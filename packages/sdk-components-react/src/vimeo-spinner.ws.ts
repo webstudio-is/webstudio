@@ -16,7 +16,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Vimeo" },
+    component: { $in: ["Vimeo", "YouTube"] },
   },
   icon: BoxIcon,
   states: defaultStates,
