@@ -35,7 +35,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["list", "none", "inline", "both"],
+    options: ["list", "inline", "none", "both"],
   },
   "aria-braillelabel": {
     description:
@@ -486,6 +486,13 @@ export const props: Record<string, PropMeta> = {
     description:
       "Often used with CSS to style a specific element. The value of this attribute must be unique.",
   },
+  inline: {
+    description: "Whether to play inline on mobile (not fullscreen).",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
   inputMode: {
     description:
       "Hints at the type of data that might be entered by the user while editing the element or its contents",
@@ -571,12 +578,12 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
   },
-  playsinline: {
-    description: "Whether to play inline on mobile (not fullscreen).",
+  playlist: {
+    description:
+      "This parameter specifies a comma-separated list of video IDs to play",
     required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
+    control: "text",
+    type: "string",
   },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },

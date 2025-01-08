@@ -50,6 +50,7 @@ const initialProps: Array<keyof ComponentProps<typeof YouTube>> = [
   "captionLanguage",
   "language",
   "color",
+  "playlist",
 ];
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -104,6 +104,7 @@ type YouTubePlayerParameters = {
 
   /**
    * ID of the playlist to load.
+   * Original parameter: `list`
    */
   listId?: string;
 
@@ -130,6 +131,11 @@ type YouTubePlayerParameters = {
    * Valid values are 'red' and 'white'.
    */
   color?: "red" | "white";
+
+  /**
+   * This parameter specifies a comma-separated list of video IDs to play
+   */
+  playlist?: string;
 };
 
 type YouTubePlayerOptions = {
@@ -192,6 +198,10 @@ const getVideoUrl = (options: YouTubePlayerOptions) => {
 
       case "loop":
         parameters.loop = options.loop ? "1" : "0";
+        if ((options.playlist ?? "").trim() !== "") {
+          parameters.playlist = videoId;
+        }
+
         break;
 
       case "inline":
@@ -247,6 +257,9 @@ const getVideoUrl = (options: YouTubePlayerOptions) => {
         break;
       case "referrer":
         parameters.widget_referrer = options.referrer;
+        break;
+      case "playlist":
+        parameters.playlist = options.playlist;
         break;
 
       default:
