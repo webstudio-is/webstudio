@@ -12,6 +12,7 @@ import { VimeoContext } from "./vimeo";
 
 /**
  * Options for configuring the YouTube player parameters.
+ * https://developers.google.com/youtube/player_parameters
  */
 type YouTubePlayerParameters = {
   /**
