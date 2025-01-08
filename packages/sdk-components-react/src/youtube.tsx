@@ -22,6 +22,13 @@ type YouTubePlayerParameters = {
   autoplay?: boolean;
 
   /**
+   * The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.
+   * https://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode
+   * @default true
+   */
+  privacyEnhancedMode?: boolean;
+
+  /**
    * Whether to show player controls.
    * @default true
    */
@@ -148,7 +155,9 @@ type YouTubePlayerOptions = {
     loading?: "eager" | "lazy";
   };
 
-const PLAYER_CDN = "https://www.youtube.com";
+const PLAYER_PRIVACY_ENHANVED_MODE_CDN = "https://www.youtube-nocookie.com";
+const PLAYER_ORIGINAL_CDN = "https://www.youtube.com";
+
 const IMAGE_CDN = "https://img.youtube.com";
 
 const getVideoId = (url?: string) => {
@@ -173,7 +182,10 @@ const getVideoUrl = (options: YouTubePlayerOptions) => {
     return;
   }
 
-  const url = new URL(`${PLAYER_CDN}/embed/${videoId}`);
+  const privacyEnhancedMode = options.privacyEnhancedMode ?? true;
+  const url = new URL(
+    `${privacyEnhancedMode ? PLAYER_PRIVACY_ENHANVED_MODE_CDN : PLAYER_ORIGINAL_CDN}/embed/${videoId}`
+  );
 
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
