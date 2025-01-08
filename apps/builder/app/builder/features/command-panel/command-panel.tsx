@@ -131,17 +131,21 @@ const $componentOptions = computed(
       });
     }
     for (const [name, meta] of templates) {
-      const label = getInstanceLabel({ component: name }, meta);
       if (meta.category === "hidden" || meta.category === "internal") {
         continue;
       }
+      const componentMeta = metas.get(name);
+      const label =
+        meta.label ??
+        componentMeta?.label ??
+        getInstanceLabel({ component: name }, meta);
       componentOptions.push({
         tokens: ["components", label, meta.category],
         type: "component",
         component: name,
         label,
         category: meta.category,
-        icon: meta.icon ?? metas.get(name)?.icon ?? "",
+        icon: meta.icon ?? componentMeta?.icon ?? "",
         order: meta.order,
       });
     }

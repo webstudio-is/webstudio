@@ -1985,6 +1985,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk

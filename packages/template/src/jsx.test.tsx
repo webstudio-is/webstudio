@@ -1,12 +1,16 @@
 import { expect, test } from "vitest";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   $,
+  ActionValue,
   AssetValue,
+  expression,
   ExpressionValue,
   PageValue,
   ParameterValue,
   PlaceholderValue,
   renderTemplate,
+  Variable,
 } from "./jsx";
 import { css } from "./css";
 
@@ -290,4 +294,180 @@ test("avoid generating style data without styles", () => {
   expect(styleSources).toEqual([]);
   expect(styleSourceSelections).toEqual([]);
   expect(styles).toEqual([]);
+});
+
+test("render variable used in prop expression", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body ws:id="body" data-count={expression`${count}`}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render variable used in child expression", () => {
+  const count = new Variable("count", 1);
+  const { instances, dataSources } = renderTemplate(
+    <$.Body ws:id="body">{expression`${count}`}</$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "expression", value: "$ws$dataSource$0" }],
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("compose expression from multiple variables", () => {
+  const count = new Variable("count", 1);
+  const step = new Variable("step", 2);
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-count={expression`Count is ${count} + ${step}`}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "Count is $ws$dataSource$0 + $ws$dataSource$1",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+    {
+      type: "variable",
+      id: "1",
+      scopeInstanceId: "body",
+      name: "step",
+      value: { type: "number", value: 2 },
+    },
+  ]);
+});
+
+test("preserve same variable on multiple instances", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body ws:id="body" data-count={expression`${count}`}>
+      <$.Box ws:id="box" data-count={expression`${count}`}></$.Box>
+    </$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+    {
+      id: "box:data-count",
+      instanceId: "box",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render variable inside of action", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-count={expression`${count}`}
+      onInc={new ActionValue(["step"], expression`${count} = ${count} + step`)}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+    {
+      id: "body:onInc",
+      instanceId: "body",
+      name: "onInc",
+      type: "action",
+      value: [
+        {
+          type: "execute",
+          args: ["step"],
+          code: "$ws$dataSource$0 = $ws$dataSource$0 + step",
+        },
+      ],
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render ws:show attribute", () => {
+  const { props } = renderTemplate(
+    <$.Body ws:id="body" ws:show={true}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-ws-show",
+      instanceId: "body",
+      name: showAttribute,
+      type: "boolean",
+      value: true,
+    },
+  ]);
 });
