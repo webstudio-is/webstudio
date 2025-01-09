@@ -95,7 +95,10 @@ export const FloatingPanel = ({
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
-      placement === "center"
+      placement === "center" ||
+      // After we positioned it once, we leave it alone to avoid jumps when user is scrolling the trigger
+      x !== undefined ||
+      y !== undefined
     ) {
       return;
     }
