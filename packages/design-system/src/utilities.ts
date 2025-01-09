@@ -94,9 +94,9 @@ export const useResize = ({
   onResizeEnd,
   timeout = 300,
 }: {
-  onResizeStart?: () => void;
-  onResize?: () => void;
-  onResizeEnd?: () => void;
+  onResizeStart?: (entries: Array<ResizeObserverEntry>) => void;
+  onResize?: (entries: Array<ResizeObserverEntry>) => void;
+  onResizeEnd?: (entries: Array<ResizeObserverEntry>) => void;
   timeout?: number;
 }) => {
   const [element, ref] = useState<HTMLElement | null>(null);
@@ -115,7 +115,7 @@ export const useResize = ({
     }
     // Mark resizing as on a new observer instance, we will use this to skip first resize event.
     isResizingRef.current = undefined;
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((entries) => {
       // Resize observer called first time is not a start of resize
       if (isResizingRef.current === undefined) {
         isResizingRef.current = false;
@@ -123,12 +123,12 @@ export const useResize = ({
       }
       if (isResizingRef.current === false) {
         isResizingRef.current = true;
-        onResizeStartRef.current?.();
+        onResizeStartRef.current?.(entries);
       }
-      onResizeRef.current?.();
+      onResizeRef.current?.(entries);
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
-        onResizeEndRef.current?.();
+        onResizeEndRef.current?.(entries);
         isResizingRef.current = false;
       }, timeout);
     });

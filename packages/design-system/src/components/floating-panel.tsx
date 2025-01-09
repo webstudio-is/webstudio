@@ -86,8 +86,8 @@ export const FloatingPanel = ({
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [x, setX] = useState<number>();
-  const [y, setY] = useState<number>();
+  const [position, setPosition] = useState<{ x: number; y: number }>();
+  const positionIsSetRef = useRef(false);
 
   const calcPosition = useCallback(() => {
     if (
@@ -95,7 +95,9 @@ export const FloatingPanel = ({
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
-      placement === "center"
+      placement === "center" ||
+      // After we positioned it once, we leave it alone to avoid jumps when user is scrolling the trigger
+      positionIsSetRef.current
     ) {
       return;
     }
@@ -125,11 +127,18 @@ export const FloatingPanel = ({
         placement === "bottom" && flip(),
         offset(offsetProp),
       ],
-    }).then(({ x, y }) => {
-      setX(x);
-      setY(y);
+    }).then((position) => {
+      setPosition(position);
+      positionIsSetRef.current = true;
     });
-  }, [contentElement, triggerRef, containerRef, placement, offsetProp]);
+  }, [
+    positionIsSetRef,
+    contentElement,
+    triggerRef,
+    containerRef,
+    placement,
+    offsetProp,
+  ]);
 
   useLayoutEffect(calcPosition, [calcPosition]);
 
@@ -148,8 +157,7 @@ export const FloatingPanel = ({
         className={contentStyle()}
         width={width}
         height={height}
-        x={x}
-        y={y}
+        {...position}
         onInteractOutside={(event) => {
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,

@@ -92,7 +92,7 @@ export const ValueEditorDialog = ({
       title="CSS Value"
       placement="bottom"
       height={200}
-      width={Number(rawTheme.sizes.sidebarWidth)}
+      width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
       content={
         <CssFragmentEditorContent
           autoFocus
