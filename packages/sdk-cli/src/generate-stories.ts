@@ -12,6 +12,7 @@ import {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
+  coreMetas,
   generateCss,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
@@ -19,6 +20,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
+const WS_NAMESPACE = "ws";
 const BASE_NAMESPACE = "@webstudio-is/sdk-components-react";
 
 const generateComponentImports = ({
@@ -53,6 +55,9 @@ const generateComponentImports = ({
 
   let componentImports = "";
   for (const [namespace, componentsSet] of namespaces.entries()) {
+    if (namespace === WS_NAMESPACE) {
+      continue;
+    }
     const specifiers = Array.from(componentsSet)
       .map(
         ([shortName, component]) =>
@@ -135,7 +140,9 @@ export const generateStories = async () => {
     const usedMetas = new Map<string, WsComponentMeta>();
     for (const namespace of namespaces) {
       let namespaceMetas;
-      if (namespace === packageJson.name) {
+      if (namespace === WS_NAMESPACE) {
+        namespaceMetas = new Map(Object.entries(coreMetas));
+      } else if (namespace === packageJson.name) {
         namespaceMetas = metas;
       } else {
         const metasUrl = import.meta.resolve(
@@ -145,7 +152,7 @@ export const generateStories = async () => {
         namespaceMetas = new Map(Object.entries(await import(metasUrl)));
       }
       for (let [name, meta] of namespaceMetas) {
-        if (namespace !== BASE_NAMESPACE) {
+        if (namespace !== BASE_NAMESPACE && namespace !== WS_NAMESPACE) {
           name = `${namespace}:${name}`;
           meta = namespaceMeta(
             meta as WsComponentMeta,
