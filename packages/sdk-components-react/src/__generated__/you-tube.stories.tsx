@@ -1,6 +1,6 @@
 import {
   Box as Box,
-  Vimeo as Vimeo,
+  YouTube as YouTube,
   VimeoPreviewImage as VimeoPreviewImage,
   VimeoSpinner as VimeoSpinner,
   HtmlEmbed as HtmlEmbed,
@@ -10,7 +10,7 @@ import {
 const Component = () => {
   return (
     <Box className={"w-box"}>
-      <Vimeo className={"w-vimeo w-vimeo-1"}>
+      <YouTube className={"w-you-tube w-you-tube-1"}>
         <VimeoPreviewImage
           alt={"Vimeo video preview image"}
           sizes={"100vw"}
@@ -38,13 +38,13 @@ const Component = () => {
             />
           </Box>
         </VimeoPlayButton>
-      </Vimeo>
+      </YouTube>
     </Box>
   );
 };
 
 export default {
-  title: "Components/Vimeo",
+  title: "Components/YouTube",
 };
 
 const Story = {
@@ -139,14 +139,6 @@ const Story = {
     white-space: normal;
     white-space-collapse: collapse
   }
-  :where(div.w-vimeo) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
-  }
   :where(button.w-play-button) {
     font-family: inherit;
     font-size: 100%;
@@ -182,9 +174,17 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
+  :where(div.w-you-tube) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
 }
 @media all {
-  .w-vimeo-1 {
+  .w-you-tube-1 {
     position: relative;
     aspect-ratio: 640/360;
     width: 100%
@@ -248,4 +248,4 @@ const Story = {
   },
 };
 
-export { Story as Vimeo };
+export { Story as YouTube };
