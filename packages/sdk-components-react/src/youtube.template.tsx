@@ -7,7 +7,8 @@ export const meta: TemplateMeta = {
   description:
     "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
   template: (
-    <$.Vimeo
+    <$.YouTube
+      ws:label="YouTube"
       ws:style={css`
         position: relative;
         aspect-ratio: 640/360;
@@ -15,6 +16,7 @@ export const meta: TemplateMeta = {
       `}
     >
       <$.VimeoPreviewImage
+        ws:label="Preview Image"
         ws:style={css`
           position: absolute;
           object-fit: cover;
@@ -42,6 +44,7 @@ export const meta: TemplateMeta = {
         <$.HtmlEmbed ws:label="Spinner SVG" code={SpinnerIcon} />
       </$.VimeoSpinner>
       <$.VimeoPlayButton
+        ws:label="Play Button"
         ws:style={css`
           position: absolute;
           width: 140px;
@@ -75,6 +78,6 @@ export const meta: TemplateMeta = {
           <$.HtmlEmbed ws:label="Play SVG" code={PlayIcon} />
         </$.Box>
       </$.VimeoPlayButton>
-    </$.Vimeo>
+    </$.YouTube>
   ),
 };

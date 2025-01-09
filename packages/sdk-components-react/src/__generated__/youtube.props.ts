@@ -8,6 +8,13 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Keyboard shortcut to activate or add focus to the element.",
   },
+  allowFullscreen: {
+    description: "Whether to allow fullscreen mode.\nOriginal parameter: `fs`",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
   "aria-activedescendant": {
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
@@ -28,7 +35,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "select",
     type: "string",
-    options: ["list", "none", "inline", "both"],
+    options: ["list", "inline", "none", "both"],
   },
   "aria-braillelabel": {
     description:
@@ -397,44 +404,30 @@ export const props: Record<string, PropMeta> = {
     description:
       "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
-  autopause: {
-    description:
-      "Whether to pause the current video when another Vimeo video on the same page starts to play. Set this value to false to permit simultaneous playback of all the videos on the page. This option has no effect if you've disabled cookies in your browser, either through browser settings or with an extension or plugin.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: true,
-  },
-  autopip: {
-    description:
-      "Whether to enable the browser to enter picture-in-picture mode automatically when switching tabs or windows, where supported.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-  },
   autoplay: {
     description:
-      "Whether to start playback of the video automatically. This feature might not work on all devices.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
+      "Whether the video should autoplay.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
   autoSave: { required: false, control: "text", type: "string" },
-  backgroundMode: {
+  captionLanguage: {
     description:
-      "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
+      "Specifies the default language that the player will use to display captions.\nThe value is an ISO 639-1 two-letter language code.\nOriginal parameter: `cc_lang_pref`",
     required: false,
-    control: "boolean",
-    type: "boolean",
+    control: "text",
+    type: "string",
   },
   className: { required: false, control: "text", type: "string" },
   color: {
-    required: false,
-    control: "color",
-    type: "string",
     description:
-      "This attribute sets the text color using either a named color or a  color specified in the hexadecimal #RRGGBB format. Note: This is a legacy attribute. Please use the CSS color property instead.",
+      "Specifies the color that will be used in the player's video progress bar to highlight the amount of the video that the viewer has already seen.\nValid values are 'red' and 'white'.",
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["red", "white"],
   },
   content: {
     required: false,
@@ -450,13 +443,6 @@ export const props: Record<string, PropMeta> = {
     description:
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
-  controlsColor: {
-    description:
-      "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
-    required: false,
-    control: "color",
-    type: "string",
-  },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
@@ -467,9 +453,9 @@ export const props: Record<string, PropMeta> = {
     description:
       "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
   },
-  doNotTrack: {
+  disableKeyboard: {
     description:
-      "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
+      "Whether to disable keyboard controls.\nOriginal parameter: `disablekb`",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -480,6 +466,12 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description: "Defines whether the element can be dragged.",
+  },
+  endTime: {
+    description: "End time of the video in seconds.\nOriginal parameter: `end`",
+    required: false,
+    control: "number",
+    type: "number",
   },
   hidden: {
     required: false,
@@ -494,6 +486,13 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description:
       "Often used with CSS to style a specific element. The value of this attribute must be unique.",
+  },
+  inline: {
+    description: "Whether to play inline on mobile (not fullscreen).",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
   inputMode: {
     description:
@@ -512,13 +511,6 @@ export const props: Record<string, PropMeta> = {
       "decimal",
     ],
   },
-  interactiveParams: {
-    description:
-      "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
-    required: false,
-    control: "text",
-    type: "string",
-  },
   is: {
     description:
       "Specify that a standard HTML element should behave like a defined custom built-in element",
@@ -532,8 +524,7 @@ export const props: Record<string, PropMeta> = {
   itemScope: { required: false, control: "boolean", type: "boolean" },
   itemType: { required: false, control: "text", type: "string" },
   keyboard: {
-    description:
-      "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
+    description: "Whether to enable keyboard controls.",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -545,9 +536,28 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Defines the language used in the element.",
   },
-  loading: {
+  language: {
     description:
-      "Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source",
+      "Sets the player's interface language. The value is an ISO 639-1 two-letter language code or a fully specified locale.\nOriginal parameter: `hl`",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  listId: {
+    description: "ID of the playlist to load.\nOriginal parameter: `list`",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  listType: {
+    description: "Type of playlist to load.",
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["playlist", "user_uploads"],
+  },
+  loading: {
+    description: "Loading strategy for iframe",
     required: false,
     control: "radio",
     type: "string",
@@ -555,8 +565,7 @@ export const props: Record<string, PropMeta> = {
     options: ["eager", "lazy"],
   },
   loop: {
-    description:
-      "Whether to restart the video automatically after reaching the end.",
+    description: "Whether the video should loop continuously.",
     required: false,
     control: "boolean",
     type: "boolean",
@@ -564,41 +573,45 @@ export const props: Record<string, PropMeta> = {
   },
   muted: {
     description:
-      "Whether the video is muted upon loading. The true value is required for the autoplay behavior in some browsers.",
+      "Whether the video should start muted.\nUseful for enabling autoplay in browsers that require videos to be muted.\nOriginal parameter: `mute`",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
   nonce: { required: false, control: "text", type: "string" },
-  pip: {
+  origin: {
     description:
-      "Whether to include the picture-in-picture button among the player controls and enable the picture-in-picture API.",
+      "Your domain for API compliance (e.g., `https://yourdomain.com`).",
     required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
+    control: "text",
+    type: "string",
   },
-  playsinline: {
+  playlist: {
     description:
-      "Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false.",
+      "This parameter specifies a comma-separated list of video IDs to play",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  prefix: { required: false, control: "text", type: "string" },
+  privacyEnhancedMode: {
+    description:
+      "The Privacy Enhanced Mode of the YouTube embedded player prevents the use of views of embedded YouTube content from influencing the viewer’s browsing experience on YouTube.\nhttps://support.google.com/youtube/answer/171780?hl=en#zippy=%2Cturn-on-privacy-enhanced-mode",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
   },
-  prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
-  quality: {
-    description:
-      "For videos on a Vimeo Plus account or higher: the playback quality of the video. Use auto for the best possible quality given available bandwidth and other factors. You can also specify 360p, 540p, 720p, 1080p, 2k, and 4k.",
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "auto",
-    options: ["auto", "360p", "540p", "720p", "1080p", "2k", "4k"],
-  },
   radioGroup: { required: false, control: "text", type: "string" },
+  referrer: {
+    description:
+      "Referrer URL for tracking purposes.\nOriginal parameter: `widget_referrer`",
+    required: false,
+    control: "text",
+    type: "string",
+  },
   rel: {
     required: false,
     control: "text",
@@ -607,14 +620,6 @@ export const props: Record<string, PropMeta> = {
       "Specifies the relationship of the target object to the link object.",
   },
   resource: { required: false, control: "text", type: "string" },
-  responsive: {
-    description:
-      "Whether to return a responsive embed code, or one that provides intelligent adjustments based on viewing conditions. We recommend this option for mobile-optimized sites.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: true,
-  },
   results: { required: false, control: "number", type: "number" },
   rev: { required: false, control: "text", type: "string" },
   role: {
@@ -625,43 +630,37 @@ export const props: Record<string, PropMeta> = {
       "Defines an explicit role for an element for use by assistive technologies.",
   },
   security: { required: false, control: "text", type: "string" },
-  showByline: {
-    description: "Whether to display the video owner's name.",
+  showAnnotations: {
+    description:
+      "Whether to show annotations on the video.\nOriginal parameter: `iv_load_policy`",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
+  showCaptions: {
+    description:
+      "Whether captions should be shown by default.\nOriginal parameter: `cc_load_policy`",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: false,
   },
   showControls: {
-    description:
-      "Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK.",
+    description: "Whether to show player controls.",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
   },
-  showPortrait: {
+  showPreview: { required: false, control: "boolean", type: "boolean" },
+  showRelatedVideos: {
     description:
-      "Whether to display the video owner's portrait. Only works if either title or byline are also enabled",
+      "Whether to show related videos at the end.\nOriginal parameter: `rel`",
     required: false,
     control: "boolean",
     type: "boolean",
     defaultValue: true,
-  },
-  showPreview: {
-    description:
-      "Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
-  showTitle: {
-    description: "Whether the player displays the title overlay.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
   },
   slot: {
     required: false,
@@ -669,19 +668,18 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Assigns a slot in a shadow DOM shadow tree to an element.",
   },
-  speed: {
-    description:
-      "Whether the player displays speed controls in the preferences menu and enables the playback rate API.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: false,
-  },
   spellCheck: {
     required: false,
     control: "boolean",
     type: "boolean",
     description: "Indicates whether spell checking is allowed for the element.",
+  },
+  startTime: {
+    description:
+      "Start time of the video in seconds.\nOriginal parameter: `start`",
+    required: false,
+    control: "number",
+    type: "number",
   },
   suppressContentEditableWarning: {
     required: false,
@@ -700,13 +698,6 @@ export const props: Record<string, PropMeta> = {
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
-  texttrack: {
-    description:
-      "The text track to display with the video. Specify the text track by its language code (en), the language code and locale (en-US), or the language code and kind (en.captions). For this argument to work, the video must already have a text track of the given type; see our Help Center or Working with Text Track Uploads for more information.\nTo enable automatically generated closed captions instead, provide the value en-x-autogen. Please note that, at the present time, automatic captions are always in English.",
-    required: false,
-    control: "text",
-    type: "string",
-  },
   title: {
     description:
       'The `title` attribute for the iframe.\nImproves accessibility by providing a brief description of the video content for screen readers.\nExample: "Video about web development tips".',
@@ -722,14 +713,6 @@ export const props: Record<string, PropMeta> = {
     description:
       "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
   },
-  transparent: {
-    description:
-      "Whether the responsive player and transparent background are enabled.",
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    defaultValue: true,
-  },
   typeof: { required: false, control: "text", type: "string" },
   unselectable: {
     required: false,
@@ -738,8 +721,7 @@ export const props: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   url: {
-    description:
-      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see Vimeo’s introductory guide.",
+    description: "The YouTube video URL or ID",
     required: false,
     control: "text",
     type: "string",

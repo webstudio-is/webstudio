@@ -19,7 +19,7 @@ export const meta: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "Vimeo" },
+      component: { $in: ["Vimeo", "YouTube"] },
     },
     {
       relation: "ancestor",

@@ -29,6 +29,7 @@ export { meta as Textarea } from "./textarea.ws";
 export { meta as RadioButton } from "./radio-button.ws";
 export { meta as Checkbox } from "./checkbox.ws";
 export { meta as Vimeo } from "./vimeo.ws";
+export { meta as YouTube } from "./youtube.ws";
 export { meta as VimeoPreviewImage } from "./vimeo-preview-image.ws";
 export { meta as VimeoPlayButton } from "./vimeo-play-button.ws";
 export { meta as VimeoSpinner } from "./vimeo-spinner.ws";

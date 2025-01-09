@@ -8,7 +8,7 @@ export const meta: WsComponentMeta = {
   label: "Preview Image",
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Vimeo" },
+    component: { $in: ["Vimeo", "YouTube"] },
   },
 };
 

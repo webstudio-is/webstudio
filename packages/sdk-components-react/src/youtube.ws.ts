@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { VimeoIcon } from "@webstudio-is/icons/svg";
+import { Youtube1cIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -7,8 +7,8 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
-import { props } from "./__generated__/vimeo.props";
-import type { Vimeo } from "./vimeo";
+import { props } from "./__generated__/youtube.props";
+import type { YouTube } from "./youtube";
 
 const presetStyle = {
   div,
@@ -16,7 +16,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
-  icon: VimeoIcon,
+  icon: Youtube1cIcon,
   states: defaultStates,
   presetStyle,
   constraints: {
@@ -25,23 +25,34 @@ export const meta: WsComponentMeta = {
   },
 };
 
-const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
+const initialProps: Array<keyof ComponentProps<typeof YouTube>> = [
   "id",
   "className",
   "url",
+  "privacyEnhancedMode",
   "title",
-  "quality",
   "loading",
   "showPreview",
   "autoplay",
-  "doNotTrack",
-  "loop",
-  "muted",
-  "showPortrait",
-  "showByline",
-  "showTitle",
   "showControls",
-  "controlsColor",
+  "showRelatedVideos",
+  "keyboard",
+  "loop",
+  "inline",
+  "allowFullscreen",
+  "showCaptions",
+  "showAnnotations",
+  "startTime",
+  "endTime",
+  "disableKeyboard",
+  "referrer",
+  "listType",
+  "listId",
+  "origin",
+  "captionLanguage",
+  "language",
+  "color",
+  "playlist",
 ];
 
 export const propsMeta: WsComponentPropsMeta = {
