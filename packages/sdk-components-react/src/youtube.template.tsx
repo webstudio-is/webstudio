@@ -2,10 +2,11 @@ import { PlayIcon, SpinnerIcon } from "@webstudio-is/icons/svg";
 import { type TemplateMeta, $, css } from "@webstudio-is/template";
 
 export const meta: TemplateMeta = {
+  label: "YouTube",
   category: "media",
   order: 1,
   description:
-    "Add a video to your page that is hosted on Vimeo. Paste a Vimeo URL and configure the video in the Settings tab.",
+    "Add a video to your page that is hosted on YouTube. Paste a YouTube URL and configure the video in the Settings tab.",
   template: (
     <$.YouTube
       ws:label="YouTube"
