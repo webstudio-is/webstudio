@@ -33,10 +33,10 @@ import {
   $isDesignModeAllowed,
   isBuilderMode,
   setBuilderMode,
-  toggleBuilderMode,
 } from "~/shared/nano-states";
 import { useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { emitCommand } from "~/builder/shared/commands";
 
 export const BuilderModeDropDown = () => {
   const builderMode = useStore($builderMode);
@@ -86,7 +86,7 @@ export const BuilderModeDropDown = () => {
           type="single"
           value={builderMode}
           onValueChange={() => {
-            toggleBuilderMode("preview");
+            emitCommand("togglePreviewMode");
           }}
         >
           <ToolbarToggleItem variant="preview" value="preview">
