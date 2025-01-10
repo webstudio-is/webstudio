@@ -58,10 +58,10 @@ import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
-import { formatDistance } from "date-fns/formatDistance";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import { RelativeTime } from "~/builder/shared/relative-time";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -206,7 +206,9 @@ const Publish = ({
 
   refresh: () => Promise<void>;
 }) => {
-  const [publishError, setPublishError] = useState<undefined | string>();
+  const [publishError, setPublishError] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -391,13 +393,11 @@ const getStaticPublishStatusAndText = ({
         ? "Download failed"
         : "Download started";
 
-  const statusText = `${textStart} ${formatDistance(
-    new Date(updatedAt),
-    new Date(),
-    {
-      addSuffix: true,
-    }
-  )}`;
+  const statusText = (
+    <>
+      {textStart} <RelativeTime time={new Date(updatedAt)} />
+    </>
+  );
 
   return { statusText, status };
 };
