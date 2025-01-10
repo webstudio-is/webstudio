@@ -98,8 +98,8 @@ export const SectionGeneral = () => {
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
-  const project = useStore($project);
-  console.log(project);
+  const project = $project.get();
+
   if (project === undefined) {
     return;
   }
