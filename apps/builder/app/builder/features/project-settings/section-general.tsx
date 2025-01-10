@@ -98,7 +98,11 @@ export const SectionGeneral = () => {
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
-  const project = $project.get();
+  const project = useStore($project);
+  console.log(project);
+  if (project === undefined) {
+    return;
+  }
 
   const handleSave = <Name extends keyof ProjectMeta>(
     name: keyof ProjectMeta
@@ -108,10 +112,6 @@ export const SectionGeneral = () => {
       saveSetting(name, value);
     };
   };
-
-  if (project === undefined) {
-    return;
-  }
 
   return (
     <Grid gap={2}>
