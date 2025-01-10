@@ -15,15 +15,22 @@ import {
   InputErrorsTooltip,
   ProBadge,
   TextArea,
+  IconButton,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { Image, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ImageControl } from "./image-control";
-import { $assets, $pages, $userPlanFeatures } from "~/shared/nano-states";
+import {
+  $assets,
+  $pages,
+  $project,
+  $userPlanFeatures,
+} from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
+import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 
 const imgStyle = css({
   objectFit: "contain",
@@ -106,6 +113,20 @@ export const SectionGeneral = () => {
       <Text variant="titles" css={sectionSpacing}>
         General
       </Text>
+
+      <Grid gap={1} css={sectionSpacing}>
+        <Flex gap={1} align="center">
+          <Text variant="labelsSentenceCase">Project ID:</Text>
+          <Text variant="mono" userSelect="text">
+            {$project.get()?.id}
+          </Text>
+          <CopyToClipboard text={$project.get()?.id} copyText="Copy ID">
+            <IconButton aria-label="Copy ID">
+              <CopyIcon aria-hidden />
+            </IconButton>
+          </CopyToClipboard>
+        </Flex>
+      </Grid>
 
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
