@@ -1836,6 +1836,9 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:*
         version: link:../generate-arg-types
+      '@webstudio-is/sdk-cli':
+        specifier: workspace:*
+        version: link:../sdk-cli
       '@webstudio-is/template':
         specifier: workspace:*
         version: link:../template
