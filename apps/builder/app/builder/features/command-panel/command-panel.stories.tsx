@@ -1,7 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import { useEffect } from "react";
-import { initialBreakpoints } from "@webstudio-is/sdk";
-import { coreMetas } from "@webstudio-is/react-sdk";
+import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import {

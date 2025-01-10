@@ -23,8 +23,6 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
-  isCoreComponent,
-  coreMetas,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -47,6 +45,8 @@ import {
   generatePageMeta,
   getStaticSiteMapXml,
   replaceFormActionsWithResources,
+  isCoreComponent,
+  coreMetas,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { wsImageLoader } from "@webstudio-is/image";

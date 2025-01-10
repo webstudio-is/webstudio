@@ -1,13 +1,9 @@
 import { nanoid } from "nanoid";
-import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
-import {
-  showAttribute,
-  textContentAttribute,
-  collectionComponent,
-  descendantComponent,
-} from "@webstudio-is/react-sdk";
-import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
+import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
+import { collectionComponent, descendantComponent } from "@webstudio-is/sdk";
+import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
+import type { PropValue } from "../shared";
 import {
   $isContentMode,
   $registeredComponentMetas,

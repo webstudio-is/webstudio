@@ -11,8 +11,7 @@ import type {
   StyleSourceSelection,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import { findTreeInstanceIds, collectionComponent } from "@webstudio-is/sdk";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots

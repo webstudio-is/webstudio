@@ -19,16 +19,14 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
+  ROOT_INSTANCE_ID,
   collectionComponent,
   blockComponent,
   rootComponent,
-  showAttribute,
   blockTemplateComponent,
   descendantComponent,
-} from "@webstudio-is/react-sdk";
-import {
-  ROOT_INSTANCE_ID,
   type Instance,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";

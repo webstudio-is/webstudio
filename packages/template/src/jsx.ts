@@ -24,10 +24,17 @@ export class Variable {
   }
 }
 
+export class Parameter {
+  name: string;
+  constructor(name: string) {
+    this.name = name;
+  }
+}
+
 class Expression {
   chunks: string[];
-  variables: Variable[];
-  constructor(chunks: string[], variables: Variable[]) {
+  variables: Array<Variable | Parameter>;
+  constructor(chunks: string[], variables: Array<Variable | Parameter>) {
     this.chunks = chunks;
     this.variables = variables;
   }
@@ -39,7 +46,7 @@ class Expression {
 
 export const expression = (
   chunks: TemplateStringsArray,
-  ...variables: Variable[]
+  ...variables: Array<Variable | Parameter>
 ): Expression => {
   return new Expression(Array.from(chunks), variables);
 };
@@ -150,7 +157,7 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
   const styleSources: StyleSource[] = [];
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
-  const dataSources = new Map<Variable, DataSource>();
+  const dataSources = new Map<Variable | Parameter, DataSource>();
   const ids = new Map<unknown, string>();
   const getId = (key: unknown) => {
     let id = ids.get(key);
@@ -161,28 +168,41 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     }
     return id;
   };
-  const getVariableId = (instanceId: string, variable: Variable) => {
+  const getVariableId = (
+    instanceId: string,
+    variable: Variable | Parameter
+  ) => {
     const id = getId(variable);
     if (dataSources.has(variable)) {
       return id;
     }
-    let value: Extract<DataSource, { type: "variable" }>["value"];
-    if (typeof variable.initialValue === "string") {
-      value = { type: "string", value: variable.initialValue };
-    } else if (typeof variable.initialValue === "number") {
-      value = { type: "number", value: variable.initialValue };
-    } else if (typeof variable.initialValue === "boolean") {
-      value = { type: "boolean", value: variable.initialValue };
-    } else {
-      value = { type: "json", value: variable.initialValue };
+    if (variable instanceof Variable) {
+      let value: Extract<DataSource, { type: "variable" }>["value"];
+      if (typeof variable.initialValue === "string") {
+        value = { type: "string", value: variable.initialValue };
+      } else if (typeof variable.initialValue === "number") {
+        value = { type: "number", value: variable.initialValue };
+      } else if (typeof variable.initialValue === "boolean") {
+        value = { type: "boolean", value: variable.initialValue };
+      } else {
+        value = { type: "json", value: variable.initialValue };
+      }
+      dataSources.set(variable, {
+        type: "variable",
+        scopeInstanceId: instanceId,
+        id,
+        name: variable.name,
+        value,
+      });
     }
-    dataSources.set(variable, {
-      type: "variable",
-      scopeInstanceId: instanceId,
-      id,
-      name: variable.name,
-      value,
-    });
+    if (variable instanceof Parameter) {
+      dataSources.set(variable, {
+        type: "parameter",
+        scopeInstanceId: instanceId,
+        id,
+        name: variable.name,
+      });
+    }
     return id;
   };
   // lazily create breakpoint
@@ -236,6 +256,14 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
         );
         const expression = value.serialize(values);
         props.push({ ...base, type: "expression", value: expression });
+        continue;
+      }
+      if (value instanceof Parameter) {
+        props.push({
+          ...base,
+          type: "parameter",
+          value: getVariableId(instanceId, value),
+        });
         continue;
       }
       if (value instanceof ExpressionValue) {

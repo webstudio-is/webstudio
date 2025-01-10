@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
+import { blockTemplateComponent } from "@webstudio-is/sdk";
 import {
-  blockTemplateComponent,
   idAttribute,
   selectorIdAttribute,
   type AnyComponent,

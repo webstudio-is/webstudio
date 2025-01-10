@@ -5,7 +5,7 @@ import {
   ExpressionValue,
   renderTemplate,
 } from "@webstudio-is/template";
-import { coreMetas } from "@webstudio-is/react-sdk";
+import { coreMetas } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";

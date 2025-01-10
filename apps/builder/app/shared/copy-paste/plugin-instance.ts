@@ -1,12 +1,12 @@
 import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
-import { portalComponent } from "@webstudio-is/react-sdk";
 import {
   Instance,
   Instances,
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
+  portalComponent,
 } from "@webstudio-is/sdk";
 import {
   $selectedInstanceSelector,
