@@ -98,6 +98,7 @@ export const SectionGeneral = () => {
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
+  const project = $project.get();
 
   const handleSave = <Name extends keyof ProjectMeta>(
     name: keyof ProjectMeta
@@ -107,6 +108,10 @@ export const SectionGeneral = () => {
       saveSetting(name, value);
     };
   };
+
+  if (project === undefined) {
+    return;
+  }
 
   return (
     <Grid gap={2}>
@@ -118,9 +123,9 @@ export const SectionGeneral = () => {
         <Flex gap={1} align="center">
           <Text variant="labelsSentenceCase">Project ID:</Text>
           <Text variant="mono" userSelect="text">
-            {$project.get()?.id}
+            {project.id}
           </Text>
-          <CopyToClipboard text={$project.get()?.id} copyText="Copy ID">
+          <CopyToClipboard text={project.id} copyText="Copy ID">
             <IconButton aria-label="Copy ID">
               <CopyIcon aria-hidden />
             </IconButton>
