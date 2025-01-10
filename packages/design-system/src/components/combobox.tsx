@@ -39,6 +39,7 @@ import { Box } from "./box";
 import { Flex } from "./flex";
 import { NestedInputButton } from "./nested-input-button";
 import { InputField } from "./input-field";
+import { Grid } from "./grid";
 
 export const ComboboxListbox = styled(
   "ul",
@@ -62,13 +63,9 @@ export const ComboboxScrollArea = forwardRef(
   ) => {
     return (
       <ScrollArea css={{ order: 1 }} {...props}>
-        <Flex
-          ref={forwardRef}
-          direction="column"
-          css={{ maxHeight: theme.spacing[34] }}
-        >
+        <Grid ref={forwardRef} css={{ maxHeight: theme.spacing[34] }}>
           {children}
-        </Flex>
+        </Grid>
       </ScrollArea>
     );
   }
