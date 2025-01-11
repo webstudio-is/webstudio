@@ -278,12 +278,17 @@ const Publish = ({
     if (publishResult.success === false) {
       console.error(publishResult.error);
 
-      let error = publishResult.error;
+      let error: JSX.Element | string = publishResult.error;
       if (publishResult.error === "NOT_IMPLEMENTED") {
-        error =
-          `Build data for publishing has been successfully created.\n\n` +
-          `Use Webstudio CLI to generate the code.\n\n` +
-          `https://docs.webstudio.is/university/self-hosting/cli`;
+        error = (
+          <>
+            Build data for publishing has been successfully created. Use{" "}
+            <Link href="https://docs.webstudio.is/university/self-hosting/cli">
+              Webstudio&nbsp;CLI
+            </Link>{" "}
+            to generate the code.
+          </>
+        );
       }
       setPublishError(error);
       if (publishResult.error === "NOT_IMPLEMENTED") {
