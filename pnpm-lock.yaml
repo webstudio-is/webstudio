@@ -1945,9 +1945,6 @@ importers:
 
   packages/sdk-components-react-remix:
     dependencies:
-      '@webstudio-is/icons':
-        specifier: workspace:*
-        version: link:../icons
       '@webstudio-is/react-sdk':
         specifier: workspace:*
         version: link:../react-sdk
@@ -1967,9 +1964,37 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
-      '@webstudio-is/generate-arg-types':
+      '@webstudio-is/tsconfig':
         specifier: workspace:*
-        version: link:../generate-arg-types
+        version: link:../tsconfig
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
+      react-dom:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+
+  packages/sdk-components-react-router:
+    dependencies:
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
+      react-router:
+        specifier: ^7.1.1
+        version: 7.1.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.70
+        version: 18.2.79
+      '@types/react-dom':
+        specifier: ^18.2.25
+        version: 18.2.25
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -7506,6 +7531,16 @@ packages:
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
+
+  react-router@7.1.1:
+    resolution: {integrity: sha512-39sXJkftkKWRZ2oJtHhCxmoCrBCULr/HAH4IT5DHlgu/Q0FCPV0S4Lx+abjDTx/74xoZzNYDYbOZWlJjruyuDQ==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: 18.3.0-canary-14898b6a9-20240318
+      react-dom: 18.3.0-canary-14898b6a9-20240318
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
 
   react-script-hook@1.7.2:
     resolution: {integrity: sha512-fhyCEfXb94fag34UPRF0zry1XGwmVY+79iibWwTqAoOiCzYJQOYTiWJ7CnqglA9tMSV8g45cQpHCMcBwr7dwhA==}
@@ -14773,6 +14808,16 @@ snapshots:
     dependencies:
       '@remix-run/router': 1.21.0
       react: 18.3.0-canary-14898b6a9-20240318
+
+  react-router@7.1.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
+    dependencies:
+      '@types/cookie': 0.6.0
+      cookie: 1.0.1
+      react: 18.3.0-canary-14898b6a9-20240318
+      set-cookie-parser: 2.6.0
+      turbo-stream: 2.4.0
+    optionalDependencies:
+      react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
   react-script-hook@1.7.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
     dependencies:
