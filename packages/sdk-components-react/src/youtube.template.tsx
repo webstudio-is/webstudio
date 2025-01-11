@@ -21,12 +21,12 @@ export const meta: TemplateMeta = {
         ws:style={css`
           position: absolute;
           object-fit: cover;
-          object-position: cover;
+          object-position: center;
           width: 100%;
           height: 100%;
           border-radius: 20px;
         `}
-        alt="Vimeo video preview image"
+        alt="YouTube video preview image"
         sizes="100vw"
         optimize={true}
       />
