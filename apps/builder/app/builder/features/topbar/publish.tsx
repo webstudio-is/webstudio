@@ -58,10 +58,10 @@ import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
-import { formatDistance } from "date-fns/formatDistance";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import { RelativeTime } from "~/builder/shared/relative-time";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -206,7 +206,9 @@ const Publish = ({
 
   refresh: () => Promise<void>;
 }) => {
-  const [publishError, setPublishError] = useState<undefined | string>();
+  const [publishError, setPublishError] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -276,12 +278,17 @@ const Publish = ({
     if (publishResult.success === false) {
       console.error(publishResult.error);
 
-      let error = publishResult.error;
+      let error: JSX.Element | string = publishResult.error;
       if (publishResult.error === "NOT_IMPLEMENTED") {
-        error =
-          `Build data for publishing has been successfully created.\n\n` +
-          `Use Webstudio CLI to generate the code.\n\n` +
-          `https://docs.webstudio.is/university/self-hosting/cli`;
+        error = (
+          <>
+            Build data for publishing has been successfully created. Use{" "}
+            <Link href="https://docs.webstudio.is/university/self-hosting/cli">
+              Webstudio&nbsp;CLI
+            </Link>{" "}
+            to generate the code.
+          </>
+        );
       }
       setPublishError(error);
       if (publishResult.error === "NOT_IMPLEMENTED") {
@@ -391,13 +398,11 @@ const getStaticPublishStatusAndText = ({
         ? "Download failed"
         : "Download started";
 
-  const statusText = `${textStart} ${formatDistance(
-    new Date(updatedAt),
-    new Date(),
-    {
-      addSuffix: true,
-    }
-  )}`;
+  const statusText = (
+    <>
+      {textStart} <RelativeTime time={new Date(updatedAt)} />
+    </>
+  );
 
   return { statusText, status };
 };

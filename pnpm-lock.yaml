@@ -190,6 +190,9 @@ importers:
       '@nanostores/react':
         specifier: ^0.8.0
         version: 0.8.0(nanostores@0.11.3)(react@18.3.0-canary-14898b6a9-20240318)
+      '@nkzw/use-relative-time':
+        specifier: ^1.1.0
+        version: 1.1.0(react@18.3.0-canary-14898b6a9-20240318)
       '@radix-ui/react-select':
         specifier: ^2.1.4
         version: 2.1.4(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -310,9 +313,6 @@ importers:
       css-tree:
         specifier: ^2.3.1
         version: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
       debug:
         specifier: ^4.3.7
         version: 4.3.7
@@ -3482,6 +3482,11 @@ packages:
   '@netlify/serverless-functions-api@1.26.1':
     resolution: {integrity: sha512-q3L9i3HoNfz0SGpTIS4zTcKBbRkxzCRpd169eyiTuk3IwcPC3/85mzLHranlKo2b+HYT0gu37YxGB45aD8A3Tw==}
     engines: {node: '>=18.0.0'}
+
+  '@nkzw/use-relative-time@1.1.0':
+    resolution: {integrity: sha512-ogCL62FvScpRpsZUuaN6Jt0xPGRv62atQUNGyMcX+nZs4H5Fs5K1iA3MbSmkJ1y0n/N0RIRLc3VAp8o46lq2CA==}
+    peerDependencies:
+      react: 18.3.0-canary-14898b6a9-20240318
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -9917,6 +9922,10 @@ snapshots:
     dependencies:
       '@netlify/node-cookies': 0.1.0
       urlpattern-polyfill: 8.0.2
+
+  '@nkzw/use-relative-time@1.1.0(react@18.3.0-canary-14898b6a9-20240318)':
+    dependencies:
+      react: 18.3.0-canary-14898b6a9-20240318
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
