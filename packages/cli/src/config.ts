@@ -89,4 +89,9 @@ export const INTERNAL_TEMPLATES = [
     label: "Cloudflare",
     expand: ["defaults", "cloudflare"],
   },
+  {
+    value: "react-router-docker",
+    label: "Dokcer",
+    expand: ["react-router-docker"],
+  },
 ];
