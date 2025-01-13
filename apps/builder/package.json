@@ -72,6 +72,7 @@
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/template": "workspace:*",
