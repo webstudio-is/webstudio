@@ -10,6 +10,7 @@ export const meta: WsComponentMeta = {
   category: "hidden",
   icon: Link2Icon,
   type: "container",
+  stylable: false,
   constraints: {
     relation: "parent",
     component: { $eq: "Head" },
