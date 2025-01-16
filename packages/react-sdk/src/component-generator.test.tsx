@@ -10,8 +10,11 @@ import {
   PageValue,
   ParameterValue,
   ResourceValue,
+  Variable,
   createProxy,
+  expression,
   renderJsx,
+  renderTemplate,
   ws,
 } from "@webstudio-is/template";
 import {
@@ -584,7 +587,7 @@ test("merge classes if no className", () => {
       clear(`
         const Page = () => {
         return <Body
-        className={"cls1"} />
+        className={\`cls1\`} />
         }
     `)
     )
@@ -608,7 +611,7 @@ test("add classes and merge classes", () => {
       clear(`
         const Page = () => {
         return <Body
-        className={"cls1" + " " + "cls2 \\"cls3\\""} />
+        className={\`cls1 \${"cls2 \\"cls3\\""}\`} />
         }
     `)
     )
@@ -632,7 +635,7 @@ test("add classes", () => {
       clear(`
         const Page = () => {
         return <Body
-        className={"cls2 \\"cls3\\""} />
+        className={\`\${"cls2 \\"cls3\\""}\`} />
         }
     `)
     )
@@ -640,6 +643,13 @@ test("add classes", () => {
 });
 
 test("add bind classes and merge classes", () => {
+  const hasClass2 = new Variable("variableName", false);
+  const { instances, props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      className={expression`${hasClass2} ? 'cls2' : ''`}
+    ></$.Body>
+  );
   expect(
     generateWebstudioComponent({
       classesMap: new Map([["body", ["cls1"]]]),
@@ -647,31 +657,18 @@ test("add bind classes and merge classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap([
-        {
-          type: "variable",
-          id: "variableId",
-          name: "variableName",
-          value: { type: "string", value: "cls3" },
-        },
-      ]),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <$.Body
-          ws:id="body"
-          className={
-            new ExpressionValue(`'cls2' + ' ' + $ws$dataSource$variableId`)
-          }
-        ></$.Body>
-      ),
+      instances: new Map(instances.map((item) => [item.id, item])),
+      props: new Map(props.map((item) => [item.id, item])),
+      dataSources: new Map(dataSources.map((item) => [item.id, item])),
     })
   ).toEqual(
     validateJSX(
       clear(`
         const Page = () => {
-        let [variableName, set$variableName] = useVariableState<any>("cls3")
+        let [variableName, set$variableName] = useVariableState<any>(false)
         return <Body
-        className={"cls1" + " " + 'cls2' + ' ' + variableName} />
+        className={\`cls1 \${variableName ? 'cls2' : ''}\`} />
         }
     `)
     )
