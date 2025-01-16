@@ -57,29 +57,44 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       childrenArray.length > 0 &&
       childrenArray.every((child) => typeof child === "string");
 
-    const attributes = attributeEntries.map(
-      ([key, value]) => `${key}=${JSON.stringify(value)}`
-    );
+    const renderAttributes = (attrs: [string, string][]) => {
+      return attrs.map(([name, value], index) => {
+        return (
+          <span key={index}>
+            {" "}
+            <span style={{ color: "#FF0000" }}>{name}</span>
+            <span style={{ color: "#000000" }}>=</span>
+            <span style={{ color: "#0000FF" }}>"{value}"</span>
+          </span>
+        );
+      });
+    };
 
     return (
       <div {...props}>
-        <span style={{ color: "rgb(16, 23, 233)" }}>
-          &lt;{[elementName, ...attributes].join(" ")}&gt;
+        <span>
+          <span style={{ color: "#800000" }}>&lt;{elementName}</span>
+          {attributeEntries.length > 0 && renderAttributes(attributeEntries)}
+          {childrenArray.length === 0 ? (
+            <span style={{ color: "#800000" }}>/&gt;</span>
+          ) : (
+            <span style={{ color: "#800000" }}>&gt;</span>
+          )}
         </span>
         {childrenArray.length > 0 && (
-          <div
-            ref={ref}
-            style={{
-              display: isTextChild ? "inline" : "block",
-              marginLeft: isTextChild ? 0 : "1rem",
-            }}
-          >
-            {children}
-          </div>
+          <>
+            <div
+              ref={ref}
+              style={{
+                display: isTextChild ? "inline" : "block",
+                marginLeft: isTextChild ? 0 : "1rem",
+              }}
+            >
+              {children}
+            </div>
+            <span style={{ color: "#800000" }}>&lt;/{elementName}&gt;</span>
+          </>
         )}
-        <span style={{ color: "rgb(16, 23, 233)" }}>
-          &lt;/{elementName}&gt;
-        </span>
       </div>
     );
   }
