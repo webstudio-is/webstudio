@@ -19,12 +19,12 @@ export const Head = forwardRef<
 >(({ ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
-  if (props["data-ws-expand"] !== true) {
-    return null;
-  }
-
   if (renderer === undefined) {
     return props.children;
+  }
+
+  if (props["data-ws-expand"] !== true) {
+    return null;
   }
 
   return <XmlNode tag={defaultTag} {...props} ref={ref} />;

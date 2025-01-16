@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "63389378-e2a2-4e25-8c98-3e408bcfc4c4",
+    "id": "d7ceee78-b972-42da-9909-570a5f616184",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 401,
-    "createdAt": "2025-01-04T10:58:00.47+00:00",
-    "updatedAt": "2025-01-04T10:58:00.47+00:00",
+    "version": 403,
+    "createdAt": "2025-01-16T14:48:23.268+00:00",
+    "updatedAt": "2025-01-16T14:48:23.268+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -202,6 +202,27 @@
             "include": false
           },
           "path": "/content-block"
+        },
+        {
+          "id": "8fF_9MQOwOqsLM9BhULUG",
+          "name": "head-tag",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "1NipO5NmaHukA_dxzfVRF",
+          "systemDataSourceId": "XYfrcSJVN66CpmamKON1m",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": []
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/head-tag"
         }
       ],
       "folders": [
@@ -220,7 +241,8 @@
             "9xlwLSHxuk8HmS3-EEGcf",
             "lTS5DKrDEC_mXSAc5ZDDA",
             "FsnS9ui6btzM4W3YELE3Q",
-            "Q1D-6G1cl0SfXyM9Xj4_O"
+            "Q1D-6G1cl0SfXyM9Xj4_O",
+            "8fF_9MQOwOqsLM9BhULUG"
           ]
         },
         {
@@ -2877,6 +2899,26 @@
           "type": "string",
           "value": "link"
         }
+      ],
+      [
+        "tmI7Yq6YK0wRDWbe6rDIF",
+        {
+          "id": "tmI7Yq6YK0wRDWbe6rDIF",
+          "instanceId": "9D0iND1GtlUmPeOePXTr8",
+          "name": "rel",
+          "type": "string",
+          "value": "help"
+        }
+      ],
+      [
+        "OTjYgJxjsnG0nuwAXBNcV",
+        {
+          "id": "OTjYgJxjsnG0nuwAXBNcV",
+          "instanceId": "9D0iND1GtlUmPeOePXTr8",
+          "name": "href",
+          "type": "string",
+          "value": "/help"
+        }
       ]
     ],
     "dataSources": [
@@ -3081,6 +3123,15 @@
           "type": "parameter",
           "id": "F3zbkztYW_mJNC5EOkopM",
           "scopeInstanceId": "-BW4QOi3PJTZ1sDCY8LW6",
+          "name": "system"
+        }
+      ],
+      [
+        "XYfrcSJVN66CpmamKON1m",
+        {
+          "type": "parameter",
+          "id": "XYfrcSJVN66CpmamKON1m",
+          "scopeInstanceId": "1NipO5NmaHukA_dxzfVRF",
           "name": "system"
         }
       ]
@@ -4870,6 +4921,43 @@
             }
           ]
         }
+      ],
+      [
+        "1NipO5NmaHukA_dxzfVRF",
+        {
+          "type": "instance",
+          "id": "1NipO5NmaHukA_dxzfVRF",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "S3mYcLSY7hlGQ654olt90"
+            }
+          ]
+        }
+      ],
+      [
+        "S3mYcLSY7hlGQ654olt90",
+        {
+          "type": "instance",
+          "id": "S3mYcLSY7hlGQ654olt90",
+          "component": "Head",
+          "children": [
+            {
+              "type": "id",
+              "value": "9D0iND1GtlUmPeOePXTr8"
+            }
+          ]
+        }
+      ],
+      [
+        "9D0iND1GtlUmPeOePXTr8",
+        {
+          "type": "instance",
+          "id": "9D0iND1GtlUmPeOePXTr8",
+          "component": "HeadLink",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -5088,6 +5176,27 @@
         "include": false
       },
       "path": "/content-block"
+    },
+    {
+      "id": "8fF_9MQOwOqsLM9BhULUG",
+      "name": "head-tag",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "1NipO5NmaHukA_dxzfVRF",
+      "systemDataSourceId": "XYfrcSJVN66CpmamKON1m",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": []
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/head-tag"
     }
   ],
   "assets": [
