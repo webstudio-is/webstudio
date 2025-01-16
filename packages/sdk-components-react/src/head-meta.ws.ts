@@ -4,7 +4,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 
-import { props } from "./__generated__/head-link.props";
+import { props } from "./__generated__/head-meta.props";
 
 export const meta: WsComponentMeta = {
   category: "hidden",
@@ -19,5 +19,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["rel", "href", "type", "hrefLang"],
+  initialProps: ["name", "property", "content"],
 };

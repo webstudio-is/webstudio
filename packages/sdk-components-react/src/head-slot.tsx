@@ -13,7 +13,7 @@ import { XmlNode } from "./xml-node";
 
 export const defaultTag = "head";
 
-export const Head = forwardRef<
+export const HeadSlot = forwardRef<
   ElementRef<"div">,
   { "data-ws-expand": boolean } & ComponentProps<typeof defaultTag>
 >(({ ...props }, ref) => {
@@ -30,16 +30,16 @@ export const Head = forwardRef<
   return <XmlNode tag={defaultTag} {...props} ref={ref} />;
 });
 
-Head.displayName = "Head";
+HeadSlot.displayName = "HeadSlot";
 
-export const hooksHead: Hook = {
+export const hooksHeadSlot: Hook = {
   onNavigatorUnselect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `Head`) {
+      if (instance.component === `HeadSlot`) {
         const popover = getClosestInstance(
           event.instancePath,
           instance,
-          `Head`
+          `HeadSlot`
         );
         if (popover) {
           context.setMemoryProp(popover, "data-ws-expand", undefined);
@@ -49,11 +49,11 @@ export const hooksHead: Hook = {
   },
   onNavigatorSelect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `Head`) {
+      if (instance.component === `HeadSlot`) {
         const popover = getClosestInstance(
           event.instancePath,
           instance,
-          `Head`
+          `HeadSlot`
         );
         if (popover) {
           context.setMemoryProp(popover, "data-ws-expand", true);

@@ -1,5 +1,5 @@
 import type { Hook } from "@webstudio-is/react-sdk";
 import { hooksSelect } from "./select";
-import { hooksHead } from "./head";
+import { hooksHeadSlot } from "./head-slot";
 
-export const hooks: Hook[] = [hooksSelect, hooksHead];
+export const hooks: Hook[] = [hooksSelect, hooksHeadSlot];

@@ -10,10 +10,17 @@ export const meta: WsComponentMeta = {
   icon: HeaderIcon,
   type: "container",
   stylable: false,
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Head"] },
-  },
+  description: "Inserts children into the head of the document",
+  constraints: [
+    {
+      relation: "ancestor",
+      component: { $nin: ["HeadSlot"] },
+    },
+    {
+      relation: "child",
+      component: { $in: ["HeadLink", "HeadMeta"] },
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
