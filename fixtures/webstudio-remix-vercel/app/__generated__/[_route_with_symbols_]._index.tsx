@@ -28,10 +28,10 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body"}>
+    <Body className={`w-body`}>
       <Image
         src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-        className={"w-image c1czoo99"}
+        className={`w-image c1czoo99`}
       />
     </Body>
   );

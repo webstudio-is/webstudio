@@ -60,47 +60,47 @@ export const CustomCode = () => {
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body cielobv"}>
-      <Heading className={"w-heading ceva767"}>
+    <Body className={`w-body cielobv`}>
+      <Heading className={`w-heading ceva767`}>
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
-      <Box className={"w-box c13v7j50 cqkqnmd cv6wa71"}>
-        <Box className={"w-box c1t3ybra c1qxdkbn c1ogzcge cv3kvac"}>
-          <Heading className={"w-heading"}>{"Heading"}</Heading>
-          <Paragraph className={"w-paragraph"}>
+      <Box className={`w-box c13v7j50 cqkqnmd cv6wa71`}>
+        <Box className={`w-box c1t3ybra c1qxdkbn c1ogzcge cv3kvac`}>
+          <Heading className={`w-heading`}>{"Heading"}</Heading>
+          <Paragraph className={`w-paragraph`}>
             {
               "a little kitten painted in black and white gouache with a thick brush"
             }
           </Paragraph>
-          <Link href={"https://github.com/"} className={"w-link"}>
+          <Link href={"https://github.com/"} className={`w-link`}>
             {"Click here to adore more kittens"}
           </Link>
-          <Text tag={"span"} className={"w-text"}>
+          <Text tag={"span"} className={`w-text`}>
             {" or "}
           </Text>
           <Link
             href={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-            className={"w-link"}
+            className={`w-link`}
           >
             {"go download this little kitten"}
           </Link>
-          <Box className={"w-box"} />
-          <Link href={"/_route_with_symbols_"} className={"w-link ch2exr5"}>
+          <Box className={`w-box`} />
+          <Link href={"/_route_with_symbols_"} className={`w-link ch2exr5`}>
             {"Symbols in path"}
           </Link>
           <Link
             href={"/heading-with-id#my-heading"}
-            className={"w-link ch2exr5"}
+            className={`w-link ch2exr5`}
           >
             {"Link to instance"}
           </Link>
         </Box>
-        <Box className={"w-box c1t3ybra c1qxdkbn c1ogzcge cv3kvac"}>
+        <Box className={`w-box c1t3ybra c1qxdkbn c1ogzcge cv3kvac`}>
           <Image
             src={
               "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
             }
-            className={"w-image c1czoo99"}
+            className={`w-image c1czoo99`}
           />
         </Box>
       </Box>

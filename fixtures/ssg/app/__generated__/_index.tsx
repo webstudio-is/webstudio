@@ -27,23 +27,23 @@ export const CustomCode = () => {
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body c1jaw2zx cbipm55 ctniqj4 ctgx88l"}>
-      <Heading className={"w-heading"}>{"Simple Project to test CLI"}</Heading>
-      <Text className={"w-text cn3rfux"}>
+    <Body className={`w-body c1jaw2zx cbipm55 ctniqj4 ctgx88l`}>
+      <Heading className={`w-heading`}>{"Simple Project to test CLI"}</Heading>
+      <Text className={`w-text cn3rfux`}>
         {"Please don't change directly in the fixture"}
       </Text>
-      <Link href={"/another-page"} className={"w-link"}>
+      <Link href={"/another-page"} className={`w-link`}>
         {"Test another page link"}
       </Link>
       <Image
         src={"/assets/iconly_svg_converted-converted_zMaMiAAutUl8XrITgz7d1.svg"}
         width={14}
         height={16}
-        className={"w-image c161qeci"}
+        className={`w-image c161qeci`}
       />
       <Image
         src={"https://picsum.photos/id/237/100/100.jpg?blur=4&grayscale"}
-        className={"w-image"}
+        className={`w-image`}
       />
     </Body>
   );

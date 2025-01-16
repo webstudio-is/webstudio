@@ -32,26 +32,26 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body"}>
-      <Box className={"w-box coklr1z"}>
-        <Heading className={"w-heading cc5h0no"}>
+    <Body className={`w-body`}>
+      <Box className={`w-box coklr1z`}>
+        <Heading className={`w-heading cc5h0no`}>
           {"Content Block With Templates And Content"}
         </Heading>
-        <Heading className={"w-heading"}>{"H1"}</Heading>
-        <Paragraph className={"w-paragraph"}>{"Paragraph"}</Paragraph>
+        <Heading className={`w-heading`}>{"H1"}</Heading>
+        <Paragraph className={`w-paragraph`}>{"Paragraph"}</Paragraph>
       </Box>
-      <Box className={"w-box c1cqkpk9"}>
-        <Heading className={"w-heading cc5h0no"}>
+      <Box className={`w-box c1cqkpk9`}>
+        <Heading className={`w-heading cc5h0no`}>
           {"Content Block With Templates Only"}
         </Heading>
       </Box>
-      <Box className={"w-box ccxj65f"}>
-        <Heading className={"w-heading cc5h0no"}>{"With Content Only"}</Heading>
-        <Heading className={"w-heading"}>{"H1"}</Heading>
-        <Paragraph className={"w-paragraph"}>{"Paragraph"}</Paragraph>
+      <Box className={`w-box ccxj65f`}>
+        <Heading className={`w-heading cc5h0no`}>{"With Content Only"}</Heading>
+        <Heading className={`w-heading`}>{"H1"}</Heading>
+        <Paragraph className={`w-paragraph`}>{"Paragraph"}</Paragraph>
       </Box>
-      <Box className={"w-box c1a2hnxl"}>
-        <Heading className={"w-heading cc5h0no"}>{"Empty"}</Heading>
+      <Box className={`w-box c1a2hnxl`}>
+        <Heading className={`w-heading cc5h0no`}>{"Empty"}</Heading>
       </Box>
     </Body>
   );
