@@ -38,3 +38,5 @@ export { meta as XmlTime } from "./xml-time.ws";
 export { meta as Time } from "./time.ws";
 export { meta as Select } from "./select.ws";
 export { meta as Option } from "./option.ws";
+export { meta as Head } from "./head.ws";
+export { meta as HeadLink } from "./head-link.ws";
