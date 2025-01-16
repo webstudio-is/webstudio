@@ -76,7 +76,7 @@ runs:
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
 
-        vercel build
+        pnpx vercel build
       shell: bash
 
     - name: Patch
@@ -103,7 +103,7 @@ runs:
     - name: Deploy
       id: deploy
       run: |
-        vercel deploy \
+        pnpx vercel deploy \
         --prebuilt \
         --token ${{ inputs.vercel-token }} \
         2> >(tee info.txt >&2) | tee domain.txt
@@ -118,7 +118,7 @@ runs:
       run: |
         ALIAS="${{ steps.branch.outputs.value }}"
 
-        vercel alias set \
+        pnpx vercel alias set \
         "${{ steps.deploy.outputs.domain }}" \
         "${ALIAS}-wstd-00-${{ inputs.environment }}" \
         --token ${{ inputs.vercel-token }} \
