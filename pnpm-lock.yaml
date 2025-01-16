@@ -299,8 +299,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/trpc-interface
       args-tokenizer:
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.3.0
+        version: 0.3.0
       bcp-47:
         specifier: ^2.1.0
         version: 2.1.0
@@ -410,8 +410,8 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2
       ultraflag:
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.3
+        version: 0.2.3
       untruncate-json:
         specifier: ^0.0.1
         version: 0.0.1
@@ -5096,8 +5096,8 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
-  args-tokenizer@0.1.0:
-    resolution: {integrity: sha512-9yDBBeg+2WTmWXJMfdO3efV+VknAL2UlxS7Yxt5e/aYjMW3yDiQhGPuFg+wEuTGN3JxsRL/wjCg0qBDFklyXjw==}
+  args-tokenizer@0.3.0:
+    resolution: {integrity: sha512-xXAd7G2Mll5W8uo37GETpQ2VrE84M181Z7ugHFGQnJZ50M2mbOv0osSZ9VsSgPfJQ+LVG0prSi0th+ELMsno7Q==}
 
   aria-hidden@1.1.3:
     resolution: {integrity: sha512-RhVWFtKH5BiGMycI72q2RAFMLQi8JP9bLuQXgR5a8Znp7P5KOIADSJeyfI8PCVxLEp067B2HbP5JIiI/PXIZeA==}
@@ -8300,8 +8300,8 @@ packages:
   ufo@1.5.3:
     resolution: {integrity: sha512-Y7HYmWaFwPUmkoQCUIAYpKqkOf+SbVj/2fJJZ4RJMCfZp0rTGwRbzQD+HghfnhKOjL9E01okqz+ncJskGYfBNw==}
 
-  ultraflag@0.1.0:
-    resolution: {integrity: sha512-F6J/7SZHkep//Ihd5N63b1ghzBUclZvFuSzsZgurFPS0h0Fj482mNdz8R9REm89ETSPPsPB9eJ3z7E52WkDMQw==}
+  ultraflag@0.2.3:
+    resolution: {integrity: sha512-RC8Q5Y72wbiDfF+LXEaFaF3j+hKt4bU6GJQSuTKJIisNXfviDV3G6UPiC8iKV+idSBshjXZGwoO/2kg7gQvnjQ==}
 
   umzug@3.2.1:
     resolution: {integrity: sha512-XyWQowvP9CKZycKc/Zg9SYWrAWX/gJCE799AUTFqk8yC3tp44K1xWr3LoFF0MNEjClKOo1suCr5ASnoy+KltdA==}
@@ -11827,7 +11827,7 @@ snapshots:
 
   argparse@2.0.1: {}
 
-  args-tokenizer@0.1.0: {}
+  args-tokenizer@0.3.0: {}
 
   aria-hidden@1.1.3:
     dependencies:
@@ -15615,7 +15615,7 @@ snapshots:
 
   ufo@1.5.3: {}
 
-  ultraflag@0.1.0: {}
+  ultraflag@0.2.3: {}
 
   umzug@3.2.1:
     dependencies:
