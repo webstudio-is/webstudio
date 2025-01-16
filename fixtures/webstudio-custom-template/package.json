@@ -24,7 +24,8 @@
     "isbot": "^5.1.19",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "web-vitals": "^3.5.2"
+    "web-vitals": "^3.5.2",
+    "@webstudio-is/sdk-components-animation": "workspace:*"
   },
   "devDependencies": {
     "@remix-run/dev": "2.15.2",

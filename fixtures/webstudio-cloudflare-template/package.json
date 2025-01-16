@@ -43,7 +43,8 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "webstudio": "workspace:*",
     "worktop": "0.8.0-next.18",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "@webstudio-is/sdk-components-animation": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",

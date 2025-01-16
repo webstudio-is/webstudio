@@ -283,6 +283,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -479,6 +482,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -531,6 +537,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -598,6 +607,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -668,6 +680,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -735,6 +750,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -799,6 +817,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -857,6 +878,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
@@ -1105,6 +1129,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../sdk-components-react
@@ -1793,6 +1820,46 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
+
+  packages/sdk-components-animation:
+    dependencies:
+      '@webstudio-is/icons':
+        specifier: workspace:*
+        version: link:../icons
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.70
+        version: 18.2.79
+      '@types/react-dom':
+        specifier: ^18.2.25
+        version: 18.2.25
+      '@webstudio-is/generate-arg-types':
+        specifier: workspace:*
+        version: link:../generate-arg-types
+      '@webstudio-is/sdk-cli':
+        specifier: workspace:^
+        version: link:../sdk-cli
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../sdk-components-react
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
+      '@webstudio-is/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
+      react-dom:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
   packages/sdk-components-react:
     dependencies:

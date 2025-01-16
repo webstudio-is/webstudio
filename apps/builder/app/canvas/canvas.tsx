@@ -14,6 +14,11 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
+import * as animationComponents from "@webstudio-is/sdk-components-animation";
+import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
+import * as animationComponentPropsMetas from "@webstudio-is/sdk-components-animation/props";
+import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
+import { hooks as animationComponentHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
@@ -246,6 +251,14 @@ export const Canvas = () => {
       propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
       templates: radixTemplates,
+    });
+    registerComponentLibrary({
+      namespace: "@webstudio-is/sdk-components-animation",
+      components: animationComponents,
+      metas: animationComponentMetas,
+      propsMetas: animationComponentPropsMetas,
+      hooks: animationComponentHooks,
+      templates: animationTemplates,
     });
   });
 
