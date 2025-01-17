@@ -25,13 +25,6 @@ import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
-const containerStyle = css({
-  px: theme.spacing[13],
-  backgroundColor: theme.colors.backgroundPanel,
-  height: theme.spacing[15],
-  boxShadow: theme.shadows.brandElevationBig,
-});
-
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
@@ -47,10 +40,11 @@ const Menu = ({
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
+  console.log(userPlanFeatures);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button color="ghost" aria-label="Menu Button" css={{ height: "100%" }}>
+        <Button color="ghost" aria-label="Menu Button">
           <Flex gap="1" align="center">
             {userPlanFeatures.hasProPlan && (
               <>
@@ -121,10 +115,9 @@ export const Header = ({
       as="header"
       align="center"
       justify="between"
-      className={containerStyle()}
+      css={{ padding: theme.spacing[8] }}
     >
-      <WebstudioIcon size={22} />
-
+      <WebstudioIcon size={24} />
       <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>
   );

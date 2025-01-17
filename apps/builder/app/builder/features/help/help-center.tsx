@@ -58,7 +58,7 @@ export const HelpCenter = ({
             Support Hub
           </Button>
           <Button
-            formAction="https://www.youtube.com/playlist"
+            formAction="https://wstd.us/101"
             name="list"
             value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
             prefix={<Youtube1cIcon fill="currentColor" />}
@@ -76,7 +76,7 @@ export const HelpCenter = ({
             Learn from docs
           </Button>
           <Button
-            formAction="https://discord.gg/UNdyrDkq5r"
+            formAction="https://wstd.us/community"
             prefix={<DiscordIcon fill="currentColor" />}
             color="ghost"
             css={{ justifyContent: "start" }}

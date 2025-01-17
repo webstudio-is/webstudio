@@ -1,8 +1,19 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import {
   Flex,
+  Link,
+  Separator,
+  Text,
   TooltipProvider,
+  buttonStyle,
+  css,
   globalCss,
+  styled,
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -10,28 +21,29 @@ import { Header } from "./header";
 import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { Resources } from "./resources";
-import { useLocation, useRevalidator } from "@remix-run/react";
+import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import { Toaster } from "@webstudio-is/design-system";
+import {
+  BodyIcon,
+  ContentIcon,
+  DiscordIcon,
+  ExtensionIcon,
+  HelpIcon,
+  LifeBuoyIcon,
+  Youtube1cIcon,
+} from "@webstudio-is/icons";
+import { HelpCenter } from "~/builder/features/help/help-center";
 
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    background: theme.colors.brandBackgroundDashboard,
+    background: theme.colors.backgroundPanel,
   },
 });
 
 const Main = (props: ComponentProps<typeof Flex>) => {
-  return (
-    <Flex
-      {...props}
-      as="main"
-      direction="column"
-      gap="5"
-      css={{ padding: theme.spacing[13] }}
-    />
-  );
+  return <Flex {...props} as="main" direction="column" gap="5" grow />;
 };
 
 const Section = (props: ComponentProps<typeof Flex>) => {
@@ -95,6 +107,43 @@ const CloneProject = ({
   ) : undefined;
 };
 
+const sidebarLinkStyle = css({
+  all: "unset",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing[5],
+  height: theme.spacing[13],
+  paddingInline: theme.panel.paddingInline,
+  outline: "none",
+  "&:focus-visible, &:hover": {
+    background: theme.colors.backgroundHover,
+  },
+  "&[aria-current=true]": {
+    background: theme.colors.backgroundItemCurrent,
+    color: theme.colors.foregroundMain,
+  },
+});
+
+const SidebarLink = ({
+  to,
+  prefix,
+  children,
+  target,
+}: {
+  prefix: ReactNode;
+  children: string;
+  to: string;
+  target?: string;
+}) => {
+  return (
+    <NavLink to={to} target={target} className={sidebarLinkStyle()}>
+      {prefix}
+      <Text variant="labelsSentenceCase">{children}</Text>
+    </NavLink>
+  );
+};
+
 export const Dashboard = ({
   user,
   projects,
@@ -107,20 +156,66 @@ export const Dashboard = ({
 
   return (
     <TooltipProvider>
-      <Header user={user} userPlanFeatures={userPlanFeatures} />
-      <Main>
-        <Section>
-          <Resources />
-        </Section>
-        <Section>
-          <Projects
-            projects={projects}
-            projectTemplates={projectTemplates}
-            hasProPlan={userPlanFeatures.hasProPlan}
-            publisherHost={publisherHost}
-          />
-        </Section>
-      </Main>
+      <Flex>
+        <Flex
+          as="aside"
+          align="stretch"
+          direction="column"
+          css={{
+            width: theme.sizes.sidebarWidth,
+            borderRight: `1px solid ${theme.colors.borderMain}`,
+          }}
+        >
+          <Header user={user} userPlanFeatures={userPlanFeatures} />
+          <SidebarLink to="/dashboard/projects" prefix={<BodyIcon />}>
+            Projects
+          </SidebarLink>
+          <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
+            Starter Templates
+          </SidebarLink>
+          <Flex direction="column">
+            <Separator css={{ marginBlock: theme.spacing[5] }} />
+            <SidebarLink
+              to="https://wstd.us/101"
+              target="_blank"
+              prefix={<Youtube1cIcon fill="black" />}
+            >
+              Video tutorials
+            </SidebarLink>
+            <SidebarLink
+              to="https://help.webstudio.is/"
+              target="_blank"
+              prefix={<LifeBuoyIcon />}
+            >
+              Support hub
+            </SidebarLink>
+            <SidebarLink
+              to="https://docs.webstudio.is"
+              target="_blank"
+              prefix={<ContentIcon />}
+            >
+              Docs
+            </SidebarLink>
+            <SidebarLink
+              to="https://wstd.us/community"
+              target="_blank"
+              prefix={<DiscordIcon fill="black" />}
+            >
+              Community
+            </SidebarLink>
+          </Flex>
+        </Flex>
+        <Main>
+          <Section>
+            <Projects
+              projects={projects}
+              projectTemplates={projectTemplates}
+              hasProPlan={userPlanFeatures.hasProPlan}
+              publisherHost={publisherHost}
+            />
+          </Section>
+        </Main>
+      </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />
     </TooltipProvider>

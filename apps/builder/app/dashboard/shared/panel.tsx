@@ -7,7 +7,6 @@ const panelStyle = css({
   borderRadius: theme.borderRadius[6],
   color: theme.colors.foregroundMain,
   minWidth: "min-content",
-  boxShadow: theme.shadows.brandElevationBig,
   flexGrow: 1,
 });
 
