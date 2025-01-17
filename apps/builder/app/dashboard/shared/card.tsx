@@ -10,7 +10,10 @@ import {
 } from "@webstudio-is/design-system";
 import { forwardRef, type ComponentProps } from "react";
 
+const borderColorVar = "--ws-dashboard-card-border-color";
+
 const cardStyle = css({
+  position: "relative",
   display: "flex",
   padding: 0,
   height: "100%",
@@ -19,17 +22,9 @@ const cardStyle = css({
   flexShrink: 0,
   overflow: "hidden",
   aspectRatio: "8 / 7",
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
-  borderRadius: theme.borderRadius[4],
-  background: theme.colors.brandBackgroundProjectCardFront,
   outline: "none",
-  "&:hover, &:focus-within": {
-    boxShadow: theme.shadows.brandElevationBig,
-  },
-  "&:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+  "&:hover, &:focus-within, &:focus-visible": {
+    [borderColorVar]: theme.colors.borderFocus,
   },
 });
 
@@ -50,6 +45,10 @@ export const CardContent = styled(Grid, {
   overflow: "hidden",
   minWidth: "100%",
   height: "100%",
+  outline: `1px solid transparent`,
+  borderRadius: theme.borderRadius[5],
+  outlineOffset: "-1px",
+  outlineColor: `var(${borderColorVar}, transparent)`,
 });
 
 export const CardFooter = styled(Flex, {
@@ -59,5 +58,5 @@ export const CardFooter = styled(Flex, {
   flexGap: theme.spacing[3],
   background: theme.colors.brandBackgroundProjectCardTextArea,
   height: theme.spacing[17],
-  padding: theme.panel.padding,
+  paddingBlock: theme.panel.paddingBlock,
 });

@@ -201,7 +201,6 @@ export const ProjectCard = ({
       <CardContent
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
-          position: "relative",
           [`&:hover`]: {
             "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
           },
