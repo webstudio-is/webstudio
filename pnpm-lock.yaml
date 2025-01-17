@@ -494,6 +494,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
       '@webstudio-is/sdk-components-react':
         specifier: workspace:*
         version: link:../../packages/sdk-components-react
