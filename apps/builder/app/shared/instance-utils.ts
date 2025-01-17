@@ -26,12 +26,10 @@ import {
   transpileExpression,
   getExpressionIdentifiers,
   ROOT_INSTANCE_ID,
-} from "@webstudio-is/sdk";
-import {
-  generateDataFromEmbedTemplate,
   portalComponent,
   collectionComponent,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
+import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   $props,
   $styles,

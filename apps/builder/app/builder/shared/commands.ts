@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { blockTemplateComponent } from "@webstudio-is/react-sdk";
+import { blockTemplateComponent } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";

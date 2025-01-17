@@ -12,14 +12,12 @@ import {
   generateExpression,
   decodeDataSourceVariable,
   transpileExpression,
-} from "@webstudio-is/sdk";
-import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
-import {
   blockComponent,
   blockTemplateComponent,
   collectionComponent,
   descendantComponent,
-} from "./core-components";
+} from "@webstudio-is/sdk";
+import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**

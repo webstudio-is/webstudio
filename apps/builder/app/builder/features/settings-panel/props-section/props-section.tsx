@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import type { Instance } from "@webstudio-is/sdk";
+import { type Instance, descendantComponent } from "@webstudio-is/sdk";
 import {
   theme,
   Combobox,
@@ -11,10 +11,7 @@ import {
   Box,
   Grid,
 } from "@webstudio-is/design-system";
-import {
-  descendantComponent,
-  isAttributeNameSafe,
-} from "@webstudio-is/react-sdk";
+import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,

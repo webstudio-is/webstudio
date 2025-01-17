@@ -21,6 +21,11 @@
       "webstudio": "./src/__generated__/normalize.css.ts",
       "types": "./lib/types/__generated__/normalize.css.d.ts",
       "import": "./lib/__generated__/normalize.css.js"
+    },
+    "./core-templates": {
+      "webstudio": "./src/core-templates.tsx",
+      "types": "./lib/types/core-templates.d.ts",
+      "import": "./lib/core-templates.js"
     }
   },
   "files": [
@@ -32,12 +37,13 @@
     "typecheck": "tsc",
     "test": "vitest run",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && prettier --write src/__generated__/normalize.css.ts",
-    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/__generated__/normalize.css.ts --outdir=lib --bundle --format=esm --packages=external",
+    "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
+    "@webstudio-is/icons": "workspace:*",
     "acorn": "^8.14.0",
     "acorn-walk": "^8.3.4",
     "reserved-identifiers": "^1.0.0",

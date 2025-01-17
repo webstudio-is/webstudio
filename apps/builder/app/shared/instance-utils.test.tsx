@@ -1,6 +1,5 @@
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "vitest";
-import { portalComponent, collectionComponent } from "@webstudio-is/react-sdk";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -11,7 +10,6 @@ import {
   renderTemplate,
 } from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
-import { coreMetas } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
@@ -32,7 +30,13 @@ import type {
   WebstudioFragment,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  getStyleDeclKey,
+  coreMetas,
+  portalComponent,
+  collectionComponent,
+} from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   findClosestEditableInstanceSelector,

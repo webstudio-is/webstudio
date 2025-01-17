@@ -14,6 +14,7 @@ export * from "./schema/prop-meta";
 export * from "./schema/embed-template";
 export * from "./schema/component-meta";
 
+export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";

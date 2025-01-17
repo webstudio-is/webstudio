@@ -2,11 +2,12 @@ import { beforeEach, expect, test } from "vitest";
 import { cleanStores } from "nanostores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { setEnv } from "@webstudio-is/feature-flags";
-import { encodeDataSourceVariable, type Instance } from "@webstudio-is/sdk";
 import {
+  type Instance,
+  encodeDataSourceVariable,
   collectionComponent,
-  textContentAttribute,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
+import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
   $propValuesByInstanceSelector,

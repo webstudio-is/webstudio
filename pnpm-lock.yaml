@@ -1770,6 +1770,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
+      '@webstudio-is/icons':
+        specifier: workspace:*
+        version: link:../icons
       acorn:
         specifier: ^8.14.0
         version: 8.14.0

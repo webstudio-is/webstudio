@@ -5,8 +5,8 @@ import {
   Instances,
   ROOT_INSTANCE_ID,
   type Page,
+  rootComponent,
 } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/react-sdk";
 import { $pages } from "./nano-states/pages";
 import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
 

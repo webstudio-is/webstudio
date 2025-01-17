@@ -20,7 +20,13 @@ import type {
   Prop,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  collectionComponent,
+  descendantComponent,
+  blockComponent,
+  blockTemplateComponent,
+} from "@webstudio-is/sdk";
 import {
   idAttribute,
   componentAttribute,
@@ -28,12 +34,8 @@ import {
   selectorIdAttribute,
   indexAttribute,
   getIndexesWithinAncestors,
-  collectionComponent,
   type AnyComponent,
   textContentAttribute,
-  descendantComponent,
-  blockComponent,
-  blockTemplateComponent,
   editingPlaceholderVariable,
   editablePlaceholderVariable,
 } from "@webstudio-is/react-sdk";
