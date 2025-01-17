@@ -20,7 +20,6 @@ const cardStyle = css({
   flexDirection: "column",
   alignItems: "center",
   flexShrink: 0,
-  overflow: "hidden",
   aspectRatio: "8 / 7",
   outline: "none",
   "&:hover, &:focus-within, &:focus-visible": {
@@ -43,12 +42,10 @@ Card.displayName = "Card";
 export const CardContent = styled(Grid, {
   position: "relative",
   overflow: "hidden",
-  minWidth: "100%",
+  width: "100%",
   height: "100%",
-  outline: `1px solid transparent`,
+  outline: `1px solid var(${borderColorVar}, transparent)`,
   borderRadius: theme.borderRadius[5],
-  outlineOffset: "-1px",
-  outlineColor: `var(${borderColorVar}, transparent)`,
 });
 
 export const CardFooter = styled(Flex, {
