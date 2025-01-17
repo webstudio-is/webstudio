@@ -16,6 +16,8 @@ import {
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
+import { HeadSlot, HeadMeta } from "@webstudio-is/sdk-components-react";
+import type { PageMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
@@ -112,17 +114,25 @@ export const headers: HeadersFunction = () => {
   };
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const metas: ReturnType<MetaFunction> = [];
-  if (data === undefined) {
-    return metas;
-  }
-  const { pageMeta } = data;
+const PageSettingsMeta = ({
+  url,
+  pageMeta,
+  host,
+}: {
+  pageMeta: PageMeta;
+  url?: string;
+  host: string;
+}) => {
+  const metas: (
+    | { title: string }
+    | { property: string; content: string }
+    | { name: string; content: string }
+  )[] = [];
 
-  if (data.url) {
+  if (url !== undefined) {
     metas.push({
       property: "og:url",
-      content: data.url,
+      content: url,
     });
   }
 
@@ -137,20 +147,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
   metas.push({ property: "og:type", content: "website" });
 
-  const origin = `https://${data.host}`;
+  const origin = `https://${host}`;
 
   if (siteName) {
     metas.push({
       property: "og:site_name",
       content: siteName,
-    });
-    metas.push({
-      "script:ld+json": {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: siteName,
-        url: origin,
-      },
     });
   }
 
@@ -175,7 +177,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (pageMeta.socialImageAssetName) {
     metas.push({
       property: "og:image",
-      content: `https://${data.host}${imageLoader({
+      content: `https://${host}${imageLoader({
         src: pageMeta.socialImageAssetName,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",
@@ -189,6 +191,34 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
 
   metas.push(...pageMeta.custom);
+
+  return (
+    <HeadSlot>
+      {metas.map((meta, index) => (
+        <HeadMeta key={index} {...meta} />
+      ))}
+    </HeadSlot>
+  );
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const metas: ReturnType<MetaFunction> = [];
+  if (data === undefined) {
+    return metas;
+  }
+
+  const origin = `https://${data.host}`;
+
+  if (siteName) {
+    metas.push({
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: siteName,
+        url: origin,
+      },
+    });
+  }
 
   return metas;
 };
@@ -323,7 +353,8 @@ export const action = async ({
 };
 
 const Outlet = () => {
-  const { system, resources, url } = useLoaderData<typeof loader>();
+  const { system, resources, url, pageMeta, host } =
+    useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -334,6 +365,7 @@ const Outlet = () => {
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
       <Page key={url} system={system} />
+      <PageSettingsMeta url={url} pageMeta={pageMeta} host={host} />
     </ReactSdkContext.Provider>
   );
 };

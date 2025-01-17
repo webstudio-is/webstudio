@@ -4,10 +4,15 @@
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
-  Head as Head,
+  Body as Body,
+  Link as Link,
+} from "@webstudio-is/sdk-components-react-remix";
+import {
+  HeadSlot as HeadSlot,
   HeadLink as HeadLink,
+  HeadMeta as HeadMeta,
+  Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
@@ -32,9 +37,15 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Page = ({}: { system: any }) => {
   return (
     <Body className={"w-body"}>
-      <Head>
+      <HeadSlot>
         <HeadLink rel={"help"} href={"/help"} />
-      </Head>
+        <HeadMeta name={"keywords"} content={"SEO"} />
+        <HeadMeta name={"og:title"} content={"Overriden og:title"} />
+      </HeadSlot>
+      <Heading className={"w-heading"}>{"Test Head Slot"}</Heading>
+      <Link href={"/"} className={"w-link"}>
+        {"Go Home"}
+      </Link>
     </Body>
   );
 };

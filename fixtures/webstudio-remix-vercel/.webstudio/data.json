@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "d7ceee78-b972-42da-9909-570a5f616184",
+    "id": "5a51ba81-c118-4e15-8ae6-1726359bc32a",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 403,
-    "createdAt": "2025-01-16T14:48:23.268+00:00",
-    "updatedAt": "2025-01-16T14:48:23.268+00:00",
+    "version": 421,
+    "createdAt": "2025-01-17T07:23:21.747+00:00",
+    "updatedAt": "2025-01-17T07:23:21.747+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2901,23 +2901,73 @@
         }
       ],
       [
-        "tmI7Yq6YK0wRDWbe6rDIF",
+        "mrHOFAJDwzKZZA5oGONt1",
         {
-          "id": "tmI7Yq6YK0wRDWbe6rDIF",
-          "instanceId": "9D0iND1GtlUmPeOePXTr8",
+          "id": "mrHOFAJDwzKZZA5oGONt1",
+          "instanceId": "GFN6suio87WybEb7dc8IM",
           "name": "rel",
           "type": "string",
           "value": "help"
         }
       ],
       [
-        "OTjYgJxjsnG0nuwAXBNcV",
+        "TdOgnu7UkI5hG6eGZhAdL",
         {
-          "id": "OTjYgJxjsnG0nuwAXBNcV",
-          "instanceId": "9D0iND1GtlUmPeOePXTr8",
+          "id": "TdOgnu7UkI5hG6eGZhAdL",
+          "instanceId": "GFN6suio87WybEb7dc8IM",
           "name": "href",
           "type": "string",
           "value": "/help"
+        }
+      ],
+      [
+        "jyAJft6LnEDjCPoS38vLN",
+        {
+          "id": "jyAJft6LnEDjCPoS38vLN",
+          "instanceId": "Py53B3dAV0BD8QAHaWV-K",
+          "name": "name",
+          "type": "string",
+          "value": "keywords"
+        }
+      ],
+      [
+        "dxwgbOjQGh_vDHcuSdJf8",
+        {
+          "id": "dxwgbOjQGh_vDHcuSdJf8",
+          "instanceId": "Py53B3dAV0BD8QAHaWV-K",
+          "name": "content",
+          "type": "string",
+          "value": "SEO"
+        }
+      ],
+      [
+        "f1BL2WAdKlnlcmgxxr_97",
+        {
+          "id": "f1BL2WAdKlnlcmgxxr_97",
+          "instanceId": "l32PppcSbcwAmPT_0q6Al",
+          "name": "name",
+          "type": "string",
+          "value": "og:title"
+        }
+      ],
+      [
+        "vy48c8nqe98WCc-depcwE",
+        {
+          "id": "vy48c8nqe98WCc-depcwE",
+          "instanceId": "l32PppcSbcwAmPT_0q6Al",
+          "name": "content",
+          "type": "string",
+          "value": "Overriden og:title"
+        }
+      ],
+      [
+        "IIwy20wFuPHblBiV5yOa8",
+        {
+          "id": "IIwy20wFuPHblBiV5yOa8",
+          "instanceId": "69Q0-F165KT33psqFcq6M",
+          "name": "href",
+          "type": "page",
+          "value": "7Db64ZXgYiRqKSQNR-qTQ"
         }
       ]
     ],
@@ -4931,32 +4981,97 @@
           "children": [
             {
               "type": "id",
-              "value": "S3mYcLSY7hlGQ654olt90"
+              "value": "Jdxu-0HI2f6Lq-LJwIOyY"
+            },
+            {
+              "type": "id",
+              "value": "McxYFTe8LB_iEqEL6DHFc"
+            },
+            {
+              "type": "id",
+              "value": "69Q0-F165KT33psqFcq6M"
             }
           ]
         }
       ],
       [
-        "S3mYcLSY7hlGQ654olt90",
+        "Jdxu-0HI2f6Lq-LJwIOyY",
         {
           "type": "instance",
-          "id": "S3mYcLSY7hlGQ654olt90",
-          "component": "Head",
+          "id": "Jdxu-0HI2f6Lq-LJwIOyY",
+          "component": "HeadSlot",
           "children": [
             {
               "type": "id",
-              "value": "9D0iND1GtlUmPeOePXTr8"
+              "value": "GFN6suio87WybEb7dc8IM"
+            },
+            {
+              "type": "id",
+              "value": "Py53B3dAV0BD8QAHaWV-K"
+            },
+            {
+              "type": "id",
+              "value": "l32PppcSbcwAmPT_0q6Al"
             }
           ]
         }
       ],
       [
-        "9D0iND1GtlUmPeOePXTr8",
+        "GFN6suio87WybEb7dc8IM",
         {
           "type": "instance",
-          "id": "9D0iND1GtlUmPeOePXTr8",
+          "id": "GFN6suio87WybEb7dc8IM",
           "component": "HeadLink",
+          "label": "Link",
           "children": []
+        }
+      ],
+      [
+        "Py53B3dAV0BD8QAHaWV-K",
+        {
+          "type": "instance",
+          "id": "Py53B3dAV0BD8QAHaWV-K",
+          "component": "HeadMeta",
+          "label": "Meta",
+          "children": []
+        }
+      ],
+      [
+        "l32PppcSbcwAmPT_0q6Al",
+        {
+          "type": "instance",
+          "id": "l32PppcSbcwAmPT_0q6Al",
+          "component": "HeadMeta",
+          "label": "Meta",
+          "children": []
+        }
+      ],
+      [
+        "McxYFTe8LB_iEqEL6DHFc",
+        {
+          "type": "instance",
+          "id": "McxYFTe8LB_iEqEL6DHFc",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Test Head Slot"
+            }
+          ]
+        }
+      ],
+      [
+        "69Q0-F165KT33psqFcq6M",
+        {
+          "type": "instance",
+          "id": "69Q0-F165KT33psqFcq6M",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Go Home"
+            }
+          ]
         }
       ]
     ],

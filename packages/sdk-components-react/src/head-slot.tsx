@@ -15,7 +15,7 @@ export const defaultTag = "head";
 
 export const HeadSlot = forwardRef<
   ElementRef<"div">,
-  { "data-ws-expand": boolean } & ComponentProps<typeof defaultTag>
+  { "data-ws-expand"?: boolean } & ComponentProps<typeof defaultTag>
 >(({ ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 

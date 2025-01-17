@@ -6,8 +6,8 @@
     "typecheck": "tsc",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-cddc1d44-af37-4cb6-a430-d300cf6f932d-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
-    "fixtures:sync": "pnpm cli sync --buildId d7ceee78-b972-42da-9909-570a5f616184 && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "pnpm cli build --template vercel --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
+    "fixtures:sync": "pnpm cli sync --buildId 5a51ba81-c118-4e15-8ae6-1726359bc32a && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm cli build --template vercel --template internal --template ./custom-template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,
   "sideEffects": false,
@@ -18,15 +18,16 @@
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "isbot": "^5.1.19",
     "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "@webstudio-is/sdk-components-animation": "workspace:*"
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {
+    "@miniflare/html-rewriter": "^2.14.4",
     "@remix-run/dev": "2.15.2",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
