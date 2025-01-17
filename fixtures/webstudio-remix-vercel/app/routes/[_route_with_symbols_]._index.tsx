@@ -18,7 +18,10 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { HeadSlot, HeadMeta } from "@webstudio-is/sdk-components-react";
 import type { PageMeta } from "@webstudio-is/sdk";
-import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  ReactSdkContext,
+  PageSettingsMeta,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
   siteName,
@@ -114,7 +117,7 @@ export const headers: HeadersFunction = () => {
   };
 };
 
-const PageSettingsMeta = ({
+const PageSettingsMetaLocal = ({
   url,
   pageMeta,
   host,
@@ -123,11 +126,8 @@ const PageSettingsMeta = ({
   url?: string;
   host: string;
 }) => {
-  const metas: (
-    | { title: string }
-    | { property: string; content: string }
-    | { name: string; content: string }
-  )[] = [];
+  const metas: // | { title: string }
+  { property?: string; name?: string; content: string }[] = [];
 
   if (url !== undefined) {
     metas.push({
@@ -137,7 +137,7 @@ const PageSettingsMeta = ({
   }
 
   if (pageMeta.title) {
-    metas.push({ title: pageMeta.title });
+    // metas.push({ title: pageMeta.title });
 
     metas.push({
       property: "og:title",
@@ -192,13 +192,7 @@ const PageSettingsMeta = ({
 
   metas.push(...pageMeta.custom);
 
-  return (
-    <HeadSlot>
-      {metas.map((meta, index) => (
-        <HeadMeta key={index} {...meta} />
-      ))}
-    </HeadSlot>
-  );
+  return metas.map((meta, index) => <PageSettingsMeta key={index} {...meta} />);
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -365,7 +359,7 @@ const Outlet = () => {
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
       <Page key={url} system={system} />
-      <PageSettingsMeta url={url} pageMeta={pageMeta} host={host} />
+      <PageSettingsMetaLocal url={url} pageMeta={pageMeta} host={host} />
     </ReactSdkContext.Provider>
   );
 };
