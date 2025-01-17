@@ -22,7 +22,7 @@ const cardStyle = css({
   flexShrink: 0,
   aspectRatio: "8 / 7",
   outline: "none",
-  "&:hover, &:focus-within, &:focus-visible": {
+  "&:focus-within": {
     [borderColorVar]: theme.colors.borderFocus,
   },
 });
