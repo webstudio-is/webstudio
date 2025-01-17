@@ -6,13 +6,13 @@ import {
   type Instances,
   type Instance,
   type Scope,
+  type WsComponentMeta,
   createScope,
   parseComponentName,
   getStyleDeclKey,
-  WsComponentMeta,
+  coreMetas,
 } from "@webstudio-is/sdk";
 import {
-  coreMetas,
   generateCss,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
