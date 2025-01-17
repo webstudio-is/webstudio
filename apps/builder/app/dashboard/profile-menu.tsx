@@ -1,8 +1,4 @@
-import {
-  ChevronDownIcon,
-  UpgradeIcon,
-  WebstudioIcon,
-} from "@webstudio-is/icons";
+import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -12,7 +8,6 @@ import {
   DropdownMenuLabel,
   Flex,
   Avatar,
-  css,
   rawTheme,
   theme,
   Button,
@@ -31,7 +26,7 @@ const getAvatarLetter = (title?: string) => {
 
 const defaultUserName = "James Bond";
 
-const Menu = ({
+export const ProfileMenu = ({
   user,
   userPlanFeatures,
 }: {
@@ -40,24 +35,22 @@ const Menu = ({
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  console.log(userPlanFeatures);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button color="ghost" aria-label="Menu Button">
           <Flex gap="1" align="center">
+            <Avatar
+              src={user?.image || undefined}
+              fallback={getAvatarLetter(nameOrEmail)}
+              alt={nameOrEmail}
+            />
             {userPlanFeatures.hasProPlan && (
               <>
                 <ProBadge>{userPlanFeatures.planName}</ProBadge>
                 <div />
               </>
             )}
-
-            <Avatar
-              src={user?.image || undefined}
-              fallback={getAvatarLetter(nameOrEmail)}
-              alt={nameOrEmail}
-            />
 
             <ChevronDownIcon
               width={15}
@@ -100,25 +93,5 @@ const Menu = ({
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
-  );
-};
-
-export const Header = ({
-  user,
-  userPlanFeatures,
-}: {
-  user: User;
-  userPlanFeatures: UserPlanFeatures;
-}) => {
-  return (
-    <Flex
-      as="header"
-      align="center"
-      justify="between"
-      css={{ padding: theme.spacing[8] }}
-    >
-      <WebstudioIcon size={24} />
-      <Menu user={user} userPlanFeatures={userPlanFeatures} />
-    </Flex>
   );
 };

@@ -6,18 +6,15 @@ import {
 } from "react";
 import {
   Flex,
-  Link,
   Separator,
   Text,
   TooltipProvider,
-  buttonStyle,
   css,
   globalCss,
-  styled,
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Header } from "./header";
+import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
@@ -29,11 +26,9 @@ import {
   ContentIcon,
   DiscordIcon,
   ExtensionIcon,
-  HelpIcon,
   LifeBuoyIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
-import { HelpCenter } from "~/builder/features/help/help-center";
 
 const globalStyles = globalCss({
   body: {
@@ -166,7 +161,19 @@ export const Dashboard = ({
             borderRight: `1px solid ${theme.colors.borderMain}`,
           }}
         >
-          <Header user={user} userPlanFeatures={userPlanFeatures} />
+          <Flex
+            as="header"
+            align="center"
+            justify="between"
+            css={{
+              //padding: theme.panel.padding,
+              paddingInline: theme.spacing[3],
+              //paddingBlock: theme.spacing[8],
+              height: theme.spacing[15],
+            }}
+          >
+            <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
+          </Flex>
           <SidebarLink to="/dashboard/projects" prefix={<BodyIcon />}>
             Projects
           </SidebarLink>
