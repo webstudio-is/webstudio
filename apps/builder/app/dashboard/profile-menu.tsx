@@ -52,11 +52,7 @@ export const ProfileMenu = ({
               </>
             )}
 
-            <ChevronDownIcon
-              width={15}
-              height={15}
-              color={rawTheme.colors.foregroundMain}
-            />
+            <ChevronDownIcon size={12} />
           </Flex>
         </Button>
       </DropdownMenuTrigger>

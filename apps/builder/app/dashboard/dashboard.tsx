@@ -114,7 +114,7 @@ const sidebarLinkStyle = css({
   "&:focus-visible, &:hover": {
     background: theme.colors.backgroundHover,
   },
-  "&[aria-current=true]": {
+  "&[aria-current=page]": {
     background: theme.colors.backgroundItemCurrent,
     color: theme.colors.foregroundMain,
   },
@@ -166,15 +166,13 @@ export const Dashboard = ({
             align="center"
             justify="between"
             css={{
-              //padding: theme.panel.padding,
               paddingInline: theme.spacing[3],
-              //paddingBlock: theme.spacing[8],
               height: theme.spacing[15],
             }}
           >
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Flex>
-          <SidebarLink to="/dashboard/projects" prefix={<BodyIcon />}>
+          <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
             Projects
           </SidebarLink>
           <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
