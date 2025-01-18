@@ -136,8 +136,6 @@ const PageSettingsMetaLocal = ({
   }
 
   if (pageMeta.title) {
-    // metas.push({ title: pageMeta.title });
-
     metas.push({
       property: "og:title",
       content: pageMeta.title,
@@ -200,7 +198,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return metas;
   }
 
+  const { pageMeta } = data;
   const origin = `https://${data.host}`;
+
+  if (pageMeta.title) {
+    metas.push({ title: pageMeta.title });
+  }
 
   if (siteName) {
     metas.push({
