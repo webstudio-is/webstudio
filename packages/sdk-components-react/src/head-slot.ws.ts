@@ -18,7 +18,7 @@ export const meta: WsComponentMeta = {
     },
     {
       relation: "child",
-      component: { $in: ["HeadLink", "HeadMeta"] },
+      component: { $in: ["HeadLink", "HeadMeta", "HeadTitle"] },
     },
   ],
 };
