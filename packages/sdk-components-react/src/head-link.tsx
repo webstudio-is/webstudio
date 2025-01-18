@@ -51,7 +51,7 @@ const PROPS_ORDER = ["rel", "href", "type", "hrefLang", "as"] as const;
 
 export const HeadLink = forwardRef<
   ElementRef<"div">,
-  { rel: LinkRel; as: LinkAs } & ComponentProps<typeof defaultTag>
+  { rel?: LinkRel; as?: LinkAs } & ComponentProps<typeof defaultTag>
 >(({ ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
