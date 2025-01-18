@@ -33,17 +33,33 @@ type LinkRel =
   | "stylesheet"
   | "tag";
 
+const PROPS_ORDER = ["rel", "href", "type", "hrefLang"] as const;
+
 export const HeadLink = forwardRef<
   ElementRef<"div">,
   { rel: LinkRel } & ComponentProps<typeof defaultTag>
 >(({ ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
-  if (renderer === undefined) {
-    return <link {...props} />;
+  const propsSet = new Set([...PROPS_ORDER, ...Object.keys(props)]) as Set<
+    keyof typeof props
+  >;
+
+  const cleanOrderedProps: Record<string, unknown> = {};
+
+  for (const prop of propsSet) {
+    // Boolean check is not a mistake; it excludes empty values.
+    // Empty properties must be excluded because there is no UI to reset them to undefined.
+    if (prop in props && Boolean(props[prop])) {
+      cleanOrderedProps[prop] = props[prop];
+    }
   }
 
-  return <XmlNode tag={defaultTag} {...props} ref={ref} />;
+  if (renderer === undefined) {
+    return <link {...cleanOrderedProps} />;
+  }
+
+  return <XmlNode tag={defaultTag} {...cleanOrderedProps} ref={ref} />;
 });
 
 HeadLink.displayName = "HeadLink";
