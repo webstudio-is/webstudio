@@ -144,8 +144,6 @@ const PageSettingsMetaLocal = ({
 
   metas.push({ property: "og:type", content: "website" });
 
-  const origin = `https://${host}`;
-
   if (siteName) {
     metas.push({
       property: "og:site_name",
