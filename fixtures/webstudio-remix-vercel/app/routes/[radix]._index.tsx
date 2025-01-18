@@ -116,80 +116,6 @@ export const headers: HeadersFunction = () => {
   };
 };
 
-const PageSettingsMetaLocal = ({
-  url,
-  pageMeta,
-  host,
-}: {
-  pageMeta: PageMeta;
-  url?: string;
-  host: string;
-}) => {
-  const metas: // | { title: string }
-  { property?: string; name?: string; content: string }[] = [];
-
-  if (url !== undefined) {
-    metas.push({
-      property: "og:url",
-      content: url,
-    });
-  }
-
-  if (pageMeta.title) {
-    metas.push({
-      property: "og:title",
-      content: pageMeta.title,
-    });
-  }
-
-  metas.push({ property: "og:type", content: "website" });
-
-  if (siteName) {
-    metas.push({
-      property: "og:site_name",
-      content: siteName,
-    });
-  }
-
-  if (pageMeta.excludePageFromSearch) {
-    metas.push({
-      name: "robots",
-      content: "noindex, nofollow",
-    });
-  }
-
-  if (pageMeta.description) {
-    metas.push({
-      name: "description",
-      content: pageMeta.description,
-    });
-    metas.push({
-      property: "og:description",
-      content: pageMeta.description,
-    });
-  }
-
-  if (pageMeta.socialImageAssetName) {
-    metas.push({
-      property: "og:image",
-      content: `https://${host}${imageLoader({
-        src: pageMeta.socialImageAssetName,
-        // Do not transform social image (not enough information do we need to do this)
-        format: "raw",
-      })}`,
-    });
-  } else if (pageMeta.socialImageUrl) {
-    metas.push({
-      property: "og:image",
-      content: pageMeta.socialImageUrl,
-    });
-  }
-
-  metas.push(...pageMeta.custom);
-
-  return metas.map((meta, index) => <PageSettingsMeta key={index} {...meta} />);
-};
-
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const metas: ReturnType<MetaFunction> = [];
   if (data === undefined) {
@@ -359,7 +285,13 @@ const Outlet = () => {
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
       <Page key={url} system={system} />
-      <PageSettingsMetaLocal url={url} pageMeta={pageMeta} host={host} />
+      <PageSettingsMeta
+        url={url}
+        pageMeta={pageMeta}
+        host={host}
+        siteName={siteName}
+        imageLoader={imageLoader}
+      />
     </ReactSdkContext.Provider>
   );
 };

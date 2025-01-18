@@ -1,6 +1,8 @@
+import type { ImageLoader } from "@webstudio-is/image";
+import type { PageMeta } from "@webstudio-is/sdk";
 import { useEffect, useState } from "react";
 
-type PageSettingsMetaProps = {
+type MetaProps = {
   property?: string;
   name?: string;
   content: string;
@@ -25,10 +27,8 @@ const isServer = typeof window === "undefined";
  * 2. On the client: Before rendering, remove any meta tags with the same `name` or `property` that were not rendered by Client React,
  *    and then proceed with rendering as usual.
  */
-export const PageSettingsMeta = (props: PageSettingsMetaProps) => {
-  const [localProps, setLocalProps] = useState<
-    PageSettingsMetaProps | undefined
-  >();
+const Meta = (props: MetaProps) => {
+  const [localProps, setLocalProps] = useState<MetaProps | undefined>();
 
   useEffect(() => {
     const selector = `meta[${props.name ? `name="${props.name}"` : `property="${props.property}"`}]`;
@@ -58,4 +58,82 @@ export const PageSettingsMeta = (props: PageSettingsMetaProps) => {
   }
 
   return <meta {...localProps} />;
+};
+
+export const PageSettingsMeta = ({
+  url,
+  host,
+  siteName,
+  pageMeta,
+  imageLoader,
+}: {
+  url?: string;
+  host: string;
+  siteName: string;
+  pageMeta: PageMeta;
+  imageLoader: ImageLoader;
+}) => {
+  const metas: // | { title: string }
+  { property?: string; name?: string; content: string }[] = [];
+
+  if (url !== undefined) {
+    metas.push({
+      property: "og:url",
+      content: url,
+    });
+  }
+
+  if (pageMeta.title) {
+    metas.push({
+      property: "og:title",
+      content: pageMeta.title,
+    });
+  }
+
+  metas.push({ property: "og:type", content: "website" });
+
+  if (siteName) {
+    metas.push({
+      property: "og:site_name",
+      content: siteName,
+    });
+  }
+
+  if (pageMeta.excludePageFromSearch) {
+    metas.push({
+      name: "robots",
+      content: "noindex, nofollow",
+    });
+  }
+
+  if (pageMeta.description) {
+    metas.push({
+      name: "description",
+      content: pageMeta.description,
+    });
+    metas.push({
+      property: "og:description",
+      content: pageMeta.description,
+    });
+  }
+
+  if (pageMeta.socialImageAssetName) {
+    metas.push({
+      property: "og:image",
+      content: `https://${host}${imageLoader({
+        src: pageMeta.socialImageAssetName,
+        // Do not transform social image (not enough information do we need to do this)
+        format: "raw",
+      })}`,
+    });
+  } else if (pageMeta.socialImageUrl) {
+    metas.push({
+      property: "og:image",
+      content: pageMeta.socialImageUrl,
+    });
+  }
+
+  metas.push(...pageMeta.custom);
+
+  return metas.map((meta, index) => <Meta key={index} {...meta} />);
 };
