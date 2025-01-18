@@ -47,7 +47,7 @@ type LinkAs =
   | "video"
   | "worker";
 
-const PROPS_ORDER = ["rel", "href", "type", "hrefLang", "as"] as const;
+const PROPS_ORDER = ["rel", "hrefLang", "href", "type", "as"] as const;
 
 export const HeadLink = forwardRef<
   ElementRef<"div">,
