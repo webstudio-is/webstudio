@@ -19,5 +19,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["rel", "href", "type", "hrefLang"],
+  initialProps: ["rel", "href", "type", "hrefLang", "as"],
 };

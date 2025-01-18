@@ -33,11 +33,25 @@ type LinkRel =
   | "stylesheet"
   | "tag";
 
-const PROPS_ORDER = ["rel", "href", "type", "hrefLang"] as const;
+type LinkAs =
+  | "audio"
+  | "document"
+  | "embed"
+  | "fetch"
+  | "font"
+  | "image"
+  | "object"
+  | "script"
+  | "style"
+  | "track"
+  | "video"
+  | "worker";
+
+const PROPS_ORDER = ["rel", "href", "type", "hrefLang", "as"] as const;
 
 export const HeadLink = forwardRef<
   ElementRef<"div">,
-  { rel: LinkRel } & ComponentProps<typeof defaultTag>
+  { rel: LinkRel; as: LinkAs } & ComponentProps<typeof defaultTag>
 >(({ ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
