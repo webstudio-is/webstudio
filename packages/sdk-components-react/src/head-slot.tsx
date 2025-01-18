@@ -15,19 +15,33 @@ export const defaultTag = "head";
 
 export const HeadSlot = forwardRef<
   ElementRef<"div">,
-  { "data-ws-expand"?: boolean } & ComponentProps<typeof defaultTag>
->(({ ...props }, ref) => {
+  { "data-ws-expand"?: boolean } & Omit<
+    ComponentProps<typeof defaultTag>,
+    "ref"
+  >
+>(({ children, ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
   if (renderer === undefined) {
-    return props.children;
+    return children;
   }
 
   if (props["data-ws-expand"] !== true) {
     return null;
   }
 
-  return <XmlNode tag={defaultTag} {...props} ref={ref} />;
+  return (
+    <div
+      ref={ref}
+      style={{
+        backgroundColor: "rgba(255,255,255,1)",
+        padding: "8px",
+      }}
+      {...props}
+    >
+      <XmlNode tag={defaultTag}>{children}</XmlNode>
+    </div>
+  );
 });
 
 HeadSlot.displayName = "HeadSlot";
