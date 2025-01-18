@@ -19,6 +19,7 @@ import {
 import {
   ReactSdkContext,
   PageSettingsMeta,
+  PageSettingsTitle,
 } from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
@@ -121,12 +122,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return metas;
   }
 
-  const { pageMeta } = data;
   const origin = `https://${data.host}`;
-
-  if (pageMeta.title) {
-    metas.push({ title: pageMeta.title });
-  }
 
   if (siteName) {
     metas.push({
@@ -291,6 +287,7 @@ const Outlet = () => {
         siteName={siteName}
         imageLoader={imageLoader}
       />
+      <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
     </ReactSdkContext.Provider>
   );
 };

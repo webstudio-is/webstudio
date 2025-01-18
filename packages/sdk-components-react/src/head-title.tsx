@@ -32,7 +32,7 @@ export const HeadTitle = forwardRef<
   }
 
   if (renderer === undefined) {
-    return <meta {...cleanOrderedProps} />;
+    return <title {...cleanOrderedProps} />;
   }
 
   // HTML attributes are case-insensitive, but the convention is to use lowercase

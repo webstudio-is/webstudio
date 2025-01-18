@@ -1,7 +1,8 @@
 export * from "./context";
 export * from "./hook";
 export * from "./variable-state";
-export * from "./page-settings-meta";
+export { PageSettingsMeta } from "./page-settings-meta";
+export { PageSettingsTitle } from "./page-settings-title";
 
 /**
  * React has issues rendering certain elements, such as errors when a <link> element has children.

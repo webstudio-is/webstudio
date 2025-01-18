@@ -13,6 +13,7 @@ import {
   HeadLink as HeadLink,
   HeadMeta as HeadMeta,
   Heading as Heading,
+  HeadTitle as HeadTitle,
 } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
@@ -36,8 +37,9 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body"}>
+    <Body className={`w-body`}>
       <HeadSlot>
+        <HeadTitle>{"Head Slot Title"}</HeadTitle>
         <HeadLink rel={"help"} href={"/help-head-slot"} />
         <HeadMeta name={"keywords"} content={"Head Slot Content"} />
         <HeadMeta
@@ -46,8 +48,8 @@ const Page = ({}: { system: any }) => {
           property={"og:title"}
         />
       </HeadSlot>
-      <Heading className={"w-heading"}>{"Test Head Slot"}</Heading>
-      <Link href={"/"} className={"w-link"}>
+      <Heading className={`w-heading`}>{"Test Head Slot"}</Heading>
+      <Link href={"/"} className={`w-link`}>
         {"Go Home"}
       </Link>
     </Body>

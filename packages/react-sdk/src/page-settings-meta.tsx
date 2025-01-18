@@ -9,7 +9,7 @@ type MetaProps = {
 };
 
 // Not documented
-const isElementRenderedWithReact = (element: Element) => {
+export const isElementRenderedWithReact = (element: Element) => {
   return Object.keys(element).some((key) => key.startsWith("__react"));
 };
 
