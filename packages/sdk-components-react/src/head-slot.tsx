@@ -3,22 +3,14 @@ import {
   ReactSdkContext,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
-import {
-  forwardRef,
-  type ElementRef,
-  type ComponentProps,
-  useContext,
-} from "react";
+import { forwardRef, type ElementRef, useContext, type ReactNode } from "react";
 import { XmlNode } from "./xml-node";
 
 export const defaultTag = "head";
 
 export const HeadSlot = forwardRef<
   ElementRef<"div">,
-  { "data-ws-expand"?: boolean } & Omit<
-    ComponentProps<typeof defaultTag>,
-    "ref"
-  >
+  { "data-ws-expand"?: boolean } & { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
