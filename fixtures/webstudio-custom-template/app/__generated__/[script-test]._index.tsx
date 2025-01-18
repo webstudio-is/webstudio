@@ -34,23 +34,23 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body cjrgi00"}>
-      <Heading className={"w-heading"}>{"Script Test"}</Heading>
-      <Link href={"/"} className={"w-link"}>
+    <Body className={`w-body cjrgi00`}>
+      <Heading className={`w-heading`}>{"Script Test"}</Heading>
+      <Link href={"/"} className={`w-link`}>
         {"Go Home"}
       </Link>
       <HtmlEmbed
         code={
           "<br>\n<script>console.log('SCRIPT TEST SSR')</script>\n<script>console.log('SCRIPT TEST SSR 2')</script>\nSCRIPTS ARE HERE 2<br>"
         }
-        className={"w-html-embed"}
+        className={`w-html-embed`}
       />
       <HtmlEmbed
         code={
           "<script>console.log('SCRIPTS TEST Client')</script>\n<script>console.log('SCRIPTS TEST 2 Client')</script>\nSCRIPTS ARE HERE <br>"
         }
         clientOnly={true}
-        className={"w-html-embed"}
+        className={`w-html-embed`}
       />
     </Body>
   );

@@ -30,7 +30,7 @@ const Heading = (props: any) => null;
 
 const Page = ({ system: system }: { system: any }) => {
   return (
-    <Body className={"w-body"}>
+    <Body className={`w-body`}>
       <XmlNode
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -61,7 +61,7 @@ const Page = ({ system: system }: { system: any }) => {
             </XmlNode>
           </Fragment>
         ))}
-        <Heading tag={"h3"} className={"w-heading c1jumvji cvdtpev"}>
+        <Heading tag={"h3"} className={`w-heading c1jumvji cvdtpev`}>
           {"Below is custom section"}
         </Heading>
         <XmlNode tag={"url"}>

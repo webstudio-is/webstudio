@@ -172,12 +172,7 @@ export const generateJsxElement = ({
   let conditionValue: undefined | string;
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
-
-  const classMapArray = classesMap?.get(instance.id);
-  const classes =
-    classMapArray !== undefined
-      ? [JSON.stringify(classMapArray.join(" "))]
-      : [];
+  let classNameValue: undefined | string;
 
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
@@ -220,8 +215,7 @@ export const generateJsxElement = ({
     }
     // We need to merge atomic classes with user-defined className prop.
     if (prop.name === "className" && propValue !== undefined) {
-      classes.push(propValue);
-
+      classNameValue = propValue;
       continue;
     }
     if (propValue !== undefined) {
@@ -229,8 +223,18 @@ export const generateJsxElement = ({
     }
   }
 
-  if (classes.length !== 0) {
-    generatedProps += `\nclassName={${classes.join(` + " " + `)}}`;
+  const classMapArray = classesMap?.get(instance.id);
+  if (classMapArray || classNameValue) {
+    let classNameTemplate = classMapArray ? classMapArray.join(" ") : "";
+    if (classNameValue) {
+      if (classNameTemplate) {
+        classNameTemplate += " ";
+      }
+      classNameTemplate += "${" + classNameValue + "}";
+    }
+    // wrap class expression with template literal to properly group
+    // for exaple expressions
+    generatedProps += "\nclassName={`" + classNameTemplate + "`}";
   }
 
   let generatedElement = "";

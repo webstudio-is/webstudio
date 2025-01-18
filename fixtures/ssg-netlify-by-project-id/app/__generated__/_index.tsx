@@ -24,8 +24,8 @@ export const CustomCode = () => {
 
 const Page = ({}: { system: any }) => {
   return (
-    <Body className={"w-body"}>
-      <Heading className={"w-heading"}>{"FIXTURE-CLIENT-DO-NOT-TOUCH"}</Heading>
+    <Body className={`w-body`}>
+      <Heading className={`w-heading`}>{"FIXTURE-CLIENT-DO-NOT-TOUCH"}</Heading>
     </Body>
   );
 };
