@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "63389378-e2a2-4e25-8c98-3e408bcfc4c4",
+    "id": "39af85c6-952a-42a5-953b-67718e2b95d7",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 401,
-    "createdAt": "2025-01-04T10:58:00.47+00:00",
-    "updatedAt": "2025-01-04T10:58:00.47+00:00",
+    "version": 455,
+    "createdAt": "2025-01-18T13:58:20.219+00:00",
+    "updatedAt": "2025-01-18T13:58:20.219+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -202,6 +202,27 @@
             "include": false
           },
           "path": "/content-block"
+        },
+        {
+          "id": "8fF_9MQOwOqsLM9BhULUG",
+          "name": "head-tag",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "1NipO5NmaHukA_dxzfVRF",
+          "systemDataSourceId": "XYfrcSJVN66CpmamKON1m",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": []
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/head-tag"
         }
       ],
       "folders": [
@@ -220,7 +241,8 @@
             "9xlwLSHxuk8HmS3-EEGcf",
             "lTS5DKrDEC_mXSAc5ZDDA",
             "FsnS9ui6btzM4W3YELE3Q",
-            "Q1D-6G1cl0SfXyM9Xj4_O"
+            "Q1D-6G1cl0SfXyM9Xj4_O",
+            "8fF_9MQOwOqsLM9BhULUG"
           ]
         },
         {
@@ -2877,6 +2899,86 @@
           "type": "string",
           "value": "link"
         }
+      ],
+      [
+        "mrHOFAJDwzKZZA5oGONt1",
+        {
+          "id": "mrHOFAJDwzKZZA5oGONt1",
+          "instanceId": "GFN6suio87WybEb7dc8IM",
+          "name": "rel",
+          "type": "string",
+          "value": "help"
+        }
+      ],
+      [
+        "TdOgnu7UkI5hG6eGZhAdL",
+        {
+          "id": "TdOgnu7UkI5hG6eGZhAdL",
+          "instanceId": "GFN6suio87WybEb7dc8IM",
+          "name": "href",
+          "type": "string",
+          "value": "/help-head-slot"
+        }
+      ],
+      [
+        "jyAJft6LnEDjCPoS38vLN",
+        {
+          "id": "jyAJft6LnEDjCPoS38vLN",
+          "instanceId": "Py53B3dAV0BD8QAHaWV-K",
+          "name": "name",
+          "type": "string",
+          "value": "keywords"
+        }
+      ],
+      [
+        "dxwgbOjQGh_vDHcuSdJf8",
+        {
+          "id": "dxwgbOjQGh_vDHcuSdJf8",
+          "instanceId": "Py53B3dAV0BD8QAHaWV-K",
+          "name": "content",
+          "type": "string",
+          "value": "Head Slot Content"
+        }
+      ],
+      [
+        "IIwy20wFuPHblBiV5yOa8",
+        {
+          "id": "IIwy20wFuPHblBiV5yOa8",
+          "instanceId": "69Q0-F165KT33psqFcq6M",
+          "name": "href",
+          "type": "page",
+          "value": "7Db64ZXgYiRqKSQNR-qTQ"
+        }
+      ],
+      [
+        "oCeOjUq5kg_g-0dq5iApN",
+        {
+          "id": "oCeOjUq5kg_g-0dq5iApN",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "name",
+          "type": "string",
+          "value": ""
+        }
+      ],
+      [
+        "9axbHjZtX8BX6vXEai1xq",
+        {
+          "id": "9axbHjZtX8BX6vXEai1xq",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "content",
+          "type": "string",
+          "value": "Head Slot Content"
+        }
+      ],
+      [
+        "B3AKQ4tazCkXwEKfNr2E7",
+        {
+          "id": "B3AKQ4tazCkXwEKfNr2E7",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "property",
+          "type": "string",
+          "value": "og:title"
+        }
       ]
     ],
     "dataSources": [
@@ -3081,6 +3183,15 @@
           "type": "parameter",
           "id": "F3zbkztYW_mJNC5EOkopM",
           "scopeInstanceId": "-BW4QOi3PJTZ1sDCY8LW6",
+          "name": "system"
+        }
+      ],
+      [
+        "XYfrcSJVN66CpmamKON1m",
+        {
+          "type": "parameter",
+          "id": "XYfrcSJVN66CpmamKON1m",
+          "scopeInstanceId": "1NipO5NmaHukA_dxzfVRF",
           "name": "system"
         }
       ]
@@ -4870,6 +4981,108 @@
             }
           ]
         }
+      ],
+      [
+        "1NipO5NmaHukA_dxzfVRF",
+        {
+          "type": "instance",
+          "id": "1NipO5NmaHukA_dxzfVRF",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "Jdxu-0HI2f6Lq-LJwIOyY"
+            },
+            {
+              "type": "id",
+              "value": "McxYFTe8LB_iEqEL6DHFc"
+            },
+            {
+              "type": "id",
+              "value": "69Q0-F165KT33psqFcq6M"
+            }
+          ]
+        }
+      ],
+      [
+        "Jdxu-0HI2f6Lq-LJwIOyY",
+        {
+          "type": "instance",
+          "id": "Jdxu-0HI2f6Lq-LJwIOyY",
+          "component": "HeadSlot",
+          "children": [
+            {
+              "type": "id",
+              "value": "GFN6suio87WybEb7dc8IM"
+            },
+            {
+              "type": "id",
+              "value": "Py53B3dAV0BD8QAHaWV-K"
+            },
+            {
+              "type": "id",
+              "value": "EveN4Skg9xb8Lj1QJcW52"
+            }
+          ]
+        }
+      ],
+      [
+        "GFN6suio87WybEb7dc8IM",
+        {
+          "type": "instance",
+          "id": "GFN6suio87WybEb7dc8IM",
+          "component": "HeadLink",
+          "label": "Link",
+          "children": []
+        }
+      ],
+      [
+        "Py53B3dAV0BD8QAHaWV-K",
+        {
+          "type": "instance",
+          "id": "Py53B3dAV0BD8QAHaWV-K",
+          "component": "HeadMeta",
+          "label": "Meta",
+          "children": []
+        }
+      ],
+      [
+        "McxYFTe8LB_iEqEL6DHFc",
+        {
+          "type": "instance",
+          "id": "McxYFTe8LB_iEqEL6DHFc",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Test Head Slot"
+            }
+          ]
+        }
+      ],
+      [
+        "69Q0-F165KT33psqFcq6M",
+        {
+          "type": "instance",
+          "id": "69Q0-F165KT33psqFcq6M",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Go Home"
+            }
+          ]
+        }
+      ],
+      [
+        "EveN4Skg9xb8Lj1QJcW52",
+        {
+          "type": "instance",
+          "id": "EveN4Skg9xb8Lj1QJcW52",
+          "component": "HeadMeta",
+          "label": "Meta",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -5088,6 +5301,27 @@
         "include": false
       },
       "path": "/content-block"
+    },
+    {
+      "id": "8fF_9MQOwOqsLM9BhULUG",
+      "name": "head-tag",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "1NipO5NmaHukA_dxzfVRF",
+      "systemDataSourceId": "XYfrcSJVN66CpmamKON1m",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": []
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/head-tag"
     }
   ],
   "assets": [

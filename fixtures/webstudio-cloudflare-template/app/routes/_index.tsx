@@ -16,7 +16,10 @@ import {
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
-import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  ReactSdkContext,
+  PageSettingsMeta,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
   siteName,
@@ -117,33 +120,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (data === undefined) {
     return metas;
   }
-  const { pageMeta } = data;
 
-  if (data.url) {
-    metas.push({
-      property: "og:url",
-      content: data.url,
-    });
-  }
+  const { pageMeta } = data;
+  const origin = `https://${data.host}`;
 
   if (pageMeta.title) {
     metas.push({ title: pageMeta.title });
-
-    metas.push({
-      property: "og:title",
-      content: pageMeta.title,
-    });
   }
 
-  metas.push({ property: "og:type", content: "website" });
-
-  const origin = `https://${data.host}`;
-
   if (siteName) {
-    metas.push({
-      property: "og:site_name",
-      content: siteName,
-    });
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
@@ -153,42 +138,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       },
     });
   }
-
-  if (pageMeta.excludePageFromSearch) {
-    metas.push({
-      name: "robots",
-      content: "noindex, nofollow",
-    });
-  }
-
-  if (pageMeta.description) {
-    metas.push({
-      name: "description",
-      content: pageMeta.description,
-    });
-    metas.push({
-      property: "og:description",
-      content: pageMeta.description,
-    });
-  }
-
-  if (pageMeta.socialImageAssetName) {
-    metas.push({
-      property: "og:image",
-      content: `https://${data.host}${imageLoader({
-        src: pageMeta.socialImageAssetName,
-        // Do not transform social image (not enough information do we need to do this)
-        format: "raw",
-      })}`,
-    });
-  } else if (pageMeta.socialImageUrl) {
-    metas.push({
-      property: "og:image",
-      content: pageMeta.socialImageUrl,
-    });
-  }
-
-  metas.push(...pageMeta.custom);
 
   return metas;
 };
@@ -323,7 +272,8 @@ export const action = async ({
 };
 
 const Outlet = () => {
-  const { system, resources, url } = useLoaderData<typeof loader>();
+  const { system, resources, url, pageMeta, host } =
+    useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -334,6 +284,13 @@ const Outlet = () => {
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
       <Page key={url} system={system} />
+      <PageSettingsMeta
+        url={url}
+        pageMeta={pageMeta}
+        host={host}
+        siteName={siteName}
+        imageLoader={imageLoader}
+      />
     </ReactSdkContext.Provider>
   );
 };

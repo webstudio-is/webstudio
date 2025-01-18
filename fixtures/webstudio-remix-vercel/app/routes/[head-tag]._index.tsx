@@ -26,14 +26,14 @@ import {
   favIconAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../__generated__/[class-names]._index";
+} from "../__generated__/[head-tag]._index";
 import {
   getResources,
   getPageMeta,
   getRemixParams,
   projectId,
   contactEmail,
-} from "../__generated__/[class-names]._index.server";
+} from "../__generated__/[head-tag]._index.server";
 import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";

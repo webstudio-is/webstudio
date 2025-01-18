@@ -85,7 +85,7 @@ jobs:
             const results = [
               await assertSize('./fixtures/ssg/dist/client', 352),
               await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 440),
-              await assertSize('./fixtures/webstudio-remix-vercel/build/client', 908),
+              await assertSize('./fixtures/webstudio-remix-vercel/build/client', 926),
             ]
             for (const result of results) {
               if (result.passed) {

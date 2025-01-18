@@ -38,3 +38,6 @@ export { propsMeta as XmlTime } from "./xml-time.ws";
 export { propsMeta as Time } from "./time.ws";
 export { propsMeta as Select } from "./select.ws";
 export { propsMeta as Option } from "./option.ws";
+export { propsMeta as HeadSlot } from "./head-slot.ws";
+export { propsMeta as HeadLink } from "./head-link.ws";
+export { propsMeta as HeadMeta } from "./head-meta.ws";

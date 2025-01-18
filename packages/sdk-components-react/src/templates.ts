@@ -15,3 +15,4 @@ export { meta as Checkbox } from "./checkbox.template";
 export { meta as Vimeo } from "./vimeo.template";
 export { meta as YouTube } from "./youtube.template";
 export { meta as Select } from "./select.template";
+export { meta as HeadSlot } from "./head-slot.template";

@@ -61,6 +61,14 @@ const $metas = computed(
     for (const [name, componentMeta] of componentMetas) {
       // only set available components from component meta
       availableComponents.add(name);
+
+      if (
+        isFeatureEnabled("headSlotComponent") === false &&
+        name === "HeadSlot"
+      ) {
+        continue;
+      }
+
       metas.push({
         name,
         category: componentMeta.category ?? "hidden",
