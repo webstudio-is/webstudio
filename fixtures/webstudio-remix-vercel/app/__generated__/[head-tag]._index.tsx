@@ -38,9 +38,13 @@ const Page = ({}: { system: any }) => {
   return (
     <Body className={"w-body"}>
       <HeadSlot>
-        <HeadLink rel={"help"} href={"/help"} />
-        <HeadMeta name={"keywords"} content={"SEO"} />
-        <HeadMeta name={"og:title"} content={"Overriden og:title"} />
+        <HeadLink rel={"help"} href={"/help-head-slot"} />
+        <HeadMeta name={"keywords"} content={"Head Slot Content"} />
+        <HeadMeta
+          name={""}
+          content={"Head Slot Content"}
+          property={"og:title"}
+        />
       </HeadSlot>
       <Heading className={"w-heading"}>{"Test Head Slot"}</Heading>
       <Link href={"/"} className={"w-link"}>

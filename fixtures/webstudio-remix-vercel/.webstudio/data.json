@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "5a51ba81-c118-4e15-8ae6-1726359bc32a",
+    "id": "39af85c6-952a-42a5-953b-67718e2b95d7",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 421,
-    "createdAt": "2025-01-17T07:23:21.747+00:00",
-    "updatedAt": "2025-01-17T07:23:21.747+00:00",
+    "version": 455,
+    "createdAt": "2025-01-18T13:58:20.219+00:00",
+    "updatedAt": "2025-01-18T13:58:20.219+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2917,7 +2917,7 @@
           "instanceId": "GFN6suio87WybEb7dc8IM",
           "name": "href",
           "type": "string",
-          "value": "/help"
+          "value": "/help-head-slot"
         }
       ],
       [
@@ -2937,27 +2937,7 @@
           "instanceId": "Py53B3dAV0BD8QAHaWV-K",
           "name": "content",
           "type": "string",
-          "value": "SEO"
-        }
-      ],
-      [
-        "f1BL2WAdKlnlcmgxxr_97",
-        {
-          "id": "f1BL2WAdKlnlcmgxxr_97",
-          "instanceId": "l32PppcSbcwAmPT_0q6Al",
-          "name": "name",
-          "type": "string",
-          "value": "og:title"
-        }
-      ],
-      [
-        "vy48c8nqe98WCc-depcwE",
-        {
-          "id": "vy48c8nqe98WCc-depcwE",
-          "instanceId": "l32PppcSbcwAmPT_0q6Al",
-          "name": "content",
-          "type": "string",
-          "value": "Overriden og:title"
+          "value": "Head Slot Content"
         }
       ],
       [
@@ -2968,6 +2948,36 @@
           "name": "href",
           "type": "page",
           "value": "7Db64ZXgYiRqKSQNR-qTQ"
+        }
+      ],
+      [
+        "oCeOjUq5kg_g-0dq5iApN",
+        {
+          "id": "oCeOjUq5kg_g-0dq5iApN",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "name",
+          "type": "string",
+          "value": ""
+        }
+      ],
+      [
+        "9axbHjZtX8BX6vXEai1xq",
+        {
+          "id": "9axbHjZtX8BX6vXEai1xq",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "content",
+          "type": "string",
+          "value": "Head Slot Content"
+        }
+      ],
+      [
+        "B3AKQ4tazCkXwEKfNr2E7",
+        {
+          "id": "B3AKQ4tazCkXwEKfNr2E7",
+          "instanceId": "EveN4Skg9xb8Lj1QJcW52",
+          "name": "property",
+          "type": "string",
+          "value": "og:title"
         }
       ]
     ],
@@ -5011,7 +5021,7 @@
             },
             {
               "type": "id",
-              "value": "l32PppcSbcwAmPT_0q6Al"
+              "value": "EveN4Skg9xb8Lj1QJcW52"
             }
           ]
         }
@@ -5031,16 +5041,6 @@
         {
           "type": "instance",
           "id": "Py53B3dAV0BD8QAHaWV-K",
-          "component": "HeadMeta",
-          "label": "Meta",
-          "children": []
-        }
-      ],
-      [
-        "l32PppcSbcwAmPT_0q6Al",
-        {
-          "type": "instance",
-          "id": "l32PppcSbcwAmPT_0q6Al",
           "component": "HeadMeta",
           "label": "Meta",
           "children": []
@@ -5072,6 +5072,16 @@
               "value": "Go Home"
             }
           ]
+        }
+      ],
+      [
+        "EveN4Skg9xb8Lj1QJcW52",
+        {
+          "type": "instance",
+          "id": "EveN4Skg9xb8Lj1QJcW52",
+          "component": "HeadMeta",
+          "label": "Meta",
+          "children": []
         }
       ]
     ],
