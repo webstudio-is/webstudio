@@ -36,7 +36,15 @@ export const HeadMeta = forwardRef<
     return <meta {...cleanOrderedProps} />;
   }
 
-  return <XmlNode tag={defaultTag} {...cleanOrderedProps} ref={ref} />;
+  // HTML attributes are case-insensitive, but the convention is to use lowercase
+  const htmlAttributes = Object.fromEntries(
+    Object.entries(cleanOrderedProps).map(([key, value]) => [
+      key?.toLowerCase(),
+      value,
+    ])
+  );
+
+  return <XmlNode tag={defaultTag} {...htmlAttributes} ref={ref} />;
 });
 
 HeadMeta.displayName = "HeadMeta";
