@@ -16,7 +16,6 @@ import {
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
-import type { PageMeta } from "@webstudio-is/sdk";
 import {
   ReactSdkContext,
   PageSettingsMeta,
