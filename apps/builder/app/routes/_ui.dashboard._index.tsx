@@ -15,12 +15,25 @@ export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
 
-export const meta: MetaFunction<typeof loader> = () => {
+export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
 
-  metas.push({ title: "Webstudio Dashboard" });
+  metas.push({ title: "Webstudio Dashboard | Projects" });
 
   return metas;
+};
+
+/**
+ * When deleting/adding a project, then navigating to a new project and pressing the back button,
+ * the dashboard page may display stale data because it’s being retrieved from the browser’s back/forward cache (bfcache).
+ *
+ * https://web.dev/articles/bfcache
+ *
+ */
+export const headers = () => {
+  return {
+    "Cache-Control": "no-store",
+  };
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -38,19 +51,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     publisherHost: env.PUBLISHER_HOST,
     origin,
     projectToClone,
-  };
-};
-
-/**
- * When deleting/adding a project, then navigating to a new project and pressing the back button,
- * the dashboard page may display stale data because it’s being retrieved from the browser’s back/forward cache (bfcache).
- *
- * https://web.dev/articles/bfcache
- *
- */
-export const headers = () => {
-  return {
-    "Cache-Control": "no-store",
   };
 };
 

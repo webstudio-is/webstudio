@@ -15,7 +15,7 @@ export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
         <Flex direction="column" gap="3">
           <Flex justify="between">
             <Text variant="brandSectionTitle" as="h2">
-              Templates
+              Starter templates
             </Text>
           </Flex>
           <Grid
