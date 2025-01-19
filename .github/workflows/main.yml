@@ -22,7 +22,7 @@ jobs:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
