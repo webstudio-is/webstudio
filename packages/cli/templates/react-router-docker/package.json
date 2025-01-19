@@ -1,0 +1,34 @@
+{
+  "type": "module",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@react-router/dev": "^7.1.1",
+    "@react-router/fs-routes": "^7.1.1",
+    "@react-router/node": "^7.1.1",
+    "@webstudio-is/image": "0.0.0-webstudio-version",
+    "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-animation": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-react-radix": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-react-router": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-react": "0.0.0-webstudio-version",
+    "isbot": "^5.1.19",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "vite": "^5.4.11"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "typescript": "5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

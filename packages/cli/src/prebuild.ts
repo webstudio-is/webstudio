@@ -59,6 +59,7 @@ import {
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 import { htmlToJsx } from "./html-to-jsx";
 import { createFramework as createRemixFramework } from "./framework-remix";
+import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
 
 const limit = pLimit(10);
@@ -261,6 +262,8 @@ export const prebuild = async (options: {
   let framework;
   if (options.template.includes("ssg")) {
     framework = await createVikeSsgFramework();
+  } else if (options.template.includes("react-router-docker")) {
+    framework = await createReactRouterFramework();
   } else {
     framework = await createRemixFramework();
   }
