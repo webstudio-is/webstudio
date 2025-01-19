@@ -33,7 +33,7 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
         ([key]) =>
           key.startsWith("data-") === false && key.startsWith("aria-") === false
       )
-      .filter(([key]) => key !== "tabIndex")
+      .filter(([key]) => key.toLowerCase() !== "tabindex")
       .filter(([, value]) => typeof value !== "function");
 
     const elementName = tag
