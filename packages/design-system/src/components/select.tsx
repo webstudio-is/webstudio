@@ -221,10 +221,15 @@ const SelectBase = <Option,>(
 
   const descriptions = options.map((option) => getDescription?.(option));
 
+  console.log(name, value);
+
   return (
     <Primitive.Root
       name={name}
-      value={value === undefined ? undefined : getValue(value)}
+      // null because of https://github.com/radix-ui/primitives/issues/2706
+      value={
+        value === undefined ? (null as unknown as undefined) : getValue(value)
+      }
       defaultValue={
         defaultValue === undefined ? undefined : getValue(defaultValue)
       }

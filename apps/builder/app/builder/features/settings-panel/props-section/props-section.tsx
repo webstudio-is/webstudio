@@ -68,7 +68,11 @@ const renderProperty = (
     prop,
     computedValue: propValues.get(propName) ?? meta.defaultValue,
     propName,
-    deletable: deletable ?? false,
+    deletable:
+      deletable ??
+      ((meta.defaultValue === undefined || meta.defaultValue !== prop?.value) &&
+        meta.required === false &&
+        prop !== undefined),
     onDelete: () => {
       if (prop) {
         logic.handleDelete(prop);
