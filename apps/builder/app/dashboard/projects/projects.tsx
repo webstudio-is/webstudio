@@ -1,9 +1,9 @@
-import { Flex, Grid, Text, rawTheme } from "@webstudio-is/design-system";
+import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { EmptyState } from "./empty-state";
-import { Panel } from "../shared/panel";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
+import { Header } from "../shared/header";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
@@ -17,14 +17,18 @@ export const Projects = ({
   publisherHost,
 }: ProjectsProps) => {
   return (
-    <Panel>
-      <Flex direction="column" gap="3">
-        <Flex justify="between">
-          <Text variant="brandSectionTitle" as="h2">
-            Projects
-          </Text>
-          <Flex gap="2">{projects.length !== 0 && <CreateProject />}</Flex>
-        </Flex>
+    <Flex direction="column" grow>
+      <Header variant="main">
+        <Text variant="brandSectionTitle" as="h2">
+          Projects
+        </Text>
+        <Flex gap="2">{projects.length !== 0 && <CreateProject />}</Flex>
+      </Header>
+      <Flex
+        direction="column"
+        gap="3"
+        css={{ paddingInline: theme.spacing[13] }}
+      >
         {projects.length === 0 && <EmptyState />}
         <Grid
           gap="6"
@@ -44,6 +48,6 @@ export const Projects = ({
           })}
         </Grid>
       </Flex>
-    </Panel>
+    </Flex>
   );
 };

@@ -29,6 +29,7 @@ import {
   LifeBuoyIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
+import { Header } from "./shared/header";
 
 const globalStyles = globalCss({
   html: {
@@ -165,24 +166,17 @@ export const Dashboard = ({
             borderRight: `1px solid ${theme.colors.borderMain}`,
           }}
         >
-          <Flex
-            as="header"
-            align="center"
-            justify="between"
-            css={{
-              paddingInline: theme.spacing[3],
-              paddingBlock: theme.spacing[8],
-            }}
-          >
+          <Header variant="aside">
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
-          </Flex>
-          <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
-            Projects
-          </SidebarLink>
-          <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
-            Starter templates
-          </SidebarLink>
-          <Flex direction="column">
+          </Header>
+
+          <nav>
+            <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
+              Projects
+            </SidebarLink>
+            <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
+              Starter templates
+            </SidebarLink>
             <Separator css={{ marginBlock: theme.spacing[5] }} />
             <SidebarLink
               to="https://wstd.us/101"
@@ -212,7 +206,7 @@ export const Dashboard = ({
             >
               Community
             </SidebarLink>
-          </Flex>
+          </nav>
         </Flex>
         <Main>
           <Section>

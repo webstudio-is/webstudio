@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   DropdownMenu,
@@ -8,23 +9,61 @@ import {
   DropdownMenuLabel,
   Flex,
   Avatar,
-  rawTheme,
   theme,
   Button,
   ProBadge,
   DropdownMenuSeparator,
   Text,
+  css,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import namesPlugin from "colord/plugins/names";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
 const defaultUserName = "James Bond";
+
+const profileButtonStyle = css({
+  //all: "unset",
+  "&:hover": {
+    "--bg": "red",
+    background: "none",
+  },
+});
+
+const ProfileButton = forwardRef<
+  HTMLButtonElement,
+  {
+    name: string;
+    image?: string;
+    badge?: string;
+  }
+>(({ image, name, badge, ...rest }, forwardedRef) => {
+  return (
+    <Button
+      color="ghost"
+      aria-label="Profile Menu"
+      className={profileButtonStyle()}
+      {...rest}
+      ref={forwardedRef}
+      prefix={
+        <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
+      }
+      suffix={<ChevronDownIcon size={12} />}
+      css={{
+        // Exception for avatar. May need to introduce a 32px controls size later.
+        height: theme.spacing[13],
+      }}
+    >
+      {badge && <ProBadge>{badge}</ProBadge>}
+    </Button>
+  );
+});
 
 export const ProfileMenu = ({
   user,
@@ -38,23 +77,13 @@ export const ProfileMenu = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button color="ghost" aria-label="Menu Button">
-          <Flex gap="1" align="center">
-            <Avatar
-              src={user?.image || undefined}
-              fallback={getAvatarLetter(nameOrEmail)}
-              alt={nameOrEmail}
-            />
-            {userPlanFeatures.hasProPlan && (
-              <>
-                <ProBadge>{userPlanFeatures.planName}</ProBadge>
-                <div />
-              </>
-            )}
-
-            <ChevronDownIcon size={12} />
-          </Flex>
-        </Button>
+        <ProfileButton
+          image={user.image || undefined}
+          name={nameOrEmail}
+          badge={
+            userPlanFeatures.hasProPlan ? userPlanFeatures.planName : undefined
+          }
+        />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">

@@ -1,7 +1,7 @@
-import { Flex, Grid, Text, rawTheme } from "@webstudio-is/design-system";
+import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Panel } from "../shared/panel";
 import { ProjectTemplateCard } from "./project-card";
+import { Header } from "../shared/header";
 
 type ProjectsProps = {
   templates: Array<DashboardProject>;
@@ -10,14 +10,18 @@ type ProjectsProps = {
 
 export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
   return (
-    <Panel>
+    <Flex direction="column" grow>
+      <Header variant="main">
+        <Text variant="brandSectionTitle" as="h2">
+          Starter templates
+        </Text>
+      </Header>
       {templates.length > 0 && (
-        <Flex direction="column" gap="3">
-          <Flex justify="between">
-            <Text variant="brandSectionTitle" as="h2">
-              Starter templates
-            </Text>
-          </Flex>
+        <Flex
+          direction="column"
+          gap="3"
+          css={{ paddingInline: theme.spacing[13] }}
+        >
           <Grid
             gap="6"
             css={{
@@ -36,6 +40,6 @@ export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
           </Grid>
         </Flex>
       )}
-    </Panel>
+    </Flex>
   );
 };
