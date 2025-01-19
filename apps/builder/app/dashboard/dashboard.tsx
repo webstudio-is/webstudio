@@ -31,6 +31,10 @@ import {
 } from "@webstudio-is/icons";
 
 const globalStyles = globalCss({
+  html: {
+    display: "grid",
+    minHeight: "100%",
+  },
   body: {
     margin: 0,
     background: theme.colors.backgroundPanel,
