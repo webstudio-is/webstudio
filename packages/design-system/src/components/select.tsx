@@ -226,7 +226,11 @@ const SelectBase = <Option,>(
       name={name}
       // null because of https://github.com/radix-ui/primitives/issues/2706
       value={
-        value === undefined ? (null as unknown as undefined) : getValue(value)
+        value === undefined
+          ? defaultValue === undefined
+            ? (null as unknown as undefined)
+            : undefined
+          : getValue(value)
       }
       defaultValue={
         defaultValue === undefined ? undefined : getValue(defaultValue)
