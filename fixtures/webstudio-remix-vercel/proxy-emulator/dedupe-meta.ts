@@ -35,33 +35,45 @@ export const dedupeMeta: Plugin = {
           const response = new Response(body);
 
           const metasSet = new Set<string>();
+          let hasTitle = false;
 
-          const rewriter = new HTMLRewriter().on("meta", {
-            element(element) {
-              const propertyOrName =
-                element.getAttribute("property") ||
-                element.getAttribute("name");
+          const rewriter = new HTMLRewriter()
+            .on("meta", {
+              element(element) {
+                const propertyOrName =
+                  element.getAttribute("property") ||
+                  element.getAttribute("name");
 
-              if (propertyOrName === null) {
-                return;
-              }
+                if (propertyOrName === null) {
+                  return;
+                }
 
-              if (propertyOrName === "viewport") {
-                // Allow "viewport" property deduplication
-                return;
-              }
+                if (propertyOrName === "viewport") {
+                  // Allow "viewport" property deduplication
+                  return;
+                }
 
-              if (metasSet.has(propertyOrName)) {
-                console.info(
-                  `Duplicate meta with name|property = ${propertyOrName} removed`
-                );
-                element.remove();
-                return;
-              }
+                if (metasSet.has(propertyOrName)) {
+                  console.info(
+                    `Duplicate meta with name|property = ${propertyOrName} removed`
+                  );
+                  element.remove();
+                  return;
+                }
 
-              metasSet.add(propertyOrName);
-            },
-          });
+                metasSet.add(propertyOrName);
+              },
+            })
+            .on("title", {
+              element(element) {
+                if (hasTitle) {
+                  element.remove();
+                  return;
+                }
+
+                hasTitle = true;
+              },
+            });
           rewriter
             // @ts-ignore
             .transform(response)
