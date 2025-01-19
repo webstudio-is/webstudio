@@ -132,7 +132,7 @@ const SidebarLink = ({
   target?: string;
 }) => {
   return (
-    <NavLink to={to} target={target} className={sidebarLinkStyle()}>
+    <NavLink to={to} end target={target} className={sidebarLinkStyle()}>
       {prefix}
       <Text variant="labelsSentenceCase">{children}</Text>
     </NavLink>
@@ -172,7 +172,7 @@ export const Dashboard = ({
           >
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Flex>
-          <SidebarLink to="/dashboard/projects" prefix={<BodyIcon />}>
+          <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
             Projects
           </SidebarLink>
           <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
