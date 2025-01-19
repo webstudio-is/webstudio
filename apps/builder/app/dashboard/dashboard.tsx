@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProfileMenu } from "./profile-menu";
-import { Projects } from "./projects";
+import { Projects, Templates } from "./projects";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
@@ -54,8 +54,8 @@ const Section = (props: ComponentProps<typeof Flex>) => {
 
 export type DashboardProps = {
   user: User;
-  projects: Array<DashboardProject>;
-  projectTemplates: Array<DashboardProject>;
+  projects?: Array<DashboardProject>;
+  templates?: Array<DashboardProject>;
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectToClone?: {
@@ -142,7 +142,7 @@ const SidebarLink = ({
 export const Dashboard = ({
   user,
   projects,
-  projectTemplates,
+  templates,
   userPlanFeatures,
   publisherHost,
   projectToClone,
@@ -172,11 +172,11 @@ export const Dashboard = ({
           >
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Flex>
-          <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
+          <SidebarLink to="/dashboard/projects" prefix={<BodyIcon />}>
             Projects
           </SidebarLink>
           <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
-            Starter Templates
+            Starter templates
           </SidebarLink>
           <Flex direction="column">
             <Separator css={{ marginBlock: theme.spacing[5] }} />
@@ -212,12 +212,16 @@ export const Dashboard = ({
         </Flex>
         <Main>
           <Section>
-            <Projects
-              projects={projects}
-              projectTemplates={projectTemplates}
-              hasProPlan={userPlanFeatures.hasProPlan}
-              publisherHost={publisherHost}
-            />
+            {projects && (
+              <Projects
+                projects={projects}
+                hasProPlan={userPlanFeatures.hasProPlan}
+                publisherHost={publisherHost}
+              />
+            )}
+            {templates && (
+              <Templates templates={templates} publisherHost={publisherHost} />
+            )}
           </Section>
         </Main>
       </Flex>
