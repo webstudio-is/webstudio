@@ -221,8 +221,6 @@ const SelectBase = <Option,>(
 
   const descriptions = options.map((option) => getDescription?.(option));
 
-  console.log(name, value);
-
   return (
     <Primitive.Root
       name={name}
