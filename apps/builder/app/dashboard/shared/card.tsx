@@ -20,7 +20,6 @@ const cardStyle = css({
   flexDirection: "column",
   alignItems: "center",
   flexShrink: 0,
-  aspectRatio: "8 / 7",
   outline: "none",
   "&:focus-within": {
     [borderColorVar]: theme.colors.borderFocus,
@@ -43,7 +42,7 @@ export const CardContent = styled(Grid, {
   position: "relative",
   overflow: "hidden",
   width: "100%",
-  height: "100%",
+  aspectRatio: "1.91/1",
   outline: `1px solid var(${borderColorVar}, transparent)`,
   borderRadius: theme.borderRadius[5],
 });

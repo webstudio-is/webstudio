@@ -155,7 +155,7 @@ export const Dashboard = ({
 
   return (
     <TooltipProvider>
-      <Flex>
+      <Flex css={{ height: "100%" }}>
         <Flex
           as="aside"
           align="stretch"
@@ -171,7 +171,7 @@ export const Dashboard = ({
             justify="between"
             css={{
               paddingInline: theme.spacing[3],
-              height: theme.spacing[15],
+              paddingBlock: theme.spacing[8],
             }}
           >
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
