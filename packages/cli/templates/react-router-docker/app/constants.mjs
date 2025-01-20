@@ -8,6 +8,12 @@ export const imageBaseUrl = "/assets/";
 /**
  * @type {import("@webstudio-is/image").ImageLoader}
  */
-export const imageLoader = ({ src }) => {
-  return src;
+export const imageLoader = (props) => {
+  if (props.format === "raw") {
+    return props.src;
+  }
+  // handle absolute urls
+  const path = URL.canParse(props.src) ? `/${props.src}` : props.src;
+  // https://github.com/unjs/ipx?tab=readme-ov-file#modifiers
+  return `/_image/w_${props.width},q_${props.quality}${path}`;
 };
