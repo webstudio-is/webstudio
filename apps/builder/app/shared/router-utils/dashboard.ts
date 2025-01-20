@@ -8,9 +8,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
-import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { redirect } from "~/services/no-store-redirect";
-import { allowedDestinations } from "~/services/destinations.server";
 import { loginPath } from "./path-utils";
 import { isDashboard } from "./is-canvas";
 
@@ -20,12 +18,6 @@ export const loadDashboardData = async (request: Request) => {
       status: 404,
     });
   }
-
-  preventCrossOriginCookie(request);
-  allowedDestinations(request, ["document", "empty"]);
-  // CSRF token checks are not necessary for dashboard-only pages.
-  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
-  // or by allowedDestinations for iframe requests.
 
   const user = await findAuthenticatedUser(request);
 

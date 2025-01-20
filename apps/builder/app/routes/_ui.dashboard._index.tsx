@@ -11,6 +11,8 @@ import {
   getProjectToClone,
   loadDashboardData,
 } from "~/shared/router-utils/dashboard";
+import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
+import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
@@ -37,6 +39,12 @@ export const headers = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // CSRF token checks are not necessary for dashboard-only pages.
+  // All requests from the builder or canvas app are safeguarded either by preventCrossOriginCookie for fetch requests
+  // or by allowedDestinations for iframe requests.
+  preventCrossOriginCookie(request);
+  allowedDestinations(request, ["document", "empty"]);
+
   const { context, user, userPlanFeatures, origin } =
     await loadDashboardData(request);
   const projects = await dashboardProjectCaller(context).findMany({
