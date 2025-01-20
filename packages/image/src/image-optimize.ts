@@ -235,7 +235,7 @@ const DEFAULT_QUALITY = 80;
 /**
  * URL.canParse(props.src)
  */
-export const UrlCanParse = (url: string): boolean => {
+const UrlCanParse = (url: string): boolean => {
   try {
     new URL(url);
     return true;
