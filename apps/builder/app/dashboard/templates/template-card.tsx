@@ -18,7 +18,10 @@ export const TemplateCard = ({ project }: TemplateCardProps) => {
   return (
     <Card tabIndex={0} onKeyDown={handleKeyDown}>
       <CardContent
-        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
+        css={{
+          background: theme.colors.brandBackgroundProjectCardBack,
+          cursor: "default",
+        }}
       >
         {previewImageAsset ? (
           <ThumbnailWithImage

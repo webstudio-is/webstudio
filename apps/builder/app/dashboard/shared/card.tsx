@@ -44,6 +44,7 @@ export const CardContent = styled(Grid, {
   width: "100%",
   aspectRatio: "1.91/1",
   outline: `1px solid var(${borderColorVar}, transparent)`,
+  outlineOffset: -1,
   borderRadius: theme.borderRadius[5],
 });
 
