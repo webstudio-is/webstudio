@@ -13,7 +13,7 @@ import {
   GithubIcon,
   LifeBuoyIcon,
   PageIcon,
-  Youtube1cIcon,
+  YoutubeIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 import { $remoteDialog } from "../../shared/nano-states";
@@ -61,7 +61,7 @@ export const HelpCenter = ({
             formAction="https://wstd.us/101"
             name="list"
             value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
-            prefix={<Youtube1cIcon fill="currentColor" />}
+            prefix={<YoutubeIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >
@@ -77,7 +77,7 @@ export const HelpCenter = ({
           </Button>
           <Button
             formAction="https://wstd.us/community"
-            prefix={<DiscordIcon fill="currentColor" />}
+            prefix={<DiscordIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >

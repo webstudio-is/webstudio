@@ -1,4 +1,5 @@
 import {
+  forwardRef,
   useEffect,
   useState,
   type ComponentProps,
@@ -6,7 +7,8 @@ import {
 } from "react";
 import {
   Flex,
-  Separator,
+  List,
+  ListItem,
   Text,
   TooltipProvider,
   css,
@@ -27,9 +29,10 @@ import {
   DiscordIcon,
   ExtensionIcon,
   LifeBuoyIcon,
-  Youtube1cIcon,
+  YoutubeIcon,
 } from "@webstudio-is/icons";
 import { Header } from "./shared/header";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 
 const globalStyles = globalCss({
   html: {
@@ -125,22 +128,61 @@ const sidebarLinkStyle = css({
   },
 });
 
-const SidebarLink = ({
-  to,
-  prefix,
-  children,
-  target,
+const SidebarLink = forwardRef<
+  HTMLAnchorElement,
+  {
+    prefix: ReactNode;
+    children: string;
+    to: string;
+    target?: string;
+  }
+>(({ to, prefix, children, target }, forwardedRef) => {
+  return (
+    <NavLink
+      to={to}
+      end
+      target={target}
+      className={sidebarLinkStyle()}
+      ref={forwardedRef}
+    >
+      {prefix}
+      <Text variant="labelsSentenceCase" color="main">
+        {children}
+      </Text>
+    </NavLink>
+  );
+});
+
+const NavigationItems = ({
+  items,
 }: {
-  prefix: ReactNode;
-  children: string;
-  to: string;
-  target?: string;
+  items: Array<{
+    to: string;
+    prefix: ReactNode;
+    children: string;
+    target?: string;
+  }>;
 }) => {
   return (
-    <NavLink to={to} end target={target} className={sidebarLinkStyle()}>
-      {prefix}
-      <Text variant="labelsSentenceCase">{children}</Text>
-    </NavLink>
+    <List style={{ padding: 0, margin: 0 }}>
+      {items.map((item) => {
+        return (
+          <ListItem asChild>
+            <NavLink
+              to={item.to}
+              end
+              target={item.target}
+              className={sidebarLinkStyle()}
+            >
+              {item.prefix}
+              <Text variant="labelsSentenceCase" color="main">
+                {item.children}
+              </Text>
+            </NavLink>
+          </ListItem>
+        );
+      })}
+    </List>
   );
 };
 
@@ -169,43 +211,53 @@ export const Dashboard = ({
           <Header variant="aside">
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Header>
-
           <nav>
-            <SidebarLink to="/dashboard" prefix={<BodyIcon />}>
-              Projects
-            </SidebarLink>
-            <SidebarLink to="/dashboard/templates" prefix={<ExtensionIcon />}>
-              Starter templates
-            </SidebarLink>
-            <Separator css={{ marginBlock: theme.spacing[5] }} />
-            <SidebarLink
-              to="https://wstd.us/101"
-              target="_blank"
-              prefix={<Youtube1cIcon fill="black" />}
-            >
-              Video tutorials
-            </SidebarLink>
-            <SidebarLink
-              to="https://help.webstudio.is/"
-              target="_blank"
-              prefix={<LifeBuoyIcon />}
-            >
-              Support hub
-            </SidebarLink>
-            <SidebarLink
-              to="https://docs.webstudio.is"
-              target="_blank"
-              prefix={<ContentIcon />}
-            >
-              Docs
-            </SidebarLink>
-            <SidebarLink
-              to="https://wstd.us/community"
-              target="_blank"
-              prefix={<DiscordIcon fill="black" />}
-            >
-              Community
-            </SidebarLink>
+            <CollapsibleSection label="Workspace" fullWidth>
+              <NavigationItems
+                items={[
+                  {
+                    to: "/dashboard",
+                    prefix: <BodyIcon />,
+                    children: "Projects",
+                  },
+                  {
+                    to: "/dashboard/templates",
+                    prefix: <ExtensionIcon />,
+                    children: "Starter templates",
+                  },
+                ]}
+              />
+            </CollapsibleSection>
+            <CollapsibleSection label="Help & support" fullWidth>
+              <NavigationItems
+                items={[
+                  {
+                    to: "https://wstd.us/101",
+                    target: "_blank",
+                    prefix: <YoutubeIcon />,
+                    children: "Video tutorials",
+                  },
+                  {
+                    to: "https://help.webstudio.is/",
+                    target: "_blank",
+                    prefix: <LifeBuoyIcon />,
+                    children: "Support hub",
+                  },
+                  {
+                    to: "https://docs.webstudio.is",
+                    target: "_blank",
+                    prefix: <ContentIcon />,
+                    children: "Docs",
+                  },
+                  {
+                    to: "https://wstd.us/community",
+                    target: "_blank",
+                    prefix: <DiscordIcon />,
+                    children: "Community",
+                  },
+                ]}
+              />
+            </CollapsibleSection>
           </nav>
         </Flex>
         <Main>
