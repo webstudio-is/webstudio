@@ -106,9 +106,9 @@ const NavigationItems = ({
 }) => {
   return (
     <List style={{ padding: 0, margin: 0 }}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         return (
-          <ListItem asChild>
+          <ListItem asChild index={index}>
             <NavLink
               to={item.to}
               end
