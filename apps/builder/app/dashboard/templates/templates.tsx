@@ -25,6 +25,7 @@ export const Templates = ({ templates }: ProjectsProps) => {
             gap="6"
             css={{
               gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
+              paddingBottom: theme.spacing[13],
             }}
           >
             {templates.map((project) => {

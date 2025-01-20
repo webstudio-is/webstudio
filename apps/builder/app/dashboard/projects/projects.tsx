@@ -37,6 +37,7 @@ export const Projects = ({
           gap="6"
           css={{
             gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
+            paddingBottom: theme.spacing[13],
           }}
         >
           {projects.map((project) => {

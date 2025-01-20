@@ -85,7 +85,7 @@ const Menu = ({
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" css={{ width: theme.spacing[24] }}>
           <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
           <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
           <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
