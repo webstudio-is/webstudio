@@ -27,6 +27,7 @@ import {
 } from "@webstudio-is/icons";
 import { Header } from "./shared/header";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { dashboardPath, templatesPath } from "~/shared/router-utils";
 
 const globalStyles = globalCss({
   html: {
@@ -170,12 +171,12 @@ export const Dashboard = ({
               <NavigationItems
                 items={[
                   {
-                    to: "/dashboard",
+                    to: dashboardPath(),
                     prefix: <BodyIcon />,
                     children: "Projects",
                   },
                   {
-                    to: "/dashboard/templates",
+                    to: templatesPath(),
                     prefix: <ExtensionIcon />,
                     children: "Starter templates",
                   },

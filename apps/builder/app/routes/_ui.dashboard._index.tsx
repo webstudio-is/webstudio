@@ -39,10 +39,10 @@ export const headers = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { context, user, userPlanFeatures, origin } =
     await loadDashboardData(request);
-  const projectToClone = await getProjectToClone(request, context);
   const projects = await dashboardProjectCaller(context).findMany({
     userId: user.id,
   });
+  const projectToClone = await getProjectToClone(request, context);
 
   return {
     user,

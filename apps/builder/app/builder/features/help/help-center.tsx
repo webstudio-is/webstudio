@@ -9,10 +9,10 @@ import {
 } from "@webstudio-is/design-system";
 import {
   BugIcon,
+  ContentIcon,
   DiscordIcon,
   GithubIcon,
   LifeBuoyIcon,
-  PageIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
@@ -69,7 +69,7 @@ export const HelpCenter = ({
           </Button>
           <Button
             formAction="https://docs.webstudio.is/"
-            prefix={<PageIcon />}
+            prefix={<ContentIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >
