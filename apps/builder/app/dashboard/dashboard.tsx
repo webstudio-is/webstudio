@@ -25,18 +25,13 @@ import {
   LifeBuoyIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
-import { Header } from "./shared/header";
+import { Header } from "./shared/layout";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dashboardPath, templatesPath } from "~/shared/router-utils";
 
 const globalStyles = globalCss({
-  html: {
-    display: "grid",
-    minHeight: "100%",
-  },
   body: {
     margin: 0,
-    background: theme.colors.backgroundPanel,
   },
 });
 
@@ -153,7 +148,7 @@ export const Dashboard = ({
 
   return (
     <TooltipProvider>
-      <Flex css={{ height: "100%" }}>
+      <Flex css={{ height: "100vh" }}>
         <Flex
           as="aside"
           align="stretch"
@@ -161,6 +156,8 @@ export const Dashboard = ({
           css={{
             width: theme.sizes.sidebarWidth,
             borderRight: `1px solid ${theme.colors.borderMain}`,
+            position: "sticky",
+            top: 0,
           }}
         >
           <Header variant="aside">
@@ -215,18 +212,16 @@ export const Dashboard = ({
             </CollapsibleSection>
           </nav>
         </Flex>
-        <Flex as="main" direction="column" gap="5" grow>
-          {projects && (
-            <Projects
-              projects={projects}
-              hasProPlan={userPlanFeatures.hasProPlan}
-              publisherHost={publisherHost}
-            />
-          )}
-          {templates && (
-            <Templates templates={templates} publisherHost={publisherHost} />
-          )}
-        </Flex>
+        {projects && (
+          <Projects
+            projects={projects}
+            hasProPlan={userPlanFeatures.hasProPlan}
+            publisherHost={publisherHost}
+          />
+        )}
+        {templates && (
+          <Templates templates={templates} publisherHost={publisherHost} />
+        )}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

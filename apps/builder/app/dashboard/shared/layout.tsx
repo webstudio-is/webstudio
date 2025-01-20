@@ -10,11 +10,29 @@ export const Header = ({
       as="header"
       align="center"
       justify="between"
+      shrink={false}
       css={{
         paddingInline:
           variant === "aside" ? theme.spacing[5] : theme.spacing[13],
         height: theme.spacing[19],
+        position: "sticky",
+        top: 0,
+        background: theme.colors.backgroundPanel,
+        zIndex: 1,
       }}
+      {...props}
+    />
+  );
+};
+
+export const Main = (props: ComponentProps<typeof Flex>) => {
+  return (
+    <Flex
+      direction="column"
+      as="main"
+      grow
+      // Allows scrolling most parent container while header stays sticky
+      css={{ overflow: "auto" }}
       {...props}
     />
   );

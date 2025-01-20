@@ -1,7 +1,7 @@
 import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectTemplateCard } from "./project-card";
-import { Header } from "../shared/header";
+import { Header, Main } from "../shared/layout";
 
 type ProjectsProps = {
   templates: Array<DashboardProject>;
@@ -10,7 +10,7 @@ type ProjectsProps = {
 
 export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
   return (
-    <Flex direction="column" grow>
+    <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
           Starter templates
@@ -40,6 +40,6 @@ export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
           </Grid>
         </Flex>
       )}
-    </Flex>
+    </Main>
   );
 };

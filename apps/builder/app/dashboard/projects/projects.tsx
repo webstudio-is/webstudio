@@ -3,7 +3,7 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { EmptyState } from "./empty-state";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
-import { Header } from "../shared/header";
+import { Header, Main } from "../shared/layout";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
@@ -17,7 +17,7 @@ export const Projects = ({
   publisherHost,
 }: ProjectsProps) => {
   return (
-    <Flex direction="column" grow>
+    <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
           Projects
@@ -51,6 +51,6 @@ export const Projects = ({
           })}
         </Grid>
       </Flex>
-    </Flex>
+    </Main>
   );
 };
