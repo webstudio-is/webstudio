@@ -23,16 +23,16 @@ import {
   DeleteProjectDialog,
   useCloneProject,
   ShareProjectDialog,
-} from "./project-dialogs";
+} from "../projects/project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
   ThumbnailWithAbbr,
   ThumbnailWithImage,
-} from "./thumbnail";
-import { Spinner } from "../shared/spinner";
+} from "../projects/thumbnail";
+import { Spinner } from "./spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Card, CardContent, CardFooter } from "../shared/card";
+import { Card, CardContent, CardFooter } from "./card";
 import { CloneProjectDialog } from "~/shared/clone-project";
 
 const infoIconStyle = css({ flexShrink: 0 });

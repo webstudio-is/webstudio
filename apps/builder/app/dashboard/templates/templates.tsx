@@ -1,6 +1,6 @@
 import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { ProjectTemplateCard } from "./project-card";
+import { ProjectTemplateCard } from "../shared/project-card";
 import { Header, Main } from "../shared/layout";
 
 type ProjectsProps = {

@@ -5,18 +5,12 @@ import {
   ListItem,
   Text,
   TooltipProvider,
+  Toaster,
   css,
   globalCss,
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { ProfileMenu } from "./profile-menu";
-import { Projects, Templates } from "./projects";
-import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
-import { CloneProjectDialog } from "~/shared/clone-project";
-import { Toaster } from "@webstudio-is/design-system";
 import {
   BodyIcon,
   ContentIcon,
@@ -25,9 +19,16 @@ import {
   LifeBuoyIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
-import { Header } from "./shared/layout";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
+import { CloneProjectDialog } from "~/shared/clone-project";
 import { dashboardPath, templatesPath } from "~/shared/router-utils";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { ProfileMenu } from "./profile-menu";
+import { Projects } from "./projects/projects";
+import { Templates } from "./templates/templates";
+import { Header } from "./shared/layout";
 
 const globalStyles = globalCss({
   body: {
