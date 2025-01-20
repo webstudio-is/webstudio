@@ -35,6 +35,7 @@
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
@@ -43,15 +44,14 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "webstudio": "workspace:*",
     "worktop": "0.8.0-next.18",
-    "zod": "^3.22.4",
-    "@webstudio-is/sdk-components-animation": "workspace:*"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
     "@remix-run/dev": "2.15.2",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "vite": "^5.4.11",
     "wrangler": "^3.63.2"
   }
