@@ -18,6 +18,8 @@
     "@webstudio-is/sdk-components-react-radix": "0.0.0-webstudio-version",
     "@webstudio-is/sdk-components-react-router": "0.0.0-webstudio-version",
     "@webstudio-is/sdk-components-react": "0.0.0-webstudio-version",
+    "h3": "^1.13.1",
+    "ipx": "^3.0.1",
     "isbot": "^5.1.19",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

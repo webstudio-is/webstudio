@@ -73,6 +73,8 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "h3": "^1.13.1",
+    "ipx": "^3.0.1",
     "prettier": "3.4.2",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "react-router": "^7.1.1",
