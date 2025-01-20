@@ -27,7 +27,10 @@ export const Projects = ({
       <Flex
         direction="column"
         gap="3"
-        css={{ paddingInline: theme.spacing[13], paddingTop: "20vh" }}
+        css={{
+          paddingInline: theme.spacing[13],
+          paddingTop: projects.length === 0 ? "20vh" : 0,
+        }}
       >
         {projects.length === 0 && <EmptyState />}
         <Grid

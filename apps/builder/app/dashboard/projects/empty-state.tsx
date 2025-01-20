@@ -22,13 +22,7 @@ const iframeStyle = css({
 });
 
 export const EmptyState = () => (
-  <Flex
-    align="center"
-    justify="center"
-    direction="column"
-    gap="6"
-    css={{ height: theme.spacing[27] }}
-  >
+  <Flex align="center" justify="center" direction="column" gap="6">
     <Text variant="brandMediumTitle" as="h1" align="center">
       What will you create?
     </Text>
