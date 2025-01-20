@@ -13,7 +13,6 @@ import {
   ProBadge,
   DropdownMenuSeparator,
   Text,
-  css,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -25,14 +24,6 @@ const getAvatarLetter = (title?: string) => {
 };
 
 const defaultUserName = "James Bond";
-
-const profileButtonStyle = css({
-  //all: "unset",
-  "&:hover": {
-    "--bg": "red",
-    background: "none",
-  },
-});
 
 const ProfileButton = forwardRef<
   HTMLButtonElement,
@@ -46,7 +37,6 @@ const ProfileButton = forwardRef<
     <Button
       color="ghost"
       aria-label="Profile Menu"
-      className={profileButtonStyle()}
       {...rest}
       ref={forwardedRef}
       prefix={
@@ -84,7 +74,7 @@ export const ProfileMenu = ({
         />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="start">
           <DropdownMenuLabel>
             {user.username ?? defaultUserName}
             <Text>{user.email}</Text>
