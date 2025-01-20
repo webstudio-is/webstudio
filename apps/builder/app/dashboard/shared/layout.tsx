@@ -31,8 +31,12 @@ export const Main = (props: ComponentProps<typeof Flex>) => {
       direction="column"
       as="main"
       grow
-      // Allows scrolling most parent container while header stays sticky
-      css={{ overflow: "auto" }}
+      css={{
+        // Allows scrolling most parent container while header stays sticky
+        overflow: "auto",
+        // Keeps dialogs on top of the main content
+        isolation: "isolate",
+      }}
       {...props}
     />
   );
