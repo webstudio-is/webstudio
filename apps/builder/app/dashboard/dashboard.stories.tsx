@@ -43,7 +43,7 @@ export const Empty: StoryFn<typeof Dashboard> = () => {
     <Dashboard
       user={user}
       projects={[]}
-      projectTemplates={[]}
+      templates={[]}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
     />
@@ -72,7 +72,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
     <Dashboard
       user={user}
       projects={projects}
-      projectTemplates={projects}
+      templates={projects}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
     />

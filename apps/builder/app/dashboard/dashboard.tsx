@@ -220,9 +220,7 @@ export const Dashboard = ({
             publisherHost={publisherHost}
           />
         )}
-        {templates && (
-          <Templates templates={templates} publisherHost={publisherHost} />
-        )}
+        {templates && <Templates templates={templates} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

@@ -7,7 +7,6 @@ import {
   DropdownMenuPortal,
   DropdownMenuItem,
   DropdownMenuLabel,
-  Flex,
   Avatar,
   theme,
   Button,
@@ -20,7 +19,6 @@ import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import namesPlugin from "colord/plugins/names";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();

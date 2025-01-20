@@ -1,14 +1,13 @@
 import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { ProjectTemplateCard } from "../shared/project-card";
 import { Header, Main } from "../shared/layout";
+import { TemplateCard } from "./template-card";
 
 type ProjectsProps = {
   templates: Array<DashboardProject>;
-  publisherHost: string;
 };
 
-export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
+export const Templates = ({ templates }: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
@@ -29,13 +28,7 @@ export const Templates = ({ templates, publisherHost }: ProjectsProps) => {
             }}
           >
             {templates.map((project) => {
-              return (
-                <ProjectTemplateCard
-                  project={project}
-                  publisherHost={publisherHost}
-                  key={project.id}
-                />
-              );
+              return <TemplateCard project={project} key={project.id} />;
             })}
           </Grid>
         </Flex>

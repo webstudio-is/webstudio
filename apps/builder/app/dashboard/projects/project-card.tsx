@@ -1,3 +1,4 @@
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -16,24 +17,20 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
   useCloneProject,
   ShareProjectDialog,
-} from "../projects/project-dialogs";
+} from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
-  ThumbnailWithAbbr,
-  ThumbnailWithImage,
-} from "../projects/thumbnail";
-import { Spinner } from "./spinner";
-import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Card, CardContent, CardFooter } from "./card";
-import { CloneProjectDialog } from "~/shared/clone-project";
+} from "../shared/thumbnail";
+import { Spinner } from "../shared/spinner";
+import { Card, CardContent, CardFooter } from "../shared/card";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -99,7 +96,8 @@ const Menu = ({
   );
 };
 
-const useProjectCard = () => {
+// @todo use List/ListItem instead
+export const useProjectCard = () => {
   const thumbnailRef = useRef<HTMLAnchorElement & HTMLDivElement>(null);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -309,67 +307,6 @@ export const ProjectCard = ({
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
         hasProPlan={hasProPlan}
-      />
-    </Card>
-  );
-};
-
-export const ProjectTemplateCard = ({
-  project,
-  publisherHost,
-}: Omit<ProjectCardProps, "hasProPlan">) => {
-  const { thumbnailRef, handleKeyDown } = useProjectCard();
-  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-  const { title, domain, previewImageAsset, isPublished } = project;
-  return (
-    <Card tabIndex={0} onKeyDown={handleKeyDown}>
-      <CardContent
-        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
-      >
-        {previewImageAsset ? (
-          <ThumbnailWithImage
-            name={previewImageAsset.name}
-            ref={thumbnailRef}
-            onClick={() => {
-              setIsDuplicateDialogOpen(true);
-            }}
-          />
-        ) : (
-          <ThumbnailWithAbbr
-            title={title}
-            ref={thumbnailRef}
-            onClick={() => {
-              setIsDuplicateDialogOpen(true);
-            }}
-          />
-        )}
-      </CardContent>
-      <CardFooter>
-        <Flex direction="column" justify="around">
-          <Text variant="titles" truncate userSelect="text">
-            {title}
-          </Text>
-          {isPublished ? (
-            <PublishedLink
-              publisherHost={publisherHost}
-              domain={domain}
-              tabIndex={-1}
-            />
-          ) : (
-            <Text color="subtle">Not Published</Text>
-          )}
-        </Flex>
-      </CardFooter>
-      <CloneProjectDialog
-        isOpen={isDuplicateDialogOpen}
-        onOpenChange={setIsDuplicateDialogOpen}
-        project={project}
-        onCreate={(projectId) => {
-          window.location.href = builderUrl({
-            origin: window.origin,
-            projectId: projectId,
-          });
-        }}
       />
     </Card>
   );

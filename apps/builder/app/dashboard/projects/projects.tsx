@@ -1,7 +1,7 @@
 import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { EmptyState } from "./empty-state";
-import { ProjectCard } from "../shared/project-card";
+import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 
