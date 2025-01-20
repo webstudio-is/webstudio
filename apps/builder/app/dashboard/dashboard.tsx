@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Flex,
   List,
@@ -44,34 +38,6 @@ const globalStyles = globalCss({
     background: theme.colors.backgroundPanel,
   },
 });
-
-const Main = (props: ComponentProps<typeof Flex>) => {
-  return <Flex {...props} as="main" direction="column" gap="5" grow />;
-};
-
-const Section = (props: ComponentProps<typeof Flex>) => {
-  return (
-    <Flex
-      {...props}
-      justify="center"
-      as="section"
-      css={{ minWidth: theme.spacing[33] }}
-    />
-  );
-};
-
-export type DashboardProps = {
-  user: User;
-  projects?: Array<DashboardProject>;
-  templates?: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
-  publisherHost: string;
-  projectToClone?: {
-    authToken: string;
-    id: string;
-    title: string;
-  };
-};
 
 const CloneProject = ({
   projectToClone,
@@ -128,31 +94,6 @@ const sidebarLinkStyle = css({
   },
 });
 
-const SidebarLink = forwardRef<
-  HTMLAnchorElement,
-  {
-    prefix: ReactNode;
-    children: string;
-    to: string;
-    target?: string;
-  }
->(({ to, prefix, children, target }, forwardedRef) => {
-  return (
-    <NavLink
-      to={to}
-      end
-      target={target}
-      className={sidebarLinkStyle()}
-      ref={forwardedRef}
-    >
-      {prefix}
-      <Text variant="labelsSentenceCase" color="main">
-        {children}
-      </Text>
-    </NavLink>
-  );
-});
-
 const NavigationItems = ({
   items,
 }: {
@@ -184,6 +125,19 @@ const NavigationItems = ({
       })}
     </List>
   );
+};
+
+type DashboardProps = {
+  user: User;
+  projects?: Array<DashboardProject>;
+  templates?: Array<DashboardProject>;
+  userPlanFeatures: UserPlanFeatures;
+  publisherHost: string;
+  projectToClone?: {
+    authToken: string;
+    id: string;
+    title: string;
+  };
 };
 
 export const Dashboard = ({
@@ -260,20 +214,18 @@ export const Dashboard = ({
             </CollapsibleSection>
           </nav>
         </Flex>
-        <Main>
-          <Section>
-            {projects && (
-              <Projects
-                projects={projects}
-                hasProPlan={userPlanFeatures.hasProPlan}
-                publisherHost={publisherHost}
-              />
-            )}
-            {templates && (
-              <Templates templates={templates} publisherHost={publisherHost} />
-            )}
-          </Section>
-        </Main>
+        <Flex as="main" direction="column" gap="5" grow>
+          {projects && (
+            <Projects
+              projects={projects}
+              hasProPlan={userPlanFeatures.hasProPlan}
+              publisherHost={publisherHost}
+            />
+          )}
+          {templates && (
+            <Templates templates={templates} publisherHost={publisherHost} />
+          )}
+        </Flex>
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />
