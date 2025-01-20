@@ -71,13 +71,13 @@ const invisibleSuffixStyle = css({
 const chevronStyle = css({
   width: theme.spacing[7],
   opacity: `var(${chevronOpacity}, 0)`,
-  marginLeft: `-${theme.spacing[7]}`,
+  translate: "-100%",
   transition: "transform 150ms, opacity 200ms",
   color: theme.colors.backgroundIconSubtle,
   variants: {
     openState: {
       open: {
-        transform: "rotate(90deg)",
+        rotate: "90deg",
       },
       closed: {},
       inactive: {},
