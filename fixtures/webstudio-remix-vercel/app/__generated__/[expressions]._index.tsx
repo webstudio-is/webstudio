@@ -33,8 +33,8 @@ const Page = ({}: { system: any }) => {
   let jsonResourceVariable = useResource("jsonResourceVariable_1");
   let [jsonVar, set$jsonVar] = useVariableState<any>({ hello: "world" });
   return (
-    <Body className={"w-body"}>
-      <Heading className={"w-heading"}>
+    <Body className={`w-body`}>
+      <Heading className={`w-heading`}>
         {`${jsonResourceVariable?.data?.args}`}
       </Heading>
       <HtmlEmbed
@@ -45,7 +45,7 @@ const b = ${jsonVar}
 
 console.log(a, b);
 </script>`}
-        className={"w-html-embed"}
+        className={`w-html-embed`}
       />
     </Body>
   );

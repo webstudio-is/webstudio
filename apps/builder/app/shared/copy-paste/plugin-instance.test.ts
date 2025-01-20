@@ -8,13 +8,13 @@ import type {
   DataSource,
   DataSources,
 } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
-import type { Project } from "@webstudio-is/project";
 import {
+  encodeDataSourceVariable,
   collectionComponent,
   coreMetas,
   portalComponent,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
+import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync";
 import {

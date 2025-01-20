@@ -8,6 +8,8 @@ import {
   ROOT_INSTANCE_ID,
   createScope,
   parseComponentName,
+  descendantComponent,
+  rootComponent,
   type Assets,
   type Breakpoints,
   type Instance,
@@ -17,7 +19,6 @@ import {
   type Styles,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { descendantComponent, rootComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { kebabCase } from "change-case";
 

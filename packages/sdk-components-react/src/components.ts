@@ -38,3 +38,7 @@ export { XmlTime } from "./xml-time";
 export { Time } from "./time";
 export { Select } from "./select";
 export { Option } from "./option";
+export { HeadSlot } from "./head-slot";
+export { HeadLink } from "./head-link";
+export { HeadMeta } from "./head-meta";
+export { HeadTitle } from "./head-title";

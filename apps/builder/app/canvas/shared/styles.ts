@@ -5,6 +5,8 @@ import {
   Instance,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
+  descendantComponent,
+  rootComponent,
   type StyleDecl,
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
@@ -14,8 +16,6 @@ import {
   editingPlaceholderVariable,
   addGlobalRules,
   createImageValueTransformer,
-  descendantComponent,
-  rootComponent,
   editablePlaceholderVariable,
   componentAttribute,
 } from "@webstudio-is/react-sdk";

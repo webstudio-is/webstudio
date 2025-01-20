@@ -72,6 +72,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vitest": "^2.1.8"
+    "vitest": "^3.0.2"
   }
 }

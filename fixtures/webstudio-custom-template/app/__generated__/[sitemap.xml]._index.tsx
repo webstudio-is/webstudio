@@ -30,7 +30,7 @@ const Body = (props: any) => <svg>{props.children}</svg>;
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");
   return (
-    <Body className={"w-body"}>
+    <Body className={`w-body`}>
       <XmlNode
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}

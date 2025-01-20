@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/react-sdk";
+import { rootComponent } from "@webstudio-is/sdk";
 import {
   theme,
   PanelTabs,

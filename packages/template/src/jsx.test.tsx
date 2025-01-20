@@ -7,6 +7,7 @@ import {
   expression,
   ExpressionValue,
   PageValue,
+  Parameter,
   ParameterValue,
   PlaceholderValue,
   renderTemplate,
@@ -453,6 +454,41 @@ test("render variable inside of action", () => {
       scopeInstanceId: "body",
       name: "count",
       value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render parameter bound to prop expression", () => {
+  const system = new Parameter("system");
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-param={system}
+      data-value={expression`${system}`}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-param",
+      instanceId: "body",
+      name: "data-param",
+      type: "parameter",
+      value: "0",
+    },
+    {
+      id: "body:data-value",
+      instanceId: "body",
+      name: "data-value",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "parameter",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "system",
     },
   ]);
 });

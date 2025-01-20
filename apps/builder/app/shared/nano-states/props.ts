@@ -12,17 +12,14 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
+  collectionComponent,
+  portalComponent,
 } from "@webstudio-is/sdk";
 import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
-import {
-  collectionComponent,
-  normalizeProps,
-  portalComponent,
-  textContentAttribute,
-} from "@webstudio-is/react-sdk";
+import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";

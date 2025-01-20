@@ -4,8 +4,11 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { XIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { type WsComponentMeta, componentCategories } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import {
+  type WsComponentMeta,
+  componentCategories,
+  collectionComponent,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Flex,
@@ -58,6 +61,14 @@ const $metas = computed(
     for (const [name, componentMeta] of componentMetas) {
       // only set available components from component meta
       availableComponents.add(name);
+
+      if (
+        isFeatureEnabled("headSlotComponent") === false &&
+        name === "HeadSlot"
+      ) {
+        continue;
+      }
+
       metas.push({
         name,
         category: componentMeta.category ?? "hidden",

@@ -29,14 +29,12 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Page = ({}: { system: any }) => {
   let [classVar, set$classVar] = useVariableState<any>("varClass");
   return (
-    <Body className={"w-body"}>
+    <Body className={`w-body`}>
       <Box
         id={"\"broken'with`symbols"}
-        className={
-          "w-box cm16yxw" + " " + "custom-class \"broken 'with `symbols"
-        }
+        className={`w-box cm16yxw ${"custom-class \"broken 'with `symbols"}`}
       />
-      <Box className={"w-box ctm310" + " " + `${classVar} class_3`} />
+      <Box className={`w-box ctm310 ${`${classVar} class_3`}`} />
     </Body>
   );
 };

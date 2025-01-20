@@ -1,5 +1,5 @@
-import { blockTemplateComponent } from "@webstudio-is/react-sdk";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/awareness";
 import {

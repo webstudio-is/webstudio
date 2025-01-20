@@ -20,7 +20,7 @@ import {
   type StyleDecl,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/react-sdk";
+import { rootComponent } from "@webstudio-is/sdk";
 import {
   $breakpoints,
   $instances,

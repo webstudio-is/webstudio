@@ -1,12 +1,9 @@
 import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import type { Instances } from "@webstudio-is/sdk";
-import {
-  type Components,
-  coreMetas,
-  corePropsMetas,
-} from "@webstudio-is/react-sdk";
+import { type Instances, coreMetas, corePropsMetas } from "@webstudio-is/sdk";
+import { coreTemplates } from "@webstudio-is/sdk/core-templates";
+import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
@@ -225,7 +222,7 @@ export const Canvas = () => {
       components: {},
       metas: coreMetas,
       propsMetas: corePropsMetas,
-      templates: {},
+      templates: coreTemplates,
     });
     registerComponentLibrary({
       components: baseComponents,

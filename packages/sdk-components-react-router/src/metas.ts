@@ -4,4 +4,4 @@ export {
   RichTextLink,
   Form,
   RemixForm,
-} from "@webstudio-is/sdk-components-react";
+} from "@webstudio-is/sdk-components-react/metas";

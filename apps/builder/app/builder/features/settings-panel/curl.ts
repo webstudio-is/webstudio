@@ -29,27 +29,66 @@ export type CurlRequest = Pick<
   "url" | "method" | "headers" | "body"
 >;
 
+const encodeSearchParams = (data: string[]) => {
+  return data
+    .map((item) => {
+      if (item.includes("=")) {
+        const [key, value] = item.split("=");
+        return `${key}=${encodeURIComponent(value)}`;
+      }
+      return item;
+    })
+    .join("&");
+};
+
 export const parseCurl = (curl: string): undefined | CurlRequest => {
-  const argv = tokenizeArgs(curl);
+  const argv = tokenizeArgs(curl, { loose: true });
   if (argv.length === 0) {
     return;
   }
   const args = parseArgs(argv, {
     alias: {
       X: ["request"],
+      G: ["get"],
       H: ["header"],
       d: ["data"],
+      "data-ascii": ["data"],
+      "data-raw": ["data"],
+      "data-urlencode": ["data"],
+      u: ["user"],
     },
-    string: ["request", "data"],
-    array: ["header", "H"],
+    boolean: ["get", "G"],
+    string: [
+      "request",
+      "X",
+      "data",
+      "d",
+      "data-ascii",
+      "data-raw",
+      "data-urlencode",
+      "user",
+      "u",
+    ],
+    array: [
+      "header",
+      "H",
+      "data",
+      "d",
+      "data-ascii",
+      "data-raw",
+      "data-urlencode",
+    ],
   });
   // require at least 2 parameters and first is curl command
   if (args._.length < 2 || args._[0] !== "curl") {
     return;
   }
-  const [_curl, url] = args._;
+  // curl url
+  let url = args._[1].toString();
   const defaultMethod = args.data ? "post" : "get";
-  const method = getMethod(args.request ?? defaultMethod);
+  const method: CurlRequest["method"] = args.get
+    ? "get"
+    : getMethod(args.request ?? defaultMethod);
   let contentType: undefined | string;
   const headers: ResourceRequest["headers"] = (
     (args.header as string[]) ?? []
@@ -61,12 +100,29 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
     }
     return { name, value };
   });
-  let body: undefined | unknown = args.data;
-  if (args.data && contentType === "application/json") {
-    try {
-      body = JSON.parse(args.data);
-    } catch {
-      // empty block
+  if (args.user) {
+    headers.push({ name: "Authorization", value: `Basic ${btoa(args.user)}` });
+  }
+  let body: undefined | unknown;
+  if (args.get && args.data) {
+    const separator = url.includes("?") ? "&" : "?";
+    const search = encodeSearchParams(args.data);
+    url = `${url}${separator}${search}`;
+  } else if (args.data) {
+    body = args.data[0];
+    if (contentType === "application/json") {
+      try {
+        body = JSON.parse(args.data[0]);
+      } catch {
+        // empty block
+      }
+    }
+    if (contentType === undefined) {
+      contentType = "application/x-www-form-urlencoded";
+      headers.push({ name: "content-type", value: contentType });
+    }
+    if (contentType === "application/x-www-form-urlencoded") {
+      body = encodeSearchParams(args.data);
     }
   }
   return {
