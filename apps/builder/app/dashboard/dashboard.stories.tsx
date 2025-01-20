@@ -43,7 +43,6 @@ export const Empty: StoryFn<typeof Dashboard> = () => {
     <Dashboard
       user={user}
       projects={[]}
-      templates={[]}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
     />
@@ -72,6 +71,33 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
     <Dashboard
       user={user}
       projects={projects}
+      userPlanFeatures={userPlanFeatures}
+      publisherHost={"https://wstd.work"}
+    />
+  );
+  return <RouterProvider router={router} />;
+};
+
+export const WithTemplates: StoryFn<typeof Dashboard> = () => {
+  const projects = [
+    {
+      id: "0",
+      createdAt: new Date().toString(),
+      title: "My Project",
+      domain: "domain.com",
+      userId: "",
+      isDeleted: false,
+      isPublished: false,
+      latestBuild: null,
+      previewImageAsset: null,
+      previewImageAssetId: "",
+      latestBuildVirtual: null,
+      marketplaceApprovalStatus: "UNLISTED" as const,
+    } as DashboardProject,
+  ];
+  const router = createRouter(
+    <Dashboard
+      user={user}
       templates={projects}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
