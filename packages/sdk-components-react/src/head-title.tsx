@@ -24,9 +24,7 @@ export const HeadTitle = forwardRef<
   const cleanOrderedProps: Record<string, unknown> = {};
 
   for (const prop of propsSet) {
-    // Boolean check is not a mistake; it excludes empty values.
-    // Empty properties must be excluded because there is no UI to reset them to undefined.
-    if (prop in props && Boolean(props[prop])) {
+    if (prop in props && props[prop] !== undefined) {
       cleanOrderedProps[prop] = props[prop];
     }
   }

@@ -42,11 +42,7 @@ const Page = ({}: { system: any }) => {
         <HeadTitle>{"Head Slot Title"}</HeadTitle>
         <HeadLink rel={"help"} href={"/help-head-slot"} />
         <HeadMeta name={"keywords"} content={"Head Slot Content"} />
-        <HeadMeta
-          name={""}
-          content={"Head Slot Content"}
-          property={"og:title"}
-        />
+        <HeadMeta content={"Head Slot Content"} property={"og:title"} />
       </HeadSlot>
       <Heading className={`w-heading`}>{"Test Head Slot"}</Heading>
       <Link href={"/"} className={`w-link`}>
