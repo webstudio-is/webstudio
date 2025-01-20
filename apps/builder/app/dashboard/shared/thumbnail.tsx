@@ -12,10 +12,8 @@ const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
   backgroundClip: "text",
   color: "transparent",
   outline: "none",
-  "&:hover, &:focus": {
-    ...textVariants.brandThumbnailLargeHover,
-    transition: "100ms",
-  },
+  transition: "100ms",
+  "&:hover, &:focus": textVariants.brandThumbnailLargeHover,
 });
 
 // My Next Project > MN
@@ -56,9 +54,9 @@ const imageContainerStyle = css({
   background: theme.colors.brandBackgroundProjectCardFront,
   outline: "none",
   overflow: "hidden",
-  transition: "transform 100ms",
+  transition: "scale 100ms",
   "&:hover, &:focus": {
-    transform: "scale(1.1)",
+    scale: "1.1",
   },
 });
 

@@ -9,11 +9,11 @@ import {
 } from "@webstudio-is/design-system";
 import {
   BugIcon,
+  ContentIcon,
   DiscordIcon,
   GithubIcon,
   LifeBuoyIcon,
-  PageIcon,
-  Youtube1cIcon,
+  YoutubeIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 import { $remoteDialog } from "../../shared/nano-states";
@@ -58,10 +58,10 @@ export const HelpCenter = ({
             Support Hub
           </Button>
           <Button
-            formAction="https://www.youtube.com/playlist"
+            formAction="https://wstd.us/101"
             name="list"
             value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
-            prefix={<Youtube1cIcon fill="currentColor" />}
+            prefix={<YoutubeIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >
@@ -69,15 +69,15 @@ export const HelpCenter = ({
           </Button>
           <Button
             formAction="https://docs.webstudio.is/"
-            prefix={<PageIcon />}
+            prefix={<ContentIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >
             Learn from docs
           </Button>
           <Button
-            formAction="https://discord.gg/UNdyrDkq5r"
-            prefix={<DiscordIcon fill="currentColor" />}
+            formAction="https://wstd.us/community"
+            prefix={<DiscordIcon />}
             color="ghost"
             css={{ justifyContent: "start" }}
           >

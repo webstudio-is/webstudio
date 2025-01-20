@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { Youtube1cIcon } from "@webstudio-is/icons/svg";
+import { YoutubeIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -16,7 +16,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
-  icon: Youtube1cIcon,
+  icon: YoutubeIcon,
   states: defaultStates,
   presetStyle,
   constraints: {

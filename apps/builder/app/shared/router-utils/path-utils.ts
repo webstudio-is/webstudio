@@ -68,6 +68,10 @@ export const dashboardPath = () => {
   return "/dashboard";
 };
 
+export const templatesPath = () => {
+  return "/dashboard/templates";
+};
+
 export const dashboardUrl = (props: { origin: string }) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
 

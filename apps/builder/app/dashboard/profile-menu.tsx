@@ -1,8 +1,5 @@
-import {
-  ChevronDownIcon,
-  UpgradeIcon,
-  WebstudioIcon,
-} from "@webstudio-is/icons";
+import { forwardRef } from "react";
+import { ChevronDownIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,10 +7,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuItem,
   DropdownMenuLabel,
-  Flex,
   Avatar,
-  css,
-  rawTheme,
   theme,
   Button,
   ProBadge,
@@ -25,20 +19,41 @@ import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
-const containerStyle = css({
-  px: theme.spacing[13],
-  backgroundColor: theme.colors.backgroundPanel,
-  height: theme.spacing[15],
-  boxShadow: theme.shadows.brandElevationBig,
-});
-
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
 const defaultUserName = "James Bond";
 
-const Menu = ({
+const ProfileButton = forwardRef<
+  HTMLButtonElement,
+  {
+    name: string;
+    image?: string;
+    badge?: string;
+  }
+>(({ image, name, badge, ...rest }, forwardedRef) => {
+  return (
+    <Button
+      color="ghost"
+      aria-label="Profile Menu"
+      {...rest}
+      ref={forwardedRef}
+      prefix={
+        <Avatar src={image} fallback={getAvatarLetter(name)} alt={name} />
+      }
+      suffix={<ChevronDownIcon size={12} />}
+      css={{
+        // Exception for avatar. May need to introduce a 32px controls size later.
+        height: theme.spacing[13],
+      }}
+    >
+      {badge && <ProBadge>{badge}</ProBadge>}
+    </Button>
+  );
+});
+
+export const ProfileMenu = ({
   user,
   userPlanFeatures,
 }: {
@@ -50,31 +65,16 @@ const Menu = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button color="ghost" aria-label="Menu Button" css={{ height: "100%" }}>
-          <Flex gap="1" align="center">
-            {userPlanFeatures.hasProPlan && (
-              <>
-                <ProBadge>{userPlanFeatures.planName}</ProBadge>
-                <div />
-              </>
-            )}
-
-            <Avatar
-              src={user?.image || undefined}
-              fallback={getAvatarLetter(nameOrEmail)}
-              alt={nameOrEmail}
-            />
-
-            <ChevronDownIcon
-              width={15}
-              height={15}
-              color={rawTheme.colors.foregroundMain}
-            />
-          </Flex>
-        </Button>
+        <ProfileButton
+          image={user.image || undefined}
+          name={nameOrEmail}
+          badge={
+            userPlanFeatures.hasProPlan ? userPlanFeatures.planName : undefined
+          }
+        />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="start">
           <DropdownMenuLabel>
             {user.username ?? defaultUserName}
             <Text>{user.email}</Text>
@@ -106,26 +106,5 @@ const Menu = ({
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
-  );
-};
-
-export const Header = ({
-  user,
-  userPlanFeatures,
-}: {
-  user: User;
-  userPlanFeatures: UserPlanFeatures;
-}) => {
-  return (
-    <Flex
-      as="header"
-      align="center"
-      justify="between"
-      className={containerStyle()}
-    >
-      <WebstudioIcon size={22} />
-
-      <Menu user={user} userPlanFeatures={userPlanFeatures} />
-    </Flex>
   );
 };

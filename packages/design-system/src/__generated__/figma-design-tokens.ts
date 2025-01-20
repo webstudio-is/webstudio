@@ -26,7 +26,7 @@ export const lineHeights = {
   "7": "58px",
   "8": "22px",
   "9": "38px",
-  "10": "360px",
+  "10": "260px",
 } as const;
 
 export const fontWeights = {
@@ -231,8 +231,8 @@ export const typography = {
   brandThumbnailLargeDefault: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 200,
-    fontSize: "360px",
-    lineHeight: "360px",
+    fontSize: "260px",
+    lineHeight: "260px",
     letterSpacing: "-0.05em",
     textTransform: "none",
     textDecoration: "none",
@@ -241,8 +241,8 @@ export const typography = {
   brandThumbnailLargeHover: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 800,
-    fontSize: "360px",
-    lineHeight: "360px",
+    fontSize: "260px",
+    lineHeight: "260px",
     letterSpacing: "-0.05em",
     textTransform: "none",
     textDecoration: "none",
@@ -553,7 +553,7 @@ export const fontSizes = {
   fontSize_4: "20px",
   fontSize_5: "32px",
   fontSize_6: "48px",
-  fontSize_7: "360px",
+  fontSize_7: "260px",
 } as const;
 
 export const other = { tokenSetOrder_0: "global" } as const;

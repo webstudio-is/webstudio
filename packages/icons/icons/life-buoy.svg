@@ -4,41 +4,14 @@
   viewBox="0 0 16 16"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
 >
-  <path
-    d="M7.99992 14.6667C11.6818 14.6667 14.6666 11.6819 14.6666 8C14.6666 4.3181 11.6818 1.33333 7.99992 1.33333C4.31802 1.33333 1.33325 4.3181 1.33325 8C1.33325 11.6819 4.31802 14.6667 7.99992 14.6667Z"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M3.28662 3.28667L6.11329 6.11333"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M9.88672 6.11333L12.7134 3.28667"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M9.88672 9.88667L12.7134 12.7133"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M6.11329 9.88667L3.28662 12.7133"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M7.99992 10.6667C9.47268 10.6667 10.6666 9.47276 10.6666 8C10.6666 6.52724 9.47268 5.33333 7.99992 5.33333C6.52716 5.33333 5.33325 6.52724 5.33325 8C5.33325 9.47276 6.52716 10.6667 7.99992 10.6667Z"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+  <circle cx="7.99483" cy="7.995" r="6.665" stroke="black" />
+  <path d="M3.2865 3.28667L6.11317 6.11333" />
+  <path d="M9.88647 6.11333L12.7131 3.28667" />
+  <path d="M9.88647 9.88667L12.7131 12.7133" />
+  <path d="M6.11317 9.88667L3.2865 12.7133" />
+  <circle cx="7.99483" cy="7.995" r="2.665" stroke="black" />
 </svg>

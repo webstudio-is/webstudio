@@ -163,7 +163,7 @@ export const CreateProject = ({
   return (
     <Dialog
       title="New Project"
-      trigger={<Button prefix={<PlusIcon />}>{buttonText}</Button>}
+      trigger={<Button prefix={<PlusIcon size={12} />}>{buttonText}</Button>}
       onOpenChange={handleOpenChange}
     >
       <DialogContent

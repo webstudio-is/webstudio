@@ -1,62 +1,40 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Flex,
+  List,
+  ListItem,
+  Text,
   TooltipProvider,
+  Toaster,
+  css,
   globalCss,
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Header } from "./header";
-import { Projects } from "./projects";
+import {
+  BodyIcon,
+  ContentIcon,
+  DiscordIcon,
+  ExtensionIcon,
+  LifeBuoyIcon,
+  YoutubeIcon,
+} from "@webstudio-is/icons";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { Resources } from "./resources";
-import { useLocation, useRevalidator } from "@remix-run/react";
+import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { Toaster } from "@webstudio-is/design-system";
+import { dashboardPath, templatesPath } from "~/shared/router-utils";
+import { CollapsibleSection } from "~/builder/shared/collapsible-section";
+import { ProfileMenu } from "./profile-menu";
+import { Projects } from "./projects/projects";
+import { Templates } from "./templates/templates";
+import { Header } from "./shared/layout";
 
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    background: theme.colors.brandBackgroundDashboard,
   },
 });
-
-const Main = (props: ComponentProps<typeof Flex>) => {
-  return (
-    <Flex
-      {...props}
-      as="main"
-      direction="column"
-      gap="5"
-      css={{ padding: theme.spacing[13] }}
-    />
-  );
-};
-
-const Section = (props: ComponentProps<typeof Flex>) => {
-  return (
-    <Flex
-      {...props}
-      justify="center"
-      as="section"
-      css={{ minWidth: theme.spacing[33] }}
-    />
-  );
-};
-
-export type DashboardProps = {
-  user: User;
-  projects: Array<DashboardProject>;
-  projectTemplates: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
-  publisherHost: string;
-  projectToClone?: {
-    authToken: string;
-    id: string;
-    title: string;
-  };
-};
 
 const CloneProject = ({
   projectToClone,
@@ -95,10 +73,74 @@ const CloneProject = ({
   ) : undefined;
 };
 
+const sidebarLinkStyle = css({
+  all: "unset",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing[5],
+  height: theme.spacing[13],
+  paddingInline: theme.panel.paddingInline,
+  outline: "none",
+  "&:focus-visible, &:hover": {
+    background: theme.colors.backgroundHover,
+  },
+  "&[aria-current=page]": {
+    background: theme.colors.backgroundItemCurrent,
+    color: theme.colors.foregroundMain,
+  },
+});
+
+const NavigationItems = ({
+  items,
+}: {
+  items: Array<{
+    to: string;
+    prefix: ReactNode;
+    children: string;
+    target?: string;
+  }>;
+}) => {
+  return (
+    <List style={{ padding: 0, margin: 0 }}>
+      {items.map((item, index) => {
+        return (
+          <ListItem asChild index={index}>
+            <NavLink
+              to={item.to}
+              end
+              target={item.target}
+              className={sidebarLinkStyle()}
+            >
+              {item.prefix}
+              <Text variant="labelsSentenceCase" color="main">
+                {item.children}
+              </Text>
+            </NavLink>
+          </ListItem>
+        );
+      })}
+    </List>
+  );
+};
+
+type DashboardProps = {
+  user: User;
+  projects?: Array<DashboardProject>;
+  templates?: Array<DashboardProject>;
+  userPlanFeatures: UserPlanFeatures;
+  publisherHost: string;
+  projectToClone?: {
+    authToken: string;
+    id: string;
+    title: string;
+  };
+};
+
 export const Dashboard = ({
   user,
   projects,
-  projectTemplates,
+  templates,
   userPlanFeatures,
   publisherHost,
   projectToClone,
@@ -107,20 +149,79 @@ export const Dashboard = ({
 
   return (
     <TooltipProvider>
-      <Header user={user} userPlanFeatures={userPlanFeatures} />
-      <Main>
-        <Section>
-          <Resources />
-        </Section>
-        <Section>
+      <Flex css={{ height: "100vh" }}>
+        <Flex
+          as="aside"
+          align="stretch"
+          direction="column"
+          css={{
+            width: theme.sizes.sidebarWidth,
+            borderRight: `1px solid ${theme.colors.borderMain}`,
+            position: "sticky",
+            top: 0,
+          }}
+        >
+          <Header variant="aside">
+            <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
+          </Header>
+          <nav>
+            <CollapsibleSection label="Workspace" fullWidth>
+              <NavigationItems
+                items={[
+                  {
+                    to: dashboardPath(),
+                    prefix: <BodyIcon />,
+                    children: "Projects",
+                  },
+                  {
+                    to: templatesPath(),
+                    prefix: <ExtensionIcon />,
+                    children: "Starter templates",
+                  },
+                ]}
+              />
+            </CollapsibleSection>
+            <CollapsibleSection label="Help & support" fullWidth>
+              <NavigationItems
+                items={[
+                  {
+                    to: "https://wstd.us/101",
+                    target: "_blank",
+                    prefix: <YoutubeIcon />,
+                    children: "Video tutorials",
+                  },
+                  {
+                    to: "https://help.webstudio.is/",
+                    target: "_blank",
+                    prefix: <LifeBuoyIcon />,
+                    children: "Support hub",
+                  },
+                  {
+                    to: "https://docs.webstudio.is",
+                    target: "_blank",
+                    prefix: <ContentIcon />,
+                    children: "Docs",
+                  },
+                  {
+                    to: "https://wstd.us/community",
+                    target: "_blank",
+                    prefix: <DiscordIcon />,
+                    children: "Community",
+                  },
+                ]}
+              />
+            </CollapsibleSection>
+          </nav>
+        </Flex>
+        {projects && (
           <Projects
             projects={projects}
-            projectTemplates={projectTemplates}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
           />
-        </Section>
-      </Main>
+        )}
+        {templates && <Templates templates={templates} />}
+      </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />
     </TooltipProvider>
