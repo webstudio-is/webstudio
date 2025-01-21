@@ -11,7 +11,6 @@ import {
   BugIcon,
   ContentIcon,
   DiscordIcon,
-  GithubIcon,
   LifeBuoyIcon,
   YoutubeIcon,
 } from "@webstudio-is/icons";
@@ -82,26 +81,6 @@ export const HelpCenter = ({
             css={{ justifyContent: "start" }}
           >
             Join the Community
-          </Button>
-          <Button
-            formAction="https://github.com/webstudio-is/webstudio-community/discussions"
-            prefix={<GithubIcon fill="currentColor" />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Discuss on GitHub
-          </Button>
-          <Button
-            prefix={<BugIcon />}
-            color="ghost"
-            onClick={() => {
-              window.open(
-                "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-              );
-            }}
-            css={{ justifyContent: "start" }}
-          >
-            Report a bug
           </Button>
         </Flex>
       </PopoverContent>
