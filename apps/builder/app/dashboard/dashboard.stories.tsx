@@ -38,18 +38,6 @@ const userPlanFeatures: UserPlanFeatures = {
   maxDomainsAllowedPerUser: 1,
 };
 
-export const Empty: StoryFn<typeof Dashboard> = () => {
-  const router = createRouter(
-    <Dashboard
-      user={user}
-      projects={[]}
-      userPlanFeatures={userPlanFeatures}
-      publisherHost={"https://wstd.work"}
-    />
-  );
-  return <RouterProvider router={router} />;
-};
-
 export const WithProjects: StoryFn<typeof Dashboard> = () => {
   const projects = [
     {
@@ -70,6 +58,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
   const router = createRouter(
     <Dashboard
       user={user}
+      welcome={false}
       projects={projects}
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
@@ -79,7 +68,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
 };
 
 export const WithTemplates: StoryFn<typeof Dashboard> = () => {
-  const projects = [
+  const templates = [
     {
       id: "0",
       createdAt: new Date().toString(),
@@ -98,7 +87,8 @@ export const WithTemplates: StoryFn<typeof Dashboard> = () => {
   const router = createRouter(
     <Dashboard
       user={user}
-      templates={projects}
+      templates={templates}
+      welcome
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
     />

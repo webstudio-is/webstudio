@@ -22,7 +22,9 @@ export const Projects = ({
         <Text variant="brandSectionTitle" as="h2">
           Projects
         </Text>
-        <Flex gap="2">{projects.length !== 0 && <CreateProject />}</Flex>
+        <Flex gap="2">
+          <CreateProject />
+        </Flex>
       </Header>
       <Flex
         direction="column"
