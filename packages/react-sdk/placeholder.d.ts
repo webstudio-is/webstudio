@@ -1,7 +1,6 @@
 declare module "__CONSTANTS__" {
   import type { ImageLoader } from "@webstudio-is/image";
   export const assetBaseUrl: string;
-  export const imageBaseUrl: string;
   export const imageLoader: ImageLoader;
 }
 

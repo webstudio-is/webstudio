@@ -4,7 +4,6 @@
  */
 
 export const assetBaseUrl = "/assets/";
-export const imageBaseUrl = "/assets/";
 
 /**
  * @type {import("@webstudio-is/image").ImageLoader}

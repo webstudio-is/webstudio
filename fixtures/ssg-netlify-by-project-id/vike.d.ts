@@ -11,7 +11,6 @@ declare global {
     interface PageContext {
       constants: {
         assetBaseUrl: string;
-        imageBaseUrl: string;
         imageLoader: ImageLoader;
       };
       data: {
