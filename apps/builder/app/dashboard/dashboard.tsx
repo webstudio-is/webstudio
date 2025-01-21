@@ -1,4 +1,4 @@
-import { Children, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Flex,
   List,
@@ -11,14 +11,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import {
-  BodyIcon,
-  ContentIcon,
-  DiscordIcon,
-  ExtensionIcon,
-  LifeBuoyIcon,
-  YoutubeIcon,
-} from "@webstudio-is/icons";
+import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
