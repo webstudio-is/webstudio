@@ -38,6 +38,7 @@ export const HelpCenter = ({
         >
           {help.map((item) => (
             <Button
+              key={item.url}
               prefix={item.icon}
               css={{ justifyContent: "start" }}
               color="ghost"
