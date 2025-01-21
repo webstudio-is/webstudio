@@ -7,15 +7,9 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  BugIcon,
-  ContentIcon,
-  DiscordIcon,
-  LifeBuoyIcon,
-  YoutubeIcon,
-} from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 import { $remoteDialog } from "../../shared/nano-states";
+import { help } from "~/shared/help";
 
 export const HelpCenter = ({
   children,
@@ -42,46 +36,24 @@ export const HelpCenter = ({
           css={{ padding: theme.spacing[5] }}
           gap="2"
         >
-          <Button
-            type="button"
-            prefix={<LifeBuoyIcon />}
-            css={{ justifyContent: "start" }}
-            color="ghost"
-            onClick={() => {
-              $remoteDialog.set({
-                title: "Support Hub",
-                url: "https://help.webstudio.is/",
-              });
-            }}
-          >
-            Support Hub
-          </Button>
-          <Button
-            formAction="https://wstd.us/101"
-            name="list"
-            value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
-            prefix={<YoutubeIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Learn with videos
-          </Button>
-          <Button
-            formAction="https://docs.webstudio.is/"
-            prefix={<ContentIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Learn from docs
-          </Button>
-          <Button
-            formAction="https://wstd.us/community"
-            prefix={<DiscordIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Join the Community
-          </Button>
+          {help.map((item) => (
+            <Button
+              prefix={item.icon}
+              css={{ justifyContent: "start" }}
+              color="ghost"
+              formAction={item.url}
+              onClick={() => {
+                if ("target" in item && item.target === "embed") {
+                  $remoteDialog.set({
+                    title: item.label,
+                    url: item.url,
+                  });
+                }
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
         </Flex>
       </PopoverContent>
     </Popover>
