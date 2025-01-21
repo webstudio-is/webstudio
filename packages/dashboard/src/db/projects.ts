@@ -85,6 +85,7 @@ export const hasAny = async (userId: string, context: AppContext) => {
   const data = await context.postgrest.client
     .from("DashboardProject")
     .select("id")
+    .limit(1)
     .eq("userId", userId)
     .eq("isDeleted", false);
 
