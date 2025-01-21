@@ -6,15 +6,15 @@ import { TemplateCard } from "./template-card";
 
 type ProjectsProps = {
   templates: Array<DashboardProject>;
-  title?: string;
+  welcome: boolean;
 };
 
-export const Templates = ({ templates, title }: ProjectsProps) => {
+export const Templates = ({ templates, welcome }: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
-          {title ?? "Starter templates"}
+          {welcome ? "What will you create?" : "Starter templates"}
         </Text>
         <Flex gap="2">
           <CreateProject />

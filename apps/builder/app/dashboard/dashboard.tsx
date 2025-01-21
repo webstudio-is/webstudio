@@ -232,12 +232,7 @@ export const Dashboard = ({
             publisherHost={publisherHost}
           />
         )}
-        {templates && (
-          <Templates
-            templates={templates}
-            title={welcome ? "What will you create?" : undefined}
-          />
-        )}
+        {templates && <Templates templates={templates} welcome={welcome} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />
