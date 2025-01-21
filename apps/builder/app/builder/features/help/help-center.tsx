@@ -7,16 +7,9 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  BugIcon,
-  ContentIcon,
-  DiscordIcon,
-  GithubIcon,
-  LifeBuoyIcon,
-  YoutubeIcon,
-} from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
 import { $remoteDialog } from "../../shared/nano-states";
+import { help } from "~/shared/help";
 
 export const HelpCenter = ({
   children,
@@ -43,66 +36,25 @@ export const HelpCenter = ({
           css={{ padding: theme.spacing[5] }}
           gap="2"
         >
-          <Button
-            type="button"
-            prefix={<LifeBuoyIcon />}
-            css={{ justifyContent: "start" }}
-            color="ghost"
-            onClick={() => {
-              $remoteDialog.set({
-                title: "Support Hub",
-                url: "https://help.webstudio.is/",
-              });
-            }}
-          >
-            Support Hub
-          </Button>
-          <Button
-            formAction="https://wstd.us/101"
-            name="list"
-            value="PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
-            prefix={<YoutubeIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Learn with videos
-          </Button>
-          <Button
-            formAction="https://docs.webstudio.is/"
-            prefix={<ContentIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Learn from docs
-          </Button>
-          <Button
-            formAction="https://wstd.us/community"
-            prefix={<DiscordIcon />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Join the Community
-          </Button>
-          <Button
-            formAction="https://github.com/webstudio-is/webstudio-community/discussions"
-            prefix={<GithubIcon fill="currentColor" />}
-            color="ghost"
-            css={{ justifyContent: "start" }}
-          >
-            Discuss on GitHub
-          </Button>
-          <Button
-            prefix={<BugIcon />}
-            color="ghost"
-            onClick={() => {
-              window.open(
-                "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-              );
-            }}
-            css={{ justifyContent: "start" }}
-          >
-            Report a bug
-          </Button>
+          {help.map((item) => (
+            <Button
+              key={item.url}
+              prefix={item.icon}
+              css={{ justifyContent: "start" }}
+              color="ghost"
+              formAction={item.url}
+              onClick={() => {
+                if ("target" in item && item.target === "embed") {
+                  $remoteDialog.set({
+                    title: item.label,
+                    url: item.url,
+                  });
+                }
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
         </Flex>
       </PopoverContent>
     </Popover>

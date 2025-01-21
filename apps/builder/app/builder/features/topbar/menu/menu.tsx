@@ -19,6 +19,7 @@ import {
   $isCloneDialogOpen,
   $isShareDialogOpen,
   $publishDialog,
+  $remoteDialog,
 } from "~/builder/shared/nano-states";
 import { cloneProjectUrl, dashboardUrl } from "~/shared/router-utils";
 import {
@@ -33,6 +34,7 @@ import { MenuButton } from "./menu-button";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
+import { help } from "~/shared/help";
 
 const ViewMenuItem = () => {
   const navigatorLayout = getSetting("navigatorLayout");
@@ -79,7 +81,7 @@ export const Menu = () => {
   const cloneIsExternal = authToken !== undefined;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <MenuButton />
       <DropdownMenuPortal>
         <DropdownMenuContent
@@ -262,13 +264,31 @@ export const Menu = () => {
           >
             Keyboard shortcuts
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              window.open("https://docs.webstudio.is");
-            }}
-          >
-            Learn Webstudio
-          </DropdownMenuItem>
+
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Help</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent width="regular">
+              {help.map((item) => (
+                <DropdownMenuItem
+                  key={item.url}
+                  onSelect={(event) => {
+                    if ("target" in item && item.target === "embed") {
+                      event.preventDefault();
+                      $remoteDialog.set({
+                        title: item.label,
+                        url: item.url,
+                      });
+                      return;
+                    }
+                    window.open(item.url);
+                  }}
+                >
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+
           {hasProPlan === false && (
             <>
               <DropdownMenuSeparator />
