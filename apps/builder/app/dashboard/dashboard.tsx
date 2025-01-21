@@ -128,6 +128,7 @@ type DashboardProps = {
   user: User;
   projects?: Array<DashboardProject>;
   templates?: Array<DashboardProject>;
+  welcome: boolean;
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectToClone?: {
@@ -141,6 +142,7 @@ export const Dashboard = ({
   user,
   projects,
   templates,
+  welcome,
   userPlanFeatures,
   publisherHost,
   projectToClone,
@@ -167,18 +169,28 @@ export const Dashboard = ({
           <nav>
             <CollapsibleSection label="Workspace" fullWidth>
               <NavigationItems
-                items={[
-                  {
-                    to: dashboardPath(),
-                    prefix: <BodyIcon />,
-                    children: "Projects",
-                  },
-                  {
-                    to: templatesPath(),
-                    prefix: <ExtensionIcon />,
-                    children: "Starter templates",
-                  },
-                ]}
+                items={
+                  welcome
+                    ? [
+                        {
+                          to: templatesPath(),
+                          prefix: <ExtensionIcon />,
+                          children: "Welcome",
+                        },
+                      ]
+                    : [
+                        {
+                          to: dashboardPath(),
+                          prefix: <BodyIcon />,
+                          children: "Projects",
+                        },
+                        {
+                          to: templatesPath(),
+                          prefix: <ExtensionIcon />,
+                          children: "Starter templates",
+                        },
+                      ]
+                }
               />
             </CollapsibleSection>
             <CollapsibleSection label="Help & support" fullWidth>
@@ -220,7 +232,7 @@ export const Dashboard = ({
             publisherHost={publisherHost}
           />
         )}
-        {templates && <Templates templates={templates} />}
+        {templates && <Templates templates={templates} welcome={welcome} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

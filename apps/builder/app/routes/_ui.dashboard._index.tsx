@@ -2,7 +2,7 @@ import { lazy } from "react";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
-import { builderUrl } from "~/shared/router-utils";
+import { builderUrl, templatesPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { createCallerFactory } from "@webstudio-is/trpc-interface/index.server";
@@ -13,6 +13,7 @@ import {
 } from "~/shared/router-utils/dashboard";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { allowedDestinations } from "~/services/destinations.server";
+import { redirect } from "react-router-dom";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
 const dashboardProjectCaller = createCallerFactory(dashboardProjectRouter);
@@ -50,11 +51,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const projects = await dashboardProjectCaller(context).findMany({
     userId: user.id,
   });
+
+  if (projects.length === 0) {
+    throw redirect(templatesPath());
+  }
+
   const projectToClone = await getProjectToClone(request, context);
 
   return {
     user,
     projects,
+    welcome: false,
     userPlanFeatures,
     publisherHost: env.PUBLISHER_HOST,
     origin,

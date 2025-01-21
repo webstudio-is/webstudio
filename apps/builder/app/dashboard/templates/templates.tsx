@@ -1,19 +1,24 @@
 import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
+import { CreateProject } from "../projects/project-dialogs";
 import { TemplateCard } from "./template-card";
 
 type ProjectsProps = {
   templates: Array<DashboardProject>;
+  welcome: boolean;
 };
 
-export const Templates = ({ templates }: ProjectsProps) => {
+export const Templates = ({ templates, welcome }: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
         <Text variant="brandSectionTitle" as="h2">
-          Starter templates
+          {welcome ? "What will you create?" : "Starter templates"}
         </Text>
+        <Flex gap="2">
+          <CreateProject />
+        </Flex>
       </Header>
       {templates.length > 0 && (
         <Flex

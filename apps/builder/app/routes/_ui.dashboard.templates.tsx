@@ -36,10 +36,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const templates = await dashboardProjectCaller(context).findManyByIds({
     projectIds: env.PROJECT_TEMPLATES,
   });
+  const hasProjects = await dashboardProjectCaller(context).hasAny({
+    userId: user.id,
+  });
 
   return {
     user,
     templates,
+    welcome: hasProjects === false,
     userPlanFeatures,
     publisherHost: env.PUBLISHER_HOST,
     origin,
