@@ -13,85 +13,92 @@ export const dedupeMeta: Plugin = {
         return;
       }
 
-      console.log("req.url", req.url);
+      // Capture the original response
+      const originalWrite = res.write;
+      const originalEnd = res.end;
 
-      if (req.url?.endsWith("/head-tag")) {
-        // Capture the original response
-        const originalWrite = res.write;
-        const originalEnd = res.end;
+      let body = "";
 
-        let body = "";
+      res.write = (chunk) => {
+        body += chunk.toString();
+        return true;
+      };
 
-        res.write = (chunk) => {
+      res.end = (chunk) => {
+        if (chunk) {
           body += chunk.toString();
-          return true;
-        };
+        }
 
-        res.end = (chunk) => {
-          if (chunk) {
-            body += chunk.toString();
-          }
+        const response = new Response(body);
 
-          const response = new Response(body);
+        const metasSet = new Set<string>();
+        let hasTitle = false;
+        let hasCanonicalLink = false;
 
-          const metasSet = new Set<string>();
-          let hasTitle = false;
+        const rewriter = new HTMLRewriter()
+          .on("meta", {
+            element(element) {
+              const propertyOrName =
+                element.getAttribute("property") ||
+                element.getAttribute("name");
 
-          const rewriter = new HTMLRewriter()
-            .on("meta", {
-              element(element) {
-                const propertyOrName =
-                  element.getAttribute("property") ||
-                  element.getAttribute("name");
+              if (propertyOrName === null) {
+                return;
+              }
 
-                if (propertyOrName === null) {
-                  return;
-                }
+              if (propertyOrName === "viewport") {
+                // Allow "viewport" property deduplication
+                return;
+              }
 
-                if (propertyOrName === "viewport") {
-                  // Allow "viewport" property deduplication
-                  return;
-                }
+              if (metasSet.has(propertyOrName)) {
+                console.info(
+                  `Duplicate meta with name|property = ${propertyOrName} removed`
+                );
+                element.remove();
+                return;
+              }
 
-                if (metasSet.has(propertyOrName)) {
-                  console.info(
-                    `Duplicate meta with name|property = ${propertyOrName} removed`
-                  );
-                  element.remove();
-                  return;
-                }
+              metasSet.add(propertyOrName);
+            },
+          })
+          .on("title", {
+            element(element) {
+              if (hasTitle) {
+                console.info(`Duplicate title removed`);
+                element.remove();
+                return;
+              }
 
-                metasSet.add(propertyOrName);
-              },
-            })
-            .on("title", {
-              element(element) {
-                if (hasTitle) {
-                  element.remove();
-                  return;
-                }
+              hasTitle = true;
+            },
+          })
+          .on('link[rel="canonical"]', {
+            element(element) {
+              if (hasCanonicalLink) {
+                console.info(`Duplicate link rel canonical removed`);
+                element.remove();
+                return;
+              }
 
-                hasTitle = true;
-              },
-            });
-          rewriter
-            // @ts-ignore
-            .transform(response)
-            .text()
-            .then((cleanedHtml) => {
-              // Send the modified response
-              res.setHeader("Content-Length", Buffer.byteLength(cleanedHtml));
-              originalWrite.call(res, cleanedHtml, "utf-8");
-              originalEnd.call(res, "", "utf-8");
-            });
+              hasCanonicalLink = true;
+            },
+          });
+        rewriter
+          // @ts-ignore
+          .transform(response)
+          .text()
+          .then((cleanedHtml) => {
+            // Send the modified response
+            res.setHeader("Content-Length", Buffer.byteLength(cleanedHtml));
+            originalWrite.call(res, cleanedHtml, "utf-8");
+            originalEnd.call(res, "", "utf-8");
+          });
 
-          return res;
-        };
+        return res;
+      };
 
-        next();
-      } else {
-        next();
-      }
+      next();
     });
   },
 };
