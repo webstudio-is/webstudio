@@ -48,7 +48,7 @@ export const meta: WsComponentMeta = {
   icon: MinusIcon,
   states: defaultStates,
   presetStyle,
-  order: 5,
+  order: 3,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

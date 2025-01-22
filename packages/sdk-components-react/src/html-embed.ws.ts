@@ -26,7 +26,7 @@ export const meta: WsComponentMeta = {
   description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
   presetStyle,
-  order: 8,
+  order: 2,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

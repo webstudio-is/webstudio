@@ -8,7 +8,7 @@ export const meta: WsComponentMeta = {
     "Slot is a container for content that you want to reference across the project. Changes made to a Slot's children will be reflected in all other instances of that Slot.",
   icon: SlotComponentIcon,
   stylable: false,
-  order: 6,
+  order: 5,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
