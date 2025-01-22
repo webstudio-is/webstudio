@@ -109,7 +109,7 @@ const NameField = ({
   );
   useEffect(() => {
     ref.current?.setCustomValidity(validateName(defaultValue));
-  }, [defaultValue]);
+  }, [defaultValue, validateName]);
   return (
     <Grid gap={1}>
       <Label htmlFor={nameId}>Name</Label>
