@@ -8,11 +8,7 @@ import {
   TextIcon,
   CheckMarkIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
 import {
   propsSelect,
@@ -25,12 +21,9 @@ import {
   propsSelectViewport,
 } from "./__generated__/select.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 export const metaSelect: WsComponentMeta = {
   type: "container",
+  icon: SelectIcon,
   constraints: [
     {
       relation: "descendant",
@@ -41,8 +34,6 @@ export const metaSelect: WsComponentMeta = {
       component: { $eq: "SelectContent" },
     },
   ],
-  icon: SelectIcon,
-  stylable: false,
 };
 
 export const metaSelectTrigger: WsComponentMeta = {
@@ -79,7 +70,9 @@ export const metaSelectValue: WsComponentMeta = {
 export const metaSelectContent: WsComponentMeta = {
   type: "container",
   icon: ContentIcon,
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   constraints: [
     {
       relation: "ancestor",
@@ -95,7 +88,9 @@ export const metaSelectContent: WsComponentMeta = {
 export const metaSelectViewport: WsComponentMeta = {
   type: "container",
   icon: ViewportIcon,
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   constraints: [
     {
       relation: "ancestor",
@@ -125,7 +120,9 @@ export const metaSelectItem: WsComponentMeta = {
       component: { $eq: "SelectItemText" },
     },
   ],
-  presetStyle,
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaSelectItemIndicator: WsComponentMeta = {

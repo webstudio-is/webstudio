@@ -11,10 +11,9 @@ import {
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
-  Instances,
   ROOT_INSTANCE_ID,
-  Styles,
-  StyleSourceSelections,
+  type Styles,
+  type StyleSourceSelections,
   type Breakpoint,
   type Instance,
   type StyleDecl,
@@ -23,7 +22,6 @@ import {
 import { rootComponent } from "@webstudio-is/sdk";
 import {
   $breakpoints,
-  $instances,
   $propsIndex,
   $registeredComponentMetas,
   $selectedBreakpoint,
@@ -38,8 +36,10 @@ import {
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
-import type { InstanceSelector } from "~/shared/tree-utils";
-import { $selectedInstancePath } from "~/shared/awareness";
+import {
+  $selectedInstancePathWithRoot,
+  type InstancePath,
+} from "~/shared/awareness";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -60,7 +60,7 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
 });
 
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $selectedInstancePath, $propsIndex],
+  [$registeredComponentMetas, $selectedInstancePathWithRoot, $propsIndex],
   (metas, instancePath, propsIndex) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
@@ -91,20 +91,23 @@ export const $instanceTags = computed(
   }
 );
 
-const $instanceComponents = computed($selectedInstancePath, (instancePath) => {
-  const instanceComponents = new Map<Instance["id"], Instance["component"]>([
-    [ROOT_INSTANCE_ID, rootComponent],
-  ]);
-  if (instancePath === undefined) {
+const $instanceComponents = computed(
+  $selectedInstancePathWithRoot,
+  (instancePath) => {
+    const instanceComponents = new Map<Instance["id"], Instance["component"]>([
+      [ROOT_INSTANCE_ID, rootComponent],
+    ]);
+    if (instancePath === undefined) {
+      return instanceComponents;
+    }
+    // store only component for selected instance and ancestors
+    // to avoid iterating over all instances in the project
+    for (const { instance } of instancePath) {
+      instanceComponents.set(instance.id, instance.component);
+    }
     return instanceComponents;
   }
-  // store only component for selected instance and ancestors
-  // to avoid iterating over all instances in the project
-  for (const { instance } of instancePath) {
-    instanceComponents.set(instance.id, instance.component);
-  }
-  return instanceComponents;
-});
+);
 
 export const $matchingBreakpoints = computed(
   [$breakpoints, $selectedBreakpoint],
@@ -124,15 +127,13 @@ export const $matchingBreakpoints = computed(
 );
 
 export const getDefinedStyles = ({
-  instanceSelector,
-  instances,
+  instancePath,
   metas,
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
 }: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
+  instancePath: InstancePath;
   metas: Map<string, WsComponentMeta>;
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
@@ -145,20 +146,18 @@ export const getDefinedStyles = ({
   const inheritedStyleSources = new Set();
   const instanceStyleSources = new Set();
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    const meta = instance?.component
-      ? metas.get(instance.component)
-      : undefined;
+  const startingInstanceSelector = instancePath[0].instanceSelector;
+  for (const { instance } of instancePath) {
+    const meta = metas.get(instance.component);
     for (const presetStyles of Object.values(meta?.presetStyle ?? {})) {
       for (const styleDecl of presetStyles) {
         definedStyles.add(styleDecl);
       }
     }
-    const styleSources = styleSourceSelections.get(instanceId)?.values;
+    const styleSources = styleSourceSelections.get(instance.id)?.values;
     if (styleSources) {
       for (const styleSourceId of styleSources) {
-        if (instanceId === instanceSelector[0]) {
+        if (instance.id === startingInstanceSelector[0]) {
           instanceStyleSources.add(styleSourceId);
         } else {
           inheritedStyleSources.add(styleSourceId);
@@ -188,43 +187,20 @@ export const getDefinedStyles = ({
   return definedStyles;
 };
 
-const $instanceAndRootSelector = computed(
-  $selectedInstancePath,
-  (instancePath) => {
-    if (instancePath === undefined) {
-      return;
-    }
-    const [selectedItem] = instancePath;
-    if (selectedItem.instance.id === ROOT_INSTANCE_ID) {
-      return selectedItem.instanceSelector;
-    }
-    return [...selectedItem.instanceSelector, ROOT_INSTANCE_ID];
-  }
-);
-
 export const $definedStyles = computed(
   [
-    $instanceAndRootSelector,
-    $instances,
+    $selectedInstancePathWithRoot,
     $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
   ],
-  (
-    instanceSelector,
-    instances,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles
-  ) => {
-    if (instanceSelector === undefined) {
+  (instancePath, metas, styleSourceSelections, matchingBreakpoints, styles) => {
+    if (instancePath === undefined) {
       return new Set<StyleDecl>();
     }
     return getDefinedStyles({
-      instanceSelector,
-      instances,
+      instancePath,
       metas,
       matchingBreakpoints,
       styleSourceSelections,
@@ -268,10 +244,10 @@ export const $definedComputedStyles = computed(
   [
     $definedStyles,
     $model,
-    $instanceAndRootSelector,
+    $selectedInstancePathWithRoot,
     $selectedOrLastStyleSourceSelector,
   ],
-  (definedStyles, model, instanceSelector, styleSourceSelector) => {
+  (definedStyles, model, instancePath, styleSourceSelector) => {
     const computedStyles = new Map<string, ComputedStyleDecl>();
     for (const { property } of definedStyles) {
       // deduplicate by property name
@@ -280,7 +256,7 @@ export const $definedComputedStyles = computed(
       }
       const computedStyleDecl = getComputedStyleDecl({
         model,
-        instanceSelector,
+        instanceSelector: instancePath?.[0].instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,
@@ -322,11 +298,11 @@ export const $availableColorVariables = computed(
 
 export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
-    [$model, $instanceAndRootSelector, $selectedOrLastStyleSourceSelector],
-    (model, instanceSelector, styleSourceSelector) => {
+    [$model, $selectedInstancePathWithRoot, $selectedOrLastStyleSourceSelector],
+    (model, instancePath, styleSourceSelector) => {
       return getComputedStyleDecl({
         model,
-        instanceSelector,
+        instanceSelector: instancePath?.[0].instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,
@@ -348,28 +324,20 @@ export const useComputedStyleDecl = (property: StyleProperty) => {
 };
 
 const $closestStylableInstanceSelector = computed(
-  [$instanceAndRootSelector, $instances, $registeredComponentMetas],
-  (instanceSelector, instances, metas) => {
+  [$selectedInstancePathWithRoot, $registeredComponentMetas],
+  (instancePath, metas) => {
     // ignore unstylable instances which do not affect parent/child relationships
-    if (instanceSelector === undefined) {
+    if (instancePath === undefined) {
       return;
     }
-    const closestStylableIndex = instanceSelector.findIndex(
-      (instanceId, index) => {
-        // start with parent
-        if (index === 0) {
-          return false;
-        }
-        const component = instances.get(instanceId)?.component;
-        if (component) {
-          return metas.get(component)?.stylable ?? true;
-        }
-        // ids without instances are collection items
-        // they are not stylable
+    const match = instancePath.find(({ instance }, index) => {
+      // start with parent
+      if (index === 0) {
         return false;
       }
-    );
-    return instanceSelector.slice(closestStylableIndex);
+      return metas.get(instance.component)?.presetStyle !== undefined;
+    });
+    return match?.instanceSelector;
   }
 );
 

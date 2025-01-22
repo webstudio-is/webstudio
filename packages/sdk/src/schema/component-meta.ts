@@ -62,7 +62,6 @@ export const WsComponentMeta = z.object({
   // important to automatically enumerate collections without
   // naming every item manually
   indexWithinAncestor: z.optional(z.string()),
-  stylable: z.optional(z.boolean()),
   label: z.optional(z.string()),
   description: z.string().optional(),
   icon: z.string(),
