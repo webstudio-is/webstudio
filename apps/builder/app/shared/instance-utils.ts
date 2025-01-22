@@ -1087,14 +1087,16 @@ export const insertWebstudioFragmentCopy = ({
         dataSources.set(newDataSourceId, {
           ...dataSource,
           id: newDataSourceId,
-          scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+          scopeInstanceId:
+            newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId,
           resourceId: newResourceId,
         });
       } else {
         dataSources.set(newDataSourceId, {
           ...dataSource,
           id: newDataSourceId,
-          scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+          scopeInstanceId:
+            newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId,
         });
       }
     }
