@@ -957,10 +957,9 @@ export const BlockquoteIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="currentColor"
-          fillRule="evenodd"
-          d="M6.142 8.5c-.056.516-.205.928-.465 1.293-.349.488-.933.943-1.9 1.427a.5.5 0 1 0 .447.894c1.032-.516 1.782-1.061 2.266-1.74.494-.691.677-1.47.677-2.374V5c0-.644-.523-1.167-1.167-1.167H3.333c-.644 0-1.166.523-1.166 1.167v2.333c0 .645.522 1.167 1.166 1.167h2.809ZM12.808 8.5c-.055.516-.204.928-.465 1.293-.348.488-.933.943-1.9 1.427a.5.5 0 1 0 .447.894c1.033-.516 1.782-1.061 2.267-1.74.494-.691.676-1.47.676-2.374V5c0-.644-.522-1.167-1.166-1.167H10c-.644 0-1.167.523-1.167 1.167v2.333c0 .645.523 1.167 1.167 1.167h2.808Z"
-          clipRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          d="M6.667 8H3.333a.667.667 0 0 1-.666-.667V5a.667.667 0 0 1 .666-.667H6A.667.667 0 0 1 6.667 5v3Zm0 0C6.667 9.667 6 10.667 4 11.667M13.333 8H10a.667.667 0 0 1-.667-.667V5A.667.667 0 0 1 10 4.333h2.667a.667.667 0 0 1 .666.667v3Zm0 0c0 1.667-.666 2.667-2.666 3.667"
         />
       </svg>
     );
@@ -1764,13 +1763,13 @@ export const ContentEmbedIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6M12.817 13.698 14 12.515l-1.183-1.182"
+          d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6M13.686 14.265l1.4-1.4-1.4-1.4"
         />
         <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="m9.269 11.333-1.183 1.182 1.183 1.183M11.652 10.612l-1.218 3.651"
+          d="m9.486 11.465-1.4 1.4 1.4 1.4M12.306 10.612l-1.441 4.321"
         />
       </svg>
     );
@@ -3141,7 +3140,7 @@ export const MarkdownEmbedIcon: IconComponent = forwardRef(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M11 14.314v-3l1.5 1.523 1.5-1.523v3"
+          d="M10 14.314v-4l2 2.03 2-2.03v4"
         />
       </svg>
     );
@@ -3969,6 +3968,36 @@ export const ResetIcon: IconComponent = forwardRef(
   }
 );
 ResetIcon.displayName = "ResetIcon";
+
+export const ResourceIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6"
+        />
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.45 14.5h-.7a1.75 1.75 0 1 1 0-3.5h.7M12.55 11h.7a1.75 1.75 0 1 1 0 3.5h-.7M10.1 12.75h2.8"
+        />
+      </svg>
+    );
+  }
+);
+ResourceIcon.displayName = "ResourceIcon";
 
 export const ScrollIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -5413,6 +5442,62 @@ export const WebstudioIcon: IconComponent = forwardRef(
   }
 );
 WebstudioIcon.displayName = "WebstudioIcon";
+
+export const WindowInfoIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 2H3.333C2.597 2 2 2.597 2 3.333v9.334C2 13.403 2.597 14 3.333 14h9.334c.736 0 1.333-.597 1.333-1.333V3.333C14 2.597 13.403 2 12.667 2ZM8 11.516V7.853"
+        />
+        <rect
+          width="1.4"
+          height="1.4"
+          x="7.3"
+          y="4.484"
+          fill="currentColor"
+          rx=".7"
+        />
+      </svg>
+    );
+  }
+);
+WindowInfoIcon.displayName = "WindowInfoIcon";
+
+export const WindowTitleIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12.667 4H3.333C2.597 4 2 4.497 2 5.111v7.778C2 13.503 2.597 14 3.333 14h9.334c.736 0 1.333-.498 1.333-1.111V5.11C14 4.497 13.403 4 12.667 4ZM4 2h8"
+        />
+      </svg>
+    );
+  }
+);
+WindowTitleIcon.displayName = "WindowTitleIcon";
 
 export const WrapIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {

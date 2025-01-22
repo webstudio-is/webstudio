@@ -1,4 +1,4 @@
-import { Link2Icon } from "@webstudio-is/icons/svg";
+import { ResourceIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
@@ -8,7 +8,7 @@ import { props } from "./__generated__/head-link.props";
 
 export const meta: WsComponentMeta = {
   category: "hidden",
-  icon: Link2Icon,
+  icon: ResourceIcon,
   type: "container",
   stylable: false,
   constraints: {
