@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { evaluateExpressionWithinScope } from "./binding-popover";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { evaluateExpressionWithinScope } from "./binding-popover";
 
 test("evaluateExpressionWithinScope works", () => {
   const variableName = "jsonVariable";

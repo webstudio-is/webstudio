@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   type ReactNode,
@@ -12,6 +13,7 @@ import {
   useRef,
   createContext,
   useEffect,
+  useCallback,
 } from "react";
 import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
@@ -55,7 +57,7 @@ import {
   $userPlanFeatures,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-
+import { $selectedInstance } from "~/shared/awareness";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
   EditorDialog,
@@ -68,18 +70,46 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
-import { $selectedInstance } from "~/shared/awareness";
 
-const validateName = (value: string) =>
-  value.trim().length === 0 ? "Name is required" : "";
+const $variablesByName = computed(
+  [$selectedInstance, $dataSources],
+  (instance, dataSources) => {
+    const variablesByName = new Map<DataSource["name"], DataSource["id"]>();
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.scopeInstanceId === instance?.id) {
+        variablesByName.set(dataSource.name, dataSource.id);
+      }
+    }
+    return variablesByName;
+  }
+);
 
-const NameField = ({ defaultValue }: { defaultValue: string }) => {
+const NameField = ({
+  variableId,
+  defaultValue,
+}: {
+  variableId: undefined | DataSource["id"];
+  defaultValue: string;
+}) => {
   const ref = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const nameId = useId();
+  const variablesByName = useStore($variablesByName);
+  const validateName = useCallback(
+    (value: string) => {
+      if (variablesByName.get(value) !== variableId) {
+        return "Name is already used by another variable on this instance";
+      }
+      if (value.trim().length === 0) {
+        return "Name is required";
+      }
+      return "";
+    },
+    [variablesByName, variableId]
+  );
   useEffect(() => {
     ref.current?.setCustomValidity(validateName(defaultValue));
-  }, [defaultValue]);
+  }, [defaultValue, validateName]);
   return (
     <Grid gap={1}>
       <Label htmlFor={nameId}>Name</Label>
@@ -510,7 +540,10 @@ const VariablePanel = forwardRef<
   if (variableType === "parameter") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <ParameterForm ref={ref} variable={variable} />
       </>
     );
@@ -518,7 +551,10 @@ const VariablePanel = forwardRef<
   if (variableType === "string") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <StringForm ref={ref} variable={variable} />
       </>
@@ -527,7 +563,10 @@ const VariablePanel = forwardRef<
   if (variableType === "number") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <NumberForm ref={ref} variable={variable} />
       </>
@@ -536,7 +575,10 @@ const VariablePanel = forwardRef<
   if (variableType === "boolean") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <BooleanForm ref={ref} variable={variable} />
       </>
@@ -545,7 +587,10 @@ const VariablePanel = forwardRef<
   if (variableType === "json") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <JsonForm ref={ref} variable={variable} />
       </>
@@ -555,7 +600,10 @@ const VariablePanel = forwardRef<
   if (variableType === "resource") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <ResourceForm ref={ref} variable={variable} />
       </>
@@ -565,7 +613,10 @@ const VariablePanel = forwardRef<
   if (variableType === "graphql-resource") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <GraphqlResourceForm ref={ref} variable={variable} />
       </>
@@ -575,7 +626,10 @@ const VariablePanel = forwardRef<
   if (variableType === "system-resource") {
     return (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
         <TypeField value={variableType} onChange={setVariableType} />
         <SystemResourceForm ref={ref} variable={variable} />
       </>
