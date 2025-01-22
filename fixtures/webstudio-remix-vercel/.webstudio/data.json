@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "1bd755a0-9c8a-416b-b373-2123f3568393",
+    "id": "3173a7d8-1af3-4e23-87fd-94c3b0cb1018",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 464,
-    "createdAt": "2025-01-19T14:02:13.405+00:00",
-    "updatedAt": "2025-01-19T14:02:13.405+00:00",
+    "version": 474,
+    "createdAt": "2025-01-22T17:59:53.714+00:00",
+    "updatedAt": "2025-01-22T17:59:53.714+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2979,6 +2979,26 @@
           "type": "boolean",
           "value": true
         }
+      ],
+      [
+        "DohJcBH-kmzk2lvN_F2hS",
+        {
+          "id": "DohJcBH-kmzk2lvN_F2hS",
+          "instanceId": "56x98yMSVYpp7eVo8wuzK",
+          "name": "rel",
+          "type": "string",
+          "value": "canonical"
+        }
+      ],
+      [
+        "_wNeTsN1d6jG8ZM5ud05d",
+        {
+          "id": "_wNeTsN1d6jG8ZM5ud05d",
+          "instanceId": "56x98yMSVYpp7eVo8wuzK",
+          "name": "href",
+          "type": "string",
+          "value": "https://overwritten.slot/head-slot-tag"
+        }
       ]
     ],
     "dataSources": [
@@ -5026,6 +5046,10 @@
             {
               "type": "id",
               "value": "EveN4Skg9xb8Lj1QJcW52"
+            },
+            {
+              "type": "id",
+              "value": "56x98yMSVYpp7eVo8wuzK"
             }
           ]
         }
@@ -5101,6 +5125,16 @@
               "value": "Head Slot Title"
             }
           ]
+        }
+      ],
+      [
+        "56x98yMSVYpp7eVo8wuzK",
+        {
+          "type": "instance",
+          "id": "56x98yMSVYpp7eVo8wuzK",
+          "component": "HeadLink",
+          "label": "Link",
+          "children": []
         }
       ]
     ],

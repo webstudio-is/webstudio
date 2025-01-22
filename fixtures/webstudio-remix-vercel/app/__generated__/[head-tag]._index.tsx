@@ -43,6 +43,10 @@ const Page = ({}: { system: any }) => {
         <HeadLink rel={"help"} href={"/help-head-slot"} />
         <HeadMeta name={"keywords"} content={"Head Slot Content"} />
         <HeadMeta content={"Head Slot Content"} property={"og:title"} />
+        <HeadLink
+          rel={"canonical"}
+          href={"https://overwritten.slot/head-slot-tag"}
+        />
       </HeadSlot>
       <Heading className={`w-heading`}>{"Test Head Slot"}</Heading>
       <Link href={"/"} className={`w-link`}>
