@@ -3,7 +3,7 @@ import { type TemplateMeta, $ } from "@webstudio-is/template";
 export const meta: TemplateMeta = {
   category: "general",
   description: "Head",
-  order: 4,
+  order: 6,
   template: (
     <$.HeadSlot>
       <$.HeadTitle ws:label="Title">Title</$.HeadTitle>

@@ -51,7 +51,7 @@ export const meta: WsComponentMeta = {
   },
   states: defaultStates,
   presetStyle,
-  order: 9,
+  order: 5,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
