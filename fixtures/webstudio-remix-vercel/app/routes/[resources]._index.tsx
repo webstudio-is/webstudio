@@ -20,6 +20,7 @@ import {
   ReactSdkContext,
   PageSettingsMeta,
   PageSettingsTitle,
+  PageSettingsCanonicalLink,
 } from "@webstudio-is/react-sdk/runtime";
 import {
   Page,
@@ -288,6 +289,7 @@ const Outlet = () => {
         imageLoader={imageLoader}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
+      <PageSettingsCanonicalLink href={url} />
     </ReactSdkContext.Provider>
   );
 };
