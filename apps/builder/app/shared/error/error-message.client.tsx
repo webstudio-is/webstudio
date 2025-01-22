@@ -6,8 +6,6 @@ import {
   Text,
   theme,
   buttonStyle,
-  Box,
-  Flex,
 } from "@webstudio-is/design-system";
 import { WebstudioIcon } from "@webstudio-is/icons";
 
