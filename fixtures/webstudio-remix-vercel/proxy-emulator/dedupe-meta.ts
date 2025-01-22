@@ -36,6 +36,7 @@ export const dedupeMeta: Plugin = {
 
           const metasSet = new Set<string>();
           let hasTitle = false;
+          let hasCanonicalLink = false;
 
           const rewriter = new HTMLRewriter()
             .on("meta", {
@@ -72,6 +73,16 @@ export const dedupeMeta: Plugin = {
                 }
 
                 hasTitle = true;
+              },
+            })
+            .on('link[rel="canonical"]', {
+              element(element) {
+                if (hasCanonicalLink) {
+                  element.remove();
+                  return;
+                }
+
+                hasCanonicalLink = true;
               },
             });
           rewriter
