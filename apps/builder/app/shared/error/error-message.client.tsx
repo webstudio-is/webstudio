@@ -60,6 +60,7 @@ export const ErrorMessage = ({
             background: theme.colors.backgroundPanel,
             padding: theme.spacing[7],
             borderRadius: theme.spacing[5],
+            minWidth: theme.spacing[34],
           }}
           gap="3"
         >
