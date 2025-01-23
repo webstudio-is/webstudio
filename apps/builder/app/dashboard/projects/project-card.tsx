@@ -163,12 +163,12 @@ export const ProjectCard = ({
   },
   hasProPlan,
   publisherHost,
+  ...props
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -195,7 +195,7 @@ export const ProjectCard = ({
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
   return (
-    <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
+    <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
@@ -219,17 +219,9 @@ export const ProjectCard = ({
         />
 
         {previewImageAsset ? (
-          <ThumbnailLinkWithImage
-            to={linkPath}
-            name={previewImageAsset.name}
-            ref={thumbnailRef}
-          />
+          <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (
-          <ThumbnailLinkWithAbbr
-            title={title}
-            to={linkPath}
-            ref={thumbnailRef}
-          />
+          <ThumbnailLinkWithAbbr title={title} to={linkPath} />
         )}
         {isTransitioning && <Spinner delay={0} />}
       </CardContent>
