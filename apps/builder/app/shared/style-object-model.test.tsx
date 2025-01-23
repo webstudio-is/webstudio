@@ -1577,3 +1577,30 @@ describe("style value source", () => {
     });
   });
 });
+
+describe("cache", () => {
+  test("reuse computed values", () => {
+    const model = createModel({
+      css: `
+        bodyLocal {
+          color: red;
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="bodyLocal"></$.Body>,
+    });
+    const cache = new Map();
+    const first = getComputedStyleDecl({
+      cache,
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    });
+    const second = getComputedStyleDecl({
+      cache,
+      model,
+      instanceSelector: ["body"],
+      property: "color",
+    });
+    expect(first).toBe(second);
+  });
+});

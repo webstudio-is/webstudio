@@ -320,11 +320,26 @@ export const $availableColorVariables = computed(
     availableVariables.filter((value) => value.fallback?.type !== "unit")
 );
 
+// completely bust the cache when model is changed
+let prevModel: undefined | StyleObjectModel;
+// store cached computed declarations by following key
+// instanceSelector + styleSourceId + state + property
+const cache = new Map<string, ComputedStyleDecl>();
+
+const validateCache = (model: StyleObjectModel) => {
+  if (model !== prevModel) {
+    prevModel = model;
+    cache.clear();
+  }
+};
+
 export const createComputedStyleDeclStore = (property: StyleProperty) => {
   return computed(
     [$model, $instanceAndRootSelector, $selectedOrLastStyleSourceSelector],
     (model, instanceSelector, styleSourceSelector) => {
+      validateCache(model);
       return getComputedStyleDecl({
+        cache,
         model,
         instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
@@ -333,10 +348,6 @@ export const createComputedStyleDeclStore = (property: StyleProperty) => {
       });
     }
   );
-};
-
-export const useStyleObjectModel = () => {
-  return useStore($model);
 };
 
 export const useComputedStyleDecl = (property: StyleProperty) => {
@@ -379,7 +390,9 @@ export const useParentComputedStyleDecl = (property: StyleProperty) => {
       computed(
         [$model, $closestStylableInstanceSelector],
         (model, instanceSelector) => {
+          validateCache(model);
           return getComputedStyleDecl({
+            cache,
             model,
             instanceSelector,
             property,
