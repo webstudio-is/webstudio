@@ -16,11 +16,11 @@ export const SecretLogin = () => {
           autoFocus
           placeholder="Auth secret"
           css={{ flexGrow: 1 }}
-          formAction={authPath({ provider: "dev" })}
           onKeyDown={(event) => {
             const form = event.currentTarget.form;
             if (event.key === "Enter" && form) {
-              form.action = action;
+              event.preventDefault();
+              form.setAttribute("action", action);
               form.submit();
             }
           }}
