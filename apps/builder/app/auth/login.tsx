@@ -1,15 +1,13 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
-  AccessibleIcon,
-  Box,
-  css,
+  Button,
   Flex,
   globalCss,
+  rawTheme,
   Text,
   theme,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
-import { BrandButton } from "./brand-button";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
@@ -17,29 +15,8 @@ import { SecretLogin } from "./secret-login";
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    background: theme.colors.backgroundPanel,
-  },
-});
-
-const layoutStyle = css({
-  display: "flex",
-  height: "100vh",
-  flexDirection: "column",
-  "@tablet": {
-    flexDirection: "row",
-  },
-});
-
-const sidebarStyle = css({
-  flexBasis: "35%",
-  "@tablet": {
-    background: `
-      radial-gradient(65.88% 47.48% at 50% 50%, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%),
-      linear-gradient(0deg, rgba(255, 255, 255, 0) 49.46%, rgba(255, 255, 255, 0.33) 100%),
-      linear-gradient(180deg, rgba(255, 174, 60, 0) 0%, rgba(230, 60, 254, 0.33) 100%),
-      radial-gradient(211.58% 161.63% at 3.13% 100%, rgba(255, 174, 60, 0.3) 0%, rgba(227, 53, 255, 0) 100%),
-      radial-gradient(107.1% 32.15% at 92.96% 5.04%, rgba(53, 255, 182, 0.2) 0%, rgba(74, 78, 250, 0.2) 100%), #EBFFFC;
-    `,
+    background: theme.colors.brandBackgroundDashboard,
+    overflow: "hidden",
   },
 });
 
@@ -58,63 +35,64 @@ export const Login = ({
 }: LoginProps) => {
   globalStyles();
   return (
-    <Box className={layoutStyle()}>
+    <Flex align="center" justify="center" css={{ height: "100vh" }}>
       <Flex
-        align="center"
-        justify="center"
-        as="aside"
-        className={sidebarStyle()}
-      >
-        <a href="https://webstudio.is" aria-label="Go to webstudio.is">
-          <AccessibleIcon label="Logo">
-            <WebstudioIcon size="100" />
-          </AccessibleIcon>
-        </a>
-      </Flex>
-      <Flex
-        align="center"
         direction="column"
-        grow
-        as="main"
-        gap={6}
+        align="center"
+        gap="6"
         css={{
-          "@tablet": {
-            justifyContent: "center",
+          width: theme.spacing[35],
+          minWidth: theme.spacing[20],
+          padding: theme.spacing[17],
+          borderRadius: theme.spacing[5],
+          [`@media (min-width: ${rawTheme.spacing[35]})`]: {
+            backgroundColor: `rgba(255, 255, 255, 0.5)`,
           },
         }}
       >
-        <Text variant="brandMediumTitle" color="main" as="h1">
-          Sign In
+        <WebstudioIcon size={48} />
+        <Text variant="brandSectionTitle" as="h1" align="center">
+          Welcome to Webstudio
         </Text>
-        <Flex direction="column" gap="4">
-          <TooltipProvider>
-            <Flex gap="3" direction="column">
-              <Form action={authPath({ provider: "google" })} method="post">
-                <BrandButton
-                  disabled={isGoogleEnabled === false}
-                  icon={<GoogleIcon size={22} />}
-                >
-                  Sign in with Google
-                </BrandButton>
-              </Form>
-              <Form action={authPath({ provider: "github" })} method="post">
-                <BrandButton
-                  disabled={isGithubEnabled === false}
-                  icon={<GithubIcon size={22} fill="currentColor" />}
-                >
-                  Sign in with GitHub
-                </BrandButton>
-              </Form>
-              {isSecretLoginEnabled && <SecretLogin />}
-            </Flex>
-          </TooltipProvider>
-          {errorMessage ? (
-            <Text align="center" color="destructive">
-              {errorMessage}
-            </Text>
-          ) : null}
-        </Flex>
+
+        <TooltipProvider>
+          <Flex
+            as={Form}
+            method="post"
+            direction="column"
+            gap="3"
+            css={{ width: "100%" }}
+          >
+            <Button
+              disabled={isGoogleEnabled === false}
+              prefix={<GoogleIcon size={22} />}
+              color="primary"
+              css={{ height: theme.spacing[15] }}
+              formAction={authPath({ provider: "google" })}
+            >
+              Sign in with Google
+            </Button>
+            <Button
+              disabled={isGithubEnabled === false}
+              prefix={<GithubIcon size={22} fill="currentColor" />}
+              color="ghost"
+              css={{
+                border: `1px solid ${theme.colors.borderDark}`,
+                height: theme.spacing[15],
+              }}
+              formAction={authPath({ provider: "github" })}
+            >
+              Sign in with GitHub
+            </Button>
+            {isSecretLoginEnabled && <SecretLogin />}
+          </Flex>
+        </TooltipProvider>
+        {errorMessage ? (
+          <Text align="center" color="destructive">
+            {errorMessage}
+          </Text>
+        ) : null}
       </Flex>
-    </Box>
+    </Flex>
   );
 };

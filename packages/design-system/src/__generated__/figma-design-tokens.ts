@@ -467,7 +467,8 @@ export const color = {
   brandBackgroundPublishedMain: "#39fbbb",
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
-  brandBackgroundDashboard: "#ededed",
+  brandBackgroundDashboard:
+    "radial-gradient(65.88% 47.48% at 50% 50%, #FFFFFF 0%, #ffffff00 100%),linear-gradient(0deg, #ffffff00 49.46%, #ffffff54 100%), linear-gradient(180deg, #ffae3c00 0%, #e63cfe54 100%),radial-gradient(211.58% 161.63% at 3.13% 100%, #ffae3c4d 0%, #e335ff00 100%), radial-gradient(107.1% 32.15% at 92.96% 5.04%, #35ffb633 0%, #4a4efa33 100%), #EBFFFC;",
   brandBackgroundRegularButtonSelected:
     "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
   brandBackgroundCtaButton: "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",

@@ -1,43 +1,44 @@
 import { Button, Flex, InputField, theme } from "@webstudio-is/design-system";
-import { CommitIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { authPath } from "~/shared/router-utils";
-import { BrandButton } from "./brand-button";
 
 export const SecretLogin = () => {
-  const [isSecretLoginOpen, setIsSecretLoginOpen] = useState(false);
-  if (isSecretLoginOpen) {
+  const [show, setShow] = useState(false);
+  if (show) {
+    const action = authPath({ provider: "dev" });
     return (
-      <Flex
-        as="form"
-        action={authPath({ provider: "dev" })}
-        method="post"
-        css={{
-          width: "fit-content",
-          flexDirection: "row",
-          gap: theme.spacing[5],
-        }}
-      >
+      <Flex gap="2">
         <InputField
           name="secret"
-          type="text"
+          type="password"
           minLength={2}
           required
           autoFocus
           placeholder="Auth secret"
           css={{ flexGrow: 1 }}
+          formAction={authPath({ provider: "dev" })}
+          onKeyDown={(event) => {
+            const form = event.currentTarget.form;
+            if (event.key === "Enter" && form) {
+              form.action = action;
+              form.submit();
+            }
+          }}
         />
-        <Button>Login</Button>
+        <Button type="submit" formAction={action}>
+          Login
+        </Button>
       </Flex>
     );
   }
 
   return (
-    <BrandButton
-      onClick={() => setIsSecretLoginOpen(true)}
-      icon={<CommitIcon size={22} />}
+    <Button
+      onClick={() => setShow(true)}
+      color="neutral"
+      css={{ height: theme.spacing[15] }}
     >
       Login with Secret
-    </BrandButton>
+    </Button>
   );
 };
