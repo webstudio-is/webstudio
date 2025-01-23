@@ -1,20 +1,18 @@
 import ts from "typescript";
 import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
-import { createScope, type DataSource } from "@webstudio-is/sdk";
+import { createScope } from "@webstudio-is/sdk";
 import {
   $,
   ActionValue,
   AssetValue,
-  ExpressionValue,
   PageValue,
-  ParameterValue,
+  Parameter,
   ResourceValue,
   Variable,
   createProxy,
   expression,
-  renderJsx,
-  renderTemplate,
+  renderData,
   ws,
 } from "@webstudio-is/template";
 import {
@@ -78,11 +76,10 @@ test("generate jsx element with children and without them", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "body" }],
-      ...renderJsx(<$.Body ws:id="body">Children</$.Body>),
+      ...renderData(<$.Body ws:id="body">Children</$.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -96,11 +93,10 @@ test("generate jsx element with children and without them", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "image" }],
-      ...renderJsx(<$.Image ws:id="image"></$.Image>),
+      ...renderData(<$.Image ws:id="image"></$.Image>),
     })
   ).toEqual(
     validateJSX(
@@ -116,11 +112,10 @@ test("generate jsx element with namespaces components", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "body" }],
-      ...renderJsx(<library.Body ws:id="body"></library.Body>),
+      ...renderData(<library.Body ws:id="body"></library.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -132,11 +127,10 @@ test("generate jsx element with namespaces components", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "image" }],
-      ...renderJsx(<library.Image ws:id="image"></library.Image>),
+      ...renderData(<library.Image ws:id="image"></library.Image>),
     })
   ).toEqual(
     validateJSX(
@@ -151,11 +145,10 @@ test("generate jsx element with literal props", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "body" }],
-      ...renderJsx(<$.Body ws:id="body" string="string" number={0}></$.Body>),
+      ...renderData(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -169,11 +162,10 @@ test("generate jsx element with literal props", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "image" }],
-      ...renderJsx(
+      ...renderData(
         <$.Image
           ws:id="image"
           boolean={true}
@@ -196,11 +188,10 @@ test("ignore asset and page props", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(
+      ...renderData(
         <$.Box
           ws:id="box"
           page={new PageValue("pageId")}
@@ -218,28 +209,19 @@ test("ignore asset and page props", () => {
 });
 
 test("generate jsx element with data sources and action", () => {
+  const variable = new Variable("variable", 0);
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: toMap([
-        {
-          type: "variable",
-          id: "variableId",
-          name: "variableName",
-          value: { type: "number", value: 0 },
-        },
-      ]),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(
+      ...renderData(
         <$.Box
           ws:id="box"
-          variable={new ExpressionValue("$ws$dataSource$variableId")}
-          expression={new ExpressionValue(`$ws$dataSource$variableId + 1`)}
-          onChange={
-            new ActionValue(["value"], `$ws$dataSource$variableId = value`)
-          }
+          variable={expression`${variable}`}
+          expression={expression`${variable} + 1`}
+          onChange={new ActionValue(["value"], expression`${variable} = value`)}
         ></$.Box>
       ),
     })
@@ -247,11 +229,11 @@ test("generate jsx element with data sources and action", () => {
     validateJSX(
       clear(`
       <Box
-      variable={variableName}
-      expression={variableName + 1}
+      variable={variable}
+      expression={variable + 1}
       onChange={(value: any) => {
-      variableName = value
-      set$variableName(variableName)
+      variable = value
+      set$variable(variable)
       }} />
     `)
     )
@@ -262,11 +244,10 @@ test("generate jsx element with condition based on show prop", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
+      ...renderData(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
   ).toEqual(
     validateJSX(
@@ -278,38 +259,27 @@ test("generate jsx element with condition based on show prop", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
+      ...renderData(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
     })
   ).toEqual("");
+  const condition = new Variable("condition", false);
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: toMap([
-        {
-          type: "variable",
-          id: "conditionId",
-          name: "conditionName",
-          value: { type: "boolean", value: false },
-        },
-      ]),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(
-        <$.Box
-          ws:id="box"
-          data-ws-show={new ExpressionValue("$ws$dataSource$conditionId")}
-        ></$.Box>
+      ...renderData(
+        <$.Box ws:id="box" data-ws-show={expression`${condition}`}></$.Box>
       ),
     })
   ).toEqual(
     validateJSX(
       clear(`
-      {(conditionName) &&
+      {(condition) &&
       <Box />
       }
     `)
@@ -321,11 +291,10 @@ test("generate jsx element with index prop", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map([["box", 5]]),
       children: [{ type: "id", value: "box" }],
-      ...renderJsx(<$.Box ws:id="box"></$.Box>),
+      ...renderData(<$.Box ws:id="box"></$.Box>),
     })
   ).toEqual(
     validateJSX(
@@ -422,10 +391,9 @@ test("generate jsx children with nested instances", () => {
     generateJsxChildren({
       scope: createScope(),
       children: [{ type: "id", value: "form" }],
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Form ws:id="form" prop="value">
           <$.Input></$.Input>
           <$.Button></$.Button>
@@ -454,10 +422,9 @@ test("deduplicate base and namespaced components with same short name", () => {
         { type: "id", value: "button1" },
         { type: "id", value: "button2" },
       ],
-      dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Fragment>
           <$.Button ws:id="button1"></$.Button>
           <radix.Button ws:id="button2"></radix.Button>
@@ -473,38 +440,18 @@ test("deduplicate base and namespaced components with same short name", () => {
 });
 
 test("generate collection component as map", () => {
+  const data = new Variable("data", ["apple", "orange", "mango"]);
+  const element = new Parameter("element");
   expect(
     generateJsxChildren({
       scope: createScope(),
       children: [{ type: "id", value: "list" }],
-      dataSources: toMap([
-        {
-          id: "dataSourceList",
-          scopeInstanceId: "list",
-          type: "variable",
-          name: "data",
-          value: { type: "json", value: ["apple", "orange", "mango"] },
-        },
-        {
-          id: "dataSourceItem",
-          scopeInstanceId: "list",
-          type: "variable",
-          name: "element",
-          value: { type: "json", value: `` },
-        },
-      ]),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <ws.collection
-          ws:id="list"
-          data={new ExpressionValue("$ws$dataSource$dataSourceList")}
-          item={new ParameterValue("dataSourceItem")}
-        >
+      ...renderData(
+        <ws.collection ws:id="list" data={expression`${data}`} item={element}>
           <$.Label></$.Label>
-          <$.Button
-            aria-label={new ExpressionValue("$ws$dataSource$dataSourceItem")}
-          ></$.Button>
+          <$.Button aria-label={expression`${element}`}></$.Button>
         </ws.collection>
       ),
     })
@@ -524,6 +471,7 @@ test("generate collection component as map", () => {
 });
 
 test("generate component with variables and actions", () => {
+  const variable = new Variable("variable", "initial");
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -531,21 +479,13 @@ test("generate component with variables and actions", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap([
-        {
-          type: "variable",
-          id: "variableId",
-          name: "variableName",
-          value: { type: "string", value: "initial" },
-        },
-      ]),
       indexesWithinAncestors: new Map([["input", 0]]),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <$.Input
-            value={new ExpressionValue("$ws$dataSource$variableId")}
+            value={expression`${variable}`}
             onChange={
-              new ActionValue(["value"], `$ws$dataSource$variableId = value`)
+              new ActionValue(["value"], expression`${variable} = value`)
             }
           />
         </$.Body>
@@ -555,13 +495,13 @@ test("generate component with variables and actions", () => {
     validateJSX(
       clear(`
       const Page = () => {
-      let [variableName, set$variableName] = useVariableState<any>("initial")
+      let [variable, set$variable] = useVariableState<any>("initial")
       return <Body>
       <Input
-      value={variableName}
+      value={variable}
       onChange={(value: any) => {
-      variableName = value
-      set$variableName(variableName)
+      variable = value
+      set$variable(variable)
       }} />
       </Body>
       }
@@ -578,9 +518,8 @@ test("merge classes if no className", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(<$.Body ws:id="body"></$.Body>),
+      ...renderData(<$.Body ws:id="body"></$.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -602,9 +541,8 @@ test("add classes and merge classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
+      ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -626,9 +564,8 @@ test("add classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
+      ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
     validateJSX(
@@ -644,12 +581,6 @@ test("add classes", () => {
 
 test("add bind classes and merge classes", () => {
   const hasClass2 = new Variable("variableName", false);
-  const { instances, props, dataSources } = renderTemplate(
-    <$.Body
-      ws:id="body"
-      className={expression`${hasClass2} ? 'cls2' : ''`}
-    ></$.Body>
-  );
   expect(
     generateWebstudioComponent({
       classesMap: new Map([["body", ["cls1"]]]),
@@ -658,9 +589,12 @@ test("add bind classes and merge classes", () => {
       rootInstanceId: "body",
       parameters: [],
       indexesWithinAncestors: new Map(),
-      instances: new Map(instances.map((item) => [item.id, item])),
-      props: new Map(props.map((item) => [item.id, item])),
-      dataSources: new Map(dataSources.map((item) => [item.id, item])),
+      ...renderData(
+        <$.Body
+          ws:id="body"
+          className={expression`${hasClass2} ? 'cls2' : ''`}
+        ></$.Body>
+      ),
     })
   ).toEqual(
     validateJSX(
@@ -676,6 +610,8 @@ test("add bind classes and merge classes", () => {
 });
 
 test("avoid generating collection parameter variable as state", () => {
+  const data = new Variable("data", ["apple", "orange", "mango"]);
+  const element = new Parameter("element");
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -683,28 +619,13 @@ test("avoid generating collection parameter variable as state", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap([
-        {
-          id: "dataSourceList",
-          scopeInstanceId: "list",
-          type: "variable",
-          name: "data",
-          value: { type: "json", value: ["apple", "orange", "mango"] },
-        },
-        {
-          id: "dataSourceItem",
-          scopeInstanceId: "list",
-          type: "parameter",
-          name: "element",
-        },
-      ]),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <ws.collection
             ws:id="list"
-            data={new ExpressionValue("$ws$dataSource$dataSourceList")}
-            item={new ParameterValue("dataSourceItem")}
+            data={expression`${data}`}
+            item={element}
           ></ws.collection>
         </$.Body>
       ),
@@ -742,6 +663,13 @@ test("generate system variable when present", () => {
           value: "systemId",
         },
       ],
+      indexesWithinAncestors: new Map(),
+      ...renderData(
+        <$.Body
+          ws:id="body"
+          data-slug={expression`$ws$dataSource$systemId.params.slug`}
+        ></$.Body>
+      ),
       dataSources: toMap([
         {
           id: "systemId",
@@ -750,13 +678,6 @@ test("generate system variable when present", () => {
           name: "system",
         },
       ]),
-      indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <$.Body
-          ws:id="body"
-          data-slug={new ExpressionValue("$ws$dataSource$systemId.params.slug")}
-        ></$.Body>
-      ),
     })
   ).toEqual(
     validateJSX(
@@ -778,6 +699,14 @@ test("generate resources loading", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
+      indexesWithinAncestors: new Map(),
+      ...renderData(
+        <$.Body
+          ws:id="body"
+          data-data={expression`$ws$dataSource$dataSourceDataId`}
+          data-resource={expression`$ws$dataSource$dataSourceResourceId`}
+        ></$.Body>
+      ),
       dataSources: toMap([
         {
           id: "dataSourceDataId",
@@ -794,16 +723,6 @@ test("generate resources loading", () => {
           resourceId: "resourceId",
         },
       ]),
-      indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <$.Body
-          ws:id="body"
-          data-data={new ExpressionValue("$ws$dataSource$dataSourceDataId")}
-          data-resource={
-            new ExpressionValue("$ws$dataSource$dataSourceResourceId")
-          }
-        ></$.Body>
-      ),
     })
   ).toEqual(
     validateJSX(
@@ -836,6 +755,13 @@ test("avoid generating unused variables", () => {
           value: "unusedParameterId",
         },
       ],
+      indexesWithinAncestors: new Map(),
+      ...renderData(
+        <$.Body
+          ws:id="body"
+          data-data={expression`$ws$dataSource$usedVariableId`}
+        ></$.Body>
+      ),
       dataSources: toMap([
         {
           id: "usedVariableId",
@@ -865,13 +791,6 @@ test("avoid generating unused variables", () => {
           resourceId: "resourceId",
         },
       ]),
-      indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <$.Body
-          ws:id="body"
-          data-data={new ExpressionValue("$ws$dataSource$usedVariableId")}
-        ></$.Body>
-      ),
     })
   ).toMatchInlineSnapshot(`
 "const Page = ({ }: { system: any; }) => {
@@ -891,9 +810,8 @@ test("avoid generating descendant component", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <ws.descendant></ws.descendant>
         </$.Body>
@@ -909,6 +827,8 @@ return <Body>
 });
 
 test("generate conditional collection", () => {
+  const condition = new Variable("condition", false);
+  const collectionItem = new Parameter("collectionItem");
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -916,40 +836,25 @@ test("generate conditional collection", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap<DataSource>([
-        {
-          id: "conditionId",
-          scopeInstanceId: "list",
-          name: "conditionName",
-          type: "variable",
-          value: { type: "boolean", value: false },
-        },
-        {
-          id: "collectionItemId",
-          scopeInstanceId: "list",
-          name: "collectionItemName",
-          type: "parameter",
-        },
-      ]),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <ws.collection
             ws:id="list"
-            data-ws-show={new ExpressionValue("$ws$dataSource$conditionId")}
+            data-ws-show={expression`${condition}`}
             data={[]}
-            item={new ParameterValue("collectionItemId")}
+            item={collectionItem}
           ></ws.collection>
         </$.Body>
       ),
     })
   ).toMatchInlineSnapshot(`
 "const Page = () => {
-let [conditionName, set$conditionName] = useVariableState<any>(false)
+let [condition, set$condition] = useVariableState<any>(false)
 return <Body>
-{(conditionName) &&
+{(condition) &&
 <>
-{[]?.map((collectionItemName: any, index: number) =>
+{[]?.map((collectionItem: any, index: number) =>
 <Fragment key={index}>
 </Fragment>
 )}
@@ -962,6 +867,7 @@ return <Body>
 });
 
 test("generate conditional body", () => {
+  const condition = new Variable("condition", false);
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -969,27 +875,15 @@ test("generate conditional body", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap<DataSource>([
-        {
-          id: "conditionId",
-          scopeInstanceId: "list",
-          name: "conditionName",
-          type: "variable",
-          value: { type: "boolean", value: false },
-        },
-      ]),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
-        <$.Body
-          ws:id="body"
-          data-ws-show={new ExpressionValue("$ws$dataSource$conditionId")}
-        ></$.Body>
+      ...renderData(
+        <$.Body ws:id="body" data-ws-show={expression`${condition}`}></$.Body>
       ),
     })
   ).toMatchInlineSnapshot(`
 "const Page = () => {
-let [conditionName, set$conditionName] = useVariableState<any>(false)
-return (conditionName) &&
+let [condition, set$condition] = useVariableState<any>(false)
+return (condition) &&
 <Body />
 
 }
@@ -1005,9 +899,8 @@ test("generate resource prop", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <$.Form
             ws:id="form1"
@@ -1041,37 +934,17 @@ test("skip unsafe properties", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-
-      instances: toMap([
-        { type: "instance", id: "body", component: "Body", children: [] },
-      ]),
-      props: toMap([
-        {
-          id: "unsafeProp",
-          instanceId: "body",
-          name: "",
-          type: "string",
-          value: "unsafe",
-        },
-
-        {
-          id: "unsafeProp-2",
-          instanceId: "body",
-          name: "1-numeric-unsafe",
-          type: "string",
-          value: "unsafe",
-        },
-
-        {
-          id: "unsafeProp-3",
-          instanceId: "body",
-          name: "click.prevent",
-          type: "string",
-          value: "unsafe",
-        },
-      ]),
+      ...renderData(
+        <$.Body
+          ws:id="body"
+          {...{
+            "": "unsafe",
+            "1-numeric-unsafe": "unsafe",
+            "click.prevent": "unsafe",
+          }}
+        ></$.Body>
+      ),
     })
   ).toEqual(
     validateJSX(
@@ -1085,6 +958,7 @@ test("skip unsafe properties", () => {
 });
 
 test("variable names can be js identifiers", () => {
+  const variable = new Variable("switch", "initial");
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -1092,21 +966,13 @@ test("variable names can be js identifiers", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: toMap([
-        {
-          type: "variable",
-          id: "variableId",
-          name: "switch",
-          value: { type: "string", value: "initial" },
-        },
-      ]),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <$.Input
-            value={new ExpressionValue("$ws$dataSource$variableId")}
+            value={expression`${variable}`}
             onChange={
-              new ActionValue(["value"], `$ws$dataSource$variableId = value`)
+              new ActionValue(["value"], expression`${variable} = value`)
             }
           />
         </$.Body>
@@ -1132,8 +998,7 @@ test("variable names can be js identifiers", () => {
 });
 
 test("Renders nothing if only templates are present in block", () => {
-  const Bt = ws["block-template"];
-
+  const BlockTemplate = ws["block-template"];
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -1141,14 +1006,13 @@ test("Renders nothing if only templates are present in block", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
-            <Bt>
+            <BlockTemplate>
               <$.Box>Test</$.Box>
-            </Bt>
+            </BlockTemplate>
           </ws.block>
         </$.Body>
       ),
@@ -1175,9 +1039,8 @@ test("Renders only block children", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      dataSources: new Map(),
       indexesWithinAncestors: new Map(),
-      ...renderJsx(
+      ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
             <Bt>

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { Breakpoint } from "@webstudio-is/sdk";
-import { descendantComponent, rootComponent } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/template";
+import { rootComponent } from "@webstudio-is/sdk";
+import { $, ws, css, renderData } from "@webstudio-is/template";
 import { generateCss, type CssConfig } from "./css";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
@@ -21,8 +21,7 @@ const generateAllCss = (config: Omit<CssConfig, "atomic">) => {
 
 test("generate css for one instance with two tokens", () => {
   const { cssText, atomicCssText, atomicClasses } = generateAllCss({
-    ...renderJsx(<$.Box ws:id="box"></$.Box>),
-    assets: new Map(),
+    ...renderData(<$.Box ws:id="box"></$.Box>),
     breakpoints: toMap<Breakpoint>([{ id: "base", label: "" }]),
     styleSourceSelections: new Map([
       ["box", { instanceId: "box", values: ["token", "local"] }],
@@ -78,56 +77,28 @@ Map {
 
 test("generate descendant selector", () => {
   const { cssText, atomicCssText, atomicClasses } = generateAllCss({
-    assets: new Map(),
-    instances: toMap([
-      {
-        id: "root",
-        type: "instance",
-        component: "Body",
-        children: [{ type: "id", value: "descendant" }],
-      },
-      {
-        id: "descendant",
-        type: "instance",
-        component: descendantComponent,
-        children: [],
-      },
-    ]),
-    props: toMap([
-      {
-        id: "1",
-        instanceId: "descendant",
-        name: "selector",
-        type: "string",
-        value: " a",
-      },
-    ]),
-    breakpoints: toMap<Breakpoint>([{ id: "base", label: "" }]),
-    styleSourceSelections: new Map([
-      ["root", { instanceId: "root", values: ["local"] }],
-      ["descendant", { instanceId: "descendant", values: ["local"] }],
-    ]),
-    styles: new Map([
-      [
-        "local:base:color",
-        {
-          styleSourceId: "local",
-          breakpointId: "base",
-          property: "color",
-          value: { type: "keyword", value: "blue" },
-        },
-      ],
-      [
-        "local:base:color::hover",
-        {
-          styleSourceId: "local",
-          breakpointId: "base",
-          state: ":hover",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    ]),
+    ...renderData(
+      <$.Body
+        ws:id="body"
+        ws:style={css`
+          color: blue;
+          &:hover {
+            color: red;
+          }
+        `}
+      >
+        <ws.descendant
+          ws:id="descendant"
+          selector=" a"
+          ws:style={css`
+            color: blue;
+            &:hover {
+              color: red;
+            }
+          `}
+        />
+      </$.Body>
+    ),
     componentMetas: new Map(),
     assetBaseUrl: "",
   });
@@ -167,7 +138,7 @@ test("generate descendant selector", () => {
 `);
   expect(atomicClasses).toMatchInlineSnapshot(`
 Map {
-  "root" => [
+  "body" => [
     "c17hlgoh",
     "c92zrdl",
     "chhpmat",
@@ -305,37 +276,21 @@ test("deduplicate component presets for similarly named components", () => {
 
 test("expose preset classes to instances", () => {
   const { atomicCssText, classes, atomicClasses } = generateAllCss({
-    assets: new Map(),
-    ...renderJsx(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box"></$.Box>
+    ...renderData(
+      <$.Body
+        ws:id="body"
+        ws:style={css`
+          color: blue;
+        `}
+      >
+        <$.Box
+          ws:id="box"
+          ws:style={css`
+            color: red;
+          `}
+        ></$.Box>
       </$.Body>
     ),
-    breakpoints: toMap([{ id: "base", label: "" }]),
-    styleSourceSelections: new Map([
-      ["body", { instanceId: "body", values: ["localBody"] }],
-      ["box", { instanceId: "box", values: ["localBox"] }],
-    ]),
-    styles: new Map([
-      [
-        "localBody:base:color",
-        {
-          styleSourceId: "localBody",
-          breakpointId: "base",
-          property: "color",
-          value: { type: "keyword", value: "blue" },
-        },
-      ],
-      [
-        "localBox:base:color::hover",
-        {
-          styleSourceId: "localBox",
-          breakpointId: "base",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    ]),
     componentMetas: new Map([
       [
         "Body",
@@ -416,37 +371,22 @@ Map {
 
 test("generate classes with instance and meta label", () => {
   const { cssText, classes } = generateAllCss({
-    assets: new Map(),
-    ...renderJsx(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box" ws:label="box%instance#label"></$.Box>
+    ...renderData(
+      <$.Body
+        ws:id="body"
+        ws:style={css`
+          color: blue;
+        `}
+      >
+        <$.Box
+          ws:id="box"
+          ws:label="box%instance#label"
+          ws:style={css`
+            color: red;
+          `}
+        ></$.Box>
       </$.Body>
     ),
-    breakpoints: toMap([{ id: "base", label: "" }]),
-    styleSourceSelections: new Map([
-      ["body", { instanceId: "body", values: ["localBody"] }],
-      ["box", { instanceId: "box", values: ["localBox"] }],
-    ]),
-    styles: new Map([
-      [
-        "localBody:base:color",
-        {
-          styleSourceId: "localBody",
-          breakpointId: "base",
-          property: "color",
-          value: { type: "keyword", value: "blue" },
-        },
-      ],
-      [
-        "localBox:base:color::hover",
-        {
-          styleSourceId: "localBox",
-          breakpointId: "base",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-        },
-      ],
-    ]),
     componentMetas: new Map([
       [
         "Body",
@@ -517,8 +457,7 @@ Map {
 
 test("generate :root preset and user styles", () => {
   const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
-    assets: new Map(),
-    ...renderJsx(
+    ...renderData(
       <$.Body ws:id="body">
         <$.Box ws:id="box"></$.Box>
       </$.Body>
