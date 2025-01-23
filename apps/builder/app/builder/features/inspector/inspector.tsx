@@ -102,7 +102,13 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   type PanelName = "style" | "settings";
 
   const availablePanels = new Set<PanelName>();
-  if (documentType === "html" && (meta?.stylable ?? true) && isDesignMode) {
+  if (
+    // forbid styling body in xml document
+    documentType === "html" &&
+    // forbid styling components without preset
+    meta?.presetStyle !== undefined &&
+    isDesignMode
+  ) {
     availablePanels.add("style");
   }
   // @todo hide root component settings until

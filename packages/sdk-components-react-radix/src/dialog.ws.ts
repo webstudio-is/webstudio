@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
-  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
@@ -25,23 +24,10 @@ import {
 } from "./__generated__/dialog.props";
 import { buttonReset } from "./shared/preset-styles";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
-const titlePresetStyle = {
-  h2,
-} satisfies PresetStyle<"h2">;
-
-const descriptionPresetStyle = {
-  p,
-} satisfies PresetStyle<"p">;
-
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
-  stylable: false,
   constraints: {
     relation: "ancestor",
     component: { $eq: "Dialog" },
@@ -50,7 +36,9 @@ export const metaDialogTrigger: WsComponentMeta = {
 
 export const metaDialogOverlay: WsComponentMeta = {
   type: "container",
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   icon: OverlayIcon,
   constraints: [
     {
@@ -66,7 +54,9 @@ export const metaDialogOverlay: WsComponentMeta = {
 
 export const metaDialogContent: WsComponentMeta = {
   type: "container",
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   icon: ContentIcon,
   constraints: [
     {
@@ -94,7 +84,9 @@ export const metaDialogContent: WsComponentMeta = {
 
 export const metaDialogTitle: WsComponentMeta = {
   type: "container",
-  presetStyle: titlePresetStyle,
+  presetStyle: {
+    h2,
+  },
   icon: HeadingIcon,
   constraints: {
     relation: "ancestor",
@@ -104,7 +96,9 @@ export const metaDialogTitle: WsComponentMeta = {
 
 export const metaDialogDescription: WsComponentMeta = {
   type: "container",
-  presetStyle: descriptionPresetStyle,
+  presetStyle: {
+    p,
+  },
   icon: TextIcon,
   constraints: {
     relation: "ancestor",
@@ -128,6 +122,7 @@ export const metaDialogClose: WsComponentMeta = {
 
 export const metaDialog: WsComponentMeta = {
   type: "container",
+  icon: DialogIcon,
   constraints: [
     {
       relation: "descendant",
@@ -138,8 +133,6 @@ export const metaDialog: WsComponentMeta = {
       component: { $eq: "DialogOverlay" },
     },
   ],
-  icon: DialogIcon,
-  stylable: false,
 };
 
 export const propsMetaDialog: WsComponentPropsMeta = {

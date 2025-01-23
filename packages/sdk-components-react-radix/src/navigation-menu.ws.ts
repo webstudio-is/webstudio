@@ -7,11 +7,7 @@ import {
   ViewportIcon,
   NavigationMenuIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import {
   propsNavigationMenu,
@@ -23,14 +19,12 @@ import {
   propsNavigationMenuViewport,
 } from "./__generated__/navigation-menu.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 export const metaNavigationMenu: WsComponentMeta = {
   type: "container",
   icon: NavigationMenuIcon,
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   constraints: [
     {
       relation: "descendant",
@@ -56,7 +50,9 @@ export const metaNavigationMenuList: WsComponentMeta = {
       component: { $eq: "NavigationMenuItem" },
     },
   ],
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   label: "Menu List",
 };
 
@@ -67,20 +63,20 @@ export const metaNavigationMenuItem: WsComponentMeta = {
     relation: "ancestor",
     component: { $eq: "NavigationMenuList" },
   },
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   indexWithinAncestor: "NavigationMenu",
   label: "Menu Item",
 };
 
 export const metaNavigationMenuTrigger: WsComponentMeta = {
-  stylable: false,
   type: "container",
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
     component: { $eq: "NavigationMenuItem" },
   },
-  presetStyle,
   label: "Menu Trigger",
 };
 
@@ -92,13 +88,14 @@ export const metaNavigationMenuContent: WsComponentMeta = {
     component: { $eq: "NavigationMenuItem" },
   },
   indexWithinAncestor: "NavigationMenu",
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   label: "Menu Content",
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
   type: "container",
-  stylable: false,
   icon: BoxIcon,
   constraints: [
     {
@@ -110,7 +107,6 @@ export const metaNavigationMenuLink: WsComponentMeta = {
       component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
     },
   ],
-  presetStyle,
   label: "Accessible Link Wrapper",
 };
 
@@ -121,7 +117,9 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
     relation: "ancestor",
     component: { $eq: "NavigationMenu" },
   },
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   label: "Menu Viewport",
 };
 

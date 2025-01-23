@@ -7,7 +7,6 @@ export const meta: WsComponentMeta = {
   type: "container",
   description: "Converts machine-readable date and time to ISO format.",
   icon: CalendarIcon,
-  stylable: false,
   order: 7,
 };
 

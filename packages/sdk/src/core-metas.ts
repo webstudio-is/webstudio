@@ -34,7 +34,6 @@ const collectionMeta: WsComponentMeta = {
   type: "container",
   label: "Collection",
   icon: ListViewIcon,
-  stylable: false,
 };
 
 const collectionPropsMeta: WsComponentPropsMeta = {
@@ -54,6 +53,8 @@ const descendantMeta: WsComponentMeta = {
   type: "control",
   label: "Descendant",
   icon: PaintBrushIcon,
+  // @todo infer possible presets
+  presetStyle: {},
   constraints: {
     relation: "parent",
     component: { $in: ["HtmlEmbed", "MarkdownEmbed"] },
@@ -96,7 +97,6 @@ export const blockTemplateComponent = "ws:block-template";
 export const blockTemplateMeta: WsComponentMeta = {
   type: "container",
   icon: AddTemplateInstanceIcon,
-  stylable: false,
   constraints: {
     relation: "parent",
     component: { $eq: blockComponent },
@@ -121,7 +121,6 @@ const blockMeta: WsComponentMeta = {
       component: { $eq: blockTemplateComponent },
     },
   ],
-  stylable: false,
 };
 
 const blockPropsMeta: WsComponentPropsMeta = {

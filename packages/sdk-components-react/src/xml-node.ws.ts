@@ -7,7 +7,6 @@ export const meta: WsComponentMeta = {
   order: 6,
   type: "container",
   icon: XmlIcon,
-  stylable: false,
   description: "XML Node",
 };
 

@@ -10,7 +10,6 @@ export const meta: WsComponentMeta = {
   category: "hidden",
   icon: ResourceIcon,
   type: "container",
-  stylable: false,
   constraints: {
     relation: "parent",
     component: { $eq: "HeadSlot" },

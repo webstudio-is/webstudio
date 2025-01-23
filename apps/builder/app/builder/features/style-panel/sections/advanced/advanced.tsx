@@ -38,7 +38,6 @@ import {
   properties as propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   hyphenateProperty,
   toValue,
@@ -67,13 +66,12 @@ import { PropertyInfo } from "../../property-label";
 import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
 import {
-  $instances,
   $registeredComponentMetas,
-  $selectedInstanceSelector,
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
 import { useClientSupports } from "~/shared/client-supports";
+import { $selectedInstancePath } from "~/shared/awareness";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -376,33 +374,20 @@ const initialProperties = new Set<StyleProperty>([
 
 const $advancedProperties = computed(
   [
-    $selectedInstanceSelector,
-    $instances,
+    // prevent showing properties inherited from root
+    // to not bloat advanced panel
+    $selectedInstancePath,
     $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
   ],
-  (
-    instanceSelector,
-    instances,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles
-  ) => {
-    if (instanceSelector === undefined) {
+  (instancePath, metas, styleSourceSelections, matchingBreakpoints, styles) => {
+    if (instancePath === undefined) {
       return [];
     }
-    const instanceAndRootSelector =
-      instanceSelector[0] === ROOT_INSTANCE_ID
-        ? instanceSelector
-        : // prevent showing properties inherited from root
-          // to not bloat advanced panel
-          instanceSelector;
     const definedStyles = getDefinedStyles({
-      instanceSelector: instanceAndRootSelector,
-      instances,
+      instancePath,
       metas,
       matchingBreakpoints,
       styleSourceSelections,

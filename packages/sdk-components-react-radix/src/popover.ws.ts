@@ -1,9 +1,5 @@
 import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import {
   propsPopover,
@@ -11,15 +7,10 @@ import {
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
   type: "container",
   icon: TriggerIcon,
-  stylable: false,
   constraints: {
     relation: "ancestor",
     component: { $eq: "Popover" },
@@ -28,7 +19,9 @@ export const metaPopoverTrigger: WsComponentMeta = {
 
 export const metaPopoverContent: WsComponentMeta = {
   type: "container",
-  presetStyle,
+  presetStyle: {
+    div,
+  },
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
@@ -38,6 +31,7 @@ export const metaPopoverContent: WsComponentMeta = {
 
 export const metaPopover: WsComponentMeta = {
   type: "container",
+  icon: PopoverIcon,
   constraints: [
     {
       relation: "descendant",
@@ -48,8 +42,6 @@ export const metaPopover: WsComponentMeta = {
       component: { $eq: "PopoverContent" },
     },
   ],
-  icon: PopoverIcon,
-  stylable: false,
 };
 
 export const propsMetaPopover: WsComponentPropsMeta = {

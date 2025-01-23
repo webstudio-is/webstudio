@@ -9,7 +9,6 @@ import { props } from "./__generated__/head.props";
 export const meta: WsComponentMeta = {
   icon: HeaderIcon,
   type: "container",
-  stylable: false,
   description: "Inserts children into the head of the document",
   constraints: [
     {

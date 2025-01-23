@@ -76,7 +76,7 @@ export const $selectedInstanceKey = computed($awareness, (awareness) =>
   getInstanceKey(awareness?.instanceSelector)
 );
 
-type InstancePath = Array<{
+export type InstancePath = Array<{
   instance: Instance;
   instanceSelector: string[];
 }>;
@@ -112,6 +112,26 @@ export const $selectedInstancePath = computed(
     const instanceSelector = awareness?.instanceSelector;
     if (instanceSelector === undefined) {
       return;
+    }
+    return getInstancePath(
+      instances,
+      virtualInstances,
+      temporaryInstances,
+      instanceSelector
+    );
+  }
+);
+
+export const $selectedInstancePathWithRoot = computed(
+  [$instances, $virtualInstances, $temporaryInstances, $awareness],
+  (instances, virtualInstances, temporaryInstances, awareness) => {
+    let instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector === undefined) {
+      return;
+    }
+    // add root as ancestor when root is not selected
+    if (instanceSelector[0] !== ROOT_INSTANCE_ID) {
+      instanceSelector = [...instanceSelector, ROOT_INSTANCE_ID];
     }
     return getInstancePath(
       instances,
