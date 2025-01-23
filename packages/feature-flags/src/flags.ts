@@ -8,4 +8,4 @@ export const xmlElement = false;
 export const staticExport = false;
 export const contentEditableMode = false;
 export const command = false;
-export const headSlotComponent = false;
+export const headSlotComponent = true;
