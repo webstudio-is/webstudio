@@ -1,5 +1,5 @@
 import { Fragment, type JSX, type ReactNode } from "react";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable, getStyleDeclKey } from "@webstudio-is/sdk";
 import type {
   Breakpoint,
   DataSource,
@@ -10,6 +10,7 @@ import type {
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
+  WebstudioData,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
@@ -350,8 +351,35 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     styleSourceSelections,
     styles,
     dataSources: Array.from(dataSources.values()),
-    assets: [],
     resources: [],
+    assets: [],
+  };
+};
+
+export const renderData = (root: JSX.Element): Omit<WebstudioData, "pages"> => {
+  const {
+    instances,
+    props,
+    breakpoints,
+    styleSources,
+    styleSourceSelections,
+    styles,
+    dataSources,
+    resources,
+    assets,
+  } = renderTemplate(root);
+  return {
+    instances: new Map(instances.map((item) => [item.id, item])),
+    props: new Map(props.map((item) => [item.id, item])),
+    breakpoints: new Map(breakpoints.map((item) => [item.id, item])),
+    styleSources: new Map(styleSources.map((item) => [item.id, item])),
+    styleSourceSelections: new Map(
+      styleSourceSelections.map((item) => [item.instanceId, item])
+    ),
+    styles: new Map(styles.map((item) => [getStyleDeclKey(item), item])),
+    dataSources: new Map(dataSources.map((item) => [item.id, item])),
+    resources: new Map(resources.map((item) => [item.id, item])),
+    assets: new Map(assets.map((item) => [item.id, item])),
   };
 };
 
