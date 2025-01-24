@@ -5,11 +5,10 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $,
   ws,
-  renderJsx,
   ExpressionValue,
   renderTemplate,
+  renderData,
 } from "@webstudio-is/template";
-import { parseCss } from "@webstudio-is/css-data";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
@@ -22,17 +21,13 @@ import type {
   Resource,
   StyleDecl,
   StyleDeclKey,
-  Styles,
   StyleSource,
-  StyleSources,
-  StyleSourceSelections,
   WebstudioData,
   WebstudioFragment,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
-  getStyleDeclKey,
   coreMetas,
   portalComponent,
   collectionComponent,
@@ -64,7 +59,6 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import { mapGroupBy } from "./shim";
 import { $awareness, selectInstance } from "./awareness";
 
 enableMapSet();
@@ -445,7 +439,7 @@ describe("insert instance children", () => {
 
 describe("insert webstudio fragment at", () => {
   test("insert multiple instances", () => {
-    $instances.set(renderJsx(<$.Body ws:id="bodyId"></$.Body>).instances);
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
     $styleSourceSelections.set(new Map());
     $styleSources.set(new Map());
     $breakpoints.set(new Map());
@@ -467,7 +461,7 @@ describe("insert webstudio fragment at", () => {
       }
     );
     expect($instances.get()).toEqual(
-      renderJsx(
+      renderData(
         <$.Body ws:id="bodyId">
           <$.Heading ws:id={expect.any(String)}></$.Heading>
           <$.Paragraph ws:id={expect.any(String)}></$.Paragraph>
@@ -705,7 +699,7 @@ describe("reparent instance", () => {
 
   test("reparent required child", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Tooltip ws:id="tooltip">
             <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
@@ -722,7 +716,7 @@ describe("reparent instance", () => {
       position: "end",
     });
     expect($instances.get()).toEqual(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Tooltip ws:id="tooltip">
             <$.TooltipContent ws:id="content"></$.TooltipContent>
@@ -2714,142 +2708,6 @@ describe("insert webstudio fragment copy", () => {
   });
 });
 
-describe("copy paste", () => {
-  const css = (strings: TemplateStringsArray, ...values: string[]) => {
-    let cssString = "";
-    strings.forEach((string, index) => {
-      cssString += string + (values[index] ?? "");
-    });
-    const styleSourceSelections: StyleSourceSelections = new Map();
-    const styleSources: StyleSources = new Map();
-    const styles: Styles = new Map();
-    const parsed = mapGroupBy(
-      parseCss(cssString).map((styleDecl) => ({
-        ...styleDecl,
-        selector: styleDecl.selector.startsWith("__")
-          ? styleDecl.selector.slice(2)
-          : styleDecl.selector,
-      })),
-      (parsedStyleDecl) => parsedStyleDecl.selector
-    );
-    for (const [selector, parsedStyles] of parsed) {
-      const [instanceId, styleSourceId] = selector.split("__");
-      styleSourceSelections.set(instanceId, {
-        instanceId: instanceId,
-        values: [styleSourceId],
-      });
-      styleSources.set(styleSourceId, { id: styleSourceId, type: "local" });
-      for (const { property, value } of parsedStyles) {
-        const styleDecl: StyleDecl = {
-          breakpointId: "baseId",
-          styleSourceId,
-          property,
-          value,
-        };
-        styles.set(getStyleDeclKey(styleDecl), styleDecl);
-      }
-    }
-    return { styleSourceSelections, styleSources, styles };
-  };
-
-  test("should add :root local styles", () => {
-    const oldProject = getWebstudioDataStub({
-      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
-      ...css`
-        :root__oldprojectlocalid {
-          color: red;
-        }
-      `,
-    });
-    const newProject = getWebstudioDataStub();
-    const fragment = extractWebstudioFragment(oldProject, ":root");
-    insertWebstudioFragmentCopy({
-      data: newProject,
-      fragment,
-      availableDataSources: new Set(),
-    });
-    const [newStyleSourceId] = newProject.styleSources.keys();
-    expect(newProject).toEqual(
-      expect.objectContaining(css`
-        :root__${newStyleSourceId} {
-          color: red;
-        }
-      `)
-    );
-  });
-
-  test("should merge :root local styles", () => {
-    const oldProject = getWebstudioDataStub({
-      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
-      ...css`
-        :root__oldprojectlocalid {
-          color: red;
-        }
-      `,
-    });
-    const newProject = getWebstudioDataStub({
-      ...renderJsx(<$.Body ws:id="oldProjectBodyId"></$.Body>),
-      ...css`
-        :root__newprojectlocalid {
-          font-size: medium;
-        }
-      `,
-    });
-    const fragment = extractWebstudioFragment(oldProject, ":root");
-    insertWebstudioFragmentCopy({
-      data: newProject,
-      fragment,
-      availableDataSources: new Set(),
-    });
-    expect({
-      styleSourceSelections: newProject.styleSourceSelections,
-      styleSources: newProject.styleSources,
-      styles: newProject.styles,
-    }).toEqual(css`
-      :root__newprojectlocalid {
-        font-size: medium;
-        color: red;
-      }
-    `);
-  });
-
-  test("should copy local styles of duplicated instance", () => {
-    const project = getWebstudioDataStub({
-      ...renderJsx(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="boxId"></$.Box>
-        </$.Body>
-      ),
-      ...css`
-        boxId__boxlocalid {
-          color: red;
-        }
-      `,
-    });
-    const fragment = extractWebstudioFragment(project, "boxId");
-    insertWebstudioFragmentCopy({
-      data: project,
-      fragment,
-      availableDataSources: new Set(),
-    });
-    const [_bodyId, _boxId, newBoxId] = project.instances.keys();
-    const [_boxLocalId, newBoxLocalId] = project.styleSources.keys();
-    expect({
-      styleSourceSelections: project.styleSourceSelections,
-      styleSources: project.styleSources,
-      styles: project.styles,
-    }).toEqual(css`
-      boxId__boxlocalid {
-        color: red;
-      }
-      /* escape potential leading digit */
-      __${newBoxId}__${newBoxLocalId} {
-        color: red;
-      }
-    `);
-  });
-});
-
 describe("find closest insertable", () => {
   const newBoxFragment = createFragment({
     children: [{ type: "id", value: "newBoxId" }],
@@ -2874,7 +2732,7 @@ describe("find closest insertable", () => {
   });
 
   test("puts in the end if closest instance is container", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="boxId">
           <$.Paragraph ws:id="paragraphId">
@@ -2892,7 +2750,7 @@ describe("find closest insertable", () => {
   });
 
   test("puts in the end of root instance", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId"></$.Paragraph>
       </$.Body>
@@ -2906,7 +2764,7 @@ describe("find closest insertable", () => {
   });
 
   test("puts in the end of root instance when page root only has text", () => {
-    const { instances } = renderJsx(<$.Body ws:id="bodyId">text</$.Body>);
+    const { instances } = renderData(<$.Body ws:id="bodyId">text</$.Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual({
@@ -2916,7 +2774,7 @@ describe("find closest insertable", () => {
   });
 
   test("finds closest container and puts after its child within selection", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId">
           <$.Bold ws:id="boldId"></$.Bold>
@@ -2932,7 +2790,7 @@ describe("find closest insertable", () => {
   });
 
   test("finds closest container that doesn't have an expression as a child", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="box1Id"></$.Box>
         <$.Paragraph ws:id="paragraphId">
@@ -2950,14 +2808,14 @@ describe("find closest insertable", () => {
   });
 
   test("forbids inserting into :root", () => {
-    const { instances } = renderJsx(<$.Body ws:id="bodyId"></$.Body>);
+    const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);
     selectInstance([":root"]);
     expect(findClosestInsertable(newBoxFragment)).toEqual(undefined);
   });
 
   test("allow inserting into collection item", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <ws.collection ws:id="collectionId">
           <$.Box ws:id="boxId"></$.Box>
@@ -2973,7 +2831,7 @@ describe("find closest insertable", () => {
   });
 
   test("forbid inserting list item in body", () => {
-    const { instances } = renderJsx(<$.Body ws:id="bodyId"></$.Body>);
+    const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
     const newListItemFragment = createFragment({
