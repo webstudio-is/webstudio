@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { $, renderJsx } from "@webstudio-is/template";
+import { $, renderData } from "@webstudio-is/template";
 import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
@@ -7,7 +7,7 @@ import {
 } from "./instances-utils";
 
 test("find all tree instances", () => {
-  const { instances } = renderJsx(
+  const { instances } = renderData(
     <$.Body ws:id="1">
       <$.Box ws:id="2"></$.Box>
       <$.Box ws:id="3">
@@ -20,7 +20,7 @@ test("find all tree instances", () => {
 });
 
 test("find all tree instances excluding slot descendants", () => {
-  const { instances } = renderJsx(
+  const { instances } = renderData(
     <$.Body ws:id="body">
       <$.Box ws:id="box1">
         <$.Slot ws:id="slot">
@@ -38,7 +38,7 @@ test("find all tree instances excluding slot descendants", () => {
 });
 
 test("include not existing/virtual instance", () => {
-  const { instances } = renderJsx(<$.Body ws:id="1"></$.Body>);
+  const { instances } = renderData(<$.Body ws:id="1"></$.Body>);
   expect(findTreeInstanceIds(instances, ":root")).toEqual(new Set([":root"]));
   expect(
     findTreeInstanceIdsExcludingSlotDescendants(instances, ":root")

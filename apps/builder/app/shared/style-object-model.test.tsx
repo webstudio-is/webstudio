@@ -9,7 +9,7 @@ import {
   type StyleDecl,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/template";
+import { $, renderData } from "@webstudio-is/template";
 import { parseCss } from "@webstudio-is/css-data";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -59,7 +59,7 @@ const createModel = ({
     };
     styles.set(getStyleDeclKey(styleDecl), styleDecl);
   }
-  const { instances, props } = renderJsx(jsx);
+  const { instances, props } = renderData(jsx);
   const styleSourceSelections: StyleSourceSelections = new Map();
   for (const prop of props.values()) {
     if (prop.name === "class" && prop.type === "string") {

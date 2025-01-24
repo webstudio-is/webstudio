@@ -4,9 +4,7 @@ import type {
   Breakpoint,
   DataSource,
   Instance,
-  Instances,
   Prop,
-  Props,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
@@ -380,21 +378,6 @@ export const renderData = (root: JSX.Element): Omit<WebstudioData, "pages"> => {
     dataSources: new Map(dataSources.map((item) => [item.id, item])),
     resources: new Map(resources.map((item) => [item.id, item])),
     assets: new Map(assets.map((item) => [item.id, item])),
-  };
-};
-
-export const renderJsx = (
-  root: JSX.Element
-): {
-  instances: Instances;
-  props: Props;
-} => {
-  const fragment = renderTemplate(root);
-  return {
-    instances: new Map(
-      fragment.instances.map((instance) => [instance.id, instance])
-    ),
-    props: new Map(fragment.props.map((prop) => [prop.id, prop])),
   };
 };
 

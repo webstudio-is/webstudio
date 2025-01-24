@@ -10,7 +10,7 @@ import {
   type WebstudioFragment,
   type Instance,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/template";
+import { $, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
 import {
@@ -41,7 +41,7 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     });
   });
 
-  const expected = renderJsx(jsx);
+  const expected = renderData(jsx);
 
   const expectedInstances = new Map();
   for (const instance of expected.instances.values()) {

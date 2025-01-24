@@ -1,12 +1,11 @@
 import { expect, test } from "vitest";
-import { renderJsx, $ } from "@webstudio-is/template";
+import { renderData, $ } from "@webstudio-is/template";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import {
   generateResources,
   replaceFormActionsWithResources,
 } from "./resources-generator";
-import type { Resource } from "./schema/resources";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -322,10 +321,9 @@ test("generate action resource", () => {
 });
 
 test("replace form action with resource", () => {
-  const data = {
-    resources: toMap<Resource>([]),
-    ...renderJsx(<$.Form ws:id="formId" action="https://my-url.com"></$.Form>),
-  };
+  const data = renderData(
+    <$.Form ws:id="formId" action="https://my-url.com"></$.Form>
+  );
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([
@@ -352,10 +350,7 @@ test("replace form action with resource", () => {
 });
 
 test("ignore empty form action", () => {
-  const data = {
-    resources: toMap<Resource>([]),
-    ...renderJsx(<$.Form ws:id="formId" action=""></$.Form>),
-  };
+  const data = renderData(<$.Form ws:id="formId" action=""></$.Form>);
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([
