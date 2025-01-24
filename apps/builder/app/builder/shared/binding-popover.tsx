@@ -8,6 +8,7 @@ import {
   createContext,
   type ReactNode,
 } from "react";
+import { useStore } from "@nanostores/react";
 import {
   DotIcon,
   InfoCircleIcon,
@@ -47,7 +48,6 @@ import {
   $isDesignMode,
   computeExpression,
 } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
 
 export const evaluateExpressionWithinScope = (
   expression: string,

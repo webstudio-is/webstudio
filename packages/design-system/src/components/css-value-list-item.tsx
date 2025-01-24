@@ -180,7 +180,7 @@ export const CssValueListItem = forwardRef(
               {...listItemAttributes}
               {...rest}
               hidden={hidden}
-              disabled={hidden === true}
+              disabled={hidden === true || rest.disabled}
             >
               <DragHandleIconStyled />
 
