@@ -173,6 +173,11 @@ const getVideoId = (url?: string) => {
   }
   try {
     const urlObj = new URL(url);
+    // It's already an embed URL, we don't need to extract video id.
+    // It could be something like this https://youtube.com/embed?listType=playlist&list=UUjk2nKmHzgH5Xy-C5qYRd5A
+    if (urlObj.pathname === "/embed") {
+      return;
+    }
     if (urlObj.hostname === "youtu.be") {
       return urlObj.pathname.slice(1);
     }
@@ -185,11 +190,26 @@ const getVideoId = (url?: string) => {
 
 const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
   const videoId = getVideoId(options.url);
-  if (!videoId) {
-    return;
+  const url = new URL(videoUrlOrigin);
+
+  if (videoId) {
+    url.pathname = `/embed/${videoId}`;
+  } else if (options.url) {
+    // E.g. this won't have videoId https://youtube.com/embed?listType=playlist&list=UUjk2nKmHzgH5Xy-C5qYRd5A
+    // It may also contain parameters since its an embed URL, so we want to keep it as-is and just use the origin we predefined
+    // so that no cookies option still works
+    try {
+      const parsedUrl = new URL(options.url);
+      url.pathname = parsedUrl.pathname;
+      url.search = parsedUrl.search;
+    } catch {
+      // Ignore invalid URL
+    }
   }
 
-  const url = new URL(`${videoUrlOrigin}/embed/${videoId}`);
+  if (!url) {
+    return;
+  }
 
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
