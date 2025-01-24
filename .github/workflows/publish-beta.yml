@@ -25,7 +25,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
-      - uses: ./.github/actions/ci-setup
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
 
       - name: Creating .npmrc
         run: |
@@ -49,6 +53,7 @@ jobs:
             --replacement="0.0.0-${{ steps.short_sha.outputs.value }}" \
             "**/package.json"
 
+      - run: pnpm install --ignore-scripts
       - run: pnpm --filter="webstudio..." build
       - run: pnpm --filter="webstudio..." dts
 
