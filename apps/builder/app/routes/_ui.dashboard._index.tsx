@@ -86,7 +86,7 @@ const DashboardRoute = () => {
 
   return (
     <ClientOnly>
-      <Dashboard {...data} />
+      <Dashboard {...data} page="projects" />
     </ClientOnly>
   );
 };

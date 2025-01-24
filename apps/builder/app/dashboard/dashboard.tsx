@@ -9,6 +9,7 @@ import {
   css,
   globalCss,
   theme,
+  SearchField,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
@@ -23,6 +24,7 @@ import { Projects } from "./projects/projects";
 import { Templates } from "./templates/templates";
 import { Header } from "./shared/layout";
 import { help } from "~/shared/help";
+import { matchSorter } from "match-sorter";
 
 const globalStyles = globalCss({
   body: {
@@ -99,7 +101,7 @@ const NavigationItems = ({
     <List style={{ padding: 0, margin: 0 }}>
       {items.map((item, index) => {
         return (
-          <ListItem asChild index={index}>
+          <ListItem asChild index={index} key={index}>
             <NavLink
               to={item.to}
               end
@@ -118,10 +120,27 @@ const NavigationItems = ({
   );
 };
 
+const Search = ({ items, keys, onUpdate }) => {
+  return (
+    <SearchField
+      onChange={(event) => {
+        const value = event.currentTarget.value.trim();
+        const found = value ? matchSorter(items, value, { keys }) : items;
+        onUpdate(found);
+      }}
+      onCancel={() => {
+        onUpdate(items);
+      }}
+      autoFocus
+      placeholder="Search for anything"
+    />
+  );
+};
+
 type DashboardProps = {
   user: User;
-  projects?: Array<DashboardProject>;
-  templates?: Array<DashboardProject>;
+  projects: Array<DashboardProject>;
+  page: "projects" | "templates";
   welcome: boolean;
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
@@ -134,14 +153,15 @@ type DashboardProps = {
 
 export const Dashboard = ({
   user,
-  projects,
-  templates,
   welcome,
   userPlanFeatures,
   publisherHost,
   projectToClone,
+  projects,
+  page,
 }: DashboardProps) => {
   globalStyles();
+  const [foundProjects, setFoundProjects] = useState(projects);
 
   return (
     <TooltipProvider>
@@ -160,6 +180,21 @@ export const Dashboard = ({
           <Header variant="aside">
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Header>
+          <Flex
+            direction="column"
+            gap="3"
+            css={{
+              paddingInline: theme.spacing[7],
+              paddingBottom: theme.spacing[7],
+            }}
+          >
+            {}
+            <Search
+              items={projects}
+              keys={["title", "domain"]}
+              onUpdate={setFoundProjects}
+            />
+          </Flex>
           <nav>
             <CollapsibleSection label="Workspace" fullWidth>
               <NavigationItems
@@ -199,14 +234,16 @@ export const Dashboard = ({
             </CollapsibleSection>
           </nav>
         </Flex>
-        {projects && (
+        {page === "projects" && (
           <Projects
-            projects={projects}
+            projects={foundProjects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
           />
         )}
-        {templates && <Templates templates={templates} welcome={welcome} />}
+        {page === "templates" && (
+          <Templates projects={foundProjects} welcome={welcome} />
+        )}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

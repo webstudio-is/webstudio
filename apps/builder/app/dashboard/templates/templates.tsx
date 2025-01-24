@@ -5,11 +5,11 @@ import { CreateProject } from "../projects/project-dialogs";
 import { TemplateCard } from "./template-card";
 
 type ProjectsProps = {
-  templates: Array<DashboardProject>;
+  projects: Array<DashboardProject>;
   welcome: boolean;
 };
 
-export const Templates = ({ templates, welcome }: ProjectsProps) => {
+export const Templates = ({ projects, welcome }: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
@@ -20,7 +20,7 @@ export const Templates = ({ templates, welcome }: ProjectsProps) => {
           <CreateProject />
         </Flex>
       </Header>
-      {templates.length > 0 && (
+      {projects.length > 0 && (
         <Flex
           direction="column"
           gap="3"
@@ -33,7 +33,7 @@ export const Templates = ({ templates, welcome }: ProjectsProps) => {
               paddingBottom: theme.spacing[13],
             }}
           >
-            {templates.map((project) => {
+            {projects.map((project) => {
               return <TemplateCard project={project} key={project.id} />;
             })}
           </Grid>

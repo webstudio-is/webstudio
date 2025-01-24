@@ -42,7 +42,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return {
     user,
-    templates,
+    projects: templates,
     welcome: hasProjects === false,
     userPlanFeatures,
     publisherHost: env.PUBLISHER_HOST,
@@ -61,7 +61,7 @@ const DashboardRoute = () => {
 
   return (
     <ClientOnly>
-      <Dashboard {...data} />
+      <Dashboard {...data} page="templates" />
     </ClientOnly>
   );
 };
