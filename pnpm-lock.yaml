@@ -1163,6 +1163,9 @@ importers:
       '@react-router/dev':
         specifier: ^7.1.3
         version: 7.1.3(@react-router/serve@7.1.3(react-router@7.1.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3))(@types/node@22.10.7)(react-router@7.1.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@react-router/fs-routes':
+        specifier: ^7.1.3
+        version: 7.1.3(@react-router/dev@7.1.3(@react-router/serve@7.1.3(react-router@7.1.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3))(@types/node@22.10.7)(react-router@7.1.3(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.7.3)
       '@remix-run/cloudflare':
         specifier: ^2.15.2
         version: 2.15.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.7.3)
