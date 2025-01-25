@@ -51,12 +51,11 @@ export const Projects = ({
               paddingBottom: theme.spacing[13],
             }}
           >
-            {projects.map((project, index) => {
+            {projects.map((project) => {
               return (
-                <ListItem index={index} key={project.id} asChild>
+                <ListItem index={0} key={project.id} asChild>
                   <ProjectCard
                     project={project}
-                    key={project.id}
                     hasProPlan={hasProPlan}
                     publisherHost={publisherHost}
                   />
