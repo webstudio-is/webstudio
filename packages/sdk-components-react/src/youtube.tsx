@@ -207,10 +207,6 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
     }
   }
 
-  if (!url) {
-    return;
-  }
-
   const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
 
   const parameters: Record<string, string | undefined> = {};
