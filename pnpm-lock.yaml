@@ -332,8 +332,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.0
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       lexical:
         specifier: ^0.21.0
         version: 0.21.0
@@ -513,8 +513,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -690,8 +690,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -763,8 +763,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -833,8 +833,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -900,8 +900,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -961,8 +961,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.19
-        version: 5.1.19
+        specifier: ^5.1.21
+        version: 5.1.21
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -6946,8 +6946,8 @@ packages:
     resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
     engines: {node: '>=12'}
 
-  isbot@5.1.19:
-    resolution: {integrity: sha512-8krWJBGKC3lVymkncvmBTpIEWMD5kKmjAvkM3/Xh6veE0bAydwgSNrI5h493DGrG2UNJCy0HuHpNPSKRy0dBJA==}
+  isbot@5.1.21:
+    resolution: {integrity: sha512-0q3naRVpENL0ReKHeNcwn/G7BDynp0DqZUckKyFtM9+hmpnPqgm8+8wbjiVZ0XNhq1wPQV28/Pb8Snh5adeUHA==}
     engines: {node: '>=18'}
 
   isexe@2.0.0:
@@ -10766,7 +10766,7 @@ snapshots:
     dependencies:
       '@netlify/functions': 2.8.2
       '@remix-run/node': 2.15.2(typescript@5.7.3)
-      isbot: 5.1.19
+      isbot: 5.1.21
     optionalDependencies:
       vite: 5.4.11(@types/node@22.10.7)
     transitivePeerDependencies:
@@ -10776,7 +10776,7 @@ snapshots:
     dependencies:
       '@netlify/remix-runtime': 2.3.1(@remix-run/server-runtime@2.15.2(typescript@5.7.3))
       '@remix-run/dev': 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      isbot: 5.1.19
+      isbot: 5.1.21
     optionalDependencies:
       vite: 5.4.11(@types/node@22.10.7)
     transitivePeerDependencies:
@@ -14496,7 +14496,7 @@ snapshots:
 
   isbot@3.6.13: {}
 
-  isbot@5.1.19: {}
+  isbot@5.1.21: {}
 
   isexe@2.0.0: {}
 
