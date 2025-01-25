@@ -1,4 +1,12 @@
-import { Flex, Grid, Text, rawTheme, theme } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Grid,
+  List,
+  ListItem,
+  Text,
+  rawTheme,
+  theme,
+} from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
@@ -30,17 +38,23 @@ export const Templates = ({ projects, welcome }: ProjectsProps) => {
         }}
       >
         {projects.length === 0 && <NothingFound />}
-        <Grid
-          gap="6"
-          css={{
-            gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
-            paddingBottom: theme.spacing[13],
-          }}
-        >
-          {projects.map((project) => {
-            return <TemplateCard project={project} key={project.id} />;
-          })}
-        </Grid>
+        <List asChild>
+          <Grid
+            gap="6"
+            css={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
+              paddingBottom: theme.spacing[13],
+            }}
+          >
+            {projects.map((project) => {
+              return (
+                <ListItem index={0} key={project.id} asChild>
+                  <TemplateCard project={project} />
+                </ListItem>
+              );
+            })}
+          </Grid>
+        </List>
       </Flex>
     </Main>
   );

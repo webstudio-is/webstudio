@@ -5,18 +5,16 @@ import { builderUrl } from "~/shared/router-utils";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import { ThumbnailWithAbbr, ThumbnailWithImage } from "../shared/thumbnail";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { useProjectCard } from "../projects/project-card";
 
 type TemplateCardProps = {
   project: DashboardProject;
 };
 
-export const TemplateCard = ({ project }: TemplateCardProps) => {
-  const { thumbnailRef, handleKeyDown } = useProjectCard();
+export const TemplateCard = ({ project, ...props }: TemplateCardProps) => {
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const { title, previewImageAsset } = project;
   return (
-    <Card tabIndex={0} onKeyDown={handleKeyDown}>
+    <Card {...props}>
       <CardContent
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
@@ -26,7 +24,6 @@ export const TemplateCard = ({ project }: TemplateCardProps) => {
         {previewImageAsset ? (
           <ThumbnailWithImage
             name={previewImageAsset.name}
-            ref={thumbnailRef}
             onClick={() => {
               setIsDuplicateDialogOpen(true);
             }}
@@ -34,7 +31,6 @@ export const TemplateCard = ({ project }: TemplateCardProps) => {
         ) : (
           <ThumbnailWithAbbr
             title={title}
-            ref={thumbnailRef}
             onClick={() => {
               setIsDuplicateDialogOpen(true);
             }}
