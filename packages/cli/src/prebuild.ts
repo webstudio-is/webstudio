@@ -211,6 +211,12 @@ const importFrom = (importee: string, importer: string) => {
   return relative(dirname(importer), importee).replaceAll("\\", "/");
 };
 
+const npmrc = `force=true
+loglevel=error
+audit=false
+fund=false
+`;
+
 export const prebuild = async (options: {
   /**
    * Do we need download assets
@@ -253,7 +259,7 @@ export const prebuild = async (options: {
   await rm(routesDir, { recursive: true, force: true });
 
   // force npm to install with not matching peer dependencies
-  await writeFile(join(cwd(), ".npmrc"), "force=true");
+  await writeFile(join(cwd(), ".npmrc"), npmrc);
 
   for (const template of options.template) {
     await copyTemplates(template);
