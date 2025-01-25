@@ -93,12 +93,14 @@ test("compute expression prop values", () => {
     toMap([
       {
         id: "var1",
+        scopeInstanceId: "box",
         type: "variable",
         name: "",
         value: { type: "number", value: 1 },
       },
       {
         id: "var2",
+        scopeInstanceId: "box",
         type: "variable",
         name: "",
         value: { type: "string", value: "Hello" },
@@ -162,6 +164,7 @@ test("generate action prop callbacks", () => {
     toMap([
       {
         id: "var",
+        scopeInstanceId: "box",
         type: "variable",
         name: "",
         value: { type: "number", value: 1 },
@@ -292,6 +295,7 @@ test("compute expression from collection items", () => {
     toMap([
       {
         id: "itemId",
+        scopeInstanceId: "list",
         type: "parameter",
         name: "item",
       },
@@ -362,6 +366,7 @@ test("access parameter value from variables values", () => {
     toMap([
       {
         id: "parameterId",
+        scopeInstanceId: "body",
         type: "parameter",
         name: "paramName",
       },
@@ -400,6 +405,7 @@ test("compute props bound to resource variables", () => {
     toMap([
       {
         id: "resourceVariableId",
+        scopeInstanceId: "body",
         type: "resource",
         name: "paramName",
         resourceId: "resourceId",

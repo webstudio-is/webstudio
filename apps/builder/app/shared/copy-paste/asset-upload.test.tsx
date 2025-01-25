@@ -1,10 +1,10 @@
 import { expect, test } from "vitest";
-import { $, renderJsx, AssetValue } from "@webstudio-is/template";
-import { denormalizeSrcProps } from "./asset-upload";
+import { $, AssetValue, renderTemplate } from "@webstudio-is/template";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
+import { denormalizeSrcProps } from "./asset-upload";
 
 test("extractSrcProps works well", async () => {
-  const inputData = renderJsx(
+  const data = renderTemplate(
     <$.Body ws:id="boxA">
       <$.Image ws:id="imageA" src="https://src-a/"></$.Image>
       <$.Box ws:id="boxB">
@@ -12,19 +12,6 @@ test("extractSrcProps works well", async () => {
       </$.Box>
     </$.Body>
   );
-
-  const data: WebstudioFragment = {
-    assets: [],
-    breakpoints: [],
-    children: [],
-    dataSources: [],
-    instances: [...inputData.instances.values()],
-    props: [...inputData.props.values()],
-    resources: [],
-    styles: [],
-    styleSources: [],
-    styleSourceSelections: [],
-  };
 
   const src2AssetId = (src: string) => `${src}asset-id`;
 
@@ -41,7 +28,7 @@ test("extractSrcProps works well", async () => {
   const assetA = new AssetValue(src2AssetId("https://src-a/"));
   const assetB = new AssetValue(src2AssetId("https://src-b/"));
 
-  const desiredOutcome = renderJsx(
+  const desiredOutcome = renderTemplate(
     <$.Body ws:id="boxA">
       <$.Image
         ws:id="imageA"
@@ -60,11 +47,9 @@ test("extractSrcProps works well", async () => {
     </$.Body>
   );
 
-  expect(denormalizedData.instances).toEqual([
-    ...desiredOutcome.instances.values(),
-  ]);
+  expect(denormalizedData.instances).toEqual(desiredOutcome.instances);
 
-  expect(denormalizedData.props).toEqual([...desiredOutcome.props.values()]);
+  expect(denormalizedData.props).toEqual(desiredOutcome.props);
 });
 
 test("it works well with no background-images", async () => {

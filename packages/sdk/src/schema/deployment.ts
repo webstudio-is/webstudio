@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const Templates = z.enum([
   "vanilla",
+  "docker",
   "vercel",
   "netlify-functions",
   "netlify-edge-functions",

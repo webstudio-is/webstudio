@@ -30,20 +30,20 @@ export const DataSource = z.union([
   z.object({
     type: z.literal("variable"),
     id: DataSourceId,
-    scopeInstanceId: z.optional(z.string()),
+    scopeInstanceId: z.string(),
     name: z.string(),
     value: DataSourceVariableValue,
   }),
   z.object({
     type: z.literal("parameter"),
     id: DataSourceId,
-    scopeInstanceId: z.optional(z.string()),
+    scopeInstanceId: z.string(),
     name: z.string(),
   }),
   z.object({
     type: z.literal("resource"),
     id: DataSourceId,
-    scopeInstanceId: z.optional(z.string()),
+    scopeInstanceId: z.string(),
     name: z.string(),
     resourceId: z.string(),
   }),

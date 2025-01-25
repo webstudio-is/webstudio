@@ -6,6 +6,7 @@ import { action } from "@storybook/addon-actions";
 import { Box, Button, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import { $, renderData } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
@@ -15,7 +16,6 @@ import {
 } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
-import { $, renderJsx } from "@webstudio-is/template";
 import { $awareness } from "~/shared/awareness";
 
 export default {
@@ -259,7 +259,7 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
       ])
     );
 
-    return renderJsx(
+    return renderData(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="boxAId">
           Hello world <$.Bold ws:id="boldA">Hello world</$.Bold> Hello world
