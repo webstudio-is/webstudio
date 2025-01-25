@@ -58,7 +58,16 @@ export const PROJECT_TEMPLATES = [
     label: "Vanilla",
     expand: ["defaults"],
   },
-  { value: "vercel" as const, label: "Vercel", expand: ["defaults", "vercel"] },
+  {
+    value: "docker" as const,
+    label: "Docker",
+    expand: ["react-router-docker"],
+  },
+  {
+    value: "vercel" as const,
+    label: "Vercel",
+    expand: ["defaults", "vercel"],
+  },
   {
     value: "netlify-functions" as const,
     label: "Netlify Functions",
@@ -69,7 +78,10 @@ export const PROJECT_TEMPLATES = [
     label: "Netlify Edge Functions",
     expand: ["defaults", "netlify-edge-functions"],
   },
-  { value: "ssg" as const, label: "Static Site Generation (SSG)" },
+  {
+    value: "ssg" as const,
+    label: "Static Site Generation (SSG)",
+  },
   {
     value: "ssg-netlify" as const,
     label: "Static Site Generation (SSG) Netlify",
@@ -88,10 +100,5 @@ export const INTERNAL_TEMPLATES = [
     value: "cloudflare",
     label: "Cloudflare",
     expand: ["defaults", "cloudflare"],
-  },
-  {
-    value: "react-router-docker",
-    label: "Dokcer",
-    expand: ["react-router-docker"],
   },
 ];
