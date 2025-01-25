@@ -60,6 +60,7 @@ export const WithProjects: StoryFn<typeof Dashboard> = () => {
       user={user}
       welcome={false}
       projects={projects}
+      page="projects"
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}
     />
@@ -87,7 +88,8 @@ export const WithTemplates: StoryFn<typeof Dashboard> = () => {
   const router = createRouter(
     <Dashboard
       user={user}
-      templates={templates}
+      projects={templates}
+      page="templates"
       welcome
       userPlanFeatures={userPlanFeatures}
       publisherHost={"https://wstd.work"}

@@ -3,6 +3,7 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
 import { TemplateCard } from "./template-card";
+import { NothingFound } from "../shared/nothing-found";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
@@ -20,25 +21,27 @@ export const Templates = ({ projects, welcome }: ProjectsProps) => {
           <CreateProject />
         </Flex>
       </Header>
-      {projects.length > 0 && (
-        <Flex
-          direction="column"
-          gap="3"
-          css={{ paddingInline: theme.spacing[13] }}
+      <Flex
+        direction="column"
+        gap="3"
+        css={{
+          paddingInline: theme.spacing[13],
+          paddingTop: projects.length === 0 ? "20vh" : 0,
+        }}
+      >
+        {projects.length === 0 && <NothingFound />}
+        <Grid
+          gap="6"
+          css={{
+            gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
+            paddingBottom: theme.spacing[13],
+          }}
         >
-          <Grid
-            gap="6"
-            css={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
-              paddingBottom: theme.spacing[13],
-            }}
-          >
-            {projects.map((project) => {
-              return <TemplateCard project={project} key={project.id} />;
-            })}
-          </Grid>
-        </Flex>
-      )}
+          {projects.map((project) => {
+            return <TemplateCard project={project} key={project.id} />;
+          })}
+        </Grid>
+      </Flex>
     </Main>
   );
 };

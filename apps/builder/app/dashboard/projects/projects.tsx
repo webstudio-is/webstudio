@@ -8,10 +8,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { EmptyState } from "./empty-state";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
+import { NothingFound } from "../shared/nothing-found";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
@@ -42,7 +42,7 @@ export const Projects = ({
           paddingTop: projects.length === 0 ? "20vh" : 0,
         }}
       >
-        {projects.length === 0 && <EmptyState />}
+        {projects.length === 0 && <NothingFound />}
         <List asChild>
           <Grid
             gap="6"
