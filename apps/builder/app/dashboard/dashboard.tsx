@@ -120,23 +120,6 @@ const NavigationItems = ({
   );
 };
 
-const Search = ({ items, keys, onUpdate }) => {
-  return (
-    <SearchField
-      onChange={(event) => {
-        const value = event.currentTarget.value.trim();
-        const found = value ? matchSorter(items, value, { keys }) : items;
-        onUpdate(found);
-      }}
-      onCancel={() => {
-        onUpdate(items);
-      }}
-      autoFocus
-      placeholder="Search for anything"
-    />
-  );
-};
-
 type DashboardProps = {
   user: User;
   projects: Array<DashboardProject>;
@@ -188,11 +171,19 @@ export const Dashboard = ({
               paddingBottom: theme.spacing[7],
             }}
           >
-            {}
-            <Search
-              items={projects}
-              keys={["title", "domain"]}
-              onUpdate={setFoundProjects}
+            <SearchField
+              onChange={(event) => {
+                const value = event.currentTarget.value.trim();
+                const found = value
+                  ? matchSorter(projects, value, { keys: ["title", "domain"] })
+                  : projects;
+                setFoundProjects(found);
+              }}
+              onCancel={() => {
+                setFoundProjects(projects);
+              }}
+              autoFocus
+              placeholder="Search for anything"
             />
           </Flex>
           <nav>
