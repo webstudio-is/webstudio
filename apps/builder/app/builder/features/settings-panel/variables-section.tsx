@@ -3,6 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  css,
   CssValueListArrowFocus,
   CssValueListItem,
   DropdownMenu,
@@ -184,6 +185,13 @@ const EmptyVariables = () => {
   );
 };
 
+const variableLabelStyle = css({
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+});
+
 const VariablesItem = ({
   variable,
   source,
@@ -197,8 +205,6 @@ const VariablesItem = ({
   value: unknown;
   usageCount: number;
 }) => {
-  const labelValue =
-    value === undefined ? "" : `: ${formatValuePreview(value)}`;
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
@@ -207,9 +213,14 @@ const VariablesItem = ({
         id={variable.id}
         index={index}
         label={
-          <Flex align="center">
+          <Flex align="center" css={{}}>
             <Label color={source}>{variable.name}</Label>
-            {labelValue}
+            {value !== undefined && (
+              <span className={variableLabelStyle.toString()}>
+                &nbsp;
+                {formatValuePreview(value)}
+              </span>
+            )}
           </Flex>
         }
         disabled={source === "remote"}
