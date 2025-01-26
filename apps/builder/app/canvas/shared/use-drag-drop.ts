@@ -30,6 +30,7 @@ import {
   getAncestorInstanceSelector,
 } from "~/shared/tree-utils";
 import {
+  findClosestContainer,
   findClosestInstanceMatchingFragment,
   isTreeMatching,
 } from "~/shared/matcher";
@@ -67,7 +68,16 @@ const findClosestDroppableInstanceSelector = (
   const instances = $instances.get();
   const metas = $registeredComponentMetas.get();
 
-  let droppableIndex = -1;
+  // prevent dropping anything into non containers like image
+  let droppableIndex = findClosestContainer({
+    metas,
+    instances,
+    instanceSelector,
+  });
+  if (droppableIndex === -1) {
+    return;
+  }
+  instanceSelector = instanceSelector.slice(droppableIndex);
   if (dragPayload?.type === "insert") {
     const fragment = getComponentTemplateData(dragPayload.dragComponent);
     if (fragment) {
