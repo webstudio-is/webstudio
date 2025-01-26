@@ -9,22 +9,22 @@ import {
   css,
   globalCss,
   theme,
-  SearchField,
 } from "@webstudio-is/design-system";
-import type { DashboardProject } from "@webstudio-is/dashboard";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
-import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { dashboardPath, templatesPath } from "~/shared/router-utils";
+import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
 import { Templates } from "./templates/templates";
 import { Header } from "./shared/layout";
 import { help } from "~/shared/help";
-import { matchSorter } from "match-sorter";
+import { SearchResults } from "./search/search-results";
+import type { DashboardData } from "./shared/types";
+import { Search } from "./search/search-field";
 
 const globalStyles = globalCss({
   body: {
@@ -35,7 +35,7 @@ const globalStyles = globalCss({
 const CloneProject = ({
   projectToClone,
 }: {
-  projectToClone: DashboardProps["projectToClone"];
+  projectToClone: DashboardData["projectToClone"];
 }) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(projectToClone !== undefined);
@@ -120,31 +120,40 @@ const NavigationItems = ({
   );
 };
 
-type DashboardProps = {
-  user: User;
-  projects: Array<DashboardProject>;
-  page: "projects" | "templates";
-  welcome: boolean;
-  userPlanFeatures: UserPlanFeatures;
-  publisherHost: string;
-  projectToClone?: {
-    authToken: string;
-    id: string;
-    title: string;
-  };
+const $data = atom<DashboardData | undefined>();
+
+export const DashboardRoot = ({ data }: { data: DashboardData }) => {
+  $data.set(data);
+  globalStyles();
 };
 
-export const Dashboard = ({
-  user,
-  welcome,
-  userPlanFeatures,
-  publisherHost,
-  projectToClone,
-  projects,
-  page,
-}: DashboardProps) => {
-  globalStyles();
-  const [foundProjects, setFoundProjects] = useState(projects);
+const getView = () => {
+  if (location.pathname === dashboardPath("templates")) {
+    return "templates";
+  }
+  if (location.pathname === dashboardPath("search")) {
+    return "search";
+  }
+  return "projects";
+};
+
+export const Dashboard = () => {
+  const data = useStore($data);
+
+  if (data === undefined) {
+    return;
+  }
+
+  const {
+    user,
+    userPlanFeatures,
+    publisherHost,
+    projectToClone,
+    projects,
+    templates,
+  } = data;
+  const view = getView();
+  const welcome = view === "templates" && projects.length === 0;
 
   return (
     <TooltipProvider>
@@ -171,20 +180,7 @@ export const Dashboard = ({
               paddingBottom: theme.spacing[7],
             }}
           >
-            <SearchField
-              onChange={(event) => {
-                const value = event.currentTarget.value.trim();
-                const found = value
-                  ? matchSorter(projects, value, { keys: ["title", "domain"] })
-                  : projects;
-                setFoundProjects(found);
-              }}
-              onCancel={() => {
-                setFoundProjects(projects);
-              }}
-              autoFocus
-              placeholder="Search for anything"
-            />
+            <Search />
           </Flex>
           <nav>
             <CollapsibleSection label="Workspace" fullWidth>
@@ -193,19 +189,19 @@ export const Dashboard = ({
                   welcome
                     ? [
                         {
-                          to: templatesPath(),
+                          to: dashboardPath("templates"),
                           prefix: <ExtensionIcon />,
                           children: "Welcome",
                         },
                       ]
                     : [
                         {
-                          to: dashboardPath(),
+                          to: dashboardPath("projects"),
                           prefix: <BodyIcon />,
                           children: "Projects",
                         },
                         {
-                          to: templatesPath(),
+                          to: dashboardPath("templates"),
                           prefix: <ExtensionIcon />,
                           children: "Starter templates",
                         },
@@ -225,16 +221,17 @@ export const Dashboard = ({
             </CollapsibleSection>
           </nav>
         </Flex>
-        {page === "projects" && (
+        {view === "projects" && (
           <Projects
-            projects={foundProjects}
+            projects={projects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
           />
         )}
-        {page === "templates" && (
-          <Templates projects={foundProjects} welcome={welcome} />
+        {view === "templates" && (
+          <Templates projects={templates} welcome={welcome} />
         )}
+        {view === "search" && <SearchResults {...data} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

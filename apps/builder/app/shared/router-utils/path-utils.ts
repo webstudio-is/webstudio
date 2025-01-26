@@ -64,12 +64,11 @@ export const builderUrl = (props: {
   return url.href;
 };
 
-export const dashboardPath = () => {
-  return "/dashboard";
-};
-
-export const templatesPath = () => {
-  return "/dashboard/templates";
+export const dashboardPath = (view: "templates" | "search" | "projects") => {
+  if (view === "projects") {
+    return `/dashboard`;
+  }
+  return `/dashboard/${view}`;
 };
 
 export const dashboardUrl = (props: { origin: string }) => {
