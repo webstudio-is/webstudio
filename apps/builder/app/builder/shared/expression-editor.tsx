@@ -272,7 +272,7 @@ const getVariableDecorations = (view: EditorView) => {
     from: 0,
     to: view.state.doc.length,
     enter: (node) => {
-      if (node.name == "VariableName") {
+      if (node.name === "VariableName") {
         const [{ scope }] = view.state.facet(VariablesData);
         const identifier = view.state.doc.sliceString(node.from, node.to);
         const variableName = decodeDataVariableName(identifier);
@@ -412,7 +412,7 @@ export const ExpressionEditor = ({
       newAliases.set(encodeDataVariableName(name), name);
     }
     return newAliases;
-  }, []);
+  }, [aliases]);
 
   const extensions = useMemo(
     () => [
