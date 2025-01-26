@@ -62,6 +62,8 @@ const $availableVariables = computed(
     if (instancePath === undefined) {
       return [];
     }
+    const [{ instanceSelector }] = instancePath;
+    const [selectedInstanceId] = instanceSelector;
     const availableVariables = new Map<DataSource["name"], DataSource>();
     // order from ancestor to descendant
     // so descendants can override ancestor variables
@@ -72,7 +74,12 @@ const $availableVariables = computed(
         }
       }
     }
-    return Array.from(availableVariables.values());
+    // order local variables first
+    return Array.from(availableVariables.values()).sort((left, right) => {
+      const leftRank = left.scopeInstanceId === selectedInstanceId ? 0 : 1;
+      const rightRank = right.scopeInstanceId === selectedInstanceId ? 0 : 1;
+      return leftRank - rightRank;
+    });
   }
 );
 
@@ -287,6 +294,7 @@ const VariablesList = () => {
 
   return (
     <CssValueListArrowFocus>
+      {/* local variables should be ordered first to not block tab to first item */}
       {availableVariables.map((variable, index) => (
         <VariablesItem
           key={variable.id}
