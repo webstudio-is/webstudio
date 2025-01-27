@@ -85,7 +85,10 @@ export const lintExpression = ({
         simple(node.left, {
           Identifier(node) {
             if (availableVariables.has(node.name) === false) {
-              addMessage(`"${node.name}" is not defined in the scope`)(node);
+              addMessage(
+                `"${node.name}" is not defined in the scope`,
+                "warning"
+              )(node);
             }
           },
         });
