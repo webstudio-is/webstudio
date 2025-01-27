@@ -3,6 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
+  css,
   CssValueListArrowFocus,
   CssValueListItem,
   DropdownMenu,
@@ -61,6 +62,8 @@ const $availableVariables = computed(
     if (instancePath === undefined) {
       return [];
     }
+    const [{ instanceSelector }] = instancePath;
+    const [selectedInstanceId] = instanceSelector;
     const availableVariables = new Map<DataSource["name"], DataSource>();
     // order from ancestor to descendant
     // so descendants can override ancestor variables
@@ -71,7 +74,12 @@ const $availableVariables = computed(
         }
       }
     }
-    return Array.from(availableVariables.values());
+    // order local variables first
+    return Array.from(availableVariables.values()).sort((left, right) => {
+      const leftRank = left.scopeInstanceId === selectedInstanceId ? 0 : 1;
+      const rightRank = right.scopeInstanceId === selectedInstanceId ? 0 : 1;
+      return leftRank - rightRank;
+    });
   }
 );
 
@@ -184,6 +192,13 @@ const EmptyVariables = () => {
   );
 };
 
+const variableLabelStyle = css({
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+});
+
 const VariablesItem = ({
   variable,
   source,
@@ -197,8 +212,6 @@ const VariablesItem = ({
   value: unknown;
   usageCount: number;
 }) => {
-  const labelValue =
-    value === undefined ? "" : `: ${formatValuePreview(value)}`;
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
@@ -207,9 +220,14 @@ const VariablesItem = ({
         id={variable.id}
         index={index}
         label={
-          <Flex align="center">
+          <Flex align="center" css={{}}>
             <Label color={source}>{variable.name}</Label>
-            {labelValue}
+            {value !== undefined && (
+              <span className={variableLabelStyle.toString()}>
+                &nbsp;
+                {formatValuePreview(value)}
+              </span>
+            )}
           </Flex>
         }
         disabled={source === "remote"}
@@ -276,6 +294,7 @@ const VariablesList = () => {
 
   return (
     <CssValueListArrowFocus>
+      {/* local variables should be ordered first to not block tab to first item */}
       {availableVariables.map((variable, index) => (
         <VariablesItem
           key={variable.id}

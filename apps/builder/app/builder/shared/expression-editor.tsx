@@ -1,11 +1,10 @@
 import { useEffect, useMemo, type ReactNode, type RefObject } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
-import { EditorState, Facet } from "@codemirror/state";
+import { Facet, RangeSetBuilder } from "@codemirror/state";
 import {
   type DecorationSet,
   type ViewUpdate,
-  MatchDecorator,
   Decoration,
   WidgetType,
   ViewPlugin,
@@ -28,12 +27,7 @@ import {
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
 import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
-import {
-  decodeDataSourceVariable,
-  lintExpression,
-  transpileExpression,
-} from "@webstudio-is/sdk";
-import { mapGroupBy } from "~/shared/shim";
+import { decodeDataVariableId, lintExpression } from "@webstudio-is/sdk";
 import {
   EditorContent,
   EditorDialog,
@@ -42,6 +36,12 @@ import {
   foldGutterExtension,
   type EditorApi,
 } from "./code-editor-base";
+import {
+  decodeDataVariableName,
+  encodeDataVariableName,
+  restoreExpressionVariables,
+  unsetExpressionVariables,
+} from "~/shared/data-variables";
 
 export type { EditorApi };
 
@@ -178,7 +178,7 @@ const completionPath = (
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
 const scopeCompletionSource: CompletionSource = (context) => {
-  const [{ scope, aliases }] = context.state.facet(VariablesData);
+  const [{ scope }] = context.state.facet(VariablesData);
   const path = completionPath(context);
   if (path === undefined) {
     return null;
@@ -195,7 +195,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
   if (typeof target === "object" && target !== null) {
     options = Object.entries(target).map(([name, value]) => ({
       label: name,
-      displayLabel: aliases.get(name),
+      displayLabel: decodeDataVariableName(name),
       detail: formatValuePreview(value),
       apply: (view, completion, from, to) => {
         // complete valid js identifier or top level variable without quotes
@@ -266,50 +266,48 @@ class VariableWidget extends WidgetType {
   }
 }
 
-const variableMatcher = new MatchDecorator({
-  regexp: /(\$ws\$dataSource\$\w+)/g,
+const getVariableDecorations = (view: EditorView) => {
+  const builder = new RangeSetBuilder<Decoration>();
+  syntaxTree(view.state).iterate({
+    from: 0,
+    to: view.state.doc.length,
+    enter: (node) => {
+      if (node.name === "VariableName") {
+        const [{ scope }] = view.state.facet(VariablesData);
+        const identifier = view.state.doc.sliceString(node.from, node.to);
+        const variableName = decodeDataVariableName(identifier);
+        if (identifier in scope) {
+          builder.add(
+            node.from,
+            node.to,
+            Decoration.replace({
+              widget: new VariableWidget(variableName!),
+            })
+          );
+        }
+      }
+    },
+  });
+  return builder.finish();
+};
 
-  decorate: (add, from, _to, match, view) => {
-    const name = match[1];
-    const [{ aliases }] = view.state.facet(VariablesData);
-
-    // The regexp may match variables not in scope, but the key problem we're solving is this:
-    // We have an alias $ws$dataSource$321 -> SomeVar, which we display as '[SomeVar]' ([] means decoration in the editor).
-    // If the user types a symbol (e.g., 'a') immediately after '[SomeVar]',
-    // the raw text becomes $ws$dataSource$321a, but we want to display '[SomeVar]a'.
-    const dataSourceId = [...aliases.keys()].find((key) => name.includes(key));
-
-    if (dataSourceId === undefined) {
-      return;
-    }
-
-    const endPos = from + dataSourceId.length;
-
-    add(
-      from,
-      endPos,
-      Decoration.replace({
-        widget: new VariableWidget(aliases.get(dataSourceId)!),
-      })
-    );
-  },
-});
-
-const variables = ViewPlugin.fromClass(
+const variablesPlugin = ViewPlugin.fromClass(
   class {
-    variables: DecorationSet;
+    decorations: DecorationSet;
     constructor(view: EditorView) {
-      this.variables = variableMatcher.createDeco(view);
+      this.decorations = getVariableDecorations(view);
     }
     update(update: ViewUpdate) {
-      this.variables = variableMatcher.updateDeco(update, this.variables);
+      if (update.docChanged) {
+        this.decorations = getVariableDecorations(update.view);
+      }
     }
   },
   {
-    decorations: (instance) => instance.variables,
+    decorations: (instance) => instance.decorations,
     provide: (plugin) =>
       EditorView.atomicRanges.of((view) => {
-        return view.plugin(plugin)?.variables || Decoration.none;
+        return view.plugin(plugin)?.decorations || Decoration.none;
       }),
   }
 );
@@ -321,76 +319,6 @@ const wrapperStyle = css({
   // 1 line is 16px
   // set and max 20 lines
   "--ws-code-editor-max-height": "320px",
-});
-
-/**
- * Replaces variables with their IDs, e.g., someVar -> $ws$dataSource$321
- */
-const replaceWithWsVariables = EditorState.transactionFilter.of((tr) => {
-  if (!tr.docChanged) {
-    return tr;
-  }
-
-  const state = tr.startState;
-  const [{ aliases }] = state.facet(VariablesData);
-
-  const aliasesByName = mapGroupBy(Array.from(aliases), ([_id, name]) => name);
-
-  // The idea of cursor preservation is simple:
-  // There are 2 cases we are handling:
-  // 1. A variable is replaced while typing its name. In this case, we preserve the cursor position from the end of the text.
-  // 2. A variable is replaced when an operation makes the expression valid. For example, ('' b) -> ('' + b).
-  //    In this case, we preserve the cursor position from the start of the text.
-  // This does not cover cases like (a b) -> (a + b). We are not handling it because I haven't found a way to enter such a case into real input.
-  // We can improve it if issues arise.
-
-  const cursorPos = tr.selection?.main.head ?? 0;
-  const cursorPosFromEnd = tr.newDoc.length - cursorPos;
-
-  const content = tr.newDoc.toString();
-  const originalContent = tr.startState.doc.toString();
-
-  let updatedContent = content;
-
-  try {
-    updatedContent = transpileExpression({
-      expression: content,
-      replaceVariable: (identifier) => {
-        if (decodeDataSourceVariable(identifier) && aliases.has(identifier)) {
-          return;
-        }
-        // prevent matching variables by unambiguous name
-        const matchedAliases = aliasesByName.get(identifier);
-        if (matchedAliases && matchedAliases.length === 1) {
-          const [id, _name] = matchedAliases[0];
-
-          return id;
-        }
-      },
-    });
-  } catch {
-    // empty block
-  }
-
-  if (updatedContent !== content) {
-    return [
-      {
-        changes: {
-          from: 0,
-          to: originalContent.length,
-          insert: updatedContent,
-        },
-        selection: {
-          anchor:
-            updatedContent.slice(0, cursorPos) === content.slice(0, cursorPos)
-              ? cursorPos
-              : updatedContent.length - cursorPosFromEnd,
-        },
-      },
-    ];
-  }
-
-  return tr;
 });
 
 const linterTooltipTheme = EditorView.theme({
@@ -416,10 +344,10 @@ const linterTooltipTheme = EditorView.theme({
 });
 
 const expressionLinter = linter((view) => {
-  const [{ aliases }] = view.state.facet(VariablesData);
+  const [{ scope }] = view.state.facet(VariablesData);
   return lintExpression({
     expression: view.state.doc.toString(),
-    availableVariables: new Set(aliases.keys()),
+    availableVariables: new Set(Object.keys(scope)),
   });
 });
 
@@ -450,13 +378,51 @@ export const ExpressionEditor = ({
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const { nameById, idByName } = useMemo(() => {
+    const nameById = new Map();
+    const idByName = new Map();
+    for (const [identifier, name] of aliases) {
+      const id = decodeDataVariableId(identifier);
+      if (id) {
+        nameById.set(id, name);
+        idByName.set(name, id);
+      }
+    }
+    return { nameById, idByName };
+  }, [aliases]);
+  const expressionWithUnsetVariables = useMemo(() => {
+    return unsetExpressionVariables({
+      expression: value,
+      unsetNameById: nameById,
+    });
+  }, [value, nameById]);
+  const scopeWithUnsetVariables = useMemo(() => {
+    const newScope: typeof scope = {};
+    for (const [identifier, value] of Object.entries(scope)) {
+      const name = aliases.get(identifier);
+      if (name) {
+        newScope[encodeDataVariableName(name)] = value;
+      }
+    }
+    return newScope;
+  }, [scope, aliases]);
+  const aliasesWithUnsetVariables = useMemo(() => {
+    const newAliases: typeof aliases = new Map();
+    for (const [_identifier, name] of aliases) {
+      newAliases.set(encodeDataVariableName(name), name);
+    }
+    return newAliases;
+  }, [aliases]);
+
   const extensions = useMemo(
     () => [
       bracketMatching(),
       closeBrackets(),
       javascript({}),
-      VariablesData.of({ scope, aliases }),
-      replaceWithWsVariables,
+      VariablesData.of({
+        scope: scopeWithUnsetVariables,
+        aliases: aliasesWithUnsetVariables,
+      }),
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
@@ -464,12 +430,12 @@ export const ExpressionEditor = ({
         override: [scopeCompletionSource],
         icons: false,
       }),
-      variables,
+      variablesPlugin,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
       expressionLinter,
       linterTooltipTheme,
     ],
-    [scope, aliases]
+    [scopeWithUnsetVariables, aliasesWithUnsetVariables]
   );
 
   // prevent clicking on autocomplete options propagating to body
@@ -497,9 +463,21 @@ export const ExpressionEditor = ({
       invalid={color === "error"}
       readOnly={readOnly}
       autoFocus={autoFocus}
-      value={value}
-      onChange={onChange}
-      onChangeComplete={onChangeComplete}
+      value={expressionWithUnsetVariables}
+      onChange={(newValue) => {
+        const expressionWithRestoredVariables = restoreExpressionVariables({
+          expression: newValue,
+          maskedIdByName: idByName,
+        });
+        onChange(expressionWithRestoredVariables);
+      }}
+      onChangeComplete={(newValue) => {
+        const expressionWithRestoredVariables = restoreExpressionVariables({
+          expression: newValue,
+          maskedIdByName: idByName,
+        });
+        onChangeComplete(expressionWithRestoredVariables);
+      }}
     />
   );
 

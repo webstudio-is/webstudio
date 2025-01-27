@@ -97,7 +97,10 @@ const NameField = ({
   const variablesByName = useStore($variablesByName);
   const validateName = useCallback(
     (value: string) => {
-      if (variablesByName.get(value) !== variableId) {
+      if (
+        variablesByName.has(value) &&
+        variablesByName.get(value) !== variableId
+      ) {
         return "Name is already used by another variable on this instance";
       }
       if (value.trim().length === 0) {
