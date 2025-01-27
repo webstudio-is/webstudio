@@ -15,7 +15,6 @@ import { SecretLogin } from "./secret-login";
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    background: theme.colors.brandBackgroundDashboard,
     overflow: "hidden",
   },
 });
@@ -35,7 +34,14 @@ export const Login = ({
 }: LoginProps) => {
   globalStyles();
   return (
-    <Flex align="center" justify="center" css={{ height: "100vh" }}>
+    <Flex
+      align="center"
+      justify="center"
+      css={{
+        height: "100vh",
+        background: theme.colors.brandBackgroundDashboard,
+      }}
+    >
       <Flex
         direction="column"
         align="center"
