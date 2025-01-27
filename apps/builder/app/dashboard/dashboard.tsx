@@ -53,20 +53,22 @@ const CloneProject = ({
     window.history.replaceState(currentState, "", location.pathname);
   }, [location.search, location.pathname]);
 
-  return projectToClone !== undefined ? (
-    <CloneProjectDialog
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      project={{
-        id: projectToClone.id,
-        title: projectToClone.title,
-      }}
-      authToken={projectToClone.authToken}
-      onCreate={() => {
-        revalidate();
-      }}
-    />
-  ) : undefined;
+  if (projectToClone !== undefined) {
+    return (
+      <CloneProjectDialog
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        project={{
+          id: projectToClone.id,
+          title: projectToClone.title,
+        }}
+        authToken={projectToClone.authToken}
+        onCreate={() => {
+          revalidate();
+        }}
+      />
+    );
+  }
 };
 
 const sidebarLinkStyle = css({
@@ -122,7 +124,7 @@ const NavigationItems = ({
 
 const $data = atom<DashboardData | undefined>();
 
-export const DashboardRoot = ({ data }: { data: DashboardData }) => {
+export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   $data.set(data);
   globalStyles();
 };

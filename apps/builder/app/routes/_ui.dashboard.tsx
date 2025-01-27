@@ -1,6 +1,10 @@
 import { lazy } from "react";
 import { preconnect, prefetchDNS } from "react-dom";
-import { Outlet, redirect } from "react-router-dom";
+import {
+  Outlet,
+  redirect,
+  type ShouldRevalidateFunction,
+} from "react-router-dom";
 import { useLoaderData, type MetaFunction } from "@remix-run/react";
 import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import {
@@ -161,9 +165,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
-const DashboardRoot = lazy(async () => {
-  const { DashboardRoot } = await import("~/dashboard/index.client");
-  return { default: DashboardRoot };
+export const shouldRevalidate: ShouldRevalidateFunction = () => {
+  return false;
+};
+
+const DashboardSetup = lazy(async () => {
+  const { DashboardSetup } = await import("~/dashboard/index.client");
+  return { default: DashboardSetup };
 });
 
 const DashboardRoute = () => {
@@ -178,7 +186,7 @@ const DashboardRoute = () => {
 
   return (
     <ClientOnly>
-      <DashboardRoot data={data} />
+      <DashboardSetup data={data} />
       <Outlet />
     </ClientOnly>
   );
