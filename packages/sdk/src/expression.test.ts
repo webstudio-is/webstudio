@@ -20,6 +20,13 @@ describe("lint expression", () => {
     message,
   });
 
+  const warn = (from: number, to: number, message: string): Diagnostic => ({
+    from,
+    to,
+    severity: "warning",
+    message,
+  });
+
   test("forbid empty expression", () => {
     expect(lintExpression({ expression: `` })).toEqual([
       error(0, 0, `Expression cannot be empty`),
@@ -119,8 +126,8 @@ describe("lint expression", () => {
     expect(
       lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
     ).toEqual([
-      error(5, 6, `"b" is not defined in the scope`),
-      error(1, 2, `"a" is not defined in the scope`),
+      warn(5, 6, `"b" is not defined in the scope`),
+      warn(1, 2, `"a" is not defined in the scope`),
     ]);
     expect(
       lintExpression({

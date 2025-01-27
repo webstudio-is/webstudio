@@ -13,11 +13,11 @@ import {
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { isLiteralExpression } from "@webstudio-is/sdk";
+import { computeExpression } from "~/shared/data-variables";
 import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "~/shared/nano-states";
 import { $pageRootScope } from "./page-utils";
 
 type Meta = {
