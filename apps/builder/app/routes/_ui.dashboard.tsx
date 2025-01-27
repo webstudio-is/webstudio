@@ -165,8 +165,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
-export const shouldRevalidate: ShouldRevalidateFunction = () => {
-  return false;
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  defaultShouldRevalidate,
+  currentUrl,
+  nextUrl,
+}) => {
+  // We have the entire data on the client, so we don't need to revalidate when
+  // URL is changing.
+  if (currentUrl.href !== nextUrl.href) {
+    return false;
+  }
+  // When .revalidate() was called explicitely without chaning the URL,
+  // `defaultShouldRevalidate` will be true
+  return defaultShouldRevalidate;
 };
 
 const DashboardSetup = lazy(async () => {
