@@ -1,4 +1,3 @@
-import { Form } from "@remix-run/react";
 import { Button, Flex, InputField, theme } from "@webstudio-is/design-system";
 import { useState } from "react";
 import { authPath } from "~/shared/router-utils";
@@ -7,7 +6,7 @@ export const SecretLogin = () => {
   const [show, setShow] = useState(false);
   if (show) {
     return (
-      <Form
+      <form
         method="post"
         action={authPath({ provider: "dev" })}
         style={{ display: "contents" }}
@@ -24,7 +23,7 @@ export const SecretLogin = () => {
           />
           <Button type="submit">Login</Button>
         </Flex>
-      </Form>
+      </form>
     );
   }
 
