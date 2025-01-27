@@ -38,6 +38,13 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      # TRY FIX cloudlare incident
+       - uses: unfor19/install-aws-cli-action@v1
+         with:
+           version: "2.22.35"
+           verbose: false
+           arch: amd64
+
       - name: pnpm instal
         run: pnpm install --ignore-scripts
 
