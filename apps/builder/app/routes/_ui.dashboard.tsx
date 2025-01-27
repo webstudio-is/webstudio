@@ -165,8 +165,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
-export const shouldRevalidate: ShouldRevalidateFunction = () => {
-  return false;
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  defaultShouldRevalidate,
+}) => {
+  // When navigating between routes we don't want to revalidate, but when client calls `revalidate()`
+  // manually, for example to rename the project - we want to revalidate.
+  return defaultShouldRevalidate || false;
 };
 
 const DashboardSetup = lazy(async () => {
