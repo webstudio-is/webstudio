@@ -14,6 +14,7 @@
   ],
   "exports": {
     ".": {
+      "webstudio-private": "./private-src/components.ts",
       "webstudio": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
       "import": "./lib/components.js"
@@ -51,9 +52,12 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
+    "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
-    "@webstudio-is/sdk": "workspace:*"
+    "@webstudio-is/sdk": "workspace:*",
+    "react-error-boundary": "^5.0.0",
+    "scroll-timeline-polyfill": "^1.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",
@@ -63,7 +67,10 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/design-system": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
-    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "type-fest": "^4.32.0"
   }
 }
