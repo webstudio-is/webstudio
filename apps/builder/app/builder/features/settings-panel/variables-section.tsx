@@ -220,8 +220,10 @@ const VariablesItem = ({
         id={variable.id}
         index={index}
         label={
-          <Flex align="center" css={{}}>
-            <Label color={source}>{variable.name}</Label>
+          <Flex align="center">
+            <Label tag="label" color={source}>
+              {variable.name}
+            </Label>
             {value !== undefined && (
               <span className={variableLabelStyle.toString()}>
                 &nbsp;

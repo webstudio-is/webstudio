@@ -74,7 +74,6 @@ import {
   $instances,
   $pages,
   $dataSources,
-  computeExpression,
   $dataSourceVariables,
   $publishedOrigin,
   $project,
@@ -112,6 +111,7 @@ import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { Card } from "../marketplace/card";
 import { selectInstance } from "~/shared/awareness";
+import { computeExpression } from "~/shared/data-variables";
 
 const fieldDefaultValues = {
   name: "Untitled",

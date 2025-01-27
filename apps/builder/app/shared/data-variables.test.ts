@@ -1,5 +1,6 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
+  computeExpression,
   decodeDataVariableName,
   encodeDataVariableName,
   restoreExpressionVariables,
@@ -55,4 +56,60 @@ test("restore expression variables", () => {
       maskedIdByName: new Map([["My Variable", "myId"]]),
     })
   ).toEqual("$ws$dataSource$myId + missingVariable");
+});
+
+test("compute expression with decoded ids", () => {
+  expect(
+    computeExpression("$ws$dataSource$myId", new Map([["myId", "value"]]))
+  ).toEqual("value");
+});
+
+test("compute expression with decoded names", () => {
+  expect(
+    computeExpression("My$32$Name", new Map([["My Name", "value"]]))
+  ).toEqual("value");
+});
+
+test("compute expression when invalid syntax", () => {
+  // prevent error message in test report
+  const spy = vi.spyOn(console, "error");
+  spy.mockImplementationOnce(() => {});
+  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
+  expect(spy).toHaveBeenCalledOnce();
+  spy.mockRestore();
+});
+
+test("compute expression with nested field of undefined without error", () => {
+  const spy = vi.spyOn(console, "error");
+  const variables = new Map([["myVariable", undefined]]);
+  expect(computeExpression("myVariable.field", variables)).toEqual(undefined);
+  expect(spy).not.toHaveBeenCalled();
+  spy.mockRestore();
+});
+
+test("compute literal expression when variable is json object", () => {
+  const jsonObject = { hello: "world", subObject: { world: "hello" } };
+  const variables = new Map([["jsonVariable", jsonObject]]);
+  expect(computeExpression("`${jsonVariable}`", variables)).toEqual(
+    `{"hello":"world","subObject":{"world":"hello"}}`
+  );
+  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
+    `{"world":"hello"}`
+  );
+});
+
+test("compute literal expression when object is frozen", () => {
+  const jsonObject = Object.freeze({
+    hello: "world",
+    subObject: { world: "hello" },
+  });
+  const variables = new Map([["jsonVariable", jsonObject]]);
+  expect(computeExpression("`${jsonVariable.subObject}`", variables)).toEqual(
+    `{"world":"hello"}`
+  );
+});
+
+test("compute unset variables as undefined", () => {
+  expect(computeExpression(`a`, new Map())).toEqual(undefined);
+  expect(computeExpression("`${a}`", new Map())).toEqual("undefined");
 });

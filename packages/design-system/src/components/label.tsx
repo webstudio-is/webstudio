@@ -127,6 +127,7 @@ const StyledLabel = styled(RadixLabel, {
 });
 
 type Props = {
+  tag?: "button" | "label";
   color?: (typeof labelColors)[number];
   text?: "title" | "sentence" | "mono";
   disabled?: boolean;
@@ -137,13 +138,16 @@ type Props = {
 export const isLabelButton = (color: Props["color"]) => color !== undefined;
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
-  const { disabled, children, ...rest } = props;
+  const { tag = "label", disabled, children, ...rest } = props;
 
   // To enable keyboard accessibility for users who rely on the spacebar to activate the radix
   // when using a preset, locala, overwritten or remote color, we need to wrap the label with
   // a button that has a "label" role.
   // (Radix adds role="button" to the label)
-  const isButton = isLabelButton(props.color);
+  let isButton = isLabelButton(props.color) || tag === "button";
+  if (tag === "label") {
+    isButton = false;
+  }
 
   return (
     <StyledLabel

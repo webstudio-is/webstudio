@@ -24,13 +24,16 @@ export const lintExpression = ({
   allowAssignment?: boolean;
 }): Diagnostic[] => {
   const diagnostics: Diagnostic[] = [];
-  const addError = (message: string) => {
+  const addMessage = (
+    message: string,
+    severity: "error" | "warning" = "error"
+  ) => {
     return (node: Expression) => {
       diagnostics.push({
         // tune error position after wrapping expression with parentheses
         from: node.start - 1,
         to: node.end - 1,
-        severity: "error",
+        severity,
         message: message,
       });
     };
@@ -57,7 +60,10 @@ export const lintExpression = ({
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
-          addError(`"${node.name}" is not defined in the scope`)(node);
+          addMessage(
+            `"${node.name}" is not defined in the scope`,
+            "warning"
+          )(node);
         }
       },
       Literal() {},
@@ -73,31 +79,31 @@ export const lintExpression = ({
       ParenthesizedExpression() {},
       AssignmentExpression(node) {
         if (allowAssignment === false) {
-          addError("Assignment is supported only inside actions")(node);
+          addMessage("Assignment is supported only inside actions")(node);
           return;
         }
         simple(node.left, {
           Identifier(node) {
             if (availableVariables.has(node.name) === false) {
-              addError(`"${node.name}" is not defined in the scope`)(node);
+              addMessage(`"${node.name}" is not defined in the scope`)(node);
             }
           },
         });
       },
       // parser forbids to yield inside module
       YieldExpression() {},
-      ThisExpression: addError(`"this" keyword is not supported`),
-      FunctionExpression: addError("Functions are not supported"),
-      UpdateExpression: addError("Increment and decrement are not supported"),
-      CallExpression: addError("Functions are not supported"),
-      NewExpression: addError("Classes are not supported"),
-      SequenceExpression: addError(`Only single expression is supported`),
-      ArrowFunctionExpression: addError("Functions are not supported"),
-      TaggedTemplateExpression: addError("Tagged template is not supported"),
-      ClassExpression: addError("Classes are not supported"),
-      MetaProperty: addError("Imports are not supported"),
-      AwaitExpression: addError(`"await" keyword is not supported`),
-      ImportExpression: addError("Imports are not supported"),
+      ThisExpression: addMessage(`"this" keyword is not supported`),
+      FunctionExpression: addMessage("Functions are not supported"),
+      UpdateExpression: addMessage("Increment and decrement are not supported"),
+      CallExpression: addMessage("Functions are not supported"),
+      NewExpression: addMessage("Classes are not supported"),
+      SequenceExpression: addMessage(`Only single expression is supported`),
+      ArrowFunctionExpression: addMessage("Functions are not supported"),
+      TaggedTemplateExpression: addMessage("Tagged template is not supported"),
+      ClassExpression: addMessage("Classes are not supported"),
+      MetaProperty: addMessage("Imports are not supported"),
+      AwaitExpression: addMessage(`"await" keyword is not supported`),
+      ImportExpression: addMessage("Imports are not supported"),
     } satisfies ExpressionVisitor);
   } catch (error) {
     const castedError = error as { message: string; pos: number };
@@ -340,10 +346,14 @@ export const generateExpression = ({
         usedDataSources?.set(dep.id, dep);
         return scope.getName(dep.id, dep.name);
       }
+      return "undefined";
     },
   });
 };
 
+/**
+ * edge case utility for "statoc" expression without variables
+ */
 export const executeExpression = (expression: undefined | string) => {
   try {
     const fn = new Function(`return (${expression})`);

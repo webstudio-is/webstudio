@@ -122,6 +122,10 @@ const editorContentStyle = css({
     textDecoration: "underline wavy red",
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
+  ".cm-lintRange-warning": {
+    textDecoration: "underline wavy orange",
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+  },
   ".cm-gutters": {
     backgroundColor: "transparent",
     border: 0,
