@@ -31,7 +31,10 @@ export const Search = () => {
               search: `?q=${value}`,
             },
             // Remember the last path to return to on abort
-            { state: { previousPathname: location.pathname } }
+            {
+              state: { previousPathname: location.pathname },
+              viewTransition: true,
+            }
           );
           return;
         }
