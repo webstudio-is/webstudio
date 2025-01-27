@@ -62,34 +62,30 @@ export const Login = ({
         </Text>
 
         <TooltipProvider>
-          <Flex
-            as={Form}
-            method="post"
-            direction="column"
-            gap="3"
-            css={{ width: "100%" }}
-          >
-            <Button
-              disabled={isGoogleEnabled === false}
-              prefix={<GoogleIcon size={22} />}
-              color="primary"
-              css={{ height: theme.spacing[15] }}
-              formAction={authPath({ provider: "google" })}
-            >
-              Sign in with Google
-            </Button>
-            <Button
-              disabled={isGithubEnabled === false}
-              prefix={<GithubIcon size={22} fill="currentColor" />}
-              color="ghost"
-              css={{
-                border: `1px solid ${theme.colors.borderDark}`,
-                height: theme.spacing[15],
-              }}
-              formAction={authPath({ provider: "github" })}
-            >
-              Sign in with GitHub
-            </Button>
+          <Flex direction="column" gap="3" css={{ width: "100%" }}>
+            <Form method="post" style={{ display: "contents" }}>
+              <Button
+                disabled={isGoogleEnabled === false}
+                prefix={<GoogleIcon size={22} />}
+                color="primary"
+                css={{ height: theme.spacing[15] }}
+                formAction={authPath({ provider: "google" })}
+              >
+                Sign in with Google
+              </Button>
+              <Button
+                disabled={isGithubEnabled === false}
+                prefix={<GithubIcon size={22} fill="currentColor" />}
+                color="ghost"
+                css={{
+                  border: `1px solid ${theme.colors.borderDark}`,
+                  height: theme.spacing[15],
+                }}
+                formAction={authPath({ provider: "github" })}
+              >
+                Sign in with GitHub
+              </Button>
+            </Form>
             {isSecretLoginEnabled && <SecretLogin />}
           </Flex>
         </TooltipProvider>

@@ -1,3 +1,4 @@
+import { Form } from "@remix-run/react";
 import { Button, Flex, InputField, theme } from "@webstudio-is/design-system";
 import { useState } from "react";
 import { authPath } from "~/shared/router-utils";
@@ -5,31 +6,25 @@ import { authPath } from "~/shared/router-utils";
 export const SecretLogin = () => {
   const [show, setShow] = useState(false);
   if (show) {
-    const action = authPath({ provider: "dev" });
     return (
-      <Flex gap="2">
-        <InputField
-          name="secret"
-          type="password"
-          minLength={2}
-          required
-          autoFocus
-          placeholder="Auth secret"
-          css={{ flexGrow: 1 }}
-          formAction={authPath({ provider: "dev" })}
-          onKeyDown={(event) => {
-            const form = event.currentTarget.form;
-            if (event.key === "Enter" && form) {
-              event.preventDefault();
-              form.setAttribute("action", action);
-              form.submit();
-            }
-          }}
-        />
-        <Button type="submit" formAction={action}>
-          Login
-        </Button>
-      </Flex>
+      <Form
+        method="post"
+        action={authPath({ provider: "dev" })}
+        style={{ display: "contents" }}
+      >
+        <Flex gap="2">
+          <InputField
+            name="secret"
+            type="password"
+            minLength={2}
+            required
+            autoFocus
+            placeholder="Auth secret"
+            css={{ flexGrow: 1 }}
+          />
+          <Button type="submit">Login</Button>
+        </Flex>
+      </Form>
     );
   }
 
