@@ -127,13 +127,14 @@ const $data = atom<DashboardData | undefined>();
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   $data.set(data);
   globalStyles();
+  return undefined;
 };
 
-const getView = () => {
-  if (location.pathname === dashboardPath("templates")) {
+const getView = (pathname: string) => {
+  if (pathname === dashboardPath("templates")) {
     return "templates";
   }
-  if (location.pathname === dashboardPath("search")) {
+  if (pathname === dashboardPath("search")) {
     return "search";
   }
   return "projects";
@@ -141,6 +142,7 @@ const getView = () => {
 
 export const Dashboard = () => {
   const data = useStore($data);
+  const location = useLocation();
 
   if (data === undefined) {
     return;
@@ -154,7 +156,7 @@ export const Dashboard = () => {
     projects,
     templates,
   } = data;
-  const view = getView();
+  const view = getView(location.pathname);
   const welcome = view === "templates" && projects.length === 0;
 
   return (

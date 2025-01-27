@@ -64,7 +64,9 @@ export const builderUrl = (props: {
   return url.href;
 };
 
-export const dashboardPath = (view: "templates" | "search" | "projects") => {
+export const dashboardPath = (
+  view: "templates" | "search" | "projects" = "projects"
+) => {
   if (view === "projects") {
     return `/dashboard`;
   }
