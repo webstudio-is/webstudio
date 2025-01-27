@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { matchSorter } from "match-sorter";
-import { useStore } from "@nanostores/react";
+import { useSearchParams } from "react-router-dom";
 import { Flex, Separator, Text, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectsGrid } from "../projects/projects";
@@ -8,7 +8,6 @@ import { Header, Main } from "../shared/layout";
 import type { DashboardData } from "../shared/types";
 import { NothingFound } from "./nothing-found";
 import { TemplatesGrid } from "../templates/templates";
-import { $searchState } from "./search-field";
 
 type SearchResults = {
   projects: Array<DashboardProject>;
@@ -21,8 +20,9 @@ const initialSearchResults: SearchResults = {
 } as const;
 
 export const SearchResults = (props: DashboardData) => {
+  const [searchParams] = useSearchParams();
   const { projects, templates, userPlanFeatures, publisherHost } = props;
-  const search = useStore($searchState);
+  const search = searchParams.get("q");
 
   const results = useMemo(() => {
     if (!search || !projects || !templates) {

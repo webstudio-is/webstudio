@@ -1,22 +1,46 @@
-import { useStore } from "@nanostores/react";
 import { SearchField } from "@webstudio-is/design-system";
-import { atom } from "nanostores";
-
-export const $searchState = atom("");
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { dashboardPath } from "~/shared/router-utils";
 
 export const Search = () => {
-  const searchState = useStore($searchState);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const handleCancelSearch = () => {
+    // When user cancels the search, we try to return to the last path they were on.
+    if (location.state?.previousPathname) {
+      return navigate(location.state.previousPathname);
+    }
+    navigate(dashboardPath("projects"));
+  };
+  const isSearchRoute = location.pathname === dashboardPath("search");
 
   return (
     <SearchField
-      value={searchState ?? undefined}
+      value={searchParams.get("q") ?? undefined}
       onChange={(event) => {
         const value = event.currentTarget.value.trim();
-        $searchState.set(value);
+        if (value === "") {
+          handleCancelSearch();
+          return;
+        }
+        if (isSearchRoute === false) {
+          navigate(
+            {
+              pathname: dashboardPath("search"),
+              search: `?q=${value}`,
+            },
+            // Remember the last path to return to on abort
+            {
+              state: { previousPathname: location.pathname },
+              viewTransition: true,
+            }
+          );
+          return;
+        }
+        setSearchParams({ q: value }, { replace: true });
       }}
-      onCancel={() => {
-        $searchState.set("");
-      }}
+      onCancel={handleCancelSearch}
       autoFocus
       placeholder="Search for anything"
     />

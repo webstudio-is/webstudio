@@ -11,12 +11,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
-import {
-  NavLink,
-  useLocation,
-  useRevalidator,
-  type Location,
-} from "@remix-run/react";
+import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -29,7 +24,7 @@ import { Header } from "./shared/layout";
 import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
-import { $searchState, Search } from "./search/search-field";
+import { Search } from "./search/search-field";
 
 const globalStyles = globalCss({
   body: {
@@ -135,12 +130,12 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   return undefined;
 };
 
-const getView = (location: Location, search: string) => {
-  if (search) {
-    return "search";
-  }
-  if (location.pathname === dashboardPath("templates")) {
+const getView = (pathname: string) => {
+  if (pathname === dashboardPath("templates")) {
     return "templates";
+  }
+  if (pathname === dashboardPath("search")) {
+    return "search";
   }
   return "projects";
 };
@@ -148,7 +143,6 @@ const getView = (location: Location, search: string) => {
 export const Dashboard = () => {
   const data = useStore($data);
   const location = useLocation();
-  const searchState = useStore($searchState);
 
   if (data === undefined) {
     return;
@@ -162,7 +156,7 @@ export const Dashboard = () => {
     projects,
     templates,
   } = data;
-  const view = getView(location, searchState);
+  const view = getView(location.pathname);
   const welcome = view === "templates" && projects.length === 0;
 
   return (
