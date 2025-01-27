@@ -20,7 +20,8 @@ export const SecretLogin = () => {
           onKeyDown={(event) => {
             const form = event.currentTarget.form;
             if (event.key === "Enter" && form) {
-              form.action = action;
+              event.preventDefault();
+              form.setAttribute("action", action);
               form.submit();
             }
           }}
