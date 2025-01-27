@@ -308,6 +308,7 @@ export const encodeDataSourceVariable = (id: string) => {
   const encoded = id.replaceAll("-", "__DASH__");
   return `${dataSourceVariablePrefix}${encoded}`;
 };
+export { encodeDataSourceVariable as encodeDataVariableId };
 
 export const decodeDataSourceVariable = (name: string) => {
   if (name.startsWith(dataSourceVariablePrefix)) {
@@ -316,6 +317,7 @@ export const decodeDataSourceVariable = (name: string) => {
   }
   return;
 };
+export { decodeDataSourceVariable as decodeDataVariableId };
 
 export const generateExpression = ({
   expression,
