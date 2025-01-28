@@ -5,12 +5,11 @@ import {
   ActionValue,
   AssetValue,
   expression,
-  ExpressionValue,
   PageValue,
   Parameter,
-  ParameterValue,
   PlaceholderValue,
   renderTemplate,
+  ResourceValue,
   Variable,
 } from "./jsx";
 import { css } from "./css";
@@ -154,10 +153,7 @@ test("render literal props", () => {
 
 test("render defined props", () => {
   const { props } = renderTemplate(
-    <$.Body
-      data-expression={new ExpressionValue("1 + 1")}
-      data-parameter={new ParameterValue("parameterId")}
-    >
+    <$.Body>
       <$.Box
         data-asset={new AssetValue("assetId")}
         data-page={new PageValue("pageId")}
@@ -166,20 +162,6 @@ test("render defined props", () => {
     </$.Body>
   );
   expect(props).toEqual([
-    {
-      id: "0:data-expression",
-      instanceId: "0",
-      name: "data-expression",
-      type: "expression",
-      value: "1 + 1",
-    },
-    {
-      id: "0:data-parameter",
-      instanceId: "0",
-      name: "data-parameter",
-      type: "parameter",
-      value: "parameterId",
-    },
     {
       id: "1:data-asset",
       instanceId: "1",
@@ -489,6 +471,86 @@ test("render parameter bound to prop expression", () => {
       id: "0",
       scopeInstanceId: "body",
       name: "system",
+    },
+  ]);
+});
+
+test("render resource variable", () => {
+  const value = new Variable("value", "value");
+  const myResource = new ResourceValue("myResource", {
+    url: expression`"https://my-url.com/" + ${value}`,
+    method: "get",
+    headers: [{ name: "auth", value: expression`${value}` }],
+    body: expression`${value}`,
+  });
+  const { dataSources, resources } = renderTemplate(
+    <$.Body ws:id="body">{expression`${myResource}.title`}</$.Body>
+  );
+  expect(dataSources).toEqual([
+    {
+      id: "1",
+      name: "value",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "value" },
+    },
+    {
+      id: "0",
+      scopeInstanceId: "body",
+      name: "myResource",
+      type: "resource",
+      resourceId: "resource:0",
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "myResource",
+      url: `"https://my-url.com/" + $ws$dataSource$1`,
+      method: "get",
+      headers: [{ name: "auth", value: `$ws$dataSource$1` }],
+      body: `$ws$dataSource$1`,
+    },
+  ]);
+});
+
+test("render resource prop", () => {
+  const value = new Variable("value", "value");
+  const myResource = new ResourceValue("myResource", {
+    url: expression`"https://my-url.com/" + ${value}`,
+    method: "get",
+    headers: [{ name: "auth", value: expression`${value}` }],
+    body: expression`${value}`,
+  });
+  const { props, dataSources, resources } = renderTemplate(
+    <$.Body ws:id="body" action={myResource}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:action",
+      instanceId: "body",
+      name: "action",
+      type: "resource",
+      value: "resource:0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      id: "1",
+      name: "value",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "value" },
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "myResource",
+      url: `"https://my-url.com/" + $ws$dataSource$1`,
+      method: "get",
+      headers: [{ name: "auth", value: `$ws$dataSource$1` }],
+      body: `$ws$dataSource$1`,
     },
   ]);
 });

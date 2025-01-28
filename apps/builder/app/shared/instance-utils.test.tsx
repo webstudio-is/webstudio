@@ -5,7 +5,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $,
   ws,
-  ExpressionValue,
+  expression,
   renderTemplate,
   renderData,
 } from "@webstudio-is/template";
@@ -2793,9 +2793,7 @@ describe("find closest insertable", () => {
     const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="box1Id"></$.Box>
-        <$.Paragraph ws:id="paragraphId">
-          {new ExpressionValue(`"bla"`)}
-        </$.Paragraph>
+        <$.Paragraph ws:id="paragraphId">{expression`"bla"`}</$.Paragraph>
         <$.Box ws:id="box2Id"></$.Box>
       </$.Body>
     );

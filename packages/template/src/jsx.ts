@@ -5,6 +5,7 @@ import type {
   DataSource,
   Instance,
   Prop,
+  Resource,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
@@ -30,16 +31,31 @@ export class Parameter {
   }
 }
 
+type ResourceConfig = {
+  url: Expression;
+  method: Resource["method"];
+  headers: Array<{ name: string; value: Expression }>;
+  body?: Expression;
+};
+
+export class ResourceValue {
+  name: string;
+  config: ResourceConfig;
+  constructor(name: string, config: ResourceConfig) {
+    this.name = name;
+    this.config = config;
+  }
+}
+
 class Expression {
   chunks: string[];
-  variables: Array<Variable | Parameter>;
-  constructor(chunks: string[], variables: Array<Variable | Parameter>) {
+  variables: Array<Variable | Parameter | ResourceValue>;
+  constructor(
+    chunks: string[],
+    variables: Array<Variable | Parameter | ResourceValue>
+  ) {
     this.chunks = chunks;
     this.variables = variables;
-  }
-  serialize(variableIds: string[]): string {
-    const values = variableIds.map(encodeDataSourceVariable);
-    return String.raw({ raw: this.chunks }, ...values);
   }
 }
 
@@ -49,27 +65,6 @@ export const expression = (
 ): Expression => {
   return new Expression(Array.from(chunks), variables);
 };
-
-export class ExpressionValue {
-  value: string;
-  constructor(expression: string) {
-    this.value = expression;
-  }
-}
-
-export class ParameterValue {
-  value: string;
-  constructor(dataSourceId: string) {
-    this.value = dataSourceId;
-  }
-}
-
-export class ResourceValue {
-  value: string;
-  constructor(resourceId: string) {
-    this.value = resourceId;
-  }
-}
 
 export class ActionValue {
   args: string[];
@@ -112,7 +107,6 @@ export class PlaceholderValue {
 const isChildValue = (child: unknown) =>
   typeof child === "string" ||
   child instanceof PlaceholderValue ||
-  child instanceof ExpressionValue ||
   child instanceof Expression;
 
 const traverseJsx = (
@@ -157,6 +151,7 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
   const dataSources = new Map<Variable | Parameter, DataSource>();
+  const resources = new Map<ResourceValue, Resource>();
   const ids = new Map<unknown, string>();
   const getId = (key: unknown) => {
     let id = ids.get(key);
@@ -202,6 +197,44 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
         name: variable.name,
       });
     }
+    if (variable instanceof ResourceValue) {
+      dataSources.set(variable, {
+        type: "resource",
+        scopeInstanceId: instanceId,
+        id,
+        name: variable.name,
+        resourceId: getResourceId(instanceId, variable),
+      });
+    }
+    return id;
+  };
+  const compileExpression = (instanceId: string, expression: Expression) => {
+    const values = expression.variables.map((variable) =>
+      getVariableId(instanceId, variable)
+    );
+    return String.raw(
+      { raw: expression.chunks },
+      ...values.map(encodeDataSourceVariable)
+    );
+  };
+  const getResourceId = (instanceId: string, resourceValue: ResourceValue) => {
+    const id = `resource:${getId(resourceValue)}`;
+    if (resources.has(resourceValue)) {
+      return id;
+    }
+    resources.set(resourceValue, {
+      id,
+      name: resourceValue.name,
+      url: compileExpression(instanceId, resourceValue.config.url),
+      method: resourceValue.config.method,
+      headers: resourceValue.config.headers.map(({ name, value }) => ({
+        name,
+        value: compileExpression(instanceId, value),
+      })),
+      body: resourceValue.config.body
+        ? compileExpression(instanceId, resourceValue.config.body)
+        : undefined,
+    });
     return id;
   };
   // lazily create breakpoint
@@ -250,11 +283,11 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
       const propId = `${instanceId}:${name}`;
       const base = { id: propId, instanceId, name };
       if (value instanceof Expression) {
-        const values = value.variables.map((variable) =>
-          getVariableId(instanceId, variable)
-        );
-        const expression = value.serialize(values);
-        props.push({ ...base, type: "expression", value: expression });
+        props.push({
+          ...base,
+          type: "expression",
+          value: compileExpression(instanceId, value),
+        });
         continue;
       }
       if (value instanceof Parameter) {
@@ -265,24 +298,13 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
         });
         continue;
       }
-      if (value instanceof ExpressionValue) {
-        props.push({ ...base, type: "expression", value: value.value });
-        continue;
-      }
-      if (value instanceof ParameterValue) {
-        props.push({ ...base, type: "parameter", value: value.value });
-        continue;
-      }
       if (value instanceof ResourceValue) {
-        props.push({ ...base, type: "resource", value: value.value });
+        const resourceId = getResourceId(instanceId, value);
+        props.push({ ...base, type: "resource", value: resourceId });
         continue;
       }
       if (value instanceof ActionValue) {
-        const code = value.expression.serialize(
-          value.expression.variables.map((variable) =>
-            getVariableId(instanceId, variable)
-          )
-        );
+        const code = compileExpression(instanceId, value.expression);
         const action = { type: "execute" as const, args: value.args, code };
         props.push({ ...base, type: "action", value: [action] });
         continue;
@@ -325,14 +347,8 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
           return { type: "text", value: child.value, placeholder: true };
         }
         if (child instanceof Expression) {
-          const values = child.variables.map((variable) =>
-            getVariableId(instanceId, variable)
-          );
-          const expression = child.serialize(values);
+          const expression = compileExpression(instanceId, child);
           return { type: "expression", value: expression };
-        }
-        if (child instanceof ExpressionValue) {
-          return { type: "expression", value: child.value };
         }
         return { type: "id", value: child.props?.["ws:id"] ?? getId(child) };
       }),
@@ -349,7 +365,7 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     styleSourceSelections,
     styles,
     dataSources: Array.from(dataSources.values()),
-    resources: [],
+    resources: Array.from(resources.values()),
     assets: [],
   };
 };
@@ -387,7 +403,7 @@ type ComponentProps = Record<string, unknown> &
     "ws:label"?: string;
     "ws:style"?: TemplateStyleDecl[];
     "ws:show"?: boolean | Expression;
-    children?: ReactNode | ExpressionValue | Expression | PlaceholderValue;
+    children?: ReactNode | Expression | PlaceholderValue;
   };
 
 type Component = { displayName: string } & ((
