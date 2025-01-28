@@ -161,7 +161,8 @@ export const Dashboard = () => {
     projects,
     templates,
   } = data;
-  const view = getView(location.pathname, projects.length > 0);
+  const hasProjects = projects.length > 0;
+  const view = getView(location.pathname, hasProjects);
 
   return (
     <TooltipProvider>
@@ -194,7 +195,7 @@ export const Dashboard = () => {
             <CollapsibleSection label="Workspace" fullWidth>
               <NavigationItems
                 items={
-                  view === "welcome"
+                  view === "welcome" || hasProjects === false
                     ? [
                         {
                           to: dashboardPath(),
