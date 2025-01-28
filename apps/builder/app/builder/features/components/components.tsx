@@ -219,7 +219,7 @@ export const ComponentsPanel = ({
 
   const searchFieldProps = useSearchFieldKeys({
     onChange: resetSelectedComponent,
-    onCancel: resetSelectedComponent,
+    onAbort: resetSelectedComponent,
     onMove({ direction }) {
       if (direction === "current") {
         const component = getSelectedComponent();

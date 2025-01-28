@@ -21,7 +21,7 @@ const cardStyle = css({
   alignItems: "center",
   flexShrink: 0,
   outline: "none",
-  "&:focus-within": {
+  "&:focus-within, &[aria-selected=true]": {
     [borderColorVar]: theme.colors.borderFocus,
   },
 });

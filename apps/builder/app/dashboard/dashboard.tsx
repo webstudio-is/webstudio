@@ -10,19 +10,21 @@ import {
   globalCss,
   theme,
 } from "@webstudio-is/design-system";
-import type { DashboardProject } from "@webstudio-is/dashboard";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
-import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { dashboardPath, templatesPath } from "~/shared/router-utils";
+import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
 import { Projects } from "./projects/projects";
 import { Templates } from "./templates/templates";
 import { Header } from "./shared/layout";
 import { help } from "~/shared/help";
+import { SearchResults } from "./search/search-results";
+import type { DashboardData } from "./shared/types";
+import { Search } from "./search/search-field";
 
 const globalStyles = globalCss({
   body: {
@@ -33,7 +35,7 @@ const globalStyles = globalCss({
 const CloneProject = ({
   projectToClone,
 }: {
-  projectToClone: DashboardProps["projectToClone"];
+  projectToClone: DashboardData["projectToClone"];
 }) => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(projectToClone !== undefined);
@@ -51,20 +53,22 @@ const CloneProject = ({
     window.history.replaceState(currentState, "", location.pathname);
   }, [location.search, location.pathname]);
 
-  return projectToClone !== undefined ? (
-    <CloneProjectDialog
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      project={{
-        id: projectToClone.id,
-        title: projectToClone.title,
-      }}
-      authToken={projectToClone.authToken}
-      onCreate={() => {
-        revalidate();
-      }}
-    />
-  ) : undefined;
+  if (projectToClone !== undefined) {
+    return (
+      <CloneProjectDialog
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        project={{
+          id: projectToClone.id,
+          title: projectToClone.title,
+        }}
+        authToken={projectToClone.authToken}
+        onCreate={() => {
+          revalidate();
+        }}
+      />
+    );
+  }
 };
 
 const sidebarLinkStyle = css({
@@ -99,7 +103,7 @@ const NavigationItems = ({
     <List style={{ padding: 0, margin: 0 }}>
       {items.map((item, index) => {
         return (
-          <ListItem asChild index={index}>
+          <ListItem asChild index={index} key={index}>
             <NavLink
               to={item.to}
               end
@@ -118,30 +122,47 @@ const NavigationItems = ({
   );
 };
 
-type DashboardProps = {
-  user: User;
-  projects?: Array<DashboardProject>;
-  templates?: Array<DashboardProject>;
-  welcome: boolean;
-  userPlanFeatures: UserPlanFeatures;
-  publisherHost: string;
-  projectToClone?: {
-    authToken: string;
-    id: string;
-    title: string;
-  };
+const $data = atom<DashboardData | undefined>();
+
+export const DashboardSetup = ({ data }: { data: DashboardData }) => {
+  $data.set(data);
+  globalStyles();
+  return undefined;
 };
 
-export const Dashboard = ({
-  user,
-  projects,
-  templates,
-  welcome,
-  userPlanFeatures,
-  publisherHost,
-  projectToClone,
-}: DashboardProps) => {
-  globalStyles();
+const getView = (pathname: string, hasProjects: boolean) => {
+  if (pathname === dashboardPath("search")) {
+    return "search";
+  }
+
+  if (hasProjects === false) {
+    return "welcome";
+  }
+
+  if (pathname === dashboardPath("templates")) {
+    return "templates";
+  }
+  return "projects";
+};
+
+export const Dashboard = () => {
+  const data = useStore($data);
+  const location = useLocation();
+
+  if (data === undefined) {
+    return;
+  }
+
+  const {
+    user,
+    userPlanFeatures,
+    publisherHost,
+    projectToClone,
+    projects,
+    templates,
+  } = data;
+  const hasProjects = projects.length > 0;
+  const view = getView(location.pathname, hasProjects);
 
   return (
     <TooltipProvider>
@@ -160,26 +181,36 @@ export const Dashboard = ({
           <Header variant="aside">
             <ProfileMenu user={user} userPlanFeatures={userPlanFeatures} />
           </Header>
+          <Flex
+            direction="column"
+            gap="3"
+            css={{
+              paddingInline: theme.spacing[7],
+              paddingBottom: theme.spacing[7],
+            }}
+          >
+            <Search />
+          </Flex>
           <nav>
             <CollapsibleSection label="Workspace" fullWidth>
               <NavigationItems
                 items={
-                  welcome
+                  view === "welcome" || hasProjects === false
                     ? [
                         {
-                          to: templatesPath(),
+                          to: dashboardPath(),
                           prefix: <ExtensionIcon />,
                           children: "Welcome",
                         },
                       ]
                     : [
                         {
-                          to: dashboardPath(),
+                          to: dashboardPath("projects"),
                           prefix: <BodyIcon />,
                           children: "Projects",
                         },
                         {
-                          to: templatesPath(),
+                          to: dashboardPath("templates"),
                           prefix: <ExtensionIcon />,
                           children: "Starter templates",
                         },
@@ -199,14 +230,16 @@ export const Dashboard = ({
             </CollapsibleSection>
           </nav>
         </Flex>
-        {projects && (
+        {view === "projects" && (
           <Projects
             projects={projects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
           />
         )}
-        {templates && <Templates templates={templates} welcome={welcome} />}
+        {view === "templates" && <Templates projects={templates} />}
+        {view === "welcome" && <Templates projects={templates} welcome />}
+        {view === "search" && <SearchResults {...data} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />
       <Toaster />

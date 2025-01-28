@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -96,47 +96,6 @@ const Menu = ({
   );
 };
 
-// @todo use List/ListItem instead
-export const useProjectCard = () => {
-  const thumbnailRef = useRef<HTMLAnchorElement & HTMLDivElement>(null);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    const elements: Array<HTMLElement> = Array.from(
-      event.currentTarget.querySelectorAll(`[tabIndex='-1']`)
-    );
-    const currentIndex = elements.indexOf(
-      document.activeElement as HTMLElement
-    );
-    switch (event.key) {
-      case "Enter": {
-        // Only open project on enter when the project card container was focused,
-        // otherwise we will always open project, even when a menu was pressed.
-        if (event.currentTarget === document.activeElement) {
-          thumbnailRef.current?.click();
-        }
-        break;
-      }
-      case "ArrowUp":
-      case "ArrowRight": {
-        const nextElement = elements.at(currentIndex + 1) ?? elements[0];
-        nextElement?.focus();
-        break;
-      }
-      case "ArrowDown":
-      case "ArrowLeft": {
-        const nextElement = elements.at(currentIndex - 1) ?? elements[0];
-        nextElement?.focus();
-        break;
-      }
-    }
-  };
-
-  return {
-    thumbnailRef,
-    handleKeyDown,
-  };
-};
-
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
@@ -163,12 +122,12 @@ export const ProjectCard = ({
   },
   hasProPlan,
   publisherHost,
+  ...props
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -195,7 +154,7 @@ export const ProjectCard = ({
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
   return (
-    <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
+    <Card hidden={isHidden} {...props}>
       <CardContent
         css={{
           background: theme.colors.brandBackgroundProjectCardBack,
@@ -219,17 +178,9 @@ export const ProjectCard = ({
         />
 
         {previewImageAsset ? (
-          <ThumbnailLinkWithImage
-            to={linkPath}
-            name={previewImageAsset.name}
-            ref={thumbnailRef}
-          />
+          <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (
-          <ThumbnailLinkWithAbbr
-            title={title}
-            to={linkPath}
-            ref={thumbnailRef}
-          />
+          <ThumbnailLinkWithAbbr title={title} to={linkPath} />
         )}
         {isTransitioning && <Spinner delay={0} />}
       </CardContent>
