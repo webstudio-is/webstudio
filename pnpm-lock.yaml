@@ -1135,18 +1135,12 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
-      react:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318
       reserved-identifiers:
         specifier: ^1.0.0
         version: 1.0.0
       tinyexec:
         specifier: ^0.3.2
         version: 0.3.2
-      warn-once:
-        specifier: ^0.1.1
-        version: 0.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1235,6 +1229,9 @@ importers:
       prettier:
         specifier: 3.4.2
         version: 3.4.2
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
