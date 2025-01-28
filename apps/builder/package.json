@@ -38,7 +38,7 @@
     "@lexical/selection": "^0.21.0",
     "@lexical/utils": "^0.21.0",
     "@lezer/common": "^1.2.3",
-    "@lezer/css": "^1.1.9",
+    "@lezer/css": "^1.1.10",
     "@lezer/highlight": "^1.2.1",
     "@nanostores/react": "^0.8.0",
     "@nkzw/use-relative-time": "^1.1.0",
