@@ -16,12 +16,7 @@ import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
-import {
-  builderUrl,
-  dashboardPath,
-  isDashboard,
-  loginPath,
-} from "~/shared/router-utils";
+import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import { ClientOnly } from "~/shared/client-only";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
