@@ -6,7 +6,7 @@ export const Search = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const handleCancelSearch = () => {
+  const handleAbortSearch = () => {
     // When user cancels the search, we try to return to the last path they were on.
     if (location.state?.previousPathname) {
       return navigate(location.state.previousPathname);
@@ -21,7 +21,7 @@ export const Search = () => {
       onChange={(event) => {
         const value = event.currentTarget.value.trim();
         if (value === "") {
-          handleCancelSearch();
+          handleAbortSearch();
           return;
         }
         if (isSearchRoute === false) {
@@ -39,7 +39,7 @@ export const Search = () => {
         }
         setSearchParams({ q: value }, { replace: true });
       }}
-      onCancel={handleCancelSearch}
+      onAbort={handleAbortSearch}
       autoFocus
       placeholder="Search for anything"
     />
