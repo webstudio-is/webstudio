@@ -131,5 +131,134 @@ export const ProjectCard = ({
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  return <Card hidden={isHidden} {...props}></Card>;
+  useEffect(() => {
+    const linkPath = builderUrl({ origin: window.origin, projectId: id });
+
+    const handleNavigate = (event: NavigateEvent) => {
+      if (event.destination.url === linkPath) {
+        setIsTransitioning(true);
+      }
+    };
+
+    if (window.navigation === undefined) {
+      return;
+    }
+
+    window.navigation.addEventListener("navigate", handleNavigate);
+
+    return () => {
+      window.navigation.removeEventListener("navigate", handleNavigate);
+    };
+  }, [id]);
+
+  const linkPath = builderUrl({ origin: window.origin, projectId: id });
+
+  return (
+    <Card hidden={isHidden} {...props}>
+      <CardContent
+        css={{
+          background: theme.colors.brandBackgroundProjectCardBack,
+          [`&:hover`]: {
+            "--ws-project-card-prefetch-image-background": `url(${linkPath}cgi/empty.gif)`,
+          },
+        }}
+      >
+        {/* This div with backgorundImage on card hover is used to prefetch DNS of the project domain on hover. */}
+        <Box
+          css={{
+            backgroundImage: `var(--ws-project-card-prefetch-image-background, none)`,
+            visibility: "hidden",
+            position: "absolute",
+            width: 1,
+            height: 1,
+            left: 0,
+            top: 0,
+            opacity: 0,
+          }}
+        />
+
+        {previewImageAsset ? (
+          <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
+        ) : (
+          <ThumbnailLinkWithAbbr title={title} to={linkPath} />
+        )}
+        {isTransitioning && <Spinner delay={0} />}
+      </CardContent>
+      <CardFooter>
+        <Flex direction="column" justify="around" grow>
+          <Flex gap="1">
+            <Text
+              variant="titles"
+              userSelect="text"
+              truncate
+              css={{ textTransform: "none" }}
+            >
+              {title}
+            </Text>
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Text variant="small">
+                  Created on {formatDate(createdAt)}
+                  {latestBuildVirtual?.publishStatus === "PUBLISHED" && (
+                    <>
+                      <br />
+                      Published on {formatDate(latestBuildVirtual.createdAt)}
+                    </>
+                  )}
+                </Text>
+              }
+            >
+              <InfoCircleIcon
+                color={rawTheme.colors.foregroundSubtle}
+                tabIndex={-1}
+                className={infoIconStyle()}
+              />
+            </Tooltip>
+          </Flex>
+          {isPublished ? (
+            <PublishedLink
+              publisherHost={publisherHost}
+              domain={domain}
+              tabIndex={-1}
+            />
+          ) : (
+            <Text color="subtle">Not Published</Text>
+          )}
+        </Flex>
+        <Menu
+          tabIndex={-1}
+          onDelete={() => {
+            setIsDeleteDialogOpen(true);
+          }}
+          onRename={() => {
+            setIsRenameDialogOpen(true);
+          }}
+          onShare={() => {
+            setIsShareDialogOpen(true);
+          }}
+          onDuplicate={handleCloneProject}
+        />
+      </CardFooter>
+      <RenameProjectDialog
+        isOpen={isRenameDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
+        title={title}
+        projectId={id}
+      />
+      <DeleteProjectDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onHiddenChange={setIsHidden}
+        title={title}
+        projectId={id}
+      />
+      <ShareProjectDialog
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        projectId={id}
+        hasProPlan={hasProPlan}
+      />
+    </Card>
+  );
 };
