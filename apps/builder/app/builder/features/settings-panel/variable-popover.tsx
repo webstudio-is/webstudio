@@ -442,6 +442,7 @@ BooleanForm.displayName = "BooleanForm";
 
 const validateJsonValue = (expression: string) => {
   const diagnostics = lintExpression({ expression });
+  // prevent saving with any message including unset variable
   return diagnostics.length > 0 ? "error" : "";
 };
 

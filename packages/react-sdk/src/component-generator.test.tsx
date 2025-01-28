@@ -997,7 +997,7 @@ test("variable names can be js identifiers", () => {
   );
 });
 
-test("Renders nothing if only templates are present in block", () => {
+test("renders nothing if only templates are present in block", () => {
   const BlockTemplate = ws["block-template"];
   expect(
     generateWebstudioComponent({
@@ -1029,8 +1029,8 @@ test("Renders nothing if only templates are present in block", () => {
   );
 });
 
-test("Renders only block children", () => {
-  const Bt = ws["block-template"];
+test("renders only block children", () => {
+  const BlockTemplate = ws["block-template"];
 
   expect(
     generateWebstudioComponent({
@@ -1043,9 +1043,9 @@ test("Renders only block children", () => {
       ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
-            <Bt>
+            <BlockTemplate>
               <$.Box>Test</$.Box>
-            </Bt>
+            </BlockTemplate>
             <$.Box>Child0</$.Box>
           </ws.block>
         </$.Body>
@@ -1058,6 +1058,36 @@ test("Renders only block children", () => {
       return <Body>
       <Box>
       {"Child0"}
+      </Box>
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("generate unset variables as undefined", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      indexesWithinAncestors: new Map(),
+      ...renderData(
+        <$.Body ws:id="body">
+          <$.Box>{expression`a + b`}</$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box>
+      {undefined + undefined}
       </Box>
       </Body>
       }

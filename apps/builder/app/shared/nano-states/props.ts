@@ -15,10 +15,6 @@ import {
   collectionComponent,
   portalComponent,
 } from "@webstudio-is/sdk";
-import {
-  createJsonStringifyProxy,
-  isPlainObject,
-} from "@webstudio-is/sdk/runtime";
 import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { mapGroupBy } from "~/shared/shim";
@@ -44,6 +40,7 @@ import {
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
 import { $selectedPage, getInstanceKey } from "../awareness";
+import { computeExpression } from "../data-variables";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -203,79 +200,6 @@ const $loaderVariableValues = computed(
     return values;
   }
 );
-
-export const computeExpression = (
-  expression: string,
-  variables: Map<DataSource["id"], unknown>
-) => {
-  try {
-    const usedVariables = new Map();
-    const transpiled = transpileExpression({
-      expression,
-      executable: true,
-      replaceVariable: (identifier) => {
-        const id = decodeDataSourceVariable(identifier);
-        if (id) {
-          usedVariables.set(identifier, id);
-        }
-      },
-    });
-    let code = "";
-    // add only used variables in expression and get values
-    // from variables map without additional serializing of these values
-    for (const [identifier, id] of usedVariables) {
-      code += `let ${identifier} = _variables.get("${id}");\n`;
-    }
-    code += `return (${transpiled})`;
-
-    /**
-     *
-     * We are using structuredClone on frozen values because, for some reason,
-     * the Proxy example below throws a cryptic error:
-     * TypeError: 'get' on proxy: property 'data' is a read-only and non-configurable
-     * data property on the proxy target, but the proxy did not return its actual value
-     * (expected '[object Array]' but got '[object Array]').
-     *
-     * ```
-     * const createJsonStringifyProxy = (target) => {
-     *   return new Proxy(target, {
-     *     get(target, prop, receiver) {
-     *
-     *       console.log((prop in target), prop)
-     *
-     *       const value = Reflect.get(target, prop, receiver);
-     *
-     *       if (typeof value === "object" && value !== null) {
-     *         return createJsonStringifyProxy(value);
-     *       }
-     *
-     *       return value;
-     *     },
-     *   });
-     * };
-     * const obj = Object.freeze({ data: [1, 2, 3, 4] });
-     * const proxy = createJsonStringifyProxy(obj)
-     * proxy.data
-     *
-     * ```
-     */
-    const proxiedVariables = new Map(
-      [...variables.entries()].map(([key, value]) => [
-        key,
-        isPlainObject(value)
-          ? createJsonStringifyProxy(
-              Object.isFrozen(value) ? structuredClone(value) : value
-            )
-          : value,
-      ])
-    );
-
-    const result = new Function("_variables", code)(proxiedVariables);
-    return result;
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 /**
  * compute prop values within context of instance ancestors

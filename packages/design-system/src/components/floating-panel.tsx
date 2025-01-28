@@ -127,8 +127,8 @@ export const FloatingPanel = ({
         placement === "bottom" && flip(),
         offset(offsetProp),
       ],
-    }).then((position) => {
-      setPosition(position);
+    }).then(({ x, y }) => {
+      setPosition({ x, y });
       positionIsSetRef.current = true;
     });
   }, [
