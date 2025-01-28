@@ -18,7 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogMaximize,
-  DialogDescription,
 } from "./dialog";
 import {
   computePosition,
