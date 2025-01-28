@@ -130,7 +130,11 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   return undefined;
 };
 
-const getView = (pathname: string) => {
+const getView = (pathname: string, hasProjects: boolean) => {
+  if (hasProjects === false) {
+    return "welcome";
+  }
+
   if (pathname === dashboardPath("templates")) {
     return "templates";
   }
@@ -156,8 +160,7 @@ export const Dashboard = () => {
     projects,
     templates,
   } = data;
-  const view = getView(location.pathname);
-  const welcome = view === "templates" && projects.length === 0;
+  const view = getView(location.pathname, projects.length > 0);
 
   return (
     <TooltipProvider>
@@ -190,10 +193,10 @@ export const Dashboard = () => {
             <CollapsibleSection label="Workspace" fullWidth>
               <NavigationItems
                 items={
-                  welcome
+                  view === "welcome"
                     ? [
                         {
-                          to: dashboardPath("templates"),
+                          to: dashboardPath(),
                           prefix: <ExtensionIcon />,
                           children: "Welcome",
                         },
@@ -232,9 +235,8 @@ export const Dashboard = () => {
             publisherHost={publisherHost}
           />
         )}
-        {view === "templates" && (
-          <Templates projects={templates} welcome={welcome} />
-        )}
+        {view === "templates" && <Templates projects={templates} />}
+        {view === "welcome" && <Templates projects={templates} welcome />}
         {view === "search" && <SearchResults {...data} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />

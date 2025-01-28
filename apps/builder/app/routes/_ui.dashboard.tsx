@@ -148,10 +148,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { context, user, userPlanFeatures, origin, projects, templates } =
     await loadDashboardData(request);
 
-  if (projects.length === 0) {
-    throw redirect(dashboardPath("templates"));
-  }
-
   const projectToClone = await getProjectToClone(request, context);
 
   return {

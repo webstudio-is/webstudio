@@ -40,10 +40,10 @@ export const TemplatesGrid = ({
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
-  welcome: boolean;
+  welcome?: boolean;
 };
 
-export const Templates = ({ projects, welcome }: ProjectsProps) => {
+export const Templates = ({ projects, welcome = false }: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
