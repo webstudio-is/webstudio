@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   $,
-  ExpressionValue,
+  expression,
   renderTemplate,
   renderData,
 } from "@webstudio-is/template";
@@ -947,9 +947,7 @@ describe("find closest container", () => {
         ...renderData(
           <$.Body ws:id="body">
             <$.Box ws:id="box">
-              <$.Box ws:id="box-with-expr">
-                {new ExpressionValue("1 + 1")}
-              </$.Box>
+              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
             </$.Box>
           </$.Body>
         ),
@@ -1009,9 +1007,7 @@ describe("find closest non textual container", () => {
         ...renderData(
           <$.Body ws:id="body">
             <$.Box ws:id="box">
-              <$.Box ws:id="box-with-expr">
-                {new ExpressionValue("1 + 1")}
-              </$.Box>
+              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
             </$.Box>
           </$.Body>
         ),

@@ -892,6 +892,16 @@ return (condition) &&
 });
 
 test("generate resource prop", () => {
+  const myResource = new ResourceValue("myResource", {
+    url: expression`"https://my-url.com?with-secret"`,
+    method: "get",
+    headers: [],
+  });
+  const anotherResource = new ResourceValue("anotherResource", {
+    url: expression`"https://another-url.com?with-secret"`,
+    method: "get",
+    headers: [],
+  });
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -902,14 +912,8 @@ test("generate resource prop", () => {
       indexesWithinAncestors: new Map(),
       ...renderData(
         <$.Body ws:id="body">
-          <$.Form
-            ws:id="form1"
-            action={new ResourceValue("https://my-url.com?with-secret")}
-          ></$.Form>
-          <$.Form
-            ws:id="form2"
-            action={new ResourceValue("https://another-url.com?with-secret")}
-          ></$.Form>
+          <$.Form ws:id="form1" action={myResource}></$.Form>
+          <$.Form ws:id="form2" action={anotherResource}></$.Form>
         </$.Body>
       ),
     })
