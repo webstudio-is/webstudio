@@ -131,15 +131,16 @@ export const DashboardSetup = ({ data }: { data: DashboardData }) => {
 };
 
 const getView = (pathname: string, hasProjects: boolean) => {
+  if (pathname === dashboardPath("search")) {
+    return "search";
+  }
+
   if (hasProjects === false) {
     return "welcome";
   }
 
   if (pathname === dashboardPath("templates")) {
     return "templates";
-  }
-  if (pathname === dashboardPath("search")) {
-    return "search";
   }
   return "projects";
 };
