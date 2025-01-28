@@ -33,7 +33,6 @@ export const Search = () => {
             // Remember the last path to return to on abort
             {
               state: { previousPathname: location.pathname },
-              viewTransition: true,
             }
           );
           return;
