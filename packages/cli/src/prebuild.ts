@@ -49,7 +49,6 @@ import {
   coreMetas,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
-import { wsImageLoader } from "@webstudio-is/image";
 import { LOCAL_DATA_FILE } from "./config";
 import {
   createFileIfNotExists,
@@ -443,14 +442,10 @@ export const prebuild = async (options: {
 
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
-        const imagePath = wsImageLoader({
-          src: asset.name,
-          format: "raw",
-        });
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetOrigin}${imagePath}`,
+              `${assetOrigin}/cgi/image/${asset.name}?format=auto`,
               asset.name,
               assetBaseUrl
             )
