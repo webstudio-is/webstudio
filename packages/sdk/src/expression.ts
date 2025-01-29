@@ -1,4 +1,9 @@
-import { type Expression, type Identifier, parseExpressionAt } from "acorn";
+import {
+  type Expression,
+  type Identifier,
+  parse,
+  parseExpressionAt,
+} from "acorn";
 import { simple } from "acorn-walk";
 import type { DataSources } from "./schema/data-sources";
 import type { Scope } from "./scope";
@@ -51,8 +56,7 @@ export const lintExpression = ({
   try {
     // wrap expression with parentheses to force acorn parse whole expression
     // instead of just first valid part
-    // https://github.com/acornjs/acorn/tree/master/acorn
-    const root = parseExpressionAt(`(${expression})`, 0, {
+    const root = parse(`(${expression})`, {
       ecmaVersion: "latest",
       // support parsing import to forbid explicitly
       sourceType: "module",

@@ -40,6 +40,9 @@ describe("lint expression", () => {
     expect(lintExpression({ expression: `a + ` })).toEqual([
       error(4, 4, "Unexpected token"),
     ]);
+    expect(lintExpression({ expression: `"string" + a)` })).toEqual([
+      error(13, 13, "Unexpected token"),
+    ]);
   });
 
   test("restrict expression syntax", () => {
