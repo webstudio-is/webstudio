@@ -3,7 +3,7 @@ import {
   computeExpression,
   decodeDataVariableName,
   encodeDataVariableName,
-  finaUnsetVariableNames,
+  findUnsetVariableNames,
   restoreExpressionVariables,
   restoreTreeVariablesMutable,
   unsetExpressionVariables,
@@ -170,7 +170,7 @@ test("find unset variable names", () => {
     </$.Body>
   );
   expect(
-    finaUnsetVariableNames({
+    findUnsetVariableNames({
       instancePath: getInstancePath(data.instances, ["body"]),
       ...data,
     })
