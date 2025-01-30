@@ -483,6 +483,7 @@ export const Combobox = <Item,>({
         <ComboboxAnchor>
           <InputField
             {...combobox.getInputProps()}
+            inputRef={inputRef}
             autoFocus={autoFocus}
             placeholder={placeholder}
             name={name}

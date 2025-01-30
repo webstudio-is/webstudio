@@ -134,31 +134,14 @@ const NameField = ({
     },
     [variablesByName, variableId]
   );
-  useEffect(() => {
-    ref.current?.setCustomValidity(validateName(defaultValue));
-  }, [defaultValue, validateName]);
   const [value, setValue] = useState(defaultValue);
+  useEffect(() => {
+    ref.current?.setCustomValidity(validateName(value));
+  }, [value, validateName]);
   return (
     <Grid gap={1}>
       <Label htmlFor={nameId}>Name</Label>
       <InputErrorsTooltip errors={error ? [error] : undefined}>
-        {/* @todo autocomplete unset variables */}
-        {/*
-        <InputField
-          inputRef={ref}
-          name="name"
-          id={nameId}
-          autoComplete="off"
-          color={error ? "error" : undefined}
-          defaultValue={defaultValue}
-          onChange={(event) => {
-            event.target.setCustomValidity(validateName(event.target.value));
-            setError("");
-          }}
-          onBlur={() => ref.current?.checkValidity()}
-          onInvalid={(event) => setError(event.currentTarget.validationMessage)}
-        />
-        */}
         <Combobox<string>
           inputRef={ref}
           name="name"
