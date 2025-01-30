@@ -177,6 +177,7 @@ export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
 };
 
 const StyledPopoverContent = styled(PopoverContent, {
+  minWidth: "var(--radix-popper-anchor-width)",
   "&[data-side=top]": {
     "--ws-combobox-description-display-top": "block",
     "--ws-combobox-description-order": 0,
@@ -443,16 +444,27 @@ export const useCombobox = <Item,>({
 type ComboboxProps<Item> = UseComboboxProps<Item> &
   Pick<
     ComponentProps<typeof InputField>,
-    "autoFocus" | "placeholder" | "color" | "suffix" | "onBlur"
+    | "inputRef"
+    | "autoFocus"
+    | "placeholder"
+    | "name"
+    | "color"
+    | "suffix"
+    | "onBlur"
+    | "onInvalid"
   >;
 
 export const Combobox = <Item,>({
-  autoFocus,
   getDescription,
+  // input props
+  inputRef,
+  autoFocus,
   placeholder,
+  name,
   color,
   suffix,
   onBlur,
+  onInvalid,
   ...props
 }: ComboboxProps<Item>) => {
   const combobox = useCombobox<Item>(props);
@@ -471,9 +483,9 @@ export const Combobox = <Item,>({
         <ComboboxAnchor>
           <InputField
             {...combobox.getInputProps()}
-            placeholder={placeholder}
             autoFocus={autoFocus}
-            onBlur={onBlur}
+            placeholder={placeholder}
+            name={name}
             color={color}
             suffix={
               suffix ?? (
@@ -482,6 +494,8 @@ export const Combobox = <Item,>({
                 </Flex>
               )
             }
+            onBlur={onBlur}
+            onInvalid={onInvalid}
           />
         </ComboboxAnchor>
         <ComboboxContent>
