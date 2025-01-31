@@ -267,7 +267,7 @@ export const prebuild = async (options: {
   let framework;
   if (options.template.includes("ssg")) {
     framework = await createVikeSsgFramework();
-  } else if (options.template.includes("react-router-docker")) {
+  } else if (options.template.includes("react-router")) {
     framework = await createReactRouterFramework();
   } else {
     framework = await createRemixFramework();

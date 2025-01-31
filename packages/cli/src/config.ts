@@ -61,7 +61,7 @@ export const PROJECT_TEMPLATES = [
   {
     value: "docker" as const,
     label: "Docker",
-    expand: ["react-router-docker"],
+    expand: ["react-router", "react-router-docker"],
   },
   {
     value: "vercel" as const,
