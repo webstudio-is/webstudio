@@ -277,7 +277,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   editingItemId?: Item["id"];
   componentStates?: ComponentState[];
   onSelectAutocompleteItem?: (item: Item) => void;
-  onRemoveItem?: (id: Item["id"]) => void;
+  onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
@@ -351,7 +351,7 @@ const renderMenuItems = (props: {
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
   onDisable?: (itemId: IntermediateItem["id"]) => void;
   onEnable?: (itemId: IntermediateItem["id"]) => void;
-  onRemove?: (itemId: IntermediateItem["id"]) => void;
+  onDetach?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
   onClearStyles?: (itemId: IntermediateItem["id"]) => void;
 }) => {
@@ -404,8 +404,8 @@ const renderMenuItems = (props: {
     )}
     */}
       {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onRemove?.(props.item.id)}>
-          Remove
+        <DropdownMenuItem onSelect={() => props.onDetach?.(props.item.id)}>
+          Detach
         </DropdownMenuItem>
       )}
       {props.item.source !== "local" && (
@@ -537,7 +537,7 @@ export const StyleSourceInput = (
       ) {
         const item = value[value.length - 2];
         if (item) {
-          props.onRemoveItem?.(item.id);
+          props.onDetachItem?.(item.id);
         }
       }
     },
@@ -568,7 +568,7 @@ export const StyleSourceInput = (
                 onEnable: props.onEnableItem,
                 onDisable: props.onDisableItem,
                 onEdit: props.onEditItem,
-                onRemove: props.onRemoveItem,
+                onDetach: props.onDetachItem,
                 onDelete: props.onDeleteItem,
                 onClearStyles: props.onClearStyles,
               })

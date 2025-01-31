@@ -77,7 +77,7 @@ export const Basic: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemId) => {
+      onDetachItem={(itemId) => {
         removeItem(itemId, value, setValue);
       }}
       onSort={setValue}
@@ -108,7 +108,7 @@ export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
+      onDetachItem={(itemToRemove) => {
         removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
@@ -148,7 +148,7 @@ export const Complete: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
+      onDetachItem={(itemToRemove) => {
         removeItem(itemToRemove, value, setValue);
       }}
       onChangeItem={(changedItem) => {

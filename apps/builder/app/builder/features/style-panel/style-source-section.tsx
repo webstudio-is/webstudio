@@ -422,7 +422,7 @@ export const StyleSourcesSection = () => {
           setEditingItem(id);
         }}
         onClearStyles={clearStyles}
-        onRemoveItem={(id) => {
+        onDetachItem={(id) => {
           removeStyleSourceFromInstance(id);
         }}
         onDeleteItem={(id) => {
