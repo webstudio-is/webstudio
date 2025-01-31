@@ -150,8 +150,11 @@ const NameField = ({
           itemToString={(item) => item ?? ""}
           getDescription={() => (
             <>
-              Enter a variable name or pick
-              <br />a not defined one from expressions.
+              Enter a new variable or select
+              <br />
+              a variable that has been used
+              <br />
+              in expressions but not yet created
             </>
           )}
           getItems={() => unsetVariableNames}
