@@ -148,6 +148,12 @@ const NameField = ({
           id={nameId}
           color={error ? "error" : undefined}
           itemToString={(item) => item ?? ""}
+          getDescription={() => (
+            <>
+              Enter a variable name or pick
+              <br />a not defined one from expressions.
+            </>
+          )}
           getItems={() => unsetVariableNames}
           value={value}
           onItemSelect={(newValue) => {

@@ -489,11 +489,12 @@ export const Combobox = <Item,>({
             name={name}
             color={color}
             suffix={
-              suffix ?? (
+              suffix ??
+              (props.getItems().length > 0 && (
                 <Flex>
                   <NestedInputButton {...combobox.getToggleButtonProps()} />
                 </Flex>
-              )
+              ))
             }
             onBlur={onBlur}
             onInvalid={onInvalid}
