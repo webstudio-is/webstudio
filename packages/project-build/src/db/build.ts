@@ -25,7 +25,6 @@ import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import { serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
-import type { MarketplaceProduct } from "../shared//marketplace";
 import { breakCyclesMutable } from "../shared/graph-utils";
 
 const parseCompactData = <Item>(serialized: string) =>
@@ -93,9 +92,6 @@ const parseCompactBuild = async (
       resources: parseCompactData<Resource>(build.resources),
       instances: parseCompactInstanceData(build.instances),
       deployment: parseDeployment(build.deployment),
-      marketplaceProduct: parseConfig<MarketplaceProduct>(
-        build.marketplaceProduct
-      ),
     } satisfies CompactBuild;
   } finally {
     // empty block
@@ -193,7 +189,6 @@ export const loadApprovedProdBuildByProjectId = async (
     )
     .eq("id", projectId)
     .eq("isDeleted", false)
-    .eq("marketplaceApprovalStatus", "APPROVED")
     .single();
   if (project.error) {
     throw project.error;

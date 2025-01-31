@@ -130,9 +130,6 @@
             "documentType": "html",
             "custom": []
           },
-          "marketplace": {
-            "include": false
-          },
           "path": "/expressions"
         },
         {
@@ -150,9 +147,6 @@
             "redirect": "\"\"",
             "documentType": "html",
             "custom": []
-          },
-          "marketplace": {
-            "include": false
           },
           "path": "/class-names"
         },
@@ -177,9 +171,6 @@
               }
             ]
           },
-          "marketplace": {
-            "include": false
-          },
           "path": "/sitemap.xml"
         },
         {
@@ -197,9 +188,6 @@
             "redirect": "\"\"",
             "documentType": "html",
             "custom": []
-          },
-          "marketplace": {
-            "include": false
           },
           "path": "/content-block"
         },
@@ -5282,9 +5270,6 @@
         "documentType": "html",
         "custom": []
       },
-      "marketplace": {
-        "include": false
-      },
       "path": "/expressions"
     },
     {
@@ -5302,9 +5287,6 @@
         "redirect": "\"\"",
         "documentType": "html",
         "custom": []
-      },
-      "marketplace": {
-        "include": false
       },
       "path": "/class-names"
     },
@@ -5329,9 +5311,6 @@
           }
         ]
       },
-      "marketplace": {
-        "include": false
-      },
       "path": "/sitemap.xml"
     },
     {
@@ -5349,9 +5328,6 @@
         "redirect": "\"\"",
         "documentType": "html",
         "custom": []
-      },
-      "marketplace": {
-        "include": false
       },
       "path": "/content-block"
     },

@@ -1,12 +1,10 @@
 import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { loader } from "~/routes/rest.data.$projectId";
 import {
   $assets,
   $breakpoints,
   $dataSources,
   $instances,
-  $marketplaceProduct,
   $pages,
   $props,
   $resources,
@@ -16,9 +14,7 @@ import {
 } from "./nano-states";
 import { fetch } from "~/shared/fetch.client";
 
-export type BuilderData = WebstudioData & {
-  marketplaceProduct: undefined | MarketplaceProduct;
-};
+export type BuilderData = WebstudioData;
 
 export const getBuilderData = (): BuilderData => {
   const pages = $pages.get();
@@ -36,7 +32,6 @@ export const getBuilderData = (): BuilderData => {
     styleSources: $styleSources.get(),
     styles: $styles.get(),
     assets: $assets.get(),
-    marketplaceProduct: $marketplaceProduct.get(),
   };
 };
 
@@ -71,7 +66,6 @@ export const loadBuilderData = async ({
         data.styleSourceSelections.map((item) => [item.instanceId, item])
       ),
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
-      marketplaceProduct: data.marketplaceProduct,
     } satisfies BuilderData & { version: number };
   }
 

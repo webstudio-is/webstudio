@@ -18,11 +18,7 @@ import {
   Resources,
   Resource,
 } from "@webstudio-is/sdk";
-import {
-  type Build,
-  findCycles,
-  MarketplaceProduct,
-} from "@webstudio-is/project-build";
+import { type Build, findCycles } from "@webstudio-is/project-build";
 import {
   parsePages,
   parseStyleSourceSelections,
@@ -32,8 +28,6 @@ import {
   serializeStyles,
   parseData,
   serializeData,
-  parseConfig,
-  serializeConfig,
   loadRawBuildById,
   parseInstanceData,
 } from "@webstudio-is/project-build/index.server";
@@ -167,7 +161,6 @@ export const action = async ({
       styleSources?: StyleSources;
       styleSourceSelections?: StyleSourceSelections;
       styles?: Styles;
-      marketplaceProduct?: MarketplaceProduct;
     } = {};
 
     let previewImageAssetId: string | null | undefined = undefined;
@@ -295,19 +288,6 @@ export const action = async ({
           continue;
         }
 
-        if (namespace === "marketplaceProduct") {
-          const marketplaceProduct =
-            buildData.marketplaceProduct ??
-            parseConfig<MarketplaceProduct>(build.marketplaceProduct);
-
-          buildData.marketplaceProduct = applyPatches(
-            marketplaceProduct,
-            patches
-          );
-
-          continue;
-        }
-
         return { status: "error", errors: `Unknown namespace "${namespace}"` };
       }
     }
@@ -378,12 +358,6 @@ export const action = async ({
       Styles.parse(stylesToValidate);
 
       dbBuildData.styles = serializeStyles(buildData.styles);
-    }
-
-    if (buildData.marketplaceProduct) {
-      dbBuildData.marketplaceProduct = serializeConfig<MarketplaceProduct>(
-        MarketplaceProduct.parse(buildData.marketplaceProduct)
-      );
     }
 
     const update = await context.postgrest.client

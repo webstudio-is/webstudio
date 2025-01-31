@@ -68,8 +68,6 @@ $project.set({
   userId: "userId",
   domain: "new-2x9tcd",
 
-  marketplaceApprovalStatus: "UNLISTED",
-
   latestStaticBuild: null,
   previewImageAssetId: null,
   previewImageAsset: {

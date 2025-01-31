@@ -43,9 +43,6 @@
               }
             ]
           },
-          "marketplace": {
-            "include": false
-          },
           "path": "/another-page"
         }
       ],
@@ -452,9 +449,6 @@
             "content": "\"\""
           }
         ]
-      },
-      "marketplace": {
-        "include": false
       },
       "path": "/another-page"
     }

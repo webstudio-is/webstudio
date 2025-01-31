@@ -1,7 +1,6 @@
 DROP VIEW IF EXISTS "LatestBuildPerProject" CASCADE;
 DROP VIEW IF EXISTS "LatestBuildPerProjectDomain" CASCADE;
 DROP VIEW IF EXISTS  "LatestStaticBuildPerProject" CASCADE;
-DROP VIEW "ApprovedMarketplaceProduct";
 DROP VIEW IF EXISTS "DashboardProject";
 DROP VIEW IF EXISTS "ProjectWithDomain";
 
@@ -54,39 +53,6 @@ ORDER BY
   bld."createdAt" DESC,
   "buildId";
 
-
-
-CREATE VIEW "ApprovedMarketplaceProduct" AS
-SELECT DISTINCT ON (build."projectId")
-  build."projectId",
-  build."marketplaceProduct",
-  (
-    SELECT
-      token
-    FROM
-      "AuthorizationToken" auth
-    WHERE
-      auth."projectId" = build."projectId" AND
-      auth.relation = 'viewers'
-    ORDER BY
-      auth."token"
-    LIMIT 1
-  ) AS "authorizationToken"
-FROM
-  "Build" build
-WHERE
-  build.deployment IS NOT NULL -- published
-  AND build."projectId" IN (
-    SELECT
-      "id"
-    FROM
-      "Project"
-    WHERE ("isDeleted" = FALSE
-      AND "marketplaceApprovalStatus" = CAST('APPROVED'::text AS "MarketplaceApprovalStatus")))
-ORDER BY
-  build."projectId",
-  build."createdAt" DESC,
-  build.id;
 
 CREATE VIEW "DashboardProject" AS
 SELECT

@@ -69,7 +69,6 @@ BEGIN
     instances = '[]'::text,
     "dataSources" = '[]'::text,
     resources = '[]'::text,
-    "marketplaceProduct" = '{}'::text,
     "isCleaned" = TRUE
   WHERE deployment IS NOT NULL
   AND id NOT IN (SELECT "buildId" FROM latest_builds)

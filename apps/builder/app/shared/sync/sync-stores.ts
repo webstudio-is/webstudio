@@ -27,7 +27,6 @@ import {
   $selectedInstanceStates,
   $resources,
   $resourceValues,
-  $marketplaceProduct,
   $canvasIframeState,
   $uploadingFilesDataStore,
   $memoryProps,
@@ -79,7 +78,6 @@ export const registerContainers = () => {
   serverSyncStore.register("dataSources", $dataSources);
   serverSyncStore.register("resources", $resources);
   serverSyncStore.register("assets", $assets);
-  serverSyncStore.register("marketplaceProduct", $marketplaceProduct);
 };
 
 export const createObjectPool = () => {

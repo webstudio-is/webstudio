@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS "public"."Build" (
     "dataSources" "text" DEFAULT '[]'::"text" NOT NULL,
     "lastTransactionId" "text",
     "resources" "text" DEFAULT '[]'::"text" NOT NULL,
-    "marketplaceProduct" "text" DEFAULT '{}'::"text" NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "public"."Project" (
@@ -64,7 +63,6 @@ CREATE TABLE IF NOT EXISTS "public"."Project" (
     "isDeleted" boolean DEFAULT false NOT NULL,
     "createdAt" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "previewImageAssetId" "text",
-    "marketplaceApprovalStatus" "public"."MarketplaceApprovalStatus" DEFAULT 'UNLISTED'::"public"."MarketplaceApprovalStatus" NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "public"."ProjectDomain" (

@@ -15,18 +15,16 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { SectionGeneral } from "./section-general";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
-import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 import type { FunctionComponent } from "react";
 import { $isDesignMode } from "~/shared/nano-states";
 
-type SectionName = "general" | "redirects" | "publish" | "marketplace";
+type SectionName = "general" | "redirects" | "publish";
 
 const sections = new Map<SectionName, FunctionComponent>([
   ["general", SectionGeneral],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
-  ["marketplace", SectionMarketplace],
 ] as const);
 
 export const ProjectSettingsView = ({
@@ -105,7 +103,6 @@ export const ProjectSettingsView = ({
                 {currentSection === "general" && <SectionGeneral />}
                 {currentSection === "redirects" && <SectionRedirects />}
                 {currentSection === "publish" && <SectionPublish />}
-                {currentSection === "marketplace" && <SectionMarketplace />}
                 <div />
               </Grid>
             </ScrollArea>

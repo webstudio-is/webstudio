@@ -17,7 +17,6 @@ import type {
 } from "@webstudio-is/sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { Project } from "@webstudio-is/project";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
@@ -460,7 +459,5 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-
-export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
 
 export const $canvasToolsVisible = atom<boolean>(true);

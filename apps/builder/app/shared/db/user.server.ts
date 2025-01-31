@@ -1,6 +1,5 @@
 import type { Database } from "@webstudio-is/postrest/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import type { GitHubProfile } from "remix-auth-github";
 import type { GoogleProfile } from "remix-auth-google";
 
 export type User = Database["public"]["Tables"]["User"]["Row"];
@@ -64,7 +63,7 @@ const genericCreateAccount = async (
 
 export const createOrLoginWithOAuth = async (
   context: AppContext,
-  profile: GoogleProfile | GitHubProfile
+  profile: GoogleProfile
 ): Promise<User> => {
   const userData = {
     email: (profile.emails ?? [])[0]?.value,

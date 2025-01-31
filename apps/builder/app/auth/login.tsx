@@ -7,7 +7,7 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
+import { GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
@@ -21,14 +21,12 @@ const globalStyles = globalCss({
 
 export type LoginProps = {
   errorMessage?: string;
-  isGithubEnabled?: boolean;
   isGoogleEnabled?: boolean;
   isSecretLoginEnabled?: boolean;
 };
 
 export const Login = ({
   errorMessage,
-  isGithubEnabled,
   isGoogleEnabled,
   isSecretLoginEnabled,
 }: LoginProps) => {
@@ -72,18 +70,6 @@ export const Login = ({
                 formAction={authPath({ provider: "google" })}
               >
                 Sign in with Google
-              </Button>
-              <Button
-                disabled={isGithubEnabled === false}
-                prefix={<GithubIcon size={22} fill="currentColor" />}
-                color="ghost"
-                css={{
-                  border: `1px solid ${theme.colors.borderDark}`,
-                  height: theme.spacing[15],
-                }}
-                formAction={authPath({ provider: "github" })}
-              >
-                Sign in with GitHub
               </Button>
             </Form>
             {isSecretLoginEnabled && <SecretLogin />}

@@ -1,7 +1,7 @@
 import * as db from "../db";
 import { z } from "zod";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { Title } from "../shared/schema";
 
 export const projectRouter = router({
   rename: procedure
@@ -40,16 +40,6 @@ export const projectRouter = router({
     .input(z.object({ title: Title }))
     .mutation(async ({ input, ctx }) => {
       return await db.project.create(input, ctx);
-    }),
-  setMarketplaceApprovalStatus: procedure
-    .input(
-      z.object({
-        projectId: z.string(),
-        marketplaceApprovalStatus: MarketplaceApprovalStatus,
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      return await db.project.setMarketplaceApprovalStatus(input, ctx);
     }),
   findCurrentUserProjectIds: procedure.query(async ({ ctx }) => {
     if (ctx.authorization.type !== "user") {

@@ -1,6 +1,5 @@
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
-import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
@@ -35,7 +34,7 @@ const strategyCallback = async ({
   profile,
   request,
 }: {
-  profile: GitHubProfile | GoogleProfile;
+  profile: GoogleProfile;
   request: Request;
 }) => {
   const context = await createContext(request);
@@ -61,18 +60,6 @@ const strategyCallback = async ({
 export const authenticator = new Authenticator<SessionData>(sessionStorage, {
   throwOnError: true,
 });
-
-if (env.GH_CLIENT_ID && env.GH_CLIENT_SECRET) {
-  const github = new GitHubStrategy(
-    {
-      clientID: env.GH_CLIENT_ID,
-      clientSecret: env.GH_CLIENT_SECRET,
-      callbackURL: `${callbackOrigin}${authCallbackPath({ provider: "github" })}`,
-    },
-    strategyCallback
-  );
-  authenticator.use(github, "github");
-}
 
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   const google = new GoogleStrategy(

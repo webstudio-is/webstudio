@@ -70,13 +70,6 @@ const commonPageFields = {
       )
       .optional(),
   }),
-  marketplace: z.optional(
-    z.object({
-      include: z.optional(z.boolean()),
-      category: z.optional(z.string()),
-      thumbnailAssetId: z.optional(z.string()),
-    })
-  ),
 } as const;
 
 export const HomePagePath = z

@@ -46,26 +46,8 @@ import { ComponentsPanel } from "~/builder/features/components";
 import { PagesPanel } from "~/builder/features/pages";
 import { NavigatorPanel } from "~/builder/features/navigator";
 import { AssetsPanel } from "~/builder/features/assets";
-import { MarketplacePanel } from "~/builder/features/marketplace";
 
 const none = { Panel: () => null };
-
-const AiTabTrigger = () => {
-  return (
-    <SidebarButton
-      label="AI"
-      data-state={getSetting("isAiCommandBarVisible") ? "active" : undefined}
-      onClick={() => {
-        setSetting(
-          "isAiCommandBarVisible",
-          getSetting("isAiCommandBarVisible") ? false : true
-        );
-      }}
-    >
-      <AiIcon size={rawTheme.spacing[10]} />
-    </SidebarButton>
-  );
-};
 
 const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
@@ -157,15 +139,6 @@ const panels: PanelConfig[] = [
     label: "Assets",
     Icon: ImageIcon,
     Panel: AssetsPanel,
-  },
-  {
-    name: "marketplace",
-    label: "Marketplace",
-    Icon: ExtensionIcon,
-    Panel: MarketplacePanel,
-    visibility: {
-      content: false,
-    },
   },
 ];
 
@@ -264,7 +237,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 })}
             </SidebarTabsList>
           </div>
-          {isDesignMode && <AiTabTrigger />}
 
           <HelpTabTrigger />
         </Flex>

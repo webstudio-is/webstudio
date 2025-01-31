@@ -32,12 +32,7 @@ export const findMany = async (userId: string, context: AppContext) => {
 
   return data.data as SetNonNullable<
     (typeof data.data)[number],
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
+    "id" | "title" | "domain" | "isDeleted" | "createdAt"
   >[];
 };
 
@@ -60,11 +55,6 @@ export const findManyByIds = async (
   }
   return data.data as SetNonNullable<
     (typeof data.data)[number],
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
+    "id" | "title" | "domain" | "isDeleted" | "createdAt"
   >[];
 };

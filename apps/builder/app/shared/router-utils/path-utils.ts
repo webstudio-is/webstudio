@@ -107,17 +107,11 @@ export const userPlanSubscriptionPath = () => {
   return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
 };
 
-export const authCallbackPath = ({
-  provider,
-}: {
-  provider: "google" | "github";
-}) => `/auth/${provider}/callback`;
+export const authCallbackPath = ({ provider }: { provider: "google" }) =>
+  `/auth/${provider}/callback`;
 
-export const authPath = ({
-  provider,
-}: {
-  provider: "google" | "github" | "dev";
-}) => `/auth/${provider}`;
+export const authPath = ({ provider }: { provider: "google" | "dev" }) =>
+  `/auth/${provider}`;
 
 export const restAssetsPath = () => {
   return `/rest/assets`;
@@ -147,6 +141,3 @@ export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
   typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";
 
 export const restResourcesLoader = () => `/rest/resources-loader`;
-
-export const marketplacePath = (method: string) =>
-  `/builder/marketplace/${method}`;

@@ -108,7 +108,6 @@ export type SidebarPanelName =
   | "components"
   | "navigator"
   | "pages"
-  | "marketplace"
   | "none";
 
 // Only used internally to avoid directly setting the value without using setActiveSidebarPanel.

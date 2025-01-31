@@ -5,7 +5,7 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createBuild } from "@webstudio-is/project-build/index.server";
-import { MarketplaceApprovalStatus, Title } from "../shared/schema";
+import { Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
 
@@ -279,34 +279,4 @@ export const updateDomain = async (
     }
     throw updatedProject.error;
   }
-};
-
-export const setMarketplaceApprovalStatus = async (
-  {
-    projectId,
-    marketplaceApprovalStatus,
-  }: {
-    projectId: Project["id"];
-    marketplaceApprovalStatus: MarketplaceApprovalStatus;
-  },
-  context: AppContext
-) => {
-  if (
-    marketplaceApprovalStatus === "APPROVED" ||
-    marketplaceApprovalStatus === "REJECTED"
-  ) {
-    throw new Error("User can't approve or reject");
-  }
-  await assertEditPermission(projectId, context);
-
-  const updatedProject = await context.postgrest.client
-    .from("Project")
-    .update({ marketplaceApprovalStatus })
-    .eq("id", projectId)
-    .select()
-    .single();
-  if (updatedProject.error) {
-    throw updatedProject.error;
-  }
-  return updatedProject.data;
 };

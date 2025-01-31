@@ -8,14 +8,3 @@ export const Title = z
     (val) => val.length >= MIN_TITLE_LENGTH,
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
-
-export const MarketplaceApprovalStatus = z.enum([
-  "UNLISTED",
-  "PENDING",
-  "APPROVED",
-  "REJECTED",
-]);
-
-export type MarketplaceApprovalStatus = z.infer<
-  typeof MarketplaceApprovalStatus
->;

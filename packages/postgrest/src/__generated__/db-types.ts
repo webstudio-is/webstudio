@@ -151,7 +151,6 @@ export type Database = {
           instances: string;
           isCleaned: boolean | null;
           lastTransactionId: string | null;
-          marketplaceProduct: string;
           pages: string;
           projectId: string;
           props: string;
@@ -172,7 +171,6 @@ export type Database = {
           instances?: string;
           isCleaned?: boolean | null;
           lastTransactionId?: string | null;
-          marketplaceProduct?: string;
           pages: string;
           projectId: string;
           props?: string;
@@ -193,7 +191,6 @@ export type Database = {
           instances?: string;
           isCleaned?: boolean | null;
           lastTransactionId?: string | null;
-          marketplaceProduct?: string;
           pages?: string;
           projectId?: string;
           props?: string;
@@ -501,7 +498,6 @@ export type Database = {
           domain: string;
           id: string;
           isDeleted: boolean;
-          marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
           title: string;
           userId: string | null;
@@ -511,7 +507,6 @@ export type Database = {
           domain: string;
           id: string;
           isDeleted?: boolean;
-          marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
           title: string;
           userId?: string | null;
@@ -521,7 +516,6 @@ export type Database = {
           domain?: string;
           id?: string;
           isDeleted?: boolean;
-          marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
           title?: string;
           userId?: string | null;
@@ -701,29 +695,6 @@ export type Database = {
       };
     };
     Views: {
-      ApprovedMarketplaceProduct: {
-        Row: {
-          authorizationToken: string | null;
-          marketplaceProduct: string | null;
-          projectId: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "DashboardProject";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "Build_projectId_fkey";
-            columns: ["projectId"];
-            isOneToOne: false;
-            referencedRelation: "Project";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       DashboardProject: {
         Row: {
           createdAt: string | null;
@@ -731,9 +702,6 @@ export type Database = {
           id: string | null;
           isDeleted: boolean | null;
           isPublished: boolean | null;
-          marketplaceApprovalStatus:
-            | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
-            | null;
           previewImageAssetId: string | null;
           title: string | null;
           userId: string | null;
@@ -744,9 +712,6 @@ export type Database = {
           id?: string | null;
           isDeleted?: boolean | null;
           isPublished?: never;
-          marketplaceApprovalStatus?:
-            | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
-            | null;
           previewImageAssetId?: string | null;
           title?: string | null;
           userId?: string | null;
@@ -757,9 +722,6 @@ export type Database = {
           id?: string | null;
           isDeleted?: boolean | null;
           isPublished?: never;
-          marketplaceApprovalStatus?:
-            | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
-            | null;
           previewImageAssetId?: string | null;
           title?: string | null;
           userId?: string | null;
@@ -829,7 +791,6 @@ export type Database = {
           domain: string;
           id: string;
           isDeleted: boolean;
-          marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
           title: string;
           userId: string | null;
@@ -926,11 +887,6 @@ export type Database = {
         | "builders"
         | "administrators";
       DomainStatus: "INITIALIZING" | "ACTIVE" | "ERROR" | "PENDING";
-      MarketplaceApprovalStatus:
-        | "UNLISTED"
-        | "PENDING"
-        | "APPROVED"
-        | "REJECTED";
       PublishStatus: "PENDING" | "PUBLISHED" | "FAILED";
       UploadStatus: "UPLOADING" | "UPLOADED";
     };

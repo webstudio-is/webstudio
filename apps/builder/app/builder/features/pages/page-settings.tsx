@@ -109,7 +109,6 @@ import {
 import { Form } from "./form";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { Card } from "../marketplace/card";
 import { selectInstance } from "~/shared/awareness";
 import { computeExpression } from "~/shared/data-variables";
 
@@ -128,9 +127,6 @@ const fieldDefaultValues = {
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
   customMetas: [{ property: "", content: `""` }],
-  marketplaceInclude: false,
-  marketplaceCategory: "",
-  marketplaceThumbnailAssetId: "",
 };
 
 const fieldNames = Object.keys(
@@ -317,9 +313,6 @@ const toFormValues = (
     documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
-    marketplaceInclude: page.marketplace?.include ?? false,
-    marketplaceCategory: page.marketplace?.category ?? "",
-    marketplaceThumbnailAssetId: page.marketplace?.thumbnailAssetId ?? "",
   };
 };
 
@@ -608,101 +601,6 @@ const fieldsetStyle = css({
     opacity: 0.4,
   },
 });
-
-const MarketplaceSection = ({
-  values,
-  onChange,
-}: {
-  values: Values;
-  onChange: OnChange;
-}) => {
-  const excludeId = useId();
-  const categoryId = useId();
-  const categoryMeta = values.customMetas.find(
-    ({ property }) => property === "ws:category"
-  );
-  // @todo remove after all stores are migrated
-  const categoryFallback = String(
-    computeExpression(categoryMeta?.content ?? `""`, new Map())
-  );
-  const category = values.marketplaceCategory ?? categoryFallback ?? "Pages";
-  const assets = useStore($assets);
-  const thumbnailAsset = assets.get(values.marketplaceThumbnailAssetId);
-  const thumnailFallbackAsset = assets.get(values.socialImageAssetId);
-  return (
-    <Grid gap={2} css={{ padding: theme.panel.padding }}>
-      <Label text="title">Marketplace</Label>
-      <Grid
-        flow="column"
-        gap={1}
-        justify="start"
-        align="center"
-        css={{ py: theme.spacing[2] }}
-      >
-        <Switch
-          id={excludeId}
-          checked={values.marketplaceInclude}
-          onCheckedChange={(value) =>
-            onChange({ field: "marketplaceInclude", value })
-          }
-        />
-        <Label htmlFor={excludeId}>Include in the marketplace</Label>
-      </Grid>
-      <Grid gap={1}>
-        <Label htmlFor={categoryId}>Category</Label>
-        <InputField
-          id={categoryId}
-          name="marketplaceCategory"
-          value={values.marketplaceCategory}
-          onChange={(event) =>
-            onChange({
-              field: "marketplaceCategory",
-              value: event.target.value,
-            })
-          }
-        />
-      </Grid>
-      <Grid gap={1} flow="column">
-        <ImageControl
-          onAssetIdChange={(value) =>
-            onChange({ field: "marketplaceThumbnailAssetId", value })
-          }
-        >
-          <Button color="neutral" css={{ justifySelf: "start" }}>
-            Choose thumbnail from assets
-          </Button>
-        </ImageControl>
-      </Grid>
-      {thumbnailAsset?.type === "image" && (
-        <ImageInfo
-          asset={thumbnailAsset}
-          onDelete={() =>
-            onChange({ field: "marketplaceThumbnailAssetId", value: "" })
-          }
-        />
-      )}
-      <Grid gap={1}>
-        <Label>Marketplace Preview</Label>
-        <Box
-          css={{
-            padding: theme.spacing[5],
-            borderRadius: theme.borderRadius[4],
-            border: `1px solid ${theme.colors.borderMain}`,
-            justifySelf: "start",
-          }}
-        >
-          <Grid gap={1} css={{ width: theme.spacing[30] }}>
-            {category && <Label text="title">{category}</Label>}
-            <Card
-              title={values.name}
-              image={thumbnailAsset ?? thumnailFallbackAsset}
-            />
-          </Grid>
-        </Box>
-      </Grid>
-    </Grid>
-  );
-};
 
 const FormFields = ({
   systemDataSourceId,
@@ -1224,15 +1122,6 @@ const FormFields = ({
           </InputErrorsTooltip>
         </fieldset>
 
-        {(project?.marketplaceApprovalStatus === "PENDING" ||
-          project?.marketplaceApprovalStatus === "APPROVED" ||
-          project?.marketplaceApprovalStatus === "REJECTED") && (
-          <>
-            <Separator />
-            <MarketplaceSection values={values} onChange={onChange} />
-          </>
-        )}
-
         <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
@@ -1470,25 +1359,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.parentFolderId !== undefined) {
       registerFolderChildMutable(folders, page.id, values.parentFolderId);
-    }
-
-    if (values.marketplaceInclude !== undefined) {
-      page.marketplace ??= {};
-      page.marketplace.include = values.marketplaceInclude;
-    }
-    if (values.marketplaceCategory !== undefined) {
-      page.marketplace ??= {};
-      page.marketplace.category =
-        values.marketplaceCategory.length > 0
-          ? values.marketplaceCategory
-          : undefined;
-    }
-    if (values.marketplaceThumbnailAssetId !== undefined) {
-      page.marketplace ??= {};
-      page.marketplace.thumbnailAssetId =
-        values.marketplaceThumbnailAssetId.length > 0
-          ? values.marketplaceThumbnailAssetId
-          : undefined;
     }
   };
 

@@ -17,7 +17,6 @@ const user = {
   image: null,
   username: "Taylor",
   teamId: null,
-  provider: "github",
 };
 
 const createRouter = (element: JSX.Element, path: string, current?: string) =>
@@ -47,7 +46,6 @@ const projects = [
     previewImageAsset: null,
     previewImageAssetId: "",
     latestBuildVirtual: null,
-    marketplaceApprovalStatus: "UNLISTED" as const,
   } as DashboardProject,
 ];
 

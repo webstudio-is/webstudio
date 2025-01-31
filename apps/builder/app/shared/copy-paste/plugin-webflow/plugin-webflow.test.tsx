@@ -100,7 +100,6 @@ beforeEach(() => {
     userId: "",
     isDeleted: false,
     previewImageAsset: null,
-    marketplaceApprovalStatus: "PENDING",
     latestStaticBuild: null,
     domainsVirtual: [],
     latestBuildVirtual: null,
