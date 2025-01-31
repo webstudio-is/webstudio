@@ -541,6 +541,12 @@ importers:
         specifier: 5.7.3
         version: 5.7.3
 
+  fixtures/react-router-netlify:
+    dependencies:
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
+
   fixtures/ssg:
     dependencies:
       '@webstudio-is/image':
@@ -1154,6 +1160,9 @@ importers:
       '@netlify/remix-edge-adapter':
         specifier: 3.4.2
         version: 3.4.2(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@remix-run/server-runtime@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@netlify/vite-plugin-react-router':
+        specifier: ^1.0.0
+        version: 1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))
       '@react-router/dev':
         specifier: ^7.1.4
         version: 7.1.4(@react-router/serve@7.1.4(react-router@7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3))(@types/node@22.10.7)(react-router@7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
@@ -3789,6 +3798,12 @@ packages:
   '@netlify/serverless-functions-api@1.26.1':
     resolution: {integrity: sha512-q3L9i3HoNfz0SGpTIS4zTcKBbRkxzCRpd169eyiTuk3IwcPC3/85mzLHranlKo2b+HYT0gu37YxGB45aD8A3Tw==}
     engines: {node: '>=18.0.0'}
+
+  '@netlify/vite-plugin-react-router@1.0.0':
+    resolution: {integrity: sha512-J9xzn2Gdehg3LSEXFrpXLjQm2T2HQEnnlbTH7Ic9mjaz9rwkRmgwbYBn9h5SexQ0mV82jZjhvneblL8VPKiUtQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      vite: '>=5.0.0'
 
   '@nkzw/use-relative-time@1.1.0':
     resolution: {integrity: sha512-ogCL62FvScpRpsZUuaN6Jt0xPGRv62atQUNGyMcX+nZs4H5Fs5K1iA3MbSmkJ1y0n/N0RIRLc3VAp8o46lq2CA==}
@@ -10792,6 +10807,17 @@ snapshots:
     dependencies:
       '@netlify/node-cookies': 0.1.0
       urlpattern-polyfill: 8.0.2
+
+  '@netlify/vite-plugin-react-router@1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))':
+    dependencies:
+      '@react-router/node': 7.1.4(react-router@7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)
+      isbot: 5.1.22
+      react-router: 7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      vite: 5.4.11(@types/node@22.10.7)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - typescript
 
   '@nkzw/use-relative-time@1.1.0(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:

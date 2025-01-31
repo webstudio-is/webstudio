@@ -50,6 +50,7 @@
   "devDependencies": {
     "@netlify/remix-adapter": "^2.5.1",
     "@netlify/remix-edge-adapter": "3.4.2",
+    "@netlify/vite-plugin-react-router": "^1.0.0",
     "@react-router/dev": "^7.1.4",
     "@react-router/fs-routes": "^7.1.4",
     "@remix-run/cloudflare": "^2.15.2",
