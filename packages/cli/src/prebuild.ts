@@ -445,7 +445,7 @@ export const prebuild = async (options: {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetOrigin}/cgi/image/${asset.name}?format=auto`,
+              `${assetOrigin}/cgi/image/${asset.name}`,
               asset.name,
               assetBaseUrl
             )
