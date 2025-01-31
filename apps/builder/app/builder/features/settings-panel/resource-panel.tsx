@@ -36,7 +36,6 @@ import {
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
-import { serverSyncStore } from "~/shared/sync";
 import {
   $dataSources,
   $resources,
@@ -55,10 +54,12 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
 import {
-  $selectedInstance,
   $selectedInstanceKey,
+  $selectedInstancePath,
   $selectedPage,
 } from "~/shared/awareness";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import { restoreTreeVariablesMutable } from "~/shared/data-variables";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -582,10 +583,11 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceId = $selectedInstance.get()?.id;
-      if (instanceId === undefined) {
+      const instancePath = $selectedInstancePath.get();
+      if (instancePath === undefined) {
         return;
       }
+      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
@@ -598,18 +600,16 @@ export const ResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
       };
-      serverSyncStore.createTransaction(
-        [$dataSources, $resources],
-        (dataSources, resources) => {
-          dataSources.set(newVariable.id, newVariable);
-          resources.set(newResource.id, newResource);
-        }
-      );
+      updateWebstudioData((data) => {
+        data.dataSources.set(newVariable.id, newVariable);
+        data.resources.set(newResource.id, newResource);
+        restoreTreeVariablesMutable({ instancePath, ...data });
+      });
     },
   }));
 
@@ -715,10 +715,11 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceId = $selectedInstance.get()?.id;
-      if (instanceId === undefined) {
+      const instancePath = $selectedInstancePath.get();
+      if (instancePath === undefined) {
         return;
       }
+      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
@@ -731,18 +732,16 @@ export const SystemResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
       };
-      serverSyncStore.createTransaction(
-        [$dataSources, $resources],
-        (dataSources, resources) => {
-          dataSources.set(newVariable.id, newVariable);
-          resources.set(newResource.id, newResource);
-        }
-      );
+      updateWebstudioData((data) => {
+        data.dataSources.set(newVariable.id, newVariable);
+        data.resources.set(newResource.id, newResource);
+        restoreTreeVariablesMutable({ instancePath, ...data });
+      });
     },
   }));
 
@@ -825,10 +824,11 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceId = $selectedInstance.get()?.id;
-      if (instanceId === undefined) {
+      const instancePath = $selectedInstancePath.get();
+      if (instancePath === undefined) {
         return;
       }
+      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const body = generateObjectExpression(
         new Map([
@@ -848,18 +848,16 @@ export const GraphqlResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
       };
-      serverSyncStore.createTransaction(
-        [$dataSources, $resources],
-        (dataSources, resources) => {
-          dataSources.set(newVariable.id, newVariable);
-          resources.set(newResource.id, newResource);
-        }
-      );
+      updateWebstudioData((data) => {
+        data.dataSources.set(newVariable.id, newVariable);
+        data.resources.set(newResource.id, newResource);
+        restoreTreeVariablesMutable({ instancePath, ...data });
+      });
     },
   }));
 

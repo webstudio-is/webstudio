@@ -19,6 +19,7 @@ import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
+  Combobox,
   DialogClose,
   DialogTitle,
   DialogTitleActions,
@@ -55,9 +56,10 @@ import {
   invalidateResource,
   getComputedResource,
   $userPlanFeatures,
+  $instances,
+  $props,
 } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
   EditorDialog,
@@ -70,6 +72,11 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import {
+  findUnsetVariableNames,
+  restoreTreeVariablesMutable,
+} from "~/shared/data-variables";
 
 const $variablesByName = computed(
   [$selectedInstance, $dataSources],
@@ -84,6 +91,22 @@ const $variablesByName = computed(
   }
 );
 
+const $unsetVariableNames = computed(
+  [$selectedInstancePath, $instances, $props, $dataSources, $resources],
+  (instancePath, instances, props, dataSources, resources) => {
+    if (instancePath === undefined) {
+      return [];
+    }
+    return findUnsetVariableNames({
+      instancePath,
+      instances,
+      props,
+      dataSources,
+      resources,
+    });
+  }
+);
+
 const NameField = ({
   variableId,
   defaultValue,
@@ -95,6 +118,7 @@ const NameField = ({
   const [error, setError] = useState("");
   const nameId = useId();
   const variablesByName = useStore($variablesByName);
+  const unsetVariableNames = useStore($unsetVariableNames);
   const validateName = useCallback(
     (value: string) => {
       if (
@@ -110,22 +134,39 @@ const NameField = ({
     },
     [variablesByName, variableId]
   );
+  const [value, setValue] = useState(defaultValue);
   useEffect(() => {
-    ref.current?.setCustomValidity(validateName(defaultValue));
-  }, [defaultValue, validateName]);
+    ref.current?.setCustomValidity(validateName(value));
+  }, [value, validateName]);
   return (
     <Grid gap={1}>
       <Label htmlFor={nameId}>Name</Label>
       <InputErrorsTooltip errors={error ? [error] : undefined}>
-        <InputField
+        <Combobox<string>
           inputRef={ref}
           name="name"
           id={nameId}
-          autoComplete="off"
           color={error ? "error" : undefined}
-          defaultValue={defaultValue}
-          onChange={(event) => {
-            event.target.setCustomValidity(validateName(event.target.value));
+          itemToString={(item) => item ?? ""}
+          getDescription={() => (
+            <>
+              Enter a new variable or select
+              <br />
+              a variable that has been used
+              <br />
+              in expressions but not yet created
+            </>
+          )}
+          getItems={() => unsetVariableNames}
+          value={value}
+          onItemSelect={(newValue) => {
+            ref.current?.setCustomValidity(validateName(newValue));
+            setValue(newValue);
+            setError("");
+          }}
+          onChange={(newValue = "") => {
+            ref.current?.setCustomValidity(validateName(newValue));
+            setValue(newValue);
             setError("");
           }}
           onBlur={() => ref.current?.checkValidity()}
@@ -247,13 +288,18 @@ const ParameterForm = forwardRef<
 >(({ variable }, ref) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      const instancePath = $selectedInstancePath.get();
+      if (instancePath === undefined) {
+        return;
+      }
       // only existing parameter variables can be renamed
       if (variable === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-        dataSources.set(variable.id, { ...variable, name });
+      updateWebstudioData((data) => {
+        data.dataSources.set(variable.id, { ...variable, name });
+        restoreTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));
@@ -272,30 +318,29 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceId = $selectedInstance.get()?.id;
-      if (instanceId === undefined) {
+      const instancePath = $selectedInstancePath.get();
+      if (instancePath === undefined) {
         return;
       }
+      const [{ instance: selectedInstance }] = instancePath;
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
-      const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
+      const scopeInstanceId = variable?.scopeInstanceId ?? selectedInstance.id;
       const name = z.string().parse(formData.get("name"));
-      serverSyncStore.createTransaction(
-        [$dataSources, $resources],
-        (dataSources, resources) => {
-          // cleanup resource when value variable is set
-          if (variable?.type === "resource") {
-            resources.delete(variable.resourceId);
-          }
-          dataSources.set(dataSourceId, {
-            id: dataSourceId,
-            scopeInstanceId,
-            name,
-            type: "variable",
-            value: variableValue,
-          });
+      updateWebstudioData((data) => {
+        // cleanup resource when value variable is set
+        if (variable?.type === "resource") {
+          data.resources.delete(variable.resourceId);
         }
-      );
+        data.dataSources.set(dataSourceId, {
+          id: dataSourceId,
+          scopeInstanceId,
+          name,
+          type: "variable",
+          value: variableValue,
+        });
+        restoreTreeVariablesMutable({ instancePath, ...data });
+      });
     },
   }));
 };

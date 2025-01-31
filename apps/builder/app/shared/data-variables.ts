@@ -1,13 +1,20 @@
 import {
   type DataSource,
+  type DataSources,
+  type Instances,
+  type Props,
+  Resource,
+  type Resources,
   decodeDataVariableId,
   encodeDataVariableId,
+  findTreeInstanceIdsExcludingSlotDescendants,
   transpileExpression,
 } from "@webstudio-is/sdk";
 import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
+import type { InstancePath } from "./awareness";
 
 const allowedJsChars = /[A-Za-z_]/;
 
@@ -171,5 +178,213 @@ export const computeExpression = (
     return result;
   } catch (error) {
     console.error(error);
+  }
+};
+
+export const findMaskedVariables = ({
+  instancePath,
+  dataSources,
+}: {
+  instancePath: InstancePath;
+  dataSources: DataSources;
+}) => {
+  const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
+  // start from the root to descendant
+  // so child variables override parent variables
+  for (const { instance } of instancePath.slice().reverse()) {
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.scopeInstanceId === instance.id) {
+        maskedVariables.set(dataSource.name, dataSource.id);
+      }
+    }
+  }
+  return maskedVariables;
+};
+
+export const findUnsetVariableNames = ({
+  instancePath,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: {
+  instancePath: InstancePath;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const unsetVariables = new Set<DataSource["name"]>();
+  const [{ instance: startingInstance }] = instancePath;
+  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    startingInstance.id
+  );
+  const resourceIds = new Set<Resource["id"]>();
+
+  const collectUnsetVariables = (
+    expression: string,
+    exclude: string[] = []
+  ) => {
+    transpileExpression({
+      expression,
+      replaceVariable: (identifier) => {
+        const id = decodeDataVariableId(identifier);
+        if (id === undefined && exclude.includes(identifier) === false) {
+          unsetVariables.add(decodeDataVariableName(identifier));
+        }
+      },
+    });
+  };
+
+  for (const instance of instances.values()) {
+    if (instanceIds.has(instance.id) === false) {
+      continue;
+    }
+    for (const child of instance.children) {
+      if (child.type === "expression") {
+        collectUnsetVariables(child.value);
+      }
+    }
+  }
+
+  for (const prop of props.values()) {
+    if (instanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+    if (prop.type === "expression") {
+      collectUnsetVariables(prop.value);
+      continue;
+    }
+    if (prop.type === "action") {
+      for (const action of prop.value) {
+        collectUnsetVariables(action.code, action.args);
+      }
+      continue;
+    }
+    if (prop.type === "resource") {
+      resourceIds.add(prop.value);
+      continue;
+    }
+  }
+
+  for (const dataSource of dataSources.values()) {
+    if (
+      instanceIds.has(dataSource.scopeInstanceId) &&
+      dataSource.type === "resource"
+    ) {
+      resourceIds.add(dataSource.resourceId);
+    }
+  }
+
+  for (const resource of resources.values()) {
+    if (resourceIds.has(resource.id) === false) {
+      continue;
+    }
+    collectUnsetVariables(resource.url);
+    for (const header of resource.headers) {
+      collectUnsetVariables(header.value);
+    }
+    if (resource.body) {
+      collectUnsetVariables(resource.body);
+    }
+  }
+  return Array.from(unsetVariables);
+};
+
+export const restoreTreeVariablesMutable = ({
+  instancePath,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: {
+  instancePath: InstancePath;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const maskedVariables = findMaskedVariables({ instancePath, dataSources });
+  const [{ instance: startingInstance }] = instancePath;
+  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    startingInstance.id
+  );
+  const resourceIds = new Set<Resource["id"]>();
+
+  for (const instance of instances.values()) {
+    if (instanceIds.has(instance.id) === false) {
+      continue;
+    }
+    for (const child of instance.children) {
+      if (child.type === "expression") {
+        child.value = restoreExpressionVariables({
+          expression: child.value,
+          maskedIdByName: maskedVariables,
+        });
+      }
+    }
+  }
+
+  for (const prop of props.values()) {
+    if (instanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+    if (prop.type === "expression") {
+      prop.value = restoreExpressionVariables({
+        expression: prop.value,
+        maskedIdByName: maskedVariables,
+      });
+      continue;
+    }
+    if (prop.type === "action") {
+      for (const action of prop.value) {
+        const maskedVariablesWithoutArgs = new Map(maskedVariables);
+        for (const arg of action.args) {
+          maskedVariablesWithoutArgs.delete(arg);
+        }
+        action.code = restoreExpressionVariables({
+          expression: action.code,
+          maskedIdByName: maskedVariablesWithoutArgs,
+        });
+      }
+      continue;
+    }
+    if (prop.type === "resource") {
+      resourceIds.add(prop.value);
+      continue;
+    }
+  }
+
+  for (const dataSource of dataSources.values()) {
+    if (
+      instanceIds.has(dataSource.scopeInstanceId) &&
+      dataSource.type === "resource"
+    ) {
+      resourceIds.add(dataSource.resourceId);
+    }
+  }
+
+  for (const resource of resources.values()) {
+    if (resourceIds.has(resource.id) === false) {
+      continue;
+    }
+    resource.url = restoreExpressionVariables({
+      expression: resource.url,
+      maskedIdByName: maskedVariables,
+    });
+    for (const header of resource.headers) {
+      header.value = restoreExpressionVariables({
+        expression: header.value,
+        maskedIdByName: maskedVariables,
+      });
+    }
+    if (resource.body) {
+      resource.body = restoreExpressionVariables({
+        expression: resource.body,
+        maskedIdByName: maskedVariables,
+      });
+    }
   }
 };
