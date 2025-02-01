@@ -1,5 +1,19 @@
 import * as path from "node:path";
 import type { StorybookConfig } from "@storybook/react-vite";
+import { existsSync, readdirSync } from "node:fs";
+
+const isFolderEmpty = (folderPath: string) => {
+  if (!existsSync(folderPath)) {
+    return true; // Folder does not exist
+  }
+  const contents = readdirSync(folderPath);
+
+  return contents.length === 0;
+};
+
+const hasPrivateFolders = !isFolderEmpty(
+  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
+);
 
 const visualTestingStories: StorybookConfig["stories"] = [
   {
@@ -37,6 +51,10 @@ export default {
           directory: "../packages/sdk-components-react-radix",
           titlePrefix: "SDK Components React Radix",
         },
+        {
+          directory: "../packages/sdk-components-animation",
+          titlePrefix: "SDK Components Animation",
+        },
       ],
   framework: {
     name: "@storybook/react-vite",
@@ -50,6 +68,10 @@ export default {
   async viteFinal(config) {
     return {
       ...config,
+      optimizeDeps: {
+        exclude: ["scroll-timeline-polyfill"],
+      },
+
       define: {
         ...config.define,
         // storybook use "util" package internally which is bundled with stories
@@ -59,7 +81,17 @@ export default {
       },
       resolve: {
         ...config.resolve,
-        conditions: ["webstudio", "import", "module", "browser", "default"],
+        conditions: hasPrivateFolders
+          ? [
+              "webstudio-private",
+              "webstudio",
+              "import",
+              "module",
+              "browser",
+              "default",
+            ]
+          : ["webstudio", "import", "module", "browser", "default"],
+
         alias: [
           {
             find: "~",

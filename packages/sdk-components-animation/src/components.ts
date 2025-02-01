@@ -1,1 +1,1 @@
-export {};
+export { Scroll } from "./scroll";

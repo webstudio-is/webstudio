@@ -9,6 +9,12 @@ on:
       builder-host:
         required: true
         type: string
+      environment:
+        required: true
+        type: string
+    secrets:
+      PRIVATE_GITHUB_DEPLOY_TOKEN:
+        required: true
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -23,6 +29,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    environment:
+      name: ${{ inputs.environment }}
+
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
@@ -32,7 +41,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Test that everything is working with submodules
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: ./.github/actions/ci-setup
 
