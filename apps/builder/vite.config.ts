@@ -11,7 +11,7 @@ import {
 } from "./app/shared/router-utils/origins";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 
-const isFolderEmptyOrNotExists = (folderPath: string) => {
+const isFolderEmpty = (folderPath: string) => {
   if (!existsSync(folderPath)) {
     return true; // Folder does not exist
   }
@@ -20,7 +20,7 @@ const isFolderEmptyOrNotExists = (folderPath: string) => {
   return contents.length === 0;
 };
 
-const hasPrivateFolders = !isFolderEmptyOrNotExists(
+const hasPrivateFolders = !isFolderEmpty(
   path.join(__dirname, "../../packages/sdk-components-animation/private-src")
 );
 
