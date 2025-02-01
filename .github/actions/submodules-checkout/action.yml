@@ -1,0 +1,46 @@
+name: CI setup
+
+description: |
+  Sets up the CI environment for the project.
+
+inputs:
+  submodules-ssh-key:
+    description: "The SSH key to private submodules to use for the checkout"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Set up SSH for Git
+      if: ${{ inputs.submodules-ssh-key }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.submodules-ssh-key }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+      shell: bash
+
+    - name: Verify SSH Connection (Optional)
+      if: ${{ inputs.submodules-ssh-key }}
+      run: |
+        ssh -T git@github.com || true
+      shell: bash
+
+    - name: Verify SSH Connection (Optional)
+      if: ${{ inputs.submodules-ssh-key }}
+      run: |
+        echo Branch is ${{ github.event.pull_request.head.ref || github.ref_name }}
+      shell: bash
+
+    - name: Try checkout submodules to the same branch as main repo
+      if: ${{ inputs.submodules-ssh-key }}
+      run: |
+        ./submodules.sh ${{ github.event.pull_request.head.ref || github.ref_name }}
+      shell: bash
+
+    - name: Show main readme
+      if: ${{ inputs.submodules-ssh-key }}
+      run: |
+        cat ./packages/sdk-components-animation/private-src/README.md || echo "No README found"
+      shell: bash

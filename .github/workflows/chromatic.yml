@@ -20,11 +20,19 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    environment:
+      name: development
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      # Storybook with submodules
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: ./.github/actions/ci-setup
 

@@ -26,6 +26,9 @@ patchedDependencies:
   css-tree@2.3.1:
     hash: epgcmebti7rfrc2ej4odb3t4jy
     path: patches/css-tree@2.3.1.patch
+  scroll-timeline-polyfill@1.1.0:
+    hash: i4g3vdpump4efgy2hri5l5rsfm
+    path: patches/scroll-timeline-polyfill@1.1.0.patch
 
 importers:
 
@@ -1914,6 +1917,9 @@ importers:
 
   packages/sdk-components-animation:
     dependencies:
+      '@webstudio-is/css-engine':
+        specifier: workspace:*
+        version: link:../css-engine
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
@@ -1923,6 +1929,12 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      react-error-boundary:
+        specifier: ^5.0.0
+        version: 5.0.0(react@18.3.0-canary-14898b6a9-20240318)
+      scroll-timeline-polyfill:
+        specifier: ^1.1.0
+        version: 1.1.0(patch_hash=i4g3vdpump4efgy2hri5l5rsfm)
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -1930,6 +1942,12 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      '@webstudio-is/css-data':
+        specifier: workspace:*
+        version: link:../css-data
+      '@webstudio-is/design-system':
+        specifier: workspace:*
+        version: link:../design-system
       '@webstudio-is/generate-arg-types':
         specifier: workspace:*
         version: link:../generate-arg-types
@@ -1951,6 +1969,9 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      type-fest:
+        specifier: ^4.32.0
+        version: 4.32.0
 
   packages/sdk-components-react:
     dependencies:
@@ -8397,6 +8418,9 @@ packages:
 
   scheduler@0.24.0-canary-14898b6a9-20240318:
     resolution: {integrity: sha512-ifDO3bUdooS4OlxvGxMyoDEC/aq14MvJLDd0thjrUSZGeLJA7WBc+sr9NZxIxrXfVqMl1GTGGPwXqRJZDNW76w==}
+
+  scroll-timeline-polyfill@1.1.0:
+    resolution: {integrity: sha512-BpL3gk3Ynt/5VYaDFUNUP/FTkDldwKQnWcA07g/mDHkMVS9pQUyUXBpsy4RZYAgsfFeI1tWcnPNrEFtCpQoO9Q==}
 
   selfsigned@2.1.1:
     resolution: {integrity: sha512-GSL3aowiF7wa/WtSFwnUrludWFoNhftq8bUkH9pkzjpN2XSPOAYEgg6e0sS9s0rZwgJzJiQRPU18A6clnoW5wQ==}
@@ -16335,6 +16359,8 @@ snapshots:
   scheduler@0.24.0-canary-14898b6a9-20240318:
     dependencies:
       loose-envify: 1.4.0
+
+  scroll-timeline-polyfill@1.1.0(patch_hash=i4g3vdpump4efgy2hri5l5rsfm): {}
 
   selfsigned@2.1.1:
     dependencies:

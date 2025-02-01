@@ -30,6 +30,8 @@ jobs:
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
+      # Do not checkout submodules, they are not needed for this workflow
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4

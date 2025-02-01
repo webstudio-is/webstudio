@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import path, { resolve } from "node:path";
 import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
@@ -9,13 +9,28 @@ import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
 } from "./app/shared/router-utils/origins";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+
+const isFolderEmpty = (folderPath: string) => {
+  if (!existsSync(folderPath)) {
+    return true; // Folder does not exist
+  }
+  const contents = readdirSync(folderPath);
+
+  return contents.length === 0;
+};
+
+const hasPrivateFolders = !isFolderEmpty(
+  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
+);
 
 export default defineConfig(({ mode }) => {
   if (mode === "test") {
     return {
       resolve: {
-        conditions: ["webstudio"],
+        conditions: hasPrivateFolders
+          ? ["webstudio-private", "webstudio"]
+          : ["webstudio"],
         alias: [
           {
             find: "~",
@@ -69,7 +84,10 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      conditions: ["webstudio"],
+      conditions: hasPrivateFolders
+        ? ["webstudio-private", "webstudio"]
+        : ["webstudio"],
+
       alias: [
         {
           find: "~",
