@@ -925,140 +925,6 @@ importers:
         specifier: 5.7.3
         version: 5.7.3
 
-  fixtures/webstudio-remix-netlify-edge-functions:
-    dependencies:
-      '@netlify/edge-functions':
-        specifier: ^2.11.1
-        version: 2.11.1
-      '@netlify/remix-edge-adapter':
-        specifier: ^3.4.2
-        version: 3.4.2(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@remix-run/server-runtime@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@remix-run/node':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@remix-run/react':
-        specifier: 2.15.2
-        version: 2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)
-      '@remix-run/server-runtime':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@webstudio-is/image':
-        specifier: workspace:*
-        version: link:../../packages/image
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../../packages/react-sdk
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@webstudio-is/sdk-components-animation':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-animation
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react
-      '@webstudio-is/sdk-components-react-radix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-radix
-      '@webstudio-is/sdk-components-react-remix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-remix
-      isbot:
-        specifier: ^5.1.22
-        version: 5.1.22
-      react:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318
-      react-dom:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-    devDependencies:
-      '@remix-run/dev':
-        specifier: 2.15.2
-        version: 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@types/react':
-        specifier: ^18.2.70
-        version: 18.2.79
-      '@types/react-dom':
-        specifier: ^18.2.25
-        version: 18.2.25
-      typescript:
-        specifier: 5.7.3
-        version: 5.7.3
-      vite:
-        specifier: ^5.4.11
-        version: 5.4.11(@types/node@22.10.7)
-      webstudio:
-        specifier: workspace:*
-        version: link:../../packages/cli
-
-  fixtures/webstudio-remix-netlify-functions:
-    dependencies:
-      '@netlify/functions':
-        specifier: ^2.8.2
-        version: 2.8.2
-      '@netlify/remix-adapter':
-        specifier: ^2.5.1
-        version: 2.5.1(@netlify/functions@2.8.2)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))
-      '@remix-run/node':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@remix-run/react':
-        specifier: 2.15.2
-        version: 2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)
-      '@remix-run/server-runtime':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@webstudio-is/image':
-        specifier: workspace:*
-        version: link:../../packages/image
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../../packages/react-sdk
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@webstudio-is/sdk-components-animation':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-animation
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react
-      '@webstudio-is/sdk-components-react-radix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-radix
-      '@webstudio-is/sdk-components-react-remix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-remix
-      isbot:
-        specifier: ^5.1.22
-        version: 5.1.22
-      react:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318
-      react-dom:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-    devDependencies:
-      '@remix-run/dev':
-        specifier: 2.15.2
-        version: 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@types/react':
-        specifier: ^18.2.70
-        version: 18.2.79
-      '@types/react-dom':
-        specifier: ^18.2.25
-        version: 18.2.25
-      typescript:
-        specifier: 5.7.3
-        version: 5.7.3
-      vite:
-        specifier: ^5.4.11
-        version: 5.4.11(@types/node@22.10.7)
-      webstudio:
-        specifier: workspace:*
-        version: link:../../packages/cli
-
   packages/ai:
     dependencies:
       '@webstudio-is/css-data':
@@ -1215,12 +1081,6 @@ importers:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
-      '@netlify/remix-adapter':
-        specifier: ^2.5.1
-        version: 2.5.1(@netlify/functions@2.8.2)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))
-      '@netlify/remix-edge-adapter':
-        specifier: 3.4.2
-        version: 3.4.2(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@remix-run/server-runtime@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@netlify/vite-plugin-react-router':
         specifier: ^1.0.0
         version: 1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))
@@ -3881,46 +3741,6 @@ packages:
     peerDependencies:
       nanostores: ^0.9.0 || ^0.10.0 || ^0.11.0
       react: 18.3.0-canary-14898b6a9-20240318
-
-  '@netlify/edge-functions@2.11.1':
-    resolution: {integrity: sha512-pyQOTZ8a+ge5lZlE+H/UAHyuqQqtL5gE0pXrHT9mOykr3YQqnkB2hZMtx12odatZ87gHg4EA+UPyMZUbLfnXvw==}
-
-  '@netlify/functions@2.8.2':
-    resolution: {integrity: sha512-DeoAQh8LuNPvBE4qsKlezjKj0PyXDryOFJfJKo3Z1qZLKzQ21sT314KQKPVjfvw6knqijj+IO+0kHXy/TJiqNA==}
-    engines: {node: '>=14.0.0'}
-
-  '@netlify/node-cookies@0.1.0':
-    resolution: {integrity: sha512-OAs1xG+FfLX0LoRASpqzVntVV/RpYkgpI0VrUnw2u0Q1qiZUzcPffxRK8HF3gc4GjuhG5ahOEMJ9bswBiZPq0g==}
-    engines: {node: ^14.16.0 || >=16.0.0}
-
-  '@netlify/remix-adapter@2.5.1':
-    resolution: {integrity: sha512-VGMLYWqelmcYTpqlyjqgw52xXSQOWe8ApHh4smo/VmaO1TqstFr2VBJN9iSZsXdRvU0Gx9im6r6uziXRnis2sQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@netlify/functions': ^2.8.1
-      vite: ^5.0.0
-    peerDependenciesMeta:
-      vite:
-        optional: true
-
-  '@netlify/remix-edge-adapter@3.4.2':
-    resolution: {integrity: sha512-zapovr1o/SecEzsrpSqsCvmT0NahhjEybm59W71LqOM9ZDvvOslUwnNtV1pqj75oJfR0xO6GYbcIwujCZj40xQ==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      vite: ^5.0.0
-    peerDependenciesMeta:
-      vite:
-        optional: true
-
-  '@netlify/remix-runtime@2.3.1':
-    resolution: {integrity: sha512-5gVnFavbyzUTW8U8+XeLQjh/NhktiLpauaxH0Oh6r66WOXrDYFi8/QWxdcOhb6WRomYidnxTeNrxQDUp59Vplg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@remix-run/server-runtime': ^2.9.2
-
-  '@netlify/serverless-functions-api@1.26.1':
-    resolution: {integrity: sha512-q3L9i3HoNfz0SGpTIS4zTcKBbRkxzCRpd169eyiTuk3IwcPC3/85mzLHranlKo2b+HYT0gu37YxGB45aD8A3Tw==}
-    engines: {node: '>=18.0.0'}
 
   '@netlify/vite-plugin-react-router@1.0.0':
     resolution: {integrity: sha512-J9xzn2Gdehg3LSEXFrpXLjQm2T2HQEnnlbTH7Ic9mjaz9rwkRmgwbYBn9h5SexQ0mV82jZjhvneblL8VPKiUtQ==}
@@ -9309,9 +9129,6 @@ packages:
   urlpattern-polyfill@4.0.3:
     resolution: {integrity: sha512-DOE84vZT2fEcl9gqCUTcnAw5ZY5Id55ikUcziSUntuEFL3pRvavg5kwDmTEUJkeCHInTlV/HexFomgYnzO5kdQ==}
 
-  urlpattern-polyfill@8.0.2:
-    resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
-
   use-callback-ref@1.3.3:
     resolution: {integrity: sha512-jQL3lRnocaFtu3V00JToYz/4QkNWswxijDaCVNZRiRTO3HQDLsdu1ZtmIUvV4yPp+rvWm5j0y0TG/S61cuijTg==}
     engines: {node: '>=10'}
@@ -11052,61 +10869,6 @@ snapshots:
     dependencies:
       nanostores: 0.11.3
       react: 18.3.0-canary-14898b6a9-20240318
-
-  '@netlify/edge-functions@2.11.1': {}
-
-  '@netlify/functions@2.8.2':
-    dependencies:
-      '@netlify/serverless-functions-api': 1.26.1
-
-  '@netlify/node-cookies@0.1.0': {}
-
-  '@netlify/remix-adapter@2.5.1(@netlify/functions@2.8.2)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))':
-    dependencies:
-      '@netlify/functions': 2.8.2
-      '@remix-run/node': 2.15.2(typescript@5.7.3)
-      isbot: 5.1.22
-    optionalDependencies:
-      vite: 5.4.11(@types/node@22.10.7)
-    transitivePeerDependencies:
-      - typescript
-
-  '@netlify/remix-edge-adapter@3.4.2(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@remix-run/server-runtime@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
-    dependencies:
-      '@netlify/remix-runtime': 2.3.1(@remix-run/server-runtime@2.15.2(typescript@5.7.3))
-      '@remix-run/dev': 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      isbot: 5.1.22
-    optionalDependencies:
-      vite: 5.4.11(@types/node@22.10.7)
-    transitivePeerDependencies:
-      - '@remix-run/react'
-      - '@remix-run/serve'
-      - '@remix-run/server-runtime'
-      - '@types/node'
-      - babel-plugin-macros
-      - bluebird
-      - bufferutil
-      - less
-      - lightningcss
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - ts-node
-      - typescript
-      - utf-8-validate
-      - wrangler
-
-  '@netlify/remix-runtime@2.3.1(@remix-run/server-runtime@2.15.2(typescript@5.7.3))':
-    dependencies:
-      '@remix-run/server-runtime': 2.15.2(typescript@5.7.3)
-
-  '@netlify/serverless-functions-api@1.26.1':
-    dependencies:
-      '@netlify/node-cookies': 0.1.0
-      urlpattern-polyfill: 8.0.2
 
   '@netlify/vite-plugin-react-router@1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))':
     dependencies:
@@ -17431,8 +17193,6 @@ snapshots:
   urlpattern-polyfill@10.0.0: {}
 
   urlpattern-polyfill@4.0.3: {}
-
-  urlpattern-polyfill@8.0.2: {}
 
   use-callback-ref@1.3.3(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318):
     dependencies:

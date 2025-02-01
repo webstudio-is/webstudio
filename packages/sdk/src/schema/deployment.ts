@@ -5,8 +5,6 @@ export const Templates = z.enum([
   "docker",
   "vercel",
   "netlify",
-  "netlify-functions",
-  "netlify-edge-functions",
   "ssg",
   "ssg-netlify",
   "ssg-vercel",

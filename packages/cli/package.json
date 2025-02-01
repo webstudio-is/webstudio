@@ -48,8 +48,6 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@netlify/remix-adapter": "^2.5.1",
-    "@netlify/remix-edge-adapter": "3.4.2",
     "@netlify/vite-plugin-react-router": "^1.0.0",
     "@react-router/dev": "^7.1.5",
     "@react-router/fs-routes": "^7.1.5",
