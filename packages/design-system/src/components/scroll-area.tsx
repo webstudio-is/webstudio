@@ -26,12 +26,11 @@ const ScrollAreaScrollbar = styled(Scrollbar, {
   touchAction: "none",
   '&[data-orientation="vertical"]': {
     width: theme.spacing[6],
-    paddingRight: 3,
   },
   '&[data-orientation="horizontal"]': {
     flexDirection: "column",
     height: theme.spacing[6],
-    paddingBottom: 3,
+    "--radix-scroll-area-thumb-height": theme.spacing[4],
   },
 
   variants: {
