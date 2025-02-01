@@ -2,6 +2,8 @@ export type Property =
   | "WebkitFontSmoothing"
   | "MozOsxFontSmoothing"
   | "-webkit-box-orient"
+  | "viewTimelineName"
+  | "scrollTimelineName"
   | "-webkit-line-clamp"
   | "-webkit-overflow-scrolling"
   | "-webkit-tap-highlight-color"

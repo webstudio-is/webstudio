@@ -27,6 +27,26 @@ export const properties = {
     },
     mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/box-orient",
   },
+  viewTimelineName: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "unparsed",
+      value: "--view-timeline",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
+  },
+  scrollTimelineName: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "unparsed",
+      value: "--scroll-timeline",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
+  },
   "-webkit-line-clamp": {
     unitGroups: ["number"],
     inherited: false,
