@@ -5,13 +5,11 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
     "typecheck": "tsc"
   },
   "dependencies": {
     "@react-router/dev": "^7.1.4",
     "@react-router/fs-routes": "^7.1.4",
-    "@react-router/serve": "^7.1.4",
     "@webstudio-is/image": "0.0.0-webstudio-version",
     "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",

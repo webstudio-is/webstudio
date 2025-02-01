@@ -555,9 +555,6 @@ importers:
       '@react-router/node':
         specifier: ^7.1.4
         version: 7.1.4(react-router@7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)
-      '@react-router/serve':
-        specifier: ^7.1.4
-        version: 7.1.4(react-router@7.1.4(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image

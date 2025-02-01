@@ -8,13 +8,13 @@
     "fixtures:build": "pnpm cli build --template netlify --template .template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "npx netlify-cli serve"
+    "start": "npx netlify-cli serve",
+    "deploy": "npx netlify-cli deploy --build --prod"
   },
   "dependencies": {
     "webstudio": "workspace:*",
     "@react-router/dev": "^7.1.4",
     "@react-router/fs-routes": "^7.1.4",
-    "@react-router/serve": "^7.1.4",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
