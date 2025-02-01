@@ -136,6 +136,7 @@ const getDeploymentInstructions = (
   switch (deployTarget) {
     case "vercel":
       return `Run ${pc.dim("npx vercel")} to publish on Vercel.`;
+    case "netlify":
     case "netlify-functions":
     case "netlify-edge-functions":
       return [
