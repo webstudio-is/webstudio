@@ -10,10 +10,10 @@
     "fixtures:build": "pnpm cli build --template docker --template .template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "dependencies": {
-    "@react-router/dev": "^7.1.4",
-    "@react-router/fs-routes": "^7.1.4",
-    "@react-router/node": "^7.1.4",
-    "@react-router/serve": "^7.1.4",
+    "@react-router/dev": "^7.1.5",
+    "@react-router/fs-routes": "^7.1.5",
+    "@react-router/node": "^7.1.5",
+    "@react-router/serve": "^7.1.5",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -26,7 +26,7 @@
     "isbot": "^5.1.22",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "react-router": "^7.1.4",
+    "react-router": "^7.1.5",
     "vite": "^5.4.11",
     "webstudio": "workspace:*"
   },
