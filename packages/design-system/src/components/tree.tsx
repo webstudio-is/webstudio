@@ -29,6 +29,7 @@ import { TreePositionIndicator } from "./list-position-indicator";
 
 const treeNodeLevel = "--tree-node-level";
 const treeNodeOutline = "--tree-node-outline";
+const treeNodeBackgroundColor = "--tree-node-background-color";
 const treeActionOpacity = "--tree-action-opacity";
 const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
 const treeDepthBarsColor = "--tree-depth-bars-color";
@@ -97,11 +98,13 @@ const NodeContainer = styled("div", {
   position: "relative",
   height: ITEM_HEIGHT,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
-    backgroundColor: theme.colors.backgroundHover,
+    [treeNodeBackgroundColor]: theme.colors.backgroundHover,
+    backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeActionOpacity]: 1,
   },
   "&:has([aria-selected=true])": {
-    backgroundColor: theme.colors.backgroundItemCurrent,
+    [treeNodeBackgroundColor]: theme.colors.backgroundItemCurrent,
+    backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
   "&:has([data-tree-action])": {
@@ -157,14 +160,16 @@ const ActionContainer = styled("div", {
   // use opacity to hide action instead of visibility
   // to prevent focus loss while navigating with keyboard
   opacity: `var(${treeActionOpacity}, 0)`,
-  position: "absolute",
-  top: 0,
-  right: ITEM_PADDING_RIGHT,
+  position: "sticky",
+  translate: `calc(${theme.sizes.sidebarWidth} - ${ACTION_WIDTH}px) -100%`,
+  left: 0,
   width: ACTION_WIDTH,
   height: "inherit",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
+  paddingRight: ITEM_PADDING_RIGHT,
+  backgroundColor: `var(${treeNodeBackgroundColor})`,
 });
 
 const DropIndicator = ({
