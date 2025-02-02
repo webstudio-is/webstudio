@@ -1,6 +1,10 @@
 {
+  "scripts": {
+    "start": "react-router-serve ./build/server/index.js"
+  },
   "dependencies": {
-    "@react-router/node": "^7.1.4",
+    "@react-router/node": "^7.1.5",
+    "@react-router/serve": "^7.1.5",
     "h3": "^1.14.0",
     "ipx": "^3.0.1"
   }

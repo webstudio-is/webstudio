@@ -5,13 +5,11 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@react-router/dev": "^7.1.4",
-    "@react-router/fs-routes": "^7.1.4",
-    "@react-router/serve": "^7.1.4",
+    "@react-router/dev": "^7.1.5",
+    "@react-router/fs-routes": "^7.1.5",
     "@webstudio-is/image": "0.0.0-webstudio-version",
     "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
@@ -22,7 +20,7 @@
     "isbot": "^5.1.22",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "react-router": "^7.1.4",
+    "react-router": "^7.1.5",
     "vite": "^5.4.11"
   },
   "devDependencies": {

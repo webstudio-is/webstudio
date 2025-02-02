@@ -69,6 +69,11 @@ export const PROJECT_TEMPLATES = [
     expand: ["defaults", "vercel"],
   },
   {
+    value: "netlify" as const,
+    label: "Netlify",
+    expand: ["react-router", "react-router-netlify"],
+  },
+  {
     value: "netlify-functions" as const,
     label: "Netlify Functions",
     expand: ["defaults", "netlify-functions"],
