@@ -21,4 +21,4 @@ jobs:
       - run: pnpm --filter="webstudio..." build
       - run: pnpm --filter="webstudio..." dts
 
-      - run: pnpx pkg-pr-new publish "./packages/*"
+      - run: pnpx pkg-pr-new publish --compact "./packages/*"
