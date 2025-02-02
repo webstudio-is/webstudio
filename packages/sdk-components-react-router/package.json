@@ -4,6 +4,10 @@
   "description": "Webstudio components for React Router",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webstudio-is/webstudio.git"
+  },
   "license": "AGPL-3.0-or-later",
   "private": false,
   "type": "module",
