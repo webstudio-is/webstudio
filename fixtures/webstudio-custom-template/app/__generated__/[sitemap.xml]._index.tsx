@@ -35,7 +35,7 @@ const Page = ({ system: system }: { system: any }) => {
         tag={"urlset"}
         xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
       >
-        {sitemapxml?.data?.map((url: any, index: number) => (
+        {sitemapxml?.data?.map?.((url: any, index: number) => (
           <Fragment key={index}>
             <XmlNode tag={"url"}>
               <XmlNode tag={"loc"}>

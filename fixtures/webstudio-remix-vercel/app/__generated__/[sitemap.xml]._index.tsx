@@ -45,7 +45,7 @@ const Page = ({ system: system }: { system: any }) => {
             path: "/olegs-test",
             lastModified: "2024-05-07",
           },
-        ]?.map((url: any, index: number) => (
+        ]?.map?.((url: any, index: number) => (
           <Fragment key={index}>
             <XmlNode tag={"url"}>
               <XmlNode tag={"loc"}>
