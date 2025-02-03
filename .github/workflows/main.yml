@@ -62,6 +62,10 @@ jobs:
         run: |
           pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
+      - name: Playwright init
+        run: |
+          pnpm playwright-init
+
       - name: Test
         run: |
           pnpm -r test
