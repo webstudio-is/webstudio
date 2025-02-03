@@ -64,7 +64,7 @@ jobs:
 
       - name: Playwright init
         run: |
-          pnpm playwright-init
+          pnpm -r playwright-init
 
       - name: Test
         run: |
