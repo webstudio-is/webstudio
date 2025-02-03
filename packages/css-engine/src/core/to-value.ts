@@ -1,4 +1,3 @@
-import { captureError } from "@webstudio-is/error-utils";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 import type { StyleValue } from "../schema";
 
@@ -146,5 +145,6 @@ export const toValue = (
     return "";
   }
 
-  return captureError(new Error("Unknown value type"), value);
+  value satisfies never;
+  return "";
 };
