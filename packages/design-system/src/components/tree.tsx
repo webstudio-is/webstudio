@@ -22,7 +22,7 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { autoScrollWindowForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
-import { styled, theme } from "../stitches.config";
+import { rawTheme, styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
@@ -40,7 +40,6 @@ const ITEM_PADDING_LEFT = 8;
 const ITEM_PADDING_RIGHT = 10;
 const BARS_GAP = 16;
 const EXPAND_WIDTH = 24;
-const ACTION_WIDTH = 24;
 
 const TreeContainer = ({ children }: { children: ReactNode }) => {
   const focusManager = useFocusManager();
@@ -107,9 +106,6 @@ const NodeContainer = styled("div", {
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
-  "&:has([data-tree-action])": {
-    paddingRight: ACTION_WIDTH,
-  },
 });
 
 const DepthBars = styled("div", {
@@ -161,14 +157,14 @@ const ActionContainer = styled("div", {
   // to prevent focus loss while navigating with keyboard
   opacity: `var(${treeActionOpacity}, 0)`,
   position: "sticky",
-  translate: `calc(${theme.sizes.sidebarWidth} - ${ACTION_WIDTH}px) -100%`,
+  translate: `calc(${theme.sizes.sidebarWidth} - 100%) -100%`,
+  paddingLeft: ITEM_PADDING_LEFT,
+  paddingRight: ITEM_PADDING_RIGHT,
   left: 0,
-  width: ACTION_WIDTH,
   height: "inherit",
-  display: "flex",
+  display: "inline-flex",
   justifyContent: "center",
   alignItems: "center",
-  paddingRight: ITEM_PADDING_RIGHT,
   backgroundColor: `var(${treeNodeBackgroundColor})`,
 });
 
