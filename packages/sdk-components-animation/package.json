@@ -47,7 +47,7 @@
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "vitest run",
-    "playwright-init": "playwright install --with-deps"
+    "playwright-init": "pnpm playwright install --with-deps"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",
