@@ -47,7 +47,7 @@
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "vitest run",
-    "playwright-init": "pnpm playwright install --with-deps"
+    "playwright-init": "playwright install --with-deps"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",
@@ -72,6 +72,7 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "playwright": "^1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.32.0",
