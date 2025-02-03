@@ -25,7 +25,7 @@ import {
   $props,
   $registeredComponentMetas,
 } from "../nano-states";
-import { onCopy, onCut, onPaste } from "./plugin-instance";
+import { onCopy, onPaste } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $awareness, selectInstance } from "../awareness";
 
