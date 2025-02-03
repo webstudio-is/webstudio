@@ -5,16 +5,7 @@ export default defineConfig({
     workspace: [
       {
         test: {
-          include: ["./**/*.{test,spec}.ts"],
-          exclude: ["./**/*.browser.{test,spec}.ts"],
-          name: "unit",
-          environment: "node",
-        },
-      },
-
-      {
-        test: {
-          include: ["./**/*.browser.{test,spec}.ts"],
+          include: ["**/*.browser.{test,spec}.ts"],
           name: "browser",
           browser: {
             provider: "playwright", // or 'webdriverio'
@@ -25,6 +16,20 @@ export default defineConfig({
           },
         },
       },
+      // For unknown reason lines below hangs the test
+      //      {
+      //        test: {
+      //          include: ["**/*.{test,spec}.ts"],
+      //          exclude: ["**/*.browser.{test,spec}.ts"],
+      //          name: "unit",
+      //          environment: "node",
+      //        },
+      //      },
     ],
+  },
+  server: {
+    watch: {
+      ignored: [],
+    },
   },
 });
