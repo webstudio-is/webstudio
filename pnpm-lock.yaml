@@ -1384,9 +1384,6 @@ importers:
       '@emotion/hash':
         specifier: ^0.9.2
         version: 0.9.2
-      '@webstudio-is/error-utils':
-        specifier: workspace:*
-        version: link:../error-utils
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -1609,12 +1606,6 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
-    devDependencies:
-      '@webstudio-is/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-
-  packages/error-utils:
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
