@@ -99,15 +99,41 @@ type AnimationTiming = {
 };
 */
 
+type AnimationAxis = "block" | "inline" | "x" | "y";
+
 type ScrollAction = {
   type: "scroll";
   source?: "closest" | "nearest" | "root";
-  axis?: "block" | "inline" | "x" | "y";
+  axis?: AnimationAxis;
   animations: {
     timing: KeyframeEffectOptions & ScrollRangeOptions;
     keyframes: AnimationKeyframe[];
   }[];
 };
 
-// | ViewAction | ...
-export type AnimationAction = ScrollAction;
+type ViewNamedRange =
+  | "contain"
+  | "cover"
+  | "entry"
+  | "exit"
+  | "entry-crossing"
+  | "exit-crossing";
+
+export type ViewRangeValue = [name: ViewNamedRange, value: RangeUnitValue];
+
+type ViewRangeOptions = {
+  rangeStart?: ScrollRangeValue | undefined;
+  rangeEnd?: ScrollRangeValue | undefined;
+};
+
+type ViewAction = {
+  type: "view";
+  subject?: string;
+  axis?: AnimationAxis;
+  animations: {
+    timing: KeyframeEffectOptions & ViewRangeOptions;
+    keyframes: AnimationKeyframe[];
+  };
+};
+
+export type AnimationAction = ScrollAction | ViewAction;
