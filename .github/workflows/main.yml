@@ -43,7 +43,16 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: ./.github/actions/ci-setup
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Pnpm install
+        run: |
+          pnpm install
 
       - uses: actions/cache@v4
         with:
