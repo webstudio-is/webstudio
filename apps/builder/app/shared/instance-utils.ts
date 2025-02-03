@@ -912,7 +912,7 @@ export const insertWebstudioFragmentCopy = ({
       }
     }
 
-    for (let prop of fragment.props) {
+    for (const prop of fragment.props) {
       if (instanceIds.has(prop.instanceId)) {
         props.set(prop.id, prop);
       }
