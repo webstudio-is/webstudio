@@ -22,7 +22,7 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { autoScrollWindowForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
-import { rawTheme, styled, theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 import { Box } from "./box";
 import { Text } from "./text";
 import { TreePositionIndicator } from "./list-position-indicator";
