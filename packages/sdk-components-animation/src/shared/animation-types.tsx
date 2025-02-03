@@ -76,7 +76,7 @@ type KeyframeEffectOptions = {
  * - "start" → `calc(0% + range)`
  * - "end" → `calc(100% - range)`
  */
-type ScrollNamedRange = "start" | "end";
+export type ScrollNamedRange = "start" | "end";
 
 /**
  * Scroll does not support https://drafts.csswg.org/scroll-animations/#named-ranges
@@ -111,7 +111,7 @@ type ScrollAction = {
   }[];
 };
 
-type ViewNamedRange =
+export type ViewNamedRange =
   | "contain"
   | "cover"
   | "entry"
@@ -122,18 +122,19 @@ type ViewNamedRange =
 export type ViewRangeValue = [name: ViewNamedRange, value: RangeUnitValue];
 
 type ViewRangeOptions = {
-  rangeStart?: ScrollRangeValue | undefined;
-  rangeEnd?: ScrollRangeValue | undefined;
+  rangeStart?: ViewRangeValue | undefined;
+  rangeEnd?: ViewRangeValue | undefined;
 };
 
 type ViewAction = {
   type: "view";
   subject?: string;
+
   axis?: AnimationAxis;
   animations: {
     timing: KeyframeEffectOptions & ViewRangeOptions;
     keyframes: AnimationKeyframe[];
-  };
+  }[];
 };
 
 export type AnimationAction = ScrollAction | ViewAction;
