@@ -63,3 +63,5 @@ dist
 packages/prisma-client/src/__generated__
 
 .temp
+
+private-*
