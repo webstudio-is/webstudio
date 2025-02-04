@@ -1,0 +1,49 @@
+{
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc",
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
+    "fixtures:link": "pnpm cli link --link https://p-cddc1d44-af37-4cb6-a430-d300cf6f932d-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
+    "fixtures:sync": "pnpm cli sync --buildId 3173a7d8-1af3-4e23-87fd-94c3b0cb1018 && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm cli build --template react-router --template ./.template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
+  },
+  "private": true,
+  "sideEffects": false,
+  "dependencies": {
+    "@miniflare/html-rewriter": "^2.14.4",
+    "@react-router/dev": "^7.1.5",
+    "@react-router/fs-routes": "^7.1.5",
+    "@react-router/node": "^7.1.5",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-animation": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react-router": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "isbot": "^5.1.22",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "react-router": "^7.1.5",
+    "vite": "^5.4.11",
+    "webstudio": "workspace:*"
+  },
+  "devDependencies": {
+    "webstudio": "workspace:*",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "typescript": "5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "name": "webstudio-features",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0-or-later"
+}

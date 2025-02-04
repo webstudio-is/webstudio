@@ -861,6 +861,70 @@ importers:
         specifier: workspace:*
         version: link:../../packages/cli
 
+  fixtures/webstudio-features:
+    dependencies:
+      '@miniflare/html-rewriter':
+        specifier: ^2.14.4
+        version: 2.14.4
+      '@react-router/dev':
+        specifier: ^7.1.5
+        version: 7.1.5(@react-router/serve@7.1.5(react-router@7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3))(@types/node@22.10.7)(react-router@7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@react-router/fs-routes':
+        specifier: ^7.1.5
+        version: 7.1.5(@react-router/dev@7.1.5(@react-router/serve@7.1.5(react-router@7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3))(@types/node@22.10.7)(react-router@7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.7.3)
+      '@react-router/node':
+        specifier: ^7.1.5
+        version: 7.1.5(react-router@7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.7.3)
+      '@webstudio-is/image':
+        specifier: workspace:*
+        version: link:../../packages/image
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-animation':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-animation
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-router':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-router
+      isbot:
+        specifier: ^5.1.22
+        version: 5.1.22
+      react:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318
+      react-dom:
+        specifier: 18.3.0-canary-14898b6a9-20240318
+        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
+      react-router:
+        specifier: ^7.1.5
+        version: 7.1.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      vite:
+        specifier: ^5.4.11
+        version: 5.4.11(@types/node@22.10.7)
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.70
+        version: 18.2.79
+      '@types/react-dom':
+        specifier: ^18.2.25
+        version: 18.2.25
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
+
   fixtures/webstudio-remix-netlify-edge-functions:
     dependencies:
       '@netlify/edge-functions':
@@ -976,70 +1040,6 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
     devDependencies:
-      '@remix-run/dev':
-        specifier: 2.15.2
-        version: 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@types/react':
-        specifier: ^18.2.70
-        version: 18.2.79
-      '@types/react-dom':
-        specifier: ^18.2.25
-        version: 18.2.25
-      typescript:
-        specifier: 5.7.3
-        version: 5.7.3
-      vite:
-        specifier: ^5.4.11
-        version: 5.4.11(@types/node@22.10.7)
-      webstudio:
-        specifier: workspace:*
-        version: link:../../packages/cli
-
-  fixtures/webstudio-remix-vercel:
-    dependencies:
-      '@remix-run/node':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@remix-run/react':
-        specifier: 2.15.2
-        version: 2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3)
-      '@remix-run/server-runtime':
-        specifier: 2.15.2
-        version: 2.15.2(typescript@5.7.3)
-      '@webstudio-is/image':
-        specifier: workspace:*
-        version: link:../../packages/image
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../../packages/react-sdk
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@webstudio-is/sdk-components-animation':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-animation
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react
-      '@webstudio-is/sdk-components-react-radix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-radix
-      '@webstudio-is/sdk-components-react-remix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-remix
-      isbot:
-        specifier: ^5.1.22
-        version: 5.1.22
-      react:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318
-      react-dom:
-        specifier: 18.3.0-canary-14898b6a9-20240318
-        version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-    devDependencies:
-      '@miniflare/html-rewriter':
-        specifier: ^2.14.4
-        version: 2.14.4
       '@remix-run/dev':
         specifier: 2.15.2
         version: 2.15.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.15.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.7.3))(@remix-run/serve@2.15.2(typescript@5.7.3))(@types/node@22.10.7)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.7))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
