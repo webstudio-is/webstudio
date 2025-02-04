@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "start": "npx vercel dev",
+    "deploy": "npx vercel deploy"
+  },
+  "dependencies": {
+    "@react-router/node": "^7.1.5"
+  }
+}

@@ -608,6 +608,12 @@ importers:
         specifier: 5.7.3
         version: 5.7.3
 
+  fixtures/react-router-vercel:
+    dependencies:
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
+
   fixtures/ssg:
     dependencies:
       '@webstudio-is/image':
