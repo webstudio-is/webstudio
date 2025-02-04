@@ -92,7 +92,10 @@ export const PagePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
   .refine((path) => path !== "/", "Can't be just a /")
-  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
+  .refine(
+    (path) => path === "" || path.startsWith("/"),
+    "Must start with a / or a full URL e.g. https://website.org"
+  )
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
   .refine(
