@@ -1,0 +1,60 @@
+name: Publish Commit on Github 📦
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //npm.pkg.github.com/:_authToken=$GITHUB_TOKEN
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # compute short sha
+      - id: short_sha
+        run: echo "value=$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - id: tag
+        run: echo "value=$(echo ${{ github.event.label.name }} | cut -d ':' -f2)" >> $GITHUB_OUTPUT
+
+      - name: bump version to 0.0.0-${{ steps.short_sha.outputs.value }}
+        run: |
+          pnpx replace-in-files-cli \
+            --string="0.0.0-webstudio-version" \
+            --replacement="0.0.0-${{ steps.short_sha.outputs.value }}" \
+            "**/package.json"
+
+      - run: pnpm install --ignore-scripts
+      - run: pnpm --filter="webstudio..." build
+      - run: pnpm --filter="webstudio..." dts
+
+      - name: Publishing ${{ steps.tag.outputs.value }} tag with sha ${{ steps.short_sha.outputs.value }}
+        run: pnpm -r publish --tag "${{ steps.tag.outputs.value }}" --no-git-checks --access public
