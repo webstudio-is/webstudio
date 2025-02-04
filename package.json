@@ -10,6 +10,7 @@
     "dev": "pnpm --filter='@webstudio-is/builder' dev",
     "lint": "eslint \"**/*.{ts,tsx}\" --max-warnings 0",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint",
+    "playwright": "pnpm -r playwright-init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build",
