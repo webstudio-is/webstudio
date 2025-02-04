@@ -5,7 +5,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   Text,
-  DropdownMenuPortal,
   styled,
   Tooltip,
   SmallIconButton,
@@ -76,24 +75,22 @@ const ItemMenu = ({
           icon={<EllipsesIcon />}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent align="start">
-          <Tooltip side="bottom" content={tooltipContent}>
-            <DropdownMenuItem
-              disabled={isDeleteDisabled}
-              onClick={(event) => {
-                // Prevent setting the current font to the item.
-                event.stopPropagation();
-              }}
-              onSelect={() => {
-                onDelete();
-              }}
-            >
-              <Text>Delete font</Text>
-            </DropdownMenuItem>
-          </Tooltip>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+      <DropdownMenuContent align="start">
+        <Tooltip side="bottom" content={tooltipContent}>
+          <DropdownMenuItem
+            disabled={isDeleteDisabled}
+            onClick={(event) => {
+              // Prevent setting the current font to the item.
+              event.stopPropagation();
+            }}
+            onSelect={() => {
+              onDelete();
+            }}
+          >
+            <Text>Delete font</Text>
+          </DropdownMenuItem>
+        </Tooltip>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

@@ -15,7 +15,6 @@ import {
   Box,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -123,103 +122,100 @@ export const TemplatesMenu = ({
       >
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       </Tooltip>
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          align="start"
-          sideOffset={4}
-          collisionPadding={16}
-          side="bottom"
-          loop
-          // @todo remove inert after creation
-          {...(inert ? { inert: "" } : {})}
-        >
-          {templates.length > 0 ? (
-            <>
-              <DropdownMenuRadioGroup
-                value={value !== undefined ? JSON.stringify(value) : value}
-                onValueChange={handleValueChangeComplete}
-              >
-                {menuItems?.map(({ icon, title, id, value }) => (
-                  <DropdownMenuRadioItem
-                    onPointerEnter={() => {
-                      handleValueChange(value);
-                    }}
-                    onPointerMove={
-                      preventFocusOnHover
-                        ? (e) => {
-                            e.preventDefault();
-                          }
-                        : undefined
-                    }
-                    onPointerLeave={
-                      preventFocusOnHover
-                        ? (e) => {
-                            handleValueChange(undefined);
-                            e.preventDefault();
-                          }
-                        : undefined
-                    }
-                    onPointerDown={
-                      preventFocusOnHover
-                        ? (event) => {
-                            event.preventDefault();
-                          }
-                        : undefined
-                    }
-                    key={id}
-                    value={JSON.stringify(value)}
-                    {...{ [skipInertHandlersAttribute]: true }}
-                  >
-                    <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                      {icon}
-                      <Box>{title}</Box>
-                    </Flex>
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <div className={menuItemCss({ hint: true })}>
-                <Grid css={{ width: theme.spacing[25] }}>
-                  <Flex
-                    gap={1}
-                    css={{ display: hasChildren ? "none" : undefined }}
-                  >
-                    <Kbd value={["click"]} />
-                    <Text>to add before</Text>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={4}
+        collisionPadding={16}
+        side="bottom"
+        loop
+        // @todo remove inert after creation
+        {...(inert ? { inert: "" } : {})}
+      >
+        {templates.length > 0 ? (
+          <>
+            <DropdownMenuRadioGroup
+              value={value !== undefined ? JSON.stringify(value) : value}
+              onValueChange={handleValueChangeComplete}
+            >
+              {menuItems?.map(({ icon, title, id, value }) => (
+                <DropdownMenuRadioItem
+                  onPointerEnter={() => {
+                    handleValueChange(value);
+                  }}
+                  onPointerMove={
+                    preventFocusOnHover
+                      ? (e) => {
+                          e.preventDefault();
+                        }
+                      : undefined
+                  }
+                  onPointerLeave={
+                    preventFocusOnHover
+                      ? (e) => {
+                          handleValueChange(undefined);
+                          e.preventDefault();
+                        }
+                      : undefined
+                  }
+                  onPointerDown={
+                    preventFocusOnHover
+                      ? (event) => {
+                          event.preventDefault();
+                        }
+                      : undefined
+                  }
+                  key={id}
+                  value={JSON.stringify(value)}
+                  {...{ [skipInertHandlersAttribute]: true }}
+                >
+                  <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
+                    {icon}
+                    <Box>{title}</Box>
                   </Flex>
-
-                  <Flex
-                    gap={1}
-                    css={{
-                      order: modifierKeys.altKey ? 2 : 0,
-                      display: hasChildren ? undefined : "none",
-                    }}
-                  >
-                    <Kbd value={["click"]} />
-                    <Text>to add after</Text>
-                  </Flex>
-                  <Flex
-                    gap={1}
-                    css={{
-                      order: 1,
-                      display: hasChildren ? undefined : "none",
-                    }}
-                  >
-                    <Kbd value={["option", "click"]} />{" "}
-                    <Text>to add before</Text>
-                  </Flex>
-                </Grid>
-              </div>
-            </>
-          ) : (
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
             <div className={menuItemCss({ hint: true })}>
               <Grid css={{ width: theme.spacing[25] }}>
-                <Text>No Results</Text>
+                <Flex
+                  gap={1}
+                  css={{ display: hasChildren ? "none" : undefined }}
+                >
+                  <Kbd value={["click"]} />
+                  <Text>to add before</Text>
+                </Flex>
+
+                <Flex
+                  gap={1}
+                  css={{
+                    order: modifierKeys.altKey ? 2 : 0,
+                    display: hasChildren ? undefined : "none",
+                  }}
+                >
+                  <Kbd value={["click"]} />
+                  <Text>to add after</Text>
+                </Flex>
+                <Flex
+                  gap={1}
+                  css={{
+                    order: 1,
+                    display: hasChildren ? undefined : "none",
+                  }}
+                >
+                  <Kbd value={["option", "click"]} /> <Text>to add before</Text>
+                </Flex>
               </Grid>
             </div>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+          </>
+        ) : (
+          <div className={menuItemCss({ hint: true })}>
+            <Grid css={{ width: theme.spacing[25] }}>
+              <Text>No Results</Text>
+            </Grid>
+          </div>
+        )}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

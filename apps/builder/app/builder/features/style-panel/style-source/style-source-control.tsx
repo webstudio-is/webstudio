@@ -1,7 +1,6 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
   Text,
   styled,
@@ -97,14 +96,12 @@ const Menu = (props: MenuProps) => {
           <ChevronDownIcon style={{ position: "relative" }} />
         </MenuTrigger>
       </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          onCloseAutoFocus={(event) => event.preventDefault()}
-          css={{ maxWidth: theme.spacing[24] }}
-        >
-          {props.children}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+      <DropdownMenuContent
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        css={{ maxWidth: theme.spacing[24] }}
+      >
+        {props.children}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

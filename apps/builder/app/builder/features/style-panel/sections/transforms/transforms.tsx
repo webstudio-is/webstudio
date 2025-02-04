@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
   Flex,
   Grid,
@@ -170,31 +169,29 @@ export const Section = () => {
                     prefix={<PlusIcon />}
                   ></SectionTitleButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuContent
-                    collisionPadding={16}
-                    css={{ width: theme.spacing[24] }}
-                  >
-                    {transformPanels.map((panel) => (
-                      <DropdownMenuItem
-                        disabled={isTransformPanelPropertyUsed({
+                <DropdownMenuContent
+                  collisionPadding={16}
+                  css={{ width: theme.spacing[24] }}
+                >
+                  {transformPanels.map((panel) => (
+                    <DropdownMenuItem
+                      disabled={isTransformPanelPropertyUsed({
+                        panel,
+                        styles,
+                      })}
+                      key={panel}
+                      onSelect={() => {
+                        addDefaultsForTransormSection({
                           panel,
                           styles,
-                        })}
-                        key={panel}
-                        onSelect={() => {
-                          addDefaultsForTransormSection({
-                            panel,
-                            styles,
-                          });
-                          setIsOpen(true);
-                        }}
-                      >
-                        {humanizeString(panel)}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenuPortal>
+                        });
+                        setIsOpen(true);
+                      }}
+                    >
+                      {humanizeString(panel)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
               </DropdownMenu>
             </Flex>
           }

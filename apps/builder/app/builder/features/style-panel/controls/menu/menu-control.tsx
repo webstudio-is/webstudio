@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -74,57 +73,55 @@ export const MenuControl = ({
           </IconButton>
         </DropdownMenuTrigger>
       </PropertyValueTooltip>
-      <DropdownMenuPortal>
-        <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
-          <DropdownMenuRadioGroup
-            value={currentValue}
-            onValueChange={(value) => setValue({ type: "keyword", value })}
-          >
-            {items.map(({ name, label, icon: Icon }) => {
-              return (
-                <DropdownMenuRadioItem
-                  text="sentence"
-                  key={name}
-                  value={name}
-                  icon={<MenuCheckedIcon />}
-                  onFocus={() => {
-                    setValue(
-                      { type: "keyword", value: name },
-                      { isEphemeral: true }
-                    );
-                    setDescriptionValue(name);
-                  }}
-                  onBlur={() => {
-                    setValue(
-                      { type: "keyword", value: currentValue },
-                      { isEphemeral: true }
-                    );
-                    setDescriptionValue(undefined);
-                  }}
-                >
-                  <Flex gap="1">
-                    <Flex
-                      css={{
-                        width: theme.spacing[9],
-                        height: theme.spacing[9],
-                      }}
-                      align="center"
-                      justify="center"
-                    >
-                      <Icon />
-                    </Flex>
-                    {label}
+      <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
+        <DropdownMenuRadioGroup
+          value={currentValue}
+          onValueChange={(value) => setValue({ type: "keyword", value })}
+        >
+          {items.map(({ name, label, icon: Icon }) => {
+            return (
+              <DropdownMenuRadioItem
+                text="sentence"
+                key={name}
+                value={name}
+                icon={<MenuCheckedIcon />}
+                onFocus={() => {
+                  setValue(
+                    { type: "keyword", value: name },
+                    { isEphemeral: true }
+                  );
+                  setDescriptionValue(name);
+                }}
+                onBlur={() => {
+                  setValue(
+                    { type: "keyword", value: currentValue },
+                    { isEphemeral: true }
+                  );
+                  setDescriptionValue(undefined);
+                }}
+              >
+                <Flex gap="1">
+                  <Flex
+                    css={{
+                      width: theme.spacing[9],
+                      height: theme.spacing[9],
+                    }}
+                    align="center"
+                    justify="center"
+                  >
+                    <Icon />
                   </Flex>
-                </DropdownMenuRadioItem>
-              );
-            })}
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem hint>
-            <Box css={{ width: theme.spacing[25] }}>{description}</Box>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+                  {label}
+                </Flex>
+              </DropdownMenuRadioItem>
+            );
+          })}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem hint>
+          <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
