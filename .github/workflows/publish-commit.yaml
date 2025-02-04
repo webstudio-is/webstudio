@@ -28,8 +28,6 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - run: pnpm install
-
       - name: Creating .npmrc
         run: |
           cat << EOF > "$HOME/.npmrc"
