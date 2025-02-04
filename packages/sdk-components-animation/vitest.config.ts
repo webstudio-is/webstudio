@@ -5,6 +5,7 @@ export default defineConfig({
     passWithNoTests: true,
     workspace: [
       {
+        extends: "./vitest.config.ts",
         test: {
           include: ["**/*.browser.{test,spec}.ts"],
           name: "browser",
@@ -17,15 +18,15 @@ export default defineConfig({
           },
         },
       },
-      // For unknown reason lines below hangs the test
-      //      {
-      //        test: {
-      //          include: ["**/*.{test,spec}.ts"],
-      //          exclude: ["**/*.browser.{test,spec}.ts"],
-      //          name: "unit",
-      //          environment: "node",
-      //        },
-      //      },
+      {
+        extends: "./vitest.config.ts",
+        test: {
+          include: ["!**/*.browser.{test,spec}.ts", "**/*.{test,spec}.ts"],
+
+          name: "unit",
+          environment: "node",
+        },
+      },
     ],
   },
   server: {
