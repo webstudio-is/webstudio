@@ -9,7 +9,7 @@ import { props } from "./__generated__/head-link.props";
 export const meta: WsComponentMeta = {
   category: "hidden",
   icon: ResourceIcon,
-  type: "container",
+  type: "embed",
   constraints: {
     relation: "parent",
     component: { $eq: "HeadSlot" },
