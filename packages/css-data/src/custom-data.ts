@@ -76,6 +76,26 @@ propertiesData["-webkit-box-orient"] = {
 };
 keywordValues["-webkit-box-orient"] = ["horizontal", "vertical"];
 
+propertiesData.viewTimelineName = {
+  unitGroups: [],
+  inherited: false,
+  initial: {
+    type: "unparsed",
+    value: "--view-timeline",
+  },
+  mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
+};
+propertiesData.scrollTimelineName = {
+  unitGroups: [],
+  inherited: false,
+  initial: {
+    type: "unparsed",
+    value: "--scroll-timeline",
+  },
+  mdnUrl:
+    "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
+};
+
 keywordValues.listStyleType = [
   "disc",
   "circle",

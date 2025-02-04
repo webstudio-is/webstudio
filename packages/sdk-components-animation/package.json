@@ -45,7 +45,9 @@
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.template.tsx !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "playwright-init": "playwright install --with-deps"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",
@@ -62,15 +64,18 @@
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
+    "@vitest/browser": "^3.0.4",
+    "@webstudio-is/css-data": "workspace:*",
+    "@webstudio-is/design-system": "workspace:*",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "@webstudio-is/css-data": "workspace:*",
-    "@webstudio-is/design-system": "workspace:*",
+    "playwright": "^1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "type-fest": "^4.32.0"
+    "type-fest": "^4.32.0",
+    "vitest": "^3.0.4"
   }
 }

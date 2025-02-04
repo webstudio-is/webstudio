@@ -43,7 +43,16 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
-      - uses: ./.github/actions/ci-setup
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Pnpm install
+        run: |
+          pnpm install
 
       - uses: actions/cache@v4
         with:
@@ -61,6 +70,19 @@ jobs:
       - name: Lint
         run: |
           pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Playwright init
+        run: |
+          pnpm playwright install
+        working-directory: packages/sdk-components-animation
 
       - name: Test
         run: |
@@ -113,7 +135,7 @@ jobs:
             const results = [
               await assertSize('./fixtures/ssg/dist/client', 352),
               await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 440),
-              await assertSize('./fixtures/webstudio-remix-vercel/build/client', 926),
+              await assertSize('./fixtures/webstudio-features/build/client', 926),
             ]
             for (const result of results) {
               if (result.passed) {

@@ -11,7 +11,6 @@ import {
   type StyleSources,
   type Breakpoints,
   type DataSources,
-  type Props,
   type DataSource,
   type Breakpoint,
   type WebstudioFragment,
@@ -24,10 +23,10 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
-  getExpressionIdentifiers,
   ROOT_INSTANCE_ID,
   portalComponent,
   collectionComponent,
+  Prop,
 } from "@webstudio-is/sdk";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
@@ -64,6 +63,18 @@ import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
 } from "./matcher";
+import {
+  restoreExpressionVariables,
+  unsetExpressionVariables,
+} from "./data-variables";
+import { current, isDraft } from "immer";
+
+/**
+ * structuredClone can be invoked on draft and throw error
+ * extract current snapshot before cloning
+ */
+const unwrap = <Value>(value: Value) =>
+  isDraft(value) ? current(value) : value;
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
   serverSyncStore.createTransaction(
@@ -507,19 +518,6 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
-const collectUsedDataSources = (
-  expression: string,
-  usedDataSourceIds: Set<DataSource["id"]>
-) => {
-  const identifiers = getExpressionIdentifiers(expression);
-  for (const identifier of identifiers) {
-    const id = decodeDataSourceVariable(identifier);
-    if (id !== undefined) {
-      usedDataSourceIds.add(id);
-    }
-  }
-};
-
 export const extractWebstudioFragment = (
   data: WebstudioData,
   rootInstanceId: string
@@ -538,19 +536,13 @@ export const extractWebstudioFragment = (
 
   // collect the instance by id and all its descendants including portal instances
   const fragmentInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
-  const fragmentInstances: Instance[] = [];
+  let fragmentInstances: Instance[] = [];
   const fragmentStyleSourceSelections: StyleSourceSelection[] = [];
   const fragmentStyleSources: StyleSources = new Map();
-  const usedDataSourceIds = new Set<DataSource["id"]>();
   for (const instanceId of fragmentInstanceIds) {
     const instance = instances.get(instanceId);
     if (instance) {
       fragmentInstances.push(instance);
-      for (const child of instance.children) {
-        if (child.type === "expression") {
-          collectUsedDataSources(child.value, usedDataSourceIds);
-        }
-      }
     }
 
     // collect all style sources bound to these instances
@@ -605,77 +597,100 @@ export const extractWebstudioFragment = (
     });
   }
 
+  // collect variables scoped to fragment instances
+  // and variables outside of scope to unset
+  const fragmentDataSources: DataSources = new Map();
+  const fragmentResourceIds = new Set<Resource["id"]>();
+  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  for (const dataSource of dataSources.values()) {
+    if (fragmentInstanceIds.has(dataSource.scopeInstanceId)) {
+      fragmentDataSources.set(dataSource.id, dataSource);
+      if (dataSource.type === "resource") {
+        fragmentResourceIds.add(dataSource.resourceId);
+      }
+    } else {
+      unsetNameById.set(dataSource.id, dataSource.name);
+    }
+  }
+
+  // unset variables outside of scope
+  fragmentInstances = fragmentInstances.map((instance) => {
+    instance = structuredClone(unwrap(instance));
+    for (const child of instance.children) {
+      if (child.type === "expression") {
+        const expression = child.value;
+        child.value = unsetExpressionVariables({ expression, unsetNameById });
+      }
+    }
+    return instance;
+  });
+
   // collect props bound to these instances
-  const fragmentProps: Props = new Map();
+  // and unset variables outside of scope
+  const fragmentProps: Prop[] = [];
   for (const prop of props.values()) {
     if (fragmentInstanceIds.has(prop.instanceId) === false) {
       continue;
     }
 
-    fragmentProps.set(prop.id, prop);
-
     if (prop.type === "expression") {
-      collectUsedDataSources(prop.value, usedDataSourceIds);
+      const newProp = structuredClone(unwrap(prop));
+      const expression = prop.value;
+      newProp.value = unsetExpressionVariables({ expression, unsetNameById });
+      fragmentProps.push(newProp);
+      continue;
     }
 
     if (prop.type === "action") {
-      for (const value of prop.value) {
-        if (value.type === "execute") {
-          collectUsedDataSources(value.code, usedDataSourceIds);
-        }
+      const newProp = structuredClone(unwrap(prop));
+      for (const value of newProp.value) {
+        const expression = value.code;
+        value.code = unsetExpressionVariables({ expression, unsetNameById });
       }
+      fragmentProps.push(newProp);
+      continue;
     }
+
+    fragmentProps.push(prop);
 
     // collect assets
     if (prop.type === "asset") {
       fragmentAssetIds.add(prop.value);
     }
-  }
 
-  // collect variables scoped to fragment instances
-  // or used by expressions or actions even outside of the tree
-  // such variables can be bound to fragment root on paste
-  const fragmentDataSources: DataSources = new Map();
-  const fragmentResourceIds = new Set<Resource["id"]>();
-  for (const dataSource of dataSources.values()) {
-    if (
-      // check if data source itself can be copied
-      (dataSource.scopeInstanceId !== undefined &&
-        fragmentInstanceIds.has(dataSource.scopeInstanceId)) ||
-      usedDataSourceIds.has(dataSource.id)
-    ) {
-      fragmentDataSources.set(dataSource.id, dataSource);
-      if (dataSource.type === "resource") {
-        fragmentResourceIds.add(dataSource.resourceId);
-      }
+    // collect resources from props
+    if (prop.type === "resource") {
+      fragmentResourceIds.add(prop.value);
     }
   }
 
   // collect resources bound to all fragment data sources
-  // and then collect data sources used in these resources
-  // it creates some recursive behavior but since resources
-  // cannot depend on other resources all left data sources
-  // can be collected just once
+  // and unset variables which are defined outside of scope
+  // and used in resource
   const fragmentResources: Resource[] = [];
-  const dataSourceIdsUsedInResources = new Set<DataSource["id"]>();
   for (const resourceId of fragmentResourceIds) {
     const resource = resources.get(resourceId);
     if (resource === undefined) {
       continue;
     }
-    fragmentResources.push(resource);
-    collectUsedDataSources(resource.url, dataSourceIdsUsedInResources);
-    for (const { value } of resource.headers) {
-      collectUsedDataSources(value, dataSourceIdsUsedInResources);
+    const newResource = structuredClone(unwrap(resource));
+    newResource.url = unsetExpressionVariables({
+      expression: newResource.url,
+      unsetNameById,
+    });
+    for (const header of newResource.headers) {
+      header.value = unsetExpressionVariables({
+        expression: header.value,
+        unsetNameById,
+      });
     }
-    if (resource.body) {
-      collectUsedDataSources(resource.body, dataSourceIdsUsedInResources);
+    if (newResource.body) {
+      newResource.body = unsetExpressionVariables({
+        expression: newResource.body,
+        unsetNameById,
+      });
     }
-  }
-  for (const dataSource of dataSources.values()) {
-    if (dataSourceIdsUsedInResources.has(dataSource.id)) {
-      fragmentDataSources.set(dataSource.id, dataSource);
-    }
+    fragmentResources.push(newResource);
   }
 
   const fragmentAssets: Asset[] = [];
@@ -697,7 +712,7 @@ export const extractWebstudioFragment = (
     styles: fragmentStyles,
     dataSources: Array.from(fragmentDataSources.values()),
     resources: fragmentResources,
-    props: Array.from(fragmentProps.values()),
+    props: fragmentProps,
     assets: fragmentAssets,
   };
 };
@@ -723,41 +738,6 @@ export const findAvailableDataSources = (
     }
   }
   return availableDataSources;
-};
-
-const inlineUnavailableDataSources = ({
-  code,
-  availableDataSources,
-  dataSources,
-}: {
-  code: string;
-  availableDataSources: Set<DataSource["id"]>;
-  dataSources: DataSources;
-}) => {
-  let isDiscarded = false;
-  const newCode = transpileExpression({
-    expression: code,
-    replaceVariable: (identifier, assignee) => {
-      const dataSourceId = decodeDataSourceVariable(identifier);
-      if (
-        dataSourceId === undefined ||
-        availableDataSources.has(dataSourceId)
-      ) {
-        return;
-      }
-      // left operand of assign operator cannot be inlined
-      if (assignee) {
-        isDiscarded = true;
-      }
-      const dataSource = dataSources.get(dataSourceId);
-      // inline variable not scoped to portal content instances
-      if (dataSource?.type === "variable") {
-        return JSON.stringify(dataSource.value.value);
-      }
-      return "{}";
-    },
-  });
-  return { code: newCode, isDiscarded };
 };
 
 const replaceDataSources = (
@@ -909,15 +889,10 @@ export const insertWebstudioFragmentCopy = ({
       continue;
     }
 
-    const availablePortalDataSources = new Set(availableDataSources);
     const usedResourceIds = new Set<Resource["id"]>();
     for (const dataSource of fragment.dataSources) {
       // insert only data sources within portal content
-      if (
-        dataSource.scopeInstanceId &&
-        instanceIds.has(dataSource.scopeInstanceId)
-      ) {
-        availablePortalDataSources.add(dataSource.id);
+      if (instanceIds.has(dataSource.scopeInstanceId)) {
         dataSources.set(dataSource.id, dataSource);
         if (dataSource.type === "resource") {
           usedResourceIds.add(dataSource.resourceId);
@@ -926,93 +901,21 @@ export const insertWebstudioFragmentCopy = ({
     }
 
     for (const resource of fragment.resources) {
-      if (usedResourceIds.has(resource.id) === false) {
-        continue;
+      if (usedResourceIds.has(resource.id)) {
+        resources.set(resource.id, resource);
       }
-      const newUrl = inlineUnavailableDataSources({
-        code: resource.url,
-        availableDataSources: availablePortalDataSources,
-        dataSources: fragmentDataSources,
-      }).code;
-      const newHeaders = resource.headers.map((header) => ({
-        name: header.name,
-        value: inlineUnavailableDataSources({
-          code: header.value,
-          availableDataSources: availablePortalDataSources,
-          dataSources: fragmentDataSources,
-        }).code,
-      }));
-      const newBody =
-        resource.body === undefined
-          ? undefined
-          : inlineUnavailableDataSources({
-              code: resource.body,
-              availableDataSources: availablePortalDataSources,
-              dataSources: fragmentDataSources,
-            }).code;
-      resources.set(resource.id, {
-        ...resource,
-        url: newUrl,
-        headers: newHeaders,
-        body: newBody,
-      });
     }
 
     for (const instance of fragment.instances) {
       if (instanceIds.has(instance.id)) {
-        instances.set(instance.id, {
-          ...instance,
-          children: instance.children.map((child) => {
-            if (child.type === "expression") {
-              const { code } = inlineUnavailableDataSources({
-                code: child.value,
-                availableDataSources: availablePortalDataSources,
-                dataSources: fragmentDataSources,
-              });
-              return {
-                type: "expression",
-                value: code,
-              };
-            }
-            return child;
-          }),
-        });
+        instances.set(instance.id, instance);
       }
     }
 
-    for (let prop of fragment.props) {
-      if (instanceIds.has(prop.instanceId) === false) {
-        continue;
+    for (const prop of fragment.props) {
+      if (instanceIds.has(prop.instanceId)) {
+        props.set(prop.id, prop);
       }
-      // inline data sources not available in scope into expressions
-      if (prop.type === "expression") {
-        const { code } = inlineUnavailableDataSources({
-          code: prop.value,
-          availableDataSources: availablePortalDataSources,
-          dataSources: fragmentDataSources,
-        });
-        prop = { ...prop, value: code };
-      }
-      if (prop.type === "action") {
-        prop = {
-          ...prop,
-          value: prop.value.flatMap((value) => {
-            if (value.type !== "execute") {
-              return [value];
-            }
-            const { code, isDiscarded } = inlineUnavailableDataSources({
-              code: value.code,
-              availableDataSources: availablePortalDataSources,
-              dataSources: fragmentDataSources,
-            });
-            if (isDiscarded) {
-              return [];
-            }
-            return [{ ...value, code }];
-          }),
-        };
-      }
-      props.set(prop.id, prop);
     }
 
     // insert local style sources with their styles
@@ -1070,110 +973,30 @@ export const insertWebstudioFragmentCopy = ({
   fragmentInstanceIds.add(ROOT_INSTANCE_ID);
   newInstanceIds.set(ROOT_INSTANCE_ID, ROOT_INSTANCE_ID);
 
-  const availableFragmentDataSources = new Set(availableDataSources);
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  for (const dataSourceId of availableDataSources) {
+    const dataSource = dataSources.get(dataSourceId);
+    if (dataSource) {
+      maskedIdByName.set(dataSource.name, dataSource.id);
+    }
+  }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
-  const usedResourceIds = new Set<Resource["id"]>();
-  for (const dataSource of fragment.dataSources) {
+  for (let dataSource of fragment.dataSources) {
     const { scopeInstanceId } = dataSource;
     // insert only data sources within portal content
-    if (scopeInstanceId && fragmentInstanceIds.has(scopeInstanceId)) {
-      availableFragmentDataSources.add(dataSource.id);
+    if (fragmentInstanceIds.has(scopeInstanceId)) {
       const newDataSourceId = nanoid();
       newDataSourceIds.set(dataSource.id, newDataSourceId);
+      dataSource = structuredClone(unwrap(dataSource));
+      dataSource.id = newDataSourceId;
+      dataSource.scopeInstanceId =
+        newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
       if (dataSource.type === "resource") {
         const newResourceId = nanoid();
         newResourceIds.set(dataSource.resourceId, newResourceId);
-        usedResourceIds.add(dataSource.resourceId);
-        dataSources.set(newDataSourceId, {
-          ...dataSource,
-          id: newDataSourceId,
-          scopeInstanceId:
-            newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId,
-          resourceId: newResourceId,
-        });
-      } else {
-        dataSources.set(newDataSourceId, {
-          ...dataSource,
-          id: newDataSourceId,
-          scopeInstanceId:
-            newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId,
-        });
+        dataSource.resourceId = newResourceId;
       }
-    }
-  }
-
-  for (const resource of fragment.resources) {
-    if (usedResourceIds.has(resource.id) === false) {
-      continue;
-    }
-    const newResourceId = newResourceIds.get(resource.id) ?? resource.id;
-
-    const newUrl = replaceDataSources(
-      inlineUnavailableDataSources({
-        code: resource.url,
-        availableDataSources: availableFragmentDataSources,
-        dataSources: fragmentDataSources,
-      }).code,
-      newDataSourceIds
-    );
-    const newHeaders = resource.headers.map((header) => ({
-      name: header.name,
-      value: replaceDataSources(
-        inlineUnavailableDataSources({
-          code: header.value,
-          availableDataSources: availableFragmentDataSources,
-          dataSources: fragmentDataSources,
-        }).code,
-        newDataSourceIds
-      ),
-    }));
-    const newBody =
-      resource.body === undefined
-        ? undefined
-        : replaceDataSources(
-            inlineUnavailableDataSources({
-              code: resource.body,
-              availableDataSources: availableFragmentDataSources,
-              dataSources: fragmentDataSources,
-            }).code,
-            newDataSourceIds
-          );
-    resources.set(newResourceId, {
-      ...resource,
-      id: newResourceId,
-      url: newUrl,
-      headers: newHeaders,
-      body: newBody,
-    });
-  }
-
-  for (const instance of fragment.instances) {
-    if (fragmentInstanceIds.has(instance.id)) {
-      const newId = newInstanceIds.get(instance.id) ?? instance.id;
-      instances.set(newId, {
-        ...instance,
-        id: newId,
-        children: instance.children.map((child) => {
-          if (child.type === "id") {
-            return {
-              type: "id",
-              value: newInstanceIds.get(child.value) ?? child.value,
-            };
-          }
-          if (child.type === "expression") {
-            const { code } = inlineUnavailableDataSources({
-              code: child.value,
-              availableDataSources: availableFragmentDataSources,
-              dataSources: fragmentDataSources,
-            });
-            return {
-              type: "expression",
-              value: replaceDataSources(code, newDataSourceIds),
-            };
-          }
-          return child;
-        }),
-      });
+      dataSources.set(dataSource.id, dataSource);
     }
   }
 
@@ -1181,48 +1004,82 @@ export const insertWebstudioFragmentCopy = ({
     if (fragmentInstanceIds.has(prop.instanceId) === false) {
       continue;
     }
-    // inline data sources not available in scope into expressions
+    prop = structuredClone(unwrap(prop));
+    prop.id = nanoid();
+    prop.instanceId = newInstanceIds.get(prop.instanceId) ?? prop.instanceId;
     if (prop.type === "expression") {
-      const { code } = inlineUnavailableDataSources({
-        code: prop.value,
-        availableDataSources: availableFragmentDataSources,
-        dataSources: fragmentDataSources,
+      prop.value = restoreExpressionVariables({
+        expression: prop.value,
+        maskedIdByName,
       });
-      prop = { ...prop, value: replaceDataSources(code, newDataSourceIds) };
+      prop.value = replaceDataSources(prop.value, newDataSourceIds);
     }
     if (prop.type === "action") {
-      prop = {
-        ...prop,
-        value: prop.value.flatMap((value) => {
-          if (value.type !== "execute") {
-            return [value];
-          }
-          const { code, isDiscarded } = inlineUnavailableDataSources({
-            code: value.code,
-            availableDataSources: availableFragmentDataSources,
-            dataSources: fragmentDataSources,
-          });
-          if (isDiscarded) {
-            return [];
-          }
-          return [
-            { ...value, code: replaceDataSources(code, newDataSourceIds) },
-          ];
-        }),
-      };
+      for (const value of prop.value) {
+        value.code = restoreExpressionVariables({
+          expression: value.code,
+          maskedIdByName,
+        });
+        value.code = replaceDataSources(value.code, newDataSourceIds);
+      }
     }
     if (prop.type === "parameter") {
-      prop = {
-        ...prop,
-        value: newDataSourceIds.get(prop.value) ?? prop.value,
-      };
+      prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
-    const newId = nanoid();
-    props.set(newId, {
-      ...prop,
-      id: newId,
-      instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
+    if (prop.type === "resource") {
+      const newResourceId = nanoid();
+      newResourceIds.set(prop.value, newResourceId);
+      prop.value = newResourceId;
+    }
+    props.set(prop.id, prop);
+  }
+
+  for (let resource of fragment.resources) {
+    if (newResourceIds.has(resource.id) === false) {
+      continue;
+    }
+    resource = structuredClone(unwrap(resource));
+    resource.id = newResourceIds.get(resource.id) ?? resource.id;
+    resource.url = restoreExpressionVariables({
+      expression: resource.url,
+      maskedIdByName,
     });
+    resource.url = replaceDataSources(resource.url, newDataSourceIds);
+    for (const header of resource.headers) {
+      header.value = restoreExpressionVariables({
+        expression: header.value,
+        maskedIdByName,
+      });
+      header.value = replaceDataSources(header.value, newDataSourceIds);
+    }
+    if (resource.body) {
+      resource.body = restoreExpressionVariables({
+        expression: resource.body,
+        maskedIdByName,
+      });
+      resource.body = replaceDataSources(resource.body, newDataSourceIds);
+    }
+    resources.set(resource.id, resource);
+  }
+
+  for (let instance of fragment.instances) {
+    if (fragmentInstanceIds.has(instance.id)) {
+      instance = structuredClone(unwrap(instance));
+      instance.id = newInstanceIds.get(instance.id) ?? instance.id;
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          child.value = newInstanceIds.get(child.value) ?? child.value;
+        }
+        if (child.type === "expression") {
+          child.value = restoreExpressionVariables({
+            expression: child.value,
+            maskedIdByName,
+          });
+          child.value = replaceDataSources(child.value, newDataSourceIds);
+        }
+      }
+      instances.set(instance.id, instance);
+    }
   }
 
   // insert local styles with new ids
