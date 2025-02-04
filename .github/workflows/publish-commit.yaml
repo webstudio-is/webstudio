@@ -40,9 +40,6 @@ jobs:
       - id: short_sha
         run: echo "value=$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      - id: tag
-        run: echo "value=$(echo ${{ github.event.label.name }} | cut -d ':' -f2)" >> $GITHUB_OUTPUT
-
       - name: bump version to 0.0.0-${{ steps.short_sha.outputs.value }}
         run: |
           pnpx replace-in-files-cli \
@@ -54,5 +51,5 @@ jobs:
       - run: pnpm --filter="webstudio..." build
       - run: pnpm --filter="webstudio..." dts
 
-      - name: Publishing ${{ steps.tag.outputs.value }} tag with sha ${{ steps.short_sha.outputs.value }}
-        run: pnpm -r publish --tag "${{ steps.tag.outputs.value }}" --no-git-checks --access public
+      - name: Publishing package with sha ${{ steps.short_sha.outputs.value }}
+        run: pnpm -r publish --no-git-checks --access public
