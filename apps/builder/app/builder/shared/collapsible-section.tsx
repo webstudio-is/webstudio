@@ -9,30 +9,57 @@ import {
   Separator,
   theme,
 } from "@webstudio-is/design-system";
-import type { ComponentProps, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Simplify } from "type-fest";
 
+type Label = string;
+
 type UseOpenStateProps = {
-  label: string;
-  isOpenDefault?: boolean;
+  label: Label;
   isOpen?: boolean;
 };
 
-const stateContainer = atom<{ [label: string]: boolean }>({});
+export const CollapsibleSectionContext = createContext<{
+  accordion?: boolean;
+  initialOpen?: Label;
+}>({});
+
+const $stateContainer = atom<{
+  [label: string]: boolean;
+}>({});
 
 // Preserves the open/close state even when component gets unmounted
 export const useOpenState = ({
   label,
-  isOpenDefault = true,
   isOpen: isOpenForced,
 }: UseOpenStateProps): [boolean, (value: boolean) => void] => {
-  const state = useStore(stateContainer);
-  const isOpen = label in state ? state[label] : isOpenDefault;
+  const state = useStore($stateContainer);
+  const { accordion, initialOpen } = useContext(CollapsibleSectionContext);
   const setIsOpen = (isOpen: boolean) => {
-    stateContainer.set({ ...state, [label]: isOpen });
+    const update = { ...state };
+    if (isOpen && accordion) {
+      // In accordion mode we close everything else within that accordion.
+      for (const key in update) {
+        update[key] = false;
+      }
+    }
+    update[label] = isOpen;
+    $stateContainer.set(update);
   };
-  return [isOpenForced === undefined ? isOpen : isOpenForced, setIsOpen];
+
+  // Set initial value for accordion mode.
+  if (accordion && state[label] === undefined) {
+    state[label] = initialOpen === label;
+  }
+
+  const isOpenCurrent = state[label];
+  return [isOpenForced ?? isOpenCurrent ?? true, setIsOpen];
 };
 
 type CollapsibleSectionBaseProps = {
