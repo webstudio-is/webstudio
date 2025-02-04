@@ -92,7 +92,8 @@ propertiesData.scrollTimelineName = {
     type: "unparsed",
     value: "--scroll-timeline",
   },
-  mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
+  mdnUrl:
+    "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
 };
 
 keywordValues.listStyleType = [
