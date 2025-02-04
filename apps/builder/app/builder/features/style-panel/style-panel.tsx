@@ -14,6 +14,8 @@ import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 import { $selectedInstance } from "~/shared/awareness";
+import { CollapsibleSectionContext } from "~/builder/shared/collapsible-section";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -72,7 +74,16 @@ export const StylePanel = () => {
         <StyleSourcesSection />
       </Box>
       <Separator />
-      <ScrollArea>{all}</ScrollArea>
+      <ScrollArea>
+        <CollapsibleSectionContext.Provider
+          value={{
+            accordion: isFeatureEnabled("stylePanelModes"),
+            initialOpen: "Layout",
+          }}
+        >
+          {all}
+        </CollapsibleSectionContext.Provider>
+      </ScrollArea>
     </>
   );
 };

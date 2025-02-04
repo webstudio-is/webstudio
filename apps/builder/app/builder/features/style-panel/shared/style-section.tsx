@@ -41,6 +41,8 @@ export const StyleSection = (props: {
   // @todo remove to keep sections consistent
   fullWidth?: boolean;
   children: ReactNode;
+  accordion?: string;
+  initialOpen?: string;
 }) => {
   const { label, children, properties, fullWidth } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
