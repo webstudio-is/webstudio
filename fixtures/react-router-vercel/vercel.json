@@ -1,4 +1,5 @@
 {
+  "framework": "vite",
   "images": {
     "domains": [],
     "sizes": [
