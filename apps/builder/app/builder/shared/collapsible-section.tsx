@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -51,54 +52,50 @@ export const CollapsibleProvider = ({
   initialOpen?: Label;
 }) => {
   const state = useStore($state);
-
-  // Set initial value for accordion mode.
-  // Mutating but should be fine here as an initializer.
-  if (initialOpen && initialOpen !== "*" && state[initialOpen] === undefined) {
-    state[initialOpen] = true;
-  }
-
   useEffect(() => {
-    const newState = { ...state };
+    const nextState = { ...$state.get() };
 
     if (initialOpen === "*") {
-      for (const key in state) {
-        newState[key] = true;
+      for (const key in nextState) {
+        nextState[key] = true;
       }
-      $state.set(newState);
+      $state.set(nextState);
       return;
     }
 
     if (accordion) {
-      for (const key in state) {
-        newState[key] = false;
+      for (const key in nextState) {
+        nextState[key] = false;
       }
     }
 
     if (initialOpen) {
-      newState[initialOpen] = true;
+      nextState[initialOpen] = true;
     }
-    $state.set(newState);
+    $state.set(nextState);
   }, [accordion, initialOpen]);
 
-  const handleOpenState: HandleOpenState = (label, isOpenForced) => {
-    if (state[label] === undefined) {
-      state[label] = accordion ? false : true;
-    }
-
-    const setIsOpen = (isOpen: boolean) => {
-      const newState = { ...state };
-      if (accordion) {
-        for (const key in state) {
-          newState[key] = false;
-        }
+  const handleOpenState: HandleOpenState = useCallback(
+    (label, isOpenForced) => {
+      const nextState = { ...state };
+      if (nextState[label] === undefined) {
+        nextState[label] = accordion ? false : true;
       }
-      newState[label] = isOpen;
-      $state.set(newState);
-    };
 
-    return [isOpenForced ?? state[label], setIsOpen];
-  };
+      const setIsOpen = (isOpen: boolean) => {
+        if (accordion) {
+          for (const key in nextState) {
+            nextState[key] = false;
+          }
+        }
+        nextState[label] = isOpen;
+        $state.set(nextState);
+      };
+
+      return [isOpenForced ?? nextState[label], setIsOpen];
+    },
+    [state]
+  );
 
   return (
     <CollapsibleSectionContext.Provider value={{ handleOpenState }}>
