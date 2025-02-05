@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  useState,
-  type ElementRef,
-  type ComponentProps,
-} from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
@@ -32,7 +27,10 @@ import {
   EyeOpenIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
 import {
   addDefaultsForTransormSection,
   isTransformPanelPropertyUsed,
@@ -138,7 +136,7 @@ const TransformAdvancedPopover = () => {
 };
 
 export const Section = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useOpenState(label);
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>

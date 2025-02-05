@@ -310,13 +310,15 @@ const VariablesList = () => {
   );
 };
 
+const label = "Data Variables";
+
 export const VariablesSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useOpenState({ label: "variables" });
+  const [isOpen, setIsOpen] = useOpenState(label);
   return (
     <VariablePopoverProvider value={{ containerRef }}>
       <CollapsibleSectionRoot
-        label="Data Variables"
+        label={label}
         fullWidth={true}
         isOpen={isOpen}
         onOpenChange={setIsOpen}

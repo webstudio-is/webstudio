@@ -22,11 +22,6 @@ import type { Simplify } from "type-fest";
 
 type Label = string;
 
-type HandleOpenStateProps = {
-  label: Label;
-  isOpen?: boolean;
-};
-
 type State = {
   [label: string]: boolean;
 };
@@ -112,10 +107,7 @@ export const CollapsibleProvider = ({
   );
 };
 
-export const useOpenState = ({
-  label,
-  isOpen,
-}: HandleOpenStateProps): [boolean, (value: boolean) => void] => {
+export const useOpenState: HandleOpenState = (label, isOpen) => {
   const context = useContext(CollapsibleSectionContext);
   const localState = useState(isOpen ?? true);
   if (context === undefined) {
@@ -173,13 +165,14 @@ export const CollapsibleSectionRoot = ({
 };
 
 type CollapsibleSectionProps = Simplify<
-  Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
-    HandleOpenStateProps
+  Omit<CollapsibleSectionBaseProps, "onOpenChange"> & {
+    label: Label;
+  }
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
   const { label, trigger, children, fullWidth } = props;
-  const [isOpen, setIsOpen] = useOpenState(props);
+  const [isOpen, setIsOpen] = useOpenState(label, props.isOpen);
   return (
     <CollapsibleSectionRoot
       label={label}
@@ -207,7 +200,7 @@ export const CollapsibleSectionWithAddButton = ({
   hasItems?: boolean | ComponentProps<typeof SectionTitle>["dots"];
 }) => {
   const { label, children } = props;
-  const [isOpen, setIsOpen] = useOpenState(props);
+  const [isOpen, setIsOpen] = useOpenState(label, props.isOpen);
 
   const isEmpty =
     hasItems === false || (Array.isArray(hasItems) && hasItems.length === 0);
