@@ -74,16 +74,6 @@ export const PROJECT_TEMPLATES = [
     expand: ["react-router", "react-router-netlify"],
   },
   {
-    value: "netlify-functions" as const,
-    label: "Netlify Functions",
-    expand: ["defaults", "netlify-functions"],
-  },
-  {
-    value: "netlify-edge-functions" as const,
-    label: "Netlify Edge Functions",
-    expand: ["defaults", "netlify-edge-functions"],
-  },
-  {
     value: "ssg" as const,
     label: "Static Site Generation (SSG)",
   },
