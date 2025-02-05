@@ -13,6 +13,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
@@ -21,7 +22,7 @@ import type { Simplify } from "type-fest";
 
 type Label = string;
 
-type UseOpenStateProps = {
+type HandleOpenStateProps = {
   label: Label;
   isOpen?: boolean;
 };
@@ -30,14 +31,20 @@ type State = {
   [label: string]: boolean;
 };
 
+// Preserves the open/close state even when component gets unmounted
 const $state = atom<State>({});
 
-const CollapsibleSectionContext = createContext<{
-  useOpenState?: (
-    label: Label,
-    isOpenForced?: boolean
-  ) => [boolean, (value: boolean) => void];
-}>({});
+type HandleOpenState = (
+  label: Label,
+  isOpenForced?: boolean
+) => [boolean, (value: boolean) => void];
+
+const CollapsibleSectionContext = createContext<
+  | undefined
+  | {
+      handleOpenState: HandleOpenState;
+    }
+>(undefined);
 
 export const CollapsibleProvider = ({
   children,
@@ -79,10 +86,7 @@ export const CollapsibleProvider = ({
     $state.set(newState);
   }, [accordion, initialOpen]);
 
-  const useOpenState = (
-    label: Label,
-    isOpenForced?: boolean
-  ): [boolean, (value: boolean) => void] => {
+  const handleOpenState: HandleOpenState = (label, isOpenForced) => {
     if (state[label] === undefined) {
       state[label] = accordion ? false : true;
     }
@@ -102,19 +106,22 @@ export const CollapsibleProvider = ({
   };
 
   return (
-    <CollapsibleSectionContext.Provider value={{ useOpenState }}>
+    <CollapsibleSectionContext.Provider value={{ handleOpenState }}>
       {children}
     </CollapsibleSectionContext.Provider>
   );
 };
 
-// Preserves the open/close state even when component gets unmounted
 export const useOpenState = ({
   label,
   isOpen,
-}: UseOpenStateProps): [boolean, (value: boolean) => void] => {
-  const { useOpenState } = useContext(CollapsibleSectionContext);
-  return useOpenState?.(label, isOpen) ?? [true, () => {}];
+}: HandleOpenStateProps): [boolean, (value: boolean) => void] => {
+  const context = useContext(CollapsibleSectionContext);
+  const localState = useState(isOpen ?? true);
+  if (context === undefined) {
+    return localState;
+  }
+  return context.handleOpenState(label, isOpen);
 };
 
 type CollapsibleSectionBaseProps = {
@@ -133,39 +140,41 @@ export const CollapsibleSectionRoot = ({
   fullWidth = false,
   isOpen,
   onOpenChange,
-}: CollapsibleSectionBaseProps) => (
-  <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
-    <>
-      <Collapsible.Trigger asChild>
-        {trigger ?? (
-          <SectionTitle>
-            <SectionTitleLabel>{label}</SectionTitleLabel>
-          </SectionTitle>
-        )}
-      </Collapsible.Trigger>
+}: CollapsibleSectionBaseProps) => {
+  return (
+    <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
+      <>
+        <Collapsible.Trigger asChild>
+          {trigger ?? (
+            <SectionTitle>
+              <SectionTitleLabel>{label}</SectionTitleLabel>
+            </SectionTitle>
+          )}
+        </Collapsible.Trigger>
 
-      <Collapsible.Content asChild>
-        <Flex
-          gap="2"
-          direction="column"
-          css={{
-            pb: theme.panel.paddingBlock,
-            px: fullWidth ? 0 : theme.panel.paddingInline,
-            paddingTop: 0,
-            "&:empty": { display: "none" },
-          }}
-        >
-          {children}
-        </Flex>
-      </Collapsible.Content>
-      <Separator />
-    </>
-  </Collapsible.Root>
-);
+        <Collapsible.Content asChild>
+          <Flex
+            gap="2"
+            direction="column"
+            css={{
+              pb: theme.panel.paddingBlock,
+              px: fullWidth ? 0 : theme.panel.paddingInline,
+              paddingTop: 0,
+              "&:empty": { display: "none" },
+            }}
+          >
+            {children}
+          </Flex>
+        </Collapsible.Content>
+        <Separator />
+      </>
+    </Collapsible.Root>
+  );
+};
 
 type CollapsibleSectionProps = Simplify<
   Omit<CollapsibleSectionBaseProps, "isOpen" | "onOpenChange"> &
-    UseOpenStateProps
+    HandleOpenStateProps
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
