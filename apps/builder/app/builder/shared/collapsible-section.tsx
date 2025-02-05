@@ -118,8 +118,8 @@ type CollapsibleSectionBaseProps = {
   children: ReactNode;
   fullWidth?: boolean;
   label: string;
-  isOpen: boolean;
-  onOpenChange: (value: boolean) => void;
+  isOpen?: boolean;
+  onOpenChange?: (value: boolean) => void;
 };
 
 export const CollapsibleSectionRoot = ({

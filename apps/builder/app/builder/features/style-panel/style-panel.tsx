@@ -23,7 +23,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 import { $selectedInstance } from "~/shared/awareness";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   $settings,
