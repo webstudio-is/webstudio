@@ -123,9 +123,7 @@ export const StylePanel = () => {
       <Separator />
       <ScrollArea>
         <CollapsibleProvider
-          accordion={
-            isFeatureEnabled("stylePanelModes") && stylePanelMode === "focus"
-          }
+          accordion={stylePanelMode === "focus"}
           initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
         >
           {all}

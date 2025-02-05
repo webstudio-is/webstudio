@@ -33,6 +33,7 @@ import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -176,7 +177,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                   }}
                 >
                   <InstanceInfo instance={selectedInstance} />
-                  <ModeMenu />
+                  {isFeatureEnabled("stylePanelModes") && <ModeMenu />}
                 </Flex>
                 <StylePanel />
               </PanelTabsContent>
