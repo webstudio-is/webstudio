@@ -12,6 +12,7 @@ import {
 import {
   createContext,
   useContext,
+  useEffect,
   type ComponentProps,
   type ReactNode,
 } from "react";
@@ -25,41 +26,95 @@ type UseOpenStateProps = {
   isOpen?: boolean;
 };
 
-export const CollapsibleSectionContext = createContext<{
-  accordion?: boolean;
-  initialOpen?: Label;
+type State = {
+  [label: string]: boolean;
+};
+
+const $state = atom<State>({});
+
+const CollapsibleSectionContext = createContext<{
+  useOpenState?: (
+    label: Label,
+    isOpenForced?: boolean
+  ) => [boolean, (value: boolean) => void];
 }>({});
 
-const $stateContainer = atom<{
-  [label: string]: boolean;
-}>({});
+export const CollapsibleProvider = ({
+  children,
+  accordion,
+  initialOpen,
+}: {
+  children: ReactNode;
+  accordion?: boolean;
+  initialOpen?: Label;
+}) => {
+  const state = useStore($state);
+
+  // Set initial value for accordion mode.
+  // Mutating but should be fine here as an initializer.
+  if (initialOpen && initialOpen !== "*" && state[initialOpen] === undefined) {
+    state[initialOpen] = true;
+  }
+
+  useEffect(() => {
+    const newState = { ...state };
+
+    if (initialOpen === "*") {
+      for (const key in state) {
+        newState[key] = true;
+      }
+      $state.set(newState);
+      return;
+    }
+
+    if (accordion) {
+      for (const key in state) {
+        newState[key] = false;
+      }
+    }
+
+    if (initialOpen) {
+      newState[initialOpen] = true;
+    }
+    $state.set(newState);
+  }, [accordion, initialOpen]);
+
+  const useOpenState = (
+    label: Label,
+    isOpenForced?: boolean
+  ): [boolean, (value: boolean) => void] => {
+    if (state[label] === undefined) {
+      state[label] = accordion ? false : true;
+    }
+
+    const setIsOpen = (isOpen: boolean) => {
+      const newState = { ...state };
+      if (accordion) {
+        for (const key in state) {
+          newState[key] = false;
+        }
+      }
+      newState[label] = isOpen;
+      $state.set(newState);
+    };
+
+    return [isOpenForced ?? state[label], setIsOpen];
+  };
+
+  return (
+    <CollapsibleSectionContext.Provider value={{ useOpenState }}>
+      {children}
+    </CollapsibleSectionContext.Provider>
+  );
+};
 
 // Preserves the open/close state even when component gets unmounted
 export const useOpenState = ({
   label,
-  isOpen: isOpenForced,
+  isOpen,
 }: UseOpenStateProps): [boolean, (value: boolean) => void] => {
-  const state = useStore($stateContainer);
-  const { accordion, initialOpen } = useContext(CollapsibleSectionContext);
-  const setIsOpen = (isOpen: boolean) => {
-    const update = { ...state };
-    if (isOpen && accordion) {
-      // In accordion mode we close everything else within that accordion.
-      for (const key in update) {
-        update[key] = false;
-      }
-    }
-    update[label] = isOpen;
-    $stateContainer.set(update);
-  };
-
-  // Set initial value for accordion mode.
-  if (accordion && state[label] === undefined) {
-    state[label] = initialOpen === label;
-  }
-
-  const isOpenCurrent = state[label];
-  return [isOpenForced ?? isOpenCurrent ?? true, setIsOpen];
+  const { useOpenState } = useContext(CollapsibleSectionContext);
+  return useOpenState?.(label, isOpen) ?? [true, () => {}];
 };
 
 type CollapsibleSectionBaseProps = {

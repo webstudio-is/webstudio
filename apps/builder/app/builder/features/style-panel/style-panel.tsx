@@ -5,6 +5,14 @@ import {
   Text,
   Separator,
   ScrollArea,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  IconButton,
+  DropdownMenuContent,
+  DropdownMenuRadioItem,
+  MenuCheckedIcon,
+  DropdownMenuRadioGroup,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
@@ -14,8 +22,15 @@ import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 import { $selectedInstance } from "~/shared/awareness";
-import { CollapsibleSectionContext } from "~/builder/shared/collapsible-section";
+import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { EllipsesIcon } from "@webstudio-is/icons";
+import {
+  $settings,
+  getSetting,
+  setSetting,
+  type Settings,
+} from "~/builder/shared/client-settings";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -27,7 +42,38 @@ const $selectedInstanceTag = computed(
   }
 );
 
+export const ModeMenu = () => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <IconButton>
+          <EllipsesIcon />
+        </IconButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent sideOffset={Number.parseFloat(rawTheme.spacing[5])}>
+        <DropdownMenuRadioGroup
+          value={getSetting("stylePanelMode")}
+          onValueChange={(value) => {
+            setSetting("stylePanelMode", value as Settings["stylePanelMode"]);
+          }}
+        >
+          <DropdownMenuRadioItem value="default" icon={<MenuCheckedIcon />}>
+            Default
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="focus" icon={<MenuCheckedIcon />}>
+            Focus mode
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
+            Advanced mode
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const StylePanel = () => {
+  const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
   const display = useParentComputedStyleDecl("display");
@@ -75,14 +121,14 @@ export const StylePanel = () => {
       </Box>
       <Separator />
       <ScrollArea>
-        <CollapsibleSectionContext.Provider
-          value={{
-            accordion: isFeatureEnabled("stylePanelModes"),
-            initialOpen: "Layout",
-          }}
+        <CollapsibleProvider
+          accordion={
+            isFeatureEnabled("stylePanelModes") && stylePanelMode === "focus"
+          }
+          initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
         >
           {all}
-        </CollapsibleSectionContext.Provider>
+        </CollapsibleProvider>
       </ScrollArea>
     </>
   );
