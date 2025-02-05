@@ -13,6 +13,10 @@ import {
   MenuCheckedIcon,
   DropdownMenuRadioGroup,
   rawTheme,
+  Kbd,
+  Flex,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
@@ -30,6 +34,7 @@ import {
   setSetting,
   type Settings,
 } from "~/builder/shared/client-settings";
+import { useState } from "react";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -42,6 +47,9 @@ const $selectedInstanceTag = computed(
 );
 
 export const ModeMenu = () => {
+  const value = getSetting("stylePanelMode");
+  const [focusedValue, setFocusedValue] = useState<string>(value);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -49,24 +57,49 @@ export const ModeMenu = () => {
           <EllipsesIcon />
         </IconButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent sideOffset={Number.parseFloat(rawTheme.spacing[5])}>
+      <DropdownMenuContent
+        sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+        css={{ width: theme.spacing[25] }}
+      >
         <DropdownMenuRadioGroup
-          value={getSetting("stylePanelMode")}
+          value={value}
           onValueChange={(value) => {
             setSetting("stylePanelMode", value as Settings["stylePanelMode"]);
           }}
         >
-          <DropdownMenuRadioItem value="default" icon={<MenuCheckedIcon />}>
+          <DropdownMenuRadioItem
+            value="default"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("default")}
+          >
             Default
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="focus" icon={<MenuCheckedIcon />}>
-            Focus mode
+          <DropdownMenuRadioItem
+            value="focus"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("focus")}
+          >
+            <Flex justify="between" grow>
+              <Text>Focus mode</Text> <Kbd value={["option", "shift", "s"]} />
+            </Flex>
           </DropdownMenuRadioItem>
           {/*
           <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
             Advanced mode
           </DropdownMenuRadioItem> */}
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+
+        {focusedValue === "default" && (
+          <DropdownMenuItem hint>
+            All sections are open by default.
+          </DropdownMenuItem>
+        )}
+        {focusedValue === "focus" && (
+          <DropdownMenuItem hint>
+            Only one section is open at a time.
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
