@@ -94,7 +94,7 @@ export const CollapsibleProvider = ({
 
       return [isOpenForced ?? nextState[label], setIsOpen];
     },
-    [state]
+    [state, accordion]
   );
 
   return (
