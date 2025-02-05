@@ -4,7 +4,6 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuPortal,
   DropdownMenuItem,
   DropdownMenuLabel,
   Avatar,
@@ -73,38 +72,36 @@ export const ProfileMenu = ({
           }
         />
       </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel>
-            {user.username ?? defaultUserName}
-            <Text>{user.email}</Text>
-          </DropdownMenuLabel>
-          {userPlanFeatures.hasSubscription && (
-            <DropdownMenuItem
-              onSelect={() => navigate(userPlanSubscriptionPath())}
-            >
-              Manage Subscription
-            </DropdownMenuItem>
-          )}
-          {userPlanFeatures.hasProPlan === false && (
-            <DropdownMenuItem
-              onSelect={() => {
-                window.open("https://webstudio.is/pricing");
-              }}
-              css={{
-                gap: theme.spacing[3],
-              }}
-            >
-              <UpgradeIcon />
-              <div>Upgrade to Pro</div>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-            Sign Out
+      <DropdownMenuContent align="start">
+        <DropdownMenuLabel>
+          {user.username ?? defaultUserName}
+          <Text>{user.email}</Text>
+        </DropdownMenuLabel>
+        {userPlanFeatures.hasSubscription && (
+          <DropdownMenuItem
+            onSelect={() => navigate(userPlanSubscriptionPath())}
+          >
+            Manage Subscription
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+        )}
+        {userPlanFeatures.hasProPlan === false && (
+          <DropdownMenuItem
+            onSelect={() => {
+              window.open("https://webstudio.is/pricing");
+            }}
+            css={{
+              gap: theme.spacing[3],
+            }}
+          >
+            <UpgradeIcon />
+            <div>Upgrade to Pro</div>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
