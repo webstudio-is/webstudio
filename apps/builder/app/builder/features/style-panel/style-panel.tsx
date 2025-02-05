@@ -5,6 +5,18 @@ import {
   Text,
   Separator,
   ScrollArea,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  IconButton,
+  DropdownMenuContent,
+  DropdownMenuRadioItem,
+  MenuCheckedIcon,
+  DropdownMenuRadioGroup,
+  rawTheme,
+  Kbd,
+  Flex,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
@@ -14,8 +26,15 @@ import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 import { $selectedInstance } from "~/shared/awareness";
-import { CollapsibleSectionContext } from "~/builder/shared/collapsible-section";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
+import { EllipsesIcon } from "@webstudio-is/icons";
+import {
+  $settings,
+  getSetting,
+  setSetting,
+  type Settings,
+} from "~/builder/shared/client-settings";
+import { useState } from "react";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -27,7 +46,67 @@ const $selectedInstanceTag = computed(
   }
 );
 
+export const ModeMenu = () => {
+  const value = getSetting("stylePanelMode");
+  const [focusedValue, setFocusedValue] = useState<string>(value);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <IconButton>
+          <EllipsesIcon />
+        </IconButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+        css={{ width: theme.spacing[25] }}
+      >
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={(value) => {
+            setSetting("stylePanelMode", value as Settings["stylePanelMode"]);
+          }}
+        >
+          <DropdownMenuRadioItem
+            value="default"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("default")}
+          >
+            Default
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
+            value="focus"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("focus")}
+          >
+            <Flex justify="between" grow>
+              <Text>Focus mode</Text> <Kbd value={["alt", "shift", "s"]} />
+            </Flex>
+          </DropdownMenuRadioItem>
+          {/*
+          <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
+            Advanced mode
+          </DropdownMenuRadioItem> */}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+
+        {focusedValue === "default" && (
+          <DropdownMenuItem hint>
+            All sections are open by default.
+          </DropdownMenuItem>
+        )}
+        {focusedValue === "focus" && (
+          <DropdownMenuItem hint>
+            Only one section is open at a time.
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export const StylePanel = () => {
+  const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
   const display = useParentComputedStyleDecl("display");
@@ -75,14 +154,12 @@ export const StylePanel = () => {
       </Box>
       <Separator />
       <ScrollArea>
-        <CollapsibleSectionContext.Provider
-          value={{
-            accordion: isFeatureEnabled("stylePanelModes"),
-            initialOpen: "Layout",
-          }}
+        <CollapsibleProvider
+          accordion={stylePanelMode === "focus"}
+          initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
         >
           {all}
-        </CollapsibleSectionContext.Provider>
+        </CollapsibleProvider>
       </ScrollArea>
     </>
   );

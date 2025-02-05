@@ -199,7 +199,7 @@ export const PropertyInfo = ({
               <ResetIcon />
             </Flex>
           }
-          suffix={<Kbd value={["option", "click"]} color="moreSubtle" />}
+          suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
           css={{ gridTemplateColumns: "1fr max-content 1fr" }}
           onClick={onReset}
         >

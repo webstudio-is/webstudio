@@ -5,6 +5,7 @@ const Settings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   isAiMenuOpen: z.boolean().default(true),
   isAiCommandBarVisible: z.boolean().default(false),
+  stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
 });
 
 export type Settings = z.infer<typeof Settings>;

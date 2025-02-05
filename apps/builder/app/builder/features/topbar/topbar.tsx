@@ -41,7 +41,7 @@ const PagesButton = () => {
       content={
         <Text>
           {"Pages or page settings "}
-          <Kbd value={["option", "click"]} color="moreSubtle" />
+          <Kbd value={["alt", "click"]} color="moreSubtle" />
         </Text>
       }
     >

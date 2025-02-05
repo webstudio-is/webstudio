@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -12,7 +11,10 @@ import {
   type LayerValueItem,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 import { repeatUntil } from "~/shared/array-utils";
@@ -83,7 +85,7 @@ const getLayerLabel = ({
 };
 
 export const Section = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useOpenState(label);
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector

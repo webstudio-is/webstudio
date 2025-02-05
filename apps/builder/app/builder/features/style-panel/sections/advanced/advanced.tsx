@@ -83,7 +83,7 @@ const AdvancedStyleSection = (props: {
   children: ReactNode;
 }) => {
   const { label, children, properties, onAdd } = props;
-  const [isOpen, setIsOpen] = useOpenState(props);
+  const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot

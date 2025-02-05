@@ -203,7 +203,7 @@ export const TemplatesMenu = ({
                     display: hasChildren ? undefined : "none",
                   }}
                 >
-                  <Kbd value={["option", "click"]} /> <Text>to add before</Text>
+                  <Kbd value={["alt", "click"]} /> <Text>to add before</Text>
                 </Flex>
               </Grid>
             </div>
@@ -303,7 +303,7 @@ export const BlockChildHoveredInstanceOutline = () => {
         gap={1}
         css={{ order: 1, display: !hasChildren ? "none" : undefined }}
       >
-        <Kbd value={["option", "click"]} color="contrast" />{" "}
+        <Kbd value={["alt", "click"]} color="contrast" />{" "}
         <Text color="subtle">to delete</Text>
       </Flex>
     </Grid>

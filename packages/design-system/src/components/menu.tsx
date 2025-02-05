@@ -61,7 +61,7 @@ export const menuItemCss = css({
   borderRadius: theme.borderRadius[3],
   // override button default styles
   backgroundColor: "transparent",
-  "&:focus, &[data-found], &[aria-selected=true], &[data-state=open], &[data-state=checked]":
+  "&:focus, &[data-found], &[aria-selected=true], &[data-state=open], &[data-state=checked]:is(:hover,:focus)":
     {
       backgroundColor: theme.colors.backgroundItemMenuItemHover,
     },
