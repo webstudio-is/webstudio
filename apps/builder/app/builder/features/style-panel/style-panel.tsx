@@ -63,9 +63,10 @@ export const ModeMenu = () => {
           <DropdownMenuRadioItem value="focus" icon={<MenuCheckedIcon />}>
             Focus mode
           </DropdownMenuRadioItem>
+          {/*
           <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
             Advanced mode
-          </DropdownMenuRadioItem>
+          </DropdownMenuRadioItem> */}
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
