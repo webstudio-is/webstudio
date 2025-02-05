@@ -6,7 +6,7 @@ const isMac =
 const shortcutSymbolMap: Record<string, string> = {
   cmd: isMac ? "⌘" : "Ctrl",
   shift: "⇧",
-  option: isMac ? "⌥" : "Alt",
+  alt: isMac ? "⌥" : "Alt",
   backspace: "⌫",
   enter: "↵",
   tab: isMac ? "tab" : "Tab",

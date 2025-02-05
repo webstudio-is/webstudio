@@ -80,7 +80,7 @@ export const ModeMenu = () => {
             onFocus={() => setFocusedValue("focus")}
           >
             <Flex justify="between" grow>
-              <Text>Focus mode</Text> <Kbd value={["option", "shift", "s"]} />
+              <Text>Focus mode</Text> <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
           {/*
