@@ -353,7 +353,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleStylePanelFocusMode",
-      defaultHotkeys: ["option+shift+s"],
+      defaultHotkeys: ["alt+shift+s"],
       handler: () => {
         setSetting(
           "stylePanelMode",
