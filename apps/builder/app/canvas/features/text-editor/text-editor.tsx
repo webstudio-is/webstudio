@@ -89,6 +89,7 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import {
   $selectedPage,
   addTemporaryInstance,
+  getInstancePath,
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
@@ -1044,7 +1045,10 @@ const RichTextContentPluginInternal = ({
 
           if (blockChildSelector) {
             updateWebstudioData((data) => {
-              deleteInstanceMutable(data, rootInstanceSelector);
+              deleteInstanceMutable(
+                data,
+                getInstancePath(rootInstanceSelector, data.instances)
+              );
             });
           }
         }
@@ -1113,7 +1117,10 @@ const RichTextContentPluginInternal = ({
               updateWebstudioData((data) => {
                 deleteInstanceMutable(
                   data,
-                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                  getInstancePath(
+                    isLastChild ? parentInstanceSelector : rootInstanceSelector,
+                    data.instances
+                  )
                 );
               });
 
@@ -1128,7 +1135,10 @@ const RichTextContentPluginInternal = ({
               onNext(editor.getEditorState(), { reason: "left" });
 
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, blockChildSelector);
+                deleteInstanceMutable(
+                  data,
+                  getInstancePath(blockChildSelector, data.instances)
+                );
               });
 
               event.preventDefault();
@@ -1218,7 +1228,12 @@ const RichTextContentPluginInternal = ({
                 updateWebstudioData((data) => {
                   deleteInstanceMutable(
                     data,
-                    isLastChild ? parentInstanceSelector : rootInstanceSelector
+                    getInstancePath(
+                      isLastChild
+                        ? parentInstanceSelector
+                        : rootInstanceSelector,
+                      data.instances
+                    )
                   );
                 });
               }

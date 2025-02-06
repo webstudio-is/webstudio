@@ -25,6 +25,7 @@ import {
   findClosestInsertable,
 } from "../instance-utils";
 import { isInstanceDetachable } from "../matcher";
+import { $selectedInstancePath } from "../awareness";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -203,20 +204,20 @@ export const onCopy = () => {
 };
 
 export const onCut = () => {
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
-  if (selectedInstanceSelector === undefined) {
+  const instancePath = $selectedInstancePath.get();
+  if (instancePath === undefined) {
     return;
   }
   // @todo tell user they can't delete root
-  if (selectedInstanceSelector.length === 1) {
+  if (instancePath.length === 1) {
     return;
   }
-  const data = getTreeData(selectedInstanceSelector);
+  const data = getTreeData(instancePath[0].instanceSelector);
   if (data === undefined) {
     return;
   }
   updateWebstudioData((data) => {
-    deleteInstanceMutable(data, selectedInstanceSelector);
+    deleteInstanceMutable(data, instancePath);
   });
   if (data === undefined) {
     return;

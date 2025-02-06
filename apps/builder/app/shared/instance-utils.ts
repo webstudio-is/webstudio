@@ -58,7 +58,13 @@ import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
-import { $awareness, $selectedPage, selectInstance } from "./awareness";
+import {
+  $awareness,
+  $selectedPage,
+  getInstancePath,
+  selectInstance,
+  type InstancePath,
+} from "./awareness";
 import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
@@ -364,7 +370,10 @@ export const reparentInstance = (
     if (reparentDropTarget === undefined) {
       return;
     }
-    deleteInstanceMutable(data, sourceInstanceSelector);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(sourceInstanceSelector, data.instances)
+    );
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
@@ -394,8 +403,8 @@ export const reparentInstance = (
 };
 
 export const deleteInstanceMutable = (
-  data: WebstudioData,
-  instanceSelector: InstanceSelector
+  data: Omit<WebstudioData, "pages">,
+  instancePath: InstancePath
 ) => {
   const {
     instances,
@@ -406,14 +415,11 @@ export const deleteInstanceMutable = (
     dataSources,
     resources,
   } = data;
-  let targetInstanceId = instanceSelector[0];
-  const parentInstanceId = instanceSelector[1];
+  let targetInstance = instancePath[0].instance;
   let parentInstance =
-    parentInstanceId === undefined
-      ? undefined
-      : instances.get(parentInstanceId);
-  const grandparentInstanceId = instanceSelector[2];
-  const grandparentInstance = instances.get(grandparentInstanceId);
+    instancePath.length > 1 ? instancePath[1]?.instance : undefined;
+  const grandparentInstance =
+    instancePath.length > 2 ? instancePath[2]?.instance : undefined;
 
   // delete parent fragment too if its last child is going to be deleted
   // use case for slots: slot became empty and remove display: contents
@@ -423,18 +429,13 @@ export const deleteInstanceMutable = (
     parentInstance.children.length === 1 &&
     grandparentInstance
   ) {
-    targetInstanceId = parentInstance.id;
-    parentInstance = grandparentInstance;
-  }
-
-  // skip parent fake "item" instance and use grandparent collection as parent
-  if (grandparentInstance?.component === collectionComponent) {
+    targetInstance = parentInstance;
     parentInstance = grandparentInstance;
   }
 
   const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,
-    targetInstanceId
+    targetInstance.id
   );
   const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
     styleSources.values(),
@@ -446,7 +447,7 @@ export const deleteInstanceMutable = (
   if (parentInstance) {
     removeByMutable(
       parentInstance.children,
-      (child) => child.type === "id" && child.value === targetInstanceId
+      (child) => child.type === "id" && child.value === targetInstance.id
     );
   }
 
@@ -457,13 +458,13 @@ export const deleteInstanceMutable = (
   for (const prop of props.values()) {
     if (instanceIds.has(prop.instanceId)) {
       props.delete(prop.id);
+      if (prop.type === "resource") {
+        resources.delete(prop.value);
+      }
     }
   }
   for (const dataSource of dataSources.values()) {
-    if (
-      dataSource.scopeInstanceId !== undefined &&
-      instanceIds.has(dataSource.scopeInstanceId)
-    ) {
+    if (instanceIds.has(dataSource.scopeInstanceId)) {
       dataSources.delete(dataSource.id);
       if (dataSource.type === "resource") {
         resources.delete(dataSource.resourceId);

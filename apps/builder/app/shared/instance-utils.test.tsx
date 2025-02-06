@@ -8,17 +8,16 @@ import {
   expression,
   renderTemplate,
   renderData,
+  ResourceValue,
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type {
   Asset,
   Breakpoint,
-  DataSource,
   Instance,
   Instances,
   Prop,
-  Resource,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -59,7 +58,7 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import { $awareness, selectInstance } from "./awareness";
+import { $awareness, getInstancePath, selectInstance } from "./awareness";
 
 enableMapSet();
 registerContainers();
@@ -120,14 +119,6 @@ const createInstance = (
   children: Instance["children"]
 ): Instance => {
   return { type: "instance", id, component, children };
-};
-
-const createInstancePair = (
-  id: Instance["id"],
-  component: string,
-  children: Instance["children"]
-): [Instance["id"], Instance] => {
-  return [id, { type: "instance", id, component, children }];
 };
 
 const createStyleDecl = (
@@ -746,98 +737,145 @@ const getWebstudioDataStub = (
 
 describe("delete instance", () => {
   test("delete instance with its children", () => {
-    // body
-    //   box1
-    //     box11
-    //   box2
-    const instances = new Map([
-      createInstancePair("body", "Body", [
-        { type: "id", value: "box1" },
-        { type: "id", value: "box2" },
-      ]),
-      createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
-      createInstancePair("box11", "Box", []),
-      createInstancePair("box2", "Box", []),
-    ]);
-    $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioDataStub({ instances });
-    deleteInstanceMutable(data, ["box1", "body"]);
-    expect(data.instances).toEqual(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
-        createInstancePair("box2", "Box", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId">
+          <$.Box ws:id="sectionId"></$.Box>
+        </$.Box>
+        <$.Box ws:id="divId"></$.Box>
+      </$.Body>
     );
+    expect(data.instances.size).toEqual(4);
+    expect(data.instances.get("bodyId")?.children.length).toEqual(2);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(["boxId", "bodyId"], data.instances)
+    );
+    expect(data.instances.size).toEqual(2);
+    expect(data.instances.get("bodyId")?.children.length).toEqual(1);
+  });
+
+  test("delete instance from collection", () => {
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <ws.collection ws:id="collectionId">
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.collection>
+      </$.Body>
+    );
+    expect(data.instances.size).toEqual(3);
+    expect(data.instances.get("collectionId")?.children.length).toEqual(1);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(
+        ["boxId", "collectionId[0]", "collectionId", "bodyId"],
+        data.instances
+      )
+    );
+    expect(data.instances.size).toEqual(2);
+    expect(data.instances.get("collectionId")?.children.length).toEqual(0);
   });
 
   test("delete instance from collection item", () => {
-    // body
-    //   list
-    //     box
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
-      createInstancePair("list", collectionComponent, [
-        { type: "id", value: "box" },
-      ]),
-      createInstancePair("box", "Box", []),
-    ]);
-    $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioDataStub({ instances });
-    deleteInstanceMutable(data, ["box", "list[0]", "list", "body"]);
-    expect(data.instances).toEqual(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
-        createInstancePair("list", collectionComponent, []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <ws.collection ws:id="collectionId">
+          <$.Box ws:id="boxId">
+            <$.Text ws:id="textId"></$.Text>
+          </$.Box>
+        </ws.collection>
+      </$.Body>
     );
+    expect(data.instances.size).toEqual(4);
+    expect(data.instances.get("boxId")?.children.length).toEqual(1);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(
+        ["textId", "boxId", "collectionId[0]", "collectionId", "bodyId"],
+        data.instances
+      )
+    );
+    expect(data.instances.size).toEqual(3);
+    expect(data.instances.get("boxId")?.children.length).toEqual(0);
   });
 
-  test("delete resource along with variable", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", []),
-    ]);
-    const resources = toMap<Resource>([
-      {
-        id: "resourceId",
-        name: "My Resource",
-        url: `""`,
-        method: "get",
-        headers: [],
-      },
-    ]);
-    const dataSources = toMap<DataSource>([
-      {
-        id: "resourceVariableId",
-        scopeInstanceId: "box",
-        name: "My Resource Variable",
-        type: "resource",
-        resourceId: "resourceId",
-      },
-    ]);
-    $registeredComponentMetas.set(createFakeComponentMetas({}));
-
-    const data = getWebstudioDataStub({ instances, resources, dataSources });
-    deleteInstanceMutable(data, ["box", "body"]);
-
-    expect(data.instances).toEqual(toMap([createInstance("body", "Body", [])]));
-    expect(data.dataSources).toEqual(new Map());
-    expect(data.resources).toEqual(new Map());
+  test("delete resource bound to variable", () => {
+    const myResource = new ResourceValue("My Resource", {
+      url: expression`""`,
+      method: "get",
+      headers: [],
+    });
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId" vars={expression`${myResource}`}></$.Box>
+      </$.Body>
+    );
+    expect(data.resources.size).toEqual(1);
+    expect(data.dataSources.size).toEqual(1);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(["boxId", "bodyId"], data.instances)
+    );
+    expect(data.resources.size).toEqual(0);
+    expect(data.dataSources.size).toEqual(0);
   });
 
-  test("delete instance without meta", () => {
-    // body
-    //   invalid
-    const instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "invalid" }]),
-      createInstancePair("invalid", "Invalid", []),
-    ]);
-    $registeredComponentMetas.set(new Map());
-    const data = getWebstudioDataStub({ instances });
-    deleteInstanceMutable(data, ["invalid", "body"]);
-    expect(data.instances).toEqual(
-      new Map([createInstancePair("body", "Body", [])])
+  test("delete resource bound to prop", () => {
+    const myResource = new ResourceValue("My Resource", {
+      url: expression`""`,
+      method: "get",
+      headers: [],
+    });
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId" action={myResource}></$.Box>
+      </$.Body>
     );
+    expect(data.resources.size).toEqual(1);
+    expect(data.props.size).toEqual(1);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(["boxId", "bodyId"], data.instances)
+    );
+    expect(data.resources.size).toEqual(0);
+    expect(data.props.size).toEqual(0);
+  });
+
+  test("delete unknown instance (just in case)", () => {
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Invalid ws:id="invalidId"></$.Invalid>
+      </$.Body>
+    );
+    expect(data.instances.size).toEqual(2);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(["invalidId", "bodyId"], data.instances)
+    );
+    expect(data.instances.size).toEqual(1);
+  });
+
+  test("delete slot fragment along with last child", () => {
+    const data = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Slot ws:id="slotId">
+          <$.Fragment ws:id="fragmentId">
+            <$.Box ws:id="boxId"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    expect(data.instances.size).toEqual(4);
+    expect(data.instances.get("fragmentId")?.children.length).toEqual(1);
+    deleteInstanceMutable(
+      data,
+      getInstancePath(
+        ["boxId", "fragmentId", "slotId", "bodyId"],
+        data.instances
+      )
+    );
+    expect(data.instances.size).toEqual(2);
+    expect(data.instances.get("slotId")?.children.length).toEqual(0);
   });
 });
 

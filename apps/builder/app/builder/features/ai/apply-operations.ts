@@ -20,7 +20,7 @@ import {
   $styles,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance, getInstancePath } from "~/shared/awareness";
 import { isInstanceDetachable } from "~/shared/matcher";
 
 export const applyOperations = (operations: operations.WsOperations) => {
@@ -107,7 +107,10 @@ const deleteInstanceByOp = (
       ) {
         return;
       }
-      deleteInstanceMutable(data, instanceSelector);
+      deleteInstanceMutable(
+        data,
+        getInstancePath(instanceSelector, data.instances)
+      );
     });
   }
 };

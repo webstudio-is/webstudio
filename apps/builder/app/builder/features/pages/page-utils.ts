@@ -23,7 +23,12 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { insertPageCopyMutable } from "~/shared/page-utils";
-import { $selectedPage, getInstanceKey, selectPage } from "~/shared/awareness";
+import {
+  $selectedPage,
+  getInstanceKey,
+  getInstancePath,
+  selectPage,
+} from "~/shared/awareness";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -209,7 +214,10 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
-    deleteInstanceMutable(data, [rootInstanceId]);
+    deleteInstanceMutable(
+      data,
+      getInstancePath([rootInstanceId], data.instances)
+    );
   }
   removeByMutable(pages.pages, (page) => page.id === pageId);
   cleanupChildRefsMutable(pageId, pages.folders);

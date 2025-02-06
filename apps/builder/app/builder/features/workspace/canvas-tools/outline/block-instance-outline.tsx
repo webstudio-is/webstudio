@@ -48,6 +48,7 @@ import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 
 import { insertTemplateAt } from "./block-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { getInstancePath } from "~/shared/awareness";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -382,7 +383,10 @@ export const BlockChildHoveredInstanceOutline = () => {
                 }
 
                 updateWebstudioData((data) => {
-                  deleteInstanceMutable(data, outline.selector);
+                  deleteInstanceMutable(
+                    data,
+                    getInstancePath(outline.selector, data.instances)
+                  );
                 });
 
                 setButtonOutline(undefined);
