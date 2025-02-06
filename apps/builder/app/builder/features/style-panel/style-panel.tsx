@@ -137,6 +137,7 @@ export const StylePanel = () => {
   const all = [];
 
   for (const [category, { Section }] of sections.entries()) {
+    // In advanced mode we only need to show advanced panel
     if (stylePanelMode === "advanced" && category !== "advanced") {
       continue;
     }
