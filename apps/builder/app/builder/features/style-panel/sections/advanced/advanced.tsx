@@ -291,7 +291,7 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
         />
       }
     >
-      <Label color={color} text="mono">
+      <Label color={color} text="mono" css={{ backgroundColor: "transparent" }}>
         {label}
       </Label>
     </Tooltip>
