@@ -35,6 +35,7 @@ import {
   type Settings,
 } from "~/builder/shared/client-settings";
 import { useState } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -83,10 +84,15 @@ export const ModeMenu = () => {
               <Text>Focus mode</Text> <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
-          {/*
-          <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
-            Advanced mode
-          </DropdownMenuRadioItem> */}
+          {isFeatureEnabled("stylePanelAdvancedMode") && (
+            <DropdownMenuRadioItem
+              value="advanced"
+              icon={<MenuCheckedIcon />}
+              onFocus={() => setFocusedValue("advanced")}
+            >
+              Advanced mode
+            </DropdownMenuRadioItem>
+          )}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
 
@@ -99,6 +105,9 @@ export const ModeMenu = () => {
           <DropdownMenuItem hint>
             Only one section is open at a time.
           </DropdownMenuItem>
+        )}
+        {focusedValue === "advanced" && (
+          <DropdownMenuItem hint>Advanced section only.</DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -128,6 +137,9 @@ export const StylePanel = () => {
   const all = [];
 
   for (const [category, { Section }] of sections.entries()) {
+    if (stylePanelMode === "advanced" && category !== "advanced") {
+      continue;
+    }
     // show flex child UI only when parent is flex or inline-flex
     if (category === "flexChild" && displayValue.includes("flex") === false) {
       continue;

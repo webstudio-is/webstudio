@@ -177,7 +177,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                   }}
                 >
                   <InstanceInfo instance={selectedInstance} />
-                  {isFeatureEnabled("stylePanelModes") && <ModeMenu />}
+                  <ModeMenu />
                 </Flex>
                 <StylePanel />
               </PanelTabsContent>
