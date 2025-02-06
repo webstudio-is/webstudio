@@ -240,6 +240,10 @@ const $model = computed(
   }
 );
 
+/**
+ * Will be deleted along with CSS Preview.
+ * @deprecated
+ */
 export const $definedComputedStyles = computed(
   [
     $definedStyles,

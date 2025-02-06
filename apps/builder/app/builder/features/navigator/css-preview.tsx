@@ -28,7 +28,7 @@ const preStyle = css(textVariants.mono, {
 // - Compiles a CSS string from the style engine
 // - Groups by category and separates categories with comments
 const getCssText = (
-  computedStyles: ComputedStyleDecl[],
+  definedComputedStyles: ComputedStyleDecl[],
   instanceId: string
 ) => {
   const sourceStyles: StyleMap = new Map();
@@ -36,7 +36,7 @@ const getCssText = (
   const presetStyles: StyleMap = new Map();
 
   // Aggregate styles by category so we can group them when rendering.
-  for (const styleDecl of computedStyles) {
+  for (const styleDecl of definedComputedStyles) {
     const property = hyphenateProperty(styleDecl.property) as StyleProperty;
     let group;
     if (
@@ -77,15 +77,19 @@ const getCssText = (
 
 const $highlightedCss = computed(
   [$selectedInstance, $definedComputedStyles],
-  (instance, computedStyles) => {
+  (instance, definedComputedStyles) => {
     if (instance === undefined) {
       return;
     }
-    const cssText = getCssText(computedStyles, instance.id);
+    const cssText = getCssText(definedComputedStyles, instance.id);
     return highlightCss(cssText);
   }
 );
 
+/**
+ * Will be deleted soon in favor of advanced panel as soon as it has ability to select.
+ * @deprecated
+ */
 export const CssPreview = () => {
   const code = useStore($highlightedCss);
   if (code === undefined) {

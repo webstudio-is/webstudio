@@ -72,6 +72,7 @@ import {
 } from "~/shared/nano-states";
 import { useClientSupports } from "~/shared/client-supports";
 import { $selectedInstancePath } from "~/shared/awareness";
+import { $settings } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -381,8 +382,16 @@ const $advancedProperties = computed(
     $styleSourceSelections,
     $matchingBreakpoints,
     $styles,
+    $settings,
   ],
-  (instancePath, metas, styleSourceSelections, matchingBreakpoints, styles) => {
+  (
+    instancePath,
+    metas,
+    styleSourceSelections,
+    matchingBreakpoints,
+    styles,
+    settings
+  ) => {
     if (instancePath === undefined) {
       return [];
     }
@@ -402,6 +411,11 @@ const $advancedProperties = computed(
     }
     const advancedProperties = new Set<StyleProperty>(initialProperties);
     for (const { property, listed } of definedStyles) {
+      // In advanced mode we show all defined properties
+      if (settings.stylePanelMode === "advanced") {
+        advancedProperties.add(property);
+        continue;
+      }
       // exclude properties from style panel UI unless edited in advanced section
       if (baseProperties.has(property) === false || listed) {
         advancedProperties.add(property);
