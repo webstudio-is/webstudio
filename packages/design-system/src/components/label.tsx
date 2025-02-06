@@ -34,7 +34,7 @@ const StyledLabel = styled(RadixLabel, {
   px: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
-  transition: "200ms color, 200ms background-color",
+  transition: "150ms color, 150ms background-color",
   color: theme.colors.foregroundMain,
 
   // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
