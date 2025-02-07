@@ -188,7 +188,16 @@ export const getDefinedStyles = ({
     }
   }
 
-  return new Set([...instanceStyles, ...inheritedStyles, ...presetStyles]);
+  // We are sorting by alphabet within each group.
+  const sortByProperty = (a: { property: string }, b: { property: string }) => {
+    return Intl.Collator().compare(a.property, b.property);
+  };
+
+  return new Set([
+    ...Array.from(instanceStyles).sort(sortByProperty),
+    ...Array.from(inheritedStyles).sort(sortByProperty),
+    ...Array.from(presetStyles).sort(sortByProperty),
+  ]);
 };
 
 export const $definedStyles = computed(
