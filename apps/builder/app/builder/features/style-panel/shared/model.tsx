@@ -139,19 +139,22 @@ export const getDefinedStyles = ({
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
 }) => {
-  const definedStyles = new Set<{
-    property: StyleProperty;
-    listed?: boolean;
-  }>();
   const inheritedStyleSources = new Set();
   const instanceStyleSources = new Set();
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
   const startingInstanceSelector = instancePath[0].instanceSelector;
+
+  type StyleDeclSubset = Pick<StyleDecl, "property" | "listed">;
+
+  const instanceStyles = new Set<StyleDeclSubset>();
+  const inheritedStyles = new Set<StyleDeclSubset>();
+  const presetStyles = new Set<StyleDeclSubset>();
+
   for (const { instance } of instancePath) {
     const meta = metas.get(instance.component);
-    for (const presetStyles of Object.values(meta?.presetStyle ?? {})) {
-      for (const styleDecl of presetStyles) {
-        definedStyles.add(styleDecl);
+    for (const preset of Object.values(meta?.presetStyle ?? {})) {
+      for (const styleDecl of preset) {
+        presetStyles.add(styleDecl);
       }
     }
     const styleSources = styleSourceSelections.get(instance.id)?.values;
@@ -170,7 +173,7 @@ export const getDefinedStyles = ({
       matchingBreakpoints.has(styleDecl.breakpointId) &&
       instanceStyleSources.has(styleDecl.styleSourceId)
     ) {
-      definedStyles.add(styleDecl);
+      instanceStyles.add(styleDecl);
     }
     const inherited =
       properties[styleDecl.property as keyof typeof properties]?.inherited ??
@@ -181,10 +184,11 @@ export const getDefinedStyles = ({
       inheritedStyleSources.has(styleDecl.styleSourceId) &&
       inherited
     ) {
-      definedStyles.add(styleDecl);
+      inheritedStyles.add(styleDecl);
     }
   }
-  return definedStyles;
+
+  return new Set([...instanceStyles, ...inheritedStyles, ...presetStyles]);
 };
 
 export const $definedStyles = computed(
