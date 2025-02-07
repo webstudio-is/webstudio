@@ -898,7 +898,7 @@ export const CssValueInput = ({
             aria-disabled={ariaDisabled}
             fieldSizing={fieldSizing}
             {...inputProps}
-            {...autoScrollProps}
+            //{...autoScrollProps}
             value={getInputValue()}
             onFocus={(event) => {
               if (event.target instanceof HTMLInputElement) {
