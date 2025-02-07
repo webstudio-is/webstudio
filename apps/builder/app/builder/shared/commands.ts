@@ -133,7 +133,7 @@ export const deleteSelectedInstance = () => {
     newSelectedInstanceSelector = parentInstanceSelector;
   }
   updateWebstudioData((data) => {
-    if (deleteInstanceMutable(data, selectedInstanceSelector)) {
+    if (deleteInstanceMutable(data, instancePath)) {
       selectInstance(newSelectedInstanceSelector);
     }
   });
