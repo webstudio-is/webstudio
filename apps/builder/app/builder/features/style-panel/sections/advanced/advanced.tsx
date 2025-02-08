@@ -565,25 +565,29 @@ export const Section = () => {
           />
         ))}
         {isAdding ? (
-          <AddProperty
-            onSelect={(property) => {
-              setIsAdding(false);
-              const isNew = advancedProperties.includes(property) === false;
-              if (isNew) {
-                setProperty(property)(
-                  { type: "guaranteedInvalid" },
-                  { listed: true }
+          <Box css={{ paddingTop: theme.spacing[3] }}>
+            <AddProperty
+              onSelect={(property) => {
+                setIsAdding(false);
+                const isNew = advancedProperties.includes(property) === false;
+                if (isNew) {
+                  setProperty(property)(
+                    { type: "guaranteedInvalid" },
+                    { listed: true }
+                  );
+                }
+                addRecentProperties([property]);
+              }}
+              onSubmit={(value) => {
+                const styles = insertStyles(value);
+                const insertedProperties = styles.map(
+                  ({ property }) => property
                 );
-              }
-              addRecentProperties([property]);
-            }}
-            onSubmit={(value) => {
-              const styles = insertStyles(value);
-              const insertedProperties = styles.map(({ property }) => property);
-              addRecentProperties(insertedProperties);
-            }}
-            onClose={() => setIsAdding(false)}
-          />
+                addRecentProperties(insertedProperties);
+              }}
+              onClose={() => setIsAdding(false)}
+            />
+          </Box>
         ) : (
           // This empty div allows showing the add property input on tab in the last value
           <div
