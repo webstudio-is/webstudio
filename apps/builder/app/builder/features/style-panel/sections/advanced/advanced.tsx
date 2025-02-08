@@ -3,7 +3,6 @@ import { colord } from "colord";
 import {
   memo,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ComponentProps,
@@ -161,6 +160,13 @@ const insertStyles = (text: string) => {
   return true;
 };
 
+const sortedProperties = Object.keys(propertiesData)
+  .sort(Intl.Collator().compare)
+  .map((property) => ({
+    value: property,
+    label: hyphenateProperty(property),
+  }));
+
 /**
  *
  * Advanced search control supports following interactions
@@ -172,36 +178,19 @@ const insertStyles = (text: string) => {
  *
  */
 const AddProperty = ({
-  usedProperties,
   onSelect,
   onClose,
 }: {
-  usedProperties: string[];
   onSelect: (value: StyleProperty) => void;
   onClose: () => void;
 }) => {
-  const availableProperties = useMemo(() => {
-    const properties = Object.keys(propertiesData).sort(
-      Intl.Collator().compare
-    ) as StyleProperty[];
-    const availableProperties: SearchItem[] = [];
-    for (const property of properties) {
-      if (usedProperties.includes(property) === false) {
-        availableProperties.push({
-          value: property,
-          label: hyphenateProperty(property),
-        });
-      }
-    }
-    return availableProperties;
-  }, [usedProperties]);
   const [item, setItem] = useState<SearchItem>({
     value: "",
     label: "",
   });
 
   const combobox = useCombobox<SearchItem>({
-    getItems: () => availableProperties,
+    getItems: () => sortedProperties,
     itemToString: (item) => item?.label ?? "",
     value: item,
     defaultHighlightedIndex: 0,
@@ -545,10 +534,10 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
-  const recentProperties = useRef<StyleProperty[]>([]);
+  let [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
 
   // In case the property was deleted, it will be removed from advanced, so we need to remove it from recent too.
-  recentProperties.current = recentProperties.current.filter((property) =>
+  recentProperties = recentProperties.filter((property) =>
     advancedProperties.includes(property)
   );
 
@@ -559,7 +548,7 @@ export const Section = () => {
       onAdd={() => setIsAdding(true)}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentProperties.current.map((property, index, properties) => (
+        {recentProperties.map((property, index, properties) => (
           <AdvancedProperty
             key={property}
             property={property}
@@ -571,25 +560,25 @@ export const Section = () => {
         ))}
         {isAdding && (
           <AddProperty
-            usedProperties={advancedProperties}
             onSelect={(property) => {
-              recentProperties.current.push(property);
               setIsAdding(false);
-              setProperty(property)(
-                { type: "guaranteedInvalid" },
-                { listed: true }
-              );
+              const isNew = advancedProperties.includes(property) === false;
+              if (isNew) {
+                setProperty(property)(
+                  { type: "guaranteedInvalid" },
+                  { listed: true }
+                );
+              }
+              setRecentProperties([...recentProperties, property]);
             }}
             onClose={() => setIsAdding(false)}
           />
         )}
       </Box>
-      {recentProperties.current.length > 0 && <Separator />}
+      {recentProperties.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {advancedProperties
-          .filter(
-            (property) => recentProperties.current.includes(property) === false
-          )
+          .filter((property) => recentProperties.includes(property) === false)
           .map((property) => (
             <AdvancedProperty key={property} property={property} />
           ))}
