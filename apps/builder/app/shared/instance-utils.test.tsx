@@ -26,7 +26,6 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
-  encodeDataSourceVariable,
   coreMetas,
   portalComponent,
   collectionComponent,
