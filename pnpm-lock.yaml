@@ -452,6 +452,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       html-tags:
         specifier: ^4.0.0
         version: 4.0.0
@@ -921,6 +924,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       typescript:
         specifier: 5.7.3
         version: 5.7.3
@@ -1893,6 +1899,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       playwright:
         specifier: ^1.50.1
         version: 1.50.1
@@ -1908,6 +1917,9 @@ importers:
       vitest:
         specifier: ^3.0.4
         version: 3.0.5(@types/debug@4.1.12)(@types/node@22.10.7)(@vitest/browser@3.0.5)(jsdom@20.0.3)(msw@2.7.0(@types/node@22.10.7)(typescript@5.7.3))
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/sdk-components-react:
     dependencies:

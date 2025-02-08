@@ -62,10 +62,25 @@ export const $propsIndex = computed($props, (props) => {
   };
 });
 
+/**
+ * $styles contains actual styling rules
+ * (breakpointId, styleSourceId, property, value, listed), tied to styleSourceIds
+ * $styles.styleSourceId -> $styleSources.id
+ */
 export const $styles = atom<Styles>(new Map());
 
+/**
+ * styleSources defines where styles come from (local or token).
+ *
+ * $styles contains actual styling rules, tied to styleSourceIds.
+ * $styles.styleSourceId -> $styleSources.id
+ */
 export const $styleSources = atom<StyleSources>(new Map());
 
+/**
+ * This is a list of connections between instances (instanceIds) and styleSources.
+ * $styleSourceSelections.values[] -> $styleSources.id[]
+ */
 export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {

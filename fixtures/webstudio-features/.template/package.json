@@ -8,5 +8,8 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
     "webstudio": "workspace:*"
+  },
+  "devDependencies": {
+    "fast-glob": "^3.3.2"
   }
 }

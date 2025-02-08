@@ -9,20 +9,17 @@ import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
 } from "./app/shared/router-utils/origins";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import fg from "fast-glob";
 
-const isFolderEmpty = (folderPath: string) => {
-  if (!existsSync(folderPath)) {
-    return true; // Folder does not exist
-  }
-  const contents = readdirSync(folderPath);
+const rootDir = ["..", "../..", "../../.."]
+  .map((dir) => path.join(__dirname, dir))
+  .find((dir) => existsSync(path.join(dir, ".git")));
 
-  return contents.length === 0;
-};
-
-const hasPrivateFolders = !isFolderEmpty(
-  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
-);
+const hasPrivateFolders =
+  fg.sync([path.join(rootDir ?? "", "packages/*/private-src/*")], {
+    ignore: ["**/node_modules/**"],
+  }).length > 0;
 
 export default defineConfig(({ mode }) => {
   if (mode === "test") {

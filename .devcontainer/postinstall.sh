@@ -14,17 +14,14 @@ sudo rm -rf /tmp/corepack-cache
 sudo rm -rf /usr/local/lib/node_modules/corepack # Manually remove global corepack
 
 # Reinstall corepack globally via npm
-npm install -g corepack@latest # Install latest corepack version
+npm install -g corepack@latest --force # Install latest corepack version
 sudo corepack enable # Re-enable corepack
 
 # Check corepack version after reinstall
-echo "--- Corepack version after reinstall ---"
 corepack --version
-echo "--- End corepack version check ---"
-
 
 # Prepare pnpm (again, after corepack reinstall)
-sudo corepack prepare pnpm@9.14.4 --activate
+corepack prepare pnpm@9.14.4 --activate
 
 # Go to workspace directory
 cd /workspaces/webstudio
@@ -42,7 +39,7 @@ find . -name '.pnpm-store' -type d -prune -exec rm -rf '{}' +
 
 # Install dependencies, build, and migrate
 pnpm install
-pnpm run build
+pnpm build
 pnpm migrations migrate
 
 # Add git aliases
