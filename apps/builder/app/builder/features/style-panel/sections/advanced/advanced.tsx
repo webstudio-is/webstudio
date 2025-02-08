@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
@@ -74,6 +75,7 @@ import {
 import { useClientSupports } from "~/shared/client-supports";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
+import { composeEventHandlers } from "~/shared/event-utils";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -169,7 +171,7 @@ const insertStyles = (text: string) => {
  * paste css declarations
  *
  */
-const AdvancedSearch = ({
+const AddProperty = ({
   usedProperties,
   onSelect,
   onClose,
@@ -212,7 +214,20 @@ const AdvancedSearch = ({
   const descriptionItem = combobox.items[combobox.highlightedIndex];
   const description = getNewPropertyDescription(descriptionItem);
   const descriptions = combobox.items.map(getNewPropertyDescription);
-
+  const inputProps = combobox.getInputProps();
+  const handleAbort = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      onClose();
+    }
+  };
+  const handleKeyDown = composeEventHandlers(
+    handleAbort,
+    inputProps.onKeyDown,
+    {
+      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
+      checkForDefaultPrevented: false,
+    }
+  );
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <form
@@ -228,7 +243,8 @@ const AdvancedSearch = ({
         <input type="submit" hidden />
         <ComboboxAnchor>
           <InputField
-            {...combobox.getInputProps()}
+            {...inputProps}
+            onKeyDown={handleKeyDown}
             autoFocus={true}
             placeholder="Add styles"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
@@ -307,9 +323,13 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
 const AdvancedPropertyValue = ({
   autoFocus,
   property,
+  onChangeComplete,
 }: {
   autoFocus?: boolean;
   property: StyleProperty;
+  onChangeComplete: ComponentProps<
+    typeof CssValueInputContainer
+  >["onChangeComplete"];
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -325,6 +345,7 @@ const AdvancedPropertyValue = ({
       variant="chromeless"
       text="mono"
       fieldSizing="content"
+      onChangeComplete={onChangeComplete}
       prefix={
         isColor && (
           <ColorPopover
@@ -447,9 +468,13 @@ const AdvancedProperty = memo(
   ({
     property,
     autoFocus,
+    onChangeComplete,
   }: {
     property: StyleProperty;
     autoFocus?: boolean;
+    onChangeComplete?: ComponentProps<
+      typeof CssValueInputContainer
+    >["onChangeComplete"];
   }) => {
     const visibilityChangeEventSupported = useClientSupports(
       () => "oncontentvisibilityautostatechange" in document.body
@@ -505,7 +530,11 @@ const AdvancedProperty = memo(
           <>
             <AdvancedPropertyLabel property={property} />
             <Text>:</Text>
-            <AdvancedPropertyValue autoFocus={autoFocus} property={property} />
+            <AdvancedPropertyValue
+              autoFocus={autoFocus}
+              property={property}
+              onChangeComplete={onChangeComplete}
+            />
           </>
         )}
       </Flex>
@@ -535,10 +564,13 @@ export const Section = () => {
             key={property}
             property={property}
             autoFocus={index === properties.length - 1}
+            onChangeComplete={() => {
+              setIsAdding(true);
+            }}
           />
         ))}
         {isAdding && (
-          <AdvancedSearch
+          <AddProperty
             usedProperties={advancedProperties}
             onSelect={(property) => {
               recentProperties.current.push(property);
