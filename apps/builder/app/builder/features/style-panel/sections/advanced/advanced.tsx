@@ -569,7 +569,9 @@ export const Section = () => {
                   { listed: true }
                 );
               }
-              setRecentProperties([...recentProperties, property]);
+              setRecentProperties(
+                Array.from(new Set([...recentProperties, property]))
+              );
             }}
             onClose={() => setIsAdding(false)}
           />
