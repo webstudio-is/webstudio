@@ -1,6 +1,7 @@
 import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
+  forwardRef,
   memo,
   useEffect,
   useRef,
@@ -177,15 +178,14 @@ const sortedProperties = Object.keys(propertiesData)
  * paste css declarations
  *
  */
-const AddProperty = ({
-  onSelect,
-  onClose,
-  onSubmit,
-}: {
-  onSelect: (value: StyleProperty) => void;
-  onClose: () => void;
-  onSubmit: (value: string) => void;
-}) => {
+const AddProperty = forwardRef<
+  HTMLInputElement,
+  {
+    onSelect: (value: StyleProperty) => void;
+    onClose: () => void;
+    onSubmit: (value: string) => void;
+  }
+>(({ onSelect, onClose, onSubmit }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
     value: "",
     label: "",
@@ -233,6 +233,7 @@ const AddProperty = ({
         <ComboboxAnchor>
           <InputField
             {...inputProps}
+            inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             autoFocus={true}
             placeholder="Add styles"
@@ -261,7 +262,7 @@ const AddProperty = ({
       </form>
     </ComboboxRoot>
   );
-};
+});
 
 const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -535,6 +536,7 @@ export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
+  const addPropertyInputRef = useRef<HTMLInputElement>(null);
 
   // In case the property was deleted, it will be removed from advanced, so we need to remove it from recent too.
   const recentPropertiesCleaned = recentProperties.filter((property) =>
@@ -551,7 +553,11 @@ export const Section = () => {
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
-      onAdd={() => setIsAdding(true)}
+      onAdd={() => {
+        setIsAdding(true);
+        // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
+        addPropertyInputRef.current?.focus();
+      }}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {recentPropertiesCleaned.map((property, index, properties) => (
@@ -586,6 +592,7 @@ export const Section = () => {
                 addRecentProperties(insertedProperties);
               }}
               onClose={() => setIsAdding(false)}
+              ref={addPropertyInputRef}
             />
           </Box>
         ) : (
