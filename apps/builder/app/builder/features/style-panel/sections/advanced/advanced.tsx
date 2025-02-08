@@ -226,7 +226,6 @@ const AddProperty = forwardRef<
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit(item.value);
-          onClose();
         }}
       >
         <input type="submit" hidden />
@@ -591,7 +590,9 @@ export const Section = () => {
                 );
                 addRecentProperties(insertedProperties);
               }}
-              onClose={() => setIsAdding(false)}
+              onClose={() => {
+                setIsAdding(false);
+              }}
               ref={addPropertyInputRef}
             />
           </Box>
