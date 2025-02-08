@@ -150,14 +150,14 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
 const insertStyles = (text: string) => {
   const parsedStyles = parseCss(`selector{${text}}`);
   if (parsedStyles.length === 0) {
-    return false;
+    return [];
   }
   const batch = createBatchUpdate();
   for (const { property, value } of parsedStyles) {
     batch.setProperty(property)(value);
   }
   batch.publish({ listed: true });
-  return true;
+  return parsedStyles;
 };
 
 const sortedProperties = Object.keys(propertiesData)
@@ -180,9 +180,11 @@ const sortedProperties = Object.keys(propertiesData)
 const AddProperty = ({
   onSelect,
   onClose,
+  onSubmit,
 }: {
   onSelect: (value: StyleProperty) => void;
   onClose: () => void;
+  onSubmit: (value: string) => void;
 }) => {
   const [item, setItem] = useState<SearchItem>({
     value: "",
@@ -223,10 +225,8 @@ const AddProperty = ({
         {...combobox.getComboboxProps()}
         onSubmit={(event) => {
           event.preventDefault();
-          const isInserted = insertStyles(item.value);
-          if (isInserted) {
-            onClose();
-          }
+          onSubmit(item.value);
+          onClose();
         }}
       >
         <input type="submit" hidden />
@@ -534,12 +534,18 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
-  let [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
+  const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
 
   // In case the property was deleted, it will be removed from advanced, so we need to remove it from recent too.
-  recentProperties = recentProperties.filter((property) =>
+  const recentPropertiesCleaned = recentProperties.filter((property) =>
     advancedProperties.includes(property)
   );
+
+  const addRecentProperties = (properties: StyleProperty[]) => {
+    setRecentProperties(
+      Array.from(new Set([...recentProperties, ...properties]))
+    );
+  };
 
   return (
     <AdvancedStyleSection
@@ -548,7 +554,7 @@ export const Section = () => {
       onAdd={() => setIsAdding(true)}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentProperties.map((property, index, properties) => (
+        {recentPropertiesCleaned.map((property, index, properties) => (
           <AdvancedProperty
             key={property}
             property={property}
@@ -569,9 +575,12 @@ export const Section = () => {
                   { listed: true }
                 );
               }
-              setRecentProperties(
-                Array.from(new Set([...recentProperties, property]))
-              );
+              addRecentProperties([property]);
+            }}
+            onSubmit={(value) => {
+              const styles = insertStyles(value);
+              const insertedProperties = styles.map(({ property }) => property);
+              addRecentProperties(insertedProperties);
             }}
             onClose={() => setIsAdding(false)}
           />
@@ -585,10 +594,12 @@ export const Section = () => {
           />
         )}
       </Box>
-      {recentProperties.length > 0 && <Separator />}
+      {recentPropertiesCleaned.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {advancedProperties
-          .filter((property) => recentProperties.includes(property) === false)
+          .filter(
+            (property) => recentPropertiesCleaned.includes(property) === false
+          )
           .map((property) => (
             <AdvancedProperty key={property} property={property} />
           ))}
