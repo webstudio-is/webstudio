@@ -38,12 +38,6 @@ const colors = {
     backgroundHover: theme.colors.backgroundRemoteHover,
     icon: theme.colors.foregroundRemoteMain,
   },
-  code: {
-    border: "transparent",
-    background: "transparent",
-    backgroundHover: theme.colors.backgroundHover,
-    icon: theme.colors.foregroundIconMain,
-  },
   inactive: {
     border: "transparent",
     background: "transparent",
@@ -82,7 +76,6 @@ const style = css({
       local: perColorStyle("local"),
       overwritten: perColorStyle("overwritten"),
       remote: perColorStyle("remote"),
-      code: perColorStyle("code"),
       inactive: perColorStyle("inactive"),
     },
   },

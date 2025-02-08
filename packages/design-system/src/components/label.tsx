@@ -15,7 +15,6 @@ export const labelColors = [
   "local",
   "overwritten",
   "remote",
-  "code",
   "inactive",
 ] as const;
 
@@ -34,7 +33,7 @@ const StyledLabel = styled(RadixLabel, {
   px: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
-  transition: "200ms color, 200ms background-color",
+  transition: "150ms color, 150ms background-color",
   color: theme.colors.foregroundMain,
 
   // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
@@ -89,12 +88,6 @@ const StyledLabel = styled(RadixLabel, {
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundRemoteHover,
-        },
-      },
-      code: {
-        color: theme.colors.foregroundLocalMain,
-        "&:hover": {
-          backgroundColor: theme.colors.backgroundHover,
         },
       },
       // Example is collapsible section title label when section has no content.

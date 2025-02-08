@@ -260,8 +260,6 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
   const styleDecl = useComputedStyleDecl(property);
   const label = hyphenateProperty(property);
   const description = propertyDescriptions[property];
-  const color =
-    styleDecl.source.name === "default" ? "code" : styleDecl.source.name;
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Tooltip
@@ -291,7 +289,13 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
         />
       }
     >
-      <Label color={color} text="mono">
+      <Label
+        color={styleDecl.source.name}
+        text="mono"
+        css={{
+          backgroundColor: "transparent",
+        }}
+      >
         {label}
       </Label>
     </Tooltip>
@@ -366,11 +370,11 @@ const AdvancedPropertyValue = ({
 };
 
 const initialProperties = new Set<StyleProperty>([
-  "userSelect",
-  "pointerEvents",
-  "mixBlendMode",
   "cursor",
+  "mixBlendMode",
   "opacity",
+  "pointerEvents",
+  "userSelect",
 ]);
 
 const $advancedProperties = computed(
@@ -409,7 +413,7 @@ const $advancedProperties = computed(
         baseProperties.add(property);
       }
     }
-    const advancedProperties = new Set<StyleProperty>(initialProperties);
+    const advancedProperties = new Set<StyleProperty>();
     for (const { property, listed } of definedStyles) {
       // In advanced mode we show all defined properties
       if (settings.stylePanelMode === "advanced") {
@@ -421,7 +425,14 @@ const $advancedProperties = computed(
         advancedProperties.add(property);
       }
     }
-    return Array.from(advancedProperties).reverse();
+    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
+    // @todo we need to find a better place for them in any case
+    if (settings.stylePanelMode !== "advanced") {
+      for (const property of initialProperties) {
+        advancedProperties.add(property);
+      }
+    }
+    return Array.from(advancedProperties);
   }
 );
 
