@@ -28,6 +28,7 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Separator,
   Text,
   theme,
   Tooltip,
@@ -91,6 +92,7 @@ const AdvancedStyleSection = (props: {
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      fullWidth
       trigger={
         <SectionTitle
           dots={getDots(styles)}
@@ -447,7 +449,7 @@ const AdvancedProperty = memo(
     autoFocus,
   }: {
     property: StyleProperty;
-    autoFocus: boolean;
+    autoFocus?: boolean;
   }) => {
     const visibilityChangeEventSupported = useClientSupports(
       () => "oncontentvisibilityautostatechange" in document.body
@@ -514,8 +516,13 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedProperties = useStore($advancedProperties);
-  const newlyAddedProperty = useRef<undefined | StyleProperty>(undefined);
+  const recentProperties = useRef<StyleProperty[]>([]);
 
+  // In case the property was deleted, it will be removed from advanced, so we need to remove it from recent too.
+  recentProperties.current = recentProperties.current.filter((property) =>
+    advancedProperties.includes(property)
+  );
+  console.log(recentProperties);
   return (
     <AdvancedStyleSection
       label="Advanced"
@@ -523,27 +530,43 @@ export const Section = () => {
       onAdd={() => setIsAdding(true)}
     >
       {isAdding && (
-        <AdvancedSearch
-          usedProperties={advancedProperties}
-          onSelect={(property) => {
-            newlyAddedProperty.current = property;
-            setIsAdding(false);
-            setProperty(property)(
-              { type: "guaranteedInvalid" },
-              { listed: true }
-            );
-          }}
-          onClose={() => setIsAdding(false)}
-        />
-      )}
-      <Box>
-        {advancedProperties.map((property) => (
-          <AdvancedProperty
-            key={property}
-            property={property}
-            autoFocus={newlyAddedProperty.current === property}
+        <Box css={{ paddingInline: theme.panel.paddingInline }}>
+          <AdvancedSearch
+            usedProperties={advancedProperties}
+            onSelect={(property) => {
+              recentProperties.current.push(property);
+              setIsAdding(false);
+              setProperty(property)(
+                { type: "guaranteedInvalid" },
+                { listed: true }
+              );
+            }}
+            onClose={() => setIsAdding(false)}
           />
-        ))}
+        </Box>
+      )}
+      {recentProperties.current.length > 0 && (
+        <>
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+            {recentProperties.current.map((property, index, properties) => (
+              <AdvancedProperty
+                key={property}
+                property={property}
+                autoFocus={index === properties.length - 1}
+              />
+            ))}
+          </Box>
+          <Separator />
+        </>
+      )}
+      <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        {advancedProperties
+          .filter(
+            (property) => recentProperties.current.includes(property) === false
+          )
+          .map((property) => (
+            <AdvancedProperty key={property} property={property} />
+          ))}
       </Box>
     </AdvancedStyleSection>
   );
