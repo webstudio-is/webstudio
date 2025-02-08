@@ -558,7 +558,7 @@ export const Section = () => {
             }}
           />
         ))}
-        {isAdding && (
+        {isAdding ? (
           <AddProperty
             onSelect={(property) => {
               setIsAdding(false);
@@ -574,6 +574,14 @@ export const Section = () => {
               );
             }}
             onClose={() => setIsAdding(false)}
+          />
+        ) : (
+          // This empty div allows showing the add property input on tab in the last value
+          <div
+            tabIndex={0}
+            onFocus={() => {
+              setIsAdding(true);
+            }}
           />
         )}
       </Box>
