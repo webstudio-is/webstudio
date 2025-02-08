@@ -522,15 +522,22 @@ export const Section = () => {
   recentProperties.current = recentProperties.current.filter((property) =>
     advancedProperties.includes(property)
   );
-  console.log(recentProperties);
+
   return (
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
       onAdd={() => setIsAdding(true)}
     >
-      {isAdding && (
-        <Box css={{ paddingInline: theme.panel.paddingInline }}>
+      <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        {recentProperties.current.map((property, index, properties) => (
+          <AdvancedProperty
+            key={property}
+            property={property}
+            autoFocus={index === properties.length - 1}
+          />
+        ))}
+        {isAdding && (
           <AdvancedSearch
             usedProperties={advancedProperties}
             onSelect={(property) => {
@@ -543,22 +550,9 @@ export const Section = () => {
             }}
             onClose={() => setIsAdding(false)}
           />
-        </Box>
-      )}
-      {recentProperties.current.length > 0 && (
-        <>
-          <Box css={{ paddingInline: theme.panel.paddingInline }}>
-            {recentProperties.current.map((property, index, properties) => (
-              <AdvancedProperty
-                key={property}
-                property={property}
-                autoFocus={index === properties.length - 1}
-              />
-            ))}
-          </Box>
-          <Separator />
-        </>
-      )}
+        )}
+      </Box>
+      {recentProperties.current.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {advancedProperties
           .filter(
