@@ -81,6 +81,11 @@ type NumericScrubState = {
   cursor?: SVGElement;
   direction: NumericScrubDirection;
   status: "idle" | "scrubbing";
+  /**
+   * On windows it's possible that requestPointerLock is already called,
+   * but document.pointerLockElement is not updated yet.
+   */
+  pointerCaptureRequested: boolean;
 };
 
 const getValueDefault = (
@@ -168,6 +173,7 @@ export const numericScrubControl = (
     cursor: undefined,
     direction,
     status: "idle",
+    pointerCaptureRequested: false,
   };
 
   // The appearance of the custom cursor is delayed, so we need to track the mouse position
@@ -208,9 +214,7 @@ export const numericScrubControl = (
     if (!(event instanceof PointerEvent)) {
       return;
     }
-
-    const { type, movementY, movementX } = event;
-    const movement = direction === "horizontal" ? movementX : -movementY;
+    const { type } = event;
 
     switch (type) {
       case "pointerup": {
@@ -296,6 +300,11 @@ export const numericScrubControl = (
         break;
       }
       case "pointermove": {
+        const { movementY, movementX } = event;
+
+        const movement = direction === "horizontal" ? movementX : -movementY;
+
+        // console.log("movement", movement, event);
         mouseState.x = event.clientX;
         mouseState.y = event.clientY;
 
@@ -328,12 +337,12 @@ export const numericScrubControl = (
           // When cursor moves out of the browser window
           // we want it to come back from the other side
           const top = wrapAround(
-            Number.parseFloat(state.cursor.style.top) + event.movementY,
+            Number.parseFloat(state.cursor.style.top) + movementY,
             0,
             globalThis.innerHeight
           );
           const left = wrapAround(
-            Number.parseFloat(state.cursor.style.left) + event.movementX,
+            Number.parseFloat(state.cursor.style.left) + movementX,
             0,
             globalThis.innerWidth
           );
@@ -345,11 +354,17 @@ export const numericScrubControl = (
         }
         break;
       }
+
       case "pointercancel": {
         cleanup();
         break;
       }
+
       case "lostpointercapture": {
+        if (state.pointerCaptureRequested) {
+          break;
+        }
+
         if (document.pointerLockElement === null) {
           cleanup();
         }
@@ -389,6 +404,8 @@ export const numericScrubControl = (
 
 const requestPointerLockSafe = async (targetNode: HTMLElement | SVGElement) => {
   try {
+    // await targetNode.requestPointerLock();
+
     return await targetNode.requestPointerLock({
       unadjustedMovement: true,
     });
@@ -417,18 +434,27 @@ const requestPointerLock = (
   disposeOnCleanup(() => {
     targetNode.setPointerCapture(pointerId);
     return () => {
-      targetNode.releasePointerCapture(pointerId);
+      if (targetNode.hasPointerCapture(pointerId)) {
+        targetNode.releasePointerCapture(pointerId);
+      }
     };
   });
 
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
   // Safari supports pointer lock well, but the issue lies with the pointer lock banner.
   // It shifts the entire page down, which creates a poor user experience.
   if (!isSafari) {
     disposeOnCleanup(() => {
       const timerId = window.setTimeout(() => {
+        state.pointerCaptureRequested = true;
         requestPointerLockSafe(targetNode)
           .then(() => {
+            if (targetNode.hasPointerCapture(pointerId)) {
+              targetNode.releasePointerCapture(pointerId);
+            }
+
+            state.pointerCaptureRequested = false;
             const cursorNode =
               (targetNode.ownerDocument.querySelector(
                 "#numeric-guesture-control-cursor"
@@ -466,17 +492,23 @@ const requestPointerLock = (
             }
           })
           .catch((error) => {
+            state.pointerCaptureRequested = false;
             console.error("requestPointerLock", error);
           });
       }, scrubTimeout);
 
       return () => {
+        state.pointerCaptureRequested = false;
+
         if (state.cursor) {
           state.cursor.remove();
           state.cursor = undefined;
         }
 
-        targetNode.ownerDocument.exitPointerLock();
+        if (targetNode.ownerDocument.pointerLockElement === targetNode) {
+          targetNode.ownerDocument.exitPointerLock();
+        }
+
         clearTimeout(timerId);
       };
     });
