@@ -237,7 +237,6 @@ const AddProperty = forwardRef<
             onFocus={onFocus}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
-            autoFocus={true}
             placeholder="Add styles"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
