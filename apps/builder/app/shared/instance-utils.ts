@@ -520,7 +520,7 @@ const traverseStyleValue = (
 };
 
 export const extractWebstudioFragment = (
-  data: WebstudioData,
+  data: Omit<WebstudioData, "pages">,
   rootInstanceId: string
 ): WebstudioFragment => {
   const {
@@ -764,7 +764,7 @@ export const insertWebstudioFragmentCopy = ({
   fragment,
   availableDataSources,
 }: {
-  data: WebstudioData;
+  data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
 }) => {
@@ -901,6 +901,15 @@ export const insertWebstudioFragmentCopy = ({
       }
     }
 
+    for (const prop of fragment.props) {
+      if (instanceIds.has(prop.instanceId)) {
+        props.set(prop.id, prop);
+        if (prop.type === "resource") {
+          usedResourceIds.add(prop.value);
+        }
+      }
+    }
+
     for (const resource of fragment.resources) {
       if (usedResourceIds.has(resource.id)) {
         resources.set(resource.id, resource);
@@ -910,12 +919,6 @@ export const insertWebstudioFragmentCopy = ({
     for (const instance of fragment.instances) {
       if (instanceIds.has(instance.id)) {
         instances.set(instance.id, instance);
-      }
-    }
-
-    for (const prop of fragment.props) {
-      if (instanceIds.has(prop.instanceId)) {
-        props.set(prop.id, prop);
       }
     }
 
