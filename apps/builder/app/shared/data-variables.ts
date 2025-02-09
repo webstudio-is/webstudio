@@ -292,7 +292,7 @@ export const findUnsetVariableNames = ({
   return Array.from(unsetVariables);
 };
 
-export const restoreTreeVariablesMutable = ({
+export const rebindTreeVariablesMutable = ({
   instancePath,
   instances,
   props,
@@ -305,7 +305,11 @@ export const restoreTreeVariablesMutable = ({
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  const maskedVariables = findMaskedVariables({ instancePath, dataSources });
+  const maskedIdByName = findMaskedVariables({ instancePath, dataSources });
+  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  for (const { id, name } of dataSources.values()) {
+    unsetNameById.set(id, name);
+  }
   const [{ instance: startingInstance }] = instancePath;
   const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,
@@ -319,9 +323,13 @@ export const restoreTreeVariablesMutable = ({
     }
     for (const child of instance.children) {
       if (child.type === "expression") {
+        child.value = unsetExpressionVariables({
+          expression: child.value,
+          unsetNameById,
+        });
         child.value = restoreExpressionVariables({
           expression: child.value,
-          maskedIdByName: maskedVariables,
+          maskedIdByName,
         });
       }
     }
@@ -332,18 +340,26 @@ export const restoreTreeVariablesMutable = ({
       continue;
     }
     if (prop.type === "expression") {
+      prop.value = unsetExpressionVariables({
+        expression: prop.value,
+        unsetNameById,
+      });
       prop.value = restoreExpressionVariables({
         expression: prop.value,
-        maskedIdByName: maskedVariables,
+        maskedIdByName,
       });
       continue;
     }
     if (prop.type === "action") {
       for (const action of prop.value) {
-        const maskedVariablesWithoutArgs = new Map(maskedVariables);
+        const maskedVariablesWithoutArgs = new Map(maskedIdByName);
         for (const arg of action.args) {
           maskedVariablesWithoutArgs.delete(arg);
         }
+        action.code = unsetExpressionVariables({
+          expression: action.code,
+          unsetNameById,
+        });
         action.code = restoreExpressionVariables({
           expression: action.code,
           maskedIdByName: maskedVariablesWithoutArgs,
@@ -370,20 +386,32 @@ export const restoreTreeVariablesMutable = ({
     if (resourceIds.has(resource.id) === false) {
       continue;
     }
+    resource.url = unsetExpressionVariables({
+      expression: resource.url,
+      unsetNameById,
+    });
     resource.url = restoreExpressionVariables({
       expression: resource.url,
-      maskedIdByName: maskedVariables,
+      maskedIdByName,
     });
     for (const header of resource.headers) {
+      header.value = unsetExpressionVariables({
+        expression: header.value,
+        unsetNameById,
+      });
       header.value = restoreExpressionVariables({
         expression: header.value,
-        maskedIdByName: maskedVariables,
+        maskedIdByName,
       });
     }
     if (resource.body) {
+      resource.body = unsetExpressionVariables({
+        expression: resource.body,
+        unsetNameById,
+      });
       resource.body = restoreExpressionVariables({
         expression: resource.body,
-        maskedIdByName: maskedVariables,
+        maskedIdByName,
       });
     }
   }
