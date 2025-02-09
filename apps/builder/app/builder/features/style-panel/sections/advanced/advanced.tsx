@@ -33,7 +33,6 @@ import {
   Text,
   theme,
   Tooltip,
-  truncate,
   useCombobox,
 } from "@webstudio-is/design-system";
 import {
