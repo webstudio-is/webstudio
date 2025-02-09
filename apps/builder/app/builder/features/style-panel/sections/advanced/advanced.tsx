@@ -258,7 +258,13 @@ const AddProperty = forwardRef<
   );
 });
 
-const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
+const AdvancedPropertyLabel = ({
+  property,
+  onReset,
+}: {
+  property: StyleProperty;
+  onReset?: () => void;
+}) => {
   const styleDecl = useComputedStyleDecl(property);
   const label = hyphenateProperty(property);
   const description = propertyDescriptions[property];
@@ -274,6 +280,7 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
           if (event.altKey) {
             event.preventDefault();
             deleteProperty(property);
+            onReset?.();
             return;
           }
           setIsOpen(true);
@@ -287,6 +294,7 @@ const AdvancedPropertyLabel = ({ property }: { property: StyleProperty }) => {
           onReset={() => {
             deleteProperty(property);
             setIsOpen(false);
+            onReset?.();
           }}
         />
       }
@@ -453,9 +461,11 @@ const AdvancedProperty = memo(
     property,
     autoFocus,
     onChangeComplete,
+    onReset,
   }: {
     property: StyleProperty;
     autoFocus?: boolean;
+    onReset?: () => void;
     onChangeComplete?: ComponentProps<
       typeof CssValueInputContainer
     >["onChangeComplete"];
@@ -512,7 +522,7 @@ const AdvancedProperty = memo(
       >
         {isVisible && (
           <>
-            <AdvancedPropertyLabel property={property} />
+            <AdvancedPropertyLabel property={property} onReset={onReset} />
             <Text>:</Text>
             <AdvancedPropertyValue
               autoFocus={autoFocus}
@@ -532,11 +542,6 @@ export const Section = () => {
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
 
-  // In case the property was deleted, it will be removed from advanced, so we need to remove it from recent too.
-  const recentPropertiesCleaned = recentProperties.filter((property) =>
-    advancedProperties.includes(property)
-  );
-
   const addRecentProperties = (properties: StyleProperty[]) => {
     setRecentProperties(
       Array.from(new Set([...recentProperties, ...properties]))
@@ -554,7 +559,7 @@ export const Section = () => {
       }}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentPropertiesCleaned.map((property, index, properties) => (
+        {recentProperties.map((property, index, properties) => (
           <AdvancedProperty
             key={property}
             property={property}
@@ -563,6 +568,13 @@ export const Section = () => {
               if (event.type === "enter") {
                 setIsAdding(true);
               }
+            }}
+            onReset={() => {
+              setRecentProperties((properties) => {
+                return properties.filter(
+                  (recentProperty) => recentProperty !== property
+                );
+              });
             }}
           />
         ))}
@@ -604,12 +616,10 @@ export const Section = () => {
           />
         )}
       </Box>
-      {recentPropertiesCleaned.length > 0 && <Separator />}
+      {recentProperties.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {advancedProperties
-          .filter(
-            (property) => recentPropertiesCleaned.includes(property) === false
-          )
+          .filter((property) => recentProperties.includes(property) === false)
           .map((property) => (
             <AdvancedProperty key={property} property={property} />
           ))}
