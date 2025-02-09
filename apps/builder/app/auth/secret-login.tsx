@@ -14,7 +14,7 @@ export const SecretLogin = () => {
         <Flex gap="2">
           <InputField
             name="secret"
-            type="password"
+            type="text"
             minLength={2}
             required
             autoFocus
