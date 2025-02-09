@@ -450,10 +450,6 @@ const requestPointerLock = (
         state.pointerCaptureRequested = true;
         requestPointerLockSafe(targetNode)
           .then(() => {
-            if (targetNode.hasPointerCapture(pointerId)) {
-              targetNode.releasePointerCapture(pointerId);
-            }
-
             state.pointerCaptureRequested = false;
             const cursorNode =
               (targetNode.ownerDocument.querySelector(
