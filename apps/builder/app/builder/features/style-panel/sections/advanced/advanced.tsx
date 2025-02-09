@@ -446,14 +446,12 @@ const $advancedProperties = computed(
     }
     const advancedProperties = new Set<StyleProperty>();
     for (const { property, listed } of definedStyles) {
-      // In advanced mode we show all defined properties
-      if (settings.stylePanelMode === "advanced") {
-        advancedProperties.add(property);
-        continue;
-      }
-      // exclude properties from style panel UI unless edited in advanced section
-      if (baseProperties.has(property) === false || listed) {
-        advancedProperties.add(property);
+      if (baseProperties.has(property) === false) {
+        // When property is listed, it was added from advanced panel.
+        // If we are in advanced mode, we show them all.
+        if (listed || settings.stylePanelMode === "advanced") {
+          advancedProperties.add(property);
+        }
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
