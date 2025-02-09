@@ -200,7 +200,10 @@ const AddProperty = forwardRef<
     getItemProps: () => ({ text: "sentence" }),
     match: matchOrSuggestToCreate,
     onChange: (value) => setItem({ value: value ?? "", label: value ?? "" }),
-    onItemSelect: (item) => onSelect(item.value as StyleProperty),
+    onItemSelect: (item) => {
+      clear();
+      onSelect(item.value as StyleProperty);
+    },
   });
 
   const descriptionItem = combobox.items[combobox.highlightedIndex];
@@ -208,16 +211,22 @@ const AddProperty = forwardRef<
   const descriptions = combobox.items.map(getNewPropertyDescription);
   const inputProps = combobox.getInputProps();
 
+  const clear = () => {
+    setItem({ value: "", label: "" });
+  };
+
   const handleKeys = (event: KeyboardEvent) => {
     // Dropdown might handle enter or escape.
     if (event.defaultPrevented) {
       return;
     }
     if (event.key === "Enter") {
+      clear();
       onSubmit(item.value);
       return;
     }
     if (event.key === "Escape") {
+      clear();
       onClose();
     }
   };
@@ -386,6 +395,7 @@ const AdvancedPropertyValue = ({
         }
       }}
       deleteProperty={deleteProperty}
+      onChangeComplete={onChangeComplete}
     />
   );
 };
@@ -554,15 +564,17 @@ export const Section = () => {
     );
   };
 
+  const showAddProperty = () => {
+    setIsAdding(true);
+    // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
+    addPropertyInputRef.current?.focus();
+  };
+
   return (
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
-      onAdd={() => {
-        setIsAdding(true);
-        // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
-        addPropertyInputRef.current?.focus();
-      }}
+      onAdd={showAddProperty}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         {recentProperties.map((property, index, properties) => (
@@ -572,7 +584,7 @@ export const Section = () => {
             autoFocus={index === properties.length - 1}
             onChangeComplete={(event) => {
               if (event.type === "enter") {
-                setIsAdding(true);
+                showAddProperty();
               }
             }}
             onReset={() => {
@@ -614,7 +626,9 @@ export const Section = () => {
               setIsAdding(false);
             }}
             onFocus={() => {
-              setIsAdding(true);
+              if (isAdding === false) {
+                showAddProperty();
+              }
             }}
             ref={addPropertyInputRef}
           />
