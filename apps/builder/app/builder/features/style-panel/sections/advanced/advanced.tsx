@@ -206,28 +206,23 @@ const AddProperty = forwardRef<
   const description = getNewPropertyDescription(descriptionItem);
   const descriptions = combobox.items.map(getNewPropertyDescription);
   const inputProps = combobox.getInputProps();
-  const handleAbort = (event: KeyboardEvent) => {
+
+  const handleKeys = (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      onSubmit(item.value);
+      return;
+    }
     if (event.key === "Escape") {
       onClose();
     }
   };
-  const handleKeyDown = composeEventHandlers(
-    handleAbort,
-    inputProps.onKeyDown,
-    {
-      // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-      checkForDefaultPrevented: false,
-    }
-  );
+  const handleKeyDown = composeEventHandlers(handleKeys, inputProps.onKeyDown, {
+    // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
+    checkForDefaultPrevented: false,
+  });
   return (
     <ComboboxRoot open={combobox.isOpen}>
-      <form
-        {...combobox.getComboboxProps()}
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSubmit(item.value);
-        }}
-      >
+      <div {...combobox.getComboboxProps()}>
         <input type="submit" hidden />
         <ComboboxAnchor>
           <InputField
@@ -258,7 +253,7 @@ const AddProperty = forwardRef<
             )}
           </ComboboxListbox>
         </ComboboxContent>
-      </form>
+      </div>
     </ComboboxRoot>
   );
 });
@@ -564,8 +559,10 @@ export const Section = () => {
             key={property}
             property={property}
             autoFocus={index === properties.length - 1}
-            onChangeComplete={() => {
-              setIsAdding(true);
+            onChangeComplete={(event) => {
+              if (event.type === "enter") {
+                setIsAdding(true);
+              }
             }}
           />
         ))}
@@ -584,6 +581,7 @@ export const Section = () => {
                 addRecentProperties([property]);
               }}
               onSubmit={(value) => {
+                setIsAdding(false);
                 const styles = insertStyles(value);
                 const insertedProperties = styles.map(
                   ({ property }) => property
