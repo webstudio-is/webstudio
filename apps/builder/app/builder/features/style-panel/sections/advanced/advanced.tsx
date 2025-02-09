@@ -184,8 +184,9 @@ const AddProperty = forwardRef<
     onSelect: (value: StyleProperty) => void;
     onClose: () => void;
     onSubmit: (value: string) => void;
+    onFocus: () => void;
   }
->(({ onSelect, onClose, onSubmit }, forwardedRef) => {
+>(({ onSelect, onClose, onSubmit, onFocus }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
     value: "",
     label: "",
@@ -233,6 +234,7 @@ const AddProperty = forwardRef<
         <ComboboxAnchor>
           <InputField
             {...inputProps}
+            onFocus={onFocus}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             autoFocus={true}
@@ -583,43 +585,41 @@ export const Section = () => {
             }}
           />
         ))}
-        {isAdding ? (
-          <Box css={{ paddingTop: theme.spacing[3] }}>
-            <AddProperty
-              onSelect={(property) => {
-                setIsAdding(false);
-                const isNew = advancedProperties.includes(property) === false;
-                if (isNew) {
-                  setProperty(property)(
-                    { type: "guaranteedInvalid" },
-                    { listed: true }
-                  );
-                }
-                addRecentProperties([property]);
-              }}
-              onSubmit={(value) => {
-                setIsAdding(false);
-                const styles = insertStyles(value);
-                const insertedProperties = styles.map(
-                  ({ property }) => property
+        <Box
+          css={
+            isAdding
+              ? { paddingTop: theme.spacing[3] }
+              : // We hide it visually so you can tab into it to get shown.
+                { overflow: "hidden", height: 0 }
+          }
+        >
+          <AddProperty
+            onSelect={(property) => {
+              setIsAdding(false);
+              const isNew = advancedProperties.includes(property) === false;
+              if (isNew) {
+                setProperty(property)(
+                  { type: "guaranteedInvalid" },
+                  { listed: true }
                 );
-                addRecentProperties(insertedProperties);
-              }}
-              onClose={() => {
-                setIsAdding(false);
-              }}
-              ref={addPropertyInputRef}
-            />
-          </Box>
-        ) : (
-          // This empty div allows showing the add property input on tab in the last value
-          <div
-            tabIndex={0}
+              }
+              addRecentProperties([property]);
+            }}
+            onSubmit={(value) => {
+              setIsAdding(false);
+              const styles = insertStyles(value);
+              const insertedProperties = styles.map(({ property }) => property);
+              addRecentProperties(insertedProperties);
+            }}
+            onClose={() => {
+              setIsAdding(false);
+            }}
             onFocus={() => {
               setIsAdding(true);
             }}
+            ref={addPropertyInputRef}
           />
-        )}
+        </Box>
       </Box>
       {recentProperties.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
