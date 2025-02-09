@@ -81,7 +81,8 @@ export const ModeMenu = () => {
             onFocus={() => setFocusedValue("focus")}
           >
             <Flex justify="between" grow>
-              <Text>Focus mode</Text> <Kbd value={["alt", "shift", "s"]} />
+              <Text variant="labelsTitleCase">Focus mode</Text>
+              <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
           {isFeatureEnabled("stylePanelAdvancedMode") && (
