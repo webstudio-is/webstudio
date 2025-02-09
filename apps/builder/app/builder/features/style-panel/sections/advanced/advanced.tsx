@@ -33,6 +33,7 @@ import {
   Text,
   theme,
   Tooltip,
+  truncate,
   useCombobox,
 } from "@webstudio-is/design-system";
 import {
@@ -135,6 +136,13 @@ const matchOrSuggestToCreate = (
     matched.unshift({
       value: propertyName,
       label: `Create "${propertyName}"`,
+    });
+  }
+  // When there is no match we suggest to create a custom property.
+  if (matched.length === 0) {
+    matched.unshift({
+      value: `--${propertyName}`,
+      label: `--${propertyName}`,
     });
   }
   return matched;
@@ -257,8 +265,15 @@ const AddProperty = forwardRef<
                 <ComboboxListboxItem
                   {...combobox.getItemProps({ item, index })}
                   key={index}
+                  asChild
                 >
-                  {item.label}
+                  <Text
+                    variant="labelsSentenceCase"
+                    truncate
+                    css={{ maxWidth: "25ch" }}
+                  >
+                    {item.label}
+                  </Text>
                 </ComboboxListboxItem>
               ))}
             </ComboboxScrollArea>
