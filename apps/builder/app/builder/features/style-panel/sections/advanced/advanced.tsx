@@ -208,6 +208,10 @@ const AddProperty = forwardRef<
   const inputProps = combobox.getInputProps();
 
   const handleKeys = (event: KeyboardEvent) => {
+    // Dropdown might handle enter or escape.
+    if (event.defaultPrevented) {
+      return;
+    }
     if (event.key === "Enter") {
       onSubmit(item.value);
       return;
@@ -216,10 +220,12 @@ const AddProperty = forwardRef<
       onClose();
     }
   };
-  const handleKeyDown = composeEventHandlers(handleKeys, inputProps.onKeyDown, {
+
+  const handleKeyDown = composeEventHandlers(inputProps.onKeyDown, handleKeys, {
     // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
     checkForDefaultPrevented: false,
   });
+
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
@@ -337,7 +343,6 @@ const AdvancedPropertyValue = ({
       variant="chromeless"
       text="mono"
       fieldSizing="content"
-      onChangeComplete={onChangeComplete}
       prefix={
         isColor && (
           <ColorPopover
