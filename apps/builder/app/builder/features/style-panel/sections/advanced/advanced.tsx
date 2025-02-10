@@ -137,11 +137,15 @@ const matchOrSuggestToCreate = (
       label: `Create "${propertyName}"`,
     });
   }
+
   // When there is no match we suggest to create a custom property.
-  if (matched.length === 0) {
+  if (
+    matched.length === 0 &&
+    lexer.match("<custom-ident>", `--${propertyName}`).matched
+  ) {
     matched.unshift({
       value: `--${propertyName}`,
-      label: `--${propertyName}`,
+      label: `--${propertyName}: unset;`,
     });
   }
   return matched;
