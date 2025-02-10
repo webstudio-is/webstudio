@@ -82,8 +82,8 @@ type NumericScrubState = {
   direction: NumericScrubDirection;
   status: "idle" | "scrubbing";
   /**
-   * On windows it's possible that requestPointerLock is already called,
-   * but document.pointerLockElement is not updated yet.
+   * On Windows, requestPointerLock might already be called,
+   * but document.pointerLockElement may not have been updated yet.
    */
   pointerCaptureRequested: boolean;
 };
