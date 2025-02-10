@@ -290,7 +290,7 @@ const AddProperty = forwardRef<
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
-const indentation = `3ch`;
+const indentation = `20px`;
 
 const AdvancedPropertyLabel = ({
   property,
