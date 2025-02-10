@@ -288,6 +288,10 @@ const AddProperty = forwardRef<
   );
 });
 
+// Used to indent the values when they are on the next line. This way its easier to see
+// where the property ends and value begins, especially in case of presets.
+const indentation = `3ch`;
+
 const AdvancedPropertyLabel = ({
   property,
   onReset,
@@ -334,6 +338,7 @@ const AdvancedPropertyLabel = ({
         text="mono"
         css={{
           backgroundColor: "transparent",
+          marginLeft: `-${indentation}`,
         }}
       >
         {label}
@@ -542,6 +547,7 @@ const AdvancedProperty = memo(
           // with "auto" it will call it with skipped false for all initial elements.
           // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
           containIntrinsicSize: "auto 44px",
+          paddingLeft: indentation,
         }}
         key={property}
         wrap="wrap"
@@ -551,12 +557,20 @@ const AdvancedProperty = memo(
         {isVisible && (
           <>
             <AdvancedPropertyLabel property={property} onReset={onReset} />
-            <Text>:</Text>
-            <AdvancedPropertyValue
-              autoFocus={autoFocus}
-              property={property}
-              onChangeComplete={onChangeComplete}
-            />
+            <Text
+              variant="mono"
+              // Improves the visual separation of value from the property.
+              css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
+            >
+              :
+            </Text>
+            <Box css={{ color: "red" }}>
+              <AdvancedPropertyValue
+                autoFocus={autoFocus}
+                property={property}
+                onChangeComplete={onChangeComplete}
+              />
+            </Box>
           </>
         )}
       </Flex>
