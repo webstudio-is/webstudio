@@ -59,7 +59,7 @@ import {
   $selectedPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { restoreTreeVariablesMutable } from "~/shared/data-variables";
+import { rebindTreeVariablesMutable } from "~/shared/data-variables";
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -608,7 +608,7 @@ export const ResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        restoreTreeVariablesMutable({ instancePath, ...data });
+        rebindTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));
@@ -740,7 +740,7 @@ export const SystemResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        restoreTreeVariablesMutable({ instancePath, ...data });
+        rebindTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));
@@ -856,7 +856,7 @@ export const GraphqlResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        restoreTreeVariablesMutable({ instancePath, ...data });
+        rebindTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));

@@ -39,7 +39,10 @@ import {
   lintExpression,
 } from "@webstudio-is/sdk";
 import { $dataSourceVariables, $isDesignMode } from "~/shared/nano-states";
-import { computeExpression } from "~/shared/data-variables";
+import {
+  computeExpression,
+  encodeDataVariableName,
+} from "~/shared/data-variables";
 import {
   ExpressionEditor,
   formatValuePreview,
@@ -146,7 +149,10 @@ const BindingPanel = ({
                 active={usedIdentifiers.has(identifier)}
                 // convert variable to expression
                 onClick={() => {
-                  editorApiRef.current?.replaceSelection(identifier);
+                  if (name) {
+                    const nameIdentifier = encodeDataVariableName(name);
+                    editorApiRef.current?.replaceSelection(nameIdentifier);
+                  }
                 }}
                 // expression editor blur is fired after pointer down even
                 // preventing it allows to not trigger validation

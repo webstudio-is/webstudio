@@ -75,7 +75,7 @@ import { generateCurl } from "./curl";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   findUnsetVariableNames,
-  restoreTreeVariablesMutable,
+  rebindTreeVariablesMutable,
 } from "~/shared/data-variables";
 
 const $variablesByName = computed(
@@ -299,7 +299,7 @@ const ParameterForm = forwardRef<
       const name = z.string().parse(formData.get("name"));
       updateWebstudioData((data) => {
         data.dataSources.set(variable.id, { ...variable, name });
-        restoreTreeVariablesMutable({ instancePath, ...data });
+        rebindTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));
@@ -339,7 +339,7 @@ const useValuePanelRef = ({
           type: "variable",
           value: variableValue,
         });
-        restoreTreeVariablesMutable({ instancePath, ...data });
+        rebindTreeVariablesMutable({ instancePath, ...data });
       });
     },
   }));
