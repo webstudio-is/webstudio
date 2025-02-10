@@ -214,6 +214,7 @@ export const numericScrubControl = (
     if (!(event instanceof PointerEvent)) {
       return;
     }
+
     const { type } = event;
 
     switch (type) {
@@ -404,8 +405,6 @@ export const numericScrubControl = (
 
 const requestPointerLockSafe = async (targetNode: HTMLElement | SVGElement) => {
   try {
-    // await targetNode.requestPointerLock();
-
     return await targetNode.requestPointerLock({
       unadjustedMovement: true,
     });
