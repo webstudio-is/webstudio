@@ -38,9 +38,12 @@ import {
 import {
   parseCss,
   properties as propertiesData,
+  keywordValues,
   propertyDescriptions,
+  parseCssValue,
 } from "@webstudio-is/css-data";
 import {
+  cssWideKeywords,
   hyphenateProperty,
   toValue,
   type StyleProperty,
@@ -117,7 +120,43 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-type SearchItem = { value: string; label: string };
+type SearchItem = { property: string; label: string; value?: string };
+
+const autoCompleteItems: Array<SearchItem> = [];
+
+const getAutocompleteItems = () => {
+  if (autoCompleteItems.length > 0) {
+    return autoCompleteItems;
+  }
+  for (const property in propertiesData) {
+    autoCompleteItems.push({
+      property,
+      label: hyphenateProperty(property),
+    });
+  }
+
+  const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
+
+  for (const property in keywordValues) {
+    const values = keywordValues[property as keyof typeof keywordValues];
+    for (const value of values) {
+      if (ignoreValues.has(value)) {
+        continue;
+      }
+      autoCompleteItems.push({
+        property,
+        value,
+        label: `${hyphenateProperty(property)}: ${value}`,
+      });
+    }
+  }
+
+  autoCompleteItems.sort((a, b) =>
+    Intl.Collator().compare(a.property, b.property)
+  );
+
+  return autoCompleteItems;
+};
 
 const matchOrSuggestToCreate = (
   search: string,
@@ -127,36 +166,49 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  const propertyName = search.trim();
+
+  // Limit the array to 100 elements
+  matched.length = Math.min(matched.length, 100);
+
+  const property = search.trim();
   if (
-    propertyName.startsWith("--") &&
-    lexer.match("<custom-ident>", propertyName).matched
+    property.startsWith("--") &&
+    lexer.match("<custom-ident>", property).matched
   ) {
     matched.unshift({
-      value: propertyName,
-      label: `Create "${propertyName}"`,
+      property,
+      label: `Create "${property}"`,
     });
   }
   // When there is no match we suggest to create a custom property.
-  if (matched.length === 0) {
+  if (
+    matched.length === 0 &&
+    lexer.match("<custom-ident>", `--${property}`).matched
+  ) {
     matched.unshift({
-      value: `--${propertyName}`,
-      label: `--${propertyName}`,
+      property: `--${property}`,
+      label: `--${property}: unset;`,
     });
   }
+
   return matched;
 };
 
 const getNewPropertyDescription = (item: null | SearchItem) => {
   let description: string | undefined = `Create CSS variable.`;
-  if (item && item.value in propertyDescriptions) {
-    description = propertyDescriptions[item.value];
+  if (item && item.property in propertyDescriptions) {
+    description = propertyDescriptions[item.property];
   }
   return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
 };
 
 const insertStyles = (text: string) => {
-  const parsedStyles = parseCss(`selector{${text}}`);
+  let parsedStyles = parseCss(`selector{${text}}`);
+  if (parsedStyles.length === 0) {
+    // Try a single property without a value.
+    parsedStyles = parseCss(`selector{${text}: unset}`);
+  }
+
   if (parsedStyles.length === 0) {
     return [];
   }
@@ -167,13 +219,6 @@ const insertStyles = (text: string) => {
   batch.publish({ listed: true });
   return parsedStyles;
 };
-
-const sortedProperties = Object.keys(propertiesData)
-  .sort(Intl.Collator().compare)
-  .map((property) => ({
-    value: property,
-    label: hyphenateProperty(property),
-  }));
 
 /**
  *
@@ -188,28 +233,46 @@ const sortedProperties = Object.keys(propertiesData)
 const AddProperty = forwardRef<
   HTMLInputElement,
   {
-    onSelect: (value: StyleProperty) => void;
     onClose: () => void;
-    onSubmit: (value: string) => void;
+    onSubmit: (css: string) => void;
     onFocus: () => void;
   }
->(({ onSelect, onClose, onSubmit, onFocus }, forwardedRef) => {
+>(({ onClose, onSubmit, onFocus }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
-    value: "",
+    property: "",
     label: "",
   });
+  const highlightedItemRef = useRef<SearchItem>();
 
   const combobox = useCombobox<SearchItem>({
-    getItems: () => sortedProperties,
+    getItems: getAutocompleteItems,
     itemToString: (item) => item?.label ?? "",
     value: item,
     defaultHighlightedIndex: 0,
     getItemProps: () => ({ text: "sentence" }),
     match: matchOrSuggestToCreate,
-    onChange: (value) => setItem({ value: value ?? "", label: value ?? "" }),
+    onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      onSelect(item.value as StyleProperty);
+      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
+    },
+    onItemHighlight: (item) => {
+      const previousHighlightedItem = highlightedItemRef.current;
+      if (item?.value === undefined && previousHighlightedItem) {
+        deleteProperty(previousHighlightedItem.property as StyleProperty, {
+          isEphemeral: true,
+        });
+        highlightedItemRef.current = undefined;
+        return;
+      }
+
+      if (item?.value) {
+        const value = parseCssValue(item.property as StyleProperty, item.value);
+        setProperty(item.property as StyleProperty)(value, {
+          isEphemeral: true,
+        });
+        highlightedItemRef.current = item;
+      }
     },
   });
 
@@ -219,7 +282,7 @@ const AddProperty = forwardRef<
   const inputProps = combobox.getInputProps();
 
   const clear = () => {
-    setItem({ value: "", label: "" });
+    setItem({ property: "", label: "" });
   };
 
   const handleKeys = (event: KeyboardEvent) => {
@@ -229,7 +292,7 @@ const AddProperty = forwardRef<
     }
     if (event.key === "Enter") {
       clear();
-      onSubmit(item.value);
+      onSubmit(item.property);
       return;
     }
     if (event.key === "Escape") {
@@ -363,6 +426,7 @@ const AdvancedPropertyValue = ({
   useEffect(() => {
     if (autoFocus) {
       inputRef.current?.focus();
+      inputRef.current?.select();
     }
   }, [autoFocus]);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
@@ -560,7 +624,10 @@ const AdvancedProperty = memo(
             <Text
               variant="mono"
               // Improves the visual separation of value from the property.
-              css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
+              css={{
+                textIndent: "-0.5ch",
+                fontWeight: "bold",
+              }}
             >
               :
             </Text>
@@ -631,17 +698,6 @@ export const Section = () => {
           }
         >
           <AddProperty
-            onSelect={(property) => {
-              setIsAdding(false);
-              const isNew = advancedProperties.includes(property) === false;
-              if (isNew) {
-                setProperty(property)(
-                  { type: "guaranteedInvalid" },
-                  { listed: true }
-                );
-              }
-              addRecentProperties([property]);
-            }}
             onSubmit={(value) => {
               setIsAdding(false);
               const styles = insertStyles(value);
