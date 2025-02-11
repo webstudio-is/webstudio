@@ -42,6 +42,7 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
+  cssWideKeywords,
   hyphenateProperty,
   toValue,
   type StyleProperty,
@@ -126,30 +127,28 @@ const getAutocompleteItems = () => {
   if (autoCompleteItems.length > 0) {
     return autoCompleteItems;
   }
-  Object.keys(propertiesData).forEach((property) => {
+  for (const property in propertiesData) {
     autoCompleteItems.push({
       property,
       label: hyphenateProperty(property),
     });
-  });
+  }
 
-  const ignoreValues = ["inherit", "initial", "unset", ...keywordValues.color];
+  const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
 
-  (Object.keys(keywordValues) as Array<keyof typeof keywordValues>).forEach(
-    (property) => {
-      const values = keywordValues[property];
-      for (const value of values) {
-        if (ignoreValues.includes(value)) {
-          continue;
-        }
-        autoCompleteItems.push({
-          property,
-          value,
-          label: `${hyphenateProperty(property)}: ${value}`,
-        });
+  for (const property in keywordValues) {
+    const values = keywordValues[property as keyof typeof keywordValues];
+    for (const value of values) {
+      if (ignoreValues.has(value)) {
+        continue;
       }
+      autoCompleteItems.push({
+        property,
+        value,
+        label: `${hyphenateProperty(property)}: ${value}`,
+      });
     }
-  );
+  }
 
   autoCompleteItems.sort((a, b) =>
     Intl.Collator().compare(a.property, b.property)
@@ -253,7 +252,7 @@ const AddProperty = forwardRef<
     onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      return onSubmit(`${item.property}: ${item.value ?? "unset"}`);
+      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
     },
   });
 
@@ -273,7 +272,7 @@ const AddProperty = forwardRef<
     }
     if (event.key === "Enter") {
       clear();
-      onSubmit(`${item.property}`);
+      onSubmit(item.property);
       return;
     }
     if (event.key === "Escape") {
