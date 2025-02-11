@@ -439,6 +439,11 @@ const requestPointerLock = (
     };
   });
 
+  let isDisposed = false;
+  disposeOnCleanup(() => () => {
+    isDisposed = true;
+  });
+
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   // Safari supports pointer lock well, but the issue lies with the pointer lock banner.
@@ -450,6 +455,14 @@ const requestPointerLock = (
         requestPointerLockSafe(targetNode)
           .then(() => {
             state.pointerCaptureRequested = false;
+
+            if (isDisposed) {
+              if (targetNode.ownerDocument.pointerLockElement === targetNode) {
+                targetNode.ownerDocument.exitPointerLock();
+              }
+              return;
+            }
+
             const cursorNode =
               (targetNode.ownerDocument.querySelector(
                 "#numeric-guesture-control-cursor"
