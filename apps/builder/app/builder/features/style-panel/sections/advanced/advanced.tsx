@@ -40,6 +40,7 @@ import {
   properties as propertiesData,
   keywordValues,
   propertyDescriptions,
+  parseCssValue,
 } from "@webstudio-is/css-data";
 import {
   cssWideKeywords,
@@ -241,6 +242,7 @@ const AddProperty = forwardRef<
     property: "",
     label: "",
   });
+  const highlightedItemRef = useRef<SearchItem>();
 
   const combobox = useCombobox<SearchItem>({
     getItems: getAutocompleteItems,
@@ -253,6 +255,24 @@ const AddProperty = forwardRef<
     onItemSelect: (item) => {
       clear();
       onSubmit(`${item.property}: ${item.value ?? "unset"}`);
+    },
+    onItemHighlight: (item) => {
+      const previousHighlightedItem = highlightedItemRef.current;
+      if (item?.value === undefined && previousHighlightedItem) {
+        deleteProperty(previousHighlightedItem.property as StyleProperty, {
+          isEphemeral: true,
+        });
+        highlightedItemRef.current = undefined;
+        return;
+      }
+
+      if (item?.value) {
+        const value = parseCssValue(item.property as StyleProperty, item.value);
+        setProperty(item.property as StyleProperty)(value, {
+          isEphemeral: true,
+        });
+        highlightedItemRef.current = item;
+      }
     },
   });
 
