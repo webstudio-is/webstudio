@@ -545,6 +545,8 @@ export const NavigatorTree = () => {
   const selectInstanceAndClearSelection = (
     instanceSelector: undefined | Instance["id"][]
   ) => {
+    // If text is selected, it needs to be unselected before selecting the instance.
+    // Otherwise user will cmd+c the text instead of copying the instance.
     window.getSelection()?.removeAllRanges();
     selectInstance(instanceSelector);
   };
