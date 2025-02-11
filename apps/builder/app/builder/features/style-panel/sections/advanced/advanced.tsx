@@ -181,12 +181,16 @@ const matchOrSuggestToCreate = (
     });
   }
   // When there is no match we suggest to create a custom property.
-  if (matched.length === 0) {
+  if (
+    matched.length === 0 &&
+    lexer.match("<custom-ident>", `--${property}`).matched
+  ) {
     matched.unshift({
       property: `--${property}`,
-      label: `--${property}`,
+      label: `--${property}: unset;`,
     });
   }
+
   return matched;
 };
 
@@ -199,7 +203,12 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
 };
 
 const insertStyles = (text: string) => {
-  const parsedStyles = parseCss(`selector{${text}}`);
+  let parsedStyles = parseCss(`selector{${text}}`);
+  if (parsedStyles.length === 0) {
+    // Try a single property without a value.
+    parsedStyles = parseCss(`selector{${text}: unset}`);
+  }
+
   if (parsedStyles.length === 0) {
     return [];
   }
@@ -224,12 +233,11 @@ const insertStyles = (text: string) => {
 const AddProperty = forwardRef<
   HTMLInputElement,
   {
-    onSelect: (value: StyleProperty) => void;
     onClose: () => void;
-    onSubmit: (property: string) => void;
+    onSubmit: (css: string) => void;
     onFocus: () => void;
   }
->(({ onSelect, onClose, onSubmit, onFocus }, forwardedRef) => {
+>(({ onClose, onSubmit, onFocus }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
     property: "",
     label: "",
@@ -242,11 +250,10 @@ const AddProperty = forwardRef<
     defaultHighlightedIndex: 0,
     getItemProps: () => ({ text: "sentence" }),
     match: matchOrSuggestToCreate,
-    onChange: (property) =>
-      setItem({ property: property ?? "", label: property ?? "" }),
+    onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      onSelect(item.property as StyleProperty);
+      return onSubmit(`${item.property}: ${item.value ?? "unset"}`);
     },
   });
 
@@ -266,7 +273,7 @@ const AddProperty = forwardRef<
     }
     if (event.key === "Enter") {
       clear();
-      onSubmit(item.property);
+      onSubmit(`${item.property}`);
       return;
     }
     if (event.key === "Escape") {
@@ -400,6 +407,7 @@ const AdvancedPropertyValue = ({
   useEffect(() => {
     if (autoFocus) {
       inputRef.current?.focus();
+      inputRef.current?.select();
     }
   }, [autoFocus]);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
@@ -597,7 +605,10 @@ const AdvancedProperty = memo(
             <Text
               variant="mono"
               // Improves the visual separation of value from the property.
-              css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
+              css={{
+                textIndent: "-0.5ch",
+                fontWeight: "bold",
+              }}
             >
               :
             </Text>
@@ -668,17 +679,6 @@ export const Section = () => {
           }
         >
           <AddProperty
-            onSelect={(property) => {
-              setIsAdding(false);
-              const isNew = advancedProperties.includes(property) === false;
-              if (isNew) {
-                setProperty(property)(
-                  { type: "guaranteedInvalid" },
-                  { listed: true }
-                );
-              }
-              addRecentProperties([property]);
-            }}
             onSubmit={(value) => {
               setIsAdding(false);
               const styles = insertStyles(value);
