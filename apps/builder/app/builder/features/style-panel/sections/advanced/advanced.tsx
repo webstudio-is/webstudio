@@ -38,6 +38,7 @@ import {
 import {
   parseCss,
   properties as propertiesData,
+  keywordValues,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
@@ -117,7 +118,40 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-type SearchItem = { property: string; label: string };
+type SearchItem = { property: string; label: string; value?: string };
+
+const autoCompleteItems: Array<SearchItem> = [];
+
+const getAutocompleteItems = () => {
+  if (autoCompleteItems.length > 0) {
+    return autoCompleteItems;
+  }
+  Object.keys(propertiesData).forEach((property) => {
+    autoCompleteItems.push({
+      property,
+      label: hyphenateProperty(property),
+    });
+  });
+
+  (Object.keys(keywordValues) as Array<keyof typeof keywordValues>).forEach(
+    (property) => {
+      const values = keywordValues[property];
+      for (const value of values) {
+        autoCompleteItems.push({
+          property,
+          value,
+          label: `${hyphenateProperty(property)}: ${value}`,
+        });
+      }
+    }
+  );
+
+  autoCompleteItems.sort((a, b) =>
+    Intl.Collator().compare(a.property, b.property)
+  );
+
+  return autoCompleteItems;
+};
 
 const matchOrSuggestToCreate = (
   search: string,
@@ -127,6 +161,10 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
+
+  // Limit the array to 100 elements
+  matched.length = Math.min(matched.length, 100);
+
   const property = search.trim();
   if (
     property.startsWith("--") &&
@@ -168,13 +206,6 @@ const insertStyles = (text: string) => {
   return parsedStyles;
 };
 
-const sortedProperties = Object.keys(propertiesData)
-  .sort(Intl.Collator().compare)
-  .map((property) => ({
-    property,
-    label: hyphenateProperty(property),
-  }));
-
 /**
  *
  * Advanced search control supports following interactions
@@ -200,7 +231,7 @@ const AddProperty = forwardRef<
   });
 
   const combobox = useCombobox<SearchItem>({
-    getItems: () => sortedProperties,
+    getItems: getAutocompleteItems,
     itemToString: (item) => item?.label ?? "",
     value: item,
     defaultHighlightedIndex: 0,
