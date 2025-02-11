@@ -64,7 +64,7 @@ const StyledLabel = styled(RadixLabel, {
       },
       preset: {
         backgroundColor: theme.colors.backgroundPresetMain,
-        color: theme.colors.foregroundMain,
+        color: theme.colors.foregroundTextSubtle,
         "&:hover": {
           backgroundColor: theme.colors.backgroundPresetHover,
         },
