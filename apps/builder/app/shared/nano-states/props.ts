@@ -422,7 +422,7 @@ export const $variableValuesByInstanceSelector = computed(
       const [instanceId] = instanceSelector;
       const instance = instances.get(instanceId);
 
-      let variableNames = new Map(parentVariableNames);
+      const variableNames = new Map(parentVariableNames);
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
