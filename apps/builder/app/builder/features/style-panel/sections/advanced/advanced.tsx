@@ -133,10 +133,15 @@ const getAutocompleteItems = () => {
     });
   });
 
+  const ignoreValues = ["inherit", "initial", "unset", ...keywordValues.color];
+
   (Object.keys(keywordValues) as Array<keyof typeof keywordValues>).forEach(
     (property) => {
       const values = keywordValues[property];
       for (const value of values) {
+        if (ignoreValues.includes(value)) {
+          continue;
+        }
         autoCompleteItems.push({
           property,
           value,
