@@ -1,6 +1,6 @@
 import type { ResourceRequest } from "@webstudio-is/sdk";
 import { tokenizeArgs } from "args-tokenizer";
-import { parse as parseArgs } from "ultraflag";
+import { parse as parseArgs } from "@bomb.sh/args";
 
 /*
 

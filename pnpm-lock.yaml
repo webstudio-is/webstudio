@@ -124,6 +124,9 @@ importers:
       '@atlaskit/pragmatic-drag-and-drop':
         specifier: ^1.5.0
         version: 1.5.0
+      '@bomb.sh/args':
+        specifier: ^0.3.0
+        version: 0.3.0
       '@codemirror/autocomplete':
         specifier: ^6.18.4
         version: 6.18.4
@@ -412,9 +415,6 @@ importers:
       title-case:
         specifier: ^4.3.2
         version: 4.3.2
-      ultraflag:
-        specifier: ^0.2.3
-        version: 0.2.3
       untruncate-json:
         specifier: ^0.0.1
         version: 0.0.1
@@ -2323,6 +2323,9 @@ packages:
   '@babel/types@7.26.0':
     resolution: {integrity: sha512-Z/yiTPj+lDVnF7lWeKCIJzaIkI0vYO87dMpZ4bg4TDrFe4XXLFWL1TbXU27gBP3QccxV9mZICCrnjnYlJjXHOA==}
     engines: {node: '>=6.9.0'}
+
+  '@bomb.sh/args@0.3.0':
+    resolution: {integrity: sha512-ufLrPUVSfU3dSn2uA+gJlls+eQYOKoFSGxHm6Si9Cx7lLu1oANLop+jKCm+2eBe1tHoGLi50B1QvcPpK8yuD8w==}
 
   '@brillout/import@0.2.3':
     resolution: {integrity: sha512-1T8WlD75eeFSMrptGy8jiLHmfHgMmSjWvLOIUvHmSVZt+6k0eQqYUoK4KbmE4T9pVLIfxvZSOm2D68VEqKRHRw==}
@@ -8878,9 +8881,6 @@ packages:
   ufo@1.5.4:
     resolution: {integrity: sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ==}
 
-  ultraflag@0.2.3:
-    resolution: {integrity: sha512-RC8Q5Y72wbiDfF+LXEaFaF3j+hKt4bU6GJQSuTKJIisNXfviDV3G6UPiC8iKV+idSBshjXZGwoO/2kg7gQvnjQ==}
-
   umzug@3.2.1:
     resolution: {integrity: sha512-XyWQowvP9CKZycKc/Zg9SYWrAWX/gJCE799AUTFqk8yC3tp44K1xWr3LoFF0MNEjClKOo1suCr5ASnoy+KltdA==}
     engines: {node: '>=12'}
@@ -9736,6 +9736,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
+
+  '@bomb.sh/args@0.3.0': {}
 
   '@brillout/import@0.2.3': {}
 
@@ -16956,8 +16958,6 @@ snapshots:
   ufo@1.5.3: {}
 
   ufo@1.5.4: {}
-
-  ultraflag@0.2.3: {}
 
   umzug@3.2.1:
     dependencies:
