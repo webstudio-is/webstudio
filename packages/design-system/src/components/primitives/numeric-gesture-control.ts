@@ -148,6 +148,14 @@ const addCursorUI = (direction: NumericScrubDirection) => {
   };
 };
 
+const isWindows = () => {
+  if (typeof window !== "undefined") {
+    return navigator.platform.toLowerCase().includes("win");
+  }
+
+  return false;
+};
+
 export const numericScrubControl = (
   targetNode: HTMLElement | SVGElement,
   options: NumericScrubOptions
@@ -187,6 +195,8 @@ export const numericScrubControl = (
     for (const task of [...cleanupTasks.reverse()]) {
       task();
     }
+
+    cleanupTasks.length = 0;
 
     if (state.status === "scrubbing") {
       state.status = "idle";
@@ -235,6 +245,8 @@ export const numericScrubControl = (
         break;
       }
       case "pointerdown": {
+        cleanup();
+
         if (
           event.target &&
           shouldHandleEvent?.(event.target as Node) === false
@@ -362,8 +374,12 @@ export const numericScrubControl = (
       }
 
       case "lostpointercapture": {
-        if (state.pointerCaptureRequested) {
-          break;
+        // On Mac if this happens it's near 100% probability that pointerup event will not fire
+        if (isWindows()) {
+          // This Windows fix cause other bug, in some cases pointerup event will not fire
+          if (state.pointerCaptureRequested) {
+            break;
+          }
         }
 
         if (document.pointerLockElement === null) {
