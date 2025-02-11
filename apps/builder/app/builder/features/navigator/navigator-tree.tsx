@@ -542,6 +542,13 @@ export const NavigatorTree = () => {
     }
   }, [selectedInstanceSelector]);
 
+  const selectInstanceAndClearSelection = (
+    instanceSelector: undefined | Instance["id"][]
+  ) => {
+    window.getSelection()?.removeAllRanges();
+    selectInstance(instanceSelector);
+  };
+
   return (
     <ScrollArea
       direction="both"
@@ -558,8 +565,10 @@ export const NavigatorTree = () => {
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}
             buttonProps={{
-              onClick: () => selectInstance([ROOT_INSTANCE_ID]),
-              onFocus: () => selectInstance([ROOT_INSTANCE_ID]),
+              onClick: () =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID]),
+              onFocus: () =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID]),
             }}
             action={
               <Tooltip
@@ -664,8 +673,8 @@ export const NavigatorTree = () => {
                     $blockChildOutline.set(undefined);
                   },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-                  onClick: () => selectInstance(item.selector),
-                  onFocus: () => selectInstance(item.selector),
+                  onClick: () => selectInstanceAndClearSelection(item.selector),
+                  onFocus: () => selectInstanceAndClearSelection(item.selector),
                   onKeyDown: (event) => {
                     if (event.key === "Enter") {
                       emitCommand("editInstanceText");
