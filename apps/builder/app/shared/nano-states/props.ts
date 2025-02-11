@@ -416,11 +416,13 @@ export const $variableValuesByInstanceSelector = computed(
     }
     const traverseInstances = (
       instanceSelector: InstanceSelector,
-      parentVariableValues: Map<string, unknown>
+      parentVariableValues = new Map<string, unknown>(),
+      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
     ) => {
       const [instanceId] = instanceSelector;
       const instance = instances.get(instanceId);
 
+      let variableNames = new Map(parentVariableNames);
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
@@ -435,6 +437,10 @@ export const $variableValuesByInstanceSelector = computed(
           ) {
             continue;
           }
+          // delete previous variable with the same name
+          // because it is masked and no longer available
+          variableValues.delete(variableNames.get(variable.name) ?? "");
+          variableNames.set(variable.name, variable.id);
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
@@ -518,11 +524,15 @@ export const $variableValuesByInstanceSelector = computed(
       }
       for (const child of instance.children) {
         if (child.type === "id") {
-          traverseInstances([child.value, ...instanceSelector], variableValues);
+          traverseInstances(
+            [child.value, ...instanceSelector],
+            variableValues,
+            variableNames
+          );
         }
       }
     };
-    traverseInstances([page.rootInstanceId], new Map());
+    traverseInstances([page.rootInstanceId]);
     return variableValuesByInstanceSelector;
   }
 );
