@@ -443,6 +443,8 @@ export const deleteInstanceMutable = (
     instanceIds
   );
 
+  // mutate instances from data instead of instance path
+  parentInstance = data.instances.get(parentInstance?.id as string);
   // may not exist when delete root
   if (parentInstance) {
     removeByMutable(
