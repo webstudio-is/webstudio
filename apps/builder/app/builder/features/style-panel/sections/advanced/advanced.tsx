@@ -8,6 +8,7 @@ import {
   useState,
   type ComponentProps,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
@@ -26,6 +27,7 @@ import {
   InputField,
   Label,
   NestedInputButton,
+  SearchField,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -79,6 +81,7 @@ import { useClientSupports } from "~/shared/client-supports";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
 import { composeEventHandlers } from "~/shared/event-utils";
+import { mergeRefs } from "@react-aria/utils";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -414,12 +417,14 @@ const AdvancedPropertyValue = ({
   autoFocus,
   property,
   onChangeComplete,
+  inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
   property: StyleProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
+  inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -432,7 +437,7 @@ const AdvancedPropertyValue = ({
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
   return (
     <CssValueInputContainer
-      inputRef={inputRef}
+      inputRef={mergeRefs(inputRef, inputRefProp)}
       variant="chromeless"
       text="mono"
       fieldSizing="content"
@@ -559,6 +564,7 @@ const AdvancedProperty = memo(
     autoFocus,
     onChangeComplete,
     onReset,
+    valueInputRef,
   }: {
     property: StyleProperty;
     autoFocus?: boolean;
@@ -566,6 +572,7 @@ const AdvancedProperty = memo(
     onChangeComplete?: ComponentProps<
       typeof CssValueInputContainer
     >["onChangeComplete"];
+    valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
     const visibilityChangeEventSupported = useClientSupports(
       () => "oncontentvisibilityautostatechange" in document.body
@@ -636,6 +643,7 @@ const AdvancedProperty = memo(
                 autoFocus={autoFocus}
                 property={property}
                 onChangeComplete={onChangeComplete}
+                inputRef={valueInputRef}
               />
             </Box>
           </>
@@ -650,6 +658,9 @@ export const Section = () => {
   const advancedProperties = useStore($advancedProperties);
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
+  const recentValueInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchProperties, setSearchProperties] = useState([]);
 
   const addRecentProperties = (properties: StyleProperty[]) => {
     setRecentProperties(
@@ -670,25 +681,45 @@ export const Section = () => {
       onAdd={showAddProperty}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentProperties.map((property, index, properties) => (
-          <AdvancedProperty
-            key={property}
-            property={property}
-            autoFocus={index === properties.length - 1}
-            onChangeComplete={(event) => {
-              if (event.type === "enter") {
-                showAddProperty();
-              }
-            }}
-            onReset={() => {
-              setRecentProperties((properties) => {
-                return properties.filter(
-                  (recentProperty) => recentProperty !== property
-                );
-              });
-            }}
-          />
-        ))}
+        <SearchField
+          inputRef={searchInputRef}
+          onChange={(event) => {
+            const search = event.target.value.trim();
+            if (search === "") {
+              return setSearchProperties([]);
+            }
+            const matched = matchSorter(advancedProperties, search);
+            setSearchProperties(matched);
+          }}
+          onAbort={() => {
+            setSearchProperties([]);
+          }}
+        />
+      </Box>
+      <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        {recentProperties.map((property, index, properties) => {
+          const isLast = index === properties.length - 1;
+          return (
+            <AdvancedProperty
+              valueInputRef={isLast ? recentValueInputRef : undefined}
+              key={property}
+              property={property}
+              autoFocus={isLast}
+              onChangeComplete={(event) => {
+                if (event.type === "enter") {
+                  showAddProperty();
+                }
+              }}
+              onReset={() => {
+                setRecentProperties((properties) => {
+                  return properties.filter(
+                    (recentProperty) => recentProperty !== property
+                  );
+                });
+              }}
+            />
+          );
+        })}
         <Box
           css={
             isAdding
@@ -706,6 +737,11 @@ export const Section = () => {
             }}
             onClose={() => {
               setIsAdding(false);
+              requestAnimationFrame(() => {
+                const element =
+                  recentValueInputRef.current ?? searchInputRef.current;
+                element?.focus();
+              });
             }}
             onFocus={() => {
               if (isAdding === false) {
@@ -718,7 +754,7 @@ export const Section = () => {
       </Box>
       {recentProperties.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {advancedProperties
+        {(searchProperties.length > 0 ? searchProperties : advancedProperties)
           .filter((property) => recentProperties.includes(property) === false)
           .map((property) => (
             <AdvancedProperty key={property} property={property} />
