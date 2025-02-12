@@ -8,7 +8,7 @@ export const assetBaseUrl = "/assets/";
  * @type {import("@webstudio-is/image").ImageLoader}
  */
 export const imageLoader = (props) => {
-  if (process.env.NODE_ENV !== "production") {
+  if (import.meta.env.DEV) {
     return props.src;
   }
 
