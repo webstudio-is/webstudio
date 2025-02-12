@@ -239,8 +239,9 @@ const AddProperty = forwardRef<
     onClose: () => void;
     onSubmit: (css: string) => void;
     onFocus: () => void;
+    onBlur: () => void;
   }
->(({ onClose, onSubmit, onFocus }, forwardedRef) => {
+>(({ onClose, onSubmit, onFocus, onBlur }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
     property: "",
     label: "",
@@ -312,11 +313,15 @@ const AddProperty = forwardRef<
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
-        <input type="submit" hidden />
         <ComboboxAnchor>
           <InputField
             {...inputProps}
+            autoFocus
             onFocus={onFocus}
+            onBlur={(event) => {
+              inputProps.onBlur(event);
+              onBlur();
+            }}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             placeholder="Add styles"
@@ -748,37 +753,44 @@ export const Section = () => {
               />
             );
           })}
-        <Box
-          css={
-            isAdding
-              ? { paddingTop: theme.spacing[3] }
-              : // We hide it visually so you can tab into it to get shown.
-                { overflow: "hidden", height: 0 }
-          }
-        >
-          <AddProperty
-            onSubmit={(value) => {
-              setIsAdding(false);
-              const styles = insertStyles(value);
-              const insertedProperties = styles.map(({ property }) => property);
-              addRecentProperties(insertedProperties);
-            }}
-            onClose={() => {
-              setIsAdding(false);
-              requestAnimationFrame(() => {
-                const element =
-                  recentValueInputRef.current ?? searchInputRef.current;
-                element?.focus();
-              });
-            }}
-            onFocus={() => {
-              if (isAdding === false) {
-                showAddProperty();
-              }
-            }}
-            ref={addPropertyInputRef}
-          />
-        </Box>
+        {(showRecentProperties || isAdding) && (
+          <Box
+            css={
+              isAdding
+                ? { paddingTop: theme.spacing[3] }
+                : // We hide it visually so you can tab into it to get shown.
+                  { overflow: "hidden", height: 0 }
+            }
+          >
+            <AddProperty
+              onSubmit={(value) => {
+                setIsAdding(false);
+                const styles = insertStyles(value);
+                const insertedProperties = styles.map(
+                  ({ property }) => property
+                );
+                addRecentProperties(insertedProperties);
+              }}
+              onClose={() => {
+                setIsAdding(false);
+                requestAnimationFrame(() => {
+                  const element =
+                    recentValueInputRef.current ?? searchInputRef.current;
+                  element?.focus();
+                });
+              }}
+              onFocus={() => {
+                if (isAdding === false) {
+                  showAddProperty();
+                }
+              }}
+              onBlur={() => {
+                setIsAdding(false);
+              }}
+              ref={addPropertyInputRef}
+            />
+          </Box>
+        )}
       </Box>
       {showRecentProperties && <Separator />}
       <Box
