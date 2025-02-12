@@ -278,13 +278,14 @@ const VariablesItem = ({
               onOpenChange={setIsDeleteDialogOpen}
             >
               <DialogContent>
-                <DialogTitle>Do you want to delete this variable?</DialogTitle>
+                <DialogTitle>Delete Variable?</DialogTitle>
                 <DialogDescription
                   className={css({
                     paddingInline: theme.panel.paddingInline,
+                    textWrap: "nowrap",
                   }).toString()}
                 >
-                  This variable is used in {usageCount}&nbsp;
+                  Variable "{variable.name}" is used in {usageCount}&nbsp;
                   {usageCount === 1 ? "expression" : "expressions"}.
                 </DialogDescription>
                 <DialogActions>
