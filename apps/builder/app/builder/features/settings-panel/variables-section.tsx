@@ -8,7 +8,6 @@ import {
   CssValueListItem,
   Dialog,
   DialogActions,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -285,7 +284,7 @@ const VariablesItem = ({
                     paddingInline: theme.panel.paddingInline,
                   }).toString()}
                 >
-                  This variable is used in {usageCount}{" "}
+                  This variable is used in {usageCount}&nbsp;
                   {usageCount === 1 ? "expression" : "expressions"}.
                 </DialogDescription>
                 <DialogActions>
