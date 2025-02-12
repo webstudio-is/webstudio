@@ -660,7 +660,11 @@ export const Section = () => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [searchProperties, setSearchProperties] = useState([]);
+  const [searchProperties, setSearchProperties] = useState();
+  const currentProperties = searchProperties ?? advancedProperties;
+
+  const showRecentProperties =
+    recentProperties.length > 0 && searchProperties === undefined;
 
   const addRecentProperties = (properties: StyleProperty[]) => {
     setRecentProperties(
@@ -672,6 +676,29 @@ export const Section = () => {
     setIsAdding(true);
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
+  };
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialHeightRef = useRef<number>();
+
+  const getHeight = () => {
+    if (
+      searchProperties &&
+      initialHeightRef.current === undefined &&
+      containerRef.current
+    ) {
+      initialHeightRef.current =
+        containerRef.current.getBoundingClientRect().height;
+    }
+
+    if (searchProperties === undefined) {
+      // @todo rewrite
+      requestAnimationFrame(() => {
+        initialHeightRef.current = undefined;
+      });
+    }
+
+    return initialHeightRef.current;
   };
 
   return (
@@ -686,40 +713,41 @@ export const Section = () => {
           onChange={(event) => {
             const search = event.target.value.trim();
             if (search === "") {
-              return setSearchProperties([]);
+              return setSearchProperties(undefined);
             }
             const matched = matchSorter(advancedProperties, search);
             setSearchProperties(matched);
           }}
           onAbort={() => {
-            setSearchProperties([]);
+            setSearchProperties(undefined);
           }}
         />
       </Box>
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentProperties.map((property, index, properties) => {
-          const isLast = index === properties.length - 1;
-          return (
-            <AdvancedProperty
-              valueInputRef={isLast ? recentValueInputRef : undefined}
-              key={property}
-              property={property}
-              autoFocus={isLast}
-              onChangeComplete={(event) => {
-                if (event.type === "enter") {
-                  showAddProperty();
-                }
-              }}
-              onReset={() => {
-                setRecentProperties((properties) => {
-                  return properties.filter(
-                    (recentProperty) => recentProperty !== property
-                  );
-                });
-              }}
-            />
-          );
-        })}
+        {showRecentProperties &&
+          recentProperties.map((property, index, properties) => {
+            const isLast = index === properties.length - 1;
+            return (
+              <AdvancedProperty
+                valueInputRef={isLast ? recentValueInputRef : undefined}
+                key={property}
+                property={property}
+                autoFocus={isLast}
+                onChangeComplete={(event) => {
+                  if (event.type === "enter") {
+                    showAddProperty();
+                  }
+                }}
+                onReset={() => {
+                  setRecentProperties((properties) => {
+                    return properties.filter(
+                      (recentProperty) => recentProperty !== property
+                    );
+                  });
+                }}
+              />
+            );
+          })}
         <Box
           css={
             isAdding
@@ -752,9 +780,15 @@ export const Section = () => {
           />
         </Box>
       </Box>
-      {recentProperties.length > 0 && <Separator />}
-      <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {(searchProperties.length > 0 ? searchProperties : advancedProperties)
+      {showRecentProperties && <Separator />}
+      <Box
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          minHeight: getHeight(),
+        }}
+        ref={containerRef}
+      >
+        {currentProperties
           .filter((property) => recentProperties.includes(property) === false)
           .map((property) => (
             <AdvancedProperty key={property} property={property} />
