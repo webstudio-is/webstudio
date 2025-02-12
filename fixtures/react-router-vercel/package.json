@@ -27,7 +27,8 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "react-router": "^7.1.5",
     "vite": "^5.4.11",
-    "@react-router/node": "^7.1.5"
+    "@react-router/node": "^7.1.5",
+    "@vercel/react-router": "^1.0.2"
   },
   "private": true,
   "type": "module",
