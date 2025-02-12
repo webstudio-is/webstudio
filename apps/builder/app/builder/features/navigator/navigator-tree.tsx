@@ -442,6 +442,12 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
   if (instanceSelector.length === 1) {
     return false;
   }
+
+  // Do not drag if the instance name is being edited
+  if ($editingItemSelector.get()?.join(",") === instanceSelector.join(",")) {
+    return false;
+  }
+
   if ($isContentMode.get()) {
     const parentId = instanceSelector[1];
     const parentInstance = $instances.get().get(parentId);
@@ -543,11 +549,16 @@ export const NavigatorTree = () => {
   }, [selectedInstanceSelector]);
 
   const selectInstanceAndClearSelection = (
-    instanceSelector: undefined | Instance["id"][]
+    instanceSelector: undefined | Instance["id"][],
+    event: React.MouseEvent | React.FocusEvent
   ) => {
-    // If text is selected, it needs to be unselected before selecting the instance.
-    // Otherwise user will cmd+c the text instead of copying the instance.
-    window.getSelection()?.removeAllRanges();
+    if (event.currentTarget.querySelector("[contenteditable]") === null) {
+      // Allow text selection and edits inside current TreeNode
+      // Outside if text is selected, it needs to be unselected before selecting the instance.
+      // Otherwise user will cmd+c the text instead of copying the instance.
+      window.getSelection()?.removeAllRanges();
+    }
+
     selectInstance(instanceSelector);
   };
 
@@ -567,10 +578,10 @@ export const NavigatorTree = () => {
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}
             buttonProps={{
-              onClick: () =>
-                selectInstanceAndClearSelection([ROOT_INSTANCE_ID]),
-              onFocus: () =>
-                selectInstanceAndClearSelection([ROOT_INSTANCE_ID]),
+              onClick: (event) =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID], event),
+              onFocus: (event) =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID], event),
             }}
             action={
               <Tooltip
@@ -675,8 +686,10 @@ export const NavigatorTree = () => {
                     $blockChildOutline.set(undefined);
                   },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-                  onClick: () => selectInstanceAndClearSelection(item.selector),
-                  onFocus: () => selectInstanceAndClearSelection(item.selector),
+                  onClick: (event) =>
+                    selectInstanceAndClearSelection(item.selector, event),
+                  onFocus: (event) =>
+                    selectInstanceAndClearSelection(item.selector, event),
                   onKeyDown: (event) => {
                     if (event.key === "Enter") {
                       emitCommand("editInstanceText");
