@@ -740,7 +740,8 @@ describe("delete instance", () => {
     expect(data.instances.get("bodyId")?.children.length).toEqual(2);
     deleteInstanceMutable(
       data,
-      getInstancePath(["boxId", "bodyId"], data.instances)
+      // clone to make sure data is mutated instead of instance path
+      structuredClone(getInstancePath(["boxId", "bodyId"], data.instances))
     );
     expect(data.instances.size).toEqual(2);
     expect(data.instances.get("bodyId")?.children.length).toEqual(1);
