@@ -1,5 +1,5 @@
 {
-  "framework": "vite",
+  "framework": "react-router",
   "images": {
     "domains": [],
     "sizes": [
