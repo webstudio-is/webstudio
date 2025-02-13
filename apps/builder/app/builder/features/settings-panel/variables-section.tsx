@@ -6,6 +6,11 @@ import {
   css,
   CssValueListArrowFocus,
   CssValueListItem,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,7 +37,6 @@ import {
   $resources,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -51,6 +55,8 @@ import {
   $selectedInstancePath,
   $selectedPage,
 } from "~/shared/awareness";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import { deleteVariableMutable } from "~/shared/data-variables";
 
 /**
  * find variables defined specifically on this selected instance
@@ -157,22 +163,6 @@ const $usedVariables = computed(
   }
 );
 
-const deleteVariable = (variableId: DataSource["id"]) => {
-  serverSyncStore.createTransaction(
-    [$dataSources, $resources],
-    (dataSources, resources) => {
-      const dataSource = dataSources.get(variableId);
-      if (dataSource === undefined) {
-        return;
-      }
-      dataSources.delete(variableId);
-      if (dataSource.type === "resource") {
-        resources.delete(dataSource.resourceId);
-      }
-    }
-  );
-};
-
 const EmptyVariables = () => {
   return (
     <Flex direction="column" gap="2">
@@ -213,6 +203,7 @@ const VariablesItem = ({
 }) => {
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   return (
     <VariablePopoverTrigger key={variable.id} variable={variable}>
       <CssValueListItem
@@ -243,6 +234,7 @@ const VariablesItem = ({
             >
               {undefined}
             </ValuePreviewDialog>
+
             <DropdownMenu modal onOpenChange={setIsMenuOpen}>
               <DropdownMenuTrigger asChild>
                 {/* a11y is completely broken here
@@ -263,17 +255,53 @@ const VariablesItem = ({
                 <DropdownMenuItem onSelect={() => setInspectDialogOpen(true)}>
                   Inspect
                 </DropdownMenuItem>
-                {source === "local" && (
+                {source === "local" && variable.type !== "parameter" && (
                   <DropdownMenuItem
-                    // allow to delete only unused variables
-                    disabled={variable.type === "parameter" || usageCount > 0}
-                    onSelect={() => deleteVariable(variable.id)}
+                    onSelect={() => {
+                      if (usageCount > 0) {
+                        setIsDeleteDialogOpen(true);
+                      } else {
+                        updateWebstudioData((data) => {
+                          deleteVariableMutable(data, variable.id);
+                        });
+                      }
+                    }}
                   >
                     Delete {usageCount > 0 && `(${usageCount} bindings)`}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Dialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+            >
+              <DialogContent>
+                <DialogTitle>Delete Variable?</DialogTitle>
+                <DialogDescription
+                  className={css({
+                    paddingInline: theme.panel.paddingInline,
+                    textWrap: "nowrap",
+                  }).toString()}
+                >
+                  Variable "{variable.name}" is used in {usageCount}&nbsp;
+                  {usageCount === 1 ? "expression" : "expressions"}.
+                </DialogDescription>
+                <DialogActions>
+                  <Button
+                    color="destructive"
+                    onClick={() => {
+                      updateWebstudioData((data) => {
+                        deleteVariableMutable(data, variable.id);
+                      });
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DialogActions>
+              </DialogContent>
+            </Dialog>
           </>
         }
       />

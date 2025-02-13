@@ -16,6 +16,7 @@ import {
   restoreExpressionVariables,
   rebindTreeVariablesMutable,
   unsetExpressionVariables,
+  deleteVariableMutable,
 } from "./data-variables";
 import { getInstancePath } from "./awareness";
 
@@ -387,6 +388,80 @@ test("rebind tree variables in resources", () => {
       method: "post",
       headers: [{ name: "auth", value: boxIdentifier }],
       body: boxIdentifier,
+    }),
+  ]);
+});
+
+test("delete variable and unset it in expressions", () => {
+  const bodyVariable = new Variable("bodyVariable", "one value of body");
+  const data = renderData(
+    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <$.Box
+        ws:id="boxId"
+        data-action={new ActionValue([], expression`${bodyVariable}`)}
+      >
+        {expression`${bodyVariable}`}
+      </$.Box>
+    </$.Body>
+  );
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: "bodyId" }),
+  ]);
+  const [bodyVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, bodyVariableId);
+  expect(Array.from(data.props.values())).toEqual([
+    expect.objectContaining({ name: "data-body-vars", value: "bodyVariable" }),
+    expect.objectContaining({
+      name: "data-action",
+      value: [{ type: "execute", args: [], code: "bodyVariable" }],
+    }),
+  ]);
+  expect(data.instances.get("boxId")?.children).toEqual([
+    { type: "expression", value: "bodyVariable" },
+  ]);
+});
+
+test("delete variable and unset it in resources", () => {
+  const bodyVariable = new Variable("bodyVariable", "one value of body");
+  const resourceVariable = new ResourceValue("resourceVariable", {
+    url: expression`${bodyVariable}`,
+    method: "post",
+    headers: [{ name: "auth", value: expression`${bodyVariable}` }],
+    body: expression`${bodyVariable}`,
+  });
+  const resourceProp = new ResourceValue("resourceProp", {
+    url: expression`${bodyVariable}`,
+    method: "post",
+    headers: [{ name: "auth", value: expression`${bodyVariable}` }],
+    body: expression`${bodyVariable}`,
+  });
+  const data = renderData(
+    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <$.Box
+        ws:id="boxId"
+        data-box-vars={expression`${resourceVariable}`}
+        data-resource={resourceProp}
+      ></$.Box>
+    </$.Body>
+  );
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: "bodyId" }),
+    expect.objectContaining({ scopeInstanceId: "boxId" }),
+  ]);
+  const [bodyVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, bodyVariableId);
+  expect(Array.from(data.resources.values())).toEqual([
+    expect.objectContaining({
+      url: "bodyVariable",
+      method: "post",
+      headers: [{ name: "auth", value: "bodyVariable" }],
+      body: "bodyVariable",
+    }),
+    expect.objectContaining({
+      url: "bodyVariable",
+      method: "post",
+      headers: [{ name: "auth", value: "bodyVariable" }],
+      body: "bodyVariable",
     }),
   ]);
 });
