@@ -56,7 +56,6 @@ import {
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { Templates } from "@webstudio-is/sdk";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
@@ -641,24 +640,29 @@ const Content = (props: {
   );
 };
 
-const deployTargets = {
-  vanilla: {
-    label: "Docker",
-    docs: "https://reactrouter.com/",
+type DeployTarget = {
+  docs?: string;
+  command?: string;
+  ssgTemplates?: Templates[];
+};
+
+const deployTargets: Record<string, DeployTarget> = {
+  docker: {
+    docs: "https://docs.docker.com",
     command: `
       docker build -t my-image .
       docker run my-image
     `,
+  },
+  static: {
     ssgTemplates: ["ssg"],
   },
   vercel: {
-    label: "Vercel",
     docs: "https://vercel.com/docs/cli",
     command: "npx vercel@latest",
     ssgTemplates: ["ssg-vercel"],
   },
   netlify: {
-    label: "Netlify",
     docs: "https://docs.netlify.com/cli/get-started/",
     command: `
 npx netlify-cli@latest login
@@ -667,7 +671,7 @@ npx netlify-cli build
 npx netlify-cli deploy`,
     ssgTemplates: ["ssg-netlify"],
   },
-} as const;
+};
 
 type DeployTargets = keyof typeof deployTargets;
 
@@ -676,7 +680,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
 
 const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 
   return (
     <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
@@ -701,152 +705,151 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
         </Grid>
       </Grid>
 
-      <Grid columns={1} gap={1}>
-        {isFeatureEnabled("staticExport") && (
-          <>
-            <PublishStatic
-              projectId={props.projectId}
-              templates={deployTargets[deployTarget].ssgTemplates}
-            />
-            <div />
+      {deployTargets[deployTarget].ssgTemplates && (
+        <Grid columns={1} gap={1}>
+          <PublishStatic
+            projectId={props.projectId}
+            templates={deployTargets[deployTarget].ssgTemplates}
+          />
+          <div />
+          <Text color="subtle">
+            Learn about deploying static sites{" "}
+            <Link
+              variant="inherit"
+              color="inherit"
+              href="https://wstd.us/ssg"
+              target="_blank"
+              rel="noreferrer"
+            >
+              here
+            </Link>
+          </Text>
+        </Grid>
+      )}
+
+      {deployTargets[deployTarget].command && (
+        <Grid columns={1} gap={2}>
+          <Grid
+            gap={2}
+            align={"center"}
+            css={{
+              gridTemplateColumns: `1fr auto 1fr`,
+            }}
+          >
+            <Separator css={{ alignSelf: "unset" }} />
+            <Text color="main">CLI</Text>
+            <Separator css={{ alignSelf: "unset" }} />
+          </Grid>
+          <Grid columns={1} gap={1}>
+            <Text color="main" variant="labelsTitleCase">
+              Step 1
+            </Text>
             <Text color="subtle">
-              Learn about deploying static sites{" "}
+              Download and install Node v20+ from{" "}
               <Link
                 variant="inherit"
                 color="inherit"
-                href="https://wstd.us/ssg"
+                href="https://nodejs.org/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                nodejs.org
+              </Link>{" "}
+              or with{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://nodejs.org/en/download/package-manager"
+                target="_blank"
+                rel="noreferrer"
+              >
+                a package manager
+              </Link>
+              .
+            </Text>
+          </Grid>
+
+          <Grid columns={1} gap={2}>
+            <Grid columns={1} gap={1}>
+              <Text color="main" variant="labelsTitleCase">
+                Step 2
+              </Text>
+              <Text color="subtle">
+                Run this command in your Terminal to install Webstudio CLI and
+                sync your project.
+              </Text>
+            </Grid>
+            <Flex gap={2}>
+              <InputField
+                css={{ flex: 1 }}
+                text="mono"
+                readOnly
+                value={npxCommand}
+              />
+              <CopyToClipboard text={npxCommand}>
+                <Button type="button" color="neutral" prefix={<CopyIcon />}>
+                  Copy
+                </Button>
+              </CopyToClipboard>
+            </Flex>
+          </Grid>
+
+          <Grid columns={1} gap={2}>
+            <Grid columns={1} gap={1}>
+              <Text color="main" variant="labelsTitleCase">
+                Step 3
+              </Text>
+              <Text color="subtle">
+                Run this command to publish to{" "}
+                <Link
+                  variant="inherit"
+                  color="inherit"
+                  href={deployTargets[deployTarget].docs}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {humanizeString(deployTarget)}
+                </Link>{" "}
+              </Text>
+            </Grid>
+            <Flex gap={2} align="end">
+              <TextArea
+                css={{ flex: 1 }}
+                variant="mono"
+                readOnly
+                value={stripIndent(deployTargets[deployTarget].command)
+                  .trimStart()
+                  .replace(/ +$/, "")}
+              />
+              <CopyToClipboard text={deployTargets[deployTarget].command}>
+                <Button
+                  type="button"
+                  css={{ flexShrink: 0 }}
+                  color="neutral"
+                  prefix={<CopyIcon />}
+                >
+                  Copy
+                </Button>
+              </CopyToClipboard>
+            </Flex>
+          </Grid>
+
+          <Grid columns={1} gap={1}>
+            <Text color="subtle">
+              Read the detailed documentation{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://wstd.us/cli"
                 target="_blank"
                 rel="noreferrer"
               >
                 here
               </Link>
             </Text>
-
-            <div />
-            <div />
-            <Grid
-              gap={2}
-              align={"center"}
-              css={{
-                gridTemplateColumns: `1fr auto 1fr`,
-              }}
-            >
-              <Separator css={{ alignSelf: "unset" }} />
-              <Text color="main">CLI</Text>
-              <Separator css={{ alignSelf: "unset" }} />
-            </Grid>
-          </>
-        )}
-
-        <Text color="main" variant="labelsTitleCase">
-          Step 1
-        </Text>
-        <Text color="subtle">
-          Download and install Node v20+ from{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://nodejs.org/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            nodejs.org
-          </Link>{" "}
-          or with{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://nodejs.org/en/download/package-manager"
-            target="_blank"
-            rel="noreferrer"
-          >
-            a package manager
-          </Link>
-          .
-        </Text>
-      </Grid>
-
-      <Grid columns={1} gap={2}>
-        <Grid columns={1} gap={1}>
-          <Text color="main" variant="labelsTitleCase">
-            Step 2
-          </Text>
-          <Text color="subtle">
-            Run this command in your Terminal to install Webstudio CLI and sync
-            your project.
-          </Text>
+          </Grid>
         </Grid>
-
-        <Flex gap={2}>
-          <InputField
-            css={{ flex: 1 }}
-            text="mono"
-            readOnly
-            value={npxCommand}
-          />
-
-          <CopyToClipboard text={npxCommand}>
-            <Button type="button" color="neutral" prefix={<CopyIcon />}>
-              Copy
-            </Button>
-          </CopyToClipboard>
-        </Flex>
-      </Grid>
-      <Grid columns={1} gap={2}>
-        <Grid columns={1} gap={1}>
-          <Text color="main" variant="labelsTitleCase">
-            Step 3
-          </Text>
-          <Text color="subtle">
-            Run this command to publish to{" "}
-            <Link
-              variant="inherit"
-              color="inherit"
-              href={deployTargets[deployTarget].docs}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {humanizeString(deployTargets[deployTarget].label)}
-            </Link>{" "}
-          </Text>
-        </Grid>
-
-        <Flex gap={2} align="end">
-          <TextArea
-            css={{ flex: 1 }}
-            variant="mono"
-            readOnly
-            value={stripIndent(deployTargets[deployTarget].command)
-              .trimStart()
-              .replace(/ +$/, "")}
-          />
-
-          <CopyToClipboard text={deployTargets[deployTarget].command}>
-            <Button
-              type="button"
-              css={{ flexShrink: 0 }}
-              color="neutral"
-              prefix={<CopyIcon />}
-            >
-              Copy
-            </Button>
-          </CopyToClipboard>
-        </Flex>
-      </Grid>
-      <Grid columns={1} gap={1}>
-        <Text color="subtle">
-          Read the detailed documentation{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://wstd.us/cli"
-            target="_blank"
-            rel="noreferrer"
-          >
-            here
-          </Link>
-        </Text>
-      </Grid>
+      )}
     </Grid>
   );
 };
