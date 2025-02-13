@@ -1,6 +1,5 @@
 {
   "scripts": {
-    "start": "npx vercel dev",
     "deploy": "npx vercel deploy"
   },
   "dependencies": {
