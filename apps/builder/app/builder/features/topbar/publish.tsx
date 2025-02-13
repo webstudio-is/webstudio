@@ -643,25 +643,28 @@ const Content = (props: {
 
 const deployTargets = {
   vanilla: {
+    label: "Docker",
+    docs: "https://reactrouter.com/",
     command: `
-      npm install
-      npm run dev
+      docker build -t my-image .
+      docker run my-image
     `,
-    docs: "https://remix.run/",
     ssgTemplates: ["ssg"],
   },
   vercel: {
-    command: "npx vercel@latest",
+    label: "Vercel",
     docs: "https://vercel.com/docs/cli",
+    command: "npx vercel@latest",
     ssgTemplates: ["ssg-vercel"],
   },
   netlify: {
+    label: "Netlify",
+    docs: "https://docs.netlify.com/cli/get-started/",
     command: `
 npx netlify-cli@latest login
 npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
-    docs: "https://docs.netlify.com/cli/get-started/",
     ssgTemplates: ["ssg-netlify"],
   },
 } as const;
@@ -803,7 +806,7 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
               target="_blank"
               rel="noreferrer"
             >
-              {humanizeString(deployTarget)}
+              {humanizeString(deployTargets[deployTarget].label)}
             </Link>{" "}
           </Text>
         </Grid>
