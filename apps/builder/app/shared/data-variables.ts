@@ -1,10 +1,10 @@
 import {
   type DataSource,
   type DataSources,
-  Instance,
+  type Instance,
   type Instances,
   type Props,
-  Resource,
+  type Resource,
   type Resources,
   type WebstudioData,
   decodeDataVariableId,
@@ -16,7 +16,6 @@ import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
-import type { InstancePath } from "./awareness";
 
 const allowedJsChars = /[A-Za-z_]/;
 
@@ -183,19 +182,39 @@ export const computeExpression = (
   }
 };
 
-export const findMaskedVariables = ({
-  instancePath,
+const findMaskedVariablesByInstanceId = ({
+  startingInstanceId,
+  instances,
   dataSources,
 }: {
-  instancePath: InstancePath;
+  startingInstanceId: Instance["id"];
+  instances: Instances;
   dataSources: DataSources;
 }) => {
+  const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    // interrupt lookup because slot variables cannot be passed to slot content
+    if (instance.component === "Slot") {
+      continue;
+    }
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstanceById.set(child.value, instance.id);
+      }
+    }
+  }
+  let currentId: undefined | string = startingInstanceId;
+  const instanceIdsPath: Instance["id"][] = [];
+  while (currentId) {
+    instanceIdsPath.push(currentId);
+    currentId = parentInstanceById.get(currentId);
+  }
   const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
   // start from the root to descendant
   // so child variables override parent variables
-  for (const { instance } of instancePath.slice().reverse()) {
+  for (const instanceId of instanceIdsPath.reverse()) {
     for (const dataSource of dataSources.values()) {
-      if (dataSource.scopeInstanceId === instance.id) {
+      if (dataSource.scopeInstanceId === instanceId) {
         maskedVariables.set(dataSource.name, dataSource.id);
       }
     }
@@ -297,22 +316,21 @@ const traverseExpressions = ({
 };
 
 export const findUnsetVariableNames = ({
-  instancePath,
+  startingInstanceId,
   instances,
   props,
   dataSources,
   resources,
 }: {
-  instancePath: InstancePath;
+  startingInstanceId: Instance["id"];
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   resources: Resources;
 }) => {
   const unsetVariables = new Set<DataSource["name"]>();
-  const [{ instance: startingInstance }] = instancePath;
   traverseExpressions({
-    startingInstanceId: startingInstance.id,
+    startingInstanceId: startingInstanceId,
     instances,
     props,
     dataSources,
@@ -333,26 +351,29 @@ export const findUnsetVariableNames = ({
 };
 
 export const rebindTreeVariablesMutable = ({
-  instancePath,
+  startingInstanceId,
   instances,
   props,
   dataSources,
   resources,
 }: {
-  instancePath: InstancePath;
+  startingInstanceId: Instance["id"];
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  const maskedVariables = findMaskedVariables({ instancePath, dataSources });
+  const maskedVariables = findMaskedVariablesByInstanceId({
+    startingInstanceId,
+    dataSources,
+    instances,
+  });
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   for (const { id, name } of dataSources.values()) {
     unsetNameById.set(id, name);
   }
-  const [{ instance: startingInstance }] = instancePath;
   traverseExpressions({
-    startingInstanceId: startingInstance.id,
+    startingInstanceId,
     instances,
     props,
     dataSources,
@@ -392,15 +413,25 @@ export const deleteVariableMutable = (
   }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
+  const maskedIdByName = findMaskedVariablesByInstanceId({
+    startingInstanceId: dataSource.scopeInstanceId,
+    instances: data.instances,
+    dataSources: data.dataSources,
+  });
   // unset deleted variable in expressions
   traverseExpressions({
     ...data,
     startingInstanceId: dataSource.scopeInstanceId,
     update: (expression) => {
-      return unsetExpressionVariables({
+      expression = unsetExpressionVariables({
         expression,
         unsetNameById,
       });
+      expression = restoreExpressionVariables({
+        expression,
+        maskedIdByName,
+      });
+      return expression;
     },
   });
 };
