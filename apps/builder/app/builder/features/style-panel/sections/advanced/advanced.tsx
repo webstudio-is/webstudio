@@ -637,8 +637,17 @@ export const Section = () => {
       return handleAbortSearch();
     }
     memorizeMinHeight();
-    const matched = matchSorter(advancedProperties, search);
-    setSearchProperties(matched);
+
+    const styles = [];
+    for (const [property, value] of advancedStyles) {
+      styles.push({ property, value: toValue(value) });
+    }
+
+    const matched = matchSorter(styles, search, {
+      keys: ["property", "value"],
+    }).map(({ property }) => property);
+
+    setSearchProperties(matched as StyleProperty[]);
   };
 
   const handleAbortAddStyles = () => {
