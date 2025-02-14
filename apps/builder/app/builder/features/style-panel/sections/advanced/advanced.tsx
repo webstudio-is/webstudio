@@ -1,3 +1,4 @@
+import { mergeRefs } from "@react-aria/utils";
 import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
@@ -6,7 +7,9 @@ import {
   useEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type ComponentProps,
+  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -81,7 +84,6 @@ import { useClientSupports } from "~/shared/client-supports";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
 import { composeEventHandlers } from "~/shared/event-utils";
-import { mergeRefs } from "@react-aria/utils";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -675,20 +677,14 @@ export const Section = () => {
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
 
-  const addRecentProperties = (properties: StyleProperty[]) => {
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...properties]))
-    );
+  const memorizeMinHeight = () => {
+    setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
-  const showAddProperty = () => {
+  const handleShowAddStylesInput = () => {
     setIsAdding(true);
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
-  };
-
-  const memorizeMinHeight = () => {
-    setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
   const handleAbortSearch = () => {
@@ -696,24 +692,44 @@ export const Section = () => {
     setSearchProperties(undefined);
   };
 
+  const handleSubmitStyles = (cssText: string) => {
+    setIsAdding(false);
+    const styles = insertStyles(cssText);
+    const insertedProperties = styles.map(({ property }) => property);
+    setRecentProperties(
+      Array.from(new Set([...recentProperties, ...insertedProperties]))
+    );
+  };
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    const search = event.target.value.trim();
+    if (search === "") {
+      return handleAbortSearch();
+    }
+    memorizeMinHeight();
+    const matched = matchSorter(advancedProperties, search);
+    setSearchProperties(matched);
+  };
+
+  const handleAbortAddStyles = () => {
+    setIsAdding(false);
+    requestAnimationFrame(() => {
+      // We are either focusing the last value input from the recent list if available or the search input.
+      const element = recentValueInputRef.current ?? searchInputRef.current;
+      element?.focus();
+    });
+  };
+
   return (
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
-      onAdd={showAddProperty}
+      onAdd={handleShowAddStylesInput}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         <SearchField
           inputRef={searchInputRef}
-          onChange={(event) => {
-            const search = event.target.value.trim();
-            if (search === "") {
-              return handleAbortSearch();
-            }
-            memorizeMinHeight();
-            const matched = matchSorter(advancedProperties, search);
-            setSearchProperties(matched);
-          }}
+          onChange={handleSearch}
           onAbort={handleAbortSearch}
         />
       </Box>
@@ -729,7 +745,7 @@ export const Section = () => {
                 autoFocus={isLast}
                 onChangeComplete={(event) => {
                   if (event.type === "enter") {
-                    showAddProperty();
+                    handleShowAddStylesInput();
                   }
                 }}
                 onReset={() => {
@@ -752,25 +768,11 @@ export const Section = () => {
             }
           >
             <AddProperty
-              onSubmit={(value) => {
-                setIsAdding(false);
-                const styles = insertStyles(value);
-                const insertedProperties = styles.map(
-                  ({ property }) => property
-                );
-                addRecentProperties(insertedProperties);
-              }}
-              onClose={() => {
-                setIsAdding(false);
-                requestAnimationFrame(() => {
-                  const element =
-                    recentValueInputRef.current ?? searchInputRef.current;
-                  element?.focus();
-                });
-              }}
+              onSubmit={handleSubmitStyles}
+              onClose={handleAbortAddStyles}
               onFocus={() => {
                 if (isAdding === false) {
-                  showAddProperty();
+                  handleShowAddStylesInput();
                 }
               }}
               onBlur={() => {
