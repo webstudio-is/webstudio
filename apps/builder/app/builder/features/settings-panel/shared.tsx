@@ -36,7 +36,7 @@ import {
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedInstanceKey } from "~/shared/awareness";
+import { $selectedInstanceKeyWithRoot } from "~/shared/awareness";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -314,7 +314,11 @@ export const Row = ({
 );
 
 export const $selectedInstanceScope = computed(
-  [$selectedInstanceKey, $variableValuesByInstanceSelector, $dataSources],
+  [
+    $selectedInstanceKeyWithRoot,
+    $variableValuesByInstanceSelector,
+    $dataSources,
+  ],
   (instanceKey, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();

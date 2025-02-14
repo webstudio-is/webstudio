@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/sdk";
 import {
   theme,
   PanelTabs,
@@ -20,7 +19,7 @@ import {
   FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import { ModeMenu, StylePanel } from "~/builder/features/style-panel";
-import { SettingsPanelContainer } from "~/builder/features/settings-panel";
+import { SettingsPanel } from "~/builder/features/settings-panel";
 import {
   $registeredComponentMetas,
   $dragAndDropState,
@@ -93,6 +92,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   type PanelName = "style" | "settings";
 
   const availablePanels = new Set<PanelName>();
+  availablePanels.add("settings");
   if (
     // forbid styling body in xml document
     documentType === "html" &&
@@ -101,11 +101,6 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
     isDesignMode
   ) {
     availablePanels.add("style");
-  }
-  // @todo hide root component settings until
-  // global data sources are implemented
-  if (selectedInstance.component !== rootComponent) {
-    availablePanels.add("settings");
   }
 
   return (
@@ -197,7 +192,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                   >
                     <InstanceInfo instance={selectedInstance} />
                   </Flex>
-                  <SettingsPanelContainer
+                  <SettingsPanel
                     // Re-render when instance changes
                     key={selectedInstance.id}
                     selectedInstance={selectedInstance}

@@ -16,7 +16,7 @@ import { useStore } from "@nanostores/react";
 import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
 import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
 
-export const SettingsPanelContainer = ({
+export const SettingsPanel = ({
   selectedInstance,
 }: {
   selectedInstance: Instance;

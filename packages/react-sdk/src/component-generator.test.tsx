@@ -1,7 +1,7 @@
 import ts from "typescript";
 import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
-import { createScope } from "@webstudio-is/sdk";
+import { createScope, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   $,
   ActionValue,
@@ -1093,6 +1093,75 @@ test("generate unset variables as undefined", () => {
       <Box>
       {undefined + undefined}
       </Box>
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("generate global variables", () => {
+  const rootVariable = new Variable("rootVariable", "root");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
+      <$.Body ws:id="body">
+        <$.Box>{expression`${rootVariable}`}</$.Box>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      indexesWithinAncestors: new Map(),
+      ...data,
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      let [rootVariable, set$rootVariable] = useVariableState<any>("root")
+      return <Body>
+      <Box>
+      {rootVariable}
+      </Box>
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("ignore unused global variables", () => {
+  const rootVariable = new Variable("rootVariable", "root");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
+      <$.Body ws:id="body">
+        <$.Box></$.Box>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      indexesWithinAncestors: new Map(),
+      ...data,
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box />
       </Body>
       }
     `)

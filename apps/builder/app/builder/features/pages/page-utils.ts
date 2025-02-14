@@ -11,6 +11,7 @@ import {
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
   isRootFolder,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -255,7 +256,7 @@ export const $pageRootScope = computed(
     }
     const values =
       variableValuesByInstanceSelector.get(
-        getInstanceKey([page.rootInstanceId])
+        getInstanceKey([page.rootInstanceId, ROOT_INSTANCE_ID])
       ) ?? new Map<string, unknown>();
     for (const [dataSourceId, value] of values) {
       const dataSource = dataSources.get(dataSourceId);

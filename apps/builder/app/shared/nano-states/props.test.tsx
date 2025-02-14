@@ -5,6 +5,7 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import {
   DataSource,
   type Instance,
+  ROOT_INSTANCE_ID,
   collectionComponent,
 } from "@webstudio-is/sdk";
 import { textContentAttribute } from "@webstudio-is/react-sdk";
@@ -16,7 +17,7 @@ import {
 import { $pages } from "./pages";
 import { $assets, $dataSources, $props, $resources } from "./misc";
 import { $dataSourceVariables, $resourceValues } from "./variables";
-import { $awareness } from "../awareness";
+import { $awareness, getInstanceKey } from "../awareness";
 import {
   $,
   expression,
@@ -592,6 +593,31 @@ test("use default system values in props", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("compute props with global variables", () => {
+  const rootVariable = new Variable("rootVariable", "root value");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId" data-value={expression`${rootVariable}`}></$.Box>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  selectPageRoot("bodyId");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [JSON.stringify(["bodyId"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["boxId", "bodyId"]),
+        new Map<string, unknown>([["data-value", "root value"]]),
+      ],
+    ])
+  );
+});
+
 test("compute variable values for root", () => {
   const bodyVariable = new Variable("bodyVariable", "initial");
   const data = renderData(
@@ -605,8 +631,9 @@ test("compute variable values for root", () => {
   $dataSourceVariables.set(new Map([[dataSourceId, "success"]]));
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[dataSourceId, "success"]]),
       ],
     ])
@@ -638,19 +665,20 @@ test("nest variable values from root to current instance", () => {
   );
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[bodyVariableId, "bodyValue"]]),
       ],
       [
-        JSON.stringify(["boxId", "bodyId"]),
+        JSON.stringify(["boxId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [bodyVariableId, "bodyValue"],
           [boxVariableId, "boxValue"],
         ]),
       ],
       [
-        JSON.stringify(["textId", "bodyId"]),
+        JSON.stringify(["textId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [bodyVariableId, "bodyValue"],
           [textVariableId, "textValue"],
@@ -686,30 +714,49 @@ test("compute item values for collection", () => {
   $dataSourceVariables.set(new Map([]));
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
-      [JSON.stringify(["bodyId"]), new Map()],
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
+      [JSON.stringify(["bodyId", ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["boxId", "collectionId[0]", "collectionId", "bodyId"]),
+        JSON.stringify([
+          "boxId",
+          "collectionId[0]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ]),
         new Map<string, unknown>([
           [dataVariableId, ["apple", "banana", "orange"]],
           [itemParameterId, "apple"],
         ]),
       ],
       [
-        JSON.stringify(["boxId", "collectionId[1]", "collectionId", "bodyId"]),
+        JSON.stringify([
+          "boxId",
+          "collectionId[1]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ]),
         new Map<string, unknown>([
           [dataVariableId, ["apple", "banana", "orange"]],
           [itemParameterId, "banana"],
         ]),
       ],
       [
-        JSON.stringify(["boxId", "collectionId[2]", "collectionId", "bodyId"]),
+        JSON.stringify([
+          "boxId",
+          "collectionId[2]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ]),
         new Map<string, unknown>([
           [dataVariableId, ["apple", "banana", "orange"]],
           [itemParameterId, "orange"],
         ]),
       ],
       [
-        JSON.stringify(["collectionId", "bodyId"]),
+        JSON.stringify(["collectionId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [dataVariableId, ["apple", "banana", "orange"]],
         ]),
@@ -736,8 +783,9 @@ test("compute resource variable values", () => {
   $resourceValues.set(new Map([[resourceId, "my-value"]]));
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[resourceVariableId, "my-value"]]),
       ],
     ])
@@ -765,23 +813,30 @@ test("stop variables lookup outside of slots", () => {
   selectPageRoot("bodyId");
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[bodyVariableId, "body"]]),
       ],
       [
-        JSON.stringify(["slotId", "bodyId"]),
+        JSON.stringify(["slotId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [bodyVariableId, "body"],
           [slotVariableId, "slot"],
         ]),
       ],
       [
-        JSON.stringify(["fragmentId", "slotId", "bodyId"]),
+        JSON.stringify(["fragmentId", "slotId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>(),
       ],
       [
-        JSON.stringify(["boxId", "fragmentId", "slotId", "bodyId"]),
+        JSON.stringify([
+          "boxId",
+          "fragmentId",
+          "slotId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ]),
         new Map<string, unknown>([[boxVariableId, "box"]]),
       ],
     ])
@@ -808,8 +863,9 @@ test("compute parameter and resource variables without values to make it availab
   selectPageRoot("bodyId");
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [resourceVariableId, undefined],
           [parameterVariableId, undefined],
@@ -831,8 +887,9 @@ test("prefill default system variable value", () => {
   selectPageRoot("bodyId", systemId);
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [
             systemId,
@@ -847,8 +904,9 @@ test("prefill default system variable value", () => {
   );
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([
           [
             systemId,
@@ -879,14 +937,94 @@ test("mask variables with the same name in nested scope", () => {
   selectPageRoot("bodyId");
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
+      [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],
       [
-        JSON.stringify(["bodyId"]),
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[bodyVariableId, "body"]]),
       ],
       [
-        JSON.stringify(["boxId", "bodyId"]),
+        JSON.stringify(["boxId", "bodyId", ROOT_INSTANCE_ID]),
         new Map<string, unknown>([[boxVariableId, "box"]]),
       ],
+    ])
+  );
+});
+
+test("inherit variables from global root", () => {
+  const rootVariable = new Variable("rootVariable", "root");
+  const boxVariable = new Variable("myVariable", "box");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [rootVariableId, boxVariableId] = data.dataSources.keys();
+  selectPageRoot("bodyId");
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify([ROOT_INSTANCE_ID]),
+        new Map<string, unknown>([[rootVariableId, "root"]]),
+      ],
+      [
+        JSON.stringify(["bodyId", ROOT_INSTANCE_ID]),
+        new Map<string, unknown>([[rootVariableId, "root"]]),
+      ],
+      [
+        JSON.stringify(["boxId", "bodyId", ROOT_INSTANCE_ID]),
+        new Map<string, unknown>([
+          [rootVariableId, "root"],
+          [boxVariableId, "box"],
+        ]),
+      ],
+    ])
+  );
+});
+
+test("inherit variables from global root inside slots", () => {
+  const rootVariable = new Variable("rootVariable", "root");
+  const bodyVariable = new Variable("bodyVariable", "body");
+  const boxVariable = new Variable("myVariable", "box");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${rootVariable}`}>
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <$.Slot ws:id="slotId">
+          <$.Fragment ws:id="fragmentId">
+            <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [rootVariableId, _bodyVariableId, boxVariableId] =
+    data.dataSources.keys();
+  selectPageRoot("bodyId");
+  expect(
+    $variableValuesByInstanceSelector
+      .get()
+      .get(
+        getInstanceKey([
+          "boxId",
+          "fragmentId",
+          "slotId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+  ).toEqual(
+    new Map<string, unknown>([
+      [rootVariableId, "root"],
+      [boxVariableId, "box"],
     ])
   );
 });

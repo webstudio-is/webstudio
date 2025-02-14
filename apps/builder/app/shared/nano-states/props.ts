@@ -14,9 +14,9 @@ import {
   transpileExpression,
   collectionComponent,
   portalComponent,
+  ROOT_INSTANCE_ID,
 } from "@webstudio-is/sdk";
 import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
 import {
@@ -226,6 +226,7 @@ export const $propValuesByInstanceSelector = computed(
     assets,
     uploadingFilesDataStore
   ) => {
+    // already includes global variables
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
     let propsList = Array.from(props.values());
@@ -414,14 +415,13 @@ export const $variableValuesByInstanceSelector = computed(
     if (page === undefined) {
       return variableValuesByInstanceSelector;
     }
-    const traverseInstances = (
+
+    const collectVariables = (
       instanceSelector: InstanceSelector,
       parentVariableValues = new Map<string, unknown>(),
       parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
     ) => {
       const [instanceId] = instanceSelector;
-      const instance = instances.get(instanceId);
-
       const variableNames = new Map(parentVariableNames);
       let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
@@ -431,12 +431,6 @@ export const $variableValuesByInstanceSelector = computed(
       const variables = variablesByInstanceId.get(instanceId);
       if (variables) {
         for (const variable of variables) {
-          if (
-            variable.id === page.systemDataSourceId &&
-            isFeatureEnabled("filters") === false
-          ) {
-            continue;
-          }
           // delete previous variable with the same name
           // because it is masked and no longer available
           variableValues.delete(variableNames.get(variable.name) ?? "");
@@ -461,7 +455,21 @@ export const $variableValuesByInstanceSelector = computed(
           }
         }
       }
+      return { variableValues, variableNames };
+    };
 
+    const traverseInstances = (
+      instanceSelector: InstanceSelector,
+      parentVariableValues = new Map<string, unknown>(),
+      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
+    ) => {
+      let { variableValues, variableNames } = collectVariables(
+        instanceSelector,
+        parentVariableValues,
+        parentVariableNames
+      );
+
+      const [instanceId] = instanceSelector;
       const propValues = new Map<Prop["name"], unknown>();
       const props = propsByInstanceId.get(instanceId);
       const parameters = new Map<Prop["name"], DataSource["id"]>();
@@ -489,6 +497,7 @@ export const $variableValuesByInstanceSelector = computed(
         }
       }
 
+      const instance = instances.get(instanceId);
       if (instance === undefined) {
         return;
       }
@@ -520,7 +529,9 @@ export const $variableValuesByInstanceSelector = computed(
       }
       // reset values for slot children to let slots behave as isolated components
       if (instance.component === portalComponent) {
-        variableValues = new Map();
+        // allow accessing global variables in slots
+        variableValues = globalVariableValues;
+        variableNames = globalVariableNames;
       }
       for (const child of instance.children) {
         if (child.type === "id") {
@@ -532,7 +543,15 @@ export const $variableValuesByInstanceSelector = computed(
         }
       }
     };
-    traverseInstances([page.rootInstanceId]);
+    let {
+      variableValues: globalVariableValues,
+      variableNames: globalVariableNames,
+    } = collectVariables([ROOT_INSTANCE_ID]);
+    traverseInstances(
+      [page.rootInstanceId, ROOT_INSTANCE_ID],
+      globalVariableValues,
+      globalVariableNames
+    );
     return variableValuesByInstanceSelector;
   }
 );
