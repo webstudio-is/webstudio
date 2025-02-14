@@ -662,7 +662,10 @@ export const Section = () => {
           onAbort={handleAbortSearch}
         />
       </Box>
-      <CopyPasteMenu onPaste={handleInsertStyles}>
+      <CopyPasteMenu
+        onPaste={handleInsertStyles}
+        properties={currentProperties}
+      >
         <Flex gap="2" direction="column">
           <Box css={{ paddingInline: theme.panel.paddingInline }}>
             {showRecentProperties &&

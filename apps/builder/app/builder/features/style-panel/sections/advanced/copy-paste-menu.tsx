@@ -12,9 +12,11 @@ import { $advancedStyles } from "./stores";
 
 export const CopyPasteMenu = ({
   children,
+  properties,
   onPaste,
 }: {
   children: ReactNode;
+  properties: Array<string>;
   onPaste: (cssText: string) => void;
 }) => {
   const advancedStyles = useStore($advancedStyles);
@@ -24,7 +26,15 @@ export const CopyPasteMenu = ({
   };
 
   const handleCopyAll = () => {
-    const css = generateStyleMap({ style: mergeStyles(advancedStyles) });
+    // We want to only copy properties that are currently in front of the user.
+    // That includes search or any future filters.
+    const currentStyleMap = new Map();
+    for (const [property, value] of advancedStyles) {
+      if (properties.includes(property)) {
+        currentStyleMap.set(property, value);
+      }
+    }
+    const css = generateStyleMap({ style: mergeStyles(currentStyleMap) });
     navigator.clipboard.writeText(css);
     return css;
   };

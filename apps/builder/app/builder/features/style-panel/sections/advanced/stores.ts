@@ -50,31 +50,27 @@ export const $advancedStyles = computed(
       styleSourceSelections,
       styles,
     });
+
     // All properties used by the panels except the advanced panel
-    const baseProperties = new Set<StyleProperty>([]);
+    const visualProperties = new Set<StyleProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        baseProperties.add(property);
+        visualProperties.add(property);
       }
     }
-    for (const { property, listed, value } of definedStyles) {
-      if (baseProperties.has(property) === false) {
-        // When property is listed, it was added from advanced panel.
-        // If we are in advanced mode, we show them all.
-        if (listed || settings.stylePanelMode === "advanced") {
-          advancedStyles.set(property, value);
-        }
+    for (const style of definedStyles) {
+      const { property, value, listed } = style;
+      // When property is listed, it was added from advanced panel.
+      // If we are in advanced mode, we show them all.
+      if (listed || settings.stylePanelMode === "advanced") {
+        advancedStyles.set(property, value);
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
     // @todo we need to find a better place for them in any case
     if (settings.stylePanelMode !== "advanced") {
       for (const initialProperty of initialProperties) {
-        for (const { property, value } of definedStyles) {
-          if (property === initialProperty) {
-            advancedStyles.set(property, value);
-          }
-        }
+        advancedStyles.set(initialProperty, { type: "unset", value: "" });
       }
     }
     return advancedStyles;
