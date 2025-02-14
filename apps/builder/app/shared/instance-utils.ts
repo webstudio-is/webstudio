@@ -770,11 +770,6 @@ export const insertWebstudioFragmentCopy = ({
     }
   }
 
-  const fragmentDataSources: DataSources = new Map();
-  for (const dataSource of fragment.dataSources) {
-    fragmentDataSources.set(dataSource.id, dataSource);
-  }
-
   const {
     assets,
     instances,
@@ -962,6 +957,16 @@ export const insertWebstudioFragmentCopy = ({
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
   for (let dataSource of fragment.dataSources) {
     const { scopeInstanceId } = dataSource;
+    if (scopeInstanceId === ROOT_INSTANCE_ID) {
+      // add global variable only if not exist already
+      if (
+        dataSources.has(dataSource.id) === false &&
+        maskedIdByName.has(dataSource.name) === false
+      ) {
+        dataSources.set(dataSource.id, dataSource);
+      }
+      continue;
+    }
     // insert only data sources within portal content
     if (fragmentInstanceIds.has(scopeInstanceId)) {
       const newDataSourceId = nanoid();

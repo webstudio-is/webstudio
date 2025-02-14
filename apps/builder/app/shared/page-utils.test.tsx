@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 import type { Project } from "@webstudio-is/project";
 import {
   ROOT_FOLDER_ID,
+  ROOT_INSTANCE_ID,
   encodeDataSourceVariable,
+  encodeDataVariableId,
   type DataSource,
   type Instance,
   type WebstudioData,
@@ -13,6 +15,14 @@ import {
 } from "@webstudio-is/project-build";
 import { $project } from "./nano-states";
 import { insertPageCopyMutable } from "./page-utils";
+import {
+  $,
+  expression,
+  renderData,
+  Variable,
+  ws,
+} from "@webstudio-is/template";
+import { nanoid } from "nanoid";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -400,5 +410,131 @@ describe("insert page copy", () => {
     // inside folder without conflict
     expect(data.pages.pages[2].name).toEqual(`Name`);
     expect(data.pages.pages[3].name).toEqual(`Name (1)`);
+  });
+
+  test("preserve global variables when duplicate page", () => {
+    const globalVariable = new Variable("globalVariable", "global value");
+    const data = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
+          </$.Body>
+        </ws.root>
+      ),
+    };
+    data.instances.delete(ROOT_INSTANCE_ID);
+    insertPageCopyMutable({
+      source: { data, pageId: data.pages.homePage.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+    expect(data.dataSources.size).toEqual(1);
+    const [globalVariableId] = data.dataSources.keys();
+    expect(Array.from(data.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "bodyId" }),
+      expect.objectContaining({ component: "Box", id: "boxId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(data.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+    ]);
+  });
+
+  test("preserve existing global variables by name", () => {
+    const globalVariable = new Variable("globalVariable", "global value");
+    const sourceData = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
+          </$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    sourceData.instances.delete(ROOT_INSTANCE_ID);
+    const targetData = {
+      pages: createDefaultPages({
+        rootInstanceId: "anotherBodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="anotherBodyId"></$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    targetData.instances.delete(ROOT_INSTANCE_ID);
+    insertPageCopyMutable({
+      source: { data: sourceData, pageId: sourceData.pages.homePage.id },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+    expect(targetData.dataSources.size).toEqual(1);
+    const [globalVariableId] = targetData.dataSources.keys();
+    expect(Array.from(targetData.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "anotherBodyId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(targetData.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+    ]);
+  });
+
+  test("restore newly added global variable by name", () => {
+    const globalVariable = new Variable("globalVariable", "global value");
+    const sourceData = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
+          </$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    sourceData.instances.delete(ROOT_INSTANCE_ID);
+    const targetData = {
+      pages: createDefaultPages({
+        rootInstanceId: "anotherBodyId",
+        systemDataSourceId: "",
+      }),
+      // generate different ids in source and data projects
+      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, nanoid),
+    };
+    insertPageCopyMutable({
+      source: { data: sourceData, pageId: sourceData.pages.homePage.id },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+    expect(targetData.dataSources.size).toEqual(1);
+    const [globalVariableId] = targetData.dataSources.keys();
+    expect(Array.from(targetData.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "anotherBodyId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(targetData.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+    ]);
   });
 });
