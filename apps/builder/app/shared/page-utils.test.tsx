@@ -22,6 +22,7 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
+import { nanoid } from "nanoid";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -440,6 +441,98 @@ describe("insert page copy", () => {
       expect.objectContaining({ component: "Box" }),
     ]);
     const newBox = Array.from(data.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+    ]);
+  });
+
+  test("preserve existing global variables by name", () => {
+    const globalVariable = new Variable("globalVariable", "global value");
+    const sourceData = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
+          </$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    sourceData.instances.delete(ROOT_INSTANCE_ID);
+    const targetData = {
+      pages: createDefaultPages({
+        rootInstanceId: "anotherBodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="anotherBodyId"></$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    targetData.instances.delete(ROOT_INSTANCE_ID);
+    insertPageCopyMutable({
+      source: { data: sourceData, pageId: sourceData.pages.homePage.id },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+    expect(targetData.dataSources.size).toEqual(1);
+    const [globalVariableId] = targetData.dataSources.keys();
+    expect(Array.from(targetData.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "anotherBodyId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(targetData.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: encodeDataVariableId(globalVariableId) },
+    ]);
+  });
+
+  test("restore newly added global variable by name", () => {
+    const globalVariable = new Variable("globalVariable", "global value");
+    const sourceData = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: "",
+      }),
+      ...renderData(
+        <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">{expression`${globalVariable}`}</$.Box>
+          </$.Body>
+        </ws.root>,
+        // generate different ids in source and data projects
+        nanoid
+      ),
+    };
+    sourceData.instances.delete(ROOT_INSTANCE_ID);
+    const targetData = {
+      pages: createDefaultPages({
+        rootInstanceId: "anotherBodyId",
+        systemDataSourceId: "",
+      }),
+      // generate different ids in source and data projects
+      ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, nanoid),
+    };
+    insertPageCopyMutable({
+      source: { data: sourceData, pageId: sourceData.pages.homePage.id },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+    expect(targetData.dataSources.size).toEqual(1);
+    const [globalVariableId] = targetData.dataSources.keys();
+    expect(Array.from(targetData.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "anotherBodyId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(targetData.instances.values()).at(-1);
     expect(newBox?.children).toEqual([
       { type: "expression", value: encodeDataVariableId(globalVariableId) },
     ]);

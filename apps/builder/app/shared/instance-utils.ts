@@ -959,7 +959,10 @@ export const insertWebstudioFragmentCopy = ({
     const { scopeInstanceId } = dataSource;
     if (scopeInstanceId === ROOT_INSTANCE_ID) {
       // add global variable only if not exist already
-      if (dataSources.has(dataSource.id) === false) {
+      if (
+        dataSources.has(dataSource.id) === false &&
+        maskedIdByName.has(dataSource.name) === false
+      ) {
         dataSources.set(dataSource.id, dataSource);
       }
       continue;

@@ -142,7 +142,10 @@ const traverseJsx = (
   return result;
 };
 
-export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
+export const renderTemplate = (
+  root: JSX.Element,
+  generateId?: () => string
+): WebstudioFragment => {
   let lastId = -1;
   const instances: Instance[] = [];
   const props: Prop[] = [];
@@ -157,7 +160,7 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
     let id = ids.get(key);
     if (id === undefined) {
       lastId += 1;
-      id = lastId.toString();
+      id = generateId?.() ?? lastId.toString();
       ids.set(key, id);
     }
     return id;
@@ -370,7 +373,10 @@ export const renderTemplate = (root: JSX.Element): WebstudioFragment => {
   };
 };
 
-export const renderData = (root: JSX.Element): Omit<WebstudioData, "pages"> => {
+export const renderData = (
+  root: JSX.Element,
+  generateId?: () => string
+): Omit<WebstudioData, "pages"> => {
   const {
     instances,
     props,
@@ -381,7 +387,7 @@ export const renderData = (root: JSX.Element): Omit<WebstudioData, "pages"> => {
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root);
+  } = renderTemplate(root, generateId);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),
