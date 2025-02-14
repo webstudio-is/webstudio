@@ -54,7 +54,7 @@ export const ContextMenuSeparator = styled(
 
 export const ContextMenuLabel = styled(ContextMenuPrimitive.Label, labelCss);
 
-export const StyledMenuItem = styled(ContextMenuPrimitive.Item, menuItemCss, {
+const StyledMenuItem = styled(ContextMenuPrimitive.Item, menuItemCss, {
   defaultVariants: { withIndicator: true },
 });
 export const ContextMenuItem = forwardRef<

@@ -1,9 +1,5 @@
 import { computed } from "nanostores";
-import {
-  StyleValue,
-  type StyleMap,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { type StyleMap, type StyleProperty } from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
 import {
