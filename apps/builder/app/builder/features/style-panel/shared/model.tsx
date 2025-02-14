@@ -144,7 +144,7 @@ export const getDefinedStyles = ({
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
   const startingInstanceSelector = instancePath[0].instanceSelector;
 
-  type StyleDeclSubset = Pick<StyleDecl, "property" | "listed">;
+  type StyleDeclSubset = Pick<StyleDecl, "property" | "listed" | "value">;
 
   const instanceStyles = new Set<StyleDeclSubset>();
   const inheritedStyles = new Set<StyleDeclSubset>();

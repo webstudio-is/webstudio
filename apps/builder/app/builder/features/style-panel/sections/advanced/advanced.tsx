@@ -14,7 +14,6 @@ import {
   type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -66,24 +65,16 @@ import {
 } from "../../shared/use-style-data";
 import {
   $availableVariables,
-  $matchingBreakpoints,
-  getDefinedStyles,
   useComputedStyleDecl,
   useComputedStyles,
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
-import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
-import {
-  $registeredComponentMetas,
-  $styles,
-  $styleSourceSelections,
-} from "~/shared/nano-states";
 import { useClientSupports } from "~/shared/client-supports";
-import { $selectedInstancePath } from "~/shared/awareness";
-import { $settings } from "~/builder/shared/client-settings";
 import { composeEventHandlers } from "~/shared/event-utils";
+import { CopyPasteMenu } from "./copy-paste-menu";
+import { $advancedStyles } from "./stores";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -495,71 +486,6 @@ const AdvancedPropertyValue = ({
   );
 };
 
-const initialProperties = new Set<StyleProperty>([
-  "cursor",
-  "mixBlendMode",
-  "opacity",
-  "pointerEvents",
-  "userSelect",
-]);
-
-const $advancedProperties = computed(
-  [
-    // prevent showing properties inherited from root
-    // to not bloat advanced panel
-    $selectedInstancePath,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-    $settings,
-  ],
-  (
-    instancePath,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles,
-    settings
-  ) => {
-    if (instancePath === undefined) {
-      return [];
-    }
-    const definedStyles = getDefinedStyles({
-      instancePath,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-    // All properties used by the panels except the advanced panel
-    const baseProperties = new Set<StyleProperty>([]);
-    for (const { properties } of sections.values()) {
-      for (const property of properties) {
-        baseProperties.add(property);
-      }
-    }
-    const advancedProperties = new Set<StyleProperty>();
-    for (const { property, listed } of definedStyles) {
-      if (baseProperties.has(property) === false) {
-        // When property is listed, it was added from advanced panel.
-        // If we are in advanced mode, we show them all.
-        if (listed || settings.stylePanelMode === "advanced") {
-          advancedProperties.add(property);
-        }
-      }
-    }
-    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
-    // @todo we need to find a better place for them in any case
-    if (settings.stylePanelMode !== "advanced") {
-      for (const property of initialProperties) {
-        advancedProperties.add(property);
-      }
-    }
-    return Array.from(advancedProperties);
-  }
-);
-
 /**
  * The Advanced section in the Style Panel on </> Global Root has performance issues.
  * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
@@ -662,7 +588,7 @@ const AdvancedProperty = memo(
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
-  const advancedProperties = useStore($advancedProperties);
+  const advancedStyles = useStore($advancedStyles);
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
@@ -672,6 +598,10 @@ export const Section = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState<number>(0);
 
+  const advancedProperties = Array.from(
+    advancedStyles.keys()
+  ) as Array<StyleProperty>;
+
   const currentProperties = searchProperties ?? advancedProperties;
 
   const showRecentProperties =
@@ -679,6 +609,14 @@ export const Section = () => {
 
   const memorizeMinHeight = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
+  };
+
+  const handleInsertStyles = (cssText: string) => {
+    const styles = insertStyles(cssText);
+    const insertedProperties = styles.map(({ property }) => property);
+    setRecentProperties(
+      Array.from(new Set([...recentProperties, ...insertedProperties]))
+    );
   };
 
   const handleShowAddStylesInput = () => {
@@ -690,15 +628,6 @@ export const Section = () => {
   const handleAbortSearch = () => {
     setMinHeight(0);
     setSearchProperties(undefined);
-  };
-
-  const handleSubmitStyles = (cssText: string) => {
-    setIsAdding(false);
-    const styles = insertStyles(cssText);
-    const insertedProperties = styles.map(({ property }) => property);
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...insertedProperties]))
-    );
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -733,68 +662,77 @@ export const Section = () => {
           onAbort={handleAbortSearch}
         />
       </Box>
-      <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {showRecentProperties &&
-          recentProperties.map((property, index, properties) => {
-            const isLast = index === properties.length - 1;
-            return (
-              <AdvancedProperty
-                valueInputRef={isLast ? recentValueInputRef : undefined}
-                key={property}
-                property={property}
-                autoFocus={isLast}
-                onChangeComplete={(event) => {
-                  if (event.type === "enter") {
-                    handleShowAddStylesInput();
-                  }
-                }}
-                onReset={() => {
-                  setRecentProperties((properties) => {
-                    return properties.filter(
-                      (recentProperty) => recentProperty !== property
-                    );
-                  });
-                }}
-              />
-            );
-          })}
-        {(showRecentProperties || isAdding) && (
-          <Box
-            style={
-              isAdding
-                ? { paddingTop: theme.spacing[3] }
-                : // We hide it visually so you can tab into it to get shown.
-                  { overflow: "hidden", height: 0 }
-            }
-          >
-            <AddProperty
-              onSubmit={handleSubmitStyles}
-              onClose={handleAbortAddStyles}
-              onFocus={() => {
-                if (isAdding === false) {
-                  handleShowAddStylesInput();
+      <CopyPasteMenu onPaste={handleInsertStyles}>
+        <Flex gap="2" direction="column">
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+            {showRecentProperties &&
+              recentProperties.map((property, index, properties) => {
+                const isLast = index === properties.length - 1;
+                return (
+                  <AdvancedProperty
+                    valueInputRef={isLast ? recentValueInputRef : undefined}
+                    key={property}
+                    property={property}
+                    autoFocus={isLast}
+                    onChangeComplete={(event) => {
+                      if (event.type === "enter") {
+                        handleShowAddStylesInput();
+                      }
+                    }}
+                    onReset={() => {
+                      setRecentProperties((properties) => {
+                        return properties.filter(
+                          (recentProperty) => recentProperty !== property
+                        );
+                      });
+                    }}
+                  />
+                );
+              })}
+            {(showRecentProperties || isAdding) && (
+              <Box
+                style={
+                  isAdding
+                    ? { paddingTop: theme.spacing[3] }
+                    : // We hide it visually so you can tab into it to get shown.
+                      { overflow: "hidden", height: 0 }
                 }
-              }}
-              onBlur={() => {
-                setIsAdding(false);
-              }}
-              ref={addPropertyInputRef}
-            />
+              >
+                <AddProperty
+                  onSubmit={(cssText: string) => {
+                    setIsAdding(false);
+                    handleInsertStyles(cssText);
+                  }}
+                  onClose={handleAbortAddStyles}
+                  onFocus={() => {
+                    if (isAdding === false) {
+                      handleShowAddStylesInput();
+                    }
+                  }}
+                  onBlur={() => {
+                    setIsAdding(false);
+                  }}
+                  ref={addPropertyInputRef}
+                />
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-      {showRecentProperties && <Separator />}
-      <Box
-        css={{ paddingInline: theme.panel.paddingInline }}
-        style={{ minHeight }}
-        ref={containerRef}
-      >
-        {currentProperties
-          .filter((property) => recentProperties.includes(property) === false)
-          .map((property) => (
-            <AdvancedProperty key={property} property={property} />
-          ))}
-      </Box>
+          {showRecentProperties && <Separator />}
+          <Box
+            css={{ paddingInline: theme.panel.paddingInline }}
+            style={{ minHeight }}
+            ref={containerRef}
+          >
+            {currentProperties
+              .filter(
+                (property) => recentProperties.includes(property) === false
+              )
+              .map((property) => (
+                <AdvancedProperty key={property} property={property} />
+              ))}
+          </Box>
+        </Flex>
+      </CopyPasteMenu>
     </AdvancedStyleSection>
   );
 };
