@@ -24,10 +24,10 @@ import {
 import type { Project } from "@webstudio-is/project";
 import {
   extractWebstudioFragment,
-  findAvailableDataSources,
   insertWebstudioFragmentCopy,
 } from "./instance-utils";
 import { $project } from "./nano-states";
+import { findAvailableVariables } from "./data-variables";
 
 $project.set({ id: "current_project" } as Project);
 
@@ -121,13 +121,13 @@ test("insert instances with slots", () => {
   insertWebstudioFragmentCopy({
     data,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   expect(data.instances.size).toEqual(4);
   insertWebstudioFragmentCopy({
     data,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   expect(data.instances.size).toEqual(5);
   expect(Array.from(data.instances.values())).toEqual([
@@ -156,7 +156,7 @@ test("insert instances with multiple roots", () => {
   insertWebstudioFragmentCopy({
     data,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   expect(data.instances.size).toEqual(5);
 });
@@ -177,7 +177,7 @@ test("should add :root local styles", () => {
   insertWebstudioFragmentCopy({
     data: newProject,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -215,7 +215,7 @@ test("should merge :root local styles", () => {
   insertWebstudioFragmentCopy({
     data: newProject,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -244,7 +244,7 @@ test("should copy local styles of duplicated instance", () => {
   insertWebstudioFragmentCopy({
     data: project,
     fragment,
-    availableDataSources: new Set(),
+    availableVariables: [],
   });
   const newInstanceId = Array.from(project.instances.keys()).at(-1);
   expect(toCss(project)).toEqual(
@@ -309,7 +309,7 @@ describe("props", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -337,7 +337,7 @@ describe("props", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -429,7 +429,7 @@ describe("variables", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     const [newDataSourceId] = data.dataSources.keys();
     expect(Array.from(data.dataSources.values())).toEqual([
@@ -480,7 +480,7 @@ describe("variables", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({
@@ -529,11 +529,10 @@ describe("variables", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        ["bodyId"]
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: "bodyId",
+      }),
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1) ?? "";
     expect(newInstanceId).not.toEqual("boxId");
@@ -626,11 +625,10 @@ describe("resources", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        ["bodyId"]
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: "bodyId",
+      }),
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
@@ -715,11 +713,10 @@ describe("resources", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        ["bodyId"]
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: "bodyId",
+      }),
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
@@ -762,7 +759,7 @@ describe("resources", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     const [newPropResourceId, newVariableResourceId] = data.resources.keys();
     const [newBoxVariableId] = data.dataSources.keys();
@@ -828,7 +825,7 @@ describe("resources", () => {
     insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: new Set(),
+      availableVariables: [],
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({

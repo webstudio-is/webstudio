@@ -51,45 +51,40 @@ import {
 } from "./variable-popover";
 import {
   $selectedInstance,
-  $selectedInstanceKey,
-  $selectedInstancePath,
+  $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { deleteVariableMutable } from "~/shared/data-variables";
+import {
+  deleteVariableMutable,
+  findAvailableVariables,
+} from "~/shared/data-variables";
 
 /**
  * find variables defined specifically on this selected instance
  */
 const $availableVariables = computed(
-  [$selectedInstancePath, $dataSources],
-  (instancePath, dataSources) => {
-    if (instancePath === undefined) {
+  [$selectedInstance, $instances, $dataSources],
+  (selectedInstance, instances, dataSources) => {
+    if (selectedInstance === undefined) {
       return [];
     }
-    const [{ instanceSelector }] = instancePath;
-    const [selectedInstanceId] = instanceSelector;
-    const availableVariables = new Map<DataSource["name"], DataSource>();
-    // order from ancestor to descendant
-    // so descendants can override ancestor variables
-    for (const { instance } of instancePath.slice().reverse()) {
-      for (const dataSource of dataSources.values()) {
-        if (dataSource.scopeInstanceId === instance.id) {
-          availableVariables.set(dataSource.name, dataSource);
-        }
-      }
-    }
+    const availableVariables = findAvailableVariables({
+      startingInstanceId: selectedInstance.id,
+      instances,
+      dataSources,
+    });
     // order local variables first
     return Array.from(availableVariables.values()).sort((left, right) => {
-      const leftRank = left.scopeInstanceId === selectedInstanceId ? 0 : 1;
-      const rightRank = right.scopeInstanceId === selectedInstanceId ? 0 : 1;
+      const leftRank = left.scopeInstanceId === selectedInstance.id ? 0 : 1;
+      const rightRank = right.scopeInstanceId === selectedInstance.id ? 0 : 1;
       return leftRank - rightRank;
     });
   }
 );
 
 const $instanceVariableValues = computed(
-  [$selectedInstanceKey, $variableValuesByInstanceSelector],
+  [$selectedInstanceKeyWithRoot, $variableValuesByInstanceSelector],
   (instanceKey, variableValuesByInstanceSelector) =>
     variableValuesByInstanceSelector.get(instanceKey ?? "") ??
     new Map<string, unknown>()

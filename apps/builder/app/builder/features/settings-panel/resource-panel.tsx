@@ -55,7 +55,7 @@ import {
 import { parseCurl, type CurlRequest } from "./curl";
 import {
   $selectedInstance,
-  $selectedInstanceKey,
+  $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -384,7 +384,7 @@ const $hiddenDataSourceIds = computed(
 
 const $selectedInstanceScope = computed(
   [
-    $selectedInstanceKey,
+    $selectedInstanceKeyWithRoot,
     $variableValuesByInstanceSelector,
     $dataSources,
     $hiddenDataSourceIds,

@@ -6,8 +6,9 @@ import {
   renderData,
   ResourceValue,
   Variable,
+  ws,
 } from "@webstudio-is/template";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { encodeDataVariableId, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import {
   computeExpression,
   decodeDataVariableName,
@@ -17,6 +18,7 @@ import {
   rebindTreeVariablesMutable,
   unsetExpressionVariables,
   deleteVariableMutable,
+  findAvailableVariables,
 } from "./data-variables";
 
 test("encode data variable name when necessary", () => {
@@ -41,6 +43,80 @@ test("dencode data variable name with dollar sign", () => {
     decodeDataVariableName(encodeDataVariableName("$my$Variable"))
   ).toEqual("$my$Variable");
   expect(decodeDataVariableName("$my$Variable")).toEqual("$my$Variable");
+});
+
+test("find available variables", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const boxVariable = new Variable("boxVariable", "");
+  const data = renderData(
+    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+    </$.Body>
+  );
+  expect(
+    findAvailableVariables({ ...data, startingInstanceId: "boxId" })
+  ).toEqual([
+    expect.objectContaining({ name: "bodyVariable" }),
+    expect.objectContaining({ name: "boxVariable" }),
+  ]);
+});
+
+test("find masked variables", () => {
+  const bodyVariable = new Variable("myVariable", "");
+  const boxVariable = new Variable("myVariable", "");
+  const data = renderData(
+    <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+      <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+    </$.Body>
+  );
+  expect(
+    findAvailableVariables({ ...data, startingInstanceId: "boxId" })
+  ).toEqual([
+    expect.objectContaining({ scopeInstanceId: "boxId", name: "myVariable" }),
+  ]);
+});
+
+test("find global variables", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const boxVariable = new Variable("boxVariable", "");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+      <$.Body ws:id="bodyId">
+        <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(
+    findAvailableVariables({ ...data, startingInstanceId: "boxId" })
+  ).toEqual([
+    expect.objectContaining({ name: "globalVariable" }),
+    expect.objectContaining({ name: "boxVariable" }),
+  ]);
+});
+
+test("find global variables in slots", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const bodyVariable = new Variable("bodyVariable", "");
+  const boxVariable = new Variable("boxVariable", "");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}>
+        <$.Slot ws:id="slotId">
+          <$.Fragment ws:id="fragmentId">
+            <$.Box ws:id="boxId" vars={expression`${boxVariable}`}></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(
+    findAvailableVariables({ ...data, startingInstanceId: "boxId" })
+  ).toEqual([
+    expect.objectContaining({ name: "globalVariable" }),
+    expect.objectContaining({ name: "boxVariable" }),
+  ]);
 });
 
 test("unset expression variables", () => {

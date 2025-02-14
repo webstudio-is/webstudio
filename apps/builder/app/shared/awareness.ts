@@ -72,6 +72,19 @@ export const getInstanceKey = <
 ): (InstanceSelector extends undefined ? undefined : never) | string =>
   JSON.stringify(instanceSelector);
 
+export const $selectedInstanceKeyWithRoot = computed(
+  $awareness,
+  (awareness) => {
+    const instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector) {
+      if (instanceSelector[0] === ROOT_INSTANCE_ID) {
+        return getInstanceKey(instanceSelector);
+      }
+      return getInstanceKey([...instanceSelector, ROOT_INSTANCE_ID]);
+    }
+  }
+);
+
 export const $selectedInstanceKey = computed($awareness, (awareness) =>
   getInstanceKey(awareness?.instanceSelector)
 );

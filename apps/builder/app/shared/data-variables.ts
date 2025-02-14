@@ -7,6 +7,7 @@ import {
   type Resource,
   type Resources,
   type WebstudioData,
+  ROOT_INSTANCE_ID,
   decodeDataVariableId,
   encodeDataVariableId,
   findTreeInstanceIdsExcludingSlotDescendants,
@@ -209,6 +210,8 @@ const findMaskedVariablesByInstanceId = ({
     instanceIdsPath.push(currentId);
     currentId = parentInstanceById.get(currentId);
   }
+  // allow accessing global variables everywhere
+  instanceIdsPath.push(ROOT_INSTANCE_ID);
   const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
   // start from the root to descendant
   // so child variables override parent variables
@@ -220,6 +223,30 @@ const findMaskedVariablesByInstanceId = ({
     }
   }
   return maskedVariables;
+};
+
+export const findAvailableVariables = ({
+  startingInstanceId,
+  instances,
+  dataSources,
+}: {
+  startingInstanceId: Instance["id"];
+  instances: Instances;
+  dataSources: DataSources;
+}) => {
+  const maskedVariables = findMaskedVariablesByInstanceId({
+    startingInstanceId,
+    instances,
+    dataSources,
+  });
+  const availableVariables: DataSource[] = [];
+  for (const dataSourceId of maskedVariables.values()) {
+    const dataSource = dataSources.get(dataSourceId);
+    if (dataSource) {
+      availableVariables.push(dataSource);
+    }
+  }
+  return availableVariables;
 };
 
 const traverseExpressions = ({

@@ -70,6 +70,7 @@ import {
   findClosestInstanceMatchingFragment,
 } from "./matcher";
 import {
+  findAvailableVariables,
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
@@ -310,11 +311,10 @@ export const insertWebstudioFragmentAt = (
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        insertable.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: insertable.parentSelector[0],
+      }),
     });
     children = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -377,11 +377,10 @@ export const reparentInstance = (
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        reparentDropTarget.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: reparentDropTarget.parentSelector[0],
+      }),
     });
     const newRootInstanceId = newInstanceIds.get(rootInstanceId);
     if (newRootInstanceId === undefined) {
@@ -720,29 +719,6 @@ export const extractWebstudioFragment = (
   };
 };
 
-export const findAvailableDataSources = (
-  dataSources: DataSources,
-  instances: Instances,
-  instanceSelector: InstanceSelector
-) => {
-  // inline data sources not scoped to current portal
-  const instanceIds = new Set();
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance?.component === portalComponent) {
-      break;
-    }
-    instanceIds.add(instanceId);
-  }
-  const availableDataSources = new Set<DataSource["id"]>();
-  for (const { id, scopeInstanceId } of dataSources.values()) {
-    if (scopeInstanceId && instanceIds.has(scopeInstanceId)) {
-      availableDataSources.add(id);
-    }
-  }
-  return availableDataSources;
-};
-
 const replaceDataSources = (
   code: string,
   replacements: Map<DataSource["id"], DataSource["id"]>
@@ -764,11 +740,11 @@ const replaceDataSources = (
 export const insertWebstudioFragmentCopy = ({
   data,
   fragment,
-  availableDataSources,
+  availableVariables,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
-  availableDataSources: Set<DataSource["id"]>;
+  availableVariables: DataSource[];
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -980,11 +956,8 @@ export const insertWebstudioFragmentCopy = ({
   newInstanceIds.set(ROOT_INSTANCE_ID, ROOT_INSTANCE_ID);
 
   const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
-  for (const dataSourceId of availableDataSources) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource) {
-      maskedIdByName.set(dataSource.name, dataSource.id);
-    }
+  for (const dataSource of availableVariables) {
+    maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
   for (let dataSource of fragment.dataSources) {
