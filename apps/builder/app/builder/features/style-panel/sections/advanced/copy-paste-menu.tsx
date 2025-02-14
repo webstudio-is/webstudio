@@ -72,11 +72,11 @@ export const CopyPasteMenu = ({
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent css={{ width: theme.spacing[25] }}>
-        <ContextMenuItem onSelect={handleCopyAll}>
-          Copy all declarations
-        </ContextMenuItem>
         <ContextMenuItem onSelect={handleCopy}>
           Copy declaration
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handleCopyAll}>
+          Copy all declarations
         </ContextMenuItem>
         <ContextMenuItem onSelect={handlePaste}>
           Paste declarations
