@@ -423,7 +423,7 @@ export const $variableValuesByInstanceSelector = computed(
     ) => {
       const [instanceId] = instanceSelector;
       const variableNames = new Map(parentVariableNames);
-      let variableValues = new Map<string, unknown>(parentVariableValues);
+      const variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
         variableValues
@@ -543,7 +543,7 @@ export const $variableValuesByInstanceSelector = computed(
         }
       }
     };
-    let {
+    const {
       variableValues: globalVariableValues,
       variableNames: globalVariableNames,
     } = collectVariables([ROOT_INSTANCE_ID]);
