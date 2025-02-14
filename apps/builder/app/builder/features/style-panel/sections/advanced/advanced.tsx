@@ -73,7 +73,7 @@ import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
 import { composeEventHandlers } from "~/shared/event-utils";
-import { CopyPasteMenu } from "./copy-paste-menu";
+import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
 import { $advancedStyles } from "./stores";
 
 // Only here to keep the same section module interface
@@ -557,6 +557,7 @@ const AdvancedProperty = memo(
         wrap="wrap"
         align="center"
         justify="start"
+        {...{ [propertyContainerAttribute]: property }}
       >
         {isVisible && (
           <>
