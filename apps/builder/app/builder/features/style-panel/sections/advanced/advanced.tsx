@@ -1,3 +1,4 @@
+import { mergeRefs } from "@react-aria/utils";
 import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
@@ -6,8 +7,11 @@ import {
   useEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type ComponentProps,
+  type KeyboardEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
@@ -26,6 +30,7 @@ import {
   InputField,
   Label,
   NestedInputButton,
+  SearchField,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -236,8 +241,9 @@ const AddProperty = forwardRef<
     onClose: () => void;
     onSubmit: (css: string) => void;
     onFocus: () => void;
+    onBlur: () => void;
   }
->(({ onClose, onSubmit, onFocus }, forwardedRef) => {
+>(({ onClose, onSubmit, onFocus, onBlur }, forwardedRef) => {
   const [item, setItem] = useState<SearchItem>({
     property: "",
     label: "",
@@ -309,11 +315,15 @@ const AddProperty = forwardRef<
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
-        <input type="submit" hidden />
         <ComboboxAnchor>
           <InputField
             {...inputProps}
+            autoFocus
             onFocus={onFocus}
+            onBlur={(event) => {
+              inputProps.onBlur(event);
+              onBlur();
+            }}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             placeholder="Add styles"
@@ -414,12 +424,14 @@ const AdvancedPropertyValue = ({
   autoFocus,
   property,
   onChangeComplete,
+  inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
   property: StyleProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
+  inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -432,7 +444,7 @@ const AdvancedPropertyValue = ({
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
   return (
     <CssValueInputContainer
-      inputRef={inputRef}
+      inputRef={mergeRefs(inputRef, inputRefProp)}
       variant="chromeless"
       text="mono"
       fieldSizing="content"
@@ -559,6 +571,7 @@ const AdvancedProperty = memo(
     autoFocus,
     onChangeComplete,
     onReset,
+    valueInputRef,
   }: {
     property: StyleProperty;
     autoFocus?: boolean;
@@ -566,6 +579,7 @@ const AdvancedProperty = memo(
     onChangeComplete?: ComponentProps<
       typeof CssValueInputContainer
     >["onChangeComplete"];
+    valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
     const visibilityChangeEventSupported = useClientSupports(
       () => "oncontentvisibilityautostatechange" in document.body
@@ -636,6 +650,7 @@ const AdvancedProperty = memo(
                 autoFocus={autoFocus}
                 property={property}
                 onChangeComplete={onChangeComplete}
+                inputRef={valueInputRef}
               />
             </Box>
           </>
@@ -650,75 +665,131 @@ export const Section = () => {
   const advancedProperties = useStore($advancedProperties);
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
+  const recentValueInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchProperties, setSearchProperties] =
+    useState<Array<StyleProperty>>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [minHeight, setMinHeight] = useState<number>(0);
 
-  const addRecentProperties = (properties: StyleProperty[]) => {
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...properties]))
-    );
+  const currentProperties = searchProperties ?? advancedProperties;
+
+  const showRecentProperties =
+    recentProperties.length > 0 && searchProperties === undefined;
+
+  const memorizeMinHeight = () => {
+    setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
-  const showAddProperty = () => {
+  const handleShowAddStylesInput = () => {
     setIsAdding(true);
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
+  };
+
+  const handleAbortSearch = () => {
+    setMinHeight(0);
+    setSearchProperties(undefined);
+  };
+
+  const handleSubmitStyles = (cssText: string) => {
+    setIsAdding(false);
+    const styles = insertStyles(cssText);
+    const insertedProperties = styles.map(({ property }) => property);
+    setRecentProperties(
+      Array.from(new Set([...recentProperties, ...insertedProperties]))
+    );
+  };
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    const search = event.target.value.trim();
+    if (search === "") {
+      return handleAbortSearch();
+    }
+    memorizeMinHeight();
+    const matched = matchSorter(advancedProperties, search);
+    setSearchProperties(matched);
+  };
+
+  const handleAbortAddStyles = () => {
+    setIsAdding(false);
+    requestAnimationFrame(() => {
+      // We are either focusing the last value input from the recent list if available or the search input.
+      const element = recentValueInputRef.current ?? searchInputRef.current;
+      element?.focus();
+    });
   };
 
   return (
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
-      onAdd={showAddProperty}
+      onAdd={handleShowAddStylesInput}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {recentProperties.map((property, index, properties) => (
-          <AdvancedProperty
-            key={property}
-            property={property}
-            autoFocus={index === properties.length - 1}
-            onChangeComplete={(event) => {
-              if (event.type === "enter") {
-                showAddProperty();
-              }
-            }}
-            onReset={() => {
-              setRecentProperties((properties) => {
-                return properties.filter(
-                  (recentProperty) => recentProperty !== property
-                );
-              });
-            }}
-          />
-        ))}
-        <Box
-          css={
-            isAdding
-              ? { paddingTop: theme.spacing[3] }
-              : // We hide it visually so you can tab into it to get shown.
-                { overflow: "hidden", height: 0 }
-          }
-        >
-          <AddProperty
-            onSubmit={(value) => {
-              setIsAdding(false);
-              const styles = insertStyles(value);
-              const insertedProperties = styles.map(({ property }) => property);
-              addRecentProperties(insertedProperties);
-            }}
-            onClose={() => {
-              setIsAdding(false);
-            }}
-            onFocus={() => {
-              if (isAdding === false) {
-                showAddProperty();
-              }
-            }}
-            ref={addPropertyInputRef}
-          />
-        </Box>
+        <SearchField
+          inputRef={searchInputRef}
+          onChange={handleSearch}
+          onAbort={handleAbortSearch}
+        />
       </Box>
-      {recentProperties.length > 0 && <Separator />}
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {advancedProperties
+        {showRecentProperties &&
+          recentProperties.map((property, index, properties) => {
+            const isLast = index === properties.length - 1;
+            return (
+              <AdvancedProperty
+                valueInputRef={isLast ? recentValueInputRef : undefined}
+                key={property}
+                property={property}
+                autoFocus={isLast}
+                onChangeComplete={(event) => {
+                  if (event.type === "enter") {
+                    handleShowAddStylesInput();
+                  }
+                }}
+                onReset={() => {
+                  setRecentProperties((properties) => {
+                    return properties.filter(
+                      (recentProperty) => recentProperty !== property
+                    );
+                  });
+                }}
+              />
+            );
+          })}
+        {(showRecentProperties || isAdding) && (
+          <Box
+            style={
+              isAdding
+                ? { paddingTop: theme.spacing[3] }
+                : // We hide it visually so you can tab into it to get shown.
+                  { overflow: "hidden", height: 0 }
+            }
+          >
+            <AddProperty
+              onSubmit={handleSubmitStyles}
+              onClose={handleAbortAddStyles}
+              onFocus={() => {
+                if (isAdding === false) {
+                  handleShowAddStylesInput();
+                }
+              }}
+              onBlur={() => {
+                setIsAdding(false);
+              }}
+              ref={addPropertyInputRef}
+            />
+          </Box>
+        )}
+      </Box>
+      {showRecentProperties && <Separator />}
+      <Box
+        css={{ paddingInline: theme.panel.paddingInline }}
+        style={{ minHeight }}
+        ref={containerRef}
+      >
+        {currentProperties
           .filter((property) => recentProperties.includes(property) === false)
           .map((property) => (
             <AdvancedProperty key={property} property={property} />

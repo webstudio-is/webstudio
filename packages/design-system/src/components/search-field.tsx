@@ -15,6 +15,7 @@ import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { Flex } from "./flex";
+import { mergeRefs } from "@react-aria/utils";
 
 const SearchIconStyled = styled(SearchIcon, {
   // need to center icon vertically
@@ -61,7 +62,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       // brings native reset button
       type="text"
       value={value}
-      inputRef={inputRef}
+      inputRef={mergeRefs(inputRef, rest.inputRef)}
       prefix={<SearchIconStyled />}
       suffix={
         <Flex align="center" css={{ padding: theme.spacing[2] }}>
