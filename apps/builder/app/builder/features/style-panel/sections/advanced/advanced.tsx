@@ -665,7 +665,11 @@ export const Section = () => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [searchProperties, setSearchProperties] = useState();
+  const [searchProperties, setSearchProperties] =
+    useState<Array<StyleProperty>>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [minHeight, setMinHeight] = useState<number>(0);
+
   const currentProperties = searchProperties ?? advancedProperties;
 
   const showRecentProperties =
@@ -683,27 +687,13 @@ export const Section = () => {
     addPropertyInputRef.current?.focus();
   };
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const initialHeightRef = useRef<number>();
+  const memorizeMinHeight = () => {
+    setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
+  };
 
-  const getHeight = () => {
-    if (
-      searchProperties &&
-      initialHeightRef.current === undefined &&
-      containerRef.current
-    ) {
-      initialHeightRef.current =
-        containerRef.current.getBoundingClientRect().height;
-    }
-
-    if (searchProperties === undefined) {
-      // @todo rewrite
-      requestAnimationFrame(() => {
-        initialHeightRef.current = undefined;
-      });
-    }
-
-    return initialHeightRef.current;
+  const handleAbortSearch = () => {
+    setMinHeight(0);
+    setSearchProperties(undefined);
   };
 
   return (
@@ -718,14 +708,13 @@ export const Section = () => {
           onChange={(event) => {
             const search = event.target.value.trim();
             if (search === "") {
-              return setSearchProperties(undefined);
+              return handleAbortSearch();
             }
+            memorizeMinHeight();
             const matched = matchSorter(advancedProperties, search);
             setSearchProperties(matched);
           }}
-          onAbort={() => {
-            setSearchProperties(undefined);
-          }}
+          onAbort={handleAbortSearch}
         />
       </Box>
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
@@ -755,7 +744,7 @@ export const Section = () => {
           })}
         {(showRecentProperties || isAdding) && (
           <Box
-            css={
+            style={
               isAdding
                 ? { paddingTop: theme.spacing[3] }
                 : // We hide it visually so you can tab into it to get shown.
@@ -794,10 +783,8 @@ export const Section = () => {
       </Box>
       {showRecentProperties && <Separator />}
       <Box
-        css={{
-          paddingInline: theme.panel.paddingInline,
-          minHeight: getHeight(),
-        }}
+        css={{ paddingInline: theme.panel.paddingInline }}
+        style={{ minHeight }}
         ref={containerRef}
       >
         {currentProperties
