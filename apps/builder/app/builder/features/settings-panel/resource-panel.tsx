@@ -54,8 +54,8 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
 import {
+  $selectedInstance,
   $selectedInstanceKey,
-  $selectedInstancePath,
   $selectedPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -583,11 +583,10 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instancePath = $selectedInstancePath.get();
-      if (instancePath === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
-      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
@@ -600,7 +599,7 @@ export const ResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
+        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -608,7 +607,8 @@ export const ResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({ instancePath, ...data });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));
@@ -715,11 +715,10 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instancePath = $selectedInstancePath.get();
-      if (instancePath === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
-      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
@@ -732,7 +731,7 @@ export const SystemResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
+        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -740,7 +739,8 @@ export const SystemResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({ instancePath, ...data });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));
@@ -824,11 +824,10 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instancePath = $selectedInstancePath.get();
-      if (instancePath === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
-      const [{ instance }] = instancePath;
       const name = z.string().parse(formData.get("name"));
       const body = generateObjectExpression(
         new Map([
@@ -848,7 +847,7 @@ export const GraphqlResourceForm = forwardRef<
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? instance.id,
+        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -856,7 +855,8 @@ export const GraphqlResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        rebindTreeVariablesMutable({ instancePath, ...data });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));

@@ -5,7 +5,7 @@
   "dependencies": {
     "@react-router/node": "^7.1.5",
     "@react-router/serve": "^7.1.5",
-    "h3": "^1.14.0",
+    "h3": "^1.15.0",
     "ipx": "^3.0.1"
   }
 }

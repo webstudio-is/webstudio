@@ -59,7 +59,7 @@ import {
   $instances,
   $props,
 } from "~/shared/nano-states";
-import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstance } from "~/shared/awareness";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
   EditorDialog,
@@ -92,13 +92,13 @@ const $variablesByName = computed(
 );
 
 const $unsetVariableNames = computed(
-  [$selectedInstancePath, $instances, $props, $dataSources, $resources],
-  (instancePath, instances, props, dataSources, resources) => {
-    if (instancePath === undefined) {
+  [$selectedInstance, $instances, $props, $dataSources, $resources],
+  (selectedInstance, instances, props, dataSources, resources) => {
+    if (selectedInstance === undefined) {
       return [];
     }
     return findUnsetVariableNames({
-      instancePath,
+      startingInstanceId: selectedInstance.id,
       instances,
       props,
       dataSources,
@@ -288,8 +288,8 @@ const ParameterForm = forwardRef<
 >(({ variable }, ref) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instancePath = $selectedInstancePath.get();
-      if (instancePath === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
       // only existing parameter variables can be renamed
@@ -299,7 +299,8 @@ const ParameterForm = forwardRef<
       const name = z.string().parse(formData.get("name"));
       updateWebstudioData((data) => {
         data.dataSources.set(variable.id, { ...variable, name });
-        rebindTreeVariablesMutable({ instancePath, ...data });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));
@@ -318,11 +319,10 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instancePath = $selectedInstancePath.get();
-      if (instancePath === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
-      const [{ instance: selectedInstance }] = instancePath;
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
       const scopeInstanceId = variable?.scopeInstanceId ?? selectedInstance.id;
@@ -339,7 +339,8 @@ const useValuePanelRef = ({
           type: "variable",
           value: variableValue,
         });
-        rebindTreeVariablesMutable({ instancePath, ...data });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));

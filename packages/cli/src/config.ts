@@ -66,6 +66,11 @@ export const PROJECT_TEMPLATES = [
   {
     value: "vercel" as const,
     label: "Vercel",
+    expand: ["react-router", "react-router-vercel"],
+  },
+  {
+    value: "vercel-legacy" as const,
+    label: "Vercel (legacy)",
     expand: ["defaults", "vercel"],
   },
   {
