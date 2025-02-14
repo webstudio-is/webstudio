@@ -20,7 +20,6 @@ import {
 } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
-  findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
@@ -44,6 +43,7 @@ import {
   isTreeMatching,
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
+import { findAvailableVariables } from "~/shared/data-variables";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -424,11 +424,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
             fragment,
-            availableDataSources: findAvailableDataSources(
-              data.dataSources,
-              data.instances,
-              parentItem.instanceSelector
-            ),
+            availableVariables: findAvailableVariables({
+              ...data,
+              startingInstanceId: parentItem.instanceSelector[0],
+            }),
           });
           const newRootInstanceId = newInstanceIds.get(
             selectedItem.instance.id

@@ -16,7 +16,6 @@ import {
 import type { InstanceSelector, DroppableTarget } from "../tree-utils";
 import {
   deleteInstanceMutable,
-  findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
@@ -26,6 +25,7 @@ import {
 } from "../instance-utils";
 import { isInstanceDetachable } from "../matcher";
 import { $selectedInstancePath } from "../awareness";
+import { findAvailableVariables } from "../data-variables";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -172,11 +172,10 @@ export const onPaste = (clipboardData: string) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        pasteTarget.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: pasteTarget.parentSelector[0],
+      }),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {

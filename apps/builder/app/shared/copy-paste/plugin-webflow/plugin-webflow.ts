@@ -1,6 +1,5 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
 import {
-  findAvailableDataSources,
   findClosestInsertable,
   insertInstanceChildrenMutable,
   insertWebstudioFragmentCopy,
@@ -19,6 +18,7 @@ import { addStyles } from "./styles";
 import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
+import { findAvailableVariables } from "~/shared/data-variables";
 
 const { toast } = builderApi;
 
@@ -186,11 +186,10 @@ export const onPaste = async (clipboardData: string) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        insertable.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: insertable.parentSelector[0],
+      }),
     });
 
     const children = fragment.children
