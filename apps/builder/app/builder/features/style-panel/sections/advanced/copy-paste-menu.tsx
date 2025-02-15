@@ -67,7 +67,7 @@ export const CopyPasteMenu = ({
           if (!(event.target instanceof HTMLElement)) {
             return;
           }
-          const property = event.target.closest(
+          const property = event.target.closest<HTMLElement>(
             `[${propertyContainerAttribute}]`
           )?.dataset.property;
           lastClickedProperty.current = property;
