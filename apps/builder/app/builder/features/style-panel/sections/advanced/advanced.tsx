@@ -75,6 +75,7 @@ import { useClientSupports } from "~/shared/client-supports";
 import { composeEventHandlers } from "~/shared/event-utils";
 import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
 import { $advancedStyles } from "./stores";
+import { $settings } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -636,7 +637,10 @@ export const Section = () => {
     if (search === "") {
       return handleAbortSearch();
     }
-    memorizeMinHeight();
+    // This is not needed in advanced mode because the input won't jump there as it is on top
+    if ($settings.get().stylePanelMode !== "advanced") {
+      memorizeMinHeight();
+    }
 
     const styles = [];
     for (const [property, value] of advancedStyles) {
