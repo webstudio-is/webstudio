@@ -1,15 +1,12 @@
 import { mergeRefs } from "@react-aria/utils";
-import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
-  forwardRef,
   memo,
   useEffect,
   useRef,
   useState,
   type ChangeEvent,
   type ComponentProps,
-  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -18,17 +15,8 @@ import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
-  ComboboxAnchor,
-  ComboboxContent,
-  ComboboxItemDescription,
-  ComboboxListbox,
-  ComboboxListboxItem,
-  ComboboxRoot,
-  ComboboxScrollArea,
   Flex,
-  InputField,
   Label,
-  NestedInputButton,
   SearchField,
   SectionTitle,
   SectionTitleButton,
@@ -37,17 +25,9 @@ import {
   Text,
   theme,
   Tooltip,
-  useCombobox,
 } from "@webstudio-is/design-system";
+import { parseCss, propertyDescriptions } from "@webstudio-is/css-data";
 import {
-  parseCss,
-  properties as propertiesData,
-  keywordValues,
-  propertyDescriptions,
-  parseCssValue,
-} from "@webstudio-is/css-data";
-import {
-  cssWideKeywords,
   hyphenateProperty,
   toValue,
   type StyleProperty,
@@ -72,10 +52,10 @@ import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
-import { composeEventHandlers } from "~/shared/event-utils";
 import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
 import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
+import { AddStylesInput } from "./add-styles-input";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -117,88 +97,6 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-type SearchItem = { property: string; label: string; value?: string };
-
-const autoCompleteItems: Array<SearchItem> = [];
-
-const getAutocompleteItems = () => {
-  if (autoCompleteItems.length > 0) {
-    return autoCompleteItems;
-  }
-  for (const property in propertiesData) {
-    autoCompleteItems.push({
-      property,
-      label: hyphenateProperty(property),
-    });
-  }
-
-  const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
-
-  for (const property in keywordValues) {
-    const values = keywordValues[property as keyof typeof keywordValues];
-    for (const value of values) {
-      if (ignoreValues.has(value)) {
-        continue;
-      }
-      autoCompleteItems.push({
-        property,
-        value,
-        label: `${hyphenateProperty(property)}: ${value}`,
-      });
-    }
-  }
-
-  autoCompleteItems.sort((a, b) =>
-    Intl.Collator().compare(a.property, b.property)
-  );
-
-  return autoCompleteItems;
-};
-
-const matchOrSuggestToCreate = (
-  search: string,
-  items: Array<SearchItem>,
-  itemToString: (item: SearchItem) => string
-) => {
-  const matched = matchSorter(items, search, {
-    keys: [itemToString],
-  });
-
-  // Limit the array to 100 elements
-  matched.length = Math.min(matched.length, 100);
-
-  const property = search.trim();
-  if (
-    property.startsWith("--") &&
-    lexer.match("<custom-ident>", property).matched
-  ) {
-    matched.unshift({
-      property,
-      label: `Create "${property}"`,
-    });
-  }
-  // When there is no match we suggest to create a custom property.
-  if (
-    matched.length === 0 &&
-    lexer.match("<custom-ident>", `--${property}`).matched
-  ) {
-    matched.unshift({
-      property: `--${property}`,
-      label: `--${property}: unset;`,
-    });
-  }
-
-  return matched;
-};
-
-const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description: string | undefined = `Create CSS variable.`;
-  if (item && item.property in propertyDescriptions) {
-    description = propertyDescriptions[item.property];
-  }
-  return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
-};
-
 const insertStyles = (text: string) => {
   let parsedStyles = parseCss(`selector{${text}}`);
   if (parsedStyles.length === 0) {
@@ -216,142 +114,6 @@ const insertStyles = (text: string) => {
   batch.publish({ listed: true });
   return parsedStyles;
 };
-
-/**
- *
- * Advanced search control supports following interactions
- *
- * find property
- * create custom property
- * submit css declarations
- * paste css declarations
- *
- */
-const AddProperty = forwardRef<
-  HTMLInputElement,
-  {
-    onClose: () => void;
-    onSubmit: (css: string) => void;
-    onFocus: () => void;
-    onBlur: () => void;
-  }
->(({ onClose, onSubmit, onFocus, onBlur }, forwardedRef) => {
-  const [item, setItem] = useState<SearchItem>({
-    property: "",
-    label: "",
-  });
-  const highlightedItemRef = useRef<SearchItem>();
-
-  const combobox = useCombobox<SearchItem>({
-    getItems: getAutocompleteItems,
-    itemToString: (item) => item?.label ?? "",
-    value: item,
-    defaultHighlightedIndex: 0,
-    getItemProps: () => ({ text: "sentence" }),
-    match: matchOrSuggestToCreate,
-    onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
-    onItemSelect: (item) => {
-      clear();
-      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
-    },
-    onItemHighlight: (item) => {
-      const previousHighlightedItem = highlightedItemRef.current;
-      if (item?.value === undefined && previousHighlightedItem) {
-        deleteProperty(previousHighlightedItem.property as StyleProperty, {
-          isEphemeral: true,
-        });
-        highlightedItemRef.current = undefined;
-        return;
-      }
-
-      if (item?.value) {
-        const value = parseCssValue(item.property as StyleProperty, item.value);
-        setProperty(item.property as StyleProperty)(value, {
-          isEphemeral: true,
-        });
-        highlightedItemRef.current = item;
-      }
-    },
-  });
-
-  const descriptionItem = combobox.items[combobox.highlightedIndex];
-  const description = getNewPropertyDescription(descriptionItem);
-  const descriptions = combobox.items.map(getNewPropertyDescription);
-  const inputProps = combobox.getInputProps();
-
-  const clear = () => {
-    setItem({ property: "", label: "" });
-  };
-
-  const handleKeys = (event: KeyboardEvent) => {
-    // Dropdown might handle enter or escape.
-    if (event.defaultPrevented) {
-      return;
-    }
-    if (event.key === "Enter") {
-      clear();
-      onSubmit(item.property);
-      return;
-    }
-    if (event.key === "Escape") {
-      clear();
-      onClose();
-    }
-  };
-
-  const handleKeyDown = composeEventHandlers(inputProps.onKeyDown, handleKeys, {
-    // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-    checkForDefaultPrevented: false,
-  });
-
-  return (
-    <ComboboxRoot open={combobox.isOpen}>
-      <div {...combobox.getComboboxProps()}>
-        <ComboboxAnchor>
-          <InputField
-            {...inputProps}
-            autoFocus
-            onFocus={onFocus}
-            onBlur={(event) => {
-              inputProps.onBlur(event);
-              onBlur();
-            }}
-            inputRef={forwardedRef}
-            onKeyDown={handleKeyDown}
-            placeholder="Add styles"
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
-          />
-        </ComboboxAnchor>
-        <ComboboxContent>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            <ComboboxScrollArea>
-              {combobox.items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...combobox.getItemProps({ item, index })}
-                  key={index}
-                  asChild
-                >
-                  <Text
-                    variant="labelsSentenceCase"
-                    truncate
-                    css={{ maxWidth: "25ch" }}
-                  >
-                    {item.label}
-                  </Text>
-                </ComboboxListboxItem>
-              ))}
-            </ComboboxScrollArea>
-            {description && (
-              <ComboboxItemDescription descriptions={descriptions}>
-                {description}
-              </ComboboxItemDescription>
-            )}
-          </ComboboxListbox>
-        </ComboboxContent>
-      </div>
-    </ComboboxRoot>
-  );
-});
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -715,7 +477,7 @@ export const Section = () => {
                       { overflow: "hidden", height: 0 }
                 }
               >
-                <AddProperty
+                <AddStylesInput
                   onSubmit={(cssText: string) => {
                     setIsAdding(false);
                     handleInsertStyles(cssText);
