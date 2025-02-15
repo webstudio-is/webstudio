@@ -6,7 +6,11 @@ import {
   ContextMenuTrigger,
   theme,
 } from "@webstudio-is/design-system";
-import { generateStyleMap, mergeStyles } from "@webstudio-is/css-engine";
+import {
+  generateStyleMap,
+  mergeStyles,
+  type StyleMap,
+} from "@webstudio-is/css-engine";
 import { useStore } from "@nanostores/react";
 import { $advancedStyles } from "./stores";
 
@@ -31,7 +35,7 @@ export const CopyPasteMenu = ({
   const handleCopyAll = () => {
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
-    const currentStyleMap = new Map();
+    const currentStyleMap: StyleMap = new Map();
     for (const [property, value] of advancedStyles) {
       if (properties.includes(property)) {
         currentStyleMap.set(property, value);
