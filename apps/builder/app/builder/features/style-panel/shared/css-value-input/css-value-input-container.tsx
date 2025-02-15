@@ -64,6 +64,7 @@ export const CssValueInputContainer = ({
         deleteProperty(property, { isEphemeral: true });
       }}
       onReset={() => {
+        setIntermediateValue(undefined);
         deleteProperty(property);
         onReset?.();
       }}
