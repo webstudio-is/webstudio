@@ -10,6 +10,7 @@ import {
   generateStyleMap,
   hyphenateProperty,
   mergeStyles,
+  toValue,
   type StyleMap,
 } from "@webstudio-is/css-engine";
 import { useStore } from "@nanostores/react";
@@ -38,7 +39,8 @@ export const CopyPasteMenu = ({
     // That includes search or any future filters.
     const currentStyleMap: StyleMap = new Map();
     for (const [property, value] of advancedStyles) {
-      if (properties.includes(property)) {
+      const isEmpty = toValue(value) === "";
+      if (properties.includes(property) && isEmpty === false) {
         currentStyleMap.set(hyphenateProperty(property), value);
       }
     }
