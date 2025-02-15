@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
+  hyphenateProperty,
   mergeStyles,
   type StyleMap,
 } from "@webstudio-is/css-engine";
@@ -38,9 +39,10 @@ export const CopyPasteMenu = ({
     const currentStyleMap: StyleMap = new Map();
     for (const [property, value] of advancedStyles) {
       if (properties.includes(property)) {
-        currentStyleMap.set(property, value);
+        currentStyleMap.set(hyphenateProperty(property), value);
       }
     }
+
     const css = generateStyleMap({ style: mergeStyles(currentStyleMap) });
     navigator.clipboard.writeText(css);
   };
