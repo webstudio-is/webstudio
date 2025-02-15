@@ -157,6 +157,7 @@ const AdvancedPropertyLabel = ({
             setIsOpen(false);
             onReset?.();
           }}
+          resetType="delete"
         />
       }
     >
