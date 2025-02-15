@@ -817,8 +817,10 @@ export const CssValueInput = ({
 
   const handleDelete = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Backspace" && inputProps.value === "") {
+      // - allows to close the menu
+      // - prevents baspace from deleting the value AFTER its already reseted to default, e.g. we get "aut" instead of "auto"
       event.preventDefault();
-      closeMenu();
+      //closeMenu();
       onReset();
     }
   };
