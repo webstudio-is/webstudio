@@ -708,7 +708,7 @@ export const Section = () => {
               })}
             {(showRecentProperties || isAdding) && (
               <Box
-                style={
+                css={
                   isAdding
                     ? { paddingTop: theme.spacing[3] }
                     : // We hide it visually so you can tab into it to get shown.
