@@ -16,6 +16,7 @@ type CssValueInputContainerProps = {
   | "onChangeComplete"
 > & {
     onChangeComplete?: ComponentProps<typeof CssValueInput>["onChangeComplete"];
+    onReset?: ComponentProps<typeof CssValueInput>["onReset"];
   };
 
 export const CssValueInputContainer = ({
@@ -23,6 +24,7 @@ export const CssValueInputContainer = ({
   setValue,
   deleteProperty,
   onChangeComplete,
+  onReset,
   ...props
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
@@ -63,6 +65,7 @@ export const CssValueInputContainer = ({
       }}
       onReset={() => {
         deleteProperty(property);
+        onReset?.();
       }}
     />
   );

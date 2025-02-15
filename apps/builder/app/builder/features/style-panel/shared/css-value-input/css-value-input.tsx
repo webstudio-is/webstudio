@@ -815,6 +815,14 @@ export const CssValueInput = ({
     }
   };
 
+  const handleDelete = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && inputProps.value === "") {
+      event.preventDefault();
+      closeMenu();
+      onReset();
+    }
+  };
+
   const { abort, ...autoScrollProps } = useMemo(() => {
     return getAutoScrollProps();
   }, []);
@@ -862,7 +870,7 @@ export const CssValueInput = ({
   }, [inputRef]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter],
+    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter, handleDelete],
     {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,

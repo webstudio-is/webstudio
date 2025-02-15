@@ -178,6 +178,7 @@ const AdvancedPropertyValue = ({
   autoFocus,
   property,
   onChangeComplete,
+  onReset,
   inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
@@ -185,6 +186,7 @@ const AdvancedPropertyValue = ({
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
+  onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -245,6 +247,7 @@ const AdvancedPropertyValue = ({
       }}
       deleteProperty={deleteProperty}
       onChangeComplete={onChangeComplete}
+      onReset={onReset}
     />
   );
 };
@@ -340,6 +343,7 @@ const AdvancedProperty = memo(
                 autoFocus={autoFocus}
                 property={property}
                 onChangeComplete={onChangeComplete}
+                onReset={onReset}
                 inputRef={valueInputRef}
               />
             </Box>
