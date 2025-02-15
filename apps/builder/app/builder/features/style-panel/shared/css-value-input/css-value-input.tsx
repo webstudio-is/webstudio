@@ -277,7 +277,9 @@ type CssValueInputProps = Pick<
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
+  // Does not reset intermediate changes.
   onAbort: () => void;
+  // Resets the value to default even if it has intermediate changes.
   onReset: () => void;
   icon?: ReactNode;
   showSuffix?: boolean;
@@ -798,7 +800,7 @@ export const CssValueInput = ({
     }
   };
 
-  const handleMetaEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (
       isUnitsOpen ||
       (isOpen && !menuProps.empty && highlightedIndex !== -1)
@@ -810,6 +812,16 @@ export const CssValueInput = ({
 
     if (event.key === "Enter") {
       onChangeComplete({ type: "enter", value, ...meta });
+    }
+  };
+
+  const handleDelete = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && inputProps.value === "") {
+      // - allows to close the menu
+      // - prevents baspace from deleting the value AFTER its already reseted to default, e.g. we get "aut" instead of "auto"
+      event.preventDefault();
+      //closeMenu();
+      onReset();
     }
   };
 
@@ -860,11 +872,11 @@ export const CssValueInput = ({
   }, [inputRef]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
+    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter, handleDelete],
+    {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,
-    }),
-    handleMetaEnter
+    }
   );
 
   const suffixRef = useRef<HTMLDivElement | null>(null);

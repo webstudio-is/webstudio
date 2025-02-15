@@ -178,31 +178,34 @@ export const AddStylesInput = forwardRef<
     setItem({ property: "", label: "" });
   };
 
-  const handleKeys = (event: KeyboardEvent) => {
-    // Dropdown might handle enter or escape.
-    if (event.defaultPrevented) {
-      return;
-    }
+  const handleEnter = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
       clear();
       onSubmit(item.property);
-      return;
-    }
-    // When user hits backspace and there is nothing in the input - we hide the input
-    const abortByBackspace =
-      event.key === "Backspace" && combobox.inputValue === "";
-
-    if (event.key === "Escape" || abortByBackspace) {
-      clear();
-      onClose();
-      event.preventDefault();
     }
   };
 
-  const handleKeyDown = composeEventHandlers(inputProps.onKeyDown, handleKeys, {
-    // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-    checkForDefaultPrevented: false,
-  });
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      clear();
+      onClose();
+    }
+  };
+
+  const handleDelete = (event: KeyboardEvent) => {
+    // When user hits backspace and there is nothing in the input - we hide the input
+    if (event.key === "Backspace" && combobox.inputValue === "") {
+      clear();
+      onClose();
+    }
+  };
+
+  const handleKeyDown = composeEventHandlers([
+    inputProps.onKeyDown,
+    handleEnter,
+    handleEscape,
+    handleDelete,
+  ]);
 
   return (
     <ComboboxRoot open={combobox.isOpen}>

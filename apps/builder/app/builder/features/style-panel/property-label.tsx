@@ -73,6 +73,7 @@ export const PropertyInfo = ({
   description,
   styles,
   onReset,
+  resetType = "reset",
 }: {
   title: string;
   code?: string;
@@ -80,6 +81,7 @@ export const PropertyInfo = ({
   description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset: () => void;
+  resetType?: "reset" | "delete";
 }) => {
   const breakpoints = useStore($breakpoints);
   const instances = useStore($instances);
@@ -203,9 +205,7 @@ export const PropertyInfo = ({
           css={{ gridTemplateColumns: "1fr max-content 1fr" }}
           onClick={onReset}
         >
-          {styles[0].property.startsWith("--")
-            ? "Delete variable"
-            : "Reset value"}
+          {resetType === "delete" ? "Delete property" : "Reset value"}
         </Button>
       )}
     </Flex>
