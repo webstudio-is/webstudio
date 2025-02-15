@@ -188,9 +188,14 @@ export const AddStylesInput = forwardRef<
       onSubmit(item.property);
       return;
     }
-    if (event.key === "Escape") {
+    // When user hits backspace and there is nothing in the input - we hide the input
+    const abortByBackspace =
+      event.key === "Backspace" && combobox.inputValue === "";
+
+    if (event.key === "Escape" || abortByBackspace) {
       clear();
       onClose();
+      event.preventDefault();
     }
   };
 
