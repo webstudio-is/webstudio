@@ -69,6 +69,18 @@ export const BuilderModeDropDown = () => {
     setActiveMode(undefined);
   };
 
+  const getDefaultMessage = () => {
+    if (
+      isContentModeAllowed &&
+      isFeatureEnabled("contentEditableMode") &&
+      isDesignModeAllowed
+    ) {
+      return "Select Design or Content mode";
+    }
+
+    return !isDesignModeAllowed ? "Select Content mode" : "Select Design mode";
+  };
+
   return (
     <Flex align="center">
       <Tooltip
@@ -145,7 +157,7 @@ export const BuilderModeDropDown = () => {
             <Box css={{ width: theme.spacing[25] }}>
               {activeMode
                 ? menuItems[activeMode].description
-                : "Select Design or Content mode"}
+                : getDefaultMessage()}
             </Box>
           </div>
         </DropdownMenuContent>
