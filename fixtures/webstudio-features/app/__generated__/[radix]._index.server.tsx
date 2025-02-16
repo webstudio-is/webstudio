@@ -23,7 +23,7 @@ export const getPageMeta = ({
     excludePageFromSearch: true,
     language: undefined,
     socialImageAssetName:
-      "DALL_E_2023-10-30_12.39.46_-_Photo_logo_with_a_bold_cat_silhouette_centered_on_a_contrasting_background_designed_for_clarity_at_small_32x32_favicon_resolution_00h6cEA8u2pJRvVJv7hRe.png",
+      "DALL_E_2023-10-30_12.39.46_-_Photo_with_bold_cat_silhouette_centered_on_contrasting_background_32x32_favicon_res_00h6cEA8u2pJRvVJv7hRe.png",
     socialImageUrl: undefined,
     status: undefined,
     redirect: undefined,
