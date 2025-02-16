@@ -1,11 +1,4 @@
-import { lexer } from "css-tree";
-import {
-  forwardRef,
-  useRef,
-  useState,
-  type FocusEvent,
-  type KeyboardEvent,
-} from "react";
+import { forwardRef, useRef, useState, type KeyboardEvent } from "react";
 import { matchSorter } from "match-sorter";
 import {
   Box,
@@ -30,11 +23,13 @@ import {
 } from "@webstudio-is/css-data";
 import {
   cssWideKeywords,
+  generateStyleMap,
   hyphenateProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import { composeEventHandlers } from "~/shared/event-utils";
+import { parseStyleInput } from "./parse-style-input";
 
 type SearchItem = { property: string; label: string; value?: string };
 
@@ -94,25 +89,14 @@ const matchOrSuggestToCreate = (
   // Limit the array to 100 elements
   matched.length = Math.min(matched.length, 100);
 
-  const property = search.trim();
-  if (
-    property.startsWith("--") &&
-    lexer.match("<custom-ident>", property).matched
-  ) {
-    matched.unshift({
-      property,
-      label: `Create "${property}"`,
-    });
-  }
-  // When there is no match we suggest to create a custom property.
-  if (
-    matched.length === 0 &&
-    lexer.match("<custom-ident>", `--${property}`).matched
-  ) {
-    matched.unshift({
-      property: `--${property}`,
-      label: `--${property}: unset;`,
-    });
+  if (matched.length === 0) {
+    const parsedStyles = parseStyleInput(search);
+    for (const style of parsedStyles) {
+      matched.push({
+        property: style.property,
+        label: `Create "${generateStyleMap(new Map([[style.property, style.value]]))}"`,
+      });
+    }
   }
 
   return matched;
@@ -128,7 +112,7 @@ const matchOrSuggestToCreate = (
  * paste css declarations
  *
  */
-export const AddStylesInput = forwardRef<
+export const AddStyleInput = forwardRef<
   HTMLInputElement,
   {
     onClose: () => void;
