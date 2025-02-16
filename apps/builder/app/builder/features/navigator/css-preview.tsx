@@ -65,7 +65,7 @@ const getCssText = (
       return;
     }
     result.push(`/* ${comment} */`);
-    result.push(generateStyleMap({ style: mergeStyles(style) }));
+    result.push(generateStyleMap(mergeStyles(style)));
   };
 
   add("Style Sources", sourceStyles);

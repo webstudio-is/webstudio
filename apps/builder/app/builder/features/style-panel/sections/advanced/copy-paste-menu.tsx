@@ -45,7 +45,7 @@ export const CopyPasteMenu = ({
       }
     }
 
-    const css = generateStyleMap({ style: mergeStyles(currentStyleMap) });
+    const css = generateStyleMap(mergeStyles(currentStyleMap));
     navigator.clipboard.writeText(css);
   };
 
@@ -59,7 +59,7 @@ export const CopyPasteMenu = ({
       return;
     }
     const style = new Map([[property, value]]);
-    const css = generateStyleMap({ style });
+    const css = generateStyleMap(style);
     navigator.clipboard.writeText(css);
   };
 
