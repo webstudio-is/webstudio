@@ -78,7 +78,7 @@ export const BuilderModeDropDown = () => {
       return "Select Design or Content mode";
     }
 
-    return !isDesignModeAllowed ? "Select Content mode" : "Select Design mode";
+    return isDesignModeAllowed ? "Select Design mode" : "Select Content mode";
   };
 
   return (
