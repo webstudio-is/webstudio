@@ -1,5 +1,11 @@
 import { lexer } from "css-tree";
-import { forwardRef, useRef, useState, type KeyboardEvent } from "react";
+import {
+  forwardRef,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+} from "react";
 import { matchSorter } from "match-sorter";
 import {
   Box,
@@ -207,6 +213,17 @@ export const AddStylesInput = forwardRef<
     handleDelete,
   ]);
 
+  const handleBlur = composeEventHandlers([
+    inputProps.onBlur,
+    () => {
+      // When user clicks on a combobox item, input will receive blur event,
+      // but we don't want that to be handled upstream because input may get hidden without click getting handled.
+      if (combobox.isOpen === false) {
+        onBlur();
+      }
+    },
+  ]);
+
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
@@ -215,10 +232,7 @@ export const AddStylesInput = forwardRef<
             {...inputProps}
             autoFocus
             onFocus={onFocus}
-            onBlur={(event) => {
-              inputProps.onBlur(event);
-              onBlur();
-            }}
+            onBlur={handleBlur}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             placeholder="Add styles"
