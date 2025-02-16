@@ -54,11 +54,6 @@ export type GlobalConfig = z.infer<typeof zGlobalConfig>;
 
 export const PROJECT_TEMPLATES = [
   {
-    value: "vanilla" as const,
-    label: "Vanilla",
-    expand: ["defaults"],
-  },
-  {
     value: "docker" as const,
     label: "Docker",
     expand: ["react-router", "react-router-docker"],
@@ -67,11 +62,6 @@ export const PROJECT_TEMPLATES = [
     value: "vercel" as const,
     label: "Vercel",
     expand: ["react-router", "react-router-vercel"],
-  },
-  {
-    value: "vercel-legacy" as const,
-    label: "Vercel (legacy)",
-    expand: ["defaults", "vercel"],
   },
   {
     value: "netlify" as const,

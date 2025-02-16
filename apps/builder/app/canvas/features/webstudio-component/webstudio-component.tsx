@@ -109,7 +109,7 @@ const ContentEditable = ({
     // Issue: <button> with contentEditable does not allow pressing space.
     // Solution: Add space on space keydown.
     const abortController = new AbortController();
-    if (rootElement.tagName === "BUTTON") {
+    if (rootElement.closest("button")) {
       rootElement.addEventListener(
         "keydown",
         (event) => {

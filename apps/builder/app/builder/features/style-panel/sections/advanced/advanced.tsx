@@ -1,35 +1,22 @@
 import { mergeRefs } from "@react-aria/utils";
-import { lexer } from "css-tree";
 import { colord } from "colord";
 import {
-  forwardRef,
   memo,
   useEffect,
   useRef,
   useState,
   type ChangeEvent,
   type ComponentProps,
-  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
 import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
-  ComboboxAnchor,
-  ComboboxContent,
-  ComboboxItemDescription,
-  ComboboxListbox,
-  ComboboxListboxItem,
-  ComboboxRoot,
-  ComboboxScrollArea,
   Flex,
-  InputField,
   Label,
-  NestedInputButton,
   SearchField,
   SectionTitle,
   SectionTitleButton,
@@ -38,17 +25,9 @@ import {
   Text,
   theme,
   Tooltip,
-  useCombobox,
 } from "@webstudio-is/design-system";
+import { parseCss, propertyDescriptions } from "@webstudio-is/css-data";
 import {
-  parseCss,
-  properties as propertiesData,
-  keywordValues,
-  propertyDescriptions,
-  parseCssValue,
-} from "@webstudio-is/css-data";
-import {
-  cssWideKeywords,
   hyphenateProperty,
   toValue,
   type StyleProperty,
@@ -66,24 +45,17 @@ import {
 } from "../../shared/use-style-data";
 import {
   $availableVariables,
-  $matchingBreakpoints,
-  getDefinedStyles,
   useComputedStyleDecl,
   useComputedStyles,
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
-import { sections } from "../sections";
 import { ColorPopover } from "../../shared/color-picker";
-import {
-  $registeredComponentMetas,
-  $styles,
-  $styleSourceSelections,
-} from "~/shared/nano-states";
 import { useClientSupports } from "~/shared/client-supports";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
+import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
-import { composeEventHandlers } from "~/shared/event-utils";
+import { AddStylesInput } from "./add-styles-input";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -125,88 +97,6 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-type SearchItem = { property: string; label: string; value?: string };
-
-const autoCompleteItems: Array<SearchItem> = [];
-
-const getAutocompleteItems = () => {
-  if (autoCompleteItems.length > 0) {
-    return autoCompleteItems;
-  }
-  for (const property in propertiesData) {
-    autoCompleteItems.push({
-      property,
-      label: hyphenateProperty(property),
-    });
-  }
-
-  const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
-
-  for (const property in keywordValues) {
-    const values = keywordValues[property as keyof typeof keywordValues];
-    for (const value of values) {
-      if (ignoreValues.has(value)) {
-        continue;
-      }
-      autoCompleteItems.push({
-        property,
-        value,
-        label: `${hyphenateProperty(property)}: ${value}`,
-      });
-    }
-  }
-
-  autoCompleteItems.sort((a, b) =>
-    Intl.Collator().compare(a.property, b.property)
-  );
-
-  return autoCompleteItems;
-};
-
-const matchOrSuggestToCreate = (
-  search: string,
-  items: Array<SearchItem>,
-  itemToString: (item: SearchItem) => string
-) => {
-  const matched = matchSorter(items, search, {
-    keys: [itemToString],
-  });
-
-  // Limit the array to 100 elements
-  matched.length = Math.min(matched.length, 100);
-
-  const property = search.trim();
-  if (
-    property.startsWith("--") &&
-    lexer.match("<custom-ident>", property).matched
-  ) {
-    matched.unshift({
-      property,
-      label: `Create "${property}"`,
-    });
-  }
-  // When there is no match we suggest to create a custom property.
-  if (
-    matched.length === 0 &&
-    lexer.match("<custom-ident>", `--${property}`).matched
-  ) {
-    matched.unshift({
-      property: `--${property}`,
-      label: `--${property}: unset;`,
-    });
-  }
-
-  return matched;
-};
-
-const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description: string | undefined = `Create CSS variable.`;
-  if (item && item.property in propertyDescriptions) {
-    description = propertyDescriptions[item.property];
-  }
-  return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
-};
-
 const insertStyles = (text: string) => {
   let parsedStyles = parseCss(`selector{${text}}`);
   if (parsedStyles.length === 0) {
@@ -224,142 +114,6 @@ const insertStyles = (text: string) => {
   batch.publish({ listed: true });
   return parsedStyles;
 };
-
-/**
- *
- * Advanced search control supports following interactions
- *
- * find property
- * create custom property
- * submit css declarations
- * paste css declarations
- *
- */
-const AddProperty = forwardRef<
-  HTMLInputElement,
-  {
-    onClose: () => void;
-    onSubmit: (css: string) => void;
-    onFocus: () => void;
-    onBlur: () => void;
-  }
->(({ onClose, onSubmit, onFocus, onBlur }, forwardedRef) => {
-  const [item, setItem] = useState<SearchItem>({
-    property: "",
-    label: "",
-  });
-  const highlightedItemRef = useRef<SearchItem>();
-
-  const combobox = useCombobox<SearchItem>({
-    getItems: getAutocompleteItems,
-    itemToString: (item) => item?.label ?? "",
-    value: item,
-    defaultHighlightedIndex: 0,
-    getItemProps: () => ({ text: "sentence" }),
-    match: matchOrSuggestToCreate,
-    onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
-    onItemSelect: (item) => {
-      clear();
-      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
-    },
-    onItemHighlight: (item) => {
-      const previousHighlightedItem = highlightedItemRef.current;
-      if (item?.value === undefined && previousHighlightedItem) {
-        deleteProperty(previousHighlightedItem.property as StyleProperty, {
-          isEphemeral: true,
-        });
-        highlightedItemRef.current = undefined;
-        return;
-      }
-
-      if (item?.value) {
-        const value = parseCssValue(item.property as StyleProperty, item.value);
-        setProperty(item.property as StyleProperty)(value, {
-          isEphemeral: true,
-        });
-        highlightedItemRef.current = item;
-      }
-    },
-  });
-
-  const descriptionItem = combobox.items[combobox.highlightedIndex];
-  const description = getNewPropertyDescription(descriptionItem);
-  const descriptions = combobox.items.map(getNewPropertyDescription);
-  const inputProps = combobox.getInputProps();
-
-  const clear = () => {
-    setItem({ property: "", label: "" });
-  };
-
-  const handleKeys = (event: KeyboardEvent) => {
-    // Dropdown might handle enter or escape.
-    if (event.defaultPrevented) {
-      return;
-    }
-    if (event.key === "Enter") {
-      clear();
-      onSubmit(item.property);
-      return;
-    }
-    if (event.key === "Escape") {
-      clear();
-      onClose();
-    }
-  };
-
-  const handleKeyDown = composeEventHandlers(inputProps.onKeyDown, handleKeys, {
-    // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
-    checkForDefaultPrevented: false,
-  });
-
-  return (
-    <ComboboxRoot open={combobox.isOpen}>
-      <div {...combobox.getComboboxProps()}>
-        <ComboboxAnchor>
-          <InputField
-            {...inputProps}
-            autoFocus
-            onFocus={onFocus}
-            onBlur={(event) => {
-              inputProps.onBlur(event);
-              onBlur();
-            }}
-            inputRef={forwardedRef}
-            onKeyDown={handleKeyDown}
-            placeholder="Add styles"
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
-          />
-        </ComboboxAnchor>
-        <ComboboxContent>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            <ComboboxScrollArea>
-              {combobox.items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...combobox.getItemProps({ item, index })}
-                  key={index}
-                  asChild
-                >
-                  <Text
-                    variant="labelsSentenceCase"
-                    truncate
-                    css={{ maxWidth: "25ch" }}
-                  >
-                    {item.label}
-                  </Text>
-                </ComboboxListboxItem>
-              ))}
-            </ComboboxScrollArea>
-            {description && (
-              <ComboboxItemDescription descriptions={descriptions}>
-                {description}
-              </ComboboxItemDescription>
-            )}
-          </ComboboxListbox>
-        </ComboboxContent>
-      </div>
-    </ComboboxRoot>
-  );
-});
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -403,6 +157,7 @@ const AdvancedPropertyLabel = ({
             setIsOpen(false);
             onReset?.();
           }}
+          resetType="delete"
         />
       }
     >
@@ -424,6 +179,7 @@ const AdvancedPropertyValue = ({
   autoFocus,
   property,
   onChangeComplete,
+  onReset,
   inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
@@ -431,6 +187,7 @@ const AdvancedPropertyValue = ({
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
+  onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -491,74 +248,10 @@ const AdvancedPropertyValue = ({
       }}
       deleteProperty={deleteProperty}
       onChangeComplete={onChangeComplete}
+      onReset={onReset}
     />
   );
 };
-
-const initialProperties = new Set<StyleProperty>([
-  "cursor",
-  "mixBlendMode",
-  "opacity",
-  "pointerEvents",
-  "userSelect",
-]);
-
-const $advancedProperties = computed(
-  [
-    // prevent showing properties inherited from root
-    // to not bloat advanced panel
-    $selectedInstancePath,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-    $settings,
-  ],
-  (
-    instancePath,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles,
-    settings
-  ) => {
-    if (instancePath === undefined) {
-      return [];
-    }
-    const definedStyles = getDefinedStyles({
-      instancePath,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-    // All properties used by the panels except the advanced panel
-    const baseProperties = new Set<StyleProperty>([]);
-    for (const { properties } of sections.values()) {
-      for (const property of properties) {
-        baseProperties.add(property);
-      }
-    }
-    const advancedProperties = new Set<StyleProperty>();
-    for (const { property, listed } of definedStyles) {
-      if (baseProperties.has(property) === false) {
-        // When property is listed, it was added from advanced panel.
-        // If we are in advanced mode, we show them all.
-        if (listed || settings.stylePanelMode === "advanced") {
-          advancedProperties.add(property);
-        }
-      }
-    }
-    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
-    // @todo we need to find a better place for them in any case
-    if (settings.stylePanelMode !== "advanced") {
-      for (const property of initialProperties) {
-        advancedProperties.add(property);
-      }
-    }
-    return Array.from(advancedProperties);
-  }
-);
 
 /**
  * The Advanced section in the Style Panel on </> Global Root has performance issues.
@@ -631,6 +324,7 @@ const AdvancedProperty = memo(
         wrap="wrap"
         align="center"
         justify="start"
+        {...{ [propertyContainerAttribute]: property }}
       >
         {isVisible && (
           <>
@@ -650,6 +344,7 @@ const AdvancedProperty = memo(
                 autoFocus={autoFocus}
                 property={property}
                 onChangeComplete={onChangeComplete}
+                onReset={onReset}
                 inputRef={valueInputRef}
               />
             </Box>
@@ -662,7 +357,7 @@ const AdvancedProperty = memo(
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
-  const advancedProperties = useStore($advancedProperties);
+  const advancedStyles = useStore($advancedStyles);
   const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
@@ -672,6 +367,10 @@ export const Section = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState<number>(0);
 
+  const advancedProperties = Array.from(
+    advancedStyles.keys()
+  ) as Array<StyleProperty>;
+
   const currentProperties = searchProperties ?? advancedProperties;
 
   const showRecentProperties =
@@ -679,6 +378,14 @@ export const Section = () => {
 
   const memorizeMinHeight = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
+  };
+
+  const handleInsertStyles = (cssText: string) => {
+    const styles = insertStyles(cssText);
+    const insertedProperties = styles.map(({ property }) => property);
+    setRecentProperties(
+      Array.from(new Set([...recentProperties, ...insertedProperties]))
+    );
   };
 
   const handleShowAddStylesInput = () => {
@@ -692,23 +399,26 @@ export const Section = () => {
     setSearchProperties(undefined);
   };
 
-  const handleSubmitStyles = (cssText: string) => {
-    setIsAdding(false);
-    const styles = insertStyles(cssText);
-    const insertedProperties = styles.map(({ property }) => property);
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...insertedProperties]))
-    );
-  };
-
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     const search = event.target.value.trim();
     if (search === "") {
       return handleAbortSearch();
     }
-    memorizeMinHeight();
-    const matched = matchSorter(advancedProperties, search);
-    setSearchProperties(matched);
+    // This is not needed in advanced mode because the input won't jump there as it is on top
+    if ($settings.get().stylePanelMode !== "advanced") {
+      memorizeMinHeight();
+    }
+
+    const styles = [];
+    for (const [property, value] of advancedStyles) {
+      styles.push({ property, value: toValue(value) });
+    }
+
+    const matched = matchSorter(styles, search, {
+      keys: ["property", "value"],
+    }).map(({ property }) => property);
+
+    setSearchProperties(matched as StyleProperty[]);
   };
 
   const handleAbortAddStyles = () => {
@@ -733,68 +443,80 @@ export const Section = () => {
           onAbort={handleAbortSearch}
         />
       </Box>
-      <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        {showRecentProperties &&
-          recentProperties.map((property, index, properties) => {
-            const isLast = index === properties.length - 1;
-            return (
-              <AdvancedProperty
-                valueInputRef={isLast ? recentValueInputRef : undefined}
-                key={property}
-                property={property}
-                autoFocus={isLast}
-                onChangeComplete={(event) => {
-                  if (event.type === "enter") {
-                    handleShowAddStylesInput();
-                  }
-                }}
-                onReset={() => {
-                  setRecentProperties((properties) => {
-                    return properties.filter(
-                      (recentProperty) => recentProperty !== property
-                    );
-                  });
-                }}
-              />
-            );
-          })}
-        {(showRecentProperties || isAdding) && (
-          <Box
-            style={
-              isAdding
-                ? { paddingTop: theme.spacing[3] }
-                : // We hide it visually so you can tab into it to get shown.
-                  { overflow: "hidden", height: 0 }
-            }
-          >
-            <AddProperty
-              onSubmit={handleSubmitStyles}
-              onClose={handleAbortAddStyles}
-              onFocus={() => {
-                if (isAdding === false) {
-                  handleShowAddStylesInput();
-                }
-              }}
-              onBlur={() => {
-                setIsAdding(false);
-              }}
-              ref={addPropertyInputRef}
-            />
-          </Box>
-        )}
-      </Box>
-      {showRecentProperties && <Separator />}
-      <Box
-        css={{ paddingInline: theme.panel.paddingInline }}
-        style={{ minHeight }}
-        ref={containerRef}
+      <CopyPasteMenu
+        onPaste={handleInsertStyles}
+        properties={currentProperties}
       >
-        {currentProperties
-          .filter((property) => recentProperties.includes(property) === false)
-          .map((property) => (
-            <AdvancedProperty key={property} property={property} />
-          ))}
-      </Box>
+        <Flex gap="2" direction="column">
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+            {showRecentProperties &&
+              recentProperties.map((property, index, properties) => {
+                const isLast = index === properties.length - 1;
+                return (
+                  <AdvancedProperty
+                    valueInputRef={isLast ? recentValueInputRef : undefined}
+                    key={property}
+                    property={property}
+                    autoFocus={isLast}
+                    onChangeComplete={(event) => {
+                      if (event.type === "enter") {
+                        handleShowAddStylesInput();
+                      }
+                    }}
+                    onReset={() => {
+                      setRecentProperties((properties) => {
+                        return properties.filter(
+                          (recentProperty) => recentProperty !== property
+                        );
+                      });
+                    }}
+                  />
+                );
+              })}
+            {(showRecentProperties || isAdding) && (
+              <Box
+                css={
+                  isAdding
+                    ? { paddingTop: theme.spacing[3] }
+                    : // We hide it visually so you can tab into it to get shown.
+                      { overflow: "hidden", height: 0 }
+                }
+              >
+                <AddStylesInput
+                  onSubmit={(cssText: string) => {
+                    setIsAdding(false);
+                    handleInsertStyles(cssText);
+                  }}
+                  onClose={handleAbortAddStyles}
+                  onFocus={() => {
+                    if (isAdding === false) {
+                      handleShowAddStylesInput();
+                    }
+                  }}
+                  onBlur={() => {
+                    setIsAdding(false);
+                  }}
+                  ref={addPropertyInputRef}
+                />
+              </Box>
+            )}
+          </Box>
+          {showRecentProperties && <Separator />}
+          <Box
+            css={{ paddingInline: theme.panel.paddingInline }}
+            style={{ minHeight }}
+            ref={containerRef}
+          >
+            {currentProperties
+              .filter(
+                (property) => recentProperties.includes(property) === false
+              )
+              .map((property) => (
+                <AdvancedProperty key={property} property={property} />
+              ))}
+          </Box>
+        </Flex>
+      </CopyPasteMenu>
     </AdvancedStyleSection>
   );
 };
