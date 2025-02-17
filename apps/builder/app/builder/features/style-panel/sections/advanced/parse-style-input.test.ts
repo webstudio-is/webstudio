@@ -78,6 +78,22 @@ describe("parseStyleInput", () => {
     ]);
   });
 
+  test("parses multiple property-value pairs, one is invalid", () => {
+    const result = parseStyleInput("color: red; somethinginvalid: block");
+    expect(result).toEqual([
+      {
+        selector: "selector",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        selector: "selector",
+        property: "--somethinginvalid",
+        value: { type: "unparsed", value: "block" },
+      },
+    ]);
+  });
+
   test("parses custom property with value", () => {
     const result = parseStyleInput("--custom-color: red");
     expect(result).toEqual([

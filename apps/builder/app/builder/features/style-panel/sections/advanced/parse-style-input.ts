@@ -6,6 +6,7 @@ import {
 import { type StyleProperty } from "@webstudio-is/css-engine";
 import { camelCase } from "change-case";
 import { lexer } from "css-tree";
+import { styleConfigByName } from "../../shared/configs";
 
 /**
  * Does several attempts to parse:
@@ -52,5 +53,17 @@ export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
     ];
   }
 
-  return parseCss(`selector{${css}}`);
+  const styles = parseCss(`selector{${css}}`);
+
+  for (const style of styles) {
+    // somethingunknown: red; -> --somethingunknown: red;
+    if (
+      style.value.type === "unparsed" &&
+      style.property.startsWith("--") === false
+    ) {
+      style.property = `--${style.property}`;
+    }
+  }
+
+  return styles;
 };
