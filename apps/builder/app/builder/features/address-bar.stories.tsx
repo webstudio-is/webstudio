@@ -61,7 +61,7 @@ $pages.set({
 const $selectedPageSystem = computed(
   [$selectedPage, $dataSourceVariables],
   (selectedPage, dataSourceVariables) => {
-    if (selectedPage === undefined) {
+    if (selectedPage?.systemDataSourceId === undefined) {
       return {};
     }
     return dataSourceVariables.get(selectedPage.systemDataSourceId);

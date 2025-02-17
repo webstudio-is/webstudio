@@ -118,7 +118,8 @@ export const insertPageCopyMutable = ({
   const newRootInstanceId =
     newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
   const newSystemDataSourceId =
-    newDataSourceIds.get(page.systemDataSourceId) ?? page.systemDataSourceId;
+    newDataSourceIds.get(page.systemDataSourceId ?? "") ??
+    page.systemDataSourceId;
   const newPage: Page = {
     ...page,
     id: newPageId,

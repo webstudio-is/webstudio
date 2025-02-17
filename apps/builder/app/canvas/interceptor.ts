@@ -27,7 +27,7 @@ const getSelectedPagePathname = () => {
   const pages = $pages.get();
   const page = $selectedPage.get();
   const dataSourceVariables = $dataSourceVariables.get();
-  if (page && pages) {
+  if (page?.systemDataSourceId && pages) {
     const system = dataSourceVariables.get(page.systemDataSourceId) as
       | undefined
       | System;

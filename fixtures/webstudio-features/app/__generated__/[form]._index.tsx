@@ -35,7 +35,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   let [formState, set$formState] = useVariableState<any>("initial");
   let [formState_1, set$formState_1] = useVariableState<any>("initial");
   return (

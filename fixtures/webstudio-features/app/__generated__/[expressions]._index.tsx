@@ -29,7 +29,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   let jsonResourceVariable = useResource("jsonResourceVariable_1");
   let [jsonVar, set$jsonVar] = useVariableState<any>({ hello: "world" });
   return (

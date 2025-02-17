@@ -27,7 +27,7 @@ export const CustomCode = () => {
   return <></>;
 };
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   return (
     <Body className={`w-body c1jaw2zx cbipm55 ctniqj4 ctgx88l`}>
       <Heading className={`w-heading`}>{"Simple Project to test CLI"}</Heading>

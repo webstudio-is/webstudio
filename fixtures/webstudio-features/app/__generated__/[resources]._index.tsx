@@ -29,7 +29,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   let list = useResource("list_1");
   return (
     <Body className={`w-body`}>

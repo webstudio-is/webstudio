@@ -26,7 +26,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   let [classVar, set$classVar] = useVariableState<any>("varClass");
   return (
     <Body className={`w-body`}>

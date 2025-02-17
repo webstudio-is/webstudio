@@ -37,7 +37,7 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   let [accordionValue, set$accordionValue] = useVariableState<any>("0");
   return (
     <Body className={`w-body`}>

@@ -47,6 +47,7 @@ import {
   replaceFormActionsWithResources,
   isCoreComponent,
   coreMetas,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -584,11 +585,18 @@ export const prebuild = async (options: {
       rootInstanceId,
       parameters: [
         {
-          id: `system`,
+          id: `page-system`,
           instanceId: "",
           name: "system",
           type: "parameter",
           value: pageData.page.systemDataSourceId ?? "",
+        },
+        {
+          id: "global-system",
+          type: "parameter",
+          instanceId: "",
+          name: "system",
+          value: SYSTEM_VARIABLE_ID,
         },
       ],
       instances,

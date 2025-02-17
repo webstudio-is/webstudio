@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   type Diagnostic,
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
+  decodeDataVariableId,
+  encodeDataVariableId,
   executeExpression,
   isLiteralExpression,
   lintExpression,
@@ -10,6 +10,7 @@ import {
   getExpressionIdentifiers,
   parseObjectExpression,
   generateObjectExpression,
+  SYSTEM_VARIABLE_ID,
 } from "./expression";
 
 describe("lint expression", () => {
@@ -398,13 +399,17 @@ describe("object expression transformations", () => {
 });
 
 test("encode/decode variable names", () => {
-  expect(encodeDataSourceVariable("my--id")).toEqual(
+  expect(encodeDataVariableId("my--id")).toEqual(
     "$ws$dataSource$my__DASH____DASH__id"
   );
-  expect(decodeDataSourceVariable(encodeDataSourceVariable("my--id"))).toEqual(
+  expect(decodeDataVariableId(encodeDataVariableId("my--id"))).toEqual(
     "my--id"
   );
-  expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
+  expect(decodeDataVariableId("myVarName")).toEqual(undefined);
+  expect(encodeDataVariableId(SYSTEM_VARIABLE_ID)).toEqual("$ws$system");
+  expect(
+    decodeDataVariableId(encodeDataVariableId(SYSTEM_VARIABLE_ID))
+  ).toEqual(SYSTEM_VARIABLE_ID);
 });
 
 test("execute expression", () => {

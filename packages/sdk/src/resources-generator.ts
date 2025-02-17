@@ -4,7 +4,7 @@ import type { Resources } from "./schema/resources";
 import type { Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
-import { generateExpression } from "./expression";
+import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
 
 export const generateResources = ({
   scope,
@@ -72,11 +72,13 @@ export const generateResources = ({
 
     if (dataSource.type === "parameter") {
       // support only page system parameter
-      if (dataSource.id !== page.systemDataSourceId) {
-        continue;
+      if (
+        dataSource.id === page.systemDataSourceId ||
+        dataSource.id === SYSTEM_VARIABLE_ID
+      ) {
+        const name = scope.getName(dataSource.id, dataSource.name);
+        generatedVariables += `  const ${name} = _props.system\n`;
       }
-      const name = scope.getName(dataSource.id, dataSource.name);
-      generatedVariables += `  const ${name} = _props.system\n`;
     }
   }
 
