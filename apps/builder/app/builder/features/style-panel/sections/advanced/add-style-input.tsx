@@ -25,6 +25,7 @@ import {
   cssWideKeywords,
   generateStyleMap,
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
@@ -94,6 +95,7 @@ const matchOrSuggestToCreate = (
     for (const style of parsedStyles) {
       matched.push({
         property: style.property,
+        value: toValue(style.value),
         label: `Create "${generateStyleMap(new Map([[style.property, style.value]]))}"`,
       });
     }
