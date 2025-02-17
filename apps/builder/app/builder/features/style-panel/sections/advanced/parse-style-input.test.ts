@@ -35,7 +35,7 @@ describe("parseStyleInput", () => {
     ]);
   });
 
-  test("handles invalid regular property", () => {
+  test("handles unparsable regular property", () => {
     const result = parseStyleInput("notapro perty");
     expect(result).toEqual([]);
   });
