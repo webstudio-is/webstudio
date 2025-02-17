@@ -60,6 +60,9 @@ export const mergeSystem = (left: System, right?: System): System => {
 };
 
 export const updateSystem = (page: Page, update: Partial<System>) => {
+  if (page.systemDataSourceId === undefined) {
+    return;
+  }
   const dataSourceVariables = new Map($dataSourceVariables.get());
   const system = dataSourceVariables.get(page.systemDataSourceId) as
     | undefined

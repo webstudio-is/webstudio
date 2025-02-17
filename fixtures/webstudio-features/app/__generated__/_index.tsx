@@ -58,7 +58,7 @@ export const CustomCode = () => {
   );
 };
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   return (
     <Body className={`w-body cielobv`}>
       <Heading className={`w-heading ceva767`}>

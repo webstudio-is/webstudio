@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { renderData, $ } from "@webstudio-is/template";
+import {
+  renderData,
+  $,
+  expression,
+  ResourceValue,
+} from "@webstudio-is/template";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import {
@@ -66,7 +71,6 @@ test("generate variable and use in resources loader", () => {
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        systemDataSourceId: "variableSystemId",
       } as Page,
       dataSources: toMap([
         {
@@ -126,7 +130,7 @@ test("generate variable and use in resources loader", () => {
   `);
 });
 
-test("generate system variable and use in resources loader", () => {
+test("generate page system variable and use in resources loader", () => {
   expect(
     generateResources({
       scope: createScope(),
@@ -177,6 +181,48 @@ test("generate system variable and use in resources loader", () => {
       }
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
+      ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
+test("generate global system variable and use in resources loader", () => {
+  const myResource = new ResourceValue("My Resource", {
+    url: expression`"https://my-json.com/" + $ws$system.params.slug`,
+    method: "post",
+    headers: [{ name: "Content-Type", value: expression`"application/json"` }],
+    body: expression`{ body: true }`,
+  });
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: {
+        rootInstanceId: "bodyId",
+      } as Page,
+      ...renderData(
+        <$.Body ws:id="bodyId" vars={expression`${myResource}`}></$.Body>
+      ),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const system = _props.system
+      const MyResource: ResourceRequest = {
+        id: "resource:0",
+        name: "My Resource",
+        url: "https://my-json.com/" + system?.params?.slug,
+        method: "post",
+        headers: [
+          { name: "Content-Type", value: "application/json" },
+        ],
+        body: { body: true },
+      }
+      const _data = new Map<string, ResourceRequest>([
+        ["MyResource", MyResource],
       ])
       const _action = new Map<string, ResourceRequest>([
       ])

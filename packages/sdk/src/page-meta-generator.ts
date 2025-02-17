@@ -2,7 +2,7 @@ import type { Asset, Assets } from "./schema/assets";
 import type { DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import { type Scope, createScope } from "./scope";
-import { generateExpression } from "./expression";
+import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
 
 export type PageMeta = {
   title: string;
@@ -112,7 +112,10 @@ export const generatePageMeta = ({
       continue;
     }
     if (dataSource.type === "parameter") {
-      if (dataSource.id === page.systemDataSourceId) {
+      if (
+        dataSource.id === page.systemDataSourceId ||
+        dataSource.id === SYSTEM_VARIABLE_ID
+      ) {
         const valueName = localScope.getName(dataSource.id, dataSource.name);
         generated += `  let ${valueName} = system\n`;
       }

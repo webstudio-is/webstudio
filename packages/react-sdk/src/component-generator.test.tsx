@@ -1,7 +1,11 @@
 import ts from "typescript";
 import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
-import { createScope, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import {
+  createScope,
+  ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
+} from "@webstudio-is/sdk";
 import {
   $,
   ActionValue,
@@ -647,7 +651,17 @@ test("avoid generating collection parameter variable as state", () => {
   );
 });
 
-test("generate system variable when present", () => {
+test("generate both page system and global system variables when present", () => {
+  const system = new Parameter("system");
+  const data = renderData(
+    <$.Body
+      ws:id="body"
+      data-page={expression`${system}.params.slug`}
+      data-global={expression`$ws$system.params.slug`}
+    ></$.Body>
+  );
+  expect(data.dataSources.size).toEqual(1);
+  const [pageSystemVariableId] = data.dataSources.keys();
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -656,35 +670,32 @@ test("generate system variable when present", () => {
       rootInstanceId: "body",
       parameters: [
         {
-          id: "pathSystemPropId",
+          id: "pathSystemPropId1",
           type: "parameter",
           instanceId: "",
           name: "system",
-          value: "systemId",
+          value: pageSystemVariableId,
+        },
+        {
+          id: "pathSystemPropId2",
+          type: "parameter",
+          instanceId: "",
+          name: "system",
+          value: SYSTEM_VARIABLE_ID,
         },
       ],
       indexesWithinAncestors: new Map(),
-      ...renderData(
-        <$.Body
-          ws:id="body"
-          data-slug={expression`$ws$dataSource$systemId.params.slug`}
-        ></$.Body>
-      ),
-      dataSources: toMap([
-        {
-          id: "systemId",
-          scopeInstanceId: "body",
-          type: "parameter",
-          name: "system",
-        },
-      ]),
+      ...data,
     })
   ).toEqual(
     validateJSX(
       clear(`
-    const Page = ({ system: system_1, }: { system: any; }) => {
+    const Page = (_props: { system: any; }) => {
+    const system_1 = _props.system;
+    const system_2 = _props.system;
     return <Body
-    data-slug={system_1?.params?.slug} />
+    data-page={system_1?.params?.slug}
+    data-global={system_2?.params?.slug} />
     }
     `)
     )
@@ -692,6 +703,12 @@ test("generate system variable when present", () => {
 });
 
 test("generate resources loading", () => {
+  const dataVariable = new Variable("data", "data");
+  const dataResource = new ResourceValue("data", {
+    url: expression`""`,
+    method: "get",
+    headers: [],
+  });
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -703,26 +720,10 @@ test("generate resources loading", () => {
       ...renderData(
         <$.Body
           ws:id="body"
-          data-data={expression`$ws$dataSource$dataSourceDataId`}
-          data-resource={expression`$ws$dataSource$dataSourceResourceId`}
+          data-data={expression`${dataVariable}`}
+          data-resource={expression`${dataResource}`}
         ></$.Body>
       ),
-      dataSources: toMap([
-        {
-          id: "dataSourceDataId",
-          scopeInstanceId: "body",
-          type: "variable",
-          name: "data",
-          value: { type: "json", value: "data" },
-        },
-        {
-          id: "dataSourceResourceId",
-          scopeInstanceId: "body",
-          type: "resource",
-          name: "data",
-          resourceId: "resourceId",
-        },
-      ]),
     })
   ).toEqual(
     validateJSX(
@@ -740,6 +741,27 @@ test("generate resources loading", () => {
 });
 
 test("avoid generating unused variables", () => {
+  const usedVariable = new Variable("Used Variable Name", "initial");
+  const unusedVariable = new Variable("Unused Variable Name", "initial");
+  const unusedParameter = new Parameter("Unused Parameter Name");
+  const unusedResource = new ResourceValue("Unused Resource Name", {
+    url: expression`""`,
+    method: "get",
+    headers: [],
+  });
+  const data = renderData(
+    <$.Body
+      ws:id="body"
+      data-used={expression`${usedVariable}`}
+      data-unused={expression`${unusedVariable} ${unusedParameter} ${unusedResource}`}
+    ></$.Body>
+  );
+  expect(Array.from(data.props.values())).toEqual([
+    expect.objectContaining({ name: "data-used" }),
+    expect.objectContaining({ name: "data-unused" }),
+  ]);
+  // make variables unused
+  data.props.delete(Array.from(data.props.values())[1].id);
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -756,47 +778,13 @@ test("avoid generating unused variables", () => {
         },
       ],
       indexesWithinAncestors: new Map(),
-      ...renderData(
-        <$.Body
-          ws:id="body"
-          data-data={expression`$ws$dataSource$usedVariableId`}
-        ></$.Body>
-      ),
-      dataSources: toMap([
-        {
-          id: "usedVariableId",
-          scopeInstanceId: "body",
-          name: "Used Variable Name",
-          type: "variable",
-          value: { type: "string", value: "initial" },
-        },
-        {
-          id: "unusedVariableId",
-          scopeInstanceId: "body",
-          name: "Unused Variable Name",
-          type: "variable",
-          value: { type: "string", value: "initial" },
-        },
-        {
-          id: "unusedParameterId",
-          scopeInstanceId: "body",
-          name: "Unused Parameter Name",
-          type: "parameter",
-        },
-        {
-          id: "unusedResourceVariableId",
-          scopeInstanceId: "body",
-          name: "Unused Resource Name",
-          type: "resource",
-          resourceId: "resourceId",
-        },
-      ]),
+      ...data,
     })
   ).toMatchInlineSnapshot(`
-"const Page = ({ }: { system: any; }) => {
+"const Page = (_props: { system: any; }) => {
 let [UsedVariableName, set$UsedVariableName] = useVariableState<any>("initial")
 return <Body
-data-data={UsedVariableName} />
+data-used={UsedVariableName} />
 }
 "
 `);

@@ -28,7 +28,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Body = (props: any) => <svg>{props.children}</svg>;
 const Heading = (props: any) => null;
 
-const Page = ({ system: system }: { system: any }) => {
+const Page = (_props: { system: any }) => {
+  const system = _props.system;
   return (
     <Body className={`w-body`}>
       <XmlNode

@@ -431,21 +431,24 @@ export const generateWebstudioComponent = ({
   });
 
   let generatedProps = "";
+  let generatedParameters = "";
+  const uniqueParameters = new Set(
+    parameters.map((parameter) => parameter.name)
+  );
   if (parameters.length > 0) {
-    let generatedPropsValue = "{ ";
-    let generatedPropsType = "{ ";
+    let generatedPropsType = "";
+    for (const parameterName of uniqueParameters) {
+      generatedPropsType += `${parameterName}: any; `;
+    }
+    generatedProps = `_props: { ${generatedPropsType}}`;
     for (const parameter of parameters) {
       const dataSource = usedDataSources.get(parameter.value);
       // always generate type and avoid generating value when unused
       if (dataSource) {
         const valueName = scope.getName(dataSource.id, dataSource.name);
-        generatedPropsValue += `${parameter.name}: ${valueName}, `;
+        generatedParameters += `const ${valueName} = _props.${parameter.name};\n`;
       }
-      generatedPropsType += `${parameter.name}: any; `;
     }
-    generatedPropsValue += `}`;
-    generatedPropsType += `}`;
-    generatedProps = `${generatedPropsValue}: ${generatedPropsType}`;
   }
 
   let generatedDataSources = "";
@@ -475,6 +478,7 @@ export const generateWebstudioComponent = ({
 
   let generatedComponent = "";
   generatedComponent += `const ${name} = (${generatedProps}) => {\n`;
+  generatedComponent += `${generatedParameters}`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

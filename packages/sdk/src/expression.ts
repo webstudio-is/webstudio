@@ -5,8 +5,18 @@ import {
   parseExpressionAt,
 } from "acorn";
 import { simple } from "acorn-walk";
-import type { DataSources } from "./schema/data-sources";
+import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Scope } from "./scope";
+import { ROOT_INSTANCE_ID } from "./instances-utils";
+
+export const SYSTEM_VARIABLE_ID = ":system";
+
+export const systemParameter: DataSource = {
+  id: SYSTEM_VARIABLE_ID,
+  scopeInstanceId: ROOT_INSTANCE_ID,
+  type: "parameter",
+  name: "system",
+};
 
 export type Diagnostic = {
   from: number;
@@ -317,20 +327,26 @@ const dataSourceVariablePrefix = "$ws$dataSource$";
 // here "-" is encoded with "__DASH__' in variable name
 // https://github.com/ai/nanoid/blob/047686abad8f15aff05f3a2eeedb7c98b6847392/url-alphabet/index.js
 
-export const encodeDataSourceVariable = (id: string) => {
+export const encodeDataVariableId = (id: string) => {
+  if (id === SYSTEM_VARIABLE_ID) {
+    return "$ws$system";
+  }
   const encoded = id.replaceAll("-", "__DASH__");
   return `${dataSourceVariablePrefix}${encoded}`;
 };
-export { encodeDataSourceVariable as encodeDataVariableId };
+export { encodeDataVariableId as encodeDataSourceVariable };
 
-export const decodeDataSourceVariable = (name: string) => {
+export const decodeDataVariableId = (name: string) => {
+  if (name === "$ws$system") {
+    return SYSTEM_VARIABLE_ID;
+  }
   if (name.startsWith(dataSourceVariablePrefix)) {
     const encoded = name.slice(dataSourceVariablePrefix.length);
     return encoded.replaceAll("__DASH__", "-");
   }
   return;
 };
-export { decodeDataSourceVariable as decodeDataVariableId };
+export { decodeDataVariableId as decodeDataSourceVariable };
 
 export const generateExpression = ({
   expression,
@@ -347,8 +363,11 @@ export const generateExpression = ({
     expression,
     executable: true,
     replaceVariable: (identifier) => {
-      const depId = decodeDataSourceVariable(identifier);
-      const dep = depId ? dataSources.get(depId) : undefined;
+      const depId = decodeDataVariableId(identifier);
+      let dep = depId ? dataSources.get(depId) : undefined;
+      if (depId === SYSTEM_VARIABLE_ID) {
+        dep = systemParameter;
+      }
       if (dep) {
         usedDataSources?.set(dep.id, dep);
         return scope.getName(dep.id, dep.name);

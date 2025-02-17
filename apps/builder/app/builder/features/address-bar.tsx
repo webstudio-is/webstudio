@@ -65,7 +65,7 @@ const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
 const $selectedPagePathParams = computed(
   [$selectedPageDefaultSystem, $selectedPage, $dataSourceVariables],
   (defaultSystem, selectedPage, dataSourceVariables) => {
-    if (selectedPage === undefined) {
+    if (selectedPage?.systemDataSourceId === undefined) {
       return defaultSystem.params;
     }
     const system = dataSourceVariables.get(selectedPage.systemDataSourceId) as

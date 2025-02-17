@@ -22,7 +22,7 @@ export const CustomCode = () => {
   return <></>;
 };
 
-const Page = ({}: { system: any }) => {
+const Page = (_props: { system: any }) => {
   return (
     <Body className={`w-body`}>
       <Heading className={`w-heading`}>{"FIXTURE-CLIENT-DO-NOT-TOUCH"}</Heading>

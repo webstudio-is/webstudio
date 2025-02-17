@@ -15,7 +15,6 @@ test("generate minimal static page meta factory", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {},
       },
@@ -56,7 +55,6 @@ test("generate complete static page meta factory", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           description: `"Page description"`,
@@ -131,7 +129,6 @@ test("generate asset url instead of id", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           socialImageUrl: `"https://my-image"`,
@@ -174,7 +171,6 @@ test("generate custom meta ignoring empty property name", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           custom: [
@@ -224,7 +220,6 @@ test("generate page meta factory with variables", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `$ws$dataSource$variableId`,
         meta: {},
       },
@@ -265,7 +260,7 @@ test("generate page meta factory with variables", () => {
 `);
 });
 
-test("generate page meta factory with system", () => {
+test("generate page meta factory with page system variable", () => {
   expect(
     generatePageMeta({
       globalScope: createScope(),
@@ -314,6 +309,47 @@ test("generate page meta factory with system", () => {
 `);
 });
 
+test("generate page meta factory with global system variable", () => {
+  expect(
+    generatePageMeta({
+      globalScope: createScope(),
+      page: {
+        id: "",
+        name: "",
+        path: "",
+        rootInstanceId: "",
+        title: `$ws$system.params.slug`,
+        meta: {},
+      },
+      dataSources: new Map(),
+      assets: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+"export const getPageMeta = ({
+  system,
+  resources,
+}: {
+  system: System;
+  resources: Record<string, any>;
+}): PageMeta => {
+  let system_1 = system
+  return {
+    title: system_1?.params?.slug,
+    description: undefined,
+    excludePageFromSearch: undefined,
+    language: undefined,
+    socialImageAssetName: undefined,
+    socialImageUrl: undefined,
+    status: undefined,
+    redirect: undefined,
+    custom: [
+    ],
+  };
+};
+"
+`);
+});
+
 test("generate page meta factory with resources", () => {
   expect(
     generatePageMeta({
@@ -323,7 +359,6 @@ test("generate page meta factory with resources", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        systemDataSourceId: "",
         title: `$ws$dataSource$resourceVariableId.data.title`,
         meta: {},
       },
