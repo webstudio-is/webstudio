@@ -6,7 +6,6 @@ import {
 import { type StyleProperty } from "@webstudio-is/css-engine";
 import { camelCase } from "change-case";
 import { lexer } from "css-tree";
-import { styleConfigByName } from "../../shared/configs";
 
 /**
  * Does several attempts to parse:
