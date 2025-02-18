@@ -57,6 +57,8 @@ import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -354,7 +356,12 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedStyles = useStore($advancedStyles);
-  const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  // Memorizing recentproperties by instance, so that when user switches between instances and comes back
+  // they are still in-place
+  const [recentPropertiesMap, setRecentPropertiesMap] = useState<
+    Map<string, Array<StyleProperty>>
+  >(new Map());
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -369,6 +376,10 @@ export const Section = () => {
 
   const currentProperties = searchProperties ?? advancedProperties;
 
+  const recentProperties = selectedInstanceSelector
+    ? (recentPropertiesMap.get(selectedInstanceSelector.toString()) ?? [])
+    : [];
+
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
 
@@ -376,12 +387,22 @@ export const Section = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
+  const updateRecentProperties = (properties: Array<StyleProperty>) => {
+    if (selectedInstanceSelector === undefined) {
+      return;
+    }
+    const newRecentPropertiesMap = new Map(recentPropertiesMap);
+    newRecentPropertiesMap.set(
+      selectedInstanceSelector.toString(),
+      Array.from(new Set([...recentProperties, ...properties]))
+    );
+    setRecentPropertiesMap(newRecentPropertiesMap);
+  };
+
   const handleInsertStyles = (cssText: string) => {
     const styles = insertStyles(cssText);
     const insertedProperties = styles.map(({ property }) => property);
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...insertedProperties]))
-    );
+    updateRecentProperties(insertedProperties);
     return styles;
   };
 
@@ -464,11 +485,11 @@ export const Section = () => {
                       }
                     }}
                     onReset={() => {
-                      setRecentProperties((properties) => {
-                        return properties.filter(
+                      updateRecentProperties(
+                        recentProperties.filter(
                           (recentProperty) => recentProperty !== property
-                        );
-                      });
+                        )
+                      );
                     }}
                   />
                 );
