@@ -274,47 +274,46 @@ const AdvancedProperty = memo(
       () => "oncontentvisibilityautostatechange" in document.body
     );
     const ref = useRef<HTMLDivElement>(null);
-    //const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
-    const [isVisible, setIsVisible] = useState(true);
-    //
-    // useEffect(() => {
-    //   if (!visibilityChangeEventSupported) {
-    //     return;
-    //   }
-    //
-    //   if (ref.current == null) {
-    //     return;
-    //   }
-    //
-    //   const controller = new AbortController();
-    //
-    //   ref.current.addEventListener(
-    //     "contentvisibilityautostatechange",
-    //     (event) => {
-    //       setIsVisible(!event.skipped);
-    //     },
-    //     {
-    //       signal: controller.signal,
-    //     }
-    //   );
-    //
-    //   return () => {
-    //     controller.abort();
-    //   };
-    // }, [visibilityChangeEventSupported]);
+    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
+
+    useEffect(() => {
+      if (!visibilityChangeEventSupported) {
+        return;
+      }
+
+      if (ref.current == null) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      ref.current.addEventListener(
+        "contentvisibilityautostatechange",
+        (event) => {
+          setIsVisible(!event.skipped);
+        },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      return () => {
+        controller.abort();
+      };
+    }, [visibilityChangeEventSupported]);
 
     return (
       <Flex
         ref={ref}
         css={{
-          // contentVisibility: "auto",
+          contentVisibility: "auto",
           // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
           // containIntrinsicSize is used to set the default size of an element before any content is loaded.
           // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
           // It also affects the contentvisibilityautostatechange event to be called properly,
           // with "auto" it will call it with skipped false for all initial elements.
           // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
-          //containIntrinsicSize: "auto 44px",
+          containIntrinsicSize: "auto 44px",
           paddingLeft: indentation,
         }}
         key={property}
