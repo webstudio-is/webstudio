@@ -1,4 +1,3 @@
-import { lexer } from "css-tree";
 import { forwardRef, useRef, useState, type KeyboardEvent } from "react";
 import { matchSorter } from "match-sorter";
 import {
@@ -24,11 +23,14 @@ import {
 } from "@webstudio-is/css-data";
 import {
   cssWideKeywords,
+  generateStyleMap,
   hyphenateProperty,
+  toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import { composeEventHandlers } from "~/shared/event-utils";
+import { parseStyleInput } from "./parse-style-input";
 
 type SearchItem = { property: string; label: string; value?: string };
 
@@ -88,25 +90,24 @@ const matchOrSuggestToCreate = (
   // Limit the array to 100 elements
   matched.length = Math.min(matched.length, 100);
 
-  const property = search.trim();
-  if (
-    property.startsWith("--") &&
-    lexer.match("<custom-ident>", property).matched
-  ) {
-    matched.unshift({
-      property,
-      label: `Create "${property}"`,
-    });
-  }
-  // When there is no match we suggest to create a custom property.
-  if (
-    matched.length === 0 &&
-    lexer.match("<custom-ident>", `--${property}`).matched
-  ) {
-    matched.unshift({
-      property: `--${property}`,
-      label: `--${property}: unset;`,
-    });
+  if (matched.length === 0) {
+    const parsedStyles = parseStyleInput(search);
+    // When parsedStyles is more than one, user entered a shorthand.
+    // We will suggest to insert their shorthand first.
+    if (parsedStyles.length > 1) {
+      matched.push({
+        property: search,
+        label: `Create "${search}"`,
+      });
+    }
+    // Now we will suggest to insert each longhand separately.
+    for (const style of parsedStyles) {
+      matched.push({
+        property: style.property,
+        value: toValue(style.value),
+        label: `Create "${generateStyleMap(new Map([[style.property, style.value]]))}"`,
+      });
+    }
   }
 
   return matched;
@@ -122,7 +123,7 @@ const matchOrSuggestToCreate = (
  * paste css declarations
  *
  */
-export const AddStylesInput = forwardRef<
+export const AddStyleInput = forwardRef<
   HTMLInputElement,
   {
     onClose: () => void;
@@ -147,7 +148,14 @@ export const AddStylesInput = forwardRef<
     onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
+      // When there is no value, property can be:
+      // - property without value: gap
+      // - declaration with value: gap: 10px
+      // - block: gap: 10px; margin: 20px;
+      if (item.value === undefined) {
+        return onSubmit(item.property);
+      }
+      onSubmit(`${item.property}: ${item.value}`);
     },
     onItemHighlight: (item) => {
       const previousHighlightedItem = highlightedItemRef.current;
@@ -207,6 +215,17 @@ export const AddStylesInput = forwardRef<
     handleDelete,
   ]);
 
+  const handleBlur = composeEventHandlers([
+    inputProps.onBlur,
+    () => {
+      // When user clicks on a combobox item, input will receive blur event,
+      // but we don't want that to be handled upstream because input may get hidden without click getting handled.
+      if (combobox.isOpen === false) {
+        onBlur();
+      }
+    },
+  ]);
+
   return (
     <ComboboxRoot open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
@@ -215,10 +234,7 @@ export const AddStylesInput = forwardRef<
             {...inputProps}
             autoFocus
             onFocus={onFocus}
-            onBlur={(event) => {
-              inputProps.onBlur(event);
-              onBlur();
-            }}
+            onBlur={handleBlur}
             inputRef={forwardedRef}
             onKeyDown={handleKeyDown}
             placeholder="Add styles"

@@ -26,7 +26,7 @@ import {
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { parseCss, propertyDescriptions } from "@webstudio-is/css-data";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
   toValue,
@@ -55,7 +55,8 @@ import { useClientSupports } from "~/shared/client-supports";
 import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
 import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
-import { AddStylesInput } from "./add-styles-input";
+import { AddStyleInput } from "./add-style-input";
+import { parseStyleInput } from "./parse-style-input";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -97,13 +98,8 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-const insertStyles = (text: string) => {
-  let parsedStyles = parseCss(`selector{${text}}`);
-  if (parsedStyles.length === 0) {
-    // Try a single property without a value.
-    parsedStyles = parseCss(`selector{${text}: unset}`);
-  }
-
+const insertStyles = (css: string) => {
+  const parsedStyles = parseStyleInput(css);
   if (parsedStyles.length === 0) {
     return [];
   }
@@ -386,9 +382,10 @@ export const Section = () => {
     setRecentProperties(
       Array.from(new Set([...recentProperties, ...insertedProperties]))
     );
+    return styles;
   };
 
-  const handleShowAddStylesInput = () => {
+  const handleShowAddStyleInput = () => {
     setIsAdding(true);
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
@@ -434,7 +431,7 @@ export const Section = () => {
     <AdvancedStyleSection
       label="Advanced"
       properties={advancedProperties}
-      onAdd={handleShowAddStylesInput}
+      onAdd={handleShowAddStyleInput}
     >
       <Box css={{ paddingInline: theme.panel.paddingInline }}>
         <SearchField
@@ -460,7 +457,7 @@ export const Section = () => {
                     autoFocus={isLast}
                     onChangeComplete={(event) => {
                       if (event.type === "enter") {
-                        handleShowAddStylesInput();
+                        handleShowAddStyleInput();
                       }
                     }}
                     onReset={() => {
@@ -482,15 +479,17 @@ export const Section = () => {
                       { overflow: "hidden", height: 0 }
                 }
               >
-                <AddStylesInput
+                <AddStyleInput
                   onSubmit={(cssText: string) => {
-                    setIsAdding(false);
-                    handleInsertStyles(cssText);
+                    const styles = handleInsertStyles(cssText);
+                    if (styles.length > 0) {
+                      setIsAdding(false);
+                    }
                   }}
                   onClose={handleAbortAddStyles}
                   onFocus={() => {
                     if (isAdding === false) {
-                      handleShowAddStylesInput();
+                      handleShowAddStyleInput();
                     }
                   }}
                   onBlur={() => {
