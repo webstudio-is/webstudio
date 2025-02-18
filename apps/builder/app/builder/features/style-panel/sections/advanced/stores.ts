@@ -50,7 +50,7 @@ export const $advancedStyles = computed(
       styleSourceSelections,
       styles,
     });
-    console.log({ definedStyles });
+
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<StyleProperty>([]);
     for (const { properties } of sections.values()) {
