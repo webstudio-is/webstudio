@@ -33,7 +33,7 @@ $project.set({ id: "current_project" } as Project);
 
 const createStub = (element: JSX.Element) => {
   const project = {
-    pages: createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }),
+    pages: createDefaultPages({ rootInstanceId: "" }),
     ...renderData(element),
   };
   // global root instance is never stored in data

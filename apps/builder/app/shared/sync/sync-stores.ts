@@ -50,7 +50,6 @@ import {
   $modifierKeys,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
-import { $awareness, $temporaryInstances } from "../awareness";
 import {
   ImmerhinSyncObject,
   NanostoresSyncObject,
@@ -59,6 +58,8 @@ import {
   type SyncEmitter,
 } from "../sync-client";
 import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
+import { $awareness, $temporaryInstances } from "../awareness";
+import { $systemDataByPage } from "../system";
 
 enableMapSet();
 // safari structuredClone fix
@@ -165,6 +166,7 @@ export const createObjectPool = () => {
     ),
     new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),
+    new NanostoresSyncObject("systemDataByPage", $systemDataByPage),
   ]);
 };
 

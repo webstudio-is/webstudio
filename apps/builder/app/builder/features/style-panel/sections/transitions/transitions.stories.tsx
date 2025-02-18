@@ -56,7 +56,6 @@ $pages.set(
   createDefaultPages({
     homePageId: "homePageId",
     rootInstanceId: "box",
-    systemDataSourceId: "systemId",
   })
 );
 $awareness.set({

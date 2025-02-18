@@ -26,15 +26,10 @@ const page = (name: string, path: string): Page => ({
   path,
   meta: {},
   rootInstanceId: unique(),
-  systemDataSourceId: unique(),
 });
 
 $pages.set({
-  ...createDefaultPages({
-    rootInstanceId: unique(),
-    systemDataSourceId: unique(),
-  }),
-
+  ...createDefaultPages({ rootInstanceId: unique() }),
   homePage: page("Home", "") as Page & { path: "" },
   pages: [
     page("About", "/about"),
