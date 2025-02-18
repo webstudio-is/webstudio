@@ -148,7 +148,10 @@ export const AddStyleInput = forwardRef<
     onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      // When there is no value, it is either a property or a declaration(s)
+      // When there is no value, property can be:
+      // - property without value: gap
+      // - declaration with value: gap: 10px
+      // - block: gap: 10px; margin: 20px;
       if (item.value === undefined) {
         return onSubmit(item.property);
       }
