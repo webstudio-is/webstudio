@@ -363,6 +363,17 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableOnInputLikeControls: true,
     },
     {
+      name: "toggleStylePanelAdvancedMode",
+      defaultHotkeys: ["alt+shift+a"],
+      handler: () => {
+        setSetting(
+          "stylePanelMode",
+          getSetting("stylePanelMode") === "advanced" ? "default" : "advanced"
+        );
+      },
+      disableOnInputLikeControls: true,
+    },
+    {
       name: "openSettingsPanel",
       defaultHotkeys: ["d"],
       handler: () => {

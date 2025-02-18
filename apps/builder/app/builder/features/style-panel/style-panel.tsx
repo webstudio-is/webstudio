@@ -60,7 +60,7 @@ export const ModeMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-        css={{ width: theme.spacing[25] }}
+        css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuRadioGroup
           value={value}
@@ -91,7 +91,10 @@ export const ModeMenu = () => {
               icon={<MenuCheckedIcon />}
               onFocus={() => setFocusedValue("advanced")}
             >
-              Advanced mode
+              <Flex justify="between" grow>
+                <Text variant="labelsTitleCase">Advanced mode</Text>
+                <Kbd value={["alt", "shift", "a"]} />
+              </Flex>
             </DropdownMenuRadioItem>
           )}
         </DropdownMenuRadioGroup>
