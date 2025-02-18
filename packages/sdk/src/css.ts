@@ -1,26 +1,43 @@
+import { kebabCase } from "change-case";
 import {
   createRegularStyleSheet,
   generateAtomic,
   type NestingRule,
+  type StyleSheetRegular,
   type TransformValue,
 } from "@webstudio-is/css-engine";
-import {
-  ROOT_INSTANCE_ID,
-  createScope,
-  parseComponentName,
-  descendantComponent,
-  rootComponent,
-  type Assets,
-  type Breakpoints,
-  type Instance,
-  type Instances,
-  type Props,
-  type StyleSourceSelections,
-  type Styles,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
-import { addGlobalRules } from "./global-rules";
-import { kebabCase } from "change-case";
+import { getFontFaces } from "@webstudio-is/fonts";
+import type { Assets, FontAsset } from "./schema/assets";
+import type { Instance, Instances } from "./schema/instances";
+import type { Props } from "./schema/props";
+import type { Breakpoints } from "./schema/breakpoints";
+import type { Styles } from "./schema/styles";
+import type { StyleSourceSelections } from "./schema/style-source-selections";
+import type { WsComponentMeta } from "./schema/component-meta";
+import { createScope } from "./scope";
+import { parseComponentName, ROOT_INSTANCE_ID } from "./instances-utils";
+import { descendantComponent, rootComponent } from "./core-metas";
+
+export const addFontRules = ({
+  sheet,
+  assets,
+  assetBaseUrl,
+}: {
+  sheet: StyleSheetRegular;
+  assets: Assets;
+  assetBaseUrl: string;
+}) => {
+  const fontAssets: FontAsset[] = [];
+  for (const asset of assets.values()) {
+    if (asset.type === "font") {
+      fontAssets.push(asset);
+    }
+  }
+  const fontFaces = getFontFaces(fontAssets, { assetBaseUrl });
+  for (const fontFace of fontFaces) {
+    sheet.addFontFaceRule(fontFace);
+  }
+};
 
 export type CssConfig = {
   assets: Assets;
@@ -76,7 +93,7 @@ export const generateCss = ({
   const globalSheet = createRegularStyleSheet({ name: "ssr" });
   const sheet = createRegularStyleSheet({ name: "ssr" });
 
-  addGlobalRules(globalSheet, { assets, assetBaseUrl });
+  addFontRules({ sheet: globalSheet, assets, assetBaseUrl });
   globalSheet.addMediaRule("presets");
   const presetClasses = new Map<Instance["component"], string>();
   const scope = createScope([], normalizeClassName, "-");

@@ -16,7 +16,6 @@ import pLimit from "p-limit";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
-  generateCss,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
   type Params,
@@ -48,6 +47,7 @@ import {
   isCoreComponent,
   coreMetas,
   SYSTEM_VARIABLE_ID,
+  generateCss,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";

@@ -9,13 +9,13 @@ import {
   rootComponent,
   type StyleDecl,
   type StyleSourceSelection,
+  createImageValueTransformer,
+  addFontRules,
 } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
   editingPlaceholderVariable,
-  addGlobalRules,
-  createImageValueTransformer,
   editablePlaceholderVariable,
   componentAttribute,
 } from "@webstudio-is/react-sdk";
@@ -500,7 +500,8 @@ export const GlobalStyles = () => {
 
   useLayoutEffect(() => {
     fontsAndDefaultsSheet.clear();
-    addGlobalRules(fontsAndDefaultsSheet, {
+    addFontRules({
+      sheet: fontsAndDefaultsSheet,
       assets,
       assetBaseUrl,
     });
