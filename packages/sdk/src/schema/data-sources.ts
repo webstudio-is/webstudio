@@ -30,11 +30,11 @@ export const DataSource = z.union([
   z.object({
     type: z.literal("variable"),
     id: DataSourceId,
-    // instance should always be specified on variable
-    // though there was a bug in embed template
-    // which produced variables without instance
+    // The instance should always be specified for variables,
+    // however, there was a bug in the embed template
+    // which produced variables without an instance
     // and these variables will fail validation
-    // if make it required
+    // if we make it required
     scopeInstanceId: z.string().optional(),
     name: z.string(),
     value: DataSourceVariableValue,
