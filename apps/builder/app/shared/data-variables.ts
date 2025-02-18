@@ -312,7 +312,7 @@ const traverseExpressions = ({
 
   for (const dataSource of dataSources.values()) {
     if (
-      instanceIds.has(dataSource.scopeInstanceId) &&
+      instanceIds.has(dataSource.scopeInstanceId ?? "") &&
       dataSource.type === "resource"
     ) {
       resourceIds.add(dataSource.resourceId);
@@ -440,15 +440,16 @@ export const deleteVariableMutable = (
   }
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   unsetNameById.set(dataSource.id, dataSource.name);
+  const startingInstanceId = dataSource.scopeInstanceId ?? "";
   const maskedIdByName = findMaskedVariablesByInstanceId({
-    startingInstanceId: dataSource.scopeInstanceId,
+    startingInstanceId,
     instances: data.instances,
     dataSources: data.dataSources,
   });
   // unset deleted variable in expressions
   traverseExpressions({
     ...data,
-    startingInstanceId: dataSource.scopeInstanceId,
+    startingInstanceId,
     update: (expression) => {
       expression = unsetExpressionVariables({
         expression,
