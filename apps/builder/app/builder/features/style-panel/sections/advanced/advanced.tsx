@@ -369,7 +369,7 @@ export const Section = () => {
   ) as Array<StyleProperty>;
 
   const currentProperties = searchProperties ?? advancedProperties;
-
+  console.log(advancedStyles);
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
 
