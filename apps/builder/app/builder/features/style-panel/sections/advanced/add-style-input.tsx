@@ -148,7 +148,11 @@ export const AddStyleInput = forwardRef<
     onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
     onItemSelect: (item) => {
       clear();
-      onSubmit(`${item.property}: ${item.value ?? "unset"}`);
+      // When there is no value, it is either a property or a declaration(s)
+      if (item.value === undefined) {
+        return onSubmit(item.property);
+      }
+      onSubmit(`${item.property}: ${item.value}`);
     },
     onItemHighlight: (item) => {
       const previousHighlightedItem = highlightedItemRef.current;
