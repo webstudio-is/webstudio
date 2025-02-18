@@ -445,7 +445,10 @@ export const Section = () => {
         properties={currentProperties}
       >
         <Flex gap="2" direction="column">
-          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+          <Flex
+            direction="column"
+            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
+          >
             {showRecentProperties &&
               recentProperties.map((property, index, properties) => {
                 const isLast = index === properties.length - 1;
@@ -499,10 +502,11 @@ export const Section = () => {
                 />
               </Box>
             )}
-          </Box>
+          </Flex>
           {showRecentProperties && <Separator />}
-          <Box
-            css={{ paddingInline: theme.panel.paddingInline }}
+          <Flex
+            direction="column"
+            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
             style={{ minHeight }}
             ref={containerRef}
           >
@@ -513,7 +517,7 @@ export const Section = () => {
               .map((property) => (
                 <AdvancedProperty key={property} property={property} />
               ))}
-          </Box>
+          </Flex>
         </Flex>
       </CopyPasteMenu>
     </AdvancedStyleSection>
