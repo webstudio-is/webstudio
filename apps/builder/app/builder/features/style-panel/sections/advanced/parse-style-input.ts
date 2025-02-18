@@ -57,8 +57,9 @@ export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
   for (const style of styles) {
     // somethingunknown: red; -> --somethingunknown: red;
     if (
-      style.value.type === "unparsed" &&
-      style.property.startsWith("--") === false
+      style.value.type === "invalid" ||
+      (style.value.type === "unparsed" &&
+        style.property.startsWith("--") === false)
     ) {
       style.property = `--${style.property}`;
     }
