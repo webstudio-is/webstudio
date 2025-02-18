@@ -1794,6 +1794,9 @@ importers:
       acorn-walk:
         specifier: ^8.3.4
         version: 8.3.4
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       reserved-identifiers:
         specifier: ^1.0.0
         version: 1.0.0
