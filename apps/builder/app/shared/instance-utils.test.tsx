@@ -62,7 +62,7 @@ import { $awareness, getInstancePath, selectInstance } from "./awareness";
 enableMapSet();
 registerContainers();
 
-$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
+$pages.set(createDefaultPages({ rootInstanceId: "" }));
 
 const defaultMetasMap = new Map(
   Object.entries({ ...defaultMetas, ...coreMetas })
@@ -713,7 +713,7 @@ describe("reparent instance", () => {
 const getWebstudioDataStub = (
   data?: Partial<WebstudioData>
 ): WebstudioData => ({
-  pages: createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }),
+  pages: createDefaultPages({ rootInstanceId: "" }),
   assets: new Map(),
   dataSources: new Map(),
   resources: new Map(),
@@ -1305,7 +1305,6 @@ describe("find closest insertable", () => {
       createDefaultPages({
         homePageId: "homePageId",
         rootInstanceId: "",
-        systemDataSourceId: "",
       })
     );
     $awareness.set({

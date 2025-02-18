@@ -10,9 +10,8 @@ import {
   $isPreviewMode,
   $pages,
   $selectedPageHash,
-  updateSystem,
 } from "~/shared/nano-states";
-import { savePathInHistory } from "~/shared/pages";
+import { updateCurrentSystem } from "~/shared/system";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -62,10 +61,9 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
       const search = Object.fromEntries(pageHref.searchParams);
       $selectedPageHash.set({ hash: pageHref.hash });
       selectPage(page.id);
-      updateSystem(page, { params, search });
-      savePathInHistory(page.id, pageHref.pathname);
-      break;
+      updateCurrentSystem({ params, search });
     }
+    break;
   }
 };
 

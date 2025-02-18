@@ -33,7 +33,6 @@ export const Redirects = () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: "body",
-      systemDataSourceId: "",
     },
     pages: [],
     folders: [],

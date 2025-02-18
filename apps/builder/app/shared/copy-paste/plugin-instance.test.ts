@@ -42,7 +42,6 @@ $pages.set(
   createDefaultPages({
     homePageId: "home-page",
     rootInstanceId: "body0",
-    systemDataSourceId: "",
   })
 );
 $awareness.set({ pageId: "home-page" });
