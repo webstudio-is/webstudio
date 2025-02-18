@@ -92,6 +92,15 @@ const matchOrSuggestToCreate = (
 
   if (matched.length === 0) {
     const parsedStyles = parseStyleInput(search);
+    // When parsedStyles is more than one, user entered a shorthand.
+    // We will suggest to insert their shorthand first.
+    if (parsedStyles.length > 1) {
+      matched.push({
+        property: search,
+        label: `Create "${search}"`,
+      });
+    }
+    // Now we will suggest to insert each longhand separately.
     for (const style of parsedStyles) {
       matched.push({
         property: style.property,
