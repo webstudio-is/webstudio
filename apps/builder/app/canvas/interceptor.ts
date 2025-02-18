@@ -1,4 +1,4 @@
-import { getPagePath, type System } from "@webstudio-is/sdk";
+import { getPagePath } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -6,12 +6,11 @@ import {
 } from "~/builder/shared/url-pattern";
 import { $selectedPage, selectPage } from "~/shared/awareness";
 import {
-  $dataSourceVariables,
   $isPreviewMode,
   $pages,
   $selectedPageHash,
 } from "~/shared/nano-states";
-import { updateCurrentSystem } from "~/shared/system";
+import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -25,13 +24,10 @@ const isAbsoluteUrl = (href: string) => {
 const getSelectedPagePathname = () => {
   const pages = $pages.get();
   const page = $selectedPage.get();
-  const dataSourceVariables = $dataSourceVariables.get();
-  if (page?.systemDataSourceId && pages) {
-    const system = dataSourceVariables.get(page.systemDataSourceId) as
-      | undefined
-      | System;
+  if (page && pages) {
     const tokens = tokenizePathnamePattern(getPagePath(page.id, pages));
-    return compilePathnamePattern(tokens, system?.params ?? {});
+    const system = $currentSystem.get();
+    return compilePathnamePattern(tokens, system.params);
   }
 };
 
@@ -62,8 +58,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
       $selectedPageHash.set({ hash: pageHref.hash });
       selectPage(page.id);
       updateCurrentSystem({ params, search });
+      break;
     }
-    break;
   }
 };
 
