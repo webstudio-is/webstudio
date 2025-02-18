@@ -357,7 +357,7 @@ export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedStyles = useStore($advancedStyles);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
-  // Memorizing recentproperties by instance, so that when user switches between instances and comes back
+  // Memorizing recent properties by instance, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
     Map<string, Array<StyleProperty>>
