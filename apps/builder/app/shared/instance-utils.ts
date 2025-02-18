@@ -465,7 +465,7 @@ export const deleteInstanceMutable = (
     }
   }
   for (const dataSource of dataSources.values()) {
-    if (instanceIds.has(dataSource.scopeInstanceId)) {
+    if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
       dataSources.delete(dataSource.id);
       if (dataSource.type === "resource") {
         resources.delete(dataSource.resourceId);
@@ -605,7 +605,7 @@ export const extractWebstudioFragment = (
   const fragmentResourceIds = new Set<Resource["id"]>();
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
   for (const dataSource of dataSources.values()) {
-    if (fragmentInstanceIds.has(dataSource.scopeInstanceId)) {
+    if (fragmentInstanceIds.has(dataSource.scopeInstanceId ?? "")) {
       fragmentDataSources.set(dataSource.id, dataSource);
       if (dataSource.type === "resource") {
         fragmentResourceIds.add(dataSource.resourceId);
@@ -866,7 +866,7 @@ export const insertWebstudioFragmentCopy = ({
     const usedResourceIds = new Set<Resource["id"]>();
     for (const dataSource of fragment.dataSources) {
       // insert only data sources within portal content
-      if (instanceIds.has(dataSource.scopeInstanceId)) {
+      if (instanceIds.has(dataSource.scopeInstanceId ?? "")) {
         dataSources.set(dataSource.id, dataSource);
         if (dataSource.type === "resource") {
           usedResourceIds.add(dataSource.resourceId);
@@ -956,7 +956,7 @@ export const insertWebstudioFragmentCopy = ({
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
   for (let dataSource of fragment.dataSources) {
-    const { scopeInstanceId } = dataSource;
+    const scopeInstanceId = dataSource.scopeInstanceId ?? "";
     if (scopeInstanceId === ROOT_INSTANCE_ID) {
       // add global variable only if not exist already
       if (
