@@ -46,6 +46,7 @@
     "@webstudio-is/icons": "workspace:*",
     "acorn": "^8.14.0",
     "acorn-walk": "^8.3.4",
+    "change-case": "^5.4.4",
     "reserved-identifiers": "^1.0.0",
     "type-fest": "^4.32.0",
     "zod": "^3.22.4"

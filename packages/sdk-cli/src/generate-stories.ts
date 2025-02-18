@@ -11,9 +11,9 @@ import {
   parseComponentName,
   getStyleDeclKey,
   coreMetas,
+  generateCss,
 } from "@webstudio-is/sdk";
 import {
-  generateCss,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
   namespaceMeta,
