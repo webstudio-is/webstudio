@@ -57,6 +57,8 @@ export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
   for (const style of styles) {
     // somethingunknown: red; -> --somethingunknown: red;
     if (
+      // Note: currently in tests it returns unparsed, but in the client it returns invalid,
+      // because we use native APIs when available in parseCss.
       style.value.type === "invalid" ||
       (style.value.type === "unparsed" &&
         style.property.startsWith("--") === false)
