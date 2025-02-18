@@ -1,4 +1,4 @@
-import { atom, computed, onSet } from "nanostores";
+import { atom, computed } from "nanostores";
 import {
   findPageByIdOrPath,
   type Page,

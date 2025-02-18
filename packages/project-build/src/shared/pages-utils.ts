@@ -22,7 +22,7 @@ export const createDefaultPages = ({
   homePageId = nanoid(),
 }: {
   rootInstanceId: Instance["id"];
-  systemDataSourceId: DataSource["id"];
+  systemDataSourceId?: DataSource["id"];
   homePageId?: string;
 }): Pages => {
   // This is a root folder that nobody can delete or going to be able to see.
