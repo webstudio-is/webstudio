@@ -270,7 +270,7 @@ export const findUnsetVariableNames = ({
 
   for (const dataSource of dataSources.values()) {
     if (
-      instanceIds.has(dataSource.scopeInstanceId) &&
+      instanceIds.has(dataSource.scopeInstanceId ?? "") &&
       dataSource.type === "resource"
     ) {
       resourceIds.add(dataSource.resourceId);
@@ -359,7 +359,7 @@ export const restoreTreeVariablesMutable = ({
 
   for (const dataSource of dataSources.values()) {
     if (
-      instanceIds.has(dataSource.scopeInstanceId) &&
+      instanceIds.has(dataSource.scopeInstanceId ?? "") &&
       dataSource.type === "resource"
     ) {
       resourceIds.add(dataSource.resourceId);
