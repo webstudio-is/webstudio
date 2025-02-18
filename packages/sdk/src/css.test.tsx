@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import type { Breakpoint } from "@webstudio-is/sdk";
-import { rootComponent } from "@webstudio-is/sdk";
 import { $, ws, css, renderData } from "@webstudio-is/template";
 import { generateCss, type CssConfig } from "./css";
+import type { Breakpoint } from "./schema/breakpoints";
+import { rootComponent } from "./core-metas";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
