@@ -57,7 +57,7 @@ import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { $selectedInstanceKey } from "~/shared/nano-states";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -355,7 +355,7 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedStyles = useStore($advancedStyles);
-  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
@@ -375,8 +375,8 @@ export const Section = () => {
 
   const currentProperties = searchProperties ?? advancedProperties;
 
-  const recentProperties = selectedInstanceSelector
-    ? (recentPropertiesMap.get(selectedInstanceSelector.toString()) ?? [])
+  const recentProperties = selectedInstanceKey
+    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
     : [];
 
   const showRecentProperties =
@@ -387,12 +387,12 @@ export const Section = () => {
   };
 
   const updateRecentProperties = (properties: Array<StyleProperty>) => {
-    if (selectedInstanceSelector === undefined) {
+    if (selectedInstanceKey === undefined) {
       return;
     }
     const newRecentPropertiesMap = new Map(recentPropertiesMap);
     newRecentPropertiesMap.set(
-      selectedInstanceSelector.toString(),
+      selectedInstanceKey,
       Array.from(new Set([...recentProperties, ...properties]))
     );
     setRecentPropertiesMap(newRecentPropertiesMap);
