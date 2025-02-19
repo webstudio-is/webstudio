@@ -1,4 +1,4 @@
-@media all {
+@layer presets {
   :root {
     display: grid;
     min-height: 100%;
@@ -8,7 +8,7 @@
     white-space: pre-wrap;
     white-space-collapse: preserve;
   }
-  :where(body.w-body) {
+  body.w-body {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -18,7 +18,7 @@
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  :where(h1.w-heading) {
+  h1.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -26,7 +26,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h2.w-heading) {
+  h2.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -34,7 +34,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h3.w-heading) {
+  h3.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -42,7 +42,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h4.w-heading) {
+  h4.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -50,7 +50,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h5.w-heading) {
+  h5.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -58,7 +58,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h6.w-heading) {
+  h6.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -66,7 +66,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(div.w-box) {
+  div.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -74,7 +74,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(address.w-box) {
+  address.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -82,7 +82,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(article.w-box) {
+  article.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -90,7 +90,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(aside.w-box) {
+  aside.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -98,7 +98,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(figure.w-box) {
+  figure.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -106,7 +106,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(footer.w-box) {
+  footer.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -114,7 +114,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(header.w-box) {
+  header.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -122,7 +122,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(main.w-box) {
+  main.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -130,7 +130,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(nav.w-box) {
+  nav.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -138,7 +138,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(section.w-box) {
+  section.w-box {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -146,7 +146,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(p.w-paragraph) {
+  p.w-paragraph {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -154,7 +154,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(img.w-image) {
+  img.w-image {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -165,7 +165,7 @@
     display: block;
     height: auto;
   }
-  :where(a.w-link) {
+  a.w-link {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -174,7 +174,7 @@
     outline-width: 1px;
     display: inline-block;
   }
-  :where(div.w-text) {
+  div.w-text {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -183,7 +183,7 @@
     outline-width: 1px;
     min-height: 1em;
   }
-  :where(div.w-accordion) {
+  div.w-accordion {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -191,7 +191,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(div.w-item) {
+  div.w-item {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -199,7 +199,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h3.w-item-header) {
+  h3.w-item-header {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -209,7 +209,7 @@
     margin-top: 0px;
     margin-bottom: 0px;
   }
-  :where(button.w-item-trigger) {
+  button.w-item-trigger {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -221,12 +221,12 @@
     margin: 0;
     padding: 0px;
   }
-  :where(div.w-html-embed) {
+  div.w-html-embed {
     display: contents;
     white-space: normal;
     white-space-collapse: collapse;
   }
-  :where(div.w-item-content) {
+  div.w-item-content {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -234,7 +234,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(form.w-webhook-form) {
+  form.w-webhook-form {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -242,7 +242,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(label.w-input-label) {
+  label.w-input-label {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -251,7 +251,7 @@
     outline-width: 1px;
     display: block;
   }
-  :where(input.w-text-input) {
+  input.w-text-input {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
@@ -267,7 +267,7 @@
     display: block;
     margin: 0;
   }
-  :where(button.w-button) {
+  button.w-button {
     font-family: inherit;
     font-size: 100%;
     line-height: 1.15;
