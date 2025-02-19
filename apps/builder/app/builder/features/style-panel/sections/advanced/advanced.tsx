@@ -57,6 +57,7 @@ import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -354,7 +355,12 @@ const AdvancedProperty = memo(
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedStyles = useStore($advancedStyles);
-  const [recentProperties, setRecentProperties] = useState<StyleProperty[]>([]);
+  const selectedInstanceKey = useStore($selectedInstanceKey);
+  // Memorizing recent properties by instance, so that when user switches between instances and comes back
+  // they are still in-place
+  const [recentPropertiesMap, setRecentPropertiesMap] = useState<
+    Map<string, Array<StyleProperty>>
+  >(new Map());
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -369,6 +375,10 @@ export const Section = () => {
 
   const currentProperties = searchProperties ?? advancedProperties;
 
+  const recentProperties = selectedInstanceKey
+    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
+    : [];
+
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
 
@@ -376,12 +386,22 @@ export const Section = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
+  const updateRecentProperties = (properties: Array<StyleProperty>) => {
+    if (selectedInstanceKey === undefined) {
+      return;
+    }
+    const newRecentPropertiesMap = new Map(recentPropertiesMap);
+    newRecentPropertiesMap.set(
+      selectedInstanceKey,
+      Array.from(new Set([...recentProperties, ...properties]))
+    );
+    setRecentPropertiesMap(newRecentPropertiesMap);
+  };
+
   const handleInsertStyles = (cssText: string) => {
     const styles = insertStyles(cssText);
     const insertedProperties = styles.map(({ property }) => property);
-    setRecentProperties(
-      Array.from(new Set([...recentProperties, ...insertedProperties]))
-    );
+    updateRecentProperties(insertedProperties);
     return styles;
   };
 
@@ -445,7 +465,10 @@ export const Section = () => {
         properties={currentProperties}
       >
         <Flex gap="2" direction="column">
-          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+          <Flex
+            direction="column"
+            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
+          >
             {showRecentProperties &&
               recentProperties.map((property, index, properties) => {
                 const isLast = index === properties.length - 1;
@@ -461,11 +484,11 @@ export const Section = () => {
                       }
                     }}
                     onReset={() => {
-                      setRecentProperties((properties) => {
-                        return properties.filter(
+                      updateRecentProperties(
+                        recentProperties.filter(
                           (recentProperty) => recentProperty !== property
-                        );
-                      });
+                        )
+                      );
                     }}
                   />
                 );
@@ -499,10 +522,11 @@ export const Section = () => {
                 />
               </Box>
             )}
-          </Box>
+          </Flex>
           {showRecentProperties && <Separator />}
-          <Box
-            css={{ paddingInline: theme.panel.paddingInline }}
+          <Flex
+            direction="column"
+            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
             style={{ minHeight }}
             ref={containerRef}
           >
@@ -513,7 +537,7 @@ export const Section = () => {
               .map((property) => (
                 <AdvancedProperty key={property} property={property} />
               ))}
-          </Box>
+          </Flex>
         </Flex>
       </CopyPasteMenu>
     </AdvancedStyleSection>

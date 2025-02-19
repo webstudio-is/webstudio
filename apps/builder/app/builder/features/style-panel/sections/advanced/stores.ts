@@ -62,7 +62,11 @@ export const $advancedStyles = computed(
       const { property, value, listed } = style;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
-      if (listed || settings.stylePanelMode === "advanced") {
+      if (
+        visualProperties.has(property) === false ||
+        listed ||
+        settings.stylePanelMode === "advanced"
+      ) {
         advancedStyles.set(property, value);
       }
     }
