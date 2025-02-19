@@ -57,7 +57,7 @@ import { $advancedStyles } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
-import { $selectedInstanceKey } from "~/shared/nano-states";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 // Only here to keep the same section module interface
 export const properties = [];
