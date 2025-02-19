@@ -5,7 +5,6 @@ import type {
   Instance,
   Prop,
   ResourceRequest,
-  System,
   ImageAsset,
 } from "@webstudio-is/sdk";
 import {
@@ -31,16 +30,12 @@ import {
 import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { restResourcesLoader } from "../router-utils";
-import {
-  $dataSourceVariables,
-  $resourceValues,
-  $selectedPageDefaultSystem,
-  mergeSystem,
-} from "./variables";
+import { $dataSourceVariables, $resourceValues } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
 import { $selectedPage, getInstanceKey } from "../awareness";
 import { computeExpression } from "../data-variables";
+import { $currentSystem, $currentSystemVariableId } from "../system";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -136,9 +131,9 @@ const $unscopedVariableValues = computed(
     $dataSourceVariables,
     $resourceValues,
     $selectedPage,
-    $selectedPageDefaultSystem,
+    $currentSystem,
   ],
-  (dataSources, dataSourceVariables, resourceValues, page, defaultSystem) => {
+  (dataSources, dataSourceVariables, resourceValues, page, system) => {
     const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
@@ -149,8 +144,9 @@ const $unscopedVariableValues = computed(
       }
       if (dataSource.type === "parameter") {
         let value = dataSourceVariables.get(dataSourceId);
+        // @todo support global system
         if (dataSource.id === page?.systemDataSourceId) {
-          value = mergeSystem(defaultSystem, value as undefined | System);
+          value = system;
         }
         values.set(dataSourceId, value);
       }
@@ -160,11 +156,6 @@ const $unscopedVariableValues = computed(
     }
     return values;
   }
-);
-
-const $selectedPageSystemId = computed(
-  $selectedPage,
-  (page) => page?.systemDataSourceId
 );
 
 /**
@@ -177,10 +168,10 @@ const $loaderVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
-    $selectedPageSystemId,
-    $selectedPageDefaultSystem,
+    $currentSystemVariableId,
+    $currentSystem,
   ],
-  (dataSources, dataSourceVariables, systemId, defaultSystem) => {
+  (dataSources, dataSourceVariables, systemVariableId, system) => {
     const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
@@ -191,8 +182,8 @@ const $loaderVariableValues = computed(
       }
       if (dataSource.type === "parameter") {
         let value = dataSourceVariables.get(dataSourceId);
-        if (dataSource.id === systemId) {
-          value = mergeSystem(defaultSystem, value as undefined | System);
+        if (dataSource.id === systemVariableId) {
+          value = system;
         }
         values.set(dataSourceId, value);
       }
@@ -386,7 +377,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
-    $selectedPageDefaultSystem,
+    $currentSystem,
   ],
   (
     instances,
@@ -395,7 +386,7 @@ export const $variableValuesByInstanceSelector = computed(
     dataSources,
     dataSourceVariables,
     resourceValues,
-    defaultSystem
+    system
   ) => {
     const propsByInstanceId = mapGroupBy(
       props.values(),
@@ -443,10 +434,7 @@ export const $variableValuesByInstanceSelector = computed(
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
             if (variable.id === page.systemDataSourceId) {
-              variableValues.set(
-                variable.id,
-                mergeSystem(defaultSystem, value as undefined | System)
-              );
+              variableValues.set(variable.id, system);
             }
           }
           if (variable.type === "resource") {

@@ -6,7 +6,6 @@ describe("getExistingRoutePaths", () => {
   test("gets all the route paths that exists in the project", () => {
     const pages = createDefaultPages({
       rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
 
@@ -16,7 +15,6 @@ describe("getExistingRoutePaths", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
       title: `"Page"`,
     });
 
@@ -26,7 +24,6 @@ describe("getExistingRoutePaths", () => {
       name: "Blog",
       path: "/blog/:id",
       rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
       title: `"Blog"`,
     });
 
