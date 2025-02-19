@@ -212,6 +212,7 @@ export const generateCss = ({
   // render presets inside of cascade layer to let user completely override all properties
   // user agent (browser) styles work in the same way
   // for example a { color: black } overrides a:visited as well
+  // @todo figure out proper API to work with layers when more use cases are known
   const presetCss = presetSheet.cssText.replaceAll(
     "@media all ",
     "@layer presets "
