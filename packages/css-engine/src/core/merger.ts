@@ -1,7 +1,13 @@
-import { StyleValue, TupleValue, TupleValueItem } from "../schema";
+import {
+  StyleValue,
+  TupleValue,
+  TupleValueItem,
+  type StyleProperty,
+} from "../schema";
 import { cssWideKeywords } from "../css";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";
+import { hyphenateProperty } from "./to-property";
 
 /**
  * Css wide keywords cannot be used in shorthand parts
@@ -136,6 +142,23 @@ const mergeBackgroundPosition = (styleMap: StyleMap) => {
       value: position,
     });
   }
+};
+
+const supportedShorthandProperties = new Set([
+  "margin",
+  "padding",
+  "border",
+  "outline",
+  "border-top",
+  "border-right",
+  "border-bottom",
+  "border-left",
+  "white-space",
+  "text-wrap",
+]);
+
+export const isShorthand = (property: string) => {
+  return supportedShorthandProperties.has(hyphenateProperty(property));
 };
 
 export const mergeStyles = (styleMap: StyleMap) => {

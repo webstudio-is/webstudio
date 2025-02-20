@@ -1,5 +1,10 @@
 import { computed } from "nanostores";
-import { type StyleMap, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  mergeStyles,
+  type StyleMap,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
 import {
@@ -9,6 +14,7 @@ import {
 } from "~/shared/nano-states";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
+import { camelCase } from "change-case";
 
 const initialProperties = new Set<StyleProperty>([
   "cursor",
@@ -77,6 +83,21 @@ export const $advancedStyles = computed(
         advancedStyles.set(initialProperty, { type: "unset", value: "" });
       }
     }
-    return advancedStyles;
+    //console.log(advancedStyles);
+    const styles1: StyleMap = new Map();
+
+    for (const [property, value] of advancedStyles) {
+      styles1.set(hyphenateProperty(property), value);
+    }
+
+    const merged = mergeStyles(styles1);
+
+    const styles2: StyleMap = new Map();
+
+    for (const [property, value] of merged) {
+      styles2.set(camelCase(property), value);
+    }
+    console.log(styles2);
+    return styles2;
   }
 );

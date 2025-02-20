@@ -15,6 +15,7 @@ import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
+  Collapsible,
   Flex,
   Label,
   SearchField,
@@ -29,6 +30,8 @@ import {
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
+  isShorthand,
+  StyleValue,
   toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
@@ -255,7 +258,64 @@ const AdvancedPropertyValue = ({
  * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
  * and the contentVisibility and containIntrinsicSize CSS properties.
  */
-const AdvancedProperty = memo(
+const LazyRender = ({ children }: ComponentProps<"div">) => {
+  const visibilityChangeEventSupported = useClientSupports(
+    () => "oncontentvisibilityautostatechange" in document.body
+  );
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
+
+  useEffect(() => {
+    if (!visibilityChangeEventSupported) {
+      return;
+    }
+
+    if (ref.current == null) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    ref.current.addEventListener(
+      "contentvisibilityautostatechange",
+      (event) => {
+        console.log("visibility", event);
+        setIsVisible(!event.skipped);
+      },
+      {
+        signal: controller.signal,
+      }
+    );
+
+    return () => {
+      controller.abort();
+    };
+  }, [visibilityChangeEventSupported]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        display: "inline-block",
+        contentVisibility: "auto",
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
+        // containIntrinsicSize is used to set the default size of an element before any content is loaded.
+        // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
+        // It also affects the contentvisibilityautostatechange event to be called properly,
+        // with "auto" it will call it with skipped false for all initial elements.
+        // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
+        containIntrinsicSize: "auto 44px",
+      }}
+    >
+      {
+        //children
+        isVisible ? children : undefined
+      }
+    </div>
+  );
+};
+
+const AdvancedDeclarationLonghand = memo(
   ({
     property,
     autoFocus,
@@ -264,6 +324,7 @@ const AdvancedProperty = memo(
     valueInputRef,
   }: {
     property: StyleProperty;
+    value: StyleValue;
     autoFocus?: boolean;
     onReset?: () => void;
     onChangeComplete?: ComponentProps<
@@ -271,60 +332,59 @@ const AdvancedProperty = memo(
     >["onChangeComplete"];
     valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
-    const visibilityChangeEventSupported = useClientSupports(
-      () => "oncontentvisibilityautostatechange" in document.body
-    );
-    const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
-
-    useEffect(() => {
-      if (!visibilityChangeEventSupported) {
-        return;
-      }
-
-      if (ref.current == null) {
-        return;
-      }
-
-      const controller = new AbortController();
-
-      ref.current.addEventListener(
-        "contentvisibilityautostatechange",
-        (event) => {
-          setIsVisible(!event.skipped);
-        },
-        {
-          signal: controller.signal,
-        }
-      );
-
-      return () => {
-        controller.abort();
-      };
-    }, [visibilityChangeEventSupported]);
-
     return (
       <Flex
-        ref={ref}
-        css={{
-          contentVisibility: "auto",
-          // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
-          // containIntrinsicSize is used to set the default size of an element before any content is loaded.
-          // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
-          // It also affects the contentvisibilityautostatechange event to be called properly,
-          // with "auto" it will call it with skipped false for all initial elements.
-          // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
-          containIntrinsicSize: "auto 44px",
-          paddingLeft: indentation,
-        }}
-        key={property}
+        css={{ paddingLeft: indentation }}
         wrap="wrap"
         align="center"
         justify="start"
         {...{ [propertyContainerAttribute]: property }}
       >
-        {isVisible && (
-          <>
+        <AdvancedPropertyLabel property={property} onReset={onReset} />
+        <Text
+          variant="mono"
+          // Improves the visual separation of value from the property.
+          css={{
+            textIndent: "-0.5ch",
+            fontWeight: "bold",
+          }}
+        >
+          :
+        </Text>
+        <AdvancedPropertyValue
+          autoFocus={autoFocus}
+          property={property}
+          onChangeComplete={onChangeComplete}
+          onReset={onReset}
+          inputRef={valueInputRef}
+        />
+      </Flex>
+    );
+  }
+);
+
+const AdvancedDeclarationShorthand = memo(
+  (props: {
+    property: StyleProperty;
+    value: StyleValue;
+    autoFocus?: boolean;
+    onReset?: () => void;
+    onChangeComplete?: ComponentProps<
+      typeof CssValueInputContainer
+    >["onChangeComplete"];
+    valueInputRef?: RefObject<HTMLInputElement>;
+  }) => {
+    const { property, value, onReset } = props;
+    return (
+      <details>
+        <summary>
+          <Flex
+            css={{ display: "inline-flex", paddingLeft: indentation }}
+            wrap="wrap"
+            align="center"
+            justify="start"
+            {...{ [propertyContainerAttribute]: property }}
+          >
             <AdvancedPropertyLabel property={property} onReset={onReset} />
             <Text
               variant="mono"
@@ -336,18 +396,11 @@ const AdvancedProperty = memo(
             >
               :
             </Text>
-            <Box css={{ color: "red" }}>
-              <AdvancedPropertyValue
-                autoFocus={autoFocus}
-                property={property}
-                onChangeComplete={onChangeComplete}
-                onReset={onReset}
-                inputRef={valueInputRef}
-              />
-            </Box>
-          </>
-        )}
-      </Flex>
+            <Text variant="mono">{toValue(value)}</Text>
+          </Flex>
+        </summary>
+        <AdvancedDeclarationLonghand {...props} />
+      </details>
     );
   }
 );
@@ -472,25 +525,30 @@ export const Section = () => {
             {showRecentProperties &&
               recentProperties.map((property, index, properties) => {
                 const isLast = index === properties.length - 1;
+                const AdvancedDeclaration = isShorthand(property)
+                  ? AdvancedDeclarationShorthand
+                  : AdvancedDeclarationLonghand;
                 return (
-                  <AdvancedProperty
-                    valueInputRef={isLast ? recentValueInputRef : undefined}
-                    key={property}
-                    property={property}
-                    autoFocus={isLast}
-                    onChangeComplete={(event) => {
-                      if (event.type === "enter") {
-                        handleShowAddStyleInput();
-                      }
-                    }}
-                    onReset={() => {
-                      updateRecentProperties(
-                        recentProperties.filter(
-                          (recentProperty) => recentProperty !== property
-                        )
-                      );
-                    }}
-                  />
+                  <LazyRender key={property}>
+                    <AdvancedDeclaration
+                      valueInputRef={isLast ? recentValueInputRef : undefined}
+                      property={property}
+                      value={advancedStyles.get(property)}
+                      autoFocus={isLast}
+                      onChangeComplete={(event) => {
+                        if (event.type === "enter") {
+                          handleShowAddStyleInput();
+                        }
+                      }}
+                      onReset={() => {
+                        updateRecentProperties(
+                          recentProperties.filter(
+                            (recentProperty) => recentProperty !== property
+                          )
+                        );
+                      }}
+                    />
+                  </LazyRender>
                 );
               })}
             {(showRecentProperties || isAdding) && (
@@ -534,9 +592,19 @@ export const Section = () => {
               .filter(
                 (property) => recentProperties.includes(property) === false
               )
-              .map((property) => (
-                <AdvancedProperty key={property} property={property} />
-              ))}
+              .map((property) => {
+                const AdvancedDeclaration = isShorthand(property)
+                  ? AdvancedDeclarationShorthand
+                  : AdvancedDeclarationLonghand;
+                return (
+                  <LazyRender key={property}>
+                    <AdvancedDeclaration
+                      property={property}
+                      value={advancedStyles.get(property)}
+                    />
+                  </LazyRender>
+                );
+              })}
           </Flex>
         </Flex>
       </CopyPasteMenu>
