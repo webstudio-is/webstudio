@@ -27,7 +27,10 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
+import { updateCurrentSystem } from "../system";
+import { registerContainers } from "../sync";
 
+registerContainers();
 setEnv("*");
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
@@ -899,9 +902,9 @@ test("prefill default system variable value", () => {
       ],
     ])
   );
-  $dataSourceVariables.set(
-    new Map([[systemId, { params: { slug: "my-post" }, search: {} }]])
-  );
+  updateCurrentSystem({
+    params: { slug: "my-post" },
+  });
   expect($variableValuesByInstanceSelector.get()).toEqual(
     new Map([
       [JSON.stringify([ROOT_INSTANCE_ID]), new Map()],

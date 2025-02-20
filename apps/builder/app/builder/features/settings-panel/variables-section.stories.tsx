@@ -22,9 +22,7 @@ $instances.set(
     ["box", { id: "box", type: "instance", component: "Box", children: [] }],
   ])
 );
-$pages.set(
-  createDefaultPages({ rootInstanceId: "box", systemDataSourceId: "system" })
-);
+$pages.set(createDefaultPages({ rootInstanceId: "box" }));
 $awareness.set({ pageId: "home", instanceSelector: ["box"] });
 
 export const VariablesSection: StoryObj = {

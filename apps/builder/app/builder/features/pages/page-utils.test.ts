@@ -26,6 +26,7 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { $awareness } from "~/shared/awareness";
+import { updateCurrentSystem } from "~/shared/system";
 
 setEnv("*");
 registerContainers();
@@ -525,10 +526,9 @@ test("page root scope should prefill default system variable value", () => {
       ],
     ]),
   });
-
-  $dataSourceVariables.set(
-    new Map([["systemId", { params: { slug: "my-post" }, search: {} }]])
-  );
+  updateCurrentSystem({
+    params: { slug: "my-post" },
+  });
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([["$ws$dataSource$systemId", "system"]]),
     scope: {

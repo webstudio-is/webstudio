@@ -223,7 +223,6 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
         path: "",
         title: "",
         name: "",
-        systemDataSourceId: "",
       },
       pages: [
         {
@@ -232,7 +231,6 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
           path: "",
           title: "",
           name: "",
-          systemDataSourceId: "",
           meta: {},
         },
       ],

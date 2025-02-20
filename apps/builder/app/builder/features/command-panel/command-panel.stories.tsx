@@ -40,16 +40,12 @@ $breakpoints.set(
   )
 );
 
-const pages = createDefaultPages({
-  rootInstanceId: "",
-  systemDataSourceId: "",
-});
+const pages = createDefaultPages({ rootInstanceId: "" });
 pages.pages.push({
   id: "page2",
   path: "",
   name: "Second Page",
   rootInstanceId: "",
-  systemDataSourceId: "",
   title: "",
   meta: {},
 });
@@ -58,7 +54,6 @@ pages.pages.push({
   path: "",
   name: "Thrid Page",
   rootInstanceId: "",
-  systemDataSourceId: "",
   title: "",
   meta: {},
 });

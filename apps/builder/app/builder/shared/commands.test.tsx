@@ -15,7 +15,7 @@ registerContainers();
 
 const metas = new Map(Object.entries(baseMetas));
 $registeredComponentMetas.set(metas);
-$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
+$pages.set(createDefaultPages({ rootInstanceId: "" }));
 $awareness.set({ pageId: "" });
 
 describe("deleteInstance", () => {

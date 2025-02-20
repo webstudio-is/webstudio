@@ -2,7 +2,8 @@ import { describe, expect, test } from "vitest";
 import type { Page, Pages } from "@webstudio-is/sdk";
 import { $pages } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
-import { savePathInHistory } from "./pages";
+import { updateCurrentSystem } from "./system";
+import { selectPage } from "./awareness";
 
 registerContainers();
 
@@ -22,7 +23,6 @@ const getInitialPages = (page: Page): Pages => ({
     title: "",
     meta: {},
     rootInstanceId: "",
-    systemDataSourceId: "",
   },
   pages: [page],
 });
@@ -37,13 +37,22 @@ describe("history", () => {
         title: "",
         meta: {},
         rootInstanceId: "",
-        systemDataSourceId: "",
       })
     );
-    savePathInHistory("dynamicId", "/path1");
-    expect($pages.get()?.pages[0].history).toEqual(["/path1"]);
-    savePathInHistory("dynamicId", "/path2");
-    expect($pages.get()?.pages[0].history).toEqual(["/path2", "/path1"]);
+    selectPage("dynamicId");
+    updateCurrentSystem({
+      params: { date: "my-date", slug: "my-slug" },
+    });
+    expect($pages.get()?.pages[0].history).toEqual([
+      "/blog/my-date/post/my-slug",
+    ]);
+    updateCurrentSystem({
+      params: { date: "another-date", slug: "another-slug" },
+    });
+    expect($pages.get()?.pages[0].history).toEqual([
+      "/blog/another-date/post/another-slug",
+      "/blog/my-date/post/my-slug",
+    ]);
   });
 
   test("move existing path to the start", () => {
@@ -55,11 +64,19 @@ describe("history", () => {
         title: "",
         meta: {},
         rootInstanceId: "",
-        systemDataSourceId: "",
-        history: ["/path2", "/path1"],
+        history: [
+          "/blog/another-date/post/another-slug",
+          "/blog/my-date/post/my-slug",
+        ],
       })
     );
-    savePathInHistory("dynamicId", "/path1");
-    expect($pages.get()?.pages[0].history).toEqual(["/path1", "/path2"]);
+    selectPage("dynamicId");
+    updateCurrentSystem({
+      params: { date: "my-date", slug: "my-slug" },
+    });
+    expect($pages.get()?.pages[0].history).toEqual([
+      "/blog/my-date/post/my-slug",
+      "/blog/another-date/post/another-slug",
+    ]);
   });
 });
