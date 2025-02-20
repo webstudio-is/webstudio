@@ -51,10 +51,11 @@ export const SettingsSection = () => {
           placeholder={placeholder}
           value={localValue.value}
           onChange={(event) => localValue.set(event.target.value)}
-          onBlur={(event) => {
-            localValue.set((event.target as HTMLInputElement).value.trim());
-            localValue.save;
-          }}
+          onBlur={(event) =>
+            localValue.finalSave(
+              (event.target as HTMLInputElement).value.trim()
+            )
+          }
         />
       </HorizontalLayout>
     </Row>
