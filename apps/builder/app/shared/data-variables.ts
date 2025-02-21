@@ -8,9 +8,11 @@ import {
   type Resources,
   type WebstudioData,
   ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
   decodeDataVariableId,
   encodeDataVariableId,
   findTreeInstanceIdsExcludingSlotDescendants,
+  systemParameter,
   transpileExpression,
 } from "@webstudio-is/sdk";
 import {
@@ -213,6 +215,8 @@ const findMaskedVariablesByInstanceId = ({
   // allow accessing global variables everywhere
   instanceIdsPath.push(ROOT_INSTANCE_ID);
   const maskedVariables = new Map<DataSource["name"], DataSource["id"]>();
+  // global system variable always present
+  maskedVariables.set("system", SYSTEM_VARIABLE_ID);
   // start from the root to descendant
   // so child variables override parent variables
   for (const instanceId of instanceIdsPath.reverse()) {
@@ -244,6 +248,9 @@ export const findAvailableVariables = ({
     const dataSource = dataSources.get(dataSourceId);
     if (dataSource) {
       availableVariables.push(dataSource);
+    }
+    if (dataSourceId === SYSTEM_VARIABLE_ID) {
+      availableVariables.push(systemParameter);
     }
   }
   return availableVariables;

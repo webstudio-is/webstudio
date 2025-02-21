@@ -263,19 +263,7 @@ export const createBuild = async (
 ): Promise<void> => {
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
-  const systemDataSource: DataSource = {
-    id: nanoid(),
-    scopeInstanceId: rootInstanceId,
-    name: "system",
-    type: "parameter",
-  };
-
-  const defaultPages = Pages.parse(
-    createDefaultPages({
-      rootInstanceId,
-      systemDataSourceId: systemDataSource.id,
-    })
-  );
+  const defaultPages = createDefaultPages({ rootInstanceId });
 
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
@@ -283,9 +271,6 @@ export const createBuild = async (
     pages: serializePages(defaultPages),
     breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
     instances: serializeData<Instance>(new Map(newInstances)),
-    dataSources: serializeData<DataSource>(
-      new Map([[systemDataSource.id, systemDataSource]])
-    ),
   });
   if (newBuild.error) {
     throw newBuild.error;
