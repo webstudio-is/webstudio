@@ -71,7 +71,6 @@ import {
   $assets,
   $instances,
   $pages,
-  $dataSources,
   $publishedOrigin,
   $project,
   $userPlanFeatures,
