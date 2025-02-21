@@ -24,7 +24,7 @@ const initialProperties = new Set<StyleProperty>([
   "userSelect",
 ]);
 
-export const $advancedStyles = computed(
+export const $advancedStylesLonghands = computed(
   [
     // prevent showing properties inherited from root
     // to not bloat advanced panel
@@ -83,21 +83,28 @@ export const $advancedStyles = computed(
         advancedStyles.set(initialProperty, { type: "unset", value: "" });
       }
     }
-    //console.log(advancedStyles);
-    const styles1: StyleMap = new Map();
 
-    for (const [property, value] of advancedStyles) {
-      styles1.set(hyphenateProperty(property), value);
+    return advancedStyles;
+  }
+);
+
+export const $advancedStylesShorthands = computed(
+  [$advancedStylesLonghands],
+  (advancedStylesLonghands) => {
+    const longhandsMap: StyleMap = new Map();
+    // @todo this hyphen/camel case convesion needs to be solved by switching entirely to dash separated syntax.
+    for (const [property, value] of advancedStylesLonghands) {
+      longhandsMap.set(hyphenateProperty(property), value);
     }
 
-    const merged = mergeStyles(styles1);
+    const shorthands = mergeStyles(longhandsMap);
 
-    const styles2: StyleMap = new Map();
+    const shorthandsMap: StyleMap = new Map();
 
-    for (const [property, value] of merged) {
-      styles2.set(camelCase(property), value);
+    for (const [property, value] of shorthands) {
+      shorthandsMap.set(camelCase(property), value);
     }
-    console.log(styles2);
-    return styles2;
+
+    return shorthandsMap;
   }
 );

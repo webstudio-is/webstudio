@@ -17,6 +17,7 @@ import {
   Box,
   Collapsible,
   Flex,
+  focusRingStyle,
   Label,
   SearchField,
   SectionTitle,
@@ -27,7 +28,11 @@ import {
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  expandShorthands,
+  parseCssValue,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
   isShorthand,
@@ -55,12 +60,13 @@ import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
-import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
-import { $advancedStyles } from "./stores";
+import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
+import { $advancedStylesShorthands } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
 import { $selectedInstanceKey } from "~/shared/awareness";
+import { camelCase } from "change-case";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -117,7 +123,7 @@ const insertStyles = (css: string) => {
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
-const indentation = `20px`;
+const initialIndentation = `20px`;
 
 const AdvancedPropertyLabel = ({
   property,
@@ -166,7 +172,7 @@ const AdvancedPropertyLabel = ({
         text="mono"
         css={{
           backgroundColor: "transparent",
-          marginLeft: `-${indentation}`,
+          marginLeft: `-${initialIndentation}`,
         }}
       >
         {label}
@@ -279,7 +285,6 @@ const LazyRender = ({ children }: ComponentProps<"div">) => {
     ref.current.addEventListener(
       "contentvisibilityautostatechange",
       (event) => {
-        console.log("visibility", event);
         setIsVisible(!event.skipped);
       },
       {
@@ -322,10 +327,12 @@ const AdvancedDeclarationLonghand = memo(
     onChangeComplete,
     onReset,
     valueInputRef,
+    indentation = initialIndentation,
   }: {
     property: StyleProperty;
-    value: StyleValue;
+    value: StyleValue | undefined;
     autoFocus?: boolean;
+    indentation?: string;
     onReset?: () => void;
     onChangeComplete?: ComponentProps<
       typeof CssValueInputContainer
@@ -338,7 +345,7 @@ const AdvancedDeclarationLonghand = memo(
         wrap="wrap"
         align="center"
         justify="start"
-        {...{ [propertyContainerAttribute]: property }}
+        {...{ [copyAttribute]: property }}
       >
         <AdvancedPropertyLabel property={property} onReset={onReset} />
         <Text
@@ -366,7 +373,7 @@ const AdvancedDeclarationLonghand = memo(
 const AdvancedDeclarationShorthand = memo(
   (props: {
     property: StyleProperty;
-    value: StyleValue;
+    value: StyleValue | undefined;
     autoFocus?: boolean;
     onReset?: () => void;
     onChangeComplete?: ComponentProps<
@@ -375,15 +382,24 @@ const AdvancedDeclarationShorthand = memo(
     valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
     const { property, value, onReset } = props;
+    const [isOpen, setIsOpen] = useState(false);
+    const longhands = expandShorthands([[property, toValue(value)]]);
+
     return (
-      <details>
-        <summary>
+      <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Collapsible.Trigger asChild>
           <Flex
-            css={{ display: "inline-flex", paddingLeft: indentation }}
+            css={{
+              paddingLeft: initialIndentation,
+              position: "relative",
+              outline: "none",
+              "&:focus-visible": focusRingStyle({ inset: 1 }),
+            }}
             wrap="wrap"
             align="center"
             justify="start"
-            {...{ [propertyContainerAttribute]: property }}
+            tabIndex={0}
+            {...{ [copyAttribute]: property }}
           >
             <AdvancedPropertyLabel property={property} onReset={onReset} />
             <Text
@@ -392,22 +408,36 @@ const AdvancedDeclarationShorthand = memo(
               css={{
                 textIndent: "-0.5ch",
                 fontWeight: "bold",
+                paddingRight: "1ch",
               }}
             >
-              :
+              {isOpen ? ": ▼" : ": ▶"}
             </Text>
             <Text variant="mono">{toValue(value)}</Text>
           </Flex>
-        </summary>
-        <AdvancedDeclarationLonghand {...props} />
-      </details>
+        </Collapsible.Trigger>
+
+        <Collapsible.Content>
+          {longhands.map(([property, value]) => {
+            return (
+              <AdvancedDeclarationLonghand
+                {...props}
+                key={property}
+                indentation="30px"
+                property={camelCase(property) as StyleProperty}
+                value={parseCssValue(property as StyleProperty, value)}
+              />
+            );
+          })}
+        </Collapsible.Content>
+      </Collapsible.Root>
     );
   }
 );
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
-  const advancedStyles = useStore($advancedStyles);
+  const advancedStyles = useStore($advancedStylesShorthands);
   const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance, so that when user switches between instances and comes back
   // they are still in-place
