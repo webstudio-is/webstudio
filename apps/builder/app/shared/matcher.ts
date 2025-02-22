@@ -376,7 +376,10 @@ export const findClosestNonTextualContainer = ({
     if (instance === undefined) {
       continue;
     }
-    let hasText = false;
+    const meta = metas.get(instance.component);
+    // placeholder exists only inside of empty instances
+    let hasText =
+      meta?.placeholder !== undefined && instance.children.length === 0;
     for (const child of instance.children) {
       if (child.type === "text" || child.type === "expression") {
         hasText = true;
@@ -392,7 +395,6 @@ export const findClosestNonTextualContainer = ({
     if (hasText) {
       continue;
     }
-    const meta = metas.get(instance.component);
     if (meta?.type === "container") {
       return index;
     }

@@ -15,6 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
+  placeholder: "Paragraph",
   icon: TextAlignLeftIcon,
   constraints: {
     relation: "ancestor",

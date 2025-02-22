@@ -12,13 +12,7 @@ import {
   createImageValueTransformer,
   addFontRules,
 } from "@webstudio-is/sdk";
-import {
-  collapsedAttribute,
-  idAttribute,
-  editingPlaceholderVariable,
-  editablePlaceholderVariable,
-  componentAttribute,
-} from "@webstudio-is/react-sdk";
+import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import {
   StyleValue,
   type TransformValue,
@@ -68,31 +62,22 @@ export const mountStyles = () => {
   helpersSheet.render();
 };
 
-/**
- * Opinionated list of non collapsible components in the builder
- */
-export const editablePlaceholderComponents = [
-  "Paragraph",
-  "Heading",
-  "ListItem",
-  "Blockquote",
-  "Link",
-];
-
-const editablePlaceholderSelector = editablePlaceholderComponents
-  .map((component) => `[${componentAttribute}= "${component}"]`)
-  .join(", ");
+export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
+// @todo replace with modern typed attr() when supported in all browsers
+// see the second edge case
+// https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
+export const editingPlaceholderVariable = "--ws-editing-placeholder";
 
 const helperStylesShared = [
   // Display a placeholder text for elements that are editable but currently empty
-  `:is(${editablePlaceholderSelector}):empty::before {
-    content: var(${editablePlaceholderVariable}, '\\200B');
+  `:is([${editablePlaceholderAttribute}]):empty::before {
+    content: attr(${editablePlaceholderAttribute});
     opacity: 0.3;
   }
   `,
 
   // Display a placeholder text for elements that are editing but empty (Lexical adds p>br children)
-  `:is(${editablePlaceholderSelector})[contenteditable] > p:only-child:has(br:only-child) {
+  `:is([${editablePlaceholderAttribute}])[contenteditable] > p:only-child:has(br:only-child) {
     position: relative;
     display: block;
     &:after {
