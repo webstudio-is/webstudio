@@ -15,6 +15,7 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
+import { toKebabCase } from "~/builder/features/style-panel/shared/keyword-utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
 import { useIds } from "~/shared/form-utils";
 
@@ -116,7 +117,7 @@ const Keyframe = ({
   const cssProperties = useMemo(() => {
     let result = ``;
     for (const [property, style] of Object.entries(value.styles)) {
-      result = `${result}${property}: ${toValue(style)};\n`;
+      result = `${result}${toKebabCase(property)}: ${toValue(style)};\n`;
     }
     return result;
   }, [value.styles]);
