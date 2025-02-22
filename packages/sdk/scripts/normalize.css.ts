@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { parseCss } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import htmlTags from "html-tags";
 
 const mapGroupBy = <Item, Key>(
@@ -48,7 +48,7 @@ for (const [tag, styles] of groups) {
   }
   const newStyles = styles.map(({ state, property, value }) => ({
     state,
-    property,
+    property: camelCaseProperty(property),
     value,
   }));
   let serializedStyles = JSON.stringify(newStyles);

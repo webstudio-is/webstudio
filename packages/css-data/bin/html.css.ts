@@ -1,12 +1,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import type { StyleValue } from "@webstudio-is/css-engine";
-import { parseCss } from "../src/parse-css";
+import { camelCaseProperty, parseCss } from "../src/parse-css";
 
 const css = readFileSync("./src/html.css", "utf8");
 const parsed = parseCss(css);
 const result: [string, StyleValue][] = [];
 for (const styleDecl of parsed) {
-  result.push([`${styleDecl.selector}:${styleDecl.property}`, styleDecl.value]);
+  result.push([
+    `${styleDecl.selector}:${camelCaseProperty(styleDecl.property)}`,
+    styleDecl.value,
+  ]);
 }
 let code = "";
 code += `import type { HtmlTags } from "html-tags";\n`;

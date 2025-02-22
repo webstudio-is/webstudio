@@ -1,6 +1,10 @@
 import { camelCase } from "change-case";
 import * as csstree from "css-tree";
-import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  StyleValue,
+  type CssProperty,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
 
@@ -8,32 +12,8 @@ export type ParsedStyleDecl = {
   breakpoint?: string;
   selector: string;
   state?: string;
-  property: StyleProperty;
+  property: CssProperty;
   value: StyleValue;
-};
-
-/**
- * Store prefixed properties without change
- * and convert to camel case only unprefixed properties
- * @todo stop converting to camel case and use hyphenated format
- */
-const normalizePropertyName = (property: string) => {
-  // these are manually added with pascal case
-  // convert unprefixed used by webflow version into prefixed one
-  if (property === "-webkit-font-smoothing" || property === "font-smoothing") {
-    return "WebkitFontSmoothing";
-  }
-  if (property === "-moz-osx-font-smoothing") {
-    return "MozOsxFontSmoothing";
-  }
-  // webflow use unprefixed version
-  if (property === "tap-highlight-color") {
-    return "-webkit-tap-highlight-color";
-  }
-  if (property.startsWith("-")) {
-    return property;
-  }
-  return camelCase(property);
 };
 
 // @todo we don't parse correctly most of them if not all
@@ -48,15 +28,43 @@ const prefixedProperties = [
 const prefixes = ["webkit", "moz", "ms", "o"];
 const prefixRegex = new RegExp(`^-(${prefixes.join("|")})-`);
 
-const unprefixProperty = (property: string) => {
-  if (prefixedProperties.includes(property)) {
-    return property;
+const normalizeProperty = (property: string): CssProperty => {
+  // convert unprefixed used by webflow version into prefixed one
+  if (property === "tap-highlight-color") {
+    return "-webkit-tap-highlight-color";
   }
-  return property.replace(prefixRegex, "");
+  if (property === "font-smoothing") {
+    return "-webkit-font-smoothing";
+  }
+  if (prefixedProperties.includes(property)) {
+    return property as CssProperty;
+  }
+  // remove old or unexpected prefixes
+  return property.replace(prefixRegex, "") as CssProperty;
+};
+
+/**
+ * Store prefixed properties without change
+ * and convert to camel case only unprefixed properties
+ * @todo stop converting to camel case and use hyphenated format
+ */
+export const camelCaseProperty = (property: CssProperty): StyleProperty => {
+  property = normalizeProperty(property);
+  // these are manually added with pascal case
+  if (property === "-webkit-font-smoothing") {
+    return "WebkitFontSmoothing";
+  }
+  if (property === "-moz-osx-font-smoothing") {
+    return "MozOsxFontSmoothing";
+  }
+  if (property.startsWith("-")) {
+    return property as StyleProperty;
+  }
+  return camelCase(property) as StyleProperty;
 };
 
 const parseCssValue = (
-  property: string,
+  property: CssProperty,
   value: string
 ): Map<StyleProperty, StyleValue> => {
   const expanded = new Map(expandShorthands([[property, value]]));
@@ -71,10 +79,7 @@ const parseCssValue = (
 
     final.set(
       property,
-      parseCssValueLonghand(
-        normalizePropertyName(property) as StyleProperty,
-        value
-      )
+      parseCssValueLonghand(camelCaseProperty(property) as StyleProperty, value)
     );
   }
   return final;
@@ -227,17 +232,16 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
     const stringValue = csstree.generate(node.value);
 
     const parsedCss = parseCssValue(
-      unprefixProperty(node.property),
+      normalizeProperty(node.property),
       stringValue
     );
 
     for (const { name: selector, state } of selectors) {
       for (const [property, value] of parsedCss) {
+        const normalizedProperty = normalizeProperty(property);
         const styleDecl: ParsedStyleDecl = {
           selector,
-          property: normalizePropertyName(
-            unprefixProperty(property)
-          ) as StyleProperty,
+          property: normalizedProperty,
           value,
         };
         if (breakpoint) {
@@ -248,7 +252,10 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         }
 
         // deduplicate styles within selector and state by using map
-        styles.set(`${breakpoint}:${selector}:${state}:${property}`, styleDecl);
+        styles.set(
+          `${breakpoint}:${selector}:${state}:${normalizedProperty}`,
+          styleDecl
+        );
       }
     }
   });

@@ -45,7 +45,7 @@ export const properties = {
       value: "--scroll-timeline",
     },
     mdnUrl:
-      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
+      "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
   },
   "-webkit-line-clamp": {
     unitGroups: ["number"],

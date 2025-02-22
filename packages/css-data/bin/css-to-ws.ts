@@ -2,7 +2,7 @@
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import * as path from "node:path";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { parseCss } from "../src/parse-css";
+import { camelCaseProperty, parseCss } from "../src/parse-css";
 
 const cliOptions = {
   allowPositionals: true,
@@ -34,7 +34,13 @@ const objectGroupBy = <Item>(list: Item[], by: (item: Item) => string) => {
 };
 
 const css = readFileSync(sourcePath, "utf8");
-const parsed = parseCss(css);
+const parsed = parseCss(css).map(({ property, ...styleDecl }) => ({
+  selector: styleDecl.selector,
+  breakpoint: styleDecl.breakpoint,
+  state: styleDecl.state,
+  property: camelCaseProperty(property),
+  value: styleDecl.value,
+}));
 const records = objectGroupBy(parsed, (item) => item.selector);
 mkdirSync(path.dirname(destinationPath), { recursive: true });
 const code = `/* eslint-disable */

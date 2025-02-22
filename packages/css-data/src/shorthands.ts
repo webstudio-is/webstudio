@@ -1,4 +1,4 @@
-import { cssWideKeywords } from "@webstudio-is/css-engine";
+import { cssWideKeywords, type CssProperty } from "@webstudio-is/css-engine";
 import {
   List,
   parse,
@@ -1401,7 +1401,7 @@ const parseValue = function* (property: string, value: string) {
 
 export const expandShorthands = (
   shorthands: [property: string, value: string][]
-): [property: string, value: string][] => {
+): [property: CssProperty, value: string][] => {
   const longhands: [property: string, value: string][] = [];
   for (const [property, value] of shorthands) {
     const generator = parseValue(property, value);
@@ -1432,5 +1432,5 @@ export const expandShorthands = (
       }
     }
   }
-  return longhands;
+  return longhands as [property: CssProperty, value: string][];
 };
