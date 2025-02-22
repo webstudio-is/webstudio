@@ -1,9 +1,4 @@
-import {
-  StyleValue,
-  TupleValue,
-  TupleValueItem,
-  type StyleProperty,
-} from "../schema";
+import { StyleValue, TupleValue, TupleValueItem } from "../schema";
 import { cssWideKeywords } from "../css";
 import type { StyleMap } from "./rules";
 import { toValue } from "./to-value";

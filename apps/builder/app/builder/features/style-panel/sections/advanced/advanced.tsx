@@ -29,6 +29,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
+  camelCaseProperty,
   expandShorthands,
   parseCssValue,
   propertyDescriptions,
@@ -38,7 +39,7 @@ import {
   isShorthand,
   StyleValue,
   toValue,
-  type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
@@ -66,20 +67,19 @@ import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { camelCase } from "change-case";
 
 // Only here to keep the same section module interface
 export const properties = [];
 
 const AdvancedStyleSection = (props: {
   label: string;
-  properties: StyleProperty[];
+  properties: Array<CssProperty>;
   onAdd: () => void;
   children: ReactNode;
 }) => {
   const { label, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const styles = useComputedStyles(properties);
+  const styles = useComputedStyles(properties.map(camelCaseProperty));
   return (
     <CollapsibleSectionRoot
       label={label}
@@ -129,10 +129,11 @@ const AdvancedPropertyLabel = ({
   property,
   onReset,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   onReset?: () => void;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
+  const camelCasedProperty = camelCaseProperty(property);
+  const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const label = hyphenateProperty(property);
   const description = propertyDescriptions[property];
   const [isOpen, setIsOpen] = useState(false);
@@ -146,7 +147,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            deleteProperty(property);
+            deleteProperty(camelCasedProperty);
             onReset?.();
             return;
           }
@@ -159,7 +160,7 @@ const AdvancedPropertyLabel = ({
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            deleteProperty(property);
+            deleteProperty(camelCasedProperty);
             setIsOpen(false);
             onReset?.();
           }}
@@ -189,14 +190,16 @@ const AdvancedPropertyValue = ({
   inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
-  property: StyleProperty;
+  property: CssProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
   onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
+  // @todo conversion should be removed once data is in dash case
+  const camelCasedProperty = camelCaseProperty(property);
+  const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) {
@@ -218,21 +221,21 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                setProperty(property)(styleValue, options);
+                setProperty(camelCasedProperty)(styleValue, options);
               } else {
-                deleteProperty(property, options);
+                deleteProperty(camelCasedProperty, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              setProperty(property)(styleValue);
+              setProperty(camelCasedProperty)(styleValue);
             }}
           />
         )
       }
-      property={property}
+      property={camelCasedProperty}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...styleConfigByName(camelCasedProperty).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
@@ -244,12 +247,15 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          setProperty(property)(
+          setProperty(camelCasedProperty)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          setProperty(property)(styleValue, { ...options, listed: true });
+          setProperty(camelCasedProperty)(styleValue, {
+            ...options,
+            listed: true,
+          });
         }
       }}
       deleteProperty={deleteProperty}
@@ -329,7 +335,7 @@ const AdvancedDeclarationLonghand = memo(
     valueInputRef,
     indentation = initialIndentation,
   }: {
-    property: StyleProperty;
+    property: CssProperty;
     value: StyleValue | undefined;
     autoFocus?: boolean;
     indentation?: string;
@@ -372,7 +378,7 @@ const AdvancedDeclarationLonghand = memo(
 
 const AdvancedDeclarationShorthand = memo(
   (props: {
-    property: StyleProperty;
+    property: CssProperty;
     value: StyleValue | undefined;
     autoFocus?: boolean;
     onReset?: () => void;
@@ -386,7 +392,7 @@ const AdvancedDeclarationShorthand = memo(
     const longhands = expandShorthands([
       [hyphenateProperty(property), toValue(value)],
     ]);
-
+    const camelCasedProperty = camelCaseProperty(property);
     return (
       <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
         <Collapsible.Trigger asChild>
@@ -426,8 +432,8 @@ const AdvancedDeclarationShorthand = memo(
                 {...props}
                 key={property}
                 indentation="30px"
-                property={camelCase(property) as StyleProperty}
-                value={parseCssValue(property as StyleProperty, value)}
+                property={property}
+                value={parseCssValue(camelCasedProperty, value)}
               />
             );
           })}
@@ -444,19 +450,19 @@ export const Section = () => {
   // Memorizing recent properties by instance, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
-    Map<string, Array<StyleProperty>>
+    Map<string, Array<CssProperty>>
   >(new Map());
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchProperties, setSearchProperties] =
-    useState<Array<StyleProperty>>();
+    useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState<number>(0);
 
   const advancedProperties = Array.from(
     advancedStyles.keys()
-  ) as Array<StyleProperty>;
+  ) as Array<CssProperty>;
 
   const currentProperties = searchProperties ?? advancedProperties;
 
@@ -471,7 +477,7 @@ export const Section = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
-  const updateRecentProperties = (properties: Array<StyleProperty>) => {
+  const updateRecentProperties = (properties: Array<CssProperty>) => {
     if (selectedInstanceKey === undefined) {
       return;
     }
@@ -485,7 +491,9 @@ export const Section = () => {
 
   const handleInsertStyles = (cssText: string) => {
     const styles = insertStyles(cssText);
-    const insertedProperties = styles.map(({ property }) => property);
+    const insertedProperties = styles.map(
+      ({ property }) => hyphenateProperty(property) as CssProperty
+    );
     updateRecentProperties(insertedProperties);
     return styles;
   };
@@ -520,7 +528,7 @@ export const Section = () => {
       keys: ["property", "value"],
     }).map(({ property }) => property);
 
-    setSearchProperties(matched as StyleProperty[]);
+    setSearchProperties(matched as CssProperty[]);
   };
 
   const handleAbortAddStyles = () => {

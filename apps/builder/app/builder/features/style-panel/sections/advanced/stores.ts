@@ -2,8 +2,8 @@ import { computed } from "nanostores";
 import {
   hyphenateProperty,
   mergeStyles,
+  type CssProperty,
   type StyleMap,
-  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
@@ -14,14 +14,13 @@ import {
 } from "~/shared/nano-states";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
-import { camelCase } from "change-case";
 
-const initialProperties = new Set<StyleProperty>([
+const initialProperties = new Set<CssProperty>([
   "cursor",
-  "mixBlendMode",
+  "mix-blend-mode",
   "opacity",
-  "pointerEvents",
-  "userSelect",
+  "pointer-events",
+  "user-select",
 ]);
 
 export const $advancedStylesLonghands = computed(
@@ -58,22 +57,23 @@ export const $advancedStylesLonghands = computed(
     });
 
     // All properties used by the panels except the advanced panel
-    const visualProperties = new Set<StyleProperty>([]);
+    const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(property);
+        visualProperties.add(hyphenateProperty(property) as CssProperty);
       }
     }
     for (const style of definedStyles) {
       const { property, value, listed } = style;
+      const hyphenatedProperty = hyphenateProperty(property) as CssProperty;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (
-        visualProperties.has(property) === false ||
+        visualProperties.has(hyphenatedProperty) === false ||
         listed ||
         settings.stylePanelMode === "advanced"
       ) {
-        advancedStyles.set(property, value);
+        advancedStyles.set(hyphenatedProperty, value);
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
@@ -94,7 +94,7 @@ export const $advancedStylesShorthands = computed(
     const longhandsMap: StyleMap = new Map();
     // @todo this hyphen/camel case convesion needs to be solved by switching entirely to dash separated syntax.
     for (const [property, value] of advancedStylesLonghands) {
-      longhandsMap.set(hyphenateProperty(property), value);
+      longhandsMap.set(property, value);
     }
 
     const shorthands = mergeStyles(longhandsMap);
@@ -102,7 +102,7 @@ export const $advancedStylesShorthands = computed(
     const shorthandsMap: StyleMap = new Map();
 
     for (const [property, value] of shorthands) {
-      shorthandsMap.set(camelCase(property), value);
+      shorthandsMap.set(property, value);
     }
 
     return shorthandsMap;
