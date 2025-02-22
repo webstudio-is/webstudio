@@ -90,11 +90,12 @@ export const generateCss = ({
   assetBaseUrl,
   atomic,
 }: CssConfig) => {
-  const globalSheet = createRegularStyleSheet({ name: "ssr" });
-  const sheet = createRegularStyleSheet({ name: "ssr" });
+  const fontSheet = createRegularStyleSheet({ name: "ssr" });
+  const presetSheet = createRegularStyleSheet({ name: "ssr" });
+  const userSheet = createRegularStyleSheet({ name: "ssr" });
 
-  addFontRules({ sheet: globalSheet, assets, assetBaseUrl });
-  globalSheet.addMediaRule("presets");
+  addFontRules({ sheet: fontSheet, assets, assetBaseUrl });
+  presetSheet.addMediaRule("presets");
   const presetClasses = new Map<Instance["component"], string>();
   const scope = createScope([], normalizeClassName, "-");
   for (const [component, meta] of componentMetas) {
@@ -105,14 +106,15 @@ export const generateCss = ({
       // add preset class only when at least one style is defined
       presetClasses.set(component, className);
     }
+    // @todo reset specificity with css cascade layers instead of :where
     for (const [tag, styles] of presetStyle) {
       // use :where() to reset specificity of preset selector
       // and let user styles completely override it
       // ideally switch to @layer when better supported
       // render root preset styles without changes
       const selector =
-        component === rootComponent ? ":root" : `:where(${tag}.${className})`;
-      const rule = globalSheet.addNestingRule(selector);
+        component === rootComponent ? ":root" : `${tag}.${className}`;
+      const rule = presetSheet.addNestingRule(selector);
       for (const declaration of styles) {
         rule.setDeclaration({
           breakpoint: "presets",
@@ -125,16 +127,16 @@ export const generateCss = ({
   }
 
   for (const breakpoint of breakpoints.values()) {
-    sheet.addMediaRule(breakpoint.id, breakpoint);
+    userSheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
   const imageValueTransformer = createImageValueTransformer(assets, {
     assetBaseUrl,
   });
-  sheet.setTransformer(imageValueTransformer);
+  userSheet.setTransformer(imageValueTransformer);
 
   for (const styleDecl of styles.values()) {
-    const rule = sheet.addMixinRule(styleDecl.styleSourceId);
+    const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
       selector: styleDecl.state ?? "",
@@ -170,7 +172,7 @@ export const generateCss = ({
     const { values } = selection;
     // special case for :root styles
     if (instanceId === ROOT_INSTANCE_ID) {
-      const rule = sheet.addNestingRule(`:root`);
+      const rule = userSheet.addNestingRule(`:root`);
       rule.applyMixins(values);
       // avoid storing in instanceByRule to prevent conversion into atomic styles
       continue;
@@ -201,21 +203,34 @@ export const generateCss = ({
       }
       classList.push(className);
     }
-    const rule = sheet.addNestingRule(`.${className}`, descendantSuffix);
+    const rule = userSheet.addNestingRule(`.${className}`, descendantSuffix);
     rule.applyMixins(values);
     instanceByRule.set(rule, instanceId);
   }
 
+  const fontCss = fontSheet.cssText;
+  // render presets inside of cascade layer to let user completely override all properties
+  // user agent (browser) styles work in the same way
+  // for example a { color: black } overrides a:visited as well
+  // @todo figure out proper API to work with layers when more use cases are known
+  const presetCss = presetSheet.cssText.replaceAll(
+    "@media all ",
+    "@layer presets "
+  );
+
   if (atomic) {
-    const { cssText } = generateAtomic(sheet, {
+    const { cssText } = generateAtomic(userSheet, {
       getKey: (rule) => instanceByRule.get(rule),
       transformValue: imageValueTransformer,
       classes,
     });
-    return { cssText: `${globalSheet.cssText}\n${cssText}`, classes };
+    return {
+      cssText: `${fontCss}${presetCss}\n${cssText}`,
+      classes,
+    };
   }
   return {
-    cssText: `${globalSheet.cssText}\n${sheet.cssText}`,
+    cssText: `${fontCss}${presetCss}\n${userSheet.cssText}`,
     classes,
   };
 };
