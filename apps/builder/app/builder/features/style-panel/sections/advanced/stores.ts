@@ -1,5 +1,10 @@
 import { computed } from "nanostores";
-import { type StyleMap, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  mergeStyles,
+  type CssProperty,
+  type StyleMap,
+} from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
 import {
@@ -10,15 +15,16 @@ import {
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
 
-const initialProperties = new Set<StyleProperty>([
+// @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
+const initialProperties = new Set<CssProperty>([
   "cursor",
-  "mixBlendMode",
+  "mix-blend-mode",
   "opacity",
-  "pointerEvents",
-  "userSelect",
+  "pointer-events",
+  "user-select",
 ]);
 
-export const $advancedStyles = computed(
+export const $advancedStylesLonghands = computed(
   [
     // prevent showing properties inherited from root
     // to not bloat advanced panel
@@ -52,22 +58,23 @@ export const $advancedStyles = computed(
     });
 
     // All properties used by the panels except the advanced panel
-    const visualProperties = new Set<StyleProperty>([]);
+    const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(property);
+        visualProperties.add(hyphenateProperty(property) as CssProperty);
       }
     }
     for (const style of definedStyles) {
       const { property, value, listed } = style;
+      const hyphenatedProperty = hyphenateProperty(property) as CssProperty;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (
-        visualProperties.has(property) === false ||
+        visualProperties.has(hyphenatedProperty) === false ||
         listed ||
         settings.stylePanelMode === "advanced"
       ) {
-        advancedStyles.set(property, value);
+        advancedStyles.set(hyphenatedProperty, value);
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
@@ -77,6 +84,21 @@ export const $advancedStyles = computed(
         advancedStyles.set(initialProperty, { type: "unset", value: "" });
       }
     }
+
     return advancedStyles;
+  }
+);
+
+export const $advancedStylesShorthands = computed(
+  [$advancedStylesLonghands],
+  (advancedStylesLonghands) => {
+    const shorthandsMap: StyleMap = new Map();
+    const shorthands = mergeStyles(advancedStylesLonghands);
+
+    for (const [property, value] of shorthands) {
+      shorthandsMap.set(property, value);
+    }
+
+    return shorthandsMap;
   }
 );

@@ -132,31 +132,29 @@ export const CollapsibleSectionRoot = ({
 }: CollapsibleSectionBaseProps) => {
   return (
     <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
-      <>
-        <Collapsible.Trigger asChild>
-          {trigger ?? (
-            <SectionTitle>
-              <SectionTitleLabel>{label}</SectionTitleLabel>
-            </SectionTitle>
-          )}
-        </Collapsible.Trigger>
+      <Collapsible.Trigger asChild>
+        {trigger ?? (
+          <SectionTitle>
+            <SectionTitleLabel>{label}</SectionTitleLabel>
+          </SectionTitle>
+        )}
+      </Collapsible.Trigger>
 
-        <Collapsible.Content asChild>
-          <Flex
-            gap="2"
-            direction="column"
-            css={{
-              pb: theme.panel.paddingBlock,
-              px: fullWidth ? 0 : theme.panel.paddingInline,
-              paddingTop: 0,
-              "&:empty": { display: "none" },
-            }}
-          >
-            {children}
-          </Flex>
-        </Collapsible.Content>
-        <Separator />
-      </>
+      <Collapsible.Content asChild>
+        <Flex
+          gap="2"
+          direction="column"
+          css={{
+            pb: theme.panel.paddingBlock,
+            px: fullWidth ? 0 : theme.panel.paddingInline,
+            paddingTop: 0,
+            "&:empty": { display: "none" },
+          }}
+        >
+          {children}
+        </Flex>
+      </Collapsible.Content>
+      <Separator />
     </Collapsible.Root>
   );
 };

@@ -15,7 +15,9 @@ import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
+  Collapsible,
   Flex,
+  focusRingStyle,
   Label,
   SearchField,
   SectionTitle,
@@ -26,11 +28,18 @@ import {
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  expandShorthands,
+  parseCssValue,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
+  isShorthand,
+  StyleValue,
   toValue,
-  type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
@@ -52,8 +61,8 @@ import { getDots } from "../../shared/style-section";
 import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
-import { CopyPasteMenu, propertyContainerAttribute } from "./copy-paste-menu";
-import { $advancedStyles } from "./stores";
+import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
+import { $advancedStylesShorthands } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
@@ -64,13 +73,13 @@ export const properties = [];
 
 const AdvancedStyleSection = (props: {
   label: string;
-  properties: StyleProperty[];
+  properties: Array<CssProperty>;
   onAdd: () => void;
   children: ReactNode;
 }) => {
   const { label, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const styles = useComputedStyles(properties);
+  const styles = useComputedStyles(properties.map(camelCaseProperty));
   return (
     <CollapsibleSectionRoot
       label={label}
@@ -114,16 +123,17 @@ const insertStyles = (css: string) => {
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
-const indentation = `20px`;
+const initialIndentation = `20px`;
 
 const AdvancedPropertyLabel = ({
   property,
   onReset,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   onReset?: () => void;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
+  const camelCasedProperty = camelCaseProperty(property);
+  const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const label = hyphenateProperty(property);
   const description = propertyDescriptions[property];
   const [isOpen, setIsOpen] = useState(false);
@@ -137,7 +147,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            deleteProperty(property);
+            deleteProperty(camelCasedProperty);
             onReset?.();
             return;
           }
@@ -150,7 +160,7 @@ const AdvancedPropertyLabel = ({
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            deleteProperty(property);
+            deleteProperty(camelCasedProperty);
             setIsOpen(false);
             onReset?.();
           }}
@@ -163,7 +173,7 @@ const AdvancedPropertyLabel = ({
         text="mono"
         css={{
           backgroundColor: "transparent",
-          marginLeft: `-${indentation}`,
+          marginLeft: `-${initialIndentation}`,
         }}
       >
         {label}
@@ -180,14 +190,16 @@ const AdvancedPropertyValue = ({
   inputRef: inputRefProp,
 }: {
   autoFocus?: boolean;
-  property: StyleProperty;
+  property: CssProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
   onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
+  // @todo conversion should be removed once data is in dash case
+  const camelCasedProperty = camelCaseProperty(property);
+  const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) {
@@ -209,21 +221,21 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                setProperty(property)(styleValue, options);
+                setProperty(camelCasedProperty)(styleValue, options);
               } else {
-                deleteProperty(property, options);
+                deleteProperty(camelCasedProperty, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              setProperty(property)(styleValue);
+              setProperty(camelCasedProperty)(styleValue);
             }}
           />
         )
       }
-      property={property}
+      property={camelCasedProperty}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...styleConfigByName(camelCasedProperty).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
@@ -235,12 +247,15 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          setProperty(property)(
+          setProperty(camelCasedProperty)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          setProperty(property)(styleValue, { ...options, listed: true });
+          setProperty(camelCasedProperty)(styleValue, {
+            ...options,
+            listed: true,
+          });
         }
       }}
       deleteProperty={deleteProperty}
@@ -255,15 +270,116 @@ const AdvancedPropertyValue = ({
  * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
  * and the contentVisibility and containIntrinsicSize CSS properties.
  */
-const AdvancedProperty = memo(
+const LazyRender = ({ children }: ComponentProps<"div">) => {
+  const visibilityChangeEventSupported = useClientSupports(
+    () => "oncontentvisibilityautostatechange" in document.body
+  );
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
+
+  useEffect(() => {
+    if (!visibilityChangeEventSupported) {
+      return;
+    }
+
+    if (ref.current == null) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    ref.current.addEventListener(
+      "contentvisibilityautostatechange",
+      (event) => {
+        setIsVisible(!event.skipped);
+      },
+      {
+        signal: controller.signal,
+      }
+    );
+
+    return () => {
+      controller.abort();
+    };
+  }, [visibilityChangeEventSupported]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        display: "inline-block",
+        contentVisibility: "auto",
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
+        // containIntrinsicSize is used to set the default size of an element before any content is loaded.
+        // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
+        // It also affects the contentvisibilityautostatechange event to be called properly,
+        // with "auto" it will call it with skipped false for all initial elements.
+        // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
+        containIntrinsicSize: "auto 44px",
+      }}
+    >
+      {
+        //children
+        isVisible ? children : undefined
+      }
+    </div>
+  );
+};
+
+const AdvancedDeclarationLonghand = memo(
   ({
     property,
     autoFocus,
     onChangeComplete,
     onReset,
     valueInputRef,
+    indentation = initialIndentation,
   }: {
-    property: StyleProperty;
+    property: CssProperty;
+    value: StyleValue | undefined;
+    autoFocus?: boolean;
+    indentation?: string;
+    onReset?: () => void;
+    onChangeComplete?: ComponentProps<
+      typeof CssValueInputContainer
+    >["onChangeComplete"];
+    valueInputRef?: RefObject<HTMLInputElement>;
+  }) => {
+    return (
+      <Flex
+        css={{ paddingLeft: indentation }}
+        wrap="wrap"
+        align="center"
+        justify="start"
+        {...{ [copyAttribute]: property }}
+      >
+        <AdvancedPropertyLabel property={property} onReset={onReset} />
+        <Text
+          variant="mono"
+          // Improves the visual separation of value from the property.
+          css={{
+            textIndent: "-0.5ch",
+            fontWeight: "bold",
+          }}
+        >
+          :
+        </Text>
+        <AdvancedPropertyValue
+          autoFocus={autoFocus}
+          property={property}
+          onChangeComplete={onChangeComplete}
+          onReset={onReset}
+          inputRef={valueInputRef}
+        />
+      </Flex>
+    );
+  }
+);
+
+const AdvancedDeclarationShorthand = memo(
+  (props: {
+    property: CssProperty;
+    value: StyleValue | undefined;
     autoFocus?: boolean;
     onReset?: () => void;
     onChangeComplete?: ComponentProps<
@@ -271,60 +387,28 @@ const AdvancedProperty = memo(
     >["onChangeComplete"];
     valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
-    const visibilityChangeEventSupported = useClientSupports(
-      () => "oncontentvisibilityautostatechange" in document.body
-    );
-    const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(!visibilityChangeEventSupported);
-
-    useEffect(() => {
-      if (!visibilityChangeEventSupported) {
-        return;
-      }
-
-      if (ref.current == null) {
-        return;
-      }
-
-      const controller = new AbortController();
-
-      ref.current.addEventListener(
-        "contentvisibilityautostatechange",
-        (event) => {
-          setIsVisible(!event.skipped);
-        },
-        {
-          signal: controller.signal,
-        }
-      );
-
-      return () => {
-        controller.abort();
-      };
-    }, [visibilityChangeEventSupported]);
-
+    const { property, value, onReset } = props;
+    const [isOpen, setIsOpen] = useState(false);
+    const longhands = expandShorthands([
+      [hyphenateProperty(property), toValue(value)],
+    ]);
+    const camelCasedProperty = camelCaseProperty(property);
     return (
-      <Flex
-        ref={ref}
-        css={{
-          contentVisibility: "auto",
-          // https://developer.mozilla.org/en-US/docs/Web/CSS/contain-intrinsic-size
-          // containIntrinsicSize is used to set the default size of an element before any content is loaded.
-          // This helps in preventing layout shifts and provides a better user experience by maintaining a consistent layout.
-          // It also affects the contentvisibilityautostatechange event to be called properly,
-          // with "auto" it will call it with skipped false for all initial elements.
-          // 44px is the height of the property row with 2 lines of text. This value can be adjusted slightly.
-          containIntrinsicSize: "auto 44px",
-          paddingLeft: indentation,
-        }}
-        key={property}
-        wrap="wrap"
-        align="center"
-        justify="start"
-        {...{ [propertyContainerAttribute]: property }}
-      >
-        {isVisible && (
-          <>
+      <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Collapsible.Trigger asChild>
+          <Flex
+            css={{
+              paddingLeft: initialIndentation,
+              position: "relative",
+              outline: "none",
+              "&:focus-visible": focusRingStyle({ inset: 1 }),
+            }}
+            wrap="wrap"
+            align="center"
+            justify="start"
+            tabIndex={0}
+            {...{ [copyAttribute]: property }}
+          >
             <AdvancedPropertyLabel property={property} onReset={onReset} />
             <Text
               variant="mono"
@@ -332,46 +416,53 @@ const AdvancedProperty = memo(
               css={{
                 textIndent: "-0.5ch",
                 fontWeight: "bold",
+                paddingRight: "1ch",
               }}
             >
-              :
+              {isOpen ? ": ▼" : ": ▶"}
             </Text>
-            <Box css={{ color: "red" }}>
-              <AdvancedPropertyValue
-                autoFocus={autoFocus}
+            <Text variant="mono">{toValue(value)}</Text>
+          </Flex>
+        </Collapsible.Trigger>
+
+        <Collapsible.Content>
+          {longhands.map(([property, value]) => {
+            return (
+              <AdvancedDeclarationLonghand
+                {...props}
+                key={property}
+                indentation="30px"
                 property={property}
-                onChangeComplete={onChangeComplete}
-                onReset={onReset}
-                inputRef={valueInputRef}
+                value={parseCssValue(camelCasedProperty, value)}
               />
-            </Box>
-          </>
-        )}
-      </Flex>
+            );
+          })}
+        </Collapsible.Content>
+      </Collapsible.Root>
     );
   }
 );
 
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
-  const advancedStyles = useStore($advancedStyles);
+  const advancedStyles = useStore($advancedStylesShorthands);
   const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
-    Map<string, Array<StyleProperty>>
+    Map<string, Array<CssProperty>>
   >(new Map());
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchProperties, setSearchProperties] =
-    useState<Array<StyleProperty>>();
+    useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState<number>(0);
 
   const advancedProperties = Array.from(
     advancedStyles.keys()
-  ) as Array<StyleProperty>;
+  ) as Array<CssProperty>;
 
   const currentProperties = searchProperties ?? advancedProperties;
 
@@ -386,7 +477,7 @@ export const Section = () => {
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
-  const updateRecentProperties = (properties: Array<StyleProperty>) => {
+  const updateRecentProperties = (properties: Array<CssProperty>) => {
     if (selectedInstanceKey === undefined) {
       return;
     }
@@ -400,7 +491,9 @@ export const Section = () => {
 
   const handleInsertStyles = (cssText: string) => {
     const styles = insertStyles(cssText);
-    const insertedProperties = styles.map(({ property }) => property);
+    const insertedProperties = styles.map(
+      ({ property }) => hyphenateProperty(property) as CssProperty
+    );
     updateRecentProperties(insertedProperties);
     return styles;
   };
@@ -435,7 +528,7 @@ export const Section = () => {
       keys: ["property", "value"],
     }).map(({ property }) => property);
 
-    setSearchProperties(matched as StyleProperty[]);
+    setSearchProperties(matched as CssProperty[]);
   };
 
   const handleAbortAddStyles = () => {
@@ -472,11 +565,14 @@ export const Section = () => {
             {showRecentProperties &&
               recentProperties.map((property, index, properties) => {
                 const isLast = index === properties.length - 1;
+                const AdvancedDeclaration = isShorthand(property)
+                  ? AdvancedDeclarationShorthand
+                  : AdvancedDeclarationLonghand;
                 return (
-                  <AdvancedProperty
+                  <AdvancedDeclaration
                     valueInputRef={isLast ? recentValueInputRef : undefined}
-                    key={property}
                     property={property}
+                    value={advancedStyles.get(property)}
                     autoFocus={isLast}
                     onChangeComplete={(event) => {
                       if (event.type === "enter") {
@@ -534,9 +630,19 @@ export const Section = () => {
               .filter(
                 (property) => recentProperties.includes(property) === false
               )
-              .map((property) => (
-                <AdvancedProperty key={property} property={property} />
-              ))}
+              .map((property) => {
+                const AdvancedDeclaration = isShorthand(property)
+                  ? AdvancedDeclarationShorthand
+                  : AdvancedDeclarationLonghand;
+                return (
+                  <LazyRender key={property}>
+                    <AdvancedDeclaration
+                      property={property}
+                      value={advancedStyles.get(property)}
+                    />
+                  </LazyRender>
+                );
+              })}
           </Flex>
         </Flex>
       </CopyPasteMenu>
