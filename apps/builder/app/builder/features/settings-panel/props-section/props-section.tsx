@@ -24,6 +24,7 @@ import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
+import { AnimateSection } from "./animation/animation-section";
 
 type Item = {
   name: string;
@@ -165,10 +166,29 @@ export const PropsSection = (props: PropsSectionProps) => {
   const hasItems =
     logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
+  const animationAction = logic.initialProps.find(
+    (prop) => prop.meta.type === "animationAction"
+  );
+
+  const hasAnimation = animationAction !== undefined;
+
   const showPropertiesSection =
     isDesignMode || (isContentMode && logic.initialProps.length > 0);
 
-  return (
+  return hasAnimation ? (
+    <>
+      <AnimateSection
+        animationAction={animationAction}
+        onChange={(value) =>
+          logic.handleChangeByPropName(animationAction.propName, {
+            type: "animationAction",
+            value,
+          })
+        }
+      />
+      <Separator />
+    </>
+  ) : (
     <>
       <Grid
         css={{

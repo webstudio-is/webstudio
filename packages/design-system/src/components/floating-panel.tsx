@@ -167,6 +167,13 @@ export const FloatingPanel = ({
             event.preventDefault();
           }
         }}
+        onEscapeKeyDown={(event) => {
+          if (event.target instanceof HTMLInputElement) {
+            event.preventDefault();
+
+            return;
+          }
+        }}
         ref={setContentElement}
       >
         {content}

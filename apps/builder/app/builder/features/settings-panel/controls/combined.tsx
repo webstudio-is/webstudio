@@ -216,6 +216,12 @@ export const renderControl = ({
       );
     }
 
+    if (prop.type === "animationAction") {
+      throw new Error(
+        `Cannot render a fallback control for prop "${rest.propName}" with type animationAction`
+      );
+    }
+
     prop satisfies never;
   }
 

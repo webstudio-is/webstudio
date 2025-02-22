@@ -92,6 +92,13 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
+
+    case "animationAction":
+      return {
+        type: "animationAction",
+        control: "animationAction",
+        required: false,
+      };
     case "json":
       throw new Error(
         "A prop with type json must have a meta, we can't provide a default one because we need a list of options"

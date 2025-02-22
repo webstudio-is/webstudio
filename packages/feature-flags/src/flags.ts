@@ -9,3 +9,4 @@ export const contentEditableMode = false;
 export const command = false;
 export const headSlotComponent = false;
 export const stylePanelAdvancedMode = false;
+export const animation = false;

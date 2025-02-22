@@ -2,17 +2,47 @@ import type {
   StyleProperty,
   StyleValue,
   InvalidValue,
+  Unit,
 } from "@webstudio-is/css-engine";
-import { units, parseCssValue, cssTryParseValue } from "@webstudio-is/css-data";
+import {
+  units,
+  parseCssValue,
+  cssTryParseValue,
+  properties,
+} from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
 import { toKebabCase } from "../keyword-utils";
 
 const unitsList = Object.values(units).flat();
 
+const getDefaultUnit = (property: StyleProperty): Unit => {
+  const unitGroups =
+    properties[property as keyof typeof properties]?.unitGroups ?? [];
+
+  for (const unitGroup of unitGroups) {
+    if (unitGroup === "number") {
+      continue;
+    }
+
+    if (unitGroup === "length") {
+      return "px";
+    }
+
+    return units[unitGroup][0]!;
+  }
+
+  if (unitGroups.includes("number" as never)) {
+    return "number";
+  }
+
+  return "px";
+};
+
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   styleValue: IntermediateStyleValue | InvalidValue,
+  defaultUnit: Unit = getDefaultUnit(property),
   originalValue?: string
 ): StyleValue => {
   let value = styleValue.value.trim();
@@ -40,7 +70,11 @@ export const parseIntermediateOrInvalidValue = (
     const unit = "unit" in styleValue ? styleValue.unit : undefined;
 
     // Use number as a fallback for custom properties
-    const fallbackUnitAsString = property.startsWith("--") ? "" : "px";
+    const fallbackUnitAsString = property.startsWith("--")
+      ? ""
+      : defaultUnit === "number"
+        ? ""
+        : defaultUnit;
 
     const testUnit = unit === "number" ? "" : (unit ?? fallbackUnitAsString);
 
@@ -133,6 +167,7 @@ export const parseIntermediateOrInvalidValue = (
         ...styleValue,
         value: value.replace(/,/g, "."),
       },
+      defaultUnit,
       originalValue ?? value
     );
   }

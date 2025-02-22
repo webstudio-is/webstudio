@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { animationActionSchema } from "./animation-schema";
 
 const PropId = z.string();
 
@@ -79,6 +80,11 @@ export const Prop = z.union([
         code: z.string(),
       })
     ),
+  }),
+  z.object({
+    ...baseProp,
+    type: z.literal("animationAction"),
+    value: animationActionSchema,
   }),
 ]);
 

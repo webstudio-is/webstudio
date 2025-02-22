@@ -30,9 +30,10 @@ const switchStyle = css({
     backgroundColor: theme.colors.backgroundNeutralDark,
   },
 
-  "&[data-state=checked]:not([data-disabled]):before": {
-    backgroundColor: theme.colors.backgroundPrimary,
-  },
+  "&[data-state=checked]:not([data-disabled]):before, &[aria-checked=true]:not([data-disabled]):before":
+    {
+      backgroundColor: theme.colors.backgroundPrimary,
+    },
 
   "&[data-disabled]:before": {
     backgroundColor: theme.colors.foregroundDisabled,

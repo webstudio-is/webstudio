@@ -49,7 +49,11 @@ export type PropValue =
   | { type: "expression"; value: string }
   | { type: "asset"; value: Asset["id"] }
   | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
-  | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] };
+  | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] }
+  | {
+      type: "animationAction";
+      value: Extract<Prop, { type: "animationAction" }>["value"];
+    };
 
 // Weird code is to make type distributive
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
