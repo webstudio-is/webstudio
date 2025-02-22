@@ -138,8 +138,11 @@ export const TemplatesMenu = ({
               value={value !== undefined ? JSON.stringify(value) : value}
               onValueChange={handleValueChangeComplete}
             >
-              {menuItems?.map(({ icon, title, id, value }) => (
+              {menuItems?.map((item) => (
                 <DropdownMenuRadioItem
+                  aria-selected={
+                    JSON.stringify(item.value) === JSON.stringify(value)
+                  }
                   onPointerEnter={() => {
                     handleValueChange(value);
                   }}
@@ -165,13 +168,13 @@ export const TemplatesMenu = ({
                         }
                       : undefined
                   }
-                  key={id}
-                  value={JSON.stringify(value)}
+                  key={item.id}
+                  value={JSON.stringify(item.value)}
                   {...{ [skipInertHandlersAttribute]: true }}
                 >
                   <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                    {icon}
-                    <Box>{title}</Box>
+                    {item.icon}
+                    <Box>{item.title}</Box>
                   </Flex>
                 </DropdownMenuRadioItem>
               ))}
