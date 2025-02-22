@@ -155,6 +155,7 @@ const supportedShorthandProperties = new Set([
   "border-left",
   "white-space",
   "text-wrap",
+  "background-position",
 ]);
 
 export const isShorthand = (property: string) => {

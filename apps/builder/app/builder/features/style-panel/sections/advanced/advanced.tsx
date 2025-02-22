@@ -383,7 +383,9 @@ const AdvancedDeclarationShorthand = memo(
   }) => {
     const { property, value, onReset } = props;
     const [isOpen, setIsOpen] = useState(false);
-    const longhands = expandShorthands([[property, toValue(value)]]);
+    const longhands = expandShorthands([
+      [hyphenateProperty(property), toValue(value)],
+    ]);
 
     return (
       <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -559,26 +561,24 @@ export const Section = () => {
                   ? AdvancedDeclarationShorthand
                   : AdvancedDeclarationLonghand;
                 return (
-                  <LazyRender key={property}>
-                    <AdvancedDeclaration
-                      valueInputRef={isLast ? recentValueInputRef : undefined}
-                      property={property}
-                      value={advancedStyles.get(property)}
-                      autoFocus={isLast}
-                      onChangeComplete={(event) => {
-                        if (event.type === "enter") {
-                          handleShowAddStyleInput();
-                        }
-                      }}
-                      onReset={() => {
-                        updateRecentProperties(
-                          recentProperties.filter(
-                            (recentProperty) => recentProperty !== property
-                          )
-                        );
-                      }}
-                    />
-                  </LazyRender>
+                  <AdvancedDeclaration
+                    valueInputRef={isLast ? recentValueInputRef : undefined}
+                    property={property}
+                    value={advancedStyles.get(property)}
+                    autoFocus={isLast}
+                    onChangeComplete={(event) => {
+                      if (event.type === "enter") {
+                        handleShowAddStyleInput();
+                      }
+                    }}
+                    onReset={() => {
+                      updateRecentProperties(
+                        recentProperties.filter(
+                          (recentProperty) => recentProperty !== property
+                        )
+                      );
+                    }}
+                  />
                 );
               })}
             {(showRecentProperties || isAdding) && (
