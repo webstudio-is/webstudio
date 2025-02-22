@@ -28,6 +28,7 @@ import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
+  findPageByIdOrPath,
   getExpressionIdentifiers,
 } from "@webstudio-is/sdk";
 import {
@@ -196,6 +197,7 @@ const VariablesItem = ({
   value: unknown;
   usageCount: number;
 }) => {
+  const selectedPage = useStore($selectedPage);
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -265,6 +267,23 @@ const VariablesItem = ({
                     Delete {usageCount > 0 && `(${usageCount} bindings)`}
                   </DropdownMenuItem>
                 )}
+                {source === "local" &&
+                  variable.id === selectedPage?.systemDataSourceId && (
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        updateWebstudioData((data) => {
+                          const page = findPageByIdOrPath(
+                            selectedPage.id,
+                            data.pages
+                          );
+                          delete page?.systemDataSourceId;
+                          deleteVariableMutable(data, variable.id);
+                        });
+                      }}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuContent>
             </DropdownMenu>
 

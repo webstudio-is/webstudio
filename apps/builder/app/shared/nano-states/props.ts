@@ -14,6 +14,7 @@ import {
   collectionComponent,
   portalComponent,
   ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
@@ -135,6 +136,8 @@ const $unscopedVariableValues = computed(
   ],
   (dataSources, dataSourceVariables, resourceValues, page, system) => {
     const values = new Map<string, unknown>();
+    // support global system
+    values.set(SYSTEM_VARIABLE_ID, system);
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
         values.set(
@@ -144,7 +147,7 @@ const $unscopedVariableValues = computed(
       }
       if (dataSource.type === "parameter") {
         let value = dataSourceVariables.get(dataSourceId);
-        // @todo support global system
+        // support page system
         if (dataSource.id === page?.systemDataSourceId) {
           value = system;
         }
@@ -420,6 +423,11 @@ export const $variableValuesByInstanceSelector = computed(
         variableValues
       );
       const variables = variablesByInstanceId.get(instanceId);
+      // set global system value
+      if (instanceId === ROOT_INSTANCE_ID) {
+        variableNames.set("system", SYSTEM_VARIABLE_ID);
+        variableValues.set(SYSTEM_VARIABLE_ID, system);
+      }
       if (variables) {
         for (const variable of variables) {
           // delete previous variable with the same name
@@ -433,6 +441,7 @@ export const $variableValuesByInstanceSelector = computed(
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
+            // set page system value
             if (variable.id === page.systemDataSourceId) {
               variableValues.set(variable.id, system);
             }

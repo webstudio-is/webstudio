@@ -12,6 +12,8 @@ import {
   ROOT_FOLDER_ID,
   isRootFolder,
   ROOT_INSTANCE_ID,
+  systemParameter,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -259,7 +261,10 @@ export const $pageRootScope = computed(
         getInstanceKey([page.rootInstanceId, ROOT_INSTANCE_ID])
       ) ?? new Map<string, unknown>();
     for (const [dataSourceId, value] of values) {
-      const dataSource = dataSources.get(dataSourceId);
+      let dataSource = dataSources.get(dataSourceId);
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        dataSource = systemParameter;
+      }
       if (dataSource === undefined) {
         continue;
       }

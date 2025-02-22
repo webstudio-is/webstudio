@@ -8,7 +8,11 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
-import { encodeDataVariableId, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import {
+  encodeDataVariableId,
+  ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
+} from "@webstudio-is/sdk";
 import {
   computeExpression,
   decodeDataVariableName,
@@ -56,6 +60,7 @@ test("find available variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "bodyVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
@@ -72,6 +77,7 @@ test("find masked variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ scopeInstanceId: "boxId", name: "myVariable" }),
   ]);
 });
@@ -90,6 +96,7 @@ test("find global variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "globalVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
@@ -114,6 +121,7 @@ test("find global variables in slots", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "globalVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);

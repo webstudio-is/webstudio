@@ -14,6 +14,8 @@ import equal from "fast-deep-equal";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
+  SYSTEM_VARIABLE_ID,
+  systemParameter,
 } from "@webstudio-is/sdk";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
 import { InfoCircleIcon, MinusIcon } from "@webstudio-is/icons";
@@ -328,7 +330,10 @@ export const $selectedInstanceScope = computed(
     const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
       for (const [dataSourceId, value] of values) {
-        const dataSource = dataSources.get(dataSourceId);
+        let dataSource = dataSources.get(dataSourceId);
+        if (dataSourceId === SYSTEM_VARIABLE_ID) {
+          dataSource = systemParameter;
+        }
         if (dataSource === undefined) {
           continue;
         }

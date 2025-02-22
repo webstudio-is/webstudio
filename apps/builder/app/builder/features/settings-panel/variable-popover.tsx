@@ -44,6 +44,7 @@ import {
   type DataSource,
   transpileExpression,
   lintExpression,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -735,6 +736,7 @@ export const VariablePopoverTrigger = ({
   const { allowDynamicData } = useStore($userPlanFeatures);
   const [isResource, setIsResource] = useState(variable?.type === "resource");
   const requiresUpgrade = allowDynamicData === false && isResource;
+  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
 
   return (
     <FloatingPanel
@@ -856,7 +858,7 @@ export const VariablePopoverTrigger = ({
               }}
               onSubmit={(event) => {
                 event.preventDefault();
-                if (requiresUpgrade) {
+                if (requiresUpgrade || isSystemVariable) {
                   return;
                 }
                 const nameElement =
@@ -879,11 +881,17 @@ export const VariablePopoverTrigger = ({
             >
               {/* submit is not triggered when press enter on input without submit button */}
               <button hidden></button>
-              <BindingPopoverProvider
-                value={{ containerRef: bindingPopoverContainerRef }}
+              <fieldset
+                style={{ display: "contents" }}
+                // forbid editing system variable
+                disabled={isSystemVariable}
               >
-                <VariablePanel ref={panelRef} variable={variable} />
-              </BindingPopoverProvider>
+                <BindingPopoverProvider
+                  value={{ containerRef: bindingPopoverContainerRef }}
+                >
+                  <VariablePanel ref={panelRef} variable={variable} />
+                </BindingPopoverProvider>
+              </fieldset>
             </form>
           </Flex>
         </ScrollArea>
