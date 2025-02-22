@@ -281,7 +281,7 @@ const VariablesItem = ({
                         });
                       }}
                     >
-                      Delete legacy system variable
+                      Delete
                     </DropdownMenuItem>
                   )}
               </DropdownMenuContent>
