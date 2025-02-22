@@ -56,6 +56,11 @@ export const WsComponentMeta = z.object({
   // embed - images, videos or other embeddable components, without children
   // rich-text-child - formatted text fragment, not listed in components list
   type: z.enum(["container", "control", "embed", "rich-text-child"]),
+  /**
+   * a property used as textual placeholder when no content specified while in builder
+   * also signals to not insert components inside unless dropped explicitly
+   */
+  placeholder: z.string().optional(),
   constraints: Matchers.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor

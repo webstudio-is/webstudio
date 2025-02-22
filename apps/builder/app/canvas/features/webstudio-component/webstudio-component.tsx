@@ -36,8 +36,6 @@ import {
   getIndexesWithinAncestors,
   type AnyComponent,
   textContentAttribute,
-  editingPlaceholderVariable,
-  editablePlaceholderVariable,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
@@ -68,8 +66,10 @@ import {
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
 import { BlockTemplate } from "../build-mode/block-template";
-import { getInstanceLabel } from "~/shared/instance-utils";
-import { editablePlaceholderComponents } from "~/canvas/shared/styles";
+import {
+  editablePlaceholderAttribute,
+  editingPlaceholderVariable,
+} from "~/canvas/shared/styles";
 
 const ContentEditable = ({
   placeholder,
@@ -376,18 +376,13 @@ const getEditableComponentPlaceholder = (
   metas: Map<string, WsComponentMeta>,
   mode: "editing" | "editable"
 ) => {
-  if (!editablePlaceholderComponents.includes(instance.component)) {
+  const meta = metas.get(instance.component);
+  if (meta?.placeholder === undefined) {
     return;
   }
 
   const isContentBlockChild =
     undefined !== findBlockSelector(instanceSelector, instances);
-
-  const meta = metas.get(instance.component);
-
-  const label = meta
-    ? getInstanceLabel(instance, meta)
-    : (instance.label ?? instance.component);
 
   const isParagraph = instance.component === "Paragraph";
 
@@ -398,7 +393,7 @@ const getEditableComponentPlaceholder = (
         undefined;
   }
 
-  return label;
+  return meta.placeholder;
 };
 
 export const WebstudioComponentCanvas = forwardRef<
@@ -498,14 +493,6 @@ export const WebstudioComponentCanvas = forwardRef<
     Component = BlockTemplate;
   }
 
-  const placeholder = getEditableComponentPlaceholder(
-    instance,
-    instanceSelector,
-    instances,
-    metas,
-    "editable"
-  );
-
   const mergedProps = mergeProps(restProps, instanceProps, "delete");
 
   const props: {
@@ -514,20 +501,19 @@ export const WebstudioComponentCanvas = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergedProps,
-    ...(placeholder !== undefined
-      ? {
-          style: {
-            ...mergedProps.style,
-            [editablePlaceholderVariable]: `'${placeholder.replaceAll("'", "\\'")}'`,
-          },
-        }
-      : null),
     // current props should override bypassed from parent
     // important for data-ws-* props
     tabIndex: 0,
     [selectorIdAttribute]: instanceSelector.join(","),
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
+    [editablePlaceholderAttribute]: getEditableComponentPlaceholder(
+      instance,
+      instanceSelector,
+      instances,
+      metas,
+      "editable"
+    ),
   };
 
   // React ignores defaultValue changes after first render.

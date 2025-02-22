@@ -21,6 +21,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
+  placeholder: "Link",
   icon: LinkIcon,
   constraints: {
     relation: "ancestor",
