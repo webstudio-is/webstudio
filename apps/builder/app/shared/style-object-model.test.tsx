@@ -10,7 +10,7 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
-import { parseCss } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import {
   type StyleObjectModel,
@@ -54,7 +54,7 @@ const createModel = ({
       styleSourceId: selector,
       breakpointId: breakpoint ?? "base",
       state,
-      property,
+      property: camelCaseProperty(property),
       value,
     };
     styles.set(getStyleDeclKey(styleDecl), styleDecl);

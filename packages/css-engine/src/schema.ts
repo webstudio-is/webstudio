@@ -1,13 +1,16 @@
 import { z } from "zod";
 import type {
-  Property as GeneratedProperty,
+  CamelCasedProperty,
+  HyphenatedProperty,
   Unit as GeneratedUnit,
 } from "./__generated__/types";
 import { toValue, type TransformValue } from "./core/to-value";
 
 export type CustomProperty = `--${string}`;
 
-export type StyleProperty = GeneratedProperty | CustomProperty;
+export type StyleProperty = CamelCasedProperty | CustomProperty;
+
+export type CssProperty = HyphenatedProperty | CustomProperty;
 
 const Unit = z.string() as z.ZodType<GeneratedUnit | "number">;
 

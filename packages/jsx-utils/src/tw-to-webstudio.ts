@@ -1,5 +1,8 @@
 import type { WsEmbedTemplate } from "@webstudio-is/sdk";
-import { parseTailwindToWebstudio } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  parseTailwindToWebstudio,
+} from "@webstudio-is/css-data";
 import { traverseTemplateAsync } from "./traverse-template";
 
 export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
@@ -9,20 +12,28 @@ export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
         (prop) => prop.name === "className"
       );
       if (classNameProp && classNameProp.type === "string") {
-        const styles = await parseTailwindToWebstudio(classNameProp.value);
+        const hyphenatedStyles = await parseTailwindToWebstudio(
+          classNameProp.value
+        );
+        const newStyles = hyphenatedStyles.map(
+          ({ property, ...styleDecl }) => ({
+            ...styleDecl,
+            property: camelCaseProperty(property),
+          })
+        );
 
         if (node.styles !== undefined) {
           // Merge with existing styles
           const currentStyles = new Set(
             node.styles.map(({ property }) => property)
           );
-          for (const styleDecl of styles) {
+          for (const styleDecl of newStyles) {
             if (currentStyles.has(styleDecl.property) === false) {
               node.styles.push(styleDecl);
             }
           }
         } else {
-          node.styles = styles;
+          node.styles = newStyles;
         }
 
         // @todo Instead of deleting className remove Tailwind CSS classes and leave the remaning ones.

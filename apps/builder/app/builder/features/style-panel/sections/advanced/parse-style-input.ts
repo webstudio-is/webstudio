@@ -1,11 +1,15 @@
 import {
+  type ParsedStyleDecl,
   properties,
   parseCss,
-  type ParsedStyleDecl,
+  camelCaseProperty,
 } from "@webstudio-is/css-data";
-import { type StyleProperty } from "@webstudio-is/css-engine";
-import { camelCase } from "change-case";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
+
+type StyleDecl = Omit<ParsedStyleDecl, "property"> & {
+  property: StyleProperty;
+};
 
 /**
  * Does several attempts to parse:
@@ -16,7 +20,7 @@ import { lexer } from "css-tree";
  * - Property and value: color: red
  * - Multiple properties: color: red; background: blue
  */
-export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
+export const parseStyleInput = (css: string): Array<StyleDecl> => {
   css = css.trim();
   // Is it a custom property "--foo"?
   if (css.startsWith("--") && lexer.match("<custom-ident>", css).matched) {
@@ -30,12 +34,11 @@ export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
   }
 
   // Is it a known regular property?
-  const camelCasedProperty = camelCase(css);
-  if (camelCasedProperty in properties) {
+  if (camelCaseProperty(css as CssProperty) in properties) {
     return [
       {
         selector: "selector",
-        property: css as StyleProperty,
+        property: camelCaseProperty(css as CssProperty),
         value: { type: "unset", value: "" },
       },
     ];
@@ -52,20 +55,29 @@ export const parseStyleInput = (css: string): Array<ParsedStyleDecl> => {
     ];
   }
 
-  const styles = parseCss(`selector{${css}}`);
+  const hyphenatedStyles = parseCss(`selector{${css}}`);
+  const newStyles: StyleDecl[] = [];
 
-  for (const style of styles) {
+  for (const { property, ...styleDecl } of hyphenatedStyles) {
     // somethingunknown: red; -> --somethingunknown: red;
     if (
       // Note: currently in tests it returns unparsed, but in the client it returns invalid,
       // because we use native APIs when available in parseCss.
-      style.value.type === "invalid" ||
-      (style.value.type === "unparsed" &&
-        style.property.startsWith("--") === false)
+      styleDecl.value.type === "invalid" ||
+      (styleDecl.value.type === "unparsed" &&
+        property.startsWith("--") === false)
     ) {
-      style.property = `--${style.property}`;
+      newStyles.push({
+        ...styleDecl,
+        property: `--${property}`,
+      });
+    } else {
+      newStyles.push({
+        ...styleDecl,
+        property: camelCaseProperty(property),
+      });
     }
   }
 
-  return styles;
+  return newStyles;
 };

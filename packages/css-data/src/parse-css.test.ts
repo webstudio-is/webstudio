@@ -6,7 +6,7 @@ describe("Parse CSS", () => {
     expect(parseCss(`.test { background-color: red }`)).toEqual([
       {
         selector: ".test",
-        property: "backgroundColor",
+        property: "background-color",
         value: { type: "keyword", value: "red" },
       },
     ]);
@@ -31,7 +31,7 @@ describe("Parse CSS", () => {
     expect(parseCss(css)).toEqual([
       {
         selector: ".test",
-        property: "backgroundImage",
+        property: "background-image",
         value: {
           type: "layers",
           value: [
@@ -46,7 +46,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundPositionX",
+        property: "background-position-x",
         value: {
           type: "layers",
           value: [
@@ -57,7 +57,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundPositionY",
+        property: "background-position-y",
         value: {
           type: "layers",
           value: [
@@ -68,7 +68,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundSize",
+        property: "background-size",
         value: {
           type: "layers",
           value: [
@@ -91,7 +91,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundRepeat",
+        property: "background-repeat",
         value: {
           type: "layers",
           value: [
@@ -102,7 +102,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundAttachment",
+        property: "background-attachment",
         value: {
           type: "layers",
           value: [
@@ -113,7 +113,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundOrigin",
+        property: "background-origin",
         value: {
           type: "layers",
           value: [
@@ -124,7 +124,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundClip",
+        property: "background-clip",
         value: {
           type: "layers",
           value: [
@@ -135,7 +135,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundColor",
+        property: "background-color",
         value: { alpha: 1, b: 252, g: 255, r: 235, type: "rgb" },
       },
     ]);
@@ -150,7 +150,7 @@ describe("Parse CSS", () => {
     expect(parseCss(css)).toEqual([
       {
         selector: ".test",
-        property: "backgroundImage",
+        property: "background-image",
         value: {
           type: "layers",
           value: [{ type: "keyword", value: "none" }],
@@ -158,7 +158,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundPositionX",
+        property: "background-position-x",
         value: {
           type: "layers",
           value: [{ type: "unit", unit: "px", value: 0 }],
@@ -166,7 +166,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundPositionY",
+        property: "background-position-y",
         value: {
           type: "layers",
           value: [{ type: "unit", unit: "px", value: 0 }],
@@ -174,7 +174,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: ".test",
-        property: "backgroundSize",
+        property: "background-size",
         value: {
           type: "layers",
           value: [{ type: "keyword", value: "auto" }],
@@ -305,27 +305,27 @@ describe("Parse CSS", () => {
     expect(parseCss(css)).toEqual([
       {
         selector: "h1",
-        property: "marginBottom",
+        property: "margin-bottom",
         value: { type: "unit", unit: "px", value: 10 },
       },
       {
         selector: "h1",
-        property: "fontSize",
+        property: "font-size",
         value: { type: "unit", unit: "px", value: 38 },
       },
       {
         selector: "h1",
-        property: "fontWeight",
+        property: "font-weight",
         value: { type: "keyword", value: "bold" },
       },
       {
         selector: "h1",
-        property: "marginTop",
+        property: "margin-top",
         value: { type: "unit", unit: "px", value: 20 },
       },
       {
         selector: "h1",
-        property: "lineHeight",
+        property: "line-height",
         value: { type: "unit", unit: "px", value: 44 },
       },
     ]);
@@ -335,62 +335,62 @@ describe("Parse CSS", () => {
     expect(parseCss(`a { border: 1px solid red }`)).toEqual([
       {
         selector: "a",
-        property: "borderTopWidth",
+        property: "border-top-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
         selector: "a",
-        property: "borderRightWidth",
+        property: "border-right-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
         selector: "a",
-        property: "borderBottomWidth",
+        property: "border-bottom-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
         selector: "a",
-        property: "borderLeftWidth",
+        property: "border-left-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
         selector: "a",
-        property: "borderTopStyle",
+        property: "border-top-style",
         value: { type: "keyword", value: "solid" },
       },
       {
         selector: "a",
-        property: "borderRightStyle",
+        property: "border-right-style",
         value: { type: "keyword", value: "solid" },
       },
       {
         selector: "a",
-        property: "borderBottomStyle",
+        property: "border-bottom-style",
         value: { type: "keyword", value: "solid" },
       },
       {
         selector: "a",
-        property: "borderLeftStyle",
+        property: "border-left-style",
         value: { type: "keyword", value: "solid" },
       },
       {
         selector: "a",
-        property: "borderTopColor",
+        property: "border-top-color",
         value: { type: "keyword", value: "red" },
       },
       {
         selector: "a",
-        property: "borderRightColor",
+        property: "border-right-color",
         value: { type: "keyword", value: "red" },
       },
       {
         selector: "a",
-        property: "borderBottomColor",
+        property: "border-bottom-color",
         value: { type: "keyword", value: "red" },
       },
       {
         selector: "a",
-        property: "borderLeftColor",
+        property: "border-left-color",
         value: { type: "keyword", value: "red" },
       },
     ]);
@@ -424,7 +424,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: "a",
-        property: "backgroundColor",
+        property: "background-color",
         value: {
           type: "var",
           value: "color",
@@ -443,7 +443,7 @@ describe("Parse CSS", () => {
       },
       {
         selector: "a",
-        property: "backgroundColor",
+        property: "background-color",
         value: { type: "keyword", value: "red" },
       },
     ]);
@@ -516,17 +516,17 @@ test("parse font-smooth properties", () => {
   ).toEqual([
     {
       selector: "a",
-      property: "WebkitFontSmoothing",
+      property: "-webkit-font-smoothing",
       value: { type: "keyword", value: "auto" },
     },
     {
       selector: "b",
-      property: "WebkitFontSmoothing",
+      property: "-webkit-font-smoothing",
       value: { type: "keyword", value: "auto" },
     },
     {
       selector: "c",
-      property: "MozOsxFontSmoothing",
+      property: "-moz-osx-font-smoothing",
       value: { type: "keyword", value: "auto" },
     },
   ]);

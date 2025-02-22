@@ -1,4 +1,4 @@
-import { parseCss } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 
 export type TemplateStyleDecl = {
@@ -14,7 +14,7 @@ export const css = (
   const cssString = `.styles{ ${String.raw({ raw: strings }, ...values)} }`;
   const styles: TemplateStyleDecl[] = [];
   for (const { state, property, value } of parseCss(cssString)) {
-    styles.push({ state, property, value });
+    styles.push({ state, property: camelCaseProperty(property), value });
   }
   return styles;
 };

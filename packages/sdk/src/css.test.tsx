@@ -182,11 +182,11 @@ test("generate component presets with multiple tags", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"@media all {
-  :where(div.w-list-item) {
+"@layer presets {
+  div.w-list-item {
     display: block
   }
-  :where(a.w-list-item) {
+  a.w-list-item {
     -webkit-user-select: none;
     user-select: none
   }
@@ -256,14 +256,14 @@ test("deduplicate component presets for similarly named components", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"@media all {
-  :where(div.w-list-item) {
+"@layer presets {
+  div.w-list-item {
     display: block
   }
-  :where(div.w-list-item-1) {
+  div.w-list-item-1 {
     display: flex
   }
-  :where(div.w-list-item-2) {
+  div.w-list-item-2 {
     display: grid
   }
 }
@@ -326,11 +326,11 @@ test("expose preset classes to instances", () => {
     assetBaseUrl: "",
   });
   expect(atomicCssText).toMatchInlineSnapshot(`
-"@media all {
-  :where(div.w-body) {
+"@layer presets {
+  div.w-body {
     display: block
   }
-  :where(div.w-box) {
+  div.w-box {
     display: flex
   }
 }
@@ -424,11 +424,11 @@ test("generate classes with instance and meta label", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"@media all {
-  :where(div.w-body-meta-label) {
+"@layer presets {
+  div.w-body-meta-label {
     display: block
   }
-  :where(div.w-box-meta-label) {
+  div.w-box-meta-label {
     display: flex
   }
 }
@@ -507,7 +507,7 @@ test("generate :root preset and user styles", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"@media all {
+"@layer presets {
   :root {
     display: grid
   }
@@ -521,7 +521,7 @@ test("generate :root preset and user styles", () => {
 `);
   expect(classes).toEqual(new Map());
   expect(atomicCssText).toMatchInlineSnapshot(`
-"@media all {
+"@layer presets {
   :root {
     display: grid
   }

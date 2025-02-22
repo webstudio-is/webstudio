@@ -7,28 +7,18 @@ import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import selectors from "mdn-data/css/selectors.json";
 import data from "css-tree/dist/data";
-import { camelCase } from "change-case";
-import type {
-  KeywordValue,
-  StyleValue,
-  Unit,
-  UnitValue,
-  UnparsedValue,
-  FontFamilyValue,
+import {
+  type KeywordValue,
+  type StyleValue,
+  type Unit,
+  type UnitValue,
+  type UnparsedValue,
+  type FontFamilyValue,
+  hyphenateProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import * as customData from "../src/custom-data";
-
-/**
- * Store prefixed properties without change
- * and convert to camel case only unprefixed properties
- * @todo stop converting to camel case and use hyphenated format
- */
-const normalizePropertyName = (property: string) => {
-  if (property.startsWith("-")) {
-    return property;
-  }
-  return camelCase(property);
-};
+import { camelCaseProperty } from "../src/parse-css";
 
 const units: Record<string, Array<string>> = {
   number: [],
@@ -233,7 +223,7 @@ const walkSyntax = (
   walk(parsed);
 };
 
-type FilteredProperties = { [property in Property]: Value };
+type FilteredProperties = { [property: string]: Value };
 
 const experimentalProperties = [
   "appearance",
@@ -299,7 +289,7 @@ const propertiesData = {
   ...customData.propertiesData,
 };
 
-let property: Property;
+let property: string;
 for (property in filteredProperties) {
   const config = filteredProperties[property];
   const unitGroups = new Set<string>();
@@ -326,7 +316,7 @@ for (property in filteredProperties) {
     );
   }
 
-  propertiesData[normalizePropertyName(property)] = {
+  propertiesData[camelCaseProperty(property as CssProperty)] = {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
@@ -367,7 +357,7 @@ const keywordValues = (() => {
   const result = { ...customData.keywordValues };
 
   for (const property in filteredProperties) {
-    const key = normalizePropertyName(property);
+    const key = camelCaseProperty(property as CssProperty);
     // prevent merging with custom keywords
     if (result[key]) {
       continue;
@@ -416,10 +406,14 @@ writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
 
 let types = "";
 
-const propertyLiterals = Object.keys(propertiesData).map((property) =>
+const camelCasedProperties = Object.keys(propertiesData).map((property) =>
   JSON.stringify(property)
 );
-types += `export type Property = ${propertyLiterals.join(" | ")};\n\n`;
+types += `export type CamelCasedProperty = ${camelCasedProperties.join(" | ")};\n\n`;
+const hyphenatedProperties = Object.keys(propertiesData).map((property) =>
+  JSON.stringify(hyphenateProperty(property))
+);
+types += `export type HyphenatedProperty = ${hyphenatedProperties.join(" | ")};\n\n`;
 
 const unitLiterals = Object.values(units)
   .flat()

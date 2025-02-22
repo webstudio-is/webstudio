@@ -42,10 +42,10 @@ export const parseTailwindToCss = async (
  **/
 const postprocessBorder = (styles: Omit<ParsedStyleDecl, "selector">[]) => {
   const borderPairs = [
-    ["borderTopWidth", "borderTopStyle"],
-    ["borderRightWidth", "borderRightStyle"],
-    ["borderBottomWidth", "borderBottomStyle"],
-    ["borderLeftWidth", "borderLeftStyle"],
+    ["border-top-width", "border-top-style"],
+    ["border-right-width", "border-right-style"],
+    ["border-bottom-width", "border-bottom-style"],
+    ["border-left-width", "border-left-style"],
   ] as const;
 
   const resultStyles = [...styles];
