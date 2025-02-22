@@ -7,8 +7,9 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { parseCss } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { css as style } from "@webstudio-is/design-system";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   EditorContent,
   EditorDialog,
@@ -18,7 +19,10 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { $availableVariables } from "./model";
 
-export const parseCssFragment = (css: string, fallbacks: string[]) => {
+export const parseCssFragment = (
+  css: string,
+  fallbacks: string[]
+): Map<StyleProperty, StyleValue> => {
   let parsed = parseCss(`.styles{${css}}`);
   if (parsed.length === 0) {
     for (const fallbackProperty of fallbacks) {
@@ -30,7 +34,10 @@ export const parseCssFragment = (css: string, fallbacks: string[]) => {
     }
   }
   return new Map(
-    parsed.map((styleDecl) => [styleDecl.property, styleDecl.value])
+    parsed.map((styleDecl) => [
+      camelCaseProperty(styleDecl.property),
+      styleDecl.value,
+    ])
   );
 };
 

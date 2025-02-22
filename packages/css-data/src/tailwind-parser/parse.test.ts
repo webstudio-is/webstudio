@@ -40,15 +40,15 @@ describe("parseTailwindToWebstudio", () => {
 
     expect(await parseTailwindToWebstudio(tailwindClasses)).toEqual([
       {
-        property: "textDecorationLine",
+        property: "text-decoration-line",
         value: { type: "keyword", value: "none" },
       },
       {
-        property: "textDecorationStyle",
+        property: "text-decoration-style",
         value: { type: "keyword", value: "solid" },
       },
       {
-        property: "textDecorationColor",
+        property: "text-decoration-color",
         value: { type: "keyword", value: "currentcolor" },
       },
     ]);
@@ -59,19 +59,19 @@ describe("parseTailwindToWebstudio", () => {
 
     expect(await parseTailwindToWebstudio(tailwindClasses)).toEqual([
       {
-        property: "marginTop",
+        property: "margin-top",
         value: { type: "unit", unit: "rem", value: 1 },
       },
       {
-        property: "marginRight",
+        property: "margin-right",
         value: { type: "unit", unit: "rem", value: 1 },
       },
       {
-        property: "marginBottom",
+        property: "margin-bottom",
         value: { type: "unit", unit: "rem", value: 1 },
       },
       {
-        property: "marginLeft",
+        property: "margin-left",
         value: { type: "unit", unit: "rem", value: 1 },
       },
     ]);
@@ -80,173 +80,80 @@ describe("parseTailwindToWebstudio", () => {
   test("substitute variables - gradient", async () => {
     const tailwindClasses = `bg-left-top bg-gradient-to-r from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90%`;
 
-    expect(await parseTailwindToWebstudio(tailwindClasses))
-      .toMatchInlineSnapshot(`
-[
-  {
-    "property": "backgroundImage",
-    "value": {
-      "type": "layers",
-      "value": [
-        {
-          "type": "unparsed",
-          "value": "linear-gradient(to right,rgb(99 102 241/1) 10%,rgb(14 165 233/1) 30%,rgb(16 185 129/1) 90%)",
+    expect(await parseTailwindToWebstudio(tailwindClasses)).toEqual([
+      {
+        property: "background-image",
+        value: {
+          type: "layers",
+          value: [
+            {
+              type: "unparsed",
+              value:
+                "linear-gradient(to right,rgb(99 102 241/1) 10%,rgb(14 165 233/1) 30%,rgb(16 185 129/1) 90%)",
+            },
+          ],
         },
-      ],
-    },
-  },
-  {
-    "property": "backgroundPositionX",
-    "value": {
-      "type": "layers",
-      "value": [
-        {
-          "type": "keyword",
-          "value": "left",
-        },
-      ],
-    },
-  },
-  {
-    "property": "backgroundPositionY",
-    "value": {
-      "type": "layers",
-      "value": [
-        {
-          "type": "keyword",
-          "value": "top",
-        },
-      ],
-    },
-  },
-]
-`);
+      },
+      {
+        property: "background-position-x",
+        value: { type: "layers", value: [{ type: "keyword", value: "left" }] },
+      },
+      {
+        property: "background-position-y",
+        value: { type: "layers", value: [{ type: "keyword", value: "top" }] },
+      },
+    ]);
   });
 
   test("shadow", async () => {
     const tailwindClasses = `shadow-md`;
 
-    expect(await parseTailwindToWebstudio(tailwindClasses))
-      .toMatchInlineSnapshot(`
-[
-  {
-    "property": "boxShadow",
-    "value": {
-      "type": "layers",
-      "value": [
-        {
-          "type": "tuple",
-          "value": [
+    expect(await parseTailwindToWebstudio(tailwindClasses)).toEqual([
+      {
+        property: "box-shadow",
+        value: {
+          type: "layers",
+          value: [
             {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
+              type: "tuple",
+              value: [
+                { type: "unit", unit: "number", value: 0 },
+                { type: "unit", unit: "number", value: 0 },
+                { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+              ],
             },
             {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
+              type: "tuple",
+              value: [
+                { type: "unit", unit: "number", value: 0 },
+                { type: "unit", unit: "number", value: 0 },
+                { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+              ],
             },
             {
-              "alpha": 0,
-              "b": 0,
-              "g": 0,
-              "r": 0,
-              "type": "rgb",
-            },
-          ],
-        },
-        {
-          "type": "tuple",
-          "value": [
-            {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
+              type: "tuple",
+              value: [
+                { type: "unit", unit: "number", value: 0 },
+                { type: "unit", unit: "px", value: 4 },
+                { type: "unit", unit: "px", value: 6 },
+                { type: "unit", unit: "px", value: -1 },
+                { alpha: 0.1, b: 0, g: 0, r: 0, type: "rgb" },
+              ],
             },
             {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
-            },
-            {
-              "alpha": 0,
-              "b": 0,
-              "g": 0,
-              "r": 0,
-              "type": "rgb",
+              type: "tuple",
+              value: [
+                { type: "unit", unit: "number", value: 0 },
+                { type: "unit", unit: "px", value: 2 },
+                { type: "unit", unit: "px", value: 4 },
+                { type: "unit", unit: "px", value: -2 },
+                { alpha: 0.1, b: 0, g: 0, r: 0, type: "rgb" },
+              ],
             },
           ],
         },
-        {
-          "type": "tuple",
-          "value": [
-            {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": 4,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": 6,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": -1,
-            },
-            {
-              "alpha": 0.1,
-              "b": 0,
-              "g": 0,
-              "r": 0,
-              "type": "rgb",
-            },
-          ],
-        },
-        {
-          "type": "tuple",
-          "value": [
-            {
-              "type": "unit",
-              "unit": "number",
-              "value": 0,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": 2,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": 4,
-            },
-            {
-              "type": "unit",
-              "unit": "px",
-              "value": -2,
-            },
-            {
-              "alpha": 0.1,
-              "b": 0,
-              "g": 0,
-              "r": 0,
-              "type": "rgb",
-            },
-          ],
-        },
-      ],
-    },
-  },
-]
-`);
+      },
+    ]);
   });
 
   test("border", async () => {
@@ -254,51 +161,51 @@ describe("parseTailwindToWebstudio", () => {
 
     expect(await parseTailwindToWebstudio(tailwindClasses)).toEqual([
       {
-        property: "borderTopWidth",
+        property: "border-top-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
-        property: "borderRightWidth",
+        property: "border-right-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
-        property: "borderBottomWidth",
+        property: "border-bottom-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
-        property: "borderLeftWidth",
+        property: "border-left-width",
         value: { type: "unit", unit: "px", value: 1 },
       },
       {
-        property: "borderTopColor",
+        property: "border-top-color",
         value: { alpha: 1, b: 233, g: 165, r: 14, type: "rgb" },
       },
       {
-        property: "borderRightColor",
+        property: "border-right-color",
         value: { alpha: 1, b: 233, g: 165, r: 14, type: "rgb" },
       },
       {
-        property: "borderBottomColor",
+        property: "border-bottom-color",
         value: { alpha: 1, b: 233, g: 165, r: 14, type: "rgb" },
       },
       {
-        property: "borderLeftColor",
+        property: "border-left-color",
         value: { alpha: 1, b: 233, g: 165, r: 14, type: "rgb" },
       },
       {
-        property: "borderTopStyle",
+        property: "border-top-style",
         value: { type: "keyword", value: "solid" },
       },
       {
-        property: "borderRightStyle",
+        property: "border-right-style",
         value: { type: "keyword", value: "solid" },
       },
       {
-        property: "borderBottomStyle",
+        property: "border-bottom-style",
         value: { type: "keyword", value: "solid" },
       },
       {
-        property: "borderLeftStyle",
+        property: "border-left-style",
         value: { type: "keyword", value: "solid" },
       },
     ]);
