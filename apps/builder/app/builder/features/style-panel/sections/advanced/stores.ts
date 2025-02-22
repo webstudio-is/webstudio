@@ -15,6 +15,7 @@ import {
 import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
 
+// @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
 const initialProperties = new Set<CssProperty>([
   "cursor",
   "mix-blend-mode",
@@ -91,15 +92,8 @@ export const $advancedStylesLonghands = computed(
 export const $advancedStylesShorthands = computed(
   [$advancedStylesLonghands],
   (advancedStylesLonghands) => {
-    const longhandsMap: StyleMap = new Map();
-    // @todo this hyphen/camel case convesion needs to be solved by switching entirely to dash separated syntax.
-    for (const [property, value] of advancedStylesLonghands) {
-      longhandsMap.set(property, value);
-    }
-
-    const shorthands = mergeStyles(longhandsMap);
-
     const shorthandsMap: StyleMap = new Map();
+    const shorthands = mergeStyles(advancedStylesLonghands);
 
     for (const [property, value] of shorthands) {
       shorthandsMap.set(property, value);
