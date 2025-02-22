@@ -116,15 +116,15 @@ export const SubjectSelect = ({
         const parsedValue = animationActionSchema.safeParse(newValue);
 
         if (parsedValue.success) {
-          const subject = subjects.find((s) => s.value === newValue.subject);
+          const subjectItem = subjects.find((s) => s.value === subject);
 
-          if (subject === undefined) {
+          if (subjectItem === undefined) {
             toast.error(`Subject "${newValue.subject}" not found`);
             return;
           }
 
           if (
-            subject.isTimelineExists === false &&
+            subjectItem.isTimelineExists === false &&
             newValue.subject !== undefined
           ) {
             serverSyncStore.createTransaction(
@@ -139,7 +139,7 @@ export const SubjectSelect = ({
                   styleSources,
                   styleSourceSelections,
                   styles
-                )(subject.instanceId, "viewTimelineName", {
+                )(subjectItem.instanceId, "viewTimelineName", {
                   type: "unparsed",
                   value: newValue.subject,
                 });
