@@ -47,6 +47,16 @@ export const properties = {
     mdnUrl:
       "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
   },
+  viewTimelineInset: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-inset",
+  },
   "-webkit-line-clamp": {
     unitGroups: ["number"],
     inherited: false,
