@@ -13,6 +13,7 @@ import {
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
   decodeDataVariableName,
@@ -592,5 +593,66 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   deleteVariableMutable(data, boxVariableId);
   expect(data.instances.get("textId")?.children).toEqual([
     { type: "expression", value: "myVariable" },
+  ]);
+});
+
+test("unset global variables on all pages when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const pages = createDefaultPages({ rootInstanceId: "homeBodyId" });
+  pages.pages.push({
+    id: "",
+    name: "",
+    path: "",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+  const data = {
+    pages,
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="homeBodyId">
+          <$.Text ws:id="homeTextId">{expression`${globalVariable}`}</$.Text>
+        </$.Body>
+        <$.Body ws:id="aboutBodyId">
+          <$.Text ws:id="aboutTextId">{expression`${globalVariable}`}</$.Text>
+        </$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, globalVariableId);
+  expect(data.instances.get("homeTextId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
+  ]);
+  expect(data.instances.get("aboutTextId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
+  ]);
+});
+
+test("unset global variables in slots when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="bodyId">
+          <$.Slot ws:id="slotId">
+            <$.Fragment ws:id="fragmentId">
+              <$.Text ws:id="textId">{expression`${globalVariable}`}</$.Text>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, globalVariableId);
+  expect(data.instances.get("textId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
   ]);
 });
