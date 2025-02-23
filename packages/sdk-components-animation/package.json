@@ -58,6 +58,7 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "change-case": "^5.4.4",
     "react-error-boundary": "^5.0.0",
     "scroll-timeline-polyfill": "^1.1.0"
   },
