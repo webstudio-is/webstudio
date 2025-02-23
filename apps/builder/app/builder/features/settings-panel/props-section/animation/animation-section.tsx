@@ -14,12 +14,26 @@ import {
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
 import type { PropAndMeta } from "../use-props-logic";
-import type { AnimationAction, AnimationActionScroll } from "@webstudio-is/sdk";
+import type {
+  AnimationAction,
+  AnimationActionScroll,
+  InsetUnitValue,
+} from "@webstudio-is/sdk";
 import { toPascalCase } from "~/builder/features/style-panel/shared/keyword-utils";
-import { animationActionSchema } from "@webstudio-is/sdk";
+import {
+  animationActionSchema,
+  insetUnitValueSchema,
+  RANGE_UNITS,
+} from "@webstudio-is/sdk";
 import { RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
+import { toValue, type StyleValue } from "@webstudio-is/css-engine";
+import {
+  CssValueInput,
+  type IntermediateStyleValue,
+} from "~/builder/features/style-panel/shared/css-value-input";
+import { useState } from "react";
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -75,6 +89,72 @@ const animationSourceDescriptions: Record<
   closest: "Selects the nearest ancestor element that is scrollable.",
 };
 
+const unitOptions = RANGE_UNITS.map((unit) => ({
+  id: unit,
+  label: unit,
+  type: "unit" as const,
+}));
+
+const InsetValueInput = ({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: InsetUnitValue;
+  onChange: (value: InsetUnitValue) => void;
+}) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <CssValueInput
+      id={id}
+      styleSource="default"
+      value={value}
+      /* marginLeft to allow negative values  */
+      property={"marginLeft"}
+      unitOptions={unitOptions}
+      intermediateValue={intermediateValue}
+      onChange={(styleValue) => {
+        setIntermediateValue(styleValue);
+        /* @todo: allow to change some ephemeral property to see the result in action */
+      }}
+      getOptions={() => [
+        {
+          value: "auto",
+          type: "keyword",
+          description:
+            "Pick the child element’s viewTimelineInset property or use the scrolling element’s scroll-padding, depending on the selected axis.",
+        },
+      ]}
+      onHighlight={() => {
+        /* Nothing to Highlight */
+      }}
+      onChangeComplete={(event) => {
+        const parsedValue = insetUnitValueSchema.safeParse(event.value);
+        if (parsedValue.success) {
+          onChange(parsedValue.data);
+          setIntermediateValue(undefined);
+          return;
+        }
+
+        setIntermediateValue({
+          type: "invalid",
+          value: toValue(event.value),
+        });
+      }}
+      onAbort={() => {
+        /* @todo: allow to change some ephemeral property to see the result in action */
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+      }}
+    />
+  );
+};
+
 const animationSources = Object.keys(
   animationSourceDescriptions
 ) as NonNullable<AnimationActionScroll["source"]>[];
@@ -86,7 +166,13 @@ export const AnimateSection = ({
   animationAction: PropAndMeta;
   onChange: (value: AnimationAction) => void;
 }) => {
-  const fieldIds = useIds(["type", "subject", "source"] as const);
+  const fieldIds = useIds([
+    "type",
+    "subject",
+    "source",
+    "insetStart",
+    "insetEnd",
+  ] as const);
 
   const { prop } = animationAction;
 
@@ -232,6 +318,39 @@ export const AnimateSection = ({
               id={fieldIds.subject}
               value={value}
               onChange={onChange}
+            />
+          </Grid>
+        )}
+
+        {value.type === "view" && (
+          <Grid
+            gap={1}
+            align={"center"}
+            css={{ gridTemplateColumns: "1fr 1fr" }}
+          >
+            <Label htmlFor={fieldIds.insetStart}>
+              {value.axis === "inline" || value.axis === "x"
+                ? "Left Inset"
+                : "Top Inset"}
+            </Label>
+            <Label htmlFor={fieldIds.insetEnd}>
+              {value.axis === "inline" || value.axis === "x"
+                ? "Right Inset"
+                : "Bottom Inset"}
+            </Label>
+            <InsetValueInput
+              id={fieldIds.insetStart}
+              value={value.insetStart ?? { type: "keyword", value: "auto" }}
+              onChange={(insetStart) => {
+                handleChange({ ...value, insetStart });
+              }}
+            />
+            <InsetValueInput
+              id={fieldIds.insetEnd}
+              value={value.insetEnd ?? { type: "keyword", value: "auto" }}
+              onChange={(insetEnd) => {
+                handleChange({ ...value, insetEnd });
+              }}
             />
           </Grid>
         )}

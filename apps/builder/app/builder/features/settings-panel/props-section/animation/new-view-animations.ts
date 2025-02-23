@@ -47,7 +47,7 @@ export const newFadeOutViewAnimation: ViewAnimation = {
   timing: {
     rangeStart: ["exit", { type: "unit", value: 0, unit: "%" }],
     rangeEnd: ["exit", { type: "unit", value: 100, unit: "%" }],
-    fill: "backwards",
+    fill: "forwards",
     easing: "linear",
   },
   keyframes: [

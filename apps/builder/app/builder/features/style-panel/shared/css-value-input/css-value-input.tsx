@@ -308,7 +308,9 @@ type CssValueInputProps = Pick<
   /**
    * Selected item in the dropdown
    */
-  getOptions?: () => Array<KeywordValue | VarValue>;
+  getOptions?: () => Array<
+    KeywordValue | VarValue | (KeywordValue & { description?: string })
+  >;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
@@ -787,10 +789,22 @@ export const CssValueInput = ({
             : undefined;
 
   if (valueForDescription) {
-    const key = `${property}:${toValue(
-      valueForDescription
-    )}` as keyof typeof declarationDescriptions;
-    description = declarationDescriptions[key];
+    const option = getOptions().find(
+      (item) =>
+        item.type === "keyword" && item.value === valueForDescription.value
+    );
+    if (
+      option !== undefined &&
+      "description" in option &&
+      option?.description
+    ) {
+      description = option.description;
+    } else {
+      const key = `${property}:${toValue(
+        valueForDescription
+      )}` as keyof typeof declarationDescriptions;
+      description = declarationDescriptions[key];
+    }
   } else if (highlightedValue?.type === "var") {
     description = "CSS custom property (variable)";
   } else if (highlightedValue === undefined) {

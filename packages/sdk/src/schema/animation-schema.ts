@@ -71,6 +71,15 @@ export const rangeUnitValueSchema = z.union([
   }),
 ]);
 
+// view-timeline-inset
+export const insetUnitValueSchema = z.union([
+  rangeUnitValueSchema,
+  z.object({
+    type: z.literal("keyword"),
+    value: z.literal("auto"),
+  }),
+]);
+
 // @todo: Fix Keyframe Styles
 export const keyframeStylesSchema = z.record(StyleValue);
 
@@ -176,6 +185,11 @@ export const viewActionSchema = z.object({
   subject: z.string().optional(),
   axis: animationAxisSchema.optional(),
   animations: z.array(viewAnimationSchema),
+
+  insetStart: insetUnitValueSchema.optional(),
+
+  insetEnd: insetUnitValueSchema.optional(),
+
   isPinned: z.boolean().optional(),
 });
 
@@ -205,3 +219,4 @@ export type AnimationActionView = z.infer<typeof viewActionSchema>;
 export type AnimationAction = z.infer<typeof animationActionSchema>;
 export type ScrollAnimation = z.infer<typeof scrollAnimationSchema>;
 export type ViewAnimation = z.infer<typeof viewAnimationSchema>;
+export type InsetUnitValue = z.infer<typeof insetUnitValueSchema>;

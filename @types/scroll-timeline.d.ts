@@ -12,6 +12,7 @@ declare class ScrollTimeline extends AnimationTimeline {
 interface ViewTimelineOptions {
   subject?: Element | Document | null;
   axis?: ScrollAxis;
+  inset?: string;
 }
 
 declare class ViewTimeline extends ScrollTimeline {
