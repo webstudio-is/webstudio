@@ -28,6 +28,7 @@ import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Keyframes } from "./animation-keyframes";
 import { styleConfigByName } from "~/builder/features/style-panel/shared/configs";
+import { titleCase } from "title-case";
 
 type Props = {
   type: "scroll" | "view";
@@ -230,7 +231,7 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         <Select
           id={fieldIds.fill}
           options={fillModeNames}
-          getLabel={(fillModeName: string) => toPascalCase(fillModeName)}
+          getLabel={(fillModeName: string) => titleCase(fillModeName)}
           value={value.timing.fill ?? fillModeNames[0]}
           getDescription={(fillModeName: string) => (
             <Box
