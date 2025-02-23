@@ -7,10 +7,12 @@ import {
   type Resource,
   type Resources,
   type WebstudioData,
+  Pages,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   decodeDataVariableId,
   encodeDataVariableId,
+  findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   systemParameter,
   transpileExpression,
@@ -19,6 +21,7 @@ import {
   createJsonStringifyProxy,
   isPlainObject,
 } from "@webstudio-is/sdk/runtime";
+import { setUnion } from "./shim";
 
 const allowedJsChars = /[A-Za-z_]/;
 
@@ -258,6 +261,7 @@ export const findAvailableVariables = ({
 
 const traverseExpressions = ({
   startingInstanceId,
+  pages,
   instances,
   props,
   dataSources,
@@ -265,16 +269,27 @@ const traverseExpressions = ({
   update,
 }: {
   startingInstanceId: Instance["id"];
+  pages: undefined | Pages;
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   resources: Resources;
   update: (expression: string, args?: string[]) => void | string;
 }) => {
-  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+  const pagesList = pages ? [pages.homePage, ...pages.pages] : [];
+  let instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,
     startingInstanceId
   );
+  // global variables can be accessed on all pages and inside of slots
+  if (startingInstanceId === ROOT_INSTANCE_ID) {
+    for (const page of pagesList) {
+      instanceIds = setUnion(
+        instanceIds,
+        findTreeInstanceIds(instances, page.rootInstanceId)
+      );
+    }
+  }
   const resourceIds = new Set<Resource["id"]>();
 
   for (const instance of instances.values()) {
@@ -365,6 +380,7 @@ export const findUnsetVariableNames = ({
   const unsetVariables = new Set<DataSource["name"]>();
   traverseExpressions({
     startingInstanceId: startingInstanceId,
+    pages: undefined,
     instances,
     props,
     dataSources,
@@ -408,6 +424,7 @@ export const rebindTreeVariablesMutable = ({
   }
   traverseExpressions({
     startingInstanceId,
+    pages: undefined,
     instances,
     props,
     dataSources,
@@ -434,7 +451,7 @@ export const rebindTreeVariablesMutable = ({
 };
 
 export const deleteVariableMutable = (
-  data: Omit<WebstudioData, "pages">,
+  data: Omit<WebstudioData, "pages"> & { pages?: Pages },
   variableId: DataSource["id"]
 ) => {
   const dataSource = data.dataSources.get(variableId);
@@ -456,6 +473,7 @@ export const deleteVariableMutable = (
   // unset deleted variable in expressions
   traverseExpressions({
     ...data,
+    pages: data.pages,
     startingInstanceId,
     update: (expression) => {
       expression = unsetExpressionVariables({
