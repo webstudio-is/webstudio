@@ -94,12 +94,13 @@ const GapTooltip = ({
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
-        onClick: (event) => {
+        onClick(event) {
           if (event.altKey) {
             event.preventDefault();
             onReset();
             return;
           }
+          setIsOpen(true);
         },
       }}
       content={
