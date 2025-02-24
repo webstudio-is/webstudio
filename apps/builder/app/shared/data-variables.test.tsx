@@ -656,3 +656,85 @@ test("unset global variables in slots when delete", () => {
     { type: "expression", value: "globalVariable" },
   ]);
 });
+
+test("unset body variables in page meta when delete", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+    ),
+  };
+  expect(data.dataSources.size).toEqual(1);
+  const [bodyVariableId] = data.dataSources.keys();
+  const bodyIdentifier = encodeDataVariableId(bodyVariableId);
+  data.pages.homePage.title = bodyIdentifier;
+  data.pages.homePage.meta = {
+    description: bodyIdentifier,
+    excludePageFromSearch: bodyIdentifier,
+    socialImageUrl: bodyIdentifier,
+    language: bodyIdentifier,
+    status: bodyIdentifier,
+    redirect: bodyIdentifier,
+    custom: [{ property: "auth", content: bodyIdentifier }],
+  };
+  deleteVariableMutable(data, bodyVariableId);
+  expect(data.pages.homePage.title).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.description).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.excludePageFromSearch).toEqual(
+    `bodyVariable`
+  );
+  expect(data.pages.homePage.meta.socialImageUrl).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.language).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.status).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.redirect).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.custom?.[0].content).toEqual(`bodyVariable`);
+});
+
+test("unset global variables in all pages meta when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="homeBodyId"></$.Body>
+        <$.Body ws:id="aboutBodyId"></$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  data.pages.pages.push({
+    id: "",
+    name: "",
+    path: "",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  const globalIdentifier = encodeDataVariableId(globalVariableId);
+  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+    page.title = globalIdentifier;
+    page.meta = {
+      description: globalIdentifier,
+      excludePageFromSearch: globalIdentifier,
+      socialImageUrl: globalIdentifier,
+      language: globalIdentifier,
+      status: globalIdentifier,
+      redirect: globalIdentifier,
+      custom: [{ property: "auth", content: globalIdentifier }],
+    };
+  }
+  deleteVariableMutable(data, globalVariableId);
+  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+    expect(page.title).toEqual(`globalVariable`);
+    expect(page.meta.description).toEqual(`globalVariable`);
+    expect(page.meta.excludePageFromSearch).toEqual(`globalVariable`);
+    expect(page.meta.socialImageUrl).toEqual(`globalVariable`);
+    expect(page.meta.language).toEqual(`globalVariable`);
+    expect(page.meta.status).toEqual(`globalVariable`);
+    expect(page.meta.redirect).toEqual(`globalVariable`);
+    expect(page.meta.custom?.[0].content).toEqual(`globalVariable`);
+  }
+});
