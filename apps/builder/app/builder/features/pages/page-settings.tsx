@@ -1631,7 +1631,16 @@ export const PageSettings = ({
       onDuplicate={() => {
         const newPageId = duplicatePage(pageId);
         if (newPageId !== undefined) {
-          onDuplicate(newPageId);
+          // In `canvas.tsx`, within `subscribeStyles`, we use `requestAnimationFrame` (RAF) for style recalculation.
+          // After `duplicatePage`, styles are not yet recalculated.
+          // To ensure they are properly updated, we use double RAF.
+          requestAnimationFrame(() => {
+            // At this tick styles are updating
+            requestAnimationFrame(() => {
+              // At this tick styles are updated
+              onDuplicate(newPageId);
+            });
+          });
         }
       }}
     >

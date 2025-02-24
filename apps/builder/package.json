@@ -129,6 +129,7 @@
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/tsconfig": "workspace:*",
+    "fast-glob": "^3.3.2",
     "html-tags": "^4.0.0",
     "react-router-dom": "^6.28.1",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",

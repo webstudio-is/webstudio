@@ -40,6 +40,7 @@ import {
   $selectedInstancePathWithRoot,
   type InstancePath,
 } from "~/shared/awareness";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -374,6 +375,17 @@ export const useParentComputedStyleDecl = (property: StyleProperty) => {
     [property]
   );
   return useStore($store);
+};
+
+export const getInstanceStyleDecl = (
+  property: StyleProperty,
+  instanceSelector: InstanceSelector
+) => {
+  return getComputedStyleDecl({
+    model: $model.get(),
+    instanceSelector,
+    property,
+  });
 };
 
 export const useComputedStyles = (properties: StyleProperty[]) => {

@@ -72,6 +72,7 @@ export type NumericScrubOptions = {
   direction?: NumericScrubDirection;
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
+  onAbort?: () => void;
   onStatusChange?: (status: "idle" | "scrubbing") => void;
   shouldHandleEvent?: (node: Node) => boolean;
 };
@@ -168,6 +169,7 @@ export const numericScrubControl = (
     distanceThreshold = 0,
     onValueInput,
     onValueChange,
+    onAbort,
     onStatusChange,
     shouldHandleEvent,
   } = options;
@@ -209,7 +211,9 @@ export const numericScrubControl = (
   // Called on ESC key press or in cases of third-party pointer lock exit.
   const handlePointerLockChange = () => {
     if (document.pointerLockElement !== targetNode) {
+      // Reset the value to the initial value
       cleanup();
+      onAbort?.();
       return;
     }
 
@@ -396,7 +400,7 @@ export const numericScrubControl = (
   const eventNames = [
     "pointerup",
     "pointerdown",
-    "pontercancel",
+    "pointercancel",
     "lostpointercapture",
   ] as const;
   eventNames.forEach((eventName) =>

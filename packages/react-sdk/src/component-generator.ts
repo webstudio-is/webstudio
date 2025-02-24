@@ -104,7 +104,8 @@ const generatePropValue = ({
     prop.type === "number" ||
     prop.type === "boolean" ||
     prop.type === "string[]" ||
-    prop.type === "json"
+    prop.type === "json" ||
+    prop.type === "animationAction"
   ) {
     return JSON.stringify(prop.value);
   }

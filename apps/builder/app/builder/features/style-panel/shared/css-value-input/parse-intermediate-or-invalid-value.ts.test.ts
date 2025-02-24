@@ -41,19 +41,30 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
     }
   });
 
-  test("fallback to px", () => {
-    for (const propery of properties) {
-      const result = parseIntermediateOrInvalidValue(propery, {
-        type: "intermediate",
-        value: "10",
-      });
+  test.each(properties)(`fallback to px for property = "%s"`, (propery) => {
+    const result = parseIntermediateOrInvalidValue(propery, {
+      type: "intermediate",
+      value: "10",
+    });
 
-      expect(result).toEqual({
-        type: "unit",
-        value: 10,
-        unit: "px",
-      });
-    }
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "px",
+    });
+  });
+
+  test("fallback to % if px is not supported", () => {
+    const result = parseIntermediateOrInvalidValue("fontStretch", {
+      type: "intermediate",
+      value: "10",
+    });
+
+    expect(result).toEqual({
+      type: "unit",
+      value: 10,
+      unit: "%",
+    });
   });
 
   test("switch on new unit if previous not known", () => {

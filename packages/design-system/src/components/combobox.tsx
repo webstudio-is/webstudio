@@ -281,7 +281,6 @@ export const useCombobox = <Item,>({
     defaultHighlightedIndex,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     isOpen,
-
     onIsOpenChange(state) {
       const { type, isOpen, inputValue } = state;
 
