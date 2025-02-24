@@ -14,6 +14,7 @@ import {
   encodeDataVariableId,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
+  getExpressionIdentifiers,
   systemParameter,
   transpileExpression,
 } from "@webstudio-is/sdk";
@@ -277,17 +278,53 @@ const traverseExpressions = ({
   update: (expression: string, args?: string[]) => void | string;
 }) => {
   const pagesList = pages ? [pages.homePage, ...pages.pages] : [];
+
   let instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
     instances,
     startingInstanceId
   );
-  // global variables can be accessed on all pages and inside of slots
-  if (startingInstanceId === ROOT_INSTANCE_ID) {
-    for (const page of pagesList) {
+  for (const page of pagesList) {
+    // global variables can be accessed on all pages and inside of slots
+    if (startingInstanceId === ROOT_INSTANCE_ID) {
       instanceIds = setUnion(
         instanceIds,
         findTreeInstanceIds(instances, page.rootInstanceId)
       );
+    }
+
+    // global and body variables can be accessed in pages meta
+    if (
+      startingInstanceId === page.rootInstanceId ||
+      startingInstanceId === ROOT_INSTANCE_ID
+    ) {
+      page.title = update(page.title) ?? page.title;
+      if (page.meta.description) {
+        page.meta.description =
+          update(page.meta.description) ?? page.meta.description;
+      }
+      if (page.meta.excludePageFromSearch) {
+        page.meta.excludePageFromSearch =
+          update(page.meta.excludePageFromSearch) ??
+          page.meta.excludePageFromSearch;
+      }
+      if (page.meta.socialImageUrl) {
+        page.meta.socialImageUrl =
+          update(page.meta.socialImageUrl) ?? page.meta.socialImageUrl;
+      }
+      if (page.meta.language) {
+        page.meta.language = update(page.meta.language) ?? page.meta.language;
+      }
+      if (page.meta.status) {
+        page.meta.status = update(page.meta.status) ?? page.meta.status;
+      }
+      if (page.meta.redirect) {
+        page.meta.redirect = update(page.meta.redirect) ?? page.meta.redirect;
+      }
+      if (page.meta.custom) {
+        for (const item of page.meta.custom) {
+          item.content = update(item.content) ?? item.content;
+        }
+      }
     }
   }
   const resourceIds = new Set<Resource["id"]>();
@@ -298,10 +335,7 @@ const traverseExpressions = ({
     }
     for (const child of instance.children) {
       if (child.type === "expression") {
-        const newExpression = update(child.value);
-        if (newExpression !== undefined) {
-          child.value = newExpression;
-        }
+        child.value = update(child.value) ?? child.value;
       }
     }
   }
@@ -311,18 +345,12 @@ const traverseExpressions = ({
       continue;
     }
     if (prop.type === "expression") {
-      const newExpression = update(prop.value);
-      if (newExpression !== undefined) {
-        prop.value = newExpression;
-      }
+      prop.value = update(prop.value) ?? prop.value;
       continue;
     }
     if (prop.type === "action") {
       for (const action of prop.value) {
-        const newExpression = update(action.code, action.args);
-        if (newExpression !== undefined) {
-          action.code = newExpression;
-        }
+        action.code = update(action.code, action.args) ?? action.code;
       }
       continue;
     }
@@ -345,21 +373,12 @@ const traverseExpressions = ({
     if (resourceIds.has(resource.id) === false) {
       continue;
     }
-    const newExpression = update(resource.url);
-    if (newExpression !== undefined) {
-      resource.url = newExpression;
-    }
+    resource.url = update(resource.url) ?? resource.url;
     for (const header of resource.headers) {
-      const newExpression = update(header.value);
-      if (newExpression !== undefined) {
-        header.value = newExpression;
-      }
+      header.value = update(header.value) ?? header.value;
     }
     if (resource.body) {
-      const newExpression = update(resource.body);
-      if (newExpression !== undefined) {
-        resource.body = newExpression;
-      }
+      resource.body = update(resource.body) ?? resource.body;
     }
   }
 };
@@ -379,7 +398,7 @@ export const findUnsetVariableNames = ({
 }) => {
   const unsetVariables = new Set<DataSource["name"]>();
   traverseExpressions({
-    startingInstanceId: startingInstanceId,
+    startingInstanceId,
     pages: undefined,
     instances,
     props,
@@ -398,6 +417,43 @@ export const findUnsetVariableNames = ({
     },
   });
   return Array.from(unsetVariables);
+};
+
+export const findUsedVariables = ({
+  startingInstanceId,
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: {
+  startingInstanceId: Instance["id"];
+  pages: undefined | Pages;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const usedVariables = new Map<DataSource["id"], number>();
+  traverseExpressions({
+    startingInstanceId,
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+    update: (expression) => {
+      const identifiers = getExpressionIdentifiers(expression);
+      for (const identifier of identifiers) {
+        const id = decodeDataVariableId(identifier);
+        if (id !== undefined) {
+          const count = usedVariables.get(id) ?? 0;
+          usedVariables.set(id, count + 1);
+        }
+      }
+    },
+  });
+  return usedVariables;
 };
 
 export const rebindTreeVariablesMutable = ({
