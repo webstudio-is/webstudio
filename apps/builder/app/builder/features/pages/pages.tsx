@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tooltip,
-  Box,
   Button,
   SmallIconButton,
   TreeNode,
@@ -13,6 +12,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
   toast,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -313,7 +313,15 @@ const PagesTree = ({
   }
 
   return (
-    <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
+    <ScrollArea
+      direction="both"
+      css={{
+        width: "100%",
+        overflow: "hidden",
+        flexBasis: 0,
+        flexGrow: 1,
+      }}
+    >
       <TreeRoot>
         {flatPagesTree.map((item, index) => {
           const handleExpand = (isExpanded: boolean, all: boolean) => {
@@ -435,7 +443,7 @@ const PagesTree = ({
           );
         })}
       </TreeRoot>
-    </Box>
+    </ScrollArea>
   );
 };
 
