@@ -12,7 +12,6 @@ import {
   encodeDataVariableId,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
-  type Page,
 } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
