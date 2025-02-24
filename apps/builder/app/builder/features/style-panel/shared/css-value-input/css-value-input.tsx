@@ -35,6 +35,7 @@ import {
   useState,
   useMemo,
   type ComponentProps,
+  type RefObject,
 } from "react";
 import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -99,11 +100,11 @@ const useScrub = ({
   onAbort: () => void;
   shouldHandleEvent?: (node: Node) => boolean;
 }): [
-  React.RefObject<HTMLDivElement | null>,
-  React.RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
 ] => {
-  const scrubRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const scrubRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
@@ -991,8 +992,11 @@ export const CssValueInput = ({
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={inputPropsHandleKeyDown}
-            containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
+            inputRef={mergeRefs(
+              inputRef,
+              props.inputRef,
+              disabled ? undefined : scrubRef
+            )}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
