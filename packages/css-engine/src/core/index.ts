@@ -6,7 +6,7 @@ export type {
   FontFaceRule,
 } from "./rules";
 export { prefixStyles } from "./prefixer";
-export { mergeStyles, isShorthand, supportedShorthands } from "./merger";
+export { mergeStyles } from "./merger";
 export { generateStyleMap } from "./rules";
 export type { StyleSheetRegular } from "./style-sheet-regular";
 export * from "./create-style-sheet";

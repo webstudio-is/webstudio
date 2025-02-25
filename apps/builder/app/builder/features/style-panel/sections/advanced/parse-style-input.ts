@@ -4,11 +4,7 @@ import {
   camelCaseProperty,
   shorthandProperties,
 } from "@webstudio-is/css-data";
-import {
-  mergeStyles,
-  type CssProperty,
-  type StyleMap,
-} from "@webstudio-is/css-engine";
+import { type CssProperty, type StyleMap } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
 
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
@@ -63,9 +59,8 @@ export const parseStyleInput = (css: string): StyleMap => {
     ) {
       styleMap.set(`--${property}`, value);
     } else {
-      if (value.type === "keyword" && value.value === "unset") {
-        styleMap.set(property, { type: "guaranteedInvalid" });
-      } else styleMap.set(property, value);
+      // @todo This should be returning { type: "guaranteedInvalid" }
+      styleMap.set(property, value);
     }
   }
   return styleMap;

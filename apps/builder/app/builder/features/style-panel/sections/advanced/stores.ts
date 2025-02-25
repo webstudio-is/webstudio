@@ -1,7 +1,6 @@
 import { computed } from "nanostores";
 import {
   hyphenateProperty,
-  mergeStyles,
   type CssProperty,
   type StyleMap,
 } from "@webstudio-is/css-engine";
@@ -86,20 +85,5 @@ export const $advancedStylesLonghands = computed(
     }
 
     return advancedStyles;
-  }
-);
-
-// @todo delete
-export const $advancedStylesShorthands = computed(
-  [$advancedStylesLonghands],
-  (advancedStylesLonghands) => {
-    const shorthandsMap: StyleMap = new Map();
-    const shorthands = mergeStyles(advancedStylesLonghands);
-
-    for (const [property, value] of shorthands) {
-      shorthandsMap.set(property, value);
-    }
-
-    return shorthandsMap;
   }
 );

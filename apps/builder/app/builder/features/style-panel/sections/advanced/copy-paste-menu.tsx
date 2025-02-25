@@ -14,7 +14,7 @@ import {
   type StyleMap,
 } from "@webstudio-is/css-engine";
 import { useStore } from "@nanostores/react";
-import { $advancedStylesShorthands, $advancedStylesLonghands } from "./stores";
+import { $advancedStylesLonghands } from "./stores";
 
 export const copyAttribute = "data-declaration";
 
@@ -27,7 +27,6 @@ export const CopyPasteMenu = ({
   properties: Array<string>;
   onPaste: (cssText: string) => void;
 }) => {
-  const advancedStylesShorthands = useStore($advancedStylesShorthands);
   const advancedStylesLonghands = useStore($advancedStylesLonghands);
   const lastClickedProperty = useRef<string>();
 
@@ -39,7 +38,7 @@ export const CopyPasteMenu = ({
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
     const currentStyleMap: StyleMap = new Map();
-    for (const [property, value] of advancedStylesShorthands) {
+    for (const [property, value] of advancedStylesLonghands) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
         currentStyleMap.set(hyphenateProperty(property), value);
@@ -52,13 +51,11 @@ export const CopyPasteMenu = ({
 
   const handleCopy = () => {
     const property = lastClickedProperty.current;
-    console.log(property);
+
     if (property === undefined) {
       return;
     }
-    const value =
-      advancedStylesShorthands.get(property) ??
-      advancedStylesLonghands.get(property);
+    const value = advancedStylesLonghands.get(property);
 
     if (value === undefined) {
       return;

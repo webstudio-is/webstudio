@@ -15,9 +15,7 @@ import { matchSorter } from "match-sorter";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   Box,
-  Collapsible,
   Flex,
-  focusRingStyle,
   Label,
   SearchField,
   SectionTitle,
@@ -30,16 +28,11 @@ import {
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
-  expandShorthands,
-  parseCssValue,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
-  isShorthand,
-  mergeStyles,
   StyleValue,
-  supportedShorthands,
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
@@ -64,7 +57,7 @@ import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
 import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
-import { $advancedStylesLonghands, $advancedStylesShorthands } from "./stores";
+import { $advancedStylesLonghands } from "./stores";
 import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
@@ -379,94 +372,6 @@ const AdvancedDeclarationLonghand = memo(
   }
 );
 
-const AdvancedDeclarationShorthand = memo(
-  (props: {
-    property: CssProperty;
-    value: StyleValue | undefined;
-    autoFocus?: boolean;
-    onReset?: () => void;
-    onChangeComplete?: ComponentProps<
-      typeof CssValueInputContainer
-    >["onChangeComplete"];
-    valueInputRef?: RefObject<HTMLInputElement>;
-  }) => {
-    const { property, value, onReset } = props;
-    const [isOpen, setIsOpen] = useState(false);
-    const longhands = expandShorthands([
-      [hyphenateProperty(property), toValue(value)],
-    ]);
-    const camelCasedProperty = camelCaseProperty(property);
-    console.log(111, property, value, toValue(value));
-    return (
-      <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
-        <Collapsible.Trigger asChild>
-          <Flex
-            css={{
-              paddingLeft: initialIndentation,
-              position: "relative",
-              outline: "none",
-              "&:focus-visible": focusRingStyle({ inset: 1 }),
-            }}
-            wrap="wrap"
-            align="center"
-            justify="start"
-            tabIndex={0}
-            {...{ [copyAttribute]: property }}
-          >
-            <AdvancedPropertyLabel property={property} onReset={onReset} />
-            <Text
-              variant="mono"
-              // Improves the visual separation of value from the property.
-              css={{
-                textIndent: "-0.5ch",
-                fontWeight: "bold",
-                paddingRight: "1ch",
-              }}
-            >
-              {isOpen ? ": ▼" : ": ▶"}
-            </Text>
-            <Text variant="mono">{toValue(value)}</Text>
-          </Flex>
-        </Collapsible.Trigger>
-
-        <Collapsible.Content>
-          {longhands.map(([property, value]) => {
-            return (
-              <AdvancedDeclarationLonghand
-                {...props}
-                key={property}
-                indentation="30px"
-                property={property}
-                value={parseCssValue(camelCasedProperty, value)}
-              />
-            );
-          })}
-        </Collapsible.Content>
-      </Collapsible.Root>
-    );
-  }
-);
-
-const toShorthands = (properties: Array<CssProperty>) => {
-  console.log("properties", properties);
-  const shorthands = new Set<string>();
-  for (const property of properties) {
-    let isAdded = false;
-    for (const [shorthand, longhands] of supportedShorthands) {
-      if (longhands.has(property)) {
-        shorthands.add(shorthand);
-        isAdded = true;
-        break;
-      }
-    }
-    if (isAdded === false) {
-      shorthands.add(property);
-    }
-  }
-  console.log("shorthands", shorthands);
-  return Array.from(shorthands);
-};
-
 export const Section = () => {
   const [isAdding, setIsAdding] = useState(false);
   const advancedStyles = useStore($advancedStylesLonghands);
@@ -508,7 +413,7 @@ export const Section = () => {
     const newRecentPropertiesMap = new Map(recentPropertiesMap);
     newRecentPropertiesMap.set(
       selectedInstanceKey,
-      Array.from(new Set([...recentProperties, ...properties]))
+      Array.from(new Set(properties))
     );
     setRecentPropertiesMap(newRecentPropertiesMap);
   };
@@ -518,7 +423,7 @@ export const Section = () => {
     const insertedProperties = Array.from(
       styleMap.keys()
     ) as Array<CssProperty>;
-    updateRecentProperties(insertedProperties);
+    updateRecentProperties([...recentProperties, ...insertedProperties]);
     return styleMap;
   };
 
@@ -564,7 +469,6 @@ export const Section = () => {
     });
   };
 
-  console.log({ recentProperties, currentProperties });
   return (
     <AdvancedStyleSection
       label="Advanced"
@@ -588,34 +492,29 @@ export const Section = () => {
             css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
           >
             {showRecentProperties &&
-              toShorthands(recentProperties).map(
-                (property, index, properties) => {
-                  const isLast = index === properties.length - 1;
-                  const AdvancedDeclaration = isShorthand(property)
-                    ? AdvancedDeclarationShorthand
-                    : AdvancedDeclarationLonghand;
-                  return (
-                    <AdvancedDeclaration
-                      valueInputRef={isLast ? recentValueInputRef : undefined}
-                      property={property}
-                      value={advancedStyles.get(property)}
-                      autoFocus={isLast}
-                      onChangeComplete={(event) => {
-                        if (event.type === "enter") {
-                          handleShowAddStyleInput();
-                        }
-                      }}
-                      onReset={() => {
-                        updateRecentProperties(
-                          recentProperties.filter(
-                            (recentProperty) => recentProperty !== property
-                          )
-                        );
-                      }}
-                    />
-                  );
-                }
-              )}
+              recentProperties.map((property, index, properties) => {
+                const isLast = index === properties.length - 1;
+                return (
+                  <AdvancedDeclarationLonghand
+                    valueInputRef={isLast ? recentValueInputRef : undefined}
+                    property={property}
+                    value={advancedStyles.get(property)}
+                    autoFocus={isLast}
+                    onChangeComplete={(event) => {
+                      if (event.type === "enter") {
+                        handleShowAddStyleInput();
+                      }
+                    }}
+                    onReset={() => {
+                      updateRecentProperties(
+                        recentProperties.filter(
+                          (recentProperty) => recentProperty !== property
+                        )
+                      );
+                    }}
+                  />
+                );
+              })}
             {(showRecentProperties || isAdding) && (
               <Box
                 css={
@@ -653,23 +552,20 @@ export const Section = () => {
             style={{ minHeight }}
             ref={containerRef}
           >
-            {toShorthands(
-              currentProperties.filter(
+            {currentProperties
+              .filter(
                 (property) => recentProperties.includes(property) === false
               )
-            ).map((property) => {
-              const AdvancedDeclaration = isShorthand(property)
-                ? AdvancedDeclarationShorthand
-                : AdvancedDeclarationLonghand;
-              return (
-                <LazyRender key={property}>
-                  <AdvancedDeclaration
-                    property={property}
-                    value={advancedStyles.get(property)}
-                  />
-                </LazyRender>
-              );
-            })}
+              .map((property) => {
+                return (
+                  <LazyRender key={property}>
+                    <AdvancedDeclarationLonghand
+                      property={property}
+                      value={advancedStyles.get(property)}
+                    />
+                  </LazyRender>
+                );
+              })}
           </Flex>
         </Flex>
       </CopyPasteMenu>
