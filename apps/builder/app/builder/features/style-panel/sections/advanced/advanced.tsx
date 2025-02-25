@@ -1,4 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
+import { flushSync } from "react-dom";
 import { colord } from "colord";
 import {
   memo,
@@ -32,7 +33,6 @@ import {
 } from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
-  StyleValue,
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
@@ -178,13 +178,11 @@ const AdvancedPropertyLabel = ({
 };
 
 const AdvancedPropertyValue = ({
-  autoFocus,
   property,
   onChangeComplete,
   onReset,
   inputRef: inputRefProp,
 }: {
-  autoFocus?: boolean;
   property: CssProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
@@ -196,12 +194,6 @@ const AdvancedPropertyValue = ({
   const camelCasedProperty = camelCaseProperty(property);
   const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (autoFocus) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [autoFocus]);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
 
   return (
@@ -325,15 +317,12 @@ const LazyRender = ({ children }: ComponentProps<"div">) => {
 const AdvancedDeclarationLonghand = memo(
   ({
     property,
-    autoFocus,
     onChangeComplete,
     onReset,
     valueInputRef,
     indentation = initialIndentation,
   }: {
     property: CssProperty;
-    value: StyleValue | undefined;
-    autoFocus?: boolean;
     indentation?: string;
     onReset?: () => void;
     onChangeComplete?: ComponentProps<
@@ -361,7 +350,6 @@ const AdvancedDeclarationLonghand = memo(
           :
         </Text>
         <AdvancedPropertyValue
-          autoFocus={autoFocus}
           property={property}
           onChangeComplete={onChangeComplete}
           onReset={onReset}
@@ -428,7 +416,9 @@ export const Section = () => {
   };
 
   const handleShowAddStyleInput = () => {
-    setIsAdding(true);
+    flushSync(() => {
+      setIsAdding(true);
+    });
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
   };
@@ -460,12 +450,13 @@ export const Section = () => {
     setSearchProperties(matched as CssProperty[]);
   };
 
-  const handleAbortAddStyles = () => {
+  const afterAddingStyles = () => {
     setIsAdding(false);
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
       const element = recentValueInputRef.current ?? searchInputRef.current;
       element?.focus();
+      element?.select();
     });
   };
 
@@ -496,10 +487,9 @@ export const Section = () => {
                 const isLast = index === properties.length - 1;
                 return (
                   <AdvancedDeclarationLonghand
+                    key={property}
                     valueInputRef={isLast ? recentValueInputRef : undefined}
                     property={property}
-                    value={advancedStyles.get(property)}
-                    autoFocus={isLast}
                     onChangeComplete={(event) => {
                       if (event.type === "enter") {
                         handleShowAddStyleInput();
@@ -528,10 +518,10 @@ export const Section = () => {
                   onSubmit={(cssText: string) => {
                     const styles = handleInsertStyles(cssText);
                     if (styles.size > 0) {
-                      setIsAdding(false);
+                      afterAddingStyles();
                     }
                   }}
-                  onClose={handleAbortAddStyles}
+                  onClose={afterAddingStyles}
                   onFocus={() => {
                     if (isAdding === false) {
                       handleShowAddStyleInput();
@@ -559,10 +549,7 @@ export const Section = () => {
               .map((property) => {
                 return (
                   <LazyRender key={property}>
-                    <AdvancedDeclarationLonghand
-                      property={property}
-                      value={advancedStyles.get(property)}
-                    />
+                    <AdvancedDeclarationLonghand property={property} />
                   </LazyRender>
                 );
               })}

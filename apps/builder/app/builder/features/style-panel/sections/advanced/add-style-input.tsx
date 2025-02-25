@@ -242,7 +242,6 @@ export const AddStyleInput = forwardRef<
         <ComboboxAnchor>
           <InputField
             {...inputProps}
-            autoFocus
             onFocus={onFocus}
             onBlur={handleBlur}
             inputRef={forwardedRef}
@@ -258,7 +257,6 @@ export const AddStyleInput = forwardRef<
                 <ComboboxListboxItem
                   {...combobox.getItemProps({ item, index })}
                   key={index}
-                  asChild
                 >
                   <Text
                     variant="labelsSentenceCase"
