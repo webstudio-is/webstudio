@@ -102,7 +102,7 @@ export -f submodule_operations
 export DRY_RUN
 export release_branch
 
-git submodule foreach --recursive "submodule_operations \"$DRY_RUN\" \"$release_branch\""
+git submodule foreach --recursive 'bash -c "submodule_operations \"$DRY_RUN\" \"$release_branch\""'
 
 # 7. Success message
 echo ""
