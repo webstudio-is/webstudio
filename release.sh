@@ -1,5 +1,33 @@
 #!/bin/bash
 
+#
+# Release Branch Creator Script
+# -----------------------------
+#
+# DESCRIPTION:
+#   This script automates the process of creating release branches in a Git repository
+#   with submodules. It creates a release branch with the current date in the format
+#   'release-DD-MM-YYYY.staging' in both the main repository and all its submodules.
+#
+# FEATURES:
+#   - Verifies you're on main/master branch before proceeding
+#   - Checks for uncommitted changes in main repo and submodules
+#   - Creates a release branch with today's date
+#   - Creates an empty commit in the main repo with message "build: Release DD-MM-YYYY"
+#   - Creates matching branches in all submodules
+#   - Pushes submodule branches to their remotes
+#   - Provides a dry run mode (-d flag) to preview actions without making changes
+#
+# USAGE:
+#   ./release-branch-script.sh         # Create and push release branches
+#   ./release-branch-script.sh -d      # Dry run (show what would happen without making changes)
+#
+# REQUIREMENTS:
+#   - All repositories (main and submodules) must be on main/master branch
+#   - No uncommitted changes anywhere
+#   - Git must be installed and properly configured
+#
+
 # Function to display error messages and exit
 error_exit() {
     echo "ERROR: $1" >&2
