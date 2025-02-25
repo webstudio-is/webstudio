@@ -7,7 +7,6 @@ import { migrateWebstudioDataMutable } from "./webstudio-data-migrator";
 const emptyData: WebstudioData = {
   pages: createDefaultPages({
     rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
   }),
   assets: new Map(),
   dataSources: new Map(),

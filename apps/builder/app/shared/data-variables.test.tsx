@@ -8,7 +8,12 @@ import {
   Variable,
   ws,
 } from "@webstudio-is/template";
-import { encodeDataVariableId, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import {
+  encodeDataVariableId,
+  ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
+} from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   computeExpression,
   decodeDataVariableName,
@@ -56,6 +61,7 @@ test("find available variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "bodyVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
@@ -72,6 +78,7 @@ test("find masked variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ scopeInstanceId: "boxId", name: "myVariable" }),
   ]);
 });
@@ -90,6 +97,7 @@ test("find global variables", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "globalVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
@@ -114,6 +122,7 @@ test("find global variables in slots", () => {
   expect(
     findAvailableVariables({ ...data, startingInstanceId: "boxId" })
   ).toEqual([
+    expect.objectContaining({ name: "system", id: SYSTEM_VARIABLE_ID }),
     expect.objectContaining({ name: "globalVariable" }),
     expect.objectContaining({ name: "boxVariable" }),
   ]);
@@ -585,4 +594,147 @@ test("prevent rebinding with variables outside of slot content scope", () => {
   expect(data.instances.get("textId")?.children).toEqual([
     { type: "expression", value: "myVariable" },
   ]);
+});
+
+test("unset global variables on all pages when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const pages = createDefaultPages({ rootInstanceId: "homeBodyId" });
+  pages.pages.push({
+    id: "",
+    name: "",
+    path: "",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+  const data = {
+    pages,
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="homeBodyId">
+          <$.Text ws:id="homeTextId">{expression`${globalVariable}`}</$.Text>
+        </$.Body>
+        <$.Body ws:id="aboutBodyId">
+          <$.Text ws:id="aboutTextId">{expression`${globalVariable}`}</$.Text>
+        </$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, globalVariableId);
+  expect(data.instances.get("homeTextId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
+  ]);
+  expect(data.instances.get("aboutTextId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
+  ]);
+});
+
+test("unset global variables in slots when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="bodyId">
+          <$.Slot ws:id="slotId">
+            <$.Fragment ws:id="fragmentId">
+              <$.Text ws:id="textId">{expression`${globalVariable}`}</$.Text>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  deleteVariableMutable(data, globalVariableId);
+  expect(data.instances.get("textId")?.children).toEqual([
+    { type: "expression", value: "globalVariable" },
+  ]);
+});
+
+test("unset body variables in page meta when delete", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+    ),
+  };
+  expect(data.dataSources.size).toEqual(1);
+  const [bodyVariableId] = data.dataSources.keys();
+  const bodyIdentifier = encodeDataVariableId(bodyVariableId);
+  data.pages.homePage.title = bodyIdentifier;
+  data.pages.homePage.meta = {
+    description: bodyIdentifier,
+    excludePageFromSearch: bodyIdentifier,
+    socialImageUrl: bodyIdentifier,
+    language: bodyIdentifier,
+    status: bodyIdentifier,
+    redirect: bodyIdentifier,
+    custom: [{ property: "auth", content: bodyIdentifier }],
+  };
+  deleteVariableMutable(data, bodyVariableId);
+  expect(data.pages.homePage.title).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.description).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.excludePageFromSearch).toEqual(
+    `bodyVariable`
+  );
+  expect(data.pages.homePage.meta.socialImageUrl).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.language).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.status).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.redirect).toEqual(`bodyVariable`);
+  expect(data.pages.homePage.meta.custom?.[0].content).toEqual(`bodyVariable`);
+});
+
+test("unset global variables in all pages meta when delete", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="homeBodyId"></$.Body>
+        <$.Body ws:id="aboutBodyId"></$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  data.pages.pages.push({
+    id: "",
+    name: "",
+    path: "",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+  expect(data.dataSources.size).toEqual(1);
+  const [globalVariableId] = data.dataSources.keys();
+  const globalIdentifier = encodeDataVariableId(globalVariableId);
+  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+    page.title = globalIdentifier;
+    page.meta = {
+      description: globalIdentifier,
+      excludePageFromSearch: globalIdentifier,
+      socialImageUrl: globalIdentifier,
+      language: globalIdentifier,
+      status: globalIdentifier,
+      redirect: globalIdentifier,
+      custom: [{ property: "auth", content: globalIdentifier }],
+    };
+  }
+  deleteVariableMutable(data, globalVariableId);
+  for (const page of [data.pages.homePage, ...data.pages.pages]) {
+    expect(page.title).toEqual(`globalVariable`);
+    expect(page.meta.description).toEqual(`globalVariable`);
+    expect(page.meta.excludePageFromSearch).toEqual(`globalVariable`);
+    expect(page.meta.socialImageUrl).toEqual(`globalVariable`);
+    expect(page.meta.language).toEqual(`globalVariable`);
+    expect(page.meta.status).toEqual(`globalVariable`);
+    expect(page.meta.redirect).toEqual(`globalVariable`);
+    expect(page.meta.custom?.[0].content).toEqual(`globalVariable`);
+  }
 });

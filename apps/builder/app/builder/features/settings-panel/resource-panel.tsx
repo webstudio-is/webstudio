@@ -17,6 +17,8 @@ import {
   generateObjectExpression,
   isLiteralExpression,
   parseObjectExpression,
+  SYSTEM_VARIABLE_ID,
+  systemParameter,
 } from "@webstudio-is/sdk";
 import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
@@ -34,7 +36,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $dataSources,
@@ -375,7 +376,7 @@ const $hiddenDataSourceIds = computed(
         dataSourceIds.add(dataSource.id);
       }
     }
-    if (page?.systemDataSourceId && isFeatureEnabled("filters")) {
+    if (page?.systemDataSourceId) {
       dataSourceIds.delete(page.systemDataSourceId);
     }
     return dataSourceIds;
@@ -406,7 +407,10 @@ const $selectedInstanceScope = computed(
         if (hiddenDataSourceIds.has(dataSourceId)) {
           continue;
         }
-        const dataSource = dataSources.get(dataSourceId);
+        let dataSource = dataSources.get(dataSourceId);
+        if (dataSourceId === SYSTEM_VARIABLE_ID) {
+          dataSource = systemParameter;
+        }
         if (dataSource === undefined) {
           continue;
         }

@@ -71,7 +71,6 @@ import {
   $assets,
   $instances,
   $pages,
-  $dataSources,
   $publishedOrigin,
   $project,
   $userPlanFeatures,
@@ -1365,36 +1364,26 @@ const NewPageSettingsView = ({
 
 const createPage = (pageId: Page["id"], values: Values) => {
   serverSyncStore.createTransaction(
-    [$pages, $instances, $dataSources],
-    (pages, instances, dataSources) => {
+    [$pages, $instances],
+    (pages, instances) => {
       if (pages === undefined) {
         return;
       }
       const rootInstanceId = nanoid();
-      const systemDataSourceId = nanoid();
       pages.pages.push({
         id: pageId,
         name: values.name,
         path: values.path,
         title: values.title,
         rootInstanceId,
-        systemDataSourceId,
         meta: {},
       });
-
       instances.set(rootInstanceId, {
         type: "instance",
         id: rootInstanceId,
         component: "Body",
         children: [],
       });
-      dataSources.set(systemDataSourceId, {
-        id: systemDataSourceId,
-        scopeInstanceId: rootInstanceId,
-        name: "system",
-        type: "parameter",
-      });
-
       registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
       selectInstance(undefined);
     }
@@ -1642,7 +1631,16 @@ export const PageSettings = ({
       onDuplicate={() => {
         const newPageId = duplicatePage(pageId);
         if (newPageId !== undefined) {
-          onDuplicate(newPageId);
+          // In `canvas.tsx`, within `subscribeStyles`, we use `requestAnimationFrame` (RAF) for style recalculation.
+          // After `duplicatePage`, styles are not yet recalculated.
+          // To ensure they are properly updated, we use double RAF.
+          requestAnimationFrame(() => {
+            // At this tick styles are updating
+            requestAnimationFrame(() => {
+              // At this tick styles are updated
+              onDuplicate(newPageId);
+            });
+          });
         }
       }}
     >

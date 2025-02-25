@@ -23,6 +23,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
+  placeholder: "Heading",
   icon: HeadingIcon,
   constraints: {
     relation: "ancestor",

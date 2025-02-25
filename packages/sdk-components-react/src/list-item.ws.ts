@@ -15,6 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   type: "container",
+  placeholder: "List item",
   constraints: {
     // cannot use parent relation here
     // because list item can be put inside of collection or slot

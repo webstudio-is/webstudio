@@ -97,7 +97,6 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
-import { editablePlaceholderComponents } from "~/canvas/shared/styles";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -1580,6 +1579,7 @@ export const TextEditor = ({
   const handleNext = useEffectEvent(
     (state: EditorState, args: HandleNextParams) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+      const metas = $registeredComponentMetas.get();
 
       if (rootInstanceId === undefined) {
         return;
@@ -1589,7 +1589,7 @@ export const TextEditor = ({
       findAllEditableInstanceSelector(
         [rootInstanceId],
         instances,
-        $registeredComponentMetas.get(),
+        metas,
         editableInstanceSelectors
       );
 
@@ -1638,14 +1638,12 @@ export const TextEditor = ({
         if (instance === undefined) {
           continue;
         }
-
-        // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-        const componentsWithPseudoElementChildren =
-          editablePlaceholderComponents;
+        const meta = metas.get(instance.component);
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
-          !componentsWithPseudoElementChildren.includes(instance.component) &&
+          // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
+          meta?.placeholder === undefined &&
           instance?.children.length === 0
         ) {
           const elt = getElementByInstanceSelector(nextSelector);

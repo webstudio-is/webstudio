@@ -26,13 +26,11 @@ import {
 } from "@webstudio-is/design-system";
 import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
-import {
-  decodeDataSourceVariable,
-  getExpressionIdentifiers,
-} from "@webstudio-is/sdk";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import {
   $dataSources,
   $instances,
+  $pages,
   $props,
   $resources,
   $variableValuesByInstanceSelector,
@@ -58,6 +56,7 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   deleteVariableMutable,
   findAvailableVariables,
+  findUsedVariables,
 } from "~/shared/data-variables";
 
 /**
@@ -90,71 +89,20 @@ const $instanceVariableValues = computed(
     new Map<string, unknown>()
 );
 
-/**
- * find variables used in
- *
- * instance children
- * expression prop
- * action prop
- * url resource field
- * header resource field
- * body resource fiel
- */
 const $usedVariables = computed(
-  [$instances, $props, $resources, $selectedPage],
-  (instances, props, resources, page) => {
-    const usedVariables = new Map<DataSource["id"], number>();
-    const collectExpressionVariables = (expression: string) => {
-      const identifiers = getExpressionIdentifiers(expression);
-      for (const identifier of identifiers) {
-        const id = decodeDataSourceVariable(identifier);
-        if (id !== undefined) {
-          const count = usedVariables.get(id) ?? 0;
-          usedVariables.set(id, count + 1);
-        }
-      }
-    };
-    for (const instance of instances.values()) {
-      for (const child of instance.children) {
-        if (child.type === "expression") {
-          collectExpressionVariables(child.value);
-        }
-      }
+  [$selectedInstance, $pages, $instances, $props, $dataSources, $resources],
+  (selectedInstance, pages, instances, props, dataSources, resources) => {
+    if (selectedInstance === undefined) {
+      return new Map<DataSource["id"], number>();
     }
-    for (const resource of resources.values()) {
-      collectExpressionVariables(resource.url);
-      for (const { value } of resource.headers) {
-        collectExpressionVariables(value);
-      }
-      if (resource.body) {
-        collectExpressionVariables(resource.body);
-      }
-    }
-    for (const prop of props.values()) {
-      if (prop.type === "expression") {
-        collectExpressionVariables(prop.value);
-      }
-      if (prop.type === "action") {
-        for (const value of prop.value) {
-          collectExpressionVariables(value.code);
-        }
-      }
-    }
-    if (page) {
-      collectExpressionVariables(page.title);
-      collectExpressionVariables(page.meta.description ?? "");
-      collectExpressionVariables(page.meta.excludePageFromSearch ?? "");
-      collectExpressionVariables(page.meta.socialImageUrl ?? "");
-      collectExpressionVariables(page.meta.language ?? "");
-      collectExpressionVariables(page.meta.status ?? "");
-      collectExpressionVariables(page.meta.redirect ?? "");
-      if (page.meta.custom) {
-        for (const { content } of page.meta.custom) {
-          collectExpressionVariables(content);
-        }
-      }
-    }
-    return usedVariables;
+    return findUsedVariables({
+      startingInstanceId: selectedInstance.id,
+      pages,
+      instances,
+      props,
+      dataSources,
+      resources,
+    });
   }
 );
 
@@ -196,6 +144,7 @@ const VariablesItem = ({
   value: unknown;
   usageCount: number;
 }) => {
+  const selectedPage = useStore($selectedPage);
   const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -265,6 +214,23 @@ const VariablesItem = ({
                     Delete {usageCount > 0 && `(${usageCount} bindings)`}
                   </DropdownMenuItem>
                 )}
+                {source === "local" &&
+                  variable.id === selectedPage?.systemDataSourceId && (
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        updateWebstudioData((data) => {
+                          const page = findPageByIdOrPath(
+                            selectedPage.id,
+                            data.pages
+                          );
+                          delete page?.systemDataSourceId;
+                          deleteVariableMutable(data, variable.id);
+                        });
+                      }}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuContent>
             </DropdownMenu>
 

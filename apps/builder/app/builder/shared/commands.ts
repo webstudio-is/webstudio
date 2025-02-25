@@ -36,7 +36,6 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-
 import {
   findClosestNonTextualContainer,
   isInstanceDetachable,

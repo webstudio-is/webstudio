@@ -59,9 +59,15 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
+      if (
+        isFeatureEnabled("animation") === false &&
+        name.endsWith(":AnimateChildren")
+      ) {
+        continue;
+      }
+
       // only set available components from component meta
       availableComponents.add(name);
-
       if (
         isFeatureEnabled("headSlotComponent") === false &&
         name === "HeadSlot"

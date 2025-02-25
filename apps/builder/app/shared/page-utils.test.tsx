@@ -3,9 +3,7 @@ import type { Project } from "@webstudio-is/project";
 import {
   ROOT_FOLDER_ID,
   ROOT_INSTANCE_ID,
-  encodeDataSourceVariable,
   encodeDataVariableId,
-  type DataSource,
   type Instance,
   type WebstudioData,
 } from "@webstudio-is/sdk";
@@ -18,6 +16,7 @@ import { insertPageCopyMutable } from "./page-utils";
 import {
   $,
   expression,
+  Parameter,
   renderData,
   Variable,
   ws,
@@ -30,7 +29,7 @@ const toMap = <T extends { id: string }>(list: T[]) =>
 const getWebstudioDataStub = (
   data?: Partial<WebstudioData>
 ): WebstudioData => ({
-  pages: createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }),
+  pages: createDefaultPages({ rootInstanceId: "" }),
   assets: new Map(),
   dataSources: new Map(),
   resources: new Map(),
@@ -51,14 +50,6 @@ describe("insert page copy", () => {
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
       ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
-      ]),
       pages: {
         meta: {},
         homePage: {
@@ -68,7 +59,6 @@ describe("insert page copy", () => {
           title: `"Title"`,
           meta: {},
           rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [],
         folders: [createRootFolder(["pageId"])],
@@ -87,14 +77,6 @@ describe("insert page copy", () => {
       title: `"Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("bodyId"),
-      systemDataSourceId: expect.not.stringMatching("systemId"),
-    });
-    expect(data.dataSources.size).toEqual(2);
-    expect(Array.from(data.dataSources.values())[1]).toEqual({
-      id: newPage.systemDataSourceId,
-      scopeInstanceId: newPage.rootInstanceId,
-      name: "system",
-      type: "parameter",
     });
     expect(data.instances.size).toEqual(2);
     expect(Array.from(data.instances.values())[1]).toEqual({
@@ -110,14 +92,6 @@ describe("insert page copy", () => {
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
       ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
-      ]),
       pages: {
         meta: {},
         homePage: {
@@ -127,7 +101,6 @@ describe("insert page copy", () => {
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [
           {
@@ -137,7 +110,6 @@ describe("insert page copy", () => {
             title: `"Title"`,
             meta: {},
             rootInstanceId: "bodyId",
-            systemDataSourceId: "systemId",
           },
         ],
         folders: [createRootFolder(["homePageId", "pageId"])],
@@ -157,14 +129,6 @@ describe("insert page copy", () => {
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
       ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
-      ]),
       pages: {
         meta: {},
         homePage: {
@@ -174,7 +138,6 @@ describe("insert page copy", () => {
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [
           {
@@ -185,7 +148,6 @@ describe("insert page copy", () => {
             title: `"My Title"`,
             meta: {},
             rootInstanceId: "bodyId",
-            systemDataSourceId: "systemId",
           },
           {
             id: "page2Id",
@@ -195,7 +157,6 @@ describe("insert page copy", () => {
             title: `"My Title"`,
             meta: {},
             rootInstanceId: "bodyId",
-            systemDataSourceId: "systemId",
           },
         ],
         folders: [createRootFolder(["homePageId", "page1Id", "page2Id"])],
@@ -221,14 +182,6 @@ describe("insert page copy", () => {
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
       ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
-      ]),
       pages: {
         meta: {},
         homePage: {
@@ -238,7 +191,6 @@ describe("insert page copy", () => {
           title: `"Home"`,
           meta: {},
           rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [
           {
@@ -248,7 +200,6 @@ describe("insert page copy", () => {
             title: `"My Title"`,
             meta: {},
             rootInstanceId: "bodyId",
-            systemDataSourceId: "systemId",
           },
         ],
         folders: [
@@ -278,41 +229,36 @@ describe("insert page copy", () => {
   });
 
   test("replace variables in page copy meta", () => {
+    const bodyVariable = new Variable("bodyVariable", "");
+    const dataWithoutPage = renderData(
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+    );
+    const [variableId] = dataWithoutPage.dataSources.keys();
+    const variableIdentifier = encodeDataVariableId(variableId);
     const data = getWebstudioDataStub({
-      instances: toMap<Instance>([
-        { type: "instance", id: "bodyId", component: "Body", children: [] },
-      ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
-      ]),
+      ...dataWithoutPage,
       pages: {
         meta: {},
         homePage: {
           id: "pageId",
+          rootInstanceId: "bodyId",
           name: "Name",
           path: "",
-          title: `"Title: " + $ws$dataSource$systemId.params.value`,
+          title: `"Title: " + ${variableIdentifier}`,
           meta: {
-            description: `"Description: " + $ws$dataSource$systemId.params.value`,
-            excludePageFromSearch: `"Exclude: " + $ws$dataSource$systemId.params.value`,
-            socialImageUrl: `"Image: " + $ws$dataSource$systemId.params.value`,
-            language: `"Language: " + $ws$dataSource$systemId.params.value`,
-            status: `"Status: " + $ws$dataSource$systemId.params.value`,
-            redirect: `"Redirect: " + $ws$dataSource$systemId.params.value`,
+            description: `"Description: " + ${variableIdentifier}`,
+            excludePageFromSearch: `"Exclude: " + ${variableIdentifier}`,
+            socialImageUrl: `"Image: " + ${variableIdentifier}`,
+            language: `"Language: " + ${variableIdentifier}`,
+            status: `"Status: " + ${variableIdentifier}`,
+            redirect: `"Redirect: " + ${variableIdentifier}`,
             custom: [
               {
                 property: "Property",
-                content: `"Value: " + $ws$dataSource$systemId.params.value`,
+                content: `"Value: " + ${variableIdentifier}`,
               },
             ],
           },
-          rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [],
         folders: [createRootFolder(["pageId"])],
@@ -324,30 +270,28 @@ describe("insert page copy", () => {
     });
     expect(data.pages.pages.length).toEqual(1);
     const newPage = data.pages.pages[0];
-    const newSystem = Array.from(data.dataSources.values())[1];
-    expect(newSystem.id).not.toEqual("systemId");
-    const newSystemName = encodeDataSourceVariable(newSystem.id);
+    const [_oldVariableId, newVariableId] = data.dataSources.keys();
+    const newVariableIdentifier = encodeDataVariableId(newVariableId);
     expect(newPage).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "Name (1)",
       path: "/copy-1",
-      title: `"Title: " + ${newSystemName}.params.value`,
+      title: `"Title: " + ${newVariableIdentifier}`,
       meta: {
-        description: `"Description: " + ${newSystemName}.params.value`,
-        excludePageFromSearch: `"Exclude: " + ${newSystemName}.params.value`,
-        socialImageUrl: `"Image: " + ${newSystemName}.params.value`,
-        language: `"Language: " + ${newSystemName}.params.value`,
-        status: `"Status: " + ${newSystemName}.params.value`,
-        redirect: `"Redirect: " + ${newSystemName}.params.value`,
+        description: `"Description: " + ${newVariableIdentifier}`,
+        excludePageFromSearch: `"Exclude: " + ${newVariableIdentifier}`,
+        socialImageUrl: `"Image: " + ${newVariableIdentifier}`,
+        language: `"Language: " + ${newVariableIdentifier}`,
+        status: `"Status: " + ${newVariableIdentifier}`,
+        redirect: `"Redirect: " + ${newVariableIdentifier}`,
         custom: [
           {
             property: "Property",
-            content: `"Value: " + ${newSystemName}.params.value`,
+            content: `"Value: " + ${newVariableIdentifier}`,
           },
         ],
       },
       rootInstanceId: expect.not.stringMatching("bodyId"),
-      systemDataSourceId: expect.not.stringMatching("systemId"),
     });
   });
 
@@ -355,14 +299,6 @@ describe("insert page copy", () => {
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
-      ]),
-      dataSources: toMap<DataSource>([
-        {
-          id: "systemId",
-          scopeInstanceId: "bodyId",
-          name: "system",
-          type: "parameter",
-        },
       ]),
       pages: {
         meta: {},
@@ -373,7 +309,6 @@ describe("insert page copy", () => {
           title: `"Title"`,
           meta: {},
           rootInstanceId: "bodyId",
-          systemDataSourceId: "systemId",
         },
         pages: [],
         folders: [
@@ -417,7 +352,6 @@ describe("insert page copy", () => {
     const data = {
       pages: createDefaultPages({
         rootInstanceId: "bodyId",
-        systemDataSourceId: "",
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
@@ -451,7 +385,6 @@ describe("insert page copy", () => {
     const sourceData = {
       pages: createDefaultPages({
         rootInstanceId: "bodyId",
-        systemDataSourceId: "",
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
@@ -467,7 +400,6 @@ describe("insert page copy", () => {
     const targetData = {
       pages: createDefaultPages({
         rootInstanceId: "anotherBodyId",
-        systemDataSourceId: "",
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
@@ -500,7 +432,6 @@ describe("insert page copy", () => {
     const sourceData = {
       pages: createDefaultPages({
         rootInstanceId: "bodyId",
-        systemDataSourceId: "",
       }),
       ...renderData(
         <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
@@ -516,7 +447,6 @@ describe("insert page copy", () => {
     const targetData = {
       pages: createDefaultPages({
         rootInstanceId: "anotherBodyId",
-        systemDataSourceId: "",
       }),
       // generate different ids in source and data projects
       ...renderData(<$.Body ws:id="anotherBodyId"></$.Body>, nanoid),
@@ -536,5 +466,41 @@ describe("insert page copy", () => {
     expect(newBox?.children).toEqual([
       { type: "expression", value: encodeDataVariableId(globalVariableId) },
     ]);
+  });
+
+  test("delete page system in favor of global one", () => {
+    const pageSystemVariable = new Parameter("system");
+    const dataWithoutPages = renderData(
+      <$.Body ws:id="bodyId" vars={expression`${pageSystemVariable}`}>
+        <$.Box ws:id="boxId">{expression`${pageSystemVariable}`}</$.Box>
+      </$.Body>
+    );
+    const [pageSystemVariableId] = dataWithoutPages.dataSources.keys();
+    const data = {
+      pages: createDefaultPages({
+        rootInstanceId: "bodyId",
+        systemDataSourceId: pageSystemVariableId,
+      }),
+      ...dataWithoutPages,
+    };
+    data.pages.homePage.title = `${encodeDataVariableId(pageSystemVariableId)}`;
+    data.pages.homePage.meta.description = `${encodeDataVariableId(pageSystemVariableId)}`;
+    insertPageCopyMutable({
+      source: { data, pageId: data.pages.homePage.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+    expect(data.dataSources.size).toEqual(1);
+    expect(Array.from(data.instances.values())).toEqual([
+      expect.objectContaining({ component: "Body", id: "bodyId" }),
+      expect.objectContaining({ component: "Box", id: "boxId" }),
+      expect.objectContaining({ component: "Body" }),
+      expect.objectContaining({ component: "Box" }),
+    ]);
+    const newBox = Array.from(data.instances.values()).at(-1);
+    expect(newBox?.children).toEqual([
+      { type: "expression", value: "$ws$system" },
+    ]);
+    expect(data.pages.pages[0].title).toEqual(`$ws$system`);
+    expect(data.pages.pages[0].meta.description).toEqual(`$ws$system`);
   });
 });

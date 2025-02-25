@@ -35,8 +35,9 @@ import {
   useState,
   useMemo,
   type ComponentProps,
+  type RefObject,
 } from "react";
-import { useUnitSelect } from "./unit-select";
+import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -58,6 +59,7 @@ import {
   isComplexValue,
   ValueEditorDialog,
 } from "./value-editor-dialog";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -81,31 +83,45 @@ const scrubUnitAcceleration = new Map<Unit, number>([
 
 const useScrub = ({
   value,
+  intermediateValue,
+  defaultUnit,
   property,
   onChange,
   onChangeComplete,
+  onAbort,
   shouldHandleEvent,
 }: {
+  defaultUnit: Unit | undefined;
   value: CssValueInputValue;
+  intermediateValue: CssValueInputValue | undefined;
   property: StyleProperty;
-  onChange: (value: CssValueInputValue) => void;
+  onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
+  onAbort: () => void;
   shouldHandleEvent?: (node: Node) => boolean;
 }): [
-  React.RefObject<HTMLDivElement | null>,
-  React.RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
 ] => {
-  const scrubRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const scrubRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
 
+  const intermediateValueRef = useRef(intermediateValue);
+
   onChangeCompleteRef.current = onChangeComplete;
   onChangeRef.current = onChange;
 
   valueRef.current = value;
+
+  const updateIntermediateValue = useEffectEvent(() => {
+    intermediateValueRef.current = intermediateValue;
+  });
+
+  const onAbortStable = useEffectEvent(onAbort);
 
   // const type = valueRef.current.type;
 
@@ -124,7 +140,7 @@ const useScrub = ({
       return;
     }
 
-    let unit: Unit = "number";
+    let unit: Unit = defaultUnit ?? "number";
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
@@ -193,6 +209,20 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           unit = valueRef.current.unit;
         }
+
+        updateIntermediateValue();
+      },
+      onAbort() {
+        onAbortStable();
+        // Returning focus that we've moved above
+        scrubRef.current?.removeAttribute("tabindex");
+        onChangeRef.current(intermediateValueRef.current);
+
+        // Otherwise selectionchange event can be triggered after 300-1000ms after focus
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        });
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
@@ -221,7 +251,13 @@ const useScrub = ({
       },
       shouldHandleEvent,
     });
-  }, [shouldHandleEvent, property]);
+  }, [
+    shouldHandleEvent,
+    property,
+    updateIntermediateValue,
+    onAbortStable,
+    defaultUnit,
+  ]);
 
   return [scrubRef, inputRef];
 };
@@ -273,7 +309,9 @@ type CssValueInputProps = Pick<
   /**
    * Selected item in the dropdown
    */
-  getOptions?: () => Array<KeywordValue | VarValue>;
+  getOptions?: () => Array<
+    KeywordValue | VarValue | (KeywordValue & { description?: string })
+  >;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
@@ -283,6 +321,9 @@ type CssValueInputProps = Pick<
   onReset: () => void;
   icon?: ReactNode;
   showSuffix?: boolean;
+  unitOptions?: UnitOption[];
+  id?: string;
+  placeholder?: string;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -429,6 +470,7 @@ const Description = styled(Box, { width: theme.spacing[27] });
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  id,
   autoFocus,
   icon,
   prefix,
@@ -444,6 +486,8 @@ export const CssValueInput = ({
   fieldSizing,
   variant,
   text,
+  unitOptions,
+  placeholder,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -453,6 +497,9 @@ export const CssValueInput = ({
   const [highlightedValue, setHighlighedValue] = useState<
     StyleValue | undefined
   >();
+
+  const defaultUnit =
+    unitOptions?.[0]?.type === "unit" ? unitOptions[0].id : undefined;
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -499,7 +546,11 @@ export const CssValueInput = ({
       return;
     }
 
-    const parsedValue = parseIntermediateOrInvalidValue(property, value);
+    const parsedValue = parseIntermediateOrInvalidValue(
+      property,
+      value,
+      defaultUnit
+    );
 
     if (parsedValue.type === "invalid") {
       props.onChange(parsedValue);
@@ -526,6 +577,7 @@ export const CssValueInput = ({
     highlightedIndex,
     closeMenu,
   } = useCombobox<CssValueInputValue>({
+    inputId: id,
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
     getItems: getOptions,
     value,
@@ -554,6 +606,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    options: unitOptions,
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -655,11 +708,14 @@ export const CssValueInput = ({
   }, []);
 
   const [scrubRef, inputRef] = useScrub({
+    defaultUnit,
     value,
     property,
+    intermediateValue: props.intermediateValue,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete({ value, type: "scrub-end" }),
     shouldHandleEvent,
+    onAbort,
   });
 
   const menuProps = getMenuProps();
@@ -733,10 +789,22 @@ export const CssValueInput = ({
             : undefined;
 
   if (valueForDescription) {
-    const key = `${property}:${toValue(
-      valueForDescription
-    )}` as keyof typeof declarationDescriptions;
-    description = declarationDescriptions[key];
+    const option = getOptions().find(
+      (item) =>
+        item.type === "keyword" && item.value === valueForDescription.value
+    );
+    if (
+      option !== undefined &&
+      "description" in option &&
+      option?.description
+    ) {
+      description = option.description;
+    } else {
+      const key = `${property}:${toValue(
+        valueForDescription
+      )}` as keyof typeof declarationDescriptions;
+      description = declarationDescriptions[key];
+    }
   } else if (highlightedValue?.type === "var") {
     description = "CSS custom property (variable)";
   } else if (highlightedValue === undefined) {
@@ -904,10 +972,12 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor asChild>
           <InputField
+            id={id}
             variant={variant}
             disabled={disabled}
             aria-disabled={ariaDisabled}
             fieldSizing={fieldSizing}
+            placeholder={placeholder}
             {...inputProps}
             {...autoScrollProps}
             value={getInputValue()}
@@ -921,8 +991,11 @@ export const CssValueInput = ({
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={inputPropsHandleKeyDown}
-            containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
+            inputRef={mergeRefs(
+              inputRef,
+              props.inputRef,
+              disabled ? undefined : scrubRef
+            )}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}

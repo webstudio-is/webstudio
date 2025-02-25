@@ -31,7 +31,8 @@ export const prefixStyles = (styleMap: StyleMap) => {
     // https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name
     if (
       property === "view-timeline-name" ||
-      property === "scroll-timeline-name"
+      property === "scroll-timeline-name" ||
+      property === "view-timeline-inset"
     ) {
       newStyleMap.set(`--${property}`, value);
     }

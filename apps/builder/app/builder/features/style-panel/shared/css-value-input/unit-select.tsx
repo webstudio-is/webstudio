@@ -29,6 +29,7 @@ type UseUnitSelectType = {
     value: { type: "unit"; value: Unit } | { type: "keyword"; value: string }
   ) => void;
   onCloseAutoFocus: (event: Event) => void;
+  options?: UnitOption[];
 };
 
 export const useUnitSelect = ({
@@ -36,12 +37,14 @@ export const useUnitSelect = ({
   value,
   onChange,
   onCloseAutoFocus,
+  options: unitOptions,
 }: UseUnitSelectType): [boolean, JSX.Element | undefined] => {
   const [isOpen, setIsOpen] = useState(false);
 
   const options = useMemo(
-    () => buildOptions(property, value, nestedSelectButtonUnitless),
-    [property, value]
+    () =>
+      unitOptions ?? buildOptions(property, value, nestedSelectButtonUnitless),
+    [property, value, unitOptions]
   );
 
   const unit =

@@ -1388,6 +1388,36 @@ describe("find closest insertable", () => {
     });
   });
 
+  test("finds closest container without textual placeholder", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Paragraph ws:id="paragraphId"></$.Paragraph>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["paragraphId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: 1,
+    });
+  });
+
+  test("finds closest container even with when parent has placeholder", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="bodyId">
+        <$.Paragraph ws:id="paragraphId">
+          <$.Box ws:id="spanId" tag="span"></$.Box>
+        </$.Paragraph>
+      </$.Body>
+    );
+    $instances.set(instances);
+    selectInstance(["boxId", "paragraphId", "bodyId"]);
+    expect(findClosestInsertable(newBoxFragment)).toEqual({
+      parentSelector: ["paragraphId", "bodyId"],
+      position: 0,
+    });
+  });
+
   test("forbids inserting into :root", () => {
     const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);

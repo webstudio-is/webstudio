@@ -31,8 +31,8 @@ export const properties = {
     unitGroups: [],
     inherited: false,
     initial: {
-      type: "unparsed",
-      value: "--view-timeline",
+      type: "keyword",
+      value: "none",
     },
     mdnUrl:
       "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
@@ -41,11 +41,21 @@ export const properties = {
     unitGroups: [],
     inherited: false,
     initial: {
-      type: "unparsed",
-      value: "--scroll-timeline",
+      type: "keyword",
+      value: "none",
     },
     mdnUrl:
       "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
+  },
+  viewTimelineInset: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    mdnUrl:
+      "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-inset",
   },
   "-webkit-line-clamp": {
     unitGroups: ["number"],

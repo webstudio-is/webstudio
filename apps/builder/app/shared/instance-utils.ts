@@ -80,7 +80,7 @@ import { current, isDraft } from "immer";
  * structuredClone can be invoked on draft and throw error
  * extract current snapshot before cloning
  */
-const unwrap = <Value>(value: Value) =>
+export const unwrap = <Value>(value: Value) =>
   isDraft(value) ? current(value) : value;
 
 export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
@@ -522,7 +522,8 @@ const traverseStyleValue = (
 
 export const extractWebstudioFragment = (
   data: Omit<WebstudioData, "pages">,
-  rootInstanceId: string
+  rootInstanceId: string,
+  options: { unsetVariables?: Set<DataSource["id"]> } = {}
 ): WebstudioFragment => {
   const {
     assets,
@@ -604,8 +605,12 @@ export const extractWebstudioFragment = (
   const fragmentDataSources: DataSources = new Map();
   const fragmentResourceIds = new Set<Resource["id"]>();
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  const unsetVariables = options.unsetVariables ?? new Set();
   for (const dataSource of dataSources.values()) {
-    if (fragmentInstanceIds.has(dataSource.scopeInstanceId ?? "")) {
+    if (
+      fragmentInstanceIds.has(dataSource.scopeInstanceId ?? "") &&
+      unsetVariables.has(dataSource.id) === false
+    ) {
       fragmentDataSources.set(dataSource.id, dataSource);
       if (dataSource.type === "resource") {
         fragmentResourceIds.add(dataSource.resourceId);

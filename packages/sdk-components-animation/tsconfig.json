@@ -1,6 +1,11 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["src", "../../@types/**/scroll-timeline.d.ts", "private-src"],
+  "include": [
+    "src",
+    "../../@types/**/scroll-timeline.d.ts",
+    "private-src",
+    "../sdk/src/schema/animation-schema.ts"
+  ],
   "compilerOptions": {
     "types": ["react/experimental", "react-dom/experimental", "@types/node"]
   }
