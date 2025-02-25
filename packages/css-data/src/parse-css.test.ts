@@ -22,6 +22,17 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  // @todo this is wrong
+  test.skip("parse declaration with missing value", () => {
+    expect(parseCss(`.test { color:;}`)).toEqual([
+      {
+        selector: ".test",
+        property: "color",
+        value: { type: "guaranteedInvalid" },
+      },
+    ]);
+  });
+
   test("parse supported shorthand values", () => {
     const css = `
       .test {

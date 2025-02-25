@@ -1,14 +1,36 @@
 import {
-  type ParsedStyleDecl,
   properties,
   parseCss,
   camelCaseProperty,
+  shorthandProperties,
 } from "@webstudio-is/css-data";
-import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import { type CssProperty, type StyleMap } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
 
-type StyleDecl = Omit<ParsedStyleDecl, "property"> & {
-  property: StyleProperty;
+// When user provides only a property name, we need to make it `property:;` to be able to parse it.
+const ensureValue = (css: string) => {
+  css = css.trim();
+
+  // Is it a custom property "--foo"?
+  if (css.startsWith("--") && lexer.match("<custom-ident>", css).matched) {
+    return `${css}:;`;
+  }
+  // Is it a known longhand property?
+  if (camelCaseProperty(css as CssProperty) in properties) {
+    return `${css}:;`;
+  }
+  // Is it a known shorthand property?
+  if (
+    shorthandProperties.includes(css as (typeof shorthandProperties)[number])
+  ) {
+    return `${css}:;`;
+  }
+  // Is it a custom property without dashes "--foo"?
+  if (lexer.match("<custom-ident>", `--${css}`).matched) {
+    return `--${css}:;`;
+  }
+
+  return css;
 };
 
 /**
@@ -20,64 +42,26 @@ type StyleDecl = Omit<ParsedStyleDecl, "property"> & {
  * - Property and value: color: red
  * - Multiple properties: color: red; background: blue
  */
-export const parseStyleInput = (css: string): Array<StyleDecl> => {
-  css = css.trim();
-  // Is it a custom property "--foo"?
-  if (css.startsWith("--") && lexer.match("<custom-ident>", css).matched) {
-    return [
-      {
-        selector: "selector",
-        property: css as StyleProperty,
-        value: { type: "unset", value: "" },
-      },
-    ];
-  }
+export const parseStyleInput = (css: string): StyleMap => {
+  css = ensureValue(css);
 
-  // Is it a known regular property?
-  if (camelCaseProperty(css as CssProperty) in properties) {
-    return [
-      {
-        selector: "selector",
-        property: camelCaseProperty(css as CssProperty),
-        value: { type: "unset", value: "" },
-      },
-    ];
-  }
+  const styles = parseCss(`selector{${css}}`);
 
-  // Is it a custom property "--foo"?
-  if (lexer.match("<custom-ident>", `--${css}`).matched) {
-    return [
-      {
-        selector: "selector",
-        property: `--${css}`,
-        value: { type: "unset", value: "" },
-      },
-    ];
-  }
+  const styleMap: StyleMap = new Map();
 
-  const hyphenatedStyles = parseCss(`selector{${css}}`);
-  const newStyles: StyleDecl[] = [];
-
-  for (const { property, ...styleDecl } of hyphenatedStyles) {
+  for (const { property, value } of styles) {
     // somethingunknown: red; -> --somethingunknown: red;
     if (
       // Note: currently in tests it returns unparsed, but in the client it returns invalid,
       // because we use native APIs when available in parseCss.
-      styleDecl.value.type === "invalid" ||
-      (styleDecl.value.type === "unparsed" &&
-        property.startsWith("--") === false)
+      value.type === "invalid" ||
+      (value.type === "unparsed" && property.startsWith("--") === false)
     ) {
-      newStyles.push({
-        ...styleDecl,
-        property: `--${property}`,
-      });
+      styleMap.set(`--${property}`, value);
     } else {
-      newStyles.push({
-        ...styleDecl,
-        property: camelCaseProperty(property),
-      });
+      // @todo This should be returning { type: "guaranteedInvalid" }
+      styleMap.set(property, value);
     }
   }
-
-  return newStyles;
+  return styleMap;
 };

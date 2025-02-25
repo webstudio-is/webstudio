@@ -493,7 +493,6 @@ export const CssValueInput = ({
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
-
   // Used to show description
   const [highlightedValue, setHighlighedValue] = useState<
     StyleValue | undefined

@@ -505,6 +505,86 @@ export const propertiesGenerated = {
   fieldSizing:
     "Controls the algorithm used to calculate the width of form controls.",
   zoom: "Specifies the zoom level of a document.",
+  animation:
+    "Animations make it possible to animate transitions from one CSS style configuration to another.",
+  background:
+    "The background property is a shorthand for setting multiple background properties at once.",
+  border:
+    "Borders outline the border area of an element and are used for decoration and visual separation.",
+  "border-block":
+    "The border-block property is a shorthand for setting the individual properties for the vertical block axis borders.",
+  "border-block-end":
+    "The border-block-end property is a shorthand for setting the individual properties for the end block axis border.",
+  "border-block-start":
+    "The border-block-start property is a shorthand for setting the individual properties for the start block axis border.",
+  "border-bottom":
+    "The border-bottom property is a shorthand for setting the individual properties for the bottom border.",
+  "border-color":
+    "The border-color property sets the color of the four borders around an element.",
+  "border-image":
+    "The border-image property is a shorthand for setting the border-image-source, border-image-slice, border-image-width, and border-image-repeat properties.",
+  "border-inline":
+    "The border-inline property is a shorthand for setting the individual properties for the inline axis borders.",
+  "border-inline-end":
+    "The border-inline-end property is a shorthand for setting the individual properties for the end inline axis border.",
+  "border-inline-start":
+    "The border-inline-start property is a shorthand for setting the individual properties for the start inline axis border.",
+  "border-left":
+    "The border-left property is a shorthand for setting the individual properties for the left border.",
+  "border-radius":
+    "Border-radius is used to create rounded corners on an element's box.",
+  "border-right":
+    "The border-right property is a shorthand for setting the individual properties for the right border.",
+  "border-style":
+    "The border-style property sets the style of the four borders.",
+  "border-top": "Controls the top border of an element.",
+  "border-width": "Sets the width of the borders of an element.",
+  "column-rule": "Manages the line drawn between columns.",
+  columns: "Specifies the number and width of columns.",
+  "contain-intrinsic-size":
+    "Defines the size of an element's intrinsic content.",
+  container: "Establishes a new block formatting context.",
+  flex: "Specifies the length of a flexible item.",
+  "flex-flow": "Sets how flex items are placed in the flex container.",
+  font: "Specifies font styles for text.",
+  gap: "Sets the gap between grid items.",
+  grid: "Defines a grid or a subgrid.",
+  "grid-area": "Specifies the size of a grid item.",
+  "grid-column": "Specifies a grid item's position within the grid.",
+  "grid-row": "Specifies a grid item's row within the grid.",
+  "grid-template": "Sets the values for grid layout properties.",
+  inset: "Specifies the position of an element.",
+  "inset-block":
+    "Controls the block axis position of an absolutely positioned element.",
+  "inset-inline":
+    "Controls the inline axis position of an absolutely positioned element.",
+  "list-style": "Sets all the properties for a list in one declaration.",
+  margin: "Sets the margin on all four sides of an element at once.",
+  "margin-block": "Sets the margin on the block axis of an element.",
+  "margin-inline": "Sets the margin on the inline axis of an element.",
+  mask: "Lets you use an image or a CSS gradient to define the shape of the mask.",
+  "mask-border":
+    "Lets you use an image or a CSS gradient to define the border image of the mask.",
+  offset: "Controls the positioning of a positioned element.",
+  outline: "Sets the style of the outline around an element.",
+  padding: "Sets the padding on all four sides of an element at once.",
+  "padding-block": "Sets the padding on the block axis of an element.",
+  "padding-inline": "Sets the padding on the inline axis of an element.",
+  "place-content": "Aligns a flex container's lines within it.",
+  "place-items": "Aligns a flex container's items within it.",
+  "place-self": "Allows the default alignment of a flex item to be overridden.",
+  "scroll-margin": "Controls the top and bottom sides of the scrollbar",
+  "scroll-margin-block": "Controls the top and bottom sides of the scrollbar",
+  "scroll-margin-inline": "Controls the left and right sides of the scrollbar",
+  "scroll-padding":
+    "Sets the amount of space between the element's content and its padding",
+  "scroll-padding-block":
+    "Sets the amount of space between the element's content and its top and bottom padding",
+  "scroll-padding-inline":
+    "Sets the amount of space between the element's content and its left and right padding",
+  "text-decoration":
+    "Adds decoration to text, such as underlines or line-through",
+  "text-emphasis": "Sets special emphasis on text, like dots or circles",
 } as Record<string, string | undefined>;
 
 export const propertiesOverrides = {} as Record<string, string | undefined>;

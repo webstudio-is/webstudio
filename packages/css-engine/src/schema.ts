@@ -107,6 +107,10 @@ export const InvalidValue = z.object({
 });
 export type InvalidValue = z.infer<typeof InvalidValue>;
 
+/**
+ * Use GuaranteedInvalidValue if you need a temp placeholder before user enters a value
+ * @deprecated
+ */
 const UnsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
