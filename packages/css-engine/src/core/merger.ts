@@ -139,22 +139,48 @@ const mergeBackgroundPosition = (styleMap: StyleMap) => {
   }
 };
 
-const supportedShorthandProperties = new Set([
-  "margin",
-  "padding",
-  "border",
-  "outline",
-  "border-top",
-  "border-right",
-  "border-bottom",
-  "border-left",
-  "white-space",
-  "text-wrap",
-  "background-position",
+export const supportedShorthands = new Map([
+  [
+    "margin",
+    new Set(["margin-top", "margin-right", "margin-bottom", "margin-left"]),
+  ],
+  [
+    "padding",
+    new Set(["padding-top", "padding-right", "padding-bottom", "padding-left"]),
+  ],
+  [
+    "border",
+    new Set([
+      "border-top-width",
+      "border-right-width",
+      "border-bottom-width",
+      "border-left-width",
+      "border-top-style",
+      "border-right-style",
+      "border-bottom-style",
+      "border-left-style",
+      "border-top-color",
+      "border-right-color",
+      "border-bottom-color",
+      "border-left-color",
+      "border-image-source",
+      "border-image-slice",
+      "border-image-width",
+      "border-image-outset",
+      "border-image-repeat",
+    ]),
+  ],
+  ["outline", new Set(["outline-color", "outline-style", "outline-width"])],
+  ["white-space", new Set(["white-space-collapse", "text-wrap-mode"])],
+  ["text-wrap", new Set(["text-wrap-mode", "text-wrap-style"])],
+  [
+    "background-position",
+    new Set(["background-position-x", "background-position-y"]),
+  ],
 ]);
 
 export const isShorthand = (property: string) => {
-  return supportedShorthandProperties.has(hyphenateProperty(property));
+  return supportedShorthands.has(hyphenateProperty(property));
 };
 
 export const mergeStyles = (styleMap: StyleMap) => {

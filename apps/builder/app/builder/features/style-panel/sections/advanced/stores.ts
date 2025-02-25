@@ -78,10 +78,10 @@ export const $advancedStylesLonghands = computed(
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
-    // @todo we need to find a better place for them in any case
+    // @todo https://github.com/webstudio-is/webstudio/issues/4871
     if (settings.stylePanelMode !== "advanced") {
       for (const initialProperty of initialProperties) {
-        advancedStyles.set(initialProperty, { type: "unset", value: "" });
+        advancedStyles.set(initialProperty, { type: "guaranteedInvalid" });
       }
     }
 
@@ -89,6 +89,7 @@ export const $advancedStylesLonghands = computed(
   }
 );
 
+// @todo delete
 export const $advancedStylesShorthands = computed(
   [$advancedStylesLonghands],
   (advancedStylesLonghands) => {

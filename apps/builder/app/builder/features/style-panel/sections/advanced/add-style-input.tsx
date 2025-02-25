@@ -17,6 +17,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   properties as propertiesData,
+  shorthandProperties,
   keywordValues,
   propertyDescriptions,
   parseCssValue,
@@ -25,6 +26,7 @@ import {
   cssWideKeywords,
   generateStyleMap,
   hyphenateProperty,
+  mergeStyles,
   toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
@@ -52,6 +54,13 @@ const getAutocompleteItems = () => {
     autoCompleteItems.push({
       property,
       label: hyphenateProperty(property),
+    });
+  }
+
+  for (const property of shorthandProperties) {
+    autoCompleteItems.push({
+      property,
+      label: property,
     });
   }
 
@@ -91,21 +100,23 @@ const matchOrSuggestToCreate = (
   matched.length = Math.min(matched.length, 100);
 
   if (matched.length === 0) {
-    const parsedStyles = parseStyleInput(search);
+    const parsedStyleMap = parseStyleInput(search);
+    const styleMap = mergeStyles(parsedStyleMap);
+
     // When parsedStyles is more than one, user entered a shorthand.
     // We will suggest to insert their shorthand first.
-    if (parsedStyles.length > 1) {
+    if (styleMap.size > 1) {
       matched.push({
         property: search,
         label: `Create "${search}"`,
       });
     }
     // Now we will suggest to insert each longhand separately.
-    for (const style of parsedStyles) {
+    for (const [property, value] of styleMap) {
       matched.push({
-        property: style.property,
-        value: toValue(style.value),
-        label: `Create "${generateStyleMap(new Map([[style.property, style.value]]))}"`,
+        property: property,
+        value: toValue(value),
+        label: `Create "${generateStyleMap(new Map([[property, value]]))}"`,
       });
     }
   }
@@ -114,13 +125,12 @@ const matchOrSuggestToCreate = (
 };
 
 /**
- *
  * Advanced search control supports following interactions
  *
- * find property
- * create custom property
- * submit css declarations
- * paste css declarations
+ * - find property
+ * - create custom property
+ * - submit css declarations
+ * - paste css declarations
  *
  */
 export const AddStyleInput = forwardRef<
