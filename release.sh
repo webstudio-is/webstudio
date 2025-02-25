@@ -35,7 +35,7 @@ echo "Mode: $([ "$DRY_RUN" = true ] && echo "DRY RUN (no changes will be made)" 
 # 1. Check if on main branch for main repo (process is for debugging)
 current_branch=$(git branch --show-current)
 if [ "$current_branch" != "main" ] && [ "$current_branch" != "process" ]; then
-    error_exit "You are not on the main branch. Please switch to main branch first."
+    error_exit "You are not on the main or master branch. Please switch to main or master branch first."
 fi
 
 # 2. Check for uncommitted changes or untracked files in main repo
@@ -51,10 +51,10 @@ release_branch="release-${today}.staging"
 echo "Verifying all submodules are ready..."
 
 git submodule foreach --recursive '
-    # Check if submodule is on main branch
+    # Check if submodule is on main or master branch
     submodule_branch=$(git branch --show-current)
-    if [ "$submodule_branch" != "main" ]; then
-        echo "ERROR: Submodule $name is not on main branch. Current branch: $submodule_branch" >&2
+    if [ "$submodule_branch" != "main" ] && [ "$submodule_branch" != "master" ]; then
+        echo "ERROR: Submodule $name is not on main or master branch. Current branch: $submodule_branch" >&2
         exit 1
     fi
 
@@ -81,28 +81,18 @@ run_cmd "git commit --allow-empty -m \"build: Release ${commit_date}\""
 # 6. Create branches in all submodules and push them
 echo "Creating and pushing branches in submodules..."
 
-# Create a function for submodule operations that supports dry run
-submodule_operations() {
-    local dry_run="$1"
-    local release_br="$2"
-
-    # Create the same branch in the submodule
-    if [ "$dry_run" = true ]; then
-        echo "DRY RUN: Would execute in submodule $name: git checkout -b $release_br"
-        echo "DRY RUN: Would execute in submodule $name: git push -u origin $release_br"
-    else
-        git checkout -b "$release_br" || { echo "ERROR: Failed to create branch in submodule $name." >&2; exit 1; }
-        git push -u origin "$release_br" || { echo "ERROR: Failed to push branch for submodule $name." >&2; exit 1; }
-    fi
-    echo "$([ "$dry_run" = true ] && echo "DRY RUN: Would have" || echo "Successfully") created and pushed branch for submodule $name"
-}
-
-# Export the function and variables so they can be used in submodule foreach
-export -f submodule_operations
-export DRY_RUN
-export release_branch
-
-git submodule foreach --recursive 'bash -c "submodule_operations \"$DRY_RUN\" \"$release_branch\""'
+# Instead of using a function, directly execute commands in each submodule
+if [ "$DRY_RUN" = true ]; then
+    git submodule foreach --recursive "echo \"DRY RUN: Would execute in submodule \$name: git checkout -b $release_branch\""
+    git submodule foreach --recursive "echo \"DRY RUN: Would execute in submodule \$name: git push -u origin $release_branch\""
+    git submodule foreach --recursive "echo \"DRY RUN: Would have created and pushed branch for submodule \$name\""
+else
+    git submodule foreach --recursive "
+        git checkout -b \"$release_branch\" || { echo \"ERROR: Failed to create branch in submodule \$name.\" >&2; exit 1; }
+        git push -u origin \"$release_branch\" || { echo \"ERROR: Failed to push branch for submodule \$name.\" >&2; exit 1; }
+        echo \"Successfully created and pushed branch for submodule \$name\"
+    " || error_exit "Failed to create or push branches in one or more submodules."
+fi
 
 # 7. Success message
 echo ""
