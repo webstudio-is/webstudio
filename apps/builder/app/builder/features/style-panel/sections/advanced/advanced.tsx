@@ -306,10 +306,7 @@ const LazyRender = ({ children }: ComponentProps<"div">) => {
         containIntrinsicSize: "auto 44px",
       }}
     >
-      {
-        //children
-        isVisible ? children : undefined
-      }
+      {isVisible ? children : undefined}
     </div>
   );
 };
