@@ -309,7 +309,7 @@ export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
   insertable: Insertable
 ) => {
-  let children: undefined | Instance["children"];
+  let newInstanceSelector: undefined | InstanceSelector;
   updateWebstudioData((data) => {
     const instancePath = getInstancePath(
       insertable.parentSelector,
@@ -323,7 +323,7 @@ export const insertWebstudioFragmentAt = (
         startingInstanceId: instancePath[0].instance.id,
       }),
     });
-    children = fragment.children.map((child) => {
+    const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
         return {
           type: "id",
@@ -354,9 +354,10 @@ export const insertWebstudioFragmentAt = (
       parentSelector,
       position,
     });
+    newInstanceSelector = [children[0].value, ...parentSelector];
   });
-  if (children?.[0].type === "id") {
-    selectInstance([children[0].value, ...insertable.parentSelector]);
+  if (newInstanceSelector) {
+    selectInstance(newInstanceSelector);
   }
 };
 
