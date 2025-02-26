@@ -1,0 +1,11 @@
+<svg 
+  width="16" 
+  height="16"
+  viewBox="0 0 16 16"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" id="svg_1">
+    <path d="m7.25,5l4,0l0,4m0,2l0,3m-6,-9l-3.5,0" id="svg_2"/>
+    <path d="m5.25,2l0,9l9,0" id="svg_3"/>
+  </g>
+</svg>
