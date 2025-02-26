@@ -114,13 +114,13 @@ const newWipeInViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("translate", "inset(0 100% 0 0)"),
+        "clip-path": parseCssValue("clipPath", "inset(0 100% 0 0)"),
       },
     },
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("translate", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
       },
     },
   ],
@@ -140,14 +140,54 @@ const newWipeOutViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("translate", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
       },
     },
 
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("translate", "inset(0 0 0 100%)"),
+        "clip-path": parseCssValue("clipPath", "inset(0 0 0 100%)"),
+      },
+    },
+  ],
+};
+
+const newParallaxInAnimation: ViewAnimation = {
+  name: "Parallax In",
+  description: "Parallax the element as it scrolls out of view.",
+
+  timing: {
+    rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+    rangeEnd: ["cover", { type: "unit", value: 50, unit: "%" }],
+    fill: "backwards",
+    easing: "linear",
+  },
+  keyframes: [
+    {
+      offset: 0,
+      styles: {
+        translate: parseCssValue("translate", "0 100px"),
+      },
+    },
+  ],
+};
+
+const newParallaxOutAnimation: ViewAnimation = {
+  name: "Parallax Out",
+  description: "Parallax the element as it scrolls out of view.",
+
+  timing: {
+    rangeStart: ["cover", { type: "unit", value: 50, unit: "%" }],
+    rangeEnd: ["cover", { type: "unit", value: 100, unit: "%" }],
+    fill: "forwards",
+    easing: "linear",
+  },
+  keyframes: [
+    {
+      offset: 1,
+      styles: {
+        translate: parseCssValue("translate", "0 -100px"),
       },
     },
   ],
@@ -156,9 +196,11 @@ const newWipeOutViewAnimation: ViewAnimation = {
 export const newViewAnimations = [
   newViewAnimation,
   newFadeInViewAnimation,
-  newFlyInViewAnimation,
-  newWipeInViewAnimation,
   newFadeOutViewAnimation,
+  newFlyInViewAnimation,
   newFlyOutViewAnimation,
+  newWipeInViewAnimation,
   newWipeOutViewAnimation,
+  newParallaxInAnimation,
+  newParallaxOutAnimation,
 ];
