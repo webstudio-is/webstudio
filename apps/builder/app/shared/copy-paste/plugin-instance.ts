@@ -13,7 +13,7 @@ import {
   $instances,
   $registeredComponentMetas,
 } from "../nano-states";
-import type { InstanceSelector, DroppableTarget } from "../tree-utils";
+import type { InstanceSelector } from "../tree-utils";
 import {
   deleteInstanceMutable,
   extractWebstudioFragment,
@@ -22,6 +22,7 @@ import {
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
+  type Insertable,
 } from "../instance-utils";
 import { isInstanceDetachable } from "../matcher";
 import { $selectedInstancePath } from "../awareness";
@@ -91,7 +92,7 @@ export const getPortalFragmentSelector = (
   return [instance.children[0].value, ...instanceSelector];
 };
 
-const findPasteTarget = (data: InstanceData): undefined | DroppableTarget => {
+const findPasteTarget = (data: InstanceData): undefined | Insertable => {
   const instances = $instances.get();
 
   const instanceSelector = $selectedInstanceSelector.get();

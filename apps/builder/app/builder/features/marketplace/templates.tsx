@@ -57,6 +57,11 @@ const insertSection = ({
   }
   const insertable = findClosestInsertable(fragment);
   if (insertable) {
+    // numeric position means the instance already
+    // insertd after or even into ancestor
+    if (insertable.position === "end") {
+      insertable.position = "after";
+    }
     insertWebstudioFragmentAt(fragment, insertable);
   }
 };
