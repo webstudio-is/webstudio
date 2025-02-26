@@ -35,16 +35,8 @@ import type {
 } from "@webstudio-is/sdk";
 
 import { animationActionSchema } from "@webstudio-is/sdk";
-import {
-  newFadeInScrollAnimation,
-  newFadeOutScrollAnimation,
-  newScrollAnimation,
-} from "./new-scroll-animations";
-import {
-  newFadeInViewAnimation,
-  newFadeOutViewAnimation,
-  newViewAnimation,
-} from "./new-view-animations";
+import { newScrollAnimations } from "./new-scroll-animations";
+import { newViewAnimations } from "./new-view-animations";
 import { useIds } from "~/shared/form-utils";
 import { AnimationPanelContent } from "./animation-panel-content";
 
@@ -52,12 +44,8 @@ const newAnimationsPerType: {
   scroll: ScrollAnimation[];
   view: ViewAnimation[];
 } = {
-  scroll: [
-    newScrollAnimation,
-    newFadeInScrollAnimation,
-    newFadeOutScrollAnimation,
-  ],
-  view: [newViewAnimation, newFadeInViewAnimation, newFadeOutViewAnimation],
+  scroll: newScrollAnimations,
+  view: newViewAnimations,
 };
 
 type Props = {

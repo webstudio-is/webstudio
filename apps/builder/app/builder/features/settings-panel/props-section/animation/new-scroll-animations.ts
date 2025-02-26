@@ -1,7 +1,7 @@
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { ScrollAnimation } from "@webstudio-is/sdk";
 
-export const newScrollAnimation: ScrollAnimation = {
+const newScrollAnimation: ScrollAnimation = {
   name: "New Animation",
   description: "Create a new animation.",
 
@@ -20,7 +20,7 @@ export const newScrollAnimation: ScrollAnimation = {
 };
 
 // @todo: visit https://github.com/argyleink/open-props/blob/main/src/props.animations.css
-export const newFadeInScrollAnimation: ScrollAnimation = {
+const newFadeInScrollAnimation: ScrollAnimation = {
   name: "Fade In",
   description: "Fade in the element as it scrolls into view.",
 
@@ -40,7 +40,7 @@ export const newFadeInScrollAnimation: ScrollAnimation = {
   ],
 };
 
-export const newFadeOutScrollAnimation: ScrollAnimation = {
+const newFadeOutScrollAnimation: ScrollAnimation = {
   name: "Fade Out",
   description: "Fade out the element as it scrolls out of view.",
 
@@ -59,3 +59,9 @@ export const newFadeOutScrollAnimation: ScrollAnimation = {
     },
   ],
 };
+
+export const newScrollAnimations = [
+  newScrollAnimation,
+  newFadeInScrollAnimation,
+  newFadeOutScrollAnimation,
+];
