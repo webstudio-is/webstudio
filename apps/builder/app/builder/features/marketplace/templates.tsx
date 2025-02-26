@@ -57,6 +57,7 @@ const insertSection = ({
   }
   const insertable = findClosestInsertable(fragment);
   if (insertable) {
+    insertable.position = "after";
     insertWebstudioFragmentAt(fragment, insertable);
   }
 };

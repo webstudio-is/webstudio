@@ -276,29 +276,32 @@ export const findClosestEditableInstanceSelector = (
 export const insertInstanceChildrenMutable = (
   data: WebstudioData,
   children: Instance["children"],
-  insertTarget: DroppableTarget
+  insertTarget: Insertable
 ) => {
+  const dropTarget: DroppableTarget = {
+    parentSelector: insertTarget.parentSelector,
+    position: insertTarget.position === "after" ? "end" : insertTarget.position,
+  };
   const metas = $registeredComponentMetas.get();
   insertTarget =
-    getInstanceOrCreateFragmentIfNecessary(data.instances, insertTarget) ??
+    getInstanceOrCreateFragmentIfNecessary(data.instances, dropTarget) ??
     insertTarget;
   insertTarget =
     wrapEditableChildrenAroundDropTargetMutable(
       data.instances,
       data.props,
       metas,
-      insertTarget
+      dropTarget
     ) ?? insertTarget;
   const [parentInstanceId] = insertTarget.parentSelector;
   const parentInstance = data.instances.get(parentInstanceId);
   if (parentInstance === undefined) {
     return;
   }
-  const { position } = insertTarget;
-  if (position === "end") {
+  if (dropTarget.position === "end") {
     parentInstance.children.push(...children);
   } else {
-    parentInstance.children.splice(position, 0, ...children);
+    parentInstance.children.splice(dropTarget.position, 0, ...children);
   }
 };
 
@@ -308,12 +311,16 @@ export const insertWebstudioFragmentAt = (
 ) => {
   let children: undefined | Instance["children"];
   updateWebstudioData((data) => {
+    const instancePath = getInstancePath(
+      insertable.parentSelector,
+      data.instances
+    );
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
       availableVariables: findAvailableVariables({
         ...data,
-        startingInstanceId: insertable.parentSelector[0],
+        startingInstanceId: instancePath[0].instance.id,
       }),
     });
     children = fragment.children.map((child) => {
@@ -325,7 +332,28 @@ export const insertWebstudioFragmentAt = (
       }
       return child;
     });
-    insertInstanceChildrenMutable(data, children, insertable);
+    let parentSelector;
+    let position: number | "end";
+    if (insertable.position === "after") {
+      if (instancePath.length === 1) {
+        parentSelector = insertable.parentSelector;
+        position = "end";
+      } else {
+        parentSelector = instancePath[1].instanceSelector;
+        const [{ instance }, { instance: parentInstance }] = instancePath;
+        const index = parentInstance.children.findIndex(
+          (child) => child.type === "id" && child.value === instance.id
+        );
+        position = 1 + index;
+      }
+    } else {
+      parentSelector = insertable.parentSelector;
+      position = insertable.position;
+    }
+    insertInstanceChildrenMutable(data, children, {
+      parentSelector,
+      position,
+    });
   });
   if (children?.[0].type === "id") {
     selectInstance([children[0].value, ...insertable.parentSelector]);
@@ -1153,7 +1181,7 @@ export const findClosestSlot = (
 
 export type Insertable = {
   parentSelector: InstanceSelector;
-  position: number | "end";
+  position: number | "end" | "after";
 };
 
 export const findClosestInsertable = (
