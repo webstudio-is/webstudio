@@ -1855,6 +1855,34 @@ export const CopyIcon: IconComponent = forwardRef(
 );
 CopyIcon.displayName = "CopyIcon";
 
+export const CropIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g
+          fill="none"
+          fillRule="evenodd"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M7.25 5h4v4m0 2v3m-6-9h-3.5" />
+          <path d="M5.25 2v9h9" />
+        </g>
+      </svg>
+    );
+  }
+);
+CropIcon.displayName = "CropIcon";
+
 export const DashedBorderIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
