@@ -11,6 +11,7 @@ import {
   ToggleGroupButton,
   Text,
   Switch,
+  SmallToggleButton,
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
 import type { PropAndMeta } from "../use-props-logic";
@@ -25,7 +26,7 @@ import {
   insetUnitValueSchema,
   RANGE_UNITS,
 } from "@webstudio-is/sdk";
-import { RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
+import { BugIcon, RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
@@ -200,14 +201,47 @@ export const AnimateSection = ({
       <Separator />
 
       <Grid
-        gap={1}
+        gap={2}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr auto",
+          gridTemplateColumns: "1fr auto auto",
           padding: theme.panel.paddingInline,
         }}
       >
         <Text variant={"titles"}>Animation</Text>
+
+        <Tooltip
+          content={
+            value.debug ? (
+              "Stop Debugging"
+            ) : (
+              <Text>
+                Debug <small>(experimental)</small>
+              </Text>
+            )
+          }
+        >
+          <SmallToggleButton
+            css={
+              value.debug
+                ? {
+                    color: theme.colors.foregroundDestructive,
+                    "&:hover": {
+                      color: theme.colors.foregroundDestructive,
+                      opacity: 0.8,
+                    },
+                  }
+                : undefined
+            }
+            pressed={value.debug ?? false}
+            onPressedChange={() => {
+              handleChange({ ...value, debug: !value.debug });
+            }}
+            variant="normal"
+            tabIndex={-1}
+            icon={<BugIcon />}
+          />
+        </Tooltip>
 
         <Tooltip content={value.isPinned ? "Unpin Animation" : "Pin Animation"}>
           <Switch

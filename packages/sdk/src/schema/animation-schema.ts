@@ -171,6 +171,7 @@ export const scrollActionSchema = z.object({
   axis: animationAxisSchema.optional(),
   animations: z.array(scrollAnimationSchema),
   isPinned: z.boolean().optional(),
+  debug: z.boolean().optional(),
 });
 
 export const viewAnimationSchema = baseAnimation.merge(
@@ -191,6 +192,7 @@ export const viewActionSchema = z.object({
   insetEnd: insetUnitValueSchema.optional(),
 
   isPinned: z.boolean().optional(),
+  debug: z.boolean().optional(),
 });
 
 // Animation Action
