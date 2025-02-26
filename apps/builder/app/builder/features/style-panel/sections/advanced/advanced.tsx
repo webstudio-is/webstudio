@@ -378,11 +378,15 @@ export const Section = () => {
     advancedStyles.keys()
   ) as Array<CssProperty>;
 
-  const currentProperties = searchProperties ?? advancedProperties;
-
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
     : [];
+
+  const currentProperties =
+    searchProperties ??
+    advancedProperties.filter(
+      (property) => recentProperties.includes(property) === false
+    );
 
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
@@ -539,17 +543,13 @@ export const Section = () => {
             style={{ minHeight }}
             ref={containerRef}
           >
-            {currentProperties
-              .filter(
-                (property) => recentProperties.includes(property) === false
-              )
-              .map((property) => {
-                return (
-                  <LazyRender key={property}>
-                    <AdvancedDeclarationLonghand property={property} />
-                  </LazyRender>
-                );
-              })}
+            {currentProperties.map((property) => {
+              return (
+                <LazyRender key={property}>
+                  <AdvancedDeclarationLonghand property={property} />
+                </LazyRender>
+              );
+            })}
           </Flex>
         </Flex>
       </CopyPasteMenu>
