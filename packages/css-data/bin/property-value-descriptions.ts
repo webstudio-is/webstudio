@@ -1,10 +1,11 @@
 /* eslint-disable func-style */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { CreateChatCompletionResponse } from "openai";
-import { keywordValues } from "../src/__generated__/keyword-values";
 import warnOnce from "warn-once";
 import pRetry from "p-retry";
+import type { CreateChatCompletionResponse } from "openai";
+import { keywordValues } from "../src/__generated__/keyword-values";
+import { shorthandProperties } from "../src/__generated__/shorthand-properties";
 import { customLonghandPropertyNames } from "../src/custom-data";
 
 const propertiesPrompt = fs.readFileSync(
@@ -66,7 +67,10 @@ const batchSize = 16;
 /**
  * Properties descriptions
  */
-const newPropertiesNames = Object.keys(keywordValues)
+const newPropertiesNames = [
+  ...Object.keys(keywordValues),
+  ...shorthandProperties,
+]
   // Slice to generate only X - useful for testing.
   // .slice(0, 30)
   .filter(

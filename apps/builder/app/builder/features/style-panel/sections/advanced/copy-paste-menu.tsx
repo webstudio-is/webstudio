@@ -14,9 +14,9 @@ import {
   type StyleMap,
 } from "@webstudio-is/css-engine";
 import { useStore } from "@nanostores/react";
-import { $advancedStyles } from "./stores";
+import { $advancedStylesLonghands } from "./stores";
 
-export const propertyContainerAttribute = "data-property";
+export const copyAttribute = "data-declaration";
 
 export const CopyPasteMenu = ({
   children,
@@ -27,7 +27,7 @@ export const CopyPasteMenu = ({
   properties: Array<string>;
   onPaste: (cssText: string) => void;
 }) => {
-  const advancedStyles = useStore($advancedStyles);
+  const advancedStylesLonghands = useStore($advancedStylesLonghands);
   const lastClickedProperty = useRef<string>();
 
   const handlePaste = () => {
@@ -38,7 +38,7 @@ export const CopyPasteMenu = ({
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
     const currentStyleMap: StyleMap = new Map();
-    for (const [property, value] of advancedStyles) {
+    for (const [property, value] of advancedStylesLonghands) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
         currentStyleMap.set(hyphenateProperty(property), value);
@@ -51,10 +51,12 @@ export const CopyPasteMenu = ({
 
   const handleCopy = () => {
     const property = lastClickedProperty.current;
+
     if (property === undefined) {
       return;
     }
-    const value = advancedStyles.get(property);
+    const value = advancedStylesLonghands.get(property);
+
     if (value === undefined) {
       return;
     }
@@ -71,9 +73,11 @@ export const CopyPasteMenu = ({
           if (!(event.target instanceof HTMLElement)) {
             return;
           }
-          const property = event.target.closest<HTMLElement>(
-            `[${propertyContainerAttribute}]`
-          )?.dataset.property;
+          const property =
+            event.target
+              .closest<HTMLElement>(`[${copyAttribute}]`)
+              ?.getAttribute(copyAttribute) ?? undefined;
+
           lastClickedProperty.current = property;
         }}
       >
