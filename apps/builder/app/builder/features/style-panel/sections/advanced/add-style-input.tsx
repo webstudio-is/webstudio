@@ -51,9 +51,10 @@ const getAutocompleteItems = () => {
     return autoCompleteItems;
   }
   for (const property in propertiesData) {
+    const hyphenatedProperty = hyphenateProperty(property);
     autoCompleteItems.push({
-      property,
-      label: hyphenateProperty(property),
+      property: hyphenatedProperty,
+      label: hyphenatedProperty,
     });
   }
 
@@ -72,10 +73,11 @@ const getAutocompleteItems = () => {
       if (ignoreValues.has(value)) {
         continue;
       }
+      const hyphenatedProperty = hyphenateProperty(property);
       autoCompleteItems.push({
-        property,
+        property: hyphenatedProperty,
         value,
-        label: `${hyphenateProperty(property)}: ${value}`,
+        label: `${hyphenatedProperty}: ${value}`,
       });
     }
   }
@@ -114,7 +116,7 @@ const matchOrSuggestToCreate = (
     // Now we will suggest to insert each longhand separately.
     for (const [property, value] of styleMap) {
       matched.push({
-        property: property,
+        property,
         value: toValue(value),
         label: `Create "${generateStyleMap(new Map([[property, value]]))}"`,
       });
