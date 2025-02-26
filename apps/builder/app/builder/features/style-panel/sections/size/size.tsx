@@ -11,10 +11,10 @@ import {
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
   EyeOpenIcon,
-  EyeClosedIcon,
   ScrollIcon,
   AutoScrollIcon,
   EllipsesIcon,
+  CropIcon,
 } from "@webstudio-is/icons";
 import { StyleSection } from "../../shared/style-section";
 import { theme } from "@webstudio-is/design-system";
@@ -121,10 +121,10 @@ export const Section = () => {
               value: "visible",
             },
             {
-              child: <EyeClosedIcon />,
+              child: <CropIcon />,
               description:
                 "Content that exceeds the container's size is clipped and hidden without scrollbars.",
-              value: "hidden",
+              value: "clip",
             },
             {
               child: <ScrollIcon />,
