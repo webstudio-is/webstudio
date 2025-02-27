@@ -318,20 +318,13 @@ export const StyleSourceControl = ({
         disabled={disabled}
         aria-current={selected && state === undefined}
         role="button"
+        onClick={onSelect}
         hasError={error !== undefined}
       >
-        <Flex
-          grow
-          css={{
-            position: "relative",
-            paddingBlock: theme.spacing[3],
-            paddingInline: theme.spacing[4],
-          }}
-        >
+        <Flex grow css={{ padding: theme.spacing[2] }}>
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}
-            onClick={onSelect}
             tabIndex={-1}
           >
             <Flex align="center" justify="center" gap="1">

@@ -204,28 +204,26 @@ const TextFieldBase: ForwardRefRenderFunction<
       onKeyDown={onKeyDown}
     >
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
-        <InputField
-          {...textFieldProps}
-          variant="chromeless"
-          css={{
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1,
-            order: 1,
-            flex: 1,
-            "&:focus-within, &:hover": {
-              borderColor: "transparent",
-            },
-          }}
-          size="1"
-          value={label}
-          onClick={onClick}
-          ref={inputRef}
-          inputRef={internalInputRef}
-          spellCheck={false}
-          aria-label="New Style Source Input"
-        />
-      )}
+      <InputField
+        {...textFieldProps}
+        variant="chromeless"
+        css={{
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+          order: 1,
+          flex: 1,
+          "&:focus-within, &:hover": {
+            borderColor: "transparent",
+          },
+        }}
+        size="1"
+        value={label}
+        onClick={onClick}
+        ref={inputRef}
+        inputRef={internalInputRef}
+        spellCheck={false}
+        aria-label="New Style Source Input"
+      />
       {value.map((item) => (
         <StyleSourceControl
           key={item.id}
