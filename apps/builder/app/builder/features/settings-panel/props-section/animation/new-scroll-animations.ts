@@ -8,7 +8,7 @@ const newScrollAnimation: ScrollAnimation = {
   timing: {
     rangeStart: ["start", { type: "unit", value: 0, unit: "px" }],
     rangeEnd: ["end", { type: "unit", value: 0, unit: "px" }],
-    fill: "backwards",
+    fill: "both",
     easing: "linear",
   },
   keyframes: [

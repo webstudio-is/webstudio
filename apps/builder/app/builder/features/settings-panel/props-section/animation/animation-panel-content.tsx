@@ -1,5 +1,6 @@
 import {
   Box,
+  Flex,
   Grid,
   Label,
   Select,
@@ -40,12 +41,12 @@ const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
   string
 > = {
-  none: "No animation is applied before or after the active period",
-  forwards:
-    "The animation state is applied after the active period. Prefered for Out Animations",
+  both: "The animation state is applied before and after the active period. Set if unsure whether it's In or Out.",
   backwards:
     "The animation state is applied before the active period. Prefered for In Animations",
-  both: "The animation state is applied before and after the active period",
+  forwards:
+    "The animation state is applied after the active period. Prefered for Out Animations",
+  none: "No animation is applied before or after the active period.",
 };
 
 const fillModeNames = Object.keys(fillModeDescriptions) as NonNullable<
@@ -223,9 +224,22 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
     toast.error("Animation schema is incompatible, try fix");
   };
 
+  // Flex is used to allow the Keyframes to overflow without setting
+  // gridTemplateRows: auto auto 1fr
   return (
-    <Grid gap="2" css={{ padding: theme.panel.padding }}>
-      <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
+    <Flex
+      gap="2"
+      direction="column"
+      css={{
+        maxHeight: "60dvh",
+        paddingBottom: theme.panel.paddingBlock,
+      }}
+    >
+      <Grid
+        gap={1}
+        align={"center"}
+        css={{ gridTemplateColumns: "1fr 1fr", padding: theme.panel.padding }}
+      >
         <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
         <Label htmlFor={fieldIds.easing}>Easing</Label>
         <Select
@@ -270,7 +284,11 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
           }}
         />
       </Grid>
-      <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
+      <Grid
+        gap={1}
+        align={"center"}
+        css={{ gridTemplateColumns: "2fr 1fr", padding: theme.panel.padding }}
+      >
         <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
         <Label htmlFor={fieldIds.rangeStartValue}>Value</Label>
 
@@ -405,6 +423,6 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         value={value.keyframes}
         onChange={(keyframes) => handleChange({ ...value, keyframes })}
       />
-    </Grid>
+    </Flex>
   );
 };
