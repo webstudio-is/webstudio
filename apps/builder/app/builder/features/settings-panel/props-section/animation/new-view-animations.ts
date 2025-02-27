@@ -6,9 +6,9 @@ const newViewAnimation: ViewAnimation = {
   description: "Create a new animation.",
 
   timing: {
-    rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
-    rangeEnd: ["entry", { type: "unit", value: 100, unit: "%" }],
-    fill: "backwards",
+    rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+    rangeEnd: ["cover", { type: "unit", value: 100, unit: "%" }],
+    fill: "both",
     easing: "linear",
   },
   keyframes: [

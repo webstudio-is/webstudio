@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   CssValueInput,
   type IntermediateStyleValue,
@@ -176,6 +176,18 @@ export const Keyframes = ({
 }) => {
   const ids = useIds(["addKeyframe"]);
 
+  // To preserve focus on children swap
+  const keyRefs = useRef(
+    Array.from({ length: keyframes.length }, (_, index) => index)
+  );
+
+  if (keyframes.length !== keyRefs.current.length) {
+    keyRefs.current = Array.from(
+      { length: keyframes.length },
+      (_, index) => index
+    );
+  }
+
   return (
     <Grid gap={2}>
       <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr auto" }}>
@@ -184,19 +196,20 @@ export const Keyframes = ({
         </Label>
         <IconButton
           id={ids.addKeyframe}
-          onClick={() =>
-            onChange([...keyframes, { offset: undefined, styles: {} }])
-          }
+          onClick={() => {
+            onChange([...keyframes, { offset: undefined, styles: {} }]);
+            keyRefs.current = [...keyRefs.current, keyframes.length];
+          }}
         >
           <PlusIcon />
         </IconButton>
       </Grid>
 
       {keyframes.map((value, index) => (
-        <Fragment key={index}>
+        <Fragment key={keyRefs.current[index]}>
           <Separator />
           <Keyframe
-            key={index}
+            key={keyRefs.current[index]}
             value={value}
             onChange={(newValue) => {
               if (newValue === undefined) {
@@ -208,6 +221,48 @@ export const Keyframes = ({
 
               const newValues = [...keyframes];
               newValues[index] = newValue;
+
+              const { offset } = newValue;
+              if (offset === undefined) {
+                onChange(newValues);
+                return;
+              }
+
+              // Check ordering
+              const minLastIndex = newValues.findLastIndex(
+                (keyframe, keyframeIndex) =>
+                  keyframeIndex !== index &&
+                  keyframe.offset !== undefined &&
+                  keyframe.offset < offset
+              );
+
+              const maxFirstIndex = newValues.findIndex(
+                (keyframe, keyframeIndex) =>
+                  keyframeIndex !== index &&
+                  keyframe.offset !== undefined &&
+                  keyframe.offset > offset
+              );
+
+              if (index < minLastIndex) {
+                const tmp = newValues[index];
+                newValues[index] = newValues[minLastIndex];
+                newValues[minLastIndex] = tmp;
+                // swap keyrefs too
+                const tmpKeyRef = keyRefs.current[index];
+                keyRefs.current[index] = keyRefs.current[minLastIndex];
+                keyRefs.current[minLastIndex] = tmpKeyRef;
+              }
+
+              if (index > maxFirstIndex && maxFirstIndex !== -1) {
+                const tmp = newValues[index];
+                newValues[index] = newValues[maxFirstIndex];
+                newValues[maxFirstIndex] = tmp;
+                // swap keyrefs too
+                const tmpKeyRef = keyRefs.current[index];
+                keyRefs.current[index] = keyRefs.current[maxFirstIndex];
+                keyRefs.current[maxFirstIndex] = tmpKeyRef;
+              }
+
               onChange(newValues);
             }}
           />

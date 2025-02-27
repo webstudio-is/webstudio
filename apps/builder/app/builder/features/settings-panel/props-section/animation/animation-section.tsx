@@ -47,7 +47,7 @@ const animationTypes: AnimationAction["type"][] = Object.keys(
 ) as AnimationAction["type"][];
 
 const defaultActionValue: AnimationAction = {
-  type: "scroll",
+  type: "view",
   animations: [],
 };
 

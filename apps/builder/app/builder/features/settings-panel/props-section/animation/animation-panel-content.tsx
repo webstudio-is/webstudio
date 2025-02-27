@@ -40,12 +40,12 @@ const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
   string
 > = {
-  none: "No animation is applied before or after the active period",
-  forwards:
-    "The animation state is applied after the active period. Prefered for Out Animations",
+  both: "The animation state is applied before and after the active period. Set if unsure whether it's In or Out.",
   backwards:
     "The animation state is applied before the active period. Prefered for In Animations",
-  both: "The animation state is applied before and after the active period",
+  forwards:
+    "The animation state is applied after the active period. Prefered for Out Animations",
+  none: "No animation is applied before or after the active period.",
 };
 
 const fillModeNames = Object.keys(fillModeDescriptions) as NonNullable<
