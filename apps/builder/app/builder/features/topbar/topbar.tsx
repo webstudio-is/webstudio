@@ -46,10 +46,7 @@ const PagesButton = () => {
       }
     >
       <ToolbarButton
-        css={{
-          paddingInline: theme.panel.paddingInline,
-          maxWidth: theme.spacing[24],
-        }}
+        css={{ paddingInline: theme.panel.paddingInline }}
         aria-label="Toggle Pages"
         onClick={(event) => {
           $editingPageId.set(event.altKey ? page.id : undefined);
@@ -57,7 +54,9 @@ const PagesButton = () => {
         }}
         tabIndex={0}
       >
-        <Text truncate>{page.name}</Text>
+        <Text truncate css={{ maxWidth: theme.spacing[24] }}>
+          {page.name}
+        </Text>
       </ToolbarButton>
     </Tooltip>
   );
