@@ -14,12 +14,6 @@ import { $selectedPage } from "./awareness";
 import { $pages, $publishedOrigin } from "./nano-states";
 import { serverSyncStore } from "./sync";
 
-export const $currentSystemVariableId = computed(
-  $selectedPage,
-  // fallback to global system variable
-  (page) => page?.systemDataSourceId ?? SYSTEM_VARIABLE_ID
-);
-
 export const $systemDataByPage = atom(
   new Map<Page["id"], Pick<System, "search" | "params">>()
 );
