@@ -36,7 +36,7 @@ import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
 import { $selectedPage, getInstanceKey } from "../awareness";
 import { computeExpression } from "../data-variables";
-import { $currentSystem, $currentSystemVariableId } from "../system";
+import { $currentSystem } from "../system";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -168,14 +168,10 @@ const $unscopedVariableValues = computed(
  * circular updates
  */
 const $loaderVariableValues = computed(
-  [
-    $dataSources,
-    $dataSourceVariables,
-    $currentSystemVariableId,
-    $currentSystem,
-  ],
-  (dataSources, dataSourceVariables, systemVariableId, system) => {
+  [$dataSources, $dataSourceVariables, $selectedPage, $currentSystem],
+  (dataSources, dataSourceVariables, selectedPage, system) => {
     const values = new Map<string, unknown>();
+    values.set(SYSTEM_VARIABLE_ID, system);
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
         values.set(
@@ -185,7 +181,7 @@ const $loaderVariableValues = computed(
       }
       if (dataSource.type === "parameter") {
         let value = dataSourceVariables.get(dataSourceId);
-        if (dataSource.id === systemVariableId) {
+        if (dataSource.id === selectedPage?.systemDataSourceId) {
           value = system;
         }
         values.set(dataSourceId, value);

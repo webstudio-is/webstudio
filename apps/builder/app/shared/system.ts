@@ -1,10 +1,5 @@
 import { atom, computed } from "nanostores";
-import {
-  findPageByIdOrPath,
-  type Page,
-  type System,
-  SYSTEM_VARIABLE_ID,
-} from "@webstudio-is/sdk";
+import { findPageByIdOrPath, type Page, type System } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -13,12 +8,6 @@ import {
 import { $selectedPage } from "./awareness";
 import { $pages, $publishedOrigin } from "./nano-states";
 import { serverSyncStore } from "./sync";
-
-export const $currentSystemVariableId = computed(
-  $selectedPage,
-  // fallback to global system variable
-  (page) => page?.systemDataSourceId ?? SYSTEM_VARIABLE_ID
-);
 
 export const $systemDataByPage = atom(
   new Map<Page["id"], Pick<System, "search" | "params">>()
