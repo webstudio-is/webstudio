@@ -275,7 +275,11 @@ const traverseExpressions = ({
   props: Props;
   dataSources: DataSources;
   resources: Resources;
-  update: (expression: string, args?: string[]) => void | string;
+  update: (
+    expression: string,
+    instanceId: Instance["id"],
+    args?: string[]
+  ) => void | string;
 }) => {
   const pagesList = pages ? [pages.homePage, ...pages.pages] : [];
 
@@ -297,37 +301,43 @@ const traverseExpressions = ({
       startingInstanceId === page.rootInstanceId ||
       startingInstanceId === ROOT_INSTANCE_ID
     ) {
-      page.title = update(page.title) ?? page.title;
+      const { rootInstanceId } = page;
+      page.title = update(page.title, rootInstanceId) ?? page.title;
       if (page.meta.description) {
         page.meta.description =
-          update(page.meta.description) ?? page.meta.description;
+          update(page.meta.description, rootInstanceId) ??
+          page.meta.description;
       }
       if (page.meta.excludePageFromSearch) {
         page.meta.excludePageFromSearch =
-          update(page.meta.excludePageFromSearch) ??
+          update(page.meta.excludePageFromSearch, rootInstanceId) ??
           page.meta.excludePageFromSearch;
       }
       if (page.meta.socialImageUrl) {
         page.meta.socialImageUrl =
-          update(page.meta.socialImageUrl) ?? page.meta.socialImageUrl;
+          update(page.meta.socialImageUrl, rootInstanceId) ??
+          page.meta.socialImageUrl;
       }
       if (page.meta.language) {
-        page.meta.language = update(page.meta.language) ?? page.meta.language;
+        page.meta.language =
+          update(page.meta.language, rootInstanceId) ?? page.meta.language;
       }
       if (page.meta.status) {
-        page.meta.status = update(page.meta.status) ?? page.meta.status;
+        page.meta.status =
+          update(page.meta.status, rootInstanceId) ?? page.meta.status;
       }
       if (page.meta.redirect) {
-        page.meta.redirect = update(page.meta.redirect) ?? page.meta.redirect;
+        page.meta.redirect =
+          update(page.meta.redirect, rootInstanceId) ?? page.meta.redirect;
       }
       if (page.meta.custom) {
         for (const item of page.meta.custom) {
-          item.content = update(item.content) ?? item.content;
+          item.content = update(item.content, rootInstanceId) ?? item.content;
         }
       }
     }
   }
-  const resourceIds = new Set<Resource["id"]>();
+  const instanceIdByResourceId = new Map<Resource["id"], Instance["id"]>();
 
   for (const instance of instances.values()) {
     if (instanceIds.has(instance.id) === false) {
@@ -335,7 +345,7 @@ const traverseExpressions = ({
     }
     for (const child of instance.children) {
       if (child.type === "expression") {
-        child.value = update(child.value) ?? child.value;
+        child.value = update(child.value, instance.id) ?? child.value;
       }
     }
   }
@@ -345,40 +355,40 @@ const traverseExpressions = ({
       continue;
     }
     if (prop.type === "expression") {
-      prop.value = update(prop.value) ?? prop.value;
+      prop.value = update(prop.value, prop.instanceId) ?? prop.value;
       continue;
     }
     if (prop.type === "action") {
       for (const action of prop.value) {
-        action.code = update(action.code, action.args) ?? action.code;
+        action.code =
+          update(action.code, prop.instanceId, action.args) ?? action.code;
       }
       continue;
     }
     if (prop.type === "resource") {
-      resourceIds.add(prop.value);
+      instanceIdByResourceId.set(prop.value, prop.instanceId);
       continue;
     }
   }
 
   for (const dataSource of dataSources.values()) {
-    if (
-      instanceIds.has(dataSource.scopeInstanceId ?? "") &&
-      dataSource.type === "resource"
-    ) {
-      resourceIds.add(dataSource.resourceId);
+    const instanceId = dataSource.scopeInstanceId ?? "";
+    if (instanceIds.has(instanceId) && dataSource.type === "resource") {
+      instanceIdByResourceId.set(dataSource.resourceId, instanceId);
     }
   }
 
   for (const resource of resources.values()) {
-    if (resourceIds.has(resource.id) === false) {
+    const instanceId = instanceIdByResourceId.get(resource.id);
+    if (instanceId === undefined) {
       continue;
     }
-    resource.url = update(resource.url) ?? resource.url;
+    resource.url = update(resource.url, instanceId) ?? resource.url;
     for (const header of resource.headers) {
-      header.value = update(header.value) ?? header.value;
+      header.value = update(header.value, instanceId) ?? header.value;
     }
     if (resource.body) {
-      resource.body = update(resource.body) ?? resource.body;
+      resource.body = update(resource.body, instanceId) ?? resource.body;
     }
   }
 };
@@ -404,7 +414,7 @@ export const findUnsetVariableNames = ({
     props,
     dataSources,
     resources,
-    update: (expression, args = []) => {
+    update: (expression, _instanceId, args = []) => {
       transpileExpression({
         expression,
         replaceVariable: (identifier) => {
@@ -458,34 +468,38 @@ export const findUsedVariables = ({
 
 export const rebindTreeVariablesMutable = ({
   startingInstanceId,
+  pages,
   instances,
   props,
   dataSources,
   resources,
 }: {
   startingInstanceId: Instance["id"];
+  pages: undefined | Pages;
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  const maskedVariables = findMaskedVariablesByInstanceId({
-    startingInstanceId,
-    dataSources,
-    instances,
-  });
+  // unset all variables
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
-  for (const { id, name } of dataSources.values()) {
-    unsetNameById.set(id, name);
+  for (const dataSource of dataSources.values()) {
+    unsetNameById.set(dataSource.id, dataSource.name);
   }
   traverseExpressions({
     startingInstanceId,
-    pages: undefined,
+    pages,
     instances,
     props,
     dataSources,
     resources,
-    update: (expression, args) => {
+    update: (expression, instanceId, args) => {
+      // restore all masked variables of current scope
+      const maskedVariables = findMaskedVariablesByInstanceId({
+        startingInstanceId: instanceId,
+        dataSources,
+        instances,
+      });
       let maskedIdByName = new Map(maskedVariables);
       if (args) {
         maskedIdByName = new Map(maskedIdByName);
