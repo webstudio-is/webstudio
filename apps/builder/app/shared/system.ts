@@ -1,10 +1,5 @@
 import { atom, computed } from "nanostores";
-import {
-  findPageByIdOrPath,
-  type Page,
-  type System,
-  SYSTEM_VARIABLE_ID,
-} from "@webstudio-is/sdk";
+import { findPageByIdOrPath, type Page, type System } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
