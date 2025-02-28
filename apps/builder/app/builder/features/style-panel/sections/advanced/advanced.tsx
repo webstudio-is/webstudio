@@ -476,7 +476,7 @@ export const Section = () => {
       </Box>
       <CopyPasteMenu
         onPaste={handleInsertStyles}
-        properties={currentProperties}
+        properties={[...recentProperties, ...currentProperties]}
       >
         <Flex gap="2" direction="column">
           <Flex
