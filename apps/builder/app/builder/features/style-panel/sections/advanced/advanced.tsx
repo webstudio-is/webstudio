@@ -451,7 +451,7 @@ export const Section = () => {
     setSearchProperties(matched as CssProperty[]);
   };
 
-  const afterAddingStyles = () => {
+  const afterChangingStyles = () => {
     setIsAdding(false);
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
@@ -502,6 +502,7 @@ export const Section = () => {
                           (recentProperty) => recentProperty !== property
                         )
                       );
+                      afterChangingStyles();
                     }}
                   />
                 );
@@ -519,10 +520,10 @@ export const Section = () => {
                   onSubmit={(cssText: string) => {
                     const styles = handleInsertStyles(cssText);
                     if (styles.size > 0) {
-                      afterAddingStyles();
+                      afterChangingStyles();
                     }
                   }}
-                  onClose={afterAddingStyles}
+                  onClose={afterChangingStyles}
                   onFocus={() => {
                     if (isAdding === false) {
                       handleShowAddStyleInput();
