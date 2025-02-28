@@ -8,6 +8,7 @@ import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import {
   Heading as Heading,
   HtmlEmbed as HtmlEmbed,
+  Box as Box,
 } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
@@ -32,6 +33,8 @@ export const pageBackgroundImageAssets: ImageAsset[] = [];
 const Page = (_props: { system: any }) => {
   let jsonResourceVariable = useResource("jsonResourceVariable_1");
   let [jsonVar, set$jsonVar] = useVariableState<any>({ hello: "world" });
+  let [globalVariable, set$globalVariable] =
+    useVariableState<any>("globalValue");
   return (
     <Body className={`w-body`}>
       <Heading className={`w-heading`}>
@@ -47,6 +50,7 @@ console.log(a, b);
 </script>`}
         className={`w-html-embed`}
       />
+      <Box className={`w-box`}>{globalVariable}</Box>
     </Body>
   );
 };
