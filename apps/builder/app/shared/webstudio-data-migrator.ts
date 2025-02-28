@@ -25,7 +25,7 @@ import { expandShorthands, parseCssValue } from "@webstudio-is/css-data";
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   for (const [styleDeclKey, styleDecl] of data.styles) {
-    const property = hyphenateProperty(styleDecl.property);
+    const property = hyphenateProperty(styleDecl.property) as string;
 
     // expands overflow shorthand into overflow-x and overflow-y longhands
     // expands transition shorthand into transition-property, transition-duration, transition-timing-function, transition-delay longhands

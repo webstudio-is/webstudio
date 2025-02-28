@@ -171,7 +171,7 @@ test("generate component presets with multiple tags", () => {
             ],
             a: [
               {
-                property: "userSelect",
+                property: "user-select",
                 value: { type: "keyword", value: "none" },
               },
             ],

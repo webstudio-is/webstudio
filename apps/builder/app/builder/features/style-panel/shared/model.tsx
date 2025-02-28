@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import type { HtmlTags } from "html-tags";
 import { computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { properties } from "@webstudio-is/css-data";
+import { camelCaseProperty, properties } from "@webstudio-is/css-data";
 import {
   compareMedia,
   toVarFallback,
@@ -155,7 +155,10 @@ export const getDefinedStyles = ({
     const meta = metas.get(instance.component);
     for (const preset of Object.values(meta?.presetStyle ?? {})) {
       for (const styleDecl of preset) {
-        presetStyles.add(styleDecl);
+        presetStyles.add({
+          property: camelCaseProperty(styleDecl.property),
+          value: styleDecl.value,
+        });
       }
     }
     const styleSources = styleSourceSelections.get(instance.id)?.values;

@@ -15,7 +15,7 @@ const presetStyle = {
 
     // Otherwise on new image insert onto canvas it can overfit screen size multiple times
     {
-      property: "maxWidth",
+      property: "max-width",
       value: { type: "unit", unit: "%", value: 100 },
     },
     // inline | inline-block is not suitable because without line-height: 0 on the parent you get unsuitable spaces/margins
