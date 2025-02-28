@@ -309,7 +309,7 @@ const PagesTree = ({
   useReparentOrphans();
 
   if (pages === undefined) {
-    return;
+    return null;
   }
 
   return (
@@ -342,7 +342,7 @@ const PagesTree = ({
           return (
             <TreeSortableItem
               key={item.id}
-              level={item.level - 1}
+              level={item.level}
               isExpanded={item.isExpanded}
               isLastChild={item.isLastChild}
               data={item}
@@ -392,7 +392,7 @@ const PagesTree = ({
               }}
             >
               <TreeNode
-                level={item.level - 1}
+                level={item.level}
                 tabbable={index === 0}
                 isSelected={item.id === selectedPageId}
                 isHighlighted={dropTarget?.parentId === item.id}
