@@ -13,7 +13,7 @@ const presetStyle = {
   i: [
     ...i,
     {
-      property: "fontStyle",
+      property: "font-style",
       value: { type: "keyword", value: "italic" },
     },
   ],

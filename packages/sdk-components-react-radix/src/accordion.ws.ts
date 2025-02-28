@@ -77,11 +77,11 @@ export const metaAccordionHeader: WsComponentMeta = {
     h3: [
       ...h3,
       {
-        property: "marginTop",
+        property: "margin-top",
         value: { type: "unit", unit: "px", value: 0 },
       },
       {
-        property: "marginBottom",
+        property: "margin-bottom",
         value: { type: "unit", unit: "px", value: 0 },
       },
     ],

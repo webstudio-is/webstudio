@@ -1,27 +1,30 @@
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 
 type StyleDecl = {
   state?: string;
-  property: StyleProperty;
+  property: CssProperty;
   value: StyleValue;
 };
 
 export const div: StyleDecl[] = [
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
-  { property: "outlineWidth", value: { type: "unit", unit: "px", value: 1 } },
+  {
+    property: "border-left-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  { property: "outline-width", value: { type: "unit", unit: "px", value: 1 } },
 ];
 
 export const address = div;
@@ -78,45 +81,51 @@ export const span = div;
 
 export const html: StyleDecl[] = [
   { property: "display", value: { type: "keyword", value: "grid" } },
-  { property: "minHeight", value: { type: "unit", unit: "%", value: 100 } },
+  { property: "min-height", value: { type: "unit", unit: "%", value: 100 } },
   {
-    property: "fontFamily",
+    property: "font-family",
     value: { type: "fontFamily", value: ["Arial", "Roboto", "sans-serif"] },
   },
-  { property: "fontSize", value: { type: "unit", unit: "px", value: 16 } },
+  { property: "font-size", value: { type: "unit", unit: "px", value: 16 } },
   {
-    property: "lineHeight",
+    property: "line-height",
     value: { type: "unit", unit: "number", value: 1.2 },
   },
   {
-    property: "whiteSpaceCollapse",
+    property: "white-space-collapse",
     value: { type: "keyword", value: "preserve" },
   },
 ];
 
 export const body: StyleDecl[] = [
-  { property: "marginTop", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "margin-top", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "marginRight",
+    property: "margin-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "marginBottom",
+    property: "margin-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "margin-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
@@ -124,39 +133,45 @@ export const body: StyleDecl[] = [
 export const hr: StyleDecl[] = [
   { property: "height", value: { type: "unit", unit: "number", value: 0 } },
   { property: "color", value: { type: "keyword", value: "inherit" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
 
 export const b: StyleDecl[] = [
   {
-    property: "fontWeight",
+    property: "font-weight",
     value: { type: "unit", unit: "number", value: 700 },
   },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
@@ -165,7 +180,7 @@ export const strong = b;
 
 export const code: StyleDecl[] = [
   {
-    property: "fontFamily",
+    property: "font-family",
     value: {
       type: "fontFamily",
       value: [
@@ -178,19 +193,22 @@ export const code: StyleDecl[] = [
       ],
     },
   },
-  { property: "fontSize", value: { type: "unit", unit: "em", value: 1 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "font-size", value: { type: "unit", unit: "em", value: 1 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
@@ -202,308 +220,386 @@ export const samp = code;
 export const pre = code;
 
 export const small: StyleDecl[] = [
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 80 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 80 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
 
 export const sub: StyleDecl[] = [
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 75 } },
-  { property: "lineHeight", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 75 } },
+  {
+    property: "line-height",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
   { property: "position", value: { type: "keyword", value: "relative" } },
-  { property: "verticalAlign", value: { type: "keyword", value: "baseline" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   { property: "bottom", value: { type: "unit", unit: "em", value: -0.25 } },
 ];
 
 export const sup: StyleDecl[] = [
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 75 } },
-  { property: "lineHeight", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 75 } },
+  {
+    property: "line-height",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
   { property: "position", value: { type: "keyword", value: "relative" } },
-  { property: "verticalAlign", value: { type: "keyword", value: "baseline" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   { property: "top", value: { type: "unit", unit: "em", value: -0.5 } },
 ];
 
 export const table: StyleDecl[] = [
-  { property: "textIndent", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "text-indent",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
-  { property: "borderTopColor", value: { type: "keyword", value: "inherit" } },
   {
-    property: "borderRightColor",
+    property: "border-left-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-top-color",
     value: { type: "keyword", value: "inherit" },
   },
   {
-    property: "borderBottomColor",
+    property: "border-right-color",
     value: { type: "keyword", value: "inherit" },
   },
-  { property: "borderLeftColor", value: { type: "keyword", value: "inherit" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-bottom-color",
+    value: { type: "keyword", value: "inherit" },
+  },
+  {
+    property: "border-left-color",
+    value: { type: "keyword", value: "inherit" },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
 ];
 
 export const input: StyleDecl[] = [
-  { property: "fontFamily", value: { type: "keyword", value: "inherit" } },
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 100 } },
+  { property: "font-family", value: { type: "keyword", value: "inherit" } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 100 } },
   {
-    property: "lineHeight",
+    property: "line-height",
     value: { type: "unit", unit: "number", value: 1.15 },
   },
-  { property: "marginTop", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "margin-top", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "marginRight",
+    property: "margin-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "marginBottom",
+    property: "margin-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "margin-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
-  { property: "borderTopStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderRightStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderBottomStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderLeftStyle", value: { type: "keyword", value: "solid" } },
+  {
+    property: "border-left-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  { property: "border-top-style", value: { type: "keyword", value: "solid" } },
+  {
+    property: "border-right-style",
+    value: { type: "keyword", value: "solid" },
+  },
+  {
+    property: "border-bottom-style",
+    value: { type: "keyword", value: "solid" },
+  },
+  { property: "border-left-style", value: { type: "keyword", value: "solid" } },
 ];
 
 export const textarea = input;
 
 export const optgroup: StyleDecl[] = [
-  { property: "fontFamily", value: { type: "keyword", value: "inherit" } },
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 100 } },
+  { property: "font-family", value: { type: "keyword", value: "inherit" } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 100 } },
   {
-    property: "lineHeight",
+    property: "line-height",
     value: { type: "unit", unit: "number", value: 1.15 },
   },
-  { property: "marginTop", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "margin-top", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "marginRight",
+    property: "margin-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "marginBottom",
+    property: "margin-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "margin-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
 
 export const radio: StyleDecl[] = [
-  { property: "fontFamily", value: { type: "keyword", value: "inherit" } },
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 100 } },
+  { property: "font-family", value: { type: "keyword", value: "inherit" } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 100 } },
   {
-    property: "lineHeight",
+    property: "line-height",
     value: { type: "unit", unit: "number", value: 1.15 },
   },
-  { property: "marginTop", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "margin-top", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "marginRight",
+    property: "margin-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "marginBottom",
+    property: "margin-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "margin-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
-  { property: "borderTopStyle", value: { type: "keyword", value: "none" } },
-  { property: "borderRightStyle", value: { type: "keyword", value: "none" } },
-  { property: "borderBottomStyle", value: { type: "keyword", value: "none" } },
-  { property: "borderLeftStyle", value: { type: "keyword", value: "none" } },
+  {
+    property: "border-left-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  { property: "border-top-style", value: { type: "keyword", value: "none" } },
+  { property: "border-right-style", value: { type: "keyword", value: "none" } },
+  {
+    property: "border-bottom-style",
+    value: { type: "keyword", value: "none" },
+  },
+  { property: "border-left-style", value: { type: "keyword", value: "none" } },
 ];
 
 export const checkbox = radio;
 
 export const button: StyleDecl[] = [
-  { property: "fontFamily", value: { type: "keyword", value: "inherit" } },
-  { property: "fontSize", value: { type: "unit", unit: "%", value: 100 } },
+  { property: "font-family", value: { type: "keyword", value: "inherit" } },
+  { property: "font-size", value: { type: "unit", unit: "%", value: 100 } },
   {
-    property: "lineHeight",
+    property: "line-height",
     value: { type: "unit", unit: "number", value: 1.15 },
   },
-  { property: "marginTop", value: { type: "unit", unit: "number", value: 0 } },
+  { property: "margin-top", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "marginRight",
+    property: "margin-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "marginBottom",
+    property: "margin-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "marginLeft", value: { type: "unit", unit: "number", value: 0 } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "margin-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
-  { property: "borderTopStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderRightStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderBottomStyle", value: { type: "keyword", value: "solid" } },
-  { property: "borderLeftStyle", value: { type: "keyword", value: "solid" } },
-  { property: "textTransform", value: { type: "keyword", value: "none" } },
+  {
+    property: "border-left-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  { property: "border-top-style", value: { type: "keyword", value: "solid" } },
+  {
+    property: "border-right-style",
+    value: { type: "keyword", value: "solid" },
+  },
+  {
+    property: "border-bottom-style",
+    value: { type: "keyword", value: "solid" },
+  },
+  { property: "border-left-style", value: { type: "keyword", value: "solid" } },
+  { property: "text-transform", value: { type: "keyword", value: "none" } },
 ];
 
 export const select = button;
 
 export const legend: StyleDecl[] = [
-  { property: "paddingTop", value: { type: "unit", unit: "number", value: 0 } },
   {
-    property: "paddingRight",
+    property: "padding-top",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "paddingBottom",
+    property: "padding-right",
     value: { type: "unit", unit: "number", value: 0 },
   },
   {
-    property: "paddingLeft",
+    property: "padding-bottom",
     value: { type: "unit", unit: "number", value: 0 },
   },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
   {
-    property: "borderRightWidth",
+    property: "padding-left",
+    value: { type: "unit", unit: "number", value: 0 },
+  },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  {
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
 
 export const progress: StyleDecl[] = [
-  { property: "verticalAlign", value: { type: "keyword", value: "baseline" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];
 
 export const summary: StyleDecl[] = [
   { property: "display", value: { type: "keyword", value: "list-item" } },
-  { property: "boxSizing", value: { type: "keyword", value: "border-box" } },
-  { property: "borderTopWidth", value: { type: "unit", unit: "px", value: 1 } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "borderRightWidth",
+    property: "border-top-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderBottomWidth",
+    property: "border-right-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
   {
-    property: "borderLeftWidth",
+    property: "border-bottom-width",
+    value: { type: "unit", unit: "px", value: 1 },
+  },
+  {
+    property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
 ];

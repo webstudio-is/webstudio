@@ -17,23 +17,23 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
     {
-      property: "whiteSpaceCollapse",
+      property: "white-space-collapse",
       value: { type: "keyword", value: "preserve" },
     },
     {
-      property: "textWrapMode",
+      property: "text-wrap-mode",
       value: { type: "keyword", value: "wrap" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "unit", value: 0.2, unit: "em" },
     },
     {
-      property: "paddingRight",
+      property: "padding-right",
       value: { type: "unit", value: 0.2, unit: "em" },
     },
     {
-      property: "backgroundColor",
+      property: "background-color",
       value: { type: "rgb", r: 238, g: 238, b: 238, alpha: 1 },
     },
   ],

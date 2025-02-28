@@ -13,11 +13,11 @@ const presetStyle = {
   body: [
     ...body,
     {
-      property: "WebkitFontSmoothing",
+      property: "-webkit-font-smoothing",
       value: { type: "keyword", value: "antialiased" },
     },
     {
-      property: "MozOsxFontSmoothing",
+      property: "-moz-osx-font-smoothing",
       value: { type: "keyword", value: "grayscale" },
     },
   ],

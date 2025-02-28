@@ -18,23 +18,23 @@ const presetStyle = {
       value: { type: "keyword", value: "1px" },
     },
     {
-      property: "backgroundColor",
+      property: "background-color",
       value: { type: "keyword", value: "gray" },
     },
     {
-      property: "borderTopStyle",
+      property: "border-top-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderRightStyle",
+      property: "border-right-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderLeftStyle",
+      property: "border-left-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderBottomStyle",
+      property: "border-bottom-style",
       value: { type: "keyword", value: "none" },
     },
   ],

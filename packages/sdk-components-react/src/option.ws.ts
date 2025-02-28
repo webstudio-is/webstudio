@@ -11,7 +11,7 @@ import { props } from "./__generated__/option.props";
 const presetStyle = {
   option: [
     {
-      property: "backgroundColor",
+      property: "background-color",
       state: ":checked",
       value: {
         type: "rgb",

@@ -11,49 +11,49 @@ import { props } from "./__generated__/blockquote.props";
 const presetStyle = {
   blockquote: [
     {
-      property: "marginTop",
+      property: "margin-top",
       value: { type: "unit", value: 0, unit: "number" },
     },
     {
-      property: "marginRight",
+      property: "margin-right",
       value: { type: "unit", value: 0, unit: "number" },
     },
     {
-      property: "marginBottom",
+      property: "margin-bottom",
       value: { type: "unit", value: 10, unit: "px" },
     },
     {
-      property: "marginLeft",
+      property: "margin-left",
       value: { type: "unit", value: 0, unit: "number" },
     },
 
     {
-      property: "paddingTop",
+      property: "padding-top",
       value: { type: "unit", value: 10, unit: "px" },
     },
     {
-      property: "paddingBottom",
+      property: "padding-bottom",
       value: { type: "unit", value: 10, unit: "px" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "unit", value: 20, unit: "px" },
     },
     {
-      property: "paddingRight",
+      property: "padding-right",
       value: { type: "unit", value: 20, unit: "px" },
     },
 
     {
-      property: "borderLeftWidth",
+      property: "border-left-width",
       value: { type: "unit", value: 5, unit: "px" },
     },
     {
-      property: "borderLeftStyle",
+      property: "border-left-style",
       value: { type: "keyword", value: "solid" },
     },
     {
-      property: "borderLeftColor",
+      property: "border-left-color",
       value: { type: "rgb", r: 226, g: 226, b: 226, alpha: 1 },
     },
   ],

@@ -13,30 +13,30 @@ const presetStyle = {
   ol: [
     ...ol,
     {
-      property: "marginTop",
+      property: "margin-top",
       value: { type: "keyword", value: "0" },
     },
     {
-      property: "marginBottom",
+      property: "margin-bottom",
       value: { type: "keyword", value: "10px" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "keyword", value: "40px" },
     },
   ],
   ul: [
     ...ul,
     {
-      property: "marginTop",
+      property: "margin-top",
       value: { type: "keyword", value: "0" },
     },
     {
-      property: "marginBottom",
+      property: "margin-bottom",
       value: { type: "keyword", value: "10px" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "keyword", value: "40px" },
     },
   ],

@@ -13,7 +13,7 @@ const presetStyle = {
   div: [
     ...div,
     {
-      property: "minHeight",
+      property: "min-height",
       value: { type: "unit", unit: "em", value: 1 },
     },
   ],

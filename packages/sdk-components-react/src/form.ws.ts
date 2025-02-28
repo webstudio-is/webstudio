@@ -12,7 +12,7 @@ import { props } from "./__generated__/form.props";
 const presetStyle = {
   form: [
     ...form,
-    { property: "minHeight", value: { type: "unit", unit: "px", value: 20 } },
+    { property: "min-height", value: { type: "unit", unit: "px", value: 20 } },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 

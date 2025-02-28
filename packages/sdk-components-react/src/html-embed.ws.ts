@@ -13,7 +13,7 @@ const presetStyle = {
       value: { type: "keyword", value: "contents" },
     },
     {
-      property: "whiteSpaceCollapse",
+      property: "white-space-collapse",
       value: { type: "keyword", value: "collapse" },
     },
   ],
