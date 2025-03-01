@@ -206,6 +206,7 @@ const subscribeSelectedInstance = (
       updateObservers();
     });
   };
+
   // update scroll state
   updateScroll();
 
