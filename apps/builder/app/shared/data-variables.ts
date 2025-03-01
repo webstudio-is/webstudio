@@ -189,15 +189,7 @@ export const computeExpression = (
   }
 };
 
-const findMaskedVariablesByInstanceId = ({
-  startingInstanceId,
-  instances,
-  dataSources,
-}: {
-  startingInstanceId: Instance["id"];
-  instances: Instances;
-  dataSources: DataSources;
-}) => {
+const getParentInstanceById = (instances: Instances) => {
   const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
   for (const instance of instances.values()) {
     // interrupt lookup because slot variables cannot be passed to slot content
@@ -210,6 +202,18 @@ const findMaskedVariablesByInstanceId = ({
       }
     }
   }
+  return parentInstanceById;
+};
+
+const findMaskedVariablesByInstanceId = ({
+  startingInstanceId,
+  parentInstanceById,
+  dataSources,
+}: {
+  startingInstanceId: Instance["id"];
+  parentInstanceById: Map<Instance["id"], Instance["id"]>;
+  dataSources: DataSources;
+}) => {
   let currentId: undefined | string = startingInstanceId;
   const instanceIdsPath: Instance["id"][] = [];
   while (currentId) {
@@ -244,7 +248,7 @@ export const findAvailableVariables = ({
 }) => {
   const maskedVariables = findMaskedVariablesByInstanceId({
     startingInstanceId,
-    instances,
+    parentInstanceById: getParentInstanceById(instances),
     dataSources,
   });
   const availableVariables: DataSource[] = [];
@@ -486,6 +490,8 @@ export const rebindTreeVariablesMutable = ({
   for (const dataSource of dataSources.values()) {
     unsetNameById.set(dataSource.id, dataSource.name);
   }
+  // precompute parent instances outside of traverse
+  const parentInstanceById = getParentInstanceById(instances);
   traverseExpressions({
     startingInstanceId,
     pages,
@@ -497,8 +503,8 @@ export const rebindTreeVariablesMutable = ({
       // restore all masked variables of current scope
       const maskedVariables = findMaskedVariablesByInstanceId({
         startingInstanceId: instanceId,
+        parentInstanceById,
         dataSources,
-        instances,
       });
       let maskedIdByName = new Map(maskedVariables);
       if (args) {
@@ -537,7 +543,7 @@ export const deleteVariableMutable = (
   const startingInstanceId = dataSource.scopeInstanceId ?? "";
   const maskedIdByName = findMaskedVariablesByInstanceId({
     startingInstanceId,
-    instances: data.instances,
+    parentInstanceById: getParentInstanceById(data.instances),
     dataSources: data.dataSources,
   });
   // unset deleted variable in expressions
