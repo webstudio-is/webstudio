@@ -34,15 +34,15 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@unocss/core": "^0.65.1",
-    "@unocss/preset-legacy-compat": "^0.65.1",
-    "@unocss/preset-uno": "^0.65.1",
+    "@unocss/core": "^66.0.0",
+    "@unocss/preset-legacy-compat": "^66.0.0",
+    "@unocss/preset-wind3": "^66.0.0",
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
     "openai": "^3.2.1",
-    "p-retry": "^6.2.0",
+    "p-retry": "^6.2.1",
     "warn-once": "^0.1.1"
   }
 }
