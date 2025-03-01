@@ -26,6 +26,7 @@ import {
   descendantComponent,
   blockComponent,
   blockTemplateComponent,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/sdk";
 import {
   idAttribute,
@@ -33,7 +34,6 @@ import {
   showAttribute,
   selectorIdAttribute,
   indexAttribute,
-  getIndexesWithinAncestors,
   type AnyComponent,
   textContentAttribute,
 } from "@webstudio-is/react-sdk";

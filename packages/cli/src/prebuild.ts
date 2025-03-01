@@ -17,7 +17,6 @@ import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
   generateWebstudioComponent,
-  getIndexesWithinAncestors,
   type Params,
   normalizeProps,
   generateRemixRoute,
@@ -606,11 +605,7 @@ export const prebuild = async (options: {
       props,
       dataSources,
       classesMap: classes,
-      indexesWithinAncestors: getIndexesWithinAncestors(
-        projectMetas,
-        instances,
-        [rootInstanceId]
-      ),
+      metas: projectMetas,
     });
 
     const projectMeta = siteData.build.pages.meta;

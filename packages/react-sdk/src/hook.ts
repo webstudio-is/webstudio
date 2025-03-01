@@ -1,5 +1,4 @@
-import type { Instance, Prop } from "@webstudio-is/sdk";
-import type { IndexesWithinAncestors } from "./instance-utils";
+import type { IndexesWithinAncestors, Instance, Prop } from "@webstudio-is/sdk";
 
 export type InstanceData = {
   id: Instance["id"];
