@@ -204,11 +204,11 @@ const subscribeSelectedInstance = (
 
       // Having that elements can be changed (i.e. div => address tag change, observe again)
       updateObservers();
-
-      // update scroll state
-      updateScroll();
     });
   };
+
+  // update scroll state
+  updateScroll();
 
   // Lightweight update
   const updateOutline: MutationCallback = (mutationRecords) => {
