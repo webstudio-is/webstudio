@@ -37,10 +37,21 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     return;
   }
   // preserve pathname when not specified in href/action
-  if (href === "" || href.startsWith("?") || href.startsWith("#")) {
+  if (href === "" || href.startsWith("?")) {
     const pathname = getSelectedPagePathname();
     if (pathname) {
-      href = pathname + href;
+      href = `${pathname}${href}`;
+    }
+  }
+  // preserve also search params when navigate with hash
+  if (href.startsWith("#")) {
+    const pathname = getSelectedPagePathname();
+    if (pathname) {
+      const system = $currentSystem.get();
+      const searchParams = new URLSearchParams(
+        system.search as Record<string, string>
+      );
+      href = `${pathname}?${searchParams}${href}`;
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");

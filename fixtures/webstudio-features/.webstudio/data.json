@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "3173a7d8-1af3-4e23-87fd-94c3b0cb1018",
+    "id": "fce42d58-8a67-4f4b-8427-ea7500132e28",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 474,
-    "createdAt": "2025-01-22T17:59:53.714+00:00",
-    "updatedAt": "2025-01-22T17:59:53.714+00:00",
+    "version": 477,
+    "createdAt": "2025-02-28T14:52:36.082+00:00",
+    "updatedAt": "2025-02-28T14:52:36.082+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -3214,6 +3214,19 @@
           "scopeInstanceId": "1NipO5NmaHukA_dxzfVRF",
           "name": "system"
         }
+      ],
+      [
+        "rKNaaGjEYnq4XPiTrSlfe",
+        {
+          "type": "variable",
+          "id": "rKNaaGjEYnq4XPiTrSlfe",
+          "scopeInstanceId": ":root",
+          "name": "globalVariable",
+          "value": {
+            "type": "string",
+            "value": "globalValue"
+          }
+        }
       ]
     ],
     "resources": [
@@ -4294,6 +4307,10 @@
             {
               "type": "id",
               "value": "sHn4Mh7DJ5X0RiETB-zVc"
+            },
+            {
+              "type": "id",
+              "value": "ABEvi07-c3_3dU6v4w-MS"
             }
           ]
         }
@@ -5135,6 +5152,20 @@
           "component": "HeadLink",
           "label": "Link",
           "children": []
+        }
+      ],
+      [
+        "ABEvi07-c3_3dU6v4w-MS",
+        {
+          "type": "instance",
+          "id": "ABEvi07-c3_3dU6v4w-MS",
+          "component": "Box",
+          "children": [
+            {
+              "type": "expression",
+              "value": "$ws$dataSource$rKNaaGjEYnq4XPiTrSlfe"
+            }
+          ]
         }
       ]
     ],

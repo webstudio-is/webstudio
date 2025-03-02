@@ -262,7 +262,11 @@ test("restore tree variables in children", () => {
       </$.Box>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
     expect.objectContaining({ scopeInstanceId: "boxId" }),
@@ -290,7 +294,11 @@ test("restore tree variables in props", () => {
       </$.Box>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   const [_bodyVariableId, boxOneVariableId, boxTwoVariableId] =
     data.dataSources.keys();
   const boxOneIdentifier = encodeDataVariableId(boxOneVariableId);
@@ -337,7 +345,11 @@ test("rebind tree variables in props and children", () => {
       </$.Box>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
     expect.objectContaining({ scopeInstanceId: "boxId" }),
@@ -355,6 +367,32 @@ test("rebind tree variables in props and children", () => {
   ]);
   expect(data.instances.get("textId")?.children).toEqual([
     { type: "expression", value: boxIdentifier },
+  ]);
+});
+
+test("preserve nested variables with the same name when rebind", () => {
+  const bodyVariable = new Variable("one", "one value of body");
+  const textVariable = new Variable("one", "one value of box");
+  const data = renderData(
+    <$.Body ws:id="bodyId" data-body-vars={expression`${bodyVariable}`}>
+      <$.Text ws:id="textId" data-text-vars={expression`${textVariable}`}>
+        {expression`${textVariable}`}
+      </$.Text>
+    </$.Body>
+  );
+  rebindTreeVariablesMutable({
+    startingInstanceId: "bodyId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: "bodyId" }),
+    expect.objectContaining({ scopeInstanceId: "textId" }),
+  ]);
+  const [_bodyVariableId, textVariableId] = data.dataSources.keys();
+  const textIdentifier = encodeDataVariableId(textVariableId);
+  expect(data.instances.get("textId")?.children).toEqual([
+    { type: "expression", value: textIdentifier },
   ]);
 });
 
@@ -384,7 +422,11 @@ test("restore tree variables in resources", () => {
       </$.Box>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
     expect.objectContaining({ scopeInstanceId: "boxId" }),
@@ -434,7 +476,11 @@ test("rebind tree variables in resources", () => {
       </$.Box>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   expect(Array.from(data.dataSources.values())).toEqual([
     expect.objectContaining({ scopeInstanceId: "bodyId" }),
     expect.objectContaining({ scopeInstanceId: "boxId" }),
@@ -458,6 +504,55 @@ test("rebind tree variables in resources", () => {
   ]);
 });
 
+test("rebind global variables in resources", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = renderData(
+    <ws.root ws:id={ROOT_INSTANCE_ID} data-vars={expression`${globalVariable}`}>
+      <$.Body ws:id="bodyId">
+        <$.Text ws:id="textId">{expression`globalVariable`}</$.Text>
+      </$.Body>
+    </ws.root>
+  );
+  data.instances.delete(ROOT_INSTANCE_ID);
+  rebindTreeVariablesMutable({
+    startingInstanceId: ROOT_INSTANCE_ID,
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: ROOT_INSTANCE_ID }),
+  ]);
+  const [globalVariableId] = data.dataSources.keys();
+  const globalIdentifier = encodeDataVariableId(globalVariableId);
+  expect(data.instances.get("textId")?.children).toEqual([
+    { type: "expression", value: globalIdentifier },
+  ]);
+});
+
+test("preserve other variables when rebind", () => {
+  const bodyVariable = new Variable("globalVariable", "");
+  const textVariable = new Variable("textVariable", "");
+  const data = renderData(
+    <$.Body ws:id="bodyId" data-vars={expression`${bodyVariable}`}>
+      <$.Text ws:id="textId">{expression`${textVariable}`}</$.Text>
+    </$.Body>
+  );
+  rebindTreeVariablesMutable({
+    startingInstanceId: "bodyId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: "bodyId" }),
+    expect.objectContaining({ scopeInstanceId: "textId" }),
+  ]);
+  const [_globalVariableId, textVariableId] = data.dataSources.keys();
+  const textIdentifier = encodeDataVariableId(textVariableId);
+  expect(data.instances.get("textId")?.children).toEqual([
+    { type: "expression", value: textIdentifier },
+  ]);
+});
+
 test("prevent rebinding tree variables from slots", () => {
   const bodyVariable = new Variable("myVariable", "one value of body");
   const data = renderData(
@@ -469,7 +564,11 @@ test("prevent rebinding tree variables from slots", () => {
       </$.Slot>
     </$.Body>
   );
-  rebindTreeVariablesMutable({ startingInstanceId: "boxId", ...data });
+  rebindTreeVariablesMutable({
+    startingInstanceId: "boxId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
   expect(data.instances.get("boxId")?.children).toEqual([
     { type: "expression", value: "myVariable" },
   ]);
