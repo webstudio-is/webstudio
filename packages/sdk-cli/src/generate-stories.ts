@@ -15,7 +15,6 @@ import {
 } from "@webstudio-is/sdk";
 import {
   generateWebstudioComponent,
-  getIndexesWithinAncestors,
   namespaceMeta,
 } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
@@ -201,9 +200,7 @@ export const generateStories = async () => {
       instances,
       props,
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
-      indexesWithinAncestors: getIndexesWithinAncestors(usedMetas, instances, [
-        rootInstanceId,
-      ]),
+      metas: usedMetas,
     });
 
     content += getStoriesExports(name, cssText);
