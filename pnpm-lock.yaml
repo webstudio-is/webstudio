@@ -1865,12 +1865,18 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
+      nanostores:
+        specifier: ^0.11.3
+        version: 0.11.3
       react-error-boundary:
         specifier: ^5.0.0
         version: 5.0.0(react@18.3.0-canary-14898b6a9-20240318)
       scroll-timeline-polyfill:
         specifier: ^1.1.0
         version: 1.1.0(patch_hash=i4g3vdpump4efgy2hri5l5rsfm)
+      shallow-equal:
+        specifier: ^3.1.0
+        version: 3.1.0
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
