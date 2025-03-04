@@ -34,7 +34,6 @@ const treeActionOpacity = "--tree-action-opacity";
 const treeDepthBarsVisibility = "--tree-depth-bars-visibility";
 const treeDepthBarsColor = "--tree-depth-bars-color";
 
-const ITEM_HEIGHT = 32;
 const ITEM_PADDING_LEFT = 8;
 // extra padding on the right to make sure scrollbar doesn't obscure anything
 const ITEM_PADDING_RIGHT = 10;
@@ -95,7 +94,7 @@ export const TreeRoot = ({ children }: { children: ReactNode }) => {
 
 const NodeContainer = styled("div", {
   position: "relative",
-  height: ITEM_HEIGHT,
+  height: theme.sizes.controlHeight,
   "&:hover, &:has(:focus-visible), &:has([aria-current=true])": {
     [treeNodeBackgroundColor]: theme.colors.backgroundHover,
     backgroundColor: `var(${treeNodeBackgroundColor})`,
