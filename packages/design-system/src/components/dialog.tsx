@@ -67,6 +67,7 @@ const DialogContext = createContext<{
 export const Dialog = ({
   resize,
   draggable,
+  onOpenChange,
   ...props
 }: ComponentProps<typeof Primitive.Dialog> & {
   resize?: "both" | "none";
@@ -77,7 +78,14 @@ export const Dialog = ({
     <DialogContext.Provider
       value={{ isMaximized, setIsMaximized, resize, draggable }}
     >
-      <Primitive.Dialog {...props} />
+      <Primitive.Dialog
+        {...props}
+        onOpenChange={(open) => {
+          requestAnimationFrame(() => {
+            onOpenChange?.(open);
+          });
+        }}
+      />
     </DialogContext.Provider>
   );
 };
