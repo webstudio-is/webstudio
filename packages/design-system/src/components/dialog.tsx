@@ -67,6 +67,7 @@ const DialogContext = createContext<{
 export const Dialog = ({
   resize,
   draggable,
+  onOpenChange,
   ...props
 }: ComponentProps<typeof Primitive.Dialog> & {
   resize?: "both" | "none";
@@ -77,7 +78,20 @@ export const Dialog = ({
     <DialogContext.Provider
       value={{ isMaximized, setIsMaximized, resize, draggable }}
     >
-      <Primitive.Dialog {...props} />
+      <Primitive.Dialog
+        {...props}
+        onOpenChange={(open) => {
+          // When dialog closes, there can be state changes in the content that haven't rendered yet.
+          // In that case we might close the dialog without saving the form changes.
+          // Currently known example is binding popover that opens from variable popover. Second popover gets
+          // closed by unmounting if we click outside and first popover doesn't get the changes because it is trying to render
+          // the value in a form and serialize the form using FormData.
+          // With this we are giving React's render cycle time to render the state before we close the dialog.
+          requestAnimationFrame(() => {
+            onOpenChange?.(open);
+          });
+        }}
+      />
     </DialogContext.Provider>
   );
 };
