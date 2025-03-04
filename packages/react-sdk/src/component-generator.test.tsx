@@ -5,6 +5,7 @@ import {
   createScope,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
+  WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   $,
@@ -291,25 +292,6 @@ test("generate jsx element with condition based on show prop", () => {
   );
 });
 
-test("generate jsx element with index prop", () => {
-  expect(
-    generateJsxChildren({
-      scope: createScope(),
-      usedDataSources: new Map(),
-      indexesWithinAncestors: new Map([["box", 5]]),
-      children: [{ type: "id", value: "box" }],
-      ...renderData(<$.Box ws:id="box"></$.Box>),
-    })
-  ).toEqual(
-    validateJSX(
-      clear(`
-      <Box
-      data-ws-index="5" />
-    `)
-    )
-  );
-});
-
 test("generate jsx children with text", () => {
   expect(
     generateJsxChildren({
@@ -483,7 +465,7 @@ test("generate component with variables and actions", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map([["input", 0]]),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <$.Input
@@ -522,7 +504,7 @@ test("merge classes if no className", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(<$.Body ws:id="body"></$.Body>),
     })
   ).toEqual(
@@ -545,7 +527,7 @@ test("add classes and merge classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
@@ -568,7 +550,7 @@ test("add classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
@@ -592,7 +574,7 @@ test("add bind classes and merge classes", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body
           ws:id="body"
@@ -623,7 +605,7 @@ test("avoid generating collection parameter variable as state", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <ws.collection
@@ -684,7 +666,7 @@ test("generate both page system and global system variables when present", () =>
           value: SYSTEM_VARIABLE_ID,
         },
       ],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...data,
     })
   ).toEqual(
@@ -716,7 +698,7 @@ test("generate resources loading", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body
           ws:id="body"
@@ -777,7 +759,7 @@ test("avoid generating unused variables", () => {
           value: "unusedParameterId",
         },
       ],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...data,
     })
   ).toMatchInlineSnapshot(`
@@ -798,7 +780,7 @@ test("avoid generating descendant component", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <ws.descendant></ws.descendant>
@@ -824,7 +806,7 @@ test("generate conditional collection", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <ws.collection
@@ -863,7 +845,7 @@ test("generate conditional body", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body" data-ws-show={expression`${condition}`}></$.Body>
       ),
@@ -897,7 +879,7 @@ test("generate resource prop", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <$.Form ws:id="form1" action={myResource}></$.Form>
@@ -926,7 +908,7 @@ test("skip unsafe properties", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body
           ws:id="body"
@@ -958,7 +940,7 @@ test("variable names can be js identifiers", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <$.Input
@@ -998,7 +980,7 @@ test("renders nothing if only templates are present in block", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
@@ -1031,7 +1013,7 @@ test("renders only block children", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
@@ -1066,7 +1048,7 @@ test("generate unset variables as undefined", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...renderData(
         <$.Body ws:id="body">
           <$.Box>{expression`a + b`}</$.Box>
@@ -1105,7 +1087,7 @@ test("generate global variables", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...data,
     })
   ).toEqual(
@@ -1141,7 +1123,7 @@ test("ignore unused global variables", () => {
       name: "Page",
       rootInstanceId: "body",
       parameters: [],
-      indexesWithinAncestors: new Map(),
+      metas: new Map(),
       ...data,
     })
   ).toEqual(
@@ -1150,6 +1132,118 @@ test("ignore unused global variables", () => {
       const Page = () => {
       return <Body>
       <Box />
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("generate prop with index within ancestor", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      metas: new Map<string, WsComponentMeta>([
+        [
+          "TabsTrigger",
+          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
+        ],
+        [
+          "TabsContent",
+          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
+        ],
+      ]),
+      ...renderData(
+        <$.Body ws:id="body">
+          <$.Tabs>
+            <$.TabsList>
+              <$.TabsTrigger></$.TabsTrigger>
+              <$.Box>
+                <$.TabsTrigger></$.TabsTrigger>
+              </$.Box>
+            </$.TabsList>
+            <$.Box>
+              <$.TabsContent></$.TabsContent>
+            </$.Box>
+            <$.TabsContent></$.TabsContent>
+          </$.Tabs>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Tabs>
+      <TabsList>
+      <TabsTrigger
+      data-ws-index="0" />
+      <Box>
+      <TabsTrigger
+      data-ws-index="1" />
+      </Box>
+      </TabsList>
+      <Box>
+      <TabsContent
+      data-ws-index="0" />
+      </Box>
+      <TabsContent
+      data-ws-index="1" />
+      </Tabs>
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("ignore ws:block-template when generate index attribute", () => {
+  const BlockTemplate = ws["block-template"];
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map<string, WsComponentMeta>([
+        [
+          "TabsTrigger",
+          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
+        ],
+      ]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Tabs>
+            <BlockTemplate>
+              <$.TabsTrigger></$.TabsTrigger>
+            </BlockTemplate>
+            <$.Box>
+              <$.TabsTrigger></$.TabsTrigger>
+            </$.Box>
+            <$.TabsTrigger></$.TabsTrigger>
+          </$.Tabs>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Tabs>
+      <Box>
+      <TabsTrigger
+      data-ws-index="0" />
+      </Box>
+      <TabsTrigger
+      data-ws-index="1" />
+      </Tabs>
       </Body>
       }
     `)

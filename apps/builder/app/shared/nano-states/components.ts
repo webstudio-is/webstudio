@@ -7,13 +7,13 @@ import {
   type Hook,
   type HookContext,
   namespaceMeta,
-  getIndexesWithinAncestors,
   type InstanceData,
 } from "@webstudio-is/react-sdk";
-import type {
-  Instance,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  getIndexesWithinAncestors,
+  type Instance,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";

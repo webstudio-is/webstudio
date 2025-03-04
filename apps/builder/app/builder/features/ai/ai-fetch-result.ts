@@ -9,7 +9,6 @@ import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
   generateJsxElement,
   generateJsxChildren,
-  getIndexesWithinAncestors,
   idAttribute,
   componentAttribute,
 } from "@webstudio-is/react-sdk";
@@ -18,6 +17,7 @@ import {
   Instance,
   createScope,
   findTreeInstanceIds,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import {
