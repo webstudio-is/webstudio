@@ -317,8 +317,8 @@ export const CssEditor = ({
   setProperty: SetProperty;
   insertProperties: (styleMap: StyleMap) => void;
   styleMap: StyleMap;
-  apiRef: RefObject<CssEditorApi>;
-  showFalse?: boolean;
+  apiRef?: RefObject<CssEditorApi>;
+  showSearch?: boolean;
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const selectedInstanceKey = useStore($selectedInstanceKey);
