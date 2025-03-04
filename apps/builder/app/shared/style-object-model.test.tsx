@@ -753,6 +753,7 @@ test("support html styles", () => {
     jsx: (
       <$.Body ws:id="bodyId" ws:tag="body">
         <$.Span ws:id="spanId" ws:tag="span"></$.Span>
+        <$.Heading ws:id="headingId" ws:tag="h1"></$.Heading>
       </$.Body>
     ),
   });
@@ -764,6 +765,13 @@ test("support html styles", () => {
       property: "display",
     }).usedValue
   ).toEqual({ type: "keyword", value: "block" });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["headingId", "bodyId"],
+      property: "marginTop",
+    }).usedValue
+  ).toEqual({ type: "unit", value: 0.67, unit: "em" });
   // tag without browser styles
   expect(
     getComputedStyleDecl({

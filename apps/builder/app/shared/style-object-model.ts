@@ -143,13 +143,14 @@ const getCascadedValue = ({
   let selectedIndex = -1;
   // store the source of latest value
   let source: StyleValueSource = { name: "default" };
+  const hyphenatedProperty = hyphenateProperty(property);
 
   // https://drafts.csswg.org/css-cascade-5/#declared
   const declaredValues: StyleValue[] = [];
 
   // browser styles
   if (tag) {
-    const key = `${tag}:${property}` as const;
+    const key = `${tag}:${hyphenatedProperty}`;
     const browserValue = html.get(key);
     if (browserValue) {
       declaredValues.push(browserValue);
@@ -175,7 +176,7 @@ const getCascadedValue = ({
         component,
         tag,
         state,
-        property: hyphenateProperty(property),
+        property: hyphenatedProperty,
       });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
