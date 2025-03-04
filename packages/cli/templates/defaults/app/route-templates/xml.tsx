@@ -71,10 +71,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     </ReactSdkContext.Provider>
   );
 
-  // Xml is wrapped with <svg> to prevent React from hoisting elements like <title>, <meta>, and <link> out of their intended scope during rendering.
-  // More details: https://github.com/facebook/react/blob/7c8e5e7ab8bb63de911637892392c5efd8ce1d0f/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js#L3083
-  text = text.replace(/^<svg>/g, "").replace(/<\/svg>$/g, "");
-
   // React has issues rendering certain elements, such as errors when a <link> element has children.
   // To render XML, we wrap it with an <svg> tag and add a suffix to avoid React's default behavior on these elements.
   text = text.replaceAll(xmlNodeTagSuffix, "");

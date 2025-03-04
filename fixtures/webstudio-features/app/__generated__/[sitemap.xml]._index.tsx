@@ -4,7 +4,10 @@
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";
+import {
+  XmlNode as XmlNode,
+  XmlTime as XmlTime,
+} from "@webstudio-is/sdk-components-react";
 
 export const siteName = "KittyGuardedZone";
 
@@ -25,62 +28,54 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
-const Body = (props: any) => <svg>{props.children}</svg>;
-const Heading = (props: any) => null;
-
 const Page = (_props: { system: any }) => {
   const system = _props.system;
   return (
-    <Body className={`w-body`}>
-      <XmlNode
-        tag={"urlset"}
-        xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
-        xmlns:xhtml={"http://www.w3.org/1999/xhtml"}
-      >
-        {[
-          {
-            path: "/",
-            lastModified: "2024-05-07",
-          },
-          {
-            path: "/olegs-test",
-            lastModified: "2024-05-07",
-          },
-        ]?.map?.((url: any, index: number) => (
-          <Fragment key={index}>
-            <XmlNode tag={"url"}>
-              <XmlNode tag={"loc"}>
-                {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
-              </XmlNode>
-              <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
-              <XmlNode
-                tag={"xhtml:link"}
-                rel={"alternate"}
-                hreflang={"en"}
-                href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
-              />
+    <XmlNode
+      tag={"urlset"}
+      xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
+      xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}
+    >
+      {[
+        {
+          path: "/",
+          lastModified: "2024-05-07",
+        },
+        {
+          path: "/olegs-test",
+          lastModified: "2024-05-07",
+        },
+      ]?.map?.((url: any, index: number) => (
+        <Fragment key={index}>
+          <XmlNode tag={"url"}>
+            <XmlNode tag={"loc"}>
+              {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
             </XmlNode>
-          </Fragment>
-        ))}
-        <Heading tag={"h3"} className={`w-heading c1jumvji cvdtpev`}>
-          {"Below is custom section"}
-        </Heading>
-        <XmlNode tag={"url"}>
-          <XmlNode tag={"loc"}>{"custom-hand-made-location"}</XmlNode>
-          <XmlNode tag={"lastmod"}>
-            <XmlTime datetime={"1733402818245"} />
+            <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
+            <XmlNode
+              tag={"xhtml:link"}
+              rel={"alternate"}
+              hreflang={"en"}
+              href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
+            />
           </XmlNode>
-          <XmlNode
-            tag={"xhtml:link"}
-            rel={"alternate"}
-            hreflang={"en"}
-            href={"custom-en-location"}
-          />
-          <XmlNode tag={"title"}>{"Hello"}</XmlNode>
-          <XmlNode tag={"link"}>{"https://webstudio.is"}</XmlNode>
+        </Fragment>
+      ))}
+      <XmlNode tag={"url"}>
+        <XmlNode tag={"loc"}>{"custom-hand-made-location"}</XmlNode>
+        <XmlNode tag={"lastmod"}>
+          <XmlTime datetime={"1733402818245"} />
         </XmlNode>
+        <XmlNode
+          tag={"xhtml:link"}
+          rel={"alternate"}
+          hreflang={"en"}
+          href={"custom-en-location"}
+        />
+        <XmlNode tag={"title"}>{"Hello"}</XmlNode>
+        <XmlNode tag={"link"}>{"https://webstudio.is"}</XmlNode>
       </XmlNode>
-    </Body>
+    </XmlNode>
   );
 };
 

@@ -64,10 +64,6 @@ import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg"
 
 const limit = pLimit(10);
 
-type ComponentsByPage = {
-  [id: Page["id"]]: Set<string>;
-};
-
 type SiteDataByPage = {
   [id: Page["id"]]: {
     page: Page;
@@ -300,10 +296,9 @@ export const prebuild = async (options: {
     }
   }
 
-  const projectMetas = new Map<Instance["component"], WsComponentMeta>(
+  const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
-  const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], FontAsset[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], ImageAsset[]> = {};
@@ -369,15 +364,10 @@ export const prebuild = async (options: {
       assets: siteData.assets,
     };
 
-    componentsByPage[page.id] = new Set();
     for (const [_instanceId, instance] of instances) {
-      if (isCoreComponent(instance.component)) {
-        continue;
-      }
-      componentsByPage[page.id].add(instance.component);
       const meta = metas.get(instance.component);
       if (meta) {
-        projectMetas.set(instance.component, meta);
+        usedMetas.set(instance.component, meta);
       }
     }
 
@@ -480,14 +470,14 @@ export const prebuild = async (options: {
     styles: new Map(siteData.build?.styles),
     styleSourceSelections: new Map(siteData.build?.styleSourceSelections),
     // pass only used metas to not generate unused preset styles
-    componentMetas: projectMetas,
+    componentMetas: usedMetas,
     assetBaseUrl,
     atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
 
-  for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
+  for (const page of Object.values(siteData.pages)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -498,6 +488,34 @@ export const prebuild = async (options: {
       "_props",
     ]);
 
+    const pageData = siteDataByPage[page.id];
+    const instances = new Map(pageData.build.instances);
+    const documentType = page.meta.documentType ?? "html";
+    let rootInstanceId = page.rootInstanceId;
+
+    // cleanup xml markup
+    if (documentType === "xml") {
+      // treat first body child as root
+      const bodyInstance = instances.get(rootInstanceId);
+      if (bodyInstance?.children?.[0].type === "id") {
+        rootInstanceId = bodyInstance.children[0].value;
+      }
+      // remove all unexpected components
+      for (const instance of instances.values()) {
+        if (isCoreComponent(instance.component)) {
+          continue;
+        }
+        if (usedMetas.get(instance.component)?.category === "xml") {
+          continue;
+        }
+        instances.delete(instance.id);
+      }
+    }
+
+    const pageComponents = new Set<Instance["component"]>();
+    for (const instance of instances.values()) {
+      pageComponents.add(instance.component);
+    }
     const namespaces = new Map<
       string,
       Set<[shortName: string, componentName: string]>
@@ -518,61 +536,19 @@ export const prebuild = async (options: {
     }
 
     let componentImports = "";
-    let xmlPresentationComponents = "";
-
-    const pageData = siteDataByPage[pageId];
-    const documentType = pageData.page.meta.documentType ?? "html";
-
     for (const [namespace, componentsSet] of namespaces.entries()) {
-      switch (documentType) {
-        case "html":
-          {
-            const specifiers = Array.from(componentsSet)
-              .map(
-                ([shortName, component]) =>
-                  `${shortName} as ${scope.getName(component, shortName)}`
-              )
-              .join(", ");
-            componentImports += `import { ${specifiers} } from "${namespace}";\n`;
-          }
-          break;
-
-        case "xml":
-          {
-            // In case of xml it's the only component we are supporting
-            componentImports = `import { XmlNode, XmlTime } from "@webstudio-is/sdk-components-react";\n`;
-
-            xmlPresentationComponents += Array.from(componentsSet)
-              .map(([shortName, component]) =>
-                scope.getName(component, shortName)
-              )
-              .filter(
-                (scopedName) =>
-                  scopedName !== "XmlNode" && scopedName !== "XmlTime"
-              )
-              .map((scopedName) =>
-                scopedName === "Body"
-                  ? // Using <svg> prevents React from hoisting elements like <title>, <meta>, and <link>
-                    // out of their intended scope during rendering.
-                    // More details: https://github.com/facebook/react/blob/7c8e5e7ab8bb63de911637892392c5efd8ce1d0f/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js#L3083
-                    `const ${scopedName} = (props: any) => <svg>{props.children}</svg>;`
-                  : // Do not render all other components
-                    `const ${scopedName} = (props: any) => null;`
-              )
-              .join("\n");
-          }
-          break;
-        default: {
-          documentType satisfies never;
-        }
-      }
+      const specifiers = Array.from(componentsSet)
+        .map(
+          ([shortName, component]) =>
+            `${shortName} as ${scope.getName(component, shortName)}`
+        )
+        .join(", ");
+      componentImports += `import { ${specifiers} } from "${namespace}";\n`;
     }
 
-    const pageFontAssets = fontAssetsByPage[pageId];
-    const pageBackgroundImageAssets = backgroundImageAssetsByPage[pageId];
+    const pageFontAssets = fontAssetsByPage[page.id];
+    const pageBackgroundImageAssets = backgroundImageAssetsByPage[page.id];
 
-    const rootInstanceId = pageData.page.rootInstanceId;
-    const instances = new Map(pageData.build.instances);
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
@@ -591,7 +567,7 @@ export const prebuild = async (options: {
           instanceId: "",
           name: "system",
           type: "parameter",
-          value: pageData.page.systemDataSourceId ?? "",
+          value: page.systemDataSourceId ?? "",
         },
         {
           id: "global-system",
@@ -605,7 +581,7 @@ export const prebuild = async (options: {
       props,
       dataSources,
       classesMap: classes,
-      metas: projectMetas,
+      metas: usedMetas,
     });
 
     const projectMeta = siteData.build.pages.meta;
@@ -614,7 +590,7 @@ export const prebuild = async (options: {
       projectMeta?.contactEmail || siteData.user?.email || undefined;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
 
-    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
+    const pagePath = getPagePath(page.id, siteData.build.pages);
 
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
@@ -668,8 +644,6 @@ export const prebuild = async (options: {
           : ""
       }
 
-      ${xmlPresentationComponents}
-
       ${pageComponent}
 
       export { Page }
@@ -681,7 +655,7 @@ export const prebuild = async (options: {
       import type { PageMeta } from "@webstudio-is/sdk";
       ${generateResources({
         scope,
-        page: pageData.page,
+        page,
         dataSources,
         props,
         resources,
@@ -689,12 +663,12 @@ export const prebuild = async (options: {
 
       ${generatePageMeta({
         globalScope: scope,
-        page: pageData.page,
+        page,
         dataSources,
         assets,
       })}
 
-      ${generateRemixParams(pageData.page.path)}
+      ${generateRemixParams(page.path)}
 
       export const projectId = "${siteData.build.projectId}";
 
