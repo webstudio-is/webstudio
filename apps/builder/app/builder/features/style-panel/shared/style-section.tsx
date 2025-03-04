@@ -1,15 +1,15 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { ReactNode } from "react";
+import { PlusIcon } from "@webstudio-is/icons";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
 import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
-import type { ReactNode } from "react";
 import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { PlusIcon } from "@webstudio-is/icons";
 import { useComputedStyles } from "./model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertySectionLabel } from "../property-label";
@@ -37,7 +37,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 
 export const StyleSection = (props: {
   label: string;
-  properties: StyleProperty[];
+  properties: (StyleProperty | CssProperty)[];
   // @todo remove to keep sections consistent
   fullWidth?: boolean;
   children: ReactNode;
@@ -65,7 +65,7 @@ export const StyleSection = (props: {
 export const RepeatedStyleSection = (props: {
   label: string;
   description: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
   collapsible?: boolean;
   onAdd: () => void;
   children: ReactNode;

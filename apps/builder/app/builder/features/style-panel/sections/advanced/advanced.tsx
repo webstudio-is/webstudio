@@ -74,7 +74,7 @@ const AdvancedStyleSection = (props: {
 }) => {
   const { label, children, properties, onAdd } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
-  const styles = useComputedStyles(properties.map(camelCaseProperty));
+  const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
       label={label}
@@ -110,7 +110,7 @@ const insertStyles = (css: string) => {
   }
   const batch = createBatchUpdate();
   for (const [property, value] of styleMap) {
-    batch.setProperty(camelCaseProperty(property as CssProperty))(value);
+    batch.setProperty(property as CssProperty)(value);
   }
   batch.publish({ listed: true });
   return styleMap;
@@ -127,10 +127,9 @@ const AdvancedPropertyLabel = ({
   property: CssProperty;
   onReset?: () => void;
 }) => {
-  const camelCasedProperty = camelCaseProperty(property);
-  const styleDecl = useComputedStyleDecl(camelCasedProperty);
+  const styleDecl = useComputedStyleDecl(property);
   const label = hyphenateProperty(property);
-  const description = propertyDescriptions[property];
+  const description = propertyDescriptions[camelCaseProperty(property)];
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Tooltip
@@ -142,7 +141,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            deleteProperty(camelCasedProperty);
+            deleteProperty(property);
             onReset?.();
             return;
           }
@@ -155,7 +154,7 @@ const AdvancedPropertyLabel = ({
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            deleteProperty(camelCasedProperty);
+            deleteProperty(property);
             setIsOpen(false);
             onReset?.();
           }}
@@ -191,8 +190,7 @@ const AdvancedPropertyValue = ({
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
   // @todo conversion should be removed once data is in dash case
-  const camelCasedProperty = camelCaseProperty(property);
-  const styleDecl = useComputedStyleDecl(camelCasedProperty);
+  const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
 
@@ -209,21 +207,21 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                setProperty(camelCasedProperty)(styleValue, options);
+                setProperty(property)(styleValue, options);
               } else {
-                deleteProperty(camelCasedProperty, options);
+                deleteProperty(property, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              setProperty(camelCasedProperty)(styleValue);
+              setProperty(property)(styleValue);
             }}
           />
         )
       }
-      property={camelCasedProperty}
+      property={property}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(camelCasedProperty).items.map((item) => ({
+        ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
@@ -235,12 +233,12 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          setProperty(camelCasedProperty)(
+          setProperty(property)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          setProperty(camelCasedProperty)(styleValue, {
+          setProperty(property)(styleValue, {
             ...options,
             listed: true,
           });

@@ -1,9 +1,13 @@
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   TupleValue,
   TupleValueItem,
   type StyleValue,
   type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -53,7 +57,7 @@ export const PositionControl = ({
   property,
   styleDecl,
 }: {
-  property: StyleProperty;
+  property: StyleProperty | CssProperty;
   styleDecl: ComputedStyleDecl;
 }) => {
   const { items } = styleConfigByName(property);
@@ -79,7 +83,7 @@ export const PositionControl = ({
     <Flex direction="column" gap="1">
       <PropertyInlineLabel
         label="Position"
-        description={propertyDescriptions[property]}
+        description={propertyDescriptions[camelCaseProperty(property)]}
         properties={[property]}
       />
       <Flex gap="6">
