@@ -1,5 +1,9 @@
 import { useState } from "react";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type {
+  CssProperty,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   CssValueInput,
   type IntermediateStyleValue,
@@ -11,7 +15,11 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 
-export const TextControl = ({ property }: { property: StyleProperty }) => {
+export const TextControl = ({
+  property,
+}: {
+  property: StyleProperty | CssProperty;
+}) => {
   const computedStyleDecl = useComputedStyleDecl(property);
   const value = computedStyleDecl.cascadedValue;
   const setValue = setProperty(property);

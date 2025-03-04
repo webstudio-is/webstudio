@@ -1,5 +1,8 @@
-import { propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import {
+  camelCaseProperty,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
 import {
   Flex,
   Grid,
@@ -24,12 +27,16 @@ import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import { deleteProperty } from "../../shared/use-style-data";
 
-const SizeProperty = ({ property }: { property: StyleProperty }) => {
+const SizeProperty = ({
+  property,
+}: {
+  property: StyleProperty | CssProperty;
+}) => {
   return (
     <Grid gap={1}>
       <PropertyLabel
         label={humanizeString(property)}
-        description={propertyDescriptions[property]}
+        description={propertyDescriptions[camelCaseProperty(property)]}
         properties={[property]}
       />
       <TextControl property={property} />

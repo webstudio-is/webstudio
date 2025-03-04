@@ -48,13 +48,21 @@ const normalizeProperty = (property: string): CssProperty => {
  * and convert to camel case only unprefixed properties
  * @todo stop converting to camel case and use hyphenated format
  */
-export const camelCaseProperty = (property: CssProperty): StyleProperty => {
-  property = normalizeProperty(property);
+export const camelCaseProperty = (
+  property: CssProperty | StyleProperty
+): StyleProperty => {
+  property = normalizeProperty(property) as CssProperty | StyleProperty;
   // these are manually added with pascal case
-  if (property === "-webkit-font-smoothing") {
+  if (
+    property === "-webkit-font-smoothing" ||
+    property === "WebkitFontSmoothing"
+  ) {
     return "WebkitFontSmoothing";
   }
-  if (property === "-moz-osx-font-smoothing") {
+  if (
+    property === "-moz-osx-font-smoothing" ||
+    property === "MozOsxFontSmoothing"
+  ) {
     return "MozOsxFontSmoothing";
   }
   if (property.startsWith("-")) {

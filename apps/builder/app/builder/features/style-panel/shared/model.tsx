@@ -6,6 +6,7 @@ import { camelCaseProperty, properties } from "@webstudio-is/css-data";
 import {
   compareMedia,
   toVarFallback,
+  type CssProperty,
   type StyleProperty,
   type StyleValue,
   type VarValue,
@@ -336,9 +337,9 @@ export const useStyleObjectModel = () => {
   return useStore($model);
 };
 
-export const useComputedStyleDecl = (property: StyleProperty) => {
+export const useComputedStyleDecl = (property: StyleProperty | CssProperty) => {
   const $store = useMemo(
-    () => createComputedStyleDeclStore(property),
+    () => createComputedStyleDeclStore(camelCaseProperty(property)),
     [property]
   );
   return useStore($store);
@@ -391,13 +392,16 @@ export const getInstanceStyleDecl = (
   });
 };
 
-export const useComputedStyles = (properties: StyleProperty[]) => {
+export const useComputedStyles = (
+  properties: (StyleProperty | CssProperty)[]
+) => {
   // cache each computed style store
   const cachedStores = useRef(
     new Map<StyleProperty, ReadableAtom<ComputedStyleDecl>>()
   );
   const stores: ReadableAtom<ComputedStyleDecl>[] = [];
-  for (const property of properties) {
+  for (const multiCaseProperty of properties) {
+    const property = camelCaseProperty(multiCaseProperty);
     let store = cachedStores.current.get(property);
     if (store === undefined) {
       store = createComputedStyleDeclStore(property);

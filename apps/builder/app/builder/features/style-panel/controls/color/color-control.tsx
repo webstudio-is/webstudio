@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
 import { ColorPicker } from "../../shared/color-picker";
 import { styleConfigByName } from "../../shared/configs";
 import {
@@ -7,7 +7,11 @@ import {
 } from "../../shared/model";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 
-export const ColorControl = ({ property }: { property: StyleProperty }) => {
+export const ColorControl = ({
+  property,
+}: {
+  property: StyleProperty | CssProperty;
+}) => {
   const computedStyleDecl = useComputedStyleDecl(property);
   const value = computedStyleDecl.cascadedValue;
   const currentColor = computedStyleDecl.usedValue;

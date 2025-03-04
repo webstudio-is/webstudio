@@ -1,10 +1,9 @@
-import {
-  type Breakpoint,
-  type Instance,
-  getStyleDeclKey,
-  StyleDecl,
-} from "@webstudio-is/sdk";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
+import type {
+  CssProperty,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   $selectedBreakpoint,
   $selectedOrLastStyleSourceSelector,
@@ -16,6 +15,7 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/awareness";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 
 export type StyleUpdate =
   | {
@@ -28,13 +28,6 @@ export type StyleUpdate =
       value: StyleValue;
     };
 
-type StyleUpdates = {
-  id: Instance["id"];
-  updates: Array<StyleUpdate>;
-  breakpoint: Breakpoint;
-  state: undefined | string;
-};
-
 export type StyleUpdateOptions = { isEphemeral?: boolean; listed?: boolean };
 
 export type SetValue = (
@@ -42,22 +35,24 @@ export type SetValue = (
   options?: StyleUpdateOptions
 ) => void;
 
-export type SetProperty = (property: StyleProperty) => SetValue;
+export type SetProperty = (property: StyleProperty | CssProperty) => SetValue;
 
 export type DeleteProperty = (
-  property: StyleProperty,
+  property: StyleProperty | CssProperty,
   options?: StyleUpdateOptions
 ) => void;
 
 export type CreateBatchUpdate = () => {
-  setProperty: (property: StyleProperty) => (style: StyleValue) => void;
-  deleteProperty: (property: StyleProperty) => void;
+  setProperty: (
+    property: StyleProperty | CssProperty
+  ) => (style: StyleValue) => void;
+  deleteProperty: (property: StyleProperty | CssProperty) => void;
   publish: (options?: StyleUpdateOptions) => void;
 };
 
 const publishUpdates = (
   type: "update" | "preview",
-  updates: StyleUpdates["updates"],
+  updates: StyleUpdate[],
   options: StyleUpdateOptions
 ) => {
   if (updates.length === 0) {
@@ -146,7 +141,13 @@ const publishUpdates = (
 export const setProperty: SetProperty = (property) => {
   return (value, options: StyleUpdateOptions = { isEphemeral: false }) => {
     if (value.type !== "invalid") {
-      const updates = [{ operation: "set" as const, property, value }];
+      const updates = [
+        {
+          operation: "set" as const,
+          property: camelCaseProperty(property),
+          value,
+        },
+      ];
       const type = options.isEphemeral ? "preview" : "update";
 
       publishUpdates(type, updates, options);
@@ -155,30 +156,39 @@ export const setProperty: SetProperty = (property) => {
 };
 
 export const deleteProperty = (
-  property: StyleProperty,
+  property: StyleProperty | CssProperty,
   options: StyleUpdateOptions = { isEphemeral: false }
 ) => {
-  const updates = [{ operation: "delete" as const, property }];
+  const updates = [
+    { operation: "delete" as const, property: camelCaseProperty(property) },
+  ];
   const type = options.isEphemeral ? "preview" : "update";
   publishUpdates(type, updates, options);
 };
 
 export const createBatchUpdate = () => {
-  let updates: StyleUpdates["updates"] = [];
+  let updates: StyleUpdate[] = [];
 
-  const setProperty = (property: StyleProperty) => {
+  const setProperty = (property: StyleProperty | CssProperty) => {
     const setValue = (value: StyleValue) => {
       if (value.type === "invalid") {
         return;
       }
 
-      updates.push({ operation: "set", property, value });
+      updates.push({
+        operation: "set",
+        property: camelCaseProperty(property),
+        value,
+      });
     };
     return setValue;
   };
 
-  const deleteProperty = (property: StyleProperty) => {
-    updates.push({ operation: "delete", property });
+  const deleteProperty = (property: StyleProperty | CssProperty) => {
+    updates.push({
+      operation: "delete",
+      property: camelCaseProperty(property),
+    });
   };
 
   const publish = (options: StyleUpdateOptions = { isEphemeral: false }) => {

@@ -8,7 +8,11 @@ import {
 import { $assets } from "~/shared/nano-states";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { useEffect, useState } from "react";
-import type { InvalidValue, StyleProperty } from "@webstudio-is/css-engine";
+import type {
+  CssProperty,
+  InvalidValue,
+  StyleProperty,
+} from "@webstudio-is/css-engine";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -32,7 +36,7 @@ export const ImageControl = ({
   property,
   index,
 }: {
-  property: StyleProperty;
+  property: StyleProperty | CssProperty;
   index: number;
 }) => {
   const assets = useStore($assets);

@@ -1,7 +1,12 @@
-import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  declarationDescriptions,
+  parseCssValue,
+} from "@webstudio-is/css-data";
 import {
   StyleValue,
   toValue,
+  type CssProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
@@ -24,7 +29,7 @@ export const SelectControl = ({
   index,
   items = styleConfigByName(property).items,
 }: {
-  property: StyleProperty;
+  property: StyleProperty | CssProperty;
   index?: number;
   items?: Array<{ label: string; name: string }>;
 }) => {
@@ -54,7 +59,9 @@ export const SelectControl = ({
   const hasDescription =
     options.length > 0 &&
     options.some(
-      (option) => declarationDescriptions[`${property}:${option}`] !== undefined
+      (option) =>
+        declarationDescriptions[`${camelCaseProperty(property)}:${option}`] !==
+        undefined
     );
 
   return (
@@ -74,7 +81,7 @@ export const SelectControl = ({
           return;
         }
         // Preview on mouse enter or focus.
-        const nextValue = parseCssValue(property, name);
+        const nextValue = parseCssValue(camelCaseProperty(property), name);
         setValue(nextValue, { isEphemeral: true });
       }}
       onOpenChange={(isOpen) => {
@@ -88,7 +95,8 @@ export const SelectControl = ({
           return;
         }
 
-        const description = declarationDescriptions[`${property}:${option}`];
+        const description =
+          declarationDescriptions[`${camelCaseProperty(property)}:${option}`];
         return (
           <Box css={{ width: theme.spacing[26] }}>
             {description ?? `The ${noCase(property)} is ${option}`}
