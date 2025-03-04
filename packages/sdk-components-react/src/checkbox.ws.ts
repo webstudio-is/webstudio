@@ -13,7 +13,7 @@ const presetStyle = {
   input: [
     ...checkbox,
     {
-      property: "marginRight",
+      property: "margin-right",
       value: { type: "unit", unit: "em", value: 0.5 },
     },
   ],

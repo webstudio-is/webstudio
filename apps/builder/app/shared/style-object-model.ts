@@ -1,11 +1,13 @@
 import type { HtmlTags } from "html-tags";
 import { html, properties } from "@webstudio-is/css-data";
-import type {
-  StyleValue,
-  StyleProperty,
-  VarFallback,
-  VarValue,
-  UnparsedValue,
+import {
+  type StyleValue,
+  type StyleProperty,
+  type VarFallback,
+  type VarValue,
+  type UnparsedValue,
+  type CssProperty,
+  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import {
   type Instance,
@@ -93,7 +95,7 @@ export const getPresetStyleDeclKey = ({
   component: string;
   tag: string;
   state?: string;
-  property: string;
+  property: CssProperty;
 }) => `${component}:${tag}:${state ?? ""}:${property}`;
 
 /**
@@ -141,13 +143,14 @@ const getCascadedValue = ({
   let selectedIndex = -1;
   // store the source of latest value
   let source: StyleValueSource = { name: "default" };
+  const hyphenatedProperty = hyphenateProperty(property);
 
   // https://drafts.csswg.org/css-cascade-5/#declared
   const declaredValues: StyleValue[] = [];
 
   // browser styles
   if (tag) {
-    const key = `${tag}:${property}` as const;
+    const key = `${tag}:${hyphenatedProperty}`;
     const browserValue = html.get(key);
     if (browserValue) {
       declaredValues.push(browserValue);
@@ -169,7 +172,12 @@ const getCascadedValue = ({
   // preset component styles
   if (component && tag) {
     for (const state of states) {
-      const key = getPresetStyleDeclKey({ component, tag, state, property });
+      const key = getPresetStyleDeclKey({
+        component,
+        tag,
+        state,
+        property: hyphenatedProperty,
+      });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
         source = { name: "preset", state, instanceId };

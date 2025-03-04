@@ -2,10 +2,25 @@ import { z } from "zod";
 import type { HtmlTags } from "html-tags";
 import { PropMeta } from "./prop-meta";
 import { Matchers } from "./instances";
-import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "./embed-template";
+import { WsEmbedTemplate } from "./embed-template";
+import { StyleValue, type CssProperty } from "@webstudio-is/css-engine";
+import type { Simplify } from "type-fest";
+
+export const PresetStyleDecl = z.object({
+  // State selector, e.g. :hover
+  state: z.optional(z.string()),
+  property: z.string(),
+  value: StyleValue,
+});
+
+export type PresetStyleDecl = Simplify<
+  Omit<z.infer<typeof PresetStyleDecl>, "property"> & {
+    property: CssProperty;
+  }
+>;
 
 export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
-  Record<Tag, EmbedTemplateStyleDecl[]>
+  Record<Tag, PresetStyleDecl[]>
 >;
 
 // props are separated from the rest of the meta
@@ -70,9 +85,7 @@ export const WsComponentMeta = z.object({
   label: z.optional(z.string()),
   description: z.string().optional(),
   icon: z.string(),
-  presetStyle: z.optional(
-    z.record(z.string(), z.array(EmbedTemplateStyleDecl))
-  ),
+  presetStyle: z.optional(z.record(z.string(), z.array(PresetStyleDecl))),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
   order: z.number().optional(),
