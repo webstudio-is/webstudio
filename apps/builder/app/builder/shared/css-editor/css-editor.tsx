@@ -62,9 +62,8 @@ const AdvancedPropertyLabel = ({
   onReset?: () => void;
   onDeleteProperty: DeleteProperty;
 }) => {
-  const camelCasedProperty = camelCaseProperty(property);
-  const styleDecl = useComputedStyleDecl(camelCasedProperty);
-  const description = propertyDescriptions[camelCasedProperty];
+  const styleDecl = useComputedStyleDecl(property);
+  const description = propertyDescriptions[camelCaseProperty(property)];
 
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -77,7 +76,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            onDeleteProperty(camelCasedProperty);
+            onDeleteProperty(property);
             onReset?.();
             return;
           }
@@ -90,7 +89,7 @@ const AdvancedPropertyLabel = ({
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            onDeleteProperty(camelCasedProperty);
+            onDeleteProperty(property);
             setIsOpen(false);
             onReset?.();
           }}
