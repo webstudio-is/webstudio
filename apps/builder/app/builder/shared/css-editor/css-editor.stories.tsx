@@ -44,9 +44,9 @@ setProperty("opacity")({ type: "unit", unit: "number", value: 11.2 });
 
 export const CssEditor = () => {
   const styleMap = new Map([
-    ["backgroundImage", backgroundImage.value],
-    ["accentColor", { type: "keyword", value: "red" }],
-    ["alignContent", { type: "keyword", value: "normal" }],
+    ["background-image", backgroundImage.value],
+    ["accent-color", { type: "keyword", value: "red" }],
+    ["align-content", { type: "keyword", value: "normal" }],
     ["opacity", { type: "unit", unit: "number", value: 11.2 }],
   ]);
   return (
