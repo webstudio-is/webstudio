@@ -29,8 +29,6 @@ import type {
   DataSource,
   Deployment,
   Asset,
-  FontAsset,
-  ImageAsset,
   Resource,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
@@ -300,8 +298,8 @@ export const prebuild = async (options: {
     Object.entries(coreMetas)
   );
   const siteDataByPage: SiteDataByPage = {};
-  const fontAssetsByPage: Record<Page["id"], FontAsset[]> = {};
-  const backgroundImageAssetsByPage: Record<Page["id"], ImageAsset[]> = {};
+  const fontAssetsByPage: Record<Page["id"], string[]> = {};
+  const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
 
   for (const page of Object.values(siteData.pages)) {
     const instanceMap = new Map(siteData.build.instances);
@@ -396,8 +394,9 @@ export const prebuild = async (options: {
     );
 
     const pageFontAssets = siteData.assets
-      .filter((asset): asset is FontAsset => asset.type === "font")
-      .filter((fontAsset) => pageFontFamilySet.has(fontAsset.meta.family));
+      .filter((asset) => asset.type === "font")
+      .filter((fontAsset) => pageFontFamilySet.has(fontAsset.meta.family))
+      .map((asset) => asset.name);
 
     fontAssetsByPage[page.id] = pageFontAssets;
 
@@ -422,8 +421,9 @@ export const prebuild = async (options: {
     );
 
     const backgroundImageAssets = siteData.assets
-      .filter((asset): asset is ImageAsset => asset.type === "image")
-      .filter((imageAsset) => backgroundImageAssetIdSet.has(imageAsset.id));
+      .filter((asset) => asset.type === "image")
+      .filter((imageAsset) => backgroundImageAssetIdSet.has(imageAsset.id))
+      .map((asset) => asset.name);
 
     backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
   }
@@ -588,7 +588,7 @@ export const prebuild = async (options: {
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
-    const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
+    const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "")?.name;
 
     const pagePath = getPagePath(page.id, siteData.build.pages);
 
@@ -597,20 +597,19 @@ export const prebuild = async (options: {
       /* This is a auto generated file for building the project */ \n
 
       import { Fragment, useState } from "react";
-      import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
       import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
       ${componentImports}
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
 
-      export const favIconAsset: ImageAsset | undefined =
+      export const favIconAsset: string | undefined =
         ${JSON.stringify(favIconAsset)};
 
       // Font assets on current page (can be preloaded)
-      export const pageFontAssets: FontAsset[] =
+      export const pageFontAssets: string[] =
         ${JSON.stringify(pageFontAssets)}
 
-      export const pageBackgroundImageAssets: ImageAsset[] =
+      export const pageBackgroundImageAssets: string[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
 
       ${

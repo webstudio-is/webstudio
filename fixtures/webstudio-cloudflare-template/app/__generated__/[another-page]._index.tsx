@@ -2,19 +2,18 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "";
 
-export const favIconAsset: ImageAsset | undefined = undefined;
+export const favIconAsset: string | undefined = undefined;
 
 // Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = [];
+export const pageFontAssets: string[] = [];
 
-export const pageBackgroundImageAssets: ImageAsset[] = [];
+export const pageBackgroundImageAssets: string[] = [];
 
 const Page = (_props: { system: any }) => {
   return (
