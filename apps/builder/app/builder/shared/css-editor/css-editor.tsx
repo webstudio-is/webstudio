@@ -56,11 +56,11 @@ const initialIndentation = `20px`;
 const AdvancedPropertyLabel = ({
   property,
   onReset,
-  deleteProperty,
+  onDeleteProperty,
 }: {
   property: CssProperty;
   onReset?: () => void;
-  deleteProperty: DeleteProperty;
+  onDeleteProperty: DeleteProperty;
 }) => {
   const camelCasedProperty = camelCaseProperty(property);
   const styleDecl = useComputedStyleDecl(camelCasedProperty);
@@ -77,7 +77,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            deleteProperty(camelCasedProperty);
+            onDeleteProperty(camelCasedProperty);
             onReset?.();
             return;
           }
@@ -90,7 +90,7 @@ const AdvancedPropertyLabel = ({
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            deleteProperty(camelCasedProperty);
+            onDeleteProperty(camelCasedProperty);
             setIsOpen(false);
             onReset?.();
           }}
@@ -114,15 +114,15 @@ const AdvancedPropertyLabel = ({
 
 const AdvancedPropertyValue = ({
   property,
-  deleteProperty,
-  setProperty,
+  onDeleteProperty,
+  onSetProperty,
   onChangeComplete,
   onReset,
   inputRef: inputRefProp,
 }: {
   property: CssProperty;
-  deleteProperty: DeleteProperty;
-  setProperty: SetProperty;
+  onDeleteProperty: DeleteProperty;
+  onSetProperty: SetProperty;
   onChangeComplete: ComponentProps<
     typeof CssValueInputContainer
   >["onChangeComplete"];
@@ -148,13 +148,13 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                setProperty(camelCasedProperty)(styleValue, options);
+                onSetProperty(camelCasedProperty)(styleValue, options);
               } else {
-                deleteProperty(camelCasedProperty, options);
+                onDeleteProperty(camelCasedProperty, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              setProperty(camelCasedProperty)(styleValue);
+              onSetProperty(camelCasedProperty)(styleValue);
             }}
           />
         )
@@ -174,18 +174,18 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          setProperty(camelCasedProperty)(
+          onSetProperty(camelCasedProperty)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          setProperty(camelCasedProperty)(styleValue, {
+          onSetProperty(camelCasedProperty)(styleValue, {
             ...options,
             listed: true,
           });
         }
       }}
-      deleteProperty={deleteProperty}
+      deleteProperty={onDeleteProperty}
       onChangeComplete={onChangeComplete}
       onReset={onReset}
     />
@@ -254,8 +254,8 @@ const AdvancedDeclarationLonghand = memo(
   ({
     property,
     onChangeComplete,
-    deleteProperty,
-    setProperty,
+    onDeleteProperty,
+    onSetProperty,
     onReset,
     valueInputRef,
     indentation = initialIndentation,
@@ -263,8 +263,8 @@ const AdvancedDeclarationLonghand = memo(
     property: CssProperty;
     indentation?: string;
     onReset?: () => void;
-    setProperty: SetProperty;
-    deleteProperty: DeleteProperty;
+    onSetProperty: SetProperty;
+    onDeleteProperty: DeleteProperty;
     onChangeComplete?: ComponentProps<
       typeof CssValueInputContainer
     >["onChangeComplete"];
@@ -281,7 +281,7 @@ const AdvancedDeclarationLonghand = memo(
         <AdvancedPropertyLabel
           property={property}
           onReset={onReset}
-          deleteProperty={deleteProperty}
+          onDeleteProperty={onDeleteProperty}
         />
         <Text
           variant="mono"
@@ -297,8 +297,8 @@ const AdvancedDeclarationLonghand = memo(
           property={property}
           onChangeComplete={onChangeComplete}
           onReset={onReset}
-          deleteProperty={deleteProperty}
-          setProperty={setProperty}
+          onDeleteProperty={onDeleteProperty}
+          onSetProperty={onSetProperty}
           inputRef={valueInputRef}
         />
       </Flex>
@@ -309,17 +309,17 @@ const AdvancedDeclarationLonghand = memo(
 export type CssEditorApi = { showAddStyleInput: () => void } | undefined;
 
 export const CssEditor = ({
-  deleteProperty,
-  setProperty,
-  addProperties,
+  onDeleteProperty,
+  onSetProperty,
+  onAddProperties,
   styleMap,
   apiRef,
   showSearch = true,
   recentProperties = [],
 }: {
-  deleteProperty: DeleteProperty;
-  setProperty: SetProperty;
-  addProperties: (styleMap: StyleMap) => void;
+  onDeleteProperty: DeleteProperty;
+  onSetProperty: SetProperty;
+  onAddProperties: (styleMap: StyleMap) => void;
   styleMap: StyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
@@ -359,7 +359,7 @@ export const CssEditor = ({
     if (styleMap.size === 0) {
       return new Map();
     }
-    addProperties(styleMap);
+    onAddProperties(styleMap);
     return styleMap;
   };
 
@@ -443,8 +443,8 @@ export const CssEditor = ({
                       }
                     }}
                     onReset={afterChangingStyles}
-                    deleteProperty={deleteProperty}
-                    setProperty={setProperty}
+                    onDeleteProperty={onDeleteProperty}
+                    onSetProperty={onSetProperty}
                   />
                 );
               })}
@@ -490,8 +490,8 @@ export const CssEditor = ({
                 <LazyRender key={property}>
                   <AdvancedDeclarationLonghand
                     property={property}
-                    deleteProperty={deleteProperty}
-                    setProperty={setProperty}
+                    onDeleteProperty={onDeleteProperty}
+                    onSetProperty={onSetProperty}
                   />
                 </LazyRender>
               );

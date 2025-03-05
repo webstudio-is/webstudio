@@ -52,9 +52,9 @@ export const CssEditor = () => {
   return (
     <CssEditorComponent
       styleMap={styleMap}
-      deleteProperty={() => undefined}
-      setProperty={() => () => undefined}
-      addProperties={() => undefined}
+      onDeleteProperty={() => undefined}
+      onSetProperty={() => () => undefined}
+      onAddProperties={() => undefined}
     />
   );
 };

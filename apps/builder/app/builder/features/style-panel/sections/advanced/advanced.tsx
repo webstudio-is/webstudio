@@ -91,7 +91,7 @@ export const Section = () => {
     setRecentPropertiesMap(newRecentPropertiesMap);
   };
 
-  const addProperties = (styleMap: StyleMap) => {
+  const handleAddProperties = (styleMap: StyleMap) => {
     const batch = createBatchUpdate();
     for (const [property, value] of styleMap) {
       batch.setProperty(camelCaseProperty(property as CssProperty))(value);
@@ -125,9 +125,9 @@ export const Section = () => {
     >
       <CssEditor
         styleMap={styleMap}
-        deleteProperty={handleDeleteProperty}
-        setProperty={setProperty}
-        addProperties={addProperties}
+        onDeleteProperty={handleDeleteProperty}
+        onSetProperty={setProperty}
+        onAddProperties={handleAddProperties}
         apiRef={apiRef}
         recentProperties={recentProperties}
       />
