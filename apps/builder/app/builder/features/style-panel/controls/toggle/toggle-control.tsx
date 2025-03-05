@@ -3,11 +3,7 @@ import {
   camelCaseProperty,
   declarationDescriptions,
 } from "@webstudio-is/css-data";
-import {
-  toValue,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
@@ -18,7 +14,7 @@ export const ToggleControl = ({
   property,
   items,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   items: Array<{
     name: string;
     label: string;

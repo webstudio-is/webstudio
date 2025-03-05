@@ -103,7 +103,7 @@ export const ToggleGroupControl = ({
   items,
 }: {
   label?: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [CssProperty | StyleProperty, ...(CssProperty | StyleProperty)[]];
   items: Array<{
     child: JSX.Element;
     value: string;

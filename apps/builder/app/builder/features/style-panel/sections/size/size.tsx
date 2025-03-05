@@ -2,7 +2,7 @@ import {
   camelCaseProperty,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   Flex,
   Grid,
@@ -10,6 +10,7 @@ import {
   Separator,
   styled,
   FloatingPanel,
+  theme,
 } from "@webstudio-is/design-system";
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
@@ -20,18 +21,13 @@ import {
   EllipsesIcon,
 } from "@webstudio-is/icons";
 import { StyleSection } from "../../shared/style-section";
-import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { humanizeString } from "~/shared/string-utils";
 import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import { deleteProperty } from "../../shared/use-style-data";
 
-const SizeProperty = ({
-  property,
-}: {
-  property: StyleProperty | CssProperty;
-}) => {
+const SizeProperty = ({ property }: { property: CssProperty }) => {
   return (
     <Grid gap={1}>
       <PropertyLabel
@@ -45,7 +41,7 @@ const SizeProperty = ({
 };
 
 const ObjectPosition = () => {
-  const styleDecl = useComputedStyleDecl("objectPosition");
+  const styleDecl = useComputedStyleDecl("object-position");
   return (
     <Flex justify="end">
       <FloatingPanel
@@ -53,7 +49,7 @@ const ObjectPosition = () => {
         placement="bottom"
         content={
           <Flex css={{ padding: theme.panel.padding }}>
-            <PositionControl property="objectPosition" styleDecl={styleDecl} />
+            <PositionControl property="object-position" styleDecl={styleDecl} />
           </Flex>
         }
       >
@@ -62,7 +58,7 @@ const ObjectPosition = () => {
           onClick={(event) => {
             if (event.altKey) {
               event.preventDefault();
-              deleteProperty("objectPosition");
+              deleteProperty("object-position");
             }
           }}
         >
@@ -76,16 +72,16 @@ const ObjectPosition = () => {
 export const properties = [
   "width",
   "height",
-  "minWidth",
-  "minHeight",
-  "maxWidth",
-  "maxHeight",
-  "overflowX",
-  "overflowY",
-  "objectFit",
-  "objectPosition",
-  "aspectRatio",
-] satisfies Array<StyleProperty>;
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "overflow-x",
+  "overflow-y",
+  "object-fit",
+  "object-position",
+  "aspect-ratio",
+] satisfies Array<CssProperty>;
 
 const SectionLayout = styled(Grid, {
   columnGap: theme.spacing[5],
@@ -99,27 +95,27 @@ export const Section = () => {
       <SectionLayout columns={2}>
         <SizeProperty property="width" />
         <SizeProperty property="height" />
-        <SizeProperty property="minWidth" />
-        <SizeProperty property="minHeight" />
-        <SizeProperty property="maxWidth" />
-        <SizeProperty property="maxHeight" />
+        <SizeProperty property="min-width" />
+        <SizeProperty property="min-height" />
+        <SizeProperty property="max-width" />
+        <SizeProperty property="max-height" />
         <PropertyLabel
           label="Aspect Ratio"
           description={propertyDescriptions.aspectRatio}
-          properties={["aspectRatio"]}
+          properties={["aspect-ratio"]}
         />
-        <TextControl property="aspectRatio" />
+        <TextControl property="aspect-ratio" />
       </SectionLayout>
       <Separator />
       <SectionLayout columns={2}>
         <PropertyLabel
           label="Overflow"
           description={propertyDescriptions.overflow}
-          properties={["overflowX", "overflowY"]}
+          properties={["overflow-x", "overflow-y"]}
         />
         <ToggleGroupControl
           label="Overflow"
-          properties={["overflowX", "overflowY"]}
+          properties={["overflow-x", "overflow-y"]}
           items={[
             {
               child: <EyeOpenIcon />,
@@ -151,13 +147,13 @@ export const Section = () => {
         <PropertyLabel
           label="Object Fit"
           description={propertyDescriptions.objectFit}
-          properties={["objectFit"]}
+          properties={["object-fit"]}
         />
-        <SelectControl property="objectFit" />
+        <SelectControl property="object-fit" />
         <PropertyLabel
           label="Object Position"
           description={propertyDescriptions.objectPosition}
-          properties={["objectPosition"]}
+          properties={["object-position"]}
         />
         <ObjectPosition />
       </SectionLayout>
