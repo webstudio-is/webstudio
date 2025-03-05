@@ -1,5 +1,4 @@
 import { HTMLRewriter } from "@miniflare/html-rewriter";
-import {} from "@mjackson/node-fetch-server";
 import { Plugin } from "vite";
 
 export const dedupeMeta: Plugin = {
