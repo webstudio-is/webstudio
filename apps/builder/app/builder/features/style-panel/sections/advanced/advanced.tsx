@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -16,11 +16,13 @@ import {
   createBatchUpdate,
   deleteProperty,
   setProperty,
+  type DeleteProperty,
 } from "../../shared/use-style-data";
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor, type CssEditorApi } from "../../shared/css-editor";
 import { $advancedStylesLonghands } from "./stores";
+import { $selectedInstanceKey } from "~/shared/awareness";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -66,31 +68,68 @@ export const Section = () => {
   const styleMap = useStore($advancedStylesLonghands);
   const apiRef = useRef<CssEditorApi>();
   const properties = Array.from(styleMap.keys()) as Array<CssProperty>;
+  const selectedInstanceKey = useStore($selectedInstanceKey);
+  // Memorizing recent properties by instance id, so that when user switches between instances and comes back
+  // they are still in-place
+  const [recentPropertiesMap, setRecentPropertiesMap] = useState<
+    Map<string, Array<CssProperty>>
+  >(new Map());
 
-  const handleShowAddStyleInput = () => {
-    apiRef.current?.showAddStyleInput();
+  const recentProperties = selectedInstanceKey
+    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
+    : [];
+
+  const updateRecentProperties = (properties: Array<CssProperty>) => {
+    if (selectedInstanceKey === undefined) {
+      return;
+    }
+    const newRecentPropertiesMap = new Map(recentPropertiesMap);
+    newRecentPropertiesMap.set(
+      selectedInstanceKey,
+      Array.from(new Set(properties))
+    );
+    setRecentPropertiesMap(newRecentPropertiesMap);
   };
 
-  const insertProperties = (styleMap: StyleMap) => {
+  const addProperties = (styleMap: StyleMap) => {
     const batch = createBatchUpdate();
     for (const [property, value] of styleMap) {
       batch.setProperty(camelCaseProperty(property as CssProperty))(value);
     }
     batch.publish({ listed: true });
+
+    const insertedProperties = Array.from(
+      styleMap.keys()
+    ) as Array<CssProperty>;
+    updateRecentProperties([...recentProperties, ...insertedProperties]);
+  };
+
+  const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
+    deleteProperty(property, options);
+
+    if (options.isEphemeral === true) {
+      return;
+    }
+    updateRecentProperties(
+      recentProperties.filter((recentProperty) => recentProperty !== property)
+    );
   };
 
   return (
     <AdvancedStyleSection
       label="Advanced"
       properties={properties}
-      onAdd={handleShowAddStyleInput}
+      onAdd={() => {
+        apiRef.current?.showAddStyleInput();
+      }}
     >
       <CssEditor
         styleMap={styleMap}
-        deleteProperty={deleteProperty}
+        deleteProperty={handleDeleteProperty}
         setProperty={setProperty}
-        insertProperties={insertProperties}
+        addProperties={addProperties}
         apiRef={apiRef}
+        recentProperties={recentProperties}
       />
     </AdvancedStyleSection>
   );

@@ -11,7 +11,6 @@ import {
   type ComponentProps,
   type RefObject,
 } from "react";
-import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
 import {
   Box,
@@ -42,7 +41,6 @@ import { useClientSupports } from "~/shared/client-supports";
 import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
-import { $selectedInstanceKey } from "~/shared/awareness";
 import type { DeleteProperty, SetProperty } from "../use-style-data";
 
 // Used to indent the values when they are on the next line. This way its easier to see
@@ -307,25 +305,21 @@ export type CssEditorApi = { showAddStyleInput: () => void } | undefined;
 export const CssEditor = ({
   deleteProperty,
   setProperty,
-  insertProperties,
+  addProperties,
   styleMap,
   apiRef,
   showSearch = true,
+  recentProperties = [],
 }: {
   deleteProperty: DeleteProperty;
   setProperty: SetProperty;
-  insertProperties: (styleMap: StyleMap) => void;
+  addProperties: (styleMap: StyleMap) => void;
   styleMap: StyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
+  recentProperties?: Array<CssProperty>;
 }) => {
   const [isAdding, setIsAdding] = useState(false);
-  const selectedInstanceKey = useStore($selectedInstanceKey);
-  // Memorizing recent properties by instance id, so that when user switches between instances and comes back
-  // they are still in-place
-  const [recentPropertiesMap, setRecentPropertiesMap] = useState<
-    Map<string, Array<CssProperty>>
-  >(new Map());
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const recentValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -341,10 +335,6 @@ export const CssEditor = ({
 
   const advancedProperties = Array.from(styleMap.keys()) as Array<CssProperty>;
 
-  const recentProperties = selectedInstanceKey
-    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
-    : [];
-
   const currentProperties =
     searchProperties ??
     advancedProperties.filter(
@@ -358,28 +348,12 @@ export const CssEditor = ({
     setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
   };
 
-  const updateRecentProperties = (properties: Array<CssProperty>) => {
-    if (selectedInstanceKey === undefined) {
-      return;
-    }
-    const newRecentPropertiesMap = new Map(recentPropertiesMap);
-    newRecentPropertiesMap.set(
-      selectedInstanceKey,
-      Array.from(new Set(properties))
-    );
-    setRecentPropertiesMap(newRecentPropertiesMap);
-  };
-
   const handleInsertStyles = (cssText: string) => {
     const styleMap = parseStyleInput(cssText);
     if (styleMap.size === 0) {
       return new Map();
     }
-    const insertedProperties = Array.from(
-      styleMap.keys()
-    ) as Array<CssProperty>;
-    updateRecentProperties([...recentProperties, ...insertedProperties]);
-    insertProperties(styleMap);
+    addProperties(styleMap);
     return styleMap;
   };
 
@@ -462,14 +436,7 @@ export const CssEditor = ({
                         handleShowAddStyleInput();
                       }
                     }}
-                    onReset={() => {
-                      updateRecentProperties(
-                        recentProperties.filter(
-                          (recentProperty) => recentProperty !== property
-                        )
-                      );
-                      afterChangingStyles();
-                    }}
+                    onReset={afterChangingStyles}
                     deleteProperty={deleteProperty}
                     setProperty={setProperty}
                   />

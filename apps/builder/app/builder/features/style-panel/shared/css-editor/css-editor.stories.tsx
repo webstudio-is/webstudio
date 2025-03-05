@@ -54,7 +54,7 @@ export const CssEditor = () => {
       styleMap={styleMap}
       deleteProperty={() => undefined}
       setProperty={() => () => undefined}
-      insertProperties={() => undefined}
+      addProperties={() => undefined}
     />
   );
 };
