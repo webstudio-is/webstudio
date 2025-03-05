@@ -1,4 +1,5 @@
 import { HTMLRewriter } from "@miniflare/html-rewriter";
+import {} from "@mjackson/node-fetch-server";
 import { Plugin } from "vite";
 
 export const dedupeMeta: Plugin = {
@@ -17,18 +18,19 @@ export const dedupeMeta: Plugin = {
       const originalWrite = res.write;
       const originalEnd = res.end;
 
-      let body = "";
+      const buffers: Buffer[] = [];
 
       res.write = (chunk) => {
-        body += chunk.toString();
+        buffers.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         return true;
       };
 
       res.end = (chunk) => {
         if (chunk) {
-          body += chunk.toString();
+          buffers.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         }
 
+        const body = Buffer.concat(buffers).toString("utf8");
         const response = new Response(body);
 
         const metasSet = new Set<string>();

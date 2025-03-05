@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 // @ts-ignore
 import { reactRouter } from "@react-router/dev/vite";
 // @ts-ignore
-// import { dedupeMeta } from "./proxy-emulator/dedupe-meta";
+import { dedupeMeta } from "./proxy-emulator/dedupe-meta";
 import { existsSync } from "fs";
 // @ts-ignore
 import path from "path";
@@ -31,5 +31,5 @@ export default defineConfig({
       conditions,
     },
   },
-  plugins: [reactRouter()],
+  plugins: [reactRouter(), dedupeMeta],
 });
