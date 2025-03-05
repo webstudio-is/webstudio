@@ -27,7 +27,6 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
-  hyphenateProperty,
   toValue,
   type CssProperty,
   type StyleMap,
