@@ -66,7 +66,7 @@ const AdvancedStyleSection = (props: {
 export const Section = () => {
   const styleMap = useStore($advancedStylesLonghands);
   const apiRef = useRef<CssEditorApi>();
-  const properties = Array.from(styleMap.keys()) as Array<CssProperty>;
+  const properties = Array.from(styleMap.keys());
   const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance id, so that when user switches between instances and comes back
   // they are still in-place
@@ -90,16 +90,14 @@ export const Section = () => {
     setRecentPropertiesMap(newRecentPropertiesMap);
   };
 
-  const handleAddProperties = (styleMap: CssStyleMap) => {
+  const handleAddDeclarations = (styleMap: CssStyleMap) => {
     const batch = createBatchUpdate();
     for (const [property, value] of styleMap) {
-      batch.setProperty(property as CssProperty)(value);
+      batch.setProperty(property)(value);
     }
     batch.publish({ listed: true });
 
-    const insertedProperties = Array.from(
-      styleMap.keys()
-    ) as Array<CssProperty>;
+    const insertedProperties = Array.from(styleMap.keys());
     updateRecentProperties([...recentProperties, ...insertedProperties]);
   };
 
@@ -111,6 +109,19 @@ export const Section = () => {
     }
     updateRecentProperties(
       recentProperties.filter((recentProperty) => recentProperty !== property)
+    );
+  };
+
+  const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
+    const batch = createBatchUpdate();
+    for (const [property] of styleMap) {
+      batch.deleteProperty(property);
+    }
+    batch.publish();
+    updateRecentProperties(
+      recentProperties.filter(
+        (recentProperty) => styleMap.has(recentProperty) === false
+      )
     );
   };
 
@@ -126,7 +137,8 @@ export const Section = () => {
         styleMap={styleMap}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}
-        onAddProperties={handleAddProperties}
+        onAddDeclarations={handleAddDeclarations}
+        onDeleteAllDeclarations={handleDeleteAllDeclarations}
         apiRef={apiRef}
         recentProperties={recentProperties}
       />

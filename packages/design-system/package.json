@@ -65,6 +65,7 @@
     "match-sorter": "^8.0.0",
     "react-hot-toast": "^2.5.1",
     "token-transformer": "^0.0.28",
+    "type-fest": "^4.32.0",
     "use-debounce": "^10.0.4",
     "warn-once": "^0.1.1"
   },

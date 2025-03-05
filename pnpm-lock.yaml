@@ -1420,6 +1420,9 @@ importers:
       token-transformer:
         specifier: ^0.0.28
         version: 0.0.28
+      type-fest:
+        specifier: ^4.32.0
+        version: 4.32.0
       use-debounce:
         specifier: ^10.0.4
         version: 10.0.4(react@18.3.0-canary-14898b6a9-20240318)

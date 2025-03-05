@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
-  hyphenateProperty,
   mergeStyles,
   toValue,
   type CssProperty,
@@ -17,16 +16,20 @@ import {
 
 export const copyAttribute = "data-declaration";
 
-export const CopyPasteMenu = ({
+export const CssEditorContextMenu = ({
   children,
   properties,
   styleMap,
   onPaste,
+  onDeleteProperty,
+  onDeleteAllDeclarations,
 }: {
   children: ReactNode;
-  properties: Array<string>;
+  properties: Array<CssProperty>;
   styleMap: CssStyleMap;
   onPaste: (cssText: string) => void;
+  onDeleteProperty: (property: CssProperty) => void;
+  onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
 }) => {
   const lastClickedProperty = useRef<string>();
 
@@ -34,35 +37,54 @@ export const CopyPasteMenu = ({
     navigator.clipboard.readText().then(onPaste);
   };
 
-  const handleCopyAll = () => {
+  // Gets all currently visible declarations based on what's in the search or filters.
+  const getAllDeclarations = () => {
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
     const currentStyleMap: CssStyleMap = new Map();
     for (const [property, value] of styleMap) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
-        currentStyleMap.set(hyphenateProperty(property), value);
+        currentStyleMap.set(property, value);
       }
     }
+    return currentStyleMap;
+  };
 
-    const css = generateStyleMap(mergeStyles(currentStyleMap));
+  const handleCopyAll = () => {
+    const styleMap = getAllDeclarations();
+    const css = generateStyleMap(mergeStyles(styleMap));
     navigator.clipboard.writeText(css);
   };
 
   const handleCopy = () => {
-    const property = lastClickedProperty.current;
+    const property = lastClickedProperty.current as CssProperty;
 
     if (property === undefined) {
       return;
     }
-    const value = styleMap.get(property as CssProperty);
+    const value = styleMap.get(property);
 
     if (value === undefined) {
       return;
     }
-    const style = new Map([[property, value]]);
-    const css = generateStyleMap(style);
+
+    const css = generateStyleMap(new Map([[property, value]]));
     navigator.clipboard.writeText(css);
+  };
+
+  const handleDelete = () => {
+    const property = lastClickedProperty.current as CssProperty;
+    const value = styleMap.get(property);
+    if (value === undefined) {
+      return;
+    }
+    onDeleteProperty(property);
+  };
+
+  const handleDeleteAllDeclarations = () => {
+    const styleMap = getAllDeclarations();
+    onDeleteAllDeclarations(styleMap);
   };
 
   return (
@@ -92,6 +114,12 @@ export const CopyPasteMenu = ({
         </ContextMenuItem>
         <ContextMenuItem onSelect={handlePaste}>
           Paste declarations
+        </ContextMenuItem>
+        <ContextMenuItem destructive onSelect={handleDelete}>
+          Delete declaration
+        </ContextMenuItem>
+        <ContextMenuItem destructive onSelect={handleDeleteAllDeclarations}>
+          Delete all declarations
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
