@@ -5,21 +5,16 @@ declare module "__CONSTANTS__" {
 }
 
 declare module "__CLIENT__" {
-  import type {
-    FontAsset,
-    ImageAsset,
-    ResourceRequest,
-    System,
-  } from "@webstudio-is/sdk";
+  import type { ResourceRequest, System } from "@webstudio-is/sdk";
 
   export const siteName: string;
 
-  export const favIconAsset: ImageAsset | undefined;
+  export const favIconAsset: string | undefined;
 
   // Font assets on current page (can be preloaded)
-  export const pageFontAssets: FontAsset[];
+  export const pageFontAssets: string[];
 
-  export const pageBackgroundImageAssets: ImageAsset[];
+  export const pageBackgroundImageAssets: string[];
 
   export const CustomCode: () => ReactNode;
 
