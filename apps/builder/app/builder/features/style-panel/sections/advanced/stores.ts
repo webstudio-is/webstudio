@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import {
   hyphenateProperty,
   type CssProperty,
-  type StyleMap,
+  type CssStyleMap,
 } from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
@@ -42,7 +42,7 @@ export const $advancedStylesLonghands = computed(
     styles,
     settings
   ) => {
-    const advancedStyles: StyleMap = new Map();
+    const advancedStyles: CssStyleMap = new Map();
 
     if (instancePath === undefined) {
       return advancedStyles;

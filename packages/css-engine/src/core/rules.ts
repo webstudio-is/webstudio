@@ -50,6 +50,10 @@ const mergeDeclarations = (declarations: Iterable<Declaration>) => {
   return newDeclarations;
 };
 
+/**
+ * Use CssStyleMap instead to enforce hyphenated properties.
+ * @deprecated
+ */
 export type StyleMap = Map<string, StyleValue>;
 
 export const generateStyleMap = (

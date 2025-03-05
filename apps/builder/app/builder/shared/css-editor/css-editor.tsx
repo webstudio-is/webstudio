@@ -29,7 +29,7 @@ import {
 import {
   toValue,
   type CssProperty,
-  type StyleMap,
+  type CssStyleMap,
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
 import { styleConfigByName } from "../../features/style-panel/shared/configs";
@@ -317,8 +317,8 @@ export const CssEditor = ({
 }: {
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
-  onAddProperties: (styleMap: StyleMap) => void;
-  styleMap: StyleMap;
+  onAddProperties: (styleMap: CssStyleMap) => void;
+  styleMap: CssStyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
   recentProperties?: Array<CssProperty>;

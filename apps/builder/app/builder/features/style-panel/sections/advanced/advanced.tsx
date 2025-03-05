@@ -6,8 +6,7 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
-import { camelCaseProperty } from "@webstudio-is/css-data";
-import { type CssProperty, type StyleMap } from "@webstudio-is/css-engine";
+import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -91,10 +90,10 @@ export const Section = () => {
     setRecentPropertiesMap(newRecentPropertiesMap);
   };
 
-  const handleAddProperties = (styleMap: StyleMap) => {
+  const handleAddProperties = (styleMap: CssStyleMap) => {
     const batch = createBatchUpdate();
     for (const [property, value] of styleMap) {
-      batch.setProperty(camelCaseProperty(property as CssProperty))(value);
+      batch.setProperty(property as CssProperty)(value);
     }
     batch.publish({ listed: true });
 

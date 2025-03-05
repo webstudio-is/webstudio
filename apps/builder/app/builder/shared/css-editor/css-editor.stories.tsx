@@ -10,6 +10,7 @@ import {
 } from "~/shared/nano-states";
 import { setProperty } from "../../features/style-panel/shared/use-style-data";
 import { $awareness } from "~/shared/awareness";
+import type { CssStyleMap } from "@webstudio-is/css-engine";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -43,7 +44,7 @@ setProperty("alignContent")({ type: "keyword", value: "normal" });
 setProperty("opacity")({ type: "unit", unit: "number", value: 11.2 });
 
 export const CssEditor = () => {
-  const styleMap = new Map([
+  const styleMap: CssStyleMap = new Map([
     ["background-image", backgroundImage.value],
     ["accent-color", { type: "keyword", value: "red" }],
     ["align-content", { type: "keyword", value: "normal" }],

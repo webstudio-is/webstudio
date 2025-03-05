@@ -11,7 +11,8 @@ import {
   hyphenateProperty,
   mergeStyles,
   toValue,
-  type StyleMap,
+  type CssProperty,
+  type CssStyleMap,
 } from "@webstudio-is/css-engine";
 
 export const copyAttribute = "data-declaration";
@@ -24,7 +25,7 @@ export const CopyPasteMenu = ({
 }: {
   children: ReactNode;
   properties: Array<string>;
-  styleMap: StyleMap;
+  styleMap: CssStyleMap;
   onPaste: (cssText: string) => void;
 }) => {
   const lastClickedProperty = useRef<string>();
@@ -36,7 +37,7 @@ export const CopyPasteMenu = ({
   const handleCopyAll = () => {
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
-    const currentStyleMap: StyleMap = new Map();
+    const currentStyleMap: CssStyleMap = new Map();
     for (const [property, value] of styleMap) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
@@ -54,7 +55,7 @@ export const CopyPasteMenu = ({
     if (property === undefined) {
       return;
     }
-    const value = styleMap.get(property);
+    const value = styleMap.get(property as CssProperty);
 
     if (value === undefined) {
       return;
