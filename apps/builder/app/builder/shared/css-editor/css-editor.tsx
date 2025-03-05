@@ -64,7 +64,6 @@ const AdvancedPropertyLabel = ({
 }) => {
   const camelCasedProperty = camelCaseProperty(property);
   const styleDecl = useComputedStyleDecl(camelCasedProperty);
-  const label = hyphenateProperty(property);
   const description = propertyDescriptions[camelCasedProperty];
 
   const [isOpen, setIsOpen] = useState(false);
@@ -87,7 +86,7 @@ const AdvancedPropertyLabel = ({
       }}
       content={
         <PropertyInfo
-          title={property.startsWith("--") ? "CSS Variable" : label}
+          title={property.startsWith("--") ? "CSS Variable" : property}
           description={description}
           styles={[styleDecl]}
           onReset={() => {
@@ -107,7 +106,7 @@ const AdvancedPropertyLabel = ({
           marginLeft: `-${initialIndentation}`,
         }}
       >
-        {label}
+        {property}
       </Label>
     </Tooltip>
   );
