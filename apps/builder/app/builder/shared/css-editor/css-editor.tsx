@@ -311,6 +311,7 @@ export const CssEditor = ({
   onDeleteProperty,
   onSetProperty,
   onAddDeclarations,
+  onDeleteAllDeclarations,
   styleMap,
   apiRef,
   showSearch = true,
@@ -319,6 +320,7 @@ export const CssEditor = ({
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
+  onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
   styleMap: CssStyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
@@ -419,6 +421,7 @@ export const CssEditor = ({
       <CssEditorContextMenu
         onPaste={handleInsertStyles}
         onDeleteProperty={onDeleteProperty}
+        onDeleteAllDeclarations={onDeleteAllDeclarations}
         styleMap={styleMap}
         properties={
           searchProperties ?? [...recentProperties, ...currentProperties]

@@ -22,12 +22,14 @@ export const CssEditorContextMenu = ({
   styleMap,
   onPaste,
   onDeleteProperty,
+  onDeleteAllDeclarations,
 }: {
   children: ReactNode;
-  properties: Array<string>;
+  properties: Array<CssProperty>;
   styleMap: CssStyleMap;
   onPaste: (cssText: string) => void;
   onDeleteProperty: (property: CssProperty) => void;
+  onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
 }) => {
   const lastClickedProperty = useRef<string>();
 
@@ -35,7 +37,8 @@ export const CssEditorContextMenu = ({
     navigator.clipboard.readText().then(onPaste);
   };
 
-  const handleCopyAll = () => {
+  // Gets all currently visible declarations based on what's in the search or filters.
+  const getAllDeclarations = () => {
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
     const currentStyleMap: CssStyleMap = new Map();
@@ -45,8 +48,12 @@ export const CssEditorContextMenu = ({
         currentStyleMap.set(property, value);
       }
     }
+    return currentStyleMap;
+  };
 
-    const css = generateStyleMap(mergeStyles(currentStyleMap));
+  const handleCopyAll = () => {
+    const styleMap = getAllDeclarations();
+    const css = generateStyleMap(mergeStyles(styleMap));
     navigator.clipboard.writeText(css);
   };
 
@@ -73,6 +80,11 @@ export const CssEditorContextMenu = ({
       return;
     }
     onDeleteProperty(property);
+  };
+
+  const handleDeleteAllDeclarations = () => {
+    const styleMap = getAllDeclarations();
+    onDeleteAllDeclarations(styleMap);
   };
 
   return (
@@ -105,6 +117,9 @@ export const CssEditorContextMenu = ({
         </ContextMenuItem>
         <ContextMenuItem destructive onSelect={handleDelete}>
           Delete declaration
+        </ContextMenuItem>
+        <ContextMenuItem destructive onSelect={handleDeleteAllDeclarations}>
+          Delete all declarations
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
