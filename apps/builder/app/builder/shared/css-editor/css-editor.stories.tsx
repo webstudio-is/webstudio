@@ -56,6 +56,7 @@ export const CssEditor = () => {
       onDeleteProperty={() => undefined}
       onSetProperty={() => () => undefined}
       onAddDeclarations={() => undefined}
+      onDeleteAllDeclarations={() => undefined}
     />
   );
 };
