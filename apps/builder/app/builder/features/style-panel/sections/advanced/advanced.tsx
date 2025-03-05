@@ -20,7 +20,7 @@ import {
 } from "../../shared/use-style-data";
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
-import { CssEditor, type CssEditorApi } from "../../shared/css-editor";
+import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
 import { $advancedStylesLonghands } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
 

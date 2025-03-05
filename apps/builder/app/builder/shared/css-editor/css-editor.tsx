@@ -32,16 +32,22 @@ import {
   type CssProperty,
   type StyleMap,
 } from "@webstudio-is/css-engine";
-import { CssValueInputContainer } from "../../shared/css-value-input";
-import { styleConfigByName } from "../../shared/configs";
-import { $availableVariables, useComputedStyleDecl } from "../../shared/model";
-import { PropertyInfo } from "../../property-label";
-import { ColorPopover } from "../../shared/color-picker";
+import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
+import { styleConfigByName } from "../../features/style-panel/shared/configs";
+import {
+  $availableVariables,
+  useComputedStyleDecl,
+} from "../../features/style-panel/shared/model";
+import { PropertyInfo } from "../../features/style-panel/property-label";
+import { ColorPopover } from "../../features/style-panel/shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
 import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
-import type { DeleteProperty, SetProperty } from "../use-style-data";
+import type {
+  DeleteProperty,
+  SetProperty,
+} from "../../features/style-panel/shared/use-style-data";
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.

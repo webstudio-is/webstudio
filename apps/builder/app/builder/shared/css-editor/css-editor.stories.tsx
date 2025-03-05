@@ -8,7 +8,7 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { setProperty } from "../use-style-data";
+import { setProperty } from "../../features/style-panel/shared/use-style-data";
 import { $awareness } from "~/shared/awareness";
 
 const backgroundImage: StyleDecl = {
