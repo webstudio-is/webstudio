@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
-  hyphenateProperty,
   mergeStyles,
   toValue,
   type CssProperty,
@@ -17,16 +16,18 @@ import {
 
 export const copyAttribute = "data-declaration";
 
-export const CopyPasteMenu = ({
+export const CssEditorContextMenu = ({
   children,
   properties,
   styleMap,
   onPaste,
+  onDeleteProperty,
 }: {
   children: ReactNode;
   properties: Array<string>;
   styleMap: CssStyleMap;
   onPaste: (cssText: string) => void;
+  onDeleteProperty: (property: CssProperty) => void;
 }) => {
   const lastClickedProperty = useRef<string>();
 
@@ -41,7 +42,7 @@ export const CopyPasteMenu = ({
     for (const [property, value] of styleMap) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
-        currentStyleMap.set(hyphenateProperty(property), value);
+        currentStyleMap.set(property, value);
       }
     }
 
@@ -50,19 +51,28 @@ export const CopyPasteMenu = ({
   };
 
   const handleCopy = () => {
-    const property = lastClickedProperty.current;
+    const property = lastClickedProperty.current as CssProperty;
 
     if (property === undefined) {
       return;
     }
-    const value = styleMap.get(property as CssProperty);
+    const value = styleMap.get(property);
 
     if (value === undefined) {
       return;
     }
-    const style = new Map([[property, value]]);
-    const css = generateStyleMap(style);
+
+    const css = generateStyleMap(new Map([[property, value]]));
     navigator.clipboard.writeText(css);
+  };
+
+  const handleDelete = () => {
+    const property = lastClickedProperty.current as CssProperty;
+    const value = styleMap.get(property);
+    if (value === undefined) {
+      return;
+    }
+    onDeleteProperty(property);
   };
 
   return (
@@ -92,6 +102,9 @@ export const CopyPasteMenu = ({
         </ContextMenuItem>
         <ContextMenuItem onSelect={handlePaste}>
           Paste declarations
+        </ContextMenuItem>
+        <ContextMenuItem destructive onSelect={handleDelete}>
+          Delete declaration
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

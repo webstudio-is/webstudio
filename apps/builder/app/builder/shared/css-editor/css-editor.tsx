@@ -31,6 +31,7 @@ import {
   type CssProperty,
   type CssStyleMap,
 } from "@webstudio-is/css-engine";
+// @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
 import { styleConfigByName } from "../../features/style-panel/shared/configs";
 import {
@@ -40,7 +41,7 @@ import {
 import { PropertyInfo } from "../../features/style-panel/property-label";
 import { ColorPopover } from "../../features/style-panel/shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
-import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
+import { CssEditorContextMenu, copyAttribute } from "./css-editor-context-menu";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
 import type {
@@ -415,8 +416,9 @@ export const CssEditor = ({
           />
         </Box>
       )}
-      <CopyPasteMenu
+      <CssEditorContextMenu
         onPaste={handleInsertStyles}
+        onDeleteProperty={onDeleteProperty}
         styleMap={styleMap}
         properties={
           searchProperties ?? [...recentProperties, ...currentProperties]
@@ -496,7 +498,7 @@ export const CssEditor = ({
             })}
           </Flex>
         </Flex>
-      </CopyPasteMenu>
+      </CssEditorContextMenu>
     </>
   );
 };

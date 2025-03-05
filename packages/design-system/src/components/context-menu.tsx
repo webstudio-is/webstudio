@@ -19,6 +19,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 export { DropdownMenuArrow } from "./menu";
+import type { Simplify } from "type-fest";
 
 export const ContextMenu = ContextMenuPrimitive.Root;
 
@@ -57,9 +58,10 @@ export const ContextMenuLabel = styled(ContextMenuPrimitive.Label, labelCss);
 const StyledMenuItem = styled(ContextMenuPrimitive.Item, menuItemCss, {
   defaultVariants: { withIndicator: true },
 });
+
 export const ContextMenuItem = forwardRef<
   ElementRef<typeof StyledMenuItem>,
-  ComponentProps<typeof StyledMenuItem> & { icon?: ReactNode }
+  Simplify<ComponentProps<typeof StyledMenuItem> & { icon?: ReactNode }>
 >(({ icon, children, withIndicator, ...props }, forwardedRef) =>
   icon ? (
     <StyledMenuItem
