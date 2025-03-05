@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
 // @ts-ignore
 import { dedupeMeta } from "./proxy-emulator/dedupe-meta";
-import { existsSync, readdirSync } from "fs";
+import { existsSync } from "fs";
 // @ts-ignore
 import path from "path";
 // @ts-ignore
