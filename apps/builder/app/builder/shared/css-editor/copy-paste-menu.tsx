@@ -11,23 +11,23 @@ import {
   hyphenateProperty,
   mergeStyles,
   toValue,
-  type StyleMap,
+  type CssProperty,
+  type CssStyleMap,
 } from "@webstudio-is/css-engine";
-import { useStore } from "@nanostores/react";
-import { $advancedStylesLonghands } from "./stores";
 
 export const copyAttribute = "data-declaration";
 
 export const CopyPasteMenu = ({
   children,
   properties,
+  styleMap,
   onPaste,
 }: {
   children: ReactNode;
   properties: Array<string>;
+  styleMap: CssStyleMap;
   onPaste: (cssText: string) => void;
 }) => {
-  const advancedStylesLonghands = useStore($advancedStylesLonghands);
   const lastClickedProperty = useRef<string>();
 
   const handlePaste = () => {
@@ -37,8 +37,8 @@ export const CopyPasteMenu = ({
   const handleCopyAll = () => {
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
-    const currentStyleMap: StyleMap = new Map();
-    for (const [property, value] of advancedStylesLonghands) {
+    const currentStyleMap: CssStyleMap = new Map();
+    for (const [property, value] of styleMap) {
       const isEmpty = toValue(value) === "";
       if (properties.includes(property) && isEmpty === false) {
         currentStyleMap.set(hyphenateProperty(property), value);
@@ -55,7 +55,7 @@ export const CopyPasteMenu = ({
     if (property === undefined) {
       return;
     }
-    const value = advancedStylesLonghands.get(property);
+    const value = styleMap.get(property as CssProperty);
 
     if (value === undefined) {
       return;
