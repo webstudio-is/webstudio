@@ -40,7 +40,6 @@ import { PropertyInfo } from "../../property-label";
 import { ColorPopover } from "../../shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
 import { CopyPasteMenu, copyAttribute } from "./copy-paste-menu";
-import { $settings } from "~/builder/shared/client-settings";
 import { AddStyleInput } from "./add-style-input";
 import { parseStyleInput } from "./parse-style-input";
 import { $selectedInstanceKey } from "~/shared/awareness";
@@ -402,10 +401,8 @@ export const CssEditor = ({
     if (search === "") {
       return handleAbortSearch();
     }
-    // This is not needed in advanced mode because the input won't jump there as it is on top
-    if ($settings.get().stylePanelMode !== "advanced") {
-      memorizeMinHeight();
-    }
+
+    memorizeMinHeight();
 
     const styles = [];
     for (const [property, value] of styleMap) {
