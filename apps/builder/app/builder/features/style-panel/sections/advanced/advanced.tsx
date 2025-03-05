@@ -126,7 +126,7 @@ export const Section = () => {
         styleMap={styleMap}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}
-        onAddProperties={handleAddProperties}
+        onAddDeclarations={handleAddProperties}
         apiRef={apiRef}
         recentProperties={recentProperties}
       />

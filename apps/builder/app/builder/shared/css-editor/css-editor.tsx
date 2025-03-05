@@ -310,7 +310,7 @@ export type CssEditorApi = { showAddStyleInput: () => void } | undefined;
 export const CssEditor = ({
   onDeleteProperty,
   onSetProperty,
-  onAddProperties,
+  onAddDeclarations,
   styleMap,
   apiRef,
   showSearch = true,
@@ -318,7 +318,7 @@ export const CssEditor = ({
 }: {
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
-  onAddProperties: (styleMap: CssStyleMap) => void;
+  onAddDeclarations: (styleMap: CssStyleMap) => void;
   styleMap: CssStyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
@@ -358,7 +358,7 @@ export const CssEditor = ({
     if (styleMap.size === 0) {
       return new Map();
     }
-    onAddProperties(styleMap);
+    onAddDeclarations(styleMap);
     return styleMap;
   };
 
