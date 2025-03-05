@@ -407,6 +407,22 @@ export const CssEditor = ({
     });
   };
 
+  const handleDeleteProperty = (property: CssProperty) => {
+    setSearchProperties(
+      searchProperties?.filter((searchProperty) => searchProperty !== property)
+    );
+    onDeleteProperty(property);
+  };
+
+  const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
+    setSearchProperties(
+      searchProperties?.filter(
+        (searchProperty) => styleMap.has(searchProperty) === false
+      )
+    );
+    onDeleteAllDeclarations(styleMap);
+  };
+
   return (
     <>
       {showSearch && (
@@ -420,8 +436,8 @@ export const CssEditor = ({
       )}
       <CssEditorContextMenu
         onPaste={handleInsertStyles}
-        onDeleteProperty={onDeleteProperty}
-        onDeleteAllDeclarations={onDeleteAllDeclarations}
+        onDeleteProperty={handleDeleteProperty}
+        onDeleteAllDeclarations={handleDeleteAllDeclarations}
         styleMap={styleMap}
         properties={
           searchProperties ?? [...recentProperties, ...currentProperties]
