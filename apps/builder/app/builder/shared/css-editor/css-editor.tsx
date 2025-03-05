@@ -340,7 +340,7 @@ export const CssEditor = ({
     },
   }));
 
-  const advancedProperties = Array.from(styleMap.keys()) as Array<CssProperty>;
+  const advancedProperties = Array.from(styleMap.keys());
 
   const currentProperties =
     searchProperties ??
@@ -394,7 +394,7 @@ export const CssEditor = ({
       keys: ["property", "value"],
     }).map(({ property }) => property);
 
-    setSearchProperties(matched as CssProperty[]);
+    setSearchProperties(matched);
   };
 
   const afterChangingStyles = () => {
@@ -407,11 +407,14 @@ export const CssEditor = ({
     });
   };
 
-  const handleDeleteProperty = (property: CssProperty) => {
+  const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
+    onDeleteProperty(property, options);
+    if (options.isEphemeral === true) {
+      return;
+    }
     setSearchProperties(
       searchProperties?.filter((searchProperty) => searchProperty !== property)
     );
-    onDeleteProperty(property);
   };
 
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
@@ -462,7 +465,7 @@ export const CssEditor = ({
                       }
                     }}
                     onReset={afterChangingStyles}
-                    onDeleteProperty={onDeleteProperty}
+                    onDeleteProperty={handleDeleteProperty}
                     onSetProperty={onSetProperty}
                   />
                 );
@@ -509,7 +512,7 @@ export const CssEditor = ({
                 <LazyRender key={property}>
                   <AdvancedDeclarationLonghand
                     property={property}
-                    onDeleteProperty={onDeleteProperty}
+                    onDeleteProperty={handleDeleteProperty}
                     onSetProperty={onSetProperty}
                   />
                 </LazyRender>
