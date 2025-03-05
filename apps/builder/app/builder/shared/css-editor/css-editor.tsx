@@ -65,7 +65,8 @@ const AdvancedPropertyLabel = ({
   const camelCasedProperty = camelCaseProperty(property);
   const styleDecl = useComputedStyleDecl(camelCasedProperty);
   const label = hyphenateProperty(property);
-  const description = propertyDescriptions[property];
+  const description = propertyDescriptions[camelCasedProperty];
+
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Tooltip
