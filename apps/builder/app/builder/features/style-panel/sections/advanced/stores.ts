@@ -60,12 +60,12 @@ export const $advancedStylesLonghands = computed(
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(hyphenateProperty(property) as CssProperty);
+        visualProperties.add(hyphenateProperty(property));
       }
     }
     for (const style of definedStyles) {
       const { property, value, listed } = style;
-      const hyphenatedProperty = hyphenateProperty(property) as CssProperty;
+      const hyphenatedProperty = hyphenateProperty(property);
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (

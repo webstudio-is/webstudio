@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  toValue,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
   Box,
@@ -32,7 +28,7 @@ export const MenuControl = ({
   property,
   items,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   items: Array<{
     name: string;
     label: string;
