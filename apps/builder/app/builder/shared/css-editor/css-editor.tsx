@@ -340,7 +340,7 @@ export const CssEditor = ({
     },
   }));
 
-  const advancedProperties = Array.from(styleMap.keys()) as Array<CssProperty>;
+  const advancedProperties = Array.from(styleMap.keys());
 
   const currentProperties =
     searchProperties ??
@@ -394,7 +394,7 @@ export const CssEditor = ({
       keys: ["property", "value"],
     }).map(({ property }) => property);
 
-    setSearchProperties(matched as CssProperty[]);
+    setSearchProperties(matched);
   };
 
   const afterChangingStyles = () => {
@@ -405,6 +405,25 @@ export const CssEditor = ({
       element?.focus();
       element?.select();
     });
+  };
+
+  const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
+    onDeleteProperty(property, options);
+    if (options.isEphemeral === true) {
+      return;
+    }
+    setSearchProperties(
+      searchProperties?.filter((searchProperty) => searchProperty !== property)
+    );
+  };
+
+  const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
+    setSearchProperties(
+      searchProperties?.filter(
+        (searchProperty) => styleMap.has(searchProperty) === false
+      )
+    );
+    onDeleteAllDeclarations(styleMap);
   };
 
   return (
@@ -420,8 +439,8 @@ export const CssEditor = ({
       )}
       <CssEditorContextMenu
         onPaste={handleInsertStyles}
-        onDeleteProperty={onDeleteProperty}
-        onDeleteAllDeclarations={onDeleteAllDeclarations}
+        onDeleteProperty={handleDeleteProperty}
+        onDeleteAllDeclarations={handleDeleteAllDeclarations}
         styleMap={styleMap}
         properties={
           searchProperties ?? [...recentProperties, ...currentProperties]
@@ -446,7 +465,7 @@ export const CssEditor = ({
                       }
                     }}
                     onReset={afterChangingStyles}
-                    onDeleteProperty={onDeleteProperty}
+                    onDeleteProperty={handleDeleteProperty}
                     onSetProperty={onSetProperty}
                   />
                 );
@@ -493,7 +512,7 @@ export const CssEditor = ({
                 <LazyRender key={property}>
                   <AdvancedDeclarationLonghand
                     property={property}
-                    onDeleteProperty={onDeleteProperty}
+                    onDeleteProperty={handleDeleteProperty}
                     onSetProperty={onSetProperty}
                   />
                 </LazyRender>
