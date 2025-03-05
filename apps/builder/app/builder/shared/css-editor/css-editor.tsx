@@ -63,9 +63,11 @@ const AdvancedPropertyLabel = ({
   onDeleteProperty: DeleteProperty;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
-  const description = propertyDescriptions[camelCaseProperty(property)];
-
   const [isOpen, setIsOpen] = useState(false);
+
+  const description = propertyDescriptions[camelCaseProperty(property)];
+  const styleConfig = styleConfigByName(property);
+
   return (
     <Tooltip
       open={isOpen}
@@ -94,6 +96,7 @@ const AdvancedPropertyLabel = ({
             onReset?.();
           }}
           resetType="delete"
+          link={styleConfig?.mdnUrl}
         />
       }
     >
