@@ -16,12 +16,12 @@ import * as advanced from "./advanced/advanced";
 import * as textShadows from "./text-shadows/text-shadows";
 import * as backdropFilter from "./backdrop-filter/backdrop-filter";
 import * as transforms from "./transforms/transforms";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
 
 export const sections = new Map<
   string,
   {
-    properties: StyleProperty[];
+    properties: (StyleProperty | CssProperty)[];
     Section: () => ReactNode;
   }
 >([
