@@ -5,6 +5,7 @@ import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
 import {
   hyphenateProperty,
   toValue,
+  type CssProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
@@ -238,7 +239,7 @@ export const PropertyLabel = ({
 }: {
   label: string;
   description?: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -301,7 +302,7 @@ export const PropertySectionLabel = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -371,7 +372,10 @@ export const PropertyInlineLabel = ({
   label: string;
   title?: string;
   description?: string;
-  properties?: [StyleProperty, ...StyleProperty[]];
+  properties?: [
+    StyleProperty | CssProperty,
+    ...(StyleProperty | CssProperty)[],
+  ];
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -427,7 +431,7 @@ export const PropertyValueTooltip = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {

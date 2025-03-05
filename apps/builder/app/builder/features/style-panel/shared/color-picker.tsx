@@ -10,6 +10,7 @@ import type {
   KeywordValue,
   RgbValue,
   VarValue,
+  CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   Popover,
@@ -174,7 +175,7 @@ type ColorPickerProps = {
   value: StyleValue;
   currentColor: StyleValue;
   getOptions?: () => Array<KeywordValue | VarValue>;
-  property: StyleProperty;
+  property: StyleProperty | CssProperty;
   disabled?: boolean;
 };
 
