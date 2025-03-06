@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  hyphenateProperty,
   toValue,
   type InvalidValue,
   type LayersValue,
@@ -70,7 +69,7 @@ import { ColorPicker } from "./color-picker";
 
 type ShadowContentProps = {
   index: number;
-  property: "boxShadow" | "textShadow" | "dropShadow";
+  property: "box-shadow" | "text-shadow" | "drop-shadow";
   layer: StyleValue;
   computedLayer?: StyleValue;
   propertyValue: string;
@@ -100,7 +99,7 @@ const boxShadowInsetValues = [
 ] as const;
 
 const shadowPropertySyntaxes = {
-  boxShadow: {
+  "box-shadow": {
     x: propertySyntaxes.boxShadowOffsetX,
     y: propertySyntaxes.boxShadowOffsetY,
     blur: propertySyntaxes.boxShadowBlurRadius,
@@ -108,13 +107,13 @@ const shadowPropertySyntaxes = {
     color: propertySyntaxes.boxShadowColor,
     position: propertySyntaxes.boxShadowPosition,
   },
-  textShadow: {
+  "text-shadow": {
     x: propertySyntaxes.textShadowOffsetX,
     y: propertySyntaxes.textShadowOffsetY,
     blur: propertySyntaxes.textShadowBlurRadius,
     color: propertySyntaxes.textShadowColor,
   },
-  dropShadow: {
+  "drop-shadow": {
     x: propertySyntaxes.dropShadowOffsetX,
     y: propertySyntaxes.dropShadowOffsetY,
     blur: propertySyntaxes.dropShadowBlurRadius,
@@ -174,10 +173,10 @@ export const ShadowContent = ({
     // https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow#formal_syntax
     // Both share a similar syntax but the property name is different.
     const parsed = parseCssFragment(intermediateValue.value, [
-      property === "dropShadow" ? "textShadow" : property,
+      property === "drop-shadow" ? "text-shadow" : property,
     ]);
     const parsedValue = parsed.get(
-      property === "dropShadow" ? "textShadow" : property
+      property === "drop-shadow" ? "text-shadow" : property
     );
     if (parsedValue?.type === "layers" || parsedValue?.type === "var") {
       onEditLayer(index, parsedValue, { isEphemeral: false });
@@ -208,7 +207,7 @@ export const ShadowContent = ({
         css={{
           padding: theme.panel.padding,
           gridTemplateColumns:
-            property === "boxShadow" ? "1fr 1fr" : "1fr 1fr 1fr",
+            property === "box-shadow" ? "1fr 1fr" : "1fr 1fr 1fr",
         }}
       >
         <Flex direction="column" gap="1">
@@ -283,12 +282,12 @@ export const ShadowContent = ({
           />
         </Flex>
 
-        {property === "boxShadow" ? (
+        {property === "box-shadow" ? (
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Spread"
               title="Spread Radius"
-              description={shadowPropertySyntaxes.boxShadow.spread}
+              description={shadowPropertySyntaxes["box-shadow"].spread}
             />
             <CssValueInputContainer
               key="boxShadowSpread"
@@ -314,7 +313,7 @@ export const ShadowContent = ({
         gap="2"
         css={{
           padding: theme.panel.padding,
-          ...(property === "boxShadow" && { gridTemplateColumns: "3fr 1fr" }),
+          ...(property === "box-shadow" && { gridTemplateColumns: "3fr 1fr" }),
         }}
       >
         <Flex direction="column" gap="1">
@@ -346,11 +345,11 @@ export const ShadowContent = ({
           />
         </Flex>
 
-        {property === "boxShadow" ? (
+        {property === "box-shadow" ? (
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Inset"
-              description={shadowPropertySyntaxes.boxShadow.position}
+              description={shadowPropertySyntaxes["box-shadow"].position}
             />
             <ToggleGroup
               type="single"
@@ -397,8 +396,8 @@ export const ShadowContent = ({
                   variant="wrapped"
                   content={
                     <Text>
-                      Paste a {hyphenateProperty(property)} CSS code without the
-                      property name, for example:
+                      Paste a {property} CSS code without the property name, for
+                      example:
                       <br /> <br />
                       <Text variant="monoBold">
                         0px 2px 5px 0px rgba(0, 0, 0, 0.2)

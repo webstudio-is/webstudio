@@ -28,7 +28,7 @@ const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
 export const BackgroundGradient = ({ index }: { index: number }) => {
-  const styleDecl = useComputedStyleDecl("backgroundImage");
+  const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   if (styleValue.type === "layers") {
     styleValue = styleValue.value[index];
@@ -71,11 +71,11 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     }
 
     const parsed = parseCssFragment(intermediateValue.value, [
-      "backgroundImage",
+      "background-image",
       "background",
     ]);
-    const backgroundImage = parsed.get("backgroundImage");
-    const backgroundColor = parsed.get("backgroundColor");
+    const backgroundImage = parsed.get("background-image");
+    const backgroundColor = parsed.get("background-color");
 
     // set invalid state
     if (backgroundColor?.type === "invalid" || backgroundImage === undefined) {
@@ -89,13 +89,13 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     }
     setIntermediateValue(undefined);
     if (backgroundColor && isTransparent(backgroundColor) === false) {
-      setProperty("backgroundColor")(backgroundColor);
+      setProperty("background-color")(backgroundColor);
     }
     // insert all new layers at current position
     editRepeatedStyleItem(
       [styleDecl],
       index,
-      new Map([["backgroundImage", backgroundImage]])
+      new Map([["background-image", backgroundImage]])
     );
   };
 

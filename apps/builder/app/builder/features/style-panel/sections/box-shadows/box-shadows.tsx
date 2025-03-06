@@ -1,7 +1,7 @@
 import { colord, type RgbaColor } from "colord";
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { RepeatedStyleSection } from "../../shared/style-section";
@@ -15,12 +15,11 @@ import {
 } from "../../shared/repeated-style";
 import { parseCssFragment } from "../../shared/css-fragment";
 
-export const properties = ["boxShadow"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
+export const properties = ["box-shadow"] satisfies [
+  CssProperty,
+  ...CssProperty[],
 ];
 
-const property: StyleProperty = properties[0];
 const label = "Box Shadows";
 const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
@@ -94,13 +93,13 @@ export const Section = () => {
             index={index}
             layer={value}
             computedLayer={getComputedRepeatedItem(styleDecl, index)}
-            property={property}
+            property="box-shadow"
             propertyValue={toValue(value)}
             onEditLayer={(index, value, options) => {
               editRepeatedStyleItem(
                 [styleDecl],
                 index,
-                new Map([["boxShadow", value]]),
+                new Map([["box-shadow", value]]),
                 options
               );
             }}

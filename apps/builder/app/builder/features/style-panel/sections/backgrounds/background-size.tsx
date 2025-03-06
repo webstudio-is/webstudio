@@ -37,7 +37,7 @@ const toTuple = (
 };
 
 export const BackgroundSize = ({ index }: { index: number }) => {
-  const property = "backgroundSize";
+  const property = "background-size";
   const styleDecl = useComputedStyleDecl(property);
   const styleValue = getRepeatedStyleItem(styleDecl, index);
 
@@ -129,14 +129,14 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         gapY={1}
       >
         <PropertyInlineLabel
-          properties={["backgroundSize"]}
+          properties={["background-size"]}
           label="Width"
           description="The width of the background image."
           disabled={customSizeDisabled}
         />
 
         <PropertyInlineLabel
-          properties={["backgroundSize"]}
+          properties={["background-size"]}
           label="Height"
           description="The height of the background image."
           disabled={customSizeDisabled}

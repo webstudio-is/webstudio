@@ -29,8 +29,8 @@ const calculateBackgroundPosition = (value: undefined | StyleValue) => {
 
 export const BackgroundPosition = ({ index }: { index: number }) => {
   const [backgroundPositionX, backgroundPositionY] = useComputedStyles([
-    "backgroundPositionX",
-    "backgroundPositionY",
+    "background-position-x",
+    "background-position-y",
   ]);
   const xValue = getRepeatedStyleItem(backgroundPositionX, index);
   const yValue = getRepeatedStyleItem(backgroundPositionY, index);
@@ -42,7 +42,7 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
       <PropertyInlineLabel
         label="Position"
         description={propertyDescriptions.backgroundPosition}
-        properties={["backgroundPositionX", "backgroundPositionY"]}
+        properties={["background-position-x", "background-position-y"]}
       />
       <Flex gap="6">
         <PositionGrid
@@ -68,10 +68,10 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <PropertyInlineLabel
             label="Left"
             description="Left position offset"
-            properties={["backgroundPositionX"]}
+            properties={["background-position-x"]}
           />
           <CssValueInputContainer
-            property="backgroundPositionX"
+            property="background-position-x"
             styleSource="default"
             getOptions={() => [
               { type: "keyword", value: "center" },
@@ -91,10 +91,10 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           <PropertyInlineLabel
             label="Top"
             description="Top position offset"
-            properties={["backgroundPositionY"]}
+            properties={["background-position-y"]}
           />
           <CssValueInputContainer
-            property="backgroundPositionY"
+            property="background-position-y"
             styleSource="default"
             getOptions={() => [
               { type: "keyword", value: "center" },
