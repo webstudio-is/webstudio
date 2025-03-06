@@ -38,7 +38,6 @@ const AdvancedStyleSection = (props: {
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
-      label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth

@@ -117,7 +117,7 @@ type CollapsibleSectionBaseProps = {
   trigger?: ReactNode;
   children: ReactNode;
   fullWidth?: boolean;
-  label: string;
+  label?: string;
   isOpen?: boolean;
   onOpenChange?: (value: boolean) => void;
 };

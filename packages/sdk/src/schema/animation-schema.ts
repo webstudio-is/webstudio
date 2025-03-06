@@ -81,6 +81,7 @@ export const insetUnitValueSchema = z.union([
 ]);
 
 // @todo: Fix Keyframe Styles
+// Can we use CssStyleMap for this? This type ends up not enforcing kebab case like.
 export const keyframeStylesSchema = z.record(StyleValue);
 
 // Animation Keyframe

@@ -4,6 +4,7 @@ import { theme } from "../stitches.config";
 export const Grid = styled("div", {
   boxSizing: "border-box",
   display: "grid",
+  minHeight: 0,
 
   variants: {
     align: {
