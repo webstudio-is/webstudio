@@ -150,13 +150,13 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                onSetProperty(camelCasedProperty)(styleValue, options);
+                onSetProperty(property)(styleValue, options);
               } else {
-                onDeleteProperty(camelCasedProperty, options);
+                onDeleteProperty(property, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              onSetProperty(camelCasedProperty)(styleValue);
+              onSetProperty(property)(styleValue);
             }}
           />
         )
@@ -176,12 +176,12 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          onSetProperty(camelCasedProperty)(
+          onSetProperty(property)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          onSetProperty(camelCasedProperty)(styleValue, {
+          onSetProperty(property)(styleValue, {
             ...options,
             listed: true,
           });
