@@ -372,6 +372,9 @@ test("parse unknown properties as unparsed", () => {
       value: "normal",
     }
   );
+  expect(
+    parseCssValue("animationTimingFunction", "linear(0 0%, 1 100%)")
+  ).toEqual({ type: "unparsed", value: "linear(0 0%, 1 100%)" });
 });
 
 test("parse transform property as tuple", () => {
