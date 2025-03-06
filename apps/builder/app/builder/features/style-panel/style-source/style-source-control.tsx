@@ -332,7 +332,7 @@ export const StyleSourceControl = ({
             isEditing={isEditing}
             tabIndex={-1}
             onClick={onSelect}
-            bleed
+            bleed={source === "local"}
           >
             <Flex align="center" justify="center" gap="1">
               {source === "local" ? (
