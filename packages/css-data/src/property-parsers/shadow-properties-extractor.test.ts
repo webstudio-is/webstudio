@@ -127,7 +127,7 @@ describe("Extract Box-Shadow Properties", () => {
 
   test("tokenize and extract values from 5em 5em 0em 5em inset #ffff", () => {
     const layers = parseCssValue(
-      "boxShadow",
+      "box-shadow",
       "5em 5em 0em 5em inset #ffff"
     ) as LayersValue;
 
@@ -153,7 +153,7 @@ describe("Extract Box-Shadow Properties", () => {
 describe("Extract Text-Shadow Properties", () => {
   test("tokenize and extracts values from 5em 10em 2em #0000", () => {
     const { offsetX, offsetY, blur, color } = extractShadowProperties(
-      (parseCssValue("textShadow", "5em 10em 2em #0000") as LayersValue)
+      (parseCssValue("text-shadow", "5em 10em 2em #0000") as LayersValue)
         ?.value[0] as TupleValue
     );
 
@@ -165,7 +165,7 @@ describe("Extract Text-Shadow Properties", () => {
 
   test("tokenize and extracts values from 5em 10em", () => {
     const { offsetX, offsetY, blur, color } = extractShadowProperties(
-      (parseCssValue("textShadow", "5em 10em") as LayersValue)
+      (parseCssValue("text-shadow", "5em 10em") as LayersValue)
         ?.value[0] as TupleValue
     );
 

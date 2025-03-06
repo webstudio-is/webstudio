@@ -1,11 +1,11 @@
 import { describe, test, expect } from "vitest";
 import { parseCssValue } from "./parse-css-value";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 
 describe("Parse CSS value", () => {
   describe("number value", () => {
     test("unitless", () => {
-      expect(parseCssValue("lineHeight", "10")).toEqual({
+      expect(parseCssValue("line-height", "10")).toEqual({
         type: "unit",
         unit: "number",
         value: 10,
@@ -79,7 +79,7 @@ describe("Parse CSS value", () => {
 
   describe("Tuples", () => {
     test("objectPosition", () => {
-      expect(parseCssValue("objectPosition", "left top")).toEqual({
+      expect(parseCssValue("object-position", "left top")).toEqual({
         type: "tuple",
         value: [
           {
@@ -97,7 +97,7 @@ describe("Parse CSS value", () => {
 
   describe("Colors", () => {
     test("Color rgba values", () => {
-      expect(parseCssValue("backgroundColor", "rgba(0,0,0,0)")).toEqual({
+      expect(parseCssValue("background-color", "rgba(0,0,0,0)")).toEqual({
         type: "rgb",
         alpha: 0,
         b: 0,
@@ -107,7 +107,7 @@ describe("Parse CSS value", () => {
     });
 
     test("modern format", () => {
-      expect(parseCssValue("backgroundColor", "rgb(99 102 241/0.5)")).toEqual({
+      expect(parseCssValue("background-color", "rgb(99 102 241/0.5)")).toEqual({
         type: "rgb",
         r: 99,
         g: 102,
@@ -117,7 +117,7 @@ describe("Parse CSS value", () => {
     });
 
     test("Color rgba values", () => {
-      expect(parseCssValue("backgroundColor", "#00220011")).toEqual({
+      expect(parseCssValue("background-color", "#00220011")).toEqual({
         type: "rgb",
         alpha: 0.07,
         b: 0,
@@ -138,7 +138,7 @@ describe("Parse CSS value", () => {
 test("parse background-image property as layers", () => {
   expect(
     parseCssValue(
-      "backgroundImage",
+      "background-image",
       `linear-gradient(180deg, hsla(0, 0.00%, 0.00%, 0.11), white), url("https://667d0b7769e0cc3754b584f6"), none, url("https://667d0fe180995eadc1534a26")`
     )
   ).toEqual({
@@ -165,7 +165,9 @@ test("parse background-image property as layers", () => {
 });
 
 test("parse background-position-* properties as layers", () => {
-  expect(parseCssValue("backgroundPositionX", `0px, 550px, 0px, 0px`)).toEqual({
+  expect(
+    parseCssValue("background-position-x", `0px, 550px, 0px, 0px`)
+  ).toEqual({
     type: "layers",
     value: [
       { type: "unit", unit: "px", value: 0 },
@@ -174,7 +176,7 @@ test("parse background-position-* properties as layers", () => {
       { type: "unit", unit: "px", value: 0 },
     ],
   });
-  expect(parseCssValue("backgroundPositionY", `0px, 0px, 0px, 0px`)).toEqual({
+  expect(parseCssValue("background-position-y", `0px, 0px, 0px, 0px`)).toEqual({
     type: "layers",
     value: [
       { type: "unit", unit: "px", value: 0 },
@@ -186,17 +188,19 @@ test("parse background-position-* properties as layers", () => {
 });
 
 test("parse background-size property as layers", () => {
-  expect(parseCssValue("backgroundSize", `auto, contain, auto, auto`)).toEqual({
-    type: "layers",
-    value: [
-      { type: "keyword", value: "auto" },
-      { type: "keyword", value: "contain" },
-      { type: "keyword", value: "auto" },
-      { type: "keyword", value: "auto" },
-    ],
-  });
+  expect(parseCssValue("background-size", `auto, contain, auto, auto`)).toEqual(
+    {
+      type: "layers",
+      value: [
+        { type: "keyword", value: "auto" },
+        { type: "keyword", value: "contain" },
+        { type: "keyword", value: "auto" },
+        { type: "keyword", value: "auto" },
+      ],
+    }
+  );
   expect(
-    parseCssValue("backgroundRepeat", `repeat, no-repeat, repeat, repeat`)
+    parseCssValue("background-repeat", `repeat, no-repeat, repeat, repeat`)
   ).toEqual({
     type: "layers",
     value: [
@@ -210,7 +214,7 @@ test("parse background-size property as layers", () => {
 
 test("parse background-attachment property as layers", () => {
   expect(
-    parseCssValue("backgroundAttachment", `scroll, fixed, scroll, scroll`)
+    parseCssValue("background-attachment", `scroll, fixed, scroll, scroll`)
   ).toEqual({
     type: "layers",
     value: [
@@ -223,34 +227,34 @@ test("parse background-attachment property as layers", () => {
 });
 
 test("parse repeated value with css wide keywords", () => {
-  expect(parseCssValue("backgroundAttachment", "initial")).toEqual({
+  expect(parseCssValue("background-attachment", "initial")).toEqual({
     type: "keyword",
     value: "initial",
   });
-  expect(parseCssValue("backgroundAttachment", "INHERIT")).toEqual({
+  expect(parseCssValue("background-attachment", "INHERIT")).toEqual({
     type: "keyword",
     value: "inherit",
   });
-  expect(parseCssValue("backgroundAttachment", "unset")).toEqual({
+  expect(parseCssValue("background-attachment", "unset")).toEqual({
     type: "keyword",
     value: "unset",
   });
-  expect(parseCssValue("backgroundAttachment", "revert")).toEqual({
+  expect(parseCssValue("background-attachment", "revert")).toEqual({
     type: "keyword",
     value: "revert",
   });
-  expect(parseCssValue("backgroundAttachment", "revert-layer")).toEqual({
+  expect(parseCssValue("background-attachment", "revert-layer")).toEqual({
     type: "keyword",
     value: "revert-layer",
   });
 });
 
 test("parse transition-property property", () => {
-  expect(parseCssValue("transitionProperty", "none")).toEqual({
+  expect(parseCssValue("transition-property", "none")).toEqual({
     type: "keyword",
     value: "none",
   });
-  expect(parseCssValue("transitionProperty", "opacity, width, all")).toEqual({
+  expect(parseCssValue("transition-property", "opacity, width, all")).toEqual({
     type: "layers",
     value: [
       { type: "unparsed", value: "opacity" },
@@ -258,27 +262,27 @@ test("parse transition-property property", () => {
       { type: "keyword", value: "all" },
     ],
   });
-  expect(parseCssValue("transitionProperty", "opacity, none, unknown")).toEqual(
-    {
-      type: "layers",
-      value: [
-        { type: "unparsed", value: "opacity" },
-        { type: "unparsed", value: "none" },
-        { type: "unparsed", value: "unknown" },
-      ],
-    }
-  );
+  expect(
+    parseCssValue("transition-property", "opacity, none, unknown")
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "opacity" },
+      { type: "unparsed", value: "none" },
+      { type: "unparsed", value: "unknown" },
+    ],
+  });
 });
 
 test("parse transition-duration property", () => {
-  expect(parseCssValue("transitionDuration", `10ms, 10ms`)).toEqual({
+  expect(parseCssValue("transition-duration", `10ms, 10ms`)).toEqual({
     type: "layers",
     value: [
       { type: "unit", unit: "ms", value: 10 },
       { type: "unit", unit: "ms", value: 10 },
     ],
   });
-  expect(parseCssValue("transitionDuration", `10ms, foo`)).toEqual({
+  expect(parseCssValue("transition-duration", `10ms, foo`)).toEqual({
     type: "invalid",
     value: "10ms, foo",
   });
@@ -286,7 +290,7 @@ test("parse transition-duration property", () => {
 
 test("parse transition-timing-function property", () => {
   const parsedValue = parseCssValue(
-    "transitionTimingFunction",
+    "transition-timing-function",
     "ease, ease-in, cubic-bezier(0.68,-0.6,.32,1.6), steps(4, jump-start)"
   );
   expect(parsedValue).toEqual({
@@ -323,7 +327,7 @@ test("parse transition-timing-function property", () => {
   expect(toValue(parsedValue)).toMatchInlineSnapshot(
     `"ease, ease-in, cubic-bezier(0.68, -0.6, 0.32, 1.6), steps(4, jump-start)"`
   );
-  expect(parseCssValue("transitionTimingFunction", "ease, testing")).toEqual({
+  expect(parseCssValue("transition-timing-function", "ease, testing")).toEqual({
     type: "invalid",
     value: "ease, testing",
   });
@@ -336,37 +340,37 @@ test("parse transition-timing-function property", () => {
 });
 
 test("parse transition-behavior property as layers", () => {
-  expect(parseCssValue("transitionBehavior", `normal`)).toEqual({
+  expect(parseCssValue("transition-behavior", `normal`)).toEqual({
     type: "layers",
     value: [{ type: "keyword", value: "normal" }],
   });
-  expect(parseCssValue("transitionBehavior", `NORMAL, allow-discrete`)).toEqual(
-    {
-      type: "layers",
-      value: [
-        { type: "keyword", value: "normal" },
-        { type: "keyword", value: "allow-discrete" },
-      ],
-    }
-  );
-  expect(parseCssValue("transitionBehavior", `normal, invalid`)).toEqual({
+  expect(
+    parseCssValue("transition-behavior", `NORMAL, allow-discrete`)
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "keyword", value: "normal" },
+      { type: "keyword", value: "allow-discrete" },
+    ],
+  });
+  expect(parseCssValue("transition-behavior", `normal, invalid`)).toEqual({
     type: "invalid",
     value: "normal, invalid",
   });
 });
 
 test("parse unknown properties as unparsed", () => {
-  expect(parseCssValue("animationTimeline" as StyleProperty, "auto")).toEqual({
+  expect(parseCssValue("animation-timeline" as CssProperty, "auto")).toEqual({
     type: "unparsed",
     value: "auto",
   });
   expect(
-    parseCssValue("animationRangeStart" as StyleProperty, "normal")
+    parseCssValue("animation-range-start" as CssProperty, "normal")
   ).toEqual({
     type: "unparsed",
     value: "normal",
   });
-  expect(parseCssValue("animationRangeEnd" as StyleProperty, "normal")).toEqual(
+  expect(parseCssValue("animation-range-end" as CssProperty, "normal")).toEqual(
     {
       type: "unparsed",
       value: "normal",
@@ -625,7 +629,7 @@ test("support custom properties var reference in custom property", () => {
 });
 
 test("parse single var in repeated value without layers or tuples", () => {
-  expect(parseCssValue("backgroundImage", "var(--gradient)")).toEqual({
+  expect(parseCssValue("background-image", "var(--gradient)")).toEqual({
     type: "var",
     value: "gradient",
   });
@@ -637,7 +641,7 @@ test("parse single var in repeated value without layers or tuples", () => {
 
 test("parse multiple var in repeated value as layers and tuples", () => {
   expect(
-    parseCssValue("backgroundImage", "var(--gradient-1), var(--gradient-2)")
+    parseCssValue("background-image", "var(--gradient-1), var(--gradient-2)")
   ).toEqual({
     type: "layers",
     value: [
@@ -655,12 +659,12 @@ test("parse multiple var in repeated value as layers and tuples", () => {
 });
 
 test("parse var in box-shadow", () => {
-  expect(parseCssValue("boxShadow", "var(--shadow)")).toEqual({
+  expect(parseCssValue("box-shadow", "var(--shadow)")).toEqual({
     type: "var",
     value: "shadow",
   });
   expect(
-    parseCssValue("boxShadow", "var(--shadow-1), var(--shadow-2)")
+    parseCssValue("box-shadow", "var(--shadow-1), var(--shadow-2)")
   ).toEqual({
     type: "layers",
     value: [
@@ -672,28 +676,28 @@ test("parse var in box-shadow", () => {
 
 describe("parse shadows", () => {
   test("parses value and returns invalid when used a invalid boxShadow is passed", () => {
-    expect(parseCssValue("boxShadow", `10px 10px 5px foo`)).toEqual({
+    expect(parseCssValue("box-shadow", `10px 10px 5px foo`)).toEqual({
       type: "invalid",
       value: "10px 10px 5px foo",
     });
   });
 
   test("parses value and returns invalid when a invalid textShadow is passed", () => {
-    expect(parseCssValue("textShadow", `10px 10px 5px foo`)).toEqual({
+    expect(parseCssValue("text-shadow", `10px 10px 5px foo`)).toEqual({
       type: "invalid",
       value: "10px 10px 5px foo",
     });
   });
 
   test("throws error when passed a value without a unit", () => {
-    expect(parseCssValue("boxShadow", `10 10px 5px red`)).toEqual({
+    expect(parseCssValue("box-shadow", `10 10px 5px red`)).toEqual({
       type: "invalid",
       value: "10 10px 5px red",
     });
   });
 
   test("parses values and returns a layer when a valid textShadow is passes", () => {
-    expect(parseCssValue("textShadow", "1px 1px 2px black")).toEqual({
+    expect(parseCssValue("text-shadow", "1px 1px 2px black")).toEqual({
       type: "layers",
       value: [
         {
@@ -710,7 +714,7 @@ describe("parse shadows", () => {
   });
 
   test("inset and color values can be interchanged", () => {
-    expect(parseCssValue("boxShadow", `inset 10px 10px 5px black`)).toEqual({
+    expect(parseCssValue("box-shadow", `inset 10px 10px 5px black`)).toEqual({
       type: "layers",
       value: [
         {
@@ -728,7 +732,7 @@ describe("parse shadows", () => {
   });
 
   test("parses value when inset is used but missing blur-radius", () => {
-    expect(parseCssValue("boxShadow", `inset 5em 1em gold`)).toEqual({
+    expect(parseCssValue("box-shadow", `inset 5em 1em gold`)).toEqual({
       type: "layers",
       value: [
         {
@@ -745,7 +749,7 @@ describe("parse shadows", () => {
   });
 
   test("parses value when offsetX and offsetY are used", () => {
-    expect(parseCssValue("boxShadow", `60px -16px teal`)).toEqual({
+    expect(parseCssValue("box-shadow", `60px -16px teal`)).toEqual({
       type: "layers",
       value: [
         {
@@ -763,7 +767,7 @@ describe("parse shadows", () => {
   test("parses value from figma", () => {
     expect(
       parseCssValue(
-        "boxShadow",
+        "box-shadow",
         "0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14)"
       )
     ).toEqual({
@@ -794,7 +798,7 @@ describe("parse shadows", () => {
   test(`parses multiple layers of box-shadow property`, () => {
     expect(
       parseCssValue(
-        "boxShadow",
+        "box-shadow",
         `
         0 0 5px rgba(0, 0, 0, 0.2),
         inset 0 0 10px rgba(0, 0, 0, 0.3),
@@ -895,7 +899,7 @@ describe("parse filters", () => {
   });
 
   test("parse backdrop-filter", () => {
-    expect(parseCssValue("backdropFilter", "blur(4px)")).toEqual({
+    expect(parseCssValue("backdrop-filter", "blur(4px)")).toEqual({
       type: "tuple",
       value: [
         {
@@ -973,20 +977,20 @@ describe("parse filters", () => {
 
 describe("aspect-ratio", () => {
   test("support single numeric value", () => {
-    expect(parseCssValue("aspectRatio", "10")).toEqual({
+    expect(parseCssValue("aspect-ratio", "10")).toEqual({
       type: "unit",
       unit: "number",
       value: 10,
     });
   });
   test("support keyword", () => {
-    expect(parseCssValue("aspectRatio", "auto")).toEqual({
+    expect(parseCssValue("aspect-ratio", "auto")).toEqual({
       type: "keyword",
       value: "auto",
     });
   });
   test("support two values", () => {
-    expect(parseCssValue("aspectRatio", "16 / 9")).toEqual({
+    expect(parseCssValue("aspect-ratio", "16 / 9")).toEqual({
       type: "unparsed",
       value: "16 / 9",
     });
@@ -995,33 +999,33 @@ describe("aspect-ratio", () => {
 
 describe("font-family", () => {
   test("support single value", () => {
-    expect(parseCssValue("fontFamily", "sans-serif")).toEqual({
+    expect(parseCssValue("font-family", "sans-serif")).toEqual({
       type: "fontFamily",
       value: ["sans-serif"],
     });
   });
 
   test("support multiple values", () => {
-    expect(parseCssValue("fontFamily", "serif, sans-serif")).toEqual({
+    expect(parseCssValue("font-family", "serif, sans-serif")).toEqual({
       type: "fontFamily",
       value: ["serif", "sans-serif"],
     });
   });
 
   test("support space separated values", () => {
-    expect(parseCssValue("fontFamily", "Song Ti, Hei Ti")).toEqual({
+    expect(parseCssValue("font-family", "Song Ti, Hei Ti")).toEqual({
       type: "fontFamily",
       value: ["Song Ti", "Hei Ti"],
     });
     // only two keywords
-    expect(parseCssValue("fontFamily", "Song Ti")).toEqual({
+    expect(parseCssValue("font-family", "Song Ti")).toEqual({
       type: "fontFamily",
       value: ["Song Ti"],
     });
   });
 
   test("support quoted values", () => {
-    expect(parseCssValue("fontFamily", "\"Song Ti\", 'Hei Ti'")).toEqual({
+    expect(parseCssValue("font-family", "\"Song Ti\", 'Hei Ti'")).toEqual({
       type: "fontFamily",
       value: ["Song Ti", "Hei Ti"],
     });
@@ -1029,12 +1033,12 @@ describe("font-family", () => {
 });
 
 test("parse transform-origin", () => {
-  expect(parseCssValue("transformOrigin", "bottom")).toEqual({
+  expect(parseCssValue("transform-origin", "bottom")).toEqual({
     type: "tuple",
     value: [{ type: "keyword", value: "bottom" }],
   });
 
-  expect(parseCssValue("transformOrigin", "left 2px")).toEqual({
+  expect(parseCssValue("transform-origin", "left 2px")).toEqual({
     type: "tuple",
     value: [
       { type: "keyword", value: "left" },
@@ -1042,7 +1046,7 @@ test("parse transform-origin", () => {
     ],
   });
 
-  expect(parseCssValue("transformOrigin", "right top")).toEqual({
+  expect(parseCssValue("transform-origin", "right top")).toEqual({
     type: "tuple",
     value: [
       { type: "keyword", value: "right" },
@@ -1050,7 +1054,7 @@ test("parse transform-origin", () => {
     ],
   });
 
-  expect(parseCssValue("transformOrigin", "2px 30% 10px")).toEqual({
+  expect(parseCssValue("transform-origin", "2px 30% 10px")).toEqual({
     type: "tuple",
     value: [
       { type: "unit", value: 2, unit: "px" },
@@ -1059,19 +1063,19 @@ test("parse transform-origin", () => {
     ],
   });
 
-  expect(parseCssValue("transformOrigin", "top left right")).toEqual({
+  expect(parseCssValue("transform-origin", "top left right")).toEqual({
     type: "invalid",
     value: "top left right",
   });
 });
 
 test("parse perspective-origin", () => {
-  expect(parseCssValue("perspectiveOrigin", "center")).toEqual({
+  expect(parseCssValue("perspective-origin", "center")).toEqual({
     type: "tuple",
     value: [{ type: "keyword", value: "center" }],
   });
 
-  expect(parseCssValue("perspectiveOrigin", "bottom right")).toEqual({
+  expect(parseCssValue("perspective-origin", "bottom right")).toEqual({
     type: "tuple",
     value: [
       { type: "keyword", value: "bottom" },
@@ -1079,12 +1083,12 @@ test("parse perspective-origin", () => {
     ],
   });
 
-  expect(parseCssValue("perspectiveOrigin", "bottom 55%")).toEqual({
+  expect(parseCssValue("perspective-origin", "bottom 55%")).toEqual({
     type: "invalid",
     value: "bottom 55%",
   });
 
-  expect(parseCssValue("perspectiveOrigin", "75% bottom")).toEqual({
+  expect(parseCssValue("perspective-origin", "75% bottom")).toEqual({
     type: "tuple",
     value: [
       { type: "unit", value: 75, unit: "%" },
@@ -1092,12 +1096,12 @@ test("parse perspective-origin", () => {
     ],
   });
 
-  expect(parseCssValue("perspectiveOrigin", "-175%")).toEqual({
+  expect(parseCssValue("perspective-origin", "-175%")).toEqual({
     type: "tuple",
     value: [{ type: "unit", value: -175, unit: "%" }],
   });
 
-  expect(parseCssValue("perspectiveOrigin", "50% 50%")).toEqual({
+  expect(parseCssValue("perspective-origin", "50% 50%")).toEqual({
     type: "tuple",
     value: [
       { type: "unit", value: 50, unit: "%" },
