@@ -85,10 +85,7 @@ const parseCssValue = (
       continue;
     }
 
-    final.set(
-      property,
-      parseCssValueLonghand(camelCaseProperty(property) as StyleProperty, value)
-    );
+    final.set(property, parseCssValueLonghand(property, value));
   }
   return final;
 };

@@ -11,15 +11,17 @@ import {
   type UnitValue,
   type LayerValueItem,
   type RgbValue,
-  type StyleProperty,
   type StyleValue,
   type Unit,
   type VarValue,
   type FunctionValue,
   type TupleValueItem,
+  type CssProperty,
+  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+import { camelCaseProperty } from "./parse-css";
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -124,36 +126,36 @@ export const isValidDeclaration = (
   return matchResult.matched != null;
 };
 
-const repeatedProps = new Set<StyleProperty>([
-  "backgroundAttachment",
-  "backgroundClip",
-  "backgroundBlendMode",
-  "backgroundOrigin",
-  "backgroundPositionX",
-  "backgroundPositionY",
-  "backgroundRepeat",
-  "backgroundSize",
-  "backgroundImage",
-  "transitionProperty",
-  "transitionDuration",
-  "transitionDelay",
-  "transitionTimingFunction",
-  "transitionBehavior",
-  "boxShadow",
-  "textShadow",
+const repeatedProps = new Set<CssProperty>([
+  "background-attachment",
+  "background-clip",
+  "background-blend-mode",
+  "background-origin",
+  "background-position-x",
+  "background-position-y",
+  "background-repeat",
+  "background-size",
+  "background-image",
+  "transition-property",
+  "transition-duration",
+  "transition-delay",
+  "transition-timing-function",
+  "transition-behavior",
+  "box-shadow",
+  "text-shadow",
 ]);
 
-const tupleProps = new Set<StyleProperty>([
-  "boxShadow",
-  "textShadow",
+const tupleProps = new Set<CssProperty>([
+  "box-shadow",
+  "text-shadow",
   "scale",
   "translate",
   "rotate",
   "transform",
   "filter",
-  "backdropFilter",
-  "transformOrigin",
-  "perspectiveOrigin",
+  "backdrop-filter",
+  "transform-origin",
+  "perspective-origin",
 ]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
@@ -333,16 +335,17 @@ const parseLiteral = (
 };
 
 export const parseCssValue = (
-  property: StyleProperty, // Handles only long-hand values.
+  multiCaseProperty: StyleProperty | CssProperty, // Handles only long-hand values.
   input: string,
   topLevel = true
 ): StyleValue => {
+  const property = hyphenateProperty(multiCaseProperty);
   const potentialKeyword = input.toLowerCase().trim();
   if (cssWideKeywords.has(potentialKeyword)) {
     return { type: "keyword", value: potentialKeyword };
   }
 
-  if (property === "transitionProperty" && potentialKeyword === "none") {
+  if (property === "transition-property" && potentialKeyword === "none") {
     if (topLevel) {
       return { type: "keyword", value: potentialKeyword };
     } else {
@@ -426,16 +429,19 @@ export const parseCssValue = (
 
   // csstree does not support transition-behavior
   // so check keywords manually
-  if (property === "transitionBehavior") {
+  if (property === "transition-behavior") {
     const node = ast.type === "Value" ? ast.children.first : ast;
-    const keyword = parseLiteral(node, keywordValues[property]);
+    const keyword = parseLiteral(
+      node,
+      keywordValues[camelCaseProperty(property) as never]
+    );
     if (keyword?.type === "keyword") {
       return keyword;
     }
     return invalidValue;
   }
 
-  if (property === "fontFamily") {
+  if (property === "font-family") {
     return {
       type: "fontFamily",
       value: splitRepeated(nodes).map((nodes) => {
@@ -465,7 +471,10 @@ export const parseCssValue = (
       if (node.type === "Operator") {
         return { type: "unparsed", value: input };
       }
-      const matchedValue = parseLiteral(node, keywordValues[property as never]);
+      const matchedValue = parseLiteral(
+        node,
+        keywordValues[camelCaseProperty(property) as never]
+      );
       if (matchedValue) {
         tuple.value.push(matchedValue as never);
       } else {
@@ -478,7 +487,10 @@ export const parseCssValue = (
   if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    const matchedValue = parseLiteral(
+      first,
+      keywordValues[camelCaseProperty(property) as never]
+    );
     if (matchedValue) {
       return matchedValue;
     }
