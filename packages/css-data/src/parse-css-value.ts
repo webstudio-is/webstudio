@@ -1,6 +1,5 @@
 import { colord } from "colord";
-import * as csstree from "css-tree";
-import { type CssNode, generate, lexer, List } from "css-tree";
+import { type CssNode, generate, lexer, List, parse } from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
@@ -24,7 +23,7 @@ import { units } from "./__generated__/units";
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
-    const ast = csstree.parse(input, { context: "value" });
+    const ast = parse(input, { context: "value" });
     return ast;
   } catch {
     return;
@@ -95,7 +94,6 @@ export const isValidDeclaration = (
   if (ast == null) {
     return false;
   }
-
   // scale css-proeprty accepts both number and percentage.
   // The syntax from MDN is incorrect and should be updated.
   // Here is a PR that fixes the same, but it is not merged yet.
@@ -105,7 +103,18 @@ export const isValidDeclaration = (
     return lexer.match(syntax, ast).matched !== null;
   }
 
-  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
+  if (
+    cssPropertyName === "transition-timing-function" ||
+    cssPropertyName === "animation-timing-function"
+  ) {
+    if (
+      lexer.match("linear( [ <number> && <percentage>{0,2} ]# )", ast).matched
+    ) {
+      return true;
+    }
+  }
+
+  const matchResult = lexer.matchProperty(cssPropertyName, ast);
 
   // allow to parse unknown properties as unparsed
   if (matchResult.error?.message.includes("Unknown property")) {
@@ -277,9 +286,9 @@ const parseLiteral = (
       node.name === "rotateZ" ||
       node.name === "perspective" ||
       // <easing-function>
-      node.name === "linear" ||
       node.name === "cubic-bezier" ||
       node.name === "steps"
+      // treat linear function as unparsed
     ) {
       const args: LayersValue = { type: "layers", value: [] };
       for (const arg of node.children) {
@@ -397,9 +406,9 @@ export const parseCssValue = (
     const layersValue: StyleValue = {
       type: "layers",
       value: splitRepeated(nodes).map((nodes) => {
-        const value = csstree.generate({
+        const value = generate({
           type: "Value",
-          children: new csstree.List<CssNode>().fromArray(nodes),
+          children: new List<CssNode>().fromArray(nodes),
         });
         const parsed = parseCssValue(property, value, false) as LayerValueItem;
         if (parsed.type === "invalid") {
