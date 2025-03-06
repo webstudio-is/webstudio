@@ -215,6 +215,12 @@ const StyleSourceButton = styled("button", {
       },
       false: {},
     },
+    bleed: {
+      true: {
+        position: "absolute",
+        inset: 0,
+      },
+    },
   },
 });
 
@@ -318,7 +324,6 @@ export const StyleSourceControl = ({
         disabled={disabled}
         aria-current={selected && state === undefined}
         role="button"
-        onClick={onSelect}
         hasError={error !== undefined}
       >
         <Flex grow css={{ padding: theme.spacing[2] }}>
@@ -326,6 +331,8 @@ export const StyleSourceControl = ({
             disabled={disabled || isEditing}
             isEditing={isEditing}
             tabIndex={-1}
+            onClick={onSelect}
+            bleed={source === "local"}
           >
             <Flex align="center" justify="center" gap="1">
               {source === "local" ? (
