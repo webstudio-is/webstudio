@@ -92,7 +92,7 @@ const getInitialValue = (
 export const BackgroundImage = ({ index }: { index: number }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const styleDecl = useComputedStyleDecl("backgroundImage");
+  const styleDecl = useComputedStyleDecl("background-image");
   const styleValue = getRepeatedStyleItem(styleDecl, index);
   const [errors, setErrors] = useState<string[]>(() =>
     getInitialErrors(styleValue)
@@ -107,8 +107,8 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       value: value,
     });
 
-    const parsed = parseCssFragment(value, ["backgroundImage", "background"]);
-    const newValue = parsed.get("backgroundImage");
+    const parsed = parseCssFragment(value, ["background-image", "background"]);
+    const newValue = parsed.get("background-image");
 
     if (newValue === undefined || newValue?.type === "invalid") {
       setIntermediateValue({

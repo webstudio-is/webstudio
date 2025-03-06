@@ -1,7 +1,7 @@
 import { colord, type RgbaColor } from "colord";
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { RepeatedStyleSection } from "../../shared/style-section";
@@ -15,12 +15,11 @@ import {
 import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 
-export const properties = ["textShadow"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
+export const properties = ["text-shadow"] satisfies [
+  CssProperty,
+  ...CssProperty[],
 ];
 
-const property: StyleProperty = properties[0];
 const label = "Text Shadows";
 const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
@@ -81,13 +80,13 @@ export const Section = () => {
             index={index}
             layer={value}
             computedLayer={getComputedRepeatedItem(styleDecl, index)}
-            property={property}
+            property="text-shadow"
             propertyValue={toValue(value)}
             onEditLayer={(index, value, options) => {
               editRepeatedStyleItem(
                 [styleDecl],
                 index,
-                new Map([["textShadow", value]]),
+                new Map([["text-shadow", value]]),
                 options
               );
             }}

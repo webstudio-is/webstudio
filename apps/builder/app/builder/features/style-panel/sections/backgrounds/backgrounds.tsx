@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/nano-states";
@@ -19,10 +19,10 @@ import {
   repeatedProperties,
 } from "./background-thumbnail";
 
-export const properties = [...repeatedProperties, "backgroundColor"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
-];
+export const properties = [
+  ...repeatedProperties,
+  "background-color",
+] satisfies [CssProperty, ...CssProperty[]];
 
 export const Section = () => {
   const styles = useComputedStyles(repeatedProperties);
@@ -58,9 +58,9 @@ export const Section = () => {
           <PropertyLabel
             label="Color"
             description={propertyDescriptions.backgroundColor}
-            properties={["backgroundColor"]}
+            properties={["background-color"]}
           />
-          <ColorControl property="backgroundColor" />
+          <ColorControl property="background-color" />
         </Grid>
       </Flex>
     </RepeatedStyleSection>

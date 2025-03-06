@@ -75,7 +75,7 @@ const filterFunctions = {
 
 type FilterContentProps = {
   index: number;
-  property: "filter" | "backdropFilter";
+  property: "filter" | "backdrop-filter";
   layer: StyleValue;
   propertyValue: string;
   tooltip: JSX.Element;
@@ -221,7 +221,7 @@ export const FilterSectionContent = ({
       layer.args.type === "tuple" ? (
         <ShadowContent
           index={index}
-          property="dropShadow"
+          property="drop-shadow"
           layer={layer.args}
           propertyValue={toValue(layer.args)}
           onEditLayer={(_, dropShadowLayers, options) => {
