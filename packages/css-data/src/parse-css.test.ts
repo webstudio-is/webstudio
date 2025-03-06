@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseCss, parseMediaQuery } from "./parse-css";
+import { camelCaseProperty, parseCss, parseMediaQuery } from "./parse-css";
 
 describe("Parse CSS", () => {
   test("longhand property name with keyword value", () => {
@@ -767,4 +767,26 @@ test("parse media query", () => {
     maxWidth: 768,
   });
   expect(parseMediaQuery(`(hover: hover)`)).toEqual(undefined);
+});
+
+test("camel case css property", () => {
+  expect(camelCaseProperty("margin-top")).toEqual("marginTop");
+  expect(camelCaseProperty("-webkit-font-smoothing")).toEqual(
+    "WebkitFontSmoothing"
+  );
+  expect(camelCaseProperty("-moz-osx-font-smoothing")).toEqual(
+    "MozOsxFontSmoothing"
+  );
+});
+
+test("camel case css property multiple times", () => {
+  expect(camelCaseProperty(camelCaseProperty("margin-top"))).toEqual(
+    "marginTop"
+  );
+  expect(
+    camelCaseProperty(camelCaseProperty("-webkit-font-smoothing"))
+  ).toEqual("WebkitFontSmoothing");
+  expect(
+    camelCaseProperty(camelCaseProperty("-moz-osx-font-smoothing"))
+  ).toEqual("MozOsxFontSmoothing");
 });

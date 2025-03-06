@@ -19,6 +19,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import type {
+  CssProperty,
   KeywordValue,
   StyleProperty,
   StyleValue,
@@ -41,6 +42,7 @@ import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import {
+  camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
   properties,
@@ -303,7 +305,7 @@ type CssValueInputProps = Pick<
   | "inputRef"
 > & {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
+  property: StyleProperty | CssProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
@@ -476,7 +478,7 @@ export const CssValueInput = ({
   prefix,
   showSuffix = true,
   styleSource,
-  property,
+  property: multiCaseProperty,
   getOptions = () => [],
   onHighlight,
   onAbort,
@@ -490,6 +492,7 @@ export const CssValueInput = ({
   placeholder,
   ...props
 }: CssValueInputProps) => {
+  const property = camelCaseProperty(multiCaseProperty);
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;

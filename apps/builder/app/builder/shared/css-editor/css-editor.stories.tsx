@@ -1,6 +1,6 @@
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { registerContainers } from "~/shared/sync";
-import { Section } from "./advanced";
+import { CssEditor as CssEditorComponent } from "./css-editor";
 import {
   $breakpoints,
   $instances,
@@ -8,8 +8,9 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { setProperty } from "../../shared/use-style-data";
+import { setProperty } from "../../features/style-panel/shared/use-style-data";
 import { $awareness } from "~/shared/awareness";
+import type { CssStyleMap } from "@webstudio-is/css-engine";
 
 const backgroundImage: StyleDecl = {
   breakpointId: "base",
@@ -42,11 +43,25 @@ setProperty("accentColor")({ type: "keyword", value: "red" });
 setProperty("alignContent")({ type: "keyword", value: "normal" });
 setProperty("opacity")({ type: "unit", unit: "number", value: 11.2 });
 
-export const Advanced = () => {
-  return <Section />;
+export const CssEditor = () => {
+  const styleMap: CssStyleMap = new Map([
+    ["background-image", backgroundImage.value],
+    ["accent-color", { type: "keyword", value: "red" }],
+    ["align-content", { type: "keyword", value: "normal" }],
+    ["opacity", { type: "unit", unit: "number", value: 11.2 }],
+  ]);
+  return (
+    <CssEditorComponent
+      styleMap={styleMap}
+      onDeleteProperty={() => undefined}
+      onSetProperty={() => () => undefined}
+      onAddDeclarations={() => undefined}
+      onDeleteAllDeclarations={() => undefined}
+    />
+  );
 };
 
 export default {
-  title: "Style Panel/Advanced",
-  component: Advanced,
+  title: "Style Panel",
+  component: CssEditor,
 };

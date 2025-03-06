@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import {
   hyphenateProperty,
   type CssProperty,
-  type StyleMap,
+  type CssStyleMap,
 } from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
@@ -42,7 +42,7 @@ export const $advancedStylesLonghands = computed(
     styles,
     settings
   ) => {
-    const advancedStyles: StyleMap = new Map();
+    const advancedStyles: CssStyleMap = new Map();
 
     if (instancePath === undefined) {
       return advancedStyles;
@@ -60,12 +60,12 @@ export const $advancedStylesLonghands = computed(
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(hyphenateProperty(property) as CssProperty);
+        visualProperties.add(hyphenateProperty(property));
       }
     }
     for (const style of definedStyles) {
       const { property, value, listed } = style;
-      const hyphenatedProperty = hyphenateProperty(property) as CssProperty;
+      const hyphenatedProperty = hyphenateProperty(property);
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (

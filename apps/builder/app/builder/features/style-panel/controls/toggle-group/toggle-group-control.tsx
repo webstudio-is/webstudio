@@ -1,5 +1,8 @@
 import { useState, type JSX, type ReactNode } from "react";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  declarationDescriptions,
+} from "@webstudio-is/css-data";
 import { AlertIcon } from "@webstudio-is/icons";
 import {
   Flex,
@@ -11,6 +14,7 @@ import {
 import {
   hyphenateProperty,
   toValue,
+  type CssProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
@@ -38,7 +42,7 @@ export const ToggleGroupTooltip = ({
   label?: string;
   code?: string;
   description: string | undefined;
-  properties: StyleProperty[];
+  properties: (StyleProperty | CssProperty)[];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
@@ -99,7 +103,7 @@ export const ToggleGroupControl = ({
   items,
 }: {
   label?: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [CssProperty | StyleProperty, ...(CssProperty | StyleProperty)[]];
   items: Array<{
     child: JSX.Element;
     value: string;
@@ -152,7 +156,7 @@ export const ToggleGroupControl = ({
           description={
             item.description ??
             declarationDescriptions[
-              `${properties[0]}:${item.value}` as keyof typeof declarationDescriptions
+              `${camelCaseProperty(properties[0])}:${item.value}` as keyof typeof declarationDescriptions
             ]
           }
           properties={properties}

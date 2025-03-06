@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
   Box,
@@ -15,7 +15,10 @@ import {
   MenuCheckedIcon,
   theme,
 } from "@webstudio-is/design-system";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  declarationDescriptions,
+} from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
@@ -25,7 +28,7 @@ export const MenuControl = ({
   property,
   items,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   items: Array<{
     name: string;
     label: string;
@@ -41,7 +44,7 @@ export const MenuControl = ({
   const Icon = currentItem?.icon ?? items[0].icon;
   const description =
     declarationDescriptions[
-      `${property}:${
+      `${camelCaseProperty(property)}:${
         descriptionValue ?? currentValue
       }` as keyof typeof declarationDescriptions
     ];

@@ -30,7 +30,10 @@ import {
   toValue,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
-import { deleteProperty, setProperty } from "../../shared/use-style-data";
+import {
+  deleteProperty,
+  setProperty,
+} from "../../features/style-panel/shared/use-style-data";
 import { composeEventHandlers } from "~/shared/event-utils";
 import { parseStyleInput } from "./parse-style-input";
 

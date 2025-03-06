@@ -4,7 +4,7 @@ import {
   camelCaseProperty,
   shorthandProperties,
 } from "@webstudio-is/css-data";
-import { type CssProperty, type StyleMap } from "@webstudio-is/css-engine";
+import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
 
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
@@ -42,12 +42,12 @@ const ensureValue = (css: string) => {
  * - Property and value: color: red
  * - Multiple properties: color: red; background: blue
  */
-export const parseStyleInput = (css: string): StyleMap => {
+export const parseStyleInput = (css: string): CssStyleMap => {
   css = ensureValue(css);
 
   const styles = parseCss(`selector{${css}}`);
 
-  const styleMap: StyleMap = new Map();
+  const styleMap: CssStyleMap = new Map();
 
   for (const { property, value } of styles) {
     // somethingunknown: red; -> --somethingunknown: red;

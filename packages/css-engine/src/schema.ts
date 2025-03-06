@@ -12,6 +12,8 @@ export type StyleProperty = CamelCasedProperty | CustomProperty;
 
 export type CssProperty = HyphenatedProperty | CustomProperty;
 
+export type CssStyleMap = Map<CssProperty, StyleValue>;
+
 const Unit = z.string() as z.ZodType<GeneratedUnit | "number">;
 
 export type Unit = z.infer<typeof Unit>;
