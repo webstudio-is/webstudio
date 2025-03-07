@@ -5,6 +5,6 @@
   },
   "dependencies": {
     "@netlify/vite-plugin-react-router": "^1.0.0",
-    "@react-router/node": "^7.1.5"
+    "@react-router/node": "^7.3.0"
   }
 }
