@@ -316,6 +316,8 @@ export const CssEditor = ({
   styleMap,
   apiRef,
   showSearch = true,
+  virtualize = true,
+  propertiesPosition = "bottom",
   recentProperties = [],
   memorizeMinHeight = true,
 }: {
@@ -329,11 +331,14 @@ export const CssEditor = ({
   // When used as part of some larger scroll area to avoid scroll jumps during search.
   // For example advanced section in the style panel.
   memorizeMinHeight?: boolean;
+  propertiesPosition?: "top" | "bottom";
+  virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
-  const recentValueInputRef = useRef<HTMLInputElement>(null);
+  const lastRecentValueInputRef = useRef<HTMLInputElement>(null);
+  const lastRegularValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchProperties, setSearchProperties] =
     useState<Array<CssProperty>>();
@@ -409,7 +414,11 @@ export const CssEditor = ({
     setIsAdding(false);
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
-      const element = recentValueInputRef.current ?? searchInputRef.current;
+      const element =
+        lastRecentValueInputRef.current ??
+        lastRegularValueInputRef.current ??
+        searchInputRef.current;
+
       element?.focus();
       element?.select();
     });
@@ -434,6 +443,59 @@ export const CssEditor = ({
     onDeleteAllDeclarations(styleMap);
   };
 
+  const recentPropertiesAndAddStyleInput = (
+    <Flex
+      direction="column"
+      css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
+    >
+      {showRecentProperties &&
+        recentProperties.map((property) => {
+          return (
+            <AdvancedDeclarationLonghand
+              key={property}
+              valueInputRef={lastRecentValueInputRef}
+              property={property}
+              onChangeComplete={(event) => {
+                if (event.type === "enter") {
+                  handleShowAddStyleInput();
+                }
+              }}
+              onReset={afterChangingStyles}
+              onDeleteProperty={handleDeleteProperty}
+              onSetProperty={onSetProperty}
+            />
+          );
+        })}
+      <Box
+        css={
+          isAdding
+            ? { paddingTop: theme.spacing[3] }
+            : // We hide it visually so you can tab into it to get shown.
+              { overflow: "hidden", height: 0 }
+        }
+      >
+        <AddStyleInput
+          onSubmit={(cssText: string) => {
+            const styles = handleInsertStyles(cssText);
+            if (styles.size > 0) {
+              afterChangingStyles();
+            }
+          }}
+          onClose={afterChangingStyles}
+          onFocus={() => {
+            if (isAdding === false) {
+              handleShowAddStyleInput();
+            }
+          }}
+          onBlur={() => {
+            setIsAdding(false);
+          }}
+          ref={addPropertyInputRef}
+        />
+      </Box>
+    </Flex>
+  );
+
   return (
     <>
       {showSearch && (
@@ -455,60 +517,12 @@ export const CssEditor = ({
         }
       >
         <Flex gap="2" direction="column">
-          <Flex
-            direction="column"
-            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
-          >
-            {showRecentProperties &&
-              recentProperties.map((property, index, properties) => {
-                const isLast = index === properties.length - 1;
-                return (
-                  <AdvancedDeclarationLonghand
-                    key={property}
-                    valueInputRef={isLast ? recentValueInputRef : undefined}
-                    property={property}
-                    onChangeComplete={(event) => {
-                      if (event.type === "enter") {
-                        handleShowAddStyleInput();
-                      }
-                    }}
-                    onReset={afterChangingStyles}
-                    onDeleteProperty={handleDeleteProperty}
-                    onSetProperty={onSetProperty}
-                  />
-                );
-              })}
-            {(showRecentProperties || isAdding) && (
-              <Box
-                css={
-                  isAdding
-                    ? { paddingTop: theme.spacing[3] }
-                    : // We hide it visually so you can tab into it to get shown.
-                      { overflow: "hidden", height: 0 }
-                }
-              >
-                <AddStyleInput
-                  onSubmit={(cssText: string) => {
-                    const styles = handleInsertStyles(cssText);
-                    if (styles.size > 0) {
-                      afterChangingStyles();
-                    }
-                  }}
-                  onClose={afterChangingStyles}
-                  onFocus={() => {
-                    if (isAdding === false) {
-                      handleShowAddStyleInput();
-                    }
-                  }}
-                  onBlur={() => {
-                    setIsAdding(false);
-                  }}
-                  ref={addPropertyInputRef}
-                />
-              </Box>
-            )}
-          </Flex>
-          {showRecentProperties && <Separator />}
+          {propertiesPosition === "bottom" && (
+            <>
+              {recentPropertiesAndAddStyleInput}
+              {showRecentProperties && <Separator />}
+            </>
+          )}
           <Flex
             direction="column"
             css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
@@ -516,17 +530,29 @@ export const CssEditor = ({
             ref={containerRef}
           >
             {currentProperties.map((property) => {
-              return (
-                <LazyRender key={property}>
-                  <AdvancedDeclarationLonghand
-                    property={property}
-                    onDeleteProperty={handleDeleteProperty}
-                    onSetProperty={onSetProperty}
-                  />
-                </LazyRender>
+              const declaration = (
+                <AdvancedDeclarationLonghand
+                  property={property}
+                  onDeleteProperty={handleDeleteProperty}
+                  onSetProperty={onSetProperty}
+                  valueInputRef={lastRegularValueInputRef}
+                />
               );
+              // When using it in keyframes with layout where delcarations are on top of add input button,
+              // we need to focus last added value, but the logic for waiting for the last rendered event would add up complexity.
+              // For now we just manually avoid virtualization in this layout.
+              if (virtualize) {
+                return <LazyRender key={property}>{declaration}</LazyRender>;
+              }
+              return declaration;
             })}
           </Flex>
+          {propertiesPosition === "top" && (
+            <>
+              {showRecentProperties && <Separator />}
+              {recentPropertiesAndAddStyleInput}
+            </>
+          )}
         </Flex>
       </CssEditorContextMenu>
     </>
