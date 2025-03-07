@@ -4,7 +4,6 @@ import {
   toValue,
   type CssProperty,
   type LayersValue,
-  type StyleProperty,
   type StyleValue,
   type TupleValue,
   type UnparsedValue,
@@ -37,7 +36,7 @@ const isRepeatedValue = (
   styleValue.type === "layers" || styleValue.type === "tuple";
 
 const reparseComputedValue = (styleDecl: ComputedStyleDecl) => {
-  const property = styleDecl.property as StyleProperty;
+  const property = styleDecl.property;
   const serialized = toValue(styleDecl.computedValue);
   return parseCssValue(property, serialized);
 };
@@ -76,7 +75,7 @@ const isItemHidden = (styleValue: StyleValue, index: number) => {
  */
 const getComputedValue = (styleDecl: ComputedStyleDecl) => {
   if (styleDecl.cascadedValue.type === "var") {
-    const property = styleDecl.property as StyleProperty;
+    const property = styleDecl.property;
     const serialized = toValue(styleDecl.computedValue);
     return parseCssValue(property, serialized);
   }
@@ -128,7 +127,7 @@ export const addRepeatedStyleItem = (
   }
   const batch = createBatchUpdate();
   const currentStyles = new Map(
-    styles.map((styleDecl) => [styleDecl.property as StyleProperty, styleDecl])
+    styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
   const primaryValue = styles[0].cascadedValue;
   let primaryCount = 0;
@@ -233,7 +232,7 @@ export const setRepeatedStyleItem = (
   const newItems: StyleValue[] = repeatUntil(oldItems, index);
   // unpack item when layers or tuple is provided
   newItems[index] = newItem.type === valueType ? newItem.value[0] : newItem;
-  batch.setProperty(styleDecl.property as StyleProperty)({
+  batch.setProperty(styleDecl.property)({
     type: valueType,
     value: newItems as UnparsedValue[],
   });
@@ -250,7 +249,7 @@ export const deleteRepeatedStyleItem = (
     ? primaryValue.value.length
     : index + 1;
   for (const styleDecl of styles) {
-    const property = styleDecl.property as StyleProperty;
+    const property = styleDecl.property;
     const newValue = structuredClone(styleDecl.cascadedValue);
     if (isRepeatedValue(newValue)) {
       newValue.value = repeatUntil(newValue.value, primaryCount);
@@ -281,7 +280,7 @@ export const toggleRepeatedStyleItem = (
     : index + 1;
   const isHidden = isItemHidden(primaryValue, index);
   for (const styleDecl of styles) {
-    const property = styleDecl.property as StyleProperty;
+    const property = styleDecl.property;
     const newValue = structuredClone(styleDecl.cascadedValue);
     if (newValue.type === "var") {
       newValue.hidden = !isHidden;
@@ -320,7 +319,7 @@ export const swapRepeatedStyleItems = (
       newValue.value.splice(oldIndex, 1);
       newValue.value.splice(newIndex, 0, oldItem);
     }
-    batch.setProperty(styleDecl.property as StyleProperty)(newValue);
+    batch.setProperty(styleDecl.property)(newValue);
   }
   batch.publish();
 };

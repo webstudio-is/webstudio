@@ -48,7 +48,6 @@ import {
  */
 
 type InstanceSelector = string[];
-type Property = string;
 
 export type StyleValueSourceColor =
   | "default"
@@ -127,7 +126,7 @@ const getCascadedValue = ({
   instanceId: Instance["id"];
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
-  property: Property;
+  property: StyleProperty;
 }) => {
   const {
     styles,
@@ -196,7 +195,7 @@ const getCascadedValue = ({
           styleSourceId,
           breakpointId,
           state,
-          property: property as StyleProperty,
+          property,
         });
         const styleDecl = styles.get(key);
         if (
@@ -281,7 +280,7 @@ const substituteVars = (
 };
 
 export type ComputedStyleDecl = {
-  property: string;
+  property: StyleProperty;
   source: StyleValueSource;
   cascadedValue: StyleValue;
   computedValue: StyleValue;
@@ -304,11 +303,11 @@ export const getComputedStyleDecl = ({
   instanceSelector?: InstanceSelector;
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
-  property: Property;
+  property: StyleProperty;
   /**
    * for internal use only
    */
-  customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
+  customPropertiesGraph?: Map<Instance["id"], Set<StyleProperty>>;
 }): ComputedStyleDecl => {
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
@@ -384,10 +383,10 @@ export const getComputedStyleDecl = ({
     // check whether the property was used with parent node
     // to support var(--var1), var(--var1) layers
     const parentUsedCustomProperties = usedCustomProperties;
-    usedCustomProperties = new Set<string>(usedCustomProperties);
+    usedCustomProperties = new Set<StyleProperty>(usedCustomProperties);
     customPropertiesGraph.set(instanceId, usedCustomProperties);
     computedValue = substituteVars(computedValue, (varValue) => {
-      const customProperty = `--${varValue.value}`;
+      const customProperty = `--${varValue.value}` as const;
       // https://www.w3.org/TR/css-variables-1/#cycles
       if (parentUsedCustomProperties.has(customProperty)) {
         invalid = true;

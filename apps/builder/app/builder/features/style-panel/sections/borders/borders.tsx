@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { StyleSection } from "../../shared/style-section";
 import {
   BorderRadius,
@@ -22,7 +22,7 @@ export const properties = [
   ...borderRadiusProperties,
   ...borderStyleProperties,
   ...borderWidthProperties,
-] satisfies Array<StyleProperty>;
+] satisfies CssProperty[];
 
 export const Section = () => {
   return (

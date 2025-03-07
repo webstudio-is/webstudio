@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   BorderWidthIndividualIcon,
   BorderWidthTopIcon,
@@ -9,26 +9,26 @@ import {
 import { BorderProperty } from "./border-property";
 
 export const properties = [
-  "borderTopWidth",
-  "borderRightWidth",
-  "borderBottomWidth",
-  "borderLeftWidth",
-] satisfies Array<StyleProperty>;
+  "border-top-width",
+  "border-right-width",
+  "border-bottom-width",
+  "border-left-width",
+] satisfies CssProperty[];
 
 const borderPropertyOptions = {
-  borderTopWidth: {
+  "border-top-width": {
     icon: <BorderWidthTopIcon />,
   },
-  borderRightWidth: {
+  "border-right-width": {
     icon: <BorderWidthRightIcon />,
   },
-  borderLeftWidth: {
+  "border-left-width": {
     icon: <BorderWidthLeftIcon />,
   },
-  borderBottomWidth: {
+  "border-bottom-width": {
     icon: <BorderWidthBottomIcon />,
   },
-} as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
+} as const satisfies Partial<{ [property in CssProperty]: unknown }>;
 
 export const BorderWidth = () => {
   return (

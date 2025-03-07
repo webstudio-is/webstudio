@@ -6,7 +6,7 @@ import {
   XSmallIcon,
 } from "@webstudio-is/icons";
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { ColorControl, TextControl } from "../../controls";
 import { StyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";
@@ -14,14 +14,14 @@ import { useComputedStyleDecl } from "../../shared/model";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
 export const properties = [
-  "outlineStyle",
-  "outlineColor",
-  "outlineWidth",
-  "outlineOffset",
-] satisfies Array<StyleProperty>;
+  "outline-style",
+  "outline-color",
+  "outline-width",
+  "outline-offset",
+] satisfies CssProperty[];
 
 export const Section = () => {
-  const outlineStyle = useComputedStyleDecl("outlineStyle");
+  const outlineStyle = useComputedStyleDecl("outline-style");
   const outlineStyleValue = toValue(outlineStyle.cascadedValue);
 
   return (
@@ -35,11 +35,11 @@ export const Section = () => {
         <PropertyLabel
           label="Style"
           description={propertyDescriptions.outlineStyle}
-          properties={["outlineStyle"]}
+          properties={["outline-style"]}
         />
         <ToggleGroupControl
           label="Style"
-          properties={["outlineStyle"]}
+          properties={["outline-style"]}
           items={[
             { child: <XSmallIcon />, value: "none" },
             { child: <MinusIcon />, value: "solid" },
@@ -53,21 +53,21 @@ export const Section = () => {
             <PropertyLabel
               label="Color"
               description={propertyDescriptions.outlineColor}
-              properties={["outlineColor"]}
+              properties={["outline-color"]}
             />
-            <ColorControl property="outlineColor" />
+            <ColorControl property="outline-color" />
             <PropertyLabel
               label="Width"
               description={propertyDescriptions.outlineWidth}
-              properties={["outlineWidth"]}
+              properties={["outline-width"]}
             />
-            <TextControl property="outlineWidth" />
+            <TextControl property="outline-width" />
             <PropertyLabel
               label="Offset"
               description={propertyDescriptions.outlineOffset}
-              properties={["outlineOffset"]}
+              properties={["outline-offset"]}
             />
-            <TextControl property="outlineOffset" />
+            <TextControl property="outline-offset" />
           </>
         )}
       </Grid>

@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
 import {
   MinusIcon,
@@ -14,11 +14,11 @@ import {
 import { rowCss } from "./utils";
 import { PropertyLabel } from "../../property-label";
 
-export const properties: [StyleProperty, ...StyleProperty[]] = [
-  "borderTopStyle",
-  "borderRightStyle",
-  "borderLeftStyle",
-  "borderBottomStyle",
+export const properties: [CssProperty, ...CssProperty[]] = [
+  "border-top-style",
+  "border-right-style",
+  "border-left-style",
+  "border-bottom-style",
 ];
 
 export const BorderStyle = () => {
