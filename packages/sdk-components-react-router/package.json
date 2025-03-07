@@ -42,7 +42,7 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
-    "react-router": "^7.1.5"
+    "react-router": "^7.3.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",

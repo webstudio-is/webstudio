@@ -44,7 +44,7 @@
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
-    "acorn": "^8.14.0",
+    "acorn": "^8.14.1",
     "acorn-walk": "^8.3.4",
     "change-case": "^5.4.4",
     "reserved-identifiers": "^1.0.0",

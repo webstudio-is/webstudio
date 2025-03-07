@@ -40,6 +40,6 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vike": "^0.4.222"
+    "vike": "^0.4.224"
   }
 }
