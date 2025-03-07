@@ -16,6 +16,7 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   Box,
+  Button,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
@@ -169,17 +170,10 @@ const Keyframe = ({
         </Tooltip>
       </Grid>
       <Grid>
-        <Box css={{ paddingInline: theme.panel.paddingInline }}>
-          <IconButton
-            onClick={() => {
-              apiRef.current?.showAddStyleInput();
-            }}
-          >
-            <PlusIcon />
-          </IconButton>
-        </Box>
         <CssEditor
           showSearch={false}
+          propertiesPosition="top"
+          virtualize={false}
           styleMap={styleMap}
           apiRef={apiRef}
           onAddDeclarations={(addedStyleMap) => {
@@ -208,6 +202,17 @@ const Keyframe = ({
           }}
         />
       </Grid>
+      <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        <Button
+          onClick={() => {
+            apiRef.current?.showAddStyleInput();
+          }}
+          prefix={<PlusIcon />}
+          color="ghost"
+        >
+          Add
+        </Button>
+      </Box>
     </>
   );
 };
