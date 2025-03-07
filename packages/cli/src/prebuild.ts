@@ -497,7 +497,12 @@ export const prebuild = async (options: {
     if (documentType === "xml") {
       // treat first body child as root
       const bodyInstance = instances.get(rootInstanceId);
-      if (bodyInstance?.children?.[0].type === "id") {
+      // @todo test empty xml
+      if (
+        bodyInstance &&
+        bodyInstance.children.length > 0 &&
+        bodyInstance.children[0].type === "id"
+      ) {
         rootInstanceId = bodyInstance.children[0].value;
       }
       // remove all unexpected components
