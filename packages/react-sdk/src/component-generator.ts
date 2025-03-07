@@ -407,9 +407,6 @@ export const generateWebstudioComponent = ({
   metas: Map<Instance["component"], WsComponentMeta>;
 }) => {
   const instance = instances.get(rootInstanceId);
-  if (instance === undefined) {
-    // return "";
-  }
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
     rootInstanceId,
   ]);
