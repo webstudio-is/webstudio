@@ -498,12 +498,9 @@ export const prebuild = async (options: {
       // treat first body child as root
       const bodyInstance = instances.get(rootInstanceId);
       // @todo test empty xml
-      if (
-        bodyInstance &&
-        bodyInstance.children.length > 0 &&
-        bodyInstance.children[0].type === "id"
-      ) {
-        rootInstanceId = bodyInstance.children[0].value;
+      const firstChild = bodyInstance?.children.at(0);
+      if (firstChild?.type === "id") {
+        rootInstanceId = firstChild.value;
       }
       // remove all unexpected components
       for (const instance of instances.values()) {
