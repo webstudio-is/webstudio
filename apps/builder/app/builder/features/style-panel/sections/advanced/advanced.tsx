@@ -22,6 +22,7 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
 import { $advancedStylesLonghands } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
+import { getSetting } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -141,6 +142,7 @@ export const Section = () => {
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
         apiRef={apiRef}
         recentProperties={recentProperties}
+        memorizeMinHeight={getSetting("stylePanelMode") !== "advanced"}
       />
     </AdvancedStyleSection>
   );
