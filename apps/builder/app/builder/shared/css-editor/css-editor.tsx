@@ -131,9 +131,7 @@ const AdvancedPropertyValue = ({
   onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
-  // @todo conversion should be removed once data is in dash case
-  const camelCasedProperty = camelCaseProperty(property);
-  const styleDecl = useComputedStyleDecl(camelCasedProperty);
+  const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
 
@@ -161,10 +159,10 @@ const AdvancedPropertyValue = ({
           />
         )
       }
-      property={camelCasedProperty}
+      property={property}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(camelCasedProperty).items.map((item) => ({
+        ...styleConfigByName(property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
