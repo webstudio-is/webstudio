@@ -3,7 +3,7 @@
     "deploy": "npx vercel deploy"
   },
   "dependencies": {
-    "@react-router/node": "^7.1.5",
-    "@vercel/react-router": "^1.0.2"
+    "@react-router/node": "^7.3.0",
+    "@vercel/react-router": "^1.1.0"
   }
 }
