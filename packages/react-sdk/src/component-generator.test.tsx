@@ -1250,3 +1250,25 @@ test("ignore ws:block-template when generate index attribute", () => {
     )
   );
 });
+
+test("render empty component when no instances found", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(<$.Body ws:id="bodyId"></$.Body>),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <></>
+      }
+    `)
+    )
+  );
+});

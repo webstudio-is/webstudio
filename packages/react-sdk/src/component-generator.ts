@@ -407,34 +407,35 @@ export const generateWebstudioComponent = ({
   metas: Map<Instance["component"], WsComponentMeta>;
 }) => {
   const instance = instances.get(rootInstanceId);
-  if (instance === undefined) {
-    return "";
-  }
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
     rootInstanceId,
   ]);
 
   const usedDataSources: DataSources = new Map();
-  const generatedJsx = generateJsxElement({
-    context: "expression",
-    scope,
-    instance,
-    props,
-    dataSources,
-    usedDataSources,
-    indexesWithinAncestors,
-    classesMap,
-    children: generateJsxChildren({
+  let generatedJsx = "<></>\n";
+  // instance can be missing when generate xml
+  if (instance) {
+    generatedJsx = generateJsxElement({
+      context: "expression",
       scope,
-      children: instance.children,
-      instances,
+      instance,
       props,
       dataSources,
       usedDataSources,
       indexesWithinAncestors,
       classesMap,
-    }),
-  });
+      children: generateJsxChildren({
+        scope,
+        children: instance.children,
+        instances,
+        props,
+        dataSources,
+        usedDataSources,
+        indexesWithinAncestors,
+        classesMap,
+      }),
+    });
+  }
 
   let generatedProps = "";
   let generatedParameters = "";
