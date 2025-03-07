@@ -1,4 +1,4 @@
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
@@ -11,13 +11,13 @@ import {
 import { createBatchUpdate } from "../../shared/use-style-data";
 
 export const properties = [
-  "borderTopColor",
-  "borderRightColor",
-  "borderBottomColor",
-  "borderLeftColor",
-] satisfies [StyleProperty, ...StyleProperty[]];
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+] satisfies [CssProperty, ...CssProperty[]];
 
-const { items } = styleConfigByName("borderTopColor");
+const { items } = styleConfigByName("border-top-color");
 
 export const BorderColor = () => {
   const styles = useComputedStyles(properties);
@@ -54,7 +54,7 @@ export const BorderColor = () => {
             <ColorPicker
               disabled={isAdvanced}
               currentColor={currentColor}
-              property={local.property as StyleProperty}
+              property={local.property}
               value={value}
               getOptions={() => [
                 ...items.map((item) => ({

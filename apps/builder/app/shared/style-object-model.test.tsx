@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
-import type { StyleValue } from "@webstudio-is/css-engine";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   type StyleObjectModel,
   getComputedStyleDecl,
@@ -990,14 +990,14 @@ test("work with unknown or invalid properties", () => {
     getComputedStyleDecl({
       model,
       instanceSelector,
-      property: "unknownProperty",
+      property: "unknownProperty" as StyleProperty,
     }).usedValue
   ).toEqual({ type: "unparsed", value: "[object Object]" });
   expect(
     getComputedStyleDecl({
       model,
       instanceSelector,
-      property: "undefinedProperty",
+      property: "undefinedProperty" as StyleProperty,
     }).usedValue
   ).toEqual({ type: "invalid", value: "" });
 });

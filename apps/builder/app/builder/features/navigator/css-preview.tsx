@@ -11,7 +11,7 @@ import {
   hyphenateProperty,
   mergeStyles,
 } from "@webstudio-is/css-engine";
-import type { StyleMap, StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleMap } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { highlightCss } from "~/builder/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -37,7 +37,7 @@ const getCssText = (
 
   // Aggregate styles by category so we can group them when rendering.
   for (const styleDecl of definedComputedStyles) {
-    const property = hyphenateProperty(styleDecl.property) as StyleProperty;
+    const property = hyphenateProperty(styleDecl.property);
     let group;
     if (
       styleDecl.source.name === "local" ||
