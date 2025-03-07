@@ -536,6 +536,7 @@ export const CssEditor = ({
                   onDeleteProperty={handleDeleteProperty}
                   onSetProperty={onSetProperty}
                   valueInputRef={lastRegularValueInputRef}
+                  key={property}
                 />
               );
               // When using it in keyframes with layout where delcarations are on top of add input button,
