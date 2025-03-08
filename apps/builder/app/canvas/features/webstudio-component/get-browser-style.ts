@@ -1,15 +1,17 @@
-import type { Style, StyleValue, Unit } from "@webstudio-is/css-engine";
-import { keywordValues } from "@webstudio-is/css-data";
-import { properties, units } from "@webstudio-is/css-data";
+import type {
+  CssProperty,
+  Style,
+  StyleValue,
+  Unit,
+} from "@webstudio-is/css-engine";
+import { camelCaseProperty, keywordValues } from "@webstudio-is/css-data";
+import { propertiesData, units } from "@webstudio-is/css-data";
 
 const unitsList = Object.values(units).flat();
 const unitRegex = new RegExp(`${unitsList.join("|")}`);
 
 // @todo use a parser
-const parseValue = (
-  property: keyof typeof properties,
-  value: string
-): StyleValue => {
+const parseValue = (property: CssProperty, value: string): StyleValue => {
   const number = Number.parseFloat(value);
   const parsedUnit = unitRegex.exec(value);
   if (value === "rgba(0, 0, 0, 0)") {
@@ -17,7 +19,7 @@ const parseValue = (
   }
   if (Number.isNaN(number)) {
     const values = keywordValues[
-      property as keyof typeof keywordValues
+      camelCaseProperty(property) as keyof typeof keywordValues
     ] as ReadonlyArray<string>;
 
     if (values?.includes(value)) {
@@ -33,8 +35,8 @@ const parseValue = (
     };
   }
 
-  if (number === 0 && property in properties) {
-    return properties[property].initial;
+  if (number === 0 && propertiesData[property]) {
+    return propertiesData[property].initial;
   }
 
   if (parsedUnit === null) {
@@ -57,15 +59,18 @@ export const getBrowserStyle = (element?: Element): Style => {
   if (element === undefined) {
     return browserStyle;
   }
-  let knownProperty: keyof typeof properties;
+  let knownProperty: CssProperty;
   const computedStyle = getComputedStyle(element);
-  for (knownProperty in properties) {
+  for (knownProperty in propertiesData) {
     if (knownProperty in computedStyle === false) {
       continue;
     }
     // Typescript doesn't know we can access CSSStyleDeclaration properties by keys
-    const computedValue = computedStyle[knownProperty as unknown as number];
-    browserStyle[knownProperty] = parseValue(knownProperty, computedValue);
+    const computedValue = computedStyle.getPropertyValue(knownProperty);
+    browserStyle[camelCaseProperty(knownProperty)] = parseValue(
+      knownProperty,
+      computedValue
+    );
   }
   return browserStyle;
 };

@@ -1,14 +1,15 @@
-import type {
-  StyleProperty,
-  StyleValue,
-  InvalidValue,
-  Unit,
+import {
+  type StyleProperty,
+  type StyleValue,
+  type InvalidValue,
+  type Unit,
+  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import {
   units,
   parseCssValue,
   cssTryParseValue,
-  properties,
+  propertiesData,
 } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
@@ -18,7 +19,7 @@ const unitsList = Object.values(units).flat();
 
 const getDefaultUnit = (property: StyleProperty): Unit => {
   const unitGroups =
-    properties[property as keyof typeof properties]?.unitGroups ?? [];
+    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {

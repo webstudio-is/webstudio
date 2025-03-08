@@ -20,7 +20,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.8.0",
-    "type-fest": "^4.32.0",
     "vitest": "^3.0.4",
     "zod": "^3.22.4"
   },

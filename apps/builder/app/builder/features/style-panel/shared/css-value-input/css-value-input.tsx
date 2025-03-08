@@ -40,12 +40,12 @@ import {
 } from "react";
 import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
-import { toValue } from "@webstudio-is/css-engine";
+import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
-  properties,
+  propertiesData,
 } from "@webstudio-is/css-data";
 import {
   $selectedInstanceBrowserStyle,
@@ -66,7 +66,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
   const unitGroups =
-    properties[property as keyof typeof properties]?.unitGroups ?? [];
+    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
   // allow scrubbing css variables with unit value
   return unitGroups.length !== 0 || value.type === "unit";
 };
@@ -610,7 +610,7 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     options: unitOptions,
-    property,
+    property: hyphenateProperty(multiCaseProperty),
     value,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {

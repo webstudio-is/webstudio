@@ -1,6 +1,11 @@
 import type { CssValueInputValue } from "./css-value-input";
-import { properties, units, isValidDeclaration } from "@webstudio-is/css-data";
+import {
+  propertiesData,
+  units,
+  isValidDeclaration,
+} from "@webstudio-is/css-data";
 import type { UnitOption } from "./unit-select";
+import type { CssProperty } from "@webstudio-is/css-engine";
 
 // To make sorting stable
 const preferedSorting = [
@@ -37,7 +42,7 @@ const initialLengthUnits = [
 ] as const;
 
 export const buildOptions = (
-  property: string,
+  property: CssProperty,
   value: CssValueInputValue,
   nestedSelectButtonUnitless: string
 ) => {
@@ -50,8 +55,7 @@ export const buildOptions = (
 
   // show at least current unit when no property meta is available
   // for example in custom properties
-  const unitGroups =
-    properties[property as keyof typeof properties]?.unitGroups ?? [];
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {

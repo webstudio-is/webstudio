@@ -1,5 +1,5 @@
 import type { HtmlTags } from "html-tags";
-import { html, properties } from "@webstudio-is/css-data";
+import { html, propertiesData } from "@webstudio-is/css-data";
 import {
   type StyleValue,
   type StyleProperty,
@@ -312,7 +312,7 @@ export const getComputedStyleDecl = ({
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
-    : (properties[property as keyof typeof properties] ?? invalidPropertyData);
+    : (propertiesData[hyphenateProperty(property)] ?? invalidPropertyData);
   const inherited = propertyData.inherited;
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;

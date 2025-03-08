@@ -17,7 +17,7 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { properties, propertyDescriptions } from "@webstudio-is/css-data";
+import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { parseCssFragment } from "../../shared/css-fragment";
@@ -128,7 +128,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transitionProperty"]}
         />
         <TransitionProperty
-          value={property ?? properties.transitionProperty.initial}
+          value={property ?? propertiesData["transition-property"].initial}
           onChange={(value) => {
             updateIntermediateValue({ property: value });
             setRepeatedStyleItem(transitionProperty, index, value);
@@ -144,7 +144,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           property="transitionDuration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={duration ?? properties.transitionDuration.initial}
+          value={duration ?? propertiesData["transition-duration"].initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
@@ -169,7 +169,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           property="transitionDelay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={delay ?? properties.transitionDelay.initial}
+          value={delay ?? propertiesData["transition-delay"].initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
@@ -203,7 +203,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
             { type: "keyword", value: "step-end" },
             ...$availableVariables.get(),
           ]}
-          value={timingFunction ?? properties.transitionTimingFunction.initial}
+          value={
+            timingFunction ??
+            propertiesData["transition-timing-function"].initial
+          }
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {

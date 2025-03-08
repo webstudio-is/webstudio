@@ -1,6 +1,7 @@
 import { useMemo, type ComponentProps, type JSX } from "react";
 import type { RgbaColor } from "colord";
 import {
+  hyphenateProperty,
   toValue,
   type CssProperty,
   type LayersValue,
@@ -8,6 +9,11 @@ import {
   type TupleValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
+import {
+  camelCaseProperty,
+  parseCssValue,
+  propertiesData,
+} from "@webstudio-is/css-data";
 import { EyeClosedIcon, EyeOpenIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   CssValueListArrowFocus,
@@ -24,11 +30,6 @@ import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
 import { ColorThumb } from "./color-thumb";
-import {
-  camelCaseProperty,
-  parseCssValue,
-  properties,
-} from "@webstudio-is/css-data";
 
 const isRepeatedValue = (
   styleValue: StyleValue
@@ -105,8 +106,10 @@ const normalizeStyleValue = (
   const items = value.type === itemType ? value.value : [];
   // prefill initial value when no items to repeated
   if (items.length === 0 && primaryItemsCount > 0) {
-    const meta = properties[styleDecl.property as keyof typeof properties];
-    items.push(meta.initial as unknown as UnparsedValue);
+    const meta = propertiesData[hyphenateProperty(styleDecl.property)];
+    if (meta) {
+      items.push(meta.initial as unknown as UnparsedValue);
+    }
   }
   return {
     type: itemType,
@@ -155,8 +158,10 @@ export const addRepeatedStyleItem = (
     } else if (styleDecl.cascadedValue.type === valueType) {
       oldItems = repeatUntil(styleDecl.cascadedValue.value, primaryCount);
     } else if (primaryCount > 0) {
-      const meta = properties[property as keyof typeof properties];
-      oldItems = repeatUntil([meta.initial], primaryCount);
+      const meta = propertiesData[hyphenatedProperty];
+      if (meta) {
+        oldItems = repeatUntil([meta.initial], primaryCount);
+      }
     }
     batch.setProperty(property)({
       type: valueType,
