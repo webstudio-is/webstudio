@@ -5,6 +5,7 @@ import { useStore } from "@nanostores/react";
 import { camelCaseProperty, properties } from "@webstudio-is/css-data";
 import {
   compareMedia,
+  hyphenateProperty,
   toVarFallback,
   type CssProperty,
   type StyleProperty,
@@ -181,7 +182,7 @@ export const getDefinedStyles = ({
       instanceStyles.add(styleDecl);
     }
     const inherited =
-      properties[styleDecl.property as keyof typeof properties]?.inherited ??
+      properties[hyphenateProperty(styleDecl.property)]?.inherited ??
       // custom properties are always inherited
       true;
     if (

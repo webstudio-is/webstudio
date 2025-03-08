@@ -1,8 +1,9 @@
-import type {
-  StyleProperty,
-  StyleValue,
-  InvalidValue,
-  Unit,
+import {
+  type StyleProperty,
+  type StyleValue,
+  type InvalidValue,
+  type Unit,
+  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import {
   units,
@@ -17,8 +18,7 @@ import { toKebabCase } from "../keyword-utils";
 const unitsList = Object.values(units).flat();
 
 const getDefaultUnit = (property: StyleProperty): Unit => {
-  const unitGroups =
-    properties[property as keyof typeof properties]?.unitGroups ?? [];
+  const unitGroups = properties[hyphenateProperty(property)]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {

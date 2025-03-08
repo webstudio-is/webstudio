@@ -128,7 +128,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           properties={["transitionProperty"]}
         />
         <TransitionProperty
-          value={property ?? properties.transitionProperty.initial}
+          value={property ?? properties["transition-property"].initial}
           onChange={(value) => {
             updateIntermediateValue({ property: value });
             setRepeatedStyleItem(transitionProperty, index, value);
@@ -144,7 +144,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           property="transitionDuration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={duration ?? properties.transitionDuration.initial}
+          value={duration ?? properties["transition-duration"].initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
@@ -169,7 +169,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
           property="transitionDelay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={delay ?? properties.transitionDelay.initial}
+          value={delay ?? properties["transition-delay"].initial}
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {
@@ -203,7 +203,9 @@ export const TransitionContent = ({ index }: { index: number }) => {
             { type: "keyword", value: "step-end" },
             ...$availableVariables.get(),
           ]}
-          value={timingFunction ?? properties.transitionTimingFunction.initial}
+          value={
+            timingFunction ?? properties["transition-timing-function"].initial
+          }
           deleteProperty={() => {}}
           setValue={(value, options) => {
             if (value === undefined) {

@@ -1,6 +1,6 @@
 import { useState, useMemo, type JSX } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import type { Unit } from "@webstudio-is/css-engine";
+import type { CssProperty, Unit } from "@webstudio-is/css-engine";
 import {
   SelectScrollUpButton,
   SelectScrollDownButton,
@@ -23,7 +23,7 @@ export type UnitOption =
   | { id: string; label: string; type: "keyword" };
 
 type UseUnitSelectType = {
-  property: string;
+  property: CssProperty;
   value: CssValueInputValue;
   onChange: (
     value: { type: "unit"; value: Unit } | { type: "keyword"; value: string }

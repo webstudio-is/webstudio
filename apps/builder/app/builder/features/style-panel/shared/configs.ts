@@ -1,4 +1,8 @@
-import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  type CssProperty,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
   keywordValues,
@@ -60,14 +64,14 @@ export const styleConfigByName = (
   const keywords = keywordValues[property] || [];
   const label = humanizeString(property);
   // property data does not exist for css custom properties
-  const propertyData = properties[property] ?? {};
+  const propertyData = properties[hyphenateProperty(property)];
 
   const result = {
     label,
     property,
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
-    ...("mdnUrl" in propertyData && { mdnUrl: propertyData.mdnUrl }),
+    mdnUrl: propertyData?.mdnUrl,
   };
 
   styleConfigCache.set(property, result);

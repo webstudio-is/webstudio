@@ -312,7 +312,7 @@ export const getComputedStyleDecl = ({
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
-    : (properties[property as keyof typeof properties] ?? invalidPropertyData);
+    : (properties[hyphenateProperty(property)] ?? invalidPropertyData);
   const inherited = propertyData.inherited;
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
