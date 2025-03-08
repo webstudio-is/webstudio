@@ -6,7 +6,6 @@ import type * as Controls from "../controls";
 type BaseStyleConfig = {
   label: string;
   property: StyleProperty;
-  // mdnUrl?: string;
 };
 
 export type Control = keyof typeof Controls;
