@@ -39,7 +39,7 @@ import { canvasApi } from "~/shared/canvas-api";
 import { $selectedInstance, $selectedPage } from "~/shared/awareness";
 import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { getVisibleElementsByInstanceSelector } from "~/shared/dom-utils";
+import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
 import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
@@ -641,7 +641,7 @@ const subscribeEphemeralStyle = () => {
 
         // We need to apply the custom property to the selected element as well.
         // Otherwise, variables defined on it will not be visible on documentElement.
-        const elements = getVisibleElementsByInstanceSelector(instanceSelector);
+        const elements = getAllElementsByInstanceSelector(instanceSelector);
         for (const element of elements) {
           element.style.setProperty(
             getEphemeralProperty(styleDecl),
