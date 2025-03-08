@@ -8,6 +8,7 @@ import {
   type CssProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import { propertiesData } from "@webstudio-is/css-data";
 import {
   Button,
   Flex,
@@ -36,7 +37,6 @@ import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/awareness";
-import { styleConfigByName } from "./shared/configs";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {
@@ -251,7 +251,6 @@ export const PropertyLabel = ({
     }
     batch.publish();
   };
-  const styleConfig = styleConfigByName(properties[0]);
 
   return (
     <Flex align="center">
@@ -281,7 +280,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={styleConfig?.mdnUrl}
+            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
           />
         }
       >
@@ -314,7 +313,6 @@ export const PropertySectionLabel = ({
     }
     batch.publish();
   };
-  const styleConfig = styleConfigByName(properties[0]);
 
   return (
     <Flex align="center">
@@ -342,7 +340,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={styleConfig?.mdnUrl}
+            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
           />
         }
       >
@@ -444,7 +442,6 @@ export const PropertyValueTooltip = ({
     }
     batch.publish();
   };
-  const styleConfig = styleConfigByName(properties[0]);
 
   return (
     <Tooltip
@@ -480,7 +477,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={styleConfig?.mdnUrl}
+          link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
         />
       }
     >

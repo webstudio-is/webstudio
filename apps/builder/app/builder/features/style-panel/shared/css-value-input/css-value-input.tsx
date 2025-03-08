@@ -45,7 +45,7 @@ import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
-  properties,
+  propertiesData,
 } from "@webstudio-is/css-data";
 import {
   $selectedInstanceBrowserStyle,
@@ -65,7 +65,8 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
-  const unitGroups = properties[hyphenateProperty(property)]?.unitGroups ?? [];
+  const unitGroups =
+    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
   // allow scrubbing css variables with unit value
   return unitGroups.length !== 0 || value.type === "unit";
 };

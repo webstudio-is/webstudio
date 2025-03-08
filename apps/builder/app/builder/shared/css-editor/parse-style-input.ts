@@ -1,7 +1,6 @@
 import {
-  properties,
+  propertiesData,
   parseCss,
-  camelCaseProperty,
   shorthandProperties,
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
@@ -16,7 +15,7 @@ const ensureValue = (css: string) => {
     return `${css}:;`;
   }
   // Is it a known longhand property?
-  if (camelCaseProperty(css as CssProperty) in properties) {
+  if (propertiesData[css as CssProperty]) {
     return `${css}:;`;
   }
   // Is it a known shorthand property?

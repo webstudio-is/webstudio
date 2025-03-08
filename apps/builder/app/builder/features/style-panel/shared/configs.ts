@@ -1,20 +1,12 @@
-import {
-  hyphenateProperty,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
-import {
-  camelCaseProperty,
-  keywordValues,
-  properties,
-} from "@webstudio-is/css-data";
+import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import { camelCaseProperty, keywordValues } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import type * as Controls from "../controls";
 
 type BaseStyleConfig = {
   label: string;
   property: StyleProperty;
-  mdnUrl?: string;
+  // mdnUrl?: string;
 };
 
 export type Control = keyof typeof Controls;
@@ -63,15 +55,12 @@ export const styleConfigByName = (
 
   const keywords = keywordValues[property] || [];
   const label = humanizeString(property);
-  // property data does not exist for css custom properties
-  const propertyData = properties[hyphenateProperty(property)];
 
   const result = {
     label,
     property,
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
-    mdnUrl: propertyData?.mdnUrl,
   };
 
   styleConfigCache.set(property, result);

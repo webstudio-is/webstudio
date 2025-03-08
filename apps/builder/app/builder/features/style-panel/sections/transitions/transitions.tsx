@@ -5,7 +5,7 @@ import {
   SectionTitleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { properties } from "@webstudio-is/css-data";
+import { propertiesData } from "@webstudio-is/css-data";
 import {
   hyphenateProperty,
   toValue,
@@ -57,7 +57,7 @@ const getTransitionLayers = (
   const definedLayers: LayerValueItem[] =
     currentPropertyValue?.type === "layers"
       ? currentPropertyValue.value
-      : [properties[property].initial as LayerValueItem];
+      : [propertiesData[property].initial as LayerValueItem];
   return repeatUntil(definedLayers, transitionPropertiesCount);
 };
 

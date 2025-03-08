@@ -24,6 +24,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
+  propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
@@ -66,7 +67,6 @@ const AdvancedPropertyLabel = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const description = propertyDescriptions[camelCaseProperty(property)];
-  const styleConfig = styleConfigByName(property);
 
   return (
     <Tooltip
@@ -96,7 +96,7 @@ const AdvancedPropertyLabel = ({
             onReset?.();
           }}
           resetType="delete"
-          link={styleConfig?.mdnUrl}
+          link={propertiesData[property]?.mdnUrl}
         />
       }
     >

@@ -5,7 +5,7 @@ import type {
   Unit,
 } from "@webstudio-is/css-engine";
 import { camelCaseProperty, keywordValues } from "@webstudio-is/css-data";
-import { properties, units } from "@webstudio-is/css-data";
+import { propertiesData, units } from "@webstudio-is/css-data";
 
 const unitsList = Object.values(units).flat();
 const unitRegex = new RegExp(`${unitsList.join("|")}`);
@@ -35,8 +35,8 @@ const parseValue = (property: CssProperty, value: string): StyleValue => {
     };
   }
 
-  if (number === 0 && properties[property]) {
-    return properties[property].initial;
+  if (number === 0 && propertiesData[property]) {
+    return propertiesData[property].initial;
   }
 
   if (parsedUnit === null) {
@@ -61,7 +61,7 @@ export const getBrowserStyle = (element?: Element): Style => {
   }
   let knownProperty: CssProperty;
   const computedStyle = getComputedStyle(element);
-  for (knownProperty in properties) {
+  for (knownProperty in propertiesData) {
     if (knownProperty in computedStyle === false) {
       continue;
     }

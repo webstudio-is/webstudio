@@ -16,7 +16,7 @@ import {
   useCombobox,
 } from "@webstudio-is/design-system";
 import {
-  properties as propertiesData,
+  propertiesData,
   shorthandProperties,
   keywordValues,
   propertyDescriptions,

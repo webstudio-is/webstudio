@@ -1,5 +1,9 @@
 import type { CssValueInputValue } from "./css-value-input";
-import { properties, units, isValidDeclaration } from "@webstudio-is/css-data";
+import {
+  propertiesData,
+  units,
+  isValidDeclaration,
+} from "@webstudio-is/css-data";
 import type { UnitOption } from "./unit-select";
 import type { CssProperty } from "@webstudio-is/css-engine";
 
@@ -51,7 +55,7 @@ export const buildOptions = (
 
   // show at least current unit when no property meta is available
   // for example in custom properties
-  const unitGroups = properties[property]?.unitGroups ?? [];
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {

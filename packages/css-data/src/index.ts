@@ -19,4 +19,4 @@ export { shorthandProperties } from "./__generated__/shorthand-properties";
 
 export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
 
-export { properties } from "./__generated__/properties";
+export { properties as propertiesData } from "./__generated__/properties";

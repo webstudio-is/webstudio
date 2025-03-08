@@ -9,7 +9,7 @@ import {
   units,
   parseCssValue,
   cssTryParseValue,
-  properties,
+  propertiesData,
 } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
@@ -18,7 +18,8 @@ import { toKebabCase } from "../keyword-utils";
 const unitsList = Object.values(units).flat();
 
 const getDefaultUnit = (property: StyleProperty): Unit => {
-  const unitGroups = properties[hyphenateProperty(property)]?.unitGroups ?? [];
+  const unitGroups =
+    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {
