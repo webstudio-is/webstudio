@@ -3,17 +3,17 @@ import { deleteProperty } from "../../shared/use-style-data";
 import { Tooltip } from "@webstudio-is/design-system";
 import { PropertyInfo } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
-import type { SpaceStyleProperty } from "./types";
+import type { SpaceStyleProperty } from "./properties";
 
 const sides = {
-  paddingTop: "top",
-  paddingRight: "top",
-  paddingBottom: "bottom",
-  paddingLeft: "left",
-  marginTop: "top",
-  marginRight: "left",
-  marginBottom: "bottom",
-  marginLeft: "right",
+  "padding-top": "top",
+  "padding-right": "top",
+  "padding-bottom": "bottom",
+  "padding-left": "left",
+  "margin-top": "top",
+  "margin-right": "left",
+  "margin-bottom": "bottom",
+  "margin-left": "right",
 } as const;
 
 const propertyContents: {
@@ -23,40 +23,45 @@ const propertyContents: {
 }[] = [
   // Padding
   {
-    properties: ["paddingTop", "paddingBottom"],
+    properties: ["padding-top", "padding-bottom"],
     label: "Vertical Padding",
     description:
       "Defines the space between the content of an element and its top and bottom border. Can affect layout height.",
   },
 
   {
-    properties: ["paddingLeft", "paddingRight"],
+    properties: ["padding-left", "padding-right"],
     label: "Horizontal Padding",
     description:
       "Defines the space between the content of an element and its left and right border. Can affect layout width.",
   },
 
   {
-    properties: ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight"],
+    properties: [
+      "padding-top",
+      "padding-bottom",
+      "padding-left",
+      "padding-right",
+    ],
     label: "Padding",
     description:
       "Defines the space between the content of an element and its border. Can affect layout size.",
   },
   // Margin
   {
-    properties: ["marginTop", "marginBottom"],
+    properties: ["margin-top", "margin-bottom"],
     label: "Vertical Margin",
     description: "Sets the margin at the top and bottom of an element.",
   },
 
   {
-    properties: ["marginLeft", "marginRight"],
+    properties: ["margin-left", "margin-right"],
     label: "Horizontal Margin",
     description: "Sets the margin at the left and right of an element.",
   },
 
   {
-    properties: ["marginTop", "marginBottom", "marginLeft", "marginRight"],
+    properties: ["margin-top", "margin-bottom", "margin-left", "margin-right"],
     label: "Margin",
     description: "Sets the margin of an element.",
   },

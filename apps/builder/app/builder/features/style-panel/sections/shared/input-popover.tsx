@@ -8,7 +8,7 @@ import {
   Flex,
   theme,
 } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueInput,
@@ -34,8 +34,8 @@ const Input = ({
   onClosePopover,
 }: {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
+  property: CssProperty;
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   value: StyleValue;
   onClosePopover: () => void;
 }) => {
@@ -147,8 +147,8 @@ export const InputPopover = ({
   onClose,
 }: {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
+  property: CssProperty;
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   value: StyleValue;
   isOpen: boolean;
   onClose: () => void;

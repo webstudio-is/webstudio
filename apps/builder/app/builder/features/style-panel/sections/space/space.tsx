@@ -1,17 +1,94 @@
 import { useState, useRef } from "react";
+import { theme } from "@webstudio-is/design-system";
+import { hyphenateProperty, type CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
-import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
-import { spaceProperties } from "./properties";
-import type { SpaceStyleProperty, HoverTarget } from "./types";
+import { useScrub } from "../shared/scrub";
+import {
+  spaceProperties,
+  type HoverTarget,
+  type SpaceStyleProperty,
+} from "./properties";
 import { InputPopover } from "../shared/input-popover";
 import { SpaceTooltip } from "./tooltip";
 import { StyleSection } from "../../shared/style-section";
-import { movementMapSpace, useKeyboardNavigation } from "../shared/keyboard";
+import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
-import { theme } from "@webstudio-is/design-system";
+
+const movementMapSpace = {
+  "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
+  "margin-right": [
+    "margin-top",
+    "margin-left",
+    "margin-bottom",
+    "padding-right",
+  ],
+  "margin-bottom": [
+    "padding-bottom",
+    "margin-right",
+    "margin-top",
+    "margin-left",
+  ],
+  "margin-left": [
+    "margin-top",
+    "padding-left",
+    "margin-bottom",
+    "margin-right",
+  ],
+  "padding-top": [
+    "margin-top",
+    "padding-right",
+    "padding-bottom",
+    "padding-left",
+  ],
+  "padding-right": [
+    "padding-top",
+    "margin-right",
+    "padding-bottom",
+    "padding-bottom",
+  ],
+  "padding-bottom": [
+    "padding-top",
+    "padding-right",
+    "margin-bottom",
+    "padding-left",
+  ],
+  "padding-left": [
+    "padding-top",
+    "padding-top",
+    "padding-bottom",
+    "margin-left",
+  ],
+} as const satisfies Record<SpaceStyleProperty, SpaceStyleProperty[]>;
+
+const opposingSpaceGroups = [
+  ["padding-top", "padding-bottom"],
+  ["padding-right", "padding-left"],
+  ["margin-top", "margin-bottom"],
+  ["margin-right", "margin-left"],
+] satisfies CssProperty[][];
+
+const circleSpaceGroups = [
+  ["padding-top", "padding-right", "padding-bottom", "padding-left"],
+  ["margin-top", "margin-right", "margin-bottom", "margin-left"],
+] satisfies CssProperty[][];
+
+const getSpaceModifiersGroup = (
+  property: CssProperty,
+  modifiers: { shiftKey: boolean; altKey: boolean }
+) => {
+  let groups: CssProperty[][] = [];
+
+  if (modifiers.shiftKey) {
+    groups = circleSpaceGroups;
+  } else if (modifiers.altKey) {
+    groups = opposingSpaceGroups;
+  }
+
+  return groups.find((group) => group.includes(property)) ?? [property];
+};
 
 const Cell = ({
   isPopoverOpen,
@@ -25,7 +102,7 @@ const Cell = ({
   onPopoverClose: () => void;
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly SpaceStyleProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   scrubStatus: ReturnType<typeof useScrub>;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -76,7 +153,8 @@ export const Section = () => {
 
   const scrubStatus = useScrub({
     value: styles.find(
-      (styleDecl) => styleDecl.property === hoverTarget?.property
+      (styleDecl) =>
+        hyphenateProperty(styleDecl.property) === hoverTarget?.property
     )?.usedValue,
     target: hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
@@ -92,9 +170,9 @@ export const Section = () => {
     },
   });
 
-  const [openProperty, setOpenProperty] = useState<SpaceStyleProperty>();
+  const [openProperty, setOpenProperty] = useState<CssProperty>();
   const [activePopoverProperties, setActivePopoverProperties] = useState<
-    undefined | readonly SpaceStyleProperty[]
+    undefined | CssProperty[]
   >();
   const modifiers = useModifierKeys();
   const handleOpenProperty = (property: undefined | SpaceStyleProperty) => {
@@ -112,11 +190,14 @@ export const Section = () => {
   });
 
   // by deafult highlight hovered or scrubbed properties
-  // if keyboard navigation is active, highlight its active property
   // if popover is open, highlight its property and hovered properties
-  const activeProperties: readonly SpaceStyleProperty[] = [
+  const activeProperties: CssProperty[] = [
     ...(activePopoverProperties ?? scrubStatus.properties),
   ];
+  // if keyboard navigation is active, highlight its active property
+  if (keyboardNavigation.isActive) {
+    activeProperties.push(keyboardNavigation.activeProperty);
+  }
 
   const getActiveProperties = (modifiers?: Modifiers) => {
     return modifiers && openProperty
@@ -136,7 +217,7 @@ export const Section = () => {
         onClick={(event) => {
           const property = hoverTarget?.property;
           const styleValueSource = styles.find(
-            (styleDecl) => styleDecl.property === property
+            (styleDecl) => hyphenateProperty(styleDecl.property) === property
           )?.source.name;
 
           if (
