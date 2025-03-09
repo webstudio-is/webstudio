@@ -1,4 +1,4 @@
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { StyleSection } from "../../shared/style-section";
@@ -13,12 +13,12 @@ import { InsetControl } from "./inset-control";
 
 export const properties = [
   "position",
-  "zIndex",
+  "z-index",
   "top",
   "right",
   "bottom",
   "left",
-] satisfies Array<StyleProperty>;
+] satisfies CssProperty[];
 
 export const Section = () => {
   const position = useComputedStyleDecl("position");
@@ -56,9 +56,9 @@ export const Section = () => {
               <PropertyLabel
                 label="Z Index"
                 description={propertyDescriptions.zIndex}
-                properties={["zIndex"]}
+                properties={["z-index"]}
               />
-              <TextControl property="zIndex" />
+              <TextControl property="z-index" />
             </>
           )}
         </Grid>
@@ -69,9 +69,9 @@ export const Section = () => {
               <PropertyLabel
                 label="Z Index"
                 description={propertyDescriptions.zIndex}
-                properties={["zIndex"]}
+                properties={["z-index"]}
               />
-              <TextControl property="zIndex" />
+              <TextControl property="z-index" />
             </Grid>
           </Grid>
         )}

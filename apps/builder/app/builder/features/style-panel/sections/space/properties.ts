@@ -1,12 +1,19 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 
 export const spaceProperties = [
-  "marginTop",
-  "marginRight",
-  "marginBottom",
-  "marginLeft",
-  "paddingTop",
-  "paddingRight",
-  "paddingBottom",
-  "paddingLeft",
-] satisfies Array<StyleProperty>;
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+] satisfies CssProperty[];
+
+export type SpaceStyleProperty = (typeof spaceProperties)[number];
+
+export type HoverTarget = {
+  property: SpaceStyleProperty;
+  element: SVGElement | HTMLElement;
+};

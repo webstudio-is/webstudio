@@ -1,11 +1,35 @@
 import { useState, type ReactElement } from "react";
 import { Tooltip } from "@webstudio-is/design-system";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { useModifierKeys } from "../../shared/modifier-keys";
-import { getInsetModifiersGroup } from "../shared/scrub";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import type { InsetProperty } from "./inset-layout";
 import { PropertyInfo } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
+
+const opposingInsetGroups = [
+  ["top", "bottom"],
+  ["left", "right"],
+] satisfies CssProperty[][];
+
+const circleInsetGroups = [
+  ["top", "right", "bottom", "left"],
+] satisfies CssProperty[][];
+
+export const getInsetModifiersGroup = (
+  property: CssProperty,
+  modifiers: { shiftKey: boolean; altKey: boolean }
+) => {
+  let groups: CssProperty[][] = [];
+
+  if (modifiers.shiftKey) {
+    groups = circleInsetGroups;
+  } else if (modifiers.altKey) {
+    groups = opposingInsetGroups;
+  }
+
+  return groups.find((group) => group.includes(property)) ?? [property];
+};
 
 const sides = {
   top: "top",
@@ -15,7 +39,7 @@ const sides = {
 } as const;
 
 const propertyContents: {
-  properties: InsetProperty[];
+  properties: CssProperty[];
   label: string;
   description: string;
 }[] = [
@@ -41,9 +65,9 @@ const propertyContents: {
   },
 ];
 
-const isSameUnorderedArrays = (
-  arrA: readonly string[],
-  arrB: readonly string[]
+const isSameUnorderedArrays = <Item,>(
+  arrA: readonly Item[],
+  arrB: readonly Item[]
 ) => {
   if (arrA.length !== arrB.length) {
     return false;
