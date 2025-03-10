@@ -25,9 +25,16 @@
     "vitest": "^3.0.4"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./runtime": {
+      "webstudio": "./src/runtime.ts",
+      "types": "./lib/types/runtime.d.ts",
+      "import": "./lib/runtime.js"
+    }
   },
   "files": [
     "lib/*",
