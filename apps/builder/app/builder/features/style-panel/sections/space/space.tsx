@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { theme } from "@webstudio-is/design-system";
-import { hyphenateProperty, type CssProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { useScrub } from "../shared/scrub";
@@ -153,8 +153,7 @@ export const Section = () => {
 
   const scrubStatus = useScrub({
     value: styles.find(
-      (styleDecl) =>
-        hyphenateProperty(styleDecl.property) === hoverTarget?.property
+      (styleDecl) => styleDecl.property === hoverTarget?.property
     )?.usedValue,
     target: hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
@@ -217,7 +216,7 @@ export const Section = () => {
         onClick={(event) => {
           const property = hoverTarget?.property;
           const styleValueSource = styles.find(
-            (styleDecl) => hyphenateProperty(styleDecl.property) === property
+            (styleDecl) => styleDecl.property === property
           )?.source.name;
 
           if (

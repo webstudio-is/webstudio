@@ -7,7 +7,6 @@ import {
 } from "@webstudio-is/design-system";
 import { propertiesData } from "@webstudio-is/css-data";
 import {
-  hyphenateProperty,
   toValue,
   type CssProperty,
   type LayerValueItem,
@@ -48,7 +47,7 @@ const getTransitionLayers = (
 ) => {
   const transitionPropertyValue = styles[0].cascadedValue;
   const currentPropertyValue = styles.find(
-    (styleDecl) => hyphenateProperty(styleDecl.property) === property
+    (styleDecl) => styleDecl.property === property
   )?.cascadedValue;
   const transitionPropertiesCount =
     transitionPropertyValue.type === "layers"
