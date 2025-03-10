@@ -3,6 +3,7 @@ import { readFile, rm } from "node:fs/promises";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { generateRemixRoute, namespaceMeta } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
 import * as reactRouterComponentMetas from "@webstudio-is/sdk-components-react-router/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { Framework } from "./framework";
@@ -40,11 +41,25 @@ export const createFramework = async (): Promise<Framework> => {
     );
   }
 
+  const animationComponentNamespacedMetas: Record<string, WsComponentMeta> = {};
+  for (const [name, meta] of Object.entries(animationComponentMetas)) {
+    const namespace = "@webstudio-is/sdk-components-animation";
+    animationComponentNamespacedMetas[`${namespace}:${name}`] = namespaceMeta(
+      meta as WsComponentMeta,
+      namespace,
+      new Set(Object.keys(animationComponentMetas))
+    );
+  }
+
   return {
     components: [
       {
         source: "@webstudio-is/sdk-components-react",
         metas: baseComponentMetas,
+      },
+      {
+        source: "@webstudio-is/sdk-components-animation",
+        metas: animationComponentNamespacedMetas,
       },
       {
         source: "@webstudio-is/sdk-components-react-radix",
