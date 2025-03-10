@@ -395,7 +395,7 @@ export const CssEditor = ({
       styles.push({
         // Allows searching for property or value and using something like this:
         // "gr te co" -> "grid-template-columns"
-        key: `${property.replace(/-/g, " ")} ${toValue(value)}`,
+        key: `${property.replaceAll("-", " ")} ${toValue(value)}`,
         property,
       });
     }

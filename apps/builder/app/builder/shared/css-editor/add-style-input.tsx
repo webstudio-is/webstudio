@@ -62,7 +62,7 @@ const getAutocompleteItems = () => {
     const hyphenatedProperty = hyphenateProperty(property);
     autoCompleteItems.push({
       // Allow matching "gr te co" -> "grid-template-columns"
-      key: hyphenatedProperty.replace(/-/g, " "),
+      key: hyphenatedProperty.replaceAll("-", " "),
       property: hyphenatedProperty,
       label: hyphenatedProperty,
     });
@@ -71,7 +71,7 @@ const getAutocompleteItems = () => {
   for (const property of shorthandProperties) {
     autoCompleteItems.push({
       // Allow matching "gr te co" -> "grid-template-columns"
-      key: property.replace(/-/g, " "),
+      key: property.replaceAll("-", " "),
       property,
       label: property,
     });
@@ -88,7 +88,7 @@ const getAutocompleteItems = () => {
       const hyphenatedProperty = hyphenateProperty(property);
       autoCompleteItems.push({
         // Allow matching "gr te co" -> "grid-template-columns"
-        key: `${hyphenatedProperty.replace(/-/g, " ")} ${value}`,
+        key: `${hyphenatedProperty.replaceAll("-", " ")} ${value}`,
         property: hyphenatedProperty,
         value,
         label: `${hyphenatedProperty}: ${value}`,
