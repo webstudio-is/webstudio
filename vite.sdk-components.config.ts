@@ -23,11 +23,20 @@ export default defineConfig({
     },
     rollupOptions: {
       external: isBareImport,
-      output: {
-        preserveModules: true,
-        preserveModulesRoot: "src",
-        dir: "lib",
-      },
+      output: [
+        {
+          preserveModules: true,
+          preserveModulesRoot: "src",
+          dir: "lib",
+        },
+        hasPrivateFolders
+          ? {
+              preserveModules: true,
+              preserveModulesRoot: "private-src",
+              dir: "lib",
+            }
+          : undefined,
+      ].filter((output) => output !== undefined),
     },
   },
 });
