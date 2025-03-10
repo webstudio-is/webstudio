@@ -59,8 +59,10 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "change-case": "^5.4.4",
+    "nanostores": "^0.11.3",
     "react-error-boundary": "^5.0.0",
-    "scroll-timeline-polyfill": "^1.1.0"
+    "scroll-timeline-polyfill": "^1.1.0",
+    "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",
