@@ -17,7 +17,6 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import {
-  hyphenateProperty,
   toValue,
   type KeywordValue,
   type StyleValue,
@@ -70,9 +69,8 @@ const $animatableDefinedProperties = computed(
   (definedStyles) => {
     const animatableProperties = new Set<string>();
     for (const { property } of definedStyles) {
-      const hyphenatedProperty = hyphenateProperty(property);
-      if (isAnimatableProperty(hyphenatedProperty)) {
-        animatableProperties.add(hyphenatedProperty);
+      if (isAnimatableProperty(property)) {
+        animatableProperties.add(property);
       }
     }
     return animatableProperties;

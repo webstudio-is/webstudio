@@ -55,14 +55,13 @@ if (typeof window !== "undefined") {
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
   for (const styleDecl of styles) {
-    const property = hyphenateProperty(styleDecl.property);
     let value;
     if (isComputed) {
       value = toValue(styleDecl.usedValue);
     } else {
       value = toValue(styleDecl.cascadedValue);
     }
-    css += `${property}: ${value};\n`;
+    css += `${styleDecl.property}: ${value};\n`;
   }
   return css;
 };

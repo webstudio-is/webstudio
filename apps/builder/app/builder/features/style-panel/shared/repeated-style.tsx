@@ -1,7 +1,6 @@
 import { useMemo, type ComponentProps, type JSX } from "react";
 import type { RgbaColor } from "colord";
 import {
-  hyphenateProperty,
   toValue,
   type CssProperty,
   type LayersValue,
@@ -9,11 +8,7 @@ import {
   type TupleValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
-import {
-  camelCaseProperty,
-  parseCssValue,
-  propertiesData,
-} from "@webstudio-is/css-data";
+import { parseCssValue, propertiesData } from "@webstudio-is/css-data";
 import { EyeClosedIcon, EyeOpenIcon, MinusIcon } from "@webstudio-is/icons";
 import {
   CssValueListArrowFocus,
@@ -106,9 +101,9 @@ const normalizeStyleValue = (
   const items = value.type === itemType ? value.value : [];
   // prefill initial value when no items to repeated
   if (items.length === 0 && primaryItemsCount > 0) {
-    const meta = propertiesData[hyphenateProperty(styleDecl.property)];
+    const meta = propertiesData[styleDecl.property];
     if (meta) {
-      items.push(meta.initial as unknown as UnparsedValue);
+      items.push(meta.initial as UnparsedValue);
     }
   }
   return {
@@ -140,8 +135,7 @@ export const addRepeatedStyleItem = (
   if (primaryValue.type === "var") {
     primaryCount = 1;
   }
-  for (const [hyphenatedProperty, newValue] of newItems) {
-    const property = camelCaseProperty(hyphenatedProperty);
+  for (const [property, newValue] of newItems) {
     if (newValue.type !== "layers" && newValue.type !== "tuple") {
       continue;
     }
@@ -158,7 +152,7 @@ export const addRepeatedStyleItem = (
     } else if (styleDecl.cascadedValue.type === valueType) {
       oldItems = repeatUntil(styleDecl.cascadedValue.value, primaryCount);
     } else if (primaryCount > 0) {
-      const meta = propertiesData[hyphenatedProperty];
+      const meta = propertiesData[property];
       if (meta) {
         oldItems = repeatUntil([meta.initial], primaryCount);
       }
@@ -181,8 +175,7 @@ export const editRepeatedStyleItem = (
   const currentStyles = new Map(
     styles.map((styleDecl) => [styleDecl.property, styleDecl])
   );
-  for (const [hyphenatedProperty, value] of newItems) {
-    const property = camelCaseProperty(hyphenatedProperty);
+  for (const [property, value] of newItems) {
     const styleDecl = currentStyles.get(property);
     if (styleDecl === undefined) {
       continue;

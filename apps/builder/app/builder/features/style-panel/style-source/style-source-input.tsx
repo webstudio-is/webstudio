@@ -13,6 +13,7 @@
 
 import { nanoid } from "nanoid";
 import { useFocusWithin } from "@react-aria/interactions";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   ComboboxListbox,
@@ -36,6 +37,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import type { StyleSource } from "@webstudio-is/sdk";
 import {
   forwardRef,
   useState,
@@ -59,9 +61,7 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { $definedStyles } from "../shared/model";
-import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
-import { useStore } from "@nanostores/react";
+import { $definedStyles, type DefinedStyleDecl } from "../shared/model";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -119,7 +119,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  definedStyles: Set<Partial<StyleDecl>>
+  definedStyles: Set<Partial<DefinedStyleDecl>>
 ) => {
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
