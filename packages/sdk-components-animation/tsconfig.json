@@ -6,6 +6,7 @@
     "private-src",
     "../sdk/src/schema/animation-schema.ts"
   ],
+  "exclude": ["private-src/perf/**/*"],
   "compilerOptions": {
     "types": ["react/experimental", "react-dom/experimental", "@types/node"]
   }
