@@ -26,9 +26,6 @@ patchedDependencies:
   css-tree@2.3.1:
     hash: epgcmebti7rfrc2ej4odb3t4jy
     path: patches/css-tree@2.3.1.patch
-  scroll-timeline-polyfill@1.1.0:
-    hash: i4g3vdpump4efgy2hri5l5rsfm
-    path: patches/scroll-timeline-polyfill@1.1.0.patch
 
 importers:
 
@@ -1871,9 +1868,6 @@ importers:
       react-error-boundary:
         specifier: ^5.0.0
         version: 5.0.0(react@18.3.0-canary-14898b6a9-20240318)
-      scroll-timeline-polyfill:
-        specifier: ^1.1.0
-        version: 1.1.0(patch_hash=i4g3vdpump4efgy2hri5l5rsfm)
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
@@ -8496,9 +8490,6 @@ packages:
 
   scheduler@0.24.0-canary-14898b6a9-20240318:
     resolution: {integrity: sha512-ifDO3bUdooS4OlxvGxMyoDEC/aq14MvJLDd0thjrUSZGeLJA7WBc+sr9NZxIxrXfVqMl1GTGGPwXqRJZDNW76w==}
-
-  scroll-timeline-polyfill@1.1.0:
-    resolution: {integrity: sha512-BpL3gk3Ynt/5VYaDFUNUP/FTkDldwKQnWcA07g/mDHkMVS9pQUyUXBpsy4RZYAgsfFeI1tWcnPNrEFtCpQoO9Q==}
 
   selfsigned@2.1.1:
     resolution: {integrity: sha512-GSL3aowiF7wa/WtSFwnUrludWFoNhftq8bUkH9pkzjpN2XSPOAYEgg6e0sS9s0rZwgJzJiQRPU18A6clnoW5wQ==}
@@ -16558,8 +16549,6 @@ snapshots:
   scheduler@0.24.0-canary-14898b6a9-20240318:
     dependencies:
       loose-envify: 1.4.0
-
-  scroll-timeline-polyfill@1.1.0(patch_hash=i4g3vdpump4efgy2hri5l5rsfm): {}
 
   selfsigned@2.1.1:
     dependencies:
