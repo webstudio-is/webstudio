@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "25a1d85b-6d23-4355-b12b-ac6df4eba37b",
+    "id": "342a7c73-ed72-441d-8a69-8b2659639e93",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 535,
-    "createdAt": "2025-03-10T12:51:15.336+00:00",
-    "updatedAt": "2025-03-10T12:51:15.336+00:00",
+    "version": 543,
+    "createdAt": "2025-03-10T13:33:47.683+00:00",
+    "updatedAt": "2025-03-10T13:33:47.683+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2031,6 +2031,71 @@
             "value": 40
           }
         }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:alignItems:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "alignItems",
+          "value": {
+            "type": "keyword",
+            "value": "start"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:alignContent:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "alignContent",
+          "value": {
+            "type": "keyword",
+            "value": "start"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK:Z8WjyXWkCrr35PXgjHdpY:marginTop:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "8WyGOidmbyXhMWoXUdEkK",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK:Z8WjyXWkCrr35PXgjHdpY:marginBottom:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "8WyGOidmbyXhMWoXUdEkK",
+          "property": "marginBottom",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
+      ],
+      [
+        "hSMd0d2O_5ogkTfvV8g8B:Z8WjyXWkCrr35PXgjHdpY:marginTop:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "hSMd0d2O_5ogkTfvV8g8B",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -2320,6 +2385,20 @@
           "type": "local",
           "id": "mcplLi9TYqk__JBKYzuss"
         }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK",
+        {
+          "type": "local",
+          "id": "8WyGOidmbyXhMWoXUdEkK"
+        }
+      ],
+      [
+        "hSMd0d2O_5ogkTfvV8g8B",
+        {
+          "type": "local",
+          "id": "hSMd0d2O_5ogkTfvV8g8B"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -2608,6 +2687,20 @@
         {
           "instanceId": "81TW-o_0QLHlfmBAKFyCQ",
           "values": ["mcplLi9TYqk__JBKYzuss"]
+        }
+      ],
+      [
+        "cvCjIfx9TJ3XeeSpCnW1w",
+        {
+          "instanceId": "cvCjIfx9TJ3XeeSpCnW1w",
+          "values": ["8WyGOidmbyXhMWoXUdEkK"]
+        }
+      ],
+      [
+        "hi1l-ro0pCVQpHFIwIhFO",
+        {
+          "instanceId": "hi1l-ro0pCVQpHFIwIhFO",
+          "values": ["hSMd0d2O_5ogkTfvV8g8B"]
         }
       ]
     ],
@@ -3528,7 +3621,7 @@
                 }
               }
             ],
-            "isPinned": true
+            "isPinned": false
           }
         }
       ],
@@ -3707,7 +3800,7 @@
                 }
               }
             ],
-            "isPinned": true
+            "isPinned": false
           }
         }
       ],

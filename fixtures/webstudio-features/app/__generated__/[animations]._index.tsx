@@ -29,7 +29,7 @@ const Page = (_props: { system: any }) => {
       <Box className={`w-box c1m04i8w c13v7j50 cpjvam0 cqkqnmd`}>
         <Heading className={`w-heading`}>{"ANIMATIONS"}</Heading>
       </Box>
-      <Box className={`w-box c1y8ynw5 c2gdfrb c1yk3skc`}>
+      <Box className={`w-box c1y8ynw5 c2gdfrb c1yk3skc c16asro7 c1pt69cw`}>
         <Box className={`w-box`}>
           <AnimateChildren
             action={{
@@ -138,10 +138,12 @@ const Page = (_props: { system: any }) => {
                   },
                 },
               ],
-              isPinned: true,
+              isPinned: false,
             }}
           >
-            <Heading className={`w-heading`}>{"ANIMATED CHILD 0"}</Heading>
+            <Heading className={`w-heading c1pdroxx cudat22`}>
+              {"ANIMATED CHILD 0"}
+            </Heading>
             <Heading className={`w-heading`}>{"ANIMATED CHILD 1"}</Heading>
           </AnimateChildren>
         </Box>
@@ -261,11 +263,13 @@ const Page = (_props: { system: any }) => {
                   },
                 },
               ],
-              isPinned: true,
+              isPinned: false,
             }}
           >
             <AnimateText charWindow={20}>
-              <Heading className={`w-heading`}>{"ANIMATED CHILD 1"}</Heading>
+              <Heading className={`w-heading c1pdroxx`}>
+                {"ANIMATED CHILD 1"}
+              </Heading>
               <Box className={`w-box`}>
                 {
                   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed tellus at nisi feugiat accumsan. Aliquam tristique vitae augue eget lacinia. "
