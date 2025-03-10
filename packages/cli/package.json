@@ -72,7 +72,6 @@
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "fast-glob": "^3.3.2",
     "h3": "^1.15.1",
     "ipx": "^3.0.1",
     "prettier": "3.4.2",

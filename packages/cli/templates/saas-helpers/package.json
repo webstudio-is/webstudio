@@ -2,5 +2,8 @@
   "dependencies": {
     "worktop": "0.8.0-next.18",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "fast-glob": "^3.3.2"
   }
 }
