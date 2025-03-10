@@ -177,6 +177,11 @@ const CaretColorPlugin = () => {
   return null;
 };
 
+const isChrome = () =>
+  navigator.userAgentData?.brands.some(
+    (brand) => brand.brand === "Google Chrome"
+  );
+
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
@@ -187,6 +192,16 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(
     () => () => {
+      // Ensures editable content is saved if no blur event occurs before unmount.
+      // This can happen in Firefox and Safari.
+      // To reproduce: create a Content Block, edit a paragraph, then type `/` and select Heading or Paragraph from the menu.
+      // Without this, changes may be lost on unmount in FF and Safari.
+
+      if (isChrome()) {
+        // Fixes an issue in DEV MODE where, if text is center-aligned inside Flex/Grid,
+        // the code below causes Chrome to scroll the editable text block to the center of the view.
+        return;
+      }
       // The issue is related to React’s development mode.
       // When we set the initial selection in the Editor, we disable Lexical’s internal
       // scrolling using the update operation tag tag: "skip-scroll-into-view".
