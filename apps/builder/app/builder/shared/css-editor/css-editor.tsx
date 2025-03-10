@@ -392,11 +392,16 @@ export const CssEditor = ({
 
     const styles = [];
     for (const [property, value] of styleMap) {
-      styles.push({ property, value: toValue(value) });
+      styles.push({
+        // Allows searching for property or value and using something like this:
+        // "gr te co" -> "grid-template-columns"
+        key: `${property.replaceAll("-", " ")} ${toValue(value)}`,
+        property,
+      });
     }
 
     const matched = matchSorter(styles, search, {
-      keys: ["property", "value"],
+      keys: ["key"],
     }).map(({ property }) => property);
 
     setSearchProperties(matched);
