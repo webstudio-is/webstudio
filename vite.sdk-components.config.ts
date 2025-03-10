@@ -1,17 +1,17 @@
 import { defineConfig } from "vite";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+const hasPrivateFolders = existsSync(path.join(process.cwd(), "private-src"));
 
 const isBareImport = (id: string) =>
   id.startsWith("@") || id.includes(".") === false;
 
 export default defineConfig({
-  // resolve only webstudio condition in tests
-  resolve: {
-    conditions: ["webstudio"],
-  },
   build: {
     lib: {
       entry: [
-        "src/components.ts",
+        hasPrivateFolders ? "private-src/components.ts" : "src/components.ts",
         "src/metas.ts",
         "src/props.ts",
         "src/hooks.ts",
