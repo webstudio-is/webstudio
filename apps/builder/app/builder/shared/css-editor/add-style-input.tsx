@@ -59,12 +59,11 @@ const getAutocompleteItems = () => {
     return autoCompleteItems;
   }
   for (const property in propertiesData) {
-    const hyphenatedProperty = hyphenateProperty(property);
     autoCompleteItems.push({
       // Allow matching "gr te co" -> "grid-template-columns"
-      key: hyphenatedProperty.replaceAll("-", " "),
-      property: hyphenatedProperty,
-      label: hyphenatedProperty,
+      key: property.replaceAll("-", " "),
+      property,
+      label: property,
     });
   }
 
