@@ -2,7 +2,9 @@ import { defineConfig } from "vite";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-const hasPrivateFolders = existsSync(path.join(process.cwd(), "private-src"));
+const hasPrivateFolders = existsSync(
+  path.join(process.cwd(), "private-src", "README.md")
+);
 
 const isBareImport = (id: string) =>
   id.startsWith("@") || id.includes(".") === false;
