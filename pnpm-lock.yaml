@@ -1156,6 +1156,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       h3:
         specifier: ^1.15.1
         version: 1.15.1

@@ -1,5 +1,17 @@
 import { defineConfig } from "vite";
+import fg from "fast-glob";
 import pkg from "./package.json";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+const rootDir = ["..", "../..", "../../.."]
+  .map((dir) => path.join(__dirname, dir))
+  .find((dir) => existsSync(path.join(dir, ".git")));
+
+const hasPrivateFolders =
+  fg.sync([path.join(rootDir ?? "", "packages/*/private-src/*")], {
+    ignore: ["**/node_modules/**"],
+  }).length > 0;
 
 const isExternal = (id: string, importer: string | undefined) => {
   if (id.startsWith("@webstudio-is/")) {
@@ -32,7 +44,9 @@ const isExternal = (id: string, importer: string | undefined) => {
 export default defineConfig({
   // resolve only webstudio condition in tests
   resolve: {
-    conditions: ["webstudio"],
+    conditions: hasPrivateFolders
+      ? ["webstudio-private", "webstudio"]
+      : ["webstudio"],
   },
   build: {
     minify: false,
