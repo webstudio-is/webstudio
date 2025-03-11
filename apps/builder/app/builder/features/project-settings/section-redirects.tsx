@@ -1,21 +1,19 @@
-import { useState, type ChangeEvent, useRef } from "react";
-import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import {
-  Grid,
-  Flex,
-  InputField,
   Button,
-  Text,
-  theme,
+  Flex,
+  Grid,
+  InputErrorsTooltip,
+  InputField,
+  Link,
   List,
   ListItem,
-  SmallIconButton,
-  InputErrorsTooltip,
   Select,
-  Link,
-  truncate,
+  SmallIconButton,
+  Text,
+  theme,
   Tooltip,
+  truncate,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import {
@@ -23,9 +21,11 @@ import {
   PageRedirect,
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
+import { useRef, useState, type ChangeEvent } from "react";
+import { flushSync } from "react-dom";
+import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
@@ -33,6 +33,9 @@ export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
     () => $pages.get()?.redirects ?? []
   );
+
+  const [editingId, setEditingId] = useState(null);
+  const [updatedPath, setUpdatedPath] = useState("");
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [httpStatus, setHttpStatus] =
@@ -224,7 +227,7 @@ export const SectionRedirects = () => {
       {redirectKeys.length > 0 ? (
         <Grid css={sectionSpacing}>
           <List asChild>
-            <Flex direction="column" gap="1">
+            <Flex direction="column" gap="1" align="stretch">
               {redirects.map((redirect, index) => {
                 return (
                   <ListItem asChild key={redirect.old} index={index}>
@@ -262,19 +265,30 @@ export const SectionRedirects = () => {
                               redirect.new,
                               publishedOrigin
                             ).toString()}
-                            css={truncate()}
+                            css={{
+                              wordBreak: "break-all",
+                              maxWidth: theme.spacing[32],
+                            }}
                             target="_blank"
                           >
                             {redirect.new}
                           </Link>
                         </Tooltip>
                       </Flex>
-                      <SmallIconButton
-                        variant="destructive"
-                        icon={<TrashIcon />}
-                        aria-label={`Delete redirect from ${redirect.old}`}
-                        onClick={() => handleDeleteRedirect(index)}
-                      />
+                      <Flex gap="2">
+                        <SmallIconButton
+                          variant="destructive"
+                          icon={<TrashIcon />}
+                          aria-label={`Delete redirect from ${redirect.old}`}
+                          onClick={() => handleDeleteRedirect(index)}
+                        />
+                        <Button
+                          onClick={handleAddRedirect}
+                          css={{ flexShrink: 0 }}
+                        >
+                          Edit
+                        </Button>
+                      </Flex>
                     </Flex>
                   </ListItem>
                 );
