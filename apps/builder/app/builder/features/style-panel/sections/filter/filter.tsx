@@ -2,7 +2,7 @@ import { Flex, Tooltip, Text } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { RepeatedStyleSection } from "../../shared/style-section";
@@ -16,12 +16,8 @@ import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 import { humanizeString } from "~/shared/string-utils";
 
-export const properties = ["filter"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
-];
+export const properties = ["filter"] satisfies [CssProperty, ...CssProperty[]];
 
-const property: StyleProperty = properties[0];
 const label = "Filters";
 const initialFilter = "blur(0px)";
 
@@ -55,7 +51,7 @@ export const Section = () => {
         renderItemContent={(index, primaryValue) => (
           <FilterSectionContent
             index={index}
-            property={property}
+            property="filter"
             propertyValue={toValue(primaryValue)}
             layer={primaryValue}
             onEditLayer={(index, value, options) => {

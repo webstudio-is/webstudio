@@ -1,5 +1,5 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueListArrowFocus,
@@ -31,6 +31,16 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { humanizeString } from "~/shared/string-utils";
+import { getDots } from "../../shared/style-section";
+import {
+  getPriorityStyleValueSource,
+  PropertyLabel,
+  PropertySectionLabel,
+} from "../../property-label";
+import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
+import { TextControl } from "../../controls";
 import {
   addDefaultsForTransormSection,
   isTransformPanelPropertyUsed,
@@ -44,33 +54,23 @@ import { TranslatePanelContent } from "./transform-translate";
 import { ScalePanelContent } from "./transform-scale";
 import { RotatePanelContent } from "./transform-rotate";
 import { SkewPanelContent } from "./transform-skew";
-import { humanizeString } from "~/shared/string-utils";
-import { getDots } from "../../shared/style-section";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
-import {
-  getPriorityStyleValueSource,
-  PropertyLabel,
-  PropertySectionLabel,
-} from "../../property-label";
-import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { createBatchUpdate } from "../../shared/use-style-data";
-import { TextControl } from "../../controls";
 
 const label = "Transforms";
 
 const advancedProperties = [
-  "transformOrigin",
-  "backfaceVisibility",
+  "transform-origin",
+  "backface-visibility",
   "perspective",
-  "perspectiveOrigin",
-] satisfies [StyleProperty, ...StyleProperty[]];
+  "perspective-origin",
+] satisfies [CssProperty, ...CssProperty[]];
 
 export const properties = [
   "transform",
   "translate",
   "scale",
   ...advancedProperties,
-] satisfies [StyleProperty, ...StyleProperty[]];
+] satisfies [CssProperty, ...CssProperty[]];
 
 const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
@@ -113,11 +113,11 @@ const TransformAdvancedPopover = () => {
             <PropertyLabel
               label="Backface Visibility"
               description={propertyDescriptions.backfaceVisibility}
-              properties={["backfaceVisibility"]}
+              properties={["backface-visibility"]}
             />
-            <TextControl property="backfaceVisibility" />
+            <TextControl property="backface-visibility" />
           </Grid>
-          <TransformAndPerspectiveOrigin property="transformOrigin" />
+          <TransformAndPerspectiveOrigin property="transform-origin" />
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Perspective"
@@ -126,7 +126,7 @@ const TransformAdvancedPopover = () => {
             />
             <TextControl property="perspective" />
           </Grid>
-          <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
+          <TransformAndPerspectiveOrigin property="perspective-origin" />
         </Grid>
       }
     >
