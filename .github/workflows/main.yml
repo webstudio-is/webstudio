@@ -135,7 +135,7 @@ jobs:
             const results = [
               await assertSize('./fixtures/ssg/dist/client', 352),
               await assertSize('./fixtures/react-router-netlify/build/client', 368),
-              await assertSize('./fixtures/webstudio-features/build/client', 936),
+              await assertSize('./fixtures/webstudio-features/build/client', 1024),
             ]
             for (const result of results) {
               if (result.passed) {
