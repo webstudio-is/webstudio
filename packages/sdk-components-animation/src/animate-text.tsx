@@ -14,13 +14,13 @@ const easings = {
 };
 
 type AnimateChildrenProps = {
-  charWindow: number;
-  easing: keyof typeof easings;
+  charWindow?: number;
+  easing?: keyof typeof easings;
   children: React.ReactNode;
 };
 
 export const AnimateText = forwardRef<ElementRef<"div">, AnimateChildrenProps>(
-  ({ charWindow: _, easing: __, ...props }, ref) => {
+  ({ charWindow = 5, easing = "linear", ...props }, ref) => {
     return <div ref={ref} {...props} />;
   }
 );

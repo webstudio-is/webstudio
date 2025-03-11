@@ -411,4 +411,45 @@
   .c1a2hnxl {
     background-color: rgba(2, 139, 250, 1);
   }
+  .c1m04i8w {
+    height: 100dvh;
+  }
+}
+@media all and (min-width: 472px) {
+  .c1jgcte3 {
+    max-width: 900px;
+  }
+  .cncutr5 {
+    width: 100%;
+  }
+  .c1ywt30e {
+    min-width: 0px;
+  }
+  .cqvurle {
+    justify-self: center;
+  }
+  .c1y8ynw5 {
+    display: grid;
+  }
+  .c2gdfrb {
+    grid-auto-flow: column;
+  }
+  .c1yk3skc {
+    grid-auto-columns: 1fr;
+  }
+  .c16asro7 {
+    align-items: start;
+  }
+  .c1pt69cw {
+    align-content: start;
+  }
+  .cq3mp4w {
+    height: 40dvh;
+  }
+  .c1pdroxx {
+    margin-top: 0em;
+  }
+  .cudat22 {
+    margin-bottom: 0em;
+  }
 }

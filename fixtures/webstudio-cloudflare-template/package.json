@@ -53,6 +53,7 @@
     "@types/react-dom": "^18.2.25",
     "typescript": "5.7.3",
     "vite": "^5.4.11",
-    "wrangler": "^3.63.2"
+    "wrangler": "^3.63.2",
+    "fast-glob": "^3.3.2"
   }
 }
