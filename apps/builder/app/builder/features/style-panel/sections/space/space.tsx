@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
@@ -16,6 +16,7 @@ import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import { getAutoScrollProps } from "../../shared/scroll-text";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -75,6 +76,13 @@ const circleSpaceGroups = [
   ["margin-top", "margin-right", "margin-bottom", "margin-left"],
 ] satisfies CssProperty[][];
 
+const inlineProperties = new Set([
+  "margin-left",
+  "margin-right",
+  "padding-left",
+  "padding-right",
+]);
+
 const getSpaceModifiersGroup = (
   property: CssProperty,
   modifiers: { shiftKey: boolean; altKey: boolean }
@@ -110,6 +118,14 @@ const Cell = ({
     (scrubStatus.isActive && scrubStatus.values[property]) ||
     styleDecl.cascadedValue;
 
+  const { abort, ...autoScrollProps } = useMemo(() => {
+    return getAutoScrollProps();
+  }, []);
+
+  useEffect(() => {
+    return () => abort("unmount");
+  }, [abort]);
+
   return (
     <>
       <InputPopover
@@ -120,27 +136,27 @@ const Cell = ({
         getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
       />
-      <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
-        <ValueText
-          truncate
-          css={{
-            // We want value to have `default` cursor to indicate that it's clickable,
-            // unlike the rest of the value area that has cursor that indicates scrubbing.
-            // Click and scrub works everywhere anyway, but we want cursors to be different.
-            //
-            // In order to have control over cursor we're setting pointerEvents to "all" here
-            // because SpaceLayout sets it to "none" for cells' content.
-            pointerEvents: "all",
-            maxWidth: theme.spacing[18],
-          }}
-          value={finalValue}
-          source={styleDecl.source.name}
-          onMouseEnter={(event) =>
-            onHover({ property, element: event.currentTarget })
-          }
-          onMouseLeave={() => onHover(undefined)}
-        />
-      </SpaceTooltip>
+      <ValueText
+        {...autoScrollProps}
+        //truncate
+        css={{
+          // We want value to have `default` cursor to indicate that it's clickable,
+          // unlike the rest of the value area that has cursor that indicates scrubbing.
+          // Click and scrub works everywhere anyway, but we want cursors to be different.
+          //
+          // In order to have control over cursor we're setting pointerEvents to "all" here
+          // because SpaceLayout sets it to "none" for cells' content.
+          pointerEvents: "all",
+          overflow: "hidden",
+          maxWidth: inlineProperties.has(property) ? "5ch" : "18ch",
+        }}
+        value={finalValue}
+        source={styleDecl.source.name}
+        //onMouseEnter={(event) =>
+        //  onHover({ property, element: event.currentTarget })
+        //}
+        //onMouseLeave={() => onHover(undefined)}
+      />
     </>
   );
 };

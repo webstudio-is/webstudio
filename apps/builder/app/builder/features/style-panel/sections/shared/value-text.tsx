@@ -11,7 +11,7 @@ const Container = styled("button", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "baseline",
-  justifyContent: "center",
+  justifyContent: "start",
   border: "none",
   borderRadius: theme.borderRadius[3],
   padding: `${theme.spacing[2]}`,
@@ -95,7 +95,7 @@ export const ValueText = ({
     if (value.type === "var") {
       return (
         <Text truncate={truncate} variant="spaceSectionValueText">
-          --{value.value}
+          {value.value}
         </Text>
       );
     }
