@@ -1,5 +1,5 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
 import { propertySyntaxes } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -13,7 +13,7 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 
-const property: StyleProperty = "translate";
+const property: CssProperty = "translate";
 
 export const TranslatePanelContent = () => {
   const styleDecl = useComputedStyleDecl(property);

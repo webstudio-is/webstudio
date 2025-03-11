@@ -1,9 +1,5 @@
 import { computed } from "nanostores";
-import {
-  hyphenateProperty,
-  type CssProperty,
-  type CssStyleMap,
-} from "@webstudio-is/css-engine";
+import type { CssProperty, CssStyleMap } from "@webstudio-is/css-engine";
 import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
 import { sections } from "../sections";
 import {
@@ -60,7 +56,7 @@ export const $advancedStylesLonghands = computed(
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(hyphenateProperty(property));
+        visualProperties.add(property);
       }
     }
     for (const style of definedStyles) {

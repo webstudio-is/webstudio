@@ -1,11 +1,11 @@
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl } from "../controls";
 import { StyleSection } from "../shared/style-section";
 import { PropertyLabel } from "../property-label";
 
-export const properties = ["listStyleType"] satisfies Array<StyleProperty>;
+export const properties = ["list-style-type"] satisfies CssProperty[];
 
 export const Section = () => {
   return (
@@ -14,9 +14,9 @@ export const Section = () => {
         <PropertyLabel
           label="List Style Type"
           description={propertyDescriptions.listStyleType}
-          properties={["listStyleType"]}
+          properties={["list-style-type"]}
         />
-        <SelectControl property="listStyleType" />
+        <SelectControl property="list-style-type" />
       </Grid>
     </StyleSection>
   );
