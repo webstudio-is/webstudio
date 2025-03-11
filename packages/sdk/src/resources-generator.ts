@@ -184,7 +184,7 @@ export const replaceFormActionsWithResources = ({
         name: "action",
         method: getMethod(method),
         url: JSON.stringify(action),
-        headers: [],
+        headers: [{ name: "Content-Type", value: "application/json" }],
       });
     }
   }

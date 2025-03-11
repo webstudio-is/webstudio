@@ -58,11 +58,31 @@ export const ResourceControl = ({
           resource.url = urlExpression;
         }
       } else {
+        let method: Resource["method"] = "get";
+        for (const prop of data.props.values()) {
+          if (
+            prop.instanceId === instanceId &&
+            prop.type === "string" &&
+            prop.name === "method"
+          ) {
+            const value = prop.value.toLowerCase();
+            if (
+              value === "get" ||
+              value === "post" ||
+              value === "put" ||
+              value === "delete"
+            ) {
+              method = value;
+            }
+            break;
+          }
+        }
+
         const newResource: Resource = {
           id: nanoid(),
           name: propName,
           url: urlExpression,
-          method: "get",
+          method,
           headers: [{ name: "Content-Type", value: "application/json" }],
         };
         const newProp: Prop = {
