@@ -19,7 +19,7 @@
   "devDependencies": {
     "@webstudio-is/postrest": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.8"
   },
   "exports": {
     "./index.server": {
