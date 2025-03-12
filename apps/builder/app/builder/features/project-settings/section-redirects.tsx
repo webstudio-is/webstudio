@@ -34,8 +34,6 @@ export const SectionRedirects = () => {
     () => $pages.get()?.redirects ?? []
   );
 
-  const [editingId, setEditingId] = useState(null);
-  const [updatedPath, setUpdatedPath] = useState("");
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [httpStatus, setHttpStatus] =
@@ -282,12 +280,6 @@ export const SectionRedirects = () => {
                           aria-label={`Delete redirect from ${redirect.old}`}
                           onClick={() => handleDeleteRedirect(index)}
                         />
-                        <Button
-                          onClick={handleAddRedirect}
-                          css={{ flexShrink: 0 }}
-                        >
-                          Edit
-                        </Button>
                       </Flex>
                     </Flex>
                   </ListItem>
