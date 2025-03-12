@@ -13,7 +13,6 @@ import {
   Text,
   theme,
   Tooltip,
-  truncate,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import {
@@ -246,7 +245,10 @@ export const SectionRedirects = () => {
                               redirect.old,
                               publishedOrigin
                             ).toString()}
-                            css={truncate()}
+                            css={{
+                              width: theme.spacing[18],
+                              wordBreak: "break-all",
+                            }}
                             target="_blank"
                           >
                             {redirect.old}
@@ -265,7 +267,7 @@ export const SectionRedirects = () => {
                             ).toString()}
                             css={{
                               wordBreak: "break-all",
-                              maxWidth: theme.spacing[32],
+                              maxWidth: theme.spacing[30],
                             }}
                             target="_blank"
                           >
