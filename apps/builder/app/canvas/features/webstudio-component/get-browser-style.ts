@@ -18,9 +18,7 @@ const parseValue = (property: CssProperty, value: string): StyleValue => {
     value = "transparent";
   }
   if (Number.isNaN(number)) {
-    const values = keywordValues[
-      camelCaseProperty(property) as keyof typeof keywordValues
-    ] as ReadonlyArray<string>;
+    const values = keywordValues[property];
 
     if (values?.includes(value)) {
       return {

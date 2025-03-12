@@ -7,6 +7,7 @@ import {
   theme,
   toast,
 } from "@webstudio-is/design-system";
+import { keywordValues } from "@webstudio-is/css-data";
 import { toPascalCase } from "~/builder/features/style-panel/shared/keyword-utils";
 import { useIds } from "~/shared/form-utils";
 
@@ -28,7 +29,6 @@ import {
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Keyframes } from "./animation-keyframes";
-import { styleConfigByName } from "~/builder/features/style-panel/shared/configs";
 import { titleCase } from "title-case";
 
 type Props = {
@@ -168,9 +168,9 @@ const EasingInput = ({
           : { type: "unparsed", value }
       }
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...keywordValues["animation-timing-function"].map((value) => ({
           type: "keyword" as const,
-          value: item.name,
+          value,
         })),
       ]}
       property={property}

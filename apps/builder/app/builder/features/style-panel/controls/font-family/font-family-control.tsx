@@ -5,15 +5,14 @@ import {
   NestedInputButton,
   FloatingPanel,
 } from "@webstudio-is/design-system";
-import { FontsManager } from "~/builder/shared/fonts-manager";
 import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
+import { UploadIcon } from "@webstudio-is/icons";
+import { keywordValues, parseCssValue } from "@webstudio-is/css-data";
+import { FontsManager } from "~/builder/shared/fonts-manager";
 import { useAssets } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
-import { UploadIcon } from "@webstudio-is/icons";
-import { styleConfigByName } from "../../shared/configs";
-import { parseCssValue } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
 
@@ -50,10 +49,11 @@ export const FontFamilyControl = () => {
   >();
   const { assetContainers } = useAssets("font");
   const items = useMemo(() => {
-    const fallbacks = styleConfigByName("fontFamily").items;
-    return [...toItems(assetContainers), ...fallbacks].map(({ label }) => ({
-      value: label,
-    }));
+    const fallbacks = keywordValues["font-family"];
+    return [
+      ...toItems(assetContainers).map(({ label }) => ({ value: label })),
+      ...fallbacks.map((value) => ({ value })),
+    ];
   }, [assetContainers]);
   const [isFontManagerOpen, setIsFontMangerOpen] = useState(false);
 

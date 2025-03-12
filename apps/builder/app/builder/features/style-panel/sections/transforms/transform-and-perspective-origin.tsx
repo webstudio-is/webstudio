@@ -11,7 +11,6 @@ import {
   UnitValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
-import { styleConfigByName } from "../../shared/configs";
 import { useMemo } from "react";
 import { extractTransformOrPerspectiveOriginValues } from "./transform-extractors";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -21,6 +20,7 @@ import {
 } from "../../shared/use-style-data";
 import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
+import { humanizeString } from "~/shared/string-utils";
 
 // Fake properties to use in the CssValueInputContainer
 // x, y axis takes length | percentage | keyword
@@ -60,7 +60,6 @@ export const TransformAndPerspectiveOrigin = ({
 }) => {
   const styleDecl = useComputedStyleDecl(property);
   const value = styleDecl.cascadedValue;
-  const { label } = styleConfigByName(property);
   const origin = useMemo((): {
     x: KeywordValue | UnitValue;
     y: KeywordValue | UnitValue;
@@ -156,7 +155,7 @@ export const TransformAndPerspectiveOrigin = ({
   return (
     <Grid gap="2">
       <PropertyLabel
-        label={label}
+        label={humanizeString(property)}
         description={propertyDescriptions[camelCaseProperty(property)]}
         properties={[property]}
       />

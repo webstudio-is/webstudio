@@ -1,14 +1,15 @@
 import { useState } from "react";
-import type {
-  CssProperty,
-  StyleProperty,
-  StyleValue,
+import {
+  hyphenateProperty,
+  type CssProperty,
+  type StyleProperty,
+  type StyleValue,
 } from "@webstudio-is/css-engine";
+import { keywordValues } from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import { styleConfigByName } from "../../shared/configs";
 import { deleteProperty, setProperty } from "../../shared/use-style-data";
 import {
   $availableUnitVariables,
@@ -33,9 +34,9 @@ export const TextControl = ({
       value={value}
       intermediateValue={intermediateValue}
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...(keywordValues[hyphenateProperty(property)] ?? []).map((value) => ({
           type: "keyword" as const,
-          value: item.name,
+          value,
         })),
         ...$availableUnitVariables.get(),
       ]}

@@ -1,6 +1,5 @@
 import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ColorPicker } from "../../shared/color-picker";
@@ -9,6 +8,7 @@ import {
   useComputedStyles,
 } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { keywordValues } from "@webstudio-is/css-data";
 
 export const properties = [
   "border-top-color",
@@ -16,8 +16,6 @@ export const properties = [
   "border-bottom-color",
   "border-left-color",
 ] satisfies [CssProperty, ...CssProperty[]];
-
-const { items } = styleConfigByName("border-top-color");
 
 export const BorderColor = () => {
   const styles = useComputedStyles(properties);
@@ -57,9 +55,9 @@ export const BorderColor = () => {
               property={local.property}
               value={value}
               getOptions={() => [
-                ...items.map((item) => ({
+                ...keywordValues["border-top-color"].map((value) => ({
                   type: "keyword" as const,
-                  value: item.name,
+                  value,
                 })),
                 ...$availableColorVariables.get(),
               ]}

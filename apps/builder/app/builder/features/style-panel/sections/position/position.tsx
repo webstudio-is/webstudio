@@ -3,7 +3,6 @@ import { Grid, theme } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { StyleSection } from "../../shared/style-section";
 import { SelectControl, TextControl } from "../../controls";
-import { styleConfigByName } from "../../shared/configs";
 import { PropertyLabel } from "../../property-label";
 import {
   useComputedStyleDecl,
@@ -47,10 +46,7 @@ export const Section = () => {
             description={propertyDescriptions.position}
             properties={["position"]}
           />
-          <SelectControl
-            property="position"
-            items={styleConfigByName("position").items}
-          />
+          <SelectControl property="position" />
           {showZindexControl && showInsetControl === false && (
             <>
               <PropertyLabel
