@@ -342,7 +342,7 @@ export const getComputedStyleDecl = ({
       state,
       property,
     });
-    let inheritedCascadedValue = cascadedValue;
+    const inheritedCascadedValue = cascadedValue;
     cascadedValue = cascaded?.value;
     source = cascaded?.source ?? { name: "default" };
 
