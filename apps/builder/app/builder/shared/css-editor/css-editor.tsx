@@ -49,6 +49,7 @@ import type {
   DeleteProperty,
   SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -115,14 +116,14 @@ const AdvancedPropertyLabel = ({
 };
 
 const AdvancedPropertyValue = ({
-  property,
+  styleDecl,
   onDeleteProperty,
   onSetProperty,
   onChangeComplete,
   onReset,
   inputRef: inputRefProp,
 }: {
-  property: CssProperty;
+  styleDecl: ComputedStyleDecl;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onChangeComplete: ComponentProps<
@@ -131,10 +132,8 @@ const AdvancedPropertyValue = ({
   onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
   const inputRef = useRef<HTMLInputElement>(null);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
-
   return (
     <CssValueInputContainer
       inputRef={mergeRefs(inputRef, inputRefProp)}
@@ -148,21 +147,21 @@ const AdvancedPropertyValue = ({
             onChange={(styleValue) => {
               const options = { isEphemeral: true, listed: true };
               if (styleValue) {
-                onSetProperty(property)(styleValue, options);
+                onSetProperty(styleDecl.property)(styleValue, options);
               } else {
-                onDeleteProperty(property, options);
+                onDeleteProperty(styleDecl.property, options);
               }
             }}
             onChangeComplete={(styleValue) => {
-              onSetProperty(property)(styleValue);
+              onSetProperty(styleDecl.property)(styleValue);
             }}
           />
         )
       }
-      property={property}
+      property={styleDecl.property}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...styleConfigByName(styleDecl.property).items.map((item) => ({
           type: "keyword" as const,
           value: item.name,
         })),
@@ -174,12 +173,12 @@ const AdvancedPropertyValue = ({
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
         ) {
-          onSetProperty(property)(
+          onSetProperty(styleDecl.property)(
             { type: "var", value: styleValue.value.slice(2) },
             { ...options, listed: true }
           );
         } else {
-          onSetProperty(property)(styleValue, {
+          onSetProperty(styleDecl.property)(styleValue, {
             ...options,
             listed: true,
           });
@@ -252,7 +251,7 @@ const LazyRender = ({ children }: ComponentProps<"div">) => {
 
 const AdvancedDeclarationLonghand = memo(
   ({
-    property,
+    styleDecl,
     onChangeComplete,
     onDeleteProperty,
     onSetProperty,
@@ -260,7 +259,7 @@ const AdvancedDeclarationLonghand = memo(
     valueInputRef,
     indentation = initialIndentation,
   }: {
-    property: CssProperty;
+    styleDecl: ComputedStyleDecl;
     indentation?: string;
     onReset?: () => void;
     onSetProperty: SetProperty;
@@ -276,10 +275,10 @@ const AdvancedDeclarationLonghand = memo(
         wrap="wrap"
         align="center"
         justify="start"
-        {...{ [copyAttribute]: property }}
+        {...{ [copyAttribute]: styleDecl.property }}
       >
         <AdvancedPropertyLabel
-          property={property}
+          property={styleDecl.property}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
         />
@@ -294,7 +293,7 @@ const AdvancedDeclarationLonghand = memo(
           :
         </Text>
         <AdvancedPropertyValue
-          property={property}
+          styleDecl={styleDecl}
           onChangeComplete={onChangeComplete}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
@@ -313,7 +312,7 @@ export const CssEditor = ({
   onSetProperty,
   onAddDeclarations,
   onDeleteAllDeclarations,
-  styleMap,
+  declarations,
   apiRef,
   showSearch = true,
   virtualize = true,
@@ -321,6 +320,7 @@ export const CssEditor = ({
   recentProperties = [],
   memorizeMinHeight = true,
 }: {
+  declarations: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
@@ -350,7 +350,11 @@ export const CssEditor = ({
     },
   }));
 
-  const advancedProperties = Array.from(styleMap.keys());
+  const declarationsMap = new Map(
+    declarations.map((decl) => [decl.property, decl])
+  );
+
+  const advancedProperties = declarations.map(({ property }) => property);
 
   const currentProperties =
     searchProperties ??
@@ -393,15 +397,12 @@ export const CssEditor = ({
       setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
     }
 
-    const styles = [];
-    for (const [property, value] of styleMap) {
-      styles.push({
-        // Allows searching for property or value and using something like this:
-        // "gr te co" -> "grid-template-columns"
-        key: `${property.replaceAll("-", " ")} ${toValue(value)}`,
+    const styles = declarations.map(({ property, cascadedValue }) => {
+      return {
+        key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
         property,
-      });
-    }
+      };
+    });
 
     const matched = matchSorter(styles, search, {
       keys: ["key"],
@@ -450,11 +451,15 @@ export const CssEditor = ({
     >
       {showRecentProperties &&
         recentProperties.map((property) => {
+          const styleDecl = declarationsMap.get(property);
+          if (styleDecl === undefined) {
+            return;
+          }
           return (
             <AdvancedDeclarationLonghand
+              styleDecl={styleDecl}
               key={property}
               valueInputRef={lastRecentValueInputRef}
-              property={property}
               onChangeComplete={(event) => {
                 if (event.type === "enter") {
                   handleShowAddStyleInput();
@@ -511,8 +516,8 @@ export const CssEditor = ({
         onPaste={handleInsertStyles}
         onDeleteProperty={handleDeleteProperty}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
-        styleMap={styleMap}
-        properties={
+        declarations={declarations}
+        foundProperties={
           searchProperties ?? [...recentProperties, ...currentProperties]
         }
       >
@@ -530,9 +535,14 @@ export const CssEditor = ({
             ref={containerRef}
           >
             {currentProperties.map((property) => {
-              const declaration = (
+              const styleDecl = declarationsMap.get(property);
+              if (styleDecl === undefined) {
+                return;
+              }
+
+              const declarationElement = (
                 <AdvancedDeclarationLonghand
-                  property={property}
+                  styleDecl={styleDecl}
                   onDeleteProperty={handleDeleteProperty}
                   onSetProperty={onSetProperty}
                   valueInputRef={lastRegularValueInputRef}
@@ -543,9 +553,11 @@ export const CssEditor = ({
               // we need to focus last added value, but the logic for waiting for the last rendered event would add up complexity.
               // For now we just manually avoid virtualization in this layout.
               if (virtualize) {
-                return <LazyRender key={property}>{declaration}</LazyRender>;
+                return (
+                  <LazyRender key={property}>{declarationElement}</LazyRender>
+                );
               }
-              return declaration;
+              return declarationElement;
             })}
           </Flex>
           {propertiesPosition === "top" && (
