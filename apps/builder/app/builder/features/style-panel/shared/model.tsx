@@ -39,6 +39,7 @@ import {
   type StyleObjectModel,
 } from "~/shared/style-object-model";
 import {
+  $selectedInstancePath,
   $selectedInstancePathWithRoot,
   type InstancePath,
 } from "~/shared/awareness";
@@ -221,7 +222,7 @@ export const getDefinedStyles = ({
 
 export const $definedStyles = computed(
   [
-    $selectedInstancePathWithRoot,
+    $selectedInstancePath,
     $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,
@@ -272,11 +273,7 @@ const $model = computed(
   }
 );
 
-/**
- * Will be deleted along with CSS Preview.
- * @deprecated
- */
-export const $definedComputedStyles = computed(
+export const $computedStyleDeclarations = computed(
   [
     $definedStyles,
     $model,
@@ -285,7 +282,7 @@ export const $definedComputedStyles = computed(
   ],
   (definedStyles, model, instancePath, styleSourceSelector) => {
     const computedStyles = new Map<string, ComputedStyleDecl>();
-    for (const { property } of definedStyles) {
+    for (const { property, listed } of definedStyles) {
       // deduplicate by property name
       if (computedStyles.has(property)) {
         continue;
@@ -297,6 +294,8 @@ export const $definedComputedStyles = computed(
         state: styleSourceSelector?.state,
         property,
       });
+      computedStyleDecl.listed = listed;
+
       computedStyles.set(property, computedStyleDecl);
     }
     return Array.from(computedStyles.values());
@@ -304,7 +303,7 @@ export const $definedComputedStyles = computed(
 );
 
 export const $availableVariables = computed(
-  $definedComputedStyles,
+  $computedStyleDeclarations,
   (computedStyles) => {
     const availableVariables: VarValue[] = [];
     for (const styleDecl of computedStyles) {

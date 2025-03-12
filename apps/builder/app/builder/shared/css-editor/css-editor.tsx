@@ -325,7 +325,6 @@ export const CssEditor = ({
   onSetProperty: SetProperty;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
-  styleMap: CssStyleMap;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
   // When used as part of some larger scroll area to avoid scroll jumps during search.

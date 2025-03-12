@@ -1,14 +1,9 @@
 import { computed } from "nanostores";
-import type { CssProperty, CssStyleMap } from "@webstudio-is/css-engine";
-import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
+import type { CssProperty } from "@webstudio-is/css-engine";
+import { $computedStyleDeclarations, $definedStyles } from "../../shared/model";
 import { sections } from "../sections";
-import {
-  $registeredComponentMetas,
-  $styles,
-  $styleSourceSelections,
-} from "~/shared/nano-states";
-import { $selectedInstancePath } from "~/shared/awareness";
 import { $settings } from "~/builder/shared/client-settings";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
 const initialProperties = new Set<CssProperty>([
@@ -19,39 +14,11 @@ const initialProperties = new Set<CssProperty>([
   "user-select",
 ]);
 
-export const $advancedStylesLonghands = computed(
-  [
-    // prevent showing properties inherited from root
-    // to not bloat advanced panel
-    $selectedInstancePath,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-    $settings,
-  ],
-  (
-    instancePath,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles,
-    settings
-  ) => {
-    const advancedStyles: CssStyleMap = new Map();
-
-    if (instancePath === undefined) {
-      return advancedStyles;
-    }
-
-    const definedStyles = getDefinedStyles({
-      instancePath,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-
+export const $advancedStyleDeclarations = computed(
+  [$computedStyleDeclarations, $settings, $definedStyles],
+  (computedStyleDeclarations, settings, definedStyles) => {
+    const advancedStyles: Array<ComputedStyleDecl> = [];
+    console.log({ definedStyles });
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
@@ -59,24 +26,28 @@ export const $advancedStylesLonghands = computed(
         visualProperties.add(property);
       }
     }
-    for (const style of definedStyles) {
-      const { property, value, listed } = style;
-      const hyphenatedProperty = property;
+    for (const styleDecl of computedStyleDeclarations) {
+      const { property, listed } = styleDecl;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (
-        visualProperties.has(hyphenatedProperty) === false ||
+        visualProperties.has(property) === false ||
         listed ||
         settings.stylePanelMode === "advanced"
       ) {
-        advancedStyles.set(hyphenatedProperty, value);
+        advancedStyles.push(styleDecl);
       }
     }
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
     // @todo https://github.com/webstudio-is/webstudio/issues/4871
     if (settings.stylePanelMode !== "advanced") {
-      for (const initialProperty of initialProperties) {
-        advancedStyles.set(initialProperty, { type: "guaranteedInvalid" });
+      for (const property of initialProperties) {
+        const styleDecl = computedStyleDeclarations.find(
+          (styleDecl) => styleDecl.property === property
+        );
+        if (styleDecl) {
+          advancedStyles.push(styleDecl);
+        }
       }
     }
 
