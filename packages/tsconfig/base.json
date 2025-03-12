@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictBuiltinIteratorReturn": true,
+    "erasableSyntaxOnly": true,
     "allowJs": false,
     "jsx": "react-jsx",
     "resolveJsonModule": true,
