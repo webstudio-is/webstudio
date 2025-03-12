@@ -58,7 +58,7 @@ export const ResourceControl = ({
           resource.url = urlExpression;
         }
       } else {
-        let method: Resource["method"] = "get";
+        let method: Resource["method"] = "post";
         for (const prop of data.props.values()) {
           if (
             prop.instanceId === instanceId &&
@@ -83,7 +83,7 @@ export const ResourceControl = ({
           name: propName,
           url: urlExpression,
           method,
-          headers: [{ name: "Content-Type", value: "application/json" }],
+          headers: [{ name: "Content-Type", value: `"application/json"` }],
         };
         const newProp: Prop = {
           id: prop?.id ?? nanoid(),
