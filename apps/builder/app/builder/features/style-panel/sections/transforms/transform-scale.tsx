@@ -7,7 +7,7 @@ import {
   SmallToggleButton,
   theme,
 } from "@webstudio-is/design-system";
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleValue, CssProperty } from "@webstudio-is/css-engine";
 import {
   BorderRadiusIcon,
   XAxisIcon,
@@ -30,7 +30,7 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 
-const property: StyleProperty = "scale";
+const property: CssProperty = "scale";
 
 export const ScalePanelContent = () => {
   const styleDecl = useComputedStyleDecl(property);

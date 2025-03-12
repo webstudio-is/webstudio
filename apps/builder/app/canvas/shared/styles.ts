@@ -18,6 +18,7 @@ import {
   type TransformValue,
   type VarValue,
   createRegularStyleSheet,
+  hyphenateProperty,
   toValue,
   toVarFallback,
 } from "@webstudio-is/css-engine";
@@ -658,7 +659,7 @@ const subscribeEphemeralStyle = () => {
 
           // Use the actual style value as a fallback (non-ephemeral); see the “Lazy” comment above.
           const computedStyleDecl = createComputedStyleDeclStore(
-            styleDecl.property
+            hyphenateProperty(styleDecl.property)
           ).get();
 
           const value =

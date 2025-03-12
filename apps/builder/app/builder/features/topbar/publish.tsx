@@ -127,7 +127,9 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <Tooltip content={error !== undefined ? error : statusText}>
+          <Tooltip
+            content={error !== undefined ? error : <Text>{statusText}</Text>}
+          >
             <Flex
               align="center"
               justify="center"

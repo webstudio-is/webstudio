@@ -66,6 +66,12 @@ const $metas = computed(
         continue;
       }
 
+      if (
+        isFeatureEnabled("animation") === false &&
+        name.endsWith(":AnimateText")
+      ) {
+        continue;
+      }
       // only set available components from component meta
       availableComponents.add(name);
       if (

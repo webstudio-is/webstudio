@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.8"
   },
   "exports": {
     "webstudio": "./src/index.ts",

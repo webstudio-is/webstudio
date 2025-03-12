@@ -9,7 +9,7 @@ import {
   FloatingPanel,
 } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   XSmallIcon,
   EllipsesIcon,
@@ -44,28 +44,28 @@ import {
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 
-const advancedProperties: StyleProperty[] = [
-  "whiteSpaceCollapse",
-  "textWrapMode",
-  "textWrapStyle",
+const advancedProperties: CssProperty[] = [
+  "white-space-collapse",
+  "text-wrap-mode",
+  "text-wrap-style",
   "direction",
   "hyphens",
-  "textOverflow",
+  "text-overflow",
 ];
 
 export const properties = [
-  "fontFamily",
-  "fontWeight",
-  "fontSize",
-  "lineHeight",
+  "font-family",
+  "font-weight",
+  "font-size",
+  "line-height",
   "color",
-  "textAlign",
-  "fontStyle",
-  "textDecorationLine",
-  "letterSpacing",
-  "textTransform",
+  "text-align",
+  "font-style",
+  "text-decoration-line",
+  "letter-spacing",
+  "text-transform",
   ...advancedProperties,
-] satisfies Array<StyleProperty>;
+] satisfies CssProperty[];
 
 export const Section = () => {
   return (
@@ -85,13 +85,13 @@ const TypographySectionFont = () => {
       <PropertyLabel
         label="Family"
         description={propertyDescriptions.fontFamily}
-        properties={["fontFamily"]}
+        properties={["font-family"]}
       />
       <FontFamilyControl />
       <PropertyLabel
         label="Weight"
         description={propertyDescriptions.fontWeight}
-        properties={["fontWeight"]}
+        properties={["font-weight"]}
       />
       <FontWeightControl />
       <PropertyLabel
@@ -111,25 +111,25 @@ const TypographySectionSizing = () => {
         <PropertyLabel
           label="Size"
           description={propertyDescriptions.fontSize}
-          properties={["fontSize"]}
+          properties={["font-size"]}
         />
-        <TextControl property="fontSize" />
+        <TextControl property="font-size" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
           label="Height"
           description={propertyDescriptions.lineHeight}
-          properties={["lineHeight"]}
+          properties={["line-height"]}
         />
-        <TextControl property="lineHeight" />
+        <TextControl property="line-height" />
       </Grid>
       <Grid gap="1">
         <PropertyLabel
           label="Spacing"
           description={propertyDescriptions.letterSpacing}
-          properties={["letterSpacing"]}
+          properties={["letter-spacing"]}
         />
-        <TextControl property="letterSpacing" />
+        <TextControl property="letter-spacing" />
       </Grid>
     </Grid>
   );
@@ -139,7 +139,7 @@ const TypographySectionAdvanced = () => {
   return (
     <Grid gap="2" columns="2">
       <ToggleGroupControl
-        properties={["textAlign"]}
+        properties={["text-align"]}
         items={[
           {
             child: <TextAlignLeftIcon />,
@@ -165,7 +165,7 @@ const TypographySectionAdvanced = () => {
         ]}
       />
       <ToggleGroupControl
-        properties={["textDecorationLine"]}
+        properties={["text-decoration-line"]}
         items={[
           {
             child: <XSmallIcon />,
@@ -186,7 +186,7 @@ const TypographySectionAdvanced = () => {
         ]}
       />
       <ToggleGroupControl
-        properties={["textTransform"]}
+        properties={["text-transform"]}
         items={[
           {
             child: <XSmallIcon />,
@@ -216,7 +216,7 @@ const TypographySectionAdvanced = () => {
       />
       <Grid align="end" gap="1" css={{ gridTemplateColumns: "3fr 1fr" }}>
         <ToggleGroupControl
-          properties={["fontStyle"]}
+          properties={["font-style"]}
           items={[
             {
               child: <XSmallIcon />,
@@ -291,21 +291,21 @@ const TypographySectionAdvancedPopover = () => {
             <PropertyLabel
               label="White Space"
               description={propertyDescriptions.whiteSpaceCollapse}
-              properties={["whiteSpaceCollapse"]}
+              properties={["white-space-collapse"]}
             />
-            <SelectControl property="whiteSpaceCollapse" />
+            <SelectControl property="white-space-collapse" />
             <PropertyLabel
               label="Wrap Mode"
               description={propertyDescriptions.textWrapMode}
-              properties={["textWrapMode"]}
+              properties={["text-wrap-mode"]}
             />
-            <SelectControl property="textWrapMode" />
+            <SelectControl property="text-wrap-mode" />
             <PropertyLabel
               label="Wrap Style"
               description={propertyDescriptions.textWrapStyle}
-              properties={["textWrapStyle"]}
+              properties={["text-wrap-style"]}
             />
-            <SelectControl property="textWrapStyle" />
+            <SelectControl property="text-wrap-style" />
             <PropertyLabel
               label="Direction"
               description={propertyDescriptions.direction}
@@ -357,11 +357,11 @@ const TypographySectionAdvancedPopover = () => {
             <PropertyLabel
               label="Text Overflow"
               description={propertyDescriptions.textOverflow}
-              properties={["textOverflow"]}
+              properties={["text-overflow"]}
             />
             <Box css={{ justifySelf: "end" }}>
               <ToggleGroupControl
-                properties={["textOverflow"]}
+                properties={["text-overflow"]}
                 items={[
                   {
                     child: <XSmallIcon />,

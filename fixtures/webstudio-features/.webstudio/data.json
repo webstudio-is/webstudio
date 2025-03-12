@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "6f14cdae-073c-4f2c-b535-da3f404f3e36",
+    "id": "342a7c73-ed72-441d-8a69-8b2659639e93",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 479,
-    "createdAt": "2025-03-04T16:25:33.097+00:00",
-    "updatedAt": "2025-03-04T16:25:33.097+00:00",
+    "version": 543,
+    "createdAt": "2025-03-10T13:33:47.683+00:00",
+    "updatedAt": "2025-03-10T13:33:47.683+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -223,6 +223,31 @@
             "include": false
           },
           "path": "/head-tag"
+        },
+        {
+          "id": "oc1Ra5zelesj-wiJwiw-P",
+          "name": "animations",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "Qrpsu4yKLKARA-82TnhLI",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/animations"
         }
       ],
       "folders": [
@@ -242,7 +267,8 @@
             "lTS5DKrDEC_mXSAc5ZDDA",
             "FsnS9ui6btzM4W3YELE3Q",
             "Q1D-6G1cl0SfXyM9Xj4_O",
-            "8fF_9MQOwOqsLM9BhULUG"
+            "8fF_9MQOwOqsLM9BhULUG",
+            "oc1Ra5zelesj-wiJwiw-P"
           ]
         },
         {
@@ -1762,6 +1788,314 @@
             "alpha": 1
           }
         }
+      ],
+      [
+        "Eboa64A1ivGBt9vVhHdkx:UoTkWyaFuTYJihS3MFYK5:height:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "Eboa64A1ivGBt9vVhHdkx",
+          "property": "height",
+          "value": {
+            "type": "unit",
+            "unit": "dvh",
+            "value": 100
+          }
+        }
+      ],
+      [
+        "Eboa64A1ivGBt9vVhHdkx:UoTkWyaFuTYJihS3MFYK5:display:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "Eboa64A1ivGBt9vVhHdkx",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "flex"
+          }
+        }
+      ],
+      [
+        "Eboa64A1ivGBt9vVhHdkx:UoTkWyaFuTYJihS3MFYK5:alignItems:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "Eboa64A1ivGBt9vVhHdkx",
+          "property": "alignItems",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "Eboa64A1ivGBt9vVhHdkx:UoTkWyaFuTYJihS3MFYK5:justifyContent:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "Eboa64A1ivGBt9vVhHdkx",
+          "property": "justifyContent",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "C-HNDjw4PJgh2x3Xt-zaT:UoTkWyaFuTYJihS3MFYK5:height:",
+        {
+          "styleSourceId": "C-HNDjw4PJgh2x3Xt-zaT",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "height",
+          "value": {
+            "type": "unit",
+            "unit": "dvh",
+            "value": 100
+          }
+        }
+      ],
+      [
+        "C-HNDjw4PJgh2x3Xt-zaT:UoTkWyaFuTYJihS3MFYK5:display:",
+        {
+          "styleSourceId": "C-HNDjw4PJgh2x3Xt-zaT",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "flex"
+          }
+        }
+      ],
+      [
+        "C-HNDjw4PJgh2x3Xt-zaT:UoTkWyaFuTYJihS3MFYK5:alignItems:",
+        {
+          "styleSourceId": "C-HNDjw4PJgh2x3Xt-zaT",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "alignItems",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "C-HNDjw4PJgh2x3Xt-zaT:UoTkWyaFuTYJihS3MFYK5:justifyContent:",
+        {
+          "styleSourceId": "C-HNDjw4PJgh2x3Xt-zaT",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "justifyContent",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
+      ],
+      [
+        "iseTqeMVub0Y6Q_3eOQ0S:Z8WjyXWkCrr35PXgjHdpY:maxWidth:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "iseTqeMVub0Y6Q_3eOQ0S",
+          "property": "maxWidth",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 900
+          }
+        }
+      ],
+      [
+        "iseTqeMVub0Y6Q_3eOQ0S:Z8WjyXWkCrr35PXgjHdpY:width:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "iseTqeMVub0Y6Q_3eOQ0S",
+          "property": "width",
+          "value": {
+            "type": "unit",
+            "unit": "%",
+            "value": 100
+          }
+        }
+      ],
+      [
+        "iseTqeMVub0Y6Q_3eOQ0S:Z8WjyXWkCrr35PXgjHdpY:minWidth:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "iseTqeMVub0Y6Q_3eOQ0S",
+          "property": "minWidth",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 0
+          }
+        }
+      ],
+      [
+        "iseTqeMVub0Y6Q_3eOQ0S:Z8WjyXWkCrr35PXgjHdpY:justifySelf:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "iseTqeMVub0Y6Q_3eOQ0S",
+          "property": "justifySelf",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:display:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "grid"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:gridAutoFlow:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "gridAutoFlow",
+          "value": {
+            "type": "keyword",
+            "value": "column"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:gridAutoColumns:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "gridAutoColumns",
+          "value": {
+            "type": "unit",
+            "unit": "fr",
+            "value": 1
+          },
+          "listed": true
+        }
+      ],
+      [
+        "9GVBj1HWWhCsENaCEZID-:Z8WjyXWkCrr35PXgjHdpY:display:",
+        {
+          "styleSourceId": "9GVBj1HWWhCsENaCEZID-",
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "grid"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "9GVBj1HWWhCsENaCEZID-:Z8WjyXWkCrr35PXgjHdpY:gridAutoFlow:",
+        {
+          "styleSourceId": "9GVBj1HWWhCsENaCEZID-",
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "property": "gridAutoFlow",
+          "value": {
+            "type": "keyword",
+            "value": "column"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "9GVBj1HWWhCsENaCEZID-:Z8WjyXWkCrr35PXgjHdpY:gridAutoColumns:",
+        {
+          "styleSourceId": "9GVBj1HWWhCsENaCEZID-",
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "property": "gridAutoColumns",
+          "value": {
+            "type": "unit",
+            "unit": "fr",
+            "value": 1
+          },
+          "listed": true
+        }
+      ],
+      [
+        "mcplLi9TYqk__JBKYzuss:Z8WjyXWkCrr35PXgjHdpY:height:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "mcplLi9TYqk__JBKYzuss",
+          "property": "height",
+          "value": {
+            "type": "unit",
+            "unit": "dvh",
+            "value": 40
+          }
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:alignItems:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "alignItems",
+          "value": {
+            "type": "keyword",
+            "value": "start"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ:Z8WjyXWkCrr35PXgjHdpY:alignContent:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "Uhs5fZ65aKJ2wz5eB2fCJ",
+          "property": "alignContent",
+          "value": {
+            "type": "keyword",
+            "value": "start"
+          },
+          "listed": true
+        }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK:Z8WjyXWkCrr35PXgjHdpY:marginTop:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "8WyGOidmbyXhMWoXUdEkK",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK:Z8WjyXWkCrr35PXgjHdpY:marginBottom:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "8WyGOidmbyXhMWoXUdEkK",
+          "property": "marginBottom",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
+      ],
+      [
+        "hSMd0d2O_5ogkTfvV8g8B:Z8WjyXWkCrr35PXgjHdpY:marginTop:",
+        {
+          "breakpointId": "Z8WjyXWkCrr35PXgjHdpY",
+          "styleSourceId": "hSMd0d2O_5ogkTfvV8g8B",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "em",
+            "value": 0
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -2009,6 +2343,62 @@
           "type": "local",
           "id": "z9mqrlxshNacx8dvtUKFI"
         }
+      ],
+      [
+        "Eboa64A1ivGBt9vVhHdkx",
+        {
+          "type": "local",
+          "id": "Eboa64A1ivGBt9vVhHdkx"
+        }
+      ],
+      [
+        "C-HNDjw4PJgh2x3Xt-zaT",
+        {
+          "type": "local",
+          "id": "C-HNDjw4PJgh2x3Xt-zaT"
+        }
+      ],
+      [
+        "iseTqeMVub0Y6Q_3eOQ0S",
+        {
+          "type": "local",
+          "id": "iseTqeMVub0Y6Q_3eOQ0S"
+        }
+      ],
+      [
+        "Uhs5fZ65aKJ2wz5eB2fCJ",
+        {
+          "type": "local",
+          "id": "Uhs5fZ65aKJ2wz5eB2fCJ"
+        }
+      ],
+      [
+        "9GVBj1HWWhCsENaCEZID-",
+        {
+          "type": "local",
+          "id": "9GVBj1HWWhCsENaCEZID-"
+        }
+      ],
+      [
+        "mcplLi9TYqk__JBKYzuss",
+        {
+          "type": "local",
+          "id": "mcplLi9TYqk__JBKYzuss"
+        }
+      ],
+      [
+        "8WyGOidmbyXhMWoXUdEkK",
+        {
+          "type": "local",
+          "id": "8WyGOidmbyXhMWoXUdEkK"
+        }
+      ],
+      [
+        "hSMd0d2O_5ogkTfvV8g8B",
+        {
+          "type": "local",
+          "id": "hSMd0d2O_5ogkTfvV8g8B"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -2255,6 +2645,62 @@
         {
           "instanceId": "ccyTkEM40ar6Z2UTXhFvY",
           "values": ["z9mqrlxshNacx8dvtUKFI"]
+        }
+      ],
+      [
+        "1e-3lR1XsDg2IsPu4mSNr",
+        {
+          "instanceId": "1e-3lR1XsDg2IsPu4mSNr",
+          "values": ["Eboa64A1ivGBt9vVhHdkx"]
+        }
+      ],
+      [
+        "YrVDoWK0I_9hpQs5yJzLt",
+        {
+          "instanceId": "YrVDoWK0I_9hpQs5yJzLt",
+          "values": ["C-HNDjw4PJgh2x3Xt-zaT"]
+        }
+      ],
+      [
+        "Qrpsu4yKLKARA-82TnhLI",
+        {
+          "instanceId": "Qrpsu4yKLKARA-82TnhLI",
+          "values": ["iseTqeMVub0Y6Q_3eOQ0S"]
+        }
+      ],
+      [
+        "3hPo1LW5P_4VAyXUmVtpY",
+        {
+          "instanceId": "3hPo1LW5P_4VAyXUmVtpY",
+          "values": ["Uhs5fZ65aKJ2wz5eB2fCJ"]
+        }
+      ],
+      [
+        "KCX8plaeWZXn98-4qmHBW",
+        {
+          "instanceId": "KCX8plaeWZXn98-4qmHBW",
+          "values": ["9GVBj1HWWhCsENaCEZID-"]
+        }
+      ],
+      [
+        "81TW-o_0QLHlfmBAKFyCQ",
+        {
+          "instanceId": "81TW-o_0QLHlfmBAKFyCQ",
+          "values": ["mcplLi9TYqk__JBKYzuss"]
+        }
+      ],
+      [
+        "cvCjIfx9TJ3XeeSpCnW1w",
+        {
+          "instanceId": "cvCjIfx9TJ3XeeSpCnW1w",
+          "values": ["8WyGOidmbyXhMWoXUdEkK"]
+        }
+      ],
+      [
+        "hi1l-ro0pCVQpHFIwIhFO",
+        {
+          "instanceId": "hi1l-ro0pCVQpHFIwIhFO",
+          "values": ["hSMd0d2O_5ogkTfvV8g8B"]
         }
       ]
     ],
@@ -2998,6 +3444,374 @@
           "name": "href",
           "type": "string",
           "value": "https://overwritten.slot/head-slot-tag"
+        }
+      ],
+      [
+        "gPNdj8LXDT6H6DLLtqzUi",
+        {
+          "id": "gPNdj8LXDT6H6DLLtqzUi",
+          "instanceId": "D6OU4dJ2tzc_Uq5LqMVWo",
+          "name": "action",
+          "type": "animationAction",
+          "value": {
+            "type": "view",
+            "animations": [
+              {
+                "name": "Fade In",
+                "description": "Fade in the element as it scrolls into view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "opacity": {
+                        "type": "unit",
+                        "unit": "number",
+                        "value": 0
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "rangeStart": [
+                    "entry",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "entry",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Fade Out",
+                "description": "Fade out the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 1,
+                    "styles": {
+                      "opacity": {
+                        "type": "unit",
+                        "unit": "number",
+                        "value": 0
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "forwards",
+                  "rangeStart": [
+                    "exit",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "exit",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Parallax In",
+                "description": "Parallax the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": 100
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Parallax Out",
+                "description": "Parallax the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 1,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": -100
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "forwards",
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              }
+            ],
+            "isPinned": false
+          }
+        }
+      ],
+      [
+        "JQasStAdmMJWCzknMxi6D",
+        {
+          "id": "JQasStAdmMJWCzknMxi6D",
+          "instanceId": "ed6Q3Y2M1MXZf7E8rMwwW",
+          "name": "action",
+          "type": "animationAction",
+          "value": {
+            "type": "view",
+            "animations": [
+              {
+                "name": "Fade In",
+                "description": "Fade in the element as it scrolls into view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "opacity": {
+                        "type": "unit",
+                        "unit": "number",
+                        "value": 0
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "rangeStart": [
+                    "entry",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "entry",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Fade Out",
+                "description": "Fade out the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 1,
+                    "styles": {
+                      "opacity": {
+                        "type": "unit",
+                        "unit": "number",
+                        "value": 0
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "forwards",
+                  "rangeStart": [
+                    "exit",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "exit",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Parallax In",
+                "description": "Parallax the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": 100
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Parallax Out",
+                "description": "Parallax the element as it scrolls out of view.",
+                "keyframes": [
+                  {
+                    "offset": 1,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": -100
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "forwards",
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 100,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              }
+            ],
+            "isPinned": false
+          }
+        }
+      ],
+      [
+        "WXm4SG4hn0GOxQzlx1onL",
+        {
+          "id": "WXm4SG4hn0GOxQzlx1onL",
+          "instanceId": "GRj9UMUzk-HAWRctEcfFH",
+          "name": "charWindow",
+          "type": "number",
+          "value": 20
         }
       ]
     ],
@@ -5167,6 +5981,309 @@
             }
           ]
         }
+      ],
+      [
+        "Qrpsu4yKLKARA-82TnhLI",
+        {
+          "type": "instance",
+          "id": "Qrpsu4yKLKARA-82TnhLI",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "1e-3lR1XsDg2IsPu4mSNr"
+            },
+            {
+              "type": "id",
+              "value": "3hPo1LW5P_4VAyXUmVtpY"
+            },
+            {
+              "type": "id",
+              "value": "81TW-o_0QLHlfmBAKFyCQ"
+            },
+            {
+              "type": "id",
+              "value": "KCX8plaeWZXn98-4qmHBW"
+            },
+            {
+              "type": "id",
+              "value": "YrVDoWK0I_9hpQs5yJzLt"
+            }
+          ]
+        }
+      ],
+      [
+        "1e-3lR1XsDg2IsPu4mSNr",
+        {
+          "type": "instance",
+          "id": "1e-3lR1XsDg2IsPu4mSNr",
+          "component": "Box",
+          "label": "Intro",
+          "children": [
+            {
+              "type": "id",
+              "value": "4wwrTenFWHa_8V-EfwjgO"
+            }
+          ]
+        }
+      ],
+      [
+        "4wwrTenFWHa_8V-EfwjgO",
+        {
+          "type": "instance",
+          "id": "4wwrTenFWHa_8V-EfwjgO",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "ANIMATIONS"
+            }
+          ]
+        }
+      ],
+      [
+        "YrVDoWK0I_9hpQs5yJzLt",
+        {
+          "type": "instance",
+          "id": "YrVDoWK0I_9hpQs5yJzLt",
+          "component": "Box",
+          "label": "Footer",
+          "children": [
+            {
+              "type": "id",
+              "value": "5_baZPv9KywpYUey_eAcH"
+            }
+          ]
+        }
+      ],
+      [
+        "5_baZPv9KywpYUey_eAcH",
+        {
+          "type": "instance",
+          "id": "5_baZPv9KywpYUey_eAcH",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "THE END"
+            }
+          ]
+        }
+      ],
+      [
+        "3hPo1LW5P_4VAyXUmVtpY",
+        {
+          "type": "instance",
+          "id": "3hPo1LW5P_4VAyXUmVtpY",
+          "component": "Box",
+          "label": "Grid",
+          "children": [
+            {
+              "type": "id",
+              "value": "nhg6K_WDmDwhfMi9qkUzE"
+            },
+            {
+              "type": "id",
+              "value": "Vylc3nJKmfZAYwc_rYx6j"
+            }
+          ]
+        }
+      ],
+      [
+        "nhg6K_WDmDwhfMi9qkUzE",
+        {
+          "type": "instance",
+          "id": "nhg6K_WDmDwhfMi9qkUzE",
+          "component": "Box",
+          "label": "AnimCol",
+          "children": [
+            {
+              "type": "id",
+              "value": "D6OU4dJ2tzc_Uq5LqMVWo"
+            }
+          ]
+        }
+      ],
+      [
+        "D6OU4dJ2tzc_Uq5LqMVWo",
+        {
+          "type": "instance",
+          "id": "D6OU4dJ2tzc_Uq5LqMVWo",
+          "component": "@webstudio-is/sdk-components-animation:AnimateChildren",
+          "children": [
+            {
+              "type": "id",
+              "value": "cvCjIfx9TJ3XeeSpCnW1w"
+            },
+            {
+              "type": "id",
+              "value": "815GnawXGdYDbF2lvJ4p-"
+            }
+          ]
+        }
+      ],
+      [
+        "cvCjIfx9TJ3XeeSpCnW1w",
+        {
+          "type": "instance",
+          "id": "cvCjIfx9TJ3XeeSpCnW1w",
+          "component": "Heading",
+          "label": "Animated H0",
+          "children": [
+            {
+              "type": "text",
+              "value": "ANIMATED CHILD 0"
+            }
+          ]
+        }
+      ],
+      [
+        "815GnawXGdYDbF2lvJ4p-",
+        {
+          "type": "instance",
+          "id": "815GnawXGdYDbF2lvJ4p-",
+          "component": "Heading",
+          "label": "Animated H0",
+          "children": [
+            {
+              "type": "text",
+              "value": "ANIMATED CHILD 1"
+            }
+          ]
+        }
+      ],
+      [
+        "Vylc3nJKmfZAYwc_rYx6j",
+        {
+          "type": "instance",
+          "id": "Vylc3nJKmfZAYwc_rYx6j",
+          "component": "Box",
+          "children": [
+            {
+              "type": "text",
+              "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed tellus at nisi feugiat accumsan. Aliquam tristique vitae augue eget lacinia. "
+            }
+          ]
+        }
+      ],
+      [
+        "KCX8plaeWZXn98-4qmHBW",
+        {
+          "type": "instance",
+          "id": "KCX8plaeWZXn98-4qmHBW",
+          "component": "Box",
+          "label": "Grid",
+          "children": [
+            {
+              "type": "id",
+              "value": "tYYYhZkINGVL853ry_940"
+            },
+            {
+              "type": "id",
+              "value": "EHq0nc3KxVSs35jB5udcn"
+            }
+          ]
+        }
+      ],
+      [
+        "tYYYhZkINGVL853ry_940",
+        {
+          "type": "instance",
+          "id": "tYYYhZkINGVL853ry_940",
+          "component": "Box",
+          "label": "AnimCol",
+          "children": [
+            {
+              "type": "id",
+              "value": "ed6Q3Y2M1MXZf7E8rMwwW"
+            }
+          ]
+        }
+      ],
+      [
+        "ed6Q3Y2M1MXZf7E8rMwwW",
+        {
+          "type": "instance",
+          "id": "ed6Q3Y2M1MXZf7E8rMwwW",
+          "component": "@webstudio-is/sdk-components-animation:AnimateChildren",
+          "children": [
+            {
+              "type": "id",
+              "value": "GRj9UMUzk-HAWRctEcfFH"
+            }
+          ]
+        }
+      ],
+      [
+        "EHq0nc3KxVSs35jB5udcn",
+        {
+          "type": "instance",
+          "id": "EHq0nc3KxVSs35jB5udcn",
+          "component": "Box",
+          "children": [
+            {
+              "type": "text",
+              "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed tellus at nisi feugiat accumsan. Aliquam tristique vitae augue eget lacinia. "
+            }
+          ]
+        }
+      ],
+      [
+        "GRj9UMUzk-HAWRctEcfFH",
+        {
+          "type": "instance",
+          "id": "GRj9UMUzk-HAWRctEcfFH",
+          "component": "@webstudio-is/sdk-components-animation:AnimateText",
+          "children": [
+            {
+              "type": "id",
+              "value": "hi1l-ro0pCVQpHFIwIhFO"
+            },
+            {
+              "type": "id",
+              "value": "oRr8wiz8x-p2kEhV0zBnt"
+            }
+          ]
+        }
+      ],
+      [
+        "hi1l-ro0pCVQpHFIwIhFO",
+        {
+          "type": "instance",
+          "id": "hi1l-ro0pCVQpHFIwIhFO",
+          "component": "Heading",
+          "label": "Animated H0",
+          "children": [
+            {
+              "type": "text",
+              "value": "ANIMATED CHILD 1"
+            }
+          ]
+        }
+      ],
+      [
+        "oRr8wiz8x-p2kEhV0zBnt",
+        {
+          "type": "instance",
+          "id": "oRr8wiz8x-p2kEhV0zBnt",
+          "component": "Box",
+          "children": [
+            {
+              "type": "text",
+              "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed tellus at nisi feugiat accumsan. Aliquam tristique vitae augue eget lacinia. "
+            }
+          ]
+        }
+      ],
+      [
+        "81TW-o_0QLHlfmBAKFyCQ",
+        {
+          "type": "instance",
+          "id": "81TW-o_0QLHlfmBAKFyCQ",
+          "component": "Box",
+          "label": "Spacer",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -5406,6 +6523,31 @@
         "include": false
       },
       "path": "/head-tag"
+    },
+    {
+      "id": "oc1Ra5zelesj-wiJwiw-P",
+      "name": "animations",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "Qrpsu4yKLKARA-82TnhLI",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/animations"
     }
   ],
   "assets": [

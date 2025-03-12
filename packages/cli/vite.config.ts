@@ -31,9 +31,6 @@ const isExternal = (id: string, importer: string | undefined) => {
 
 export default defineConfig({
   // resolve only webstudio condition in tests
-  resolve: {
-    conditions: ["webstudio"],
-  },
   build: {
     minify: false,
     lib: {

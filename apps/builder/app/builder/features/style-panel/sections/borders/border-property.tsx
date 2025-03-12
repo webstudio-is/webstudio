@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import { Box, Grid, ToggleButton } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
@@ -117,10 +117,7 @@ export const BorderProperty = ({
           {styles.map((styleDecl) => (
             <CssValueInputContainer
               key={styleDecl.property}
-              icon={
-                borderPropertyOptions[hyphenateProperty(styleDecl.property)]
-                  ?.icon
-              }
+              icon={borderPropertyOptions[styleDecl.property]?.icon}
               property={styleDecl.property}
               styleSource={styleDecl.source.name}
               getOptions={() =>

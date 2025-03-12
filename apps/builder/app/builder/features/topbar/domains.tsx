@@ -80,8 +80,7 @@ export const getPublishStatusAndText = ({
 
   const statusText = (
     <>
-      {textStart}
-      <RelativeTime time={new Date(createdAt)} />
+      {textStart} <RelativeTime time={new Date(createdAt)} />
     </>
   );
 

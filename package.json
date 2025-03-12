@@ -26,33 +26,32 @@
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
+    "@eslint/js": "^9.22.0",
     "@fontsource-variable/inter": "^5.0.20",
     "@fontsource-variable/manrope": "^5.0.20",
     "@fontsource/roboto-mono": "^5.0.18",
     "@radix-ui/react-tooltip": "^1.1.8",
-    "@storybook/addon-actions": "^8.5.0",
-    "@storybook/addon-backgrounds": "^8.5.0",
-    "@storybook/addon-controls": "^8.5.0",
-    "@storybook/react": "^8.5.0",
-    "@storybook/react-vite": "^8.5.0",
+    "@storybook/addon-actions": "^8.6.4",
+    "@storybook/addon-backgrounds": "^8.6.4",
+    "@storybook/addon-controls": "^8.6.4",
+    "@storybook/react": "^8.6.4",
+    "@storybook/react-vite": "^8.6.4",
     "@types/css-tree": "^2.3.1",
-    "@types/eslint__js": "^8.42.3",
     "@types/node": "^22.10.7",
     "@types/react": "^18.2.70",
-    "esbuild": "^0.24.2",
-    "eslint": "^9.18.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-unicorn": "^56.0.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-unicorn": "^57.0.0",
     "nano-staged": "^0.8.0",
-    "prettier": "3.4.2",
+    "prettier": "3.5.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "simple-git-hooks": "^2.11.1",
-    "storybook": "^8.5.0",
-    "tsx": "^4.19.2",
+    "storybook": "^8.6.4",
+    "tsx": "^4.19.3",
     "typescript": "5.7.3",
-    "typescript-eslint": "^8.20.0",
+    "typescript-eslint": "^8.26.1",
     "vite": "^5.4.11"
   },
   "engines": {
@@ -89,8 +88,7 @@
       "css-tree@2.3.1": "patches/css-tree@2.3.1.patch",
       "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch",
       "@radix-ui/react-scroll-area@1.0.5": "patches/@radix-ui__react-scroll-area@1.0.5.patch",
-      "@remix-run/dev": "patches/@remix-run__dev.patch",
-      "scroll-timeline-polyfill@1.1.0": "patches/scroll-timeline-polyfill@1.1.0.patch"
+      "@remix-run/dev": "patches/@remix-run__dev.patch"
     }
   }
 }

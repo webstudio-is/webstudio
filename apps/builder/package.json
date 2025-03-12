@@ -47,14 +47,14 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-aria/interactions": "^3.23.0",
     "@react-aria/utils": "^3.27.0",
-    "@remix-run/node": "^2.15.2",
-    "@remix-run/react": "^2.15.2",
-    "@remix-run/serve": "^2.15.2",
-    "@remix-run/server-runtime": "^2.15.2",
+    "@remix-run/node": "^2.16.0",
+    "@remix-run/react": "^2.16.0",
+    "@remix-run/serve": "^2.16.0",
+    "@remix-run/server-runtime": "^2.16.0",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
-    "@vercel/remix": "2.15.2",
+    "@vercel/remix": "2.15.3",
     "@webstudio-is/ai": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
@@ -123,7 +123,7 @@
     "zod-validation-error": "^3.3.1"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.15.2",
+    "@remix-run/dev": "^2.16.0",
     "@types/debug": "^4.1.12",
     "@types/dom-navigation": "^1.0.4",
     "@types/react": "^18.2.70",
@@ -131,12 +131,12 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "fast-glob": "^3.3.2",
     "html-tags": "^4.0.0",
-    "react-router-dom": "^6.28.1",
+    "react-router-dom": "^6.30.0",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
     "type-fest": "^4.32.0",
     "typescript": "5.7.3",
     "vite": "^5.4.11",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.8"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"
