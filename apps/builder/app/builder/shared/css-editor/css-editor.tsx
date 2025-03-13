@@ -56,18 +56,18 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 const initialIndentation = `20px`;
 
 const AdvancedPropertyLabel = ({
-  property,
+  styleDecl,
   onReset,
   onDeleteProperty,
 }: {
-  property: CssProperty;
+  styleDecl: ComputedStyleDecl;
   onReset?: () => void;
   onDeleteProperty: DeleteProperty;
 }) => {
-  const styleDecl = useComputedStyleDecl(property);
   const [isOpen, setIsOpen] = useState(false);
 
-  const description = propertyDescriptions[camelCaseProperty(property)];
+  const description =
+    propertyDescriptions[camelCaseProperty(styleDecl.property)];
 
   return (
     <Tooltip
@@ -79,7 +79,7 @@ const AdvancedPropertyLabel = ({
         onClick: (event) => {
           if (event.altKey) {
             event.preventDefault();
-            onDeleteProperty(property);
+            onDeleteProperty(styleDecl.property);
             onReset?.();
             return;
           }
@@ -88,16 +88,20 @@ const AdvancedPropertyLabel = ({
       }}
       content={
         <PropertyInfo
-          title={property.startsWith("--") ? "CSS Variable" : property}
+          title={
+            styleDecl.property.startsWith("--")
+              ? "CSS Variable"
+              : styleDecl.property
+          }
           description={description}
           styles={[styleDecl]}
           onReset={() => {
-            onDeleteProperty(property);
+            onDeleteProperty(styleDecl.property);
             setIsOpen(false);
             onReset?.();
           }}
           resetType="delete"
-          link={propertiesData[property]?.mdnUrl}
+          link={propertiesData[styleDecl.property]?.mdnUrl}
         />
       }
     >
@@ -109,7 +113,7 @@ const AdvancedPropertyLabel = ({
           marginLeft: `-${initialIndentation}`,
         }}
       >
-        {property}
+        {styleDecl.property}
       </Label>
     </Tooltip>
   );
@@ -134,6 +138,7 @@ const AdvancedPropertyValue = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
+  console.log(styleDecl);
   return (
     <CssValueInputContainer
       inputRef={mergeRefs(inputRef, inputRefProp)}
@@ -278,7 +283,7 @@ const AdvancedDeclarationLonghand = memo(
         {...{ [copyAttribute]: styleDecl.property }}
       >
         <AdvancedPropertyLabel
-          property={styleDecl.property}
+          styleDecl={styleDecl}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
         />

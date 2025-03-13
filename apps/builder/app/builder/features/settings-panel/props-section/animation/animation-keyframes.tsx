@@ -2,7 +2,6 @@ import {
   StyleValue,
   toValue,
   type CssProperty,
-  type CssStyleMap,
 } from "@webstudio-is/css-engine";
 import {
   Grid,
@@ -28,6 +27,7 @@ import {
 import { useIds } from "~/shared/form-utils";
 import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
 import { CssEditor, type CssEditorApi } from "~/builder/shared/css-editor";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const unitOptions = [
   {
@@ -133,14 +133,18 @@ const Keyframe = ({
   const ids = useIds(["offset"]);
   const apiRef = useRef<CssEditorApi>();
 
-  const styleMap: CssStyleMap = useMemo(
+  const declarations: Array<ComputedStyleDecl> = useMemo(
     () =>
-      new Map(
-        Object.keys(value.styles).map((key) => [
-          key as CssProperty,
-          value.styles[key],
-        ])
-      ),
+      (Object.keys(value.styles) as Array<CssProperty>).map((property) => {
+        const styleValue = value.styles[property];
+        return {
+          property,
+          source: { name: "local" },
+          cascadedValue: styleValue,
+          computedValue: styleValue,
+          usedValue: styleValue,
+        };
+      }),
     [value.styles]
   );
 
@@ -174,7 +178,7 @@ const Keyframe = ({
           showSearch={false}
           propertiesPosition="top"
           virtualize={false}
-          styleMap={styleMap}
+          declarations={declarations}
           apiRef={apiRef}
           onAddDeclarations={(addedStyleMap) => {
             const styles = { ...value.styles };
