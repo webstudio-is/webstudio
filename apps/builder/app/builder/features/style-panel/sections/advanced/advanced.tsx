@@ -20,7 +20,7 @@ import {
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
-import { $advancedStylesLonghands } from "./stores";
+import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
 import { getSetting } from "~/builder/shared/client-settings";
 
@@ -38,7 +38,6 @@ const AdvancedStyleSection = (props: {
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
-      label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
@@ -65,9 +64,11 @@ const AdvancedStyleSection = (props: {
 };
 
 export const Section = () => {
-  const styleMap = useStore($advancedStylesLonghands);
+  const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
   const apiRef = useRef<CssEditorApi>();
-  const properties = Array.from(styleMap.keys());
+  const properties = advancedStyleDeclarations.map(
+    (styleDecl) => styleDecl.property
+  );
   const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance id, so that when user switches between instances and comes back
   // they are still in-place
@@ -135,7 +136,7 @@ export const Section = () => {
       }}
     >
       <CssEditor
-        styleMap={styleMap}
+        declarations={advancedStyleDeclarations}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}
         onAddDeclarations={handleAddDeclarations}
