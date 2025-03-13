@@ -315,6 +315,9 @@ export const insertWebstudioFragmentAt = (
       insertable.parentSelector,
       data.instances
     );
+    if (instancePath === undefined) {
+      return;
+    }
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
@@ -432,8 +435,11 @@ export const reparentInstance = (
 
 export const deleteInstanceMutable = (
   data: Omit<WebstudioData, "pages">,
-  instancePath: InstancePath
+  instancePath: undefined | InstancePath
 ) => {
+  if (instancePath === undefined) {
+    return false;
+  }
   const {
     instances,
     props,
