@@ -59,10 +59,9 @@ const matchOrSuggestToCreate = (
 const renderProperty = (
   { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
-  { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
+  { deletable }: { deletable?: boolean } = {}
 ) =>
   renderControl({
-    autoFocus,
     key: propName,
     instanceId,
     meta,

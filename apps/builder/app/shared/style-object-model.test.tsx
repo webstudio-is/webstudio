@@ -954,11 +954,11 @@ test("access cascaded value without resolving", () => {
   ).toEqual({ type: "keyword", value: "initial" });
 });
 
-test("fallback cascaded value to inherited computed value", () => {
+test("fallback cascaded value to initial value", () => {
   const model = createModel({
     css: `
       body {
-        border-top-color: currentcolor;
+        width: 10px;
       }
     `,
     jsx: (
@@ -971,9 +971,32 @@ test("fallback cascaded value to inherited computed value", () => {
     getComputedStyleDecl({
       model,
       instanceSelector: ["box", "body"],
-      property: "border-top-color",
+      property: "width",
     }).cascadedValue
-  ).toEqual({ type: "keyword", value: "currentColor" });
+  ).toEqual({ type: "keyword", value: "auto" });
+});
+
+test("fallback cascaded value to inherited unresolved value", () => {
+  const model = createModel({
+    css: `
+      body {
+        --color: red;
+        color: var(--color);
+      }
+    `,
+    jsx: (
+      <$.Body ws:id="body" class="body">
+        <$.Box ws:id="box" class="box"></$.Box>
+      </$.Body>
+    ),
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box", "body"],
+      property: "color",
+    }).cascadedValue
+  ).toEqual({ type: "var", value: "color" });
 });
 
 test("work with unknown or invalid properties", () => {

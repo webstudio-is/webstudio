@@ -286,6 +286,9 @@ export type ComputedStyleDecl = {
   cascadedValue: StyleValue;
   computedValue: StyleValue;
   usedValue: StyleValue;
+  // @todo We will delete it once we have added additional filters to advanced panel and
+  // don't need to differentiate this any more.
+  listed?: boolean;
 };
 
 /**
@@ -342,6 +345,7 @@ export const getComputedStyleDecl = ({
       state,
       property,
     });
+    const inheritedCascadedValue = cascadedValue;
     cascadedValue = cascaded?.value;
     source = cascaded?.source ?? { name: "default" };
 
@@ -372,6 +376,7 @@ export const getComputedStyleDecl = ({
     // defaulting https://drafts.csswg.org/css-cascade-5/#defaulting
     else if (inherited) {
       specifiedValue = inheritedValue;
+      cascadedValue = inheritedCascadedValue;
       source = inheritedSource;
     } else {
       specifiedValue = initialValue;
@@ -436,8 +441,8 @@ export const getComputedStyleDecl = ({
     usedValue = currentColor.usedValue;
   }
 
-  // fallback to inherited value
-  cascadedValue ??= computedValue;
+  // fallback to initial value
+  cascadedValue ??= initialValue;
 
   return { property, source, cascadedValue, computedValue, usedValue };
 };

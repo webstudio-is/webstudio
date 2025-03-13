@@ -42,6 +42,13 @@ const Text = z.object({
   rows: z.number().optional(),
 });
 
+const Resource = z.object({
+  ...common,
+  control: z.literal("resource"),
+  type: z.literal("resource"),
+  defaultValue: z.string().optional(),
+});
+
 const Code = z.object({
   ...common,
   control: z.literal("code"),
@@ -178,6 +185,7 @@ export const PropMeta = z.union([
   Number,
   Range,
   Text,
+  Resource,
   Code,
   CodeText,
   Color,

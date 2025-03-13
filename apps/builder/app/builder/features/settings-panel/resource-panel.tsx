@@ -13,7 +13,7 @@ import {
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
 import {
-  encodeDataSourceVariable,
+  encodeDataVariableId,
   generateObjectExpression,
   isLiteralExpression,
   parseObjectExpression,
@@ -383,7 +383,7 @@ const $hiddenDataSourceIds = computed(
   }
 );
 
-const $selectedInstanceScope = computed(
+export const $selectedInstanceResourceScope = computed(
   [
     $selectedInstanceKeyWithRoot,
     $variableValuesByInstanceSelector,
@@ -398,8 +398,9 @@ const $selectedInstanceScope = computed(
   ) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
+    const variableValues = new Map<DataSource["id"], unknown>();
     if (instanceKey === undefined) {
-      return { scope, aliases };
+      return { variableValues, scope, aliases };
     }
     const values = variableValuesByInstanceSelector.get(instanceKey);
     if (values) {
@@ -411,21 +412,21 @@ const $selectedInstanceScope = computed(
         if (dataSourceId === SYSTEM_VARIABLE_ID) {
           dataSource = systemParameter;
         }
-        if (dataSource === undefined) {
-          continue;
+        if (dataSource) {
+          const name = encodeDataVariableId(dataSourceId);
+          variableValues.set(dataSourceId, value);
+          scope[name] = value;
+          aliases.set(name, dataSource.name);
         }
-        const name = encodeDataSourceVariable(dataSourceId);
-        scope[name] = value;
-        aliases.set(name, dataSource.name);
       }
     }
-    return { scope, aliases };
+    return { variableValues, scope, aliases };
   }
 );
 
 const useScope = ({ variable }: { variable?: DataSource }) => {
   const { scope: scopeWithCurrentVariable, aliases } = useStore(
-    $selectedInstanceScope
+    $selectedInstanceResourceScope
   );
   const currentVariableId = variable?.id;
   // prevent showing currently edited variable in suggestions
@@ -435,7 +436,7 @@ const useScope = ({ variable }: { variable?: DataSource }) => {
       return scopeWithCurrentVariable;
     }
     const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
-    delete newScope[encodeDataSourceVariable(currentVariableId)];
+    delete newScope[encodeDataVariableId(currentVariableId)];
     return newScope;
   }, [scopeWithCurrentVariable, currentVariableId]);
   return { scope, aliases };
