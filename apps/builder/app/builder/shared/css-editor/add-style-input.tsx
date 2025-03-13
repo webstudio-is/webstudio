@@ -103,7 +103,7 @@ const getAutocompleteItems = () => {
 };
 
 const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
-  const matched = matchSorter(items, search, {
+  const matched = matchSorter(items, search.replaceAll("-", " "), {
     keys: ["key"],
   });
 
