@@ -130,12 +130,12 @@ export const $matchingBreakpoints = computed(
   }
 );
 
-export type DefinedStyleDecl = Pick<StyleDecl, "listed" | "value"> & {
+type DefinedStyleDecl = Pick<StyleDecl, "listed" | "value"> & {
   property: CssProperty;
   styleSourceId: undefined | StyleDecl["styleSourceId"];
 };
 
-export const getDefinedStyles = ({
+const getDefinedStyles = ({
   instancePath,
   metas,
   matchingBreakpoints: matchingBreakpointsArray,
@@ -220,7 +220,7 @@ export const getDefinedStyles = ({
   ]);
 };
 
-export const $definedStyles = computed(
+const $definedStyles = computed(
   [
     $selectedInstancePath,
     $registeredComponentMetas,

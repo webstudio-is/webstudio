@@ -72,11 +72,11 @@ const getCssText = (
 
 const $highlightedCss = computed(
   [$selectedInstance, $computedStyleDeclarations],
-  (instance, definedComputedStyles) => {
+  (instance, computedStyleDeclarations) => {
     if (instance === undefined) {
       return;
     }
-    const cssText = getCssText(definedComputedStyles, instance.id);
+    const cssText = getCssText(computedStyleDeclarations, instance.id);
     return highlightCss(cssText);
   }
 );
