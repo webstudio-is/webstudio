@@ -78,7 +78,7 @@
     "playwright": "^1.50.1",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "type-fest": "^4.32.0",
+    "type-fest": "^4.37.0",
     "vitest": "^3.0.8",
     "zod": "^3.22.4"
   }

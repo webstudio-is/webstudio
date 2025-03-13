@@ -21,6 +21,15 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
+  props: {
+    ...props,
+    action: {
+      type: "resource",
+      control: "resource",
+      description:
+        "The URI of a program that processes the information submitted via the form.",
+      required: true,
+    },
+  },
   initialProps: ["id", "className", "state", "action"],
 };

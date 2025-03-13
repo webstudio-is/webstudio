@@ -9,7 +9,7 @@ export const getResources = (_props: { system: System }) => {
     name: "action",
     url: "/custom",
     method: "get",
-    headers: [],
+    headers: [{ name: "Content-Type", value: "application/json" }],
   };
   const _data = new Map<string, ResourceRequest>([]);
   const _action = new Map<string, ResourceRequest>([["action", action]]);

@@ -232,10 +232,6 @@ export const action = async ({
     formData.delete(formBotFieldName);
 
     if (resource) {
-      resource.headers.push({
-        name: "Content-Type",
-        value: "application/json",
-      });
       resource.body = Object.fromEntries(formData);
     } else {
       if (contactEmail === undefined) {

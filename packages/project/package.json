@@ -15,7 +15,7 @@
     "@webstudio-is/trpc-interface": "workspace:*",
     "nanoid": "^5.0.9",
     "slugify": "^1.6.6",
-    "type-fest": "^4.32.0",
+    "type-fest": "^4.37.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

@@ -72,7 +72,6 @@ export type ControlProps<Control> = {
   deletable: boolean;
   onChange: (value: PropValue) => void;
   onDelete: () => void;
-  autoFocus?: boolean;
 };
 
 export const RemovePropButton = (props: { onClick: () => void }) => (

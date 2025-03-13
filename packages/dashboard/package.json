@@ -11,7 +11,7 @@
   "dependencies": {
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "type-fest": "^4.32.0",
+    "type-fest": "^4.37.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
