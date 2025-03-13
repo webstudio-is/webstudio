@@ -503,9 +503,17 @@ export const CssEditor = ({
   );
 
   return (
-    <>
+    <Box>
       {showSearch && (
-        <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        <Box
+          css={{
+            padding: theme.panel.padding,
+            position: "sticky",
+            top: 0,
+            background: theme.colors.backgroundPanel,
+            zIndex: 1,
+          }}
+        >
           <SearchField
             inputRef={searchInputRef}
             onChange={handleSearch}
@@ -569,6 +577,6 @@ export const CssEditor = ({
           )}
         </Flex>
       </CssEditorContextMenu>
-    </>
+    </Box>
   );
 };
