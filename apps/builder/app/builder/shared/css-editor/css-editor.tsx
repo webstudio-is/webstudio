@@ -35,10 +35,7 @@ import {
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
 import { styleConfigByName } from "../../features/style-panel/shared/configs";
-import {
-  $availableVariables,
-  useComputedStyleDecl,
-} from "../../features/style-panel/shared/model";
+import { $availableVariables } from "../../features/style-panel/shared/model";
 import { PropertyInfo } from "../../features/style-panel/property-label";
 import { ColorPopover } from "../../features/style-panel/shared/color-picker";
 import { useClientSupports } from "~/shared/client-supports";
@@ -138,7 +135,7 @@ const AdvancedPropertyValue = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const isColor = colord(toValue(styleDecl.usedValue)).isValid();
-  console.log(styleDecl);
+
   return (
     <CssValueInputContainer
       inputRef={mergeRefs(inputRef, inputRefProp)}

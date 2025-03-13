@@ -1,6 +1,6 @@
 import { computed } from "nanostores";
 import type { CssProperty } from "@webstudio-is/css-engine";
-import { $computedStyleDeclarations, $definedStyles } from "../../shared/model";
+import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
 import { $settings } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -15,10 +15,9 @@ const initialProperties = new Set<CssProperty>([
 ]);
 
 export const $advancedStyleDeclarations = computed(
-  [$computedStyleDeclarations, $settings, $definedStyles],
-  (computedStyleDeclarations, settings, definedStyles) => {
+  [$computedStyleDeclarations, $settings],
+  (computedStyleDeclarations, settings) => {
     const advancedStyles: Array<ComputedStyleDecl> = [];
-    console.log({ definedStyles });
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
