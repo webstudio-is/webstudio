@@ -286,7 +286,7 @@ export type ComputedStyleDecl = {
   cascadedValue: StyleValue;
   computedValue: StyleValue;
   usedValue: StyleValue;
-  // We will delete it once we have added additional filters to advanced panel and
+  // @todo We will delete it once we have added additional filters to advanced panel and
   // don't need to differentiate this any more.
   listed?: boolean;
 };

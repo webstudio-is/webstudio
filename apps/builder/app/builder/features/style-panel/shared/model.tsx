@@ -18,7 +18,6 @@ import {
   type StyleSourceSelections,
   type Breakpoint,
   type Instance,
-  type StyleDecl,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { rootComponent } from "@webstudio-is/sdk";
@@ -39,7 +38,6 @@ import {
   type StyleObjectModel,
 } from "~/shared/style-object-model";
 import {
-  $selectedInstancePath,
   $selectedInstancePathWithRoot,
   type InstancePath,
 } from "~/shared/awareness";
@@ -130,11 +128,6 @@ export const $matchingBreakpoints = computed(
   }
 );
 
-type DefinedStyleDecl = Pick<StyleDecl, "listed" | "value"> & {
-  property: CssProperty;
-  styleSourceId: undefined | StyleDecl["styleSourceId"];
-};
-
 const getDefinedStyles = ({
   instancePath,
   metas,
@@ -148,24 +141,25 @@ const getDefinedStyles = ({
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
 }) => {
+  type Defined = {
+    property: CssProperty;
+    listed?: boolean;
+  };
+
   const inheritedStyleSources = new Set();
   const instanceStyleSources = new Set();
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
   const startingInstanceSelector = instancePath[0].instanceSelector;
 
-  const instanceStyles = new Set<DefinedStyleDecl>();
-  const inheritedStyles = new Set<DefinedStyleDecl>();
-  const presetStyles = new Set<DefinedStyleDecl>();
+  const instanceStyles = new Set<Defined>();
+  const inheritedStyles = new Set<Defined>();
+  const presetStyles = new Set<Defined>();
 
   for (const { instance } of instancePath) {
     const meta = metas.get(instance.component);
     for (const preset of Object.values(meta?.presetStyle ?? {})) {
       for (const styleDecl of preset) {
-        presetStyles.add({
-          styleSourceId: undefined,
-          property: styleDecl.property,
-          value: styleDecl.value,
-        });
+        presetStyles.add({ property: styleDecl.property });
       }
     }
     const styleSources = styleSourceSelections.get(instance.id)?.values;
@@ -186,9 +180,7 @@ const getDefinedStyles = ({
       instanceStyleSources.has(styleDecl.styleSourceId)
     ) {
       instanceStyles.add({
-        styleSourceId: styleDecl.styleSourceId,
         property,
-        value: styleDecl.value,
         listed: styleDecl.listed,
       });
     }
@@ -200,9 +192,7 @@ const getDefinedStyles = ({
       inherited
     ) {
       inheritedStyles.add({
-        styleSourceId: styleDecl.styleSourceId,
         property,
-        value: styleDecl.value,
         listed: styleDecl.listed,
       });
     }
@@ -213,34 +203,12 @@ const getDefinedStyles = ({
     return Intl.Collator().compare(a.property, b.property);
   };
 
-  return new Set([
+  return [
     ...Array.from(instanceStyles).sort(sortByProperty),
     ...Array.from(inheritedStyles).sort(sortByProperty),
     ...Array.from(presetStyles).sort(sortByProperty),
-  ]);
+  ];
 };
-
-const $definedStyles = computed(
-  [
-    $selectedInstancePathWithRoot,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-  ],
-  (instancePath, metas, styleSourceSelections, matchingBreakpoints, styles) => {
-    if (instancePath === undefined) {
-      return new Set<DefinedStyleDecl>();
-    }
-    return getDefinedStyles({
-      instancePath,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-  }
-);
 
 const $model = computed(
   [
@@ -275,12 +243,33 @@ const $model = computed(
 
 export const $computedStyleDeclarations = computed(
   [
-    $definedStyles,
     $model,
     $selectedInstancePathWithRoot,
     $selectedOrLastStyleSourceSelector,
+    $registeredComponentMetas,
+    $matchingBreakpoints,
+    $styleSourceSelections,
+    $styles,
   ],
-  (definedStyles, model, instancePath, styleSourceSelector) => {
+  (
+    model,
+    instancePath,
+    styleSourceSelector,
+    metas,
+    matchingBreakpoints,
+    styleSourceSelections,
+    styles
+  ) => {
+    if (instancePath === undefined) {
+      return [];
+    }
+    const definedStyles = getDefinedStyles({
+      instancePath,
+      metas,
+      matchingBreakpoints,
+      styleSourceSelections,
+      styles,
+    });
     const computedStyles = new Map<string, ComputedStyleDecl>();
     for (const { property, listed } of definedStyles) {
       // deduplicate by property name
@@ -294,6 +283,8 @@ export const $computedStyleDeclarations = computed(
         state: styleSourceSelector?.state,
         property,
       });
+      // @todo We will delete it once we have added additional filters to advanced panel and
+      // don't need to differentiate this any more.
       computedStyleDecl.listed = listed;
 
       computedStyles.set(property, computedStyleDecl);
