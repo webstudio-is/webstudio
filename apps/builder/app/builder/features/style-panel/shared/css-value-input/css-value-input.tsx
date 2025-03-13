@@ -47,10 +47,7 @@ import {
   isValidDeclaration,
   propertiesData,
 } from "@webstudio-is/css-data";
-import {
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
-} from "~/shared/nano-states";
+import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
@@ -630,7 +627,8 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = $selectedInstanceUnitSizes.get();
+      const { unitSizes, propertySizes } = $selectedInstanceSizes.get();
+      console.log(propertySizes);
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -653,20 +651,10 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = $selectedInstanceBrowserStyle.get();
-        const browserPropertyValue = browserStyle?.[property];
-        const propertyValue =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.value
-            : 0;
-        const propertyUnit =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.unit
-            : "number";
-
+        const styleValue = propertySizes[hyphenateProperty(property)];
         const convertedValue = convertUnits(unitSizes)(
-          propertyValue,
-          propertyUnit,
+          styleValue?.value ?? 0,
+          styleValue?.unit ?? "number",
           unit
         );
 
