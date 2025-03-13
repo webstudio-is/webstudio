@@ -1505,3 +1505,7 @@ describe("find closest insertable", () => {
     expect(findClosestInsertable(newListItemFragment)).toEqual(undefined);
   });
 });
+
+test("get undefined instead of instance path when no instances found", () => {
+  expect(getInstancePath(["boxId"], new Map())).toEqual(undefined);
+});

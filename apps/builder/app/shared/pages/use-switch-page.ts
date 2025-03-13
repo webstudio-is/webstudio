@@ -109,6 +109,19 @@ export const useSyncPageUrl = () => {
       })
     );
   }, [builderMode, navigate, page, pageHash]);
+
+  useEffect(() => {
+    return $selectedPage.subscribe((page) => {
+      // switch to home page when current one does not exist
+      // possible when undo creating page
+      if (page === undefined) {
+        const pages = $pages.get();
+        if (pages) {
+          selectPage(pages.homePage.id);
+        }
+      }
+    });
+  });
 };
 
 /**

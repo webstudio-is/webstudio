@@ -99,7 +99,7 @@ export const getInstancePath = (
   instances: Instances,
   virtualInstances?: Instances,
   temporaryInstances?: Instances
-): InstancePath => {
+): undefined | InstancePath => {
   const instancePath: InstancePath = [];
   for (let index = 0; index < instanceSelector.length; index += 1) {
     const instanceId = instanceSelector[index];
@@ -115,6 +115,11 @@ export const getInstancePath = (
       instance,
       instanceSelector: instanceSelector.slice(index),
     });
+  }
+  // all consuming code expect at least one instance to be selected
+  // though it is possible to get empty array when undo created page
+  if (instancePath.length === 0) {
+    return undefined;
   }
   return instancePath;
 };
