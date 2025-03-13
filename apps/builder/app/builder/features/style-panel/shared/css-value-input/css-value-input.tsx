@@ -628,7 +628,6 @@ export const CssValueInput = ({
       }
 
       const { unitSizes, propertySizes } = $selectedInstanceSizes.get();
-      console.log(propertySizes);
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
