@@ -389,7 +389,7 @@ export const CssEditor = ({
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    const search = event.target.value.trim();
+    const search = event.target.value.trim().replaceAll("-", " ");
     if (search === "") {
       return handleAbortSearch();
     }
