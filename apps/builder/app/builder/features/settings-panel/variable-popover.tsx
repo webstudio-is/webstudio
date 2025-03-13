@@ -55,7 +55,7 @@ import {
   $resources,
   $areResourcesLoading,
   invalidateResource,
-  getComputedResource,
+  getComputedResourceRequest,
   $userPlanFeatures,
   $instances,
   $props,
@@ -776,7 +776,7 @@ export const VariablePopoverTrigger = ({
                           prefix={<CopyIcon />}
                           color="ghost"
                           onClick={() => {
-                            const resourceRequest = getComputedResource(
+                            const resourceRequest = getComputedResourceRequest(
                               variable.resourceId
                             );
                             if (resourceRequest) {
