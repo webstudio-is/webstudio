@@ -1,6 +1,10 @@
-import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  type CssProperty,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
+import { keywordValues } from "@webstudio-is/css-data";
 import { ColorPicker } from "../../shared/color-picker";
-import { styleConfigByName } from "../../shared/configs";
 import {
   $availableColorVariables,
   useComputedStyleDecl,
@@ -22,9 +26,9 @@ export const ColorControl = ({
       value={value}
       currentColor={currentColor}
       getOptions={() => [
-        ...styleConfigByName(property).items.map((item) => ({
+        ...(keywordValues[hyphenateProperty(property)] ?? []).map((item) => ({
           type: "keyword" as const,
-          value: item.name,
+          value: item,
         })),
         ...$availableColorVariables.get(),
       ]}

@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   extractShadowProperties,
+  keywordValues,
   propertySyntaxes,
   type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
@@ -40,7 +41,6 @@ import {
   parseCssFragment,
 } from "./css-fragment";
 import { PropertyInlineLabel } from "../property-label";
-import { styleConfigByName } from "./configs";
 import { ColorPicker } from "./color-picker";
 
 /*
@@ -327,9 +327,9 @@ export const ShadowContent = ({
             value={colorControlProp}
             currentColor={colorControlProp}
             getOptions={() =>
-              styleConfigByName("color").items.map((item) => ({
+              keywordValues["color"].map((value) => ({
                 type: "keyword",
-                value: item.name,
+                value,
               }))
             }
             onChange={(styleValue) =>

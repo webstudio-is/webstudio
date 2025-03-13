@@ -1,12 +1,11 @@
 import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   type StyleValue,
   TupleValue,
   TupleValueItem,
 } from "@webstudio-is/css-engine";
-import { styleConfigByName } from "../../shared/configs";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
@@ -41,12 +40,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl(property);
   const styleValue = getRepeatedStyleItem(styleDecl, index);
 
-  const { items: defaultItems } = styleConfigByName(property);
-
-  const selectOptions = [
-    ...defaultItems,
-    { name: "custom", label: "Custom" },
-  ].map(({ name }) => name);
+  const selectOptions = [...keywordValues[property], "custom"];
   const selectValue =
     styleValue?.type === "keyword" ? toValue(styleValue) : "custom";
 

@@ -21,7 +21,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
-import { camelCaseProperty } from "./parse-css";
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -59,20 +58,12 @@ export const isValidDeclaration = (
   // these properties have poor support natively and in csstree
   // though rendered styles are merged as shorthand
   // so validate artifically
-  if (cssPropertyName === "white-space-collapse") {
-    return keywordValues.whiteSpaceCollapse.includes(
-      value as (typeof keywordValues.whiteSpaceCollapse)[0]
-    );
-  }
-  if (cssPropertyName === "text-wrap-mode") {
-    return keywordValues.textWrapMode.includes(
-      value as (typeof keywordValues.textWrapMode)[0]
-    );
-  }
-  if (cssPropertyName === "text-wrap-style") {
-    return keywordValues.textWrapStyle.includes(
-      value as (typeof keywordValues.textWrapStyle)[0]
-    );
+  if (
+    cssPropertyName === "white-space-collapse" ||
+    cssPropertyName === "text-wrap-mode" ||
+    cssPropertyName === "text-wrap-style"
+  ) {
+    return keywordValues[cssPropertyName].includes(value);
   }
 
   if (cssPropertyName === "transition-behavior") {
@@ -431,10 +422,7 @@ export const parseCssValue = (
   // so check keywords manually
   if (property === "transition-behavior") {
     const node = ast.type === "Value" ? ast.children.first : ast;
-    const keyword = parseLiteral(
-      node,
-      keywordValues[camelCaseProperty(property) as never]
-    );
+    const keyword = parseLiteral(node, keywordValues[property]);
     if (keyword?.type === "keyword") {
       return keyword;
     }
@@ -471,10 +459,7 @@ export const parseCssValue = (
       if (node.type === "Operator") {
         return { type: "unparsed", value: input };
       }
-      const matchedValue = parseLiteral(
-        node,
-        keywordValues[camelCaseProperty(property) as never]
-      );
+      const matchedValue = parseLiteral(node, keywordValues[property]);
       if (matchedValue) {
         tuple.value.push(matchedValue as never);
       } else {
@@ -487,10 +472,7 @@ export const parseCssValue = (
   if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const matchedValue = parseLiteral(
-      first,
-      keywordValues[camelCaseProperty(property) as never]
-    );
+    const matchedValue = parseLiteral(first, keywordValues[property]);
     if (matchedValue) {
       return matchedValue;
     }

@@ -8,7 +8,7 @@ import {
   SmallToggleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -40,7 +40,6 @@ import {
   AlignContentStretchIcon,
 } from "@webstudio-is/icons";
 import { MenuControl, SelectControl } from "../../controls";
-import { styleConfigByName } from "../../shared/configs";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { StyleSection } from "../../shared/style-section";
 import {
@@ -56,6 +55,7 @@ import {
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { FlexGrid } from "./shared/flex-grid";
+import { humanizeString } from "~/shared/string-utils";
 
 const GapLinked = ({
   isLinked,
@@ -139,14 +139,16 @@ const GapInput = ({
   onChange: (value: StyleValue) => void;
   onReset: () => void;
 }) => {
-  const { label, items } = styleConfigByName(property);
-
   return (
     <Box>
       <CssValueInput
         styleSource={styleDecl.source.name}
         icon={
-          <GapTooltip label={label} styleDecl={styleDecl} onReset={onReset}>
+          <GapTooltip
+            label={humanizeString(property)}
+            styleDecl={styleDecl}
+            onReset={onReset}
+          >
             {icon}
           </GapTooltip>
         }
@@ -154,9 +156,9 @@ const GapInput = ({
         value={styleDecl.cascadedValue}
         intermediateValue={intermediateValue}
         getOptions={() => [
-          ...items.map((item) => ({
+          ...(keywordValues[property] ?? []).map((value) => ({
             type: "keyword" as const,
-            value: item.name,
+            value,
           })),
           ...$availableUnitVariables.get(),
         ]}

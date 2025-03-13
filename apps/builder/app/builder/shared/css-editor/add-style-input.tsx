@@ -25,7 +25,6 @@ import {
 import {
   cssWideKeywords,
   generateStyleMap,
-  hyphenateProperty,
   mergeStyles,
   toValue,
   type StyleProperty,
@@ -78,19 +77,17 @@ const getAutocompleteItems = () => {
 
   const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
 
-  for (const property in keywordValues) {
-    const values = keywordValues[property as keyof typeof keywordValues];
-    for (const value of values) {
+  for (const [property, values] of Object.entries(keywordValues)) {
+    for (const value of values ?? []) {
       if (ignoreValues.has(value)) {
         continue;
       }
-      const hyphenatedProperty = hyphenateProperty(property);
       autoCompleteItems.push({
         // Allow matching "gr te co" -> "grid-template-columns"
-        key: `${hyphenatedProperty.replaceAll("-", " ")} ${value}`,
-        property: hyphenatedProperty,
+        key: `${property.replaceAll("-", " ")} ${value}`,
+        property,
         value,
-        label: `${hyphenatedProperty}: ${value}`,
+        label: `${property}: ${value}`,
       });
     }
   }

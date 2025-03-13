@@ -1,16 +1,18 @@
+import { noCase } from "change-case";
 import {
   camelCaseProperty,
   declarationDescriptions,
+  keywordValues,
   parseCssValue,
 } from "@webstudio-is/css-data";
 import {
+  hyphenateProperty,
   StyleValue,
   toValue,
   type CssProperty,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
 import { toKebabCase } from "../../shared/keyword-utils";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
@@ -22,12 +24,11 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { noCase } from "change-case";
 
 export const SelectControl = ({
   property,
   index,
-  items = styleConfigByName(property).items,
+  items,
 }: {
   property: StyleProperty | CssProperty;
   index?: number;
@@ -45,7 +46,11 @@ export const SelectControl = ({
       setRepeatedStyleItem(styleDecl, index, value, options);
     }
   };
-  const options = items.map(({ name }) => name);
+  const options =
+    items?.map(({ name }) => name) ??
+    keywordValues[hyphenateProperty(property)] ??
+    [];
+
   // We can't render an empty string as a value when display was added but without a value.
   // One case is when advanced property is being added, but no value is set.
   const valueString = toValue(value) || "empty";

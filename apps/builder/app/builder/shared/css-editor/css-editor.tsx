@@ -24,6 +24,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
+  keywordValues,
   propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
@@ -34,7 +35,6 @@ import {
 } from "@webstudio-is/css-engine";
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
-import { styleConfigByName } from "../../features/style-panel/shared/configs";
 import { $availableVariables } from "../../features/style-panel/shared/model";
 import { PropertyInfo } from "../../features/style-panel/property-label";
 import { ColorPopover } from "../../features/style-panel/shared/color-picker";
@@ -163,9 +163,9 @@ const AdvancedPropertyValue = ({
       property={styleDecl.property}
       styleSource={styleDecl.source.name}
       getOptions={() => [
-        ...styleConfigByName(styleDecl.property).items.map((item) => ({
+        ...(keywordValues[styleDecl.property] ?? []).map((value) => ({
           type: "keyword" as const,
-          value: item.name,
+          value,
         })),
         ...$availableVariables.get(),
       ]}

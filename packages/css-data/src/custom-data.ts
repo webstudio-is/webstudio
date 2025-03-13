@@ -85,6 +85,7 @@ propertiesData.viewTimelineName = {
   },
   mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
 };
+keywordValues.viewTimelineName = [];
 propertiesData.scrollTimelineName = {
   unitGroups: [],
   inherited: false,
@@ -95,6 +96,7 @@ propertiesData.scrollTimelineName = {
   mdnUrl:
     "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
 };
+keywordValues.scrollTimelineName = [];
 
 propertiesData.viewTimelineInset = {
   unitGroups: ["length", "percentage"],
@@ -106,6 +108,7 @@ propertiesData.viewTimelineInset = {
   mdnUrl:
     "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-inset",
 };
+keywordValues.viewTimelineInset = [];
 
 keywordValues.listStyleType = [
   "disc",
