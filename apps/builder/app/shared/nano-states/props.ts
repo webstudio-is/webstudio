@@ -570,11 +570,18 @@ const computeResource = (
 };
 
 const $computedResources = computed(
-  [$resources, $loaderVariableValues],
-  (resources, values) => {
+  [$dataSources, $resources, $loaderVariableValues],
+  (dataSources, resources, values) => {
     const computedResources: ResourceRequest[] = [];
-    for (const resource of resources.values()) {
-      computedResources.push(computeResource(resource, values));
+    // load only resources bound to variables
+    // action resources should not be loaded automatically
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type === "resource") {
+        const resource = resources.get(dataSource.resourceId);
+        if (resource) {
+          computedResources.push(computeResource(resource, values));
+        }
+      }
     }
     return computedResources;
   }

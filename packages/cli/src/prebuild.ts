@@ -301,6 +301,16 @@ export const prebuild = async (options: {
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
 
+  // use whole project props to access id props from other pages
+  const normalizedProps = normalizeProps({
+    props: siteData.build.props.map(([_id, prop]) => prop),
+    assetBaseUrl,
+    assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
+    uploadingImageAssets: [],
+    pages: siteData.build.pages,
+    source: "prebuild",
+  });
+
   for (const page of Object.values(siteData.pages)) {
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
@@ -309,33 +319,33 @@ export const prebuild = async (options: {
     );
     // support global data variables
     pageInstanceSet.add(ROOT_INSTANCE_ID);
-    const instances: [Instance["id"], Instance][] =
-      siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
-    const dataSources: [DataSource["id"], DataSource][] = [];
+    // collect used instances and metas
+    const instances: [Instance["id"], Instance][] = [];
+    for (const [_instanceId, instance] of siteData.build.instances) {
+      if (pageInstanceSet.has(instance.id)) {
+        instances.push([instance.id, instance]);
+        const meta = metas.get(instance.component);
+        if (meta) {
+          usedMetas.set(instance.component, meta);
+        }
+      }
+    }
 
-    // use whole project props to access id props from other pages
-    const normalizedProps = normalizeProps({
-      props: siteData.build.props.map(([_id, prop]) => prop),
-      assetBaseUrl,
-      assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
-      uploadingImageAssets: [],
-      pages: siteData.build.pages,
-      source: "prebuild",
-    });
+    const resourceIds = new Set<Resource["id"]>();
 
     const props: [Prop["id"], Prop][] = [];
     for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
+        if (prop.type === "resource") {
+          resourceIds.add(prop.value);
+        }
       }
     }
 
-    const resourceIds = new Set<Resource["id"]>();
+    const dataSources: [DataSource["id"], DataSource][] = [];
     for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
-      if (
-        dataSource.scopeInstanceId === undefined ||
-        pageInstanceSet.has(dataSource.scopeInstanceId)
-      ) {
+      if (pageInstanceSet.has(dataSource.scopeInstanceId ?? "")) {
         dataSources.push([dataSourceId, dataSource]);
         if (dataSource.type === "resource") {
           resourceIds.add(dataSource.resourceId);
@@ -361,13 +371,6 @@ export const prebuild = async (options: {
       page,
       assets: siteData.assets,
     };
-
-    for (const [_instanceId, instance] of instances) {
-      const meta = metas.get(instance.component);
-      if (meta) {
-        usedMetas.set(instance.component, meta);
-      }
-    }
 
     // Extract background SVGs and Font assets
     const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];

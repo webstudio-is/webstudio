@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { TextArea } from "@webstudio-is/design-system";
 import {
@@ -22,7 +22,6 @@ export const TextControl = ({
   propName,
   deletable,
   computedValue,
-  autoFocus,
   onChange,
   onDelete,
 }: ControlProps<"text">) => {
@@ -35,7 +34,6 @@ export const TextControl = ({
   });
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -43,16 +41,9 @@ export const TextControl = ({
     prop?.type === "expression" ? prop.value : undefined
   );
 
-  useEffect(() => {
-    if (autoFocus) {
-      textAreaRef.current?.focus();
-    }
-  }, [autoFocus]);
-
   const input = (
     <BindingControl>
       <TextArea
-        ref={textAreaRef}
         id={id}
         disabled={overwritable === false}
         autoGrow
