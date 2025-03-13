@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "type-fest": "^4.32.0"
+    "type-fest": "^4.37.0"
   },
   "exports": {
     ".": {
