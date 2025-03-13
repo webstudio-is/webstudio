@@ -222,7 +222,7 @@ const getDefinedStyles = ({
 
 const $definedStyles = computed(
   [
-    $selectedInstancePath,
+    $selectedInstancePathWithRoot,
     $registeredComponentMetas,
     $styleSourceSelections,
     $matchingBreakpoints,

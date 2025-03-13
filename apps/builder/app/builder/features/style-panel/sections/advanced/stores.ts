@@ -4,6 +4,7 @@ import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
 import { $settings } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 
 // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
 const initialProperties = new Set<CssProperty>([
@@ -26,6 +27,14 @@ export const $advancedStyleDeclarations = computed(
       }
     }
     for (const styleDecl of computedStyleDeclarations) {
+      // We don't want to show the massive amount of root variables on child instances.
+      // @todo add filters to the UI to allow user decide.
+      if (
+        styleDecl.source.name === "remote" &&
+        styleDecl.source.instanceId === ROOT_INSTANCE_ID
+      ) {
+        continue;
+      }
       const { property, listed } = styleDecl;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
