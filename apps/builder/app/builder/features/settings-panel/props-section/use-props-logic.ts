@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import { collectionComponent, descendantComponent } from "@webstudio-is/sdk";
 import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
-import type { PropValue } from "../shared";
+import { showAttributeMeta, type PropValue } from "../shared";
 import {
   $isContentMode,
   $registeredComponentMetas,
@@ -133,22 +133,6 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
-const systemPropsMeta: { name: string; meta: PropMeta }[] = [
-  {
-    name: showAttribute,
-    meta: {
-      label: "Show",
-      required: false,
-      control: "boolean",
-      type: "boolean",
-      defaultValue: true,
-      // If you are changing it, change the other one too
-      description:
-        "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
-    },
-  },
-];
-
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -198,32 +182,17 @@ export const usePropsLogic = ({
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
-  const systemProps: PropAndMeta[] = systemPropsMeta
-    .filter(({ name }) => {
-      // descendant component is not actually rendered
-      // but affects styling of nested elements
-      // hiding descendant does not hide nested elements and confuse users
-      if (
-        instance.component === descendantComponent &&
-        name === showAttribute
-      ) {
-        return false;
-      }
-      return true;
-    })
-    .map(({ name, meta }) => {
-      let saved = getAndDelete<Prop>(unprocessedSaved, name);
-      if (saved === undefined && meta.defaultValue !== undefined) {
-        saved = getStartingProp(instance.id, meta, name);
-      }
-      getAndDelete(unprocessedKnown, name);
-      initialPropsNames.delete(name);
-      return {
-        prop: saved,
-        propName: name,
-        meta,
-      };
+  const systemProps: PropAndMeta[] = [];
+  // descendant component is not actually rendered
+  // but affects styling of nested elements
+  // hiding descendant does not hide nested elements and confuse users
+  if (instance.component !== descendantComponent) {
+    systemProps.push({
+      propName: showAttribute,
+      prop: getAndDelete(unprocessedSaved, showAttribute),
+      meta: showAttributeMeta,
     });
+  }
 
   const canHaveTextContent =
     instanceMeta?.type === "container" &&

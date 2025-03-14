@@ -14,6 +14,7 @@ import {
   useBindingState,
   humanizeAttribute,
 } from "../shared";
+import { PropertyLabel } from "../property-label";
 
 const add = (array: string[], item: string) => {
   if (array.includes(item)) {
@@ -34,9 +35,7 @@ export const CheckControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: ControlProps<"check" | "inline-check" | "multi-select">) => {
   const value = Array.isArray(computedValue)
     ? computedValue.map((item) => String(item))
@@ -57,16 +56,8 @@ export const CheckControl = ({
   return (
     <VerticalLayout
       label={
-        <Label
-          htmlFor={`${id}:${options[0]}`}
-          description={meta.description}
-          readOnly={overwritable === false}
-        >
-          {label}
-        </Label>
+        <PropertyLabel name={propName} readOnly={overwritable === false} />
       }
-      deletable={deletable}
-      onDelete={onDelete}
     >
       <BindingControl>
         {options.map((option) => (

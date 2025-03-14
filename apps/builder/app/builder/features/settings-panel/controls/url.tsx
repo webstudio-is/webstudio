@@ -42,6 +42,7 @@ import {
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 import { createRootFolder } from "@webstudio-is/project-build";
+import { PropertyLabel } from "../property-label";
 
 type UrlControlProps = ControlProps<"url">;
 
@@ -461,7 +462,6 @@ export const UrlControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
   onDelete,
 }: UrlControlProps) => {
@@ -484,15 +484,7 @@ export const UrlControl = ({
   );
 
   return (
-    <VerticalLayout
-      label={
-        <Label htmlFor={id} description={meta.description}>
-          {label}
-        </Label>
-      }
-      deletable={deletable}
-      onDelete={onDelete}
-    >
+    <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex
         css={{
           py: theme.spacing[2],

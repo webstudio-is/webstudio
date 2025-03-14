@@ -14,8 +14,7 @@ import {
   $assets,
   $selectedPageHash,
   $selectedInstanceSelector,
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
+  $selectedInstanceSizes,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $authTokenPermissions,
@@ -98,14 +97,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourceValues", $resourceValues),
     new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
-    new NanostoresSyncObject(
-      "selectedInstanceBrowserStyle",
-      $selectedInstanceBrowserStyle
-    ),
-    new NanostoresSyncObject(
-      "selectedInstanceUnitSizes",
-      $selectedInstanceUnitSizes
-    ),
+    new NanostoresSyncObject("selectedInstanceSizes", $selectedInstanceSizes),
     new NanostoresSyncObject(
       "selectedInstanceRenderState",
       $selectedInstanceRenderState

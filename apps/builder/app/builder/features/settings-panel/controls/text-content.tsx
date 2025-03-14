@@ -84,8 +84,6 @@ export const TextContent = ({
           {label}
         </Label>
       }
-      deletable={false}
-      onDelete={() => {}}
     >
       <BindingControl>
         <TextArea
