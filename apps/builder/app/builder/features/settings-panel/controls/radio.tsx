@@ -14,15 +14,14 @@ import {
   useBindingState,
   humanizeAttribute,
 } from "../shared";
+import { PropertyLabel } from "../property-label";
 
 export const RadioControl = ({
   meta,
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: ControlProps<"radio" | "inline-radio">) => {
   const value = computedValue === undefined ? undefined : String(computedValue);
   // making sure that the current value is in the list of options
@@ -43,16 +42,8 @@ export const RadioControl = ({
   return (
     <VerticalLayout
       label={
-        <Label
-          htmlFor={id}
-          description={meta.description}
-          readOnly={overwritable === false}
-        >
-          {label}
-        </Label>
+        <PropertyLabel name={propName} readOnly={overwritable === false} />
       }
-      deletable={deletable}
-      onDelete={onDelete}
     >
       <BindingControl>
         <RadioGroup

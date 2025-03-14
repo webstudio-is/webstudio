@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { InputField } from "@webstudio-is/design-system";
@@ -10,22 +11,20 @@ import {
 import {
   type ControlProps,
   useLocalValue,
-  ResponsiveLayout,
-  Label,
   humanizeAttribute,
+  VerticalLayout,
 } from "../shared";
 import { $resources } from "~/shared/nano-states";
 import { $selectedInstanceResourceScope } from "../resource-panel";
 import { computeExpression } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { nanoid } from "nanoid";
+import { PropertyLabel } from "../property-label";
 
 export const ResourceControl = ({
   meta,
   prop,
   propName,
   instanceId,
-  deletable,
 }: ControlProps<"resource">) => {
   const resources = useStore($resources);
   const { variableValues, scope, aliases } = useStore(
@@ -98,17 +97,6 @@ export const ResourceControl = ({
     });
   };
 
-  const deletePropAndResource = () => {
-    updateWebstudioData((data) => {
-      if (prop?.type === "resource") {
-        data.resources.delete(prop.value);
-      }
-      if (prop) {
-        data.props.delete(prop.id);
-      }
-    });
-  };
-
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
   let variant: BindingVariant = "bound";
@@ -122,14 +110,8 @@ export const ResourceControl = ({
   );
 
   return (
-    <ResponsiveLayout
-      label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {label}
-        </Label>
-      }
-      deletable={deletable}
-      onDelete={deletePropAndResource}
+    <VerticalLayout
+      label={<PropertyLabel name={propName} readOnly={readOnly} />}
     >
       <BindingControl>
         <InputField
@@ -156,6 +138,6 @@ export const ResourceControl = ({
           }
         />
       </BindingControl>
-    </ResponsiveLayout>
+    </VerticalLayout>
   );
 };

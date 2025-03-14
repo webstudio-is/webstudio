@@ -9,21 +9,19 @@ import {
   type ControlProps,
   useLocalValue,
   ResponsiveLayout,
-  Label,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
   humanizeAttribute,
 } from "../shared";
+import { PropertyLabel } from "../property-label";
 
 export const TextControl = ({
   meta,
   prop,
   propName,
-  deletable,
   computedValue,
   onChange,
-  onDelete,
 }: ControlProps<"text">) => {
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
@@ -76,21 +74,11 @@ export const TextControl = ({
     </BindingControl>
   );
 
-  const labelElement = (
-    <Label
-      htmlFor={id}
-      description={meta.description}
-      readOnly={overwritable === false}
-    >
-      {label}
-    </Label>
-  );
-
   return (
     <ResponsiveLayout
-      label={labelElement}
-      deletable={deletable}
-      onDelete={onDelete}
+      label={
+        <PropertyLabel name={propName} readOnly={overwritable === false} />
+      }
     >
       {input}
     </ResponsiveLayout>
