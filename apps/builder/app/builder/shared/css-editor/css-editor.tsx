@@ -320,7 +320,7 @@ export const CssEditor = ({
   virtualize = true,
   propertiesPosition = "bottom",
   recentProperties = [],
-  memorizeMinHeight = true,
+  stabilizeScrollTop = true,
 }: {
   declarations: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
@@ -331,7 +331,7 @@ export const CssEditor = ({
   showSearch?: boolean;
   // When used as part of some larger scroll area to avoid scroll jumps during search.
   // For example advanced section in the style panel.
-  memorizeMinHeight?: boolean;
+  stabilizeScrollTop?: boolean;
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
@@ -394,7 +394,7 @@ export const CssEditor = ({
       return handleAbortSearch();
     }
 
-    if (memorizeMinHeight) {
+    if (stabilizeScrollTop) {
       setMinHeight(containerRef.current?.offsetTop ?? 0);
     }
 

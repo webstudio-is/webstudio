@@ -143,7 +143,7 @@ export const Section = () => {
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
         apiRef={apiRef}
         recentProperties={recentProperties}
-        memorizeMinHeight={getSetting("stylePanelMode") !== "advanced"}
+        stabilizeScrollTop={getSetting("stylePanelMode") !== "advanced"}
       />
     </AdvancedStyleSection>
   );
