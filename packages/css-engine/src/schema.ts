@@ -212,9 +212,3 @@ export const StyleValue = z.union([
 ]);
 
 export type StyleValue = z.infer<typeof StyleValue>;
-
-const Style = z.record(z.string(), StyleValue);
-
-export type Style = {
-  [property in StyleProperty]?: StyleValue;
-} & { [property: CustomProperty]: StyleValue };
