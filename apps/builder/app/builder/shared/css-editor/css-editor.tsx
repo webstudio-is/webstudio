@@ -503,7 +503,7 @@ export const CssEditor = ({
   );
 
   return (
-    <Box>
+    <Box css={{ isolation: "isolate" }}>
       {showSearch && (
         <Box
           css={{
