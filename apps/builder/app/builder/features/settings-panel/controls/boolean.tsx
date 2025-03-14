@@ -6,22 +6,19 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  Label,
-  RemovePropButton,
   $selectedInstanceScope,
   updateExpressionValue,
   useBindingState,
   humanizeAttribute,
 } from "../shared";
+import { PropertyLabel } from "../property-label";
 
 export const BooleanControl = ({
   meta,
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: ControlProps<"boolean">) => {
   const label = humanizeAttribute(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
@@ -34,18 +31,14 @@ export const BooleanControl = ({
   return (
     <Grid
       css={{
-        gridTemplateColumns: deletable
-          ? `1fr max-content max-content`
-          : `1fr max-content`,
+        gridTemplateColumns: `1fr max-content`,
         minHeight: theme.spacing[13],
         justifyItems: "start",
       }}
       align="center"
       gap="2"
     >
-      <Label description={meta.description} readOnly={overwritable === false}>
-        {label}
-      </Label>
+      <PropertyLabel name={propName} readOnly={overwritable === false} />
       <BindingControl>
         <Switch
           disabled={overwritable === false}
@@ -76,7 +69,6 @@ export const BooleanControl = ({
           }
         />
       </BindingControl>
-      {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );
 };

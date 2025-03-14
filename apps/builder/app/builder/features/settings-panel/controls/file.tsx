@@ -9,13 +9,13 @@ import {
   type ControlProps,
   VerticalLayout,
   useLocalValue,
-  Label,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
   humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { PropertyLabel } from "../property-label";
 
 const UrlInput = ({
   id,
@@ -47,7 +47,6 @@ export const FileControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
   onDelete,
 }: ControlProps<"file">) => {
@@ -81,15 +80,7 @@ export const FileControl = ({
   );
 
   return (
-    <VerticalLayout
-      label={
-        <Label htmlFor={id} description={meta.description}>
-          {label}
-        </Label>
-      }
-      deletable={deletable}
-      onDelete={onDelete}
-    >
+    <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
         <BindingControl>
           <UrlInput

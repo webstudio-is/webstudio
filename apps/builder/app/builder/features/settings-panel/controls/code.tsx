@@ -1,19 +1,4 @@
 import { useStore } from "@nanostores/react";
-import { CodeEditor } from "~/builder/shared/code-editor";
-import {
-  BindingControl,
-  BindingPopover,
-} from "~/builder/shared/binding-popover";
-import {
-  useLocalValue,
-  type ControlProps,
-  VerticalLayout,
-  Label,
-  updateExpressionValue,
-  $selectedInstanceScope,
-  useBindingState,
-  humanizeAttribute,
-} from "../shared";
 import { useState } from "react";
 import {
   Button,
@@ -29,6 +14,21 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { CodeEditor } from "~/builder/shared/code-editor";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
+import {
+  useLocalValue,
+  type ControlProps,
+  VerticalLayout,
+  updateExpressionValue,
+  $selectedInstanceScope,
+  useBindingState,
+  humanizeAttribute,
+} from "../shared";
+import { PropertyLabel } from "../property-label";
 
 const ErrorInfo = ({
   error,
@@ -126,9 +126,7 @@ export const CodeControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: ControlProps<"code"> | ControlProps<"codetext">) => {
   const [error, setError] = useState<Error>();
   const metaOverride = {
@@ -177,17 +175,10 @@ export const CodeControl = ({
     <VerticalLayout
       label={
         <Flex gap="1" align="center">
-          <Label
-            description={metaOverride.description}
-            readOnly={overwritable === false}
-          >
-            {label}
-          </Label>
+          <PropertyLabel name={propName} readOnly={overwritable === false} />
           {errorInfo}
         </Flex>
       }
-      deletable={deletable}
-      onDelete={onDelete}
     >
       <BindingControl>
         <CodeEditor
