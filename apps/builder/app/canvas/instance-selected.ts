@@ -82,7 +82,7 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
 const calculatePropertySizes = (element: HTMLElement) => {
   const computedStyle = getComputedStyle(element);
   const propertySizes: PropertySizes = {};
-  for (const property of Object.keys(propertiesData)) {
+  for (const property in propertiesData) {
     try {
       const propertyValue = computedStyle.getPropertyValue(property);
       const value = CSSStyleValue.parse(property, propertyValue);
