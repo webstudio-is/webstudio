@@ -350,7 +350,7 @@ export const CssEditor = ({
       handleShowAddStyleInput();
     },
   }));
-  console.log(declarations);
+
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
   );
@@ -395,7 +395,7 @@ export const CssEditor = ({
     }
 
     if (memorizeMinHeight) {
-      setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
+      setMinHeight(containerRef.current?.offsetTop ?? 0);
     }
 
     const styles = declarations.map(({ property, cascadedValue }) => {
