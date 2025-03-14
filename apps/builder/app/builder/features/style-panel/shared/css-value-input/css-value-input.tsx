@@ -59,6 +59,7 @@ import {
   ValueEditorDialog,
 } from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { flushSync } from "react-dom";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
@@ -929,7 +930,21 @@ export const CssValueInput = ({
   }, [inputRef]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter, handleDelete],
+    [
+      handleUpDownNumeric,
+      inputProps.onKeyDown,
+      handleEnter,
+      handleDelete,
+      (event: KeyboardEvent) => {
+        // When dropdown is open - we are loosing focus to the combobox.
+        // When menu gets closed via Escape - we want to restore the focus.
+        if (event.key === "Escape" && isOpen) {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      },
+    ],
     {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,
