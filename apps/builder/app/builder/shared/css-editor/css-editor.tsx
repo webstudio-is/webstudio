@@ -350,7 +350,7 @@ export const CssEditor = ({
       handleShowAddStyleInput();
     },
   }));
-
+  console.log(declarations);
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
   );
