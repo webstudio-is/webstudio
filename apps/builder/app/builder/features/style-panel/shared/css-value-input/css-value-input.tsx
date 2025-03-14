@@ -59,7 +59,6 @@ import {
   ValueEditorDialog,
 } from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { flushSync } from "react-dom";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
