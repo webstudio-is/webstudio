@@ -320,7 +320,6 @@ export const CssEditor = ({
   virtualize = true,
   propertiesPosition = "bottom",
   recentProperties = [],
-  stabilizeScrollTop = true,
 }: {
   declarations: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
@@ -329,9 +328,6 @@ export const CssEditor = ({
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
-  // When used as part of some larger scroll area to avoid scroll jumps during search.
-  // For example advanced section in the style panel.
-  stabilizeScrollTop?: boolean;
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
@@ -394,8 +390,8 @@ export const CssEditor = ({
       return handleAbortSearch();
     }
 
-    if (stabilizeScrollTop) {
-      setMinHeight(containerRef.current?.offsetTop ?? 0);
+    if (minHeight === 0) {
+      setMinHeight(window.innerHeight);
     }
 
     const styles = declarations.map(({ property, cascadedValue }) => {
@@ -542,6 +538,7 @@ export const CssEditor = ({
             css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
             style={{ minHeight }}
             ref={containerRef}
+            data-test
           >
             {currentProperties.map((property) => {
               const styleDecl = declarationsMap.get(property);

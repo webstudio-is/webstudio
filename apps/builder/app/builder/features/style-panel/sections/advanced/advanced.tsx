@@ -22,7 +22,6 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { getSetting } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -143,7 +142,6 @@ export const Section = () => {
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
         apiRef={apiRef}
         recentProperties={recentProperties}
-        stabilizeScrollTop={getSetting("stylePanelMode") !== "advanced"}
       />
     </AdvancedStyleSection>
   );
