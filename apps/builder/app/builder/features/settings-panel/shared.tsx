@@ -78,9 +78,7 @@ export type ControlProps<Control> = {
   prop: Prop | undefined;
   propName: string;
   computedValue: unknown;
-  deletable: boolean;
   onChange: (value: PropValue) => void;
-  onDelete: () => void;
 };
 
 const SimpleLabel = ({

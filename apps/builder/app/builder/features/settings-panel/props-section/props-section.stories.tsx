@@ -370,10 +370,6 @@ const startingProps: Prop[] = [
 export const Story = () => {
   const [props, setProps] = useState(startingProps);
 
-  const handleDelete = (id: Prop["id"]) => {
-    setProps((current) => current.filter((prop) => prop.id !== id));
-  };
-
   const handleUpdate = (prop: Prop) => {
     setProps((current) => {
       const exists = current.find((item) => item.id === prop.id) !== undefined;
@@ -387,7 +383,6 @@ export const Story = () => {
     instance,
     props,
     updateProp: handleUpdate,
-    deleteProp: handleDelete,
   });
 
   return (
