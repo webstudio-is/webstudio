@@ -18,8 +18,10 @@ import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
 
 export const SettingsPanel = ({
   selectedInstance,
+  selectedInstanceKey,
 }: {
   selectedInstance: Instance;
+  selectedInstanceKey: string;
 }) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
   const isDesignMode = useStore($isDesignMode);
@@ -28,7 +30,10 @@ export const SettingsPanel = ({
     <Box css={{ pt: theme.spacing[5] }}>
       <SettingsSection />
 
-      <PropsSectionContainer selectedInstance={selectedInstance} />
+      <PropsSectionContainer
+        selectedInstance={selectedInstance}
+        selectedInstanceKey={selectedInstanceKey}
+      />
 
       {isDesignMode && <VariablesSection />}
 
