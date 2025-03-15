@@ -320,7 +320,6 @@ export const CssEditor = ({
   virtualize = true,
   propertiesPosition = "bottom",
   recentProperties = [],
-  memorizeMinHeight = true,
 }: {
   declarations: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
@@ -329,9 +328,6 @@ export const CssEditor = ({
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
   apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
-  // When used as part of some larger scroll area to avoid scroll jumps during search.
-  // For example advanced section in the style panel.
-  memorizeMinHeight?: boolean;
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
@@ -344,7 +340,6 @@ export const CssEditor = ({
   const [searchProperties, setSearchProperties] =
     useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [minHeight, setMinHeight] = useState<number>(0);
   useImperativeHandle(apiRef, () => ({
     showAddStyleInput() {
       handleShowAddStyleInput();
@@ -384,18 +379,30 @@ export const CssEditor = ({
   };
 
   const handleAbortSearch = () => {
-    setMinHeight(0);
+    if (containerRef.current) {
+      containerRef.current.style.minHeight = "auto";
+    }
     setSearchProperties(undefined);
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     const search = event.target.value.trim().replaceAll("-", " ");
+
     if (search === "") {
       return handleAbortSearch();
     }
-
-    if (memorizeMinHeight) {
-      setMinHeight(containerRef.current?.getBoundingClientRect().height ?? 0);
+    // This keeps container height big enough to avoid scroll position jumping around while user types.
+    if (containerRef.current) {
+      containerRef.current.style.height = `${window.innerHeight}px`;
+      // Min height is needed as long as the search is active.
+      containerRef.current.style.minHeight = `${window.innerHeight}px`;
+      requestAnimationFrame(() => {
+        // We can't keep it permanently because we need user to see all of the content.
+        // Fixed height only needed temporarily while react rerenders the tree to avoid jumps.
+        if (containerRef.current) {
+          containerRef.current.style.height = "auto";
+        }
+      });
     }
 
     const styles = declarations.map(({ property, cascadedValue }) => {
@@ -503,9 +510,17 @@ export const CssEditor = ({
   );
 
   return (
-    <>
+    <Box css={{ isolation: "isolate" }}>
       {showSearch && (
-        <Box css={{ paddingInline: theme.panel.paddingInline }}>
+        <Box
+          css={{
+            padding: theme.panel.padding,
+            position: "sticky",
+            top: 0,
+            background: theme.colors.backgroundPanel,
+            zIndex: 1,
+          }}
+        >
           <SearchField
             inputRef={searchInputRef}
             onChange={handleSearch}
@@ -531,8 +546,10 @@ export const CssEditor = ({
           )}
           <Flex
             direction="column"
-            css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
-            style={{ minHeight }}
+            css={{
+              paddingInline: theme.panel.paddingInline,
+              gap: 2,
+            }}
             ref={containerRef}
           >
             {currentProperties.map((property) => {
@@ -569,6 +586,6 @@ export const CssEditor = ({
           )}
         </Flex>
       </CssEditorContextMenu>
-    </>
+    </Box>
   );
 };
