@@ -1,5 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from "react";
-import { theme } from "@webstudio-is/design-system";
+import { useState, useRef } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
@@ -10,13 +9,11 @@ import {
   type SpaceStyleProperty,
 } from "./properties";
 import { InputPopover } from "../shared/input-popover";
-import { SpaceTooltip } from "./tooltip";
 import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
-import { getAutoScrollProps } from "../../shared/scroll-text";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -118,14 +115,6 @@ const Cell = ({
     (scrubStatus.isActive && scrubStatus.values[property]) ||
     styleDecl.cascadedValue;
 
-  const { abort, ...autoScrollProps } = useMemo(() => {
-    return getAutoScrollProps();
-  }, []);
-
-  useEffect(() => {
-    return () => abort("unmount");
-  }, [abort]);
-
   return (
     <>
       <InputPopover
@@ -137,8 +126,6 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       <ValueText
-        {...autoScrollProps}
-        //truncate
         css={{
           // We want value to have `default` cursor to indicate that it's clickable,
           // unlike the rest of the value area that has cursor that indicates scrubbing.
