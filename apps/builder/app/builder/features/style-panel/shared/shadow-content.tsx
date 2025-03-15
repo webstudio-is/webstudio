@@ -219,7 +219,7 @@ export const ShadowContent = ({
           <CssValueInputContainer
             key="boxShadowOffsetX"
             // outline-offset is a fake property for validating box-shadow's offsetX.
-            property="outlineOffset"
+            property="outline-offset"
             styleSource="local"
             disabled={layer.type === "var"}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
@@ -243,7 +243,7 @@ export const ShadowContent = ({
           <CssValueInputContainer
             key="boxShadowOffsetY"
             // outline-offset is a fake property for validating box-shadow's offsetY.
-            property="outlineOffset"
+            property="outline-offset"
             styleSource="local"
             disabled={layer.type === "var"}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
@@ -267,7 +267,7 @@ export const ShadowContent = ({
           <CssValueInputContainer
             key="boxShadowBlur"
             // border-top-width is a fake property for validating box-shadow's blur.
-            property="borderTopWidth"
+            property="border-top-width"
             styleSource="local"
             disabled={layer.type === "var"}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
@@ -292,7 +292,7 @@ export const ShadowContent = ({
             <CssValueInputContainer
               key="boxShadowSpread"
               // outline-offset is a fake property for validating box-shadow's spread.
-              property="outlineOffset"
+              property="outline-offset"
               styleSource="local"
               disabled={layer.type === "var"}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}

@@ -1,9 +1,8 @@
-import {
-  type StyleProperty,
-  type StyleValue,
-  type InvalidValue,
-  type Unit,
-  hyphenateProperty,
+import type {
+  StyleValue,
+  InvalidValue,
+  Unit,
+  CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   units,
@@ -17,9 +16,8 @@ import { toKebabCase } from "../keyword-utils";
 
 const unitsList = Object.values(units).flat();
 
-const getDefaultUnit = (property: StyleProperty): Unit => {
-  const unitGroups =
-    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
+const getDefaultUnit = (property: CssProperty): Unit => {
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
 
   for (const unitGroup of unitGroups) {
     if (unitGroup === "number") {
@@ -41,7 +39,7 @@ const getDefaultUnit = (property: StyleProperty): Unit => {
 };
 
 export const parseIntermediateOrInvalidValue = (
-  property: StyleProperty,
+  property: CssProperty,
   styleValue: IntermediateStyleValue | InvalidValue,
   defaultUnit: Unit = getDefaultUnit(property),
   originalValue?: string

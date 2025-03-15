@@ -125,7 +125,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Property"
           description={propertyDescriptions.transitionProperty}
-          properties={["transitionProperty"]}
+          properties={["transition-property"]}
         />
         <TransitionProperty
           value={property ?? propertiesData["transition-property"].initial}
@@ -138,10 +138,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Duration"
           description={propertyDescriptions.transitionDuration}
-          properties={["transitionDuration"]}
+          properties={["transition-duration"]}
         />
         <CssValueInputContainer
-          property="transitionDuration"
+          property="transition-duration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
           value={duration ?? propertiesData["transition-duration"].initial}
@@ -163,10 +163,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Delay"
           description={propertyDescriptions.transitionDelay}
-          properties={["transitionDelay"]}
+          properties={["transition-delay"]}
         />
         <CssValueInputContainer
-          property="transitionDelay"
+          property="transition-delay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
           value={delay ?? propertiesData["transition-delay"].initial}
@@ -188,10 +188,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Easing"
           description={propertyDescriptions.transitionTimingFunction}
-          properties={["transitionTimingFunction"]}
+          properties={["transition-timing-function"]}
         />
         <CssValueInputContainer
-          property="transitionTimingFunction"
+          property="transition-timing-function"
           styleSource="local"
           getOptions={() => [
             { type: "keyword", value: "linear" },

@@ -6,7 +6,7 @@ import type {
 } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import { numericScrubControl } from "@webstudio-is/design-system";
-import { camelCaseProperty, isValidDeclaration } from "@webstudio-is/css-data";
+import { isValidDeclaration } from "@webstudio-is/css-data";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { parseIntermediateOrInvalidValue } from "../../shared/css-value-input/parse-intermediate-or-invalid-value";
@@ -85,7 +85,7 @@ export const useScrub = <P extends CssProperty>(props: {
       } as const;
 
       if (isValidDeclaration(property, toValue(value)) === false) {
-        value = parseIntermediateOrInvalidValue(camelCaseProperty(property), {
+        value = parseIntermediateOrInvalidValue(property, {
           type: "intermediate",
           value: `${value.value}`,
           unit: value.unit,

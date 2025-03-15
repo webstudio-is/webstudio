@@ -65,7 +65,7 @@ const OffsetInput = ({
       intermediateValue={intermediateValue}
       styleSource="default"
       /* same as offset has 0 - 100% */
-      property={"fontStretch"}
+      property={"font-stretch"}
       value={
         value !== undefined
           ? {
