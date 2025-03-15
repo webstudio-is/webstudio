@@ -7,9 +7,7 @@ import {
   TupleValue,
   TupleValueItem,
   type StyleValue,
-  type StyleProperty,
   type CssProperty,
-  hyphenateProperty,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -58,16 +56,14 @@ export const PositionControl = ({
   property,
   styleDecl,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   styleDecl: ComputedStyleDecl;
 }) => {
   const value = toTuple(styleDecl.cascadedValue);
-  const keywords = (keywordValues[hyphenateProperty(property)] ?? []).map(
-    (value) => ({
-      type: "keyword" as const,
-      value,
-    })
-  );
+  const keywords = (keywordValues[property] ?? []).map((value) => ({
+    type: "keyword" as const,
+    value,
+  }));
 
   const setValue = setProperty(property);
 

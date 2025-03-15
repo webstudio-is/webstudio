@@ -5,7 +5,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { RgbaColorPicker } from "react-colorful";
 import { EyedropperIcon } from "@webstudio-is/icons";
 import type {
-  StyleProperty,
   StyleValue,
   KeywordValue,
   RgbValue,
@@ -175,7 +174,7 @@ type ColorPickerProps = {
   value: StyleValue;
   currentColor: StyleValue;
   getOptions?: () => Array<KeywordValue | VarValue>;
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   disabled?: boolean;
 };
 

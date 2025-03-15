@@ -2,11 +2,11 @@ import { describe, test, expect } from "vitest";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toKebabCase, toPascalCase } from "../keyword-utils";
 
-const properties = ["width", "lineHeight"] as const;
+const properties = ["width", "line-height"] as const;
 
 const propertiesAndKeywords = [
   ["width", "auto" as string],
-  ["lineHeight", "normal" as string],
+  ["line-height", "normal" as string],
 ] as const;
 
 test("forgive trailing semicolon", () => {
@@ -55,7 +55,7 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
   });
 
   test("fallback to % if px is not supported", () => {
-    const result = parseIntermediateOrInvalidValue("fontStretch", {
+    const result = parseIntermediateOrInvalidValue("font-stretch", {
       type: "intermediate",
       value: "10",
     });
@@ -133,7 +133,7 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
   });
 
   test("keyword with pascal case name", () => {
-    const result = parseIntermediateOrInvalidValue("boxSizing", {
+    const result = parseIntermediateOrInvalidValue("box-sizing", {
       type: "intermediate",
       value: "Border Box",
       unit: "em",
@@ -173,7 +173,7 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
   });
 
   test("tolerate comma instead of dot typo while correctly parsing legit comma inside value", () => {
-    const result = parseIntermediateOrInvalidValue("transitionDuration", {
+    const result = parseIntermediateOrInvalidValue("transition-duration", {
       type: "intermediate",
       value: "1s, 2s",
     });
@@ -327,7 +327,7 @@ describe("Returns invalid if can't parse", () => {
   });
 
   test("do not accept wrong keywords", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "auto",
     });
@@ -341,7 +341,7 @@ describe("Returns invalid if can't parse", () => {
 
 describe("Value ending with `-` should be considered unitless", () => {
   test("Unitless intermediate transformed to unitless", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10-",
     });
@@ -354,7 +354,7 @@ describe("Value ending with `-` should be considered unitless", () => {
   });
 
   test("Unit intermediate transformed to unitless", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10-",
       unit: "em",
@@ -368,7 +368,7 @@ describe("Value ending with `-` should be considered unitless", () => {
   });
 
   test("Unit intermediate with space transformed to unitless", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10 -",
       unit: "em",
@@ -382,7 +382,7 @@ describe("Value ending with `-` should be considered unitless", () => {
   });
 
   test("Unit number intermediate transformed to unitless", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10",
       unit: "number",
@@ -396,7 +396,7 @@ describe("Value ending with `-` should be considered unitless", () => {
   });
 
   test("Unitless expression transformed to unitless", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10 + 20 -",
       unit: "px",
@@ -410,7 +410,7 @@ describe("Value ending with `-` should be considered unitless", () => {
   });
 
   test("Expression containing unit and unitless must be a unit", () => {
-    const result = parseIntermediateOrInvalidValue("lineHeight", {
+    const result = parseIntermediateOrInvalidValue("line-height", {
       type: "intermediate",
       value: "10px + 20 -",
       unit: "px",
@@ -638,7 +638,7 @@ test("parse css variables as unparsed", () => {
 
 test("parse z-index", () => {
   expect(
-    parseIntermediateOrInvalidValue("zIndex", {
+    parseIntermediateOrInvalidValue("z-index", {
       type: "intermediate",
       value: "6.5",
       unit: "number",

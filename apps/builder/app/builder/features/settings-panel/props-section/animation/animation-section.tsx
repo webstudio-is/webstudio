@@ -115,7 +115,7 @@ const InsetValueInput = ({
       styleSource="default"
       value={value}
       /* marginLeft to allow negative values  */
-      property={"marginLeft"}
+      property="margin-left"
       unitOptions={unitOptions}
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
