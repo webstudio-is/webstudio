@@ -380,7 +380,6 @@ export const CssEditor = ({
 
   const handleAbortSearch = () => {
     if (containerRef.current) {
-      containerRef.current.style.height = "auto";
       containerRef.current.style.minHeight = "auto";
     }
     setSearchProperties(undefined);
