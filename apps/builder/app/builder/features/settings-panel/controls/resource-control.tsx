@@ -230,7 +230,7 @@ export const ResourceControl = ({
     }
   }
   // create temporary resource
-  const resourceId = useMemo(() => resource?.id ?? nanoid(), []);
+  const resourceId = useMemo(() => resource?.id ?? nanoid(), [resource]);
   resource ??= {
     id: resourceId,
     name: propName,
