@@ -31,7 +31,11 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { $selectedInstance, $selectedPage } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKey,
+  $selectedPage,
+} from "~/shared/awareness";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -64,6 +68,7 @@ const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
 export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore($selectedInstance);
+  const selectedInstanceKey = useStore($selectedInstanceKey);
   const tabsRef = useRef<HTMLDivElement>(null);
   const isDragging = useStore($isDragging);
   const metas = useStore($registeredComponentMetas);
@@ -75,7 +80,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
     return <NavigatorTree />;
   }
 
-  if (selectedInstance === undefined) {
+  if (selectedInstance === undefined || selectedInstanceKey === undefined) {
     return (
       <Flex css={{ p: theme.spacing[9] }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
@@ -196,6 +201,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     // Re-render when instance changes
                     key={selectedInstance.id}
                     selectedInstance={selectedInstance}
+                    selectedInstanceKey={selectedInstanceKey}
                   />
                 </ScrollArea>
               </PanelTabsContent>

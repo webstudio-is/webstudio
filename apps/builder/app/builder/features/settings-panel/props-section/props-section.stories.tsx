@@ -393,6 +393,7 @@ export const Story = () => {
           propsLogic={logic}
           propValues={new Map()}
           component="Button"
+          selectedInstanceKey={instanceId}
         />
       </div>
       <pre style={textVariants.mono}>
