@@ -38,11 +38,11 @@ const getLayer = (value: undefined | StyleValue, index: number) =>
 
 export const TransitionContent = ({ index }: { index: number }) => {
   const styles = useComputedStyles([
-    "transitionProperty",
-    "transitionDuration",
-    "transitionTimingFunction",
-    "transitionDelay",
-    "transitionBehavior",
+    "transition-property",
+    "transition-duration",
+    "transition-timing-function",
+    "transition-delay",
+    "transition-behavior",
   ]);
   const [
     transitionProperty,

@@ -55,7 +55,7 @@ const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
 };
 
 export const Section = () => {
-  const styleDecl = useComputedStyleDecl("textShadow");
+  const styleDecl = useComputedStyleDecl("text-shadow");
 
   return (
     <RepeatedStyleSection

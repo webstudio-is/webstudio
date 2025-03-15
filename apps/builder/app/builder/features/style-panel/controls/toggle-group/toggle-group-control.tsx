@@ -11,12 +11,7 @@ import {
   ToggleGroupButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import {
-  hyphenateProperty,
-  toValue,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
@@ -42,7 +37,7 @@ export const ToggleGroupTooltip = ({
   label?: string;
   code?: string;
   description: string | undefined;
-  properties: (StyleProperty | CssProperty)[];
+  properties: CssProperty[];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
@@ -103,7 +98,7 @@ export const ToggleGroupControl = ({
   items,
 }: {
   label?: string;
-  properties: [CssProperty | StyleProperty, ...(CssProperty | StyleProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
   items: Array<{
     child: JSX.Element;
     value: string;
@@ -151,12 +146,12 @@ export const ToggleGroupControl = ({
           isAdvanced={isAdvanced}
           label={label}
           code={properties
-            .map((property) => `${hyphenateProperty(property)}: ${item.value};`)
+            .map((property) => `${property}: ${item.value};`)
             .join("\n")}
           description={
             item.description ??
             declarationDescriptions[
-              `${camelCaseProperty(properties[0])}:${item.value}` as keyof typeof declarationDescriptions
+              `${camelCaseProperty(properties[0])}:${item.value}`
             ]
           }
           properties={properties}

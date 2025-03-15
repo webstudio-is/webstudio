@@ -1,3 +1,5 @@
+import { matchSorter } from "match-sorter";
+import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import {
   Combobox,
   EnhancedTooltip,
@@ -5,9 +7,7 @@ import {
   NestedInputButton,
   FloatingPanel,
 } from "@webstudio-is/design-system";
-import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
-import { matchSorter } from "match-sorter";
 import { UploadIcon } from "@webstudio-is/icons";
 import { keywordValues, parseCssValue } from "@webstudio-is/css-data";
 import { FontsManager } from "~/builder/shared/fonts-manager";
@@ -41,9 +41,9 @@ const matchOrSuggestToCreate = (
 };
 
 export const FontFamilyControl = () => {
-  const fontFamily = useComputedStyleDecl("fontFamily");
+  const fontFamily = useComputedStyleDecl("font-family");
   const value = fontFamily.cascadedValue;
-  const setValue = setProperty("fontFamily");
+  const setValue = setProperty("font-family");
   const [intermediateValue, setIntermediateValue] = useState<
     string | undefined
   >();

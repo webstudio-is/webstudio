@@ -6,11 +6,9 @@ import {
   parseCssValue,
 } from "@webstudio-is/css-data";
 import {
-  hyphenateProperty,
-  StyleValue,
   toValue,
+  type StyleValue,
   type CssProperty,
-  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
 import { toKebabCase } from "../../shared/keyword-utils";
@@ -30,7 +28,7 @@ export const SelectControl = ({
   index,
   items,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   index?: number;
   items?: Array<{ label: string; name: string }>;
 }) => {
@@ -47,9 +45,7 @@ export const SelectControl = ({
     }
   };
   const options =
-    items?.map(({ name }) => name) ??
-    keywordValues[hyphenateProperty(property)] ??
-    [];
+    items?.map(({ name }) => name) ?? keywordValues[property] ?? [];
 
   // We can't render an empty string as a value when display was added but without a value.
   // One case is when advanced property is being added, but no value is set.
@@ -86,7 +82,7 @@ export const SelectControl = ({
           return;
         }
         // Preview on mouse enter or focus.
-        const nextValue = parseCssValue(camelCaseProperty(property), name);
+        const nextValue = parseCssValue(property, name);
         setValue(nextValue, { isEphemeral: true });
       }}
       onOpenChange={(isOpen) => {

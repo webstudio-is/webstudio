@@ -1,15 +1,17 @@
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { nanoid } from "nanoid";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   getStyleDeclKey,
+  StyleDecl,
   type Breakpoints,
   type Instance,
   type Styles,
   type StyleSources,
   type StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 
 import { isBaseBreakpoint } from "~/shared/nano-states";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 
 export const setListedCssProperty =
   (
@@ -19,7 +21,7 @@ export const setListedCssProperty =
     styleSourceSelections: StyleSourceSelections,
     styles: Styles
   ) =>
-  (instanceId: Instance["id"], property: StyleProperty, value: StyleValue) => {
+  (instanceId: Instance["id"], property: CssProperty, value: StyleValue) => {
     if (!styleSourceSelections.has(instanceId)) {
       const styleSourceId = nanoid();
       styleSources.set(styleSourceId, { type: "local", id: styleSourceId });
@@ -48,17 +50,12 @@ export const setListedCssProperty =
       throw new Error("Base breakpoint not found");
     }
 
-    const styleKey = getStyleDeclKey({
+    const styleDecl: StyleDecl = {
       breakpointId: baseBreakpoint.id,
-      property,
-      styleSourceId: localStyleSorceId,
-    });
-
-    styles.set(styleKey, {
-      breakpointId: baseBreakpoint.id,
-      property,
+      property: camelCaseProperty(property),
       styleSourceId: localStyleSorceId,
       value,
       listed: true,
-    });
+    };
+    styles.set(getStyleDeclKey(styleDecl), styleDecl);
   };

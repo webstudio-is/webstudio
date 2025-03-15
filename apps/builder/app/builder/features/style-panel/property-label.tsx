@@ -2,12 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
-import {
-  hyphenateProperty,
-  toValue,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { propertiesData } from "@webstudio-is/css-data";
 import {
   Button,
@@ -238,7 +233,7 @@ export const PropertyLabel = ({
 }: {
   label: string;
   description?: string;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -279,7 +274,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+            link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
       >
@@ -300,7 +295,7 @@ export const PropertySectionLabel = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -339,7 +334,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+            link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
       >
@@ -369,10 +364,7 @@ export const PropertyInlineLabel = ({
   label: string;
   title?: string;
   description?: string;
-  properties?: [
-    StyleProperty | CssProperty,
-    ...(StyleProperty | CssProperty)[],
-  ];
+  properties?: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -401,7 +393,7 @@ export const PropertyInlineLabel = ({
                   userSelect="text"
                   css={{ whiteSpace: "break-spaces", cursor: "text" }}
                 >
-                  {properties.map(hyphenateProperty).join("\n")}
+                  {properties.join("\n")}
                 </Text>
               )}
               <Text>{description}</Text>
@@ -428,7 +420,7 @@ export const PropertyValueTooltip = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
@@ -476,7 +468,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >
