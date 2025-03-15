@@ -53,7 +53,6 @@ type BaseControlProps = {
   prop: UrlControlProps["prop"];
   value: string;
   onChange: UrlControlProps["onChange"];
-  onDelete: UrlControlProps["onDelete"];
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -405,12 +404,11 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
   );
 };
 
-const BaseAttachment = ({ prop, onChange, onDelete }: BaseControlProps) => (
+const BaseAttachment = ({ prop, onChange }: BaseControlProps) => (
   <Row>
     <SelectAsset
       prop={prop?.type === "asset" ? prop : undefined}
       onChange={onChange}
-      onDelete={onDelete}
     />
   </Row>
 );
@@ -463,7 +461,6 @@ export const UrlControl = ({
   propName,
   computedValue,
   onChange,
-  onDelete,
 }: UrlControlProps) => {
   const value = String(computedValue ?? "");
   const { value: mode, set: setMode } = useLocalValue<Mode>(
@@ -520,7 +517,6 @@ export const UrlControl = ({
           prop={prop}
           value={value}
           onChange={onChange}
-          onDelete={onDelete}
         />
         <BindingPopover
           scope={scope}

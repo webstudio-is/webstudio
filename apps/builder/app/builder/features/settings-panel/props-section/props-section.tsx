@@ -58,8 +58,7 @@ const matchOrSuggestToCreate = (
 
 const renderProperty = (
   { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta,
-  { deletable }: { deletable?: boolean } = {}
+  { prop, propName, meta }: PropAndMeta
 ) =>
   renderControl({
     key: propName,
@@ -68,20 +67,6 @@ const renderProperty = (
     prop,
     computedValue: propValues.get(propName) ?? meta.defaultValue,
     propName,
-    deletable:
-      deletable ??
-      ((meta.defaultValue === undefined || meta.defaultValue !== prop?.value) &&
-        meta.required === false &&
-        prop !== undefined),
-    onDelete: () => {
-      if (prop) {
-        logic.handleDelete(prop);
-        if (component === "Image" && propName === "src") {
-          logic.handleDeleteByPropName("width");
-          logic.handleDeleteByPropName("height");
-        }
-      }
-    },
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
 
@@ -221,9 +206,7 @@ export const PropsSection = (props: PropsSectionProps) => {
                 }}
               />
             )}
-            {logic.addedProps.map((item) =>
-              renderProperty(props, item, { deletable: true })
-            )}
+            {logic.addedProps.map((item) => renderProperty(props, item))}
             {logic.initialProps.map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
@@ -263,12 +246,6 @@ export const PropsSectionContainer = ({
           props.delete(prop.id);
         }
         props.set(update.id, update);
-      });
-    },
-
-    deleteProp: (propId) => {
-      serverSyncStore.createTransaction([$props], (props) => {
-        props.delete(propId);
       });
     },
   });
