@@ -48,7 +48,6 @@ export const FileControl = ({
   propName,
   computedValue,
   onChange,
-  onDelete,
 }: ControlProps<"file">) => {
   const id = useId();
 
@@ -61,8 +60,6 @@ export const FileControl = ({
     (value) => {
       if (value === undefined) {
         return;
-      } else if (value === "") {
-        onDelete();
       } else if (prop?.type === "expression") {
         updateExpressionValue(prop.value, value);
       } else {
@@ -110,7 +107,6 @@ export const FileControl = ({
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}
           onChange={onChange}
-          onDelete={onDelete}
         />
       </Flex>
     </VerticalLayout>

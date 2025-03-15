@@ -40,7 +40,7 @@ import { parseCssFragment } from "./css-fragment";
 const filterFunctions = {
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/blur#syntax
   // length
-  blur: { default: "0px", fakeProperty: "outlineOffset" },
+  blur: { default: "0px", fakeProperty: "outline-offset" },
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/brightness#formal_syntax
   // number | percentage
   brightness: { default: "0%", fakeProperty: "opacity" },
@@ -199,7 +199,7 @@ export const FilterSectionContent = ({
               property={
                 filterFunction
                   ? filterFunctions[filterFunction].fakeProperty
-                  : "outlineOffset"
+                  : "outline-offset"
               }
               styleSource="local"
               value={

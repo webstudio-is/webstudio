@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  hyphenateProperty,
-  type CssProperty,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { keywordValues } from "@webstudio-is/css-data";
 import {
   CssValueInput,
@@ -16,11 +11,7 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 
-export const TextControl = ({
-  property,
-}: {
-  property: StyleProperty | CssProperty;
-}) => {
+export const TextControl = ({ property }: { property: CssProperty }) => {
   const computedStyleDecl = useComputedStyleDecl(property);
   const value = computedStyleDecl.cascadedValue;
   const setValue = setProperty(property);
@@ -34,7 +25,7 @@ export const TextControl = ({
       value={value}
       intermediateValue={intermediateValue}
       getOptions={() => [
-        ...(keywordValues[hyphenateProperty(property)] ?? []).map((value) => ({
+        ...(keywordValues[property] ?? []).map((value) => ({
           type: "keyword" as const,
           value,
         })),

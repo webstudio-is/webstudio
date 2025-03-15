@@ -109,7 +109,7 @@ const RangeValueInput = ({
       styleSource="default"
       value={value}
       /* marginLeft to allow negative values  */
-      property={"marginLeft"}
+      property={"margin-left"}
       unitOptions={unitOptions}
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
@@ -156,8 +156,6 @@ const EasingInput = ({
     StyleValue | IntermediateStyleValue
   >();
 
-  const property = "animationTimingFunction";
-
   return (
     <CssValueInput
       id={id}
@@ -173,7 +171,7 @@ const EasingInput = ({
           value,
         })),
       ]}
-      property={property}
+      property="animation-timing-function"
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);

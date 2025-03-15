@@ -21,7 +21,6 @@ import {
 import type {
   CssProperty,
   KeywordValue,
-  StyleProperty,
   StyleValue,
   Unit,
   VarValue,
@@ -40,7 +39,7 @@ import {
 } from "react";
 import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
   declarationDescriptions,
@@ -61,9 +60,8 @@ import {
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 // We need to enable scrub on properties that can have numeric value.
-const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
-  const unitGroups =
-    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
+const canBeNumber = (property: CssProperty, value: CssValueInputValue) => {
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
   // allow scrubbing css variables with unit value
   return unitGroups.length !== 0 || value.type === "unit";
 };
@@ -93,7 +91,7 @@ const useScrub = ({
   defaultUnit: Unit | undefined;
   value: CssValueInputValue;
   intermediateValue: CssValueInputValue | undefined;
-  property: StyleProperty;
+  property: CssProperty;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   onAbort: () => void;
@@ -302,7 +300,7 @@ type CssValueInputProps = Pick<
   | "inputRef"
 > & {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
@@ -475,7 +473,7 @@ export const CssValueInput = ({
   prefix,
   showSuffix = true,
   styleSource,
-  property: multiCaseProperty,
+  property,
   getOptions = () => [],
   onHighlight,
   onAbort,
@@ -489,7 +487,6 @@ export const CssValueInput = ({
   placeholder,
   ...props
 }: CssValueInputProps) => {
-  const property = camelCaseProperty(multiCaseProperty);
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -607,7 +604,7 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     options: unitOptions,
-    property: hyphenateProperty(multiCaseProperty),
+    property,
     value,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {
@@ -650,7 +647,7 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const styleValue = propertySizes[hyphenateProperty(property)];
+        const styleValue = propertySizes[property];
         const convertedValue = convertUnits(unitSizes)(
           styleValue?.value ?? 0,
           styleValue?.unit ?? "number",
@@ -790,7 +787,7 @@ export const CssValueInput = ({
     ) {
       description = option.description;
     } else {
-      const key = `${property}:${toValue(
+      const key = `${camelCaseProperty(property)}:${toValue(
         valueForDescription
       )}` as keyof typeof declarationDescriptions;
       description = declarationDescriptions[key];
@@ -808,7 +805,7 @@ export const CssValueInput = ({
     .map((item) =>
       item.type === "keyword"
         ? declarationDescriptions[
-            `${property}:${toValue(
+            `${camelCaseProperty(property)}:${toValue(
               item
             )}` as keyof typeof declarationDescriptions
           ]
@@ -929,7 +926,21 @@ export const CssValueInput = ({
   }, [inputRef]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter, handleDelete],
+    [
+      handleUpDownNumeric,
+      inputProps.onKeyDown,
+      handleEnter,
+      handleDelete,
+      (event: KeyboardEvent) => {
+        // When dropdown is open - we are loosing focus to the combobox.
+        // When menu gets closed via Escape - we want to restore the focus.
+        if (event.key === "Escape" && isOpen) {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      },
+    ],
     {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,

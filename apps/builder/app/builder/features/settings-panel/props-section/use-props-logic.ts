@@ -124,7 +124,6 @@ type UsePropsLogicInput = {
   instance: Instance;
   props: Prop[];
   updateProp: (update: Prop) => void;
-  deleteProp: (id: Prop["id"]) => void;
 };
 
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
@@ -138,7 +137,6 @@ export const usePropsLogic = ({
   instance,
   props,
   updateProp,
-  deleteProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
 
@@ -301,24 +299,10 @@ export const usePropsLogic = ({
     );
   };
 
-  const handleDeleteByPropName = (propName: string) => {
-    const prop = props.find((prop) => prop.name === propName);
-
-    if (prop) {
-      deleteProp(prop.id);
-    }
-  };
-
-  const handleDelete = (prop: Prop) => {
-    deleteProp(prop.id);
-  };
-
   return {
     handleAdd,
     handleChange,
-    handleDelete,
     handleChangeByPropName,
-    handleDeleteByPropName,
     meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.
      * Currentrly used only for the ID prop. */
