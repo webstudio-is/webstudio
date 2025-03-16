@@ -56,7 +56,7 @@ test("Add Css Property styles", () => {
     data.styleSources,
     data.styleSourceSelections,
     data.styles
-  )("boxChildId", "viewTimelineName", {
+  )("boxChildId", "view-timeline-name", {
     type: "unparsed",
     value: "--view-timeline-name-child",
   });
@@ -66,7 +66,7 @@ test("Add Css Property styles", () => {
     data.styleSources,
     data.styleSourceSelections,
     data.styles
-  )("boxId", "viewTimelineName", {
+  )("boxId", "view-timeline-name", {
     type: "unparsed",
     value: "--view-timeline-name",
   });

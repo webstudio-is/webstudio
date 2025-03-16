@@ -49,7 +49,7 @@ const initSubjects = () => {
     selector.length !== 0;
     selector = selector.slice(1)
   ) {
-    const styleDecl = getInstanceStyleDecl("viewTimelineName", selector);
+    const styleDecl = getInstanceStyleDecl("view-timeline-name", selector);
     const instanceId = selector.at(0)!;
 
     const instance = instances.get(selector[0]);
@@ -139,7 +139,7 @@ export const SubjectSelect = ({
                   styleSources,
                   styleSourceSelections,
                   styles
-                )(subjectItem.instanceId, "viewTimelineName", {
+                )(subjectItem.instanceId, "view-timeline-name", {
                   type: "unparsed",
                   value: newValue.subject,
                 });

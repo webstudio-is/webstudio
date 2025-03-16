@@ -27,7 +27,7 @@ import {
   generateStyleMap,
   mergeStyles,
   toValue,
-  type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   deleteProperty,
@@ -187,7 +187,7 @@ export const AddStyleInput = forwardRef<
     onItemHighlight: (item) => {
       const previousHighlightedItem = highlightedItemRef.current;
       if (item?.value === undefined && previousHighlightedItem) {
-        deleteProperty(previousHighlightedItem.property as StyleProperty, {
+        deleteProperty(previousHighlightedItem.property as CssProperty, {
           isEphemeral: true,
         });
         highlightedItemRef.current = undefined;
@@ -195,8 +195,8 @@ export const AddStyleInput = forwardRef<
       }
 
       if (item?.value) {
-        const value = parseCssValue(item.property as StyleProperty, item.value);
-        setProperty(item.property as StyleProperty)(value, {
+        const value = parseCssValue(item.property as CssProperty, item.value);
+        setProperty(item.property as CssProperty)(value, {
           isEphemeral: true,
         });
         highlightedItemRef.current = item;

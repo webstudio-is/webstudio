@@ -8,7 +8,6 @@ import {
   hyphenateProperty,
   toVarFallback,
   type CssProperty,
-  type StyleProperty,
   type StyleValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
@@ -341,9 +340,9 @@ export const useStyleObjectModel = () => {
   return useStore($model);
 };
 
-export const useComputedStyleDecl = (property: StyleProperty | CssProperty) => {
+export const useComputedStyleDecl = (property: CssProperty) => {
   const $store = useMemo(
-    () => createComputedStyleDeclStore(hyphenateProperty(property)),
+    () => createComputedStyleDeclStore(property),
     [property]
   );
   return useStore($store);
@@ -386,26 +385,23 @@ export const useParentComputedStyleDecl = (property: CssProperty) => {
 };
 
 export const getInstanceStyleDecl = (
-  property: StyleProperty,
+  property: CssProperty,
   instanceSelector: InstanceSelector
 ) => {
   return getComputedStyleDecl({
     model: $model.get(),
     instanceSelector,
-    property: hyphenateProperty(property),
+    property,
   });
 };
 
-export const useComputedStyles = (
-  properties: (StyleProperty | CssProperty)[]
-) => {
+export const useComputedStyles = (properties: CssProperty[]) => {
   // cache each computed style store
   const cachedStores = useRef(
     new Map<CssProperty, ReadableAtom<ComputedStyleDecl>>()
   );
   const stores: ReadableAtom<ComputedStyleDecl>[] = [];
-  for (const multiCaseProperty of properties) {
-    const property = hyphenateProperty(multiCaseProperty);
+  for (const property of properties) {
     let store = cachedStores.current.get(property);
     if (store === undefined) {
       store = createComputedStyleDeclStore(property);
