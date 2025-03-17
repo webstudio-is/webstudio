@@ -26,7 +26,11 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input/css-value-input";
-import { toValue, type StyleValue } from "@webstudio-is/css-engine";
+import {
+  cssWideKeywords,
+  toValue,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Keyframes } from "./animation-keyframes";
 import { titleCase } from "title-case";
@@ -180,7 +184,7 @@ const EasingInput = ({
       }
       getOptions={() => [
         ...keywordValues["animation-timing-function"]
-          .filter((value) => !["initial", "inherit", "unset"].includes(value))
+          .filter((value) => !cssWideKeywords.has(value))
           .map((value) => ({
             type: "keyword" as const,
             value,
