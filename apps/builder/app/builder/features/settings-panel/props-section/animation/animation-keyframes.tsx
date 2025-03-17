@@ -128,7 +128,10 @@ const Keyframe = ({
 }: {
   value: AnimationKeyframe;
   offsetPlaceholder: number;
-  onChange: (value: AnimationKeyframe | undefined) => void;
+  onChange: (
+    value: AnimationKeyframe | undefined,
+    isEphemeral: boolean
+  ) => void;
 }) => {
   const ids = useIds(["offset"]);
   const apiRef = useRef<CssEditorApi>();
@@ -164,11 +167,11 @@ const Keyframe = ({
           value={value.offset}
           placeholder={offsetPlaceholder}
           onChange={(offset) => {
-            onChange({ ...value, offset });
+            onChange({ ...value, offset }, false);
           }}
         />
         <Tooltip content="Remove keyframe">
-          <IconButton onClick={() => onChange(undefined)}>
+          <IconButton onClick={() => onChange(undefined, false)}>
             <MinusIcon />
           </IconButton>
         </Tooltip>
@@ -185,7 +188,7 @@ const Keyframe = ({
             for (const [property, value] of addedStyleMap) {
               styles[property] = value;
             }
-            onChange({ ...value, styles });
+            onChange({ ...value, styles }, false);
           }}
           onDeleteProperty={(property, options = {}) => {
             if (options.isEphemeral === true) {
@@ -193,16 +196,16 @@ const Keyframe = ({
             }
             const styles = { ...value.styles };
             delete styles[property];
-            onChange({ ...value, styles });
+            onChange({ ...value, styles }, false);
           }}
           onSetProperty={(property) => {
-            return (newValue) => {
+            return (newValue, options) => {
               const styles = { ...value.styles, [property]: newValue };
-              onChange({ ...value, styles });
+              onChange({ ...value, styles }, options?.isEphemeral ?? false);
             };
           }}
           onDeleteAllDeclarations={() => {
-            onChange({ ...value, styles: {} });
+            onChange({ ...value, styles: {} }, false);
           }}
         />
       </Grid>
@@ -226,7 +229,8 @@ export const Keyframes = ({
   onChange,
 }: {
   value: AnimationKeyframe[];
-  onChange: (value: AnimationKeyframe[]) => void;
+  onChange: ((value: undefined, isEphemeral: true) => void) &
+    ((value: AnimationKeyframe[], isEphemeral: boolean) => void);
 }) => {
   // To preserve focus on children swap
   const keyRefs = useRef(
@@ -251,7 +255,10 @@ export const Keyframes = ({
             tabIndex={0}
             prefix={<PlusIcon />}
             onClick={() => {
-              onChange([...keyframes, { offset: undefined, styles: {} }]);
+              onChange(
+                [...keyframes, { offset: undefined, styles: {} }],
+                false
+              );
               keyRefs.current = [...keyRefs.current, keyframes.length];
             }}
           />
@@ -268,11 +275,16 @@ export const Keyframes = ({
                 key={keyRefs.current[index]}
                 value={value}
                 offsetPlaceholder={offsets[index]}
-                onChange={(newValue) => {
+                onChange={(newValue, isEphemeral) => {
+                  if (newValue === undefined && isEphemeral) {
+                    onChange(undefined, true);
+                    return;
+                  }
+
                   if (newValue === undefined) {
                     const newValues = [...keyframes];
                     newValues.splice(index, 1);
-                    onChange(newValues);
+                    onChange(newValues, isEphemeral);
                     return;
                   }
 
@@ -281,7 +293,7 @@ export const Keyframes = ({
 
                   const { offset } = newValue;
                   if (offset === undefined) {
-                    onChange(newValues);
+                    onChange(newValues, isEphemeral);
                     return;
                   }
 
@@ -293,7 +305,7 @@ export const Keyframes = ({
                     insertionIndex
                   );
 
-                  onChange(newValues);
+                  onChange(newValues, isEphemeral);
                 }}
               />
             </Fragment>

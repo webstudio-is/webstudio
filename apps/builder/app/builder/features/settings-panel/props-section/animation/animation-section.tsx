@@ -103,11 +103,28 @@ const InsetValueInput = ({
 }: {
   id: string;
   value: InsetUnitValue;
-  onChange: (value: InsetUnitValue) => void;
+  onChange: ((value: undefined, isEphemeral: true) => void) &
+    ((value: InsetUnitValue, isEphemeral: boolean) => void);
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
+
+  const handleEphemeralChange = (styleValue: unknown | undefined) => {
+    if (styleValue === undefined) {
+      onChange(undefined, true);
+      return;
+    }
+
+    const parsedResult = insetUnitValueSchema.safeParse(styleValue);
+
+    if (parsedResult.success) {
+      onChange(parsedResult.data, true);
+      return;
+    }
+
+    onChange(undefined, true);
+  };
 
   return (
     <CssValueInput
@@ -120,7 +137,7 @@ const InsetValueInput = ({
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-        /* @todo: allow to change some ephemeral property to see the result in action */
+        handleEphemeralChange(styleValue);
       }}
       getOptions={() => [
         {
@@ -130,13 +147,13 @@ const InsetValueInput = ({
             "Pick the child element’s viewTimelineInset property or use the scrolling element’s scroll-padding, depending on the selected axis.",
         },
       ]}
-      onHighlight={() => {
-        /* Nothing to Highlight */
+      onHighlight={(value) => {
+        handleEphemeralChange(value);
       }}
       onChangeComplete={(event) => {
         const parsedValue = insetUnitValueSchema.safeParse(event.value);
         if (parsedValue.success) {
-          onChange(parsedValue.data);
+          onChange(parsedValue.data, false);
           setIntermediateValue(undefined);
           return;
         }
@@ -147,9 +164,10 @@ const InsetValueInput = ({
         });
       }}
       onAbort={() => {
-        /* @todo: allow to change some ephemeral property to see the result in action */
+        handleEphemeralChange(undefined);
       }}
       onReset={() => {
+        handleEphemeralChange(undefined);
         setIntermediateValue(undefined);
       }}
     />
@@ -165,7 +183,8 @@ export const AnimateSection = ({
   onChange,
 }: {
   animationAction: PropAndMeta;
-  onChange: (value: AnimationAction) => void;
+  onChange: ((value: undefined, isEphemeral: true) => void) &
+    ((value: AnimationAction, isEphemeral: boolean) => void);
 }) => {
   const fieldIds = useIds([
     "type",
@@ -180,10 +199,15 @@ export const AnimateSection = ({
   const value: AnimationAction =
     prop?.type === "animationAction" ? prop.value : defaultActionValue;
 
-  const handleChange = (value: unknown) => {
+  const handleChange = (value: unknown, isEphemeral: boolean) => {
+    if (value === undefined && isEphemeral) {
+      onChange(undefined, isEphemeral);
+      return;
+    }
+
     const parsedValue = animationActionSchema.safeParse(value);
     if (parsedValue.success) {
-      onChange(parsedValue.data);
+      onChange(parsedValue.data, isEphemeral);
       return;
     }
 
@@ -235,7 +259,7 @@ export const AnimateSection = ({
             }
             pressed={value.debug ?? false}
             onPressedChange={() => {
-              handleChange({ ...value, debug: !value.debug });
+              handleChange({ ...value, debug: !value.debug }, false);
             }}
             variant="normal"
             tabIndex={-1}
@@ -247,7 +271,7 @@ export const AnimateSection = ({
           <Switch
             checked={value.isPinned ?? false}
             onCheckedChange={(isPinned) => {
-              handleChange({ ...value, isPinned });
+              handleChange({ ...value, isPinned }, false);
             }}
           />
         </Tooltip>
@@ -276,7 +300,10 @@ export const AnimateSection = ({
               </Box>
             )}
             onChange={(typeValue) => {
-              handleChange({ ...value, type: typeValue, animations: [] });
+              handleChange(
+                { ...value, type: typeValue, animations: [] },
+                false
+              );
             }}
           />
         </Grid>
@@ -287,7 +314,7 @@ export const AnimateSection = ({
             type="single"
             value={value.axis ?? ("block" as const)}
             onValueChange={(axis) => {
-              handleChange({ ...value, axis });
+              handleChange({ ...value, axis }, false);
             }}
           >
             {Object.entries(animationAxisDescription).map(
@@ -335,7 +362,7 @@ export const AnimateSection = ({
                 </Box>
               )}
               onChange={(source) => {
-                handleChange({ ...value, source });
+                handleChange({ ...value, source }, false);
               }}
             />
           </Grid>
@@ -351,7 +378,7 @@ export const AnimateSection = ({
             <SubjectSelect
               id={fieldIds.subject}
               value={value}
-              onChange={onChange}
+              onChange={handleChange}
             />
           </Grid>
         )}
@@ -375,21 +402,21 @@ export const AnimateSection = ({
             <InsetValueInput
               id={fieldIds.insetStart}
               value={value.insetStart ?? { type: "keyword", value: "auto" }}
-              onChange={(insetStart) => {
-                handleChange({ ...value, insetStart });
+              onChange={(insetStart, isEphemeral) => {
+                handleChange({ ...value, insetStart }, isEphemeral);
               }}
             />
             <InsetValueInput
               id={fieldIds.insetEnd}
               value={value.insetEnd ?? { type: "keyword", value: "auto" }}
-              onChange={(insetEnd) => {
-                handleChange({ ...value, insetEnd });
+              onChange={(insetEnd, isEphemeral) => {
+                handleChange({ ...value, insetEnd }, isEphemeral);
               }}
             />
           </Grid>
         )}
 
-        <AnimationsSelect value={value} onChange={onChange} />
+        <AnimationsSelect value={value} onChange={handleChange} />
       </Grid>
     </Grid>
   );

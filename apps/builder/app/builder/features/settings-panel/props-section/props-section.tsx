@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import { type Instance, descendantComponent } from "@webstudio-is/sdk";
+import { type Instance, Props, descendantComponent } from "@webstudio-is/sdk";
 import {
   theme,
   Combobox,
@@ -18,6 +18,7 @@ import {
   $props,
   $isDesignMode,
   $isContentMode,
+  $memoryProps,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
@@ -25,6 +26,7 @@ import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
 import { AnimateSection } from "./animation/animation-section";
+import { nanoid } from "nanoid";
 
 type Item = {
   name: string;
@@ -138,6 +140,7 @@ type PropsSectionProps = {
   propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
+  selectedInstanceKey: string;
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
@@ -163,12 +166,43 @@ export const PropsSection = (props: PropsSectionProps) => {
     <>
       <AnimateSection
         animationAction={animationAction}
-        onChange={(value) =>
+        onChange={(value, isEphemeral) => {
+          const memoryProps = new Map($memoryProps.get());
+          const memoryInstanceProp: Props = new Map(
+            memoryProps.get(props.selectedInstanceKey)
+          );
+
+          if (isEphemeral && value !== undefined) {
+            memoryInstanceProp.set(animationAction.propName, {
+              id: nanoid(),
+              instanceId: props.instanceId,
+              type: "animationAction",
+              name: animationAction.propName,
+              value,
+            });
+            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
+            $memoryProps.set(memoryProps);
+            return;
+          }
+
+          if (memoryInstanceProp.has(animationAction.propName)) {
+            memoryInstanceProp.delete(animationAction.propName);
+            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
+
+            $memoryProps.set(memoryProps);
+          }
+
+          if (isEphemeral || value === undefined) {
+            return;
+          }
+
+          isEphemeral satisfies false;
+
           logic.handleChangeByPropName(animationAction.propName, {
             type: "animationAction",
             value,
-          })
-        }
+          });
+        }}
       />
       <Separator />
     </>
@@ -223,8 +257,10 @@ const $propValues = computed(
 
 export const PropsSectionContainer = ({
   selectedInstance: instance,
+  selectedInstanceKey,
 }: {
   selectedInstance: Instance;
+  selectedInstanceKey: string;
 }) => {
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
@@ -266,6 +302,7 @@ export const PropsSectionContainer = ({
         propValues={propValues ?? new Map()}
         component={instance.component}
         instanceId={instance.id}
+        selectedInstanceKey={selectedInstanceKey}
       />
     </fieldset>
   );

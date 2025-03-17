@@ -17,7 +17,6 @@ import {
   Grid,
   useSortable,
   CssValueListArrowFocus,
-  toast,
   FloatingPanel,
   InputField,
   DialogTitle,
@@ -33,8 +32,6 @@ import type {
   ScrollAnimation,
   ViewAnimation,
 } from "@webstudio-is/sdk";
-
-import { animationActionSchema } from "@webstudio-is/sdk";
 import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
 import { useIds } from "~/shared/form-utils";
@@ -50,7 +47,8 @@ const newAnimationsPerType: {
 
 type Props = {
   value: AnimationAction;
-  onChange: (value: AnimationAction) => void;
+  onChange: ((value: unknown, isEphemeral: boolean) => void) &
+    ((value: undefined, isEphemeral: true) => void);
 };
 
 const floatingPanelOffset = { alignmentAxis: -100 };
@@ -76,24 +74,12 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
       const [movedItem] = newAnimations.splice(oldIndex, 1);
       newAnimations.splice(newIndex, 0, movedItem);
       const newValue = { ...value, animations: newAnimations };
-      const parsedValue = animationActionSchema.safeParse(newValue);
-
-      if (parsedValue.success) {
-        onChange(parsedValue.data);
-        return;
-      }
-      toast.error("Failed to sort animation");
+      onChange(newValue, false);
     },
   });
 
-  const handleChange = (newValue: unknown) => {
-    const parsedValue = animationActionSchema.safeParse(newValue);
-
-    if (parsedValue.success) {
-      onChange(parsedValue.data);
-      return;
-    }
-    toast.error("Failed to add animation");
+  const handleChange = (newValue: unknown, isEphemeral: boolean) => {
+    onChange(newValue, isEphemeral);
   };
 
   return (
@@ -116,10 +102,13 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
             <DropdownMenuItem
               key={index}
               onSelect={() => {
-                handleChange({
-                  ...value,
-                  animations: value.animations.concat(animation),
-                });
+                handleChange(
+                  {
+                    ...value,
+                    animations: value.animations.concat(animation),
+                  },
+                  false
+                );
               }}
               onFocus={() => setNewAnimationHint(animation.description)}
               onBlur={() => setNewAnimationHint(undefined)}
@@ -180,7 +169,7 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
                         animations: newAnimations,
                       };
 
-                      handleChange(newValue);
+                      handleChange(newValue, false);
                     }}
                   />
                 </DialogTitle>
@@ -189,14 +178,20 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
                 <AnimationPanelContent
                   type={value.type}
                   value={animation}
-                  onChange={(animation) => {
+                  onChange={(animation, isEphemeral) => {
+                    if (animation === undefined) {
+                      // Reset ephemeral state
+                      handleChange(undefined, true);
+                      return;
+                    }
+
                     const newAnimations = [...value.animations];
                     newAnimations[index] = animation;
                     const newValue = {
                       ...value,
                       animations: newAnimations,
                     };
-                    handleChange(newValue);
+                    handleChange(newValue, isEphemeral);
                   }}
                 />
               }
@@ -242,7 +237,7 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
                           ...value,
                           animations: newAnimations,
                         };
-                        handleChange(newValue);
+                        handleChange(newValue, false);
                       }}
                     />
                   </>
