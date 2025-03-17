@@ -181,10 +181,16 @@ const animationSources = Object.keys(
 export const AnimateSection = ({
   animationAction,
   onChange,
+  isAnimationEnabled,
+  selectedBreakpointId,
 }: {
   animationAction: PropAndMeta;
   onChange: ((value: undefined, isEphemeral: true) => void) &
     ((value: AnimationAction, isEphemeral: boolean) => void);
+  isAnimationEnabled: (
+    enabled: [breakpointId: string, enabled: boolean][] | undefined
+  ) => boolean | undefined;
+  selectedBreakpointId: string;
 }) => {
   const fieldIds = useIds([
     "type",
@@ -416,7 +422,12 @@ export const AnimateSection = ({
           </Grid>
         )}
 
-        <AnimationsSelect value={value} onChange={handleChange} />
+        <AnimationsSelect
+          value={value}
+          onChange={handleChange}
+          isAnimationEnabled={isAnimationEnabled}
+          selectedBreakpointId={selectedBreakpointId}
+        />
       </Grid>
     </Grid>
   );

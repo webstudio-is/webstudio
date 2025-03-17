@@ -10,6 +10,11 @@ export const calcOffsets = (
   const offsets = keyframes.map((k) =>
     k.offset !== undefined ? k.offset * multiplier : undefined
   );
+
+  if (offsets.length === 1 && offsets[0] === undefined) {
+    return [1];
+  }
+
   if (offsets[0] === undefined) {
     offsets[0] = 0;
   }

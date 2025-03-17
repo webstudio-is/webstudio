@@ -45,15 +45,24 @@ const newAnimationsPerType: {
   view: newViewAnimations,
 };
 
-type Props = {
+type AnimationsSelectProps = {
   value: AnimationAction;
   onChange: ((value: unknown, isEphemeral: boolean) => void) &
     ((value: undefined, isEphemeral: true) => void);
+  isAnimationEnabled: (
+    enabled: [breakpointId: string, enabled: boolean][] | undefined
+  ) => boolean | undefined;
+  selectedBreakpointId: string;
 };
 
 const floatingPanelOffset = { alignmentAxis: -100 };
 
-export const AnimationsSelect = ({ value, onChange }: Props) => {
+export const AnimationsSelect = ({
+  value,
+  onChange,
+  isAnimationEnabled,
+  selectedBreakpointId,
+}: AnimationsSelectProps) => {
   const fieldIds = useIds(["addAnimation"] as const);
 
   const [newAnimationHint, setNewAnimationHint] = useState<string | undefined>(
@@ -145,106 +154,126 @@ export const AnimationsSelect = ({ value, onChange }: Props) => {
       </DropdownMenu>
       <CssValueListArrowFocus dragItemId={dragItemId}>
         <Grid gap={1} css={{ gridColumn: "span 2" }} ref={sortableRefCallback}>
-          {value.animations.map((animation, index) => (
-            <FloatingPanel
-              key={index}
-              title={
-                <DialogTitle css={{ paddingLeft: theme.spacing[6] }}>
-                  <InputField
-                    css={{
-                      width: "100%",
-                      fontWeight: `inherit`,
-                    }}
-                    variant="chromeless"
-                    value={animation.name}
-                    autoFocus={true}
-                    placeholder="Enter animation name"
-                    onChange={(event) => {
-                      const name = event.currentTarget.value;
-                      const newAnimations = [...value.animations];
-                      newAnimations[index] = { ...animation, name };
+          {value.animations.map((animation, index) => {
+            const isEnabled = isAnimationEnabled(animation.enabled) ?? true;
 
-                      const newValue = {
-                        ...value,
-                        animations: newAnimations,
-                      };
-
-                      handleChange(newValue, false);
-                    }}
-                  />
-                </DialogTitle>
-              }
-              content={
-                <AnimationPanelContent
-                  type={value.type}
-                  value={animation}
-                  onChange={(animation, isEphemeral) => {
-                    if (animation === undefined) {
-                      // Reset ephemeral state
-                      handleChange(undefined, true);
-                      return;
-                    }
-
-                    const newAnimations = [...value.animations];
-                    newAnimations[index] = animation;
-                    const newValue = {
-                      ...value,
-                      animations: newAnimations,
-                    };
-                    handleChange(newValue, isEphemeral);
-                  }}
-                />
-              }
-              offset={floatingPanelOffset}
-            >
-              <CssValueListItem
+            return (
+              <FloatingPanel
                 key={index}
-                label={
-                  <Label disabled={false} truncate>
-                    {animation.name ?? "Unnamed"}
-                  </Label>
-                }
-                hidden={false}
-                draggable
-                active={dragItemId === String(index)}
-                state={undefined}
-                index={index}
-                id={String(index)}
-                buttons={
-                  <>
-                    <SmallToggleButton
-                      pressed={false}
-                      onPressedChange={() => {
-                        alert("Not implemented");
+                title={
+                  <DialogTitle css={{ paddingLeft: theme.spacing[6] }}>
+                    <InputField
+                      css={{
+                        width: "100%",
+                        fontWeight: `inherit`,
                       }}
-                      variant="normal"
-                      tabIndex={-1}
-                      icon={
-                        // eslint-disable-next-line no-constant-condition
-                        false ? <EyeClosedIcon /> : <EyeOpenIcon />
-                      }
-                    />
-
-                    <SmallIconButton
-                      variant="destructive"
-                      tabIndex={-1}
-                      icon={<MinusIcon />}
-                      onClick={() => {
+                      variant="chromeless"
+                      value={animation.name}
+                      autoFocus={true}
+                      placeholder="Enter animation name"
+                      onChange={(event) => {
+                        const name = event.currentTarget.value;
                         const newAnimations = [...value.animations];
-                        newAnimations.splice(index, 1);
+                        newAnimations[index] = { ...animation, name };
 
                         const newValue = {
                           ...value,
                           animations: newAnimations,
                         };
+
                         handleChange(newValue, false);
                       }}
                     />
-                  </>
+                  </DialogTitle>
                 }
-              />
-            </FloatingPanel>
-          ))}
+                content={
+                  <AnimationPanelContent
+                    type={value.type}
+                    value={animation}
+                    onChange={(animation, isEphemeral) => {
+                      if (animation === undefined) {
+                        // Reset ephemeral state
+                        handleChange(undefined, true);
+                        return;
+                      }
+
+                      const newAnimations = [...value.animations];
+                      newAnimations[index] = animation;
+                      const newValue = {
+                        ...value,
+                        animations: newAnimations,
+                      };
+                      handleChange(newValue, isEphemeral);
+                    }}
+                  />
+                }
+                offset={floatingPanelOffset}
+              >
+                <CssValueListItem
+                  key={index}
+                  label={
+                    <Label disabled={false} truncate>
+                      {animation.name ?? "Unnamed"}
+                    </Label>
+                  }
+                  hidden={!isEnabled}
+                  draggable
+                  active={dragItemId === String(index)}
+                  state={undefined}
+                  index={index}
+                  id={String(index)}
+                  buttons={
+                    <>
+                      <SmallToggleButton
+                        pressed={!isEnabled}
+                        onPressedChange={() => {
+                          const enabledMap = new Map(animation.enabled);
+                          enabledMap.set(selectedBreakpointId, !isEnabled);
+
+                          const enabled = [...enabledMap];
+
+                          const newAnimations = [...value.animations];
+                          const newAnimation = {
+                            ...animation,
+                            enabled: enabled.every(([_, enabled]) => enabled)
+                              ? undefined
+                              : [...enabledMap],
+                          };
+
+                          newAnimations[index] = newAnimation;
+
+                          const newValue = {
+                            ...value,
+                            animations: newAnimations,
+                          };
+                          handleChange(newValue, false);
+                        }}
+                        variant="normal"
+                        tabIndex={-1}
+                        icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                      />
+
+                      <SmallIconButton
+                        variant="destructive"
+                        tabIndex={-1}
+                        icon={<MinusIcon />}
+                        onClick={() => {
+                          const newAnimations = [...value.animations];
+                          newAnimations.splice(index, 1);
+
+                          const newValue = {
+                            ...value,
+                            animations: newAnimations,
+                          };
+                          handleChange(newValue, false);
+                        }}
+                      />
+                    </>
+                  }
+                />
+              </FloatingPanel>
+            );
+          })}
           {placementIndicator}
         </Grid>
       </CssValueListArrowFocus>
