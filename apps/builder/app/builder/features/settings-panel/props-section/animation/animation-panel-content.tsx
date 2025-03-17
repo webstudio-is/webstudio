@@ -34,7 +34,11 @@ import { titleCase } from "title-case";
 type Props = {
   type: "scroll" | "view";
   value: ScrollAnimation | ViewAnimation;
-  onChange: (value: ScrollAnimation | ViewAnimation) => void;
+  onChange: ((
+    value: ScrollAnimation | ViewAnimation,
+    isEphemeral: boolean
+  ) => void) &
+    ((value: undefined, isEphemeral: true) => void);
 };
 
 const fillModeDescriptions: Record<
@@ -97,7 +101,8 @@ const RangeValueInput = ({
 }: {
   id: string;
   value: RangeUnitValue;
-  onChange: (value: RangeUnitValue) => void;
+  onChange: ((value: undefined, isEphemeral: true) => void) &
+    ((value: RangeUnitValue, isEphemeral: boolean) => void);
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -114,7 +119,14 @@ const RangeValueInput = ({
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-        /* @todo: allow to change some ephemeral property to see the result in action */
+
+        const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
+        if (parsedValue.success) {
+          onChange(parsedValue.data, true);
+          return;
+        }
+
+        onChange(undefined, true);
       }}
       getOptions={() => []}
       onHighlight={() => {
@@ -123,7 +135,7 @@ const RangeValueInput = ({
       onChangeComplete={(event) => {
         const parsedValue = rangeUnitValueSchema.safeParse(event.value);
         if (parsedValue.success) {
-          onChange(parsedValue.data);
+          onChange(parsedValue.data, false);
           setIntermediateValue(undefined);
           return;
         }
@@ -134,10 +146,11 @@ const RangeValueInput = ({
         });
       }}
       onAbort={() => {
-        /* @todo: allow to change some ephemeral property to see the result in action */
+        onChange(undefined, true);
       }}
       onReset={() => {
         setIntermediateValue(undefined);
+        onChange(undefined, true);
       }}
     />
   );
@@ -150,7 +163,7 @@ const EasingInput = ({
 }: {
   id: string;
   value: string | undefined;
-  onChange: (value: string | undefined) => void;
+  onChange: (value: string | undefined, isEphemeral: boolean) => void;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -166,10 +179,12 @@ const EasingInput = ({
           : { type: "unparsed", value }
       }
       getOptions={() => [
-        ...keywordValues["animation-timing-function"].map((value) => ({
-          type: "keyword" as const,
-          value,
-        })),
+        ...keywordValues["animation-timing-function"]
+          .filter((value) => !["initial", "inherit", "unset"].includes(value))
+          .map((value) => ({
+            type: "keyword" as const,
+            value,
+          })),
       ]}
       property="animation-timing-function"
       intermediateValue={intermediateValue}
@@ -177,18 +192,19 @@ const EasingInput = ({
         setIntermediateValue(styleValue);
         /* @todo: allow to change some ephemeral property to see the result in action */
       }}
-      onHighlight={() => {
-        /* Nothing to Highlight */
+      onHighlight={(value) => {
+        onChange(toValue(value), true);
       }}
       onChangeComplete={(event) => {
-        onChange(toValue(event.value));
+        onChange(toValue(event.value), false);
         setIntermediateValue(undefined);
       }}
       onAbort={() => {
-        /* @todo: allow to change some ephemeral property to see the result in action */
+        onChange(undefined, true);
       }}
       onReset={() => {
         setIntermediateValue(undefined);
+        onChange(undefined, true);
       }}
     />
   );
@@ -212,13 +228,20 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
   const animationSchema =
     type === "scroll" ? scrollAnimationSchema : viewAnimationSchema;
 
-  const handleChange = (rawValue: unknown) => {
-    const parsedValue = animationSchema.safeParse(rawValue);
-    if (parsedValue.success) {
-      onChange(parsedValue.data);
+  const handleChange = (rawValue: unknown, isEphemeral: boolean) => {
+    if (rawValue === undefined) {
+      onChange(undefined, true);
       return;
     }
 
+    const parsedValue = animationSchema.safeParse(rawValue);
+
+    if (parsedValue.success) {
+      onChange(parsedValue.data, isEphemeral);
+      return;
+    }
+
+    console.error(parsedValue.error.format());
     toast.error("Animation schema is incompatible, try fix");
   };
 
@@ -245,6 +268,23 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
           options={fillModeNames}
           getLabel={(fillModeName: string) => titleCase(fillModeName)}
           value={value.timing.fill ?? fillModeNames[0]}
+          onItemHighlight={(fillModeName) => {
+            if (fillModeName === undefined) {
+              handleChange(undefined, true);
+              return;
+            }
+
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  fill: fillModeName,
+                },
+              },
+              true
+            );
+          }}
           getDescription={(fillModeName: string) => (
             <Box
               css={{
@@ -259,26 +299,37 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
             </Box>
           )}
           onChange={(fillModeName) => {
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                fill: fillModeName,
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  fill: fillModeName,
+                },
               },
-            });
+              false
+            );
           }}
         />
         <EasingInput
           id={fieldIds.easing}
           value={value.timing.easing}
-          onChange={(easing) => {
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                easing,
+          onChange={(easing, isEphemeral) => {
+            if (easing === undefined && isEphemeral) {
+              handleChange(undefined, true);
+              return;
+            }
+
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  easing,
+                },
               },
-            });
+              isEphemeral
+            );
           }}
         />
       </Grid>
@@ -310,21 +361,48 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
               }
             </Box>
           )}
-          onChange={(timelineRangeName) => {
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                rangeStart: [
-                  timelineRangeName,
-                  value.timing.rangeStart?.[1] ?? {
-                    type: "unit",
-                    value: 0,
-                    unit: "%",
-                  },
-                ],
+          onItemHighlight={(timelineRangeName) => {
+            if (timelineRangeName === undefined) {
+              handleChange(undefined, true);
+              return;
+            }
+
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeStart: [
+                    timelineRangeName,
+                    value.timing.rangeStart?.[1] ?? {
+                      type: "unit",
+                      value: 0,
+                      unit: "%",
+                    },
+                  ],
+                },
               },
-            });
+              true
+            );
+          }}
+          onChange={(timelineRangeName) => {
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeStart: [
+                    timelineRangeName,
+                    value.timing.rangeStart?.[1] ?? {
+                      type: "unit",
+                      value: 0,
+                      unit: "%",
+                    },
+                  ],
+                },
+              },
+              false
+            );
           }}
         />
         <RangeValueInput
@@ -336,19 +414,27 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
               unit: "%",
             }
           }
-          onChange={(rangeStart) => {
+          onChange={(rangeStart, isEphemeral) => {
+            if (rangeStart === undefined && isEphemeral) {
+              handleChange(undefined, true);
+              return;
+            }
+
             const defaultTimelineRangeName = timelineRangeNames[0]!;
 
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                rangeStart: [
-                  value.timing.rangeStart?.[0] ?? defaultTimelineRangeName,
-                  rangeStart,
-                ],
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeStart: [
+                    value.timing.rangeStart?.[0] ?? defaultTimelineRangeName,
+                    rangeStart,
+                  ],
+                },
               },
-            });
+              isEphemeral
+            );
           }}
         />
 
@@ -374,21 +460,47 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
               }
             </Box>
           )}
-          onChange={(timelineRangeName) => {
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                rangeEnd: [
-                  timelineRangeName,
-                  value.timing.rangeEnd?.[1] ?? {
-                    type: "unit",
-                    value: 0,
-                    unit: "%",
-                  },
-                ],
+          onItemHighlight={(timelineRangeName) => {
+            if (timelineRangeName === undefined) {
+              handleChange(undefined, true);
+              return;
+            }
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeEnd: [
+                    timelineRangeName,
+                    value.timing.rangeEnd?.[1] ?? {
+                      type: "unit",
+                      value: 0,
+                      unit: "%",
+                    },
+                  ],
+                },
               },
-            });
+              true
+            );
+          }}
+          onChange={(timelineRangeName) => {
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeEnd: [
+                    timelineRangeName,
+                    value.timing.rangeEnd?.[1] ?? {
+                      type: "unit",
+                      value: 0,
+                      unit: "%",
+                    },
+                  ],
+                },
+              },
+              false
+            );
           }}
         />
         <RangeValueInput
@@ -400,19 +512,27 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
               unit: "%",
             }
           }
-          onChange={(rangeEnd) => {
+          onChange={(rangeEnd, isEphemeral) => {
+            if (rangeEnd === undefined && isEphemeral) {
+              handleChange(undefined, true);
+              return;
+            }
+
             const defaultTimelineRangeName = timelineRangeNames[0]!;
 
-            handleChange({
-              ...value,
-              timing: {
-                ...value.timing,
-                rangeEnd: [
-                  value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
-                  rangeEnd,
-                ],
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeEnd: [
+                    value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
+                    rangeEnd,
+                  ],
+                },
               },
-            });
+              isEphemeral
+            );
           }}
         />
       </Grid>

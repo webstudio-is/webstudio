@@ -122,6 +122,8 @@ const InsetValueInput = ({
       onChange(parsedResult.data, true);
       return;
     }
+
+    onChange(undefined, true);
   };
 
   return (
@@ -414,10 +416,7 @@ export const AnimateSection = ({
           </Grid>
         )}
 
-        <AnimationsSelect
-          value={value}
-          onChange={(anim) => handleChange(anim, false)}
-        />
+        <AnimationsSelect value={value} onChange={handleChange} />
       </Grid>
     </Grid>
   );
