@@ -20,6 +20,7 @@ import {
   FloatingPanel,
   InputField,
   DialogTitle,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import {
   EyeClosedIcon,
@@ -224,34 +225,42 @@ export const AnimationsSelect = ({
                   id={String(index)}
                   buttons={
                     <>
-                      <SmallToggleButton
-                        pressed={!isEnabled}
-                        onPressedChange={() => {
-                          const enabledMap = new Map(animation.enabled);
-                          enabledMap.set(selectedBreakpointId, !isEnabled);
+                      <Tooltip
+                        content={
+                          isEnabled
+                            ? "Disable animation at breakpoint"
+                            : "Enable animation at breakpoint"
+                        }
+                      >
+                        <SmallToggleButton
+                          pressed={!isEnabled}
+                          onPressedChange={() => {
+                            const enabledMap = new Map(animation.enabled);
+                            enabledMap.set(selectedBreakpointId, !isEnabled);
 
-                          const enabled = [...enabledMap];
+                            const enabled = [...enabledMap];
 
-                          const newAnimations = [...value.animations];
-                          const newAnimation = {
-                            ...animation,
-                            enabled: enabled.every(([_, enabled]) => enabled)
-                              ? undefined
-                              : [...enabledMap],
-                          };
+                            const newAnimations = [...value.animations];
+                            const newAnimation = {
+                              ...animation,
+                              enabled: enabled.every(([_, enabled]) => enabled)
+                                ? undefined
+                                : [...enabledMap],
+                            };
 
-                          newAnimations[index] = newAnimation;
+                            newAnimations[index] = newAnimation;
 
-                          const newValue = {
-                            ...value,
-                            animations: newAnimations,
-                          };
-                          handleChange(newValue, false);
-                        }}
-                        variant="normal"
-                        tabIndex={-1}
-                        icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
-                      />
+                            const newValue = {
+                              ...value,
+                              animations: newAnimations,
+                            };
+                            handleChange(newValue, false);
+                          }}
+                          variant="normal"
+                          tabIndex={-1}
+                          icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                        />
+                      </Tooltip>
 
                       <SmallIconButton
                         variant="destructive"
