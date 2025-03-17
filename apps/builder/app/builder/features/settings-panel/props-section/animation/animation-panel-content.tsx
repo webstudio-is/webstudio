@@ -263,7 +263,11 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
       <Grid
         gap={1}
         align={"center"}
-        css={{ gridTemplateColumns: "1fr 1fr", padding: theme.panel.padding }}
+        css={{
+          gridTemplateColumns: "1fr 1fr",
+          padding: theme.panel.padding,
+          flexShrink: 0,
+        }}
       >
         <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
         <Label htmlFor={fieldIds.easing}>Easing</Label>
@@ -340,7 +344,11 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
       <Grid
         gap={1}
         align={"center"}
-        css={{ gridTemplateColumns: "2fr 1fr", padding: theme.panel.padding }}
+        css={{
+          gridTemplateColumns: "2fr 1fr",
+          padding: theme.panel.padding,
+          flexShrink: 0,
+        }}
       >
         <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
         <Label htmlFor={fieldIds.rangeStartValue}>Value</Label>
