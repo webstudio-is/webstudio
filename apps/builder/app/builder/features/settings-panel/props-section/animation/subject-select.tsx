@@ -8,18 +8,10 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { getInstanceStyleDecl } from "~/builder/features/style-panel/shared/model";
-import { getInstanceLabel } from "~/shared/instance-utils";
+import { getInstanceLabel, updateWebstudioData } from "~/shared/instance-utils";
 import { toValue } from "@webstudio-is/css-engine";
 import type { AnimationAction } from "@webstudio-is/sdk";
 import { setListedCssProperty } from "./set-css-property";
-import { serverSyncStore } from "~/shared/sync";
-
-import {
-  $breakpoints,
-  $styles,
-  $styleSources,
-  $styleSourceSelections,
-} from "~/shared/nano-states";
 
 const initSubjects = () => {
   const selectedInstanceSelector = $selectedInstanceSelector.get();
@@ -142,9 +134,8 @@ export const SubjectSelect = ({
           subjectItem.isTimelineExists === false &&
           newValue.subject !== undefined
         ) {
-          serverSyncStore.createTransaction(
-            [$breakpoints, $styles, $styleSources, $styleSourceSelections],
-            (breakpoints, styles, styleSources, styleSourceSelections) => {
+          updateWebstudioData(
+            ({ breakpoints, styleSources, styleSourceSelections, styles }) => {
               if (newValue.subject === undefined) {
                 return;
               }
@@ -160,6 +151,14 @@ export const SubjectSelect = ({
               });
             }
           );
+
+          // Wait styles to be applied
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              onChange(newValue, false);
+            });
+          });
+          return;
         }
 
         onChange(newValue, false);
