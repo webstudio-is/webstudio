@@ -539,7 +539,14 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
 
       <Keyframes
         value={value.keyframes}
-        onChange={(keyframes) => handleChange({ ...value, keyframes })}
+        onChange={(keyframes, isEphemeral) => {
+          if (keyframes === undefined && isEphemeral) {
+            handleChange(undefined, true);
+            return;
+          }
+
+          handleChange({ ...value, keyframes }, isEphemeral);
+        }}
       />
     </Flex>
   );
