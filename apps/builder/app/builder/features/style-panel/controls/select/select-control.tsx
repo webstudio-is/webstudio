@@ -1,4 +1,3 @@
-import { noCase } from "change-case";
 import {
   camelCaseProperty,
   declarationDescriptions,
@@ -11,7 +10,6 @@ import {
   type CssProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
-import { toKebabCase } from "../../shared/keyword-utils";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   resetEphemeralStyles,
@@ -70,7 +68,6 @@ export const SelectControl = ({
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={toKebabCase}
       value={valueString}
       onChange={(name) => setValue({ type: "keyword", value: name })}
       onItemHighlight={(name) => {
@@ -100,7 +97,7 @@ export const SelectControl = ({
           declarationDescriptions[`${camelCaseProperty(property)}:${option}`];
         return (
           <Box css={{ width: theme.spacing[26] }}>
-            {description ?? `The ${noCase(property)} is ${option}`}
+            {description ?? `The ${property} is ${option}`}
           </Box>
         );
       }}

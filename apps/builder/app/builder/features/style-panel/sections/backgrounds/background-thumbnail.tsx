@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { toPascalCase } from "../../shared/keyword-utils";
+import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
 import { getComputedRepeatedItem } from "../../shared/repeated-style";
 
@@ -105,7 +105,7 @@ export const getBackgroundLabel = (
       backgroundImageStyle.value.includes(name)
     );
 
-    return gradientName ? toPascalCase(gradientName) : "Gradient";
+    return gradientName ? humanizeString(gradientName) : "Gradient";
   }
 
   return "None";

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Box,
   Flex,
@@ -8,7 +9,6 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
-import { toPascalCase } from "~/builder/features/style-panel/shared/keyword-utils";
 import { useIds } from "~/shared/form-utils";
 
 import type {
@@ -31,9 +31,8 @@ import {
   toValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import { useState } from "react";
 import { Keyframes } from "./animation-keyframes";
-import { titleCase } from "title-case";
+import { humanizeString } from "~/shared/string-utils";
 
 type Props = {
   type: "scroll" | "view";
@@ -274,7 +273,7 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         <Select
           id={fieldIds.fill}
           options={fillModeNames}
-          getLabel={(fillModeName: string) => titleCase(fillModeName)}
+          getLabel={humanizeString}
           value={value.timing.fill ?? fillModeNames[0]}
           onItemHighlight={(fillModeName) => {
             if (fillModeName === undefined) {
@@ -356,9 +355,7 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         <Select
           id={fieldIds.rangeStartName}
           options={timelineRangeNames}
-          getLabel={(timelineRangeName: string) =>
-            toPascalCase(timelineRangeName)
-          }
+          getLabel={humanizeString}
           value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
           getDescription={(timelineRangeName: string) => (
             <Box
@@ -455,9 +452,7 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         <Select
           id={fieldIds.rangeEndName}
           options={timelineRangeNames}
-          getLabel={(timelineRangeName: string) =>
-            toPascalCase(timelineRangeName)
-          }
+          getLabel={humanizeString}
           value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
           getDescription={(timelineRangeName: string) => (
             <Box

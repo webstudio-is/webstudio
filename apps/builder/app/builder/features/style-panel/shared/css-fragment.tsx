@@ -7,7 +7,7 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { parseCss } from "@webstudio-is/css-data";
+import { parseCss, shorthandProperties } from "@webstudio-is/css-data";
 import { css as style } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -19,9 +19,11 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { $availableVariables } from "./model";
 
+type ShorthandProperty = (typeof shorthandProperties)[number];
+
 export const parseCssFragment = (
   css: string,
-  fallbacks: string[]
+  fallbacks: (CssProperty | ShorthandProperty)[]
 ): Map<CssProperty, StyleValue> => {
   let parsed = parseCss(`.styles{${css}}`);
   if (parsed.length === 0) {
