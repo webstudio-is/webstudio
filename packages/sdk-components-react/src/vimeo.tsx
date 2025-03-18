@@ -14,6 +14,7 @@ import {
   useContext,
   createContext,
   type ContextType,
+  useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
@@ -250,7 +251,7 @@ type PlayerStatus = "initial" | "loading" | "ready";
 
 type PlayerProps = Pick<
   VimeoOptions,
-  "loading" | "autoplay" | "showPreview"
+  "loading" | "autoplay" | "showPreview" | "playsinline"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -270,16 +271,24 @@ const Player = ({
   autoplay,
   renderer,
   showPreview,
+  playsinline,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
+  const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (autoplay && renderer !== "canvas" && status === "initial") {
       onStatusChange("loading");
     }
   }, [autoplay, status, renderer, onStatusChange]);
+
+  useEffect(() => {
+    if (playsinline === false) {
+      ref.current?.requestFullscreen();
+    }
+  }, [playsinline]);
 
   useEffect(() => {
     if (renderer !== "canvas") {
@@ -312,6 +321,7 @@ const Player = ({
 
   return (
     <iframe
+      ref={ref}
       title={title}
       src={videoUrl}
       loading={loading}
@@ -440,6 +450,7 @@ export const Vimeo = forwardRef<Ref, Props>(
               <Player
                 title={rest.title}
                 autoplay={autoplay}
+                playsinline={playsinline}
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}
                 loading={loading}
