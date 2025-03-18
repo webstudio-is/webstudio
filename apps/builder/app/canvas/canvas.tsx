@@ -141,7 +141,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
         })}
       </ReactSdkContext.Provider>
     );
-  }, [instances, rootInstanceId, components, isPreviewMode, breakpointsMap]);
+  }, [instances, rootInstanceId, components, isPreviewMode, breakpoints]);
 };
 
 const DesignMode = () => {
