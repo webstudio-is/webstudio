@@ -142,8 +142,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           styleSource="default"
           getOptions={() => customSizeOptions}
           value={customSizeValue.value[0]}
-          setValue={setValueX}
-          deleteProperty={() => {}}
+          onUpdate={setValueX}
+          onDelete={() => {}}
         />
 
         <CssValueInputContainer
@@ -152,8 +152,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           styleSource="default"
           getOptions={() => customSizeOptions}
           value={customSizeValue.value[1]}
-          setValue={setValueY}
-          deleteProperty={() => {}}
+          onUpdate={setValueY}
+          onDelete={() => {}}
         />
       </Grid>
     </>

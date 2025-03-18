@@ -216,13 +216,11 @@ export const ShadowContent = ({
             styleSource="local"
             disabled={layer.type === "var"}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
+            onUpdate={(value, options) =>
               handlePropertyChange({ offsetX: value }, options)
             }
-            deleteProperty={() =>
-              handlePropertyChange({
-                offsetX: offsetX ?? undefined,
-              })
+            onDelete={(options) =>
+              handlePropertyChange({ offsetX: offsetX ?? undefined }, options)
             }
           />
         </Flex>
@@ -239,13 +237,11 @@ export const ShadowContent = ({
             styleSource="local"
             disabled={layer.type === "var"}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
+            onUpdate={(value, options) =>
               handlePropertyChange({ offsetY: value }, options)
             }
-            deleteProperty={() =>
-              handlePropertyChange({
-                offsetY: offsetY ?? undefined,
-              })
+            onDelete={(options) =>
+              handlePropertyChange({ offsetY: offsetY ?? undefined }, options)
             }
           />
         </Flex>
@@ -262,13 +258,11 @@ export const ShadowContent = ({
             styleSource="local"
             disabled={layer.type === "var"}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
+            onUpdate={(value, options) =>
               handlePropertyChange({ blur: value }, options)
             }
-            deleteProperty={() =>
-              handlePropertyChange({
-                blur: blur ?? undefined,
-              })
+            onDelete={(options) =>
+              handlePropertyChange({ blur: blur ?? undefined }, options)
             }
           />
         </Flex>
@@ -286,13 +280,11 @@ export const ShadowContent = ({
               styleSource="local"
               disabled={layer.type === "var"}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}
-              setValue={(value, options) =>
+              onUpdate={(value, options) =>
                 handlePropertyChange({ spread: value }, options)
               }
-              deleteProperty={() =>
-                handlePropertyChange({
-                  spread: spread ?? undefined,
-                })
+              onDelete={(options) =>
+                handlePropertyChange({ spread: spread ?? undefined }, options)
               }
             />
           </Flex>

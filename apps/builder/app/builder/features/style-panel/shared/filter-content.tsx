@@ -208,8 +208,8 @@ export const FilterSectionContent = ({
                   unit: "px",
                 }
               }
-              setValue={handleFilterFunctionValueChange}
-              deleteProperty={() => {}}
+              onUpdate={handleFilterFunctionValueChange}
+              onDelete={() => {}}
             />
           </Grid>
         ) : undefined}

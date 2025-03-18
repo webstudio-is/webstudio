@@ -145,8 +145,8 @@ export const TransitionContent = ({ index }: { index: number }) => {
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
           value={duration ?? propertiesData["transition-duration"].initial}
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }
@@ -170,8 +170,8 @@ export const TransitionContent = ({ index }: { index: number }) => {
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
           value={delay ?? propertiesData["transition-delay"].initial}
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }
@@ -207,8 +207,8 @@ export const TransitionContent = ({ index }: { index: number }) => {
             timingFunction ??
             propertiesData["transition-timing-function"].initial
           }
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }

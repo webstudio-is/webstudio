@@ -112,8 +112,8 @@ export const PositionControl = ({
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
             value={value.value[0]}
-            setValue={setValueX}
-            deleteProperty={deleteProperty}
+            onUpdate={setValueX}
+            onDelete={(options) => deleteProperty(property, options)}
           />
           <PropertyInlineLabel
             label="Top"
@@ -125,8 +125,8 @@ export const PositionControl = ({
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
             value={value.value[1]}
-            setValue={setValueY}
-            deleteProperty={deleteProperty}
+            onUpdate={setValueY}
+            onDelete={(options) => deleteProperty(property, options)}
           />
         </Grid>
       </Flex>
