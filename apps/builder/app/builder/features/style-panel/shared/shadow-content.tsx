@@ -33,7 +33,6 @@ import {
 } from "@webstudio-is/icons";
 import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
-import { toPascalCase } from "../shared/keyword-utils";
 import type { StyleUpdateOptions } from "../shared/use-style-data";
 import {
   CssFragmentEditor,
@@ -92,11 +91,6 @@ const convertValuesToTupple = (
     ),
   };
 };
-
-const boxShadowInsetValues = [
-  { value: "normal", Icon: ShadowNormalIcon },
-  { value: "inset", Icon: ShadowInsetIcon },
-] as const;
 
 const shadowPropertySyntaxes = {
   "box-shadow": {
@@ -217,7 +211,6 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].x}
           />
           <CssValueInputContainer
-            key="boxShadowOffsetX"
             // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outline-offset"
             styleSource="local"
@@ -241,7 +234,6 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].y}
           />
           <CssValueInputContainer
-            key="boxShadowOffsetY"
             // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outline-offset"
             styleSource="local"
@@ -265,7 +257,6 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].blur}
           />
           <CssValueInputContainer
-            key="boxShadowBlur"
             // border-top-width is a fake property for validating box-shadow's blur.
             property="border-top-width"
             styleSource="local"
@@ -290,7 +281,6 @@ export const ShadowContent = ({
               description={shadowPropertySyntaxes["box-shadow"].spread}
             />
             <CssValueInputContainer
-              key="boxShadowSpread"
               // outline-offset is a fake property for validating box-shadow's spread.
               property="outline-offset"
               styleSource="local"
@@ -354,7 +344,7 @@ export const ShadowContent = ({
             <ToggleGroup
               type="single"
               disabled={layer.type === "var"}
-              value={inset?.value ?? "normal"}
+              value={inset?.value ?? "outset"}
               defaultValue="inset"
               onValueChange={(value) => {
                 if (value === "inset") {
@@ -366,13 +356,16 @@ export const ShadowContent = ({
                 }
               }}
             >
-              {boxShadowInsetValues.map(({ value, Icon }) => (
-                <Tooltip key={value} content={toPascalCase(value)}>
-                  <ToggleGroupButton value={value}>
-                    <Icon />
-                  </ToggleGroupButton>
-                </Tooltip>
-              ))}
+              <Tooltip content="Outset">
+                <ToggleGroupButton value="outset">
+                  <ShadowNormalIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip content="Inset">
+                <ToggleGroupButton value="inset">
+                  <ShadowInsetIcon />
+                </ToggleGroupButton>
+              </Tooltip>
             </ToggleGroup>
           </Flex>
         ) : null}

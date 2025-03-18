@@ -1,3 +1,4 @@
+import { kebabCase } from "change-case";
 import type {
   StyleValue,
   InvalidValue,
@@ -12,7 +13,6 @@ import {
 } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
-import { toKebabCase } from "../keyword-utils";
 
 const unitsList = Object.values(units).flat();
 
@@ -110,7 +110,7 @@ export const parseIntermediateOrInvalidValue = (
   }
 
   // Probably in kebab-case value will be valid
-  styleInput = parseCssValue(property, toKebabCase(value));
+  styleInput = parseCssValue(property, kebabCase(value));
 
   if (styleInput.type !== "invalid") {
     return styleInput;

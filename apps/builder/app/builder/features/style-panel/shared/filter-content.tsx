@@ -1,4 +1,3 @@
-import { camelCase } from "change-case";
 import {
   type InvalidValue,
   type TupleValue,
@@ -150,7 +149,7 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const parsed = parseCssFragment(value, [camelCase(property)]);
+    const parsed = parseCssFragment(value, [property]);
     const parsedValue = parsed.get(property);
     const invalid = parsedValue === undefined || parsedValue.type === "invalid";
     setIntermediateValue({

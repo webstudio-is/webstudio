@@ -1,13 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
-import { toKebabCase, toPascalCase } from "../keyword-utils";
 
 const properties = ["width", "line-height"] as const;
-
-const propertiesAndKeywords = [
-  ["width", "auto" as string],
-  ["line-height", "normal" as string],
-] as const;
 
 test("forgive trailing semicolon", () => {
   expect(
@@ -99,37 +93,37 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
   });
 
   test("accept keywords", () => {
-    for (const [propery, keyword] of propertiesAndKeywords) {
-      const result = parseIntermediateOrInvalidValue(propery, {
+    expect(
+      parseIntermediateOrInvalidValue("width", {
         type: "intermediate",
-        value: keyword,
+        value: "auto",
         unit: "em",
-      });
-
-      expect(result).toEqual({
-        type: "keyword",
-        value: keyword,
-      });
-    }
+      })
+    ).toEqual({ type: "keyword", value: "auto" });
+    expect(
+      parseIntermediateOrInvalidValue("line-height", {
+        type: "intermediate",
+        value: "normal",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "normal" });
   });
 
   test("accept keywords written as pascal case", () => {
-    const pascalCaseKeywords = propertiesAndKeywords.map(
-      ([property, keyword]) => [property, toPascalCase(keyword)] as const
-    );
-
-    for (const [propery, keyword] of pascalCaseKeywords) {
-      const result = parseIntermediateOrInvalidValue(propery, {
+    expect(
+      parseIntermediateOrInvalidValue("width", {
         type: "intermediate",
-        value: keyword,
+        value: "Auto",
         unit: "em",
-      });
-
-      expect(result).toEqual({
-        type: "keyword",
-        value: toKebabCase(keyword),
-      });
-    }
+      })
+    ).toEqual({ type: "keyword", value: "auto" });
+    expect(
+      parseIntermediateOrInvalidValue("line-height", {
+        type: "intermediate",
+        value: "Normal",
+        unit: "em",
+      })
+    ).toEqual({ type: "keyword", value: "normal" });
   });
 
   test("keyword with pascal case name", () => {

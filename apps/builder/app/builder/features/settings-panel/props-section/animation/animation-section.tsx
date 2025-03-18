@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Grid,
   theme,
@@ -20,7 +21,6 @@ import type {
   AnimationActionScroll,
   InsetUnitValue,
 } from "@webstudio-is/sdk";
-import { toPascalCase } from "~/builder/features/style-panel/shared/keyword-utils";
 import {
   animationActionSchema,
   insetUnitValueSchema,
@@ -34,7 +34,7 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
-import { useState } from "react";
+import { humanizeString } from "~/shared/string-utils";
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -292,9 +292,7 @@ export const AnimateSection = ({
           <Select
             id={fieldIds.type}
             options={animationTypes}
-            getLabel={(animationType: AnimationAction["type"]) =>
-              toPascalCase(animationType)
-            }
+            getLabel={humanizeString}
             value={value.type}
             getDescription={(animationType: AnimationAction["type"]) => (
               <Box
@@ -352,9 +350,7 @@ export const AnimateSection = ({
             <Select
               id={fieldIds.source}
               options={animationSources}
-              getLabel={(
-                animationSource: NonNullable<AnimationActionScroll["source"]>
-              ) => toPascalCase(animationSource)}
+              getLabel={humanizeString}
               value={value.source ?? "nearest"}
               getDescription={(
                 animationSource: NonNullable<AnimationActionScroll["source"]>
