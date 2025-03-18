@@ -169,11 +169,7 @@ export const PropsSection = (props: PropsSectionProps) => {
   const showPropertiesSection =
     isDesignMode || (isContentMode && logic.initialProps.length > 0);
 
-  if (selectedBreakpoint?.id === undefined) {
-    return null;
-  }
-
-  return hasAnimation ? (
+  return hasAnimation && selectedBreakpoint?.id !== undefined ? (
     <>
       <AnimateSection
         animationAction={animationAction}
