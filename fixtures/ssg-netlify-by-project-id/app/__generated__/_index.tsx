@@ -10,6 +10,13 @@ import {
 
 export const siteName = undefined;
 
+export const breakpoints = [
+  { id: "pTyOZEX5PG52onfyt3-Vg" },
+  { id: "GzBytedsc258Pp7rh1hiD", maxWidth: 991 },
+  { id: "ugRM71O_Lm78kMKjkrtyz", maxWidth: 767 },
+  { id: "NKdYAYw-oxmW8laNbpiwK", maxWidth: 479 },
+];
+
 export const favIconAsset: string | undefined = undefined;
 
 // Font assets on current page (can be preloaded)
