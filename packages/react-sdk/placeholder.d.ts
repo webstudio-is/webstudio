@@ -11,6 +11,12 @@ declare module "__CLIENT__" {
 
   export const favIconAsset: string | undefined;
 
+  export const breakpoints: {
+    id: string;
+    minWidth?: number;
+    maxWidth?: number;
+  }[];
+
   // Font assets on current page (can be preloaded)
   export const pageFontAssets: string[];
 
@@ -23,6 +29,7 @@ declare module "__CLIENT__" {
 
 declare module "__SERVER__" {
   import type { PageMeta, System, ResourceRequest } from "@webstudio-is/sdk";
+  import { maxWidth } from "../sdk-components-react-radix/src/shared/theme";
 
   export const getResources: (props: { system: System }) => {
     data: Map<string, ResourceRequest>;

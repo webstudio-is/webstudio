@@ -51,6 +51,7 @@ import {
   $isContentMode,
   subscribeModifierKeys,
   assetBaseUrl,
+  $breakpoints,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
@@ -75,6 +76,7 @@ import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
 import { Body } from "./shared/body";
 import { subscribeScrollbarSize } from "./scrollbar-width";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 registerContainers();
 
@@ -99,6 +101,7 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
 const useElementsTree = (components: Components, instances: Instances) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
+  const breakpointsMap = useStore($breakpoints);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
@@ -111,6 +114,11 @@ const useElementsTree = (components: Components, instances: Instances) => {
     });
   }
 
+  const breakpoints = useMemo(
+    () => [...breakpointsMap.values()].sort(compareMedia),
+    [breakpointsMap]
+  );
+
   return useMemo(() => {
     return (
       <ReactSdkContext.Provider
@@ -119,6 +127,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           assetBaseUrl,
           imageLoader: wsImageLoader,
           resources: {},
+          breakpoints,
         }}
       >
         {createInstanceElement({
@@ -132,7 +141,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
         })}
       </ReactSdkContext.Provider>
     );
-  }, [instances, rootInstanceId, components, isPreviewMode]);
+  }, [instances, rootInstanceId, components, isPreviewMode, breakpointsMap]);
 };
 
 const DesignMode = () => {

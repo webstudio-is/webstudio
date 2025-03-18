@@ -5,7 +5,7 @@ import {
   ReactSdkContext,
   xmlNodeTagSuffix,
 } from "@webstudio-is/react-sdk/runtime";
-import { Page } from "../__generated__/[sitemap.xml]._index";
+import { Page, breakpoints } from "../__generated__/[sitemap.xml]._index";
 import {
   getPageMeta,
   getRemixParams,
@@ -69,6 +69,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
         imageLoader,
         assetBaseUrl,
         resources,
+        breakpoints,
       }}
     >
       <Page system={system} />

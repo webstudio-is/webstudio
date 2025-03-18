@@ -1126,6 +1126,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.3.4(vite@5.4.11(@types/node@22.13.10))
+      '@webstudio-is/css-engine':
+        specifier: workspace:*
+        version: link:../css-engine
       '@webstudio-is/http-client':
         specifier: workspace:*
         version: link:../http-client

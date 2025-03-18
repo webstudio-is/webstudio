@@ -28,6 +28,7 @@ import {
   favIconAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
+  breakpoints,
 } from "__CLIENT__";
 import {
   getResources,
@@ -273,6 +274,7 @@ const Outlet = () => {
         imageLoader,
         assetBaseUrl,
         resources,
+        breakpoints,
       }}
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
