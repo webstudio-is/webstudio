@@ -9,6 +9,7 @@ const Component = () => {
         assetBaseUrl: "/",
         imageLoader: ({ src }) => src,
         resources: {},
+        breakpoints: [],
       }}
     >
       <XmlNode tag="root">
