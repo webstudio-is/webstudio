@@ -7,7 +7,6 @@ import {
 } from "react";
 import { VimeoContext } from "./vimeo";
 import { Button, defaultTag } from "./button";
-import interactionResponse from "await-interaction-response";
 
 export { defaultTag };
 
@@ -17,8 +16,7 @@ export const VimeoPlayButton = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const vimeoContext = useContext(VimeoContext);
 
-    const handleClick = useCallback(async () => {
-      await interactionResponse();
+    const handleClick = useCallback(() => {
       vimeoContext.onInitPlayer();
     }, [vimeoContext]);
 
