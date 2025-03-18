@@ -154,6 +154,9 @@ export const viewRangeOptionsSchema = z.object({
 const baseAnimation = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
+  enabled: z
+    .array(z.tuple([z.string().describe("breakpointId"), z.boolean()]))
+    .optional(),
   keyframes: z.array(animationKeyframeSchema),
 });
 

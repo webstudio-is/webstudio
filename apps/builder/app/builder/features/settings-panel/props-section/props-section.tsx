@@ -19,6 +19,7 @@ import {
   $isDesignMode,
   $isContentMode,
   $memoryProps,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
@@ -27,6 +28,8 @@ import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
 import { AnimateSection } from "./animation/animation-section";
 import { nanoid } from "nanoid";
+import { $matchingBreakpoints } from "../../style-panel/shared/model";
+import { matchMediaBreakpoints } from "./match-media-breakpoints";
 
 type Item = {
   name: string;
@@ -149,6 +152,10 @@ export const PropsSection = (props: PropsSectionProps) => {
   const [addingProp, setAddingProp] = useState(false);
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
+  const matchingBreakpoints = useStore($matchingBreakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+
+  const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
   const hasItems =
     logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
@@ -162,10 +169,12 @@ export const PropsSection = (props: PropsSectionProps) => {
   const showPropertiesSection =
     isDesignMode || (isContentMode && logic.initialProps.length > 0);
 
-  return hasAnimation ? (
+  return hasAnimation && selectedBreakpoint?.id !== undefined ? (
     <>
       <AnimateSection
         animationAction={animationAction}
+        isAnimationEnabled={matchMediaValue}
+        selectedBreakpointId={selectedBreakpoint?.id}
         onChange={(value, isEphemeral) => {
           const memoryProps = new Map($memoryProps.get());
           const memoryInstanceProp: Props = new Map(
