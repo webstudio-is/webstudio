@@ -53,10 +53,10 @@ export const RotatePanelContent = () => {
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}
           value={rotateX}
-          setValue={(value, options) =>
+          onUpdate={(value, options) =>
             updateTransformFunction(styleDecl, "rotateX", value, options)
           }
-          deleteProperty={() => {}}
+          onDelete={() => {}}
         />
       </Grid>
       <Grid
@@ -73,10 +73,10 @@ export const RotatePanelContent = () => {
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}
           value={rotateY}
-          setValue={(value, options) =>
+          onUpdate={(value, options) =>
             updateTransformFunction(styleDecl, "rotateY", value, options)
           }
-          deleteProperty={() => {}}
+          onDelete={() => {}}
         />
       </Grid>
       <Grid
@@ -93,10 +93,10 @@ export const RotatePanelContent = () => {
           property="rotate"
           getOptions={() => $availableUnitVariables.get()}
           value={rotateZ}
-          setValue={(value, options) =>
+          onUpdate={(value, options) =>
             updateTransformFunction(styleDecl, "rotateZ", value, options)
           }
-          deleteProperty={() => {}}
+          onDelete={() => {}}
         />
       </Grid>
     </Flex>

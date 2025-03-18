@@ -170,7 +170,7 @@ const AdvancedPropertyValue = ({
         ...$availableVariables.get(),
       ]}
       value={styleDecl.cascadedValue}
-      setValue={(styleValue, options) => {
+      onUpdate={(styleValue, options) => {
         if (
           styleValue.type === "keyword" &&
           styleValue.value.startsWith("--")
@@ -186,7 +186,7 @@ const AdvancedPropertyValue = ({
           });
         }
       }}
-      deleteProperty={onDeleteProperty}
+      onDelete={(options) => onDeleteProperty(styleDecl.property, options)}
       onChangeComplete={onChangeComplete}
       onReset={onReset}
     />

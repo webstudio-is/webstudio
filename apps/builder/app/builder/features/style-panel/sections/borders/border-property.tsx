@@ -86,14 +86,14 @@ export const BorderProperty = ({
               ...$availableUnitVariables.get(),
             ]}
             value={value}
-            setValue={(newValue, options) => {
+            onUpdate={(newValue, options) => {
               const batch = createBatchUpdate();
               for (const property of borderProperties) {
                 batch.setProperty(property)(newValue);
               }
               batch.publish(options);
             }}
-            deleteProperty={(_property, options) => {
+            onDelete={(options) => {
               const batch = createBatchUpdate();
               for (const property of borderProperties) {
                 batch.deleteProperty(property);
@@ -127,8 +127,10 @@ export const BorderProperty = ({
                 }))
               }
               value={styleDecl.cascadedValue}
-              setValue={setProperty(styleDecl.property)}
-              deleteProperty={deleteProperty}
+              onUpdate={setProperty(styleDecl.property)}
+              onDelete={(options) =>
+                deleteProperty(styleDecl.property, options)
+              }
             />
           ))}
         </Grid>

@@ -187,8 +187,8 @@ export const TransformAndPerspectiveOrigin = ({
                 getOptions={() => xOriginKeywords}
                 styleSource="local"
                 property={fakePropertyX}
-                deleteProperty={() => {}}
-                setValue={(value, options) =>
+                onDelete={() => {}}
+                onUpdate={(value, options) =>
                   handleValueChange(0, value, options)
                 }
               />
@@ -214,8 +214,8 @@ export const TransformAndPerspectiveOrigin = ({
                 getOptions={() => yOriginKeywords}
                 styleSource="local"
                 property={fakePropertyY}
-                deleteProperty={() => {}}
-                setValue={(value, options) =>
+                onDelete={() => {}}
+                onUpdate={(value, options) =>
                   handleValueChange(1, value, options)
                 }
               />
@@ -235,8 +235,8 @@ export const TransformAndPerspectiveOrigin = ({
                   value={origin.z}
                   styleSource="local"
                   property={fakePropertyZ}
-                  deleteProperty={() => {}}
-                  setValue={(value, options) =>
+                  onDelete={() => {}}
+                  onUpdate={(value, options) =>
                     handleValueChange(2, value, options)
                   }
                 />

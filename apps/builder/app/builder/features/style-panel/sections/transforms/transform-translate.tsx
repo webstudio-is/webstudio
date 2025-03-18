@@ -63,8 +63,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateX}
-          setValue={(newValue, options) => setAxis(0, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(0, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />
@@ -83,8 +83,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateY}
-          setValue={(newValue, options) => setAxis(1, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(1, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />
@@ -103,8 +103,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateZ}
-          setValue={(newValue, options) => setAxis(2, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(2, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />
