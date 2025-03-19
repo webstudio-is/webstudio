@@ -385,51 +385,107 @@ export const getComponentTemplateData = (
   return generateDataFromEmbedTemplate(template, metas);
 };
 
-export const reparentInstance = (
+export const reparentInstanceMutable = (
+  data: Omit<WebstudioData, "pages">,
   sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
   const [rootInstanceId] = sourceInstanceSelector;
-  updateWebstudioData((data) => {
-    const fragment = extractWebstudioFragment(data, rootInstanceId);
-    const reparentDropTarget = getReparentDropTargetMutable(
+  // delect is target is one of own descendants
+  // prevent reparenting to avoid infinite loop
+  const instanceDescendants = findTreeInstanceIds(
+    data.instances,
+    rootInstanceId
+  );
+  for (const instanceId of instanceDescendants) {
+    if (dropTarget.parentSelector.includes(instanceId)) {
+      return;
+    }
+  }
+  // try to use slot fragment as target instead of slot itself
+  let parentInstance = data.instances.get(dropTarget.parentSelector[0]);
+  if (
+    parentInstance?.component === portalComponent &&
+    parentInstance.children.length > 0 &&
+    parentInstance.children[0].type === "id"
+  ) {
+    const fragmentId = parentInstance.children[0].value;
+    dropTarget = {
+      parentSelector: [fragmentId, ...dropTarget.parentSelector],
+      position: dropTarget.position,
+    };
+  }
+  // move within same parent
+  if (sourceInstanceSelector[1] === dropTarget.parentSelector[0]) {
+    const [parentId] = dropTarget.parentSelector;
+    const parent = data.instances.get(parentId);
+    if (parent === undefined) {
+      return;
+    }
+    let prevPosition = parent.children.findIndex(
+      (child) => child.type === "id" && child.value === rootInstanceId
+    );
+    const child = parent.children[prevPosition];
+    parent?.children.splice(prevPosition, 1);
+    if (dropTarget.position === "end") {
+      parent?.children.push(child);
+    } else {
+      // when parent is the same, we need to adjust the position
+      // to account for the removal of the instance.
+      let nextPosition = dropTarget.position;
+      if (prevPosition < nextPosition) {
+        nextPosition -= 1;
+      }
+      parent?.children.splice(nextPosition, 0, child);
+    }
+    return sourceInstanceSelector;
+  }
+  // move into another parent
+  const fragment = extractWebstudioFragment(data, rootInstanceId);
+  deleteInstanceMutable(
+    data,
+    getInstancePath(sourceInstanceSelector, data.instances)
+  );
+  // prepare drop target after deleting instance to recreate new slot fragment
+  dropTarget =
+    getReparentDropTargetMutable(
       data.instances,
       data.props,
       $registeredComponentMetas.get(),
+      dropTarget
+    ) ?? dropTarget;
+  const { newInstanceIds } = insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: findAvailableVariables({
+      ...data,
+      startingInstanceId: dropTarget.parentSelector[0],
+    }),
+  });
+  const [newParentId] = dropTarget.parentSelector;
+  const newRootInstanceId =
+    newInstanceIds.get(rootInstanceId) ?? rootInstanceId;
+  const newParent = data.instances.get(newParentId);
+  const newChild = { type: "id" as const, value: newRootInstanceId };
+  if (dropTarget.position === "end") {
+    newParent?.children.push(newChild);
+  } else {
+    newParent?.children.splice(dropTarget.position, 0, newChild);
+  }
+  return [newRootInstanceId, ...dropTarget.parentSelector];
+};
+
+export const reparentInstance = (
+  sourceInstanceSelector: InstanceSelector,
+  dropTarget: DroppableTarget
+) => {
+  updateWebstudioData((data) => {
+    const newSelector = reparentInstanceMutable(
+      data,
       sourceInstanceSelector,
       dropTarget
     );
-    if (reparentDropTarget === undefined) {
-      return;
-    }
-    deleteInstanceMutable(
-      data,
-      getInstancePath(sourceInstanceSelector, data.instances)
-    );
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
-      fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: reparentDropTarget.parentSelector[0],
-      }),
-    });
-    const newRootInstanceId = newInstanceIds.get(rootInstanceId);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const [newParentId] = reparentDropTarget.parentSelector;
-    const newParent = data.instances.get(newParentId);
-    if (newParent === undefined) {
-      return;
-    }
-    const newChild = { type: "id" as const, value: newRootInstanceId };
-    if (reparentDropTarget.position === "end") {
-      newParent.children.push(newChild);
-    } else {
-      newParent.children.splice(reparentDropTarget.position, 0, newChild);
-    }
-    selectInstance([newRootInstanceId, ...reparentDropTarget.parentSelector]);
+    selectInstance(newSelector);
   });
 };
 
