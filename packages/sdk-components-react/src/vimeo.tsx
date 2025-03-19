@@ -247,6 +247,15 @@ const EmptyState = () => {
   );
 };
 
+export const requestFullscreen = (element: HTMLIFrameElement) => {
+  const isTouchDevice = "ontouchstart" in window;
+  // Allows it to work on small screens on desktop too and makes it easy to test.
+  const isMobileResolution = window.matchMedia("(max-width: 1024px)").matches;
+  if (isMobileResolution || isTouchDevice) {
+    element.requestFullscreen();
+  }
+};
+
 type PlayerStatus = "initial" | "loading" | "ready";
 
 type PlayerProps = Pick<
@@ -283,13 +292,6 @@ const Player = ({
       onStatusChange("loading");
     }
   }, [autoplay, status, renderer, onStatusChange]);
-
-  //  useEffect(() => {
-  //    if (playsinline === false) {
-  //      ref.current?.requestFullscreen();
-  //      console.log(111);
-  //    }
-  //  }, [playsinline]);
 
   useEffect(() => {
     if (renderer !== "canvas") {
@@ -339,9 +341,8 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
-        if (playsinline === false) {
-          ref.current?.requestFullscreen();
-          console.log(111);
+        if (ref.current && playsinline === false) {
+          requestFullscreen(ref.current);
         }
       }}
     />
@@ -384,7 +385,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       loop = false,
       muted = false,
       pip = false,
-      playsinline = true,
+      playsinline = false,
       showPortrait = true,
       quality = "auto",
       responsive = true,

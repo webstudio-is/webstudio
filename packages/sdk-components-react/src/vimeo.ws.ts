@@ -42,6 +42,7 @@ const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "showTitle",
   "showControls",
   "controlsColor",
+  "playsinline",
 ];
 
 export const propsMeta: WsComponentPropsMeta = {
