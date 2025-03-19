@@ -403,7 +403,7 @@ export const reparentInstanceMutable = (
     }
   }
   // try to use slot fragment as target instead of slot itself
-  let parentInstance = data.instances.get(dropTarget.parentSelector[0]);
+  const parentInstance = data.instances.get(dropTarget.parentSelector[0]);
   if (
     parentInstance?.component === portalComponent &&
     parentInstance.children.length > 0 &&
@@ -422,7 +422,7 @@ export const reparentInstanceMutable = (
     if (parent === undefined) {
       return;
     }
-    let prevPosition = parent.children.findIndex(
+    const prevPosition = parent.children.findIndex(
       (child) => child.type === "id" && child.value === rootInstanceId
     );
     const child = parent.children[prevPosition];
