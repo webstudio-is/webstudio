@@ -6,6 +6,7 @@ import { propertiesData } from "@webstudio-is/css-data";
 import {
   compareMedia,
   hyphenateProperty,
+  matchMedia,
   toVarFallback,
   type CssProperty,
   type StyleValue,
@@ -41,6 +42,7 @@ import {
   type InstancePath,
 } from "~/shared/awareness";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { $canvasWidth } from "~/builder/shared/nano-states";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -111,16 +113,28 @@ const $instanceComponents = computed(
 );
 
 export const $matchingBreakpoints = computed(
-  [$breakpoints, $selectedBreakpoint],
-  (breakpoints, selectedBreakpoint) => {
-    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
-      compareMedia
-    );
+  [$breakpoints, $selectedBreakpoint, $canvasWidth],
+  (breakpoints, selectedBreakpoint, canvasWidth) => {
+    // zero is not correct, need to use current width for base breakpoint
+    // add always add base
+    const selectedWidth =
+      selectedBreakpoint?.minWidth ??
+      selectedBreakpoint?.maxWidth ??
+      canvasWidth ??
+      0;
+    const sortedBreakpoints = Array.from(breakpoints.values())
+      .sort(compareMedia)
+      .sort((left, right) => {
+        // put selected breakpoint always in the end
+        // to make style from matching breakpoints remote
+        const leftScore = left.id === selectedBreakpoint?.id ? 1 : 0;
+        const rightScore = right.id === selectedBreakpoint?.id ? 1 : 0;
+        return leftScore - rightScore;
+      });
     const matchingBreakpoints: Breakpoint["id"][] = [];
     for (const breakpoint of sortedBreakpoints) {
-      matchingBreakpoints.push(breakpoint.id);
-      if (breakpoint.id === selectedBreakpoint?.id) {
-        break;
+      if (matchMedia(breakpoint, selectedWidth)) {
+        matchingBreakpoints.push(breakpoint.id);
       }
     }
     return matchingBreakpoints;

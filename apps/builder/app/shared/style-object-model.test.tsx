@@ -1638,12 +1638,13 @@ describe("compute matching breakpoints", () => {
       ])
     );
     $selectedBreakpointId.set("desktop");
-    const computedStyleDecl = getComputedStyleDecl({
-      model: _$model.get(),
-      instanceSelector: ["body"],
-      property: "color",
-    });
-    expect(computedStyleDecl.computedValue).toEqual({
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).computedValue
+    ).toEqual({
       type: "keyword",
       value: "red",
     });
@@ -1670,18 +1671,19 @@ describe("compute matching breakpoints", () => {
       ])
     );
     $selectedBreakpointId.set("desktop");
-    const computedStyleDecl = getComputedStyleDecl({
-      model: _$model.get(),
-      instanceSelector: ["body"],
-      property: "color",
-    });
-    expect(computedStyleDecl.computedValue).toEqual({
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).computedValue
+    ).toEqual({
       type: "keyword",
       value: "black",
     });
   });
 
-  test("mixed min-width and max-width breakpoints", () => {
+  test("mixed min-width and max-width with selected min-width", () => {
     const model = createModel({
       css: `
         @media mobile {
@@ -1702,14 +1704,66 @@ describe("compute matching breakpoints", () => {
       ])
     );
     $selectedBreakpointId.set("desktop");
-    const computedStyleDecl = getComputedStyleDecl({
-      model: _$model.get(),
-      instanceSelector: ["body"],
-      property: "color",
-    });
-    expect(computedStyleDecl.computedValue).toEqual({
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).computedValue
+    ).toEqual({
       type: "keyword",
       value: "black",
     });
+    $selectedBreakpointId.set("base");
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual(
+      expect.objectContaining({ name: "remote", breakpointId: "mobile" })
+    );
+  });
+
+  test("mixed min-width and max-width with selected max-width", () => {
+    const model = createModel({
+      css: `
+        @media desktop {
+          bodyLocal {
+            color: red;
+          }
+        }
+      `,
+      jsx: <$.Body ws:id="body" ws:tag="body" class="bodyLocal"></$.Body>,
+    });
+    $styles.set(model.styles);
+    $styleSourceSelections.set(model.styleSourceSelections);
+    $breakpoints.set(
+      new Map([
+        ["desktop", { id: "desktop", label: "", minWidth: 991 }],
+        ["base", { id: "base", label: "" }],
+        ["mobile", { id: "mobile", label: "", maxWidth: 479 }],
+      ])
+    );
+    $selectedBreakpointId.set("mobile");
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).computedValue
+    ).toEqual({
+      type: "keyword",
+      value: "black",
+    });
+    $selectedBreakpointId.set("base");
+    expect(
+      getComputedStyleDecl({
+        model: _$model.get(),
+        instanceSelector: ["body"],
+        property: "color",
+      }).source
+    ).toEqual(expect.objectContaining({ name: "default" }));
   });
 });
