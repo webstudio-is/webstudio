@@ -240,6 +240,8 @@ const $model = computed(
   }
 );
 
+export { $model as _$model };
+
 export const $computedStyleDeclarations = computed(
   [
     $model,

@@ -3003,6 +3003,11 @@ describe("Styles", () => {
           background-color: rgba(0, 208, 255, 1)
         }
       }
+      @media all and (min-width: 1280px) {
+        Div Block 2 {
+          background-color: rgba(0, 255, 128, 1)
+        }
+      }
       @media all and (max-width: 991px) {
         Div Block 2 {
           background-color: rgba(68, 0, 255, 1)
@@ -3016,11 +3021,6 @@ describe("Styles", () => {
       @media all and (max-width: 479px) {
         Div Block 2 {
           background-color: rgba(255, 0, 4, 1)
-        }
-      }
-      @media all and (min-width: 1280px) {
-        Div Block 2 {
-          background-color: rgba(0, 255, 128, 1)
         }
       }"
     `);
