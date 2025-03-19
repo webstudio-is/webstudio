@@ -8,6 +8,13 @@ import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "";
 
+export const breakpoints = [
+  { id: "rKj-wYctg3-GnqL3WHN9I" },
+  { id: "yH9RXhqCyeaVkrOt8MzLc", maxWidth: 991 },
+  { id: "8nSCZbeS002IVwkTdoIes", maxWidth: 767 },
+  { id: "7gBD25KrrbBdJYNDlhPz7", maxWidth: 479 },
+];
+
 export const favIconAsset: string | undefined =
   "147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg";
 

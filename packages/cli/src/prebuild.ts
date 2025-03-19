@@ -59,6 +59,7 @@ import { htmlToJsx } from "./html-to-jsx";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 const limit = pLimit(10);
 
@@ -597,6 +598,14 @@ export const prebuild = async (options: {
 
     const pagePath = getPagePath(page.id, siteData.build.pages);
 
+    const breakpoints = siteData.build.breakpoints
+      .map(([_, value]) => ({
+        id: value.id,
+        minWidth: value.minWidth,
+        maxWidth: value.maxWidth,
+      }))
+      .sort(compareMedia);
+
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
       /* This is a auto generated file for building the project */ \n
@@ -606,6 +615,8 @@ export const prebuild = async (options: {
       ${componentImports}
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
+
+      export const breakpoints = ${JSON.stringify(breakpoints)};
 
       export const favIconAsset: string | undefined =
         ${JSON.stringify(favIconAsset)};

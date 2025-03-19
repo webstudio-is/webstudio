@@ -32,11 +32,13 @@ export const ReactSdkContext = createContext<
     // resources need to be any to support accessing unknown fields without extra checks
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resources: Record<string, any>;
+    breakpoints: { id: string; minWidth?: number; maxWidth?: number }[];
   }
 >({
   assetBaseUrl: "/",
   imageLoader: ({ src }) => src,
   resources: {},
+  breakpoints: [],
 });
 
 export const useResource = (name: string) => {
