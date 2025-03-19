@@ -284,11 +284,12 @@ const Player = ({
     }
   }, [autoplay, status, renderer, onStatusChange]);
 
-  useEffect(() => {
-    if (playsinline === false) {
-      ref.current?.requestFullscreen();
-    }
-  }, [playsinline]);
+  //  useEffect(() => {
+  //    if (playsinline === false) {
+  //      ref.current?.requestFullscreen();
+  //      console.log(111);
+  //    }
+  //  }, [playsinline]);
 
   useEffect(() => {
     if (renderer !== "canvas") {
@@ -338,6 +339,10 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
+        if (playsinline === false) {
+          ref.current?.requestFullscreen();
+          console.log(111);
+        }
       }}
     />
   );
