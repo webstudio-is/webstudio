@@ -6,9 +6,10 @@ import {
   type ComponentProps,
   useContext,
   type ContextType,
+  useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VimeoContext } from "./vimeo";
+import { VimeoContext, requestFullscreen } from "./vimeo";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -362,7 +363,7 @@ const EmptyState = () => {
 
 type PlayerProps = Pick<
   YouTubePlayerOptions,
-  "loading" | "autoplay" | "showPreview"
+  "loading" | "autoplay" | "showPreview" | "inline"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -380,12 +381,14 @@ const Player = ({
   videoUrl,
   previewImageUrl,
   autoplay,
+  inline,
   renderer,
   showPreview,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
+  const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (autoplay && renderer !== "canvas" && status === "initial") {
@@ -417,6 +420,7 @@ const Player = ({
 
   return (
     <iframe
+      ref={ref}
       title={title}
       src={videoUrl}
       loading={loading}
@@ -433,6 +437,9 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
+        if (!inline && !autoplay && ref.current) {
+          requestFullscreen(ref.current);
+        }
       }}
     />
   );
@@ -463,6 +470,7 @@ export const YouTube = forwardRef<Ref, Props>(
       showPreview,
       children,
       privacyEnhancedMode,
+      inline = false,
       ...rest
     },
     ref
@@ -478,6 +486,7 @@ export const YouTube = forwardRef<Ref, Props>(
     const videoUrl = getVideoUrl(
       {
         ...rest,
+        inline,
         url,
         autoplay: true,
       },
@@ -508,6 +517,7 @@ export const YouTube = forwardRef<Ref, Props>(
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}
                 loading={loading}
+                inline={inline}
                 showPreview={showPreview}
                 renderer={renderer}
                 status={status}
