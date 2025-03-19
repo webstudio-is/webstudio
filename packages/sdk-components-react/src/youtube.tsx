@@ -437,7 +437,7 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
-        if (inline === false && ref.current) {
+        if (!inline && !autoplay && ref.current) {
           requestFullscreen(ref.current);
         }
       }}
