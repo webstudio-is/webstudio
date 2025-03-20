@@ -25,18 +25,14 @@ import type {
   WebstudioFragment,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import {
-  coreMetas,
-  portalComponent,
-  collectionComponent,
-} from "@webstudio-is/sdk";
+import { coreMetas, portalComponent } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   findClosestEditableInstanceSelector,
   deleteInstanceMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  reparentInstance,
+  reparentInstanceMutable,
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
@@ -501,249 +497,267 @@ describe("insert webstudio fragment at", () => {
 
 describe("reparent instance", () => {
   test("between instances", () => {
-    // body
-    //   box
-    //     text
-    //   button
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: "button" },
-        ]),
-        createInstance("box", "Box", [{ type: "id", value: "text" }]),
-        createInstance("button", "Button", []),
-        createInstance("text", "Text", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box">
+          <$.Text ws:id="text"></$.Text>
+        </$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["text", "box", "body"], {
+    reparentInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: 1,
     });
-    const instances = $instances.get();
-    const newTextId = instances.get("body")?.children[1].value as string;
-    // body
-    //   box
-    //   text
-    //   button
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: newTextId },
-          { type: "id", value: "button" },
-        ]),
-        createInstance("box", "Box", []),
-        createInstance("button", "Button", []),
-        createInstance(newTextId, "Text", []),
-      ])
+    const newTextId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box"></$.Box>
+          <$.Text ws:id={newTextId}></$.Text>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
   test("to the end", () => {
-    // body
-    //   box
-    //     text
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "box" }]),
-        createInstance("box", "Box", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box">
+          <$.Text ws:id="text"></$.Text>
+        </$.Box>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["text", "box", "body"], {
+    reparentInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
-    const instances = $instances.get();
-    const newTextId = instances.get("body")?.children[1].value as string;
-    // body
-    //   box
-    //   text
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: newTextId },
-        ]),
-        createInstance("box", "Box", []),
-        createInstance(newTextId, "Text", []),
-      ])
+    const newTextId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box"></$.Box>
+          <$.Text ws:id={newTextId}></$.Text>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("wrap with fragment when reparent into empty portal", () => {
-    // body
-    //   portal
-    //   box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "portal" },
-          { type: "id", value: "box" },
-        ]),
-        createInstance("portal", portalComponent, []),
-        createInstance("box", "Box", []),
-      ])
+  test("before itself", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Text ws:id="text"></$.Text>
+        <$.Box ws:id="box"></$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "body"], {
-      parentSelector: ["portal", "body"],
-      position: "end",
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["body"],
+      position: 1,
     });
-    const instances = $instances.get();
-    const newFragmentId = instances.get("portal")?.children[0].value as string;
-    const newBoxId = instances.get(newFragmentId)?.children[0].value as string;
-    // body
-    //   portal
-    //     fragment
-    //       box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: newFragmentId },
-        ]),
-        createInstance(newFragmentId, "Fragment", [
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance(newBoxId, "Box", []),
-      ])
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Text ws:id="text"></$.Text>
+          <$.Box ws:id="box"></$.Box>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("reuse existing fragment when reparent into portal", () => {
-    // body
-    //   portal
-    //     fragment
-    //   box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "portal" },
-          { type: "id", value: "box" },
-        ]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-        createInstance("box", "Box", []),
-      ])
+  test("after itself", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Text ws:id="text"></$.Text>
+        <$.Box ws:id="box"></$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "body"], {
-      parentSelector: ["portal", "body"],
-      position: "end",
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["body"],
+      position: 2,
     });
-    const instances = $instances.get();
-    const newBoxId = instances.get("fragment")?.children[0].value as string;
-    // body
-    //   portal
-    //     fragment
-    //       box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", [
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance(newBoxId, "Box", []),
-      ])
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Text ws:id="text"></$.Text>
+          <$.Box ws:id="box"></$.Box>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("prevent portal reparenting into own children to avoid infinite loop", () => {
-    // body
-    //   portal
-    //     fragment
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-      ])
+  test("wrap with fragment when reparent into empty slot", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot"></$.Slot>
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["portal", "body"], {
-      parentSelector: ["fragment", "portal", "body"],
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["slot", "body"],
       position: "end",
     });
-    const instances = $instances.get();
-    // body
-    //   portal
-    //     fragment
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-      ])
+    const newFragmentId = data.instances.get("slot")?.children[0]
+      .value as string;
+    const newBoxId = data.instances.get(newFragmentId)?.children[0]
+      .value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id={newFragmentId}>
+              <$.Box ws:id={newBoxId}></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("reuse existing fragment when reparent into slot", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot">
+          <$.Fragment ws:id="fragment"></$.Fragment>
+        </$.Slot>
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["slot", "body"],
+      position: "end",
+    });
+    const newBoxId = data.instances.get("fragment")?.children[0]
+      .value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id={newBoxId}></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("reparent slot child from one instance of this slot into another", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
+      parentSelector: ["slot2", "body"],
+      position: "end",
+    });
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot1">
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id="box"></$.Box>
+            </$.Fragment>
+          </$.Slot>
+          <$.Slot ws:id="slot2">
+            {/* same ids */}
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id="box"></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("prevent slot reparenting into own children to avoid infinite loop", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot">
+          <$.Fragment ws:id="fragment"></$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["slot", "body"], {
+      parentSelector: ["fragment", "slot", "body"],
+      position: "end",
+    });
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id="fragment"></$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
     );
   });
 
   test("from collection item", () => {
-    // body
-    //   list
-    //     box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "list" }]),
-        createInstance("list", collectionComponent, [
-          { type: "id", value: "box" },
-        ]),
-        createInstance("box", "Box", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <ws.collection ws:id="collection">
+          <$.Box ws:id="box"></$.Box>
+        </ws.collection>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "list[0]", "list", "body"], {
-      parentSelector: ["body"],
-      position: "end",
-    });
-    const instances = $instances.get();
-    const newBoxId = instances.get("body")?.children[1].value as string;
-    // body
-    //   list
-    //   box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "list" },
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance("list", collectionComponent, []),
-        createInstance(newBoxId, "Box", []),
-      ])
+    reparentInstanceMutable(
+      data,
+      ["box", "collection[0]", "collection", "body"],
+      { parentSelector: ["body"], position: "end" }
+    );
+    const newBoxId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <ws.collection ws:id="collection"></ws.collection>
+          <$.Box ws:id={newBoxId}></$.Box>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("reparent required child", () => {
-    $instances.set(
-      renderData(
-        <$.Body ws:id="body">
-          <$.Tooltip ws:id="tooltip">
-            <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
-            <$.TooltipContent ws:id="content"></$.TooltipContent>
-          </$.Tooltip>
-        </$.Body>
-      ).instances
+  test("move required child within same instance", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Tooltip ws:id="tooltip">
+          <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
+          <$.TooltipContent ws:id="content"></$.TooltipContent>
+        </$.Tooltip>
+      </$.Body>
     );
     $registeredComponentMetas.set(
       new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
     );
-    reparentInstance(["trigger", "tooltip", "body"], {
+    reparentInstanceMutable(data, ["trigger", "tooltip", "body"], {
       parentSelector: ["tooltip", "body"],
       position: "end",
     });
-    expect($instances.get()).toEqual(
+    expect(data.instances).toEqual(
       renderData(
         <$.Body ws:id="body">
           <$.Tooltip ws:id="tooltip">
