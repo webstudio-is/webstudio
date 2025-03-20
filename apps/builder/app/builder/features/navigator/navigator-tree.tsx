@@ -19,7 +19,10 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import {
+  animationCanPlayOnCanvasAttribute,
+  showAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
@@ -29,6 +32,7 @@ import {
   descendantComponent,
   type Instance,
   type WsComponentMeta,
+  type AnimationAction,
 } from "@webstudio-is/sdk";
 import {
   EyeClosedIcon,
@@ -49,6 +53,7 @@ import {
   $selectedInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
+  $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -285,9 +290,11 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
 const ShowToggle = ({
   instance,
   value,
+  isAnimating,
 }: {
   instance: Instance;
   value: boolean;
+  isAnimating: boolean;
 }) => {
   // descendant component is not actually rendered
   // but affects styling of nested elements
@@ -323,6 +330,17 @@ const ShowToggle = ({
       variant="wrapped"
     >
       <SmallIconButton
+        css={
+          value && isAnimating
+            ? {
+                color: theme.colors.foregroundPrimary,
+                "&:hover": {
+                  color: theme.colors.foregroundPrimary,
+                  filter: "brightness(80%)",
+                },
+              }
+            : undefined
+        }
         tabIndex={-1}
         aria-label="Show"
         onClick={toggleShow}
@@ -521,7 +539,9 @@ export const NavigatorTree = () => {
   const selectedKey = selectedInstanceSelector?.join();
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const hoveredKey = hoveredInstanceSelector?.join();
-  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const propValuesByInstanceSelectorWithMemoryProps = useStore(
+    $propValuesByInstanceSelectorWithMemoryProps
+  );
   const metas = useStore($registeredComponentMetas);
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
@@ -608,14 +628,28 @@ export const NavigatorTree = () => {
         {flatTree.map((item) => {
           const level = item.visibleAncestors.length - 1;
           const key = item.selector.join();
-          const propValues = propValuesByInstanceSelector.get(
+          const propValues = propValuesByInstanceSelectorWithMemoryProps.get(
             getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
+
+          // Hook memory prop
+          const isAnimationSelected =
+            propValues?.get(animationCanPlayOnCanvasAttribute) === true;
+
+          const isAnimationPinned =
+            item.instance.component ===
+              "@webstudio-is/sdk-components-animation:AnimateChildren" &&
+            (propValues?.get("action") as AnimationAction)?.isPinned === true;
+
+          const isAnimating = isAnimationSelected || isAnimationPinned;
+
           const meta = metas.get(item.instance.component);
+
           if (meta === undefined) {
             return;
           }
+
           return (
             <TreeSortableItem
               key={key}
@@ -669,6 +703,7 @@ export const NavigatorTree = () => {
                 isSelected={selectedKey === key}
                 isHighlighted={hoveredKey === key || dropTargetKey === key}
                 isExpanded={item.isExpanded}
+                isActionVisible={isAnimating}
                 onExpand={(isExpanded, all) =>
                   handleExpand(item, isExpanded, all)
                 }
@@ -696,7 +731,13 @@ export const NavigatorTree = () => {
                     }
                   },
                 }}
-                action={<ShowToggle instance={item.instance} value={show} />}
+                action={
+                  <ShowToggle
+                    instance={item.instance}
+                    value={show}
+                    isAnimating={isAnimating}
+                  />
+                }
               >
                 <TreeNodeContent
                   meta={meta}

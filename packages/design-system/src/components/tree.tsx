@@ -105,6 +105,13 @@ const NodeContainer = styled("div", {
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
+  variants: {
+    isActionVisible: {
+      true: {
+        [treeActionOpacity]: 1,
+      },
+    },
+  },
 });
 
 const DepthBars = styled("div", {
@@ -408,6 +415,7 @@ export const TreeNode = ({
   isSelected,
   isHighlighted,
   isExpanded,
+  isActionVisible,
   onExpand,
   nodeProps,
   buttonProps,
@@ -419,10 +427,11 @@ export const TreeNode = ({
   isSelected: boolean;
   isHighlighted?: boolean;
   isExpanded?: undefined | boolean;
+  isActionVisible?: boolean;
   onExpand?: (expanded: boolean, all: boolean) => void;
   nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
-  action?: ReactNode;
+  action: ReactNode;
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -465,6 +474,7 @@ export const TreeNode = ({
       {...nodeProps}
       css={{ [treeNodeLevel]: level }}
       onKeyDown={handleKeydown}
+      isActionVisible={isActionVisible}
     >
       <DepthBars />
       <NodeButton
@@ -489,7 +499,7 @@ export const TreeNode = ({
           )}
         </ExpandButton>
       )}
-      {action && <ActionContainer data-tree-action>{action}</ActionContainer>}
+      <ActionContainer data-tree-action>{action}</ActionContainer>
     </NodeContainer>
   );
 };
