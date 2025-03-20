@@ -283,7 +283,16 @@ const Publish = ({
       if (publishResult.error === "NOT_IMPLEMENTED") {
         error = (
           <>
-            Build data for publishing has been successfully created. Use{" "}
+            <Tooltip
+              content={
+                <Text userSelect="text">
+                  {project.latestBuildVirtual?.buildId}
+                </Text>
+              }
+            >
+              <span>Build data</span>
+            </Tooltip>{" "}
+            for publishing has been successfully created. Use{" "}
             <Link href="https://docs.webstudio.is/university/self-hosting/cli">
               Webstudio&nbsp;CLI
             </Link>{" "}
