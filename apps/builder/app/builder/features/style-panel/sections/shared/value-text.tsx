@@ -9,6 +9,7 @@ const Container = styled("button", {
   // fit-content is not needed for the "button" element,
   // leave it here in case of tag change
   width: "fit-content",
+  maxWidth: "100%",
   display: "flex",
   flexWrap: "nowrap",
   alignItems: "baseline",
