@@ -41,7 +41,7 @@ export const scrollByPointer = () => {
     abortController.abort(reason);
   };
 
-  const onMouseOver = (event: MouseEvent) => {
+  const onMouseOver = (event: React.MouseEvent) => {
     const element = event.currentTarget;
     if (element instanceof HTMLElement === false) {
       return;
@@ -78,7 +78,7 @@ export const scrollByPointer = () => {
     );
   };
 
-  const onMouseOut = (event: MouseEvent) => {
+  const onMouseOut = (event: React.MouseEvent) => {
     abort("mouseout");
     const element = event.currentTarget;
     if (element instanceof HTMLElement === false) {
