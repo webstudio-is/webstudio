@@ -34,6 +34,10 @@ const scrollAhead = (element: HTMLElement, clientX: number) => {
 // E.g. this is important for inputs, where the user might be interacting with text.
 const isFocused = (element: HTMLElement) => element === document.activeElement;
 
+/**
+ * Scroll any element horizontally based on pointer position.
+ * Used in CSSValueInput and Spacing UI to show a string that is too long.
+ */
 export const scrollByPointer = () => {
   let abortController = new AbortController();
 
