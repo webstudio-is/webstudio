@@ -11,7 +11,7 @@ import type {
   StyleSourceSelection,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIds, collectionComponent } from "@webstudio-is/sdk";
+import { collectionComponent } from "@webstudio-is/sdk";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -230,25 +230,8 @@ export const getReparentDropTargetMutable = (
   instances: Instances,
   props: Props,
   metas: Map<string, WsComponentMeta>,
-  instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ): undefined | DroppableTarget => {
-  const [instanceId, parentInstanceId, grandparentInstanceId] =
-    instanceSelector;
-  const grandparentInstance =
-    grandparentInstanceId === undefined
-      ? undefined
-      : instances.get(grandparentInstanceId);
-
-  let prevParent =
-    parentInstanceId === undefined
-      ? undefined
-      : instances.get(parentInstanceId);
-  // skip parent fake "item" instance and use grandparent collection as parent
-  if (grandparentInstance?.component === collectionComponent) {
-    prevParent = grandparentInstance;
-  }
-
   dropTarget = getCollectionDropTarget(instances, dropTarget) ?? dropTarget;
   dropTarget =
     getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
@@ -259,44 +242,7 @@ export const getReparentDropTargetMutable = (
       metas,
       dropTarget
     ) ?? dropTarget;
-  const [parentId] = dropTarget.parentSelector;
-  const nextParent = instances.get(parentId);
-
-  // delect is target is one of own descendants
-  // prevent reparenting to avoid infinite loop
-  const instanceDescendants = findTreeInstanceIds(instances, instanceId);
-  for (const instanceId of instanceDescendants) {
-    if (dropTarget.parentSelector.includes(instanceId)) {
-      return;
-    }
-  }
-
-  if (prevParent === undefined || nextParent === undefined) {
-    return;
-  }
-
-  const prevPosition = prevParent.children.findIndex(
-    (child) => child.type === "id" && child.value === instanceId
-  );
-  if (prevPosition === -1) {
-    return;
-  }
-
-  // if parent is the same, we need to adjust the position
-  // to account for the removal of the instance.
-  let nextPosition = dropTarget.position;
-  if (
-    nextPosition !== "end" &&
-    prevParent.id === nextParent.id &&
-    prevPosition < nextPosition
-  ) {
-    nextPosition -= 1;
-  }
-
-  return {
-    parentSelector: dropTarget.parentSelector,
-    position: nextPosition,
-  };
+  return dropTarget;
 };
 
 export const cloneStyles = (
