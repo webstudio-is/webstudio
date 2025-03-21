@@ -8,6 +8,7 @@ import {
   type WsComponentMeta,
   componentCategories,
   collectionComponent,
+  parseComponentName,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -59,19 +60,14 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
+      const [namespace] = parseComponentName(name);
       if (
         isFeatureEnabled("animation") === false &&
-        name.endsWith(":AnimateChildren")
+        namespace === "@webstudio-is/sdk-components-animation"
       ) {
         continue;
       }
 
-      if (
-        isFeatureEnabled("animation") === false &&
-        name.endsWith(":AnimateText")
-      ) {
-        continue;
-      }
       // only set available components from component meta
       availableComponents.add(name);
       if (
