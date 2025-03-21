@@ -372,7 +372,7 @@ const TypographySectionAdvancedPopover = () => {
                   {
                     child: <TextTruncateIcon />,
                     description:
-                      "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
+                      "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: text-wrap-mode: nowrap; overflow: hidden;",
                     value: "ellipsis",
                   },
                 ]}
