@@ -349,7 +349,7 @@ const ShowToggle = ({
             <>
               <br />
               <Text css={{ color: theme.colors.foregroundPrimary }}>
-                Animation running on canvas.
+                Animation is running on canvas.
               </Text>
             </>
           )}
