@@ -32,7 +32,6 @@ import {
   descendantComponent,
   type Instance,
   type WsComponentMeta,
-  type AnimationAction,
 } from "@webstudio-is/sdk";
 import {
   EyeClosedIcon,
@@ -542,6 +541,8 @@ export const NavigatorTree = () => {
   const propValuesByInstanceSelectorWithMemoryProps = useStore(
     $propValuesByInstanceSelectorWithMemoryProps
   );
+  const { propsByInstanceId } = useStore($propsIndex);
+
   const metas = useStore($registeredComponentMetas);
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
@@ -637,10 +638,12 @@ export const NavigatorTree = () => {
           const isAnimationSelected =
             propValues?.get(animationCanPlayOnCanvasAttribute) === true;
 
-          const isAnimationPinned =
-            item.instance.component ===
-              "@webstudio-is/sdk-components-animation:AnimateChildren" &&
-            (propValues?.get("action") as AnimationAction)?.isPinned === true;
+          const props = propsByInstanceId.get(item.instance.id);
+          const actionProp = props?.find(
+            (prop) => prop.type === "animationAction"
+          );
+
+          const isAnimationPinned = actionProp?.value?.isPinned === true;
 
           const isAnimating = isAnimationSelected || isAnimationPinned;
 

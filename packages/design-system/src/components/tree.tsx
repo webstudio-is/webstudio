@@ -105,13 +105,6 @@ const NodeContainer = styled("div", {
     backgroundColor: `var(${treeNodeBackgroundColor})`,
     [treeDepthBarsColor]: theme.colors.borderItemChildLineCurrent,
   },
-  variants: {
-    isActionVisible: {
-      true: {
-        [treeActionOpacity]: 1,
-      },
-    },
-  },
 });
 
 const DepthBars = styled("div", {
@@ -472,9 +465,11 @@ export const TreeNode = ({
   return (
     <NodeContainer
       {...nodeProps}
-      css={{ [treeNodeLevel]: level }}
+      css={{
+        [treeNodeLevel]: level,
+        ...(isActionVisible && { [treeActionOpacity]: 1 }),
+      }}
       onKeyDown={handleKeydown}
-      isActionVisible={isActionVisible}
     >
       <DepthBars />
       <NodeButton
