@@ -341,7 +341,20 @@ const ShowToggle = ({
   return (
     <Tooltip
       // If you are changing it, change the other one too
-      content="Removes the instance from the DOM. Breakpoints have no effect on this setting."
+      content={
+        <Text>
+          Removes the instance from the DOM. Breakpoints have no effect on this
+          setting.
+          {isAnimating && (
+            <>
+              <br />
+              <Text css={{ color: theme.colors.foregroundPrimary }}>
+                Animation running on canvas.
+              </Text>
+            </>
+          )}
+        </Text>
+      }
       disableHoverableContent
       variant="wrapped"
     >
