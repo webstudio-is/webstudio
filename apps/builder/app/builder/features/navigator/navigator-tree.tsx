@@ -5,6 +5,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  keyframes,
   rawTheme,
   ScrollArea,
   SmallIconButton,
@@ -286,6 +287,19 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
   $expandedItems.set(expandedItems);
 };
 
+const pulse = keyframes({
+  "0%": { fillOpacity: 0 },
+  "100%": { fillOpacity: 1 },
+});
+
+const AnimatedEyeOpenIcon = styled(EyeOpenIcon, {
+  "& .ws-eye-open-pupil": {
+    transformOrigin: "center",
+    animation: `${pulse} 1.5s ease-in-out infinite alternate`,
+    fill: "currentColor",
+  },
+});
+
 const ShowToggle = ({
   instance,
   value,
@@ -321,6 +335,9 @@ const ShowToggle = ({
       }
     });
   };
+
+  const EyeIcon = isAnimating ? AnimatedEyeOpenIcon : EyeOpenIcon;
+
   return (
     <Tooltip
       // If you are changing it, change the other one too
@@ -343,7 +360,7 @@ const ShowToggle = ({
         tabIndex={-1}
         aria-label="Show"
         onClick={toggleShow}
-        icon={value ? <EyeOpenIcon /> : <EyeClosedIcon />}
+        icon={value ? <EyeIcon /> : <EyeClosedIcon />}
       />
     </Tooltip>
   );
