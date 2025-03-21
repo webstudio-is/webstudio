@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { theme } from "@webstudio-is/design-system";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
@@ -10,7 +9,6 @@ import {
   type SpaceStyleProperty,
 } from "./properties";
 import { InputPopover } from "../shared/input-popover";
-import { SpaceTooltip } from "./tooltip";
 import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
@@ -120,27 +118,14 @@ const Cell = ({
         getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
       />
-      <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
-        <ValueText
-          truncate
-          css={{
-            // We want value to have `default` cursor to indicate that it's clickable,
-            // unlike the rest of the value area that has cursor that indicates scrubbing.
-            // Click and scrub works everywhere anyway, but we want cursors to be different.
-            //
-            // In order to have control over cursor we're setting pointerEvents to "all" here
-            // because SpaceLayout sets it to "none" for cells' content.
-            pointerEvents: "all",
-            maxWidth: theme.spacing[18],
-          }}
-          value={finalValue}
-          source={styleDecl.source.name}
-          onMouseEnter={(event) =>
-            onHover({ property, element: event.currentTarget })
-          }
-          onMouseLeave={() => onHover(undefined)}
-        />
-      </SpaceTooltip>
+      <ValueText
+        value={finalValue}
+        source={styleDecl.source.name}
+        onMouseEnter={(event) =>
+          onHover({ property, element: event.currentTarget })
+        }
+        onMouseLeave={() => onHover(undefined)}
+      />
     </>
   );
 };

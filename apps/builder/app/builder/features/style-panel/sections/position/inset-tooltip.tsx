@@ -141,7 +141,7 @@ export const InsetTooltip = ({
       }
     >
       {/* @todo show tooltip on focus */}
-      <div>{children}</div>
+      <div style={{ maxWidth: "100%" }}>{children}</div>
     </Tooltip>
   );
 };

@@ -50,15 +50,6 @@ const Cell = ({
       />
       <InsetTooltip property={property} preventOpen={scrubStatus.isActive}>
         <ValueText
-          css={{
-            // We want value to have `default` cursor to indicate that it's clickable,
-            // unlike the rest of the value area that has cursor that indicates scrubbing.
-            // Click and scrub works everywhere anyway, but we want cursors to be different.
-            //
-            // In order to have control over cursor we're setting pointerEvents to "all" here
-            // because SpaceLayout sets it to "none" for cells' content.
-            pointerEvents: "all",
-          }}
           value={finalValue}
           source={styleDecl.source.name}
           onMouseEnter={(event) =>

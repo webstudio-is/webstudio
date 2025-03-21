@@ -173,7 +173,6 @@ const Cell = styled("div", {
   alignItems: "center",
   justifyContent: "center",
   maxWidth: "100%",
-  padding: theme.spacing[2],
   variants: {
     property: {
       "margin-top": { gridColumn: "2 / 5", gridRow: "1" },
