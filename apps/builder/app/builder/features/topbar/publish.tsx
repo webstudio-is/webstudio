@@ -68,7 +68,6 @@ import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
-import { computed } from "nanostores";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -207,36 +206,36 @@ const ChangeProjectDomain = ({
   );
 };
 
-const $proFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
-    const features = new Set<string>();
-    // specified emails for default webhook form
-    if ((pages?.meta?.contactEmail ?? "").trim()) {
-      features.add("Custom contant email");
-    }
-    // pages with dynamic paths
-    for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
-      if (isPathnamePattern(page.path)) {
-        features.add("Dynamic path");
-      }
-    }
-    // has resource variables
-    for (const dataSource of dataSources.values()) {
-      if (dataSource.type === "resource") {
-        features.add("Resource variable");
-      }
-    }
-    // instances with animations
-    for (const instance of instances.values()) {
-      const [namespace] = parseComponentName(instance.component);
-      if (namespace === "@webstudio-is/sdk-components-animation") {
-        features.add("Animation component");
-      }
-    }
-    return features;
+const getUsedProFeatures = () => {
+  const pages = $pages.get();
+  const dataSources = $dataSources.get();
+  const instances = $instances.get();
+  const features = new Set<string>();
+  // specified emails for default webhook form
+  if ((pages?.meta?.contactEmail ?? "").trim()) {
+    features.add("Custom contant email");
   }
-);
+  // pages with dynamic paths
+  for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
+    if (isPathnamePattern(page.path)) {
+      features.add("Dynamic path");
+    }
+  }
+  // has resource variables
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "resource") {
+      features.add("Resource variable");
+    }
+  }
+  // instances with animations
+  for (const instance of instances.values()) {
+    const [namespace] = parseComponentName(instance.component);
+    if (namespace === "@webstudio-is/sdk-components-animation") {
+      features.add("Animation component");
+    }
+  }
+  return features;
+};
 
 const Publish = ({
   project,
@@ -290,7 +289,7 @@ const Publish = ({
   }, [hasProPlan]);
 
   const handlePublish = async (formData: FormData) => {
-    const proFeatures = $proFeatures.get();
+    const proFeatures = getUsedProFeatures();
     if (proFeatures.size > 0 && hasProPlan === false) {
       setPublishError(
         <>
