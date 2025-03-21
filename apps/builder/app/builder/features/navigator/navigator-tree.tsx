@@ -345,7 +345,7 @@ const ShowToggle = ({
         <Text>
           Removes the instance from the DOM. Breakpoints have no effect on this
           setting.
-          {isAnimating && (
+          {isAnimating && value && (
             <>
               <br />
               <Text css={{ color: theme.colors.foregroundPrimary }}>
