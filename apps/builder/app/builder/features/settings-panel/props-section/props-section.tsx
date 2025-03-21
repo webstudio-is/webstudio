@@ -26,7 +26,7 @@ import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { AnimateSection } from "./animation/animation-section";
+import { AnimationSection } from "./animation/animation-section";
 import { nanoid } from "nanoid";
 import { $matchingBreakpoints } from "../../style-panel/shared/model";
 import { matchMediaBreakpoints } from "./match-media-breakpoints";
@@ -171,7 +171,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   return hasAnimation && selectedBreakpoint?.id !== undefined ? (
     <>
-      <AnimateSection
+      <AnimationSection
         animationAction={animationAction}
         isAnimationEnabled={matchMediaValue}
         selectedBreakpointId={selectedBreakpoint?.id}
@@ -213,7 +213,6 @@ export const PropsSection = (props: PropsSectionProps) => {
           });
         }}
       />
-      <Separator />
     </>
   ) : (
     <>
