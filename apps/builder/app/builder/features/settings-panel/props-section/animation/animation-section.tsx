@@ -178,7 +178,7 @@ const animationSources = Object.keys(
   animationSourceDescriptions
 ) as NonNullable<AnimationActionScroll["source"]>[];
 
-export const AnimateSection = ({
+export const AnimationSection = ({
   animationAction,
   onChange,
   isAnimationEnabled,
@@ -221,11 +221,7 @@ export const AnimateSection = ({
   };
 
   return (
-    <Grid
-      css={{
-        paddingBottom: theme.panel.paddingBlock,
-      }}
-    >
+    <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
       <Box css={{ height: theme.panel.paddingBlock }} />
 
       <Separator />
@@ -417,7 +413,8 @@ export const AnimateSection = ({
             />
           </Grid>
         )}
-
+      </Grid>
+      <Grid gap={2}>
         <AnimationsSelect
           value={value}
           onChange={handleChange}

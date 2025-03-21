@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import {
   theme,
-  IconButton,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -12,7 +11,6 @@ import {
   SmallToggleButton,
   SmallIconButton,
   Box,
-  Text,
   Label,
   Grid,
   useSortable,
@@ -21,6 +19,9 @@ import {
   InputField,
   DialogTitle,
   Tooltip,
+  SectionTitleButton,
+  SectionTitle,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import {
   EyeClosedIcon,
@@ -37,6 +38,7 @@ import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
 import { useIds } from "~/shared/form-utils";
 import { AnimationPanelContent } from "./animation-panel-content";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 const newAnimationsPerType: {
   scroll: ScrollAnimation[];
@@ -93,66 +95,76 @@ export const AnimationsSelect = ({
   };
 
   return (
-    <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr auto" }}>
-      <Label htmlFor={fieldIds.addAnimation}>
-        <Text variant={"titles"}>Animations</Text>
-      </Label>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <IconButton id={fieldIds.addAnimation}>
-            <PlusIcon />
-          </IconButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-          css={{ width: theme.spacing[25] }}
-        >
-          {newAnimations.map((animation, index) => (
-            <DropdownMenuItem
-              key={index}
-              onSelect={() => {
-                handleChange(
-                  {
-                    ...value,
-                    animations: value.animations.concat(animation),
-                  },
-                  false
-                );
-              }}
-              onFocus={() => setNewAnimationHint(animation.description)}
-              onBlur={() => setNewAnimationHint(undefined)}
-            >
-              {animation.name}
-            </DropdownMenuItem>
-          ))}
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem css={{ display: "grid" }} hint>
-            {newAnimations.map(({ description }, index) => (
-              <Box
-                css={{
-                  gridColumn: "1",
-                  gridRow: "1",
-                  visibility: "hidden",
-                }}
-                key={index}
+    <CollapsibleSectionRoot
+      isOpen
+      fullWidth
+      trigger={
+        <SectionTitle
+          collapsible={false}
+          suffix={
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SectionTitleButton
+                  prefix={<PlusIcon />}
+                  tabIndex={0}
+                  id={fieldIds.addAnimation}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+                css={{ width: theme.spacing[25] }}
               >
-                {description}
-              </Box>
-            ))}
-            <Box
-              css={{
-                gridColumn: "1",
-                gridRow: "1",
-              }}
-            >
-              {newAnimationHint ?? "Add new or select existing animation"}
-            </Box>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+                {newAnimations.map((animation, index) => (
+                  <DropdownMenuItem
+                    key={index}
+                    onSelect={() => {
+                      handleChange(
+                        {
+                          ...value,
+                          animations: value.animations.concat(animation),
+                        },
+                        false
+                      );
+                    }}
+                    onFocus={() => setNewAnimationHint(animation.description)}
+                    onBlur={() => setNewAnimationHint(undefined)}
+                  >
+                    {animation.name}
+                  </DropdownMenuItem>
+                ))}
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem css={{ display: "grid" }} hint>
+                  {newAnimations.map(({ description }, index) => (
+                    <Box
+                      css={{
+                        gridColumn: "1",
+                        gridRow: "1",
+                        visibility: "hidden",
+                      }}
+                      key={index}
+                    >
+                      {description}
+                    </Box>
+                  ))}
+                  <Box
+                    css={{
+                      gridColumn: "1",
+                      gridRow: "1",
+                    }}
+                  >
+                    {newAnimationHint ?? "Add new or select existing animation"}
+                  </Box>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          }
+        >
+          <SectionTitleLabel>Animations</SectionTitleLabel>
+        </SectionTitle>
+      }
+    >
       <CssValueListArrowFocus dragItemId={dragItemId}>
         <Grid gap={1} css={{ gridColumn: "span 2" }} ref={sortableRefCallback}>
           {value.animations.map((animation, index) => {
@@ -286,6 +298,6 @@ export const AnimationsSelect = ({
           {placementIndicator}
         </Grid>
       </CssValueListArrowFocus>
-    </Grid>
+    </CollapsibleSectionRoot>
   );
 };
