@@ -5,6 +5,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  keyframes,
   rawTheme,
   ScrollArea,
   SmallIconButton,
@@ -19,7 +20,10 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import {
+  animationCanPlayOnCanvasAttribute,
+  showAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
@@ -49,6 +53,7 @@ import {
   $selectedInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
+  $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -282,12 +287,27 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
   $expandedItems.set(expandedItems);
 };
 
+const pulse = keyframes({
+  "0%": { fillOpacity: 0 },
+  "100%": { fillOpacity: 1 },
+});
+
+const AnimatedEyeOpenIcon = styled(EyeOpenIcon, {
+  "& .ws-eye-open-pupil": {
+    transformOrigin: "center",
+    animation: `${pulse} 1.5s ease-in-out infinite alternate`,
+    fill: "currentColor",
+  },
+});
+
 const ShowToggle = ({
   instance,
   value,
+  isAnimating,
 }: {
   instance: Instance;
   value: boolean;
+  isAnimating: boolean;
 }) => {
   // descendant component is not actually rendered
   // but affects styling of nested elements
@@ -315,18 +335,45 @@ const ShowToggle = ({
       }
     });
   };
+
+  const EyeIcon = isAnimating ? AnimatedEyeOpenIcon : EyeOpenIcon;
+
   return (
     <Tooltip
       // If you are changing it, change the other one too
-      content="Removes the instance from the DOM. Breakpoints have no effect on this setting."
+      content={
+        <Text>
+          Removes the instance from the DOM. Breakpoints have no effect on this
+          setting.
+          {isAnimating && value && (
+            <>
+              <br />
+              <Text css={{ color: theme.colors.foregroundPrimary }}>
+                Animation is running on canvas.
+              </Text>
+            </>
+          )}
+        </Text>
+      }
       disableHoverableContent
       variant="wrapped"
     >
       <SmallIconButton
+        css={
+          value && isAnimating
+            ? {
+                color: theme.colors.foregroundPrimary,
+                "&:hover": {
+                  color: theme.colors.foregroundPrimary,
+                  filter: "brightness(80%)",
+                },
+              }
+            : undefined
+        }
         tabIndex={-1}
         aria-label="Show"
         onClick={toggleShow}
-        icon={value ? <EyeOpenIcon /> : <EyeClosedIcon />}
+        icon={value ? <EyeIcon /> : <EyeClosedIcon />}
       />
     </Tooltip>
   );
@@ -521,7 +568,11 @@ export const NavigatorTree = () => {
   const selectedKey = selectedInstanceSelector?.join();
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const hoveredKey = hoveredInstanceSelector?.join();
-  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const propValuesByInstanceSelectorWithMemoryProps = useStore(
+    $propValuesByInstanceSelectorWithMemoryProps
+  );
+  const { propsByInstanceId } = useStore($propsIndex);
+
   const metas = useStore($registeredComponentMetas);
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
@@ -608,14 +659,30 @@ export const NavigatorTree = () => {
         {flatTree.map((item) => {
           const level = item.visibleAncestors.length - 1;
           const key = item.selector.join();
-          const propValues = propValuesByInstanceSelector.get(
+          const propValues = propValuesByInstanceSelectorWithMemoryProps.get(
             getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
+
+          // Hook memory prop
+          const isAnimationSelected =
+            propValues?.get(animationCanPlayOnCanvasAttribute) === true;
+
+          const props = propsByInstanceId.get(item.instance.id);
+          const actionProp = props?.find(
+            (prop) => prop.type === "animationAction"
+          );
+
+          const isAnimationPinned = actionProp?.value?.isPinned === true;
+
+          const isAnimating = isAnimationSelected || isAnimationPinned;
+
           const meta = metas.get(item.instance.component);
+
           if (meta === undefined) {
             return;
           }
+
           return (
             <TreeSortableItem
               key={key}
@@ -669,6 +736,7 @@ export const NavigatorTree = () => {
                 isSelected={selectedKey === key}
                 isHighlighted={hoveredKey === key || dropTargetKey === key}
                 isExpanded={item.isExpanded}
+                isActionVisible={isAnimating}
                 onExpand={(isExpanded, all) =>
                   handleExpand(item, isExpanded, all)
                 }
@@ -696,7 +764,13 @@ export const NavigatorTree = () => {
                     }
                   },
                 }}
-                action={<ShowToggle instance={item.instance} value={show} />}
+                action={
+                  <ShowToggle
+                    instance={item.instance}
+                    value={show}
+                    isAnimating={isAnimating}
+                  />
+                }
               >
                 <TreeNodeContent
                   meta={meta}

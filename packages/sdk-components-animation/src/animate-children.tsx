@@ -1,7 +1,9 @@
-import type { Hook } from "@webstudio-is/react-sdk";
+import {
+  animationCanPlayOnCanvasAttribute,
+  type Hook,
+} from "@webstudio-is/react-sdk";
 import type { AnimationAction } from "@webstudio-is/sdk";
 import { forwardRef, type ElementRef } from "react";
-import { animationCanPlayOnCanvasProperty } from "./shared/consts";
 
 type ScrollProps = {
   debug?: boolean;
@@ -28,7 +30,7 @@ export const hooksAnimateChildren: Hook = {
     ) {
       context.setMemoryProp(
         event.instancePath[0],
-        animationCanPlayOnCanvasProperty,
+        animationCanPlayOnCanvasAttribute,
         undefined
       );
     }
@@ -40,7 +42,7 @@ export const hooksAnimateChildren: Hook = {
     ) {
       context.setMemoryProp(
         event.instancePath[0],
-        animationCanPlayOnCanvasProperty,
+        animationCanPlayOnCanvasAttribute,
         true
       );
     }

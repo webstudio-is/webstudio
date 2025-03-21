@@ -129,6 +129,8 @@ export const showAttribute = "data-ws-show" as const;
 export const indexAttribute = "data-ws-index" as const;
 export const collapsedAttribute = "data-ws-collapsed" as const;
 export const textContentAttribute = "data-ws-text-content" as const;
+export const animationCanPlayOnCanvasAttribute =
+  "data-ws-animation-can-play-on-canvas";
 
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
