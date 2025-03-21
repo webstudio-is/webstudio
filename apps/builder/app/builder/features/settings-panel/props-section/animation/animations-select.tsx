@@ -108,6 +108,7 @@ export const AnimationsSelect = ({
               <DropdownMenuTrigger asChild>
                 <SectionTitleButton
                   prefix={<PlusIcon />}
+                  tabIndex={0}
                   id={fieldIds.addAnimation}
                 />
               </DropdownMenuTrigger>
