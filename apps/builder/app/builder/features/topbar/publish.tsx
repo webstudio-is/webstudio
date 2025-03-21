@@ -1,3 +1,4 @@
+import { computed } from "nanostores";
 import {
   useEffect,
   useState,
@@ -55,6 +56,7 @@ import {
   AlertIcon,
   CopyIcon,
   GearIcon,
+  UpgradeIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
@@ -68,6 +70,7 @@ import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -206,44 +209,45 @@ const ChangeProjectDomain = ({
   );
 };
 
-const getUsedProFeatures = () => {
-  const pages = $pages.get();
-  const dataSources = $dataSources.get();
-  const instances = $instances.get();
-  const features = new Set<string>();
-  // specified emails for default webhook form
-  if ((pages?.meta?.contactEmail ?? "").trim()) {
-    features.add("Custom contant email");
-  }
-  // pages with dynamic paths
-  for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
-    if (isPathnamePattern(page.path)) {
-      features.add("Dynamic path");
+const $usedProFeatures = computed(
+  [$pages, $dataSources, $instances],
+  (pages, dataSources, instances) => {
+    const features = new Set<string>();
+    // specified emails for default webhook form
+    if ((pages?.meta?.contactEmail ?? "").trim()) {
+      features.add("Custom contant email");
     }
-  }
-  // has resource variables
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "resource") {
-      features.add("Resource variable");
+    // pages with dynamic paths
+    for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
+      if (isPathnamePattern(page.path)) {
+        features.add("Dynamic path");
+      }
     }
-  }
-  // instances with animations
-  for (const instance of instances.values()) {
-    const [namespace] = parseComponentName(instance.component);
-    if (namespace === "@webstudio-is/sdk-components-animation") {
-      features.add("Animation component");
+    // has resource variables
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type === "resource") {
+        features.add("Resource variable");
+      }
     }
+    // instances with animations
+    for (const instance of instances.values()) {
+      const [namespace] = parseComponentName(instance.component);
+      if (namespace === "@webstudio-is/sdk-components-animation") {
+        features.add("Animation component");
+      }
+    }
+    return features;
   }
-  return features;
-};
+);
 
 const Publish = ({
   project,
   refresh,
+  disabled,
 }: {
   project: Project;
-
   refresh: () => Promise<void>;
+  disabled: boolean;
 }) => {
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
@@ -289,22 +293,6 @@ const Publish = ({
   }, [hasProPlan]);
 
   const handlePublish = async (formData: FormData) => {
-    const proFeatures = getUsedProFeatures();
-    if (proFeatures.size > 0 && hasProPlan === false) {
-      setPublishError(
-        <>
-          Following features require PRO plan:
-          <ul>
-            {Array.from(proFeatures).map((message) => (
-              <li>{message}</li>
-            ))}
-          </ul>
-        </>
-      );
-      setIsPublishing(false);
-      return;
-    }
-
     setPublishError(undefined);
     setIsPublishing(true);
 
@@ -430,7 +418,7 @@ const Publish = ({
           formAction={handlePublish}
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
-          disabled={hasSelectedDomains === false}
+          disabled={hasSelectedDomains === false || disabled}
         >
           Publish
         </Button>
@@ -634,6 +622,8 @@ const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
 }) => {
+  const usedProFeatures = useStore($usedProFeatures);
+  const { hasProPlan } = useStore($userPlanFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const project = useStore($project);
@@ -648,27 +638,57 @@ const Content = (props: {
   return (
     <form>
       <ScrollArea>
-        {canAddDomain === false && (
+        {usedProFeatures.size > 0 && hasProPlan === false ? (
           <PanelBanner>
-            <Text variant="regularBold">Free domains limit reached</Text>
-            <Text variant="regular">
-              You have reached the limit of {maxDomainsAllowedPerUser} custom
-              domains on your account.{" "}
-              <Text variant="regularBold" inline>
-                Upgrade to a Pro account
-              </Text>{" "}
-              to add unlimited domains and publish to each domain individually.
+            <img
+              src={cmsUpgradeBanner}
+              alt="Upgrade for CMS"
+              width={rawTheme.spacing[28]}
+              style={{ aspectRatio: "4.1" }}
+            />
+            <Text variant="regularBold">
+              Upgrade to publish with following features:
             </Text>
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </Link>
+            <Text as="ul">
+              {Array.from(usedProFeatures).map((message, index) => (
+                <li key={index}>{message}</li>
+              ))}
+            </Text>
+            <Flex align="center" gap={1}>
+              <UpgradeIcon />
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://webstudio.is/pricing"
+              >
+                Upgrade to Pro
+              </Link>
+            </Flex>
           </PanelBanner>
+        ) : (
+          canAddDomain === false && (
+            <PanelBanner>
+              <Text variant="regularBold">Free domains limit reached</Text>
+              <Text variant="regular">
+                You have reached the limit of {maxDomainsAllowedPerUser} custom
+                domains on your account.{" "}
+                <Text variant="regularBold" inline>
+                  Upgrade to a Pro account
+                </Text>{" "}
+                to add unlimited domains and publish to each domain
+                individually.
+              </Text>
+              <Link
+                className={buttonStyle({ color: "gradient" })}
+                color="contrast"
+                underline="none"
+                href="https://webstudio.is/pricing"
+                target="_blank"
+              >
+                Upgrade
+              </Link>
+            </PanelBanner>
+          )
         )}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
@@ -699,7 +719,11 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
-        <Publish project={project} refresh={refreshProject} />
+        <Publish
+          project={project}
+          refresh={refreshProject}
+          disabled={usedProFeatures.size > 0 && hasProPlan === false}
+        />
       </Flex>
     </form>
   );
