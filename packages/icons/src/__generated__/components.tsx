@@ -2254,6 +2254,7 @@ export const EyeOpenIcon: IconComponent = forwardRef(
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+          className="ws-eye-open-pupil"
         />
       </svg>
     );
