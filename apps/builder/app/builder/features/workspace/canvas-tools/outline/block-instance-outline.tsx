@@ -1,16 +1,5 @@
+import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  $blockChildOutline,
-  $hoveredInstanceOutline,
-  $hoveredInstanceSelector,
-  $instances,
-  $isContentMode,
-  $modifierKeys,
-  $registeredComponentMetas,
-  findBlockSelector,
-  findTemplates,
-  type BlockChildOutline,
-} from "~/shared/nano-states";
 import {
   Box,
   DropdownMenu,
@@ -28,27 +17,34 @@ import {
   DropdownMenuSeparator,
   menuItemCss,
 } from "@webstudio-is/design-system";
-import { Outline } from "./outline";
-import { applyScale } from "./apply-scale";
-import { $clampingRect, $scale } from "~/builder/shared/nano-states";
+import type { Instance } from "@webstudio-is/sdk";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import { useRef, useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {
+  $blockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
+  $instances,
+  $isContentMode,
+  $modifierKeys,
+  $registeredComponentMetas,
+  findBlockSelector,
+  findTemplates,
+  type BlockChildOutline,
+} from "~/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import type { Instance } from "@webstudio-is/sdk";
-
 import {
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
-
-import { insertTemplateAt } from "./block-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { getInstancePath } from "~/shared/awareness";
+import { insertTemplateAt } from "./block-utils";
+import { Outline } from "./outline";
+import { applyScale } from "./apply-scale";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -251,10 +247,6 @@ export const BlockChildHoveredInstanceOutline = () => {
   const outline = blockChildOutline ?? buttonOutline;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  if (isFeatureEnabled("contentEditableMode") === false) {
-    return;
-  }
 
   if (!isContentMode) {
     return;

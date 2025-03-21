@@ -2,7 +2,6 @@ import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Command,
   CommandDialog,
@@ -55,9 +54,6 @@ const $commandPanel = atom<
 >();
 
 export const openCommandPanel = () => {
-  if (isFeatureEnabled("command") === false) {
-    return;
-  }
   const activeElement =
     document.activeElement instanceof HTMLElement
       ? document.activeElement

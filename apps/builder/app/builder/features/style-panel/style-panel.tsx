@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   theme,
   Box,
@@ -18,24 +21,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@webstudio-is/design-system";
-import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
-import { StyleSourcesSection } from "./style-source-section";
-import { $selectedInstanceRenderState } from "~/shared/nano-states";
-import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
-import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
+import { EllipsesIcon } from "@webstudio-is/icons";
+import { $selectedInstanceRenderState } from "~/shared/nano-states";
 import { $selectedInstance } from "~/shared/awareness";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
-import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   $settings,
   getSetting,
   setSetting,
   type Settings,
 } from "~/builder/shared/client-settings";
-import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { sections } from "./sections";
+import { StyleSourcesSection } from "./style-source-section";
+import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -85,18 +84,16 @@ export const ModeMenu = () => {
               <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
-          {isFeatureEnabled("stylePanelAdvancedMode") && (
-            <DropdownMenuRadioItem
-              value="advanced"
-              icon={<MenuCheckedIcon />}
-              onFocus={() => setFocusedValue("advanced")}
-            >
-              <Flex justify="between" grow>
-                <Text variant="labelsTitleCase">Advanced mode</Text>
-                <Kbd value={["alt", "shift", "a"]} />
-              </Flex>
-            </DropdownMenuRadioItem>
-          )}
+          <DropdownMenuRadioItem
+            value="advanced"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("advanced")}
+          >
+            <Flex justify="between" grow>
+              <Text variant="labelsTitleCase">Advanced mode</Text>
+              <Kbd value={["alt", "shift", "a"]} />
+            </Flex>
+          </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
 
