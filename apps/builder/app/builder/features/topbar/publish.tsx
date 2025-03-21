@@ -665,31 +665,28 @@ const Content = (props: {
               </Link>
             </Flex>
           </PanelBanner>
-        ) : (
-          canAddDomain === false && (
-            <PanelBanner>
-              <Text variant="regularBold">Free domains limit reached</Text>
-              <Text variant="regular">
-                You have reached the limit of {maxDomainsAllowedPerUser} custom
-                domains on your account.{" "}
-                <Text variant="regularBold" inline>
-                  Upgrade to a Pro account
-                </Text>{" "}
-                to add unlimited domains and publish to each domain
-                individually.
-              </Text>
-              <Link
-                className={buttonStyle({ color: "gradient" })}
-                color="contrast"
-                underline="none"
-                href="https://webstudio.is/pricing"
-                target="_blank"
-              >
-                Upgrade
-              </Link>
-            </PanelBanner>
-          )
-        )}
+        ) : canAddDomain === false ? (
+          <PanelBanner>
+            <Text variant="regularBold">Free domains limit reached</Text>
+            <Text variant="regular">
+              You have reached the limit of {maxDomainsAllowedPerUser} custom
+              domains on your account.{" "}
+              <Text variant="regularBold" inline>
+                Upgrade to a Pro account
+              </Text>{" "}
+              to add unlimited domains and publish to each domain individually.
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        ) : null}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
             refresh={refreshProject}
