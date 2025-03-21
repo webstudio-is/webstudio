@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   ChevronDownIcon,
@@ -31,8 +32,6 @@ import {
   isBuilderMode,
   setBuilderMode,
 } from "~/shared/nano-states";
-import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { emitCommand } from "~/builder/shared/commands";
 
 export const BuilderModeDropDown = () => {
@@ -53,7 +52,7 @@ export const BuilderModeDropDown = () => {
       description: "Modify the page content",
       title: "Content",
       shortcut: ["cmd", "shift", "c"],
-      enabled: isContentModeAllowed && isFeatureEnabled("contentEditableMode"),
+      enabled: isContentModeAllowed,
     },
   } as const;
 
