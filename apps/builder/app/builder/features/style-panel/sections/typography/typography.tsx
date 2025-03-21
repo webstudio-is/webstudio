@@ -289,19 +289,19 @@ const TypographySectionAdvancedPopover = () => {
         >
           <Grid css={{ gridTemplateColumns: "5fr 5fr" }} gap={2}>
             <PropertyLabel
-              label="White Space"
+              label="White Space Collapse"
               description={propertyDescriptions.whiteSpaceCollapse}
               properties={["white-space-collapse"]}
             />
             <SelectControl property="white-space-collapse" />
             <PropertyLabel
-              label="Wrap Mode"
+              label="Text Wrap Mode"
               description={propertyDescriptions.textWrapMode}
               properties={["text-wrap-mode"]}
             />
             <SelectControl property="text-wrap-mode" />
             <PropertyLabel
-              label="Wrap Style"
+              label="Text Wrap Style"
               description={propertyDescriptions.textWrapStyle}
               properties={["text-wrap-style"]}
             />
@@ -372,7 +372,7 @@ const TypographySectionAdvancedPopover = () => {
                   {
                     child: <TextTruncateIcon />,
                     description:
-                      "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: white-space: nowrap; overflow: hidden;",
+                      "The overflowing text is truncated with an ellipsis (...) to indicate that there is more content. To make the text-overflow: ellipsis property work, you need to set the following CSS properties: text-wrap-mode: nowrap; overflow: hidden;",
                     value: "ellipsis",
                   },
                 ]}
