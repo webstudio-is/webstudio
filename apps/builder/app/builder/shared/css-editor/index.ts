@@ -1,1 +1,1 @@
-export { CssEditor, type CssEditorApi } from "./css-editor";
+export { CssEditor } from "./css-editor";
