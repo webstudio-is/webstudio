@@ -68,6 +68,7 @@ type UserPlanFeatures = {
   allowDynamicData: boolean;
   maxContactEmails: number;
   maxDomainsAllowedPerUser: number;
+  maxPublishesAllowedPerUser: number;
   hasSubscription: boolean;
 } & (
   | {

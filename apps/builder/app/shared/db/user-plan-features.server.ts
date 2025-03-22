@@ -24,7 +24,7 @@ export const getUserPlanFeatures = async (
     .select("name")
     .in(
       "id",
-      userProducts.map(({ productId }) => productId)
+      userProducts.map(({ productId }) => productId ?? "")
     );
 
   if (productsResult.error) {
@@ -46,6 +46,7 @@ export const getUserPlanFeatures = async (
       allowDynamicData: true,
       maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+      maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
       planName: products[0].name,
@@ -58,6 +59,7 @@ export const getUserPlanFeatures = async (
       allowDynamicData: true,
       maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+      maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription: true,
       hasProPlan: true,
       planName: "env.USER_PLAN Pro",
@@ -69,6 +71,7 @@ export const getUserPlanFeatures = async (
     allowDynamicData: false,
     maxContactEmails: 0,
     maxDomainsAllowedPerUser: 1,
+    maxPublishesAllowedPerUser: 10,
     hasSubscription: false,
     hasProPlan: false,
   };

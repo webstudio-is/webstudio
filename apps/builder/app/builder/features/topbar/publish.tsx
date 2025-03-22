@@ -242,13 +242,16 @@ const $usedProFeatures = computed(
 
 const Publish = ({
   project,
-  refresh,
+  timesLeft,
   disabled,
+  refresh,
 }: {
   project: Project;
-  refresh: () => Promise<void>;
+  timesLeft: number;
   disabled: boolean;
+  refresh: () => Promise<void>;
 }) => {
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -379,6 +382,19 @@ const Publish = ({
             };
 
       if (status === "PUBLISHED") {
+        toast.success(
+          <>
+            The project has been successfully published. The project is
+            successfully published.{" "}
+            {hasProPlan === false && (
+              <div>
+                On the free plan, you have {timesLeft} out of{" "}
+                {maxPublishesAllowedPerUser} daily publications remaining. The
+                counter resets tomorrow.
+              </div>
+            )}
+          </>
+        );
         break;
       }
 
@@ -601,6 +617,18 @@ const useCanAddDomain = () => {
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
+const useUserPublishCount = () => {
+  const { load, data } = trpcClient.project.userPublishCount.useQuery();
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  useEffect(() => {
+    load();
+  }, [load]);
+  return {
+    userPublishCount: data?.success ? data.data : 0,
+    maxPublishesAllowedPerUser,
+  };
+};
+
 const refreshProject = async () => {
   const result = await nativeClient.domain.project.query(
     {
@@ -634,11 +662,29 @@ const Content = (props: {
   const projectState = "idle";
 
   const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { userPublishCount, maxPublishesAllowedPerUser } =
+    useUserPublishCount();
 
   return (
     <form>
       <ScrollArea>
-        {usedProFeatures.size > 0 && hasProPlan === false ? (
+        {userPublishCount >= maxPublishesAllowedPerUser ? (
+          <PanelBanner>
+            <Text variant="regularBold">
+              Upgrade to publish more than {maxPublishesAllowedPerUser} times
+              per day:
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        ) : usedProFeatures.size > 0 && hasProPlan === false ? (
           <PanelBanner>
             <img
               src={cmsUpgradeBanner}
@@ -719,7 +765,11 @@ const Content = (props: {
         <Publish
           project={project}
           refresh={refreshProject}
-          disabled={usedProFeatures.size > 0 && hasProPlan === false}
+          timesLeft={maxPublishesAllowedPerUser - userPublishCount}
+          disabled={
+            (usedProFeatures.size > 0 && hasProPlan === false) ||
+            userPublishCount >= maxPublishesAllowedPerUser
+          }
         />
       </Flex>
     </form>
