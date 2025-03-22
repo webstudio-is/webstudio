@@ -332,7 +332,7 @@ test("parse transition-timing-function property", () => {
     value: "ease, testing",
   });
   expect(
-    parseCssValue("transitionTimingFunction", "linear(0 0%, 1 100%)")
+    parseCssValue("transition-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({
     type: "layers",
     value: [{ type: "unparsed", value: "linear(0 0%,1 100%)" }],
@@ -377,7 +377,7 @@ test("parse unknown properties as unparsed", () => {
     }
   );
   expect(
-    parseCssValue("animationTimingFunction", "linear(0 0%, 1 100%)")
+    parseCssValue("animation-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({ type: "unparsed", value: "linear(0 0%, 1 100%)" });
 });
 
