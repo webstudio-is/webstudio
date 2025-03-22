@@ -384,8 +384,7 @@ const Publish = ({
       if (status === "PUBLISHED") {
         toast.success(
           <>
-            The project has been successfully published. The project is
-            successfully published.{" "}
+            The project has been successfully published.{" "}
             {hasProPlan === false && (
               <div>
                 On the free plan, you have {timesLeft} out of{" "}
@@ -393,7 +392,8 @@ const Publish = ({
                 counter resets tomorrow.
               </div>
             )}
-          </>
+          </>,
+          { duration: 10000 }
         );
         break;
       }
