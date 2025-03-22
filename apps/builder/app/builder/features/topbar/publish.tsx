@@ -392,7 +392,8 @@ const Publish = ({
                 counter resets tomorrow.
               </div>
             )}
-          </>
+          </>,
+          { duration: 10000 }
         );
         break;
       }
