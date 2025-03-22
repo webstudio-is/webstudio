@@ -805,6 +805,21 @@ export type Database = {
           },
         ];
       };
+      user_publish_count: {
+        Row: {
+          count: number | null;
+          user_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "Project_userId_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "User";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       UserProduct: {
         Row: {
           customerEmail: string | null;
@@ -851,7 +866,7 @@ export type Database = {
       };
       domainsVirtual: {
         Args: {
-          "": unknown;
+          "": Database["public"]["Tables"]["Project"]["Row"];
         };
         Returns: {
           cname: string;
@@ -868,16 +883,10 @@ export type Database = {
           verified: boolean;
         }[];
       };
-      f_is_json: {
-        Args: {
-          _txt: string;
-        };
-        Returns: boolean;
-      };
       latestBuildVirtual:
         | {
             Args: {
-              "": unknown;
+              "": Database["public"]["Tables"]["Project"]["Row"];
             };
             Returns: {
               buildId: string;
@@ -890,7 +899,7 @@ export type Database = {
           }
         | {
             Args: {
-              "": unknown;
+              "": Database["public"]["Tables"]["domainsVirtual"]["Row"];
             };
             Returns: {
               buildId: string;
@@ -903,7 +912,7 @@ export type Database = {
           };
       latestProjectDomainBuildVirtual: {
         Args: {
-          "": unknown;
+          "": Database["public"]["Tables"]["Project"]["Row"];
         };
         Returns: {
           buildId: string;
@@ -913,10 +922,6 @@ export type Database = {
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
         }[];
-      };
-      uuid_generate_v4: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
       };
     };
     Enums: {

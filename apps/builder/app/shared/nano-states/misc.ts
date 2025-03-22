@@ -317,6 +317,7 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
   allowDynamicData: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 1,
+  maxPublishesAllowedPerUser: 1,
   hasSubscription: false,
   hasProPlan: false,
 });

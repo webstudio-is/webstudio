@@ -63,6 +63,38 @@ export const projectRouter = router({
 
     return projectIds.map((project) => project.id);
   }),
+
+  userPublishCount: procedure.query(async ({ ctx }) => {
+    try {
+      if (
+        ctx.authorization.type !== "user" &&
+        ctx.authorization.type !== "token"
+      ) {
+        throw new Error("Not authorized");
+      }
+      const userId =
+        ctx.authorization.type === "user"
+          ? ctx.authorization.userId
+          : ctx.authorization.ownerId;
+      const result = await ctx.postgrest.client
+        .from("user_publish_count")
+        .select("count")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (result.error) {
+        throw result.error;
+      }
+      return {
+        success: true,
+        data: result.data?.count ?? 0,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      } as const;
+    }
+  }),
 });
 
 export type ProjectRouter = typeof projectRouter;

@@ -1634,8 +1634,8 @@ importers:
   packages/postgrest:
     dependencies:
       '@supabase/postgrest-js':
-        specifier: ^1.16.2
-        version: 1.16.2
+        specifier: ^1.19.3
+        version: 1.19.3
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -5051,8 +5051,8 @@ packages:
     resolution: {integrity: sha512-1ibVeYUacxWYi9i0cf5efil6adJ9WRyZBLivgjs+AUpewx1F3xPi7gLgaASI2SmIQxPoCEjAsLAzKPgMJVgOUQ==}
     engines: {node: 4.x || >=6.0.0}
 
-  '@supabase/postgrest-js@1.16.2':
-    resolution: {integrity: sha512-dA/CIrSO2YDQ6ABNpbvEg9DwBMMbuKfWaFuZAU9c66PenoLSoIoyXk1Yq/wC2XISgEIqaMHmTrDAAsO80kjHqg==}
+  '@supabase/postgrest-js@1.19.3':
+    resolution: {integrity: sha512-6wwAdDaDES6HGTjRjr1GeEqAUqZxUbxyX/RW6BNlP0SmVkXUymCtB98383N7lBaaUf6KBryngPMnapDIzNaSfQ==}
 
   '@svgo/jsx@0.4.2':
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
@@ -12165,7 +12165,7 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  '@supabase/postgrest-js@1.16.2':
+  '@supabase/postgrest-js@1.19.3':
     dependencies:
       '@supabase/node-fetch': 2.6.15
 
