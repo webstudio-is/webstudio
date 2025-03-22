@@ -114,13 +114,13 @@ const newWipeInViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 100% 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 100% 0 0)"),
       },
     },
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 0)"),
       },
     },
   ],
@@ -140,14 +140,14 @@ const newWipeOutViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 0)"),
       },
     },
 
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 100%)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 100%)"),
       },
     },
   ],
