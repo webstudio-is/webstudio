@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -19,7 +19,7 @@ import {
 } from "../../shared/use-style-data";
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
-import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
+import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
 
@@ -64,7 +64,6 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
-  const apiRef = useRef<CssEditorApi>();
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -74,6 +73,7 @@ export const Section = () => {
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
     Map<string, Array<CssProperty>>
   >(new Map());
+  const [showAddStyleInput, setShowAddStyleInput] = useState<boolean>(false);
 
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
@@ -131,7 +131,7 @@ export const Section = () => {
       label="Advanced"
       properties={properties}
       onAdd={() => {
-        apiRef.current?.showAddStyleInput();
+        setShowAddStyleInput(true);
       }}
     >
       <CssEditor
@@ -140,8 +140,9 @@ export const Section = () => {
         onSetProperty={setProperty}
         onAddDeclarations={handleAddDeclarations}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
-        apiRef={apiRef}
         recentProperties={recentProperties}
+        showAddStyleInput={showAddStyleInput}
+        onToggleAddStyleInput={setShowAddStyleInput}
       />
     </AdvancedStyleSection>
   );

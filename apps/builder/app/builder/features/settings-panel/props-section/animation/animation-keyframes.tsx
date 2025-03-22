@@ -14,8 +14,6 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  Box,
-  Button,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
@@ -26,7 +24,7 @@ import {
 } from "~/builder/features/style-panel/shared/css-value-input";
 import { useIds } from "~/shared/form-utils";
 import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
-import { CssEditor, type CssEditorApi } from "~/builder/shared/css-editor";
+import { CssEditor } from "~/builder/shared/css-editor";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const unitOptions = [
@@ -134,8 +132,6 @@ const Keyframe = ({
   ) => void;
 }) => {
   const ids = useIds(["offset"]);
-  const apiRef = useRef<CssEditorApi>();
-
   const declarations: Array<ComputedStyleDecl> = useMemo(
     () =>
       (Object.keys(value.styles) as Array<CssProperty>).map((property) => {
@@ -179,10 +175,10 @@ const Keyframe = ({
       <Grid>
         <CssEditor
           showSearch={false}
+          showAddStyleInput
           propertiesPosition="top"
           virtualize={false}
           declarations={declarations}
-          apiRef={apiRef}
           onAddDeclarations={(addedStyleMap) => {
             const styles = { ...value.styles };
             for (const [property, value] of addedStyleMap) {
@@ -209,17 +205,6 @@ const Keyframe = ({
           }}
         />
       </Grid>
-      <Box css={{ paddingInline: theme.panel.paddingInline }}>
-        <Button
-          onClick={() => {
-            apiRef.current?.showAddStyleInput();
-          }}
-          prefix={<PlusIcon />}
-          color="ghost"
-        >
-          Add
-        </Button>
-      </Box>
     </>
   );
 };
