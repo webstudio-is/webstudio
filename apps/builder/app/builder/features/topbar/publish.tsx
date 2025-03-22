@@ -384,7 +384,9 @@ const Publish = ({
         toast.success(
           <>
             The project is successfully published.{" "}
-            {hasProPlan === false && <div>{timesLeft} times is left</div>}
+            {hasProPlan === false && (
+              <div>You can publish {timesLeft} more times on free plan.</div>
+            )}
           </>
         );
         break;
