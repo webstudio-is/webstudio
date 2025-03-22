@@ -86,7 +86,7 @@ export const FontFamilyControl = () => {
         itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {
           if (item === null) {
-            setValue(parseCssValue("fontFamily", itemValue), {
+            setValue(parseCssValue("font-family", itemValue), {
               isEphemeral: true,
             });
             return;
@@ -97,7 +97,7 @@ export const FontFamilyControl = () => {
           );
         }}
         onItemSelect={(item) => {
-          setValue(parseCssValue("fontFamily", item.value));
+          setValue(parseCssValue("font-family", item.value));
           setIntermediateValue(undefined);
         }}
         value={{ value: intermediateValue ?? itemValue }}
@@ -108,7 +108,7 @@ export const FontFamilyControl = () => {
           if (isFontManagerOpen) {
             return;
           }
-          setValue(parseCssValue("fontFamily", itemValue));
+          setValue(parseCssValue("font-family", itemValue));
         }}
         match={matchOrSuggestToCreate}
       />

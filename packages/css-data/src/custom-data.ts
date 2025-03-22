@@ -41,7 +41,7 @@ export type RawPropertyData = {
 export const propertiesData: { [property: string]: RawPropertyData } = {};
 export const keywordValues: { [property: string]: Array<string> } = {};
 
-propertiesData.WebkitFontSmoothing = {
+propertiesData["-webkit-font-smoothing"] = {
   unitGroups: [],
   inherited: true,
   initial: {
@@ -50,14 +50,14 @@ propertiesData.WebkitFontSmoothing = {
   },
   mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
 };
-keywordValues.WebkitFontSmoothing = [
+keywordValues["-webkit-font-smoothing"] = [
   "auto",
   "none",
   "antialiased",
   "subpixel-antialiased",
 ];
 
-propertiesData.MozOsxFontSmoothing = {
+propertiesData["-moz-osx-font-smoothing"] = {
   unitGroups: [],
   inherited: true,
   initial: {
@@ -66,7 +66,7 @@ propertiesData.MozOsxFontSmoothing = {
   },
   mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth",
 };
-keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
+keywordValues["-moz-osx-font-smoothing"] = ["auto", "grayscale"];
 
 propertiesData["-webkit-box-orient"] = {
   unitGroups: [],
@@ -76,7 +76,7 @@ propertiesData["-webkit-box-orient"] = {
 };
 keywordValues["-webkit-box-orient"] = ["horizontal", "vertical"];
 
-propertiesData.viewTimelineName = {
+propertiesData["view-timeline-name"] = {
   unitGroups: [],
   inherited: false,
   initial: {
@@ -85,8 +85,8 @@ propertiesData.viewTimelineName = {
   },
   mdnUrl: "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-name",
 };
-keywordValues.viewTimelineName = [];
-propertiesData.scrollTimelineName = {
+keywordValues["view-timeline-name"] = [];
+propertiesData["scroll-timeline-name"] = {
   unitGroups: [],
   inherited: false,
   initial: {
@@ -96,9 +96,9 @@ propertiesData.scrollTimelineName = {
   mdnUrl:
     "https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-timeline-name",
 };
-keywordValues.scrollTimelineName = [];
+keywordValues["scroll-timeline-name"] = [];
 
-propertiesData.viewTimelineInset = {
+propertiesData["view-timeline-inset"] = {
   unitGroups: ["length", "percentage"],
   inherited: false,
   initial: {
@@ -108,9 +108,9 @@ propertiesData.viewTimelineInset = {
   mdnUrl:
     "https://developer.mozilla.org/en-US/docs/Web/CSS/view-timeline-inset",
 };
-keywordValues.viewTimelineInset = [];
+keywordValues["view-timeline-inset"] = [];
 
-keywordValues.listStyleType = [
+keywordValues["list-style-type"] = [
   "disc",
   "circle",
   "square",
@@ -126,7 +126,13 @@ keywordValues.listStyleType = [
 
 // removed auto from keywords
 // fixed in webref btw
-keywordValues.textWrapMode = ["wrap", "nowrap", "initial", "inherit", "unset"];
+keywordValues["text-wrap-mode"] = [
+  "wrap",
+  "nowrap",
+  "initial",
+  "inherit",
+  "unset",
+];
 
 export const customLonghandPropertyNames = [
   "boxShadowOffsetX",

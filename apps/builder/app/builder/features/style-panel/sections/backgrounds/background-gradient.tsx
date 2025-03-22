@@ -49,7 +49,7 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     // This doesn't have the same behavior as CssValueInput.
     // However, it's great to see the immediate results when making gradient changes,
     // especially until we have a better gradient tool.
-    const newValue = parseCssValue("backgroundImage", value);
+    const newValue = parseCssValue("background-image", value);
 
     if (newValue.type === "unparsed" || newValue.type === "var") {
       setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });

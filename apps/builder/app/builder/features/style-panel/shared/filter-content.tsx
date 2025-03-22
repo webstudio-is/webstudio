@@ -50,7 +50,7 @@ const filterFunctions = {
   // and pass the args as value and property
   "drop-shadow": {
     default: "0px 2px 5px rgba(0, 0, 0, 0.2)",
-    fakeProperty: "textShadow",
+    fakeProperty: "text-shadow",
   },
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/grayscale#syntax
   // number  | percentage

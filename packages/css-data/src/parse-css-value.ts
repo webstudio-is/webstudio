@@ -3,7 +3,6 @@ import { type CssNode, generate, lexer, List, parse } from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
-  hyphenateProperty,
   type ImageValue,
   type KeywordValue,
   type LayersValue,
@@ -17,7 +16,6 @@ import {
   type FunctionValue,
   type TupleValueItem,
   type CssProperty,
-  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
@@ -46,11 +44,9 @@ const splitRepeated = (nodes: CssNode[]) => {
 // Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
 // and fall back to csstree.
 export const isValidDeclaration = (
-  property: string,
+  property: CssProperty,
   value: string
 ): boolean => {
-  const cssPropertyName = hyphenateProperty(property);
-
   if (property.startsWith("--") || value.includes("var(")) {
     return true;
   }
@@ -59,14 +55,14 @@ export const isValidDeclaration = (
   // though rendered styles are merged as shorthand
   // so validate artifically
   if (
-    cssPropertyName === "white-space-collapse" ||
-    cssPropertyName === "text-wrap-mode" ||
-    cssPropertyName === "text-wrap-style"
+    property === "white-space-collapse" ||
+    property === "text-wrap-mode" ||
+    property === "text-wrap-style"
   ) {
-    return keywordValues[cssPropertyName].includes(value);
+    return keywordValues[property].includes(value);
   }
 
-  if (cssPropertyName === "transition-behavior") {
+  if (property === "transition-behavior") {
     return true;
   }
 
@@ -75,7 +71,7 @@ export const isValidDeclaration = (
   // - https://github.com/csstree/csstree/issues/164
   if (typeof CSSStyleValue !== "undefined") {
     try {
-      CSSStyleValue.parse(cssPropertyName, value);
+      CSSStyleValue.parse(property, value);
       return true;
     } catch {
       return false;
@@ -91,14 +87,14 @@ export const isValidDeclaration = (
   // The syntax from MDN is incorrect and should be updated.
   // Here is a PR that fixes the same, but it is not merged yet.
   // https://github.com/mdn/data/pull/746
-  if (cssPropertyName === "scale") {
+  if (property === "scale") {
     const syntax = "none | [ <number> | <percentage> ]{1,3}";
     return lexer.match(syntax, ast).matched !== null;
   }
 
   if (
-    cssPropertyName === "transition-timing-function" ||
-    cssPropertyName === "animation-timing-function"
+    property === "transition-timing-function" ||
+    property === "animation-timing-function"
   ) {
     if (
       lexer.match("linear( [ <number> && <percentage>{0,2} ]# )", ast).matched
@@ -107,7 +103,7 @@ export const isValidDeclaration = (
     }
   }
 
-  const matchResult = lexer.matchProperty(cssPropertyName, ast);
+  const matchResult = lexer.matchProperty(property, ast);
 
   // allow to parse unknown properties as unparsed
   if (matchResult.error?.message.includes("Unknown property")) {
@@ -326,11 +322,10 @@ const parseLiteral = (
 };
 
 export const parseCssValue = (
-  multiCaseProperty: StyleProperty | CssProperty, // Handles only long-hand values.
+  property: CssProperty, // Handles only long-hand values.
   input: string,
   topLevel = true
 ): StyleValue => {
-  const property = hyphenateProperty(multiCaseProperty);
   const potentialKeyword = input.toLowerCase().trim();
   if (cssWideKeywords.has(potentialKeyword)) {
     return { type: "keyword", value: potentialKeyword };
