@@ -9,8 +9,6 @@ export {
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";
 
-// longhand property parsers
-export * from "./property-parsers/index";
 // shorthand property parsers
 export * from "./parse-css-value";
 export * from "./parse-css";

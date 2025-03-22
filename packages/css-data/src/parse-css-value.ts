@@ -1,4 +1,5 @@
-import { colord } from "colord";
+import { colord, extend } from "colord";
+import namesPlugin from "colord/plugins/names";
 import { type CssNode, generate, lexer, List, parse } from "css-tree";
 import warnOnce from "warn-once";
 import {
@@ -16,9 +17,14 @@ import {
   type FunctionValue,
   type TupleValueItem,
   type CssProperty,
+  type ShadowValue,
+  UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+
+// To support color names
+extend([namesPlugin]);
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -133,8 +139,6 @@ const repeatedProps = new Set<CssProperty>([
 ]);
 
 const tupleProps = new Set<CssProperty>([
-  "box-shadow",
-  "text-shadow",
   "scale",
   "translate",
   "rotate",
@@ -159,6 +163,49 @@ const parseColor = (colorString: string): undefined | RgbValue => {
       b: rgb.b,
     };
   }
+};
+
+const parseShadow = (
+  nodes: CssNode[],
+  input: string
+): ShadowValue | UnparsedValue => {
+  // https://drafts.csswg.org/css-borders-4/#box-shadow-position
+  let position: "inset" | "outset" = "outset";
+  let color: undefined | RgbValue | KeywordValue;
+  const units: UnitValue[] = [];
+  for (const node of nodes) {
+    const item = parseLiteral(node, ["inset"]);
+    if (item?.type === "keyword" && item.value === "inset") {
+      position = item.value;
+    } else if (item?.type === "keyword" && parseColor(item.value)) {
+      color = item;
+    } else if (item?.type === "rgb") {
+      color = item;
+    } else if (item?.type === "unit") {
+      units.push(item);
+    } else {
+      return { type: "unparsed", value: input };
+    }
+  }
+  if (units.length < 2) {
+    return { type: "unparsed", value: input };
+  }
+  const shadowValue: ShadowValue = {
+    type: "shadow",
+    position,
+    offsetX: units[0],
+    offsetY: units[1],
+  };
+  if (units.length > 2) {
+    shadowValue.blur = units[2];
+  }
+  if (units.length > 3) {
+    shadowValue.spread = units[3];
+  }
+  if (color) {
+    shadowValue.color = color;
+  }
+  return shadowValue;
 };
 
 const parseLiteral = (
@@ -195,7 +242,10 @@ const parseLiteral = (
   }
   if (node?.type === "Identifier") {
     const name = node.name.toLowerCase();
-    if (keywords?.map((keyword) => keyword.toLowerCase()).includes(name)) {
+    if (
+      keywords?.map((keyword) => keyword.toLowerCase()).includes(name) ||
+      parseColor(name)
+    ) {
       return {
         type: "keyword",
         value: name,
@@ -298,7 +348,6 @@ const parseLiteral = (
       node.name === "blur" ||
       node.name === "brightness" ||
       node.name === "contrast" ||
-      node.name === "drop-shadow" ||
       node.name === "grayscale" ||
       node.name === "hue-rotate" ||
       node.name === "invert" ||
@@ -312,11 +361,18 @@ const parseLiteral = (
         if (matchedValue) {
           args.value.push(matchedValue as TupleValueItem);
         }
-        if (arg.type === "Identifier") {
-          args.value.push({ type: "keyword", value: arg.name });
-        }
       }
       return { type: "function", args, name: node.name };
+    }
+    if (node.name === "drop-shadow") {
+      return {
+        type: "function",
+        args: parseShadow(
+          node.children.toArray(),
+          generate({ type: "Value", children: node.children })
+        ),
+        name: node.name,
+      };
     }
   }
 };
@@ -438,6 +494,10 @@ export const parseCssValue = (
         });
       }),
     };
+  }
+
+  if (property === "box-shadow" || property === "text-shadow") {
+    return parseShadow(nodes, input);
   }
 
   // Probably a tuple like background-size or box-shadow

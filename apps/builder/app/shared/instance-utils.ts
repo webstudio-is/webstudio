@@ -608,6 +608,20 @@ const traverseStyleValue = (
     }
     return;
   }
+  if (value.type === "shadow") {
+    traverseStyleValue(value.offsetX, callback);
+    traverseStyleValue(value.offsetY, callback);
+    if (value.blur) {
+      traverseStyleValue(value.blur, callback);
+    }
+    if (value.spread) {
+      traverseStyleValue(value.spread, callback);
+    }
+    if (value.color) {
+      traverseStyleValue(value.color, callback);
+    }
+    return;
+  }
   value satisfies never;
 };
 
