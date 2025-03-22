@@ -251,6 +251,7 @@ const Publish = ({
   disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -383,9 +384,14 @@ const Publish = ({
       if (status === "PUBLISHED") {
         toast.success(
           <>
-            The project is successfully published.{" "}
+            The project has been successfully published. The project is
+            successfully published.{" "}
             {hasProPlan === false && (
-              <div>You can publish {timesLeft} more times on free plan.</div>
+              <div>
+                On the free plan, you have {timesLeft} out of{" "}
+                {maxPublishesAllowedPerUser} daily publications remaining. The
+                counter resets tomorrow.
+              </div>
             )}
           </>
         );
