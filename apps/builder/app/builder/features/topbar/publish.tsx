@@ -219,7 +219,7 @@ const findInstanceSelector = (
   parentInstanceById: Map<Instance["id"], Instance["id"]>,
   startingInstanceId: Instance["id"]
 ) => {
-  let instanceSelector = [];
+  const instanceSelector = [];
   let currentInstanceId: undefined | Instance["id"] = startingInstanceId;
   while (currentInstanceId) {
     instanceSelector.push(currentInstanceId);
