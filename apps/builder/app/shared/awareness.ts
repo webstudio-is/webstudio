@@ -10,7 +10,7 @@ import {
 import { $pages } from "./nano-states/pages";
 import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
 
-type Awareness = {
+export type Awareness = {
   pageId: Page["id"];
   instanceSelector?: Instance["id"][];
 };
