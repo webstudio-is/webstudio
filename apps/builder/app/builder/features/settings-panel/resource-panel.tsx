@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
-import type { DataSource, Resource } from "@webstudio-is/sdk";
+import { Resource, type DataSource } from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
   generateObjectExpression,
@@ -62,6 +62,30 @@ import {
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { rebindTreeVariablesMutable } from "~/shared/data-variables";
 
+export const parseResource = ({
+  id,
+  name,
+  formData,
+}: {
+  id: string;
+  name: string;
+  formData: FormData;
+}) => {
+  const headerNames = formData.getAll("header-name");
+  const headerValues = formData.getAll("header-value");
+  return Resource.parse({
+    id,
+    name,
+    url: formData.get("url"),
+    method: formData.get("method"),
+    headers: headerNames.map((name, index) => {
+      const value = headerValues[index];
+      return { name, value };
+    }),
+    body: formData.get("body") ?? undefined,
+  });
+};
+
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
   if (typeof evaluatedValue !== "string") {
@@ -78,7 +102,7 @@ const validateUrl = (value: string, scope: Record<string, unknown>) => {
   return "";
 };
 
-const UrlField = ({
+export const UrlField = ({
   scope,
   aliases,
   value,
@@ -115,11 +139,12 @@ const UrlField = ({
           <InfoCircleIcon tabIndex={0} />
         </Tooltip>
       </Label>
+      <input hidden={true} readOnly={true} name="url" value={value} />
       <BindingControl>
         <InputErrorsTooltip errors={error ? [error] : undefined}>
           <TextArea
             ref={ref}
-            name="url"
+            name="url-validator"
             id={urlId}
             rows={1}
             grow={true}
@@ -153,6 +178,27 @@ const UrlField = ({
           }
         />
       </BindingControl>
+    </Grid>
+  );
+};
+
+export const MethodField = ({
+  value,
+  onChange,
+}: {
+  value: Resource["method"];
+  onChange: (value: Resource["method"]) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Label>Method</Label>
+      <Select<Resource["method"]>
+        options={["get", "post", "put", "delete"]}
+        getLabel={humanizeString}
+        name="method"
+        value={value}
+        onChange={onChange}
+      />
     </Grid>
   );
 };
@@ -239,12 +285,13 @@ const HeaderPair = ({
       <Label htmlFor={valueId} css={{ gridArea: "value" }}>
         Value
       </Label>
+      <input hidden={true} readOnly={true} name="header-value" value={value} />
       <Box css={{ gridArea: "value-input", position: "relative" }}>
         <BindingControl>
           <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
             <InputField
               inputRef={valueRef}
-              name="header-value"
+              name="header-value-validator"
               id={valueId}
               // expressions with variables cannot be edited
               disabled={isLiteralExpression(value) === false}
@@ -309,7 +356,7 @@ const HeaderPair = ({
   );
 };
 
-const Headers = ({
+export const Headers = ({
   scope,
   aliases,
   headers,
@@ -593,14 +640,11 @@ export const ResourceForm = forwardRef<
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      const newResource: Resource = {
+      const newResource = parseResource({
         id: resource?.id ?? nanoid(),
         name,
-        url,
-        method,
-        headers,
-        body,
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
@@ -638,15 +682,7 @@ export const ResourceForm = forwardRef<
           setBody(JSON.stringify(curl.body));
         }}
       />
-      <Grid gap={1}>
-        <Label>Method</Label>
-        <Select<Resource["method"]>
-          options={["get", "post", "put", "delete"]}
-          getLabel={humanizeString}
-          value={method}
-          onChange={(newValue) => setMethod(newValue)}
-        />
-      </Grid>
+      <MethodField value={method} onChange={setMethod} />
       <Headers
         scope={scope}
         aliases={aliases}
