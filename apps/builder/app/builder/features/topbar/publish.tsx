@@ -40,8 +40,11 @@ import {
   textVariants,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { $awareness, type Awareness } from "~/shared/awareness";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import {
+  $awareness,
+  findAwarenessByInstanceId,
+  type Awareness,
+} from "~/shared/awareness";
 import {
   $authTokenPermissions,
   $dataSources,
@@ -66,9 +69,7 @@ import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import {
-  Instance,
   isPathnamePattern,
-  Pages,
   parseComponentName,
   type Templates,
 } from "@webstudio-is/sdk";
@@ -215,65 +216,19 @@ const ChangeProjectDomain = ({
   );
 };
 
-const findInstanceSelector = (
-  parentInstanceById: Map<Instance["id"], Instance["id"]>,
-  startingInstanceId: Instance["id"]
-) => {
-  const instanceSelector = [];
-  let currentInstanceId: undefined | Instance["id"] = startingInstanceId;
-  while (currentInstanceId) {
-    instanceSelector.push(currentInstanceId);
-    currentInstanceId = parentInstanceById.get(currentInstanceId);
-  }
-  return instanceSelector;
-};
-
-const findPageId = (
-  pages: undefined | Pages,
-  instanceSelector: InstanceSelector
-) => {
-  if (pages === undefined) {
-    return;
-  }
-  const rootInstanceId = instanceSelector.at(-1);
-  for (const page of [pages.homePage, ...pages.pages]) {
-    if (page.rootInstanceId === rootInstanceId) {
-      return page.id;
-    }
-  }
-};
-
-const findAwareness = (
-  pages: undefined | Pages,
-  parentInstanceById: Map<Instance["id"], Instance["id"]>,
-  startingInstanceId: Instance["id"]
-) => {
-  const instanceSelector = findInstanceSelector(
-    parentInstanceById,
-    startingInstanceId
-  );
-  const pageId = findPageId(pages, instanceSelector) ?? "";
-  return { pageId, instanceSelector };
-};
-
 const $usedProFeatures = computed(
   [$pages, $dataSources, $instances],
   (pages, dataSources, instances) => {
-    const parentInstanceById = new Map<Instance["id"], Instance["id"]>();
-    for (const instance of instances.values()) {
-      for (const child of instance.children) {
-        if (child.type === "id") {
-          parentInstanceById.set(child.value, instance.id);
-        }
-      }
-    }
     const features = new Map<string, undefined | Awareness>();
+    if (pages === undefined) {
+      return features;
+    }
     // specified emails for default webhook form
     if ((pages?.meta?.contactEmail ?? "").trim()) {
       features.set("Custom contant email", undefined);
     }
     // pages with dynamic paths
-    for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
+    for (const page of [pages.homePage, ...pages.pages]) {
       if (isPathnamePattern(page.path)) {
         features.set("Dynamic path", {
           pageId: page.id,
@@ -287,7 +242,7 @@ const $usedProFeatures = computed(
         const instanceId = dataSource.scopeInstanceId ?? "";
         features.set(
           "Resource variable",
-          findAwareness(pages, parentInstanceById, instanceId)
+          findAwarenessByInstanceId(pages, instances, instanceId)
         );
       }
     }
@@ -297,7 +252,7 @@ const $usedProFeatures = computed(
       if (namespace === "@webstudio-is/sdk-components-animation") {
         features.set(
           "Animation component",
-          findAwareness(pages, parentInstanceById, instance.id)
+          findAwarenessByInstanceId(pages, instances, instance.id)
         );
       }
     }
