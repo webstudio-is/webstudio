@@ -1,3 +1,4 @@
+import stripIndent from "strip-indent";
 import { computed } from "nanostores";
 import {
   useEffect,
@@ -35,10 +36,15 @@ import {
   PopoverTitle,
   PopoverClose,
   PopoverTitleActions,
+  css,
+  textVariants,
 } from "@webstudio-is/design-system";
-import stripIndent from "strip-indent";
-import { $publishDialog } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
+import {
+  $awareness,
+  findAwarenessByInstanceId,
+  type Awareness,
+} from "~/shared/awareness";
 import {
   $authTokenPermissions,
   $dataSources,
@@ -48,6 +54,7 @@ import {
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
+import { $publishDialog } from "../../shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -212,28 +219,41 @@ const ChangeProjectDomain = ({
 const $usedProFeatures = computed(
   [$pages, $dataSources, $instances],
   (pages, dataSources, instances) => {
-    const features = new Set<string>();
+    const features = new Map<string, undefined | Awareness>();
+    if (pages === undefined) {
+      return features;
+    }
     // specified emails for default webhook form
     if ((pages?.meta?.contactEmail ?? "").trim()) {
-      features.add("Custom contant email");
+      features.set("Custom contact email", undefined);
     }
     // pages with dynamic paths
-    for (const page of pages ? [pages.homePage, ...pages.pages] : []) {
+    for (const page of [pages.homePage, ...pages.pages]) {
       if (isPathnamePattern(page.path)) {
-        features.add("Dynamic path");
+        features.set("Dynamic path", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
       }
     }
     // has resource variables
     for (const dataSource of dataSources.values()) {
       if (dataSource.type === "resource") {
-        features.add("Resource variable");
+        const instanceId = dataSource.scopeInstanceId ?? "";
+        features.set(
+          "Resource variable",
+          findAwarenessByInstanceId(pages, instances, instanceId)
+        );
       }
     }
     // instances with animations
     for (const instance of instances.values()) {
       const [namespace] = parseComponentName(instance.component);
       if (namespace === "@webstudio-is/sdk-components-animation") {
-        features.add("Animation component");
+        features.set(
+          "Animation component",
+          findAwarenessByInstanceId(pages, instances, instance.id)
+        );
       }
     }
     return features;
@@ -646,6 +666,12 @@ const refreshProject = async () => {
   toast.error(result.error);
 };
 
+const buttonLinkClass = css({
+  all: "unset",
+  cursor: "pointer",
+  ...textVariants.link,
+}).toString();
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
@@ -696,9 +722,23 @@ const Content = (props: {
               Upgrade to publish with following features:
             </Text>
             <Text as="ul">
-              {Array.from(usedProFeatures).map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
+              {Array.from(usedProFeatures).map(
+                ([message, awareness], index) => (
+                  <li key={index}>
+                    {awareness ? (
+                      <button
+                        className={buttonLinkClass}
+                        type="button"
+                        onClick={() => $awareness.set(awareness)}
+                      >
+                        {message}
+                      </button>
+                    ) : (
+                      message
+                    )}
+                  </li>
+                )
+              )}
             </Text>
             <Flex align="center" gap={1}>
               <UpgradeIcon />
