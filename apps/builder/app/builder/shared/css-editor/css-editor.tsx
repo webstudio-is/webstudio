@@ -4,7 +4,6 @@ import { colord } from "colord";
 import {
   memo,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
   type ChangeEvent,
@@ -307,32 +306,31 @@ const AdvancedDeclarationLonghand = memo(
   }
 );
 
-export type CssEditorApi = { showAddStyleInput: () => void } | undefined;
-
 export const CssEditor = ({
   onDeleteProperty,
   onSetProperty,
   onAddDeclarations,
   onDeleteAllDeclarations,
   declarations,
-  apiRef,
   showSearch = true,
   virtualize = true,
   propertiesPosition = "bottom",
   recentProperties = [],
+  showAddStyleInput,
+  onToggleAddStyleInput,
 }: {
   declarations: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
-  apiRef?: RefObject<CssEditorApi>;
   showSearch?: boolean;
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
+  showAddStyleInput?: boolean;
+  onToggleAddStyleInput?: (show: boolean) => void;
 }) => {
-  const [isAdding, setIsAdding] = useState(false);
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const lastRecentValueInputRef = useRef<HTMLInputElement>(null);
   const lastRegularValueInputRef = useRef<HTMLInputElement>(null);
@@ -340,11 +338,6 @@ export const CssEditor = ({
   const [searchProperties, setSearchProperties] =
     useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(apiRef, () => ({
-    showAddStyleInput() {
-      handleShowAddStyleInput();
-    },
-  }));
 
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
@@ -372,7 +365,7 @@ export const CssEditor = ({
 
   const handleShowAddStyleInput = () => {
     flushSync(() => {
-      setIsAdding(true);
+      onToggleAddStyleInput?.(true);
     });
     // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
     addPropertyInputRef.current?.focus();
@@ -420,7 +413,7 @@ export const CssEditor = ({
   };
 
   const afterChangingStyles = () => {
-    setIsAdding(false);
+    onToggleAddStyleInput?.(false);
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
       const element =
@@ -481,7 +474,7 @@ export const CssEditor = ({
         })}
       <Box
         css={
-          isAdding
+          showAddStyleInput
             ? { paddingTop: theme.spacing[3] }
             : // We hide it visually so you can tab into it to get shown.
               { overflow: "hidden", height: 0 }
@@ -496,12 +489,12 @@ export const CssEditor = ({
           }}
           onClose={afterChangingStyles}
           onFocus={() => {
-            if (isAdding === false) {
+            if (showAddStyleInput === false) {
               handleShowAddStyleInput();
             }
           }}
           onBlur={() => {
-            setIsAdding(false);
+            onToggleAddStyleInput?.(false);
           }}
           ref={addPropertyInputRef}
         />
@@ -537,7 +530,7 @@ export const CssEditor = ({
           searchProperties ?? [...recentProperties, ...currentProperties]
         }
       >
-        <Flex gap="2" direction="column">
+        <Flex gap="1" direction="column">
           {propertiesPosition === "bottom" && (
             <>
               {recentPropertiesAndAddStyleInput}
