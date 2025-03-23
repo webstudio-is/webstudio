@@ -225,7 +225,7 @@ const $usedProFeatures = computed(
     }
     // specified emails for default webhook form
     if ((pages?.meta?.contactEmail ?? "").trim()) {
-      features.set("Custom contant email", undefined);
+      features.set("Custom contact email", undefined);
     }
     // pages with dynamic paths
     for (const page of [pages.homePage, ...pages.pages]) {
