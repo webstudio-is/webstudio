@@ -38,6 +38,10 @@ export const renderControl = ({
     return;
   }
 
+  if (meta.control === "animationAction") {
+    return;
+  }
+
   if (meta.control === "json") {
     return <JsonControl key={key} meta={meta} prop={prop} {...rest} />;
   }
@@ -222,9 +226,7 @@ export const renderControl = ({
     }
 
     if (prop.type === "animationAction") {
-      throw new Error(
-        `Cannot render a fallback control for prop "${rest.propName}" with type animationAction`
-      );
+      return;
     }
 
     prop satisfies never;

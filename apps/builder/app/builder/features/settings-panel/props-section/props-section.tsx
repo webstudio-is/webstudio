@@ -2,7 +2,7 @@ import { computed } from "nanostores";
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import { type Instance, Props, descendantComponent } from "@webstudio-is/sdk";
+import { type Instance, descendantComponent } from "@webstudio-is/sdk";
 import {
   theme,
   Combobox,
@@ -18,18 +18,12 @@ import {
   $props,
   $isDesignMode,
   $isContentMode,
-  $memoryProps,
-  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { AnimationSection } from "./animation/animation-section";
-import { nanoid } from "nanoid";
-import { $matchingBreakpoints } from "../../style-panel/shared/model";
-import { matchMediaBreakpoints } from "./match-media-breakpoints";
 
 type Item = {
   name: string;
@@ -152,69 +146,14 @@ export const PropsSection = (props: PropsSectionProps) => {
   const [addingProp, setAddingProp] = useState(false);
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
-  const matchingBreakpoints = useStore($matchingBreakpoints);
-  const selectedBreakpoint = useStore($selectedBreakpoint);
-
-  const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
   const hasItems =
     logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
-  const animationAction = logic.initialProps.find(
-    (prop) => prop.meta.type === "animationAction"
-  );
-
-  const hasAnimation = animationAction !== undefined;
-
   const showPropertiesSection =
     isDesignMode || (isContentMode && logic.initialProps.length > 0);
 
-  return hasAnimation && selectedBreakpoint?.id !== undefined ? (
-    <>
-      <AnimationSection
-        animationAction={animationAction}
-        isAnimationEnabled={matchMediaValue}
-        selectedBreakpointId={selectedBreakpoint?.id}
-        onChange={(value, isEphemeral) => {
-          const memoryProps = new Map($memoryProps.get());
-          const memoryInstanceProp: Props = new Map(
-            memoryProps.get(props.selectedInstanceKey)
-          );
-
-          if (isEphemeral && value !== undefined) {
-            memoryInstanceProp.set(animationAction.propName, {
-              id: nanoid(),
-              instanceId: props.instanceId,
-              type: "animationAction",
-              name: animationAction.propName,
-              value,
-            });
-            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
-            $memoryProps.set(memoryProps);
-            return;
-          }
-
-          if (memoryInstanceProp.has(animationAction.propName)) {
-            memoryInstanceProp.delete(animationAction.propName);
-            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
-
-            $memoryProps.set(memoryProps);
-          }
-
-          if (isEphemeral || value === undefined) {
-            return;
-          }
-
-          isEphemeral satisfies false;
-
-          logic.handleChangeByPropName(animationAction.propName, {
-            type: "animationAction",
-            value,
-          });
-        }}
-      />
-    </>
-  ) : (
+  return (
     <>
       <Grid
         css={{

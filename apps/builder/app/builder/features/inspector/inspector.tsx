@@ -24,6 +24,7 @@ import {
   $registeredComponentMetas,
   $dragAndDropState,
   $isDesignMode,
+  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -36,6 +37,7 @@ import {
   $selectedInstanceKey,
   $selectedPage,
 } from "~/shared/awareness";
+import { InteractionsPanel } from "../interactions/interactions-panel";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -75,6 +77,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedPage = useStore($selectedPage);
   const activeInspectorPanel = useStore($activeInspectorPanel);
   const isDesignMode = useStore($isDesignMode);
+  const propsMetas = useStore($registeredComponentPropsMetas);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -94,9 +97,18 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const meta = metas.get(selectedInstance.component);
   const documentType = selectedPage?.meta.documentType ?? "html";
 
-  type PanelName = "style" | "settings";
+  type PanelName = "style" | "settings" | "interactions";
 
   const availablePanels = new Set<PanelName>();
+
+  if (selectedInstance?.component) {
+    const propsMeta = propsMetas.get(selectedInstance.component);
+
+    if (propsMeta?.props.action?.type === "animationAction") {
+      availablePanels.add("interactions");
+    }
+  }
+
   availablePanels.add("settings");
   if (
     // forbid styling body in xml document
@@ -163,6 +175,18 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     </div>
                   </Tooltip>
                 )}
+                {availablePanels.has("interactions") && (
+                  <Tooltip
+                    variant="wrapped"
+                    content={<Text>Interactions</Text>}
+                  >
+                    <div>
+                      <PanelTabsTrigger value="interactions">
+                        Interactions
+                      </PanelTabsTrigger>
+                    </div>
+                  </Tooltip>
+                )}
               </PanelTabsList>
               <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
@@ -198,6 +222,21 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                     <InstanceInfo instance={selectedInstance} />
                   </Flex>
                   <SettingsPanel
+                    // Re-render when instance changes
+                    key={selectedInstance.id}
+                    selectedInstance={selectedInstance}
+                    selectedInstanceKey={selectedInstanceKey}
+                  />
+                </ScrollArea>
+              </PanelTabsContent>
+
+              <PanelTabsContent
+                value="interactions"
+                css={contentStyle}
+                tabIndex={-1}
+              >
+                <ScrollArea>
+                  <InteractionsPanel
                     // Re-render when instance changes
                     key={selectedInstance.id}
                     selectedInstance={selectedInstance}

@@ -75,7 +75,9 @@ export const $clampingRect = computed(
   }
 );
 
-export const $activeInspectorPanel = atom<"style" | "settings">("style");
+export const $activeInspectorPanel = atom<
+  "style" | "settings" | "interactions"
+>("style");
 
 export const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 

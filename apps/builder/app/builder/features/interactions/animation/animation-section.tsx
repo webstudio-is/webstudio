@@ -15,7 +15,6 @@ import {
   SmallToggleButton,
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
-import type { PropAndMeta } from "../use-props-logic";
 import type {
   AnimationAction,
   AnimationActionScroll,
@@ -179,12 +178,12 @@ const animationSources = Object.keys(
 ) as NonNullable<AnimationActionScroll["source"]>[];
 
 export const AnimationSection = ({
-  animationAction,
+  action,
   onChange,
   isAnimationEnabled,
   selectedBreakpointId,
 }: {
-  animationAction: PropAndMeta;
+  action: AnimationAction | undefined;
   onChange: ((value: undefined, isEphemeral: true) => void) &
     ((value: AnimationAction, isEphemeral: boolean) => void);
   isAnimationEnabled: (
@@ -200,10 +199,7 @@ export const AnimationSection = ({
     "insetEnd",
   ] as const);
 
-  const { prop } = animationAction;
-
-  const value: AnimationAction =
-    prop?.type === "animationAction" ? prop.value : defaultActionValue;
+  const value = action ?? defaultActionValue;
 
   const handleChange = (value: unknown, isEphemeral: boolean) => {
     if (value === undefined && isEphemeral) {
@@ -222,10 +218,6 @@ export const AnimationSection = ({
 
   return (
     <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
-      <Box css={{ height: theme.panel.paddingBlock }} />
-
-      <Separator />
-
       <Grid
         gap={2}
         align={"center"}
