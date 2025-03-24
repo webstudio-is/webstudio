@@ -276,35 +276,6 @@ export const generateDataFromEmbedTemplate = (
   };
 };
 
-const namespaceEmbedTemplateComponents = (
-  template: WsEmbedTemplate,
-  namespace: string,
-  components: Set<EmbedTemplateInstance["component"]>
-): WsEmbedTemplate => {
-  return template.map((item) => {
-    if (item.type === "text") {
-      return item;
-    }
-    if (item.type === "expression") {
-      return item;
-    }
-    if (item.type === "instance") {
-      const prefix = components.has(item.component) ? `${namespace}:` : "";
-      return {
-        ...item,
-        component: `${prefix}${item.component}`,
-        children: namespaceEmbedTemplateComponents(
-          item.children,
-          namespace,
-          components
-        ),
-      };
-    }
-    item satisfies never;
-    throw Error("Impossible case");
-  });
-};
-
 const namespaceMatcher = (namespace: string, matcher: Matcher) => {
   const newMatcher = structuredClone(matcher);
   if (newMatcher.component?.$eq) {
@@ -345,13 +316,6 @@ export const namespaceMeta = (
     newMeta.indexWithinAncestor = components.has(newMeta.indexWithinAncestor)
       ? `${namespace}:${newMeta.indexWithinAncestor}`
       : newMeta.indexWithinAncestor;
-  }
-  if (newMeta.template) {
-    newMeta.template = namespaceEmbedTemplateComponents(
-      newMeta.template,
-      namespace,
-      components
-    );
   }
   return newMeta;
 };

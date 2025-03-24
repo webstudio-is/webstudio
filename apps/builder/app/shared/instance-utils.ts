@@ -1,3 +1,4 @@
+import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
@@ -28,7 +29,6 @@ import {
   collectionComponent,
   Prop,
 } from "@webstudio-is/sdk";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   $props,
   $styles,
@@ -74,7 +74,6 @@ import {
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
-import { current, isDraft } from "immer";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -372,17 +371,24 @@ export const getComponentTemplateData = (
   if (templateMeta) {
     return templateMeta.template;
   }
-  const metas = $registeredComponentMetas.get();
-  const componentMeta = metas.get(componentOrTemplate);
-  // when template not specified fallback to template with the component
-  const template = componentMeta?.template ?? [
-    {
-      type: "instance",
-      component: componentOrTemplate,
-      children: [],
-    },
-  ];
-  return generateDataFromEmbedTemplate(template, metas);
+  const newInstance: Instance = {
+    id: nanoid(),
+    type: "instance",
+    component: componentOrTemplate,
+    children: [],
+  };
+  return {
+    children: [{ type: "id", value: newInstance.id }],
+    instances: [newInstance],
+    props: [],
+    dataSources: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    breakpoints: [],
+    assets: [],
+    resources: [],
+  };
 };
 
 export const reparentInstanceMutable = (

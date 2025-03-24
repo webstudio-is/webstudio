@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { HtmlTags } from "html-tags";
 import { PropMeta } from "./prop-meta";
 import { Matchers } from "./instances";
-import { WsEmbedTemplate } from "./embed-template";
 import { StyleValue, type CssProperty } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
 
@@ -87,7 +86,6 @@ export const WsComponentMeta = z.object({
   icon: z.string(),
   presetStyle: z.optional(z.record(z.string(), z.array(PresetStyleDecl))),
   states: z.optional(z.array(ComponentState)),
-  template: z.optional(WsEmbedTemplate),
   order: z.number().optional(),
 });
 

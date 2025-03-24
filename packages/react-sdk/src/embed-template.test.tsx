@@ -665,7 +665,7 @@ test("generate data for embedding from instance child bound to variables", () =>
   });
 });
 
-test("add namespace to selected components in embed template", () => {
+test("add namespace to constants and indexWithinAncestor", () => {
   expect(
     namespaceMeta(
       {
@@ -677,26 +677,6 @@ test("add namespace to selected components in embed template", () => {
           component: { $nin: ["Button", "Box"] },
         },
         indexWithinAncestor: "Tooltip",
-        template: [
-          {
-            type: "instance",
-            component: "Tooltip",
-            children: [
-              { type: "text", value: "Some text" },
-              {
-                type: "instance",
-                component: "Box",
-                children: [
-                  {
-                    type: "instance",
-                    component: "Button",
-                    children: [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
       },
       "my-namespace",
       new Set(["Tooltip", "Button"])
@@ -710,25 +690,5 @@ test("add namespace to selected components in embed template", () => {
       component: { $nin: ["my-namespace:Button", "my-namespace:Box"] },
     },
     indexWithinAncestor: "my-namespace:Tooltip",
-    template: [
-      {
-        type: "instance",
-        component: "my-namespace:Tooltip",
-        children: [
-          { type: "text", value: "Some text" },
-          {
-            type: "instance",
-            component: "Box",
-            children: [
-              {
-                type: "instance",
-                component: "my-namespace:Button",
-                children: [],
-              },
-            ],
-          },
-        ],
-      },
-    ],
   });
 });
