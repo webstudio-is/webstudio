@@ -55,6 +55,7 @@ import {
   PanelTitle,
   TitleSuffixSpacer,
   FloatingPanelProvider,
+  ProBadge,
 } from "@webstudio-is/design-system";
 import {
   ChevronsLeftIcon,
@@ -86,11 +87,9 @@ import { ImageControl } from "~/builder/features/project-settings";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {
   compilePathnamePattern,
-  isPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
 import { selectInstance } from "~/shared/awareness";
 import { computeExpression } from "~/shared/data-variables";
@@ -120,7 +119,7 @@ const fieldDefaultValues = {
   language: `""`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
-  status: `200`,
+  status: undefined as string | undefined,
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
   customMetas: [{ property: "", content: `""` }],
@@ -201,8 +200,7 @@ const validateValues = (
   // undefined page id means new page
   pageId: undefined | Page["id"],
   values: Values,
-  variableValues: Map<string, unknown>,
-  userPlanFeatures: UserPlanFeatures
+  variableValues: Map<string, unknown>
 ): Errors => {
   // Null or undefined in the field value is only possible if it’s a dynamic (expression) value.
   // We do not validate dynamic values but instead provide a default value for validation.
@@ -221,7 +219,7 @@ const validateValues = (
     ),
     language: computeExpression(values.language, variableValues),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
-    status: computeExpression(values.status, variableValues),
+    status: computeExpression(values.status ?? `undefined`, variableValues),
     redirect: computeExpression(values.redirect, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
@@ -251,14 +249,6 @@ const validateValues = (
     if (messages.length > 0) {
       errors.path = errors.path ?? [];
       errors.path.push(...messages);
-    }
-
-    if (
-      userPlanFeatures.allowDynamicData === false &&
-      isPathnamePattern(values.path)
-    ) {
-      errors.path = errors.path ?? [];
-      errors.path.push("Dynamic path is supported only in Pro");
     }
   }
   return errors;
@@ -311,59 +301,47 @@ const PathField = ({
   const id = useId();
   return (
     <Grid gap={1}>
-      {allowDynamicData ? (
-        <Flex align="center" gap={1}>
-          <Label htmlFor={id}>Dynamic Path</Label>
-          <Tooltip
-            content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-            variant="wrapped"
-          >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={-1}
-            />
-          </Tooltip>
-        </Flex>
-      ) : (
-        <Flex align="center" gap={1}>
-          <Label htmlFor={id}>Path</Label>
-          <Tooltip
-            content={
-              <>
-                <Text>
-                  Path is a subset of the URL that looks like this:
-                  &quot;/blog&quot;.
-                </Text>
-                {allowDynamicData === false && (
-                  <>
-                    <Text>
-                      To make the path dynamic and use it with CMS, you can use
-                      parameters and other features. CMS features are part of
-                      the Pro plan.
-                    </Text>
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      css={{ marginTop: theme.spacing[5], width: "100%" }}
-                      color="contrast"
-                      underline="none"
-                      target="_blank"
-                      href="https://webstudio.is/pricing"
-                    >
-                      Upgrade
-                    </Link>
-                  </>
-                )}
-              </>
-            }
-            variant="wrapped"
-          >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={-1}
-            />
-          </Tooltip>
-        </Flex>
-      )}
+      <Flex align="center" gap={1}>
+        <Label htmlFor={id}>Path</Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
+        <Tooltip
+          content={
+            <>
+              <Text>
+                The path can include dynamic parameters like :name, which could
+                be made optional using :name?, or have a wildcard such as /* or
+                /:name* to store whole remaining part at the end of the URL.
+              </Text>
+              {allowDynamicData === false && (
+                <>
+                  <br />
+                  <Text>
+                    To make the path dynamic and use it with CMS, you can use
+                    parameters and other features. CMS features are part of the
+                    Pro plan.
+                  </Text>
+                  <Link
+                    className={buttonStyle({ color: "gradient" })}
+                    css={{ marginTop: theme.spacing[5], width: "100%" }}
+                    color="contrast"
+                    underline="none"
+                    target="_blank"
+                    href="https://webstudio.is/pricing"
+                  >
+                    Upgrade
+                  </Link>
+                </>
+              )}
+            </>
+          }
+          variant="wrapped"
+        >
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
+        </Tooltip>
+      </Flex>
       <InputErrorsTooltip errors={errors}>
         <InputField
           color={errors && "error"}
@@ -379,12 +357,12 @@ const PathField = ({
 
 const StatusField = ({
   errors,
-  value,
+  value = `undefined`,
   onChange,
 }: {
   errors?: string[];
-  value: string;
-  onChange: (value: string) => void;
+  value: undefined | string;
+  onChange: (value: undefined | string) => void;
 }) => {
   const id = useId();
   const { allowDynamicData } = useStore($userPlanFeatures);
@@ -393,6 +371,7 @@ const StatusField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Status Code </Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content={
             <Text>
@@ -417,35 +396,35 @@ const StatusField = ({
         </Tooltip>
       </Flex>
       <BindingControl>
-        {allowDynamicData && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
-        )}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue ?? ""))
+          }
+        />
         <InputErrorsTooltip errors={errors}>
           <InputField
             inputMode="numeric"
             color={errors && "error"}
             id={id}
             placeholder="200"
-            disabled={
-              allowDynamicData === false || isLiteralExpression(value) === false
-            }
-            value={String(computeExpression(value, variableValues))}
+            disabled={isLiteralExpression(value) === false}
+            value={String(computeExpression(value, variableValues) ?? "")}
             onChange={(event) => {
-              const number = Number(event.target.value);
-              const status =
-                Number.isNaN(number) || String(number) !== event.target.value
-                  ? event.target.value
-                  : number;
-              onChange(JSON.stringify(status));
+              if (event.target.value === "") {
+                onChange(undefined);
+              } else {
+                const number = Number(event.target.value);
+                const status =
+                  Number.isNaN(number) || String(number) !== event.target.value
+                    ? event.target.value
+                    : number;
+                onChange(JSON.stringify(status));
+              }
             }}
           />
         </InputErrorsTooltip>
@@ -470,6 +449,7 @@ const RedirectField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Redirect </Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
           variant="wrapped"
@@ -482,26 +462,22 @@ const RedirectField = ({
       </Flex>
 
       <BindingControl>
-        {allowDynamicData && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
-        )}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue ?? ""))
+          }
+        />
         <InputErrorsTooltip errors={errors}>
           <InputField
             color={errors && "error"}
             id={id}
             placeholder="/another-path"
-            disabled={
-              allowDynamicData === false || isLiteralExpression(value) === false
-            }
+            disabled={isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -1224,15 +1200,8 @@ export const NewPageSettings = ({
     ...fieldDefaultValues,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
-  const userPlanFeatures = useStore($userPlanFeatures);
   const { variableValues } = useStore($pageRootScope);
-  const errors = validateValues(
-    pages,
-    undefined,
-    values,
-    variableValues,
-    userPlanFeatures
-  );
+  const errors = validateValues(pages, undefined, values, variableValues);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -1376,7 +1345,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         values.language.length > 0 ? values.language : undefined;
     }
 
-    if (values.status !== undefined) {
+    if ("status" in values) {
       page.meta.status = values.status;
     }
 
@@ -1514,14 +1483,7 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const errors = validateValues(
-    pages,
-    pageId,
-    values,
-    variableValues,
-    userPlanFeatures
-  );
+  const errors = validateValues(pages, pageId, values, variableValues);
 
   const debouncedFn = useEffectEvent(() => {
     if (

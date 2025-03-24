@@ -229,6 +229,7 @@ test("check simple literals", () => {
   expect(isLiteralExpression(`true`)).toEqual(true);
   expect(isLiteralExpression(`[]`)).toEqual(true);
   expect(isLiteralExpression(`{}`)).toEqual(true);
+  expect(isLiteralExpression(`undefined`)).toEqual(true);
   expect(isLiteralExpression(`"" + ""`)).toEqual(false);
   expect(isLiteralExpression(`{}.field`)).toEqual(false);
   expect(isLiteralExpression(`variable`)).toEqual(false);

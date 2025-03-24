@@ -558,11 +558,10 @@ JsonForm.displayName = "JsonForm";
 
 const VariablePanel = forwardRef<
   undefined | PanelApi,
-  {
-    variable?: DataSource;
-  }
+  { variable?: DataSource }
 >(({ variable }, ref) => {
   const resources = useStore($resources);
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (variable?.type === "resource") {
@@ -588,60 +587,37 @@ const VariablePanel = forwardRef<
     return "string";
   });
 
+  let fields: ReactNode;
   if (variableType === "parameter") {
-    return (
-      <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
-        <ParameterForm ref={ref} variable={variable} />
-      </>
-    );
+    fields = <ParameterForm ref={ref} variable={variable} />;
   }
   if (variableType === "string") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <StringForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "number") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <NumberForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "boolean") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <BooleanForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "json") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <JsonForm ref={ref} variable={variable} />
       </>
@@ -649,47 +625,70 @@ const VariablePanel = forwardRef<
   }
 
   if (variableType === "resource") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <ResourceForm ref={ref} variable={variable} />
       </>
     );
   }
-
   if (variableType === "graphql-resource") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <GraphqlResourceForm ref={ref} variable={variable} />
       </>
     );
   }
-
   if (variableType === "system-resource") {
-    return (
+    fields = (
       <>
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
         <TypeField value={variableType} onChange={setVariableType} />
         <SystemResourceForm ref={ref} variable={variable} />
       </>
     );
   }
 
-  variableType satisfies never;
+  const isResource =
+    variableType === "resource" ||
+    variableType === "graphql-resource" ||
+    variableType === "system-resource";
+  const requiresUpgrade = allowDynamicData === false && isResource;
+  return (
+    <>
+      {requiresUpgrade && (
+        <PanelBanner>
+          <Text>Resource fetching is part of the CMS functionality.</Text>
+          <Flex align="center" gap={1}>
+            <UpgradeIcon />
+            <Link
+              color="inherit"
+              target="_blank"
+              href="https://webstudio.is/pricing"
+            >
+              Upgrade to Pro
+            </Link>
+          </Flex>
+        </PanelBanner>
+      )}
+      <Flex
+        direction="column"
+        css={{
+          overflow: "hidden",
+          gap: theme.spacing[7],
+          p: theme.panel.padding,
+        }}
+      >
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
+        {fields}
+      </Flex>
+    </>
+  );
 });
-VariablePanel.displayName = "VariablePanel";
+VariablePanel.displayName = "VariableForm";
 
 const VariablePopoverContext = createContext<{
   containerRef?: RefObject<null | HTMLElement>;
@@ -733,9 +732,6 @@ export const VariablePopoverTrigger = ({
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
-  const { allowDynamicData } = useStore($userPlanFeatures);
-  const [isResource, setIsResource] = useState(variable?.type === "resource");
-  const requiresUpgrade = allowDynamicData === false && isResource;
   const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
 
   return (
@@ -821,79 +817,48 @@ export const VariablePopoverTrigger = ({
             width: theme.spacing[30],
           }}
         >
-          <Flex
-            direction="column"
-            css={{
-              overflow: "hidden",
-              gap: theme.spacing[7],
-              p: theme.panel.padding,
+          <form
+            ref={formRef}
+            noValidate={true}
+            // exclude from the flow
+            style={{ display: "contents" }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (isSystemVariable) {
+                return;
+              }
+              const nameElement =
+                event.currentTarget.elements.namedItem("name");
+              // make sure only name is valid and allow to save everything else
+              // to avoid loosing complex configuration when closed accidentally
+              if (
+                nameElement instanceof HTMLInputElement &&
+                nameElement.checkValidity()
+              ) {
+                const formData = new FormData(event.currentTarget);
+                panelRef.current?.save(formData);
+                // close popover whenever new variable is created
+                // to prevent creating duplicated variable
+                if (variable === undefined) {
+                  setOpen(false);
+                }
+              }
             }}
           >
-            {requiresUpgrade && (
-              <PanelBanner>
-                <Text>Resource fetching is part of the CMS functionality.</Text>
-                <Flex align="center" gap={1}>
-                  <UpgradeIcon />
-                  <Link
-                    color="inherit"
-                    target="_blank"
-                    href="https://webstudio.is/pricing"
-                  >
-                    Upgrade to Pro
-                  </Link>
-                </Flex>
-              </PanelBanner>
-            )}
-            <form
-              ref={formRef}
-              noValidate={true}
-              // exclude from the flow
+            {/* submit is not triggered when press enter on input without submit button */}
+            <button hidden></button>
+            <fieldset
               style={{ display: "contents" }}
-              onChange={(event) => {
-                const { name, value } = event.target as HTMLSelectElement;
-                // When type is changing, we need to show the upgrade banner.
-                if (name === "type") {
-                  setIsResource(value.includes("resource"));
-                }
-              }}
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (requiresUpgrade || isSystemVariable) {
-                  return;
-                }
-                const nameElement =
-                  event.currentTarget.elements.namedItem("name");
-                // make sure only name is valid and allow to save everything else
-                // to avoid loosing complex configuration when closed accidentally
-                if (
-                  nameElement instanceof HTMLInputElement &&
-                  nameElement.checkValidity()
-                ) {
-                  const formData = new FormData(event.currentTarget);
-                  panelRef.current?.save(formData);
-                  // close popover whenever new variable is created
-                  // to prevent creating duplicated variable
-                  if (variable === undefined) {
-                    setOpen(false);
-                  }
-                }
-              }}
+              // forbid editing system variable
+              disabled={isSystemVariable}
             >
-              {/* submit is not triggered when press enter on input without submit button */}
-              <button hidden></button>
-              <fieldset
-                style={{ display: "contents" }}
-                // forbid editing system variable
-                disabled={isSystemVariable}
+              <BindingPopoverProvider
+                value={{ containerRef: bindingPopoverContainerRef }}
               >
-                <BindingPopoverProvider
-                  value={{ containerRef: bindingPopoverContainerRef }}
-                >
-                  <VariablePanel ref={panelRef} variable={variable} />
-                </BindingPopoverProvider>
-              </fieldset>
-            </form>
-          </Flex>
+                <VariablePanel ref={panelRef} variable={variable} />
+              </BindingPopoverProvider>
+            </fieldset>
+          </form>
         </ScrollArea>
       }
     >
