@@ -45,7 +45,7 @@
     "reserved-identifiers": "^1.0.0",
     "tinyexec": "^0.3.2",
     "yargs": "^17.7.2",
-    "zod": "^3.22.4"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@netlify/vite-plugin-react-router": "^1.0.0",
@@ -62,11 +62,11 @@
     "@types/yargs": "^17.0.33",
     "@vercel/react-router": "^1.1.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",

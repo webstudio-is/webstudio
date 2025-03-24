@@ -422,11 +422,11 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
       zod-validation-error:
-        specifier: ^3.3.1
-        version: 3.3.1(zod@3.22.4)
+        specifier: ^3.4.0
+        version: 3.4.0(zod@3.24.2)
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.16.0
@@ -833,8 +833,8 @@ importers:
         specifier: 0.8.0-next.18
         version: 0.8.0-next.18
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20240620.0
@@ -958,11 +958,11 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
       zod-to-json-schema:
-        specifier: ^3.21.4
-        version: 3.21.4(zod@3.22.4)
+        specifier: ^3.24.5
+        version: 3.24.5(zod@3.24.2)
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
@@ -1014,8 +1014,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/authorization-token:
     dependencies:
@@ -1026,8 +1026,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1081,8 +1081,8 @@ importers:
         specifier: ^17.7.2
         version: 17.7.2
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@netlify/vite-plugin-react-router':
         specifier: ^1.0.0
@@ -1242,8 +1242,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/css-engine:
     dependencies:
@@ -1254,8 +1254,8 @@ importers:
         specifier: workspace:*
         version: link:../fonts
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -1288,8 +1288,8 @@ importers:
         specifier: ^4.37.0
         version: 4.37.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1449,8 +1449,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/domain:
     dependencies:
@@ -1476,8 +1476,8 @@ importers:
         specifier: ^4.37.0
         version: 4.37.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1498,8 +1498,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/generate-arg-types:
     dependencies:
@@ -1519,8 +1519,8 @@ importers:
         specifier: 5.8.2
         version: 5.8.2
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1615,8 +1615,8 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:^
@@ -1663,8 +1663,8 @@ importers:
         specifier: 5.12.1
         version: 5.12.1
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/project:
     dependencies:
@@ -1690,8 +1690,8 @@ importers:
         specifier: ^4.37.0
         version: 4.37.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1715,8 +1715,8 @@ importers:
         specifier: ^5.0.9
         version: 5.0.9
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1780,8 +1780,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/sdk:
     dependencies:
@@ -1810,8 +1810,8 @@ importers:
         specifier: ^4.37.0
         version: 4.37.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/css-data':
         specifier: workspace:*
@@ -1924,8 +1924,8 @@ importers:
         specifier: ^3.0.8
         version: 3.0.8(@types/debug@4.1.12)(@types/node@22.13.10)(@vitest/browser@3.0.8)(jsdom@20.0.3)(msw@2.7.3(@types/node@22.13.10)(typescript@5.8.2))
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
 
   packages/sdk-components-react:
     dependencies:
@@ -2181,8 +2181,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@webstudio-is/postrest':
         specifier: workspace:*
@@ -9384,19 +9384,19 @@ packages:
   youch@3.3.3:
     resolution: {integrity: sha512-qSFXUk3UZBLfggAW3dJKg0BMblG5biqSF8M34E06o5CSsZtH92u9Hqmj2RzGiHDi64fhe83+4tENFP2DB6t6ZA==}
 
-  zod-to-json-schema@3.21.4:
-    resolution: {integrity: sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==}
+  zod-to-json-schema@3.24.5:
+    resolution: {integrity: sha512-/AuWwMP+YqiPbsJx5D6TfgRTc4kTLjsh5SOcd4bLsfUg2RcEXrFMJl1DGgdHy2aCfsIA/cr/1JM0xcB2GZji8g==}
     peerDependencies:
-      zod: ^3.21.4
+      zod: ^3.24.1
 
-  zod-validation-error@3.3.1:
-    resolution: {integrity: sha512-uFzCZz7FQis256dqw4AhPQgD6f3pzNca/Zh62RNELavlumQB3nDIUFbF5JQfFLcMbO1s02Q7Xg/gpcOBlEnYZA==}
+  zod-validation-error@3.4.0:
+    resolution: {integrity: sha512-ZOPR9SVY6Pb2qqO5XHt+MkkTRxGXb4EVtnjc9JpXUOtUB1T9Ru7mZOT361AN3MsetVe7R0a1KZshJDZdgp9miQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.18.0
 
-  zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+  zod@3.24.2:
+    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -15261,7 +15261,7 @@ snapshots:
       workerd: 1.20240701.0
       ws: 8.18.0
       youch: 3.3.3
-      zod: 3.22.4
+      zod: 3.24.2
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -17238,14 +17238,14 @@ snapshots:
       mustache: 4.2.0
       stacktracey: 2.1.8
 
-  zod-to-json-schema@3.21.4(zod@3.22.4):
+  zod-to-json-schema@3.24.5(zod@3.24.2):
     dependencies:
-      zod: 3.22.4
+      zod: 3.24.2
 
-  zod-validation-error@3.3.1(zod@3.22.4):
+  zod-validation-error@3.4.0(zod@3.24.2):
     dependencies:
-      zod: 3.22.4
+      zod: 3.24.2
 
-  zod@3.22.4: {}
+  zod@3.24.2: {}
 
   zwitch@2.0.4: {}
