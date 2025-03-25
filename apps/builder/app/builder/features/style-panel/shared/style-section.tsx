@@ -19,10 +19,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 
   for (const styleDecl of styles) {
     // Unparsed values are not editable directly in the section, so we don't show the dot
-    if (
-      styleDecl.usedValue.type === "unparsed" ||
-      styleDecl.usedValue.type === "guaranteedInvalid"
-    ) {
+    if (styleDecl.usedValue.type === "guaranteedInvalid") {
       return [];
     }
 
