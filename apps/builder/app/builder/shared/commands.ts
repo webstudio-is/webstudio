@@ -43,7 +43,9 @@ import {
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
-import { focusStyleSourceInput } from "../features/style-panel/style-source";
+import { createRef } from "react";
+
+export const styleSourceInputRef = createRef<HTMLInputElement>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -362,7 +364,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         $activeInspectorPanel.set("style");
-        requestAnimationFrame(focusStyleSourceInput);
+        requestAnimationFrame(() => {
+          styleSourceInputRef.current?.focus();
+        });
       },
       disableOnInputLikeControls: true,
     },

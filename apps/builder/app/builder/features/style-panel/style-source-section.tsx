@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
@@ -369,7 +369,11 @@ const $availableStyleSources = computed([$styleSources], (styleSources) => {
   return availableStylesSources;
 });
 
-export const StyleSourcesSection = () => {
+export const StyleSourcesSection = ({
+  styleSourceInputRef,
+}: {
+  styleSourceInputRef: RefObject<HTMLInputElement>;
+}) => {
   const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
   const selectedInstanceStyleSources = useStore($selectedInstanceStyleSources);
@@ -402,6 +406,7 @@ export const StyleSourcesSection = () => {
   return (
     <>
       <StyleSourceInput
+        styleSourceInputRef={styleSourceInputRef}
         error={error}
         items={availableStyleSources}
         value={value}

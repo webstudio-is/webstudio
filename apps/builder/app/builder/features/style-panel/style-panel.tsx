@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -115,7 +115,11 @@ export const ModeMenu = () => {
   );
 };
 
-export const StylePanel = () => {
+export const StylePanel = ({
+  styleSourceInputRef,
+}: {
+  styleSourceInputRef: RefObject<HTMLInputElement>;
+}) => {
   const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
@@ -164,7 +168,7 @@ export const StylePanel = () => {
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style Sources
         </Text>
-        <StyleSourcesSection />
+        <StyleSourcesSection styleSourceInputRef={styleSourceInputRef} />
       </Box>
       <Separator />
       <ScrollArea>

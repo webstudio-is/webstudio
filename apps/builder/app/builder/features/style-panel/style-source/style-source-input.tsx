@@ -48,7 +48,6 @@ import {
   type ReactNode,
   useRef,
   useCallback,
-  createRef,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
@@ -269,6 +268,7 @@ const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
+  styleSourceInputRef: RefObject<HTMLInputElement>;
   error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
@@ -488,12 +488,6 @@ const renderMenuItems = (props: {
   );
 };
 
-const styleSourceInputRef = createRef<HTMLInputElement>();
-
-export const focusStyleSourceInput = () => {
-  styleSourceInputRef.current?.focus();
-};
-
 export const StyleSourceInput = (
   props: StyleSourceInputProps<IntermediateItem>
 ) => {
@@ -560,7 +554,7 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
-            inputRef={styleSourceInputRef}
+            inputRef={props.styleSourceInputRef}
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({
