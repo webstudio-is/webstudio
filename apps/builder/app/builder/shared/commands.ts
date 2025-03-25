@@ -43,9 +43,10 @@ import {
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
-import { createRef } from "react";
 
-export const styleSourceInputRef = createRef<HTMLInputElement>();
+export const styleSourceInputRef: { current: HTMLInputElement | null } = {
+  current: null,
+};
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
