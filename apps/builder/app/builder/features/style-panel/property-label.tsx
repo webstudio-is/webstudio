@@ -29,7 +29,7 @@ import type {
   StyleValueSourceColor,
 } from "~/shared/style-object-model";
 import { useComputedStyles } from "./shared/model";
-import { StyleSourceBadge } from "./style-source";
+import { StyleSourceBadge } from "../../shared/style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/awareness";
 

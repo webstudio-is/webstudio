@@ -48,6 +48,7 @@ import {
   type ReactNode,
   useRef,
   useCallback,
+  createRef,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
@@ -61,7 +62,7 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { $computedStyleDeclarations } from "../shared/model";
+import { $computedStyleDeclarations } from "../../features/style-panel/shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 type IntermediateItem = {
@@ -220,8 +221,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         size="1"
         value={label}
         onClick={onClick}
-        ref={inputRef}
-        inputRef={internalInputRef}
+        inputRef={mergeRefs(internalInputRef, inputRef)}
         spellCheck={false}
         aria-label="New Style Source Input"
       />
@@ -488,6 +488,12 @@ const renderMenuItems = (props: {
   );
 };
 
+const styleSourceInputRef = createRef<HTMLInputElement>();
+
+export const focusStyleSourceInput = () => {
+  styleSourceInputRef.current?.focus();
+};
+
 export const StyleSourceInput = (
   props: StyleSourceInputProps<IntermediateItem>
 ) => {
@@ -554,6 +560,7 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            inputRef={styleSourceInputRef}
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({
