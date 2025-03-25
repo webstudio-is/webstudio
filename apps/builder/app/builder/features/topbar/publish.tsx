@@ -235,6 +235,18 @@ const $usedProFeatures = computed(
           instanceSelector: [page.rootInstanceId],
         });
       }
+      if (page.meta.status && page.meta.status !== `200`) {
+        features.set("Page status code", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
+      }
+      if (page.meta.redirect && page.meta.redirect !== `""`) {
+        features.set("Redirect", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
+      }
     }
     // has resource variables
     for (const dataSource of dataSources.values()) {

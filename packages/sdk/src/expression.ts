@@ -138,6 +138,9 @@ export const lintExpression = ({
 };
 
 const isLiteralNode = (node: Expression): boolean => {
+  if (node.type === "Identifier" && node.name === "undefined") {
+    return true;
+  }
   if (node.type === "Literal") {
     return true;
   }
