@@ -1,5 +1,4 @@
 import { mergeRefs } from "@react-aria/utils";
-import { flushSync } from "react-dom";
 import { colord } from "colord";
 import {
   memo,
@@ -339,6 +338,12 @@ export const CssEditor = ({
     useState<Array<CssProperty>>();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (showAddStyleInput) {
+      addPropertyInputRef.current?.focus();
+    }
+  }, [showAddStyleInput]);
+
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
   );
@@ -361,14 +366,6 @@ export const CssEditor = ({
     }
     onAddDeclarations(styleMap);
     return styleMap;
-  };
-
-  const handleShowAddStyleInput = () => {
-    flushSync(() => {
-      onToggleAddStyleInput?.(true);
-    });
-    // User can click twice on the add button, so we need to focus the input on the second click after autoFocus isn't working.
-    addPropertyInputRef.current?.focus();
   };
 
   const handleAbortSearch = () => {
@@ -463,7 +460,7 @@ export const CssEditor = ({
               valueInputRef={lastRecentValueInputRef}
               onChangeComplete={(event) => {
                 if (event.type === "enter") {
-                  handleShowAddStyleInput();
+                  onToggleAddStyleInput?.(true);
                 }
               }}
               onReset={afterChangingStyles}
@@ -489,9 +486,7 @@ export const CssEditor = ({
           }}
           onClose={afterChangingStyles}
           onFocus={() => {
-            if (showAddStyleInput === false) {
-              handleShowAddStyleInput();
-            }
+            onToggleAddStyleInput?.(true);
           }}
           onBlur={() => {
             onToggleAddStyleInput?.(false);
