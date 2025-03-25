@@ -262,20 +262,36 @@ const substituteVars = (
   if (styleValue.type === "var") {
     return mapper(styleValue);
   }
+  if (styleValue.type === "shadow") {
+    const newShadowValue = { ...styleValue };
+    if (newShadowValue.offsetX.type === "var") {
+      newShadowValue.offsetX = mapper(newShadowValue.offsetX) as VarValue;
+    }
+    if (newShadowValue.offsetY.type === "var") {
+      newShadowValue.offsetY = mapper(newShadowValue.offsetY) as VarValue;
+    }
+    if (newShadowValue.blur?.type === "var") {
+      newShadowValue.blur = mapper(newShadowValue.blur) as VarValue;
+    }
+    if (newShadowValue.spread?.type === "var") {
+      newShadowValue.spread = mapper(newShadowValue.spread) as VarValue;
+    }
+    if (newShadowValue.color?.type === "var") {
+      newShadowValue.color = mapper(newShadowValue.color) as VarValue;
+    }
+    return newShadowValue;
+  }
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
-    const newItems: UnparsedValue[] = [];
-    let hasVars = false;
-    for (const item of styleValue.value) {
+    const newItems = styleValue.value.map((item) => {
       if (item.type === "var") {
-        hasVars = true;
-        newItems.push(mapper(item) as UnparsedValue);
-      } else {
-        newItems.push(item as UnparsedValue);
+        return mapper(item) as UnparsedValue;
       }
-    }
-    if (hasVars) {
-      return { ...styleValue, value: newItems };
-    }
+      if (item.type === "shadow") {
+        return substituteVars(item, mapper) as UnparsedValue;
+      }
+      return item as UnparsedValue;
+    });
+    return { ...styleValue, value: newItems };
   }
   return styleValue;
 };
