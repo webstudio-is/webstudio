@@ -16,7 +16,6 @@ import {
   useSortable,
   CssValueListArrowFocus,
   FloatingPanel,
-  InputField,
   DialogTitle,
   Tooltip,
   SectionTitleButton,
@@ -175,28 +174,7 @@ export const AnimationsSelect = ({
                 key={index}
                 title={
                   <DialogTitle css={{ paddingLeft: theme.spacing[6] }}>
-                    <InputField
-                      css={{
-                        width: "100%",
-                        fontWeight: `inherit`,
-                      }}
-                      variant="chromeless"
-                      value={animation.name}
-                      autoFocus={true}
-                      placeholder="Enter animation name"
-                      onChange={(event) => {
-                        const name = event.currentTarget.value;
-                        const newAnimations = [...value.animations];
-                        newAnimations[index] = { ...animation, name };
-
-                        const newValue = {
-                          ...value,
-                          animations: newAnimations,
-                        };
-
-                        handleChange(newValue, false);
-                      }}
-                    />
+                    {animation.name}
                   </DialogTitle>
                 }
                 content={

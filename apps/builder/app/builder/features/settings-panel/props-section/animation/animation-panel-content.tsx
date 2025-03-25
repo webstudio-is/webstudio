@@ -3,6 +3,7 @@ import {
   Box,
   Flex,
   Grid,
+  InputField,
   Label,
   Select,
   theme,
@@ -33,16 +34,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
-
-type Props = {
-  type: "scroll" | "view";
-  value: ScrollAnimation | ViewAnimation;
-  onChange: ((
-    value: ScrollAnimation | ViewAnimation,
-    isEphemeral: boolean
-  ) => void) &
-    ((value: undefined, isEphemeral: true) => void);
-};
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -213,7 +204,22 @@ const EasingInput = ({
   );
 };
 
-export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
+type AnimationPanelContentProps = {
+  type: "scroll" | "view";
+  value: ScrollAnimation | ViewAnimation;
+
+  onChange: ((
+    value: ScrollAnimation | ViewAnimation,
+    isEphemeral: boolean
+  ) => void) &
+    ((value: undefined, isEphemeral: true) => void);
+};
+
+export const AnimationPanelContent = ({
+  onChange,
+  value,
+  type,
+}: AnimationPanelContentProps) => {
   const fieldIds = useIds([
     "rangeStartName",
     "rangeStartValue",
@@ -221,6 +227,7 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
     "rangeEndValue",
     "fill",
     "easing",
+    "name",
   ] as const);
 
   const timelineRangeDescriptions =
@@ -256,20 +263,53 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
       direction="column"
       css={{
         maxHeight: "60dvh",
-        paddingBottom: theme.panel.paddingBlock,
+
+        paddingBlock: theme.panel.paddingBlock,
       }}
     >
       <Grid
         gap={1}
         align={"center"}
         css={{
+          paddingInline: theme.panel.paddingInline,
+          gridTemplateColumns: "1fr",
+          flexShrink: 0,
+        }}
+      >
+        <Label htmlFor={fieldIds.name}>Name</Label>
+        <InputField
+          id={fieldIds.name}
+          css={{
+            width: "100%",
+            fontWeight: `inherit`,
+          }}
+          value={value.name}
+          placeholder="Enter animation name"
+          onChange={(event) => {
+            const name = event.currentTarget.value;
+
+            const newValue = {
+              ...value,
+              name,
+            };
+
+            handleChange(newValue, false);
+          }}
+        />
+      </Grid>
+
+      <Grid
+        gap={1}
+        align={"center"}
+        css={{
           gridTemplateColumns: "1fr 1fr",
-          padding: theme.panel.padding,
+          paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
         <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
         <Label htmlFor={fieldIds.easing}>Easing</Label>
+
         <Select
           id={fieldIds.fill}
           options={fillModeNames}
@@ -344,8 +384,8 @@ export const AnimationPanelContent = ({ onChange, value, type }: Props) => {
         gap={1}
         align={"center"}
         css={{
-          gridTemplateColumns: "2fr 1fr",
-          padding: theme.panel.padding,
+          gridTemplateColumns: "1fr 1fr",
+          paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
