@@ -1,15 +1,19 @@
+import { generate, walk } from "css-tree";
 import type { HtmlTags } from "html-tags";
 import {
   camelCaseProperty,
+  cssTryParseValue,
   html,
+  parseCssVar,
   propertiesData,
 } from "@webstudio-is/css-data";
-import type {
-  StyleValue,
-  VarFallback,
-  VarValue,
-  UnparsedValue,
-  CssProperty,
+import {
+  type StyleValue,
+  type VarFallback,
+  type VarValue,
+  type UnparsedValue,
+  type CssProperty,
+  toValue,
 } from "@webstudio-is/css-engine";
 import {
   type Instance,
@@ -281,15 +285,38 @@ const substituteVars = (
     }
     return newShadowValue;
   }
+  // slightly optimize to not parse without variables
+  if (styleValue.type === "unparsed" && styleValue.value.includes("var(")) {
+    // parse, replace variables and serialize back to unparsed value
+    const ast = cssTryParseValue(styleValue.value);
+    if (ast) {
+      walk(ast, {
+        enter(node, item, list) {
+          if (node.type === "Function" && node.name === "var") {
+            const varValue = parseCssVar(node);
+            if (varValue) {
+              const newValue = mapper(varValue);
+              list.replace(
+                item,
+                node.children.createItem({
+                  type: "Raw",
+                  value: toValue(newValue),
+                })
+              );
+            }
+          }
+        },
+      });
+      return {
+        type: "unparsed",
+        value: generate(ast),
+      };
+    }
+    return styleValue;
+  }
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
     const newItems = styleValue.value.map((item) => {
-      if (item.type === "var") {
-        return mapper(item) as UnparsedValue;
-      }
-      if (item.type === "shadow") {
-        return substituteVars(item, mapper) as UnparsedValue;
-      }
-      return item as UnparsedValue;
+      return substituteVars(item, mapper) as UnparsedValue;
     });
     return { ...styleValue, value: newItems };
   }

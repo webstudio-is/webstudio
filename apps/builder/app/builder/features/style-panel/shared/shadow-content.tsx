@@ -9,7 +9,11 @@ import {
   type CssProperty,
   type RgbValue,
 } from "@webstudio-is/css-engine";
-import { keywordValues, propertySyntaxes } from "@webstudio-is/css-data";
+import {
+  keywordValues,
+  parseCssValue,
+  propertySyntaxes,
+} from "@webstudio-is/css-data";
 import {
   Flex,
   Grid,
@@ -123,6 +127,16 @@ export const ShadowContent = ({
   useEffect(() => {
     setIntermediateValue({ type: "intermediate", value: propertyValue });
   }, [propertyValue]);
+  const parsedShadowProperty: CssProperty =
+    property === "drop-shadow" ? "text-shadow" : property;
+  // try to reparse computed value
+  // which can contain parsable value after variables substitution
+  if (computedLayer?.type === "unparsed") {
+    const styleValue = parseCssValue(parsedShadowProperty, computedLayer.value);
+    if (styleValue.type === "layers") {
+      [computedLayer] = styleValue.value;
+    }
+  }
   let shadowValue: ShadowValue = {
     type: "shadow",
     position: "outset",
@@ -135,11 +149,11 @@ export const ShadowContent = ({
   if (layer.type === "var" && computedLayer?.type === "shadow") {
     shadowValue = computedLayer;
   }
+  if (layer.type === "unparsed" && computedLayer?.type === "shadow") {
+    shadowValue = computedLayer;
+  }
   const computedShadow =
     computedLayer?.type === "shadow" ? computedLayer : shadowValue;
-
-  const parsedShadowProperty: CssProperty =
-    property === "drop-shadow" ? "text-shadow" : property;
 
   const disabledControls = layer.type === "var" || layer.type === "unparsed";
 
