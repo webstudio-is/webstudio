@@ -37,8 +37,11 @@ metas.set("NoTextItem", {
   },
 });
 
-describe("Child text=false constraints does not affect matchinf", () => {
-  test("", () => {
+// Solutions added as a quick workaround
+describe("Fast workaround tests", () => {
+  // For simplicity, we don’t check the relation=child and text=false constraints during tree validation.
+  // These are only used to prevent text editing of container components.
+  test("Child text=false constraints does not affect matching", () => {
     expect(
       isTreeMatching({
         ...renderData(

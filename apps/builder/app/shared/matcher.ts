@@ -170,6 +170,12 @@ const isInstanceMatching = ({
   return true;
 };
 
+/**
+ * Added as a quick workaround!!!
+ *
+ * Some constraints don’t make much sense to check in this module, like relation=child and text=false.
+ * They’re only used to prevent text editing of container instances.
+ */
 const filterConstraints = (
   constraints: Matcher | Matcher[] | undefined
 ): undefined | Matcher[] => {
