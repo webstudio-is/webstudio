@@ -78,7 +78,7 @@ const formatList = (operation: MatcherOperation) => {
  * @todo following features are missing
  * - tag matcher
  */
-export const isInstanceMatching = ({
+const isInstanceMatching = ({
   instances,
   instanceSelector,
   query,
@@ -89,10 +89,13 @@ export const isInstanceMatching = ({
   query: undefined | Matcher | Matcher[];
   onError?: (message: string) => void;
 }): boolean => {
+  query = filterConstraints(query);
+
   // fast path to the lack of constraints
   if (query === undefined) {
     return true;
   }
+
   const queries = Array.isArray(query) ? query : [query];
   const matchesByMatcher = new Map<Matcher, boolean>();
   let aborted = false;
@@ -167,6 +170,24 @@ export const isInstanceMatching = ({
   return true;
 };
 
+const filterConstraints = (
+  constraints: Matcher | Matcher[] | undefined
+): undefined | Matcher[] => {
+  if (constraints === undefined) {
+    return undefined;
+  }
+
+  const result = (
+    Array.isArray(constraints) ? constraints : [constraints]
+  ).filter(
+    (constraint) => constraint.relation !== "child" || constraint.text !== false
+  );
+  if (result.length === 0) {
+    return undefined;
+  }
+  return result;
+};
+
 export const isTreeMatching = ({
   instances,
   metas,
@@ -191,7 +212,7 @@ export const isTreeMatching = ({
   let matches = isInstanceMatching({
     instances,
     instanceSelector,
-    query: meta?.constraints,
+    query: filterConstraints(meta?.constraints),
     onError,
   });
   // check ancestors only on the first run
@@ -206,7 +227,7 @@ export const isTreeMatching = ({
       const matches = isInstanceMatching({
         instances,
         instanceSelector: instanceSelector.slice(index),
-        query: meta?.constraints,
+        query: filterConstraints(meta?.constraints),
         onError,
       });
       if (matches === false) {
@@ -266,7 +287,7 @@ export const isInstanceDetachable = ({
     const matches = isInstanceMatching({
       instances: newInstances,
       instanceSelector: instanceSelector.slice(index),
-      query: meta?.constraints,
+      query: filterConstraints(meta?.constraints),
     });
     if (matches === false) {
       return false;
@@ -400,4 +421,8 @@ export const findClosestNonTextualContainer = ({
     }
   }
   return -1;
+};
+
+export const __testing__ = {
+  isInstanceMatching,
 };

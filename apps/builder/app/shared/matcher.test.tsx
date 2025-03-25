@@ -12,11 +12,13 @@ import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
-  isInstanceMatching,
   isTreeMatching,
   findClosestContainer,
   isInstanceDetachable,
+  __testing__,
 } from "./matcher";
+
+const { isInstanceMatching } = __testing__;
 
 const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
 metas.set("ListItem", {
@@ -25,6 +27,30 @@ metas.set("ListItem", {
     relation: "parent",
     component: { $eq: "List" },
   },
+});
+
+metas.set("NoTextItem", {
+  ...baseMetas.Box,
+  constraints: {
+    relation: "child",
+    text: false,
+  },
+});
+
+describe("Child text=false constraints does not affect matchinf", () => {
+  test("", () => {
+    expect(
+      isTreeMatching({
+        ...renderData(
+          <$.Body ws:id="body">
+            <$.NoTextItem ws:id="notextitem">AnyText</$.NoTextItem>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["notextitem", "body"],
+      })
+    ).toBeTruthy();
+  });
 });
 
 describe("is instance matching", () => {

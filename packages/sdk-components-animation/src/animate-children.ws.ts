@@ -8,6 +8,10 @@ export const meta: WsComponentMeta = {
   icon: SlotComponentIcon,
   order: 5,
   label: "Animate Children",
+  constraints: {
+    relation: "child",
+    text: false,
+  },
 };
 
 export const propsMeta: WsComponentPropsMeta = {
