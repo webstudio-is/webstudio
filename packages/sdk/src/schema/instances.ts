@@ -61,6 +61,15 @@ export const Matcher = z.object({
   relation: MatcherRelation,
   component: MatcherOperation.optional(),
   tag: MatcherOperation.optional(),
+  text: z
+    .literal(false)
+    .describe(
+      `
+      To disallow text editing on a container instance,
+      use: { relation: 'child', text: false }
+     `
+    )
+    .optional(),
 });
 
 export type Matcher = z.infer<typeof Matcher>;
