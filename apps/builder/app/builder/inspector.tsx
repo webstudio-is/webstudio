@@ -36,6 +36,7 @@ import {
   $selectedInstanceKey,
   $selectedPage,
 } from "~/shared/awareness";
+import { $styleSourceInputElement } from "./shared/commands";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore($registeredComponentMetas);
@@ -178,7 +179,9 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                   <InstanceInfo instance={selectedInstance} />
                   <ModeMenu />
                 </Flex>
-                <StylePanel />
+                <StylePanel
+                  $styleSourceInputElement={$styleSourceInputElement}
+                />
               </PanelTabsContent>
               <PanelTabsContent
                 value="settings"
