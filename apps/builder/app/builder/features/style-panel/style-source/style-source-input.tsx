@@ -63,6 +63,7 @@ import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import type { WritableAtom } from "nanostores";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -268,7 +269,7 @@ const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
-  styleSourceInputRef: RefObject<HTMLInputElement>;
+  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
   error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
@@ -554,7 +555,9 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
-            inputRef={props.styleSourceInputRef}
+            inputRef={(element) =>
+              props.$styleSourceInputElement.set(element ?? undefined)
+            }
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({

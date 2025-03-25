@@ -43,10 +43,9 @@ import {
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
+import { atom } from "nanostores";
 
-export const styleSourceInputRef: { current: HTMLInputElement | null } = {
-  current: null,
-};
+export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -366,7 +365,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         $activeInspectorPanel.set("style");
         requestAnimationFrame(() => {
-          styleSourceInputRef.current?.focus();
+          $styleSourceInputElement.get()?.focus();
         });
       },
       disableOnInputLikeControls: true,

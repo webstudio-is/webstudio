@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
+import { atom } from "nanostores";
 
 export default {
   component: StyleSourceInput,
@@ -67,7 +68,7 @@ export const Basic: StoryFn<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState([localItem, ...getItems()]);
   return (
     <StyleSourceInput
-      styleSourceInputRef={{ current: null }}
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
@@ -99,7 +100,7 @@ export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
   ]);
   return (
     <StyleSourceInput
-      styleSourceInputRef={{ current: null }}
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
@@ -137,7 +138,7 @@ export const Complete: StoryFn<typeof StyleSourceInput> = () => {
 
   return (
     <StyleSourceInput
-      styleSourceInputRef={{ current: null }}
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
