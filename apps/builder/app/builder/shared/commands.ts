@@ -43,7 +43,7 @@ import {
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
-import { focusStyleSourceInput } from "./style-source";
+import { focusStyleSourceInput } from "../features/style-panel/style-source";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,

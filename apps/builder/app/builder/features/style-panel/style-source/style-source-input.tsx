@@ -62,7 +62,7 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { $computedStyleDeclarations } from "../../features/style-panel/shared/model";
+import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 type IntermediateItem = {
