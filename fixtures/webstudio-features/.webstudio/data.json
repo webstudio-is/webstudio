@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "342a7c73-ed72-441d-8a69-8b2659639e93",
+    "id": "3a8c8a9c-cfd9-46b8-a8bf-30d48250bc1b",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 543,
-    "createdAt": "2025-03-10T13:33:47.683+00:00",
-    "updatedAt": "2025-03-10T13:33:47.683+00:00",
+    "version": 554,
+    "createdAt": "2025-03-26T12:23:17.308+00:00",
+    "updatedAt": "2025-03-26T12:23:17.308+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -3805,11 +3805,11 @@
         }
       ],
       [
-        "WXm4SG4hn0GOxQzlx1onL",
+        "PkOUxrUpSNIkRV8MuLSQh",
         {
-          "id": "WXm4SG4hn0GOxQzlx1onL",
+          "id": "PkOUxrUpSNIkRV8MuLSQh",
           "instanceId": "GRj9UMUzk-HAWRctEcfFH",
-          "name": "charWindow",
+          "name": "slidingWindow",
           "type": "number",
           "value": 20
         }

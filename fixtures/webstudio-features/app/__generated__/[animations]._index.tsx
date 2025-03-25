@@ -272,7 +272,7 @@ const Page = (_props: { system: any }) => {
               isPinned: false,
             }}
           >
-            <AnimateText charWindow={20}>
+            <AnimateText slidingWindow={20}>
               <Heading className={`w-heading c1pdroxx`}>
                 {"ANIMATED CHILD 1"}
               </Heading>

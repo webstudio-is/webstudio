@@ -13,14 +13,25 @@ const easings = {
   easeInOutQuart: true,
 };
 
+const split = {
+  char: true,
+  space: true,
+  'symbol "#"': true,
+  'symbol "~"': true,
+};
+
 type AnimateChildrenProps = {
-  charWindow?: number;
+  slidingWindow?: number;
   easing?: keyof typeof easings;
   children: React.ReactNode;
+  splitBy?: keyof typeof split;
 };
 
 export const AnimateText = forwardRef<ElementRef<"div">, AnimateChildrenProps>(
-  ({ charWindow = 5, easing = "linear", ...props }, ref) => {
+  (
+    { slidingWindow = 5, easing = "linear", splitBy = "char", ...props },
+    ref
+  ) => {
     return <div ref={ref} {...props} />;
   }
 );
