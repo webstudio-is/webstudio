@@ -25,7 +25,7 @@ import {
   type ItemSource,
   StyleSourceInput,
   type StyleSourceError,
-} from "../../shared/style-source";
+} from "~/builder/shared/style-source";
 import {
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
