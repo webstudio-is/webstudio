@@ -131,6 +131,23 @@ export const toValue = (
       .join(" ");
   }
 
+  if (value.type === "shadow") {
+    let shadow = `${toValue(value.offsetX)} ${toValue(value.offsetY)}`;
+    if (value.blur) {
+      shadow += ` ${toValue(value.blur)}`;
+    }
+    if (value.spread) {
+      shadow += ` ${toValue(value.spread)}`;
+    }
+    if (value.color) {
+      shadow += ` ${toValue(value.color)}`;
+    }
+    if (value.position === "inset") {
+      shadow += ` inset`;
+    }
+    return shadow;
+  }
+
   if (value.type === "function") {
     // Right now, we are using function-value only for filter and backdrop-filter functions
     if (value.hidden === true) {

@@ -11,7 +11,12 @@ import {
 } from "@webstudio-is/sdk";
 import { $, renderData } from "@webstudio-is/template";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
-import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
+import type {
+  CssProperty,
+  LayersValue,
+  ShadowValue,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   type StyleObjectModel,
   getComputedStyleDecl,
@@ -402,6 +407,43 @@ test("parse single custom property without tuples", () => {
       property: "filter",
     }).computedValue
   ).toEqual({ type: "unparsed", value: "contrast(300%) brightness(100%)" });
+});
+
+test("compute custom properties in shadows", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --blur: 30px;
+        --color: #ff0000;
+        box-shadow: 10px 20px;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  const layers = model.styles.get("bodyLocal:base:boxShadow:")
+    ?.value as LayersValue;
+  const shadowValue = layers.value[0] as ShadowValue;
+  shadowValue.blur = { type: "var", value: "blur" };
+  shadowValue.color = { type: "var", value: "color" };
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "box-shadow",
+    }).computedValue
+  ).toEqual({
+    type: "layers",
+    value: [
+      {
+        type: "shadow",
+        position: "outset",
+        offsetX: { type: "unit", unit: "px", value: 10 },
+        offsetY: { type: "unit", unit: "px", value: 20 },
+        blur: { type: "unit", value: 30, unit: "px" },
+        color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+      },
+    ],
+  });
 });
 
 test("support custom properties in tuples", () => {

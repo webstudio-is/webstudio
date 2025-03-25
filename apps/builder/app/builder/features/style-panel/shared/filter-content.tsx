@@ -215,23 +215,21 @@ export const FilterSectionContent = ({
         ) : undefined}
       </Flex>
 
-      {filterFunction === "drop-shadow" &&
-      layer.type === "function" &&
-      layer.args.type === "tuple" ? (
+      {filterFunction === "drop-shadow" && layer.type === "function" && (
         <ShadowContent
           index={index}
           property="drop-shadow"
           layer={layer.args}
           propertyValue={toValue(layer.args)}
+          hideCodeEditor={true}
           onEditLayer={(_, dropShadowLayers, options) => {
             handleComplete(
               `drop-shadow(${toValue(dropShadowLayers)})`,
               options
             );
           }}
-          hideCodeEditor={true}
         />
-      ) : undefined}
+      )}
 
       <Separator css={{ gridAutoColumns: "span 2" }} />
       <Flex
