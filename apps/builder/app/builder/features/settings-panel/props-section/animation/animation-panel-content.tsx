@@ -1,11 +1,13 @@
 import { useState } from "react";
 import {
   Box,
+  EnhancedTooltip,
   Flex,
   Grid,
   InputField,
   Label,
   Select,
+  SmallToggleButton,
   theme,
   toast,
 } from "@webstudio-is/design-system";
@@ -34,6 +36,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
+import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -215,11 +218,27 @@ type AnimationPanelContentProps = {
     ((value: undefined, isEphemeral: true) => void);
 };
 
+const defaultRangeStart = {
+  type: "unit",
+  value: 0,
+  unit: "%",
+};
+
+const defaultRangeEnd = {
+  type: "unit",
+  value: 100,
+  unit: "%",
+};
+
 export const AnimationPanelContent = ({
   onChange,
   value,
   type,
 }: AnimationPanelContentProps) => {
+  const [isLinked, setIsLinked] = useState(
+    value.timing.rangeStart?.[0] === value.timing.rangeEnd?.[0]
+  );
+
   const fieldIds = useIds([
     "rangeStartName",
     "rangeStartValue",
@@ -302,12 +321,13 @@ export const AnimationPanelContent = ({
         gap={1}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "1fr 16px 1fr",
           paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
         <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
+        <div />
         <Label htmlFor={fieldIds.easing}>Easing</Label>
 
         <Select
@@ -358,6 +378,7 @@ export const AnimationPanelContent = ({
             );
           }}
         />
+        <div />
         <EasingInput
           id={fieldIds.easing}
           value={value.timing.easing}
@@ -384,13 +405,14 @@ export const AnimationPanelContent = ({
         gap={1}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "1fr 16px 1fr",
           paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
         <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
-        <Label htmlFor={fieldIds.rangeStartValue}>Value</Label>
+        <div />
+        <Label htmlFor={fieldIds.rangeEndName}>Range End</Label>
 
         <Select
           id={fieldIds.rangeStartName}
@@ -423,12 +445,14 @@ export const AnimationPanelContent = ({
                   ...value.timing,
                   rangeStart: [
                     timelineRangeName,
-                    value.timing.rangeStart?.[1] ?? {
-                      type: "unit",
-                      value: 0,
-                      unit: "%",
-                    },
+                    value.timing.rangeStart?.[1] ?? defaultRangeStart,
                   ],
+                  rangeEnd: isLinked
+                    ? [
+                        timelineRangeName,
+                        value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                      ]
+                    : value.timing.rangeEnd,
                 },
               },
               true
@@ -442,18 +466,117 @@ export const AnimationPanelContent = ({
                   ...value.timing,
                   rangeStart: [
                     timelineRangeName,
-                    value.timing.rangeStart?.[1] ?? {
-                      type: "unit",
-                      value: 0,
-                      unit: "%",
-                    },
+                    value.timing.rangeStart?.[1] ?? defaultRangeStart,
                   ],
+                  rangeEnd: isLinked
+                    ? [
+                        timelineRangeName,
+                        value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                      ]
+                    : value.timing.rangeEnd,
                 },
               },
               false
             );
           }}
         />
+        <Grid>
+          <EnhancedTooltip
+            content={isLinked ? "Unlink range names" : "Link range names"}
+          >
+            <SmallToggleButton
+              pressed={isLinked}
+              onPressedChange={(pressed) => {
+                setIsLinked(pressed);
+                if (pressed) {
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeEnd: pressed
+                          ? [
+                              value.timing.rangeStart?.[0] ?? "entry",
+                              value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                            ]
+                          : value.timing.rangeEnd,
+                      },
+                    },
+                    false
+                  );
+                }
+              }}
+              variant="normal"
+              icon={isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
+            />
+          </EnhancedTooltip>
+        </Grid>
+        <Select
+          id={fieldIds.rangeEndName}
+          options={timelineRangeNames}
+          getLabel={humanizeString}
+          value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
+          getDescription={(timelineRangeName: string) => (
+            <Box
+              css={{
+                width: theme.spacing[28],
+              }}
+            >
+              {
+                timelineRangeDescriptions[
+                  timelineRangeName as keyof typeof timelineRangeDescriptions
+                ]
+              }
+            </Box>
+          )}
+          onItemHighlight={(timelineRangeName) => {
+            if (timelineRangeName === undefined) {
+              handleChange(undefined, true);
+              return;
+            }
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeEnd: [
+                    timelineRangeName,
+                    value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                  ],
+                  rangeStart: isLinked
+                    ? [
+                        timelineRangeName,
+                        value.timing.rangeStart?.[1] ?? defaultRangeStart,
+                      ]
+                    : value.timing.rangeStart,
+                },
+              },
+              true
+            );
+          }}
+          onChange={(timelineRangeName) => {
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  rangeEnd: [
+                    timelineRangeName,
+                    value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                  ],
+                  rangeStart: isLinked
+                    ? [
+                        timelineRangeName,
+                        value.timing.rangeStart?.[1] ?? defaultRangeStart,
+                      ]
+                    : value.timing.rangeStart,
+                },
+              },
+              false
+            );
+          }}
+        />
+
         <RangeValueInput
           id={fieldIds.rangeStartValue}
           value={
@@ -486,70 +609,7 @@ export const AnimationPanelContent = ({
             );
           }}
         />
-
-        <Label htmlFor={fieldIds.rangeEndName}>Range End</Label>
-        <Label htmlFor={fieldIds.rangeEndValue}>Value</Label>
-        <Select
-          id={fieldIds.rangeEndName}
-          options={timelineRangeNames}
-          getLabel={humanizeString}
-          value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
-          getDescription={(timelineRangeName: string) => (
-            <Box
-              css={{
-                width: theme.spacing[28],
-              }}
-            >
-              {
-                timelineRangeDescriptions[
-                  timelineRangeName as keyof typeof timelineRangeDescriptions
-                ]
-              }
-            </Box>
-          )}
-          onItemHighlight={(timelineRangeName) => {
-            if (timelineRangeName === undefined) {
-              handleChange(undefined, true);
-              return;
-            }
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    timelineRangeName,
-                    value.timing.rangeEnd?.[1] ?? {
-                      type: "unit",
-                      value: 0,
-                      unit: "%",
-                    },
-                  ],
-                },
-              },
-              true
-            );
-          }}
-          onChange={(timelineRangeName) => {
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    timelineRangeName,
-                    value.timing.rangeEnd?.[1] ?? {
-                      type: "unit",
-                      value: 0,
-                      unit: "%",
-                    },
-                  ],
-                },
-              },
-              false
-            );
-          }}
-        />
+        <div />
         <RangeValueInput
           id={fieldIds.rangeEndValue}
           value={
