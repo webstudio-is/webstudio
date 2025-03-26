@@ -34,12 +34,24 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
     ? "View mode. You can't delete assets."
     : undefined;
 
+  const truncateFileName = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    const extension = text.split(".").pop() ?? "";
+    const trimLength = maxLength - (extension.length + 1);
+    const output = `${text.slice(0, trimLength)}.${extension}`;
+
+    return output;
+  };
+
   return (
     <>
       <Box css={{ padding: theme.panel.padding }}>
-        <Grid columns={2} align="center" gap={2}>
-          <Box css={{ width: 100 }}>
-            <Filename variant="labelsSentenceCase">{name}</Filename>
+        <Grid columns={1} align="center" gap={2}>
+          <Box css={{ width: 200 }}>
+            <Text>{truncateFileName(name, 28)}</Text>
           </Box>
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <CloudIcon />
