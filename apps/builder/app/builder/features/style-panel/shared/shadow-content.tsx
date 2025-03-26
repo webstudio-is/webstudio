@@ -420,7 +420,7 @@ export const ShadowContent = ({
               content={
                 <CssFragmentEditorContent
                   invalid={intermediateValue?.type === "invalid"}
-                  autoFocus={layer.type === "var"}
+                  autoFocus={disabledControls}
                   value={intermediateValue?.value ?? propertyValue ?? ""}
                   onChange={handleChange}
                   onChangeComplete={handleComplete}
