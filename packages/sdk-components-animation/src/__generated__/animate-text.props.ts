@@ -1,12 +1,6 @@
 import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
-  charWindow: {
-    required: false,
-    control: "number",
-    type: "number",
-    defaultValue: 5,
-  },
   easing: {
     required: false,
     control: "select",
@@ -24,5 +18,18 @@ export const props: Record<string, PropMeta> = {
       "easeInOutCubic",
       "easeInOutQuart",
     ],
+  },
+  slidingWindow: {
+    required: false,
+    control: "number",
+    type: "number",
+    defaultValue: 5,
+  },
+  splitBy: {
+    required: false,
+    control: "select",
+    type: "string",
+    defaultValue: "char",
+    options: ["char", "space", 'symbol "#"', 'symbol "~"'],
   },
 };
