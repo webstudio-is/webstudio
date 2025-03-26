@@ -16,7 +16,6 @@ import {
   TrashIcon,
 } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
-import { Filename } from "./filename";
 import { getFormattedAspectRatio } from "./utils";
 import { $authPermit } from "~/shared/nano-states";
 
