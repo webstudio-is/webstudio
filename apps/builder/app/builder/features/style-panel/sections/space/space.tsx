@@ -12,7 +12,7 @@ import { InputPopover } from "../shared/input-popover";
 import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { createBatchUpdate } from "../../shared/use-style-data";
+import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
 
 const movementMapSpace = {
@@ -125,6 +125,11 @@ const Cell = ({
           onHover({ property, element: event.currentTarget })
         }
         onMouseLeave={() => onHover(undefined)}
+        onClick={(event) => {
+          if (event.altKey) {
+            deleteProperty(property);
+          }
+        }}
       />
     </>
   );
