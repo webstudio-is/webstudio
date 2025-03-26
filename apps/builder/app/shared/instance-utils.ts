@@ -179,7 +179,7 @@ export const getInstanceLabel = (
   );
 };
 
-const isTextEditingInstance = (
+const isTextEditableInstance = (
   instance: Instance,
   instances: Instances,
   metas: Map<string, WsComponentMeta>
@@ -200,6 +200,19 @@ const isTextEditingInstance = (
   if (meta.type !== "container") {
     return false;
   }
+
+  if (meta.constraints !== undefined) {
+    const hasTextContraint = (
+      Array.isArray(meta.constraints) ? meta.constraints : [meta.constraints]
+    ).some(
+      (constraint) =>
+        constraint.relation === "child" && constraint.text === false
+    );
+    if (hasTextContraint) {
+      return false;
+    }
+  }
+
   // only container with rich-text-child children and text can be edited
   for (const child of instance.children) {
     if (child.type === "id") {
@@ -235,7 +248,7 @@ export const findAllEditableInstanceSelector = (
   }
 
   // Check if current instance is text editing instance
-  if (isTextEditingInstance(instance, instances, metas)) {
+  if (isTextEditableInstance(instance, instances, metas)) {
     results.push(currentPath);
     return;
   }
@@ -266,7 +279,7 @@ export const findClosestEditableInstanceSelector = (
       return;
     }
 
-    if (isTextEditingInstance(instance, instances, metas)) {
+    if (isTextEditableInstance(instance, instances, metas)) {
       return getAncestorInstanceSelector(instanceSelector, instanceId);
     }
   }
@@ -611,6 +624,20 @@ const traverseStyleValue = (
   if (value.type === "tuple" || value.type === "layers") {
     for (const item of value.value) {
       traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  if (value.type === "shadow") {
+    traverseStyleValue(value.offsetX, callback);
+    traverseStyleValue(value.offsetY, callback);
+    if (value.blur) {
+      traverseStyleValue(value.blur, callback);
+    }
+    if (value.spread) {
+      traverseStyleValue(value.spread, callback);
+    }
+    if (value.color) {
+      traverseStyleValue(value.color, callback);
     }
     return;
   }
@@ -1284,7 +1311,12 @@ export const findClosestInsertable = (
     instances,
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
-    onError: (message) => toast.error(message),
+    onError: (message) =>
+      toast.error(
+        message === ""
+          ? "findClosestInstanceMatchingFragment encountered an unknown error"
+          : message
+      ),
   });
   if (insertableIndex === -1) {
     return;

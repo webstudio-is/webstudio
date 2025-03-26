@@ -9,6 +9,13 @@ export const meta: WsComponentMeta = {
   icon: TextIcon,
   order: 6,
   label: "Animate Text",
+  constraints: [
+    { relation: "parent", component: { $eq: "AnimateChildren" } },
+    {
+      relation: "child",
+      text: false,
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

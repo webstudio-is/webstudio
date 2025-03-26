@@ -12,11 +12,13 @@ import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
-  isInstanceMatching,
   isTreeMatching,
   findClosestContainer,
   isInstanceDetachable,
+  __testing__,
 } from "./matcher";
+
+const { isInstanceMatching } = __testing__;
 
 const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
 metas.set("ListItem", {
@@ -25,6 +27,33 @@ metas.set("ListItem", {
     relation: "parent",
     component: { $eq: "List" },
   },
+});
+
+metas.set("NoTextItem", {
+  ...baseMetas.Box,
+  constraints: {
+    relation: "child",
+    text: false,
+  },
+});
+
+// Solutions added as a quick workaround
+describe("Fast workaround tests", () => {
+  // For simplicity, we don’t check the relation=child and text=false constraints during tree validation.
+  // These are only used to prevent text editing of container components.
+  test("Child text=false constraints does not affect matching", () => {
+    expect(
+      isTreeMatching({
+        ...renderData(
+          <$.Body ws:id="body">
+            <$.NoTextItem ws:id="notextitem">AnyText</$.NoTextItem>
+          </$.Body>
+        ),
+        metas,
+        instanceSelector: ["notextitem", "body"],
+      })
+    ).toBeTruthy();
+  });
 });
 
 describe("is instance matching", () => {

@@ -43,6 +43,9 @@ import {
 } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
+import { atom } from "nanostores";
+
+export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -347,6 +350,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         $activeInspectorPanel.set("style");
+      },
+      disableOnInputLikeControls: true,
+    },
+    {
+      name: "focusStyleSources",
+      defaultHotkeys: ["meta+enter"],
+      handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Style panel is only available in design mode."
+          );
+          return;
+        }
+        $activeInspectorPanel.set("style");
+        requestAnimationFrame(() => {
+          $styleSourceInputElement.get()?.focus();
+        });
       },
       disableOnInputLikeControls: true,
     },

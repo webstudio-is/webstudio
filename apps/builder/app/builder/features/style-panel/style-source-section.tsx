@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
-import { computed } from "nanostores";
+import { computed, type WritableAtom } from "nanostores";
 import {
   type Instance,
   type StyleSource,
@@ -369,7 +369,11 @@ const $availableStyleSources = computed([$styleSources], (styleSources) => {
   return availableStylesSources;
 });
 
-export const StyleSourcesSection = () => {
+export const StyleSourcesSection = ({
+  $styleSourceInputElement,
+}: {
+  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
+}) => {
   const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
   const selectedInstanceStyleSources = useStore($selectedInstanceStyleSources);
@@ -402,6 +406,7 @@ export const StyleSourcesSection = () => {
   return (
     <>
       <StyleSourceInput
+        $styleSourceInputElement={$styleSourceInputElement}
         error={error}
         items={availableStyleSources}
         value={value}

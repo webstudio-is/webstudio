@@ -12,7 +12,6 @@ import {
   ToggleGroupButton,
   Text,
   Switch,
-  SmallToggleButton,
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
 import type { PropAndMeta } from "../use-props-logic";
@@ -26,7 +25,7 @@ import {
   insetUnitValueSchema,
   RANGE_UNITS,
 } from "@webstudio-is/sdk";
-import { BugIcon, RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
+import { RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
@@ -198,6 +197,7 @@ export const AnimationSection = ({
     "source",
     "insetStart",
     "insetEnd",
+    "debug",
   ] as const);
 
   const { prop } = animationAction;
@@ -230,46 +230,15 @@ export const AnimationSection = ({
         gap={2}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr auto auto",
+          gridTemplateColumns: "1fr auto",
           padding: theme.panel.paddingInline,
         }}
       >
         <Text variant={"titles"}>Animation</Text>
 
         <Tooltip
-          content={
-            value.debug ? (
-              "Stop Debugging"
-            ) : (
-              <Text>
-                Debug <small>(experimental)</small>
-              </Text>
-            )
-          }
+          content={value.isPinned ? "Don’t run on canvas" : "Run on canvas"}
         >
-          <SmallToggleButton
-            css={
-              value.debug
-                ? {
-                    color: theme.colors.foregroundDestructive,
-                    "&:hover": {
-                      color: theme.colors.foregroundDestructive,
-                      opacity: 0.8,
-                    },
-                  }
-                : undefined
-            }
-            pressed={value.debug ?? false}
-            onPressedChange={() => {
-              handleChange({ ...value, debug: !value.debug }, false);
-            }}
-            variant="normal"
-            tabIndex={-1}
-            icon={<BugIcon />}
-          />
-        </Tooltip>
-
-        <Tooltip content={value.isPinned ? "Unpin Animation" : "Pin Animation"}>
           <Switch
             checked={value.isPinned ?? false}
             onCheckedChange={(isPinned) => {
@@ -413,6 +382,20 @@ export const AnimationSection = ({
             />
           </Grid>
         )}
+
+        <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
+          <Label htmlFor={fieldIds.debug}>Debug</Label>
+          <Switch
+            css={{
+              justifySelf: "end",
+            }}
+            id={fieldIds.debug}
+            checked={value.debug ?? false}
+            onCheckedChange={(debug) => {
+              handleChange({ ...value, debug }, false);
+            }}
+          />
+        </Grid>
       </Grid>
       <Grid gap={2}>
         <AnimationsSelect
