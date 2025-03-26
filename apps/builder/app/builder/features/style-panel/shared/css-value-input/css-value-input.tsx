@@ -322,6 +322,7 @@ type CssValueInputProps = Pick<
   unitOptions?: UnitOption[];
   id?: string;
   placeholder?: string;
+  minWidth?: string;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -399,6 +400,7 @@ export const CssValueInput = ({
   text,
   unitOptions,
   placeholder,
+  minWidth = "2ch",
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -921,7 +923,7 @@ export const CssValueInput = ({
             }
             css={{
               cursor: "default",
-              minWidth: "2em",
+              minWidth,
               "&:hover": {
                 [cssButtonDisplay]: "block",
               },
