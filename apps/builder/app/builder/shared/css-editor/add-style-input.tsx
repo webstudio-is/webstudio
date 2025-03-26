@@ -100,7 +100,10 @@ const getAutocompleteItems = () => {
 };
 
 const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
-  const matched = matchSorter(items, search.replaceAll("-", " "), {
+  const searchWithSpaces = search.startsWith("--")
+    ? search
+    : search.replaceAll("-", " ");
+  const matched = matchSorter(items, searchWithSpaces, {
     keys: ["key"],
   });
 
