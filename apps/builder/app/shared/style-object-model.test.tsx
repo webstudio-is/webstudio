@@ -472,6 +472,53 @@ test("support custom properties in tuples", () => {
   });
 });
 
+test("support custom properties in unparsed values", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --size: 10px;
+        width: calc(var(--size) * 2);
+        height: calc(var(--height, 20px) * 2);
+        box-shadow: var(--size) red, var(--size) blue;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "width",
+    }).computedValue
+  ).toEqual({
+    type: "unparsed",
+    value: "calc(10px*2)",
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "height",
+    }).computedValue
+  ).toEqual({
+    type: "unparsed",
+    value: "calc(20px*2)",
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "box-shadow",
+    }).computedValue
+  ).toEqual({
+    type: "layers",
+    value: [
+      { type: "unparsed", value: "10px red" },
+      { type: "unparsed", value: "10px blue" },
+    ],
+  });
+});
+
 test("use fallback value when custom property does not exist", () => {
   const model = createModel({
     css: `

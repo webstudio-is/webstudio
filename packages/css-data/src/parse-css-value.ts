@@ -1,6 +1,13 @@
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
-import { type CssNode, generate, lexer, List, parse } from "css-tree";
+import {
+  type CssNode,
+  type FunctionNode,
+  generate,
+  lexer,
+  List,
+  parse,
+} from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
@@ -18,7 +25,7 @@ import {
   type TupleValueItem,
   type CssProperty,
   type ShadowValue,
-  UnparsedValue,
+  type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
@@ -208,6 +215,24 @@ const parseShadow = (
   return shadowValue;
 };
 
+export const parseCssVar = (node: FunctionNode): undefined | VarValue => {
+  const [name, _comma, ...fallback] = node.children;
+  const fallbackString = generate({
+    type: "Value",
+    children: new List<CssNode>().fromArray(fallback),
+  }).trim();
+  if (name.type === "Identifier") {
+    const value: VarValue = {
+      type: "var",
+      value: name.name.slice("--".length),
+    };
+    if (fallback.length > 0) {
+      value.fallback = { type: "unparsed", value: fallbackString };
+    }
+    return value;
+  }
+};
+
 const parseLiteral = (
   node: undefined | null | CssNode,
   keywords?: readonly string[]
@@ -281,21 +306,7 @@ const parseLiteral = (
       }
     }
     if (node.name === "var") {
-      const [name, _comma, ...fallback] = node.children;
-      const fallbackString = generate({
-        type: "Value",
-        children: new List<CssNode>().fromArray(fallback),
-      }).trim();
-      if (name.type === "Identifier") {
-        const value: VarValue = {
-          type: "var",
-          value: name.name.slice("--".length),
-        };
-        if (fallback.length > 0) {
-          value.fallback = { type: "unparsed", value: fallbackString };
-        }
-        return value;
-      }
+      return parseCssVar(node);
     }
 
     // functions with comma-separated arguments
