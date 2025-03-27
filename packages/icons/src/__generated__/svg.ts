@@ -138,7 +138,7 @@ export const ContentIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" 
 
 export const CopyIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.214 5.5H6.786c-.71 0-1.286.576-1.286 1.286v6.428c0 .71.576 1.286 1.286 1.286h6.428c.71 0 1.286-.576 1.286-1.286V6.786c0-.71-.576-1.286-1.286-1.286Z"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.786 10.5A1.29 1.29 0 0 1 1.5 9.214V2.786A1.29 1.29 0 0 1 2.786 1.5h6.428A1.29 1.29 0 0 1 10.5 2.786"/></svg>`;
 
-export const CropIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7.25 5h4v4m0 2v3m-6-9h-3.5"/><path d="M5.25 2v9h9"/></g></svg>`;
+export const CropIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.167 1.5v9.333A1.333 1.333 0 0 0 5.5 12.167h9.333m-2.666 2.666V5.5a1.333 1.333 0 0 0-1.334-1.333H1.5"/></svg>`;
 
 export const DashedBorderIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.714 8H2M8.857 8H7.143M14 8h-1.714"/></svg>`;
 

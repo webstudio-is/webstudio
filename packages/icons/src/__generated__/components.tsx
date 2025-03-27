@@ -1867,16 +1867,12 @@ export const CropIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <g
-          fill="none"
-          fillRule="evenodd"
+        <path
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-        >
-          <path d="M7.25 5h4v4m0 2v3m-6-9h-3.5" />
-          <path d="M5.25 2v9h9" />
-        </g>
+          d="M4.167 1.5v9.333A1.333 1.333 0 0 0 5.5 12.167h9.333m-2.666 2.666V5.5a1.333 1.333 0 0 0-1.334-1.333H1.5"
+        />
       </svg>
     );
   }
