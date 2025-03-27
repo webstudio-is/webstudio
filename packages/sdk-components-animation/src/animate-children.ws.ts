@@ -1,4 +1,4 @@
-import { SlotComponentIcon } from "@webstudio-is/icons/svg";
+import { AnimationGroupIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 
 export const meta: WsComponentMeta = {
@@ -6,7 +6,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   description:
     "Animation Group component is designed to animate it's children.",
-  icon: SlotComponentIcon,
+  icon: AnimationGroupIcon,
   order: 5,
   label: "Animation Group",
   constraints: {
