@@ -35,7 +35,7 @@ export const initFlow = async (
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
   let folderName: undefined | string;
-  let projectTemplate: ProjectTemplates | undefined = undefined;
+  let projectTemplate: ProjectTemplates | undefined;
 
   if (isProjectConfigured === false) {
     const shouldCreateFolder = exitIfCancelled(
@@ -71,12 +71,14 @@ export const initFlow = async (
 
     await link({ link: shareLink });
 
-    projectTemplate = exitIfCancelled(
-      await select({
-        message: "Where would you like to deploy your project?",
-        options: PROJECT_TEMPLATES,
-      })
-    );
+    if (!options.template.length) {
+      projectTemplate = exitIfCancelled(
+        await select({
+          message: "Where would you like to deploy your project?",
+          options: PROJECT_TEMPLATES,
+        })
+      );
+    }
 
     shouldInstallDeps = exitIfCancelled(
       await confirm({
@@ -91,7 +93,7 @@ export const initFlow = async (
     We need to request for deploy target here as the current flow is running in a existing project.
   */
 
-  if (projectTemplate === undefined) {
+  if (!options.template.length && projectTemplate === undefined) {
     projectTemplate = exitIfCancelled(
       await select({
         message: "Where would you like to deploy your project?",
@@ -104,9 +106,9 @@ export const initFlow = async (
 
   await build({
     ...options,
-    ...(projectTemplate && {
-      template: mapToTemplatesFromOptions([projectTemplate]),
-    }),
+    template: projectTemplate
+      ? mapToTemplatesFromOptions([projectTemplate])
+      : options.template,
   });
 
   if (shouldInstallDeps === true) {
