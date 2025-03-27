@@ -17,7 +17,11 @@ import { showAttribute } from "@webstudio-is/react-sdk";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
 import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
-import { humanizeAttribute, showAttributeMeta } from "./shared";
+import {
+  ariaLabelAttributeMeta,
+  humanizeAttribute,
+  showAttributeMeta,
+} from "./shared";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -26,6 +30,9 @@ const usePropMeta = (name: string) => {
       (instance, propsMetas) => {
         if (name === showAttribute) {
           return showAttributeMeta;
+        }
+        if (name === "aria-label") {
+          return ariaLabelAttributeMeta;
         }
         const metas = propsMetas.get(instance?.component ?? "");
         const propMeta = metas?.props[name];

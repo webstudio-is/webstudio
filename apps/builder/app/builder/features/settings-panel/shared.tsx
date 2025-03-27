@@ -50,6 +50,15 @@ export const showAttributeMeta: PropMeta = {
     "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
 };
 
+export const ariaLabelAttributeMeta: PropMeta = {
+  label: "Accessible Label",
+  required: false,
+  control: "text",
+  type: "string",
+  description:
+    "Used by screen readers to describe the element. Do not set this if the element has a visible label.",
+};
+
 export type PropValue =
   | { type: "number"; value: number }
   | { type: "string"; value: string }
