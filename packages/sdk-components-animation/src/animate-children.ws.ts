@@ -4,8 +4,7 @@ import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 export const meta: WsComponentMeta = {
   category: "animations",
   type: "container",
-  description:
-    "Animation Group component is designed to animate it's children.",
+  description: "Animation Group component is designed to animate its children.",
   icon: AnimationGroupIcon,
   order: 5,
   label: "Animation Group",
