@@ -36,6 +36,7 @@ export const componentCategories = [
   "general",
   "typography",
   "media",
+  "animations",
   "data",
   "forms",
   "localization",

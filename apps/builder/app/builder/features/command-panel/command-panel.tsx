@@ -45,6 +45,7 @@ import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const $commandPanel = atom<
   | undefined
@@ -101,6 +102,12 @@ const $componentOptions = computed(
     for (const [name, meta] of metas) {
       const category = meta.category ?? "hidden";
       if (category === "hidden" || category === "internal") {
+        continue;
+      }
+      if (
+        category === "animations" &&
+        isFeatureEnabled("animation") === false
+      ) {
         continue;
       }
       // show only xml category and collection component in xml documents
