@@ -71,12 +71,14 @@ export const initFlow = async (
 
     await link({ link: shareLink });
 
-    projectTemplate = exitIfCancelled(
-      await select({
-        message: "Where would you like to deploy your project?",
-        options: PROJECT_TEMPLATES,
-      })
-    );
+    if (!options.template.length) {
+      projectTemplate = exitIfCancelled(
+        await select({
+          message: "Where would you like to deploy your project?",
+          options: PROJECT_TEMPLATES,
+        })
+      );
+    }
 
     shouldInstallDeps = exitIfCancelled(
       await confirm({
