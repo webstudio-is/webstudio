@@ -302,8 +302,8 @@ export const AnimationSection = ({
             }}
             type="single"
             value={convertAxisToXY(value.axis ?? ("y" as const))}
-            onValueChange={(axis) => {
-              handleChange({ ...value, axis }, false);
+            onValueChange={(axis: keyof typeof animationAxisDescription) => {
+              handleChange({ ...value, axis: convertAxisToXY(axis) }, false);
             }}
           >
             {Object.entries(animationAxisDescription).map(
