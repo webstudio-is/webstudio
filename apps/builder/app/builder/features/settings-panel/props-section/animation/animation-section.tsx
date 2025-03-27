@@ -234,7 +234,7 @@ export const AnimationSection = ({
       return;
     }
 
-    toast.error("Schemas are incompatible, try fix");
+    toast.error("Invalid animation schema.");
   };
 
   return (
