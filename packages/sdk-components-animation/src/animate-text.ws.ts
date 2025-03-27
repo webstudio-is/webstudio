@@ -3,12 +3,13 @@ import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/animate-text.props";
 
 export const meta: WsComponentMeta = {
-  category: "general",
+  category: "animations",
   type: "container",
-  description: "Animate Text",
+  description:
+    "Text animation allows you to split text by char or by word to animate it.",
   icon: TextIcon,
   order: 6,
-  label: "Animate Text",
+  label: "Text Animation",
   constraints: [
     { relation: "parent", component: { $eq: "AnimateChildren" } },
     {
