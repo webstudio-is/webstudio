@@ -25,7 +25,7 @@ import {
   insetUnitValueSchema,
   RANGE_UNITS,
 } from "@webstudio-is/sdk";
-import { RepeatColumnIcon, RepeatRowIcon } from "@webstudio-is/icons";
+import { ArrowDownIcon, ArrowRightIcon } from "@webstudio-is/icons";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
@@ -51,33 +51,50 @@ const defaultActionValue: AnimationAction = {
 };
 
 const animationAxisDescription: Record<
-  NonNullable<AnimationAction["axis"]>,
+  Exclude<NonNullable<AnimationAction["axis"]>, "block" | "inline">,
   { icon: React.ReactNode; label: string; description: React.ReactNode }
 > = {
+  /*
+  // We decided to not support block and inline axis, as mostly not used
   block: {
-    icon: <RepeatColumnIcon />,
+    icon: <ArrowDownIcon />,
     label: "Block axis",
     description:
       "Uses the scroll progress along the block axis (depends on writing mode, usually vertical in English).",
   },
   inline: {
-    icon: <RepeatRowIcon />,
+    icon: <ArrowRightIcon />,
     label: "Inline axis",
     description:
       "Uses the scroll progress along the inline axis (depends on writing mode, usually horizontal in English).",
   },
+  */
+
   y: {
     label: "Y axis",
-    icon: <RepeatColumnIcon />,
-    description:
-      "Always maps to the vertical scroll direction, regardless of writing mode.",
+    icon: <ArrowDownIcon />,
+    description: "The scrollbar on the vertical axis of the scroller element.",
   },
   x: {
     label: "X axis",
-    icon: <RepeatRowIcon />,
+    icon: <ArrowRightIcon />,
     description:
-      "Always maps to the horizontal scroll direction, regardless of writing mode.",
+      "The scrollbar on the horizontal axis of the scroller element.",
   },
+};
+
+/**
+ * Support for block and inline axis is removed, as it is not widely used.
+ */
+const convertAxisToXY = (axis: NonNullable<AnimationAction["axis"]>) => {
+  switch (axis) {
+    case "block":
+      return "y";
+    case "inline":
+      return "x";
+    default:
+      return axis;
+  }
 };
 
 const animationSourceDescriptions: Record<
@@ -280,8 +297,11 @@ export const AnimationSection = ({
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
           <Label>Axis</Label>
           <ToggleGroup
+            css={{
+              justifySelf: "end",
+            }}
             type="single"
-            value={value.axis ?? ("block" as const)}
+            value={convertAxisToXY(value.axis ?? ("y" as const))}
             onValueChange={(axis) => {
               handleChange({ ...value, axis }, false);
             }}
