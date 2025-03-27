@@ -24,7 +24,7 @@ type ProjectTemplates = (typeof PROJECT_TEMPLATES)[number]["value"];
 const exitIfCancelled = <Value>(value: Value | symbol): Value => {
   if (isCancel(value)) {
     cancel("Project initialization is cancelled");
-    process.exit(0);
+    process.exit(1);
   }
   return value;
 };
