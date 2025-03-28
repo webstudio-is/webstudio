@@ -535,7 +535,7 @@ export const StyleSourceInput = (
         label === "" &&
         props.editingItemId === undefined
       ) {
-        const item = value[value.length - 2];
+        const item = value[value.length - 1];
         if (item) {
           props.onDetachItem?.(item.id);
         }
