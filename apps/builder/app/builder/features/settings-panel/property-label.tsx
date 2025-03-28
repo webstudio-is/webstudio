@@ -180,3 +180,71 @@ export const PropertyLabel = ({
     </Flex>
   );
 };
+
+export const FieldLabel = ({
+  description,
+  resettable = false,
+  onReset,
+  children,
+}: {
+  description?: string;
+  resettable?: boolean;
+  onReset?: () => void;
+  children: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+      {/* prevent label growing */}
+      <div>
+        <Tooltip
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          triggerProps={{
+            onClick: (event) => {
+              if (event.altKey) {
+                event.preventDefault();
+                if (resettable) {
+                  onReset?.();
+                }
+                return;
+              }
+              setIsOpen(true);
+            },
+          }}
+          content={
+            <Flex
+              direction="column"
+              gap="2"
+              css={{ maxWidth: theme.spacing[28] }}
+            >
+              <Text variant="titles" css={{ textTransform: "none" }}>
+                {children}
+              </Text>
+              {description && <Text>{description}</Text>}
+              {resettable && (
+                <Button
+                  color="dark"
+                  // to align button text in the middle
+                  prefix={<div></div>}
+                  suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
+                  css={{ gridTemplateColumns: "1fr max-content 1fr" }}
+                  onClick={() => {
+                    onReset?.();
+                    setIsOpen(false);
+                  }}
+                >
+                  Reset value
+                </Button>
+              )}
+            </Flex>
+          }
+        >
+          <Label truncate color={resettable ? "local" : "default"}>
+            {children}
+          </Label>
+        </Tooltip>
+      </div>
+    </Flex>
+  );
+};

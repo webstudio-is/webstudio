@@ -3,7 +3,6 @@ import {
   Grid,
   theme,
   Select,
-  Label,
   Separator,
   Box,
   toast,
@@ -34,6 +33,7 @@ import {
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
 import { humanizeString } from "~/shared/string-utils";
+import { FieldLabel } from "../../property-label";
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -252,7 +252,6 @@ export const AnimationSection = ({
         }}
       >
         <Text variant={"titles"}>Animation</Text>
-
         <Tooltip
           content={value.isPinned ? "Don’t run on canvas" : "Run on canvas"}
         >
@@ -270,7 +269,7 @@ export const AnimationSection = ({
       <Box css={{ height: theme.panel.paddingBlock }} />
       <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <Label htmlFor={fieldIds.type}>Action</Label>
+          <FieldLabel>Action</FieldLabel>
           <Select
             id={fieldIds.type}
             options={animationTypes}
@@ -295,7 +294,7 @@ export const AnimationSection = ({
         </Grid>
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <Label>Axis</Label>
+          <FieldLabel>Axis</FieldLabel>
           <ToggleGroup
             css={{
               justifySelf: "end",
@@ -310,6 +309,7 @@ export const AnimationSection = ({
               ([key, { icon, label, description }]) => (
                 <Tooltip
                   key={key}
+                  variant="wrapped"
                   content={
                     <Grid gap={1}>
                       <Text variant={"titles"}>{label}</Text>
@@ -330,8 +330,7 @@ export const AnimationSection = ({
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <Label htmlFor={fieldIds.source}>Scroll Source</Label>
-
+            <FieldLabel>Scroll Source</FieldLabel>
             <Select
               id={fieldIds.source}
               options={animationSources}
@@ -361,7 +360,7 @@ export const AnimationSection = ({
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <Label htmlFor={fieldIds.subject}>Subject</Label>
+            <FieldLabel>Subject</FieldLabel>
             <SubjectSelect
               id={fieldIds.subject}
               value={value}
@@ -376,16 +375,16 @@ export const AnimationSection = ({
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <Label htmlFor={fieldIds.insetStart}>
+            <FieldLabel>
               {value.axis === "inline" || value.axis === "x"
                 ? "Left Inset"
                 : "Top Inset"}
-            </Label>
-            <Label htmlFor={fieldIds.insetEnd}>
+            </FieldLabel>
+            <FieldLabel>
               {value.axis === "inline" || value.axis === "x"
                 ? "Right Inset"
                 : "Bottom Inset"}
-            </Label>
+            </FieldLabel>
             <InsetValueInput
               id={fieldIds.insetStart}
               value={value.insetStart ?? { type: "keyword", value: "auto" }}
@@ -404,7 +403,7 @@ export const AnimationSection = ({
         )}
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
-          <Label htmlFor={fieldIds.debug}>Debug</Label>
+          <FieldLabel>Debug</FieldLabel>
           <Switch
             css={{
               justifySelf: "end",
