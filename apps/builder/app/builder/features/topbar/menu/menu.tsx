@@ -107,13 +107,13 @@ export const Menu = () => {
         <DropdownMenuItem onSelect={() => emitCommand("undo")}>
           Undo
           <DropdownMenuItemRightSlot>
-            <Kbd value={["cmd", "z"]} />
+            <Kbd value={["meta", "z"]} />
           </DropdownMenuItemRightSlot>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => emitCommand("redo")}>
           Redo
           <DropdownMenuItemRightSlot>
-            <Kbd value={["cmd", "shift", "z"]} />
+            <Kbd value={["meta", "shift", "z"]} />
           </DropdownMenuItemRightSlot>
         </DropdownMenuItem>
         {/* https://github.com/webstudio-is/webstudio/issues/499
@@ -124,7 +124,7 @@ export const Menu = () => {
             }}
           >
             Copy
-            <DropdownMenuItemRightSlot><Kbd value={["cmd", "c"]} /></DropdownMenuItemRightSlot>
+            <DropdownMenuItemRightSlot><Kbd value={["meta", "c"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -132,7 +132,7 @@ export const Menu = () => {
             }}
           >
             Paste
-            <DropdownMenuItemRightSlot><Kbd value={["cmd", "v"]} /></DropdownMenuItemRightSlot>
+            <DropdownMenuItemRightSlot><Kbd value={["meta", "v"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem>
 
           */}
@@ -146,7 +146,7 @@ export const Menu = () => {
         <DropdownMenuItem onSelect={() => emitCommand("togglePreviewMode")}>
           Preview
           <DropdownMenuItemRightSlot>
-            <Kbd value={["cmd", "shift", "p"]} />
+            <Kbd value={["meta", "shift", "p"]} />
           </DropdownMenuItemRightSlot>
         </DropdownMenuItem>
 
@@ -242,7 +242,7 @@ export const Menu = () => {
           <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
             Search & Commands
             <DropdownMenuItemRightSlot>
-              <Kbd value={["cmd", "k"]} />
+              <Kbd value={["meta", "k"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
         )}

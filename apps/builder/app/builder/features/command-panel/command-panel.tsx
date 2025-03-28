@@ -349,9 +349,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   for (const [name, meta] of commandMetas) {
     if (!meta.hidden) {
       const label = humanizeString(name);
-      const keys = meta.defaultHotkeys?.[0]
-        ?.split("+")
-        .map((key) => (key === "meta" ? "cmd" : key));
+      const keys = meta.defaultHotkeys?.[0]?.split("+");
       shortcutOptions.push({
         tokens: ["shortcuts", "commands", label],
         type: "shortcut",
