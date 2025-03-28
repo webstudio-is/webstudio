@@ -18,6 +18,7 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
 import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
 import { humanizeAttribute, showAttributeMeta } from "./shared";
+import { micromark } from "micromark";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -187,6 +188,9 @@ export const FieldLabel = ({
   onReset,
   children,
 }: {
+  /**
+   * Markdown text to show in tooltip
+   */
   description?: string;
   /**
    * when true means field has value and colored true
@@ -224,7 +228,11 @@ export const FieldLabel = ({
               <Text variant="titles" css={{ textTransform: "none" }}>
                 {children}
               </Text>
-              {description && <Text>{description}</Text>}
+              {description && (
+                <Text
+                  dangerouslySetInnerHTML={{ __html: micromark(description) }}
+                ></Text>
+              )}
               {resettable && (
                 <Button
                   color="dark"

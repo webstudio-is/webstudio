@@ -269,7 +269,15 @@ export const AnimationSection = ({
       <Box css={{ height: theme.panel.paddingBlock }} />
       <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel>Action</FieldLabel>
+          <FieldLabel
+            description={`
+paragraph
+- list item 1
+- list item 1
+`}
+          >
+            Action
+          </FieldLabel>
           <Select
             id={fieldIds.type}
             options={animationTypes}
