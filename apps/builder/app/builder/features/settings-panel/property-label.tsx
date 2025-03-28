@@ -188,6 +188,9 @@ export const FieldLabel = ({
   children,
 }: {
   description?: string;
+  /**
+   * when true means field has value and colored true
+   */
   resettable?: boolean;
   onReset?: () => void;
   children: string;
