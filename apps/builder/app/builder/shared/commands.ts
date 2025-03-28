@@ -513,7 +513,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "undo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
       handler: () => {
@@ -522,7 +522,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "redo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
       handler: () => {

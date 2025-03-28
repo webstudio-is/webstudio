@@ -402,7 +402,7 @@ export const EditorContent = ({
       {showShortcuts && (
         <Flex align="center" justify="end" gap="1" className={shortcutStyle()}>
           <Text variant="small">Submit</Text>
-          <Kbd value={["cmd", "enter"]} />
+          <Kbd value={["meta", "enter"]} />
         </Flex>
       )}
     </div>

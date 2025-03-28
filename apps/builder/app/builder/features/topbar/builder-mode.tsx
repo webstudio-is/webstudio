@@ -44,14 +44,14 @@ export const BuilderModeDropDown = () => {
       icon: <PaintBrushIcon />,
       description: "Edit components, styles, and properties",
       title: "Design",
-      shortcut: ["cmd", "shift", "d"],
+      shortcut: ["meta", "shift", "d"],
       enabled: isDesignModeAllowed,
     },
     content: {
       icon: <NotebookAndPenIcon />,
       description: "Modify the page content",
       title: "Content",
-      shortcut: ["cmd", "shift", "c"],
+      shortcut: ["meta", "shift", "c"],
       enabled: isContentModeAllowed,
     },
   } as const;
@@ -74,7 +74,7 @@ export const BuilderModeDropDown = () => {
         content={
           <Flex gap="1">
             <Text variant="regular">Toggle preview</Text>
-            <Kbd value={["cmd", "shift", "p"]} />
+            <Kbd value={["meta", "shift", "p"]} />
           </Flex>
         }
       >

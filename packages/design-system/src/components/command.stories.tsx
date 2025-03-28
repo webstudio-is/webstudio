@@ -67,7 +67,7 @@ const CommandContent = () => {
               </CommandIcon>
               <Text variant="labelsTitleCase">Profile</Text>
             </Flex>
-            <Kbd value={["cmd", "p"]} />
+            <Kbd value={["meta", "p"]} />
           </CommandItem>
           <CommandItem>
             <Flex gap={2}>
@@ -76,7 +76,7 @@ const CommandContent = () => {
               </CommandIcon>
               <Text variant="labelsTitleCase">Billing</Text>
             </Flex>
-            <Kbd value={["cmd", "b"]} />
+            <Kbd value={["meta", "b"]} />
           </CommandItem>
           <CommandItem>
             <Flex gap={2}>
@@ -85,7 +85,7 @@ const CommandContent = () => {
               </CommandIcon>
               <Text variant="labelsTitleCase">Settings</Text>
             </Flex>
-            <Kbd value={["cmd", "s"]} />
+            <Kbd value={["meta", "s"]} />
           </CommandItem>
         </CommandGroup>
       </CommandList>

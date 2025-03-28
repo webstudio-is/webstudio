@@ -17,7 +17,7 @@ type CommandMeta<CommandName extends string> = {
    **/
   disableOnInputLikeControls?: boolean;
   /**
-   * hide the command in cmd+k panel
+   * hide the command in meta+k panel
    */
   hidden?: boolean;
 };
