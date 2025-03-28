@@ -18,6 +18,7 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
 import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
 import { humanizeAttribute, showAttributeMeta } from "./shared";
+import { micromark } from "micromark";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -177,6 +178,84 @@ export const PropertyLabel = ({
           />
         </Tooltip>
       )}
+    </Flex>
+  );
+};
+
+export const FieldLabel = ({
+  description,
+  resettable = false,
+  onReset,
+  children,
+}: {
+  /**
+   * Markdown text to show in tooltip
+   */
+  description?: string;
+  /**
+   * when true means field has value and colored true
+   */
+  resettable?: boolean;
+  onReset?: () => void;
+  children: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+      {/* prevent label growing */}
+      <div>
+        <Tooltip
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          triggerProps={{
+            onClick: (event) => {
+              if (event.altKey) {
+                event.preventDefault();
+                if (resettable) {
+                  onReset?.();
+                }
+                return;
+              }
+              setIsOpen(true);
+            },
+          }}
+          content={
+            <Flex
+              direction="column"
+              gap="2"
+              css={{ maxWidth: theme.spacing[28] }}
+            >
+              <Text variant="titles" css={{ textTransform: "none" }}>
+                {children}
+              </Text>
+              {description && (
+                <Text
+                  dangerouslySetInnerHTML={{ __html: micromark(description) }}
+                ></Text>
+              )}
+              {resettable && (
+                <Button
+                  color="dark"
+                  // to align button text in the middle
+                  prefix={<div></div>}
+                  suffix={<Kbd value={["alt", "click"]} color="moreSubtle" />}
+                  css={{ gridTemplateColumns: "1fr max-content 1fr" }}
+                  onClick={() => {
+                    onReset?.();
+                    setIsOpen(false);
+                  }}
+                >
+                  Reset value
+                </Button>
+              )}
+            </Flex>
+          }
+        >
+          <Label truncate color={resettable ? "local" : "default"}>
+            {children}
+          </Label>
+        </Tooltip>
+      </div>
     </Flex>
   );
 };
