@@ -331,6 +331,47 @@ describe("reparent pages and folders", () => {
     expect(folder1?.children).toEqual(["page2"]);
     expect(folder2?.children).toEqual(["page3", "page1"]);
   });
+
+  test("move folder into another folder", () => {
+    const { f, register, pages } = createPages();
+    register([f("folder1", []), f("folder2", [])]);
+    reparentPageOrFolderMutable(pages.folders, "folder1", "folder2", 1);
+    expect(pages.folders).toEqual([
+      expect.objectContaining({
+        id: "root",
+        children: ["homePageId", "folder2"],
+      }),
+      expect.objectContaining({ id: "folder1", children: [] }),
+      expect.objectContaining({ id: "folder2", children: ["folder1"] }),
+    ]);
+  });
+
+  test("prevent reparanting folder into itself", () => {
+    const { f, register, pages } = createPages();
+    register([f("folder1", [])]);
+    reparentPageOrFolderMutable(pages.folders, "folder1", "folder1", 1);
+    expect(pages.folders).toEqual([
+      expect.objectContaining({
+        id: "root",
+        children: ["homePageId", "folder1"],
+      }),
+      expect.objectContaining({ id: "folder1", children: [] }),
+    ]);
+  });
+
+  test("prevent reparanting folder own children", () => {
+    const { f, register, pages } = createPages();
+    register([f("folder1", [f("folder2", [])])]);
+    reparentPageOrFolderMutable(pages.folders, "folder1", "folder2", 1);
+    expect(pages.folders).toEqual([
+      expect.objectContaining({
+        id: "root",
+        children: ["homePageId", "folder1"],
+      }),
+      expect.objectContaining({ id: "folder2", children: [] }),
+      expect.objectContaining({ id: "folder1", children: ["folder2"] }),
+    ]);
+  });
 });
 
 describe("getAllChildrenAndSelf", () => {
