@@ -167,6 +167,15 @@ export const reparentPageOrFolderMutable = (
   newFolderId: string,
   newPosition: number
 ) => {
+  const childrenAndSelf = getAllChildrenAndSelf(
+    pageOrFolderId,
+    folders,
+    "folder"
+  );
+  // make sure target folder is not self or descendants
+  if (childrenAndSelf.includes(newFolderId)) {
+    return;
+  }
   const prevParent = findParentFolderByChildId(pageOrFolderId, folders);
   const nextParent = folders.find((folder) => folder.id === newFolderId);
   if (prevParent === undefined || nextParent === undefined) {
