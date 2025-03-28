@@ -206,17 +206,17 @@ importers:
         specifier: ^3.27.0
         version: 3.27.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@remix-run/node':
-        specifier: ^2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@remix-run/react':
-        specifier: ^2.16.0
-        version: 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
       '@remix-run/serve':
-        specifier: ^2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@remix-run/server-runtime':
-        specifier: ^2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@trpc/client':
         specifier: ^10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
@@ -228,7 +228,7 @@ importers:
         version: 2.5.3
       '@vercel/remix':
         specifier: 2.15.3
-        version: 2.15.3(@remix-run/dev@2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.0(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.15.3(@remix-run/dev@2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.2(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -332,8 +332,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.0
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       lexical:
         specifier: ^0.21.0
         version: 0.21.0
@@ -384,19 +384,19 @@ importers:
         version: 1.7.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       remix-auth:
         specifier: ^3.7.0
-        version: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
+        version: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
       remix-auth-form:
         specifier: ^1.5.0
-        version: 1.5.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+        version: 1.5.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
       remix-auth-github:
         specifier: ^1.7.0
-        version: 1.7.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+        version: 1.7.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
       remix-auth-google:
         specifier: ^2.0.0
-        version: 2.0.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+        version: 2.0.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
       remix-auth-oauth2:
         specifier: ^2.3.0
-        version: 2.3.0(@remix-run/cloudflare@2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2))(@remix-run/node@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+        version: 2.3.0(@remix-run/cloudflare@2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2))(@remix-run/node@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
@@ -432,8 +432,8 @@ importers:
         version: 3.4.0(zod@3.24.2)
     devDependencies:
       '@remix-run/dev':
-        specifier: ^2.16.0
-        version: 2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^2.16.2
+        version: 2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -477,17 +477,17 @@ importers:
   fixtures/react-router-docker:
     dependencies:
       '@react-router/dev':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@react-router/fs-routes':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
       '@react-router/node':
-        specifier: ^7.3.0
-        version: 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@react-router/serve':
-        specifier: ^7.3.0
-        version: 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -513,11 +513,11 @@ importers:
         specifier: ^1.15.1
         version: 1.15.1
       ipx:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.3
+        version: 3.0.3
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -525,8 +525,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.13.10)
@@ -550,14 +550,14 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))
       '@react-router/dev':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@react-router/fs-routes':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
       '@react-router/node':
-        specifier: ^7.3.0
-        version: 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -580,8 +580,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -589,8 +589,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.13.10)
@@ -611,17 +611,17 @@ importers:
   fixtures/react-router-vercel:
     dependencies:
       '@react-router/dev':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@react-router/fs-routes':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
       '@react-router/node':
-        specifier: ^7.3.0
-        version: 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@vercel/react-router':
         specifier: ^1.1.0
-        version: 1.1.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.23)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 1.1.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.25)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -644,8 +644,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -653,8 +653,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.13.10)
@@ -702,8 +702,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       vike:
-        specifier: ^0.4.224
-        version: 0.4.224(vite@5.4.11(@types/node@22.13.10))
+        specifier: ^0.4.227
+        version: 0.4.227(vite@5.4.11(@types/node@22.13.10))
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -757,8 +757,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       vike:
-        specifier: ^0.4.224
-        version: 0.4.224(vite@5.4.11(@types/node@22.13.10))
+        specifier: ^0.4.227
+        version: 0.4.227(vite@5.4.11(@types/node@22.13.10))
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -785,20 +785,20 @@ importers:
   fixtures/webstudio-cloudflare-template:
     dependencies:
       '@remix-run/cloudflare':
-        specifier: 2.16.0
-        version: 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+        specifier: 2.16.2
+        version: 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
       '@remix-run/cloudflare-pages':
-        specifier: 2.16.0
-        version: 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+        specifier: 2.16.2
+        version: 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
       '@remix-run/node':
-        specifier: 2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: 2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@remix-run/react':
-        specifier: 2.16.0
-        version: 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+        specifier: 2.16.2
+        version: 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
       '@remix-run/server-runtime':
-        specifier: 2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: 2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -821,8 +821,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-remix
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -843,8 +843,8 @@ importers:
         specifier: ^4.20240620.0
         version: 4.20240701.0
       '@remix-run/dev':
-        specifier: 2.16.0
-        version: 2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: 2.16.2
+        version: 2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -870,14 +870,14 @@ importers:
         specifier: ^2.14.4
         version: 2.14.4
       '@react-router/dev':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@react-router/fs-routes':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
       '@react-router/node':
-        specifier: ^7.3.0
-        version: 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
@@ -900,8 +900,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk-components-react-router
       isbot:
-        specifier: ^5.1.23
-        version: 5.1.23
+        specifier: ^5.1.25
+        version: 5.1.25
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -909,8 +909,8 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.13.10)
@@ -1091,29 +1091,29 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))
       '@react-router/dev':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@react-router/fs-routes':
-        specifier: ^7.3.0
-        version: 7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
+        specifier: ^7.4.0
+        version: 7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)
       '@remix-run/cloudflare':
-        specifier: ^2.16.0
-        version: 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
       '@remix-run/cloudflare-pages':
-        specifier: ^2.16.0
-        version: 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
       '@remix-run/dev':
-        specifier: ^2.16.0
-        version: 2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+        specifier: ^2.16.2
+        version: 2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       '@remix-run/node':
-        specifier: ^2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@remix-run/react':
-        specifier: ^2.16.0
-        version: 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
       '@remix-run/server-runtime':
-        specifier: ^2.16.0
-        version: 2.16.0(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(typescript@5.8.2)
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -1125,7 +1125,7 @@ importers:
         version: 17.0.33
       '@vercel/react-router':
         specifier: ^1.1.0
-        version: 1.1.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.23)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 1.1.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.25)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.3.4(vite@5.4.11(@types/node@22.13.10))
@@ -1166,8 +1166,8 @@ importers:
         specifier: ^1.15.1
         version: 1.15.1
       ipx:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.3
+        version: 3.0.3
       prettier:
         specifier: 3.5.3
         version: 3.5.3
@@ -1178,14 +1178,14 @@ importers:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       ts-expect:
         specifier: ^1.3.0
         version: 1.3.0
       vike:
-        specifier: ^0.4.224
-        version: 0.4.224(vite@5.4.11(@types/node@22.13.10))
+        specifier: ^0.4.227
+        version: 0.4.227(vite@5.4.11(@types/node@22.13.10))
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.13.10)
@@ -2095,8 +2095,8 @@ importers:
         version: link:../sdk-components-react
     devDependencies:
       '@remix-run/react':
-        specifier: ^2.16.0
-        version: 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+        specifier: ^2.16.2
+        version: 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -2125,8 +2125,8 @@ importers:
         specifier: workspace:*
         version: link:../sdk-components-react
       react-router:
-        specifier: ^7.3.0
-        version: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^7.4.0
+        version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -2424,8 +2424,8 @@ packages:
   '@brillout/require-shim@0.1.2':
     resolution: {integrity: sha512-3I4LRHnVZXoSAsEoni5mosq9l6eiJED58d9V954W4CIZ88AUfYBanWGBGbJG3NztaRTpFHEA6wB3Hn93BmmJdg==}
 
-  '@brillout/vite-plugin-server-entry@0.6.3':
-    resolution: {integrity: sha512-uSbzC4d0xIBxnt8JbrZiUb0iylHsHXyDNIi1sYf7bnr4HY6FcNMnSTE2C5FLIH1pc0qQXnvZzdw6tn/jEGM/6A==}
+  '@brillout/vite-plugin-server-entry@0.7.1':
+    resolution: {integrity: sha512-f4Mf4/5Lc8ScQwx15EkVfp34Zmt0o4pDG6zvNWxMNyCToUTs31RDCiXtIGTWck2AOIAiBkEeuM6vK0cA7cuU1Q==}
 
   '@bundled-es-modules/cookie@2.0.1':
     resolution: {integrity: sha512-8o+5fRPLNbjbdGRRmJj3h6Hh1AQJf2dk3qQ/5ZFb+PXkRNiSoMGGUKlsgLfrxneb72axVJyIYji64E2+nNfYyw==}
@@ -3410,9 +3410,8 @@ packages:
     resolution: {integrity: sha512-JubJ5B2pJ4k4yGxaNLdbjrnk9d/iDz6/q8wOilpIowd6PJPgaxCuHBnBszq7Ce2TyMrywm5r4PnKm6V3iiZF+g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fastify/accept-negotiator@1.1.0':
-    resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
-    engines: {node: '>=14'}
+  '@fastify/accept-negotiator@2.0.1':
+    resolution: {integrity: sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ==}
 
   '@fastify/busboy@2.1.1':
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
@@ -4639,13 +4638,13 @@ packages:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
 
-  '@react-router/dev@7.3.0':
-    resolution: {integrity: sha512-k9eWulu3FyJ2swN/RftgFAQviaRT4vMwE4COQ6WUCVQryQsru/ZK/dhw5YjZLPp1V+QieijigPxK4e7Pz4cOrg==}
+  '@react-router/dev@7.4.0':
+    resolution: {integrity: sha512-z3++B3H6k/GyMoR05CUiy2ney5ZxFWJ8YLyVN8wBU2h4aVscqxxVoX9GyrMvjz81VPtrzf0S2iPTJ758ZVmEIg==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
-      '@react-router/serve': ^7.3.0
-      react-router: ^7.3.0
+      '@react-router/serve': ^7.4.0
+      react-router: ^7.4.0
       typescript: ^5.1.0
       vite: ^5.1.0 || ^6.0.0
       wrangler: ^3.28.2
@@ -4657,43 +4656,43 @@ packages:
       wrangler:
         optional: true
 
-  '@react-router/express@7.3.0':
-    resolution: {integrity: sha512-wAv020Wfwj6mW62NC8JQ6rlY1cJgeg+hRCFV2gcx5vxUfjH/tCFBRN4Rujo9WLFfRCwCEeilFqiuwBKeODDBsw==}
+  '@react-router/express@7.4.0':
+    resolution: {integrity: sha512-vj3L53b5eL9RBRdhsNnaxPhYDqieflg4e44+pO3o60CG70zjIl2d+9BLwuvlKgYI1+CzpI4GnB4gFfAYNPM6xg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       express: ^4.17.1 || ^5
-      react-router: 7.3.0
+      react-router: 7.4.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/fs-routes@7.3.0':
-    resolution: {integrity: sha512-GJiNer1o8qg3me1bSLUQV4jQPtL6d429qPLzEZEvC9W8Vcvgv+v3svzdVDgiXrZ4l2loUZy4sooyPJ/U3Oyfkw==}
+  '@react-router/fs-routes@7.4.0':
+    resolution: {integrity: sha512-jORT5Suo5agu2lVPqEn9PR2DWTS3JMHBoPca6HnVHRErLGG3FhyM1WSQxcShAf5qE6TtS91s5/Fpth+ij+82ig==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@react-router/dev': ^7.3.0
+      '@react-router/dev': ^7.4.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/node@7.3.0':
-    resolution: {integrity: sha512-Vhww6DH0cVusO2yGhZuKmboGvFHuYOeIYEW0gpf0gFshbU0tR7MNAnOZS2Cud48hxVUSrEtgl0Kbs5BN+RQKJg==}
+  '@react-router/node@7.4.0':
+    resolution: {integrity: sha512-Y+2CXCPmnxcBbdTNGYO7pDusP+1xSlInbFXhsgjsM5WPH+5aDKHKYmDDrOT7fkg0l3b/SkzfwVsJg5XT9qjb/A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      react-router: 7.3.0
+      react-router: 7.4.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/serve@7.3.0':
-    resolution: {integrity: sha512-NGW8FRDghV6F04nki4dnL+sS8NHgbWkeQTtnGTIdTtPw2CaHOP7nsfJNJcetoSTw8xQjZWMDCbJfWYzSYeTF/g==}
+  '@react-router/serve@7.4.0':
+    resolution: {integrity: sha512-SvtEDZEkXvfZ40uuUvgwqc/0ZjBvPvHu9o7XS+1hTAFoklYreSw4lCadzs9qRlomDC7Aj/byXseiR9eXi+7Abw==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
-      react-router: 7.3.0
+      react-router: 7.4.0
 
   '@react-stately/utils@3.10.5':
     resolution: {integrity: sha512-iMQSGcpaecghDIh3mZEpZfoFH3ExBwTtuBEcvZ2XnGzCgQjeYXcMdIUwAfVQLXFTdHUHGF6Gu6/dFrYsCzySBQ==}
@@ -4705,8 +4704,8 @@ packages:
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@remix-run/cloudflare-pages@2.16.0':
-    resolution: {integrity: sha512-Il/4JWkIFhkGPqE9MtaWCG431wNvAo+JsGClwVnOQgQYOJKV7wcvjZ4fQmkzc+GYBGMlOxx1OxD/S76XqnVzFQ==}
+  '@remix-run/cloudflare-pages@2.16.2':
+    resolution: {integrity: sha512-Vai5+Gj2IDl0gfeeh4uwogB+RZEb06kBvu0InXg/YE9sbcVRtHESoXNBUeiCpu4VInWp63kHgaNPPn29dmcc+A==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.0.0
@@ -4715,8 +4714,8 @@ packages:
       typescript:
         optional: true
 
-  '@remix-run/cloudflare@2.16.0':
-    resolution: {integrity: sha512-Z9kN6tChe36S175z4AVm8c79kUUBS4k16IBIpNods3z3oyo103EDawHdpiYcaEdz2OfdTCvNwsA7zLvRBW7yNA==}
+  '@remix-run/cloudflare@2.16.2':
+    resolution: {integrity: sha512-Tf+JE6DYNeY3kxcJs0li7W+ponxb5vchjVfk9UrrMrz7E70iV3ABQNYf/VMKrSColJRs1XSc7egjvH4Ze1G+/A==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.0.0
@@ -4725,13 +4724,13 @@ packages:
       typescript:
         optional: true
 
-  '@remix-run/dev@2.16.0':
-    resolution: {integrity: sha512-zfb93zJatWRMmBU4dQFM9pTgYfkZi1orDYtd18f9YNZM6pbshmhqlsiGZmrMAhAuYLGB983aqkXY3pxtZhoDkQ==}
+  '@remix-run/dev@2.16.2':
+    resolution: {integrity: sha512-0uB2iIsZ/5YgbZxW6YztmzF0VdsbdUB28XhTlYx3VR8GLrxLE3S8pIvong/hMtHMIWtAGMQ0ywtYe+6AcPCpbg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
-      '@remix-run/react': ^2.16.0
-      '@remix-run/serve': ^2.16.0
+      '@remix-run/react': ^2.16.2
+      '@remix-run/serve': ^2.16.2
       typescript: ^5.1.0
       vite: ^5.1.0 || ^6.0.0
       wrangler: ^3.28.2
@@ -4745,8 +4744,8 @@ packages:
       wrangler:
         optional: true
 
-  '@remix-run/express@2.16.0':
-    resolution: {integrity: sha512-JuN+HjwJqlJqvMIWxWEw6Oj6u/TfwW4itHJg2hGAvQftBCwSD49kkAMUwBzdZr2BOepdwjuS/UKJpannp4PWKQ==}
+  '@remix-run/express@2.16.2':
+    resolution: {integrity: sha512-QpDYiWvVB8+LBRGuAZDYGaS5z5jRFUbSb3tBQRCfOQvDJ/WzLjEtf5Wy9l3Nexbe6RTRuDW/tsIr3L94lTKmYg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       express: ^4.20.0
@@ -4755,8 +4754,8 @@ packages:
       typescript:
         optional: true
 
-  '@remix-run/node@2.16.0':
-    resolution: {integrity: sha512-9yYBYCHYO1+bIScGAtOy5/r4BoTS8E5lpQmjWP99UxSCSiKHPEO76V9Z8mmmarTNis/FPN+sUwfmbQWNHLA2vw==}
+  '@remix-run/node@2.16.2':
+    resolution: {integrity: sha512-Q+DdX9YU1eCqwtWxJG2rIk2sYVZokCzb/T3ZsnhkWkSc0/NTMcrtkQY6JRymcMEoR+oVnJaJ9xPHt1P/BV4k9Q==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       typescript: ^5.1.0
@@ -4764,8 +4763,8 @@ packages:
       typescript:
         optional: true
 
-  '@remix-run/react@2.16.0':
-    resolution: {integrity: sha512-eTi60/7AO8vnIL+IT33ZixT0tLjUrilgKhimdZtddBc/XIawUeslC01mNUHIlLXS+zUDM05iBmY2aLTKkqyy6Q==}
+  '@remix-run/react@2.16.2':
+    resolution: {integrity: sha512-EhsUXUP/GbnLdVs4docgVndb0eGJncCRbIJduLe+IVGVcpJNeZO+lHZPfLHa0Hv+KvL17lMWg5bmKAVdl4RVoA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
@@ -4779,13 +4778,13 @@ packages:
     resolution: {integrity: sha512-O3rHJzAQKamUz1fvE0Qaw0xSFqsA/yafi2iqeE0pvdFtCO1viYx8QL6f3Ln/aCCTLxs68SLf0KPM9eSeM8yBnA==}
     engines: {node: '>=14.0.0'}
 
-  '@remix-run/serve@2.16.0':
-    resolution: {integrity: sha512-KF3ofzLcXf2lY1jFa8o7iDbRblSDIlzpUaxhcvPWPatrJwfB6ww/aVEesERKD+AUUonx6kB4KkEj5eAn0U86MA==}
+  '@remix-run/serve@2.16.2':
+    resolution: {integrity: sha512-Mz/L7XKuYcOagNU3taTLGkAdSsjUYdQxhTwT+vOuxxzBfRuLp6tX1Vuy2LObxkmZFEaBNSpcteRvxmD4Ppio1g==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@remix-run/server-runtime@2.16.0':
-    resolution: {integrity: sha512-gbuc4slxPi+pT47MrUYprX/wCuDlYL6H3LHZSvimWO1kDCBt8oefHzdHDPjLi4B1xzqXZomswTbuJzpZ7xRRTg==}
+  '@remix-run/server-runtime@2.16.2':
+    resolution: {integrity: sha512-tleEyGfFcczyUzBumDXRV4ns8ghqoCXgiNUrTWmvtI+8Vaw9bIB9Y4/m852YNLz1Kum1d936SobATzijhnEPsA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       typescript: ^5.1.0
@@ -5847,8 +5846,8 @@ packages:
   confbox@0.1.8:
     resolution: {integrity: sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==}
 
-  consola@3.2.3:
-    resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
+  consola@3.4.2:
+    resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
     engines: {node: ^14.18.0 || >=16.10.0}
 
   content-disposition@0.5.4:
@@ -5904,9 +5903,6 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
-
-  crossws@0.3.1:
-    resolution: {integrity: sha512-HsZgeVYaG+b5zA+9PbIPGq4+J/CJynJuearykPsXx4V/eMhyQ5EDVg3Ak2FBZtVXCiOLu/U7IiwDHTr9MA+IKw==}
 
   crossws@0.3.4:
     resolution: {integrity: sha512-uj0O1ETYX1Bh6uSgktfPvwDiPYGQ3aI4qVsaC/LWpkIzGj1nUYm5FK3K+t11oOlpN01lGbprFCH4wBlKdJjVgw==}
@@ -6775,8 +6771,8 @@ packages:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
 
-  ipx@3.0.1:
-    resolution: {integrity: sha512-OqbP9wLqpGXtI/le0sU4exCH5cb7kZS9jaV5xDDM8wZ62VJZBBhEjR0gXwK0agA/GfS4g/GGwY9fFSIFrTb4Gg==}
+  ipx@3.0.3:
+    resolution: {integrity: sha512-c8ZWrM9Rzf8C/W1WoBb9KJ73C76+s3xyBL4iS5WdlPVIObE14tKKW79JIWbMkzhPZw71ZL/mLRMSvQOOhwbj0Q==}
     hasBin: true
 
   iron-webcrypto@1.2.1:
@@ -6925,8 +6921,8 @@ packages:
     resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
     engines: {node: '>=12'}
 
-  isbot@5.1.23:
-    resolution: {integrity: sha512-ie3ehy2iXdkuzaZx32SoKb9b8l9Cm8cqQ1lJjQXnq8GRTrk/Jx7IUDcB4mhlw6H3gWaMqGYoWeV0lPv1P/20Ig==}
+  isbot@5.1.25:
+    resolution: {integrity: sha512-mqU76fmT7cpGG0JX1EzhCZIC+xovpH6TD2SAK18alonk0RG/RgChpGduJTYzRaq9a0COoFA99M9JVtEUOcScIw==}
     engines: {node: '>=18'}
 
   isexe@2.0.0:
@@ -7581,6 +7577,9 @@ packages:
   node-fetch-native@1.6.4:
     resolution: {integrity: sha512-IhOigYzAKHd244OC0JIMIUrjzctirCmPkaIfhDeGcEETWof5zKYUW7e7MYvChGWh/4CJeXEgsRyGzuF334rOOQ==}
 
+  node-fetch-native@1.6.6:
+    resolution: {integrity: sha512-8Mc2HhqPdlIfedsuZoc3yioPuzp6b+L5jRCRY1QzuWZh2EGJVQrGppC6V6cF0bLdbW0+O2YpqCA25aF/1lvipQ==}
+
   node-fetch@2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
     engines: {node: 4.x || >=6.0.0}
@@ -7793,9 +7792,6 @@ packages:
 
   pathe@1.1.2:
     resolution: {integrity: sha512-whLdWMYL2TwI08hn8/ZqAbrVemu0LNaNNJZX73O6qaIdCTfXutsLhMkjdENX0qhsQ9uIimo4/aQOmXkoon2nDQ==}
-
-  pathe@2.0.2:
-    resolution: {integrity: sha512-15Ztpk+nov8DR524R4BF7uEuzESgzUEAV4Ah7CUMNGXdE5ELuvxElxGXndBl32vMSsWa1jpNf22Z+Er3sKwq+w==}
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
@@ -8114,8 +8110,8 @@ packages:
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  react-router@7.3.0:
-    resolution: {integrity: sha512-466f2W7HIWaNXTKM5nHTqNxLrHTyXybm7R0eBlVSt0k/u55tTCDO194OIx/NrYD4TS5SXKTNekXfT37kMKUjgw==}
+  react-router@7.4.0:
+    resolution: {integrity: sha512-Y2g5ObjkvX3VFeVt+0CIPuYd9PpgqCslG7ASSIdN73LwA1nNWzcMLaoMRJfP3prZFI92svxFwbn7XkLJ+UPQ6A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
@@ -8814,9 +8810,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  ufo@1.5.3:
-    resolution: {integrity: sha512-Y7HYmWaFwPUmkoQCUIAYpKqkOf+SbVj/2fJJZ4RJMCfZp0rTGwRbzQD+HghfnhKOjL9E01okqz+ncJskGYfBNw==}
-
   ufo@1.5.4:
     resolution: {integrity: sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ==}
 
@@ -8914,27 +8907,27 @@ packages:
     resolution: {integrity: sha512-5liCNPuJW8dqh3+DM6uNM2EI3MLLpCKp/KY+9pB5M2S2SR2qvvDHhKgBOaTWEbZTAws3CXfB0rKTIolWKL05VQ==}
     engines: {node: '>=14.0.0'}
 
-  unstorage@1.14.4:
-    resolution: {integrity: sha512-1SYeamwuYeQJtJ/USE1x4l17LkmQBzg7deBJ+U9qOBoHo15d1cDxG4jM31zKRgF7pG0kirZy4wVMX6WL6Zoscg==}
+  unstorage@1.15.0:
+    resolution: {integrity: sha512-m40eHdGY/gA6xAPqo8eaxqXgBuzQTlAKfmB1iF7oCKXE1HfwHwzDJBywK+qQGn52dta+bPlZluPF7++yR3p/bg==}
     peerDependencies:
       '@azure/app-configuration': ^1.8.0
       '@azure/cosmos': ^4.2.0
       '@azure/data-tables': ^13.3.0
-      '@azure/identity': ^4.5.0
+      '@azure/identity': ^4.6.0
       '@azure/keyvault-secrets': ^4.9.0
       '@azure/storage-blob': ^12.26.0
       '@capacitor/preferences': ^6.0.3
-      '@deno/kv': '>=0.8.4'
+      '@deno/kv': '>=0.9.0'
       '@netlify/blobs': ^6.5.0 || ^7.0.0 || ^8.1.0
       '@planetscale/database': ^1.19.0
       '@upstash/redis': ^1.34.3
-      '@vercel/blob': '>=0.27.0'
+      '@vercel/blob': '>=0.27.1'
       '@vercel/kv': ^1.0.1
       aws4fetch: ^1.0.20
       db0: '>=0.2.1'
       idb-keyval: ^6.2.1
       ioredis: ^5.4.2
-      uploadthing: ^7.4.1
+      uploadthing: ^7.4.4
     peerDependenciesMeta:
       '@azure/app-configuration':
         optional: true
@@ -9089,8 +9082,8 @@ packages:
   vfile@5.3.6:
     resolution: {integrity: sha512-ADBsmerdGBs2WYckrLBEmuETSPyTD4TuLxTrw0DvjirxW1ra4ZwkbzG8ndsv3Q57smvHxo677MHaQrY9yxH8cA==}
 
-  vike@0.4.224:
-    resolution: {integrity: sha512-EesWnstUnG6AfPVWUKWa91tbmpz6oHWn7Hb/L8bRWGCSAyooPIZwWged9/oDIKiH1rLm5CmZixcFFPeChh4Bgg==}
+  vike@0.4.227:
+    resolution: {integrity: sha512-poAckU/7H0oJlevVveWLE7isv81fZYilKpiW55UWPsSC5gnuAJflUevuQ4kWvQEiURh8L5BsggrzOCHHN4Vrhw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -9677,7 +9670,7 @@ snapshots:
 
   '@brillout/require-shim@0.1.2': {}
 
-  '@brillout/vite-plugin-server-entry@0.6.3':
+  '@brillout/vite-plugin-server-entry@0.7.1':
     dependencies:
       '@brillout/import': 0.2.6
       '@brillout/picocolors': 1.0.26
@@ -10295,7 +10288,7 @@ snapshots:
       '@eslint/core': 0.12.0
       levn: 0.4.1
 
-  '@fastify/accept-negotiator@1.1.0': {}
+  '@fastify/accept-negotiator@2.0.1': {}
 
   '@fastify/busboy@2.1.1': {}
 
@@ -10743,9 +10736,9 @@ snapshots:
 
   '@netlify/vite-plugin-react-router@1.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))':
     dependencies:
-      '@react-router/node': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
-      isbot: 5.1.23
-      react-router: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@react-router/node': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      isbot: 5.1.25
+      react-router: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       vite: 5.4.11(@types/node@22.13.10)
     transitivePeerDependencies:
       - react
@@ -10770,7 +10763,7 @@ snapshots:
 
   '@npmcli/fs@3.1.0':
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@npmcli/git@4.1.0':
     dependencies:
@@ -10780,7 +10773,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.6.3
+      semver: 7.7.1
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -10793,7 +10786,7 @@ snapshots:
       json-parse-even-better-errors: 3.0.1
       normalize-package-data: 5.0.0
       proc-log: 3.0.0
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - bluebird
 
@@ -11633,7 +11626,7 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
+  '@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/generator': 7.26.2
@@ -11644,7 +11637,7 @@ snapshots:
       '@babel/traverse': 7.25.9
       '@babel/types': 7.26.0
       '@npmcli/package-json': 4.0.1
-      '@react-router/node': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/node': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.8
       chokidar: 4.0.3
@@ -11658,14 +11651,14 @@ snapshots:
       picocolors: 1.1.1
       prettier: 2.8.7
       react-refresh: 0.14.2
-      react-router: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      semver: 7.6.3
+      react-router: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      semver: 7.7.1
       set-cookie-parser: 2.6.0
       valibot: 0.41.0(typescript@5.8.2)
       vite: 5.4.11(@types/node@22.13.10)
       vite-node: 3.0.0-beta.2(@types/node@22.13.10)
     optionalDependencies:
-      '@react-router/serve': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/serve': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       typescript: 5.8.2
       wrangler: 3.63.2(@cloudflare/workers-types@4.20240701.0)
     transitivePeerDependencies:
@@ -11681,40 +11674,40 @@ snapshots:
       - supports-color
       - terser
 
-  '@react-router/express@7.3.0(express@4.21.1)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
+  '@react-router/express@7.4.0(express@4.21.1)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
     dependencies:
-      '@react-router/node': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/node': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       express: 4.21.1
-      react-router: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      react-router: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
     optionalDependencies:
       typescript: 5.8.2
 
-  '@react-router/fs-routes@7.3.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)':
+  '@react-router/fs-routes@7.4.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(typescript@5.8.2)':
     dependencies:
-      '@react-router/dev': 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@react-router/dev': 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
       minimatch: 9.0.4
     optionalDependencies:
       typescript: 5.8.2
 
-  '@react-router/node@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
+  '@react-router/node@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      react-router: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       source-map-support: 0.5.21
       stream-slice: 0.1.2
       undici: 6.21.0
     optionalDependencies:
       typescript: 5.8.2
 
-  '@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
+  '@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)':
     dependencies:
-      '@react-router/express': 7.3.0(express@4.21.1)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
-      '@react-router/node': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/express': 7.4.0(express@4.21.1)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/node': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       compression: 1.7.4
       express: 4.21.1
       get-port: 5.1.1
       morgan: 1.10.0
-      react-router: 7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      react-router: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -11729,22 +11722,22 @@ snapshots:
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@remix-run/cloudflare-pages@2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)':
+  '@remix-run/cloudflare-pages@2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)':
     dependencies:
       '@cloudflare/workers-types': 4.20240701.0
-      '@remix-run/cloudflare': 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+      '@remix-run/cloudflare': 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
     optionalDependencies:
       typescript: 5.8.2
 
-  '@remix-run/cloudflare@2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)':
+  '@remix-run/cloudflare@2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)':
     dependencies:
       '@cloudflare/kv-asset-handler': 0.1.3
       '@cloudflare/workers-types': 4.20240701.0
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
     optionalDependencies:
       typescript: 5.8.2
 
-  '@remix-run/dev@2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
+  '@remix-run/dev@2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/generator': 7.26.2
@@ -11756,10 +11749,10 @@ snapshots:
       '@babel/types': 7.26.0
       '@mdx-js/mdx': 2.3.0
       '@npmcli/package-json': 4.0.1
-      '@remix-run/node': 2.16.0(typescript@5.8.2)
-      '@remix-run/react': 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+      '@remix-run/node': 2.16.2(typescript@5.8.2)
+      '@remix-run/react': 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
       '@remix-run/router': 1.23.0
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       '@types/mdx': 2.0.13
       '@vanilla-extract/integration': 6.5.0(@types/node@22.13.10)
       arg: 5.0.2
@@ -11796,7 +11789,7 @@ snapshots:
       react-refresh: 0.14.2
       remark-frontmatter: 4.0.1
       remark-mdx-frontmatter: 1.1.1
-      semver: 7.6.3
+      semver: 7.7.1
       set-cookie-parser: 2.6.0
       tar-fs: 2.1.1
       tsconfig-paths: 4.2.0
@@ -11804,7 +11797,7 @@ snapshots:
       vite-node: 3.0.0-beta.2(@types/node@22.13.10)
       ws: 7.5.10
     optionalDependencies:
-      '@remix-run/serve': 2.16.0(typescript@5.8.2)
+      '@remix-run/serve': 2.16.2(typescript@5.8.2)
       typescript: 5.8.2
       vite: 5.4.11(@types/node@22.13.10)
       wrangler: 3.63.2(@cloudflare/workers-types@4.20240701.0)
@@ -11824,16 +11817,16 @@ snapshots:
       - ts-node
       - utf-8-validate
 
-  '@remix-run/express@2.16.0(express@4.21.1)(typescript@5.8.2)':
+  '@remix-run/express@2.16.2(express@4.21.1)(typescript@5.8.2)':
     dependencies:
-      '@remix-run/node': 2.16.0(typescript@5.8.2)
+      '@remix-run/node': 2.16.2(typescript@5.8.2)
       express: 4.21.1
     optionalDependencies:
       typescript: 5.8.2
 
-  '@remix-run/node@2.16.0(typescript@5.8.2)':
+  '@remix-run/node@2.16.2(typescript@5.8.2)':
     dependencies:
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       '@remix-run/web-fetch': 4.4.2
       '@web3-storage/multipart-parser': 1.0.0
       cookie-signature: 1.2.0
@@ -11843,10 +11836,10 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.2
 
-  '@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)':
+  '@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)':
     dependencies:
       '@remix-run/router': 1.23.0
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-router: 6.30.0(react@18.3.0-canary-14898b6a9-20240318)
@@ -11857,10 +11850,10 @@ snapshots:
 
   '@remix-run/router@1.23.0': {}
 
-  '@remix-run/serve@2.16.0(typescript@5.8.2)':
+  '@remix-run/serve@2.16.2(typescript@5.8.2)':
     dependencies:
-      '@remix-run/express': 2.16.0(express@4.21.1)(typescript@5.8.2)
-      '@remix-run/node': 2.16.0(typescript@5.8.2)
+      '@remix-run/express': 2.16.2(express@4.21.1)(typescript@5.8.2)
+      '@remix-run/node': 2.16.2(typescript@5.8.2)
       chokidar: 3.6.0
       compression: 1.7.4
       express: 4.21.1
@@ -11871,7 +11864,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@remix-run/server-runtime@2.16.0(typescript@5.8.2)':
+  '@remix-run/server-runtime@2.16.2(typescript@5.8.2)':
     dependencies:
       '@remix-run/router': 1.23.0
       '@types/cookie': 0.6.0
@@ -12492,21 +12485,21 @@ snapshots:
 
   '@vanilla-extract/private@1.0.5': {}
 
-  '@vercel/react-router@1.1.0(@react-router/dev@7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.23)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/react-router@1.1.0(@react-router/dev@7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@react-router/node@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(isbot@5.1.25)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@react-router/dev': 7.3.0(@react-router/serve@7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@react-router/node': 7.3.0(react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
+      '@react-router/dev': 7.4.0(@react-router/serve@7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2))(@types/node@22.13.10)(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@react-router/node': 7.4.0(react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318))(typescript@5.8.2)
       '@vercel/static-config': 3.0.0
-      isbot: 5.1.23
+      isbot: 5.1.25
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       ts-morph: 12.0.0
 
-  '@vercel/remix@2.15.3(@remix-run/dev@2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.0(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.15.3(@remix-run/dev@2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.2(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.16.0(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.0(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
-      '@remix-run/node': 2.16.0(typescript@5.8.2)
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/dev': 2.16.2(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.2(typescript@5.8.2))(@types/node@22.13.10)(typescript@5.8.2)(vite@5.4.11(@types/node@22.13.10))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0))
+      '@remix-run/node': 2.16.2(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       '@vercel/static-config': 3.0.0
       isbot: 3.6.13
       react: 18.3.0-canary-14898b6a9-20240318
@@ -12963,7 +12956,7 @@ snapshots:
 
   capnp-ts@0.7.0:
     dependencies:
-      debug: 4.3.7
+      debug: 4.4.0
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
@@ -13021,7 +13014,7 @@ snapshots:
 
   citty@0.1.6:
     dependencies:
-      consola: 3.2.3
+      consola: 3.4.2
 
   clean-regexp@1.0.0:
     dependencies:
@@ -13129,7 +13122,7 @@ snapshots:
 
   confbox@0.1.8: {}
 
-  consola@3.2.3: {}
+  consola@3.4.2: {}
 
   content-disposition@0.5.4:
     dependencies:
@@ -13168,10 +13161,6 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
-
-  crossws@0.3.1:
-    dependencies:
-      uncrypto: 0.1.3
 
   crossws@0.3.4:
     dependencies:
@@ -14217,11 +14206,11 @@ snapshots:
 
   ipaddr.js@1.9.1: {}
 
-  ipx@3.0.1:
+  ipx@3.0.3:
     dependencies:
-      '@fastify/accept-negotiator': 1.1.0
+      '@fastify/accept-negotiator': 2.0.1
       citty: 0.1.6
-      consola: 3.2.3
+      consola: 3.4.2
       defu: 6.1.4
       destr: 2.0.3
       etag: 1.8.1
@@ -14229,11 +14218,11 @@ snapshots:
       image-meta: 0.2.1
       listhen: 1.9.0
       ofetch: 1.4.1
-      pathe: 1.1.2
+      pathe: 2.0.3
       sharp: 0.33.5
       svgo: 3.3.2
-      ufo: 1.5.3
-      unstorage: 1.14.4
+      ufo: 1.5.4
+      unstorage: 1.15.0
       xss: 1.0.15
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -14366,7 +14355,7 @@ snapshots:
 
   isbot@3.6.13: {}
 
-  isbot@5.1.23: {}
+  isbot@5.1.25: {}
 
   isexe@2.0.0: {}
 
@@ -14476,8 +14465,8 @@ snapshots:
       '@parcel/watcher-wasm': 2.5.0
       citty: 0.1.6
       clipboardy: 4.0.0
-      consola: 3.2.3
-      crossws: 0.3.1
+      consola: 3.4.2
+      crossws: 0.3.4
       defu: 6.1.4
       get-port-please: 3.1.2
       h3: 1.15.1
@@ -15299,7 +15288,7 @@ snapshots:
   mlly@1.7.4:
     dependencies:
       acorn: 8.14.1
-      pathe: 2.0.2
+      pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.5.4
 
@@ -15378,6 +15367,8 @@ snapshots:
 
   node-fetch-native@1.6.4: {}
 
+  node-fetch-native@1.6.6: {}
+
   node-fetch@2.6.9:
     dependencies:
       whatwg-url: 5.0.0
@@ -15392,7 +15383,7 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.1
       is-core-module: 2.13.0
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@6.0.2:
@@ -15405,7 +15396,7 @@ snapshots:
 
   npm-install-checks@6.3.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-normalize-package-bin@3.0.1: {}
 
@@ -15413,7 +15404,7 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-name: 5.0.0
 
   npm-pick-manifest@8.0.2:
@@ -15421,7 +15412,7 @@ snapshots:
       npm-install-checks: 6.3.0
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-run-path@4.0.1:
     dependencies:
@@ -15621,8 +15612,6 @@ snapshots:
 
   pathe@1.1.2: {}
 
-  pathe@2.0.2: {}
-
   pathe@2.0.3: {}
 
   pathval@2.0.0: {}
@@ -15653,7 +15642,7 @@ snapshots:
     dependencies:
       confbox: 0.1.8
       mlly: 1.7.4
-      pathe: 2.0.2
+      pathe: 2.0.3
 
   playwright-core@1.50.1: {}
 
@@ -15911,7 +15900,7 @@ snapshots:
       '@remix-run/router': 1.23.0
       react: 18.3.0-canary-14898b6a9-20240318
 
-  react-router@7.3.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
+  react-router@7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
     dependencies:
       '@types/cookie': 0.6.0
       cookie: 1.0.1
@@ -16043,53 +16032,53 @@ snapshots:
       mdast-util-to-hast: 12.3.0
       unified: 10.1.2
 
-  remix-auth-form@1.5.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))):
+  remix-auth-form@1.5.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))):
     dependencies:
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
-      remix-auth: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
+      remix-auth: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
 
-  remix-auth-github@1.7.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))):
+  remix-auth-github@1.7.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))):
     dependencies:
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
-      remix-auth: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
-      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
+      remix-auth: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
+      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth-google@2.0.0(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))):
+  remix-auth-google@2.0.0(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))):
     dependencies:
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
-      remix-auth: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
-      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)))
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
+      remix-auth: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
+      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)))
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth-oauth2@1.11.2(@remix-run/server-runtime@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))):
+  remix-auth-oauth2@1.11.2(@remix-run/server-runtime@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))):
     dependencies:
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       debug: 4.3.7
-      remix-auth: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
+      remix-auth: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth-oauth2@2.3.0(@remix-run/cloudflare@2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2))(@remix-run/node@2.16.0(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))):
+  remix-auth-oauth2@2.3.0(@remix-run/cloudflare@2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2))(@remix-run/node@2.16.2(typescript@5.8.2))(remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))):
     dependencies:
       '@oslojs/crypto': 0.6.2
       '@oslojs/encoding': 0.4.1
       '@oslojs/oauth2': 0.5.0
       debug: 4.3.7
-      remix-auth: 3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2))
+      remix-auth: 3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2))
     optionalDependencies:
-      '@remix-run/cloudflare': 2.16.0(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
-      '@remix-run/node': 2.16.0(typescript@5.8.2)
+      '@remix-run/cloudflare': 2.16.2(@cloudflare/workers-types@4.20240701.0)(typescript@5.8.2)
+      '@remix-run/node': 2.16.2(typescript@5.8.2)
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth@3.7.0(@remix-run/react@2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.0(typescript@5.8.2)):
+  remix-auth@3.7.0(@remix-run/react@2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.2(typescript@5.8.2)):
     dependencies:
-      '@remix-run/react': 2.16.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
-      '@remix-run/server-runtime': 2.16.0(typescript@5.8.2)
+      '@remix-run/react': 2.16.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2)
+      '@remix-run/server-runtime': 2.16.2(typescript@5.8.2)
       uuid: 8.3.2
 
   remove-accents@0.5.0: {}
@@ -16250,7 +16239,7 @@ snapshots:
     dependencies:
       color: 4.2.3
       detect-libc: 2.0.3
-      semver: 7.6.3
+      semver: 7.7.1
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.5
       '@img/sharp-darwin-x64': 0.33.5
@@ -16657,8 +16646,6 @@ snapshots:
 
   typescript@5.8.2: {}
 
-  ufo@1.5.3: {}
-
   ufo@1.5.4: {}
 
   umzug@3.2.1:
@@ -16682,10 +16669,10 @@ snapshots:
 
   unenv-nightly@1.10.0-1717606461.a117952:
     dependencies:
-      consola: 3.2.3
+      consola: 3.4.2
       defu: 6.1.4
       mime: 3.0.0
-      node-fetch-native: 1.6.4
+      node-fetch-native: 1.6.6
       pathe: 1.1.2
       ufo: 1.5.4
 
@@ -16781,14 +16768,14 @@ snapshots:
       acorn: 8.14.1
       webpack-virtual-modules: 0.6.2
 
-  unstorage@1.14.4:
+  unstorage@1.15.0:
     dependencies:
       anymatch: 3.1.3
-      chokidar: 3.6.0
+      chokidar: 4.0.3
       destr: 2.0.3
       h3: 1.15.1
       lru-cache: 10.4.3
-      node-fetch-native: 1.6.4
+      node-fetch-native: 1.6.6
       ofetch: 1.4.1
       ufo: 1.5.4
 
@@ -16797,7 +16784,7 @@ snapshots:
   untun@0.1.3:
     dependencies:
       citty: 0.1.6
-      consola: 3.2.3
+      consola: 3.4.2
       pathe: 1.1.2
 
   update-browserslist-db@1.1.1(browserslist@4.24.3):
@@ -16908,20 +16895,21 @@ snapshots:
       unist-util-stringify-position: 3.0.3
       vfile-message: 3.1.3
 
-  vike@0.4.224(vite@5.4.11(@types/node@22.13.10)):
+  vike@0.4.227(vite@5.4.11(@types/node@22.13.10)):
     dependencies:
       '@brillout/import': 0.2.6
       '@brillout/json-serializer': 0.5.15
       '@brillout/picocolors': 1.0.26
       '@brillout/require-shim': 0.1.2
-      '@brillout/vite-plugin-server-entry': 0.6.3
+      '@brillout/vite-plugin-server-entry': 0.7.1
       acorn: 8.14.1
       cac: 6.7.14
       es-module-lexer: 1.6.0
       esbuild: 0.24.2
       json5: 2.2.3
       picomatch: 4.0.2
-      semver: 7.6.3
+      semver: 7.7.1
+      sirv: 3.0.1
       source-map-support: 0.5.21
       tinyglobby: 0.2.12
     optionalDependencies:
