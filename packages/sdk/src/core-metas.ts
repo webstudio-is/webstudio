@@ -4,6 +4,7 @@ import {
   PaintBrushIcon,
   SettingsIcon,
   AddTemplateInstanceIcon,
+  BoxIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
 import type {
@@ -23,6 +24,18 @@ const rootMeta: WsComponentMeta = {
 };
 
 const rootPropsMeta: WsComponentPropsMeta = {
+  props: {},
+};
+
+export const elementComponent = "ws:element";
+
+const elementMeta: WsComponentMeta = {
+  type: "container",
+  label: "Element",
+  icon: BoxIcon,
+};
+
+const elementPropsMeta: WsComponentPropsMeta = {
   props: {},
 };
 
@@ -129,6 +142,7 @@ const blockPropsMeta: WsComponentPropsMeta = {
 
 export const coreMetas = {
   [rootComponent]: rootMeta,
+  [elementComponent]: elementMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
@@ -137,6 +151,7 @@ export const coreMetas = {
 
 export const corePropsMetas = {
   [rootComponent]: rootPropsMeta,
+  [elementComponent]: elementPropsMeta,
   [collectionComponent]: collectionPropsMeta,
   [descendantComponent]: descendantPropsMeta,
   [blockComponent]: blockPropsMeta,
@@ -147,6 +162,7 @@ export const corePropsMetas = {
 // should not be imported as react component
 export const isCoreComponent = (component: string) =>
   component === rootComponent ||
+  component === elementComponent ||
   component === collectionComponent ||
   component === descendantComponent ||
   component === blockComponent ||
