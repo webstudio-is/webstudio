@@ -28,6 +28,7 @@ export const Instance = z.object({
   type: z.literal("instance"),
   id: InstanceId,
   component: z.string(),
+  tag: z.string().optional(),
   label: z.string().optional(),
   children: z.array(InstanceChild),
 });

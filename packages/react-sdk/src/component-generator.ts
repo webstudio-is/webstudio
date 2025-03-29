@@ -19,8 +19,10 @@ import {
   collectionComponent,
   descendantComponent,
   getIndexesWithinAncestors,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
+import { standardAttributesToReactProps } from "./standard-attributes";
 
 /**
  * (arg1) => {
@@ -192,6 +194,10 @@ export const generateJsxElement = ({
     if (isAttributeNameSafe(prop.name) === false) {
       continue;
     }
+    let name = prop.name;
+    if (instance.component === elementComponent) {
+      name = standardAttributesToReactProps[prop.name] ?? prop.name;
+    }
 
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
@@ -217,12 +223,12 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className" && propValue !== undefined) {
+    if (name === "className" && propValue !== undefined) {
       classNameValue = propValue;
       continue;
     }
     if (propValue !== undefined) {
-      generatedProps += `\n${prop.name}={${propValue}}`;
+      generatedProps += `\n${name}={${propValue}}`;
     }
   }
 
@@ -263,6 +269,15 @@ export const generateJsxElement = ({
     generatedElement += `)}\n`;
   } else if (instance.component === blockComponent) {
     generatedElement += children;
+  } else if (instance.component === elementComponent) {
+    const tagName = instance.tag ?? "div";
+    if (instance.children.length === 0) {
+      generatedElement += `<${tagName}${generatedProps} />\n`;
+    } else {
+      generatedElement += `<${tagName}${generatedProps}>\n`;
+      generatedElement += children;
+      generatedElement += `</${tagName}>\n`;
+    }
   } else {
     const [_namespace, shortName] = parseComponentName(instance.component);
     const componentVariable = scope.getName(instance.component, shortName);
