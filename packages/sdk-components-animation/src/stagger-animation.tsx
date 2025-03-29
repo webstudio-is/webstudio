@@ -35,6 +35,7 @@ export const StaggerAnimation = forwardRef<
   ElementRef<"div">,
   StaggerAnimationProps
 >(({ slidingWindow = 1, easing = "linear", ...props }, ref) => {
+  // Implementation is located in private-src
   return <div ref={ref} {...props} />;
 });
 
