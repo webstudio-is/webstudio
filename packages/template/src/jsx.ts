@@ -254,10 +254,15 @@ export const renderTemplate = (
   };
   const children = traverseJsx(root, (element, children) => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
+    let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
       const [_name, value] = entry;
       let [name] = entry;
       if (name === "ws:id" || name === "ws:label" || name === "children") {
+        continue;
+      }
+      if (name === "ws:tag") {
+        tag = value as string;
         continue;
       }
       if (name === "ws:style") {
@@ -339,9 +344,6 @@ export const renderTemplate = (
       type: "instance",
       id: instanceId,
       component,
-      ...(element.props?.["ws:label"]
-        ? { label: element.props?.["ws:label"] }
-        : undefined),
       children: children.map((child): Instance["children"][number] => {
         if (typeof child === "string") {
           return { type: "text", value: child };
@@ -356,6 +358,12 @@ export const renderTemplate = (
         return { type: "id", value: child.props?.["ws:id"] ?? getId(child) };
       }),
     };
+    if (element.props?.["ws:label"]) {
+      instance.label = element.props?.["ws:label"];
+    }
+    if (tag) {
+      instance.tag = tag;
+    }
     instances.push(instance);
     return { type: "id", value: instance.id };
   });
@@ -407,6 +415,7 @@ type ComponentProps = Record<string, unknown> &
   Record<`${string}:expression`, string> & {
     "ws:id"?: string;
     "ws:label"?: string;
+    "ws:tag"?: string;
     "ws:style"?: TemplateStyleDecl[];
     "ws:show"?: boolean | Expression;
     children?: ReactNode | Expression | PlaceholderValue;
