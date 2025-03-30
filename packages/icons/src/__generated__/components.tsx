@@ -4356,6 +4356,30 @@ export const SpinnerIcon: IconComponent = forwardRef(
 );
 SpinnerIcon.displayName = "SpinnerIcon";
 
+export const StaggerAnimationIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14.222 5H8.778A.778.778 0 0 0 8 5.778v5.444c0 .43.348.778.778.778h5.444c.43 0 .778-.348.778-.778V5.778A.778.778 0 0 0 14.222 5ZM5.444 6H1.556A.556.556 0 0 0 1 6.556v3.888c0 .307.249.556.556.556h3.888A.556.556 0 0 0 6 10.444V6.556A.556.556 0 0 0 5.444 6Z"
+        />
+      </svg>
+    );
+  }
+);
+StaggerAnimationIcon.displayName = "StaggerAnimationIcon";
+
 export const StopIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

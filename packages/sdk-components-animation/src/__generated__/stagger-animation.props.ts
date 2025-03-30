@@ -22,19 +22,10 @@ export const props: Record<string, PropMeta> = {
   },
   slidingWindow: {
     description:
-      "Size of the sliding window for the animation:\n- 0: Typewriter effect (no animation).\n- (0..1]: Animates one part of the text at a time.\n- (1..n]: Animates multiple parts of the text within the sliding window.",
+      "Size of the sliding window for the animation:\n- 0: Typewriter effect (no animation).\n- (0..1]: Animates one child at a time.\n- (1..n]: Animates multiple children within the sliding window.",
     required: false,
     control: "number",
     type: "number",
-    defaultValue: 5,
-  },
-  splitBy: {
-    description:
-      "Defines how the text is split for animation (e.g., by character, space, or symbol).",
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "char",
-    options: ["char", "space", 'symbol "#"', 'symbol "~"'],
+    defaultValue: 1,
   },
 };
