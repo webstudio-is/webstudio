@@ -1,4 +1,4 @@
-import { TextAnimationIcon } from "@webstudio-is/icons/svg";
+import { StaggerAnimationIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/stagger-animation.props";
 
@@ -7,7 +7,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   description:
     "Stagger animation allows you to animate children elements with a sliding window.",
-  icon: TextAnimationIcon,
+  icon: StaggerAnimationIcon,
   order: 6,
   label: "Stagger Animation",
   constraints: [
