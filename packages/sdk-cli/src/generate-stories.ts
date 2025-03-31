@@ -13,10 +13,7 @@ import {
   coreMetas,
   generateCss,
 } from "@webstudio-is/sdk";
-import {
-  generateWebstudioComponent,
-  namespaceMeta,
-} from "@webstudio-is/react-sdk";
+import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
 const WS_NAMESPACE = "ws";
@@ -150,17 +147,13 @@ export const generateStories = async () => {
         );
         namespaceMetas = new Map(Object.entries(await import(metasUrl)));
       }
-      for (let [name, meta] of namespaceMetas) {
+      for (const [name, meta] of namespaceMetas) {
+        let prefixedName = name;
         if (namespace !== BASE_NAMESPACE && namespace !== WS_NAMESPACE) {
-          name = `${namespace}:${name}`;
-          meta = namespaceMeta(
-            meta as WsComponentMeta,
-            namespace,
-            new Set(metas.keys())
-          );
+          prefixedName = `${namespace}:${name}`;
         }
-        if (components.has(name)) {
-          usedMetas.set(name, meta as WsComponentMeta);
+        if (components.has(prefixedName)) {
+          usedMetas.set(prefixedName, meta as WsComponentMeta);
         }
       }
     }

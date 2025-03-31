@@ -13,6 +13,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { div, button, h2, p } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsDialog,
   propsDialogContent,
@@ -30,7 +31,7 @@ export const metaDialogTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Dialog" },
+    component: { $eq: radix.Dialog },
   },
 };
 
@@ -43,11 +44,11 @@ export const metaDialogOverlay: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "Dialog" },
+      component: { $eq: radix.Dialog },
     },
     {
       relation: "descendant",
-      component: { $eq: "DialogContent" },
+      component: { $eq: radix.DialogContent },
     },
   ],
 };
@@ -61,23 +62,23 @@ export const metaDialogContent: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "DialogOverlay" },
+      component: { $eq: radix.DialogOverlay },
     },
     // often deleted by users
     // though radix starts throwing warnings in console
     /*
     {
       relation: "descendant",
-      component: { $eq: "DialogTitle" },
+      component: { $eq: radix.DialogTitle },
     },
     {
       relation: "descendant",
-      component: { $eq: "DialogDescription" },
+      component: { $eq: radix.DialogDescription },
     },
     */
     {
       relation: "descendant",
-      component: { $eq: "DialogClose" },
+      component: { $eq: radix.DialogClose },
     },
   ],
 };
@@ -90,7 +91,7 @@ export const metaDialogTitle: WsComponentMeta = {
   icon: HeadingIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "DialogContent" },
+    component: { $eq: radix.DialogContent },
   },
 };
 
@@ -102,7 +103,7 @@ export const metaDialogDescription: WsComponentMeta = {
   icon: TextIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "DialogContent" },
+    component: { $eq: radix.DialogContent },
   },
 };
 
@@ -116,7 +117,7 @@ export const metaDialogClose: WsComponentMeta = {
   label: "Close Button",
   constraints: {
     relation: "ancestor",
-    component: { $eq: "DialogContent" },
+    component: { $eq: radix.DialogContent },
   },
 };
 
@@ -126,11 +127,11 @@ export const metaDialog: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "DialogTrigger" },
+      component: { $eq: radix.DialogTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "DialogOverlay" },
+      component: { $eq: radix.DialogOverlay },
     },
   ],
 };

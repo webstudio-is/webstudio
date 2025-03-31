@@ -11,6 +11,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsTabs,
@@ -29,15 +30,15 @@ export const metaTabs: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "TabsTrigger" },
+      component: { $eq: radix.TabsTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "TabsList" },
+      component: { $eq: radix.TabsList },
     },
     {
       relation: "descendant",
-      component: { $eq: "TabsContent" },
+      component: { $eq: radix.TabsContent },
     },
   ],
   presetStyle,
@@ -48,7 +49,7 @@ export const metaTabsList: WsComponentMeta = {
   icon: HeaderIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Tabs" },
+    component: { $eq: radix.Tabs },
   },
   presetStyle,
 };
@@ -59,14 +60,14 @@ export const metaTabsTrigger: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "TabsList" },
+      component: { $eq: radix.TabsList },
     },
     {
       relation: "ancestor",
-      component: { $neq: "TabsTrigger" },
+      component: { $neq: radix.TabsTrigger },
     },
   ],
-  indexWithinAncestor: "Tabs",
+  indexWithinAncestor: radix.Tabs,
   label: "Tab Trigger",
   states: [
     ...defaultStates,
@@ -87,9 +88,9 @@ export const metaTabsContent: WsComponentMeta = {
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Tabs" },
+    component: { $eq: radix.Tabs },
   },
-  indexWithinAncestor: "Tabs",
+  indexWithinAncestor: radix.Tabs,
   presetStyle,
 };
 

@@ -1,6 +1,7 @@
 import { TooltipIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsTooltip,
   propsTooltipContent,
@@ -13,7 +14,7 @@ export const metaTooltipTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Tooltip" },
+    component: { $eq: radix.Tooltip },
   },
 };
 
@@ -25,7 +26,7 @@ export const metaTooltipContent: WsComponentMeta = {
   },
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Tooltip" },
+    component: { $eq: radix.Tooltip },
   },
 };
 
@@ -34,11 +35,11 @@ export const metaTooltip: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "TooltipTrigger" },
+      component: { $eq: radix.TooltipTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "TooltipContent" },
+      component: { $eq: radix.TooltipContent },
     },
   ],
   icon: TooltipIcon,

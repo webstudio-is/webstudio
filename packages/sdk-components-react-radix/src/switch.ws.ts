@@ -5,6 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import { propsSwitch, propsSwitchThumb } from "./__generated__/switch.props";
 
@@ -12,7 +13,7 @@ export const metaSwitch: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "descendant",
-    component: { $eq: "SwitchThumb" },
+    component: { $eq: radix.SwitchThumb },
   },
   icon: SwitchIcon,
   states: [
@@ -37,7 +38,7 @@ export const metaSwitchThumb: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Switch" },
+    component: { $eq: radix.Switch },
   },
   icon: TriggerIcon,
   states: [

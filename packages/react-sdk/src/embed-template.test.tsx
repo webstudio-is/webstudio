@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
+import { generateDataFromEmbedTemplate } from "./embed-template";
 import { showAttribute } from "./props";
 
 const expectString = expect.any(String);
@@ -662,33 +662,5 @@ test("generate data for embedding from instance child bound to variables", () =>
     assets: [],
     breakpoints: [],
     resources: [],
-  });
-});
-
-test("add namespace to constants and indexWithinAncestor", () => {
-  expect(
-    namespaceMeta(
-      {
-        type: "container",
-        label: "",
-        icon: "",
-        constraints: {
-          relation: "ancestor",
-          component: { $nin: ["Button", "Box"] },
-        },
-        indexWithinAncestor: "Tooltip",
-      },
-      "my-namespace",
-      new Set(["Tooltip", "Button"])
-    )
-  ).toEqual({
-    type: "container",
-    label: "",
-    icon: "",
-    constraints: {
-      relation: "ancestor",
-      component: { $nin: ["my-namespace:Button", "my-namespace:Box"] },
-    },
-    indexWithinAncestor: "my-namespace:Tooltip",
   });
 });

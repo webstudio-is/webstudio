@@ -5,6 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsRadioGroup,
@@ -16,7 +17,7 @@ export const metaRadioGroup: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "descendant",
-    component: { $eq: "RadioGroupItem" },
+    component: { $eq: radix.RadioGroupItem },
   },
   icon: RadioGroupIcon,
   states: [
@@ -42,11 +43,11 @@ export const metaRadioGroupItem: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "RadioGroup" },
+      component: { $eq: radix.RadioGroup },
     },
     {
       relation: "descendant",
-      component: { $eq: "RadioGroupIndicator" },
+      component: { $eq: radix.RadioGroupIndicator },
     },
   ],
   icon: ItemIcon,
@@ -61,7 +62,7 @@ export const metaRadioGroupIndicator: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "RadioGroupItem" },
+    component: { $eq: radix.RadioGroupItem },
   },
   states: defaultStates,
   presetStyle: {

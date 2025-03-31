@@ -9,6 +9,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsNavigationMenu,
   propsNavigationMenuItem,
@@ -28,11 +29,11 @@ export const metaNavigationMenu: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "NavigationMenuList" },
+      component: { $eq: radix.NavigationMenuList },
     },
     {
       relation: "descendant",
-      component: { $eq: "NavigationMenuViewport" },
+      component: { $eq: radix.NavigationMenuViewport },
     },
   ],
 };
@@ -43,11 +44,11 @@ export const metaNavigationMenuList: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "NavigationMenu" },
+      component: { $eq: radix.NavigationMenu },
     },
     {
       relation: "descendant",
-      component: { $eq: "NavigationMenuItem" },
+      component: { $eq: radix.NavigationMenuItem },
     },
   ],
   presetStyle: {
@@ -61,12 +62,12 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   icon: ListItemIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "NavigationMenuList" },
+    component: { $eq: radix.NavigationMenuList },
   },
   presetStyle: {
     div,
   },
-  indexWithinAncestor: "NavigationMenu",
+  indexWithinAncestor: radix.NavigationMenu,
   label: "Menu Item",
 };
 
@@ -75,7 +76,7 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "NavigationMenuItem" },
+    component: { $eq: radix.NavigationMenuItem },
   },
   label: "Menu Trigger",
 };
@@ -85,9 +86,9 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "NavigationMenuItem" },
+    component: { $eq: radix.NavigationMenuItem },
   },
-  indexWithinAncestor: "NavigationMenu",
+  indexWithinAncestor: radix.NavigationMenu,
   presetStyle: {
     div,
   },
@@ -100,11 +101,13 @@ export const metaNavigationMenuLink: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "NavigationMenu" },
+      component: { $eq: radix.NavigationMenu },
     },
     {
       relation: "ancestor",
-      component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
+      component: {
+        $in: [radix.NavigationMenuContent, radix.NavigationMenuItem],
+      },
     },
   ],
   label: "Accessible Link Wrapper",
@@ -115,7 +118,7 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   icon: ViewportIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "NavigationMenu" },
+    component: { $eq: radix.NavigationMenu },
   },
   presetStyle: {
     div,

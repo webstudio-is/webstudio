@@ -12,6 +12,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsAccordion,
@@ -32,7 +33,7 @@ export const metaAccordion: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "AccordionItem" },
+      component: { $eq: radix.AccordionItem },
     },
   ],
 };
@@ -44,18 +45,18 @@ export const metaAccordionItem: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "Accordion" },
+      component: { $eq: radix.Accordion },
     },
     {
       relation: "descendant",
-      component: { $eq: "AccordionHeader" },
+      component: { $eq: radix.AccordionHeader },
     },
     {
       relation: "descendant",
-      component: { $eq: "AccordionContent" },
+      component: { $eq: radix.AccordionContent },
     },
   ],
-  indexWithinAncestor: "Accordion",
+  indexWithinAncestor: radix.Accordion,
   presetStyle,
 };
 
@@ -66,11 +67,11 @@ export const metaAccordionHeader: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "AccordionItem" },
+      component: { $eq: radix.AccordionItem },
     },
     {
       relation: "descendant",
-      component: { $eq: "AccordionTrigger" },
+      component: { $eq: radix.AccordionTrigger },
     },
   ],
   presetStyle: {
@@ -94,7 +95,7 @@ export const metaAccordionTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "AccordionHeader" },
+    component: { $eq: radix.AccordionHeader },
   },
   states: [
     ...defaultStates,
@@ -115,7 +116,7 @@ export const metaAccordionContent: WsComponentMeta = {
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "AccordionItem" },
+    component: { $eq: radix.AccordionItem },
   },
   presetStyle,
 };

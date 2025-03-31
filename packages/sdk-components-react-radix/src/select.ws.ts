@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsSelect,
   propsSelectContent,
@@ -27,11 +28,11 @@ export const metaSelect: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "SelectTrigger" },
+      component: { $eq: radix.SelectTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectContent" },
+      component: { $eq: radix.SelectContent },
     },
   ],
 };
@@ -45,11 +46,11 @@ export const metaSelectTrigger: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "Select" },
+      component: { $eq: radix.Select },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectValue" },
+      component: { $eq: radix.SelectValue },
     },
   ],
 };
@@ -63,7 +64,7 @@ export const metaSelectValue: WsComponentMeta = {
   },
   constraints: {
     relation: "ancestor",
-    component: { $eq: "SelectTrigger" },
+    component: { $eq: radix.SelectTrigger },
   },
 };
 
@@ -76,11 +77,11 @@ export const metaSelectContent: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "Select" },
+      component: { $eq: radix.Select },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectViewport" },
+      component: { $eq: radix.SelectViewport },
     },
   ],
 };
@@ -94,11 +95,11 @@ export const metaSelectViewport: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "SelectContent" },
+      component: { $eq: radix.SelectContent },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectItem" },
+      component: { $eq: radix.SelectItem },
     },
   ],
 };
@@ -109,15 +110,15 @@ export const metaSelectItem: WsComponentMeta = {
   constraints: [
     {
       relation: "ancestor",
-      component: { $eq: "SelectViewport" },
+      component: { $eq: radix.SelectViewport },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectItemIndicator" },
+      component: { $eq: radix.SelectItemIndicator },
     },
     {
       relation: "descendant",
-      component: { $eq: "SelectItemText" },
+      component: { $eq: radix.SelectItemText },
     },
   ],
   presetStyle: {
@@ -131,7 +132,7 @@ export const metaSelectItemIndicator: WsComponentMeta = {
   icon: CheckMarkIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "SelectItem" },
+    component: { $eq: radix.SelectItem },
   },
   presetStyle: {
     span,
@@ -144,7 +145,7 @@ export const metaSelectItemText: WsComponentMeta = {
   icon: TextIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "SelectItem" },
+    component: { $eq: radix.SelectItem },
   },
   presetStyle: {
     span,

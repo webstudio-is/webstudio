@@ -5,6 +5,7 @@ import {
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsCollapsible,
   propsCollapsibleContent,
@@ -16,11 +17,11 @@ export const metaCollapsible: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "CollapsibleTrigger" },
+      component: { $eq: radix.CollapsibleTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "CollapsibleContent" },
+      component: { $eq: radix.CollapsibleContent },
     },
   ],
   presetStyle: {
@@ -34,7 +35,7 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Collapsible" },
+    component: { $eq: radix.Collapsible },
   },
 };
 
@@ -46,7 +47,7 @@ export const metaCollapsibleContent: WsComponentMeta = {
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Collapsible" },
+    component: { $eq: radix.Collapsible },
   },
 };
 

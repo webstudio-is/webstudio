@@ -1,6 +1,7 @@
 import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsPopover,
   propsPopoverContent,
@@ -13,7 +14,7 @@ export const metaPopoverTrigger: WsComponentMeta = {
   icon: TriggerIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Popover" },
+    component: { $eq: radix.Popover },
   },
 };
 
@@ -25,7 +26,7 @@ export const metaPopoverContent: WsComponentMeta = {
   icon: ContentIcon,
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Popover" },
+    component: { $eq: radix.Popover },
   },
 };
 
@@ -35,11 +36,11 @@ export const metaPopover: WsComponentMeta = {
   constraints: [
     {
       relation: "descendant",
-      component: { $eq: "PopoverTrigger" },
+      component: { $eq: radix.PopoverTrigger },
     },
     {
       relation: "descendant",
-      component: { $eq: "PopoverContent" },
+      component: { $eq: radix.PopoverContent },
     },
   ],
 };
