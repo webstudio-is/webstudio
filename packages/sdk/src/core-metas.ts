@@ -4,7 +4,7 @@ import {
   PaintBrushIcon,
   SettingsIcon,
   AddTemplateInstanceIcon,
-  BoxIcon,
+  HtmlElementIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
 import type {
@@ -32,7 +32,7 @@ export const elementComponent = "ws:element";
 const elementMeta: WsComponentMeta = {
   type: "container",
   label: "Element",
-  icon: BoxIcon,
+  icon: HtmlElementIcon,
 };
 
 const elementPropsMeta: WsComponentPropsMeta = {
