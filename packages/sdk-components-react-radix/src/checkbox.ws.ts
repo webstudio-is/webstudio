@@ -5,6 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsCheckbox,
@@ -15,7 +16,7 @@ export const metaCheckbox: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "descendant",
-    component: { $eq: "CheckboxIndicator" },
+    component: { $eq: radix.CheckboxIndicator },
   },
   icon: CheckboxCheckedIcon,
   states: [
@@ -40,7 +41,7 @@ export const metaCheckboxIndicator: WsComponentMeta = {
   type: "container",
   constraints: {
     relation: "ancestor",
-    component: { $eq: "Checkbox" },
+    component: { $eq: radix.Checkbox },
   },
   icon: TriggerIcon,
   states: defaultStates,
