@@ -4,6 +4,7 @@ import {
   expression,
   renderTemplate,
   renderData,
+  createProxy,
 } from "@webstudio-is/template";
 import { coreMetas } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
@@ -788,21 +789,25 @@ describe("is tree matching", () => {
 });
 
 describe("is instance detachable", () => {
-  const metas = new Map(Object.entries({ ...baseMetas, ...radixMetas }));
+  const metas = new Map(Object.entries(baseMetas));
+  const radix = createProxy("@webstudio-is/sdk-components-react-radix:");
+  for (const [component, meta] of Object.entries(radixMetas)) {
+    metas.set(`@webstudio-is/sdk-components-react-radix:${component}`, meta);
+  }
 
   test("allow deleting one of matching instances", () => {
     expect(
       isInstanceDetachable({
         ...renderData(
           <$.Body ws:id="body">
-            <$.Tabs ws:id="tabs">
-              <$.TabsList ws:id="list">
-                <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
-                <$.TabsTrigger ws:id="trigger2"></$.TabsTrigger>
-              </$.TabsList>
-              <$.TabsContent ws:id="content1"></$.TabsContent>
-              <$.TabsContent ws:id="content2"></$.TabsContent>
-            </$.Tabs>
+            <radix.Tabs ws:id="tabs">
+              <radix.TabsList ws:id="list">
+                <radix.TabsTrigger ws:id="trigger1"></radix.TabsTrigger>
+                <radix.TabsTrigger ws:id="trigger2"></radix.TabsTrigger>
+              </radix.TabsList>
+              <radix.TabsContent ws:id="content1"></radix.TabsContent>
+              <radix.TabsContent ws:id="content2"></radix.TabsContent>
+            </radix.Tabs>
           </$.Body>
         ),
         metas,
@@ -816,12 +821,12 @@ describe("is instance detachable", () => {
       isInstanceDetachable({
         ...renderData(
           <$.Body ws:id="body">
-            <$.Tabs ws:id="tabs">
-              <$.TabsList ws:id="list">
-                <$.TabsTrigger ws:id="trigger1"></$.TabsTrigger>
-              </$.TabsList>
-              <$.TabsContent ws:id="content1"></$.TabsContent>
-            </$.Tabs>
+            <radix.Tabs ws:id="tabs">
+              <radix.TabsList ws:id="list">
+                <radix.TabsTrigger ws:id="trigger1"></radix.TabsTrigger>
+              </radix.TabsList>
+              <radix.TabsContent ws:id="content1"></radix.TabsContent>
+            </radix.Tabs>
           </$.Body>
         ),
         metas,
@@ -835,7 +840,7 @@ describe("is instance detachable", () => {
       isInstanceDetachable({
         ...renderData(
           <$.Body ws:id="body">
-            <$.Tabs ws:id="tabs"></$.Tabs>
+            <radix.Tabs ws:id="tabs"></radix.Tabs>
             <$.Box ws:id="box"></$.Box>
           </$.Body>
         ),
