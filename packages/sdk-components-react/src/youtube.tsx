@@ -10,6 +10,7 @@ import {
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { VimeoContext, requestFullscreen } from "./vimeo";
+import type { Atom } from "nanostores";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -146,6 +147,8 @@ type YouTubePlayerParameters = {
    * This parameter specifies a comma-separated list of video IDs to play
    */
   playlist?: string;
+
+  $progress?: Atom<number | undefined>;
 };
 
 type YouTubePlayerOptions = {
@@ -189,7 +192,10 @@ const getVideoId = (url?: string) => {
   }
 };
 
-const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
+const getVideoUrl = (
+  options: YouTubePlayerOptions & { enablejsapi: boolean },
+  videoUrlOrigin: string
+) => {
   const videoId = getVideoId(options.url);
   const url = new URL(videoUrlOrigin);
 
@@ -208,7 +214,10 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
     }
   }
 
-  const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
+  const optionsKeys = Object.keys(options) as (
+    | keyof YouTubePlayerParameters
+    | "enablejsapi"
+  )[];
 
   const parameters: Record<string, string | undefined> = {};
 
@@ -303,7 +312,12 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
       case "playlist":
         parameters.playlist = options.playlist;
         break;
-
+      case "enablejsapi":
+        parameters.enablejsapi = options.enablejsapi ? "1" : "0";
+        break;
+      case "$progress":
+        // Do nothing
+        break;
       default:
         optionsKey satisfies never;
     }
@@ -372,6 +386,7 @@ type PlayerProps = Pick<
   previewImageUrl?: URL;
   onStatusChange: (status: PlayerStatus) => void;
   onPreviewImageUrlChange: (url?: URL) => void;
+  $progress?: Atom<number | undefined>;
 };
 
 const Player = ({
@@ -386,6 +401,7 @@ const Player = ({
   showPreview,
   onStatusChange,
   onPreviewImageUrlChange,
+  $progress,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
   const ref = useRef<HTMLIFrameElement>(null);
@@ -413,6 +429,33 @@ const Player = ({
       onPreviewImageUrlChange(getPreviewImageUrl(videoId));
     }
   }, [onPreviewImageUrlChange, showPreview, videoUrl, previewImageUrl]);
+
+  useEffect(() => {
+    if ($progress === undefined) {
+      return;
+    }
+
+    return $progress.subscribe((progress) => {
+      if (progress === undefined) {
+        return;
+      }
+
+      if (ref.current === null) {
+        return;
+      }
+
+      ref.current.contentWindow?.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: "seekTo",
+          args: [progress * 30, true],
+          id: ref.current.id,
+          channel: "widget",
+        }),
+        "*"
+      );
+    });
+  }, [$progress]);
 
   if (renderer === "canvas" || status === "initial") {
     return null;
@@ -471,6 +514,7 @@ export const YouTube = forwardRef<Ref, Props>(
       children,
       privacyEnhancedMode,
       inline = false,
+      $progress,
       ...rest
     },
     ref
@@ -483,12 +527,14 @@ export const YouTube = forwardRef<Ref, Props>(
       (privacyEnhancedMode ?? true)
         ? PLAYER_PRIVACY_ENHANVED_MODE_CDN
         : PLAYER_ORIGINAL_CDN;
+
     const videoUrl = getVideoUrl(
       {
         ...rest,
         inline,
         url,
         autoplay: true,
+        enablejsapi: $progress !== undefined,
       },
       videoUrlOrigin
     );
@@ -523,6 +569,7 @@ export const YouTube = forwardRef<Ref, Props>(
                 status={status}
                 onStatusChange={setStatus}
                 onPreviewImageUrlChange={setPreviewImageUrl}
+                $progress={$progress}
               />
             </>
           )}

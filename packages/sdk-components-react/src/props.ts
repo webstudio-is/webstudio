@@ -42,3 +42,4 @@ export { propsMeta as HeadSlot } from "./head-slot.ws";
 export { propsMeta as HeadLink } from "./head-link.ws";
 export { propsMeta as HeadMeta } from "./head-meta.ws";
 export { propsMeta as HeadTitle } from "./head-title.ws";
+export { propsMeta as Video } from "./video.ws";
