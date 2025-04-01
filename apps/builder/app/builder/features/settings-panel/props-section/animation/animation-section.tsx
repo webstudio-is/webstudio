@@ -41,6 +41,9 @@ const animationTypeDescription: Record<AnimationAction["type"], string> = {
   view: "View-based animations occur when an element enters or exits the viewport. They rely on the element’s visibility rather than the scroll position.",
 };
 
+const insetDescription =
+  "Adjusts the animation’s start/end position relative to the scrollport. Positive values move it inward (delaying start or hastening end), while negative values move it outward (starting animation before visibility or continuing after disappearance).";
+
 const animationTypes: AnimationAction["type"][] = Object.keys(
   animationTypeDescription
 ) as AnimationAction["type"][];
@@ -247,7 +250,7 @@ export const AnimationSection = ({
           padding: theme.panel.paddingInline,
         }}
       >
-        <FieldLabel description="Allows to preview the animation on the canvas in design mode.">
+        <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the instance.">
           Run on canvas
         </FieldLabel>
         <Tooltip content={value.isPinned ? "Off" : "On"}>
@@ -369,12 +372,12 @@ export const AnimationSection = ({
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel description="Inset defines the point where an element’s left/top edge enters the viewport, setting the start position for the animation’s progress.">
+            <FieldLabel description={insetDescription}>
               {value.axis === "inline" || value.axis === "x"
                 ? "Left Inset"
                 : "Top Inset"}
             </FieldLabel>
-            <FieldLabel description="Inset defines the point where an element’s right/bottom edge enters the viewport, setting the start position for the animation’s progress.">
+            <FieldLabel description={insetDescription}>
               {value.axis === "inline" || value.axis === "x"
                 ? "Right Inset"
                 : "Bottom Inset"}
