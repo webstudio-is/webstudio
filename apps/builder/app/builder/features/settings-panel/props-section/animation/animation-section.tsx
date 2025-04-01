@@ -247,10 +247,10 @@ export const AnimationSection = ({
           padding: theme.panel.paddingInline,
         }}
       >
-        <Text>Run on canvas</Text>
-        <Tooltip
-          content={value.isPinned ? "Don’t run on canvas" : "Run on canvas"}
-        >
+        <FieldLabel description="Allows to preview the animation on the canvas in design mode.">
+          Run on canvas
+        </FieldLabel>
+        <Tooltip content={value.isPinned ? "Off" : "On"}>
           <Switch
             checked={value.isPinned ?? false}
             onCheckedChange={(isPinned) => {
