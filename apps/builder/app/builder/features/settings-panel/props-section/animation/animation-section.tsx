@@ -239,10 +239,6 @@ export const AnimationSection = ({
 
   return (
     <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
-      <Box css={{ height: theme.panel.paddingBlock }} />
-
-      <Separator />
-
       <Grid
         gap={2}
         align={"center"}
@@ -251,7 +247,7 @@ export const AnimationSection = ({
           padding: theme.panel.paddingInline,
         }}
       >
-        <Text variant={"titles"}>Animation</Text>
+        <Text>Run on canvas</Text>
         <Tooltip
           content={value.isPinned ? "Don’t run on canvas" : "Run on canvas"}
         >
@@ -276,7 +272,7 @@ paragraph
 - list item 1
 `}
           >
-            Action
+            Type
           </FieldLabel>
           <Select
             id={fieldIds.type}
@@ -284,11 +280,7 @@ paragraph
             getLabel={humanizeString}
             value={value.type}
             getDescription={(animationType: AnimationAction["type"]) => (
-              <Box
-                css={{
-                  width: theme.spacing[28],
-                }}
-              >
+              <Box css={{ width: theme.spacing[28] }}>
                 {animationTypeDescription[animationType]}
               </Box>
             )}
@@ -304,9 +296,7 @@ paragraph
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
           <FieldLabel>Axis</FieldLabel>
           <ToggleGroup
-            css={{
-              justifySelf: "end",
-            }}
+            css={{ justifySelf: "end" }}
             type="single"
             value={convertAxisToXY(value.axis ?? ("y" as const))}
             onValueChange={(axis: keyof typeof animationAxisDescription) => {
