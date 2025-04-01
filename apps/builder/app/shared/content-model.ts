@@ -143,13 +143,16 @@ const computeAllowedCategories = ({
  * and all elements has own categories. We check intersections to match them.
  *
  * div > span = true
- * because div requires flow category and span has flow category
+ * where div is flow category
+ * and requires flow or phrasing category in children
+ * span is flow and phrasing category
+ * and requires phrasing in children
  *
  * span > div = false
- * because span requires phrasing category while div has flow
+ * because span requires phrasing category in children
  *
  * p > div = false
- * because paragraph also requires phrasing category
+ * because paragraph also requires phrasing category in children
  *
  * Interactive categories and form elements are exception.
  * They pass through negative categories

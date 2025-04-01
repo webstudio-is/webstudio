@@ -28,6 +28,7 @@ import {
   portalComponent,
   collectionComponent,
   Prop,
+  parseComponentName,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -1314,8 +1315,11 @@ export const findClosestInsertable = (
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
     onError: (message) => {
-      const componentName = humanizeString(fragment.instances[0].component);
-      toast.error(message || `Cannot insert "${componentName}"`);
+      const [_namespace, componentName] = parseComponentName(
+        fragment.instances[0].component
+      );
+      const label = humanizeString(componentName);
+      toast.error(message || `Cannot insert "${label}"`);
     },
   });
   if (insertableIndex === -1) {
