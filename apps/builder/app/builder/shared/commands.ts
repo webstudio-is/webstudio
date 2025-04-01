@@ -44,6 +44,7 @@ import {
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
 import { atom } from "nanostores";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -174,9 +175,15 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      const matches = isTreeMatching({
+      let matches = isTreeMatching({
         metas,
         instances: data.instances,
+        instanceSelector: newInstanceSelector,
+      });
+      matches &&= isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas,
         instanceSelector: newInstanceSelector,
       });
       if (matches === false) {
@@ -218,9 +225,15 @@ export const unwrap = () => {
         );
         parentInstance.children.splice(index, 1, ...selectedInstance.children);
       }
-      const matches = isTreeMatching({
+      let matches = isTreeMatching({
         metas: $registeredComponentMetas.get(),
         instances: data.instances,
+        instanceSelector: parentItem.instanceSelector,
+      });
+      matches &&= isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
         instanceSelector: parentItem.instanceSelector,
       });
       if (matches === false) {

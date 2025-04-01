@@ -23,10 +23,6 @@ export const meta: WsComponentMeta = {
   type: "container",
   placeholder: "Link",
   icon: LinkIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
   presetStyle,
   states: [
     ...defaultStates,

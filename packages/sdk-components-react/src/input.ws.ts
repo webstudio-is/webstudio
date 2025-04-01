@@ -21,10 +21,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
   type: "control",
   label: "Text Input",
   description:

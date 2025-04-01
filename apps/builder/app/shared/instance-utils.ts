@@ -1298,6 +1298,7 @@ export const findClosestInsertable = (
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
+  const props = $props.get();
   const closestContainerIndex = findClosestNonTextualContainer({
     metas,
     instances,
@@ -1309,14 +1310,13 @@ export const findClosestInsertable = (
   let insertableIndex = findClosestInstanceMatchingFragment({
     metas,
     instances,
+    props,
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
-    onError: (message) =>
-      toast.error(
-        message === ""
-          ? "findClosestInstanceMatchingFragment encountered an unknown error"
-          : message
-      ),
+    onError: (message) => {
+      const componentName = humanizeString(fragment.instances[0].component);
+      toast.error(message || `Cannot insert "${componentName}"`);
+    },
   });
   if (insertableIndex === -1) {
     return;

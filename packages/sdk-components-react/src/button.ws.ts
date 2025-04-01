@@ -16,10 +16,6 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   icon: ButtonElementIcon,
   type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
   presetStyle,
   states: [
     ...defaultStates,
