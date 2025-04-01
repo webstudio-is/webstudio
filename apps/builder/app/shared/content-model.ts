@@ -145,6 +145,8 @@ const computeAllowedCategories = ({
  * from html-data package. Basically all elements enforce children categories
  * and all elements has own categories. We check intersections to match them.
  *
+ * See https://html.spec.whatwg.org/multipage/indices.html#elements-3
+ *
  * div > span = true
  * where div is flow category
  * and requires flow or phrasing category in children
@@ -157,7 +159,9 @@ const computeAllowedCategories = ({
  * p > div = false
  * because paragraph also requires phrasing category in children
  *
- * Interactive categories and form elements are exception.
+ * Interactive categories and form elements are exception
+ * because button requires phrasing children
+ * and does not prevent nesting interactive elements by content model
  * They pass through negative categories
  *
  * [categories]  [children]
