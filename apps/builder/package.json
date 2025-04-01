@@ -65,6 +65,7 @@
     "@webstudio-is/domain": "workspace:*",
     "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
+    "@webstudio-is/html-data": "workspace:*",
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",

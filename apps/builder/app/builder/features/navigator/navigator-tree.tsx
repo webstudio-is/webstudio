@@ -67,6 +67,7 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 
 type TreeItemAncestor =
   | undefined
@@ -529,6 +530,7 @@ const canDrop = (
 ) => {
   const dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
+  const props = $props.get();
   const metas = $registeredComponentMetas.get();
   // in content mode allow drop only within same block
   if ($isContentMode.get()) {
@@ -550,15 +552,23 @@ const canDrop = (
   if (closestContainerIndex !== 0) {
     return false;
   }
-  return isTreeMatching({
+  // make sure dragging tree can be put inside of drop instance
+  const containerInstanceSelector = [
+    dragSelector[0],
+    ...dropSelector.slice(closestContainerIndex),
+  ];
+  let matches = isTreeMatching({
     instances,
     metas,
-    // make sure dragging tree can be put inside of drop instance
-    instanceSelector: [
-      dragSelector[0],
-      ...dropSelector.slice(closestContainerIndex),
-    ],
+    instanceSelector: containerInstanceSelector,
   });
+  matches &&= isTreeSatisfyingContentModel({
+    instances,
+    metas,
+    props,
+    instanceSelector: containerInstanceSelector,
+  });
+  return matches;
 };
 
 export const NavigatorTree = () => {

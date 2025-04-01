@@ -28,6 +28,7 @@ import {
   portalComponent,
   collectionComponent,
   Prop,
+  parseComponentName,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -1298,6 +1299,7 @@ export const findClosestInsertable = (
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
+  const props = $props.get();
   const closestContainerIndex = findClosestNonTextualContainer({
     metas,
     instances,
@@ -1309,14 +1311,16 @@ export const findClosestInsertable = (
   let insertableIndex = findClosestInstanceMatchingFragment({
     metas,
     instances,
+    props,
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
-    onError: (message) =>
-      toast.error(
-        message === ""
-          ? "findClosestInstanceMatchingFragment encountered an unknown error"
-          : message
-      ),
+    onError: (message) => {
+      const [_namespace, componentName] = parseComponentName(
+        fragment.instances[0].component
+      );
+      const label = humanizeString(componentName);
+      toast.error(message || `Cannot insert "${label}"`);
+    },
   });
   if (insertableIndex === -1) {
     return;

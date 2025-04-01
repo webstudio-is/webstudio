@@ -6,17 +6,17 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:spec": "tsx --conditions=webstudio ./bin/html-crawler.ts"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "parse5": "7.2.1"
   },
-  "peerDependencies": {},
   "exports": {
     "webstudio": "./src/index.ts"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,
-  "sideEffects": false,
-  "dependencies": {}
+  "sideEffects": false
 }
