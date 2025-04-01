@@ -352,3 +352,36 @@ test("prevent nesting forms", () => {
     })
   ).toBeFalsy();
 });
+
+test("edge case: allow wrapping input with label", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Label>
+            <$.Box tag="span">
+              <$.Input />
+            </$.Box>
+          </$.Label>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Label>
+            <$.Box tag="span">
+              <$.Button />
+            </$.Box>
+          </$.Label>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeFalsy();
+});

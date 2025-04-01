@@ -63,6 +63,11 @@ const isTagSatisfyingContentModel = ({
     allowedCategories.includes("non-interactive") &&
     categoriesByTag[tag].includes("interactive")
   ) {
+    // interactive exception, label > input is not recommended but a popular case
+    // to automatically focus input when click on label text without using id
+    if (allowedCategories.includes("label-content") && tag === "input") {
+      return true;
+    }
     return false;
   }
   // prevent nesting form elements
@@ -95,6 +100,11 @@ const getTagChildrenCategories = (
       allowedCategories?.includes("non-interactive"))
   ) {
     childrenCategories = [...childrenCategories, "non-interactive"];
+  }
+  // interactive exception, label > input is not recommended but a popular case
+  // to automatically focus input when click on label text without using id
+  if (tag === "label" || allowedCategories?.includes("label-content")) {
+    childrenCategories = [...childrenCategories, "label-content"];
   }
   // introduce custom non-form category to restrict nesting form elements
   // like form > div > form
