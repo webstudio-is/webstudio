@@ -1,53 +1,53 @@
-import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, type JSX } from "react";
 import { useStore } from "@nanostores/react";
-import { useDebouncedCallback } from "use-debounce";
-import slugify from "slugify";
+import {
+  Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  Flex,
+  Grid,
+  InputErrorsTooltip,
+  InputField,
+  Label,
+  PanelTitle,
+  ScrollArea,
+  Separator,
+  Text,
+  TitleSuffixSpacer,
+  Tooltip,
+  rawTheme,
+  theme,
+} from "@webstudio-is/design-system";
+import {
+  ChevronsLeftIcon,
+  InfoCircleIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import {
   Folder,
   Pages,
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
 } from "@webstudio-is/sdk";
-import {
-  theme,
-  Button,
-  Label,
-  InputErrorsTooltip,
-  Tooltip,
-  InputField,
-  Grid,
-  ScrollArea,
-  rawTheme,
-  Flex,
-  Dialog,
-  DialogContent,
-  Text,
-  DialogClose,
-  DialogTitle,
-  PanelTitle,
-  Separator,
-  TitleSuffixSpacer,
-} from "@webstudio-is/design-system";
-import {
-  ChevronsLeftIcon,
-  TrashIcon,
-  InfoCircleIcon,
-} from "@webstudio-is/icons";
-import { useIds } from "~/shared/form-utils";
-import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
-import { serverSyncStore } from "~/shared/sync";
+import { useCallback, useState, type FocusEventHandler, type JSX } from "react";
+import slugify from "slugify";
+import { useDebouncedCallback } from "use-debounce";
+import { z } from "zod";
+import { useIds } from "~/shared/form-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { useUnmount } from "~/shared/hook-utils/use-mount";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import { $pages, $isDesignMode } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
+import { Form } from "./form";
 import {
-  isSlugAvailable,
-  registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
   deletePageMutable,
+  isSlugAvailable,
+  registerFolderChildMutable,
 } from "./page-utils";
-import { Form } from "./form";
-import { updateWebstudioData } from "~/shared/instance-utils";
-import { useUnmount } from "~/shared/hook-utils/use-mount";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -462,20 +462,24 @@ const FolderSettingsView = ({
     onDelete();
   };
 
+  const isDesignMode = useStore($isDesignMode);
+
   return (
     <>
       <PanelTitle
         suffix={
           <>
-            <Tooltip content="Delete folder" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<TrashIcon />}
-                onClick={hanldeRequestDelete}
-                aria-label="Delete folder"
-                tabIndex={2}
-              />
-            </Tooltip>
+            {isDesignMode && (
+              <Tooltip content="Delete folder" side="bottom">
+                <Button
+                  color="ghost"
+                  prefix={<TrashIcon />}
+                  onClick={hanldeRequestDelete}
+                  aria-label="Delete folder"
+                  tabIndex={2}
+                />
+              </Tooltip>
+            )}
             <Tooltip content="Close folder settings" side="bottom">
               <Button
                 color="ghost"
