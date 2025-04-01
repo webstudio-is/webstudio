@@ -265,13 +265,7 @@ export const AnimationSection = ({
       <Box css={{ height: theme.panel.paddingBlock }} />
       <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel
-            description={`
-paragraph
-- list item 1
-- list item 1
-`}
-          >
+          <FieldLabel description="Type of the timeline defines how the animation is triggered.">
             Type
           </FieldLabel>
           <Select
@@ -294,7 +288,9 @@ paragraph
         </Grid>
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel>Axis</FieldLabel>
+          <FieldLabel description="Axis determines whether an animation progresses based on an element’s visibility along the horizontal or vertical direction.">
+            Axis
+          </FieldLabel>
           <ToggleGroup
             css={{ justifySelf: "end" }}
             type="single"
@@ -328,7 +324,9 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>Scroll Source</FieldLabel>
+            <FieldLabel description="The scroll source is the element whose scrolling behavior drives the animation's progress.">
+              Scroll Source
+            </FieldLabel>
             <Select
               id={fieldIds.source}
               options={animationSources}
@@ -337,11 +335,7 @@ paragraph
               getDescription={(
                 animationSource: NonNullable<AnimationActionScroll["source"]>
               ) => (
-                <Box
-                  css={{
-                    width: theme.spacing[28],
-                  }}
-                >
+                <Box css={{ width: theme.spacing[28] }}>
                   {animationSourceDescriptions[animationSource]}
                 </Box>
               )}
@@ -358,7 +352,9 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>Subject</FieldLabel>
+            <FieldLabel description="The subject is the element whose visibility determines the animation’s progress.">
+              Subject
+            </FieldLabel>
             <SubjectSelect
               id={fieldIds.subject}
               value={value}
@@ -373,12 +369,12 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>
+            <FieldLabel description="Inset defines the point where an element’s left/top edge enters the viewport, setting the start position for the animation’s progress.">
               {value.axis === "inline" || value.axis === "x"
                 ? "Left Inset"
                 : "Top Inset"}
             </FieldLabel>
-            <FieldLabel>
+            <FieldLabel description="Inset defines the point where an element’s right/bottom edge enters the viewport, setting the start position for the animation’s progress.">
               {value.axis === "inline" || value.axis === "x"
                 ? "Right Inset"
                 : "Bottom Inset"}
@@ -401,11 +397,11 @@ paragraph
         )}
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
-          <FieldLabel>Debug</FieldLabel>
+          <FieldLabel description="Debug mode shows animation progress on canvas in design mode only.">
+            Debug
+          </FieldLabel>
           <Switch
-            css={{
-              justifySelf: "end",
-            }}
+            css={{ justifySelf: "end" }}
             id={fieldIds.debug}
             checked={value.debug ?? false}
             onCheckedChange={(debug) => {
