@@ -4,8 +4,6 @@ import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { $, renderData, ws } from "@webstudio-is/template";
 import { isTreeSatisfyingContentModel } from "./content-model";
 
-// @todo maybe change api to do better errors
-
 const defaultMetas = new Map(
   Object.entries({ ...coreMetas, ...baseComponentMetas })
 );

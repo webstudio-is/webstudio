@@ -54,32 +54,38 @@ const isTagSatisfyingContentModel = ({
   if (isIntersected(allowedCategories, categoriesByTag[tag]) === false) {
     return false;
   }
-  // prevent accepting interactive when ancestor enforced non-interactive elements
+  // prevent nesting interactive elements
+  // like button > button or a > input
   if (
     allowedCategories.includes("non-interactive") &&
     categoriesByTag[tag].includes("interactive")
   ) {
     return false;
   }
-  // prevent accepting form when ancestor enforced non-form elements
+  // prevent nesting form elements
+  // like form > div > form
   if (allowedCategories.includes("non-form") && tag === "form") {
     return false;
   }
   return true;
 };
 
-const getTagChildren = (
+/**
+ * compute possible categories for tag children
+ */
+const getTagChildrenCategories = (
   tag: undefined | string,
   allowedCategories: undefined | string[]
 ) => {
   // components without tag behave like transparent category
-  // and pass through parent constraint
+  // and pass through parent constraints
   let childrenCategories: string[] =
     tag === undefined ? ["transparent"] : childrenByTag[tag];
   if (childrenCategories.includes("transparent") && allowedCategories) {
     childrenCategories = allowedCategories;
   }
   // introduce custom non-interactive category to restrict nesting interactive elements
+  // like button > button or a > input
   if (
     tag &&
     (categoriesByTag[tag].includes("interactive") ||
@@ -88,6 +94,7 @@ const getTagChildren = (
     childrenCategories = [...childrenCategories, "non-interactive"];
   }
   // introduce custom non-form category to restrict nesting form elements
+  // like form > div > form
   if (tag === "form" || allowedCategories?.includes("non-form")) {
     childrenCategories = [...childrenCategories, "non-form"];
   }
@@ -95,8 +102,9 @@ const getTagChildren = (
 };
 
 /**
- * compute allowed categories for specified selector
- * to consider transparent and interactive categories
+ * compute allowed categories from all ancestors
+ * considering inherited (transparent) categories
+ * and other ancestor specific behaviors
  */
 const computeAllowedCategories = ({
   instances,
@@ -121,11 +129,39 @@ const computeAllowedCategories = ({
     const tagByInstanceId = getTagByInstanceId(props);
     const meta = metas.get(instance.component);
     const tag = tagByInstanceId.get(instance.id) ?? getMetaTag(meta);
-    allowedCategories = getTagChildren(tag, allowedCategories);
+    allowedCategories = getTagChildrenCategories(tag, allowedCategories);
   }
   return allowedCategories;
 };
 
+/**
+ * Check all tags starting with specified instance select
+ * for example
+ *
+ * Most rules are described by categoriesByTag and childrenByTag
+ * from html-data package. Basically all elements enforce children categories
+ * and all elements has own categories. We check intersections to match them.
+ *
+ * div > span = true
+ * because div requires flow category and span has flow category
+ *
+ * span > div = false
+ * because span requires phrasing category while div has flow
+ *
+ * p > div = false
+ * because paragraph also requires phrasing category
+ *
+ * Interactive categories and form elements are exception.
+ * They pass through negative categories
+ *
+ * [categories]  [children]
+ * interactive   non-interactive
+ *
+ * exampeles
+ * button > input = false
+ * form > div > form = false
+ *
+ */
 export const isTreeSatisfyingContentModel = ({
   instances,
   props,
@@ -159,7 +195,10 @@ export const isTreeSatisfyingContentModel = ({
     tag,
     allowedCategories,
   });
-  const childrenCategories: string[] = getTagChildren(tag, allowedCategories);
+  const childrenCategories: string[] = getTagChildrenCategories(
+    tag,
+    allowedCategories
+  );
   for (const child of instance.children) {
     if (child.type === "id") {
       isSatisfying &&= isTreeSatisfyingContentModel({
