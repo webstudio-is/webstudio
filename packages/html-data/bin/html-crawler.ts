@@ -20,7 +20,7 @@ try {
 const document = parseHtml(text);
 
 const categoriesByTag: Record<string, string[]> = {};
-const childrenByTag: Record<string, string[]> = {};
+const childrenCategoriesByTag: Record<string, string[]> = {};
 
 /**
  * scrape elements table with content model
@@ -50,14 +50,14 @@ const childrenByTag: Record<string, string[]> = {};
     const children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
       categoriesByTag[tag] = categories;
-      childrenByTag[tag] = children;
+      childrenCategoriesByTag[tag] = children;
     }
   }
 }
 
 let contentModel = ``;
 contentModel += `export const categoriesByTag: Record<string, string[]> = ${JSON.stringify(categoriesByTag, null, 2)};\n`;
-contentModel += `export const childrenByTag: Record<string, string[]> = ${JSON.stringify(childrenByTag, null, 2)};\n`;
+contentModel += `export const childrenCategoriesByTag: Record<string, string[]> = ${JSON.stringify(childrenCategoriesByTag, null, 2)};\n`;
 const contentModelFile = "./src/__generated__/content-model.ts";
 await mkdir(dirname(contentModelFile), { recursive: true });
 await writeFile(contentModelFile, contentModel);

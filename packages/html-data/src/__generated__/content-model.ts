@@ -174,7 +174,7 @@ export const categoriesByTag: Record<string, string[]> = {
   video: ["flow", "phrasing", "embedded", "interactive", "palpable"],
   wbr: ["flow", "phrasing"],
 };
-export const childrenByTag: Record<string, string[]> = {
+export const childrenCategoriesByTag: Record<string, string[]> = {
   a: ["transparent"],
   abbr: ["phrasing"],
   address: ["flow"],

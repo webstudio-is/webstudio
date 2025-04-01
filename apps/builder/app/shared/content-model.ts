@@ -1,4 +1,7 @@
-import { categoriesByTag, childrenByTag } from "@webstudio-is/html-data";
+import {
+  categoriesByTag,
+  childrenCategoriesByTag,
+} from "@webstudio-is/html-data";
 import type {
   Instance,
   Instances,
@@ -80,7 +83,7 @@ const getTagChildrenCategories = (
   // components without tag behave like transparent category
   // and pass through parent constraints
   let childrenCategories: string[] =
-    tag === undefined ? ["transparent"] : childrenByTag[tag];
+    tag === undefined ? ["transparent"] : childrenCategoriesByTag[tag];
   if (childrenCategories.includes("transparent") && allowedCategories) {
     childrenCategories = allowedCategories;
   }
@@ -138,7 +141,7 @@ const computeAllowedCategories = ({
  * Check all tags starting with specified instance select
  * for example
  *
- * Most rules are described by categoriesByTag and childrenByTag
+ * Most rules are described by categoriesByTag and childrenCategoriesByTag
  * from html-data package. Basically all elements enforce children categories
  * and all elements has own categories. We check intersections to match them.
  *
