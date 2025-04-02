@@ -69,7 +69,7 @@ export const meta: TemplateMeta = {
           <$.HtmlEmbed ws:label="Indicator Icon" code={CheckMarkIcon} />
         </radix.CheckboxIndicator>
       </radix.Checkbox>
-      <$.Text ws:label="Checkbox Label" tag="span">
+      <$.Text ws:label="Checkbox Label" ws:tag="span">
         {new PlaceholderValue("Checkbox")}
       </$.Text>
     </radix.Label>

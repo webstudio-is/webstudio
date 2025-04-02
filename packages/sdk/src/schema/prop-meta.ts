@@ -16,6 +16,14 @@ const common = {
   required: z.boolean(),
 };
 
+const Tag = z.object({
+  ...common,
+  control: z.literal("tag"),
+  type: z.literal("string"),
+  defaultValue: z.undefined().optional(),
+  options: z.array(z.string()),
+});
+
 const Number = z.object({
   ...common,
   control: z.literal("number"),
@@ -182,6 +190,7 @@ const AnimationAction = z.object({
 });
 
 export const PropMeta = z.union([
+  Tag,
   Number,
   Range,
   Text,

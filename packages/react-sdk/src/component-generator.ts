@@ -20,6 +20,7 @@ import {
   descendantComponent,
   getIndexesWithinAncestors,
 } from "@webstudio-is/sdk";
+import { tagProperty } from "@webstudio-is/sdk/runtime";
 import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
 
 /**
@@ -170,6 +171,9 @@ export const generateJsxElement = ({
   const index = indexesWithinAncestors.get(instance.id);
   if (index !== undefined) {
     generatedProps += `\n${indexAttribute}="${index}"`;
+  }
+  if (instance.tag !== undefined) {
+    generatedProps += `\n${tagProperty}=${JSON.stringify(instance.tag)}`;
   }
 
   let conditionValue: undefined | string;

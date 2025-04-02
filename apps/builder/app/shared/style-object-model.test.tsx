@@ -73,13 +73,11 @@ const createModel = ({
         values: prop.value.split(" "),
       });
     }
-    if (prop.name === "ws:tag" && prop.type === "string") {
-      instanceTags.set(prop.instanceId, prop.value as HtmlTags);
-    }
   }
   const instanceComponents = new Map<string, string>();
   for (const instance of instances.values()) {
     instanceComponents.set(instance.id, instance.component);
+    instanceTags.set(instance.id, (instance.tag ?? "div") as HtmlTags);
   }
   const presetStyles = new Map<string, StyleValue>();
   for (const [componentName, css] of Object.entries(presets ?? {})) {

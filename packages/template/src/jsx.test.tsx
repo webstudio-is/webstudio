@@ -569,3 +569,27 @@ test("render ws:show attribute", () => {
     },
   ]);
 });
+
+test("render ws:tag property", () => {
+  const { instances, props } = renderTemplate(
+    <$.Body ws:id="body">
+      <$.Box ws:tag="span"></$.Box>
+    </$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "0" }],
+    },
+    {
+      type: "instance",
+      id: "0",
+      component: "Box",
+      tag: "span",
+      children: [],
+    },
+  ]);
+  expect(props).toEqual([]);
+});
