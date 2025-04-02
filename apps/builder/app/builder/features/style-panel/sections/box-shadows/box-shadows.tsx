@@ -1,4 +1,5 @@
-import { colord, type RgbaColor } from "colord";
+import { colord, extend, type RgbaColor } from "colord";
+import namesPlugin from "colord/plugins/names";
 import {
   toValue,
   type CssProperty,
@@ -15,6 +16,9 @@ import {
 } from "../../shared/repeated-style";
 import { parseCssFragment } from "../../shared/css-fragment";
 
+// To support color names
+extend([namesPlugin]);
+
 export const properties = ["box-shadow"] satisfies [
   CssProperty,
   ...CssProperty[],
@@ -24,46 +28,29 @@ const label = "Box Shadows";
 const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
-  let values: StyleValue[] = [];
-  if (layer.type === "tuple") {
-    values = layer.value;
-  }
-  if (layer.type === "var" && computedLayer?.type === "tuple") {
-    values = computedLayer.value;
-  }
+  const shadowValue =
+    computedLayer?.type === "shadow" ? computedLayer : undefined;
   const labels = [];
-  let color: RgbaColor | undefined;
-  let isInset = false;
-
+  if (shadowValue?.position === "inset") {
+    labels.push("Inner:");
+  } else {
+    labels.push("Outer:");
+  }
   if (layer.type === "var") {
     labels.push(`--${layer.value}`);
-  }
-  for (const item of values) {
-    if (item.type === "rgb") {
-      color = colord(toValue(item)).toRgb();
-      continue;
-    }
-    if (item.type === "keyword") {
-      if (item.value === "inset") {
-        isInset = true;
-        continue;
-      }
-      if (colord(item.value).isValid()) {
-        color = colord(item.value).toRgb();
-        continue;
-      }
-    }
-    if (layer.type !== "var") {
-      labels.push(toValue(item));
-    }
-  }
-
-  if (isInset) {
-    labels.unshift("Inner Shadow:");
+  } else if (shadowValue) {
+    labels.push(toValue(shadowValue.offsetX));
+    labels.push(toValue(shadowValue.offsetY));
+    labels.push(toValue(shadowValue.blur));
+    labels.push(toValue(shadowValue.spread));
   } else {
-    labels.unshift("Outer Shadow:");
+    labels.push(toValue(shadowValue));
   }
-
+  let color: undefined | RgbaColor;
+  const colordValue = colord(toValue(shadowValue?.color));
+  if (colordValue.isValid()) {
+    color = colordValue.toRgb();
+  }
   return { label: labels.join(" "), color };
 };
 

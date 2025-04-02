@@ -225,7 +225,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outline-offset"
             styleSource="local"
-            disabled={disabledControls}
+            aria-disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.offsetX}
             onUpdate={(value, options) => {
@@ -249,7 +249,7 @@ export const ShadowContent = ({
             // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outline-offset"
             styleSource="local"
-            disabled={disabledControls}
+            aria-disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.offsetY}
             onUpdate={(value, options) => {
@@ -273,7 +273,7 @@ export const ShadowContent = ({
             // border-top-width is a fake property for validating box-shadow's blur.
             property="border-top-width"
             styleSource="local"
-            disabled={disabledControls}
+            aria-disabled={disabledControls}
             getOptions={() => $availableUnitVariables.get()}
             value={shadowValue.blur ?? { type: "unit", value: 0, unit: "px" }}
             onUpdate={(value, options) => {
@@ -298,7 +298,7 @@ export const ShadowContent = ({
               // outline-offset is a fake property for validating box-shadow's spread.
               property="outline-offset"
               styleSource="local"
-              disabled={disabledControls}
+              aria-disabled={disabledControls}
               getOptions={() => $availableUnitVariables.get()}
               value={
                 shadowValue.spread ?? { type: "unit", value: 0, unit: "px" }
@@ -330,7 +330,7 @@ export const ShadowContent = ({
           />
           <ColorPicker
             property="color"
-            disabled={disabledControls}
+            aria-disabled={disabledControls}
             value={shadowValue.color ?? defaultColor}
             currentColor={computedShadow?.color ?? defaultColor}
             getOptions={() => [
@@ -363,7 +363,7 @@ export const ShadowContent = ({
             />
             <ToggleGroup
               type="single"
-              disabled={disabledControls}
+              aria-disabled={disabledControls}
               value={shadowValue.position}
               defaultValue="inset"
               onValueChange={(value) =>
