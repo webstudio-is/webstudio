@@ -16,7 +16,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  PagePath,
+  OldPagePath,
   PageRedirect,
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
@@ -58,7 +58,7 @@ export const SectionRedirects = () => {
   };
 
   const validateOldPath = (oldPath: string): string[] => {
-    const oldPathValidationResult = PagePath.safeParse(oldPath);
+    const oldPathValidationResult = OldPagePath.safeParse(oldPath);
 
     if (oldPathValidationResult.success === true) {
       if (oldPath.startsWith("/") === true) {
