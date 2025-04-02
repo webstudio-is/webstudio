@@ -13,7 +13,7 @@ test("flow accepts flow", () => {
     isTreeSatisfyingContentModel({
       ...renderData(
         <$.Body ws:id="bodyId">
-          <$.Box ws:id="divId"></$.Box>
+          <$.Box ws:id="articleId" tag="article"></$.Box>
         </$.Body>
       ),
       metas: defaultMetas,
@@ -114,7 +114,7 @@ test("transparent category accepts flow", () => {
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Link ws:id="linkId">
-            <$.Box ws:id="divId"></$.Box>
+            <$.Box ws:id="articleId" tag="article"></$.Box>
           </$.Link>
         </$.Body>
       ),
@@ -162,7 +162,7 @@ test("transparent category should pass through phrasing category and forbid flow
         <$.Body ws:id="bodyId">
           <$.Box ws:id="spanId" tag="span">
             <$.Link ws:id="linkId">
-              <$.Box ws:id="divId"></$.Box>
+              <$.Box ws:id="articleId" tag="article"></$.Box>
             </$.Link>
           </$.Box>
         </$.Body>
@@ -213,7 +213,7 @@ test("transparent category should pass through category when check deep in the t
         <$.Body ws:id="bodyId">
           <$.Box ws:id="spanId" tag="span">
             <$.Link ws:id="linkId">
-              <$.Box ws:id="divId"></$.Box>
+              <$.Box ws:id="articleId" tag="article"></$.Box>
             </$.Link>
           </$.Box>
         </$.Body>
@@ -308,14 +308,14 @@ test("prevent nesting interactive instances when check deep in the tree", () => 
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Button ws:id="buttonId">
-            <$.Box ws:id="divId">
+            <$.Box ws:id="spanId" tag="span">
               <$.Link ws:id="linkId"></$.Link>
             </$.Box>
           </$.Button>
         </$.Body>
       ),
       metas: defaultMetas,
-      instanceSelector: ["linkId", "divId", "buttonId", "bodyId"],
+      instanceSelector: ["linkId", "spanId", "buttonId", "bodyId"],
     })
   ).toBeFalsy();
 });
@@ -384,4 +384,36 @@ test("edge case: allow wrapping input with label", () => {
       instanceSelector: ["bodyId"],
     })
   ).toBeFalsy();
+});
+
+test("edge case: allow inserting div where phrasing is required", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Button>
+            <$.Box></$.Box>
+          </$.Button>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
+test("edge case: support a > img", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Link>
+            <$.Image />
+          </$.Link>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
 });
