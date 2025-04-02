@@ -34,6 +34,15 @@ const isIntersected = (arrayA: string[], arrayB: string[]) => {
   return arrayA.some((item) => arrayB.includes(item));
 };
 
+/**
+ * checks if tag has interactive category
+ * though img is an exception and historically its interactivity ignored
+ * so img can be put into links and buttons
+ */
+const isTagInteractive = (tag: string) => {
+  return tag !== "img" && categoriesByTag[tag].includes("interactive");
+};
+
 const isTagSatisfyingContentModel = ({
   tag,
   allowedCategories,
@@ -53,16 +62,19 @@ const isTagSatisfyingContentModel = ({
   if (allowedCategories.includes(tag)) {
     return true;
   }
+  // very big hack to support putting div into buttons or headings
+  // users put "Embed HTML" all over the place to embed icons
+  // radix templates do it as well
+  if (allowedCategories.includes("phrasing") && tag === "div") {
+    return true;
+  }
   // instance does not match parent constraints
   if (isIntersected(allowedCategories, categoriesByTag[tag]) === false) {
     return false;
   }
   // prevent nesting interactive elements
   // like button > button or a > input
-  if (
-    allowedCategories.includes("non-interactive") &&
-    categoriesByTag[tag].includes("interactive")
-  ) {
+  if (allowedCategories.includes("non-interactive") && isTagInteractive(tag)) {
     // interactive exception, label > input is not recommended but a popular case
     // to automatically focus input when click on label text without using id
     if (allowedCategories.includes("label-content") && tag === "input") {
@@ -96,8 +108,7 @@ const getTagChildrenCategories = (
   // like button > button or a > input
   if (
     tag &&
-    (categoriesByTag[tag].includes("interactive") ||
-      allowedCategories?.includes("non-interactive"))
+    (isTagInteractive(tag) || allowedCategories?.includes("non-interactive"))
   ) {
     childrenCategories = [...childrenCategories, "non-interactive"];
   }
