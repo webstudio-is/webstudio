@@ -7,10 +7,6 @@ export const meta: WsComponentMeta = {
   label: "Webhook Form",
   icon: WebhookFormIcon,
   type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Form", "Button", "Link"] },
-  },
   presetStyle: {
     form,
   },

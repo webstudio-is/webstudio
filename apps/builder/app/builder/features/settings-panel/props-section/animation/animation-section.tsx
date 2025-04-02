@@ -41,6 +41,9 @@ const animationTypeDescription: Record<AnimationAction["type"], string> = {
   view: "View-based animations occur when an element enters or exits the viewport. They rely on the element’s visibility rather than the scroll position.",
 };
 
+const insetDescription =
+  "Adjusts the animation’s start/end position relative to the scrollport. Positive values move it inward (delaying start or hastening end), while negative values move it outward (starting animation before visibility or continuing after disappearance).";
+
 const animationTypes: AnimationAction["type"][] = Object.keys(
   animationTypeDescription
 ) as AnimationAction["type"][];
@@ -239,10 +242,6 @@ export const AnimationSection = ({
 
   return (
     <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
-      <Box css={{ height: theme.panel.paddingBlock }} />
-
-      <Separator />
-
       <Grid
         gap={2}
         align={"center"}
@@ -251,10 +250,10 @@ export const AnimationSection = ({
           padding: theme.panel.paddingInline,
         }}
       >
-        <Text variant={"titles"}>Animation</Text>
-        <Tooltip
-          content={value.isPinned ? "Don’t run on canvas" : "Run on canvas"}
-        >
+        <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the instance.">
+          Run on canvas
+        </FieldLabel>
+        <Tooltip content={value.isPinned ? "Off" : "On"}>
           <Switch
             checked={value.isPinned ?? false}
             onCheckedChange={(isPinned) => {
@@ -269,14 +268,8 @@ export const AnimationSection = ({
       <Box css={{ height: theme.panel.paddingBlock }} />
       <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel
-            description={`
-paragraph
-- list item 1
-- list item 1
-`}
-          >
-            Action
+          <FieldLabel description="Type of the timeline defines how the animation is triggered.">
+            Type
           </FieldLabel>
           <Select
             id={fieldIds.type}
@@ -284,11 +277,7 @@ paragraph
             getLabel={humanizeString}
             value={value.type}
             getDescription={(animationType: AnimationAction["type"]) => (
-              <Box
-                css={{
-                  width: theme.spacing[28],
-                }}
-              >
+              <Box css={{ width: theme.spacing[28] }}>
                 {animationTypeDescription[animationType]}
               </Box>
             )}
@@ -302,11 +291,11 @@ paragraph
         </Grid>
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel>Axis</FieldLabel>
+          <FieldLabel description="Axis determines whether an animation progresses based on an element’s visibility along the horizontal or vertical direction.">
+            Axis
+          </FieldLabel>
           <ToggleGroup
-            css={{
-              justifySelf: "end",
-            }}
+            css={{ justifySelf: "end" }}
             type="single"
             value={convertAxisToXY(value.axis ?? ("y" as const))}
             onValueChange={(axis: keyof typeof animationAxisDescription) => {
@@ -338,7 +327,9 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>Scroll Source</FieldLabel>
+            <FieldLabel description="The scroll source is the element whose scrolling behavior drives the animation's progress.">
+              Scroll Source
+            </FieldLabel>
             <Select
               id={fieldIds.source}
               options={animationSources}
@@ -347,11 +338,7 @@ paragraph
               getDescription={(
                 animationSource: NonNullable<AnimationActionScroll["source"]>
               ) => (
-                <Box
-                  css={{
-                    width: theme.spacing[28],
-                  }}
-                >
+                <Box css={{ width: theme.spacing[28] }}>
                   {animationSourceDescriptions[animationSource]}
                 </Box>
               )}
@@ -368,7 +355,9 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>Subject</FieldLabel>
+            <FieldLabel description="The subject is the element whose visibility determines the animation’s progress.">
+              Subject
+            </FieldLabel>
             <SubjectSelect
               id={fieldIds.subject}
               value={value}
@@ -383,12 +372,12 @@ paragraph
             align={"center"}
             css={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <FieldLabel>
+            <FieldLabel description={insetDescription}>
               {value.axis === "inline" || value.axis === "x"
                 ? "Left Inset"
                 : "Top Inset"}
             </FieldLabel>
-            <FieldLabel>
+            <FieldLabel description={insetDescription}>
               {value.axis === "inline" || value.axis === "x"
                 ? "Right Inset"
                 : "Bottom Inset"}
@@ -411,11 +400,11 @@ paragraph
         )}
 
         <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
-          <FieldLabel>Debug</FieldLabel>
+          <FieldLabel description="Debug mode shows animation progress on canvas in design mode only.">
+            Debug
+          </FieldLabel>
           <Switch
-            css={{
-              justifySelf: "end",
-            }}
+            css={{ justifySelf: "end" }}
             id={fieldIds.debug}
             checked={value.debug ?? false}
             onCheckedChange={(debug) => {

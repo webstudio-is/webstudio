@@ -1472,7 +1472,9 @@ describe("find closest insertable", () => {
     );
     $instances.set(instances);
     selectInstance(["boxId", "paragraphId", "bodyId"]);
-    expect(findClosestInsertable(newBoxFragment)).toEqual({
+    expect(
+      findClosestInsertable(renderTemplate(<$.Box tag="span"></$.Box>))
+    ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
       position: 0,
     });

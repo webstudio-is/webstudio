@@ -10,6 +10,7 @@ import {
 import {
   $dragAndDropState,
   $instances,
+  $props,
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
@@ -34,6 +35,7 @@ import {
   findClosestInstanceMatchingFragment,
   isTreeMatching,
 } from "~/shared/matcher";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -66,6 +68,7 @@ const findClosestDroppableInstanceSelector = (
   dragPayload: DragStartPayload
 ) => {
   const instances = $instances.get();
+  const props = $props.get();
   const metas = $registeredComponentMetas.get();
 
   // prevent dropping anything into non containers like image
@@ -83,6 +86,7 @@ const findClosestDroppableInstanceSelector = (
     if (fragment) {
       droppableIndex = findClosestInstanceMatchingFragment({
         instances,
+        props,
         metas,
         instanceSelector,
         fragment,
@@ -90,13 +94,20 @@ const findClosestDroppableInstanceSelector = (
     }
   }
   if (dragPayload?.type === "reparent") {
-    const matches = isTreeMatching({
+    const dropInstanceSelector = [
+      dragPayload.dragInstanceSelector[0],
+      ...instanceSelector,
+    ];
+    let matches = isTreeMatching({
       instances,
       metas,
-      instanceSelector: [
-        dragPayload.dragInstanceSelector[0],
-        ...instanceSelector,
-      ],
+      instanceSelector: dropInstanceSelector,
+    });
+    matches &&= isTreeSatisfyingContentModel({
+      instances,
+      props,
+      metas,
+      instanceSelector: dropInstanceSelector,
     });
     droppableIndex = matches ? 0 : -1;
   }

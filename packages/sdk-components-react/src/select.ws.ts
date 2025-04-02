@@ -20,10 +20,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
   type: "container",
   icon: SelectIcon,
   presetStyle,

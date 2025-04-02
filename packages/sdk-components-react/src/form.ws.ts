@@ -20,10 +20,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
   label: "Form",
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Form", "Button", "Link"] },
-  },
   description: "Create filters, surveys, searches and more.",
   icon: FormIcon,
   states: defaultStates,

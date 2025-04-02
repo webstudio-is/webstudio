@@ -1,5 +1,6 @@
 import {
   parseComponentName,
+  Props,
   type Instance,
   type Instances,
   type Matcher,
@@ -9,6 +10,7 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "./tree-utils";
+import { isTreeSatisfyingContentModel } from "./content-model";
 
 const isNegated = (operation?: MatcherOperation) => {
   return operation?.$neq !== undefined || operation?.$nin !== undefined;
@@ -304,21 +306,27 @@ export const isInstanceDetachable = ({
 
 export const findClosestInstanceMatchingFragment = ({
   instances,
+  props,
   metas,
   instanceSelector,
   fragment,
   onError,
 }: {
   instances: Instances;
+  props: Props;
   metas: Map<string, WsComponentMeta>;
   instanceSelector: InstanceSelector;
   // require only subset of fragment
-  fragment: Pick<WebstudioFragment, "children" | "instances">;
+  fragment: Pick<WebstudioFragment, "children" | "instances" | "props">;
   onError?: (message: string) => void;
 }) => {
   const mergedInstances = new Map(instances);
   for (const instance of fragment.instances) {
     mergedInstances.set(instance.id, instance);
+  }
+  const mergedProps = new Map(props);
+  for (const prop of fragment.props) {
+    mergedProps.set(prop.id, prop);
   }
   let firstError = "";
   for (let index = 0; index < instanceSelector.length; index += 1) {
@@ -335,15 +343,25 @@ export const findClosestInstanceMatchingFragment = ({
     let matches = true;
     for (const child of fragment.children) {
       if (child.type === "id") {
+        const childInstanceSelector = [
+          child.value,
+          ...instanceSelector.slice(index),
+        ];
         matches &&= isTreeMatching({
           instances: mergedInstances,
           metas,
-          instanceSelector: [child.value, ...instanceSelector.slice(index)],
+          instanceSelector: childInstanceSelector,
           onError: (message) => {
             if (firstError === "") {
               firstError = message;
             }
           },
+        });
+        matches &&= isTreeSatisfyingContentModel({
+          instances: mergedInstances,
+          props: mergedProps,
+          metas,
+          instanceSelector: childInstanceSelector,
         });
       }
     }

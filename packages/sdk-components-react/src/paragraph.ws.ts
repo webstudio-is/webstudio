@@ -17,10 +17,6 @@ export const meta: WsComponentMeta = {
   type: "container",
   placeholder: "Paragraph",
   icon: TextAlignLeftIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $neq: "Paragraph" },
-  },
   states: defaultStates,
   presetStyle,
 };

@@ -853,7 +853,7 @@ describe("is instance detachable", () => {
 
 describe("find closest instance matching fragment", () => {
   test("finds closest list with list item fragment", () => {
-    const { instances } = renderData(
+    const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.List ws:id="list">
           <$.ListItem ws:id="listitem"></$.ListItem>
@@ -865,6 +865,7 @@ describe("find closest instance matching fragment", () => {
       findClosestInstanceMatchingFragment({
         metas,
         instances,
+        props,
         instanceSelector: ["list", "body"],
         fragment,
       })
@@ -873,6 +874,7 @@ describe("find closest instance matching fragment", () => {
       findClosestInstanceMatchingFragment({
         metas,
         instances,
+        props,
         // looks up until list parent is reached
         instanceSelector: ["listitem", "list", "body"],
         fragment,
@@ -882,6 +884,7 @@ describe("find closest instance matching fragment", () => {
       findClosestInstanceMatchingFragment({
         metas,
         instances,
+        props,
         instanceSelector: ["body"],
         fragment,
       })
@@ -889,7 +892,7 @@ describe("find closest instance matching fragment", () => {
   });
 
   test("finds button parent with button fragment", () => {
-    const { instances } = renderData(
+    const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Button ws:id="button"></$.Button>
       </$.Body>
@@ -899,6 +902,7 @@ describe("find closest instance matching fragment", () => {
       findClosestInstanceMatchingFragment({
         metas,
         instances,
+        props,
         instanceSelector: ["button", "body"],
         fragment,
       })
@@ -906,7 +910,7 @@ describe("find closest instance matching fragment", () => {
   });
 
   test("finds button parent with button+span fragment", () => {
-    const { instances } = renderData(
+    const { instances, props } = renderData(
       <$.Body ws:id="body">
         <$.Button ws:id="button"></$.Button>
       </$.Body>
@@ -921,6 +925,7 @@ describe("find closest instance matching fragment", () => {
       findClosestInstanceMatchingFragment({
         metas,
         instances,
+        props,
         instanceSelector: ["button", "body"],
         fragment,
       })
@@ -929,11 +934,12 @@ describe("find closest instance matching fragment", () => {
 
   test("report first error", () => {
     const onError = vi.fn();
-    const { instances } = renderData(<$.Body ws:id="body"></$.Body>);
+    const { instances, props } = renderData(<$.Body ws:id="body"></$.Body>);
     const fragment = renderTemplate(<$.ListItem ws:id="listitem"></$.ListItem>);
     findClosestInstanceMatchingFragment({
       metas,
       instances,
+      props,
       instanceSelector: ["body"],
       fragment,
       onError,

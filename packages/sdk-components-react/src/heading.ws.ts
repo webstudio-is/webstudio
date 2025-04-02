@@ -25,10 +25,6 @@ export const meta: WsComponentMeta = {
   type: "container",
   placeholder: "Heading",
   icon: HeadingIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $neq: "Heading" },
-  },
   states: defaultStates,
   presetStyle,
 };
