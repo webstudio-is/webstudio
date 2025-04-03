@@ -350,7 +350,7 @@ export const TreeSortableItem = <Data,>({
           window.clearTimeout(expandTimeout.current);
           expandTimeout.current = window.setTimeout(() => {
             handleExpand.current(true);
-          }, 600);
+          }, 1000);
           setIsDropOver(true);
         },
         onDragLeave: (args) => {
