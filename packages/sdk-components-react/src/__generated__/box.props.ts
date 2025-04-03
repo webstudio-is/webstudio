@@ -536,26 +536,7 @@ export const props: Record<string, PropMeta> = {
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
-  tag: {
-    description:
-      "Use this property to change the HTML tag of this element to semantically structure and describe the content of a webpage. This can be important for accessibility tools and search engine optimization.",
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "div",
-    options: [
-      "div",
-      "address",
-      "article",
-      "aside",
-      "figure",
-      "footer",
-      "header",
-      "main",
-      "nav",
-      "section",
-    ],
-  },
+  tag: { required: false, control: "text", type: "string" },
   title: {
     required: false,
     control: "text",

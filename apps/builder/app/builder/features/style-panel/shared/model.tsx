@@ -22,7 +22,7 @@ import {
 import { rootComponent } from "@webstudio-is/sdk";
 import {
   $breakpoints,
-  $propsIndex,
+  $props,
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedInstanceStates,
@@ -60,32 +60,31 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
+const $tagByInstanceId = computed($props, (props) => {
+  const tagByInstanceId = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.type === "string" && prop.name === "tag") {
+      tagByInstanceId.set(prop.instanceId, prop.value);
+    }
+  }
+  return tagByInstanceId;
+});
+
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $selectedInstancePathWithRoot, $propsIndex],
-  (metas, instancePath, propsIndex) => {
+  [$registeredComponentMetas, $selectedInstancePathWithRoot, $tagByInstanceId],
+  (metas, instancePath, tagByInstanceId) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
     }
     for (const { instance } of instancePath) {
       const meta = metas.get(instance.component);
-      if (meta === undefined) {
-        continue;
-      }
-      const tags = Object.keys(meta.presetStyle ?? {}) as HtmlTags[];
+      const tags = Object.keys(meta?.presetStyle ?? {});
       if (tags.length > 0) {
-        // take first tag from preset
-        let currentTag = tags[0];
-        // when more than one tag is defined in preset look for specific one in props
-        if (tags.length > 1) {
-          const props = propsIndex.propsByInstanceId.get(instance.id);
-          // @todo rewrite adhoc solution when ws:tag is supported
-          const tagProp = props?.find((prop) => prop.name === "tag");
-          if (tagProp) {
-            currentTag = tagProp.value as HtmlTags;
-          }
-        }
-        instanceTags.set(instance.id, currentTag);
+        const metaTag = tags[0];
+        const propTag = tagByInstanceId.get(instance.id);
+        const tag = instance.tag ?? propTag ?? metaTag;
+        instanceTags.set(instance.id, tag as HtmlTags);
       }
     }
     return instanceTags;

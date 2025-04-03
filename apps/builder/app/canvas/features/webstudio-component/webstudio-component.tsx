@@ -70,6 +70,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
+import { tagProperty } from "@webstudio-is/sdk/runtime";
 
 const ContentEditable = ({
   placeholder,
@@ -280,9 +281,17 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
-      [$propValuesByInstanceSelectorWithMemoryProps, $indexesWithinAncestors],
-      (propValuesByInstanceSelector, indexesWithinAncestors) => {
+      [
+        $propValuesByInstanceSelectorWithMemoryProps,
+        $instances,
+        $indexesWithinAncestors,
+      ],
+      (propValuesByInstanceSelector, instances, indexesWithinAncestors) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const tag = instances.get(instanceId)?.tag;
+        if (tag !== undefined) {
+          instancePropsObject[tagProperty] = tag;
+        }
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();

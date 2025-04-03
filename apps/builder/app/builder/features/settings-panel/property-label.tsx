@@ -1,3 +1,4 @@
+import { micromark } from "micromark";
 import { useMemo, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -18,7 +19,6 @@ import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
 import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
 import { humanizeAttribute, showAttributeMeta } from "./shared";
-import { micromark } from "micromark";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -230,6 +230,11 @@ export const FieldLabel = ({
               </Text>
               {description && (
                 <Text
+                  css={{
+                    "> *": {
+                      marginTop: 0,
+                    },
+                  }}
                   dangerouslySetInnerHTML={{ __html: micromark(description) }}
                 ></Text>
               )}

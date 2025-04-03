@@ -1272,3 +1272,32 @@ test("render empty component when no instances found", () => {
     )
   );
 });
+
+test("render tag property on components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box ws:id="spanId" ws:tag="span"></$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box
+      data-ws-tag="span" />
+      </Body>
+      }
+    `)
+    )
+  );
+});

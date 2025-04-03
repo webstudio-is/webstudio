@@ -42,12 +42,12 @@ const blockMeta: TemplateMeta = {
     <ws.block>
       <BlockTemplate ws:label="Templates">
         <$.Paragraph></$.Paragraph>
-        <$.Heading ws:label="Heading 1" tag="h1"></$.Heading>
-        <$.Heading ws:label="Heading 2" tag="h2"></$.Heading>
-        <$.Heading ws:label="Heading 3" tag="h3"></$.Heading>
-        <$.Heading ws:label="Heading 4" tag="h4"></$.Heading>
-        <$.Heading ws:label="Heading 5" tag="h5"></$.Heading>
-        <$.Heading ws:label="Heading 6" tag="h6"></$.Heading>
+        <$.Heading ws:label="Heading 1" ws:tag="h1"></$.Heading>
+        <$.Heading ws:label="Heading 2" ws:tag="h2"></$.Heading>
+        <$.Heading ws:label="Heading 3" ws:tag="h3"></$.Heading>
+        <$.Heading ws:label="Heading 4" ws:tag="h4"></$.Heading>
+        <$.Heading ws:label="Heading 5" ws:tag="h5"></$.Heading>
+        <$.Heading ws:label="Heading 6" ws:tag="h6"></$.Heading>
         <$.List ws:label="List (Unordered)">
           <$.ListItem></$.ListItem>
         </$.List>
