@@ -353,7 +353,7 @@ test("prevent nesting forms", () => {
   ).toBeFalsy();
 });
 
-test("edge case: allow wrapping input with label", () => {
+test("allow wrapping labelable controls with label", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
@@ -361,6 +361,11 @@ test("edge case: allow wrapping input with label", () => {
           <$.Label>
             <$.Box tag="span">
               <$.Input />
+            </$.Box>
+          </$.Label>
+          <$.Label>
+            <$.Box tag="span">
+              <$.Button />
             </$.Box>
           </$.Label>
         </$.Body>
@@ -375,7 +380,7 @@ test("edge case: allow wrapping input with label", () => {
         <$.Body ws:id="bodyId">
           <$.Label>
             <$.Box tag="span">
-              <$.Button />
+              <$.Link />
             </$.Box>
           </$.Label>
         </$.Body>
