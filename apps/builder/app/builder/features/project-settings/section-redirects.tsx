@@ -1,31 +1,31 @@
-import { useState, type ChangeEvent, useRef } from "react";
-import { flushSync } from "react-dom";
 import { useStore } from "@nanostores/react";
 import {
-  Grid,
-  Flex,
-  InputField,
   Button,
-  Text,
-  theme,
+  Flex,
+  Grid,
+  InputErrorsTooltip,
+  InputField,
+  Link,
   List,
   ListItem,
-  SmallIconButton,
-  InputErrorsTooltip,
   Select,
-  Link,
-  truncate,
+  SmallIconButton,
+  Text,
+  theme,
   Tooltip,
+  truncate,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import {
-  PagePath,
+  OldPagePath,
   PageRedirect,
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
+import { useRef, useState, type ChangeEvent } from "react";
+import { flushSync } from "react-dom";
+import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
@@ -58,7 +58,7 @@ export const SectionRedirects = () => {
   };
 
   const validateOldPath = (oldPath: string): string[] => {
-    const oldPathValidationResult = PagePath.safeParse(oldPath);
+    const oldPathValidationResult = OldPagePath.safeParse(oldPath);
 
     if (oldPathValidationResult.success === true) {
       if (oldPath.startsWith("/") === true) {
