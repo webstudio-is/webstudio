@@ -1301,3 +1301,137 @@ test("render tag property on components", () => {
     )
   );
 });
+
+test("render ws:element component with div tag by default", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element id="element1">
+            <ws.element id="element2"></ws.element>
+          </ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <div
+       id={"element1"}>
+       <div
+       id={"element2"} />
+       </div>
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("render ws:element component with ws:tag", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:tag="p" id="paragraph">
+            <ws.element ws:tag="span" id="span"></ws.element>
+          </ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <p
+       id={"paragraph"}>
+       <span
+       id={"span"} />
+       </p>
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("convert attributes to react compatible when render ws:element", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element
+            class="my-class"
+            for="my-id"
+            autocomplete="off"
+          ></ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <div
+       htmlFor={"my-id"}
+       autoComplete={"off"}
+       className={\`\${"my-class"}\`} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("ignore props similar to standard attributes on react components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Box
+       class={"my-class"}
+       for={"my-id"}
+       autocomplete={"off"} />
+       </Body>
+       }
+     `)
+    )
+  );
+});

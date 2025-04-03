@@ -11,6 +11,7 @@ import {
   renderTemplate,
   ResourceValue,
   Variable,
+  ws,
 } from "./jsx";
 import { css } from "./css";
 
@@ -587,6 +588,30 @@ test("render ws:tag property", () => {
       type: "instance",
       id: "0",
       component: "Box",
+      tag: "span",
+      children: [],
+    },
+  ]);
+  expect(props).toEqual([]);
+});
+
+test("render ws:element with ws:tag prop", () => {
+  const { instances, props } = renderTemplate(
+    <$.Body ws:id="body">
+      <ws.element ws:tag="span"></ws.element>
+    </$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "0" }],
+    },
+    {
+      type: "instance",
+      id: "0",
+      component: "ws:element",
       tag: "span",
       children: [],
     },
