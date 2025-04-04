@@ -5,6 +5,7 @@ import { sections } from "../sections";
 import { $settings } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import { $selectedInstance } from "~/shared/awareness";
 
 // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
 const initialProperties = new Set<CssProperty>([
@@ -16,8 +17,8 @@ const initialProperties = new Set<CssProperty>([
 ]);
 
 export const $advancedStyleDeclarations = computed(
-  [$computedStyleDeclarations, $settings],
-  (computedStyleDeclarations, settings) => {
+  [$computedStyleDeclarations, $settings, $selectedInstance],
+  (computedStyleDeclarations, settings, selectedInstance) => {
     const advancedStyles: Array<ComputedStyleDecl> = [];
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<CssProperty>([]);
@@ -31,7 +32,8 @@ export const $advancedStyleDeclarations = computed(
       // @todo add filters to the UI to allow user decide.
       if (
         styleDecl.source.name === "remote" &&
-        styleDecl.source.instanceId === ROOT_INSTANCE_ID
+        styleDecl.source.instanceId === ROOT_INSTANCE_ID &&
+        styleDecl.source.instanceId !== selectedInstance?.id
       ) {
         continue;
       }
