@@ -1319,11 +1319,13 @@ export const findClosestInsertable = (
         fragment.instances[0].component
       );
       const label = humanizeString(componentName);
-      toast.error(message || `Cannot insert "${label}"`);
+      toast.warn(message || `"${label}" has no place here`);
     },
   });
   if (insertableIndex === -1) {
-    return;
+    // fallback to closest container to always insert something
+    // even when validation fails
+    insertableIndex = 0;
   }
 
   // adjust with container lookup
