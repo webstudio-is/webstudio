@@ -26,8 +26,19 @@ const getTagByInstanceId = (props: Props) => {
   return tagByInstanceId;
 };
 
-const getMetaTag = (meta: undefined | WsComponentMeta) => {
-  return Object.keys(meta?.presetStyle ?? {}).at(0);
+const getTag = ({
+  instance,
+  metas,
+  props,
+}: {
+  instance: Instance;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  props: Props;
+}) => {
+  const tagByInstanceId = getTagByInstanceId(props);
+  const meta = metas.get(instance.component);
+  const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
+  return tagByInstanceId.get(instance.id) ?? metaTag;
 };
 
 const isIntersected = (arrayA: string[], arrayB: string[]) => {
@@ -68,18 +79,17 @@ const isTagSatisfyingContentModel = ({
   if (allowedCategories.includes("phrasing") && tag === "div") {
     return true;
   }
-  // instance does not match parent constraints
-  if (isIntersected(allowedCategories, categoriesByTag[tag]) === false) {
-    return false;
+  // interactive exception, label > input or label > button are considered
+  // valid way to nest interactive elements
+  if (
+    allowedCategories.includes("labelable") &&
+    categoriesByTag[tag].includes("labelable")
+  ) {
+    return true;
   }
   // prevent nesting interactive elements
   // like button > button or a > input
   if (allowedCategories.includes("non-interactive") && isTagInteractive(tag)) {
-    // interactive exception, label > input is not recommended but a popular case
-    // to automatically focus input when click on label text without using id
-    if (allowedCategories.includes("label-content") && tag === "input") {
-      return true;
-    }
     return false;
   }
   // prevent nesting form elements
@@ -87,7 +97,8 @@ const isTagSatisfyingContentModel = ({
   if (allowedCategories.includes("non-form") && tag === "form") {
     return false;
   }
-  return true;
+  // instance matches parent constraints
+  return isIntersected(allowedCategories, categoriesByTag[tag]);
 };
 
 /**
@@ -112,10 +123,15 @@ const getTagChildrenCategories = (
   ) {
     childrenCategories = [...childrenCategories, "non-interactive"];
   }
-  // interactive exception, label > input is not recommended but a popular case
-  // to automatically focus input when click on label text without using id
-  if (tag === "label" || allowedCategories?.includes("label-content")) {
-    childrenCategories = [...childrenCategories, "label-content"];
+  // interactive exception, label > input or label > button are considered
+  // valid way to nest interactive elements
+  // pass through labelable to match controls with labelable category
+  if (tag === "label" || allowedCategories?.includes("labelable")) {
+    // stop passing through labelable to control children
+    // to prevent label > button > input
+    if (tag && categoriesByTag[tag].includes("labelable") === false) {
+      childrenCategories = [...childrenCategories, "labelable"];
+    }
   }
   // introduce custom non-form category to restrict nesting form elements
   // like form > div > form
@@ -150,9 +166,7 @@ const computeAllowedCategories = ({
     if (instance === undefined) {
       continue;
     }
-    const tagByInstanceId = getTagByInstanceId(props);
-    const meta = metas.get(instance.component);
-    const tag = tagByInstanceId.get(instance.id) ?? getMetaTag(meta);
+    const tag = getTag({ instance, metas, props });
     allowedCategories = getTagChildrenCategories(tag, allowedCategories);
   }
   return allowedCategories;
@@ -198,12 +212,14 @@ export const isTreeSatisfyingContentModel = ({
   props,
   metas,
   instanceSelector,
+  onError,
   _allowedCategories: allowedCategories,
 }: {
   instances: Instances;
   props: Props;
   metas: Map<Instance["component"], WsComponentMeta>;
   instanceSelector: InstanceSelector;
+  onError?: (message: string) => void;
   _allowedCategories?: string[];
 }): boolean => {
   // compute constraints only when not passed from parent
@@ -213,19 +229,31 @@ export const isTreeSatisfyingContentModel = ({
     props,
     metas,
   });
-  const [instanceId] = instanceSelector;
+  const [instanceId, parentInstanceId] = instanceSelector;
   const instance = instances.get(instanceId);
   // collection item can be undefined
   if (instance === undefined) {
     return true;
   }
-  const tagByInstanceId = getTagByInstanceId(props);
-  const meta = metas.get(instance.component);
-  const tag = tagByInstanceId.get(instance.id) ?? getMetaTag(meta);
+  const tag = getTag({ instance, metas, props });
   let isSatisfying = isTagSatisfyingContentModel({
     tag,
     allowedCategories,
   });
+  if (isSatisfying === false && allowedCategories) {
+    const parentInstance = instances.get(parentInstanceId);
+    let parentTag: undefined | string;
+    if (parentInstance) {
+      parentTag = getTag({ instance: parentInstance, metas, props });
+    }
+    if (parentTag) {
+      onError?.(
+        `Placing <${tag}> element inside a <${parentTag}> violates HTML spec.`
+      );
+    } else {
+      onError?.(`Placing <${tag}> element here violates HTML spec.`);
+    }
+  }
   const childrenCategories: string[] = getTagChildrenCategories(
     tag,
     allowedCategories
@@ -237,6 +265,7 @@ export const isTreeSatisfyingContentModel = ({
         props,
         metas,
         instanceSelector: [child.value, ...instanceSelector],
+        onError,
         _allowedCategories: childrenCategories,
       });
     }
