@@ -1,11 +1,11 @@
 import { computed } from "nanostores";
 import type { CssProperty } from "@webstudio-is/css-engine";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import { $settings } from "~/builder/shared/client-settings";
+import { $selectedInstance } from "~/shared/awareness";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
-import { $settings } from "~/builder/shared/client-settings";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
-import { $selectedInstance } from "~/shared/awareness";
 
 // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
 const initialProperties = new Set<CssProperty>([
