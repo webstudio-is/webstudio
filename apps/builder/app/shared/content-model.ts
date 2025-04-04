@@ -127,7 +127,11 @@ const getTagChildrenCategories = (
   // valid way to nest interactive elements
   // pass through labelable to match controls with labelable category
   if (tag === "label" || allowedCategories?.includes("labelable")) {
-    childrenCategories = [...childrenCategories, "labelable"];
+    // stop passing through labelable to control children
+    // to prevent label > button > input
+    if (tag && categoriesByTag[tag].includes("labelable") === false) {
+      childrenCategories = [...childrenCategories, "labelable"];
+    }
   }
   // introduce custom non-form category to restrict nesting form elements
   // like form > div > form

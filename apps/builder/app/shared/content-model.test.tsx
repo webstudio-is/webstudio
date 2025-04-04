@@ -389,6 +389,21 @@ test("allow wrapping labelable controls with label", () => {
       instanceSelector: ["bodyId"],
     })
   ).toBeFalsy();
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Label>
+            <$.Button>
+              <$.Input />
+            </$.Button>
+          </$.Label>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeFalsy();
 });
 
 test("edge case: allow inserting div where phrasing is required", () => {
