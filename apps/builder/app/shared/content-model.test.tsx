@@ -8,13 +8,61 @@ const defaultMetas = new Map(
   Object.entries({ ...coreMetas, ...baseComponentMetas })
 );
 
-test("flow accepts flow", () => {
+test("support element with ws:tag", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span">
+            <ws.element ws:tag="article"></ws.element>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeFalsy();
+});
+
+test("support Box with ws:tag", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
         <$.Body ws:id="bodyId">
-          <$.Box ws:id="articleId" tag="article"></$.Box>
+          <$.Box ws:tag="span">
+            <$.Box ws:tag="article"></$.Box>
+          </$.Box>
         </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeFalsy();
+});
+
+test("support legacy tag property", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box tag="span">
+            <$.Box tag="article"></$.Box>
+          </$.Box>
+        </$.Body>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeFalsy();
+});
+
+test("flow accepts flow", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="article"></ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -26,43 +74,40 @@ test("none category accepted by parent by tag", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.List ws:id="listId">
-            <$.ListItem ws:id="itemId"></$.ListItem>
-          </$.List>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul">
+            <ws.element ws:tag="li"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
-      instanceSelector: ["listId"],
+      instanceSelector: ["bodyId"],
     })
   ).toBeTruthy();
 });
 
-test("none category prevents unacceptable parent 1", () => {
+test("none category prevents unacceptable parent", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.ListItem ws:id="itemId"></$.ListItem>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="li"></ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
     })
   ).toBeFalsy();
-});
-
-test("none category prevents unacceptable parent 2", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.List ws:id="listId">
-            <$.Box ws:id="divId">
-              <$.ListItem ws:id="itemId"></$.ListItem>
-            </$.Box>
-          </$.List>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul">
+            <ws.element ws:tag="div">
+              <ws.element ws:tag="li"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -74,15 +119,15 @@ test("slot without tag accepts transparent category", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.List ws:id="listId">
-            <$.Slot ws:id="slotId">
-              <$.Fragment ws:id="fragmentId">
-                <$.ListItem ws:id="itemId"></$.ListItem>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul">
+            <$.Slot>
+              <$.Fragment>
+                <ws.element ws:tag="li"></ws.element>
               </$.Fragment>
             </$.Slot>
-          </$.List>
-        </$.Body>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -94,13 +139,13 @@ test("collection without tag accepts transparent category", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.List ws:id="listId">
-            <ws.collection ws:id="collectionId">
-              <$.ListItem ws:id="itemId"></$.ListItem>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul">
+            <ws.collection>
+              <ws.element ws:tag="li"></ws.element>
             </ws.collection>
-          </$.List>
-        </$.Body>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -112,11 +157,11 @@ test("transparent category accepts flow", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Link ws:id="linkId">
-            <$.Box ws:id="articleId" tag="article"></$.Box>
-          </$.Link>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a">
+            <ws.element ws:tag="article"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -128,11 +173,11 @@ test("phrasing category accepts element with transparent children", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="spanId" tag="span">
-            <$.Link ws:id="linkId"></$.Link>
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span">
+            <ws.element ws:tag="a"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -144,13 +189,13 @@ test("transparent category should pass through phrasing category and forbid flow
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="spanId" tag="span">
-            <$.Link ws:id="linkId">
-              <$.Box ws:id="anotherSpanId" tag="span"></$.Box>
-            </$.Link>
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span">
+            <ws.element ws:tag="a">
+              <ws.element ws:tag="span"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -159,13 +204,13 @@ test("transparent category should pass through phrasing category and forbid flow
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="spanId" tag="span">
-            <$.Link ws:id="linkId">
-              <$.Box ws:id="articleId" tag="article"></$.Box>
-            </$.Link>
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span">
+            <ws.element ws:tag="a">
+              <ws.element ws:tag="article"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -177,13 +222,13 @@ test("transparent category should not pass through invalid parent", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.List ws:id="listId">
-            <$.Link ws:id="linkId">
-              <$.ListItem ws:id="itemId"></$.ListItem>
-            </$.Link>
-          </$.List>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="ul">
+            <ws.element ws:tag="a">
+              <ws.element ws:tag="li"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -195,13 +240,13 @@ test("transparent category should pass through category when check deep in the t
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="spanId" tag="span">
-            <$.Link ws:id="linkId">
-              <$.Bold ws:id="boldId"></$.Bold>
-            </$.Link>
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span" ws:id="spanId">
+            <ws.element ws:tag="a" ws:id="linkId">
+              <ws.element ws:tag="strong"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["linkId", "spanId", "bodyId"],
@@ -210,13 +255,13 @@ test("transparent category should pass through category when check deep in the t
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Box ws:id="spanId" tag="span">
-            <$.Link ws:id="linkId">
-              <$.Box ws:id="articleId" tag="article"></$.Box>
-            </$.Link>
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="span" ws:id="spanId">
+            <ws.element ws:tag="a" ws:id="linkId">
+              <ws.element ws:tag="article"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["linkId", "spanId", "bodyId"],
@@ -228,9 +273,9 @@ test("restrict empty category", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Separator ws:id="separatorId" />
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="hr"></ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -239,11 +284,11 @@ test("restrict empty category", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Separator ws:id="separatorId">
-            <$.Box ws:id="spanId" tag="span"></$.Box>
-          </$.Separator>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="hr">
+            <ws.element ws:tag="span"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -255,11 +300,11 @@ test("prevent nesting interactive instances", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Button>
-            <$.Button></$.Button>
-          </$.Button>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="button">
+            <ws.element ws:tag="button"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -268,13 +313,13 @@ test("prevent nesting interactive instances", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Button>
-            <$.Box tag="span">
-              <$.Link></$.Link>
-            </$.Box>
-          </$.Button>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="button">
+            <ws.element ws:tag="span">
+              <ws.element ws:tag="a"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -286,15 +331,15 @@ test("prevent nesting interactive instances with slots in between", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Button>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="button">
             <$.Slot>
               <$.Fragment>
-                <$.Textarea></$.Textarea>
+                <ws.element ws:tag="textarea"></ws.element>
               </$.Fragment>
             </$.Slot>
-          </$.Button>
-        </$.Body>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -306,13 +351,13 @@ test("prevent nesting interactive instances when check deep in the tree", () => 
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Button ws:id="buttonId">
-            <$.Box ws:id="spanId" tag="span">
-              <$.Link ws:id="linkId"></$.Link>
-            </$.Box>
-          </$.Button>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="button" ws:id="buttonId">
+            <ws.element ws:tag="span" ws:id="spanId">
+              <ws.element ws:tag="a" ws:id="linkId"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["linkId", "spanId", "buttonId", "bodyId"],
@@ -324,11 +369,11 @@ test("prevent nesting forms", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Form>
-            <$.Button></$.Button>
-          </$.Form>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="form">
+            <ws.element ws:tag="button"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -337,15 +382,15 @@ test("prevent nesting forms", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Form ws:id="formId">
-            <$.Box ws:id="divId">
-              <$.Form ws:id="anotherFormId">
-                <$.Button ws:id="buttonId"></$.Button>
-              </$.Form>
-            </$.Box>
-          </$.Form>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="form" ws:id="formId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <ws.element ws:tag="form" ws:id="anotherFormId">
+                <ws.element ws:tag="button"></ws.element>
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["anotherFormId", "divId", "formId", "bodyId"],
@@ -357,18 +402,18 @@ test("allow wrapping labelable controls with label", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Label>
-            <$.Box tag="span">
-              <$.Input />
-            </$.Box>
-          </$.Label>
-          <$.Label>
-            <$.Box tag="span">
-              <$.Button />
-            </$.Box>
-          </$.Label>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="label">
+            <ws.element ws:tag="span">
+              <ws.element ws:tag="input"></ws.element>
+            </ws.element>
+          </ws.element>
+          <ws.element ws:tag="label">
+            <ws.element ws:tag="span">
+              <ws.element ws:tag="button"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -377,13 +422,13 @@ test("allow wrapping labelable controls with label", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Label>
-            <$.Box tag="span">
-              <$.Link />
-            </$.Box>
-          </$.Label>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="label">
+            <ws.element ws:tag="span">
+              <ws.element ws:tag="a"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -392,13 +437,13 @@ test("allow wrapping labelable controls with label", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Label>
-            <$.Button>
-              <$.Input />
-            </$.Button>
-          </$.Label>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="label">
+            <ws.element ws:tag="button">
+              <ws.element ws:tag="input"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -410,11 +455,11 @@ test("edge case: allow inserting div where phrasing is required", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Button>
-            <$.Box></$.Box>
-          </$.Button>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="button">
+            <ws.element ws:tag="div"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],
@@ -426,11 +471,11 @@ test("edge case: support a > img", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
-        <$.Body ws:id="bodyId">
-          <$.Link>
-            <$.Image />
-          </$.Link>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a">
+            <ws.element ws:tag="img"></ws.element>
+          </ws.element>
+        </ws.element>
       ),
       metas: defaultMetas,
       instanceSelector: ["bodyId"],

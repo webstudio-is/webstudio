@@ -35,10 +35,9 @@ const getTag = ({
   metas: Map<Instance["component"], WsComponentMeta>;
   props: Props;
 }) => {
-  const tagByInstanceId = getTagByInstanceId(props);
   const meta = metas.get(instance.component);
   const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
-  return tagByInstanceId.get(instance.id) ?? metaTag;
+  return instance.tag ?? getTagByInstanceId(props).get(instance.id) ?? metaTag;
 };
 
 const isIntersected = (arrayA: string[], arrayB: string[]) => {

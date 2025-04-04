@@ -80,13 +80,7 @@ const toInstanceData = (
     children.push({ type: "id", value: instanceId });
 
     if (child.type === "heading") {
-      props.push({
-        id: generateId(),
-        type: "string",
-        name: "tag",
-        instanceId,
-        value: `h${child.depth}`,
-      });
+      instance.tag = `h${child.depth}`;
     }
     if (child.type === "link") {
       props.push({

@@ -1466,14 +1466,14 @@ describe("find closest insertable", () => {
     const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId">
-          <$.Box ws:id="spanId" tag="span"></$.Box>
+          <$.Box ws:id="spanId" ws:tag="span"></$.Box>
         </$.Paragraph>
       </$.Body>
     );
     $instances.set(instances);
     selectInstance(["boxId", "paragraphId", "bodyId"]);
     expect(
-      findClosestInsertable(renderTemplate(<$.Box tag="span"></$.Box>))
+      findClosestInsertable(renderTemplate(<$.Box ws:tag="span"></$.Box>))
     ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
       position: 0,
