@@ -518,6 +518,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => wrapIn("Link"),
     },
     {
+      name: "wrapInButton",
+      handler: () => wrapIn("Button"),
+    },
+    {
+      name: "wrapInHFlex",
+      handler: () => wrapIn("HFlex"),
+    },
+    {
+      name: "wrapInVFlex",
+      handler: () => wrapIn("VFlex"),
+    },
+    {
       name: "unwrap",
       handler: () => unwrap(),
     },
