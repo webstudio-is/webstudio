@@ -3,7 +3,11 @@ import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import { collectionComponent, descendantComponent } from "@webstudio-is/sdk";
 import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
-import { showAttributeMeta, type PropValue } from "../shared";
+import {
+  ariaLabelAttributeMeta,
+  showAttributeMeta,
+  type PropValue,
+} from "../shared";
 import {
   $isContentMode,
   $registeredComponentMetas,
@@ -181,6 +185,7 @@ export const usePropsLogic = ({
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
   const systemProps: PropAndMeta[] = [];
+
   // descendant component is not actually rendered
   // but affects styling of nested elements
   // hiding descendant does not hide nested elements and confuse users
@@ -191,6 +196,12 @@ export const usePropsLogic = ({
       meta: showAttributeMeta,
     });
   }
+
+  systemProps.push({
+    propName: "aria-label",
+    prop: getAndDelete(unprocessedSaved, "aria-label"),
+    meta: ariaLabelAttributeMeta,
+  });
 
   const canHaveTextContent =
     instanceMeta?.type === "container" &&
