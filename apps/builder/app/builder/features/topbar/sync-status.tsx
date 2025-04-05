@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
-import { queueStatus } from "~/builder/shared/sync";
+import { $queueStatus } from "~/builder/shared/sync";
 
 const $isOnline = atom(false);
 
@@ -24,7 +24,7 @@ const subscribeIsOnline = () => {
 };
 
 export const SyncStatus = () => {
-  const statusObject = useStore(queueStatus);
+  const statusObject = useStore($queueStatus);
   const isOnline = useStore($isOnline);
   useEffect(subscribeIsOnline, []);
 
