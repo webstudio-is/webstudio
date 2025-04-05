@@ -21,8 +21,8 @@ import {
   getIndexesWithinAncestors,
   elementComponent,
 } from "@webstudio-is/sdk";
-import { tagProperty } from "@webstudio-is/sdk/runtime";
-import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import { isAttributeNameSafe, showAttribute } from "./props";
 import { standardAttributesToReactProps } from "./standard-attributes";
 
 /**
@@ -172,7 +172,7 @@ export const generateJsxElement = ({
 
   const index = indexesWithinAncestors.get(instance.id);
   if (index !== undefined) {
-    generatedProps += `\n${indexAttribute}="${index}"`;
+    generatedProps += `\n${indexProperty}="${index}"`;
   }
   if (instance.tag !== undefined && instance.component !== elementComponent) {
     generatedProps += `\n${tagProperty}=${JSON.stringify(instance.tag)}`;

@@ -12,11 +12,8 @@ import {
   Trigger,
   Content,
 } from "@radix-ui/react-accordion";
-import {
-  getClosestInstance,
-  getIndexWithinAncestorFromComponentProps,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
 
 export const Accordion = forwardRef<
   HTMLDivElement,
@@ -32,7 +29,7 @@ export const AccordionItem = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Item>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
-  const index = getIndexWithinAncestorFromComponentProps(props);
+  const index = getIndexWithinAncestorFromProps(props);
   return <Item ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 

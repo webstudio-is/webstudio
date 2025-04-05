@@ -4,7 +4,7 @@ import {
   type ComponentProps,
   createElement,
 } from "react";
-import { getTagFromComponentProps } from "@webstudio-is/sdk/runtime";
+import { getTagFromProps } from "@webstudio-is/sdk/runtime";
 
 const defaultTag = "h1";
 
@@ -14,7 +14,7 @@ type Props = ComponentProps<typeof defaultTag> & {
 
 export const Heading = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ tag: legacyTag, ...props }, ref) => {
-    const tag = getTagFromComponentProps(props) ?? legacyTag ?? defaultTag;
+    const tag = getTagFromProps(props) ?? legacyTag ?? defaultTag;
     return createElement(tag, { ...props, ref });
   }
 );
