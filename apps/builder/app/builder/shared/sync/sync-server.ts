@@ -39,7 +39,7 @@ export type QueueStatus =
   | { status: "failed" }
   | { status: "fatal"; error: string };
 
-export const queueStatus = atom<QueueStatus>({ status: "idle" });
+export const $queueStatus = atom<QueueStatus>({ status: "idle" });
 
 const getRandomBetween = (a: number, b: number) => {
   return Math.random() * (b - a) + a;
@@ -50,13 +50,13 @@ const pollCommands = async function* () {
   while (true) {
     const commands = commandQueue.dequeueAll();
     if (commands.length > 0) {
-      queueStatus.set({ status: "running" });
+      $queueStatus.set({ status: "running" });
       yield* commands;
       await pause(NEW_ENTRIES_INTERVAL);
       // Do not switch on idle state until there is possibility that queue is not empty
       continue;
     }
-    queueStatus.set({ status: "idle" });
+    $queueStatus.set({ status: "idle" });
     await pause(NEW_ENTRIES_INTERVAL);
   }
 };
@@ -69,15 +69,19 @@ const retry = async function* () {
     yield;
     failedAttempts += 1;
     if (failedAttempts < MAX_RETRY_RECOVERY) {
-      queueStatus.set({ status: "recovering" });
+      $queueStatus.set({ status: "recovering" });
       await pause(INTERVAL_RECOVERY);
     } else {
-      queueStatus.set({ status: "failed" });
+      $queueStatus.set({ status: "failed" });
 
       // Clamped exponential backoff with decorrelated jitter
       // to prevent clients from sending simultaneous requests after server issues
       delay = getRandomBetween(INTERVAL_ERROR, delay * 3);
       delay = Math.min(delay, MAX_INTERVAL_ERROR);
+
+      toast.error(
+        `Builder is offline. Retry in ${Math.round(delay / 1000)} seconds.`
+      );
 
       await pause(delay);
     }
@@ -116,7 +120,7 @@ const syncServer = async function () {
         }
 
         // stop synchronization and wait til user reload
-        queueStatus.set({ status: "fatal", error });
+        $queueStatus.set({ status: "fatal", error });
 
         if (shouldReload === false) {
           toast.error(
@@ -148,7 +152,7 @@ const syncServer = async function () {
         duration: Number.POSITIVE_INFINITY,
       });
 
-      queueStatus.set({ status: "fatal", error });
+      $queueStatus.set({ status: "fatal", error });
 
       return;
     }
@@ -198,7 +202,7 @@ const syncServer = async function () {
               location.reload();
             }
 
-            queueStatus.set({ status: "fatal", error });
+            $queueStatus.set({ status: "fatal", error });
 
             if (shouldReload === false) {
               toast.error(
@@ -217,7 +221,7 @@ const syncServer = async function () {
             } Synchronization has been paused.`;
             // Api error we don't know how to handle, as retries will not help probably
             // We should show error and break synchronization
-            queueStatus.set({ status: "fatal", error });
+            $queueStatus.set({ status: "fatal", error });
 
             toast.error(error, {
               id: "fatal-error",
@@ -333,7 +337,7 @@ export const useSyncServer = ({ projectId, authPermit }: SyncServerProps) => {
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      const { status } = queueStatus.get();
+      const { status } = $queueStatus.get();
       if (status === "idle" || status === "fatal") {
         return;
       }

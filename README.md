@@ -21,7 +21,7 @@
 
 - [Twitter](https://twitter.com/getwebstudio)
 - [Youtube](https://www.youtube.com/@getwebstudio)
-- [Discord](https://discord.gg/UNdyrDkq5r)
+- [Discord](https://wstd.us/community)
 
 ## Thanks
 

@@ -40,11 +40,9 @@ const ErrorInfo = ({
   if (error === undefined) {
     return;
   }
-  const errorContent = (
+  const errorContent = error.expected ? (
     <Flex direction="column" gap="2" css={{ width: theme.spacing[28] }}>
-      <Text>
-        Entered HTML has a validation error. Do you want us to fix it?
-      </Text>
+      <Text>{error.message} Do you want us to fix it?</Text>
       <Button
         color="neutral-destructive"
         onClick={() => {
@@ -53,6 +51,10 @@ const ErrorInfo = ({
       >
         Fix automatically
       </Button>
+    </Flex>
+  ) : (
+    <Flex direction="column" gap="2" css={{ width: theme.spacing[28] }}>
+      <Text>{error.message}</Text>
     </Flex>
   );
 
@@ -65,7 +67,7 @@ const ErrorInfo = ({
   );
 };
 
-type Error = { message: string; value: string; expected: string };
+type Error = { message: string; value: string; expected?: string };
 
 /**
  * Use DOMParser in xml mode to parse potential svg
@@ -96,6 +98,14 @@ const parseHtml = (value: string) => {
 //    - unifying `boolean=""` is the same as `boolean`
 //    - xmlns attirbute which is always reordered first
 const validateHtml = (value: string): Error | undefined => {
+  const maxChars = 50_000;
+  if (value.length > maxChars) {
+    return {
+      message: `The HTML Embed code exceeds ${maxChars} character limit.`,
+      value,
+      expected: "",
+    };
+  }
   const clean = (value: string) => {
     return (
       value
@@ -118,7 +128,11 @@ const validateHtml = (value: string): Error | undefined => {
   if (clean(html) === clean(value)) {
     return;
   }
-  return { message: "Invalid HTML detected", value, expected: html ?? "" };
+  return {
+    message: "Entered HTML has a validation error.",
+    value,
+    expected: html ?? "",
+  };
 };
 
 export const CodeControl = ({
@@ -163,7 +177,7 @@ export const CodeControl = ({
     <ErrorInfo
       error={error}
       onAutoFix={() => {
-        if (error) {
+        if (error?.expected) {
           setError(undefined);
           localValue.set(error.expected);
         }

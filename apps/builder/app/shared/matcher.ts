@@ -362,6 +362,11 @@ export const findClosestInstanceMatchingFragment = ({
           props: mergedProps,
           metas,
           instanceSelector: childInstanceSelector,
+          onError: (message) => {
+            if (firstError === "") {
+              firstError = message;
+            }
+          },
         });
       }
     }
