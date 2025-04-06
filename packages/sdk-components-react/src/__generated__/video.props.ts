@@ -397,6 +397,12 @@ export const props: Record<string, PropMeta> = {
     description:
       "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
+  autoPlay: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "The audio or video should play as soon as possible.",
+  },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
   color: {
@@ -420,6 +426,21 @@ export const props: Record<string, PropMeta> = {
     description:
       "Defines the ID of a menu element which willserve as the element's context menu.",
   },
+  controls: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates whether the browser should show playback controls to the user.",
+  },
+  controlsList: { required: false, control: "text", type: "string" },
+  crossOrigin: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["", "anonymous", "use-credentials"],
+    description: "How the element handles cross-origin requests",
+  },
   datatype: { required: false, control: "text", type: "string" },
   defaultChecked: { required: false, control: "boolean", type: "boolean" },
   defaultValue: { required: false, control: "text", type: "string" },
@@ -430,11 +451,27 @@ export const props: Record<string, PropMeta> = {
     description:
       "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
   },
+  disablePictureInPicture: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+  },
+  disableRemotePlayback: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+  },
   draggable: {
     required: false,
     control: "boolean",
     type: "boolean",
     description: "Defines whether the element can be dragged.",
+  },
+  height: {
+    required: false,
+    control: "number",
+    type: "number",
+    description: "Defines the image’s height in pixels.",
   },
   hidden: {
     required: false,
@@ -485,8 +522,44 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Defines the language used in the element.",
   },
+  loop: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates whether the media should start playing from the start when it's finished.",
+  },
+  mediaGroup: { required: false, control: "text", type: "string" },
+  muted: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      "Indicates whether the audio will be initially silenced on page load.",
+  },
   nonce: { required: false, control: "text", type: "string" },
+  playsInline: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description:
+      'A Boolean attribute indicating that the video is to be played "inline"; that is, within the element\'s playback area. Note that the absence of this attribute does not imply that the video will always be played in fullscreen.',
+  },
+  poster: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "A URL indicating a poster frame to show until the user plays or seeks.",
+  },
   prefix: { required: false, control: "text", type: "string" },
+  preload: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Indicates whether the whole resource, parts of it or nothing should be preloaded.",
+  },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
   rel: {
@@ -519,6 +592,12 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     description: "Indicates whether spell checking is allowed for the element.",
   },
+  src: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "The URL of the embeddable content.",
+  },
   suppressContentEditableWarning: {
     required: false,
     control: "boolean",
@@ -536,7 +615,6 @@ export const props: Record<string, PropMeta> = {
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
-  tag: { required: false, control: "text", type: "string" },
   title: {
     required: false,
     control: "text",
@@ -560,4 +638,10 @@ export const props: Record<string, PropMeta> = {
     options: ["on", "off"],
   },
   vocab: { required: false, control: "text", type: "string" },
+  width: {
+    required: false,
+    control: "number",
+    type: "number",
+    description: "Defines the image’s width in pixels.",
+  },
 };

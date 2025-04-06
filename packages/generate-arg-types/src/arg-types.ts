@@ -16,6 +16,7 @@ export const propsToArgTypes = (
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
       .filter(([propName]) => propName.startsWith("$webstudio") === false)
+      .filter(([propName]) => propName.startsWith("$") === false)
       // Exclude props that are in the exclude list
       .filter(([propName]) => exclude.includes(propName) === false)
       .map(([propName, propItem]) => {

@@ -189,7 +189,10 @@ const getVideoId = (url?: string) => {
   }
 };
 
-const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
+const getVideoUrl = (
+  options: YouTubePlayerOptions & { enablejsapi: boolean },
+  videoUrlOrigin: string
+) => {
   const videoId = getVideoId(options.url);
   const url = new URL(videoUrlOrigin);
 
@@ -208,7 +211,10 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
     }
   }
 
-  const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
+  const optionsKeys = Object.keys(options) as (
+    | keyof YouTubePlayerParameters
+    | "enablejsapi"
+  )[];
 
   const parameters: Record<string, string | undefined> = {};
 
@@ -303,7 +309,9 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
       case "playlist":
         parameters.playlist = options.playlist;
         break;
-
+      case "enablejsapi":
+        parameters.enablejsapi = options.enablejsapi ? "1" : "0";
+        break;
       default:
         optionsKey satisfies never;
     }
@@ -468,6 +476,11 @@ export const YouTube = forwardRef<Ref, Props>(
       loading = "lazy",
       autoplay,
       showPreview,
+      showAnnotations,
+      showCaptions,
+      showControls,
+      allowFullscreen,
+      keyboard,
       children,
       privacyEnhancedMode,
       inline = false,
@@ -483,12 +496,19 @@ export const YouTube = forwardRef<Ref, Props>(
       (privacyEnhancedMode ?? true)
         ? PLAYER_PRIVACY_ENHANVED_MODE_CDN
         : PLAYER_ORIGINAL_CDN;
+
     const videoUrl = getVideoUrl(
       {
         ...rest,
         inline,
         url,
+        keyboard,
+        showAnnotations,
+        showCaptions,
+        allowFullscreen,
+        showControls,
         autoplay: true,
+        enablejsapi: false,
       },
       videoUrlOrigin
     );
