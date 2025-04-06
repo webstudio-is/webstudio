@@ -117,10 +117,12 @@ const RangeValueInput = ({
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
 
-        const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
-        if (parsedValue.success) {
-          onChange(parsedValue.data, true);
-          return;
+        if (styleValue?.type !== "intermediate") {
+          const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
+          if (parsedValue.success) {
+            onChange(parsedValue.data, true);
+            return;
+          }
         }
 
         onChange(undefined, true);
