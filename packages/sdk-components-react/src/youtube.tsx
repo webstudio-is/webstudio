@@ -149,6 +149,7 @@ type YouTubePlayerParameters = {
   playlist?: string;
 
   $progress?: Atom<number | undefined>;
+  $visible?: Atom<boolean>;
 };
 
 type YouTubePlayerOptions = {
@@ -318,6 +319,10 @@ const getVideoUrl = (
       case "$progress":
         // Do nothing
         break;
+      case "$visible":
+        // Do nothing
+        break;
+
       default:
         optionsKey satisfies never;
     }
@@ -401,7 +406,6 @@ const Player = ({
   showPreview,
   onStatusChange,
   onPreviewImageUrlChange,
-  $progress,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
   const ref = useRef<HTMLIFrameElement>(null);
@@ -429,33 +433,6 @@ const Player = ({
       onPreviewImageUrlChange(getPreviewImageUrl(videoId));
     }
   }, [onPreviewImageUrlChange, showPreview, videoUrl, previewImageUrl]);
-
-  useEffect(() => {
-    if ($progress === undefined) {
-      return;
-    }
-
-    return $progress.subscribe((progress) => {
-      if (progress === undefined) {
-        return;
-      }
-
-      if (ref.current === null) {
-        return;
-      }
-
-      ref.current.contentWindow?.postMessage(
-        JSON.stringify({
-          event: "command",
-          func: "seekTo",
-          args: [progress * 30, true],
-          id: ref.current.id,
-          channel: "widget",
-        }),
-        "*"
-      );
-    });
-  }, [$progress]);
 
   if (renderer === "canvas" || status === "initial") {
     return null;
@@ -511,10 +488,16 @@ export const YouTube = forwardRef<Ref, Props>(
       loading = "lazy",
       autoplay,
       showPreview,
+      showAnnotations,
+      showCaptions,
+      showControls,
+      allowFullscreen,
+      keyboard,
       children,
       privacyEnhancedMode,
       inline = false,
       $progress,
+      $visible: _visible,
       ...rest
     },
     ref
@@ -533,6 +516,11 @@ export const YouTube = forwardRef<Ref, Props>(
         ...rest,
         inline,
         url,
+        keyboard,
+        showAnnotations,
+        showCaptions,
+        allowFullscreen,
+        showControls,
         autoplay: true,
         enablejsapi: $progress !== undefined,
       },

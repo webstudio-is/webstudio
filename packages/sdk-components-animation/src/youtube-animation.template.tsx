@@ -16,6 +16,7 @@ export const meta: TemplateMeta = {
           position: relative;
           width: 100%;
           max-width: 100%;
+          aspect-ratio: 492/875;
         `}
         inline={true}
         autoplay={true}
