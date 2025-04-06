@@ -536,15 +536,7 @@ export const props: Record<string, PropMeta> = {
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
   },
-  tag: {
-    description:
-      "Use HTML heading levels (h1-h6) to structure content hierarchically, with h1 as the main title and subsequent levels representing sub-sections. Maintain a logical order and avoid skipping levels to ensure consistent and meaningful organization.",
-    required: false,
-    control: "select",
-    type: "string",
-    defaultValue: "h1",
-    options: ["h1", "h2", "h3", "h4", "h5", "h6"],
-  },
+  tag: { required: false, control: "text", type: "string" },
   title: {
     required: false,
     control: "text",
