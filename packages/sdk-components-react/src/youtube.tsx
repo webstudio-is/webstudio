@@ -10,7 +10,6 @@ import {
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { VimeoContext, requestFullscreen } from "./vimeo";
-import type { Atom } from "nanostores";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -147,9 +146,6 @@ type YouTubePlayerParameters = {
    * This parameter specifies a comma-separated list of video IDs to play
    */
   playlist?: string;
-
-  $progress?: Atom<number | undefined>;
-  $visible?: Atom<boolean>;
 };
 
 type YouTubePlayerOptions = {
@@ -316,13 +312,6 @@ const getVideoUrl = (
       case "enablejsapi":
         parameters.enablejsapi = options.enablejsapi ? "1" : "0";
         break;
-      case "$progress":
-        // Do nothing
-        break;
-      case "$visible":
-        // Do nothing
-        break;
-
       default:
         optionsKey satisfies never;
     }
@@ -391,7 +380,6 @@ type PlayerProps = Pick<
   previewImageUrl?: URL;
   onStatusChange: (status: PlayerStatus) => void;
   onPreviewImageUrlChange: (url?: URL) => void;
-  $progress?: Atom<number | undefined>;
 };
 
 const Player = ({
@@ -496,8 +484,6 @@ export const YouTube = forwardRef<Ref, Props>(
       children,
       privacyEnhancedMode,
       inline = false,
-      $progress,
-      $visible: _visible,
       ...rest
     },
     ref
@@ -522,7 +508,7 @@ export const YouTube = forwardRef<Ref, Props>(
         allowFullscreen,
         showControls,
         autoplay: true,
-        enablejsapi: $progress !== undefined,
+        enablejsapi: false,
       },
       videoUrlOrigin
     );
@@ -557,7 +543,6 @@ export const YouTube = forwardRef<Ref, Props>(
                 status={status}
                 onStatusChange={setStatus}
                 onPreviewImageUrlChange={setPreviewImageUrl}
-                $progress={$progress}
               />
             </>
           )}
