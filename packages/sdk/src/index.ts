@@ -39,6 +39,8 @@ export type {
   ScrollAnimation,
   ViewAnimation,
   InsetUnitValue,
+  DurationUnitValue,
+  TimeUnit,
 } from "./schema/animation-schema";
 
 export {
@@ -48,5 +50,6 @@ export {
   rangeUnitValueSchema,
   animationKeyframeSchema,
   insetUnitValueSchema,
+  durationUnitValueSchema,
   RANGE_UNITS,
 } from "./schema/animation-schema";

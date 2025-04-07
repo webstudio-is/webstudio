@@ -15,11 +15,13 @@ import { keywordValues } from "@webstudio-is/css-data";
 import { useIds } from "~/shared/form-utils";
 
 import type {
+  DurationUnitValue,
   RangeUnitValue,
   ScrollAnimation,
   ViewAnimation,
 } from "@webstudio-is/sdk";
 import {
+  durationUnitValueSchema,
   RANGE_UNITS,
   rangeUnitValueSchema,
   scrollAnimationSchema,
@@ -37,6 +39,7 @@ import {
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
 import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
+import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -95,9 +98,11 @@ const RangeValueInput = ({
   id,
   value,
   onChange,
+  disabled,
 }: {
   id: string;
   value: RangeUnitValue;
+  disabled?: boolean;
   onChange: ((value: undefined, isEphemeral: true) => void) &
     ((value: RangeUnitValue, isEphemeral: boolean) => void);
 }) => {
@@ -108,6 +113,7 @@ const RangeValueInput = ({
   return (
     <CssValueInput
       id={id}
+      disabled={disabled}
       styleSource="default"
       value={value}
       /* marginLeft to allow negative values  */
@@ -127,12 +133,13 @@ const RangeValueInput = ({
 
         onChange(undefined, true);
       }}
-      getOptions={() => []}
+      getOptions={() => $availableUnitVariables.get()}
       onHighlight={() => {
         /* Nothing to Highlight */
       }}
       onChangeComplete={(event) => {
         const parsedValue = rangeUnitValueSchema.safeParse(event.value);
+
         if (parsedValue.success) {
           onChange(parsedValue.data, false);
           setIntermediateValue(undefined);
@@ -184,6 +191,7 @@ const EasingInput = ({
             type: "keyword" as const,
             value,
           })),
+        ...$availableUnitVariables.get(),
       ]}
       property="animation-timing-function"
       intermediateValue={intermediateValue}
@@ -203,6 +211,61 @@ const EasingInput = ({
       }}
       onReset={() => {
         setIntermediateValue(undefined);
+        onChange(undefined, true);
+      }}
+    />
+  );
+};
+
+const DurationInput = ({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: DurationUnitValue | undefined;
+  onChange: (
+    value: DurationUnitValue | undefined,
+    isEphemeral: boolean
+  ) => void;
+}) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <CssValueInput
+      id={id}
+      styleSource="default"
+      value={value}
+      placeholder="auto"
+      property="animation-duration"
+      intermediateValue={intermediateValue}
+      onChange={(styleValue) => {
+        setIntermediateValue(styleValue);
+      }}
+      getOptions={() => $availableUnitVariables.get()}
+      onHighlight={() => {}}
+      onChangeComplete={(event) => {
+        const value = durationUnitValueSchema.safeParse(event.value);
+        onChange(undefined, true);
+        if (value.success) {
+          onChange(value.data, false);
+          setIntermediateValue(undefined);
+          return;
+        }
+
+        setIntermediateValue({
+          type: "invalid",
+          value: toValue(event.value),
+        });
+      }}
+      onAbort={() => {
+        onChange(undefined, true);
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        onChange(undefined, false);
         onChange(undefined, true);
       }}
     />
@@ -249,6 +312,7 @@ export const AnimationPanelContent = ({
     "fill",
     "easing",
     "name",
+    "duration",
   ] as const);
 
   const timelineRangeDescriptions =
@@ -258,6 +322,8 @@ export const AnimationPanelContent = ({
 
   const animationSchema =
     type === "scroll" ? scrollAnimationSchema : viewAnimationSchema;
+
+  const isRangeEndEnabled = value.timing.duration === undefined;
 
   const handleChange = (rawValue: unknown, isEphemeral: boolean) => {
     if (rawValue === undefined) {
@@ -414,7 +480,9 @@ export const AnimationPanelContent = ({
       >
         <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
         <div />
-        <Label htmlFor={fieldIds.rangeEndName}>Range End</Label>
+        <Label disabled={!isRangeEndEnabled} htmlFor={fieldIds.rangeEndName}>
+          Range End
+        </Label>
 
         <Select
           id={fieldIds.rangeStartName}
@@ -515,6 +583,7 @@ export const AnimationPanelContent = ({
         </Grid>
         <Select
           id={fieldIds.rangeEndName}
+          disabled={!isRangeEndEnabled}
           options={timelineRangeNames}
           getLabel={humanizeString}
           value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
@@ -614,6 +683,7 @@ export const AnimationPanelContent = ({
         <div />
         <RangeValueInput
           id={fieldIds.rangeEndValue}
+          disabled={!isRangeEndEnabled}
           value={
             value.timing.rangeEnd?.[1] ?? {
               type: "unit",
@@ -638,6 +708,39 @@ export const AnimationPanelContent = ({
                     value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
                     rangeEnd,
                   ],
+                },
+              },
+              isEphemeral
+            );
+          }}
+        />
+      </Grid>
+
+      <Grid
+        gap={1}
+        align={"center"}
+        css={{
+          gridTemplateColumns: "1fr 16px 1fr",
+          paddingInline: theme.panel.paddingInline,
+        }}
+      >
+        <Label htmlFor={fieldIds.duration}>Duration</Label>
+        <div />
+        <DurationInput
+          id={fieldIds.duration}
+          value={value.timing.duration}
+          onChange={(duration, isEphemeral) => {
+            if (duration === undefined && isEphemeral) {
+              handleChange(undefined, true);
+              return;
+            }
+
+            handleChange(
+              {
+                ...value,
+                timing: {
+                  ...value.timing,
+                  duration,
                 },
               },
               isEphemeral
