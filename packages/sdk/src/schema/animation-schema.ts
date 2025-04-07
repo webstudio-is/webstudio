@@ -78,11 +78,17 @@ export const rangeUnitValueSchema = z.union([
 export const TIME_UNITS = ["ms", "s"] as const;
 const timeUnitSchema = literalUnion(TIME_UNITS);
 
-export const durationUnitValueSchema = z.object({
-  type: z.literal("unit"),
-  value: z.number(),
-  unit: timeUnitSchema,
-});
+export const durationUnitValueSchema = z.union([
+  z.object({
+    type: z.literal("unit"),
+    value: z.number(),
+    unit: timeUnitSchema,
+  }),
+  z.object({
+    type: z.literal("var"),
+    value: z.string(),
+  }),
+]);
 
 // view-timeline-inset
 export const insetUnitValueSchema = z.union([

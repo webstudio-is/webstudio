@@ -244,6 +244,7 @@ const DurationInput = ({
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
       }}
+      getOptions={() => $availableUnitVariables.get()}
       onHighlight={() => {}}
       onChangeComplete={(event) => {
         const value = durationUnitValueSchema.safeParse(event.value);
