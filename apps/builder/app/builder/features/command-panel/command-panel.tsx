@@ -20,7 +20,11 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { componentCategories, collectionComponent } from "@webstudio-is/sdk";
+import {
+  componentCategories,
+  collectionComponent,
+  parseComponentName,
+} from "@webstudio-is/sdk";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
 import {
@@ -104,12 +108,24 @@ const $componentOptions = computed(
       if (category === "hidden" || category === "internal") {
         continue;
       }
+
       if (
         category === "animations" &&
         isFeatureEnabled("animation") === false
       ) {
         continue;
       }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
@@ -136,6 +152,17 @@ const $componentOptions = computed(
       if (meta.category === "hidden" || meta.category === "internal") {
         continue;
       }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       const componentMeta = metas.get(name);
       const label =
         meta.label ??

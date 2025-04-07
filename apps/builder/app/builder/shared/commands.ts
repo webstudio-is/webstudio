@@ -368,7 +368,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "focusStyleSources",
-      defaultHotkeys: ["meta+enter"],
+      defaultHotkeys: ["meta+enter", "ctrl+enter"],
       handler: () => {
         if ($isDesignMode.get() === false) {
           builderApi.toast.info(

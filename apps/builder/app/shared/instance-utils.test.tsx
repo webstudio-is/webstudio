@@ -1466,14 +1466,14 @@ describe("find closest insertable", () => {
     const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId">
-          <$.Box ws:id="spanId" tag="span"></$.Box>
+          <$.Box ws:id="spanId" ws:tag="span"></$.Box>
         </$.Paragraph>
       </$.Body>
     );
     $instances.set(instances);
     selectInstance(["boxId", "paragraphId", "bodyId"]);
     expect(
-      findClosestInsertable(renderTemplate(<$.Box tag="span"></$.Box>))
+      findClosestInsertable(renderTemplate(<$.Box ws:tag="span"></$.Box>))
     ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
       position: 0,
@@ -1503,22 +1503,17 @@ describe("find closest insertable", () => {
     });
   });
 
-  test("forbid inserting list item in body", () => {
+  test("allow inserting list item in body even though validation fails", () => {
     const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
-    const newListItemFragment = createFragment({
-      children: [{ type: "id", value: "newListItemId" }],
-      instances: [
-        {
-          type: "instance",
-          id: "newListItemId",
-          component: "ListItem",
-          children: [],
-        },
-      ],
+    const newListItemFragment = renderTemplate(
+      <$.ListItem ws:id="newListItemId"></$.ListItem>
+    );
+    expect(findClosestInsertable(newListItemFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: "end",
     });
-    expect(findClosestInsertable(newListItemFragment)).toEqual(undefined);
   });
 });
 

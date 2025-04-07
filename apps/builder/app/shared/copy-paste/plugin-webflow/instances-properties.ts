@@ -58,17 +58,20 @@ const toFragment = (
     }
   };
 
-  const addInstance = (
-    component: Instance["component"],
-    children: Instance["children"] = [],
-    label?: string
-  ) => {
+  const addInstance = ({
+    children = [],
+    ...instance
+  }: {
+    component: Instance["component"];
+    tag?: string;
+    children?: Instance["children"];
+    label?: string;
+  }) => {
     fragment.instances.push({
       id: instanceId,
       type: "instance",
-      component,
       children,
-      ...(label ? { label } : undefined),
+      ...instance,
     });
   };
 
@@ -88,15 +91,14 @@ const toFragment = (
       return fragment;
     }
     case "Heading": {
-      addProp("tag", wfNode.tag);
-      addInstance(component);
+      addInstance({ component, tag: wfNode.tag });
       return fragment;
     }
     case "List": {
       if (wfNode.tag === "ol") {
         addProp("ordered", true);
       }
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "ListItem":
@@ -105,15 +107,12 @@ const toFragment = (
     case "Subscript":
     case "Blockquote":
     case "Span": {
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Block": {
       const component = wfNode.data?.text ? "Text" : "Box";
-      if (wfNode.tag !== "div") {
-        addProp("tag", wfNode.tag);
-      }
-      addInstance(component);
+      addInstance({ component, tag: wfNode.tag });
       return fragment;
     }
 
@@ -139,69 +138,68 @@ const toFragment = (
       if ("tel" in data.link) {
         addProp("href", `tel:${data.link.tel}`);
       }
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Section": {
       const component = "Box";
-      addProp("tag", wfNode.tag);
-      addInstance(component);
+      addInstance({ component, tag: wfNode.tag });
       return fragment;
     }
     case "RichText": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Strong": {
       const component = "Bold";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Emphasized": {
       const component = "Italic";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Container":
     case "BlockContainer": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Layout": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Cell": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "VFlex": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "HFlex": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Grid": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Row": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Column": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "CodeBlock": {
@@ -209,13 +207,13 @@ const toFragment = (
       const data = wfNode.data;
       addProp("lang", data.language);
       addProp("code", data.code);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "HtmlEmbed": {
       addProp("code", wfNode.v);
       addProp("clientOnly", true);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "Image": {
@@ -245,17 +243,17 @@ const toFragment = (
       if (data.attr.src) {
         addProp("src", data.attr.src);
       }
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormWrapper": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormForm": {
       const component = "Box";
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormErrorMessage":
@@ -265,12 +263,15 @@ const toFragment = (
     case "FormButton": {
       const component = "Button";
       const data = wfNode.data;
-      addInstance(component, [
-        {
-          type: "text" as const,
-          value: data.attr.value,
-        },
-      ]);
+      addInstance({
+        component,
+        children: [
+          {
+            type: "text" as const,
+            value: data.attr.value,
+          },
+        ],
+      });
       return fragment;
     }
     case "FormTextInput": {
@@ -283,7 +284,7 @@ const toFragment = (
       addProp("type", data.attr.type);
       addProp("required", data.attr.required);
       addProp("autoFocus", data.attr.autofocus);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormTextarea": {
@@ -294,19 +295,19 @@ const toFragment = (
       addProp("placeholder", data.attr.placeholder);
       addProp("required", data.attr.required);
       addProp("autoFocus", data.attr.autofocus);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormBlockLabel": {
       const data = wfNode.data;
       const component = "Label";
       addProp("htmlFor", data.attr.for);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormCheckboxWrapper": {
       const component = "Label";
-      addInstance(component, [], "Checkbox Field");
+      addInstance({ component, label: "Checkbox Field" });
       return fragment;
     }
     case "FormCheckboxInput": {
@@ -315,18 +316,17 @@ const toFragment = (
       addProp("name", data.attr.name);
       addProp("required", data.attr.required);
       addProp("defaultChecked", data.attr.checked);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormInlineLabel": {
       const component = "Text";
-      addProp("tag", "span");
-      addInstance(component, [], "Label");
+      addInstance({ component, tag: "span", label: "Label" });
       return fragment;
     }
     case "FormRadioWrapper": {
       const component = "Label";
-      addInstance(component, [], "Radio Field");
+      addInstance({ component, label: "Radio Field" });
       return fragment;
     }
     case "FormRadioInput": {
@@ -335,7 +335,7 @@ const toFragment = (
       addProp("name", data.attr.name);
       addProp("required", data.attr.required);
       addProp("value", data.attr.value);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "FormSelect": {
@@ -345,26 +345,23 @@ const toFragment = (
       addProp("name", data.attr.name);
       addProp("required", data.attr.required);
       addProp("multiple", data.attr.multiple);
-      addInstance(component);
+      addInstance({ component });
       return fragment;
     }
     case "LightboxWrapper": {
-      addProp("tag", wfNode.tag);
       addProp("href", wfNode.data?.attr?.href);
-      addInstance("Box", [], component);
+      addInstance({ component: "Box", tag: wfNode.tag, label: component });
       return fragment;
     }
     case "NavbarMenu": {
-      addProp("tag", wfNode.tag);
       addProp("role", wfNode.data?.attr?.role);
-
-      addInstance("Box", [], component);
+      addInstance({ component: "Box", tag: wfNode.tag, label: component });
       return fragment;
     }
     case "NavbarContainer":
     case "NavbarButton":
     case "NavbarWrapper": {
-      addInstance("Box", [], component);
+      addInstance({ component: "Box", label: component });
       return fragment;
     }
 
@@ -389,18 +386,18 @@ const toFragment = (
       if ("tel" in data.link) {
         addProp("href", `tel:${data.link.tel}`);
       }
-      addInstance("Link", [], component);
+      addInstance({ component: "Link", label: component });
       return fragment;
     }
 
     case "Icon": {
       // We don't have access to widget icons
-      addInstance("Box", [], component);
+      addInstance({ component: "Box", label: component });
       return fragment;
     }
+    default:
+      (component) satisfies never;
   }
-
-  (component) satisfies never;
 };
 
 const addCustomAttributes = (

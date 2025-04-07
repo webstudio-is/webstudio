@@ -156,7 +156,10 @@ const InsetValueInput = ({
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-        handleEphemeralChange(styleValue);
+
+        if (styleValue?.type !== "intermediate") {
+          handleEphemeralChange(styleValue);
+        }
       }}
       getOptions={() => [
         {

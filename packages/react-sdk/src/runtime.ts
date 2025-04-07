@@ -11,9 +11,3 @@ export { PageSettingsCanonicalLink } from "./page-settings-canonical-link";
  */
 export const xmlNodeTagSuffix =
   "-ws-xml-node-fb77f896-8e96-40b9-b8f8-90a4e70d724a";
-
-export const getIndexWithinAncestorFromComponentProps = (
-  props: Record<string, unknown>
-) => {
-  return props["data-ws-index"] as string | undefined;
-};

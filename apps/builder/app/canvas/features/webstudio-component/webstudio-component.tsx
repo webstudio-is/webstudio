@@ -28,12 +28,12 @@ import {
   blockTemplateComponent,
   getIndexesWithinAncestors,
 } from "@webstudio-is/sdk";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import {
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
-  indexAttribute,
   type AnyComponent,
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
@@ -70,7 +70,6 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
-import { tagProperty } from "@webstudio-is/sdk/runtime";
 
 const ContentEditable = ({
   placeholder,
@@ -294,7 +293,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         }
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
-          instancePropsObject[indexAttribute] = index.toString();
+          instancePropsObject[indexProperty] = index.toString();
         }
         const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
