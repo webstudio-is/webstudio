@@ -138,6 +138,7 @@ const RangeValueInput = ({
       }}
       onChangeComplete={(event) => {
         const parsedValue = rangeUnitValueSchema.safeParse(event.value);
+
         if (parsedValue.success) {
           onChange(parsedValue.data, false);
           setIntermediateValue(undefined);

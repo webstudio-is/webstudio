@@ -69,6 +69,10 @@ export const rangeUnitValueSchema = z.union([
     type: z.literal("unparsed"),
     value: z.string(),
   }),
+  z.object({
+    type: z.literal("var"),
+    value: z.string(),
+  }),
 ]);
 
 export const TIME_UNITS = ["ms", "s"] as const;
