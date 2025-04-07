@@ -39,6 +39,7 @@ import {
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
 import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
+import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -132,7 +133,7 @@ const RangeValueInput = ({
 
         onChange(undefined, true);
       }}
-      getOptions={() => []}
+      getOptions={() => $availableUnitVariables.get()}
       onHighlight={() => {
         /* Nothing to Highlight */
       }}
@@ -190,6 +191,7 @@ const EasingInput = ({
             type: "keyword" as const,
             value,
           })),
+        ...$availableUnitVariables.get(),
       ]}
       property="animation-timing-function"
       intermediateValue={intermediateValue}
