@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { coreMetas } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { $, renderData, ws } from "@webstudio-is/template";
@@ -481,4 +481,130 @@ test("edge case: support a > img", () => {
       instanceSelector: ["bodyId"],
     })
   ).toBeTruthy();
+});
+
+describe("component content model", () => {
+  test("restrict children with specific component", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.HtmlEmbed>
+              <ws.descendant />
+            </$.HtmlEmbed>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.HtmlEmbed>
+              <ws.element ws:tag="div" />
+            </$.HtmlEmbed>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeFalsy();
+  });
+
+  test("restrict components within specific ancestor", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.Vimeo>
+              <$.VimeoSpinner></$.VimeoSpinner>
+            </$.Vimeo>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.Vimeo>
+              <ws.element ws:tag="div">
+                <$.VimeoSpinner></$.VimeoSpinner>
+              </ws.element>
+            </$.Vimeo>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.VimeoSpinner></$.VimeoSpinner>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeFalsy();
+  });
+
+  test("prevent self nesting with descendants restriction", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.Vimeo>
+              <$.VimeoSpinner>
+                <$.VimeoSpinner></$.VimeoSpinner>
+              </$.VimeoSpinner>
+            </$.Vimeo>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeFalsy();
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.Vimeo>
+              <$.VimeoSpinner>
+                <$.Vimeo>
+                  <$.VimeoSpinner></$.VimeoSpinner>
+                </$.Vimeo>
+              </$.VimeoSpinner>
+            </$.Vimeo>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toBeTruthy();
+  });
+
+  test("pass constraints when check deep in the tree", () => {
+    expect(
+      isTreeSatisfyingContentModel({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <$.Vimeo ws:id="vimeoId">
+              <ws.element ws:tag="div" ws:id="divId">
+                <$.VimeoSpinner></$.VimeoSpinner>
+              </ws.element>
+            </$.Vimeo>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["divId", "vimeoId", "bodyId"],
+      })
+    ).toBeTruthy();
+  });
 });

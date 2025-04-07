@@ -1,32 +1,34 @@
 import { EmbedIcon } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
+import {
+  descendantComponent,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { props } from "./__generated__/html-embed.props";
 
-const presetStyle = {
-  div: [
-    {
-      property: "display",
-      value: { type: "keyword", value: "contents" },
-    },
-    {
-      property: "white-space-collapse",
-      value: { type: "keyword", value: "collapse" },
-    },
-  ],
-} satisfies PresetStyle<"div">;
-
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "embed",
+  type: "container",
   label: "HTML Embed",
   description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
-  presetStyle,
   order: 2,
+  contentModel: {
+    category: "instance",
+    children: [descendantComponent],
+  },
+  presetStyle: {
+    div: [
+      {
+        property: "display",
+        value: { type: "keyword", value: "contents" },
+      },
+      {
+        property: "white-space-collapse",
+        value: { type: "keyword", value: "collapse" },
+      },
+    ],
+  },
 };
 
 export const propsMeta: WsComponentPropsMeta = {
