@@ -6,9 +6,9 @@ export const meta: WsComponentMeta = {
   ...imageMeta,
   category: "hidden",
   label: "Preview Image",
-  constraints: {
-    relation: "ancestor",
-    component: { $in: ["Vimeo", "YouTube"] },
+  contentModel: {
+    category: "none",
+    children: ["empty"],
   },
 };
 

@@ -64,6 +64,28 @@ export const defaultStates: ComponentState[] = [
   { selector: ":focus-within", label: "Focus Within" },
 ];
 
+export const ContentModel = z.object({
+  /*
+   * instance - accepted by any parent with "instance" in children categories
+   * none - accepted by parents with this component name in children categories
+   */
+  category: z.union([z.literal("instance"), z.literal("none")]),
+  /**
+   * transparent - pass through possible children from parent
+   * rich-text - can be edited as rich text
+   * instance - other instances accepted
+   * empty - no children accepted
+   * ComponentName - accept specific components with none category
+   */
+  children: z.array(
+    z.string() as z.ZodType<
+      "transparent" | "instance" | "rich-text" | "empty" | (string & {})
+    >
+  ),
+});
+
+export type ContentModel = z.infer<typeof ContentModel>;
+
 export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   // container - can accept other components with dnd or be edited as text
@@ -77,6 +99,7 @@ export const WsComponentMeta = z.object({
    */
   placeholder: z.string().optional(),
   constraints: Matchers.optional(),
+  contentModel: ContentModel.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor
   // important to automatically enumerate collections without
