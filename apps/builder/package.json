@@ -47,10 +47,10 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-aria/interactions": "^3.23.0",
     "@react-aria/utils": "^3.27.0",
-    "@remix-run/node": "^2.16.2",
-    "@remix-run/react": "^2.16.2",
-    "@remix-run/serve": "^2.16.2",
-    "@remix-run/server-runtime": "^2.16.2",
+    "@remix-run/node": "^2.16.4",
+    "@remix-run/react": "^2.16.4",
+    "@remix-run/serve": "^2.16.4",
+    "@remix-run/server-runtime": "^2.16.4",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
@@ -125,7 +125,7 @@
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.16.2",
+    "@remix-run/dev": "^2.16.4",
     "@types/debug": "^4.1.12",
     "@types/dom-navigation": "^1.0.5",
     "@types/react": "^18.2.70",
