@@ -2,12 +2,13 @@ import {
   categoriesByTag,
   childrenCategoriesByTag,
 } from "@webstudio-is/html-data";
-import type {
-  ContentModel,
-  Instance,
-  Instances,
-  Props,
-  WsComponentMeta,
+import {
+  parseComponentName,
+  type ContentModel,
+  type Instance,
+  type Instances,
+  type Props,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "./tree-utils";
 
@@ -320,16 +321,11 @@ export const isTreeSatisfyingContentModel = ({
     return true;
   }
   const tag = getTag({ instance, metas, props });
-  let isSatisfying = isTagSatisfyingContentModel({
+  const isTagSatisfying = isTagSatisfyingContentModel({
     tag,
     allowedCategories,
   });
-  isSatisfying &&= isComponentSatisfyingContentModel({
-    metas,
-    component: instance.component,
-    allowedCategories: allowedComponentCategories,
-  });
-  if (isSatisfying === false && allowedCategories) {
+  if (isTagSatisfying === false) {
     const parentInstance = instances.get(parentInstanceId);
     let parentTag: undefined | string;
     if (parentInstance) {
@@ -343,6 +339,28 @@ export const isTreeSatisfyingContentModel = ({
       onError?.(`Placing <${tag}> element here violates HTML spec.`);
     }
   }
+  const isComponentSatisfying = isComponentSatisfyingContentModel({
+    metas,
+    component: instance.component,
+    allowedCategories: allowedComponentCategories,
+  });
+  if (isComponentSatisfying === false) {
+    const [_namespace, name] = parseComponentName(instance.component);
+    const parentInstance = instances.get(parentInstanceId);
+    let parentName: undefined | string;
+    if (parentInstance) {
+      const [_namespace, name] = parseComponentName(parentInstance.component);
+      parentName = name;
+    }
+    if (parentName) {
+      onError?.(
+        `Placing "${name}" element inside a "${parentName}" violates content model.`
+      );
+    } else {
+      onError?.(`Placing "${name}" element here violates content model.`);
+    }
+  }
+  let isSatisfying = isTagSatisfying && isComponentSatisfying;
   for (const child of instance.children) {
     if (child.type === "id") {
       isSatisfying &&= isTreeSatisfyingContentModel({
