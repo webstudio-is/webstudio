@@ -4,7 +4,7 @@
     "deploy": "npx netlify-cli deploy --build --prod"
   },
   "dependencies": {
-    "@netlify/vite-plugin-react-router": "^1.0.0",
-    "@react-router/node": "^7.4.0"
+    "@netlify/vite-plugin-react-router": "^1.0.1",
+    "@react-router/node": "^7.5.0"
   }
 }
