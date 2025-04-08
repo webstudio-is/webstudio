@@ -156,7 +156,10 @@ const InsetValueInput = ({
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-        handleEphemeralChange(styleValue);
+
+        if (styleValue?.type !== "intermediate") {
+          handleEphemeralChange(styleValue);
+        }
       }}
       getOptions={() => [
         {
@@ -386,6 +389,11 @@ export const AnimationSection = ({
               id={fieldIds.insetStart}
               value={value.insetStart ?? { type: "keyword", value: "auto" }}
               onChange={(insetStart, isEphemeral) => {
+                if (insetStart === undefined) {
+                  handleChange(undefined, isEphemeral);
+                  return;
+                }
+
                 handleChange({ ...value, insetStart }, isEphemeral);
               }}
             />
@@ -393,6 +401,11 @@ export const AnimationSection = ({
               id={fieldIds.insetEnd}
               value={value.insetEnd ?? { type: "keyword", value: "auto" }}
               onChange={(insetEnd, isEphemeral) => {
+                if (insetEnd === undefined) {
+                  handleChange(undefined, isEphemeral);
+                  return;
+                }
+
                 handleChange({ ...value, insetEnd }, isEphemeral);
               }}
             />

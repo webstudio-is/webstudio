@@ -60,10 +60,18 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
-      const [namespace] = parseComponentName(name);
+      const [namespace, shortName] = parseComponentName(name);
       if (
         isFeatureEnabled("animation") === false &&
         namespace === "@webstudio-is/sdk-components-animation"
+      ) {
+        continue;
+      }
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
       ) {
         continue;
       }
@@ -81,6 +89,15 @@ const $metas = computed(
     }
     for (const [name, templateMeta] of templates) {
       const componentMeta = componentMetas.get(name);
+      const [namespace, shortName] = parseComponentName(name);
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       metas.push({
         name,
         category: templateMeta.category ?? "hidden",

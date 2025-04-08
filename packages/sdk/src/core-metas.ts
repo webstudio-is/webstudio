@@ -66,12 +66,12 @@ const descendantMeta: WsComponentMeta = {
   type: "control",
   label: "Descendant",
   icon: PaintBrushIcon,
+  contentModel: {
+    category: "none",
+    children: ["empty"],
+  },
   // @todo infer possible presets
   presetStyle: {},
-  constraints: {
-    relation: "parent",
-    component: { $in: ["HtmlEmbed", "MarkdownEmbed"] },
-  },
 };
 
 const descendantPropsMeta: WsComponentPropsMeta = {
@@ -110,9 +110,9 @@ export const blockTemplateComponent = "ws:block-template";
 export const blockTemplateMeta: WsComponentMeta = {
   type: "container",
   icon: AddTemplateInstanceIcon,
-  constraints: {
-    relation: "parent",
-    component: { $eq: blockComponent },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
 };
 
@@ -124,16 +124,11 @@ const blockMeta: WsComponentMeta = {
   type: "container",
   label: "Content Block",
   icon: ContentBlockIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $nin: [collectionComponent, blockComponent] },
-    },
-    {
-      relation: "child",
-      component: { $eq: blockTemplateComponent },
-    },
-  ],
+  contentModel: {
+    category: "instance",
+    children: [blockTemplateComponent, "instance"],
+    // @todo prevent deleting block template
+  },
 };
 
 const blockPropsMeta: WsComponentPropsMeta = {
