@@ -39,6 +39,7 @@ export default defineConfig({
             headless: true,
             screenshotFailures: false,
             instances: [{ browser: "chromium" }, { browser: "firefox" }],
+            fileParallelism: false,
           },
         },
       },
