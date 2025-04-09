@@ -450,7 +450,7 @@ export const isRichTextTree = ({
   }
   const componentContentModel =
     metas.get(instance.component)?.contentModel ?? defaultComponentContentModel;
-  let isRichText = componentContentModel.children.includes("rich-text");
+  const isRichText = componentContentModel.children.includes("rich-text");
   // only empty instance with rich text content can be edited
   if (instance.children.length === 0) {
     return isRichText;
@@ -535,7 +535,6 @@ export const findClosestNonTextualContainer = ({
   if (instanceSelector.length === 1) {
     return instanceSelector;
   }
-  let lastMatched = instanceSelector;
   for (let index = 0; index < instanceSelector.length; index += 1) {
     const instanceId = instanceSelector[index];
     const instance = instances.get(instanceId);
@@ -575,5 +574,5 @@ export const findClosestNonTextualContainer = ({
       return instanceSelector.slice(index);
     }
   }
-  return lastMatched;
+  return instanceSelector;
 };
