@@ -51,7 +51,7 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -1440,6 +1440,7 @@ const onError = (error: Error) => {
 type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
+  props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
   onChange: (instancesList: Instance[]) => void;
@@ -1520,6 +1521,7 @@ const AnyKeyDownPlugin = ({
 export const TextEditor = ({
   rootInstanceSelector: rootInstanceSelectorUnstable,
   instances,
+  props,
   contentEditable,
   editable,
   onChange,
@@ -1623,12 +1625,13 @@ export const TextEditor = ({
       }
 
       const editableInstanceSelectors: InstanceSelector[] = [];
-      findAllEditableInstanceSelector(
-        [rootInstanceId],
+      findAllEditableInstanceSelector({
+        instanceSelector: [rootInstanceId],
         instances,
+        props,
         metas,
-        editableInstanceSelectors
-      );
+        results: editableInstanceSelectors,
+      });
 
       const currentIndex = editableInstanceSelectors.findIndex(
         (instanceSelector) => {

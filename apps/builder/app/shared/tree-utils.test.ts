@@ -8,10 +8,8 @@ import type {
 } from "@webstudio-is/sdk";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
 import {
-  type InstanceSelector,
   cloneStyles,
   findLocalStyleSourcesWithinInstances,
-  getAncestorInstanceSelector,
   isDescendantOrSelf,
 } from "./tree-utils";
 
@@ -74,18 +72,6 @@ const createStyleDeclPair = (
     createStyleDecl(styleSourceId, breakpointId, value),
   ] as const;
 };
-
-test("get ancestor instance selector", () => {
-  const instanceSelector: InstanceSelector = ["4", "3", "2", "1"];
-  expect(getAncestorInstanceSelector(instanceSelector, "2")).toEqual([
-    "2",
-    "1",
-  ]);
-  expect(getAncestorInstanceSelector(instanceSelector, "-1")).toEqual(
-    undefined
-  );
-  expect(getAncestorInstanceSelector(instanceSelector, "1")).toEqual(["1"]);
-});
 
 test("clone styles with appled new style source ids", () => {
   const styles: Styles = new Map([

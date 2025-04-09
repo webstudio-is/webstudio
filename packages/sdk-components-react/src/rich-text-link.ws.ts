@@ -3,7 +3,7 @@ import { meta as linkMeta, propsMeta as linkPropsMeta } from "./link.ws";
 
 export const meta: WsComponentMeta = {
   ...linkMeta,
-  type: "rich-text-child",
+  type: "container",
 };
 
 export const propsMeta: WsComponentPropsMeta = linkPropsMeta;

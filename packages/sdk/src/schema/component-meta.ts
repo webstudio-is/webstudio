@@ -91,8 +91,7 @@ export const WsComponentMeta = z.object({
   // container - can accept other components with dnd or be edited as text
   // control - usually form controls like inputs, without children
   // embed - images, videos or other embeddable components, without children
-  // rich-text-child - formatted text fragment, not listed in components list
-  type: z.enum(["container", "control", "embed", "rich-text-child"]),
+  type: z.enum(["container", "control", "embed"]),
   /**
    * a property used as textual placeholder when no content specified while in builder
    * also signals to not insert components inside unless dropped explicitly

@@ -14,7 +14,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "rich-text-child",
+  type: "container",
   label: "Text",
   icon: PaintBrushIcon,
   states: defaultStates,

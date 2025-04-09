@@ -1,8 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { coreMetas } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import { $, renderData, ws } from "@webstudio-is/template";
-import { isTreeSatisfyingContentModel } from "./content-model";
+import { $, expression, renderData, ws } from "@webstudio-is/template";
+import {
+  findClosestNonTextualContainer,
+  findClosestRichText,
+  isRichTextTree,
+  isTreeSatisfyingContentModel,
+} from "./content-model";
 
 const defaultMetas = new Map(
   Object.entries({ ...coreMetas, ...baseComponentMetas })
@@ -606,5 +611,318 @@ describe("component content model", () => {
         instanceSelector: ["divId", "vimeoId", "bodyId"],
       })
     ).toBeTruthy();
+  });
+});
+
+describe("rich text tree", () => {
+  test("check empty instance is rich text", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(<$.Bold ws:id="instanceId"></$.Bold>),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeTruthy();
+    expect(
+      isRichTextTree({
+        ...renderData(<$.HeadSlot ws:id="instanceId"></$.HeadSlot>),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeFalsy();
+  });
+
+  test("any instance with text can be edited", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(<$.HeadSlot ws:id="instanceId">my text</$.HeadSlot>),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeTruthy();
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <$.HeadSlot ws:id="instanceId">{expression``}</$.HeadSlot>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeTruthy();
+  });
+
+  test("rich text content tags can be edited", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <$.Bold ws:id="instanceId">
+            <$.Italic></$.Italic>
+          </$.Bold>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeTruthy();
+  });
+
+  test("rich text instances with rich text content can be edited", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <$.Paragraph ws:id="instanceId">
+            <$.Bold>bold</$.Bold>
+          </$.Paragraph>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeTruthy();
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <$.HeadSlot ws:id="instanceId">
+            <$.Bold>bold</$.Bold>
+          </$.HeadSlot>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeFalsy();
+  });
+
+  test("div with paragraph cannot be rich text", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <$.Box ws:id="instanceId">
+            <$.Paragraph></$.Paragraph>
+          </$.Box>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeFalsy();
+  });
+
+  test("finds closest rich text with rich text content", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="p" ws:id="paragraphId">
+              <ws.element ws:tag="b" ws:id="boldId"></ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["boldId", "paragraphId", "bodyId"],
+      })
+    ).toEqual(["paragraphId", "bodyId"]);
+  });
+
+  test("finds closest rich text with rich text content", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="p" ws:id="paragraphId">
+              text
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["paragraphId", "bodyId"],
+      })
+    ).toEqual(["paragraphId", "bodyId"]);
+  });
+
+  test("treat body as rich text when has text inside", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            text
+            <ws.element ws:tag="p" ws:id="paragraphId">
+              <ws.element ws:tag="b" ws:id="boldId"></ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["boldId", "paragraphId", "bodyId"],
+      })
+    ).toEqual(["bodyId"]);
+  });
+
+  test("ignore <a> with <div> inside", () => {
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="a" ws:id="linkId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      </ws.element>
+    );
+    expect(
+      findClosestRichText({
+        ...data,
+        metas: defaultMetas,
+        instanceSelector: ["divId", "linkId", "bodyId"],
+      })
+    ).toEqual(["divId", "linkId", "bodyId"]);
+    expect(
+      findClosestRichText({
+        ...data,
+        metas: defaultMetas,
+        instanceSelector: ["linkId", "bodyId"],
+      })
+    ).toEqual(undefined);
+  });
+
+  test("finds link rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <ws.element ws:tag="a" ws:id="linkId">
+                my link
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["linkId", "divId", "bodyId"],
+      })
+    ).toEqual(["linkId", "divId", "bodyId"]);
+  });
+
+  test("finds span rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <ws.element ws:tag="span" ws:id="spanId">
+                my span
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["spanId", "divId", "bodyId"],
+      })
+    ).toEqual(["spanId", "divId", "bodyId"]);
+  });
+
+  test("finds rich text with mixed children", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <ws.element ws:tag="span" ws:id="spanId">
+                my link
+              </ws.element>
+              <ws.element ws:tag="b" ws:id="boldId">
+                my link
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["spanId", "divId", "bodyId"],
+      })
+    ).toEqual(["divId", "bodyId"]);
+  });
+});
+
+describe("closest non textual container", () => {
+  test("skips non-container instances", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Image ws:id="imageId" />
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["imageId", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("skips containers with text", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Box ws:id="box-with-text">text</$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["box-with-text", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("skips containers with expression", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["box-with-expr", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("skips containers with rich text children", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Box ws:id="box-with-bold">
+                <$.Bold ws:id="boldId"></$.Bold>
+              </$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["box-with-bold", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("allow root with text", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(<$.Body ws:id="body">text</$.Body>),
+        metas: defaultMetas,
+        instanceSelector: ["body"],
+      })
+    ).toEqual(["body"]);
+  });
+
+  test("matches empty div", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["divId", "bodyId"],
+      })
+    ).toEqual(["divId", "bodyId"]);
   });
 });
