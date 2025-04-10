@@ -23,6 +23,7 @@ import {
   PageSettingsCanonicalLink,
 } from "@webstudio-is/react-sdk/runtime";
 import {
+  projectId,
   Page,
   siteName,
   favIconAsset,
@@ -34,7 +35,6 @@ import {
   getResources,
   getPageMeta,
   getRemixParams,
-  projectId,
   contactEmail,
 } from "__SERVER__";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
