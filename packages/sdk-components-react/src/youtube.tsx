@@ -217,11 +217,15 @@ const getVideoUrl = (
   )[];
 
   const parameters: Record<string, string | undefined> = {};
+  parameters.autoplay = "1";
 
   for (const optionsKey of optionsKeys) {
+    if (options[optionsKey] === undefined) {
+      continue;
+    }
     switch (optionsKey) {
       case "autoplay":
-        parameters.autoplay = options.autoplay ? "1" : "0";
+        // parameters.autoplay = options.autoplay ? "1" : "0";
         // Mute video if autoplay is enabled and muted is not touched
         if (options.autoplay && options.muted === undefined) {
           parameters.mute = "1";
@@ -507,7 +511,7 @@ export const YouTube = forwardRef<Ref, Props>(
         showCaptions,
         allowFullscreen,
         showControls,
-        autoplay: true,
+        autoplay,
         enablejsapi: false,
       },
       videoUrlOrigin
