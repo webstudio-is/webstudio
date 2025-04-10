@@ -22,6 +22,7 @@ import {
   PageSettingsTitle,
 } from "@webstudio-is/react-sdk/runtime";
 import {
+  projectId,
   Page,
   siteName,
   favIconAsset,
@@ -33,7 +34,6 @@ import {
   getResources,
   getPageMeta,
   getRemixParams,
-  projectId,
   contactEmail,
 } from "../__generated__/[class-names]._index.server";
 import { assetBaseUrl, imageLoader } from "../constants.mjs";

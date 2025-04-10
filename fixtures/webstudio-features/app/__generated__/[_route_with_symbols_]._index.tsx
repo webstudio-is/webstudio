@@ -6,6 +6,10 @@ import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import { Image as Image } from "@webstudio-is/sdk-components-react";
 
+export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
+
+export const lastPublished = "2025-03-26T12:23:17.308Z";
+
 export const siteName = "KittyGuardedZone";
 
 export const breakpoints = [

@@ -13,6 +13,10 @@ import {
   Image as Image,
 } from "@webstudio-is/sdk-components-react";
 
+export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const lastPublished = "2025-01-04T11:01:50.091Z";
+
 export const siteName = "";
 
 export const breakpoints = [

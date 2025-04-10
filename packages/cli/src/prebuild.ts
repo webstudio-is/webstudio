@@ -614,6 +614,10 @@ export const prebuild = async (options: {
       import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
       ${componentImports}
 
+      export const projectId = "${siteData.build.projectId}";
+
+      export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
+
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
 
       export const breakpoints = ${JSON.stringify(breakpoints)};
@@ -684,8 +688,6 @@ export const prebuild = async (options: {
       })}
 
       ${generateRemixParams(page.path)}
-
-      export const projectId = "${siteData.build.projectId}";
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
