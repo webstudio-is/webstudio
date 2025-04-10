@@ -206,12 +206,13 @@ const subscribeContentEditModeHelperStyles = () => {
       const editableInstanceSelectors: InstanceSelector[] = [];
       const instances = $instances.get();
 
-      findAllEditableInstanceSelector(
-        [rootInstanceId],
+      findAllEditableInstanceSelector({
+        instanceSelector: [rootInstanceId],
         instances,
-        $registeredComponentMetas.get(),
-        editableInstanceSelectors
-      );
+        props: $props.get(),
+        metas: $registeredComponentMetas.get(),
+        results: editableInstanceSelectors,
+      });
 
       // Group IDs into chunks of 20 since :is() allows for more efficient grouping
       const chunkSize = 20;

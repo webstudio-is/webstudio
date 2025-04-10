@@ -1,16 +1,17 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
-import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
 import {
   $hoveredInstanceOutline,
   $hoveredInstanceSelector,
   $instances,
   $isContentMode,
+  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
 import { shallowEqual } from "shallow-equal";
 import { $awareness, selectInstance } from "~/shared/awareness";
+import { findClosestRichText } from "~/shared/content-model";
 
 const isElementBeingEdited = (element: Element) => {
   if (element.closest("[contenteditable=true]")) {
@@ -67,11 +68,12 @@ const handleEdit = (event: MouseEvent) => {
 
   const instances = $instances.get();
 
-  let editableInstanceSelector = findClosestEditableInstanceSelector(
+  let editableInstanceSelector = findClosestRichText({
     instanceSelector,
     instances,
-    $registeredComponentMetas.get()
-  );
+    props: $props.get(),
+    metas: $registeredComponentMetas.get(),
+  });
 
   // Do not allow edit bindable text instances with expression children in Content Mode
   if (editableInstanceSelector !== undefined && $isContentMode.get()) {

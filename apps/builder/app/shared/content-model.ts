@@ -11,6 +11,9 @@ import {
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "./tree-utils";
+import { setIsSubsetOf } from "./shim";
+
+type Metas = Map<Instance["component"], WsComponentMeta>;
 
 const tagByInstanceIdCache = new WeakMap<Props, Map<Instance["id"], string>>();
 
@@ -34,7 +37,7 @@ const getTag = ({
   props,
 }: {
   instance: Instance;
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   props: Props;
 }) => {
   const meta = metas.get(instance.component);
@@ -155,7 +158,7 @@ const computeAllowedCategories = ({
 }: {
   instances: Instances;
   props: Props;
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   instanceSelector: InstanceSelector;
 }) => {
   let instance: undefined | Instance;
@@ -183,7 +186,7 @@ const isComponentSatisfyingContentModel = ({
   component,
   allowedCategories,
 }: {
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   component: string;
   allowedCategories: undefined | string[];
 }) => {
@@ -207,7 +210,7 @@ const getComponentChildrenCategories = ({
   component,
   allowedCategories,
 }: {
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   component: string;
   allowedCategories: undefined | string[];
 }) => {
@@ -229,7 +232,7 @@ const computeAllowedComponentCategories = ({
   instanceSelector,
 }: {
   instances: Instances;
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   instanceSelector: InstanceSelector;
 }) => {
   let instance: undefined | Instance;
@@ -296,7 +299,7 @@ export const isTreeSatisfyingContentModel = ({
 }: {
   instances: Instances;
   props: Props;
-  metas: Map<Instance["component"], WsComponentMeta>;
+  metas: Metas;
   instanceSelector: InstanceSelector;
   onError?: (message: string) => void;
   _allowedCategories?: string[];
@@ -379,4 +382,197 @@ export const isTreeSatisfyingContentModel = ({
     }
   }
   return isSatisfying;
+};
+
+const richTextContentTags = new Set<undefined | string>([
+  "sup",
+  "sub",
+  "b",
+  "strong",
+  "i",
+  "em",
+  "a",
+  "span",
+]);
+
+const richTextContainerTags = new Set<undefined | string>(["a", "span"]);
+
+const findContentTags = ({
+  instances,
+  props,
+  metas,
+  instance,
+  _tags: tags = new Set(),
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instance: Instance;
+  _tags?: Set<undefined | string>;
+}) => {
+  for (const child of instance.children) {
+    if (child.type === "id") {
+      const childInstance = instances.get(child.value);
+      // consider collection item as well
+      if (childInstance === undefined) {
+        tags.add(undefined);
+        continue;
+      }
+      const tag = getTag({ instance: childInstance, metas, props });
+      tags.add(tag);
+      findContentTags({
+        instances,
+        props,
+        metas,
+        instance: childInstance,
+        _tags: tags,
+      });
+    }
+  }
+  return tags;
+};
+
+export const isRichTextTree = ({
+  instanceId,
+  instances,
+  props,
+  metas,
+}: {
+  instanceId: Instance["id"];
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+}): boolean => {
+  const instance = instances.get(instanceId);
+  // collection item is not rich text
+  if (instance === undefined) {
+    return false;
+  }
+  const componentContentModel =
+    metas.get(instance.component)?.contentModel ?? defaultComponentContentModel;
+  const isRichText = componentContentModel.children.includes("rich-text");
+  // only empty instance with rich text content can be edited
+  if (instance.children.length === 0) {
+    return isRichText;
+  }
+  for (const child of instance.children) {
+    if (child.type === "text" || child.type === "expression") {
+      return true;
+    }
+  }
+  const contentTags = findContentTags({
+    instances,
+    props,
+    metas,
+    instance,
+  });
+  return (
+    isRichText &&
+    // rich text must contain only supported elements in editor
+    setIsSubsetOf(contentTags, richTextContentTags) &&
+    // rich text cannot contain only span and only link
+    // those links and spans are containers in such cases
+    !setIsSubsetOf(contentTags, richTextContainerTags)
+  );
+};
+
+export const findClosestRichText = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}): undefined | InstanceSelector => {
+  let foundRichText: undefined | InstanceSelector = undefined;
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    if (!isRichTextTree({ instanceId, instances, props, metas })) {
+      break;
+    }
+    foundRichText = instanceSelector.slice(index);
+  }
+  return foundRichText;
+};
+
+export const isRichTextContent = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}) => {
+  const richTextSelector = findClosestRichText({
+    instanceSelector,
+    instances,
+    props,
+    metas,
+  });
+  return (
+    richTextSelector && richTextSelector.join() !== instanceSelector.join()
+  );
+};
+
+export const findClosestNonTextualContainer = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}) => {
+  // page root with text can be used as container
+  if (instanceSelector.length === 1) {
+    return instanceSelector;
+  }
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance = instances.get(instanceId);
+    // collection item can be undefined
+    if (instance === undefined) {
+      continue;
+    }
+    const meta = metas.get(instance.component);
+    if (meta?.type !== "container") {
+      continue;
+    }
+    const tag = getTag({ instance, props, metas });
+    if (
+      instance.children.length === 0 &&
+      !meta?.placeholder &&
+      !richTextContentTags.has(tag)
+    ) {
+      return instanceSelector.slice(index);
+    }
+    // placeholder exists only inside of empty instances
+    let hasText = false;
+    for (const child of instance.children) {
+      if (child.type === "text" || child.type === "expression") {
+        hasText = true;
+      }
+    }
+    const contentTags = findContentTags({
+      instances,
+      props,
+      metas,
+      instance,
+    });
+    if (setIsSubsetOf(contentTags, richTextContentTags)) {
+      hasText = true;
+    }
+    if (!hasText) {
+      return instanceSelector.slice(index);
+    }
+  }
+  return instanceSelector;
 };

@@ -12,25 +12,13 @@ import type {
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { collectionComponent } from "@webstudio-is/sdk";
+import { isRichTextTree } from "./content-model";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
 // and support deletion of slot child from specific parent
 // selector starts with target instance and ends with root
 export type InstanceSelector = Instance["id"][];
-
-// provide a selector starting with ancestor id
-// useful to select parent instance or one of breadcrumbs instances
-export const getAncestorInstanceSelector = (
-  instanceSelector: InstanceSelector,
-  ancestorId: Instance["id"]
-): undefined | InstanceSelector => {
-  const ancestorIndex = instanceSelector.indexOf(ancestorId);
-  if (ancestorIndex === -1) {
-    return undefined;
-  }
-  return instanceSelector.slice(ancestorIndex);
-};
 
 export const areInstanceSelectorsEqual = (
   left?: InstanceSelector,
@@ -161,17 +149,14 @@ export const wrapEditableChildrenAroundDropTargetMutable = (
     return;
   }
   // wrap only containers with text and rich text childre
-  for (const child of parentInstance.children) {
-    if (child.type === "id") {
-      const childInstance = instances.get(child.value);
-      if (childInstance === undefined) {
-        return;
-      }
-      const childMeta = metas.get(childInstance.component);
-      if (childMeta?.type !== "rich-text-child") {
-        return;
-      }
-    }
+  const isParentRichText = isRichTextTree({
+    instances,
+    props,
+    metas,
+    instanceId: parentId,
+  });
+  if (!isParentRichText) {
+    return;
   }
   const position =
     dropTarget.position === "end"
