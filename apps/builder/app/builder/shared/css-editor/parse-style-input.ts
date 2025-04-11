@@ -46,16 +46,17 @@ export const parseStyleInput = (css: string): CssStyleMap => {
   const styles = parseCss(`selector{${css}}`);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
-    // somethingunknown: red; -> --somethingunknown: red;
-    if (
-      (propertiesData[property] === undefined && !property.startsWith("--")) ||
-      (value.type === "unparsed" && property.startsWith("--") === false)
-    ) {
-      styleMap.set(`--${property}`, value);
-    } else {
-      // @todo This should be returning { type: "guaranteedInvalid" }
+    if (property.startsWith("--")) {
       styleMap.set(property, value);
+      continue;
     }
+    // somethingunknown: red; -> --somethingunknown: red;
+    if (propertiesData[property] === undefined || value.type === "unparsed") {
+      styleMap.set(`--${property}`, value);
+      continue;
+    }
+    // @todo This should be returning { type: "guaranteedInvalid" }
+    styleMap.set(property, value);
   }
   return styleMap;
 };
