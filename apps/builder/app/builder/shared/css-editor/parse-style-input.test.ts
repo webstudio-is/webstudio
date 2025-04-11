@@ -87,4 +87,11 @@ describe("parseStyleInput", () => {
       new Map([["color", { type: "keyword", value: "red" }]])
     );
   });
+
+  test("output property with invalid value", () => {
+    const result = parseStyleInput("rotate: z 0;");
+    expect(result).toEqual(
+      new Map([["rotate", { type: "invalid", value: "z 0" }]])
+    );
+  });
 });
