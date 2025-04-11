@@ -29,11 +29,12 @@ import {
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
+import { composeEventHandlers } from "~/shared/event-utils";
 import {
   deleteProperty,
   setProperty,
-} from "../../features/style-panel/shared/use-style-data";
-import { composeEventHandlers } from "~/shared/event-utils";
+} from "~/builder/features/style-panel/shared/use-style-data";
+import { $availableVariables } from "~/builder/features/style-panel/shared/model";
 import { parseStyleInput } from "./parse-style-input";
 
 type SearchItem = {
@@ -43,19 +44,27 @@ type SearchItem = {
   key: string;
 };
 
-const autoCompleteItems: Array<SearchItem> = [];
-
 const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description: string | undefined = `Create CSS variable.`;
-  if (item && item.property in propertyDescriptions) {
+  let description: string | undefined = "Add CSS property.";
+  if (item?.property.startsWith("--")) {
+    description = "Create CSS variable.";
+  }
+  if (item && propertyDescriptions[item.property]) {
     description = propertyDescriptions[item.property];
   }
   return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
 };
 
 const getAutocompleteItems = () => {
-  if (autoCompleteItems.length > 0) {
-    return autoCompleteItems;
+  const autoCompleteItems: SearchItem[] = [];
+  for (const varValue of $availableVariables.get()) {
+    const property = `--${varValue.value}`;
+    autoCompleteItems.push({
+      // consider additional properties to be custom properties
+      key: property,
+      property,
+      label: property,
+    });
   }
   for (const property in propertiesData) {
     autoCompleteItems.push({
