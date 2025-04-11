@@ -51,7 +51,7 @@ export const parseStyleInput = (css: string): CssStyleMap => {
       continue;
     }
     // somethingunknown: red; -> --somethingunknown: red;
-    if (propertiesData[property] === undefined || value.type === "unparsed") {
+    if (propertiesData[property] === undefined) {
       styleMap.set(`--${property}`, value);
       continue;
     }
