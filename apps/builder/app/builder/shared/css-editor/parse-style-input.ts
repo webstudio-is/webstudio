@@ -43,17 +43,12 @@ const ensureValue = (css: string) => {
  */
 export const parseStyleInput = (css: string): CssStyleMap => {
   css = ensureValue(css);
-
   const styles = parseCss(`selector{${css}}`);
-
   const styleMap: CssStyleMap = new Map();
-
   for (const { property, value } of styles) {
     // somethingunknown: red; -> --somethingunknown: red;
     if (
-      // Note: currently in tests it returns unparsed, but in the client it returns invalid,
-      // because we use native APIs when available in parseCss.
-      value.type === "invalid" ||
+      (propertiesData[property] === undefined && !property.startsWith("--")) ||
       (value.type === "unparsed" && property.startsWith("--") === false)
     ) {
       styleMap.set(`--${property}`, value);
