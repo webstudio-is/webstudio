@@ -1,26 +1,26 @@
 export const sitemap = [
   {
     path: "/",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
   {
     path: "/_route_with_symbols_",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
   {
     path: "/form",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
   {
     path: "/heading-with-id",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
   {
     path: "/resources",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
   {
     path: "/nested/nested-page",
-    lastModified: "2025-03-26",
+    lastModified: "2025-04-12",
   },
 ];

@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "3a8c8a9c-cfd9-46b8-a8bf-30d48250bc1b",
+    "id": "691fef31-369a-46b5-9ca7-e67482d8f602",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 554,
-    "createdAt": "2025-03-26T12:23:17.308+00:00",
-    "updatedAt": "2025-03-26T12:23:17.308+00:00",
+    "version": 558,
+    "createdAt": "2025-04-12T06:51:31.672+00:00",
+    "updatedAt": "2025-04-12T06:51:31.672+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -248,6 +248,30 @@
             "include": false
           },
           "path": "/animations"
+        },
+        {
+          "id": "GgJUcrFoHE6EGMccjLa4t",
+          "name": "duration",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "Lmn0VIRtr_Yn9AvDyjgZG",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/duration"
         }
       ],
       "folders": [
@@ -268,7 +292,8 @@
             "FsnS9ui6btzM4W3YELE3Q",
             "Q1D-6G1cl0SfXyM9Xj4_O",
             "8fF_9MQOwOqsLM9BhULUG",
-            "oc1Ra5zelesj-wiJwiw-P"
+            "oc1Ra5zelesj-wiJwiw-P",
+            "GgJUcrFoHE6EGMccjLa4t"
           ]
         },
         {
@@ -2096,6 +2121,18 @@
             "value": 0
           }
         }
+      ],
+      [
+        "SdJcDQJhrZ0zxtPqj546x:UoTkWyaFuTYJihS3MFYK5:textAlign:",
+        {
+          "styleSourceId": "SdJcDQJhrZ0zxtPqj546x",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "textAlign",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -2399,6 +2436,13 @@
           "type": "local",
           "id": "hSMd0d2O_5ogkTfvV8g8B"
         }
+      ],
+      [
+        "SdJcDQJhrZ0zxtPqj546x",
+        {
+          "type": "local",
+          "id": "SdJcDQJhrZ0zxtPqj546x"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -2701,6 +2745,13 @@
         {
           "instanceId": "hi1l-ro0pCVQpHFIwIhFO",
           "values": ["hSMd0d2O_5ogkTfvV8g8B"]
+        }
+      ],
+      [
+        "tOdjbQbLEf52thwmubL7R",
+        {
+          "instanceId": "tOdjbQbLEf52thwmubL7R",
+          "values": ["SdJcDQJhrZ0zxtPqj546x"]
         }
       ]
     ],
@@ -3812,6 +3863,81 @@
           "name": "slidingWindow",
           "type": "number",
           "value": 20
+        }
+      ],
+      [
+        "CKL9YyMMdbB8Bg1o2M0S-",
+        {
+          "id": "CKL9YyMMdbB8Bg1o2M0S-",
+          "instanceId": "Iz65PDmd9YjqrIy5fGtWt",
+          "name": "action",
+          "type": "animationAction",
+          "value": {
+            "type": "view",
+            "animations": [
+              {
+                "name": "Parent",
+                "description": "Parallax the element as it scrolls into the view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": 100
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "duration": {
+                    "type": "unit",
+                    "value": 302,
+                    "unit": "ms"
+                  },
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              }
+            ],
+            "insetStart": {
+              "type": "keyword",
+              "value": "auto"
+            },
+            "insetEnd": {
+              "type": "keyword",
+              "value": "auto"
+            },
+            "isPinned": true,
+            "debug": false
+          }
         }
       ]
     ],
@@ -6284,6 +6410,72 @@
           "label": "Spacer",
           "children": []
         }
+      ],
+      [
+        "Lmn0VIRtr_Yn9AvDyjgZG",
+        {
+          "type": "instance",
+          "id": "Lmn0VIRtr_Yn9AvDyjgZG",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "Iz65PDmd9YjqrIy5fGtWt"
+            }
+          ]
+        }
+      ],
+      [
+        "Iz65PDmd9YjqrIy5fGtWt",
+        {
+          "type": "instance",
+          "id": "Iz65PDmd9YjqrIy5fGtWt",
+          "component": "@webstudio-is/sdk-components-animation:AnimateChildren",
+          "children": [
+            {
+              "type": "id",
+              "value": "tOdjbQbLEf52thwmubL7R"
+            }
+          ]
+        }
+      ],
+      [
+        "tOdjbQbLEf52thwmubL7R",
+        {
+          "type": "instance",
+          "id": "tOdjbQbLEf52thwmubL7R",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "HELLO WORLD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "GOOD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "BAD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "UGLY"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
@@ -6548,6 +6740,30 @@
         "include": false
       },
       "path": "/animations"
+    },
+    {
+      "id": "GgJUcrFoHE6EGMccjLa4t",
+      "name": "duration",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "Lmn0VIRtr_Yn9AvDyjgZG",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/duration"
     }
   ],
   "assets": [
