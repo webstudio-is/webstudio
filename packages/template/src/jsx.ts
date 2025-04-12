@@ -14,6 +14,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { TemplateStyleDecl } from "./css";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 
 export class Variable {
   name: string;
@@ -276,11 +277,13 @@ export const renderTemplate = (
           values: [styleSourceId],
         });
         const localStyles = value as TemplateStyleDecl[];
-        for (const styleDecl of localStyles) {
+        for (const { state, property, value } of localStyles) {
           styles.push({
             breakpointId: getBreakpointId(),
             styleSourceId,
-            ...styleDecl,
+            state,
+            property: camelCaseProperty(property),
+            value,
           });
         }
         continue;

@@ -98,7 +98,32 @@ export const generateCss = ({
   presetSheet.addMediaRule("presets");
   const presetClasses = new Map<Instance["component"], string>();
   const scope = createScope([], normalizeClassName, "-");
+
+  const tagsByComponent = new Map<Instance["component"], Set<string>>();
+  tagsByComponent.set(rootComponent, new Set(["html"]));
+  const tagByInstanceId = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.type === "string" && prop.name === "tag") {
+      tagByInstanceId.set(prop.instanceId, prop.value);
+    }
+  }
+  for (const instance of instances.values()) {
+    const propTag = tagByInstanceId.get(instance.id);
+    const meta = componentMetas.get(instance.component);
+    const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
+    let componentTags = tagsByComponent.get(instance.component);
+    if (componentTags === undefined) {
+      componentTags = new Set();
+      tagsByComponent.set(instance.component, componentTags);
+    }
+    const tag = instance.tag ?? propTag ?? metaTag;
+    if (tag) {
+      componentTags.add(tag);
+    }
+  }
+
   for (const [component, meta] of componentMetas) {
+    const componentTags = tagsByComponent.get(component);
     const [_namespace, componentName] = parseComponentName(component);
     const className = `w-${scope.getName(component, meta.label ?? componentName)}`;
     const presetStyle = Object.entries(meta.presetStyle ?? {});
@@ -106,12 +131,11 @@ export const generateCss = ({
       // add preset class only when at least one style is defined
       presetClasses.set(component, className);
     }
-    // @todo reset specificity with css cascade layers instead of :where
     for (const [tag, styles] of presetStyle) {
-      // use :where() to reset specificity of preset selector
-      // and let user styles completely override it
-      // ideally switch to @layer when better supported
-      // render root preset styles without changes
+      // ignore unused tags
+      if (!componentTags?.has(tag)) {
+        continue;
+      }
       const selector =
         component === rootComponent ? ":root" : `${tag}.${className}`;
       const rule = presetSheet.addNestingRule(selector);
