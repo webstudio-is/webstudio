@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { AnimationPanelContent } from "./animation-panel-content";
-import { theme } from "@webstudio-is/design-system";
+import { Box, theme } from "@webstudio-is/design-system";
 import { useState } from "react";
 import type { ScrollAnimation, ViewAnimation } from "@webstudio-is/sdk";
 
@@ -26,13 +26,19 @@ const ScrollAnimationTemplate: Story["render"] = ({ value: initialValue }) => {
   const [value, setValue] = useState(initialValue);
 
   return (
-    <AnimationPanelContent
-      type="scroll"
-      value={value}
-      onChange={(newValue) => {
-        setValue(newValue as ScrollAnimation);
-      }}
-    />
+    <Box css={{ width: 240 }}>
+      <AnimationPanelContent
+        type="scroll"
+        value={value}
+        onChange={(newValue, isEphemeral) => {
+          if (isEphemeral) {
+            return;
+          }
+
+          setValue(newValue as ScrollAnimation);
+        }}
+      />
+    </Box>
   );
 };
 
@@ -40,13 +46,18 @@ const ViewAnimationTemplate: Story["render"] = ({ value: initialValue }) => {
   const [value, setValue] = useState(initialValue);
 
   return (
-    <AnimationPanelContent
-      type="view"
-      value={value}
-      onChange={(newValue) => {
-        setValue(newValue as ViewAnimation);
-      }}
-    />
+    <Box css={{ width: 240 }}>
+      <AnimationPanelContent
+        type="view"
+        value={value}
+        onChange={(newValue, isEphemeral) => {
+          if (isEphemeral) {
+            return;
+          }
+          setValue(newValue as ViewAnimation);
+        }}
+      />
+    </Box>
   );
 };
 
@@ -82,7 +93,7 @@ export const ViewAnimationStory: Story = {
       name: "view-animation",
       timing: {
         rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
-        rangeEnd: ["exit", { type: "unit", value: 100, unit: "%" }],
+        rangeEnd: ["entry", { type: "unit", value: 100, unit: "%" }],
       },
       keyframes: [
         {

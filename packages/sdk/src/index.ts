@@ -41,6 +41,8 @@ export type {
   InsetUnitValue,
   DurationUnitValue,
   TimeUnit,
+  ViewRangeOptionsSchema,
+  ScrollRangeOptionsSchema,
 } from "./schema/animation-schema";
 
 export {

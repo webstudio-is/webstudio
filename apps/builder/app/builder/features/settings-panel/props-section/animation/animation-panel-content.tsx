@@ -40,6 +40,7 @@ import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
 import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
+import { AnimationRanges } from "./animation-ranges";
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -469,22 +470,46 @@ export const AnimationPanelContent = ({
           }}
         />
       </Grid>
+
       <Grid
         gap={1}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr 16px 1fr",
+          gridTemplateAreas: `
+            "rangeEndLabel . . animation"
+            "rangeEndName rangeEndPercentage connect animation"
+            "rangeStartLabel . connect animation"
+            "rangeStartName rangeStartPercentage connect animation"
+            "durationLabel durationValue . animation"
+          `,
+          gridTemplateColumns: "1.5fr 1fr 16px 34px",
           paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
-        <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
-        <div />
-        <Label disabled={!isRangeEndEnabled} htmlFor={fieldIds.rangeEndName}>
+        <Label
+          css={{
+            gridArea: "rangeStartLabel",
+          }}
+          htmlFor={fieldIds.rangeStartName}
+        >
+          Range Start
+        </Label>
+
+        <Label
+          css={{
+            gridArea: "rangeEndLabel",
+          }}
+          disabled={!isRangeEndEnabled}
+          htmlFor={fieldIds.rangeEndName}
+        >
           Range End
         </Label>
 
         <Select
+          css={{
+            gridArea: "rangeStartName",
+          }}
           id={fieldIds.rangeStartName}
           options={timelineRangeNames}
           getLabel={humanizeString}
@@ -550,7 +575,11 @@ export const AnimationPanelContent = ({
             );
           }}
         />
-        <Grid>
+        <Grid
+          css={{
+            gridArea: "connect",
+          }}
+        >
           <EnhancedTooltip
             content={isLinked ? "Unlink range names" : "Link range names"}
           >
@@ -582,6 +611,9 @@ export const AnimationPanelContent = ({
           </EnhancedTooltip>
         </Grid>
         <Select
+          css={{
+            gridArea: "rangeEndName",
+          }}
           id={fieldIds.rangeEndName}
           disabled={!isRangeEndEnabled}
           options={timelineRangeNames}
@@ -648,105 +680,114 @@ export const AnimationPanelContent = ({
           }}
         />
 
-        <RangeValueInput
-          id={fieldIds.rangeStartValue}
-          value={
-            value.timing.rangeStart?.[1] ?? {
-              type: "unit",
-              value: 0,
-              unit: "%",
+        <Box css={{ gridArea: "rangeStartPercentage" }}>
+          <RangeValueInput
+            id={fieldIds.rangeStartValue}
+            value={
+              value.timing.rangeStart?.[1] ?? {
+                type: "unit",
+                value: 0,
+                unit: "%",
+              }
             }
-          }
-          onChange={(rangeStart, isEphemeral) => {
-            if (rangeStart === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
+            onChange={(rangeStart, isEphemeral) => {
+              if (rangeStart === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
 
-            const defaultTimelineRangeName = timelineRangeNames[0]!;
+              const defaultTimelineRangeName = timelineRangeNames[0]!;
 
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeStart: [
-                    value.timing.rangeStart?.[0] ?? defaultTimelineRangeName,
-                    rangeStart,
-                  ],
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    rangeStart: [
+                      value.timing.rangeStart?.[0] ?? defaultTimelineRangeName,
+                      rangeStart,
+                    ],
+                  },
                 },
-              },
-              isEphemeral
-            );
-          }}
-        />
-        <div />
-        <RangeValueInput
-          id={fieldIds.rangeEndValue}
-          disabled={!isRangeEndEnabled}
-          value={
-            value.timing.rangeEnd?.[1] ?? {
-              type: "unit",
-              value: 0,
-              unit: "%",
+                isEphemeral
+              );
+            }}
+          />
+        </Box>
+        <Box css={{ gridArea: "rangeEndPercentage" }}>
+          <RangeValueInput
+            id={fieldIds.rangeEndValue}
+            disabled={!isRangeEndEnabled}
+            value={
+              value.timing.rangeEnd?.[1] ?? {
+                type: "unit",
+                value: 0,
+                unit: "%",
+              }
             }
-          }
-          onChange={(rangeEnd, isEphemeral) => {
-            if (rangeEnd === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
+            onChange={(rangeEnd, isEphemeral) => {
+              if (rangeEnd === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
 
-            const defaultTimelineRangeName = timelineRangeNames[0]!;
+              const defaultTimelineRangeName = timelineRangeNames[0]!;
 
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
-                    rangeEnd,
-                  ],
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    rangeEnd: [
+                      value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
+                      rangeEnd,
+                    ],
+                  },
                 },
-              },
-              isEphemeral
-            );
+                isEphemeral
+              );
+            }}
+          />
+        </Box>
+
+        <Label
+          css={{
+            gridArea: "durationLabel",
           }}
-        />
-      </Grid>
+          htmlFor={fieldIds.duration}
+        >
+          Duration
+        </Label>
 
-      <Grid
-        gap={1}
-        align={"center"}
-        css={{
-          gridTemplateColumns: "1fr 16px 1fr",
-          paddingInline: theme.panel.paddingInline,
-        }}
-      >
-        <Label htmlFor={fieldIds.duration}>Duration</Label>
-        <div />
-        <DurationInput
-          id={fieldIds.duration}
-          value={value.timing.duration}
-          onChange={(duration, isEphemeral) => {
-            if (duration === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
+        <Box css={{ gridArea: "durationValue" }}>
+          <DurationInput
+            id={fieldIds.duration}
+            value={value.timing.duration}
+            onChange={(duration, isEphemeral) => {
+              if (duration === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
 
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  duration,
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    duration,
+                  },
                 },
-              },
-              isEphemeral
-            );
-          }}
-        />
+                isEphemeral
+              );
+            }}
+          />
+        </Box>
+        <Grid css={{ gridArea: "animation", alignSelf: "stretch" }}>
+          <AnimationRanges
+            rangeStart={value.timing.rangeStart}
+            rangeEnd={value.timing.rangeEnd}
+          />
+        </Grid>
       </Grid>
 
       <Keyframes
