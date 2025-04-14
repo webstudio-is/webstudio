@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import {
   theme,
   DropdownMenu,
@@ -21,6 +21,7 @@ import {
   SectionTitleButton,
   SectionTitle,
   SectionTitleLabel,
+  Flex,
 } from "@webstudio-is/design-system";
 import {
   EyeClosedIcon,
@@ -48,6 +49,7 @@ const newAnimationsPerType: {
 };
 
 type AnimationsSelectProps = {
+  action?: ReactNode;
   value: AnimationAction;
   onChange: ((value: unknown, isEphemeral: boolean) => void) &
     ((value: undefined, isEphemeral: true) => void);
@@ -60,6 +62,7 @@ type AnimationsSelectProps = {
 const floatingPanelOffset = { alignmentAxis: -100 };
 
 export const AnimationsSelect = ({
+  action,
   value,
   onChange,
   isAnimationEnabled,
@@ -101,63 +104,67 @@ export const AnimationsSelect = ({
         <SectionTitle
           collapsible={false}
           suffix={
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SectionTitleButton
-                  prefix={<PlusIcon />}
-                  tabIndex={0}
-                  id={fieldIds.addAnimation}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-                css={{ width: theme.spacing[25] }}
-              >
-                {newAnimations.map((animation, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    onSelect={() => {
-                      handleChange(
-                        {
-                          ...value,
-                          animations: value.animations.concat(animation),
-                        },
-                        false
-                      );
-                    }}
-                    onFocus={() => setNewAnimationHint(animation.description)}
-                    onBlur={() => setNewAnimationHint(undefined)}
-                  >
-                    {animation.name}
-                  </DropdownMenuItem>
-                ))}
+            <Flex gap="1" align="center">
+              {action}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SectionTitleButton
+                    prefix={<PlusIcon />}
+                    tabIndex={0}
+                    id={fieldIds.addAnimation}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+                  css={{ width: theme.spacing[25] }}
+                >
+                  {newAnimations.map((animation, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onSelect={() => {
+                        handleChange(
+                          {
+                            ...value,
+                            animations: value.animations.concat(animation),
+                          },
+                          false
+                        );
+                      }}
+                      onFocus={() => setNewAnimationHint(animation.description)}
+                      onBlur={() => setNewAnimationHint(undefined)}
+                    >
+                      {animation.name}
+                    </DropdownMenuItem>
+                  ))}
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-                <DropdownMenuItem css={{ display: "grid" }} hint>
-                  {newAnimations.map(({ description }, index) => (
+                  <DropdownMenuItem css={{ display: "grid" }} hint>
+                    {newAnimations.map(({ description }, index) => (
+                      <Box
+                        css={{
+                          gridColumn: "1",
+                          gridRow: "1",
+                          visibility: "hidden",
+                        }}
+                        key={index}
+                      >
+                        {description}
+                      </Box>
+                    ))}
                     <Box
                       css={{
                         gridColumn: "1",
                         gridRow: "1",
-                        visibility: "hidden",
                       }}
-                      key={index}
                     >
-                      {description}
+                      {newAnimationHint ??
+                        "Add new or select existing animation"}
                     </Box>
-                  ))}
-                  <Box
-                    css={{
-                      gridColumn: "1",
-                      gridRow: "1",
-                    }}
-                  >
-                    {newAnimationHint ?? "Add new or select existing animation"}
-                  </Box>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </Flex>
           }
         >
           <SectionTitleLabel>Animations</SectionTitleLabel>

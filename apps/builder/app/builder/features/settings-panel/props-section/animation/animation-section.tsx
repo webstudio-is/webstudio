@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState, type ComponentProps } from "react";
 import {
   Grid,
   theme,
@@ -11,9 +11,9 @@ import {
   ToggleGroupButton,
   Text,
   Switch,
+  FloatingPanel,
+  IconButton,
 } from "@webstudio-is/design-system";
-import { useIds } from "~/shared/form-utils";
-import type { PropAndMeta } from "../use-props-logic";
 import type {
   AnimationAction,
   AnimationActionScroll,
@@ -24,16 +24,22 @@ import {
   insetUnitValueSchema,
   RANGE_UNITS,
 } from "@webstudio-is/sdk";
-import { ArrowDownIcon, ArrowRightIcon } from "@webstudio-is/icons";
-import { AnimationsSelect } from "./animations-select";
-import { SubjectSelect } from "./subject-select";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  EllipsesIcon,
+} from "@webstudio-is/icons";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
 import { humanizeString } from "~/shared/string-utils";
+import { useIds } from "~/shared/form-utils";
 import { FieldLabel } from "../../property-label";
+import type { PropAndMeta } from "../use-props-logic";
+import { AnimationsSelect } from "./animations-select";
+import { SubjectSelect } from "./subject-select";
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -44,7 +50,7 @@ const animationTypeDescription: Record<AnimationAction["type"], string> = {
 const insetDescription =
   "Adjusts the animation’s start/end position relative to the scrollport. Positive values move it inward (delaying start or hastening end), while negative values move it outward (starting animation before visibility or continuing after disappearance).";
 
-const animationTypes: AnimationAction["type"][] = Object.keys(
+const animationTypes = Object.keys(
   animationTypeDescription
 ) as AnimationAction["type"][];
 
@@ -116,11 +122,9 @@ const unitOptions = RANGE_UNITS.map((unit) => ({
 }));
 
 const InsetValueInput = ({
-  id,
   value,
   onChange,
 }: {
-  id: string;
   value: InsetUnitValue;
   onChange: ((value: undefined, isEphemeral: true) => void) &
     ((value: InsetUnitValue, isEphemeral: boolean) => void);
@@ -147,7 +151,6 @@ const InsetValueInput = ({
 
   return (
     <CssValueInput
-      id={id}
       styleSource="default"
       value={value}
       /* marginLeft to allow negative values  */
@@ -200,6 +203,140 @@ const animationSources = Object.keys(
   animationSourceDescriptions
 ) as NonNullable<AnimationActionScroll["source"]>[];
 
+const AnimationConfig = ({
+  value,
+  onChange,
+}: {
+  value: AnimationAction;
+  onChange: (value: unknown, isEphemeral: boolean) => void;
+}) => {
+  return (
+    <Grid gap={2} css={{ padding: theme.panel.padding }}>
+      <Grid gap={1} align="center" columns={2}>
+        <FieldLabel description="Type of the timeline defines how the animation is triggered.">
+          Type
+        </FieldLabel>
+        <Select
+          options={animationTypes}
+          getLabel={humanizeString}
+          value={value.type}
+          getDescription={(animationType) => (
+            <Box css={{ width: theme.spacing[28] }}>
+              {animationTypeDescription[animationType]}
+            </Box>
+          )}
+          onChange={(typeValue) =>
+            onChange({ ...value, type: typeValue, animations: [] }, false)
+          }
+        />
+      </Grid>
+
+      <Grid gap={1} align="center" columns={2}>
+        <FieldLabel description="Axis determines whether an animation progresses based on an element’s visibility along the horizontal or vertical direction.">
+          Axis
+        </FieldLabel>
+        <ToggleGroup
+          css={{ justifySelf: "end" }}
+          type="single"
+          value={convertAxisToXY(value.axis ?? ("y" as const))}
+          onValueChange={(axis: keyof typeof animationAxisDescription) =>
+            onChange({ ...value, axis: convertAxisToXY(axis) }, false)
+          }
+        >
+          {Object.entries(animationAxisDescription).map(
+            ([key, { icon, label, description }]) => (
+              <Tooltip
+                key={key}
+                variant="wrapped"
+                content={
+                  <Grid gap={1}>
+                    <Text variant={"titles"}>{label}</Text>
+                    <Text>{description}</Text>
+                  </Grid>
+                }
+              >
+                <ToggleGroupButton value={key}>{icon}</ToggleGroupButton>
+              </Tooltip>
+            )
+          )}
+        </ToggleGroup>
+      </Grid>
+
+      {value.type === "scroll" && (
+        <Grid gap={1} align="center" columns={2}>
+          <FieldLabel description="The scroll source is the element whose scrolling behavior drives the animation's progress.">
+            Scroll Source
+          </FieldLabel>
+          <Select
+            options={animationSources}
+            getLabel={humanizeString}
+            value={value.source ?? "nearest"}
+            getDescription={(animationSource) => (
+              <Box css={{ width: theme.spacing[28] }}>
+                {animationSourceDescriptions[animationSource]}
+              </Box>
+            )}
+            onChange={(source) => onChange({ ...value, source }, false)}
+          />
+        </Grid>
+      )}
+
+      {value.type === "view" && (
+        <Grid gap={1} align="center" columns={2}>
+          <FieldLabel description="The subject is the element whose visibility determines the animation’s progress.">
+            Subject
+          </FieldLabel>
+          <SubjectSelect value={value} onChange={onChange} />
+        </Grid>
+      )}
+
+      {value.type === "view" && (
+        <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
+          <FieldLabel description={insetDescription}>
+            {value.axis === "inline" || value.axis === "x"
+              ? "Left Inset"
+              : "Top Inset"}
+          </FieldLabel>
+          <FieldLabel description={insetDescription}>
+            {value.axis === "inline" || value.axis === "x"
+              ? "Right Inset"
+              : "Bottom Inset"}
+          </FieldLabel>
+          <InsetValueInput
+            value={value.insetStart ?? { type: "keyword", value: "auto" }}
+            onChange={(insetStart, isEphemeral) => {
+              const newValue =
+                insetStart === undefined ? undefined : { ...value, insetStart };
+              onChange(newValue, isEphemeral);
+            }}
+          />
+          <InsetValueInput
+            value={value.insetEnd ?? { type: "keyword", value: "auto" }}
+            onChange={(insetEnd, isEphemeral) => {
+              const newValue =
+                insetEnd === undefined ? undefined : { ...value, insetEnd };
+              onChange(newValue, isEphemeral);
+            }}
+          />
+        </Grid>
+      )}
+    </Grid>
+  );
+};
+
+const AnimationConfigButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<"button">
+>((props, ref) => {
+  return (
+    <Tooltip content="Advanced transform options">
+      <IconButton {...props} ref={ref}>
+        <EllipsesIcon />
+      </IconButton>
+    </Tooltip>
+  );
+});
+
 export const AnimationSection = ({
   animationAction,
   onChange,
@@ -245,174 +382,22 @@ export const AnimationSection = ({
 
   return (
     <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
-      <Grid
-        gap={2}
-        align={"center"}
-        css={{
-          gridTemplateColumns: "1fr auto",
-          padding: theme.panel.paddingInline,
-        }}
-      >
-        <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the instance.">
-          Run on canvas
-        </FieldLabel>
-        <Tooltip content={value.isPinned ? "Off" : "On"}>
-          <Switch
-            checked={value.isPinned ?? false}
-            onCheckedChange={(isPinned) => {
-              handleChange({ ...value, isPinned }, false);
-            }}
-          />
-        </Tooltip>
-      </Grid>
-
-      <Separator />
-
-      <Box css={{ height: theme.panel.paddingBlock }} />
-      <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
-        <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel description="Type of the timeline defines how the animation is triggered.">
-            Type
+      <Grid gap={2} css={{ padding: theme.panel.paddingInline }}>
+        <Grid gap={2} align="center" css={{ gridTemplateColumns: "1fr auto" }}>
+          <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the instance.">
+            Run on canvas
           </FieldLabel>
-          <Select
-            id={fieldIds.type}
-            options={animationTypes}
-            getLabel={humanizeString}
-            value={value.type}
-            getDescription={(animationType: AnimationAction["type"]) => (
-              <Box css={{ width: theme.spacing[28] }}>
-                {animationTypeDescription[animationType]}
-              </Box>
-            )}
-            onChange={(typeValue) => {
-              handleChange(
-                { ...value, type: typeValue, animations: [] },
-                false
-              );
-            }}
-          />
+          <Tooltip content={value.isPinned ? "Off" : "On"}>
+            <Switch
+              checked={value.isPinned ?? false}
+              onCheckedChange={(isPinned) => {
+                handleChange({ ...value, isPinned }, false);
+              }}
+            />
+          </Tooltip>
         </Grid>
 
-        <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "1fr 1fr" }}>
-          <FieldLabel description="Axis determines whether an animation progresses based on an element’s visibility along the horizontal or vertical direction.">
-            Axis
-          </FieldLabel>
-          <ToggleGroup
-            css={{ justifySelf: "end" }}
-            type="single"
-            value={convertAxisToXY(value.axis ?? ("y" as const))}
-            onValueChange={(axis: keyof typeof animationAxisDescription) => {
-              handleChange({ ...value, axis: convertAxisToXY(axis) }, false);
-            }}
-          >
-            {Object.entries(animationAxisDescription).map(
-              ([key, { icon, label, description }]) => (
-                <Tooltip
-                  key={key}
-                  variant="wrapped"
-                  content={
-                    <Grid gap={1}>
-                      <Text variant={"titles"}>{label}</Text>
-                      <Text>{description}</Text>
-                    </Grid>
-                  }
-                >
-                  <ToggleGroupButton value={key}>{icon}</ToggleGroupButton>
-                </Tooltip>
-              )
-            )}
-          </ToggleGroup>
-        </Grid>
-
-        {value.type === "scroll" && (
-          <Grid
-            gap={1}
-            align={"center"}
-            css={{ gridTemplateColumns: "1fr 1fr" }}
-          >
-            <FieldLabel description="The scroll source is the element whose scrolling behavior drives the animation's progress.">
-              Scroll Source
-            </FieldLabel>
-            <Select
-              id={fieldIds.source}
-              options={animationSources}
-              getLabel={humanizeString}
-              value={value.source ?? "nearest"}
-              getDescription={(
-                animationSource: NonNullable<AnimationActionScroll["source"]>
-              ) => (
-                <Box css={{ width: theme.spacing[28] }}>
-                  {animationSourceDescriptions[animationSource]}
-                </Box>
-              )}
-              onChange={(source) => {
-                handleChange({ ...value, source }, false);
-              }}
-            />
-          </Grid>
-        )}
-
-        {value.type === "view" && (
-          <Grid
-            gap={1}
-            align={"center"}
-            css={{ gridTemplateColumns: "1fr 1fr" }}
-          >
-            <FieldLabel description="The subject is the element whose visibility determines the animation’s progress.">
-              Subject
-            </FieldLabel>
-            <SubjectSelect
-              id={fieldIds.subject}
-              value={value}
-              onChange={handleChange}
-            />
-          </Grid>
-        )}
-
-        {value.type === "view" && (
-          <Grid
-            gap={1}
-            align={"center"}
-            css={{ gridTemplateColumns: "1fr 1fr" }}
-          >
-            <FieldLabel description={insetDescription}>
-              {value.axis === "inline" || value.axis === "x"
-                ? "Left Inset"
-                : "Top Inset"}
-            </FieldLabel>
-            <FieldLabel description={insetDescription}>
-              {value.axis === "inline" || value.axis === "x"
-                ? "Right Inset"
-                : "Bottom Inset"}
-            </FieldLabel>
-            <InsetValueInput
-              id={fieldIds.insetStart}
-              value={value.insetStart ?? { type: "keyword", value: "auto" }}
-              onChange={(insetStart, isEphemeral) => {
-                if (insetStart === undefined) {
-                  handleChange(undefined, isEphemeral);
-                  return;
-                }
-
-                handleChange({ ...value, insetStart }, isEphemeral);
-              }}
-            />
-            <InsetValueInput
-              id={fieldIds.insetEnd}
-              value={value.insetEnd ?? { type: "keyword", value: "auto" }}
-              onChange={(insetEnd, isEphemeral) => {
-                if (insetEnd === undefined) {
-                  handleChange(undefined, isEphemeral);
-                  return;
-                }
-
-                handleChange({ ...value, insetEnd }, isEphemeral);
-              }}
-            />
-          </Grid>
-        )}
-
-        <Grid gap={1} align={"center"} css={{ gridTemplateColumns: "2fr 1fr" }}>
+        <Grid gap={2} align="center" css={{ gridTemplateColumns: "1fr auto" }}>
           <FieldLabel description="Debug mode shows animation progress on canvas in design mode only.">
             Debug
           </FieldLabel>
@@ -426,8 +411,22 @@ export const AnimationSection = ({
           />
         </Grid>
       </Grid>
+
+      <Separator />
+
       <Grid gap={2}>
         <AnimationsSelect
+          action={
+            <FloatingPanel
+              title="Advanced Animation"
+              placement="bottom"
+              content={
+                <AnimationConfig value={value} onChange={handleChange} />
+              }
+            >
+              <AnimationConfigButton />
+            </FloatingPanel>
+          }
           value={value}
           onChange={handleChange}
           isAnimationEnabled={isAnimationEnabled}
