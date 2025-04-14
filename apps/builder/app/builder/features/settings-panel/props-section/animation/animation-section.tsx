@@ -35,7 +35,6 @@ import {
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
 import { humanizeString } from "~/shared/string-utils";
-import { useIds } from "~/shared/form-utils";
 import { FieldLabel } from "../../property-label";
 import type { PropAndMeta } from "../use-props-logic";
 import { AnimationsSelect } from "./animations-select";
@@ -351,15 +350,6 @@ export const AnimationSection = ({
   ) => boolean | undefined;
   selectedBreakpointId: string;
 }) => {
-  const fieldIds = useIds([
-    "type",
-    "subject",
-    "source",
-    "insetStart",
-    "insetEnd",
-    "debug",
-  ] as const);
-
   const { prop } = animationAction;
 
   const value: AnimationAction =
@@ -403,7 +393,6 @@ export const AnimationSection = ({
           </FieldLabel>
           <Switch
             css={{ justifySelf: "end" }}
-            id={fieldIds.debug}
             checked={value.debug ?? false}
             onCheckedChange={(debug) => {
               handleChange({ ...value, debug }, false);

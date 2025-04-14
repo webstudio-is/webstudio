@@ -36,7 +36,6 @@ import type {
 } from "@webstudio-is/sdk";
 import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
-import { useIds } from "~/shared/form-utils";
 import { AnimationPanelContent } from "./animation-panel-content";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
@@ -68,8 +67,6 @@ export const AnimationsSelect = ({
   isAnimationEnabled,
   selectedBreakpointId,
 }: AnimationsSelectProps) => {
-  const fieldIds = useIds(["addAnimation"] as const);
-
   const [newAnimationHint, setNewAnimationHint] = useState<string | undefined>(
     undefined
   );
@@ -108,11 +105,7 @@ export const AnimationsSelect = ({
               {action}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SectionTitleButton
-                    prefix={<PlusIcon />}
-                    tabIndex={0}
-                    id={fieldIds.addAnimation}
-                  />
+                  <SectionTitleButton prefix={<PlusIcon />} tabIndex={0} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   sideOffset={Number.parseFloat(rawTheme.spacing[5])}
