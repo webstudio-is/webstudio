@@ -136,14 +136,11 @@ const EditableText = ({
       spellCheck={false}
       userSelect={isEditing ? "text" : "none"}
       css={{
+        // prevent collapsing horizontally editable text when empty
+        flexGrow: 1,
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
         cursor: isEditing ? "auto" : "default",
-        // prevent collapsing editable text when empty
-        "&:empty::before, &:has(br:only-child)::before": {
-          // &nbsp;
-          content: '"\\00a0"',
-        },
       }}
       {...handlers}
     >
