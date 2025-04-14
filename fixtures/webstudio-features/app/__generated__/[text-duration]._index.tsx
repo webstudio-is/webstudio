@@ -4,7 +4,10 @@
 import { Fragment, useState } from "react";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
-import { AnimateChildren as AnimateChildren } from "@webstudio-is/sdk-components-animation";
+import {
+  AnimateChildren as AnimateChildren,
+  AnimateText as AnimateText,
+} from "@webstudio-is/sdk-components-animation";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
@@ -45,7 +48,7 @@ const Page = (_props: { system: any }) => {
                       type: "tuple",
                       value: [
                         { type: "unit", unit: "number", value: 0 },
-                        { type: "unit", unit: "px", value: 100 },
+                        { type: "unit", unit: "px", value: 200 },
                       ],
                     },
                   },
@@ -54,7 +57,24 @@ const Page = (_props: { system: any }) => {
               timing: {
                 easing: "linear",
                 fill: "backwards",
-                duration: { type: "unit", value: 302, unit: "ms" },
+                duration: { type: "unit", value: 600, unit: "ms" },
+                rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
+                rangeEnd: ["cover", { type: "unit", value: 50, unit: "%" }],
+              },
+            },
+            {
+              name: "Parallax In",
+              description: "Parallax the element as it scrolls into the view.",
+              keyframes: [
+                {
+                  offset: 0,
+                  styles: { opacity: { type: "unit", unit: "%", value: 0 } },
+                },
+              ],
+              timing: {
+                easing: "linear",
+                fill: "backwards",
+                duration: { type: "unit", value: 600, unit: "ms" },
                 rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],
                 rangeEnd: ["cover", { type: "unit", value: 50, unit: "%" }],
               },
@@ -66,21 +86,23 @@ const Page = (_props: { system: any }) => {
           debug: false,
         }}
       >
-        <Heading className={`w-heading cjib6ds`}>
-          {"HELLO WORLD"}
-          {""}
-          <br />
-          {""}
-          {"GOOD"}
-          {""}
-          <br />
-          {""}
-          {"BAD"}
-          {""}
-          <br />
-          {""}
-          {"UGLY"}
-        </Heading>
+        <AnimateText>
+          <Heading className={`w-heading cjib6ds`}>
+            {"HELLO WORLD"}
+            {""}
+            <br />
+            {""}
+            {"GOOD"}
+            {""}
+            <br />
+            {""}
+            {"BAD"}
+            {""}
+            <br />
+            {""}
+            {"UGLY"}
+          </Heading>
+        </AnimateText>
       </AnimateChildren>
     </Body>
   );

@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "691fef31-369a-46b5-9ca7-e67482d8f602",
+    "id": "f0dfc2e7-240a-4542-ad28-a4cb68b2d9db",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 558,
-    "createdAt": "2025-04-12T06:51:31.672+00:00",
-    "updatedAt": "2025-04-12T06:51:31.672+00:00",
+    "version": 583,
+    "createdAt": "2025-04-14T09:45:34.257+00:00",
+    "updatedAt": "2025-04-14T09:45:34.257+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -272,6 +272,25 @@
             "include": false
           },
           "path": "/duration"
+        },
+        {
+          "id": "uuYXNj4-XxzMtJpR8O5IH",
+          "name": "Text Duration",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "LTaU1Znm6P4yt3S8kAZi-",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "redirect": "\"\"",
+            "documentType": "html",
+            "custom": []
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/text-duration"
         }
       ],
       "folders": [
@@ -293,7 +312,8 @@
             "Q1D-6G1cl0SfXyM9Xj4_O",
             "8fF_9MQOwOqsLM9BhULUG",
             "oc1Ra5zelesj-wiJwiw-P",
-            "GgJUcrFoHE6EGMccjLa4t"
+            "GgJUcrFoHE6EGMccjLa4t",
+            "uuYXNj4-XxzMtJpR8O5IH"
           ]
         },
         {
@@ -2133,6 +2153,18 @@
             "value": "center"
           }
         }
+      ],
+      [
+        "hEVSzkOEBn_3dNyo65PAM:UoTkWyaFuTYJihS3MFYK5:textAlign:",
+        {
+          "styleSourceId": "hEVSzkOEBn_3dNyo65PAM",
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "property": "textAlign",
+          "value": {
+            "type": "keyword",
+            "value": "center"
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -2443,6 +2475,13 @@
           "type": "local",
           "id": "SdJcDQJhrZ0zxtPqj546x"
         }
+      ],
+      [
+        "hEVSzkOEBn_3dNyo65PAM",
+        {
+          "type": "local",
+          "id": "hEVSzkOEBn_3dNyo65PAM"
+        }
       ]
     ],
     "styleSourceSelections": [
@@ -2752,6 +2791,13 @@
         {
           "instanceId": "tOdjbQbLEf52thwmubL7R",
           "values": ["SdJcDQJhrZ0zxtPqj546x"]
+        }
+      ],
+      [
+        "g__o13UKOkD0KImnp-sWp",
+        {
+          "instanceId": "g__o13UKOkD0KImnp-sWp",
+          "values": ["hEVSzkOEBn_3dNyo65PAM"]
         }
       ]
     ],
@@ -3938,6 +3984,132 @@
             "isPinned": true,
             "debug": false
           }
+        }
+      ],
+      [
+        "UMpi59UWI6MbY9ExyAHPM",
+        {
+          "id": "UMpi59UWI6MbY9ExyAHPM",
+          "instanceId": "Z4ogkQT54jFVlCIFkXKmb",
+          "name": "action",
+          "type": "animationAction",
+          "value": {
+            "type": "view",
+            "animations": [
+              {
+                "name": "Parent",
+                "description": "Parallax the element as it scrolls into the view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "translate": {
+                        "type": "tuple",
+                        "value": [
+                          {
+                            "type": "unit",
+                            "unit": "number",
+                            "value": 0
+                          },
+                          {
+                            "type": "unit",
+                            "unit": "px",
+                            "value": 200
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "duration": {
+                    "type": "unit",
+                    "value": 600,
+                    "unit": "ms"
+                  },
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Parallax In",
+                "description": "Parallax the element as it scrolls into the view.",
+                "keyframes": [
+                  {
+                    "offset": 0,
+                    "styles": {
+                      "opacity": {
+                        "type": "unit",
+                        "unit": "%",
+                        "value": 0
+                      }
+                    }
+                  }
+                ],
+                "timing": {
+                  "easing": "linear",
+                  "fill": "backwards",
+                  "duration": {
+                    "type": "unit",
+                    "value": 600,
+                    "unit": "ms"
+                  },
+                  "rangeStart": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 0,
+                      "unit": "%"
+                    }
+                  ],
+                  "rangeEnd": [
+                    "cover",
+                    {
+                      "type": "unit",
+                      "value": 50,
+                      "unit": "%"
+                    }
+                  ]
+                }
+              }
+            ],
+            "insetStart": {
+              "type": "keyword",
+              "value": "auto"
+            },
+            "insetEnd": {
+              "type": "keyword",
+              "value": "auto"
+            },
+            "isPinned": true,
+            "debug": false
+          }
+        }
+      ],
+      [
+        "pCJa0iDVD_LkD7VvQcoka",
+        {
+          "id": "pCJa0iDVD_LkD7VvQcoka",
+          "instanceId": "Z4ogkQT54jFVlCIFkXKmb",
+          "name": "data-ws-show",
+          "type": "boolean",
+          "value": true
         }
       ]
     ],
@@ -6476,6 +6648,86 @@
             }
           ]
         }
+      ],
+      [
+        "LTaU1Znm6P4yt3S8kAZi-",
+        {
+          "type": "instance",
+          "id": "LTaU1Znm6P4yt3S8kAZi-",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "Z4ogkQT54jFVlCIFkXKmb"
+            }
+          ]
+        }
+      ],
+      [
+        "Z4ogkQT54jFVlCIFkXKmb",
+        {
+          "type": "instance",
+          "id": "Z4ogkQT54jFVlCIFkXKmb",
+          "component": "@webstudio-is/sdk-components-animation:AnimateChildren",
+          "children": [
+            {
+              "type": "id",
+              "value": "aqJaUhJ3xDmbIDws8d1TS"
+            }
+          ]
+        }
+      ],
+      [
+        "aqJaUhJ3xDmbIDws8d1TS",
+        {
+          "type": "instance",
+          "id": "aqJaUhJ3xDmbIDws8d1TS",
+          "component": "@webstudio-is/sdk-components-animation:AnimateText",
+          "children": [
+            {
+              "type": "id",
+              "value": "g__o13UKOkD0KImnp-sWp"
+            }
+          ]
+        }
+      ],
+      [
+        "g__o13UKOkD0KImnp-sWp",
+        {
+          "type": "instance",
+          "id": "g__o13UKOkD0KImnp-sWp",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "HELLO WORLD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "GOOD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "BAD"
+            },
+            {
+              "type": "text",
+              "value": "\n"
+            },
+            {
+              "type": "text",
+              "value": "UGLY"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
@@ -6764,6 +7016,25 @@
         "include": false
       },
       "path": "/duration"
+    },
+    {
+      "id": "uuYXNj4-XxzMtJpR8O5IH",
+      "name": "Text Duration",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "LTaU1Znm6P4yt3S8kAZi-",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "redirect": "\"\"",
+        "documentType": "html",
+        "custom": []
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/text-duration"
     }
   ],
   "assets": [
