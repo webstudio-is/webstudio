@@ -437,7 +437,9 @@ const TreeNodeContent = ({
         ref={mergeRefs(editableRef, ref)}
         {...handlers}
         isEditing={isEditing}
-      />
+      >
+        {label}
+      </EditableTreeNodeLabel>
     </TreeNodeLabel>
   );
 };
