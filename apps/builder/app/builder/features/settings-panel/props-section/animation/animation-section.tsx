@@ -306,17 +306,21 @@ const AnimationConfig = ({
           <InsetValueInput
             value={value.insetStart ?? { type: "keyword", value: "auto" }}
             onChange={(insetStart, isEphemeral) => {
-              const newValue =
-                insetStart === undefined ? undefined : { ...value, insetStart };
-              onChange(newValue, isEphemeral);
+              if (insetStart === undefined) {
+                onChange(undefined, true);
+                return;
+              }
+              onChange({ ...value, insetStart }, isEphemeral);
             }}
           />
           <InsetValueInput
             value={value.insetEnd ?? { type: "keyword", value: "auto" }}
             onChange={(insetEnd, isEphemeral) => {
-              const newValue =
-                insetEnd === undefined ? undefined : { ...value, insetEnd };
-              onChange(newValue, isEphemeral);
+              if (insetEnd === undefined) {
+                onChange(undefined, true);
+                return;
+              }
+              onChange({ ...value, insetEnd }, isEphemeral);
             }}
           />
         </Grid>
