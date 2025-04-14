@@ -74,12 +74,10 @@ const initSubjects = () => {
 export const SubjectSelect = ({
   value,
   onChange,
-  id,
 }: {
   value: AnimationAction;
   onChange: ((value: AnimationAction, isEphemeral: boolean) => void) &
     ((value: undefined, isEphemeral: true) => void);
-  id: string;
 }) => {
   const [subjects] = useState(() => initSubjects());
 
@@ -89,7 +87,6 @@ export const SubjectSelect = ({
 
   return (
     <Select
-      id={id}
       options={subjects.map((subject) => subject.value)}
       value={value.subject ?? "self"}
       getLabel={(subject) =>
