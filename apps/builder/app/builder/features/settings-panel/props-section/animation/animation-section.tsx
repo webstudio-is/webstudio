@@ -1,3 +1,4 @@
+import isEqual from "fast-deep-equal";
 import { forwardRef, useState, type ComponentProps } from "react";
 import {
   Grid,
@@ -207,7 +208,8 @@ const AnimationConfig = ({
   onChange,
 }: {
   value: AnimationAction;
-  onChange: (value: unknown, isEphemeral: boolean) => void;
+  onChange: ((value: AnimationAction, isEphemeral: boolean) => void) &
+    ((value: undefined, isEphemeral: true) => void);
 }) => {
   return (
     <Grid gap={2} css={{ padding: theme.panel.padding }}>
@@ -325,11 +327,28 @@ const AnimationConfig = ({
 
 const AnimationConfigButton = forwardRef<
   HTMLButtonElement,
-  ComponentProps<"button">
->((props, ref) => {
+  Omit<ComponentProps<typeof IconButton>, "value" | "onChange"> & {
+    value: AnimationAction;
+    onChange: ((value: AnimationAction, isEphemeral: boolean) => void) &
+      ((value: undefined, isEphemeral: true) => void);
+  }
+>(({ value, onChange, ...props }, ref) => {
+  const { animations: defaultAnimations, ...defaultValue } = defaultActionValue;
+  const { animations, ...newValue } = value;
   return (
     <Tooltip content="Advanced transform options">
-      <IconButton {...props} ref={ref}>
+      <IconButton
+        {...props}
+        ref={ref}
+        variant={isEqual(defaultValue, newValue) ? "default" : "local"}
+        onClick={(event) => {
+          if (event.altKey) {
+            onChange(defaultActionValue, false);
+            return;
+          }
+          props.onClick?.(event);
+        }}
+      >
         <EllipsesIcon />
       </IconButton>
     </Tooltip>
@@ -413,7 +432,7 @@ export const AnimationSection = ({
                 <AnimationConfig value={value} onChange={handleChange} />
               }
             >
-              <AnimationConfigButton />
+              <AnimationConfigButton value={value} onChange={handleChange} />
             </FloatingPanel>
           }
           value={value}
