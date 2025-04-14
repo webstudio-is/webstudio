@@ -45,13 +45,6 @@ export const useContentEditable = ({
     }
 
     element.removeAttribute("contenteditable");
-    // This is needed to force layout to recalc max-width when editing is done,
-    // because otherwise, layout will keep the value from before engaging contenteditable.
-    const { parentElement } = element;
-    if (parentElement) {
-      parentElement.removeChild(element);
-      parentElement.appendChild(element);
-    }
   }, [isEditing]);
 
   const handleEnd = (event: KeyboardEvent<Element> | FocusEvent<Element>) => {
