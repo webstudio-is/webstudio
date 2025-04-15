@@ -5,24 +5,24 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   Grid,
-  IconButton,
   Label,
-  Separator,
   Tooltip,
-  ScrollArea,
   theme,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  FloatingPanel,
+  CssValueListItem,
+  SmallIconButton,
+  CssValueListArrowFocus,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
-import { Fragment, useMemo, useRef, useState } from "react";
+import { Fragment, useId, useMemo, useRef, useState } from "react";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
-import { useIds } from "~/shared/form-utils";
 import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
 import { CssEditor } from "~/builder/shared/css-editor";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -34,6 +34,8 @@ const unitOptions = [
     type: "unit" as const,
   },
 ];
+
+const roundOffset = (value: number) => Math.round(value * 1000) / 10;
 
 const OffsetInput = ({
   id,
@@ -54,9 +56,7 @@ const OffsetInput = ({
     <CssValueInput
       id={id}
       placeholder={
-        value === undefined
-          ? `auto (${Math.round(placeholder * 1000) / 10}%)`
-          : "auto"
+        value === undefined ? `auto (${roundOffset(placeholder)}%)` : "auto"
       }
       getOptions={() => []}
       unitOptions={unitOptions}
@@ -66,11 +66,7 @@ const OffsetInput = ({
       property={"font-stretch"}
       value={
         value !== undefined
-          ? {
-              type: "unit",
-              value: Math.round(value * 1000) / 10,
-              unit: "%",
-            }
+          ? { type: "unit", value: roundOffset(value), unit: "%" }
           : undefined
       }
       onChange={(styleValue) => {
@@ -121,20 +117,21 @@ const OffsetInput = ({
 
 const Keyframe = ({
   value,
+  index,
   offsetPlaceholder,
   onChange,
+  onDelete,
 }: {
   value: AnimationKeyframe;
+  index: number;
   offsetPlaceholder: number;
-  onChange: (
-    value: AnimationKeyframe | undefined,
-    isEphemeral: boolean
-  ) => void;
+  onChange: (value: AnimationKeyframe, isEphemeral: boolean) => void;
+  onDelete: () => void;
 }) => {
-  const ids = useIds(["offset"]);
-  const declarations: Array<ComputedStyleDecl> = useMemo(
+  const offsetId = useId();
+  const declarations = useMemo(
     () =>
-      (Object.keys(value.styles) as Array<CssProperty>).map((property) => {
+      (Object.keys(value.styles) as CssProperty[]).map((property) => {
         const styleValue = value.styles[property];
         return {
           property,
@@ -142,70 +139,91 @@ const Keyframe = ({
           cascadedValue: styleValue,
           computedValue: styleValue,
           usedValue: styleValue,
-        };
+        } satisfies ComputedStyleDecl;
       }),
     [value.styles]
   );
 
   return (
-    <>
-      <Grid
-        gap={1}
-        align={"center"}
-        css={{
-          gridTemplateColumns: "1fr 1fr auto",
-          paddingInline: theme.panel.paddingInline,
-        }}
-      >
-        <Label htmlFor={ids.offset}>Offset</Label>
-        <OffsetInput
-          id={ids.offset}
-          value={value.offset}
-          placeholder={offsetPlaceholder}
-          onChange={(offset) => {
-            onChange({ ...value, offset }, false);
-          }}
-        />
-        <Tooltip content="Remove keyframe">
-          <IconButton onClick={() => onChange(undefined, false)}>
-            <MinusIcon />
-          </IconButton>
-        </Tooltip>
-      </Grid>
-      <Grid>
-        <CssEditor
-          showSearch={false}
-          showAddStyleInput
-          propertiesPosition="top"
-          virtualize={false}
-          declarations={declarations}
-          onAddDeclarations={(addedStyleMap) => {
-            const styles = { ...value.styles };
-            for (const [property, value] of addedStyleMap) {
-              styles[property] = value;
-            }
-            onChange({ ...value, styles }, false);
-          }}
-          onDeleteProperty={(property, options = {}) => {
-            if (options.isEphemeral === true) {
-              return;
-            }
-            const styles = { ...value.styles };
-            delete styles[property];
-            onChange({ ...value, styles }, false);
-          }}
-          onSetProperty={(property) => {
-            return (newValue, options) => {
-              const styles = { ...value.styles, [property]: newValue };
-              onChange({ ...value, styles }, options?.isEphemeral ?? false);
-            };
-          }}
-          onDeleteAllDeclarations={() => {
-            onChange({ ...value, styles: {} }, false);
-          }}
-        />
-      </Grid>
-    </>
+    <FloatingPanel
+      title="Keyframe"
+      content={
+        <Grid css={{ paddingBlock: theme.panel.paddingBlock }}>
+          <Grid
+            gap={1}
+            align="center"
+            css={{
+              gridTemplateColumns: `1fr ${theme.spacing[22]}`,
+              paddingInline: theme.panel.paddingInline,
+            }}
+          >
+            <Label htmlFor={offsetId}>Offset</Label>
+            <OffsetInput
+              id={offsetId}
+              value={value.offset}
+              placeholder={offsetPlaceholder}
+              onChange={(offset) => {
+                onChange({ ...value, offset }, false);
+              }}
+            />
+          </Grid>
+
+          <CssEditor
+            showSearch={false}
+            showAddStyleInput
+            propertiesPosition="top"
+            virtualize={false}
+            declarations={declarations}
+            onAddDeclarations={(addedStyleMap) => {
+              const styles = { ...value.styles };
+              for (const [property, value] of addedStyleMap) {
+                styles[property] = value;
+              }
+              onChange({ ...value, styles }, false);
+            }}
+            onDeleteProperty={(property, options = {}) => {
+              if (options.isEphemeral === true) {
+                return;
+              }
+              const styles = { ...value.styles };
+              delete styles[property];
+              onChange({ ...value, styles }, false);
+            }}
+            onSetProperty={(property) => {
+              return (newValue, options) => {
+                const styles = { ...value.styles, [property]: newValue };
+                onChange({ ...value, styles }, options?.isEphemeral ?? false);
+              };
+            }}
+            onDeleteAllDeclarations={() => {
+              onChange({ ...value, styles: {} }, false);
+            }}
+          />
+        </Grid>
+      }
+    >
+      <CssValueListItem
+        id={offsetPlaceholder.toString()}
+        index={index}
+        label={
+          <Label truncate>
+            {value.offset
+              ? `${roundOffset(value.offset)}%`
+              : `auto (${roundOffset(offsetPlaceholder)}%)`}
+          </Label>
+        }
+        buttons={
+          <Tooltip content="Remove keyframe">
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              icon={<MinusIcon />}
+              onClick={onDelete}
+            />
+          </Tooltip>
+        }
+      ></CssValueListItem>
+    </FloatingPanel>
   );
 };
 
@@ -232,7 +250,7 @@ export const Keyframes = ({
   const offsets = calcOffsets(keyframes);
 
   return (
-    <Grid gap={1}>
+    <div>
       <SectionTitle
         collapsible={false}
         suffix={
@@ -251,52 +269,42 @@ export const Keyframes = ({
       >
         <SectionTitleLabel>Keyframes</SectionTitleLabel>
       </SectionTitle>
-      <ScrollArea>
-        <Grid gap={2}>
-          {keyframes.map((value, index) => (
-            <Fragment key={keyRefs.current[index]}>
-              {index > 0 && <Separator />}
-              <Keyframe
-                key={keyRefs.current[index]}
-                value={value}
-                offsetPlaceholder={offsets[index]}
-                onChange={(newValue, isEphemeral) => {
-                  if (newValue === undefined && isEphemeral) {
-                    onChange(undefined, true);
-                    return;
-                  }
+      <CssValueListArrowFocus>
+        {keyframes.map((value, index) => (
+          <Fragment key={keyRefs.current[index]}>
+            <Keyframe
+              value={value}
+              index={index}
+              offsetPlaceholder={offsets[index]}
+              onChange={(newValue, isEphemeral) => {
+                let newValues = [...keyframes];
+                newValues[index] = newValue;
 
-                  if (newValue === undefined) {
-                    const newValues = [...keyframes];
-                    newValues.splice(index, 1);
-                    onChange(newValues, isEphemeral);
-                    return;
-                  }
-
-                  let newValues = [...keyframes];
-                  newValues[index] = newValue;
-
-                  const { offset } = newValue;
-                  if (offset === undefined) {
-                    onChange(newValues, isEphemeral);
-                    return;
-                  }
-
-                  const insertionIndex = findInsertionIndex(newValues, index);
-                  newValues = moveItem(newValues, index, insertionIndex);
-                  keyRefs.current = moveItem(
-                    keyRefs.current,
-                    index,
-                    insertionIndex
-                  );
-
+                const { offset } = newValue;
+                if (offset === undefined) {
                   onChange(newValues, isEphemeral);
-                }}
-              />
-            </Fragment>
-          ))}
-        </Grid>
-      </ScrollArea>
-    </Grid>
+                  return;
+                }
+
+                const insertionIndex = findInsertionIndex(newValues, index);
+                newValues = moveItem(newValues, index, insertionIndex);
+                keyRefs.current = moveItem(
+                  keyRefs.current,
+                  index,
+                  insertionIndex
+                );
+
+                onChange(newValues, isEphemeral);
+              }}
+              onDelete={() => {
+                const newValues = [...keyframes];
+                newValues.splice(index, 1);
+                onChange(newValues, false);
+              }}
+            />
+          </Fragment>
+        ))}
+      </CssValueListArrowFocus>
+    </div>
   );
 };

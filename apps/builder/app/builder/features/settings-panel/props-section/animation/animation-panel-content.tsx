@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Box,
   EnhancedTooltip,
-  Flex,
   Grid,
   InputField,
   Label,
+  ScrollArea,
   Select,
   SmallToggleButton,
   theme,
@@ -295,6 +295,16 @@ const defaultRangeEnd = {
   unit: "%",
 };
 
+const PanelContainer = ({ children }: { children: ReactNode }) => {
+  return (
+    <ScrollArea>
+      <Grid gap={2} css={{ paddingBlock: theme.panel.paddingBlock }}>
+        {children}
+      </Grid>
+    </ScrollArea>
+  );
+};
+
 export const AnimationPanelContent = ({
   onChange,
   value,
@@ -345,23 +355,11 @@ export const AnimationPanelContent = ({
   // Flex is used to allow the Keyframes to overflow without setting
   // gridTemplateRows: auto auto 1fr
   return (
-    <Flex
-      gap="2"
-      direction="column"
-      css={{
-        maxHeight: "60dvh",
-
-        paddingBlock: theme.panel.paddingBlock,
-      }}
-    >
+    <PanelContainer>
       <Grid
         gap={1}
-        align={"center"}
-        css={{
-          paddingInline: theme.panel.paddingInline,
-          gridTemplateColumns: "1fr",
-          flexShrink: 0,
-        }}
+        align="center"
+        css={{ paddingInline: theme.panel.paddingInline }}
       >
         <Label htmlFor={fieldIds.name}>Name</Label>
         <InputField
@@ -760,6 +758,6 @@ export const AnimationPanelContent = ({
           handleChange({ ...value, keyframes }, isEphemeral);
         }}
       />
-    </Flex>
+    </PanelContainer>
   );
 };
