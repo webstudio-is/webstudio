@@ -1,4 +1,10 @@
-import { IconButton, Text, Grid, theme } from "@webstudio-is/design-system";
+import {
+  IconButton,
+  Text,
+  Grid,
+  theme,
+  Flex,
+} from "@webstudio-is/design-system";
 import {
   AspectRatioIcon,
   TrashIcon,
@@ -15,7 +21,7 @@ type ImageInfoProps = {
 
 export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   return (
-    <Grid gap={1} flow={"column"} align={"center"} justify={"start"}>
+    <Grid gap={1} flow={"column"} align={"center"} justify={"between"}>
       <Grid
         gap={2}
         flow={"column"}
@@ -30,25 +36,32 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           pr: theme.spacing[5],
         }}
       >
-        <Grid flow={"column"} gap={1} align={"center"}>
-          <ImageIcon />
-          <Text truncate variant={"labelsTitleCase"}>
-            {asset.name}
-          </Text>
-        </Grid>
-        |
-        <Grid flow={"column"} gap={1} align={"center"}>
-          <DimensionsIcon />
-          <Text variant={"labelsTitleCase"}>
-            {asset.meta.width} x {asset.meta.height} Px
-          </Text>
-        </Grid>
-        |
-        <Grid flow={"column"} gap={1} align={"center"}>
-          <AspectRatioIcon />
-          <Text variant={"labelsTitleCase"}>
-            {getFormattedAspectRatio(asset.meta)}
-          </Text>
+        <Grid
+          columns={1}
+          css={{ padding: theme.panel.padding, width: theme.spacing[34] }}
+          gap={2}
+          align={"center"}
+        >
+          <Grid flow={"column"} gap={1} align={"center"}>
+            <ImageIcon />
+            <Text truncate variant={"labelsTitleCase"}>
+              {asset.name}
+            </Text>
+          </Grid>
+          <Grid columns={2} gap={1} align={"center"}>
+            <Flex gap={1}>
+              <DimensionsIcon />
+              <Text variant={"labelsTitleCase"}>
+                {asset.meta.width} x {asset.meta.height} Px
+              </Text>
+            </Flex>
+            <Flex gap={1}>
+              <AspectRatioIcon />
+              <Text variant={"labelsTitleCase"}>
+                {getFormattedAspectRatio(asset.meta)}
+              </Text>
+            </Flex>
+          </Grid>
         </Grid>
       </Grid>
       <IconButton onClick={onDelete}>
