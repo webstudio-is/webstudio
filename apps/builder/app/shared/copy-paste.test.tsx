@@ -28,6 +28,7 @@ import {
 } from "./instance-utils";
 import { $project } from "./nano-states";
 import { findAvailableVariables } from "./data-variables";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 
 $project.set({ id: "current_project" } as Project);
 
@@ -83,8 +84,14 @@ const insertStyles = ({
   styleSourceId: string;
   style: TemplateStyleDecl[];
 }) => {
-  for (const styleDecl of style) {
-    const newStyleDecl = { breakpointId, styleSourceId, ...styleDecl };
+  for (const { state, property, value } of style) {
+    const newStyleDecl = {
+      breakpointId,
+      styleSourceId,
+      state,
+      property: camelCaseProperty(property),
+      value,
+    };
     data.styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
   }
 };

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { $, ws, css, renderData } from "@webstudio-is/template";
+import { $, ws, css, renderData, createProxy } from "@webstudio-is/template";
 import { generateCss, type CssConfig } from "./css";
 import type { Breakpoint } from "./schema/breakpoints";
 import { rootComponent } from "./core-metas";
@@ -150,9 +150,12 @@ Map {
 
 test("generate component presets with multiple tags", () => {
   const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
+    ...renderData(
+      <$.ListItem tag="div">
+        <$.ListItem tag="a"></$.ListItem>
+      </$.ListItem>
+    ),
     assets: new Map(),
-    instances: new Map(),
-    props: new Map(),
     breakpoints: new Map(),
     styleSourceSelections: new Map([]),
     styles: new Map(),
@@ -163,18 +166,12 @@ test("generate component presets with multiple tags", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "block" },
-              },
-            ],
-            a: [
-              {
-                property: "user-select",
-                value: { type: "keyword", value: "none" },
-              },
-            ],
+            div: css`
+              display: block;
+            `,
+            a: css`
+              user-select: none;
+            `,
           },
         },
       ],
@@ -194,15 +191,27 @@ test("generate component presets with multiple tags", () => {
 "
 `);
   expect(cssText).toEqual(atomicCssText);
-  expect(classes).toMatchInlineSnapshot(`Map {}`);
+  expect(classes).toEqual(
+    new Map([
+      ["0", ["w-list-item"]],
+      ["1", ["w-list-item"]],
+    ])
+  );
   expect(classes).toEqual(atomicClasses);
 });
 
 test("deduplicate component presets for similarly named components", () => {
+  const radix = createProxy("@webstudio/radix:");
+  const aria = createProxy("@webstudio/aria:");
   const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
+    ...renderData(
+      <$.ListItem>
+        <radix.ListItem>
+          <aria.ListItem></aria.ListItem>
+        </radix.ListItem>
+      </$.ListItem>
+    ),
     assets: new Map(),
-    instances: new Map(),
-    props: new Map(),
     breakpoints: new Map(),
     styleSourceSelections: new Map([]),
     styles: new Map(),
@@ -213,12 +222,9 @@ test("deduplicate component presets for similarly named components", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "block" },
-              },
-            ],
+            div: css`
+              display: block;
+            `,
           },
         },
       ],
@@ -228,12 +234,9 @@ test("deduplicate component presets for similarly named components", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "flex" },
-              },
-            ],
+            div: css`
+              display: flex;
+            `,
           },
         },
       ],
@@ -243,12 +246,9 @@ test("deduplicate component presets for similarly named components", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "grid" },
-              },
-            ],
+            div: css`
+              display: grid;
+            `,
           },
         },
       ],
@@ -270,7 +270,13 @@ test("deduplicate component presets for similarly named components", () => {
 "
 `);
   expect(cssText).toEqual(atomicCssText);
-  expect(classes).toMatchInlineSnapshot(`Map {}`);
+  expect(classes).toEqual(
+    new Map([
+      ["0", ["w-list-item"]],
+      ["1", ["w-list-item-1"]],
+      ["2", ["w-list-item-2"]],
+    ])
+  );
   expect(classes).toEqual(atomicClasses);
 });
 
@@ -298,12 +304,9 @@ test("expose preset classes to instances", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "block" },
-              },
-            ],
+            div: css`
+              display: block;
+            `,
           },
         },
       ],
@@ -313,12 +316,9 @@ test("expose preset classes to instances", () => {
           type: "container",
           icon: "",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "flex" },
-              },
-            ],
+            div: css`
+              display: flex;
+            `,
           },
         },
       ],
@@ -395,12 +395,9 @@ test("generate classes with instance and meta label", () => {
           icon: "",
           label: "body meta label",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "block" },
-              },
-            ],
+            div: css`
+              display: block;
+            `,
           },
         },
       ],
@@ -411,12 +408,9 @@ test("generate classes with instance and meta label", () => {
           icon: "",
           label: "box meta label",
           presetStyle: {
-            div: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "flex" },
-              },
-            ],
+            div: css`
+              display: flex;
+            `,
           },
         },
       ],
@@ -494,12 +488,9 @@ test("generate :root preset and user styles", () => {
           icon: "",
           label: "Global Root",
           presetStyle: {
-            html: [
-              {
-                property: "display",
-                value: { type: "keyword", value: "grid" },
-              },
-            ],
+            html: css`
+              display: grid;
+            `,
           },
         },
       ],
@@ -534,4 +525,70 @@ test("generate :root preset and user styles", () => {
 }"
 `);
   expect(atomicClasses).toEqual(new Map());
+});
+
+test("generate presets only for used tags", () => {
+  const { cssText, classes } = generateCss({
+    ...renderData(
+      <$.Body ws:id="body">
+        {/* first tag in preset */}
+        <$.Box></$.Box>
+        {/* legacy tag property */}
+        <$.Box tag="span"></$.Box>
+        {/* modern ws:tag property */}
+        <$.Box ws:tag="article"></$.Box>
+      </$.Body>
+    ),
+    atomic: false,
+    breakpoints: toMap([{ id: "base", label: "" }]),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+    componentMetas: new Map([
+      [
+        "Box",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            div: css`
+              display: block;
+            `,
+            span: css`
+              display: block;
+            `,
+            article: css`
+              display: block;
+            `,
+            section: css`
+              display: block;
+            `,
+            main: css`
+              display: block;
+            `,
+          },
+        },
+      ],
+    ]),
+    assetBaseUrl: "",
+  });
+  expect(cssText).toMatchInlineSnapshot(`
+"@layer presets {
+  div.w-box {
+    display: block
+  }
+  span.w-box {
+    display: block
+  }
+  article.w-box {
+    display: block
+  }
+}
+"`);
+  expect(classes).toEqual(
+    new Map([
+      ["0", ["w-box"]],
+      ["1", ["w-box"]],
+      ["2", ["w-box"]],
+    ])
+  );
 });
