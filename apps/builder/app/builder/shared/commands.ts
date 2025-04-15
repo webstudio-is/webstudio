@@ -36,15 +36,15 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import {
-  findClosestNonTextualContainer,
-  isInstanceDetachable,
-  isTreeMatching,
-} from "~/shared/matcher";
+import { isInstanceDetachable, isTreeMatching } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
 import { atom } from "nanostores";
-import { isTreeSatisfyingContentModel } from "~/shared/content-model";
+import {
+  findClosestNonTextualContainer,
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -155,8 +155,13 @@ export const wrapIn = (component: string) => {
   const metas = $registeredComponentMetas.get();
   try {
     updateWebstudioData((data) => {
-      const meta = metas.get(selectedInstance.component);
-      if (meta?.type === "rich-text-child") {
+      const isContent = isRichTextContent({
+        instanceSelector: selectedItem.instanceSelector,
+        instances: data.instances,
+        props: data.props,
+        metas,
+      });
+      if (isContent) {
         toast.error(`Cannot wrap textual content`);
         throw Error("Abort transaction");
       }
@@ -206,12 +211,13 @@ export const unwrap = () => {
   const [selectedItem, parentItem] = instancePath;
   try {
     updateWebstudioData((data) => {
-      const nonTextualIndex = findClosestNonTextualContainer({
+      const instanceSelector = findClosestNonTextualContainer({
         metas: $registeredComponentMetas.get(),
+        props: data.props,
         instances: data.instances,
         instanceSelector: selectedItem.instanceSelector,
       });
-      if (nonTextualIndex !== 0) {
+      if (selectedItem.instanceSelector.join() !== instanceSelector.join()) {
         toast.error(`Cannot unwrap textual instance`);
         throw Error("Abort transaction");
       }

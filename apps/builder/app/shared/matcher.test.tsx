@@ -11,7 +11,6 @@ import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";
 import {
-  findClosestNonTextualContainer,
   findClosestInstanceMatchingFragment,
   isTreeMatching,
   findClosestContainer,
@@ -1000,84 +999,6 @@ describe("find closest container", () => {
   test("allow root with text", () => {
     expect(
       findClosestContainer({
-        ...renderData(<$.Body ws:id="body">text</$.Body>),
-        metas,
-        instanceSelector: ["body"],
-      })
-    ).toEqual(0);
-  });
-});
-
-describe("find closest non textual container", () => {
-  test("skips non-container instances", () => {
-    expect(
-      findClosestNonTextualContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Image ws:id="image" />
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["image", "box", "body"],
-      })
-    ).toEqual(1);
-  });
-
-  test("skips containers with text", () => {
-    expect(
-      findClosestNonTextualContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Box ws:id="box-with-text">text</$.Box>
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["box-with-text", "box", "body"],
-      })
-    ).toEqual(1);
-  });
-
-  test("skips containers with expression", () => {
-    expect(
-      findClosestNonTextualContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["box-with-expr", "box", "body"],
-      })
-    ).toEqual(1);
-  });
-
-  test("skips containers with rich text children", () => {
-    expect(
-      findClosestNonTextualContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Box ws:id="box-with-bold">
-                <$.Bold ws:id="bold"></$.Bold>
-              </$.Box>
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["box-with-bold", "box", "body"],
-      })
-    ).toEqual(1);
-  });
-
-  test("allow root with text", () => {
-    expect(
-      findClosestNonTextualContainer({
         ...renderData(<$.Body ws:id="body">text</$.Body>),
         metas,
         instanceSelector: ["body"],

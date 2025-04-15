@@ -45,6 +45,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
+  $props,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -410,6 +411,7 @@ export const WebstudioComponentCanvas = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const allProps = useStore($props);
   const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -551,6 +553,7 @@ export const WebstudioComponentCanvas = forwardRef<
     <TextEditor
       rootInstanceSelector={instanceSelector}
       instances={instances}
+      props={allProps}
       contentEditable={
         <ContentEditable
           placeholder={getEditableComponentPlaceholder(

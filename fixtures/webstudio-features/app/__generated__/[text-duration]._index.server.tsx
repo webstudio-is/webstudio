@@ -23,7 +23,7 @@ export const getPageMeta = ({
     language: "",
     socialImageAssetName: undefined,
     socialImageUrl: "",
-    status: 200,
+    status: undefined,
     redirect: "",
     custom: [],
   };

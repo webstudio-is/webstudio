@@ -191,12 +191,13 @@ export const insertTemplateAt = (
 
     const selectors: InstanceSelector[] = [];
 
-    findAllEditableInstanceSelector(
-      selectedInstanceSelector,
-      data.instances,
-      $registeredComponentMetas.get(),
-      selectors
-    );
+    findAllEditableInstanceSelector({
+      instanceSelector: selectedInstanceSelector,
+      instances: data.instances,
+      props: data.props,
+      metas: $registeredComponentMetas.get(),
+      results: selectors,
+    });
 
     const editableInstanceSelector = selectors[0];
 

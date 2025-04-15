@@ -67,7 +67,10 @@ import {
   selectInstance,
 } from "~/shared/awareness";
 import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
-import { isTreeSatisfyingContentModel } from "~/shared/content-model";
+import {
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
 
 type TreeItemAncestor =
   | undefined
@@ -434,7 +437,9 @@ const TreeNodeContent = ({
         ref={mergeRefs(editableRef, ref)}
         {...handlers}
         isEditing={isEditing}
-      />
+      >
+        {label}
+      </EditableTreeNodeLabel>
     </TreeNodeLabel>
   );
 };
@@ -511,17 +516,18 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
     return false;
   }
 
-  const meta = $registeredComponentMetas.get().get(instance.component);
-  if (meta === undefined) {
-    return true;
-  }
-  const detachable = meta.type !== "rich-text-child";
-  if (detachable === false) {
+  const isContent = isRichTextContent({
+    instanceSelector,
+    instances: $instances.get(),
+    props: $props.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  if (isContent) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
   }
-  return detachable;
+  return !isContent;
 };
 
 const canDrop = (

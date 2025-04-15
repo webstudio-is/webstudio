@@ -16,7 +16,6 @@ import type {
   Asset,
   Breakpoint,
   Instance,
-  Instances,
   Prop,
   StyleDecl,
   StyleDeclKey,
@@ -28,7 +27,6 @@ import type {
 import { coreMetas, portalComponent } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  findClosestEditableInstanceSelector,
   deleteInstanceMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
@@ -92,7 +90,7 @@ const createFakeComponentMetas = (
   const configs = {
     Item: { ...base, type: "container", ...itemMeta },
     AnotherItem: { ...base, type: "container", ...anotherItemMeta },
-    Bold: { ...base, type: "rich-text-child" },
+    Bold: { ...base, type: "container" },
     Text: { ...base, type: "container" },
     Form: { ...base, type: "container" },
     Box: { ...base, type: "container" },
@@ -165,80 +163,6 @@ const createFontAsset = (id: string, family: string): Asset => {
     meta: { style: "normal", family, variationAxes: {} },
   };
 };
-
-describe("find closest editable instance selector", () => {
-  test("searches closest container", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", [
-        { type: "text", value: "some text" },
-        { type: "id", value: "bold" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["bold", "box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-  });
-
-  test("skips when container has anything except rich-text-child or text", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", [
-        { type: "text", value: "some text" },
-        { type: "id", value: "bold" },
-        { type: "id", value: "child-box" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
-      createInstance("child-box", "Box", [
-        { type: "text", value: "child-box" },
-      ]),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["bold", "box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(undefined);
-  });
-
-  test("considers empty container as editable", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "body" }]),
-      createInstance("box", "Box", []),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-  });
-
-  test("prevent editing Body instance", () => {
-    const instances: Instances = toMap([createInstance("body", "Body", [])]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(undefined);
-  });
-});
 
 describe("insert instance children", () => {
   test("insert instance children into empty target", () => {
@@ -1466,17 +1390,17 @@ describe("find closest insertable", () => {
     const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId">
-          <$.Box ws:id="spanId" ws:tag="span"></$.Box>
+          <$.Image ws:id="imageId"></$.Image>
         </$.Paragraph>
       </$.Body>
     );
     $instances.set(instances);
-    selectInstance(["boxId", "paragraphId", "bodyId"]);
+    selectInstance(["imageId", "paragraphId", "bodyId"]);
     expect(
       findClosestInsertable(renderTemplate(<$.Box ws:tag="span"></$.Box>))
     ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
-      position: 0,
+      position: 1,
     });
   });
 

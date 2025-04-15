@@ -7,6 +7,10 @@ declare module "__CONSTANTS__" {
 declare module "__CLIENT__" {
   import type { ResourceRequest, System } from "@webstudio-is/sdk";
 
+  export const projectId: string;
+
+  export const lastPublished: string;
+
   export const siteName: string;
 
   export const favIconAsset: string | undefined;
@@ -42,8 +46,6 @@ declare module "__SERVER__" {
 
   type Params = Record<string, string | undefined>;
   export const getRemixParams: ({ ...params }: Params) => Params;
-
-  export const projectId: string;
 
   export const contactEmail: undefined | string;
 }

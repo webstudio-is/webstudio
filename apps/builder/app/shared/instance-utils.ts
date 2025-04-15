@@ -29,6 +29,7 @@ import {
   collectionComponent,
   Prop,
   parseComponentName,
+  Props,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -49,7 +50,6 @@ import {
   type DroppableTarget,
   type InstanceSelector,
   findLocalStyleSourcesWithinInstances,
-  getAncestorInstanceSelector,
   getReparentDropTargetMutable,
   getInstanceOrCreateFragmentIfNecessary,
   wrapEditableChildrenAroundDropTargetMutable,
@@ -66,15 +66,16 @@ import {
   selectInstance,
   type InstancePath,
 } from "./awareness";
-import {
-  findClosestNonTextualContainer,
-  findClosestInstanceMatchingFragment,
-} from "./matcher";
+import { findClosestInstanceMatchingFragment } from "./matcher";
 import {
   findAvailableVariables,
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
+import {
+  findClosestNonTextualContainer,
+  isRichTextTree,
+} from "./content-model";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -180,108 +181,43 @@ export const getInstanceLabel = (
   );
 };
 
-const isTextEditableInstance = (
-  instance: Instance,
-  instances: Instances,
-  metas: Map<string, WsComponentMeta>
-) => {
-  // when start editing empty body all text content
-  // including style and scripts appear in editor
-  // assume body is root and stop checking further
-  if (instance.component === "Body") {
-    return false;
-  }
-
-  const meta = metas.get(instance.component);
-
-  if (meta === undefined) {
-    return false;
-  }
-
-  if (meta.type !== "container") {
-    return false;
-  }
-
-  if (meta.constraints !== undefined) {
-    const hasTextContraint = (
-      Array.isArray(meta.constraints) ? meta.constraints : [meta.constraints]
-    ).some(
-      (constraint) =>
-        constraint.relation === "child" && constraint.text === false
-    );
-    if (hasTextContraint) {
-      return false;
-    }
-  }
-
-  // only container with rich-text-child children and text can be edited
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      const childInstance = instances.get(child.value);
-      if (childInstance === undefined) {
-        return;
-      }
-      const childMeta = metas.get(childInstance.component);
-      if (childMeta?.type !== "rich-text-child") {
-        return;
-      }
-    }
-  }
-
-  return true;
-};
-
-export const findAllEditableInstanceSelector = (
-  currentPath: InstanceSelector,
-  instances: Map<string, Instance>,
-  metas: Map<string, WsComponentMeta>,
-  results: InstanceSelector[]
-) => {
-  const instanceId = currentPath[0];
+export const findAllEditableInstanceSelector = ({
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  results,
+}: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  results: InstanceSelector[];
+}) => {
+  const [instanceId] = instanceSelector;
 
   if (instanceId === undefined) {
     return;
   }
 
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return;
-  }
-
   // Check if current instance is text editing instance
-  if (isTextEditableInstance(instance, instances, metas)) {
-    results.push(currentPath);
+  if (isRichTextTree({ instanceId, instances, props, metas })) {
+    results.push(instanceSelector);
     return;
   }
 
-  // If not, traverse its children
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      findAllEditableInstanceSelector(
-        [child.value, ...currentPath],
-        instances,
-        metas,
-        results
-      );
-    }
-  }
-
-  return null;
-};
-
-export const findClosestEditableInstanceSelector = (
-  instanceSelector: InstanceSelector,
-  instances: Instances,
-  metas: Map<string, WsComponentMeta>
-) => {
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-
-    if (isTextEditableInstance(instance, instances, metas)) {
-      return getAncestorInstanceSelector(instanceSelector, instanceId);
+  const instance = instances.get(instanceId);
+  if (instance) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        findAllEditableInstanceSelector({
+          instanceSelector: [child.value, ...instanceSelector],
+          instances,
+          props,
+          metas,
+          results,
+        });
+      }
     }
   }
 };
@@ -1300,11 +1236,14 @@ export const findClosestInsertable = (
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
   const props = $props.get();
-  const closestContainerIndex = findClosestNonTextualContainer({
+  const containerSelector = findClosestNonTextualContainer({
     metas,
+    props,
     instances,
     instanceSelector,
   });
+  const closestContainerIndex =
+    instanceSelector.length - containerSelector.length;
   if (closestContainerIndex === -1) {
     return;
   }

@@ -29,13 +29,13 @@ import {
   pageFontAssets,
   pageBackgroundImageAssets,
   breakpoints,
-} from "../__generated__/[class-names]._index";
+} from "../__generated__/[text-duration]._index";
 import {
   getResources,
   getPageMeta,
   getRemixParams,
   contactEmail,
-} from "../__generated__/[class-names]._index.server";
+} from "../__generated__/[text-duration]._index.server";
 import { assetBaseUrl, imageLoader } from "../constants.mjs";
 import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
