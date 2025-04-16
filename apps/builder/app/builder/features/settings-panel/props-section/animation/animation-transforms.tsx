@@ -33,6 +33,9 @@ export const transformProperties: CssProperty[] = [
   "opacity",
 ];
 
+// gap linked gap
+let CONTROLS_GAP = 4 + 16 + 4;
+
 export const AnimationTransforms = ({
   styles,
   onUpdate,
@@ -75,7 +78,7 @@ export const AnimationTransforms = ({
         >
           Translate
         </FieldLabel>
-        <Grid gap={2} columns={2}>
+        <Grid columns={2} css={{ gap: CONTROLS_GAP }}>
           <CssValueInputContainer
             property="translate"
             styleSource={styles.translate ? "local" : "default"}
@@ -248,7 +251,7 @@ export const AnimationTransforms = ({
         </Grid>
       </Grid>
 
-      <Grid gap={2} columns={2}>
+      <Grid columns={2} css={{ gap: CONTROLS_GAP }}>
         <Grid gap={1}>
           <FieldLabel
             resettable={styles.rotate !== undefined}
