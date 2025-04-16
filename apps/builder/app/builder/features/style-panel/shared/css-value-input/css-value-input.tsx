@@ -660,14 +660,7 @@ export const CssValueInput = ({
 
   const finalPrefix =
     prefix ||
-    (icon && (
-      <NestedIconLabel
-        color={styleSource}
-        css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
-      >
-        {icon}
-      </NestedIconLabel>
-    ));
+    (icon && <NestedIconLabel color={styleSource}>{icon}</NestedIconLabel>);
 
   const keywordButtonElement =
     value.type === "keyword" && items.length !== 0 ? (
