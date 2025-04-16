@@ -30,7 +30,7 @@
     "@fontsource-variable/inter": "^5.0.20",
     "@fontsource-variable/manrope": "^5.0.20",
     "@fontsource/roboto-mono": "^5.0.18",
-    "@radix-ui/react-tooltip": "^1.1.8",
+    "@radix-ui/react-tooltip": "^1.2.0",
     "@storybook/addon-actions": "^8.6.4",
     "@storybook/addon-backgrounds": "^8.6.4",
     "@storybook/addon-controls": "^8.6.4",
