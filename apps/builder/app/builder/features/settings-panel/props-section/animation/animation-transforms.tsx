@@ -55,8 +55,8 @@ export const AnimationTransforms = ({
   if (styles.translate?.type === "tuple") {
     [translateX, translateY = translateY] = styles.translate.value;
   }
-  let scaleX: StyleValue = { type: "unit", value: 1, unit: "number" };
-  let scaleY: StyleValue = { type: "unit", value: 1, unit: "number" };
+  let scaleX: StyleValue = { type: "unit", value: 100, unit: "%" };
+  let scaleY: StyleValue = { type: "unit", value: 100, unit: "%" };
   if (styles.scale?.type === "tuple") {
     [scaleX, scaleY = scaleY] = styles.scale.value;
   }
@@ -291,7 +291,7 @@ export const AnimationTransforms = ({
             property="opacity"
             styleSource={styles.opacity ? "local" : "default"}
             getOptions={() => $availableUnitVariables.get()}
-            value={styles.opacity ?? { type: "unit", value: 1, unit: "number" }}
+            value={styles.opacity ?? { type: "unit", value: 100, unit: "%" }}
             onUpdate={(value, options) => {
               onUpdate("opacity", value, options);
             }}
