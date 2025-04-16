@@ -127,7 +127,7 @@ export const AnimationRanges = (props: {
     },
   ];
 
-  const insetSize = "34px";
+  const insetSize = "28px";
   const boxSize = "28px";
   const borderColor = "#ccc";
 
