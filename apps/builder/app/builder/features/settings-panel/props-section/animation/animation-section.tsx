@@ -397,7 +397,7 @@ export const AnimationSection = ({
     <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
       <Grid gap={2} css={{ padding: theme.panel.paddingInline }}>
         <Grid gap={2} align="center" css={{ gridTemplateColumns: "1fr auto" }}>
-          <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the instance.">
+          <FieldLabel description="Even if its off, you can preview the animation by selecting the item in the navigator.">
             Run on canvas
           </FieldLabel>
           <Tooltip content={value.isPinned ? "Off" : "On"}>
