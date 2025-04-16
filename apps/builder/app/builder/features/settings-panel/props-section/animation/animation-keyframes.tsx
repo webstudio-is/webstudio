@@ -1,3 +1,4 @@
+import { Fragment, useId, useMemo, useRef, useState } from "react";
 import {
   StyleValue,
   toValue,
@@ -18,14 +19,17 @@ import {
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
-import { Fragment, useId, useMemo, useRef, useState } from "react";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
-import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
 import { CssEditor } from "~/builder/shared/css-editor";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
+import {
+  AnimationTransforms,
+  transformProperties,
+} from "./animation-transforms";
 
 const unitOptions = [
   {
@@ -131,16 +135,19 @@ const Keyframe = ({
   const offsetId = useId();
   const declarations = useMemo(
     () =>
-      (Object.keys(value.styles) as CssProperty[]).map((property) => {
-        const styleValue = value.styles[property];
-        return {
-          property,
-          source: { name: "local" },
-          cascadedValue: styleValue,
-          computedValue: styleValue,
-          usedValue: styleValue,
-        } satisfies ComputedStyleDecl;
-      }),
+      (Object.keys(value.styles) as CssProperty[])
+        // avoid duplicating transform properties in css editor
+        .filter((property) => !transformProperties.includes(property))
+        .map((property) => {
+          const styleValue = value.styles[property];
+          return {
+            property,
+            source: { name: "local" },
+            cascadedValue: styleValue,
+            computedValue: styleValue,
+            usedValue: styleValue,
+          } satisfies ComputedStyleDecl;
+        }),
     [value.styles]
   );
 
@@ -167,6 +174,22 @@ const Keyframe = ({
               }}
             />
           </Grid>
+
+          <AnimationTransforms
+            styles={value.styles}
+            onUpdate={(property, newValue, options) => {
+              const styles = { ...value.styles, [property]: newValue };
+              onChange({ ...value, styles }, options?.isEphemeral ?? false);
+            }}
+            onDelete={(property, options) => {
+              if (options?.isEphemeral === true) {
+                return;
+              }
+              const styles = { ...value.styles };
+              delete styles[property];
+              onChange({ ...value, styles }, false);
+            }}
+          />
 
           <CssEditor
             showSearch={false}
