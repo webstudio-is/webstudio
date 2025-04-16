@@ -34,7 +34,7 @@ export const transformProperties: CssProperty[] = [
 ];
 
 // gap linked gap
-let CONTROLS_GAP = 4 + 16 + 4;
+const CONTROLS_GAP = 4 + 16 + 4;
 
 export const AnimationTransforms = ({
   styles,
