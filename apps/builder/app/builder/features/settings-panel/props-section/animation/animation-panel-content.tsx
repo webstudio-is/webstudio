@@ -3,7 +3,6 @@ import {
   Box,
   EnhancedTooltip,
   Grid,
-  IconButton,
   InputField,
   Label,
   ScrollArea,
@@ -47,15 +46,26 @@ import {
   Link2Icon,
   Link2UnlinkedIcon,
   RangeContain50Icon,
-  RangeEntry0Icon,
-  RangeEntry100Icon,
-  RangeEntry50Icon,
-  RangeExit0Icon,
-  RangeExit100Icon,
-  RangeExit50Icon,
+  RangeContainIcon,
+  RangeCoverIcon,
 } from "@webstudio-is/icons";
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 import isEqual from "fast-deep-equal";
+
+const RotateIcon180 = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Box
+      css={{
+        transform: "rotate(180deg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -616,36 +626,35 @@ const RangesAdvancedPanel = ({
 
 const simplifiedRanges = [
   [
-    "entry 0%",
-    RangeEntry0Icon,
-    ["entry", { type: "unit", unit: "%", value: 0 }],
+    "cover 0%",
+    <RangeCoverIcon />,
+    ["cover", { type: "unit", unit: "%", value: 0 }],
   ],
   [
-    "entry 50%",
-    RangeEntry50Icon,
-    ["entry", { type: "unit", unit: "%", value: 50 }],
-  ],
-  [
-    "entry 100%",
-    RangeEntry100Icon,
-    ["entry", { type: "unit", unit: "%", value: 100 }],
+    "contain 0%",
+    <RangeContainIcon />,
+    ["contain", { type: "unit", unit: "%", value: 100 }],
   ],
   [
     "contain 50%",
-    RangeContain50Icon,
+    <RangeContain50Icon />,
     ["contain", { type: "unit", unit: "%", value: 50 }],
   ],
-  ["exit 0%", RangeExit0Icon],
-  ["exit", { type: "unit", unit: "%", value: 0 }],
+
   [
-    "exit 50%",
-    RangeExit50Icon,
-    ["exit", { type: "unit", unit: "%", value: 50 }],
+    "contain 100%",
+    <RotateIcon180>
+      <RangeContainIcon />
+    </RotateIcon180>,
+    ["contain", { type: "unit", unit: "%", value: 0 }],
   ],
+
   [
-    "exit 100%",
-    RangeExit100Icon,
-    ["exit", { type: "unit", unit: "%", value: 100 }],
+    "cover 100%",
+    <RotateIcon180>
+      <RangeCoverIcon />
+    </RotateIcon180>,
+    ["cover", { type: "unit", unit: "%", value: 100 }],
   ],
 ] as const;
 
@@ -659,27 +668,21 @@ export const AnimationPanelContent = ({
 }: AnimationPanelContentProps) => {
   const fieldIds = useIds(["fill", "easing", "name", "duration"] as const);
 
-  const simplifiedRangeStartValue = simplifiedStartRanges.find(([, , range]) =>
+  const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
     isEqual(range, value.timing.rangeStart ?? defaultRangeStart)
   );
 
-  const simplifiedRangeEndValue = simplifiedEndRanges.find(([, , range]) =>
+  const [startRangeValue] = simplifiedStartRanges.find(([, , range]) =>
+    isEqual(range, value.timing.rangeStart ?? defaultRangeStart)
+  ) ?? [undefined, undefined, undefined];
+
+  const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
     isEqual(range, value.timing.rangeEnd ?? defaultRangeEnd)
   );
 
-  const [isAdvancedRangeView, setIsAdvancedRangeView] = useState(() => {
-    if (type === "scroll") {
-      return true;
-    }
-    if (
-      simplifiedRangeStartValue === undefined ||
-      simplifiedRangeEndValue === undefined
-    ) {
-      return true;
-    }
-
-    return false;
-  });
+  const [endRangeValue] = simplifiedEndRanges.find(([, , range]) =>
+    isEqual(range, value.timing.rangeEnd ?? defaultRangeEnd)
+  ) ?? [undefined, undefined, undefined];
 
   const animationSchema =
     type === "scroll" ? scrollAnimationSchema : viewAnimationSchema;
@@ -827,81 +830,86 @@ export const AnimationPanelContent = ({
           }}
         >
           <Label text="title">Ranges</Label>
-
-          <IconButton
-            // variant={isEqual(defaultValue, newValue) ? "default" : "local"}
-            onClick={() => setIsAdvancedRangeView((prev) => !prev)}
-            state={isAdvancedRangeView ? "open" : undefined}
-          >
-            <EllipsesIcon />
-          </IconButton>
         </Grid>
 
-        {isAdvancedRangeView ? (
-          <RangesAdvancedPanel
-            onChange={handleChange}
-            value={value}
-            type={type}
-          />
-        ) : (
-          <Grid
-            css={{
-              gridTemplateColumns: "auto 1fr",
-            }}
-            gap={1}
-            align={"center"}
+        <Grid
+          css={{
+            gridTemplateColumns: "auto 1fr",
+          }}
+          gap={1}
+          align={"center"}
+        >
+          <Label>End</Label>
+          <ToggleGroup
+            value={endRangeValue ?? "advanced"}
+            css={{ justifySelf: "end" }}
+            type="single"
           >
-            <Label>End</Label>
-            <ToggleGroup css={{ justifySelf: "end" }} type="single">
-              <ToggleGroupButton value="2" disabled>
-                <RangeEntry50Icon />
+            {simplifiedEndRanges.map(([toggleValue, icon, range], index) => (
+              <ToggleGroupButton
+                disabled={index < startRangeIndex}
+                key={toggleValue}
+                value={toggleValue}
+                onClick={() => {
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: value.timing.rangeStart,
+                        rangeEnd: range,
+                      },
+                    },
+                    false
+                  );
+                }}
+              >
+                {icon}
               </ToggleGroupButton>
-              <ToggleGroupButton value="3" disabled>
-                <RangeEntry100Icon />
-              </ToggleGroupButton>
+            ))}
 
-              <ToggleGroupButton value="4">
-                <RangeContain50Icon />
-              </ToggleGroupButton>
+            <ToggleGroupButton value="advanced">
+              <EllipsesIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
 
-              <ToggleGroupButton value="5">
-                <RangeExit0Icon />
-              </ToggleGroupButton>
+          <Label>Start</Label>
 
-              <ToggleGroupButton value="6">
-                <RangeExit50Icon />
+          <ToggleGroup
+            value={startRangeValue ?? "advanced"}
+            css={{ justifySelf: "end" }}
+            type="single"
+          >
+            {simplifiedStartRanges.map(([toggleValue, icon, range], index) => (
+              <ToggleGroupButton
+                key={toggleValue}
+                value={toggleValue}
+                onClick={() => {
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: range,
+                        rangeEnd:
+                          endRangeIndex < index
+                            ? simplifiedEndRanges[index][2]
+                            : value.timing.rangeEnd,
+                      },
+                    },
+                    false
+                  );
+                }}
+              >
+                {icon}
               </ToggleGroupButton>
-              <ToggleGroupButton value="7">
-                <RangeExit100Icon />
-              </ToggleGroupButton>
-            </ToggleGroup>
+            ))}
 
-            <Label>Start</Label>
-            <ToggleGroup css={{ justifySelf: "end" }} type="single">
-              <ToggleGroupButton value="1">
-                <RangeEntry0Icon />
-              </ToggleGroupButton>
-              <ToggleGroupButton value="2">
-                <RangeEntry50Icon />
-              </ToggleGroupButton>
-              <ToggleGroupButton value="3">
-                <RangeEntry100Icon />
-              </ToggleGroupButton>
-
-              <ToggleGroupButton value="4">
-                <RangeContain50Icon />
-              </ToggleGroupButton>
-
-              <ToggleGroupButton value="5">
-                <RangeExit0Icon />
-              </ToggleGroupButton>
-
-              <ToggleGroupButton value="6">
-                <RangeExit50Icon />
-              </ToggleGroupButton>
-            </ToggleGroup>
-          </Grid>
-        )}
+            <ToggleGroupButton value="advanced">
+              <EllipsesIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
+        </Grid>
 
         <Grid
           gap={1}
