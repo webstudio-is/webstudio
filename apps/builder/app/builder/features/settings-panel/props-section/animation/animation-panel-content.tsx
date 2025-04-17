@@ -421,8 +421,6 @@ export const AnimationPanelContent = ({
     isRangeEqual(range, value.timing.rangeStart)
   ) ?? [undefined, undefined, undefined];
 
-  console.log("startRangeValue", startRangeValue);
-
   const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
     isRangeEqual(range, value.timing.rangeEnd)
   );
@@ -430,8 +428,6 @@ export const AnimationPanelContent = ({
   const [endRangeValue] = simplifiedEndRanges.find(([, , range]) =>
     isRangeEqual(range, value.timing.rangeEnd)
   ) ?? [undefined, undefined, undefined];
-
-  console.log("endRangeValue", endRangeValue, value.timing.rangeEnd);
 
   const [isAdvancedRangeStart, setIsAdvancedRangeStart] = useState(
     () => startRangeValue === undefined
