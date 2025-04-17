@@ -3905,6 +3905,153 @@ export const RadioUncheckedIcon: IconComponent = forwardRef(
 );
 RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
+export const RangeContain50Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M6 8h4" />
+      </svg>
+    );
+  }
+);
+RangeContain50Icon.displayName = "RangeContain50Icon";
+
+export const RangeEntry0Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M6 15h4" />
+      </svg>
+    );
+  }
+);
+RangeEntry0Icon.displayName = "RangeEntry0Icon";
+
+export const RangeEntry100Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M6 10h4" />
+      </svg>
+    );
+  }
+);
+RangeEntry100Icon.displayName = "RangeEntry100Icon";
+
+export const RangeEntry50Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M8 11v4" />
+      </svg>
+    );
+  }
+);
+RangeEntry50Icon.displayName = "RangeEntry50Icon";
+
+export const RangeExit0Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M6 5h4" />
+      </svg>
+    );
+  }
+);
+RangeExit0Icon.displayName = "RangeExit0Icon";
+
+export const RangeExit100Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M6 1h4" />
+      </svg>
+    );
+  }
+);
+RangeExit100Icon.displayName = "RangeExit100Icon";
+
+export const RangeExit50Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path strokeLinecap="round" d="M1 3h14M1 13h14" />
+        <path strokeLinecap="round" strokeWidth="2" d="M8 1v4" />
+      </svg>
+    );
+  }
+);
+RangeExit50Icon.displayName = "RangeExit50Icon";
+
 export const RefreshIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

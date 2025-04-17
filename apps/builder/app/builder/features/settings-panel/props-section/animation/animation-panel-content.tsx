@@ -3,13 +3,19 @@ import {
   Box,
   EnhancedTooltip,
   Grid,
+  IconButton,
   InputField,
   Label,
   ScrollArea,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
   Select,
   SmallToggleButton,
   theme,
   toast,
+  ToggleGroup,
+  ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 import { useIds } from "~/shared/form-utils";
@@ -38,7 +44,18 @@ import {
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
-import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
+import {
+  EllipsesIcon,
+  Link2Icon,
+  Link2UnlinkedIcon,
+  RangeContain50Icon,
+  RangeEntry0Icon,
+  RangeEntry100Icon,
+  RangeEntry50Icon,
+  RangeExit0Icon,
+  RangeExit100Icon,
+  RangeExit50Icon,
+} from "@webstudio-is/icons";
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 
 const fillModeDescriptions: Record<
@@ -467,6 +484,7 @@ export const AnimationPanelContent = ({
           }}
         />
       </Grid>
+
       <Grid
         gap={1}
         align={"center"}
@@ -745,6 +763,74 @@ export const AnimationPanelContent = ({
             );
           }}
         />
+      </Grid>
+
+      <Grid
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          gridTemplateColumns: "auto 1fr",
+        }}
+        gap={1}
+        align={"center"}
+      >
+        <Grid
+          css={{
+            gridTemplateColumns: "1fr auto",
+            gridColumn: "1 / 3",
+          }}
+        >
+          <SectionTitleLabel>Ranges</SectionTitleLabel>
+          <SectionTitleButton tabIndex={0} prefix={<EllipsesIcon />} />
+        </Grid>
+        <Label>End</Label>
+        <ToggleGroup css={{ justifySelf: "end" }} type="single">
+          <ToggleGroupButton value="2" disabled>
+            <RangeEntry50Icon />
+          </ToggleGroupButton>
+          <ToggleGroupButton value="3" disabled>
+            <RangeEntry100Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="4">
+            <RangeContain50Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="5">
+            <RangeExit0Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="6">
+            <RangeExit50Icon />
+          </ToggleGroupButton>
+          <ToggleGroupButton value="7">
+            <RangeExit100Icon />
+          </ToggleGroupButton>
+        </ToggleGroup>
+
+        <Label>Start</Label>
+        <ToggleGroup css={{ justifySelf: "end" }} type="single">
+          <ToggleGroupButton value="1">
+            <RangeEntry0Icon />
+          </ToggleGroupButton>
+          <ToggleGroupButton value="2">
+            <RangeEntry50Icon />
+          </ToggleGroupButton>
+          <ToggleGroupButton value="3">
+            <RangeEntry100Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="4">
+            <RangeContain50Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="5">
+            <RangeExit0Icon />
+          </ToggleGroupButton>
+
+          <ToggleGroupButton value="6">
+            <RangeExit50Icon />
+          </ToggleGroupButton>
+        </ToggleGroup>
       </Grid>
 
       <Keyframes

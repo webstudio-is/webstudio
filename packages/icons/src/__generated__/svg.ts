@@ -288,6 +288,20 @@ export const RadioGroupIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="non
 
 export const RadioUncheckedIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"/></svg>`;
 
+export const RangeContain50Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M6 8h4"/></svg>`;
+
+export const RangeEntry0Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M6 15h4"/></svg>`;
+
+export const RangeEntry100Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M6 10h4"/></svg>`;
+
+export const RangeEntry50Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M8 11v4"/></svg>`;
+
+export const RangeExit0Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M6 5h4"/></svg>`;
+
+export const RangeExit100Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M6 1h4"/></svg>`;
+
+export const RangeExit50Icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke-linecap="round" d="M1 3h14M1 13h14"/><path stroke-linecap="round" stroke-width="2" d="M8 1v4"/></svg>`;
+
 export const RefreshIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path fill="currentColor" fill-rule="evenodd" d="M8 1.5h-.002A7 7 0 0 0 3.16 3.467l-.006.006-.653.653V2a.5.5 0 0 0-1 0v3.333a.498.498 0 0 0 .144.352l.005.004A.498.498 0 0 0 2 5.833h3.357a.5.5 0 1 0 0-1h-2.15l.65-.65A6 6 0 0 1 8.001 2.5 5.5 5.5 0 0 1 13.5 8a.5.5 0 0 0 1 0A6.5 6.5 0 0 0 8 1.5Zm-6 6a.5.5 0 0 1 .5.5A5.5 5.5 0 0 0 8 13.5a6 6 0 0 0 4.143-1.683l.759-.76h-2.235a.5.5 0 1 1 0-1H14a.5.5 0 0 1 .5.5v3.334a.5.5 0 0 1-1 0v-2.017l-.653.653-.006.006A7 7 0 0 1 8 14.5H8A6.5 6.5 0 0 1 1.5 8a.5.5 0 0 1 .5-.5Z" clip-rule="evenodd"/></svg>`;
 
 export const RepeatColumnIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.25 12.417V3.083c0-.736-.597-1.333-1.333-1.333H7.083c-.736 0-1.333.597-1.333 1.333v9.334c0 .736.597 1.333 1.333 1.333h1.834c.736 0 1.333-.597 1.333-1.333ZM10.25 5.75h-4M10.25 9.75h-4"/></svg>`;
