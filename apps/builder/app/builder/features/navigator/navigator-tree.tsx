@@ -535,7 +535,7 @@ const canDrop = (
   dragSelector: InstanceSelector,
   dropTarget: ItemDropTarget
 ) => {
-  let dropSelector = dropTarget.itemSelector;
+  const dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
