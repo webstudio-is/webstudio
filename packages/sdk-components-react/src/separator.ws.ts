@@ -42,7 +42,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "embed",
   description:
     "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
   icon: MinusIcon,

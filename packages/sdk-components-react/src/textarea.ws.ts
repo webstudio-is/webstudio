@@ -23,13 +23,16 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  type: "control",
   label: "Text Area",
   description:
     "A multi-line text input for collecting longer string data from your users.",
   icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
+  contentModel: {
+    category: "instance",
+    children: [],
+  },
   states: [
     ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },

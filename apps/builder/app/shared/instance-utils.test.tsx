@@ -88,14 +88,14 @@ const createFakeComponentMetas = (
     Icon: () => null,
   };
   const configs = {
-    Item: { ...base, type: "container", ...itemMeta },
-    AnotherItem: { ...base, type: "container", ...anotherItemMeta },
-    Bold: { ...base, type: "container" },
-    Text: { ...base, type: "container" },
-    Form: { ...base, type: "container" },
-    Box: { ...base, type: "container" },
-    Div: { ...base, type: "container" },
-    Body: { ...base, type: "container" },
+    Item: { ...base, ...itemMeta },
+    AnotherItem: { ...base, ...anotherItemMeta },
+    Bold: base,
+    Text: base,
+    Form: base,
+    Box: base,
+    Div: base,
+    Body: base,
   } as const;
   return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
 };

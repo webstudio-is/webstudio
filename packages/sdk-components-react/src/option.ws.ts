@@ -26,7 +26,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "hidden",
-  type: "control",
   description:
     "An item within a drop-down menu that users can select as their chosen value.",
   icon: ItemIcon,

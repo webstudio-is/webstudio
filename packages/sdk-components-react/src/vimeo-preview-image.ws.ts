@@ -8,7 +8,7 @@ export const meta: WsComponentMeta = {
   label: "Preview Image",
   contentModel: {
     category: "none",
-    children: ["empty"],
+    children: [],
   },
 };
 

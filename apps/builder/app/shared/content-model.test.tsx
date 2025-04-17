@@ -3,6 +3,7 @@ import { coreMetas } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { $, expression, renderData, ws } from "@webstudio-is/template";
 import {
+  findClosestContainer,
   findClosestNonTextualContainer,
   findClosestRichText,
   isRichTextTree,
@@ -835,8 +836,68 @@ describe("rich text tree", () => {
   });
 });
 
-describe("closest non textual container", () => {
+describe("closest container", () => {
   test("skips non-container instances", () => {
+    expect(
+      findClosestContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Image ws:id="imageId" />
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["imageId", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("allow containers with text", () => {
+    expect(
+      findClosestContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Box ws:id="box-with-text">text</$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["box-with-text", "boxId", "bodyId"],
+      })
+    ).toEqual(["box-with-text", "boxId", "bodyId"]);
+  });
+
+  test("allow containers with expression", () => {
+    expect(
+      findClosestContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["box-with-expr", "boxId", "bodyId"],
+      })
+    ).toEqual(["box-with-expr", "boxId", "bodyId"]);
+  });
+
+  test("allow root with text", () => {
+    expect(
+      findClosestContainer({
+        ...renderData(<$.Body ws:id="bodyId">text</$.Body>),
+        metas: defaultMetas,
+        instanceSelector: ["bodyId"],
+      })
+    ).toEqual(["bodyId"]);
+  });
+});
+
+describe("closest non textual container", () => {
+  test("skips image tag", () => {
     expect(
       findClosestNonTextualContainer({
         ...renderData(
@@ -848,6 +909,22 @@ describe("closest non textual container", () => {
         ),
         metas: defaultMetas,
         instanceSelector: ["imageId", "boxId", "bodyId"],
+      })
+    ).toEqual(["boxId", "bodyId"]);
+  });
+
+  test("skips CodeText component", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <$.Body ws:id="bodyId">
+            <$.Box ws:id="boxId">
+              <$.CodeText ws:id="codeId" />
+            </$.Box>
+          </$.Body>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["codeId", "boxId", "bodyId"],
       })
     ).toEqual(["boxId", "bodyId"]);
   });

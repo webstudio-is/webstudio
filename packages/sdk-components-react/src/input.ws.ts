@@ -21,7 +21,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  type: "control",
   label: "Text Input",
   description:
     "A single-line text input for collecting string data from your users.",

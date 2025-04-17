@@ -181,6 +181,9 @@ const defaultComponentContentModel: ContentModel = {
   children: ["rich-text", "instance", "transparent"],
 };
 
+const getComponentContentModel = (meta: undefined | WsComponentMeta) =>
+  meta?.contentModel ?? defaultComponentContentModel;
+
 const isComponentSatisfyingContentModel = ({
   metas,
   component,
@@ -190,10 +193,7 @@ const isComponentSatisfyingContentModel = ({
   component: string;
   allowedCategories: undefined | string[];
 }) => {
-  const contentModel = {
-    ...defaultComponentContentModel,
-    ...metas.get(component)?.contentModel,
-  };
+  const contentModel = getComponentContentModel(metas.get(component));
   return (
     // body does not have parent
     allowedCategories === undefined ||
@@ -214,8 +214,7 @@ const getComponentChildrenCategories = ({
   component: string;
   allowedCategories: undefined | string[];
 }) => {
-  const contentModel =
-    metas.get(component)?.contentModel ?? defaultComponentContentModel;
+  const contentModel = getComponentContentModel(metas.get(component));
   let childrenCategories = contentModel.children;
   // transparent categories makes component inherit constraints from parent
   if (childrenCategories.includes("transparent") && allowedCategories) {
@@ -448,8 +447,9 @@ export const isRichTextTree = ({
   if (instance === undefined) {
     return false;
   }
-  const componentContentModel =
-    metas.get(instance.component)?.contentModel ?? defaultComponentContentModel;
+  const componentContentModel = getComponentContentModel(
+    metas.get(instance.component)
+  );
   const isRichText = componentContentModel.children.includes("rich-text");
   // only empty instance with rich text content can be edited
   if (instance.children.length === 0) {
@@ -520,6 +520,65 @@ export const isRichTextContent = ({
   );
 };
 
+export const isRichText = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}) => {
+  const richTextSelector = findClosestRichText({
+    instanceSelector,
+    instances,
+    props,
+    metas,
+  });
+  return (
+    richTextSelector && richTextSelector.join() === instanceSelector.join()
+  );
+};
+
+export const findClosestContainer = ({
+  instances,
+  props,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  props: Props;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}) => {
+  // page root with text can be used as container
+  if (instanceSelector.length === 1) {
+    return instanceSelector;
+  }
+  for (let index = 0; index < instanceSelector.length; index += 1) {
+    const instanceId = instanceSelector[index];
+    const instance = instances.get(instanceId);
+    // collection item can be undefined
+    if (instance === undefined) {
+      continue;
+    }
+    const tag = getTag({ instance, props, metas });
+    const meta = metas.get(instance.component);
+    const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
+    const childrenComponentCategories = getComponentContentModel(meta).children;
+    if (
+      childrenComponentCategories.length === 0 ||
+      (childrenCategories && childrenCategories.length === 0)
+    ) {
+      continue;
+    }
+    return instanceSelector.slice(index);
+  }
+  return instanceSelector;
+};
+
 export const findClosestNonTextualContainer = ({
   instances,
   props,
@@ -542,11 +601,16 @@ export const findClosestNonTextualContainer = ({
     if (instance === undefined) {
       continue;
     }
+    const tag = getTag({ instance, props, metas });
     const meta = metas.get(instance.component);
-    if (meta?.type !== "container") {
+    const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
+    const childrenComponentCategories = getComponentContentModel(meta).children;
+    if (
+      childrenComponentCategories.length === 0 ||
+      (childrenCategories && childrenCategories.length === 0)
+    ) {
       continue;
     }
-    const tag = getTag({ instance, props, metas });
     if (
       instance.children.length === 0 &&
       !meta?.placeholder &&

@@ -50,7 +50,7 @@ const childrenCategoriesByTag: Record<string, string[]> = {};
     const children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
       categoriesByTag[tag] = categories;
-      childrenCategoriesByTag[tag] = children;
+      childrenCategoriesByTag[tag] = children.includes("empty") ? [] : children;
     }
   }
 }

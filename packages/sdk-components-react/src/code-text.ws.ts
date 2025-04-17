@@ -41,10 +41,13 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "embed",
   description:
     "Use this component when you want to display code as text on the page.",
   icon: BracesIcon,
+  contentModel: {
+    category: "instance",
+    children: [],
+  },
   states: defaultStates,
   presetStyle,
   order: 5,
