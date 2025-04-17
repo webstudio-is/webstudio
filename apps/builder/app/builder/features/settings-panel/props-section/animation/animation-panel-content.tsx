@@ -364,6 +364,39 @@ const simplifiedRanges = [
 const simplifiedStartRanges = simplifiedRanges.slice(0, -1);
 const simplifiedEndRanges = simplifiedRanges.slice(1);
 
+const isRangeEqual = (
+  rangeA:
+    | Readonly<ViewAnimation["timing"]["rangeStart"]>
+    | Readonly<ScrollAnimation["timing"]["rangeStart"]>,
+  rangeB:
+    | Readonly<ViewAnimation["timing"]["rangeStart"]>
+    | Readonly<ScrollAnimation["timing"]["rangeStart"]>
+): boolean => {
+  if (isEqual(rangeA, rangeB)) {
+    return true;
+  }
+
+  if (rangeA === undefined || rangeB === undefined) {
+    return false;
+  }
+
+  const rangeAValue = `${rangeA[0]} ${toValue(rangeA[1])}`;
+  const rangeBValue = `${rangeB[0]} ${toValue(rangeB[1])}`;
+
+  const rangesMap = {
+    "entry 0%": "cover 0%",
+    "entry 100%": "contain 0%",
+    "exit 0%": "contain 100%",
+    "exit 100%": "cover 100%",
+    "cover 50%": "contain 50%",
+  };
+
+  return (
+    (rangesMap[rangeAValue as keyof typeof rangesMap] ?? rangeAValue) ===
+    (rangesMap[rangeBValue as keyof typeof rangesMap] ?? rangeBValue)
+  );
+};
+
 export const AnimationPanelContent = ({
   onChange,
   value,
@@ -381,20 +414,24 @@ export const AnimationPanelContent = ({
   ] as const);
 
   const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
-    isEqual(range, value.timing.rangeStart ?? defaultRangeStart)
+    isRangeEqual(range, value.timing.rangeStart)
   );
 
   const [startRangeValue] = simplifiedStartRanges.find(([, , range]) =>
-    isEqual(range, value.timing.rangeStart ?? defaultRangeStart)
+    isRangeEqual(range, value.timing.rangeStart)
   ) ?? [undefined, undefined, undefined];
 
+  console.log("startRangeValue", startRangeValue);
+
   const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
-    isEqual(range, value.timing.rangeEnd ?? defaultRangeEnd)
+    isRangeEqual(range, value.timing.rangeEnd)
   );
 
   const [endRangeValue] = simplifiedEndRanges.find(([, , range]) =>
-    isEqual(range, value.timing.rangeEnd ?? defaultRangeEnd)
+    isRangeEqual(range, value.timing.rangeEnd)
   ) ?? [undefined, undefined, undefined];
+
+  console.log("endRangeValue", endRangeValue, value.timing.rangeEnd);
 
   const [isAdvancedRangeStart, setIsAdvancedRangeStart] = useState(
     () => startRangeValue === undefined
