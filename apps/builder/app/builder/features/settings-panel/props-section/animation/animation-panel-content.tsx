@@ -1,15 +1,15 @@
 import { useState, type ReactNode } from "react";
 import {
   Box,
-  EnhancedTooltip,
   Grid,
   InputField,
   Label,
   ScrollArea,
   Select,
-  SmallToggleButton,
   theme,
   toast,
+  ToggleGroup,
+  ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 import { useIds } from "~/shared/form-utils";
@@ -38,8 +38,30 @@ import {
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
-import { Link2Icon, Link2UnlinkedIcon } from "@webstudio-is/icons";
+
+import {
+  EllipsesIcon,
+  RangeContain50Icon,
+  RangeContainIcon,
+  RangeCoverIcon,
+} from "@webstudio-is/icons";
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
+import isEqual from "fast-deep-equal";
+
+const RotateIcon180 = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Box
+      css={{
+        transform: "rotate(180deg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
 
 const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
@@ -305,35 +327,125 @@ const PanelContainer = ({ children }: { children: ReactNode }) => {
   );
 };
 
+const simplifiedRanges = [
+  [
+    "cover 0%",
+    <RangeCoverIcon />,
+    ["cover", { type: "unit", unit: "%", value: 0 }],
+  ],
+  [
+    "contain 0%",
+    <RangeContainIcon />,
+    ["contain", { type: "unit", unit: "%", value: 0 }],
+  ],
+  [
+    "contain 50%",
+    <RangeContain50Icon />,
+    ["contain", { type: "unit", unit: "%", value: 50 }],
+  ],
+
+  [
+    "contain 100%",
+    <RotateIcon180>
+      <RangeContainIcon />
+    </RotateIcon180>,
+    ["contain", { type: "unit", unit: "%", value: 100 }],
+  ],
+
+  [
+    "cover 100%",
+    <RotateIcon180>
+      <RangeCoverIcon />
+    </RotateIcon180>,
+    ["cover", { type: "unit", unit: "%", value: 100 }],
+  ],
+] as const;
+
+const simplifiedStartRanges = simplifiedRanges.slice(0, -1);
+const simplifiedEndRanges = simplifiedRanges.slice(1);
+
+const isRangeEqual = (
+  rangeA:
+    | Readonly<ViewAnimation["timing"]["rangeStart"]>
+    | Readonly<ScrollAnimation["timing"]["rangeStart"]>,
+  rangeB:
+    | Readonly<ViewAnimation["timing"]["rangeStart"]>
+    | Readonly<ScrollAnimation["timing"]["rangeStart"]>
+): boolean => {
+  if (isEqual(rangeA, rangeB)) {
+    return true;
+  }
+
+  if (rangeA === undefined || rangeB === undefined) {
+    return false;
+  }
+
+  const rangeAValue = `${rangeA[0]} ${toValue(rangeA[1])}`;
+  const rangeBValue = `${rangeB[0]} ${toValue(rangeB[1])}`;
+
+  const rangesMap = {
+    "entry 0%": "cover 0%",
+    "entry 100%": "contain 0%",
+    "exit 0%": "contain 100%",
+    "exit 100%": "cover 100%",
+    "cover 50%": "contain 50%",
+  };
+
+  return (
+    (rangesMap[rangeAValue as keyof typeof rangesMap] ?? rangeAValue) ===
+    (rangesMap[rangeBValue as keyof typeof rangesMap] ?? rangeBValue)
+  );
+};
+
 export const AnimationPanelContent = ({
   onChange,
   value,
   type,
 }: AnimationPanelContentProps) => {
-  const [isLinked, setIsLinked] = useState(
-    value.timing.rangeStart?.[0] === value.timing.rangeEnd?.[0]
-  );
-
   const fieldIds = useIds([
-    "rangeStartName",
-    "rangeStartValue",
-    "rangeEndName",
-    "rangeEndValue",
     "fill",
     "easing",
     "name",
     "duration",
+    "rangeStartName",
+    "rangeStartValue",
+    "rangeEndName",
+    "rangeEndValue",
   ] as const);
+
+  const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeStart)
+  );
+
+  const [startRangeValue] = simplifiedStartRanges.find(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeStart)
+  ) ?? [undefined, undefined, undefined];
+
+  const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeEnd)
+  );
+
+  const [endRangeValue] = simplifiedEndRanges.find(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeEnd)
+  ) ?? [undefined, undefined, undefined];
+
+  const [isAdvancedRangeStart, setIsAdvancedRangeStart] = useState(
+    () => startRangeValue === undefined
+  );
+
+  const [isAdvancedRangeEnd, setIsAdvancedRangeEnd] = useState(
+    () => endRangeValue === undefined
+  );
 
   const timelineRangeDescriptions =
     type === "scroll" ? scrollTimelineRangeName : viewTimelineRangeName;
 
   const timelineRangeNames = Object.keys(timelineRangeDescriptions);
 
+  const isRangeEndEnabled = value.timing.duration === undefined;
+
   const animationSchema =
     type === "scroll" ? scrollAnimationSchema : viewAnimationSchema;
-
-  const isRangeEndEnabled = value.timing.duration === undefined;
 
   const handleChange = (rawValue: unknown, isEphemeral: boolean) => {
     if (rawValue === undefined) {
@@ -384,16 +496,16 @@ export const AnimationPanelContent = ({
       </Grid>
 
       <Grid
-        gap={1}
         align={"center"}
         css={{
-          gridTemplateColumns: "1fr 16px 1fr",
+          columnGap: theme.spacing[6],
+          rowGap: theme.spacing[2],
+          gridTemplateColumns: "1fr 1fr",
           paddingInline: theme.panel.paddingInline,
           flexShrink: 0,
         }}
       >
         <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
-        <div />
         <Label htmlFor={fieldIds.easing}>Easing</Label>
 
         <Select
@@ -444,7 +556,6 @@ export const AnimationPanelContent = ({
             );
           }}
         />
-        <div />
         <EasingInput
           id={fieldIds.easing}
           value={value.timing.easing}
@@ -467,284 +578,336 @@ export const AnimationPanelContent = ({
           }}
         />
       </Grid>
+
       <Grid
         gap={1}
-        align={"center"}
         css={{
-          gridTemplateColumns: "1fr 16px 1fr",
           paddingInline: theme.panel.paddingInline,
-          flexShrink: 0,
         }}
       >
-        <Label htmlFor={fieldIds.rangeStartName}>Range Start</Label>
-        <div />
-        <Label disabled={!isRangeEndEnabled} htmlFor={fieldIds.rangeEndName}>
-          Range End
-        </Label>
-
-        <Select
-          id={fieldIds.rangeStartName}
-          options={timelineRangeNames}
-          getLabel={humanizeString}
-          value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
-          getDescription={(timelineRangeName: string) => (
-            <Box
-              css={{
-                width: theme.spacing[28],
-              }}
-            >
-              {
-                timelineRangeDescriptions[
-                  timelineRangeName as keyof typeof timelineRangeDescriptions
-                ]
-              }
-            </Box>
-          )}
-          onItemHighlight={(timelineRangeName) => {
-            if (timelineRangeName === undefined) {
-              handleChange(undefined, true);
-              return;
+        <Grid
+          css={{
+            gridTemplateColumns: "1.1fr 2fr",
+          }}
+          gap={2}
+          align={"center"}
+        >
+          <Label>Range End</Label>
+          <ToggleGroup
+            value={
+              isAdvancedRangeEnd ? "advanced" : (endRangeValue ?? "advanced")
             }
-
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeStart: [
-                    timelineRangeName,
-                    value.timing.rangeStart?.[1] ?? defaultRangeStart,
-                  ],
-                  rangeEnd: isLinked
-                    ? [
-                        timelineRangeName,
-                        value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
-                      ]
-                    : value.timing.rangeEnd,
-                },
-              },
-              true
-            );
-          }}
-          onChange={(timelineRangeName) => {
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeStart: [
-                    timelineRangeName,
-                    value.timing.rangeStart?.[1] ?? defaultRangeStart,
-                  ],
-                  rangeEnd: isLinked
-                    ? [
-                        timelineRangeName,
-                        value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
-                      ]
-                    : value.timing.rangeEnd,
-                },
-              },
-              false
-            );
-          }}
-        />
-        <Grid>
-          <EnhancedTooltip
-            content={isLinked ? "Unlink range names" : "Link range names"}
+            type="single"
           >
-            <SmallToggleButton
-              pressed={isLinked}
-              onPressedChange={(pressed) => {
-                setIsLinked(pressed);
-                if (pressed) {
+            {simplifiedEndRanges.map(([toggleValue, icon, range], index) => (
+              <ToggleGroupButton
+                disabled={
+                  !isRangeEndEnabled ||
+                  (!isAdvancedRangeStart && index < startRangeIndex)
+                }
+                key={toggleValue}
+                value={toggleValue}
+                onClick={() => {
+                  setIsAdvancedRangeEnd(false);
                   handleChange(
                     {
                       ...value,
                       timing: {
                         ...value.timing,
-                        rangeEnd: pressed
-                          ? [
-                              value.timing.rangeStart?.[0] ?? "entry",
-                              value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
-                            ]
-                          : value.timing.rangeEnd,
+                        rangeStart: value.timing.rangeStart,
+                        rangeEnd: range,
                       },
                     },
                     false
                   );
-                }
+                }}
+              >
+                {icon}
+              </ToggleGroupButton>
+            ))}
+
+            <ToggleGroupButton
+              disabled={!isRangeEndEnabled}
+              onClick={() => {
+                setIsAdvancedRangeEnd(true);
               }}
-              variant="normal"
-              icon={isLinked ? <Link2Icon /> : <Link2UnlinkedIcon />}
-            />
-          </EnhancedTooltip>
-        </Grid>
-        <Select
-          id={fieldIds.rangeEndName}
-          disabled={!isRangeEndEnabled}
-          options={timelineRangeNames}
-          getLabel={humanizeString}
-          value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
-          getDescription={(timelineRangeName: string) => (
-            <Box
-              css={{
-                width: theme.spacing[28],
-              }}
+              value="advanced"
             >
-              {
-                timelineRangeDescriptions[
-                  timelineRangeName as keyof typeof timelineRangeDescriptions
-                ]
-              }
-            </Box>
+              <EllipsesIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
+          {isAdvancedRangeEnd && (
+            <Grid
+              css={{
+                gridColumn: "2 / -1",
+                gridTemplateColumns: "1.5fr 1fr",
+              }}
+              gap={2}
+            >
+              <Select
+                id={fieldIds.rangeEndName}
+                disabled={!isRangeEndEnabled}
+                options={timelineRangeNames}
+                getLabel={humanizeString}
+                value={value.timing.rangeEnd?.[0] ?? timelineRangeNames[0]!}
+                getDescription={(timelineRangeName: string) => (
+                  <Box
+                    css={{
+                      width: theme.spacing[28],
+                    }}
+                  >
+                    {
+                      timelineRangeDescriptions[
+                        timelineRangeName as keyof typeof timelineRangeDescriptions
+                      ]
+                    }
+                  </Box>
+                )}
+                onItemHighlight={(timelineRangeName) => {
+                  if (timelineRangeName === undefined) {
+                    handleChange(undefined, true);
+                    return;
+                  }
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeEnd: [
+                          timelineRangeName,
+                          value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                        ],
+                        rangeStart: value.timing.rangeStart,
+                      },
+                    },
+                    true
+                  );
+                }}
+                onChange={(timelineRangeName) => {
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeEnd: [
+                          timelineRangeName,
+                          value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
+                        ],
+                        rangeStart: value.timing.rangeStart,
+                      },
+                    },
+                    false
+                  );
+                }}
+              />
+
+              <RangeValueInput
+                id={fieldIds.rangeEndValue}
+                disabled={!isRangeEndEnabled}
+                value={
+                  value.timing.rangeEnd?.[1] ?? {
+                    type: "unit",
+                    value: 0,
+                    unit: "%",
+                  }
+                }
+                onChange={(rangeEnd, isEphemeral) => {
+                  if (rangeEnd === undefined && isEphemeral) {
+                    handleChange(undefined, true);
+                    return;
+                  }
+
+                  const defaultTimelineRangeName = timelineRangeNames[0]!;
+
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeEnd: [
+                          value.timing.rangeEnd?.[0] ??
+                            defaultTimelineRangeName,
+                          rangeEnd,
+                        ],
+                      },
+                    },
+                    isEphemeral
+                  );
+                }}
+              />
+            </Grid>
           )}
-          onItemHighlight={(timelineRangeName) => {
-            if (timelineRangeName === undefined) {
-              handleChange(undefined, true);
-              return;
+
+          <Label>Range Start</Label>
+
+          <ToggleGroup
+            value={
+              isAdvancedRangeStart
+                ? "advanced"
+                : (startRangeValue ?? "advanced")
             }
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    timelineRangeName,
-                    value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
-                  ],
-                  rangeStart: isLinked
-                    ? [
-                        timelineRangeName,
-                        value.timing.rangeStart?.[1] ?? defaultRangeStart,
+            type="single"
+          >
+            {simplifiedStartRanges.map(([toggleValue, icon, range], index) => (
+              <ToggleGroupButton
+                key={toggleValue}
+                value={toggleValue}
+                onClick={() => {
+                  setIsAdvancedRangeStart(false);
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: range,
+                        rangeEnd:
+                          endRangeIndex < index
+                            ? simplifiedEndRanges[index][2]
+                            : value.timing.rangeEnd,
+                      },
+                    },
+                    false
+                  );
+                }}
+              >
+                {icon}
+              </ToggleGroupButton>
+            ))}
+
+            <ToggleGroupButton
+              onClick={() => {
+                setIsAdvancedRangeStart(true);
+              }}
+              value="advanced"
+            >
+              <EllipsesIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
+
+          {isAdvancedRangeStart && (
+            <Grid
+              css={{
+                gridColumn: "2 / -1",
+                gridTemplateColumns: "1.5fr 1fr",
+              }}
+              gap={2}
+            >
+              <Select
+                id={fieldIds.rangeStartName}
+                options={timelineRangeNames}
+                getLabel={humanizeString}
+                value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
+                getDescription={(timelineRangeName: string) => (
+                  <Box
+                    css={{
+                      width: theme.spacing[28],
+                    }}
+                  >
+                    {
+                      timelineRangeDescriptions[
+                        timelineRangeName as keyof typeof timelineRangeDescriptions
                       ]
-                    : value.timing.rangeStart,
+                    }
+                  </Box>
+                )}
+                onItemHighlight={(timelineRangeName) => {
+                  if (timelineRangeName === undefined) {
+                    handleChange(undefined, true);
+                    return;
+                  }
+
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: [
+                          timelineRangeName,
+                          value.timing.rangeStart?.[1] ?? defaultRangeStart,
+                        ],
+                        rangeEnd: value.timing.rangeEnd,
+                      },
+                    },
+                    true
+                  );
+                }}
+                onChange={(timelineRangeName) => {
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: [
+                          timelineRangeName,
+                          value.timing.rangeStart?.[1] ?? defaultRangeStart,
+                        ],
+                        rangeEnd: value.timing.rangeEnd,
+                      },
+                    },
+                    false
+                  );
+                }}
+              />
+              <RangeValueInput
+                id={fieldIds.rangeStartValue}
+                value={
+                  value.timing.rangeStart?.[1] ?? {
+                    type: "unit",
+                    value: 0,
+                    unit: "%",
+                  }
+                }
+                onChange={(rangeStart, isEphemeral) => {
+                  if (rangeStart === undefined && isEphemeral) {
+                    handleChange(undefined, true);
+                    return;
+                  }
+
+                  const defaultTimelineRangeName = timelineRangeNames[0]!;
+
+                  handleChange(
+                    {
+                      ...value,
+                      timing: {
+                        ...value.timing,
+                        rangeStart: [
+                          value.timing.rangeStart?.[0] ??
+                            defaultTimelineRangeName,
+                          rangeStart,
+                        ],
+                      },
+                    },
+                    isEphemeral
+                  );
+                }}
+              />
+            </Grid>
+          )}
+
+          <Label htmlFor={fieldIds.duration}>Duration</Label>
+
+          <DurationInput
+            id={fieldIds.duration}
+            value={value.timing.duration}
+            onChange={(duration, isEphemeral) => {
+              if (duration === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    duration,
+                  },
                 },
-              },
-              true
-            );
-          }}
-          onChange={(timelineRangeName) => {
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    timelineRangeName,
-                    value.timing.rangeEnd?.[1] ?? defaultRangeEnd,
-                  ],
-                  rangeStart: isLinked
-                    ? [
-                        timelineRangeName,
-                        value.timing.rangeStart?.[1] ?? defaultRangeStart,
-                      ]
-                    : value.timing.rangeStart,
-                },
-              },
-              false
-            );
-          }}
-        />
-
-        <RangeValueInput
-          id={fieldIds.rangeStartValue}
-          value={
-            value.timing.rangeStart?.[1] ?? {
-              type: "unit",
-              value: 0,
-              unit: "%",
-            }
-          }
-          onChange={(rangeStart, isEphemeral) => {
-            if (rangeStart === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
-
-            const defaultTimelineRangeName = timelineRangeNames[0]!;
-
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeStart: [
-                    value.timing.rangeStart?.[0] ?? defaultTimelineRangeName,
-                    rangeStart,
-                  ],
-                },
-              },
-              isEphemeral
-            );
-          }}
-        />
-        <div />
-        <RangeValueInput
-          id={fieldIds.rangeEndValue}
-          disabled={!isRangeEndEnabled}
-          value={
-            value.timing.rangeEnd?.[1] ?? {
-              type: "unit",
-              value: 0,
-              unit: "%",
-            }
-          }
-          onChange={(rangeEnd, isEphemeral) => {
-            if (rangeEnd === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
-
-            const defaultTimelineRangeName = timelineRangeNames[0]!;
-
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  rangeEnd: [
-                    value.timing.rangeEnd?.[0] ?? defaultTimelineRangeName,
-                    rangeEnd,
-                  ],
-                },
-              },
-              isEphemeral
-            );
-          }}
-        />
-      </Grid>
-
-      <Grid
-        gap={1}
-        align={"center"}
-        css={{
-          gridTemplateColumns: "1fr 16px 1fr",
-          paddingInline: theme.panel.paddingInline,
-        }}
-      >
-        <Label htmlFor={fieldIds.duration}>Duration</Label>
-        <div />
-        <DurationInput
-          id={fieldIds.duration}
-          value={value.timing.duration}
-          onChange={(duration, isEphemeral) => {
-            if (duration === undefined && isEphemeral) {
-              handleChange(undefined, true);
-              return;
-            }
-
-            handleChange(
-              {
-                ...value,
-                timing: {
-                  ...value.timing,
-                  duration,
-                },
-              },
-              isEphemeral
-            );
-          }}
-        />
+                isEphemeral
+              );
+            }}
+          />
+        </Grid>
       </Grid>
 
       <Keyframes
