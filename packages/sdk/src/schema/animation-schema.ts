@@ -248,3 +248,5 @@ export type AnimationAction = z.infer<typeof animationActionSchema>;
 export type ScrollAnimation = z.infer<typeof scrollAnimationSchema>;
 export type ViewAnimation = z.infer<typeof viewAnimationSchema>;
 export type InsetUnitValue = z.infer<typeof insetUnitValueSchema>;
+export type ViewRangeOptionsSchema = z.infer<typeof viewRangeOptionsSchema>;
+export type ScrollRangeOptionsSchema = z.infer<typeof scrollRangeOptionsSchema>;
