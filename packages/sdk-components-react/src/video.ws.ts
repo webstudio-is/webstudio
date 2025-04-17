@@ -10,7 +10,7 @@ export const meta: WsComponentMeta = {
   icon: VideoIcon,
   contentModel: {
     category: "instance",
-    children: ["empty"],
+    children: [],
   },
   presetStyle: {
     video: [

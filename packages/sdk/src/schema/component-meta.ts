@@ -74,11 +74,10 @@ export const ContentModel = z.object({
    * transparent - pass through possible children from parent
    * rich-text - can be edited as rich text
    * instance - other instances accepted
-   * empty - no children accepted
    * ComponentName - accept specific components with none category
    */
   children: z.array(z.string()) as z.ZodType<
-    Array<"transparent" | "instance" | "rich-text" | "empty" | (string & {})>
+    Array<"transparent" | "instance" | "rich-text" | (string & {})>
   >,
 });
 

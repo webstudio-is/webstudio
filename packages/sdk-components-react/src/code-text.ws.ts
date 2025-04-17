@@ -46,7 +46,7 @@ export const meta: WsComponentMeta = {
   icon: BracesIcon,
   contentModel: {
     category: "instance",
-    children: ["empty"],
+    children: [],
   },
   states: defaultStates,
   presetStyle,

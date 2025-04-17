@@ -68,7 +68,7 @@ const descendantMeta: WsComponentMeta = {
   icon: PaintBrushIcon,
   contentModel: {
     category: "none",
-    children: ["empty"],
+    children: [],
   },
   // @todo infer possible presets
   presetStyle: {},

@@ -31,7 +31,7 @@ export const meta: WsComponentMeta = {
   order: 4,
   contentModel: {
     category: "instance",
-    children: ["empty"],
+    children: [],
   },
   states: [
     ...defaultStates,

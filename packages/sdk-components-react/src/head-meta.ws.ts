@@ -9,7 +9,7 @@ export const meta: WsComponentMeta = {
   icon: WindowInfoIcon,
   contentModel: {
     category: "none",
-    children: ["empty"],
+    children: [],
   },
 };
 

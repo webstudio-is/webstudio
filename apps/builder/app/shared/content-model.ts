@@ -569,8 +569,8 @@ export const findClosestContainer = ({
     const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
     const childrenComponentCategories = getComponentContentModel(meta).children;
     if (
-      childrenComponentCategories.includes("empty") ||
-      childrenCategories?.includes("empty")
+      childrenComponentCategories.length === 0 ||
+      (childrenCategories && childrenCategories.length === 0)
     ) {
       continue;
     }
@@ -606,8 +606,8 @@ export const findClosestNonTextualContainer = ({
     const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
     const childrenComponentCategories = getComponentContentModel(meta).children;
     if (
-      childrenComponentCategories.includes("empty") ||
-      childrenCategories?.includes("empty")
+      childrenComponentCategories.length === 0 ||
+      (childrenCategories && childrenCategories.length === 0)
     ) {
       continue;
     }
