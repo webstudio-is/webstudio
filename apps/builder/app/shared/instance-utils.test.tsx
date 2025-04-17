@@ -90,12 +90,12 @@ const createFakeComponentMetas = (
   const configs = {
     Item: { ...base, ...itemMeta },
     AnotherItem: { ...base, ...anotherItemMeta },
-    Bold: { ...base },
-    Text: { ...base },
-    Form: { ...base },
-    Box: { ...base },
-    Div: { ...base },
-    Body: { ...base },
+    Bold: base,
+    Text: base,
+    Form: base,
+    Box: base,
+    Div: base,
+    Body: base,
   } as const;
   return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
 };
