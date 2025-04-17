@@ -336,7 +336,7 @@ const simplifiedRanges = [
   [
     "contain 0%",
     <RangeContainIcon />,
-    ["contain", { type: "unit", unit: "%", value: 100 }],
+    ["contain", { type: "unit", unit: "%", value: 0 }],
   ],
   [
     "contain 50%",
@@ -349,7 +349,7 @@ const simplifiedRanges = [
     <RotateIcon180>
       <RangeContainIcon />
     </RotateIcon180>,
-    ["contain", { type: "unit", unit: "%", value: 0 }],
+    ["contain", { type: "unit", unit: "%", value: 100 }],
   ],
 
   [
