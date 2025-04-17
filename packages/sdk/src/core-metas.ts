@@ -15,7 +15,6 @@ import type {
 export const rootComponent = "ws:root";
 
 const rootMeta: WsComponentMeta = {
-  type: "container",
   label: "Global Root",
   icon: SettingsIcon,
   presetStyle: {
@@ -30,7 +29,6 @@ const rootPropsMeta: WsComponentPropsMeta = {
 export const elementComponent = "ws:element";
 
 const elementMeta: WsComponentMeta = {
-  type: "container",
   label: "Element",
   icon: HtmlElementIcon,
 };
@@ -44,9 +42,12 @@ export const portalComponent = "Slot";
 export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
-  type: "container",
   label: "Collection",
   icon: ListViewIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+  },
 };
 
 const collectionPropsMeta: WsComponentPropsMeta = {
@@ -63,7 +64,6 @@ const collectionPropsMeta: WsComponentPropsMeta = {
 export const descendantComponent = "ws:descendant";
 
 const descendantMeta: WsComponentMeta = {
-  type: "control",
   label: "Descendant",
   icon: PaintBrushIcon,
   contentModel: {
@@ -108,7 +108,6 @@ export const blockComponent = "ws:block";
 export const blockTemplateComponent = "ws:block-template";
 
 export const blockTemplateMeta: WsComponentMeta = {
-  type: "container",
   icon: AddTemplateInstanceIcon,
   contentModel: {
     category: "none",
@@ -121,7 +120,6 @@ const blockTemplatePropsMeta: WsComponentPropsMeta = {
 };
 
 const blockMeta: WsComponentMeta = {
-  type: "container",
   label: "Content Block",
   icon: ContentBlockIcon,
   contentModel: {

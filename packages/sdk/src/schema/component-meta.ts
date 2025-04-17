@@ -77,21 +77,17 @@ export const ContentModel = z.object({
    * empty - no children accepted
    * ComponentName - accept specific components with none category
    */
-  children: z.array(
-    z.string() as z.ZodType<
-      "transparent" | "instance" | "rich-text" | "empty" | (string & {})
-    >
-  ),
+  children: z.array(z.string()) as z.ZodType<
+    Array<"transparent" | "instance" | "rich-text" | "empty" | (string & {})>
+  >,
 });
 
 export type ContentModel = z.infer<typeof ContentModel>;
 
 export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  // container - can accept other components with dnd or be edited as text
-  // control - usually form controls like inputs, without children
-  // embed - images, videos or other embeddable components, without children
-  type: z.enum(["container", "control", "embed"]),
+  // container - can accept other components with dnd or be edited as text              ..
+  type: z.enum(["container"]).optional(),
   /**
    * a property used as textual placeholder when no content specified while in builder
    * also signals to not insert components inside unless dropped explicitly

@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   $,
-  expression,
   renderTemplate,
   renderData,
   createProxy,
@@ -13,7 +12,6 @@ import type { Matcher, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   findClosestInstanceMatchingFragment,
   isTreeMatching,
-  findClosestContainer,
   isInstanceDetachable,
   __testing__,
 } from "./matcher";
@@ -944,65 +942,5 @@ describe("find closest instance matching fragment", () => {
       onError,
     });
     expect(onError).toHaveBeenLastCalledWith("List is missing");
-  });
-});
-
-describe("find closest container", () => {
-  test("skips non-container instances", () => {
-    expect(
-      findClosestContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Image ws:id="image" />
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["image", "box", "body"],
-      })
-    ).toEqual(1);
-  });
-
-  test("allow containers with text", () => {
-    expect(
-      findClosestContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Box ws:id="box-with-text">text</$.Box>
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["box-with-text", "box", "body"],
-      })
-    ).toEqual(0);
-  });
-
-  test("allow containers with expression", () => {
-    expect(
-      findClosestContainer({
-        ...renderData(
-          <$.Body ws:id="body">
-            <$.Box ws:id="box">
-              <$.Box ws:id="box-with-expr">{expression`1 + 1`}</$.Box>
-            </$.Box>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["box-with-expr", "box", "body"],
-      })
-    ).toEqual(0);
-  });
-
-  test("allow root with text", () => {
-    expect(
-      findClosestContainer({
-        ...renderData(<$.Body ws:id="body">text</$.Body>),
-        metas,
-        instanceSelector: ["body"],
-      })
-    ).toEqual(0);
   });
 });

@@ -6,9 +6,7 @@ import {
 import { props } from "./__generated__/head-meta.props";
 
 export const meta: WsComponentMeta = {
-  category: "hidden",
   icon: WindowInfoIcon,
-  type: "embed",
   contentModel: {
     category: "none",
     children: ["empty"],

@@ -1,16 +1,22 @@
 import { nanoid } from "nanoid";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
-import { collectionComponent, descendantComponent } from "@webstudio-is/sdk";
+import { descendantComponent } from "@webstudio-is/sdk";
 import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
-import { showAttributeMeta, type PropValue } from "../shared";
 import {
+  $instances,
   $isContentMode,
+  $props,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
+import { isRichText } from "~/shared/content-model";
+import { $selectedInstancePath } from "~/shared/awareness";
+import { showAttributeMeta, type PropValue } from "../shared";
 
 type PropOrName = { prop?: Prop; propName: string };
+
 export type PropAndMeta = {
   prop?: Prop;
   propName: string;
@@ -132,6 +138,22 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
+const $canHaveTextContent = computed(
+  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
+  (instances, props, metas, instancePath) => {
+    if (instancePath === undefined) {
+      return false;
+    }
+    const [{ instanceSelector }] = instancePath;
+    return isRichText({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+    });
+  }
+);
+
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -160,9 +182,6 @@ export const usePropsLogic = ({
     return propsWhiteList.includes(propName);
   };
 
-  const instanceMeta = useStore($registeredComponentMetas).get(
-    instance.component
-  );
   const meta = useStore($registeredComponentPropsMetas).get(
     instance.component
   ) ?? {
@@ -192,9 +211,7 @@ export const usePropsLogic = ({
     });
   }
 
-  const canHaveTextContent =
-    instanceMeta?.type === "container" &&
-    instance.component !== collectionComponent;
+  const canHaveTextContent = useStore($canHaveTextContent);
 
   const hasNoChildren = instance.children.length === 0;
   const hasOnlyTextChild =

@@ -66,8 +66,9 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
-import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
+import { isTreeMatching } from "~/shared/matcher";
 import {
+  findClosestContainer,
   isRichTextContent,
   isTreeSatisfyingContentModel,
 } from "~/shared/content-model";
@@ -534,7 +535,7 @@ const canDrop = (
   dragSelector: InstanceSelector,
   dropTarget: ItemDropTarget
 ) => {
-  const dropSelector = dropTarget.itemSelector;
+  let dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
@@ -550,19 +551,17 @@ const canDrop = (
     }
   }
   // prevent dropping into non-container instances
-  const closestContainerIndex = findClosestContainer({
+  const containerSelector = findClosestContainer({
     metas,
+    props,
     instances,
     instanceSelector: dropSelector,
   });
-  if (closestContainerIndex !== 0) {
+  if (dropSelector.length !== containerSelector.length) {
     return false;
   }
   // make sure dragging tree can be put inside of drop instance
-  const containerInstanceSelector = [
-    dragSelector[0],
-    ...dropSelector.slice(closestContainerIndex),
-  ];
+  const containerInstanceSelector = [dragSelector[0], ...dropSelector];
   let matches = isTreeMatching({
     instances,
     metas,

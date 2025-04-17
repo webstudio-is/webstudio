@@ -1218,7 +1218,8 @@ export type Insertable = {
 };
 
 export const findClosestInsertable = (
-  fragment: WebstudioFragment
+  fragment: WebstudioFragment,
+  from?: Insertable
 ): undefined | Insertable => {
   const selectedPage = $selectedPage.get();
   const awareness = $awareness.get();
@@ -1226,9 +1227,8 @@ export const findClosestInsertable = (
     return;
   }
   // paste to the page root if nothing is selected
-  const instanceSelector = awareness?.instanceSelector ?? [
-    selectedPage.rootInstanceId,
-  ];
+  const instanceSelector = from?.parentSelector ??
+    awareness?.instanceSelector ?? [selectedPage.rootInstanceId];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
     toast.error(`Cannot insert into Global Root`);
     return;
@@ -1271,10 +1271,7 @@ export const findClosestInsertable = (
   insertableIndex = insertableIndex + closestContainerIndex;
   const parentSelector = instanceSelector.slice(insertableIndex);
   if (insertableIndex === 0) {
-    return {
-      parentSelector,
-      position: "end",
-    };
+    return from ?? { parentSelector, position: "end" };
   }
   const instance = instances.get(instanceSelector[insertableIndex]);
   if (instance === undefined) {

@@ -244,8 +244,8 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
 
     $registeredComponentMetas.set(
       new Map([
-        ["Box", { type: "container", icon: "icon" }],
-        ["Bold", { type: "container", icon: "icon" }],
+        ["Box", { icon: "icon" }],
+        ["Bold", { icon: "icon" }],
       ])
     );
 

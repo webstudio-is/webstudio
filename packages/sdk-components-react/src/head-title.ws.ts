@@ -6,7 +6,6 @@ import {
 import { props } from "./__generated__/head-title.props";
 
 export const meta: WsComponentMeta = {
-  category: "hidden",
   icon: WindowTitleIcon,
   type: "container",
   contentModel: {
