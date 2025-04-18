@@ -18,7 +18,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  type: "container",
   label: "Form",
   description: "Create filters, surveys, searches and more.",
   icon: FormIcon,

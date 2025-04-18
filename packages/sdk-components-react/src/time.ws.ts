@@ -14,7 +14,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "localization",
-  type: "container",
   description:
     "Converts machine-readable date and time to a human-readable format.",
   icon: CalendarIcon,

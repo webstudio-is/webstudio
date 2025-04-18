@@ -10,17 +10,12 @@ import { props } from "./__generated__/vimeo.props";
 import type { Vimeo } from "./vimeo";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: VimeoIcon,
   states: defaultStates,
   contentModel: {
     category: "instance",
-    children: [
-      "instance",
-      "VimeoSpinner",
-      "VimeoPlayButton",
-      "VimeoPreviewImage",
-    ],
+    children: ["instance"],
+    descendants: ["VimeoSpinner", "VimeoPlayButton", "VimeoPreviewImage"],
   },
   presetStyle: {
     div,

@@ -178,7 +178,7 @@ const computeAllowedCategories = ({
 
 const defaultComponentContentModel: ContentModel = {
   category: "instance",
-  children: ["rich-text", "instance", "transparent"],
+  children: ["rich-text", "instance"],
 };
 
 const getComponentContentModel = (meta: undefined | WsComponentMeta) =>
@@ -187,45 +187,29 @@ const getComponentContentModel = (meta: undefined | WsComponentMeta) =>
 const isComponentSatisfyingContentModel = ({
   metas,
   component,
-  allowedCategories,
+  allowedParentCategories,
+  allowedAncestorCategories,
 }: {
   metas: Metas;
   component: string;
-  allowedCategories: undefined | string[];
+  allowedParentCategories: undefined | string[];
+  allowedAncestorCategories: undefined | string[];
 }) => {
   const contentModel = getComponentContentModel(metas.get(component));
   return (
     // body does not have parent
-    allowedCategories === undefined ||
+    allowedParentCategories === undefined ||
     // parents may restrict specific components with none category
     // any instances
     // or nothing
-    allowedCategories.includes(component) ||
-    allowedCategories.includes(contentModel.category)
+    allowedParentCategories.includes(component) ||
+    allowedParentCategories.includes(contentModel.category) ||
+    allowedAncestorCategories?.includes(component) === true ||
+    allowedAncestorCategories?.includes(contentModel.category) === true
   );
 };
 
-const getComponentChildrenCategories = ({
-  metas,
-  component,
-  allowedCategories,
-}: {
-  metas: Metas;
-  component: string;
-  allowedCategories: undefined | string[];
-}) => {
-  const contentModel = getComponentContentModel(metas.get(component));
-  let childrenCategories = contentModel.children;
-  // transparent categories makes component inherit constraints from parent
-  if (childrenCategories.includes("transparent") && allowedCategories) {
-    childrenCategories = Array.from(
-      new Set([...childrenCategories, ...allowedCategories])
-    );
-  }
-  return childrenCategories;
-};
-
-const computeAllowedComponentCategories = ({
+const computeAllowedAncestorCategories = ({
   instances,
   metas,
   instanceSelector,
@@ -234,22 +218,45 @@ const computeAllowedComponentCategories = ({
   metas: Metas;
   instanceSelector: InstanceSelector;
 }) => {
-  let instance: undefined | Instance;
   let allowedCategories: undefined | string[];
   // skip selected instance for which these constraints are computed
   for (const instanceId of instanceSelector.slice(1).reverse()) {
-    instance = instances.get(instanceId);
+    const instance = instances.get(instanceId);
     // collection item can be undefined
     if (instance === undefined) {
       continue;
     }
-    allowedCategories = getComponentChildrenCategories({
-      metas,
-      component: instance.component,
-      allowedCategories,
-    });
+    const contentModel = getComponentContentModel(
+      metas.get(instance.component)
+    );
+    if (contentModel.descendants) {
+      allowedCategories ??= [];
+      allowedCategories = [...allowedCategories, ...contentModel.descendants];
+    }
   }
   return allowedCategories;
+};
+
+const getAllowedParentCategories = ({
+  instances,
+  metas,
+  instanceSelector,
+}: {
+  instances: Instances;
+  metas: Metas;
+  instanceSelector: InstanceSelector;
+}) => {
+  // @todo
+  if (instanceSelector.length === 0) {
+    // return;
+  }
+  const instanceId = instanceSelector[1];
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  const contentModel = getComponentContentModel(metas.get(instance.component));
+  return contentModel.children;
 };
 
 /**
@@ -294,7 +301,8 @@ export const isTreeSatisfyingContentModel = ({
   instanceSelector,
   onError,
   _allowedCategories: allowedCategories,
-  _allowedComponentCategories: allowedComponentCategories,
+  _allowedAncestorCategories: allowedAncestorCategories,
+  _allowedParentCategories: allowedParentCategories,
 }: {
   instances: Instances;
   props: Props;
@@ -302,7 +310,8 @@ export const isTreeSatisfyingContentModel = ({
   instanceSelector: InstanceSelector;
   onError?: (message: string) => void;
   _allowedCategories?: string[];
-  _allowedComponentCategories?: string[];
+  _allowedAncestorCategories?: string[];
+  _allowedParentCategories?: string[];
 }): boolean => {
   // compute constraints only when not passed from parent
   allowedCategories ??= computeAllowedCategories({
@@ -311,7 +320,12 @@ export const isTreeSatisfyingContentModel = ({
     props,
     metas,
   });
-  allowedComponentCategories ??= computeAllowedComponentCategories({
+  allowedParentCategories ??= getAllowedParentCategories({
+    instanceSelector,
+    instances,
+    metas,
+  });
+  allowedAncestorCategories ??= computeAllowedAncestorCategories({
     instanceSelector,
     instances,
     metas,
@@ -344,7 +358,8 @@ export const isTreeSatisfyingContentModel = ({
   const isComponentSatisfying = isComponentSatisfyingContentModel({
     metas,
     component: instance.component,
-    allowedCategories: allowedComponentCategories,
+    allowedParentCategories,
+    allowedAncestorCategories,
   });
   if (isComponentSatisfying === false) {
     const [_namespace, name] = parseComponentName(instance.component);
@@ -363,6 +378,16 @@ export const isTreeSatisfyingContentModel = ({
     }
   }
   let isSatisfying = isTagSatisfying && isComponentSatisfying;
+  const contentModel = getComponentContentModel(metas.get(instance.component));
+  allowedCategories = getTagChildrenCategories(tag, allowedCategories);
+  allowedParentCategories = contentModel.children;
+  if (contentModel.descendants) {
+    allowedAncestorCategories ??= [];
+    allowedAncestorCategories = [
+      ...allowedAncestorCategories,
+      ...contentModel.descendants,
+    ];
+  }
   for (const child of instance.children) {
     if (child.type === "id") {
       isSatisfying &&= isTreeSatisfyingContentModel({
@@ -371,12 +396,9 @@ export const isTreeSatisfyingContentModel = ({
         metas,
         instanceSelector: [child.value, ...instanceSelector],
         onError,
-        _allowedCategories: getTagChildrenCategories(tag, allowedCategories),
-        _allowedComponentCategories: getComponentChildrenCategories({
-          metas,
-          component: instance.component,
-          allowedCategories: allowedComponentCategories,
-        }),
+        _allowedCategories: allowedCategories,
+        _allowedParentCategories: allowedParentCategories,
+        _allowedAncestorCategories: allowedAncestorCategories,
       });
     }
   }

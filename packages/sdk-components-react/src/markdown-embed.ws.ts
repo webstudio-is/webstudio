@@ -7,7 +7,6 @@ import {
 import { props } from "./__generated__/markdown-embed.props";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: MarkdownEmbedIcon,
   contentModel: {
     category: "instance",

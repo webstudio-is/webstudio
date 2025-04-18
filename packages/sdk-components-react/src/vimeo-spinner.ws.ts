@@ -8,7 +8,6 @@ import { BoxIcon } from "@webstudio-is/icons/svg";
 import { props } from "./__generated__/vimeo-spinner.props";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: BoxIcon,
   states: defaultStates,
   category: "hidden",

@@ -24,7 +24,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: BodyIcon,
   states: defaultStates,
   presetStyle,

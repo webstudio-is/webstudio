@@ -17,7 +17,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "container",
   label: "Input Label",
   icon: LabelIcon,
   states: defaultStates,

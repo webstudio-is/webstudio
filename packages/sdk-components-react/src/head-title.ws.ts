@@ -1,13 +1,9 @@
 import { WindowTitleIcon } from "@webstudio-is/icons/svg";
-import {
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/head-title.props";
 
 export const meta: WsComponentMeta = {
   icon: WindowTitleIcon,
-  type: "container",
   contentModel: {
     category: "none",
     children: ["text"],
