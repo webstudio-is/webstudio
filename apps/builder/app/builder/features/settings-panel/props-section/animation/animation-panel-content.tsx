@@ -592,8 +592,9 @@ export const AnimationPanelContent = ({
             {simplifiedEndRanges.map(
               ([toggleValue, icon, range, description], index) => (
                 <Tooltip
-                  content={`The animation ends ${description}`}
                   key={toggleValue}
+                  content={`The animation ends ${description}`}
+                  variant="wrapped"
                 >
                   <ToggleGroupButton
                     disabled={
@@ -749,8 +750,9 @@ export const AnimationPanelContent = ({
             {simplifiedStartRanges.map(
               ([toggleValue, icon, range, description], index) => (
                 <Tooltip
-                  content={`The animation starts ${description}`}
                   key={toggleValue}
+                  content={`The animation starts ${description}`}
+                  variant="wrapped"
                 >
                   <ToggleGroupButton
                     key={toggleValue}
