@@ -891,7 +891,7 @@ export const AnimationPanelContent = ({
             </Grid>
           )}
 
-          <FieldLabel description="Sets a fixed time for the animation instead of using rangeEnd">
+          <FieldLabel description="Sets a fixed duration instead of using range end.">
             Duration
           </FieldLabel>
 
