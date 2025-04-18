@@ -276,7 +276,7 @@ const Page = (_props: { system: any }) => {
               isPinned: false,
             }}
           >
-            <AnimateText slidingWindow={20}>
+            <AnimateText slidingWindow={20} className={`w-text-animation`}>
               <Heading className={`w-heading c1pdroxx`}>
                 {"ANIMATED CHILD 1"}
               </Heading>

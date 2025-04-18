@@ -179,6 +179,14 @@
     text-transform: none;
     margin: 0;
   }
+  div.w-text-animation {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
 }
 @media all {
   .ceva767 {
