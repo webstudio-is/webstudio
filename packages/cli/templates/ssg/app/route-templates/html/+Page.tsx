@@ -12,6 +12,7 @@ const PageComponent = ({ data }: { data: PageContext["data"] }) => {
         assetBaseUrl,
         resources,
         breakpoints,
+        onError: console.error,
       }}
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}

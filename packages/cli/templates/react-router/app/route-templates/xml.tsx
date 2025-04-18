@@ -66,6 +66,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
         assetBaseUrl,
         resources,
         breakpoints,
+        onError: console.error,
       }}
     >
       <Page system={system} />
