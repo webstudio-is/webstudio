@@ -33,7 +33,7 @@ export const ReactSdkContext = createContext<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resources: Record<string, any>;
     breakpoints: { id: string; minWidth?: number; maxWidth?: number }[];
-    onError: (error: Error) => void;
+    onError: (error: unknown) => void;
   }
 >({
   assetBaseUrl: "/",
