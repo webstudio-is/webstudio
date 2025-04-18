@@ -3,7 +3,6 @@ import {
   Box,
   Grid,
   InputField,
-  Label,
   ScrollArea,
   Select,
   theme,
@@ -12,7 +11,6 @@ import {
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
-import { useIds } from "~/shared/form-utils";
 
 import type {
   DurationUnitValue,
@@ -47,6 +45,7 @@ import {
 } from "@webstudio-is/icons";
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 import isEqual from "fast-deep-equal";
+import { FieldLabel } from "../../property-label";
 
 const RotateIcon180 = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -117,12 +116,10 @@ const unitOptions = RANGE_UNITS.map((unit) => ({
 }));
 
 const RangeValueInput = ({
-  id,
   value,
   onChange,
   disabled,
 }: {
-  id: string;
   value: RangeUnitValue;
   disabled?: boolean;
   onChange: ((value: undefined, isEphemeral: true) => void) &
@@ -134,7 +131,6 @@ const RangeValueInput = ({
 
   return (
     <CssValueInput
-      id={id}
       disabled={disabled}
       styleSource="default"
       value={value}
@@ -185,11 +181,9 @@ const RangeValueInput = ({
 };
 
 const EasingInput = ({
-  id,
   value,
   onChange,
 }: {
-  id: string;
   value: string | undefined;
   onChange: (value: string | undefined, isEphemeral: boolean) => void;
 }) => {
@@ -199,7 +193,6 @@ const EasingInput = ({
 
   return (
     <CssValueInput
-      id={id}
       styleSource="default"
       value={
         value === undefined
@@ -240,11 +233,9 @@ const EasingInput = ({
 };
 
 const DurationInput = ({
-  id,
   value,
   onChange,
 }: {
-  id: string;
   value: DurationUnitValue | undefined;
   onChange: (
     value: DurationUnitValue | undefined,
@@ -257,7 +248,6 @@ const DurationInput = ({
 
   return (
     <CssValueInput
-      id={id}
       styleSource="default"
       value={value}
       placeholder="auto"
@@ -402,17 +392,6 @@ export const AnimationPanelContent = ({
   value,
   type,
 }: AnimationPanelContentProps) => {
-  const fieldIds = useIds([
-    "fill",
-    "easing",
-    "name",
-    "duration",
-    "rangeStartName",
-    "rangeStartValue",
-    "rangeEndName",
-    "rangeEndValue",
-  ] as const);
-
   const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
     isRangeEqual(range, value.timing.rangeStart)
   );
@@ -473,9 +452,10 @@ export const AnimationPanelContent = ({
         align="center"
         css={{ paddingInline: theme.panel.paddingInline }}
       >
-        <Label htmlFor={fieldIds.name}>Name</Label>
+        <FieldLabel description="A meaningful label to identify this animation">
+          Name
+        </FieldLabel>
         <InputField
-          id={fieldIds.name}
           css={{
             width: "100%",
             fontWeight: `inherit`,
@@ -505,11 +485,14 @@ export const AnimationPanelContent = ({
           flexShrink: 0,
         }}
       >
-        <Label htmlFor={fieldIds.fill}>Fill Mode</Label>
-        <Label htmlFor={fieldIds.easing}>Easing</Label>
+        <FieldLabel description="Controls how styles apply before and after the animation">
+          Fill Mode
+        </FieldLabel>
+        <FieldLabel description="Controls how fast the animation moves at different times">
+          Easing
+        </FieldLabel>
 
         <Select
-          id={fieldIds.fill}
           options={fillModeNames}
           getLabel={humanizeString}
           value={value.timing.fill ?? fillModeNames[0]}
@@ -557,7 +540,6 @@ export const AnimationPanelContent = ({
           }}
         />
         <EasingInput
-          id={fieldIds.easing}
           value={value.timing.easing}
           onChange={(easing, isEphemeral) => {
             if (easing === undefined && isEphemeral) {
@@ -592,7 +574,9 @@ export const AnimationPanelContent = ({
           gap={2}
           align={"center"}
         >
-          <Label>Range End</Label>
+          <FieldLabel description="When the animation ends, based on how much of the subject is visible.">
+            Range End
+          </FieldLabel>
           <ToggleGroup
             value={
               isAdvancedRangeEnd ? "advanced" : (endRangeValue ?? "advanced")
@@ -645,7 +629,6 @@ export const AnimationPanelContent = ({
               gap={2}
             >
               <Select
-                id={fieldIds.rangeEndName}
                 disabled={!isRangeEndEnabled}
                 options={timelineRangeNames}
                 getLabel={humanizeString}
@@ -702,7 +685,6 @@ export const AnimationPanelContent = ({
               />
 
               <RangeValueInput
-                id={fieldIds.rangeEndValue}
                 disabled={!isRangeEndEnabled}
                 value={
                   value.timing.rangeEnd?.[1] ?? {
@@ -738,7 +720,9 @@ export const AnimationPanelContent = ({
             </Grid>
           )}
 
-          <Label>Range Start</Label>
+          <FieldLabel description="When the animation begins, based on how much of the subject is visible.">
+            Range Start
+          </FieldLabel>
 
           <ToggleGroup
             value={
@@ -793,7 +777,6 @@ export const AnimationPanelContent = ({
               gap={2}
             >
               <Select
-                id={fieldIds.rangeStartName}
                 options={timelineRangeNames}
                 getLabel={humanizeString}
                 value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
@@ -849,7 +832,6 @@ export const AnimationPanelContent = ({
                 }}
               />
               <RangeValueInput
-                id={fieldIds.rangeStartValue}
                 value={
                   value.timing.rangeStart?.[1] ?? {
                     type: "unit",
@@ -884,10 +866,11 @@ export const AnimationPanelContent = ({
             </Grid>
           )}
 
-          <Label htmlFor={fieldIds.duration}>Duration</Label>
+          <FieldLabel description="Sets a fixed time for the animation instead of using rangeEnd.">
+            Duration
+          </FieldLabel>
 
           <DurationInput
-            id={fieldIds.duration}
             value={value.timing.duration}
             onChange={(duration, isEphemeral) => {
               if (duration === undefined && isEphemeral) {
