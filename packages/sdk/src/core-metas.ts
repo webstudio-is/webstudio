@@ -125,7 +125,6 @@ const blockMeta: WsComponentMeta = {
   contentModel: {
     category: "instance",
     children: [blockTemplateComponent, "instance"],
-    // @todo prevent deleting block template
   },
 };
 

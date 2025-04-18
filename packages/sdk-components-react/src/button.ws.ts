@@ -15,7 +15,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   icon: ButtonElementIcon,
-  type: "container",
   presetStyle,
   states: [
     ...defaultStates,

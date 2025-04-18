@@ -8,7 +8,6 @@ import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/text.props";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: TextIcon,
   states: defaultStates,
   presetStyle: {

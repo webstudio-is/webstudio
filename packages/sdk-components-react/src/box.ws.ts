@@ -20,7 +20,6 @@ import { props } from "./__generated__/box.props";
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "container",
   description:
     "A container for content. By default this is a Div, but the tag can be changed in settings.",
   icon: BoxIcon,

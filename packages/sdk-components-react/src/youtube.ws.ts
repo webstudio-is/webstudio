@@ -10,17 +10,12 @@ import { props } from "./__generated__/youtube.props";
 import type { YouTube } from "./youtube";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: YoutubeIcon,
   states: defaultStates,
   contentModel: {
     category: "instance",
-    children: [
-      "instance",
-      "VimeoSpinner",
-      "VimeoPlayButton",
-      "VimeoPreviewImage",
-    ],
+    children: ["instance"],
+    descendants: ["VimeoSpinner", "VimeoPlayButton", "VimeoPreviewImage"],
   },
   presetStyle: {
     div,

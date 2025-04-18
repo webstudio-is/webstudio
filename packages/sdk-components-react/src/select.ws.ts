@@ -20,7 +20,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: SelectIcon,
   presetStyle,
   states: [

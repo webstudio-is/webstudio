@@ -64,6 +64,15 @@ export const defaultStates: ComponentState[] = [
   { selector: ":focus-within", label: "Focus Within" },
 ];
 
+/**
+ * rich-text - can be edited as rich text
+ * instance - other instances accepted
+ * ComponentName - accept specific components with none category
+ */
+const ComponentContent = z.string() as z.ZodType<
+  "instance" | "rich-text" | (string & {})
+>;
+
 export const ContentModel = z.object({
   /*
    * instance - accepted by any parent with "instance" in children categories
@@ -71,14 +80,13 @@ export const ContentModel = z.object({
    */
   category: z.union([z.literal("instance"), z.literal("none")]),
   /**
-   * transparent - pass through possible children from parent
-   * rich-text - can be edited as rich text
-   * instance - other instances accepted
-   * ComponentName - accept specific components with none category
+   * enforce direct children of category or components
    */
-  children: z.array(z.string()) as z.ZodType<
-    Array<"transparent" | "instance" | "rich-text" | (string & {})>
-  >,
+  children: z.array(ComponentContent),
+  /**
+   * enforce descendants of category or components
+   */
+  descendants: z.array(ComponentContent).optional(),
 });
 
 export type ContentModel = z.infer<typeof ContentModel>;

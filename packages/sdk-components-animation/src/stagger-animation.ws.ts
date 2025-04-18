@@ -1,8 +1,7 @@
 import { StaggerAnimationIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
-import { animation } from "./shared/meta";
-import { props } from "./__generated__/stagger-animation.props";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { props } from "./__generated__/stagger-animation.props";
 
 export const meta: WsComponentMeta = {
   category: "animations",
@@ -12,13 +11,10 @@ export const meta: WsComponentMeta = {
   icon: StaggerAnimationIcon,
   order: 6,
   label: "Stagger Animation",
-  constraints: [
-    { relation: "parent", component: { $eq: animation.AnimateChildren } },
-    {
-      relation: "child",
-      text: false,
-    },
-  ],
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
   presetStyle: {
     div,
   },

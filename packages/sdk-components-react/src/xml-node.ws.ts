@@ -5,7 +5,6 @@ import { props } from "./__generated__/xml-node.props";
 export const meta: WsComponentMeta = {
   category: "xml",
   order: 6,
-  type: "container",
   icon: XmlIcon,
   description: "XML Node",
 };

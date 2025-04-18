@@ -9,7 +9,6 @@ import { props } from "./__generated__/vimeo-play-button.props";
 
 export const meta: WsComponentMeta = {
   category: "hidden",
-  type: "container",
   label: "Play Button",
   icon: ButtonElementIcon,
   states: defaultStates,

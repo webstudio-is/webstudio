@@ -6,7 +6,6 @@ import { props } from "./__generated__/webhook-form.props";
 export const meta: WsComponentMeta = {
   label: "Webhook Form",
   icon: WebhookFormIcon,
-  type: "container",
   presetStyle: {
     form,
   },

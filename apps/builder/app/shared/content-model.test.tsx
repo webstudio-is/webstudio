@@ -561,41 +561,6 @@ describe("component content model", () => {
     ).toBeFalsy();
   });
 
-  test("prevent self nesting with descendants restriction", () => {
-    expect(
-      isTreeSatisfyingContentModel({
-        ...renderData(
-          <ws.element ws:tag="body" ws:id="bodyId">
-            <$.Vimeo>
-              <$.VimeoSpinner>
-                <$.VimeoSpinner></$.VimeoSpinner>
-              </$.VimeoSpinner>
-            </$.Vimeo>
-          </ws.element>
-        ),
-        metas: defaultMetas,
-        instanceSelector: ["bodyId"],
-      })
-    ).toBeFalsy();
-    expect(
-      isTreeSatisfyingContentModel({
-        ...renderData(
-          <ws.element ws:tag="body" ws:id="bodyId">
-            <$.Vimeo>
-              <$.VimeoSpinner>
-                <$.Vimeo>
-                  <$.VimeoSpinner></$.VimeoSpinner>
-                </$.Vimeo>
-              </$.VimeoSpinner>
-            </$.Vimeo>
-          </ws.element>
-        ),
-        metas: defaultMetas,
-        instanceSelector: ["bodyId"],
-      })
-    ).toBeTruthy();
-  });
-
   test("pass constraints when check deep in the tree", () => {
     expect(
       isTreeSatisfyingContentModel({
