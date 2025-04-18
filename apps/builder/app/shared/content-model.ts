@@ -246,10 +246,6 @@ const getAllowedParentCategories = ({
   metas: Metas;
   instanceSelector: InstanceSelector;
 }) => {
-  // @todo
-  if (instanceSelector.length === 0) {
-    // return;
-  }
   const instanceId = instanceSelector[1];
   const instance = instances.get(instanceId);
   if (instance === undefined) {
