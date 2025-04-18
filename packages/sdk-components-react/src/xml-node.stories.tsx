@@ -10,6 +10,7 @@ const Component = () => {
         imageLoader: ({ src }) => src,
         resources: {},
         breakpoints: [],
+        onError: console.error,
       }}
     >
       <XmlNode tag="root">

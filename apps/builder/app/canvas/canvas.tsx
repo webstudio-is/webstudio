@@ -77,6 +77,7 @@ import { createInstanceElement } from "./elements";
 import { Body } from "./shared/body";
 import { subscribeScrollbarSize } from "./scrollbar-width";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { builderApi } from "~/shared/builder-api";
 
 registerContainers();
 
@@ -128,6 +129,16 @@ const useElementsTree = (components: Components, instances: Instances) => {
           imageLoader: wsImageLoader,
           resources: {},
           breakpoints,
+          // error reporting
+          onError: (error: unknown) => {
+            if (error instanceof Error) {
+              builderApi.toast.error(error.message);
+              return;
+            }
+
+            builderApi.toast.error(`Unknown error: ${String(error)}`);
+            console.error(error);
+          },
         }}
       >
         {createInstanceElement({
