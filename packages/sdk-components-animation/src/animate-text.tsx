@@ -40,6 +40,8 @@ type AnimateChildrenProps = {
    * Defines how the text is split for animation (e.g., by character, space, or symbol).
    */
   splitBy?: keyof typeof split;
+} & {
+  className?: string;
 };
 
 export const AnimateText = forwardRef<ElementRef<"div">, AnimateChildrenProps>(

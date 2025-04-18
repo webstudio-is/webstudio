@@ -86,7 +86,7 @@ const Page = (_props: { system: any }) => {
           debug: false,
         }}
       >
-        <AnimateText>
+        <AnimateText className={`w-text-animation`}>
           <Heading className={`w-heading cjib6ds`}>
             {"HELLO WORLD"}
             {""}

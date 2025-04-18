@@ -29,6 +29,8 @@ type StaggerAnimationProps = {
    * Text content to animate.
    */
   children: React.ReactNode;
+} & {
+  className?: string;
 };
 
 export const StaggerAnimation = forwardRef<
