@@ -99,6 +99,16 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
   );
 };
 
+const handleError = (error: unknown) => {
+  if (error instanceof Error) {
+    builderApi.toast.error(error.message);
+    return;
+  }
+
+  builderApi.toast.error(`Unknown error: ${String(error)}`);
+  console.error(error);
+};
+
 const useElementsTree = (components: Components, instances: Instances) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
@@ -130,15 +140,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           resources: {},
           breakpoints,
           // error reporting
-          onError: (error: unknown) => {
-            if (error instanceof Error) {
-              builderApi.toast.error(error.message);
-              return;
-            }
-
-            builderApi.toast.error(`Unknown error: ${String(error)}`);
-            console.error(error);
-          },
+          onError: handleError,
         }}
       >
         {createInstanceElement({
