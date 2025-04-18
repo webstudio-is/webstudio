@@ -9,6 +9,7 @@ import {
   toast,
   ToggleGroup,
   ToggleGroupButton,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { keywordValues } from "@webstudio-is/css-data";
 
@@ -66,12 +67,12 @@ const fillModeDescriptions: Record<
   NonNullable<ViewAnimation["timing"]["fill"]>,
   string
 > = {
-  both: "The animation state is applied before and after the active period. Set if unsure whether it's In or Out.",
+  both: "The animation state is applied before and after the active period. Set if unsure whether it's In or Out",
   backwards:
     "The animation state is applied before the active period. Prefered for In Animations",
   forwards:
     "The animation state is applied after the active period. Prefered for Out Animations",
-  none: "No animation is applied before or after the active period.",
+  none: "No animation is applied before or after the active period",
 };
 
 const fillModeNames = Object.keys(fillModeDescriptions) as NonNullable<
@@ -322,16 +323,19 @@ const simplifiedRanges = [
     "cover 0%",
     <RangeCoverIcon />,
     ["cover", { type: "unit", unit: "%", value: 0 }],
+    "the subject just begins to appear in view",
   ],
   [
     "contain 0%",
     <RangeContainIcon />,
     ["contain", { type: "unit", unit: "%", value: 0 }],
+    "when the subject becomes fully visible",
   ],
   [
     "contain 50%",
     <RangeContain50Icon />,
     ["contain", { type: "unit", unit: "%", value: 50 }],
+    "when the subject is centered in the view",
   ],
 
   [
@@ -340,6 +344,7 @@ const simplifiedRanges = [
       <RangeContainIcon />
     </RotateIcon180>,
     ["contain", { type: "unit", unit: "%", value: 100 }],
+    "when the subject begins to leave the view but is still fully visible",
   ],
 
   [
@@ -348,6 +353,7 @@ const simplifiedRanges = [
       <RangeCoverIcon />
     </RotateIcon180>,
     ["cover", { type: "unit", unit: "%", value: 100 }],
+    "when the subject is completely out of view",
   ],
 ] as const;
 
@@ -574,7 +580,7 @@ export const AnimationPanelContent = ({
           gap={2}
           align={"center"}
         >
-          <FieldLabel description="When the animation ends, based on how much of the subject is visible.">
+          <FieldLabel description="When the animation ends, based on how much of the subject is visible">
             Range End
           </FieldLabel>
           <ToggleGroup
@@ -583,42 +589,50 @@ export const AnimationPanelContent = ({
             }
             type="single"
           >
-            {simplifiedEndRanges.map(([toggleValue, icon, range], index) => (
-              <ToggleGroupButton
-                disabled={
-                  !isRangeEndEnabled ||
-                  (!isAdvancedRangeStart && index < startRangeIndex)
-                }
-                key={toggleValue}
-                value={toggleValue}
-                onClick={() => {
-                  setIsAdvancedRangeEnd(false);
-                  handleChange(
-                    {
-                      ...value,
-                      timing: {
-                        ...value.timing,
-                        rangeStart: value.timing.rangeStart,
-                        rangeEnd: range,
-                      },
-                    },
-                    false
-                  );
-                }}
-              >
-                {icon}
-              </ToggleGroupButton>
-            ))}
+            {simplifiedEndRanges.map(
+              ([toggleValue, icon, range, description], index) => (
+                <Tooltip
+                  content={`The animation ends ${description}`}
+                  key={toggleValue}
+                >
+                  <ToggleGroupButton
+                    disabled={
+                      !isRangeEndEnabled ||
+                      (!isAdvancedRangeStart && index < startRangeIndex)
+                    }
+                    value={toggleValue}
+                    onClick={() => {
+                      setIsAdvancedRangeEnd(false);
+                      handleChange(
+                        {
+                          ...value,
+                          timing: {
+                            ...value.timing,
+                            rangeStart: value.timing.rangeStart,
+                            rangeEnd: range,
+                          },
+                        },
+                        false
+                      );
+                    }}
+                  >
+                    {icon}
+                  </ToggleGroupButton>
+                </Tooltip>
+              )
+            )}
 
-            <ToggleGroupButton
-              disabled={!isRangeEndEnabled}
-              onClick={() => {
-                setIsAdvancedRangeEnd(true);
-              }}
-              value="advanced"
-            >
-              <EllipsesIcon />
-            </ToggleGroupButton>
+            <Tooltip content="Set custom range">
+              <ToggleGroupButton
+                disabled={!isRangeEndEnabled}
+                onClick={() => {
+                  setIsAdvancedRangeEnd(true);
+                }}
+                value="advanced"
+              >
+                <EllipsesIcon />
+              </ToggleGroupButton>
+            </Tooltip>
           </ToggleGroup>
           {isAdvancedRangeEnd && (
             <Grid
@@ -720,7 +734,7 @@ export const AnimationPanelContent = ({
             </Grid>
           )}
 
-          <FieldLabel description="When the animation begins, based on how much of the subject is visible.">
+          <FieldLabel description="When the animation begins, based on how much of the subject is visible">
             Range Start
           </FieldLabel>
 
@@ -732,40 +746,49 @@ export const AnimationPanelContent = ({
             }
             type="single"
           >
-            {simplifiedStartRanges.map(([toggleValue, icon, range], index) => (
-              <ToggleGroupButton
-                key={toggleValue}
-                value={toggleValue}
-                onClick={() => {
-                  setIsAdvancedRangeStart(false);
-                  handleChange(
-                    {
-                      ...value,
-                      timing: {
-                        ...value.timing,
-                        rangeStart: range,
-                        rangeEnd:
-                          endRangeIndex < index
-                            ? simplifiedEndRanges[index][2]
-                            : value.timing.rangeEnd,
-                      },
-                    },
-                    false
-                  );
-                }}
-              >
-                {icon}
-              </ToggleGroupButton>
-            ))}
+            {simplifiedStartRanges.map(
+              ([toggleValue, icon, range, description], index) => (
+                <Tooltip
+                  content={`The animation starts ${description}`}
+                  key={toggleValue}
+                >
+                  <ToggleGroupButton
+                    key={toggleValue}
+                    value={toggleValue}
+                    onClick={() => {
+                      setIsAdvancedRangeStart(false);
+                      handleChange(
+                        {
+                          ...value,
+                          timing: {
+                            ...value.timing,
+                            rangeStart: range,
+                            rangeEnd:
+                              endRangeIndex < index
+                                ? simplifiedEndRanges[index][2]
+                                : value.timing.rangeEnd,
+                          },
+                        },
+                        false
+                      );
+                    }}
+                  >
+                    {icon}
+                  </ToggleGroupButton>
+                </Tooltip>
+              )
+            )}
 
-            <ToggleGroupButton
-              onClick={() => {
-                setIsAdvancedRangeStart(true);
-              }}
-              value="advanced"
-            >
-              <EllipsesIcon />
-            </ToggleGroupButton>
+            <Tooltip content="Set custom range">
+              <ToggleGroupButton
+                onClick={() => {
+                  setIsAdvancedRangeStart(true);
+                }}
+                value="advanced"
+              >
+                <EllipsesIcon />
+              </ToggleGroupButton>
+            </Tooltip>
           </ToggleGroup>
 
           {isAdvancedRangeStart && (
@@ -866,7 +889,7 @@ export const AnimationPanelContent = ({
             </Grid>
           )}
 
-          <FieldLabel description="Sets a fixed time for the animation instead of using rangeEnd.">
+          <FieldLabel description="Sets a fixed time for the animation instead of using rangeEnd">
             Duration
           </FieldLabel>
 
