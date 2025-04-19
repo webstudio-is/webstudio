@@ -96,7 +96,10 @@ export const uploadFile = async (
   name: string,
   data: ReadableStream<Uint8Array>,
   client: AssetClient,
-  context: AppContext
+  context: AppContext,
+  assetInfoFallback:
+    | { width: number; height: number; format: string }
+    | undefined
 ): Promise<Asset> => {
   let file = await context.postgrest.client
     .from("File")
@@ -117,7 +120,8 @@ export const uploadFile = async (
       name,
       file.data.format,
       // global web streams types do not define ReadableStream as async iterable
-      data as unknown as AsyncIterable<Uint8Array>
+      data as unknown as AsyncIterable<Uint8Array>,
+      assetInfoFallback
     );
     const { meta, format, size } = assetData;
     file = await context.postgrest.client

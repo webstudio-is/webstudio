@@ -2,6 +2,14 @@ import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 import type { UploadingFileData } from "~/shared/nano-states";
 
+const videoExtensionToMime = [
+  [".mp4", "video/mp4"],
+  [".webm", "video/webm"],
+  [".mpg", "video/mpeg"],
+  [".mpeg", "video/mpeg"],
+  [".mov", "video/quicktime"],
+] as const;
+
 const extensionToMime = new Map([
   [".gif", "image/gif"],
   [".ico", "image/x-icon"],
@@ -10,7 +18,13 @@ const extensionToMime = new Map([
   [".png", "image/png"],
   [".svg", "image/svg+xml"],
   [".webp", "image/webp"],
+  // Support video formats as images
+  ...videoExtensionToMime,
 ] as const);
+
+export const isVideoFormat = (format: string) => {
+  return videoExtensionToMime.some(([extension]) => extension.includes(format));
+};
 
 const extensions = [...extensionToMime.keys()];
 
@@ -101,6 +115,27 @@ export const uploadingFileDataToAsset = (
     fileData.source === "file" ? fileData.file : new URL(fileData.url)
   );
   const format = mimeType.split("/")[1];
+
+  if (mimeType.startsWith("video/")) {
+    // Use image type for now
+    const asset: ImageAsset = {
+      id: fileData.assetId,
+      name: fileData.objectURL,
+      format,
+      type: "image",
+      description: "",
+      createdAt: "",
+      projectId: "",
+      size: 0,
+
+      meta: {
+        width: Number.NaN,
+        height: Number.NaN,
+      },
+    };
+
+    return asset;
+  }
 
   if (mimeType.startsWith("image/")) {
     const asset: ImageAsset = {

@@ -21,6 +21,8 @@ export const action = async (
 
   const { request, params } = props;
 
+  // await new Promise((resolve) => setTimeout(resolve, 20000));
+
   if (params.name === undefined) {
     throw new Error("Name is undefined");
   }
@@ -57,12 +59,31 @@ export const action = async (
         body = imageRequest.body;
       }
 
+      const url = new URL(request.url);
+      const contentTypeArr = contentType?.split(";")[0]?.split("/") ?? [];
+
+      const format =
+        contentTypeArr[0] === "video" ? contentTypeArr[1] : undefined;
+
+      const width = url.searchParams.has("width")
+        ? Number.parseInt(url.searchParams.get("width")!, 10)
+        : undefined;
+      const height = url.searchParams.has("height")
+        ? Number.parseInt(url.searchParams.get("height")!, 10)
+        : undefined;
+
+      const assetInfoFallback =
+        height !== undefined && width !== undefined && format !== undefined
+          ? { width, height, format }
+          : undefined;
+
       const context = await createContext(request);
       const asset = await uploadFile(
         params.name,
         body,
         createAssetClient(),
-        context
+        context,
+        assetInfoFallback
       );
       return {
         uploadedAssets: [asset],

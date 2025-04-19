@@ -76,7 +76,7 @@ const renderProperty = (
       logic.handleChange({ prop, propName }, propValue);
 
       if (
-        component === "Image" &&
+        (component === "Image" || component === "Video") &&
         propName === "src" &&
         propValue.type === "asset"
       ) {

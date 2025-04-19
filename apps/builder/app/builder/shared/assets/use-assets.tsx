@@ -145,6 +145,24 @@ const $assetContainers = computed(
 
 export type UploadData = ActionData;
 
+const getVideoDimensions = async (file: File) => {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const vid = document.createElement("video");
+    vid.preload = "metadata";
+    vid.src = url;
+
+    vid.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: vid.videoWidth, height: vid.videoHeight });
+    };
+    vid.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Invalid video file"));
+    };
+  });
+};
+
 const uploadAsset = async ({
   authToken,
   projectId,
@@ -198,8 +216,17 @@ const uploadAsset = async ({
       headers.set("Content-Type", "application/json");
     }
 
+    let width = undefined;
+    let height = undefined;
+
+    if (mimeType.startsWith("video/") && fileOrUrl instanceof File) {
+      const videoSize = await getVideoDimensions(fileOrUrl);
+      width = videoSize.width;
+      height = videoSize.height;
+    }
+
     const uploadResponse = await fetch(
-      restAssetsUploadPath({ name: metaData.name }),
+      restAssetsUploadPath({ name: metaData.name, width, height }),
       {
         method: "POST",
         body,
