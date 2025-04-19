@@ -28,10 +28,20 @@ export const Video = forwardRef<
     $progress?: Atom<number | undefined>;
     $visible?: Atom<boolean>;
     $timeline?: boolean;
+  } & {
+    $webstudio$canvasOnly$assetId?: string | undefined;
   }
 >(
   (
-    { $progress, $visible, $timeline, children, src: srcProp, ...props },
+    {
+      $progress,
+      $visible,
+      $timeline,
+      $webstudio$canvasOnly$assetId: _,
+      children,
+      src: srcProp,
+      ...props
+    },
     ref
   ) => {
     const id = useId();
