@@ -36,6 +36,9 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
       endpoint: options.endpoint,
       bucket: options.bucket,
       acl: options.acl,
+
+      accessKeyId: options.accessKeyId,
+      secretAccessKey: options.secretAccessKey,
     });
   };
 

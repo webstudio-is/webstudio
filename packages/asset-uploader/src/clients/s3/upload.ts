@@ -1,18 +1,21 @@
 import { arrayBuffer } from "node:stream/consumers";
 import type { SignatureV4 } from "@smithy/signature-v4";
 import { type AssetData, getAssetData } from "../../utils/get-asset-data";
-import { createSizeLimiter } from "../../utils/size-limiter";
 import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
+import { S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 export const uploadToS3 = async ({
   signer,
   name,
   type,
   data: dataStream,
-  maxSize,
+
   endpoint,
   bucket,
   acl,
+  accessKeyId,
+  secretAccessKey,
 }: {
   signer: SignatureV4;
   name: string;
@@ -22,8 +25,36 @@ export const uploadToS3 = async ({
   endpoint: string;
   bucket: string;
   acl?: string;
+  accessKeyId: string;
+  secretAccessKey: string;
 }): Promise<AssetData> => {
-  const limitSize = createSizeLimiter(maxSize, name);
+  const client = new S3Client({
+    endpoint,
+    region: "auto",
+    credentials: {
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+    },
+  });
+
+  const parallelUploads3 = new Upload({
+    client,
+    params: {
+      Bucket: bucket,
+      Key: extendedEncodeURIComponent(name),
+      Body: dataStream,
+    },
+  });
+  parallelUploads3.on("httpUploadProgress", (progress) => {
+    console.log(":::progress:::", progress);
+  });
+
+  await parallelUploads3.done();
+  return {
+    size: 100,
+    format: "png",
+    meta: { width: 100, height: 100 },
+  };
 
   // @todo this is going to put the entire file in memory
   // this has to be a stream that goes directly to s3
