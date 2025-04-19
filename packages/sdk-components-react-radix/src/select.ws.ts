@@ -23,116 +23,80 @@ import {
 } from "./__generated__/select.props";
 
 export const metaSelect: WsComponentMeta = {
-  type: "container",
   icon: SelectIcon,
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectTrigger },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectContent },
-    },
-  ],
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.SelectTrigger, radix.SelectContent],
+  },
 };
 
 export const metaSelectTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectValue],
+  },
   presetStyle: {
     button,
   },
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.Select },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectValue },
-    },
-  ],
 };
 
 export const metaSelectValue: WsComponentMeta = {
-  type: "container",
   label: "Value",
   icon: FormTextFieldIcon,
+  contentModel: {
+    category: "none",
+    children: [],
+  },
   presetStyle: {
     span,
-  },
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.SelectTrigger },
   },
 };
 
 export const metaSelectContent: WsComponentMeta = {
-  type: "container",
   icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectViewport],
+  },
   presetStyle: {
     div,
   },
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.Select },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectViewport },
-    },
-  ],
 };
 
 export const metaSelectViewport: WsComponentMeta = {
-  type: "container",
   icon: ViewportIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectItem],
+  },
   presetStyle: {
     div,
   },
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.SelectContent },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectItem },
-    },
-  ],
 };
 
 export const metaSelectItem: WsComponentMeta = {
-  type: "container",
   icon: ItemIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.SelectViewport },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectItemIndicator },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.SelectItemText },
-    },
-  ],
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectItemIndicator, radix.SelectItemText],
+  },
   presetStyle: {
     div,
   },
 };
 
 export const metaSelectItemIndicator: WsComponentMeta = {
-  type: "container",
   label: "Indicator",
   icon: CheckMarkIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.SelectItem },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   presetStyle: {
     span,
@@ -140,12 +104,11 @@ export const metaSelectItemIndicator: WsComponentMeta = {
 };
 
 export const metaSelectItemText: WsComponentMeta = {
-  type: "container",
   label: "Item Text",
   icon: TextIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.SelectItem },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
   presetStyle: {
     span,

@@ -13,41 +13,33 @@ import {
 } from "./__generated__/collapsible.props";
 
 export const metaCollapsible: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.CollapsibleTrigger },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.CollapsibleContent },
-    },
-  ],
+  icon: CollapsibleIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.CollapsibleTrigger, radix.CollapsibleContent],
+  },
   presetStyle: {
     div,
   },
-  icon: CollapsibleIcon,
 };
 
 export const metaCollapsibleTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Collapsible },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
-  type: "container",
+  icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   presetStyle: {
     div,
-  },
-  icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Collapsible },
   },
 };
 

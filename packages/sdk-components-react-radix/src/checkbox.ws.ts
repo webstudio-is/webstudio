@@ -13,12 +13,12 @@ import {
 } from "./__generated__/checkbox.props";
 
 export const metaCheckbox: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: radix.CheckboxIndicator },
-  },
   icon: CheckboxCheckedIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.CheckboxIndicator],
+  },
   states: [
     ...defaultStates,
     {
@@ -38,12 +38,11 @@ export const metaCheckbox: WsComponentMeta = {
 };
 
 export const metaCheckboxIndicator: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Checkbox },
-  },
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   states: defaultStates,
   presetStyle: {
     span,

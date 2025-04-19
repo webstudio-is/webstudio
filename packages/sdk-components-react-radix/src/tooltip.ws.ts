@@ -10,39 +10,31 @@ import {
 
 // @todo add [data-state] to button and link
 export const metaTooltipTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Tooltip },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
 };
 
 export const metaTooltipContent: WsComponentMeta = {
-  type: "container",
   icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
   presetStyle: {
     div,
-  },
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Tooltip },
   },
 };
 
 export const metaTooltip: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.TooltipTrigger },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.TooltipContent },
-    },
-  ],
   icon: TooltipIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.TooltipTrigger, radix.TooltipContent],
+  },
 };
 
 export const propsMetaTooltip: WsComponentPropsMeta = {

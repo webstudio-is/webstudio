@@ -3,7 +3,6 @@ import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/video-animation.props";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: Youtube1cIcon,
   label: "Video Animation",
   contentModel: {

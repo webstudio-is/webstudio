@@ -10,39 +10,31 @@ import {
 
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Popover },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
 };
 
 export const metaPopoverContent: WsComponentMeta = {
-  type: "container",
+  icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
   presetStyle: {
     div,
-  },
-  icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Popover },
   },
 };
 
 export const metaPopover: WsComponentMeta = {
-  type: "container",
   icon: PopoverIcon,
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.PopoverTrigger },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.PopoverContent },
-    },
-  ],
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.PopoverTrigger, radix.PopoverContent],
+  },
 };
 
 export const propsMetaPopover: WsComponentPropsMeta = {
