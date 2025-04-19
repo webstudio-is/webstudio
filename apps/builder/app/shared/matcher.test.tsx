@@ -677,7 +677,6 @@ describe("is tree matching", () => {
     [
       "ListItem",
       {
-        type: "container",
         icon: "",
         constraints: {
           relation: "parent",
@@ -688,7 +687,6 @@ describe("is tree matching", () => {
     [
       "Tabs",
       {
-        type: "container",
         icon: "",
         constraints: {
           relation: "descendant",
