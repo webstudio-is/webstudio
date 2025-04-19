@@ -101,6 +101,14 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
 
   // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept
   // https://github.com/webstudio-is/webstudio/blob/83503e39b0e1561ea93cfcff92aa35b54c15fefa/packages/sdk-components-react/src/video.ws.ts#L34
+  //
+  // To reproduce:
+  // 1. Create Video Animation
+  // 2. Open "Video" component properties
+  // 3. Click "Choose source" button
+  // 4. See ImageManager allows upload all image and video files
+  // 5. See ImageManager do not filter video files based on accept parameter
+  // 6. But see accept = ".mp4,.webm,.mpg,.mpeg,.mov" is right here
   console.info(
     "@todo accept for video tag should allow only video uploads and filter items",
     accept
