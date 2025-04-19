@@ -14,12 +14,12 @@ import {
 } from "./__generated__/radio-group.props";
 
 export const metaRadioGroup: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: radix.RadioGroupItem },
-  },
   icon: RadioGroupIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.RadioGroupItem],
+  },
   states: [
     ...defaultStates,
     {
@@ -39,18 +39,12 @@ export const metaRadioGroup: WsComponentMeta = {
 };
 
 export const metaRadioGroupItem: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.RadioGroup },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.RadioGroupIndicator },
-    },
-  ],
   icon: ItemIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.RadioGroupIndicator],
+  },
   states: defaultStates,
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -58,11 +52,10 @@ export const metaRadioGroupItem: WsComponentMeta = {
 };
 
 export const metaRadioGroupIndicator: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.RadioGroupItem },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   states: defaultStates,
   presetStyle: {

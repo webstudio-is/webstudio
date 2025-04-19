@@ -5,7 +5,6 @@ import { props } from "./__generated__/animate-text.props";
 
 export const meta: WsComponentMeta = {
   category: "animations",
-  type: "container",
   description:
     "Text animation allows you to split text by char or by word to animate it.",
   icon: TextAnimationIcon,

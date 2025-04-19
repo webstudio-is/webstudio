@@ -1,9 +1,9 @@
 import { z } from "zod";
 import type { HtmlTags } from "html-tags";
+import type { Simplify } from "type-fest";
+import { StyleValue, type CssProperty } from "@webstudio-is/css-engine";
 import { PropMeta } from "./prop-meta";
 import { Matchers } from "./instances";
-import { StyleValue, type CssProperty } from "@webstudio-is/css-engine";
-import type { Simplify } from "type-fest";
 
 export const PresetStyleDecl = z.object({
   // State selector, e.g. :hover
@@ -93,8 +93,6 @@ export type ContentModel = z.infer<typeof ContentModel>;
 
 export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  // container - can accept other components with dnd or be edited as text              ..
-  type: z.enum(["container"]).optional(),
   /**
    * a property used as textual placeholder when no content specified while in builder
    * also signals to not insert components inside unless dropped explicitly

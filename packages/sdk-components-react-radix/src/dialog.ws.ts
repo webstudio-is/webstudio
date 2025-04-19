@@ -27,113 +27,83 @@ import { buttonReset } from "./shared/preset-styles";
 
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Dialog },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
 };
 
 export const metaDialogOverlay: WsComponentMeta = {
-  type: "container",
+  icon: OverlayIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.DialogContent],
+  },
   presetStyle: {
     div,
   },
-  icon: OverlayIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.Dialog },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogContent },
-    },
-  ],
 };
 
 export const metaDialogContent: WsComponentMeta = {
-  type: "container",
+  icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [
+      radix.DialogTitle,
+      radix.DialogDescription,
+      radix.DialogClose,
+    ],
+  },
   presetStyle: {
     div,
   },
-  icon: ContentIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.DialogOverlay },
-    },
-    // often deleted by users
-    // though radix starts throwing warnings in console
-    /*
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogTitle },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogDescription },
-    },
-    */
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogClose },
-    },
-  ],
 };
 
 export const metaDialogTitle: WsComponentMeta = {
-  type: "container",
+  icon: HeadingIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   presetStyle: {
     h2,
-  },
-  icon: HeadingIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.DialogContent },
   },
 };
 
 export const metaDialogDescription: WsComponentMeta = {
-  type: "container",
+  icon: TextIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   presetStyle: {
     p,
-  },
-  icon: TextIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.DialogContent },
   },
 };
 
 export const metaDialogClose: WsComponentMeta = {
-  type: "container",
-  presetStyle: {
-    button: [buttonReset, button].flat(),
-  },
-  states: defaultStates,
   icon: ButtonElementIcon,
   label: "Close Button",
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.DialogContent },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
+  states: defaultStates,
+  presetStyle: {
+    button: [buttonReset, button].flat(),
   },
 };
 
 export const metaDialog: WsComponentMeta = {
-  type: "container",
   icon: DialogIcon,
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogTrigger },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.DialogOverlay },
-    },
-  ],
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.DialogTrigger, radix.DialogOverlay],
+  },
 };
 
 export const propsMetaDialog: WsComponentPropsMeta = {

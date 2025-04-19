@@ -21,109 +21,89 @@ import {
 } from "./__generated__/navigation-menu.props";
 
 export const metaNavigationMenu: WsComponentMeta = {
-  type: "container",
   icon: NavigationMenuIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuList, radix.NavigationMenuViewport],
+  },
   presetStyle: {
     div,
   },
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: radix.NavigationMenuList },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.NavigationMenuViewport },
-    },
-  ],
 };
 
 export const metaNavigationMenuList: WsComponentMeta = {
-  type: "container",
   icon: ListIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.NavigationMenu },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: radix.NavigationMenuItem },
-    },
-  ],
+  label: "Menu List",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuItem],
+  },
   presetStyle: {
     div,
   },
-  label: "Menu List",
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
-  type: "container",
   icon: ListItemIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.NavigationMenuList },
+  label: "Menu Item",
+  indexWithinAncestor: radix.NavigationMenu,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [
+      radix.NavigationMenuTrigger,
+      radix.NavigationMenuContent,
+      radix.NavigationMenuLink,
+    ],
   },
   presetStyle: {
     div,
   },
-  indexWithinAncestor: radix.NavigationMenu,
-  label: "Menu Item",
 };
 
 export const metaNavigationMenuTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.NavigationMenuItem },
-  },
   label: "Menu Trigger",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
 };
 
 export const metaNavigationMenuContent: WsComponentMeta = {
-  type: "container",
   icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.NavigationMenuItem },
+  label: "Menu Content",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuLink],
   },
-  indexWithinAncestor: radix.NavigationMenu,
   presetStyle: {
     div,
   },
-  label: "Menu Content",
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
-  type: "container",
   icon: BoxIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: radix.NavigationMenu },
-    },
-    {
-      relation: "ancestor",
-      component: {
-        $in: [radix.NavigationMenuContent, radix.NavigationMenuItem],
-      },
-    },
-  ],
   label: "Accessible Link Wrapper",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
-  type: "container",
   icon: ViewportIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.NavigationMenu },
+  label: "Menu Viewport",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   presetStyle: {
     div,
   },
-  label: "Menu Viewport",
 };
 
 export const propsMetaNavigationMenu: WsComponentPropsMeta = {

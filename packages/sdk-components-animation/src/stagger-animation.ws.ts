@@ -5,7 +5,6 @@ import { props } from "./__generated__/stagger-animation.props";
 
 export const meta: WsComponentMeta = {
   category: "animations",
-  type: "container",
   description:
     "Stagger animation allows you to animate children elements with a sliding window.",
   icon: StaggerAnimationIcon,

@@ -10,12 +10,12 @@ import { buttonReset } from "./shared/preset-styles";
 import { propsSwitch, propsSwitchThumb } from "./__generated__/switch.props";
 
 export const metaSwitch: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: radix.SwitchThumb },
-  },
   icon: SwitchIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.SwitchThumb],
+  },
   states: [
     ...defaultStates,
     {
@@ -35,12 +35,11 @@ export const metaSwitch: WsComponentMeta = {
 };
 
 export const metaSwitchThumb: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: radix.Switch },
-  },
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
   states: [
     ...defaultStates,
     {
