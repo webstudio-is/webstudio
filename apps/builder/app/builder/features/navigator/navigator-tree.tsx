@@ -66,7 +66,6 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
-import { isTreeMatching } from "~/shared/matcher";
 import {
   findClosestContainer,
   isRichTextContent,
@@ -562,12 +561,7 @@ const canDrop = (
   }
   // make sure dragging tree can be put inside of drop instance
   const containerInstanceSelector = [dragSelector[0], ...dropSelector];
-  let matches = isTreeMatching({
-    instances,
-    metas,
-    instanceSelector: containerInstanceSelector,
-  });
-  matches &&= isTreeSatisfyingContentModel({
+  const matches = isTreeSatisfyingContentModel({
     instances,
     metas,
     props,
