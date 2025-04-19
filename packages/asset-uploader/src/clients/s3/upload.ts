@@ -23,13 +23,13 @@ export const uploadToS3 = async ({
   bucket: string;
   acl?: string;
 }): Promise<AssetData> => {
-  const limitSize = createSizeLimiter(maxSize, name);
+  // const limitSize = createSizeLimiter(maxSize, name);
 
   // @todo this is going to put the entire file in memory
   // this has to be a stream that goes directly to s3
   // Size check has to happen as you stream and interrupted when size is too big
   // Also check if S3 client has an option to check the size limit
-  const data = await arrayBuffer(limitSize(dataStream));
+  const data = await arrayBuffer(dataStream);
 
   const url = new URL(
     `/${bucket}/${extendedEncodeURIComponent(name)}`,
