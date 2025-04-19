@@ -105,12 +105,12 @@ export const deleteSelectedInstance = () => {
       blockTemplateComponent;
 
     if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
 
     if (!isChildOfBlock) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
   }
