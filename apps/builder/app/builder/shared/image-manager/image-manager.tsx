@@ -99,6 +99,13 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
     selectedIndex,
   } = useLogic({ onChange, accept });
 
+  // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept
+  // https://github.com/webstudio-is/webstudio/blob/83503e39b0e1561ea93cfcff92aa35b54c15fefa/packages/sdk-components-react/src/video.ws.ts#L34
+  console.info(
+    "@todo accept for video tag should allow only video uploads and filter items",
+    accept
+  );
+
   return (
     <AssetsShell
       searchProps={searchProps}
