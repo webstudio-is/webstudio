@@ -26,7 +26,12 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     uriEscapePath: false,
   });
 
-  const uploadFile: AssetClient["uploadFile"] = async (name, type, data) => {
+  const uploadFile: AssetClient["uploadFile"] = async (
+    name,
+    type,
+    data,
+    assetInfoFallback
+  ) => {
     return uploadToS3({
       signer,
       name,
@@ -36,6 +41,7 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
       endpoint: options.endpoint,
       bucket: options.bucket,
       acl: options.acl,
+      assetInfoFallback,
     });
   };
 

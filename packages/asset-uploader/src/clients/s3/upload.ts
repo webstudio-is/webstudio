@@ -13,6 +13,7 @@ export const uploadToS3 = async ({
   endpoint,
   bucket,
   acl,
+  assetInfoFallback,
 }: {
   signer: SignatureV4;
   name: string;
@@ -22,6 +23,9 @@ export const uploadToS3 = async ({
   endpoint: string;
   bucket: string;
   acl?: string;
+  assetInfoFallback:
+    | { width: number; height: number; format: string }
+    | undefined;
 }): Promise<AssetData> => {
   const limitSize = createSizeLimiter(maxSize, name);
 
@@ -65,8 +69,20 @@ export const uploadToS3 = async ({
     throw Error(`Cannot upload file ${name}`);
   }
 
+  if (type.startsWith("video") && assetInfoFallback !== undefined) {
+    return {
+      size: data.byteLength,
+      format: assetInfoFallback?.format,
+      meta: {
+        width: assetInfoFallback?.width ?? 0,
+        height: assetInfoFallback?.height ?? 0,
+      },
+    };
+  }
+
   const assetData = await getAssetData({
-    type: type.startsWith("image") ? "image" : "font",
+    type:
+      type.startsWith("image") || type.startsWith("video") ? "image" : "font",
     size: data.byteLength,
     data: new Uint8Array(data),
     name,
