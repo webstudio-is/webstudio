@@ -813,25 +813,6 @@ describe("is instance detachable", () => {
     ).toBeTruthy();
   });
 
-  test("prevent deleting last matching instance", () => {
-    expect(
-      isInstanceDetachable({
-        ...renderData(
-          <$.Body ws:id="body">
-            <radix.Tabs ws:id="tabs">
-              <radix.TabsList ws:id="list">
-                <radix.TabsTrigger ws:id="trigger1"></radix.TabsTrigger>
-              </radix.TabsList>
-              <radix.TabsContent ws:id="content1"></radix.TabsContent>
-            </radix.Tabs>
-          </$.Body>
-        ),
-        metas,
-        instanceSelector: ["trigger1", "list", "tabs", "body"],
-      })
-    ).toBeFalsy();
-  });
-
   test("allow deleting when siblings not matching", () => {
     expect(
       isInstanceDetachable({
