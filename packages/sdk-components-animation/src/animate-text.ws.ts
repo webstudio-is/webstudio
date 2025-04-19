@@ -8,7 +8,7 @@ export const meta: WsComponentMeta = {
   description:
     "Text animation allows you to split text by char or by word to animate it.",
   icon: TextAnimationIcon,
-  order: 6,
+  order: 1,
   label: "Text Animation",
   contentModel: {
     category: "none",

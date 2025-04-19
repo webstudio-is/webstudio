@@ -8,7 +8,7 @@ export const meta: WsComponentMeta = {
   description:
     "Stagger animation allows you to animate children elements with a sliding window.",
   icon: StaggerAnimationIcon,
-  order: 6,
+  order: 4,
   label: "Stagger Animation",
   contentModel: {
     category: "none",

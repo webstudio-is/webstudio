@@ -6,7 +6,7 @@ export const meta: WsComponentMeta = {
   category: "animations",
   description: "Animation Group component is designed to animate its children.",
   icon: AnimationGroupIcon,
-  order: 5,
+  order: 0,
   label: "Animation Group",
   contentModel: {
     category: "instance",
