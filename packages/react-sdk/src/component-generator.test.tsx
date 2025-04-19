@@ -1148,14 +1148,8 @@ test("generate prop with index within ancestor", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        [
-          "TabsTrigger",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
-        [
-          "TabsContent",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
+        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
+        ["TabsContent", { icon: "", indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="body">
@@ -1212,10 +1206,7 @@ test("ignore ws:block-template when generate index attribute", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        [
-          "TabsTrigger",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
+        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="bodyId">
