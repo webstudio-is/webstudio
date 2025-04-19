@@ -81,8 +81,7 @@ export const uploadToS3 = async ({
   }
 
   const assetData = await getAssetData({
-    type:
-      type.startsWith("image") || type.startsWith("video") ? "image" : "font",
+    type: type.startsWith("image") ? "image" : "font",
     size: data.byteLength,
     data: new Uint8Array(data),
     name,
