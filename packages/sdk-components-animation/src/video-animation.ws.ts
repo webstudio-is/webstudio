@@ -1,10 +1,11 @@
-import { Youtube1cIcon } from "@webstudio-is/icons/svg";
+import { PlayIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/video-animation.props";
 
 export const meta: WsComponentMeta = {
-  icon: Youtube1cIcon,
+  icon: PlayIcon,
   label: "Video Animation",
+  order: 3,
   contentModel: {
     category: "none",
     children: ["instance"],
