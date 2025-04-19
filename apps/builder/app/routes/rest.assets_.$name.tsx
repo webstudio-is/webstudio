@@ -66,10 +66,10 @@ export const action = async (
         contentTypeArr[0] === "video" ? contentTypeArr[1] : undefined;
 
       const width = url.searchParams.has("width")
-        ? parseInt(url.searchParams.get("width")!, 10)
+        ? Number.parseInt(url.searchParams.get("width")!, 10)
         : undefined;
       const height = url.searchParams.has("height")
-        ? parseInt(url.searchParams.get("height")!, 10)
+        ? Number.parseInt(url.searchParams.get("height")!, 10)
         : undefined;
 
       const assetInfoFallback =
