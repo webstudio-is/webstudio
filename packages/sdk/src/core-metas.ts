@@ -11,6 +11,7 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "./schema/component-meta";
+import type { Instance } from "./schema/instances";
 
 export const rootComponent = "ws:root";
 
@@ -152,10 +153,15 @@ export const corePropsMetas = {
 
 // components with custom implementation
 // should not be imported as react component
-export const isCoreComponent = (component: string) =>
+export const isCoreComponent = (component: Instance["component"]) =>
   component === rootComponent ||
   component === elementComponent ||
   component === collectionComponent ||
   component === descendantComponent ||
   component === blockComponent ||
   component === blockTemplateComponent;
+
+export const isComponentDetachable = (component: Instance["component"]) =>
+  component !== rootComponent &&
+  component !== blockTemplateComponent &&
+  component !== descendantComponent;
