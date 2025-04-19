@@ -147,15 +147,9 @@ export const ImageThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {isVideoFormat(assetContainer.asset.format) ? (
-          <StyledWebstudioVideo
-            width={64}
-            src={
-              assetContainer.status === "uploading"
-                ? assetContainer.objectURL
-                : `/cgi/image/${assetContainer.asset.name}?format=raw`
-            }
-          />
+        {isVideoFormat(assetContainer.asset.format) &&
+        assetContainer.status === "uploading" ? (
+          <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
         ) : (
           <StyledWebstudioImage
             assetId={assetContainer.asset.id}
