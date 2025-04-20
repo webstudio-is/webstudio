@@ -47,7 +47,8 @@ export const ariaAttributes: Attribute[] = [
     name: "aria-checked",
     description:
       'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets. See related aria-pressed and aria-selected.',
-    type: "string",
+    type: "select",
+    options: ["false", "mixed", "true"],
   },
   {
     name: "aria-colcount",
@@ -232,7 +233,8 @@ export const ariaAttributes: Attribute[] = [
     name: "aria-pressed",
     description:
       'Indicates the current "pressed" state of toggle buttons. See related aria-checked and aria-selected.',
-    type: "string",
+    type: "select",
+    options: ["false", "mixed", "true"],
   },
   {
     name: "aria-readonly",

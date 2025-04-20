@@ -96,23 +96,19 @@ for (const row of rows) {
     .split(/\s*;\s*/)
     .filter((item) => item.startsWith('"') && item.endsWith('"'))
     .map((item) => item.slice(1, -1));
-  let control: "text" | "radio" | "select" | "boolean" | "number" = "text";
-  let type: "string" | "boolean" | "number" = "string";
+  let type: "string" | "boolean" | "number" | "select" = "string";
   let options: undefined | string[];
   if (possibleOptions.length > 0) {
-    type = "string";
-    control = possibleOptions.length <= 3 ? "radio" : "select";
+    type = "select";
     options = possibleOptions;
   } else if (value.includes("boolean attribute")) {
     type = "boolean";
-    control = "boolean";
   } else if (
     (value.includes("number") || value.includes("integer")) &&
     !value.includes("list") &&
     !value.includes("string")
   ) {
     type = "number";
-    control = "number";
   }
   for (let tag of tags) {
     tag = tag.toLowerCase().trim();

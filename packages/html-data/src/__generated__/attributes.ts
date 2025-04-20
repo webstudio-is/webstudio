@@ -16,14 +16,14 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "autocapitalize",
       description:
         "Recommended autocapitalization behavior (for supported input methods)",
-      type: "string",
+      type: "select",
       options: ["on", "off", "none", "sentences", "words", "characters"],
     },
     {
       name: "autocorrect",
       description:
         "Recommended autocorrection behavior (for supported input methods)",
-      type: "string",
+      type: "select",
       options: ["on", "off"],
     },
     {
@@ -39,19 +39,19 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "contenteditable",
       description: "Whether the element is editable",
-      type: "string",
+      type: "select",
       options: ["true", "plaintext-only", "false"],
     },
     {
       name: "dir",
       description: "The text directionality of the element",
-      type: "string",
+      type: "select",
       options: ["ltr", "rtl", "auto"],
     },
     {
       name: "draggable",
       description: "Whether the element is draggable",
-      type: "string",
+      type: "select",
       options: ["true", "false"],
     },
     {
@@ -67,7 +67,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "inputmode",
       description: "Hint for selecting an input modality",
-      type: "string",
+      type: "select",
       options: [
         "none",
         "text",
@@ -129,7 +129,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "spellcheck",
       description:
         "Whether the element is to have its spelling and grammar checked",
-      type: "string",
+      type: "select",
       options: ["true", "false"],
     },
     {
@@ -147,7 +147,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "translate",
       description:
         "Whether the element is to be translated when the page is localized",
-      type: "string",
+      type: "select",
       options: ["yes", "no"],
     },
   ],
@@ -238,7 +238,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "shape",
       description: "The kind of shape to be created in an image map",
-      type: "string",
+      type: "select",
       options: ["circle", "default", "poly", "rect"],
     },
     {
@@ -262,7 +262,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "crossorigin",
       description: "How the element handles crossorigin requests",
-      type: "string",
+      type: "select",
       options: ["anonymous", "use-credentials"],
     },
     {
@@ -279,7 +279,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "preload",
       description:
         "Hints how much buffering the media resource will likely need",
-      type: "string",
+      type: "select",
       options: ["none", "metadata", "auto"],
     },
     {
@@ -305,7 +305,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "dir",
       description: "The text directionality of the element",
-      type: "string",
+      type: "select",
       options: ["ltr", "rtl"],
     },
   ],
@@ -336,7 +336,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formenctype",
       description: "Entry list encoding type to use for form submission",
-      type: "string",
+      type: "select",
       options: [
         "application/x-www-form-urlencoded",
         "multipart/form-data",
@@ -346,7 +346,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formmethod",
       description: "Variant to use for form submission",
-      type: "string",
+      type: "select",
       options: ["get", "post", "dialog"],
     },
     {
@@ -368,7 +368,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "type",
       description: "Type of button",
-      type: "string",
+      type: "select",
       options: ["submit", "reset", "button"],
     },
     {
@@ -505,13 +505,13 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "autocomplete",
       description:
         "Default setting for autofill feature for controls in the form",
-      type: "string",
+      type: "select",
       options: ["on", "off"],
     },
     {
       name: "enctype",
       description: "Entry list encoding type to use for form submission",
-      type: "string",
+      type: "select",
       options: [
         "application/x-www-form-urlencoded",
         "multipart/form-data",
@@ -521,7 +521,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "method",
       description: "Variant to use for form submission",
-      type: "string",
+      type: "select",
       options: ["get", "post", "dialog"],
     },
     {
@@ -560,7 +560,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "loading",
       description: "Used when determining loading deferral",
-      type: "string",
+      type: "select",
       options: ["lazy", "eager"],
     },
     {
@@ -603,20 +603,20 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "crossorigin",
       description: "How the element handles crossorigin requests",
-      type: "string",
+      type: "select",
       options: ["anonymous", "use-credentials"],
     },
     {
       name: "decoding",
       description:
         "Decoding hint to use when processing this image for presentation",
-      type: "string",
+      type: "select",
       options: ["sync", "async", "auto"],
     },
     {
       name: "fetchpriority",
       description: "Sets the priority for fetches initiated by the element",
-      type: "string",
+      type: "select",
       options: ["auto", "high", "low"],
     },
     {
@@ -627,7 +627,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "loading",
       description: "Used when determining loading deferral",
-      type: "string",
+      type: "select",
       options: ["lazy", "eager"],
     },
     {
@@ -701,7 +701,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formenctype",
       description: "Entry list encoding type to use for form submission",
-      type: "string",
+      type: "select",
       options: [
         "application/x-www-form-urlencoded",
         "multipart/form-data",
@@ -711,7 +711,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formmethod",
       description: "Variant to use for form submission",
-      type: "string",
+      type: "select",
       options: ["get", "post", "dialog"],
     },
     {
@@ -859,7 +859,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "charset",
       description: "Character encoding declaration",
-      type: "string",
+      type: "select",
       options: ["utf-8"],
     },
     {
@@ -870,7 +870,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "http-equiv",
       description: "Pragma directive",
-      type: "string",
+      type: "select",
       options: [
         "content-type",
         "default-style",
@@ -968,7 +968,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "type",
       description: "Kind of list marker",
-      type: "string",
+      type: "select",
       options: ["1", "a", "a", "i", "i"],
     },
   ],
@@ -1211,7 +1211,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "wrap",
       description:
         "How the value of the form control is to be wrapped for form submission",
-      type: "string",
+      type: "select",
       options: ["soft", "hard"],
     },
   ],
@@ -1240,7 +1240,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "scope",
       description: "Specifies which cells the header cell applies to",
-      type: "string",
+      type: "select",
       options: ["row", "col", "rowgroup", "colgroup"],
     },
   ],
@@ -1260,7 +1260,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "kind",
       description: "The type of text track",
-      type: "string",
+      type: "select",
       options: [
         "subtitles",
         "captions",
@@ -1300,7 +1300,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "crossorigin",
       description: "How the element handles crossorigin requests",
-      type: "string",
+      type: "select",
       options: ["anonymous", "use-credentials"],
     },
     {
@@ -1333,7 +1333,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "preload",
       description:
         "Hints how much buffering the media resource will likely need",
-      type: "string",
+      type: "select",
       options: ["none", "metadata", "auto"],
     },
     {

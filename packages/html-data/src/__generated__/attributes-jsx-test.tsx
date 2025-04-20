@@ -3,15 +3,15 @@ const Page = () => {
     <body>
       <div
         accessKey={""}
-        autoCapitalize={""}
-        autoCorrect={""}
+        autoCapitalize={"on"}
+        autoCorrect={"on"}
         autoFocus={true}
-        contentEditable={""}
-        dir={""}
-        draggable={""}
+        contentEditable={"true"}
+        dir={"ltr"}
+        draggable={"true"}
         hidden={true}
         id={""}
-        inputMode={""}
+        inputMode={"none"}
         is={""}
         itemID={""}
         itemProp={""}
@@ -21,10 +21,10 @@ const Page = () => {
         lang={""}
         nonce={""}
         slot={""}
-        spellCheck={""}
+        spellCheck={"true"}
         tabIndex={0}
         title={""}
-        translate={""}
+        translate={"yes"}
         className={`${""}`}
       />
       <a
@@ -45,31 +45,31 @@ const Page = () => {
         href={""}
         referrerPolicy={""}
         rel={""}
-        shape={""}
+        shape={"circle"}
         target={""}
       />
       <audio
         autoPlay={true}
         controls={true}
-        crossOrigin={""}
+        crossOrigin={"anonymous"}
         loop={true}
         muted={true}
-        preload={""}
+        preload={"none"}
         src={""}
       />
       <base href={""} target={""} />
-      <bdo dir={""} />
+      <bdo dir={"ltr"} />
       <blockquote cite={""} />
       <button
         disabled={true}
         form={""}
         formAction={""}
-        formEncType={""}
-        formMethod={""}
+        formEncType={"application/x-www-form-urlencoded"}
+        formMethod={"get"}
         formNoValidate={true}
         formTarget={""}
         name={""}
-        type={""}
+        type={"submit"}
         value={""}
       />
       <canvas height={0} width={0} />
@@ -85,9 +85,9 @@ const Page = () => {
       <form
         acceptCharset={""}
         action={""}
-        autoComplete={""}
-        encType={""}
-        method={""}
+        autoComplete={"on"}
+        encType={"application/x-www-form-urlencoded"}
+        method={"get"}
         name={""}
         noValidate={true}
         target={""}
@@ -96,7 +96,7 @@ const Page = () => {
         allow={""}
         allowFullScreen={true}
         height={0}
-        loading={""}
+        loading={"lazy"}
         name={""}
         referrerPolicy={""}
         sandbox={""}
@@ -106,11 +106,11 @@ const Page = () => {
       />
       <img
         alt={""}
-        crossOrigin={""}
-        decoding={""}
-        fetchPriority={""}
+        crossOrigin={"anonymous"}
+        decoding={"sync"}
+        fetchPriority={"auto"}
         height={0}
-        loading={""}
+        loading={"lazy"}
         referrerPolicy={""}
         sizes={""}
         src={""}
@@ -126,8 +126,8 @@ const Page = () => {
         disabled={true}
         form={""}
         formAction={""}
-        formEncType={""}
-        formMethod={""}
+        formEncType={"application/x-www-form-urlencoded"}
+        formMethod={"get"}
         formNoValidate={true}
         formTarget={""}
         height={0}
@@ -154,10 +154,16 @@ const Page = () => {
       <label htmlFor={""} />
       <li value={0} />
       <map name={""} />
-      <meta charSet={""} content={""} httpEquiv={""} media={""} name={""} />
+      <meta
+        charSet={"utf-8"}
+        content={""}
+        httpEquiv={"content-type"}
+        media={""}
+        name={""}
+      />
       <meter high={0} low={0} max={0} min={0} optimum={0} value={0} />
       <object data={""} form={""} height={0} name={""} type={""} width={0} />
-      <ol reversed={true} start={0} type={""} />
+      <ol reversed={true} start={0} type={"1"} />
       <optgroup disabled={true} label={""} />
       <option disabled={true} label={""} selected={true} value={""} />
       <output htmlFor={""} form={""} name={""} />
@@ -196,21 +202,27 @@ const Page = () => {
         readOnly={true}
         required={true}
         rows={0}
-        wrap={""}
+        wrap={"soft"}
       />
-      <th abbr={""} colSpan={0} headers={""} rowSpan={0} scope={""} />
+      <th abbr={""} colSpan={0} headers={""} rowSpan={0} scope={"row"} />
       <time dateTime={""} />
-      <track default={true} kind={""} label={""} src={""} srcLang={""} />
+      <track
+        default={true}
+        kind={"subtitles"}
+        label={""}
+        src={""}
+        srcLang={""}
+      />
       <video
         autoPlay={true}
         controls={true}
-        crossOrigin={""}
+        crossOrigin={"anonymous"}
         height={0}
         loop={true}
         muted={true}
         playsInline={true}
         poster={""}
-        preload={""}
+        preload={"none"}
         src={""}
         width={0}
       />
