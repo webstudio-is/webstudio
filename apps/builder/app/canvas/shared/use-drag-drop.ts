@@ -29,10 +29,7 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import {
-  findClosestInstanceMatchingFragment,
-  isTreeMatching,
-} from "~/shared/matcher";
+import { findClosestInstanceMatchingFragment } from "~/shared/matcher";
 import {
   findClosestContainer,
   findClosestRichText,
@@ -98,12 +95,7 @@ const findClosestDroppableInstanceSelector = (
       dragPayload.dragInstanceSelector[0],
       ...instanceSelector,
     ];
-    let matches = isTreeMatching({
-      instances,
-      metas,
-      instanceSelector: dropInstanceSelector,
-    });
-    matches &&= isTreeSatisfyingContentModel({
+    const matches = isTreeSatisfyingContentModel({
       instances,
       props,
       metas,

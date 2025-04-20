@@ -1,5 +1,8 @@
 import { nanoid } from "nanoid";
-import { blockTemplateComponent } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  isComponentDetachable,
+} from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
@@ -36,7 +39,6 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import { isInstanceDetachable, isTreeMatching } from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
 import { atom } from "nanostores";
@@ -77,14 +79,7 @@ export const deleteSelectedInstance = () => {
   const [selectedItem, parentItem] = instancePath;
   const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
-  if (
-    isInstanceDetachable({
-      metas,
-      instances,
-      instanceSelector: selectedInstanceSelector,
-    }) === false
-  ) {
+  if (!isComponentDetachable(selectedItem.instance.component)) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -110,12 +105,12 @@ export const deleteSelectedInstance = () => {
       blockTemplateComponent;
 
     if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
 
     if (!isChildOfBlock) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
   }
@@ -180,12 +175,7 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      let matches = isTreeMatching({
-        metas,
-        instances: data.instances,
-        instanceSelector: newInstanceSelector,
-      });
-      matches &&= isTreeSatisfyingContentModel({
+      const matches = isTreeSatisfyingContentModel({
         instances: data.instances,
         props: data.props,
         metas,
@@ -231,12 +221,7 @@ export const unwrap = () => {
         );
         parentInstance.children.splice(index, 1, ...selectedInstance.children);
       }
-      let matches = isTreeMatching({
-        metas: $registeredComponentMetas.get(),
-        instances: data.instances,
-        instanceSelector: parentItem.instanceSelector,
-      });
-      matches &&= isTreeSatisfyingContentModel({
+      const matches = isTreeSatisfyingContentModel({
         instances: data.instances,
         props: data.props,
         metas: $registeredComponentMetas.get(),

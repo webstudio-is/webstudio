@@ -6,13 +6,10 @@ import {
   Instances,
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
+  isComponentDetachable,
   portalComponent,
 } from "@webstudio-is/sdk";
-import {
-  $selectedInstanceSelector,
-  $instances,
-  $registeredComponentMetas,
-} from "../nano-states";
+import { $selectedInstanceSelector, $instances } from "../nano-states";
 import type { InstanceSelector } from "../tree-utils";
 import {
   deleteInstanceMutable,
@@ -24,7 +21,6 @@ import {
   findClosestInsertable,
   type Insertable,
 } from "../instance-utils";
-import { isInstanceDetachable } from "../matcher";
 import { $selectedInstancePath } from "../awareness";
 import { findAvailableVariables } from "../data-variables";
 
@@ -38,8 +34,9 @@ type InstanceData = z.infer<typeof InstanceData>;
 
 const getTreeData = (instanceSelector: InstanceSelector) => {
   const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
-  if (isInstanceDetachable({ metas, instances, instanceSelector }) === false) {
+  const [targetInstanceId] = instanceSelector;
+  const instance = instances.get(targetInstanceId);
+  if (instance && !isComponentDetachable(instance.component)) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -50,8 +47,6 @@ const getTreeData = (instanceSelector: InstanceSelector) => {
   if (instanceSelector.length === 1) {
     return;
   }
-
-  const [targetInstanceId] = instanceSelector;
 
   return {
     instanceSelector,

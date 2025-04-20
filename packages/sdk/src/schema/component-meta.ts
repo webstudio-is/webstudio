@@ -3,7 +3,6 @@ import type { HtmlTags } from "html-tags";
 import type { Simplify } from "type-fest";
 import { StyleValue, type CssProperty } from "@webstudio-is/css-engine";
 import { PropMeta } from "./prop-meta";
-import { Matchers } from "./instances";
 
 export const PresetStyleDecl = z.object({
   // State selector, e.g. :hover
@@ -98,7 +97,6 @@ export const WsComponentMeta = z.object({
    * also signals to not insert components inside unless dropped explicitly
    */
   placeholder: z.string().optional(),
-  constraints: Matchers.optional(),
   contentModel: ContentModel.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor
