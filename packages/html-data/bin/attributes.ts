@@ -186,7 +186,9 @@ const body: Instance = {
 };
 instances.set(body.id, body);
 
-for (let [tag, attributes] of Object.entries(attributesByTag)) {
+for (const entry of Object.entries(attributesByTag)) {
+  let [tag] = entry;
+  const [_tag, attributes] = entry;
   if (tag === "*") {
     tag = "div";
   }
