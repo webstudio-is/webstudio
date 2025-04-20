@@ -25,7 +25,7 @@
     "@webstudio-is/postrest": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "nanoid": "^5.0.9",
+    "nanoid": "^5.1.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {

@@ -13,3 +13,8 @@ export * from "./utils/remix-streaming-text-response";
 export * from "./types";
 
 export * from "./image";
+export {
+  WsEmbedTemplate,
+  EmbedTemplateProp,
+  EmbedTemplateVariable,
+} from "@webstudio-is/jsx-utils";

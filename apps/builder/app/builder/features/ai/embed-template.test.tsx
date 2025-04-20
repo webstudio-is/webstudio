@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import { generateDataFromEmbedTemplate } from "./embed-template";
-import { showAttribute } from "./props";
 
 const expectString = expect.any(String);
 

@@ -41,7 +41,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   thematicBreak: "Separator",
 };
 
-type Options = { generateId?: typeof nanoid };
+type Options = { generateId?: typeof nanoid<string> };
 
 type Root = ReturnType<typeof fromMarkdown>;
 

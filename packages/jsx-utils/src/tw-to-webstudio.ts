@@ -1,9 +1,9 @@
-import type { WsEmbedTemplate } from "@webstudio-is/sdk";
 import {
   camelCaseProperty,
   parseTailwindToWebstudio,
 } from "@webstudio-is/css-data";
 import { traverseTemplateAsync } from "./traverse-template";
+import type { WsEmbedTemplate } from "./embed-template";
 
 export const tailwindToWebstudio = async (template: WsEmbedTemplate) => {
   return traverseTemplateAsync(template, async (node) => {
