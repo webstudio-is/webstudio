@@ -1534,9 +1534,21 @@ importers:
 
   packages/html-data:
     devDependencies:
+      '@types/aria-query':
+        specifier: ^5.0.4
+        version: 5.0.4
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      aria-query:
+        specifier: ^5.3.2
+        version: 5.3.2
       parse5:
         specifier: 7.2.1
         version: 7.2.1
@@ -5533,6 +5545,10 @@ packages:
 
   aria-query@5.3.0:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
+
+  aria-query@5.3.2:
+    resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
+    engines: {node: '>= 0.4'}
 
   array-flatten@1.1.1:
     resolution: {integrity: sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==}
@@ -12768,6 +12784,8 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
+  aria-query@5.3.2: {}
+
   array-flatten@1.1.1: {}
 
   as-table@1.0.55:
@@ -16446,7 +16464,7 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.0
       '@jridgewell/trace-mapping': 0.3.25
       acorn: 8.14.1
-      aria-query: 5.3.0
+      aria-query: 5.3.2
       axobject-query: 3.2.1
       code-red: 1.0.4
       css-tree: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)

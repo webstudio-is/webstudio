@@ -1,3 +1,4 @@
+import { readFile, writeFile } from "node:fs/promises";
 import { Parser, defaultTreeAdapter, type DefaultTreeAdapterMap } from "parse5";
 
 type Document = DefaultTreeAdapterMap["document"];
@@ -29,10 +30,10 @@ export const findTags = (
 };
 
 export const getAttr = (
-  node: NodeWithChildren,
+  node: undefined | NodeWithChildren,
   name: string
 ): undefined | Attribute => {
-  return node.attrs.find((attr) => attr.name === name);
+  return node?.attrs.find((attr) => attr.name === name);
 };
 
 export const getTextContent = (node: ChildNode) => {
@@ -51,3 +52,23 @@ export const getTextContent = (node: ChildNode) => {
 export const parseHtml = (html: string): Document => {
   return Parser.parse(html, { treeAdapter: defaultTreeAdapter });
 };
+
+export const loadPage = async (name: string, url: string) => {
+  // prefer cached file to avoid too many requests on debug
+  const cachedFile = `./node_modules/.cache/${name}.html`;
+  let text;
+  try {
+    text = await readFile(cachedFile, "utf-8");
+  } catch {
+    const response = await fetch(url);
+    text = await response.text();
+    await writeFile(cachedFile, text);
+  }
+  return text;
+};
+
+export const loadHtmlIndices = () =>
+  loadPage(
+    "html-spec-indices",
+    "https://html.spec.whatwg.org/multipage/indices.html"
+  );
