@@ -79,7 +79,7 @@ const table = findTags(document, "table").find(
 const [tbody] = findTags(table, "tbody");
 const rows = findTags(tbody, "tr");
 
-let attributesByTag: Record<string, Attribute[]> = {};
+const attributesByTag: Record<string, Attribute[]> = {};
 
 for (const row of rows) {
   const attribute = getTextContent(row.childNodes[0]).trim();
@@ -144,8 +144,8 @@ for (const row of rows) {
 
 // sort tags and attributes
 const tags = Object.keys(attributesByTag).sort();
-for (let tag of tags) {
-  let attributes = attributesByTag[tag];
+for (const tag of tags) {
+  const attributes = attributesByTag[tag];
   delete attributesByTag[tag];
   attributes.sort();
   if (attributes.length > 0) {
