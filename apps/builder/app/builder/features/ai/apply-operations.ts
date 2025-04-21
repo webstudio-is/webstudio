@@ -5,7 +5,6 @@ import {
   isComponentDetachable,
   type StyleSource,
 } from "@webstudio-is/sdk";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import type { copywriter, operations } from "@webstudio-is/ai";
 import { serverSyncStore } from "~/shared/sync";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
@@ -29,6 +28,7 @@ import {
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $selectedInstance, getInstancePath } from "~/shared/awareness";
 import { isRichTextTree } from "~/shared/content-model";
+import { generateDataFromEmbedTemplate } from "./embed-template";
 
 export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {

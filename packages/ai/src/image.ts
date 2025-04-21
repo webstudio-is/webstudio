@@ -2,7 +2,7 @@ import type {
   EmbedTemplateInstance,
   EmbedTemplateProp,
   WsEmbedTemplate,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/jsx-utils";
 
 const isRemoteImageGeneratedByAi = (url: string) => {
   // wsai search param is added when image is queried by ai

@@ -1,8 +1,8 @@
-import { WsEmbedTemplate, type EmbedTemplateProp } from "@webstudio-is/sdk";
 import JSON5 from "json5";
 import type { JsonObject } from "type-fest";
 import type { JSXElement, JSXOpeningElement, JSXText } from "./parser";
 import { parseExpression } from "./parser";
+import { EmbedTemplateProp, WsEmbedTemplate } from "./embed-template";
 
 export const jsxToWSEmbedTemplate = async (
   code: string

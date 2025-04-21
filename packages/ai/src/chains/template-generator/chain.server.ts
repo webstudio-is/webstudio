@@ -1,8 +1,8 @@
+import type { WsEmbedTemplate } from "@webstudio-is/jsx-utils";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/template-generator.system.prompt";
 import { prompt as promptUserTemplate } from "./__generated__/template-generator.user.prompt";
-import { WsEmbedTemplate } from "@webstudio-is/sdk";
 import {
   jsxToTemplate,
   postProcessTemplate,

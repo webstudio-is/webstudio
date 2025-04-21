@@ -1,4 +1,4 @@
-import type { WsEmbedTemplate } from "@webstudio-is/sdk";
+import type { WsEmbedTemplate } from "../embed-template";
 import { traverseTemplate } from "../traverse-template";
 import { getIcon } from "./get-icon";
 

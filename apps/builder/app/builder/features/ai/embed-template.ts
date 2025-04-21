@@ -8,14 +8,13 @@ import type {
   Breakpoint,
   DataSource,
   WebstudioFragment,
-  EmbedTemplateVariable,
-  WsEmbedTemplate,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
+import type { EmbedTemplateVariable, WsEmbedTemplate } from "@webstudio-is/ai";
 
 const getVariablValue = (
   value: EmbedTemplateVariable["initialValue"]

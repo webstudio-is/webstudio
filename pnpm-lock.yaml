@@ -359,8 +359,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       nanostores:
         specifier: ^0.11.3
         version: 0.11.3
@@ -1004,8 +1004,8 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -1066,8 +1066,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       p-limit:
         specifier: ^6.2.0
         version: 6.2.0
@@ -1476,8 +1476,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       type-fest:
         specifier: ^4.37.0
         version: 4.37.0
@@ -1611,6 +1611,12 @@ importers:
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../css-data
+      '@webstudio-is/css-engine':
+        specifier: workspace:*
+        version: link:../css-engine
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -1623,6 +1629,9 @@ importers:
       json5:
         specifier: ^2.2.3
         version: 2.2.3
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -1653,8 +1662,8 @@ importers:
   packages/prisma-client:
     dependencies:
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       tinyexec:
         specifier: ^0.3.2
         version: 0.3.2
@@ -1690,8 +1699,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
@@ -1721,8 +1730,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -1758,8 +1767,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       nanoid:
-        specifier: ^5.0.9
-        version: 5.0.9
+        specifier: ^5.1.5
+        version: 5.1.5
     devDependencies:
       '@types/react':
         specifier: ^18.2.70
@@ -7553,8 +7562,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.0.9:
-    resolution: {integrity: sha512-Aooyr6MXU6HpvvWXKoVoXwKMs/KyVakWwg7xQfv5/S/RIgJMy0Ifa45H9qqYy7pTCszrHzP21Uk4PZq2HpEM8Q==}
+  nanoid@5.1.5:
+    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -14178,7 +14187,7 @@ snapshots:
   immerhin@0.10.0:
     dependencies:
       immer: 10.1.1
-      nanoid: 5.0.9
+      nanoid: 5.1.5
 
   import-fresh@3.3.0:
     dependencies:
@@ -15351,7 +15360,7 @@ snapshots:
 
   nanoid@3.3.7: {}
 
-  nanoid@5.0.9: {}
+  nanoid@5.1.5: {}
 
   nanostores@0.11.3: {}
 
