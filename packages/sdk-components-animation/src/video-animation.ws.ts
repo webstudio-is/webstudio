@@ -1,6 +1,7 @@
 import { PlayIcon } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/video-animation.props";
+import { div } from "@webstudio-is/sdk/normalize.css";
 
 export const meta: WsComponentMeta = {
   icon: PlayIcon,
@@ -8,6 +9,9 @@ export const meta: WsComponentMeta = {
   contentModel: {
     category: "none",
     children: ["instance"],
+  },
+  presetStyle: {
+    div,
   },
 };
 
