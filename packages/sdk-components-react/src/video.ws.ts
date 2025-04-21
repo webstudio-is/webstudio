@@ -23,7 +23,17 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
+  props: {
+    ...props,
+    // Automatically generated props don't have the right control.
+    src: {
+      type: "string",
+      control: "file",
+      label: "Source",
+      required: false,
+      accept: ".mp4,.webm,.mpg,.mpeg,.mov",
+    },
+  },
   initialProps: [
     "id",
     "className",
