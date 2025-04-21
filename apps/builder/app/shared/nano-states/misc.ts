@@ -23,9 +23,8 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
-import { $selectedInstanceSelector } from "./instances";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
-import { $selectedInstance } from "../awareness";
+import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
 
 export const $project = atom<Project | undefined>();
@@ -92,7 +91,7 @@ export const $selectedStyleSources = atom(
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
 // reset style state whenever selected instance change
-onSet($selectedInstanceSelector, () => {
+onSet($awareness, () => {
   $selectedStyleState.set(undefined);
 });
 

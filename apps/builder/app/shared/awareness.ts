@@ -178,7 +178,12 @@ export const selectInstance = (
   instanceSelector: undefined | Instance["id"][]
 ) => {
   const awareness = $awareness.get();
-  if (awareness) {
+  if (
+    awareness &&
+    // prevent triggering select across the builder when selector is the same
+    // useful when click and focus events have to select instance
+    awareness.instanceSelector?.join() !== instanceSelector?.join()
+  ) {
     $awareness.set({
       pageId: awareness.pageId,
       instanceSelector,

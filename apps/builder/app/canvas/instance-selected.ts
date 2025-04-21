@@ -11,7 +11,6 @@ import {
   $selectedInstanceRenderState,
   $stylesIndex,
   $instances,
-  $selectedInstanceSelector,
   $propValuesByInstanceSelectorWithMemoryProps,
   $styles,
   $selectedInstanceStates,
@@ -33,6 +32,7 @@ import {
   setDataCollapsed,
 } from "~/canvas/collapsed";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { $awareness } from "~/shared/awareness";
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
   $selectedInstanceOutline.set({
@@ -132,6 +132,7 @@ const subscribeSelectedInstance = (
   };
 
   const updateDataCollapsed = () => {
+    // console.trace('updateDataCollapsed')
     if (visibleElements.length === 0) {
       return;
     }
@@ -347,17 +348,16 @@ export const subscribeSelected = (
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
-  const unsubscribe = $selectedInstanceSelector.subscribe(
-    (instanceSelector) => {
-      if (instanceSelector !== previousSelectedInstance) {
-        unsubscribeSelectedInstance();
-        unsubscribeSelectedInstance =
-          subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
-          (() => {});
-        previousSelectedInstance = instanceSelector;
-      }
+  const unsubscribe = $awareness.subscribe((awareness) => {
+    const instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector !== previousSelectedInstance) {
+      unsubscribeSelectedInstance();
+      unsubscribeSelectedInstance =
+        subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
+        (() => {});
+      previousSelectedInstance = instanceSelector;
     }
-  );
+  });
 
   return () => {
     unsubscribe();
