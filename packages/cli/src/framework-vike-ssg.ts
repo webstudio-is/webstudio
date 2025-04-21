@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { readFile, rm } from "node:fs/promises";
-import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { isPathnamePattern, type WsComponentMeta } from "@webstudio-is/sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
@@ -59,20 +59,26 @@ export const createFramework = async (): Promise<Framework> => {
         metas: radixComponentNamespacedMetas,
       },
     ],
-    html: ({ pagePath }: { pagePath: string }) => [
-      {
-        file: join("pages", generateVikeRoute(pagePath), "+Page.tsx"),
-        template: htmlPageTemplate,
-      },
-      {
-        file: join("pages", generateVikeRoute(pagePath), "+Head.tsx"),
-        template: htmlHeadTemplate,
-      },
-      {
-        file: join("pages", generateVikeRoute(pagePath), "+data.ts"),
-        template: htmlDataTemplate,
-      },
-    ],
+    html: ({ pagePath }: { pagePath: string }) => {
+      // ignore dynamic pages in static export
+      if (isPathnamePattern(pagePath)) {
+        return [];
+      }
+      return [
+        {
+          file: join("pages", generateVikeRoute(pagePath), "+Page.tsx"),
+          template: htmlPageTemplate,
+        },
+        {
+          file: join("pages", generateVikeRoute(pagePath), "+Head.tsx"),
+          template: htmlHeadTemplate,
+        },
+        {
+          file: join("pages", generateVikeRoute(pagePath), "+data.ts"),
+          template: htmlDataTemplate,
+        },
+      ];
+    },
     xml: () => [],
     redirect: () => [],
     defaultSitemap: () => [],
