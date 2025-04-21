@@ -55,11 +55,19 @@ const useLogic = ({
   const filteredItems = useMemo(() => {
     let acceptable = assetContainers;
     const patterns = acceptToMimePatterns(accept ?? "");
+
     if (patterns !== "*") {
       acceptable = assetContainers.filter((item) =>
         doesAssetMatchMimePatterns(item.asset, patterns)
       );
+    } else if (accept !== undefined) {
+      // Filter by file extension
+      const extensions = accept.split(",").map((ext) => ext.trim());
+      acceptable = assetContainers.filter((item) =>
+        extensions.some((ext) => item.asset.name.endsWith(ext))
+      );
     }
+
     if (searchProps.value === "") {
       return acceptable;
     }
