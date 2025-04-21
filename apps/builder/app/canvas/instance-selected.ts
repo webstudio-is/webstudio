@@ -132,7 +132,6 @@ const subscribeSelectedInstance = (
   };
 
   const updateDataCollapsed = () => {
-    // console.trace('updateDataCollapsed')
     if (visibleElements.length === 0) {
       return;
     }
