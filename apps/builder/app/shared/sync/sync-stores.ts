@@ -13,7 +13,6 @@ import {
   $styleSourceSelections,
   $assets,
   $selectedPageHash,
-  $selectedInstanceSelector,
   $selectedInstanceSizes,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
@@ -86,10 +85,6 @@ export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
-    new NanostoresSyncObject(
-      "selectedInstanceSelector",
-      $selectedInstanceSelector
-    ),
     new NanostoresSyncObject("awareness", $awareness),
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
