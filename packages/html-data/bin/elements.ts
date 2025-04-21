@@ -1,23 +1,16 @@
 import { dirname } from "node:path";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { findTags, getTextContent, parseHtml } from "./crawler";
+import { mkdir, writeFile } from "node:fs/promises";
+import {
+  findTags,
+  getTextContent,
+  loadHtmlIndices,
+  parseHtml,
+} from "./crawler";
 
 // Crawl WHATWG HTML.
 
-// prefer cached file to avoid too many requests on debug
-const cachedFile = "./node_modules/.cache/html-spec-indices.html";
-let text;
-try {
-  text = await readFile(cachedFile, "utf-8");
-} catch {
-  const response = await fetch(
-    "https://html.spec.whatwg.org/multipage/indices.html"
-  );
-  text = await response.text();
-  await writeFile(cachedFile, text);
-}
-
-const document = parseHtml(text);
+const html = await loadHtmlIndices();
+const document = parseHtml(html);
 
 const categoriesByTag: Record<string, string[]> = {};
 const childrenCategoriesByTag: Record<string, string[]> = {};

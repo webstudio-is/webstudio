@@ -7,10 +7,16 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "build:spec": "tsx --conditions=webstudio ./bin/html-crawler.ts"
+    "build:elements": "tsx --conditions=webstudio ./bin/elements.ts && prettier --write ./src/__generated__",
+    "build:attributes": "tsx --conditions=webstudio ./bin/attributes.ts && prettier --write ./src/__generated__",
+    "build:aria": "tsx --conditions=webstudio ./bin/aria.ts && prettier --write ./src/__generated__"
   },
   "devDependencies": {
+    "@types/aria-query": "^5.0.4",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "aria-query": "^5.3.2",
     "parse5": "7.2.1"
   },
   "exports": {

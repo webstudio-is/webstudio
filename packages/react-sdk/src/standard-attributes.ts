@@ -506,4 +506,6 @@ export const standardAttributesToReactProps: Record<string, string> = {
   ychannelselector: "yChannelSelector",
   z: "z",
   zoomandpan: "zoomAndPan",
+  // added by us
+  dirname: "dirName",
 };
