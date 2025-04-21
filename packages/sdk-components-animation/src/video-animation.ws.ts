@@ -5,7 +5,6 @@ import { props } from "./__generated__/video-animation.props";
 export const meta: WsComponentMeta = {
   icon: PlayIcon,
   label: "Video Animation",
-  order: 3,
   contentModel: {
     category: "none",
     children: ["instance"],
