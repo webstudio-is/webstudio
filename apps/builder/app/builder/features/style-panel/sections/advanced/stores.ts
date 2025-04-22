@@ -7,19 +7,13 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
 
-// @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
-const initialProperties = new Set<CssProperty>([
-  "cursor",
-  "mix-blend-mode",
-  "opacity",
-  "pointer-events",
-  "user-select",
-]);
-
 export const $advancedStyleDeclarations = computed(
   [$computedStyleDeclarations, $settings, $selectedInstance],
   (computedStyleDeclarations, settings, selectedInstance) => {
-    const advancedStyles: Array<ComputedStyleDecl> = [];
+    const advancedStyles = new Map<
+      ComputedStyleDecl["property"],
+      ComputedStyleDecl
+    >();
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
@@ -37,6 +31,14 @@ export const $advancedStyleDeclarations = computed(
       ) {
         continue;
       }
+      // ignore predefined styles in advanced mode
+      // @todo will be deleted https://github.com/webstudio-is/webstudio/issues/4871
+      if (
+        styleDecl.source.name === "default" &&
+        settings.stylePanelMode === "advanced"
+      ) {
+        continue;
+      }
       const { property, listed } = styleDecl;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
@@ -45,22 +47,10 @@ export const $advancedStyleDeclarations = computed(
         listed ||
         settings.stylePanelMode === "advanced"
       ) {
-        advancedStyles.push(styleDecl);
-      }
-    }
-    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
-    // @todo https://github.com/webstudio-is/webstudio/issues/4871
-    if (settings.stylePanelMode !== "advanced") {
-      for (const property of initialProperties) {
-        const styleDecl = computedStyleDeclarations.find(
-          (styleDecl) => styleDecl.property === property
-        );
-        if (styleDecl) {
-          advancedStyles.push(styleDecl);
-        }
+        advancedStyles.set(styleDecl.property, styleDecl);
       }
     }
 
-    return advancedStyles;
+    return Array.from(advancedStyles.values());
   }
 );
