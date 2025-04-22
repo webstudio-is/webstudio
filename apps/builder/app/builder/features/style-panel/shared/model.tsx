@@ -268,6 +268,15 @@ export const $computedStyleDeclarations = computed(
       styleSourceSelections,
       styles,
     });
+    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
+    // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
+    definedStyles.push(
+      { property: "cursor" },
+      { property: "mix-blend-mode" },
+      { property: "opacity" },
+      { property: "pointer-events" },
+      { property: "user-select" }
+    );
     const computedStyles = new Map<string, ComputedStyleDecl>();
     for (const { property, listed } of definedStyles) {
       // deduplicate by property name
