@@ -93,8 +93,9 @@ export const BlockingAlerts = () => {
   const isPreviewMode = useStore($isPreviewMode);
   const loadingState = useStore($loadingState);
 
+  const unsupportedBrowsersMessage = useUnsupportedBrowser();
   // Takes the latest message, order matters
-  const message = [useTooSmallMessage(), useUnsupportedBrowser()]
+  const message = [useTooSmallMessage(), unsupportedBrowsersMessage]
     .filter(Boolean)
     .pop();
 
@@ -107,5 +108,10 @@ export const BlockingAlerts = () => {
     return;
   }
 
-  return <Alert message={message} />;
+  return (
+    <Alert
+      message={message}
+      isDismissable={unsupportedBrowsersMessage !== undefined}
+    />
+  );
 };
