@@ -45,6 +45,7 @@ import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
 import { AnimationPanelContent } from "./animation-panel-content";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import { z } from "zod";
 
 const newAnimationsPerType: {
   scroll: ScrollAnimation[];
@@ -79,6 +80,53 @@ const AnimationContextMenu = ({
   children: ReactNode;
 }) => {
   const lastClickedAnimationIndex = useRef(-1);
+
+  const copyAnimation = () => {
+    const index = lastClickedAnimationIndex.current;
+    const animations =
+      index === -1 ? action.animations : [action.animations[index]];
+    navigator.clipboard.writeText(JSON.stringify(animations));
+  };
+
+  const copyAllAnimations = () => {
+    navigator.clipboard.writeText(JSON.stringify(action.animations));
+  };
+
+  const pasteAnimations = () => {
+    const index = lastClickedAnimationIndex.current;
+    navigator.clipboard
+      .readText()
+      .then((string) => {
+        const data = JSON.parse(string);
+        if (action.type === "scroll") {
+          const animations = z.array(scrollAnimationSchema).parse(data);
+          const newAction = structuredClone(action);
+          newAction.animations.splice(index + 1, 0, ...animations);
+          onChange(newAction);
+        }
+        if (action.type === "view") {
+          const animations = z.array(viewAnimationSchema).parse(data);
+          const newAction = structuredClone(action);
+          newAction.animations.splice(index + 1, 0, ...animations);
+          onChange(newAction);
+        }
+      })
+      .catch((error) => {
+        toast.error("Pasted data is not valid animation");
+        console.error(error);
+      });
+  };
+
+  const deleteAnimation = () => {
+    const index = lastClickedAnimationIndex.current;
+    if (index === -1) {
+      return;
+    }
+    const newAction = structuredClone(action);
+    newAction.animations.splice(index, 1);
+    onChange(newAction);
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -94,58 +142,16 @@ const AnimationContextMenu = ({
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent css={{ width: theme.spacing[25] }}>
-        <ContextMenuItem
-          onSelect={() => {
-            const index = lastClickedAnimationIndex.current;
-            if (index === -1) {
-              return;
-            }
-            const animation = action.animations[index];
-            navigator.clipboard.writeText(JSON.stringify(animation));
-          }}
-        >
+        <ContextMenuItem onSelect={copyAnimation}>
           Copy animation
         </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            const index = lastClickedAnimationIndex.current;
-            navigator.clipboard
-              .readText()
-              .then((string) => {
-                const data = JSON.parse(string);
-                if (action.type === "scroll") {
-                  const animation = scrollAnimationSchema.parse(data);
-                  const newAction = structuredClone(action);
-                  newAction.animations.splice(index + 1, 0, animation);
-                  onChange(newAction);
-                }
-                if (action.type === "view") {
-                  const animation = viewAnimationSchema.parse(data);
-                  const newAction = structuredClone(action);
-                  newAction.animations.splice(index + 1, 0, animation);
-                  onChange(newAction);
-                }
-              })
-              .catch((error) => {
-                toast.error("Pasted data is not valid animation");
-                console.error(error);
-              });
-          }}
-        >
-          Paste animation
+        <ContextMenuItem onSelect={copyAllAnimations}>
+          Copy all animations
         </ContextMenuItem>
-        <ContextMenuItem
-          destructive
-          onSelect={() => {
-            const index = lastClickedAnimationIndex.current;
-            if (index === -1) {
-              return;
-            }
-            const newAction = structuredClone(action);
-            newAction.animations.splice(index, 1);
-            onChange(newAction);
-          }}
-        >
+        <ContextMenuItem onSelect={pasteAnimations}>
+          Paste animations
+        </ContextMenuItem>
+        <ContextMenuItem destructive onSelect={deleteAnimation}>
           Delete animation
         </ContextMenuItem>
       </ContextMenuContent>
