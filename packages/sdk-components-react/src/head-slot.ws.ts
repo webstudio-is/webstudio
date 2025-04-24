@@ -3,7 +3,7 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
-import { props } from "./__generated__/head.props";
+import { props } from "./__generated__/head-slot.props";
 
 export const meta: WsComponentMeta = {
   icon: HeaderIcon,

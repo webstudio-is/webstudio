@@ -24,6 +24,13 @@ type Attribute = {
   options?: string[];
 };
 
+const overrides: Record<string, Partial<Attribute>> = {
+  "aria-label": {
+    description:
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
+  },
+};
+
 const html = await loadPage("aria1.3", "https://www.w3.org/TR/wai-aria-1.3");
 const document = parseHtml(html);
 const list = findTags(document, "dl").find(
@@ -44,6 +51,7 @@ for (const [name, meta] of aria.entries()) {
     name,
     description: descriptions.get(name) ?? "",
     type: "string",
+    ...overrides[name],
   };
   if (meta.type === "string" || meta.type === "boolean") {
     attribute.type = meta.type;

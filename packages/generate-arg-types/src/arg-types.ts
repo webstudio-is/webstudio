@@ -19,6 +19,15 @@ export const propsToArgTypes = (
       .filter(([propName]) => propName.startsWith("$") === false)
       // Exclude props that are in the exclude list
       .filter(([propName]) => exclude.includes(propName) === false)
+      .filter(([_propName, propItem]) => {
+        for (const { fileName, name } of propItem.declarations ?? []) {
+          // ignore aria attributes
+          if (fileName.endsWith("/@types/react/index.d.ts")) {
+            return name !== "AriaAttributes";
+          }
+        }
+        return true;
+      })
       .map(([propName, propItem]) => {
         // Remove @see and @deprecated from description also {@link ...} is removed as it always go after @see
         propItem.description = propItem.description

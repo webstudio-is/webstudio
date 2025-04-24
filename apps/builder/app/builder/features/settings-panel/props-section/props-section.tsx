@@ -1,8 +1,14 @@
-import { computed } from "nanostores";
+import { nanoid } from "nanoid";
 import { useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import { type Instance, Props, descendantComponent } from "@webstudio-is/sdk";
+import { ariaAttributes } from "@webstudio-is/html-data";
+import {
+  type Instance,
+  type Props,
+  descendantComponent,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Combobox,
@@ -20,15 +26,18 @@ import {
   $isContentMode,
   $memoryProps,
   $selectedBreakpoint,
+  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
+import { serverSyncStore } from "~/shared/sync";
+import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
-import { serverSyncStore } from "~/shared/sync";
-import { $selectedInstanceKey } from "~/shared/awareness";
 import { AnimationSection } from "./animation/animation-section";
-import { nanoid } from "nanoid";
-import { $matchingBreakpoints } from "../../style-panel/shared/model";
+import {
+  $instanceTags,
+  $matchingBreakpoints,
+} from "../../style-panel/shared/model";
 import { matchMediaBreakpoints } from "./match-media-breakpoints";
 
 type Item = {
@@ -44,14 +53,15 @@ const matchOrSuggestToCreate = (
   items: Array<Item>,
   itemToString: (item: Item) => string
 ): Array<Item> => {
+  if (search.trim() === "") {
+    return items;
+  }
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-
   if (
-    search.trim() !== "" &&
     itemToString(matched[0]).toLocaleLowerCase() !==
-      search.toLocaleLowerCase().trim()
+    search.toLocaleLowerCase().trim()
   ) {
     matched.unshift({
       name: search.trim(),
@@ -88,11 +98,43 @@ const renderProperty = (
 
 const forbiddenProperties = new Set(["style", "class", "className"]);
 
+const $availableProps = computed(
+  [$selectedInstance, $props, $registeredComponentPropsMetas, $instanceTags],
+  (instance, props, propsMetas, instanceTags) => {
+    const availableProps = new Map<Item["name"], Item>();
+    if (instance === undefined) {
+      return [];
+    }
+    // add component props
+    const metas = propsMetas.get(instance.component);
+    for (const [name, propMeta] of Object.entries(metas?.props ?? {})) {
+      const { label, description } = propMeta;
+      availableProps.set(name, { name, label, description });
+    }
+    // add aria attributes only for components with tags
+    const tag = instanceTags.get(instance.id);
+    if (tag) {
+      for (const { name, description } of ariaAttributes) {
+        availableProps.set(name, { name, description });
+      }
+    }
+    // remove initial props
+    for (const name of metas?.initialProps ?? []) {
+      availableProps.delete(name);
+    }
+    // remove defined props
+    for (const prop of props.values()) {
+      if (prop.instanceId === instance.id) {
+        availableProps.delete(prop.name);
+      }
+    }
+    return Array.from(availableProps.values());
+  }
+);
+
 const AddPropertyOrAttribute = ({
-  availableProps,
   onPropSelected,
 }: {
-  availableProps: Item[];
   onPropSelected: (propName: string) => void;
 }) => {
   const [value, setValue] = useState("");
@@ -108,7 +150,8 @@ const AddPropertyOrAttribute = ({
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"
-        getItems={() => availableProps}
+        // lazily load available props to not bloat component renders
+        getItems={() => $availableProps.get()}
         itemToString={itemToString}
         onItemSelect={(item) => {
           if (
@@ -241,7 +284,6 @@ export const PropsSection = (props: PropsSectionProps) => {
           <Flex gap="1" direction="column">
             {addingProp && (
               <AddPropertyOrAttribute
-                availableProps={logic.availableProps}
                 onPropSelected={(propName) => {
                   setAddingProp(false);
                   logic.handleAdd(propName);

@@ -1,6 +1,7 @@
 import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
+  className: { required: false, control: "text", type: "string" },
   easing: {
     description: "Easing function applied within the sliding window.",
     required: false,
