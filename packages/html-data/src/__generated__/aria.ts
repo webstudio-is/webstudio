@@ -165,7 +165,7 @@ export const ariaAttributes: Attribute[] = [
   {
     name: "aria-label",
     description:
-      "Defines a string value that labels the current element. See related aria-labelledby.",
+      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
     type: "string",
   },
   {

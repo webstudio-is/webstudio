@@ -14,6 +14,7 @@ import {
 import { isRichText } from "~/shared/content-model";
 import { $selectedInstancePath } from "~/shared/awareness";
 import { showAttributeMeta, type PropValue } from "../shared";
+import { ariaAttributes } from "@webstudio-is/html-data";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -153,6 +154,42 @@ const $canHaveTextContent = computed(
     });
   }
 );
+type Attribute = (typeof ariaAttributes)[number];
+
+const attributeToMeta = (attribute: Attribute): PropMeta => {
+  if (attribute.type === "string") {
+    return {
+      type: "string",
+      control: "text",
+      required: false,
+    };
+  }
+  if (attribute.type === "select") {
+    const options = attribute.options ?? [];
+    return {
+      type: "string",
+      control: options.length > 3 ? "select" : "radio",
+      required: false,
+      options,
+    };
+  }
+  if (attribute.type === "number") {
+    return {
+      type: "number",
+      control: "number",
+      required: false,
+    };
+  }
+  if (attribute.type === "boolean") {
+    return {
+      type: "boolean",
+      control: "boolean",
+      required: false,
+    };
+  }
+  attribute.type satisfies never;
+  throw Error("impossible case");
+};
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
@@ -193,9 +230,14 @@ export const usePropsLogic = ({
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-  const unprocessedKnown = new Map<Prop["name"], PropMeta>(
-    Object.entries(meta.props)
-  );
+
+  const metas = new Map<Prop["name"], PropMeta>();
+  for (const attribute of ariaAttributes) {
+    metas.set(attribute.name, attributeToMeta(attribute));
+  }
+  for (const [name, propMeta] of Object.entries(meta.props)) {
+    metas.set(name, propMeta);
+  }
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
@@ -238,9 +280,9 @@ export const usePropsLogic = ({
   const initialProps: PropAndMeta[] = [];
   for (const name of initialPropsNames) {
     const saved = getAndDelete<Prop>(unprocessedSaved, name);
-    const known = getAndDelete(unprocessedKnown, name);
+    const propMeta = metas.get(name);
 
-    if (known === undefined) {
+    if (propMeta === undefined) {
       console.error(
         `The prop "${name}" is defined in meta.initialProps but not in meta.props`
       );
@@ -258,14 +300,14 @@ export const usePropsLogic = ({
     //   - where 0 is a fallback when no default is available
     //   - they think that width is set to 0, but it's actually not set at all
     //
-    if (prop === undefined && known.defaultValue !== undefined) {
-      prop = getStartingProp(instance.id, known, name);
+    if (prop === undefined && propMeta.defaultValue !== undefined) {
+      prop = getStartingProp(instance.id, propMeta, name);
     }
 
     initialProps.push({
       prop,
       propName: name,
-      meta: known,
+      meta: propMeta,
     });
   }
 
@@ -276,22 +318,18 @@ export const usePropsLogic = ({
       continue;
     }
 
-    const meta =
-      getAndDelete(unprocessedKnown, prop.name) ??
-      getDefaultMetaForType("string");
+    const propMeta = metas.get(prop.name) ?? getDefaultMetaForType("string");
 
     addedProps.push({
       prop,
       propName: prop.name,
-      meta,
+      meta: propMeta,
     });
   }
 
   const handleAdd = (propName: string) => {
-    const propMeta =
-      unprocessedKnown.get(propName) ??
-      // In case of custom property/attribute we get a string.
-      getDefaultMetaForType("string");
+    // In case of custom property/attribute we get a string.
+    const propMeta = metas.get(propName) ?? getDefaultMetaForType("string");
     const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);
@@ -330,10 +368,5 @@ export const usePropsLogic = ({
     ),
     /** Optional props that were added by user */
     addedProps: addedProps.filter(({ propName }) => isPropVisible(propName)),
-    /** List of remaining props still available to add */
-    availableProps: Array.from(
-      unprocessedKnown.entries(),
-      ([name, { label, description }]) => ({ name, label, description })
-    ),
   };
 };
