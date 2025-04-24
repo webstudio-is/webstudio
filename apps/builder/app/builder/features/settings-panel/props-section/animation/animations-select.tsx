@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, type ReactNode, useRef } from "react";
 import {
   theme,
   DropdownMenu,
@@ -22,6 +22,11 @@ import {
   SectionTitle,
   SectionTitleLabel,
   Flex,
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  toast,
 } from "@webstudio-is/design-system";
 import {
   EyeClosedIcon,
@@ -29,10 +34,12 @@ import {
   MinusIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
-import type {
-  AnimationAction,
-  ScrollAnimation,
-  ViewAnimation,
+import {
+  scrollAnimationSchema,
+  viewAnimationSchema,
+  type AnimationAction,
+  type ScrollAnimation,
+  type ViewAnimation,
 } from "@webstudio-is/sdk";
 import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
@@ -59,6 +66,92 @@ type AnimationsSelectProps = {
 };
 
 const floatingPanelOffset = { alignmentAxis: -100 };
+
+const copyAttribute = "data-animation-index";
+
+const AnimationContextMenu = ({
+  action,
+  onChange,
+  children,
+}: {
+  action: AnimationAction;
+  onChange: (newAction: AnimationAction) => void;
+  children: ReactNode;
+}) => {
+  const lastClickedAnimationIndex = useRef(-1);
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger
+        onPointerDown={(event) => {
+          if (event.target instanceof HTMLElement) {
+            const animationIndex = event.target
+              .closest(`[${copyAttribute}]`)
+              ?.getAttribute(copyAttribute);
+            lastClickedAnimationIndex.current = Number(animationIndex ?? -1);
+          }
+        }}
+      >
+        {children}
+      </ContextMenuTrigger>
+      <ContextMenuContent css={{ width: theme.spacing[25] }}>
+        <ContextMenuItem
+          onSelect={() => {
+            const index = lastClickedAnimationIndex.current;
+            if (index === -1) {
+              return;
+            }
+            const animation = action.animations[index];
+            navigator.clipboard.writeText(JSON.stringify(animation));
+          }}
+        >
+          Copy animation
+        </ContextMenuItem>
+        <ContextMenuItem
+          onSelect={() => {
+            const index = lastClickedAnimationIndex.current;
+            navigator.clipboard
+              .readText()
+              .then((string) => {
+                const data = JSON.parse(string);
+                if (action.type === "scroll") {
+                  const animation = scrollAnimationSchema.parse(data);
+                  const newAction = structuredClone(action);
+                  newAction.animations.splice(index + 1, 0, animation);
+                  onChange(newAction);
+                }
+                if (action.type === "view") {
+                  const animation = viewAnimationSchema.parse(data);
+                  const newAction = structuredClone(action);
+                  newAction.animations.splice(index + 1, 0, animation);
+                  onChange(newAction);
+                }
+              })
+              .catch((error) => {
+                toast.error("Pasted data is not valid animation");
+                console.error(error);
+              });
+          }}
+        >
+          Paste animation
+        </ContextMenuItem>
+        <ContextMenuItem
+          destructive
+          onSelect={() => {
+            const index = lastClickedAnimationIndex.current;
+            if (index === -1) {
+              return;
+            }
+            const newAction = structuredClone(action);
+            newAction.animations.splice(index, 1);
+            onChange(newAction);
+          }}
+        >
+          Delete animation
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+};
 
 export const AnimationsSelect = ({
   action,
@@ -94,151 +187,182 @@ export const AnimationsSelect = ({
   };
 
   return (
-    <CollapsibleSectionRoot
-      isOpen
-      fullWidth
-      trigger={
-        <SectionTitle
-          collapsible={false}
-          suffix={
-            <Flex gap="1" align="center">
-              {action}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SectionTitleButton prefix={<PlusIcon />} tabIndex={0} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  sideOffset={Number.parseFloat(rawTheme.spacing[5])}
-                  css={{ width: theme.spacing[25] }}
-                >
-                  {newAnimations.map((animation, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => {
-                        handleChange(
-                          {
-                            ...value,
-                            animations: value.animations.concat(animation),
-                          },
-                          false
-                        );
-                      }}
-                      onFocus={() => setNewAnimationHint(animation.description)}
-                      onBlur={() => setNewAnimationHint(undefined)}
-                    >
-                      {animation.name}
-                    </DropdownMenuItem>
-                  ))}
+    <AnimationContextMenu
+      action={value}
+      onChange={(newAction) => handleChange(newAction, false)}
+    >
+      <CollapsibleSectionRoot
+        isOpen
+        fullWidth
+        trigger={
+          <SectionTitle
+            collapsible={false}
+            suffix={
+              <Flex gap="1" align="center">
+                {action}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SectionTitleButton prefix={<PlusIcon />} tabIndex={0} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+                    css={{ width: theme.spacing[25] }}
+                  >
+                    {newAnimations.map((animation, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        onSelect={() => {
+                          handleChange(
+                            {
+                              ...value,
+                              animations: value.animations.concat(animation),
+                            },
+                            false
+                          );
+                        }}
+                        onFocus={() =>
+                          setNewAnimationHint(animation.description)
+                        }
+                        onBlur={() => setNewAnimationHint(undefined)}
+                      >
+                        {animation.name}
+                      </DropdownMenuItem>
+                    ))}
 
-                  <DropdownMenuSeparator />
+                    <DropdownMenuSeparator />
 
-                  <DropdownMenuItem css={{ display: "grid" }} hint>
-                    {newAnimations.map(({ description }, index) => (
+                    <DropdownMenuItem css={{ display: "grid" }} hint>
+                      {newAnimations.map(({ description }, index) => (
+                        <Box
+                          css={{
+                            gridColumn: "1",
+                            gridRow: "1",
+                            visibility: "hidden",
+                          }}
+                          key={index}
+                        >
+                          {description}
+                        </Box>
+                      ))}
                       <Box
                         css={{
                           gridColumn: "1",
                           gridRow: "1",
-                          visibility: "hidden",
                         }}
-                        key={index}
                       >
-                        {description}
+                        {newAnimationHint ??
+                          "Add new or select existing animation"}
                       </Box>
-                    ))}
-                    <Box
-                      css={{
-                        gridColumn: "1",
-                        gridRow: "1",
-                      }}
-                    >
-                      {newAnimationHint ??
-                        "Add new or select existing animation"}
-                    </Box>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </Flex>
-          }
-        >
-          <SectionTitleLabel>Animations</SectionTitleLabel>
-        </SectionTitle>
-      }
-    >
-      <CssValueListArrowFocus dragItemId={dragItemId}>
-        <Grid gap={1} css={{ gridColumn: "span 2" }} ref={sortableRefCallback}>
-          {value.animations.map((animation, index) => {
-            const isEnabled = isAnimationEnabled(animation.enabled) ?? true;
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Flex>
+            }
+          >
+            <SectionTitleLabel>Animations</SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        <CssValueListArrowFocus dragItemId={dragItemId}>
+          <Grid ref={sortableRefCallback}>
+            {value.animations.map((animation, index) => {
+              const isEnabled = isAnimationEnabled(animation.enabled) ?? true;
 
-            return (
-              <FloatingPanel
-                key={index}
-                title={
-                  <DialogTitle css={{ paddingLeft: theme.spacing[6] }}>
-                    {animation.name}
-                  </DialogTitle>
-                }
-                content={
-                  <AnimationPanelContent
-                    type={value.type}
-                    value={animation}
-                    onChange={(animation, isEphemeral) => {
-                      if (animation === undefined) {
-                        // Reset ephemeral state
-                        handleChange(undefined, true);
-                        return;
-                      }
-
-                      const newAnimations = [...value.animations];
-                      newAnimations[index] = animation;
-                      const newValue = {
-                        ...value,
-                        animations: newAnimations,
-                      };
-                      handleChange(newValue, isEphemeral);
-                    }}
-                  />
-                }
-                offset={floatingPanelOffset}
-              >
-                <CssValueListItem
+              return (
+                <FloatingPanel
                   key={index}
-                  label={
-                    <Label disabled={false} truncate>
-                      {animation.name ?? "Unnamed"}
-                    </Label>
+                  title={
+                    <DialogTitle css={{ paddingLeft: theme.spacing[6] }}>
+                      {animation.name}
+                    </DialogTitle>
                   }
-                  hidden={!isEnabled}
-                  draggable
-                  active={dragItemId === String(index)}
-                  state={undefined}
-                  index={index}
-                  id={String(index)}
-                  buttons={
-                    <>
-                      <Tooltip
-                        content={
-                          isEnabled
-                            ? "Disable animation at breakpoint"
-                            : "Enable animation at breakpoint"
+                  content={
+                    <AnimationPanelContent
+                      type={value.type}
+                      value={animation}
+                      onChange={(animation, isEphemeral) => {
+                        if (animation === undefined) {
+                          // Reset ephemeral state
+                          handleChange(undefined, true);
+                          return;
                         }
-                      >
-                        <SmallToggleButton
-                          pressed={!isEnabled}
-                          onPressedChange={() => {
-                            const enabledMap = new Map(animation.enabled);
-                            enabledMap.set(selectedBreakpointId, !isEnabled);
 
-                            const enabled = [...enabledMap];
+                        const newAnimations = [...value.animations];
+                        newAnimations[index] = animation;
+                        const newValue = {
+                          ...value,
+                          animations: newAnimations,
+                        };
+                        handleChange(newValue, isEphemeral);
+                      }}
+                    />
+                  }
+                  offset={floatingPanelOffset}
+                >
+                  <CssValueListItem
+                    key={index}
+                    {...{ [copyAttribute]: index }}
+                    label={
+                      <Label disabled={false} truncate>
+                        {animation.name ?? "Unnamed"}
+                      </Label>
+                    }
+                    hidden={!isEnabled}
+                    draggable
+                    active={dragItemId === String(index)}
+                    state={undefined}
+                    index={index}
+                    id={String(index)}
+                    buttons={
+                      <>
+                        <Tooltip
+                          content={
+                            isEnabled
+                              ? "Disable animation at breakpoint"
+                              : "Enable animation at breakpoint"
+                          }
+                        >
+                          <SmallToggleButton
+                            pressed={!isEnabled}
+                            onPressedChange={() => {
+                              const enabledMap = new Map(animation.enabled);
+                              enabledMap.set(selectedBreakpointId, !isEnabled);
 
+                              const enabled = [...enabledMap];
+
+                              const newAnimations = [...value.animations];
+                              const newAnimation = {
+                                ...animation,
+                                enabled: enabled.every(
+                                  ([_, enabled]) => enabled
+                                )
+                                  ? undefined
+                                  : [...enabledMap],
+                              };
+
+                              newAnimations[index] = newAnimation;
+
+                              const newValue = {
+                                ...value,
+                                animations: newAnimations,
+                              };
+                              handleChange(newValue, false);
+                            }}
+                            variant="normal"
+                            tabIndex={-1}
+                            icon={
+                              isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />
+                            }
+                          />
+                        </Tooltip>
+
+                        <SmallIconButton
+                          variant="destructive"
+                          tabIndex={-1}
+                          icon={<MinusIcon />}
+                          onClick={() => {
                             const newAnimations = [...value.animations];
-                            const newAnimation = {
-                              ...animation,
-                              enabled: enabled.every(([_, enabled]) => enabled)
-                                ? undefined
-                                : [...enabledMap],
-                            };
-
-                            newAnimations[index] = newAnimation;
+                            newAnimations.splice(index, 1);
 
                             const newValue = {
                               ...value,
@@ -246,36 +370,17 @@ export const AnimationsSelect = ({
                             };
                             handleChange(newValue, false);
                           }}
-                          variant="normal"
-                          tabIndex={-1}
-                          icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
                         />
-                      </Tooltip>
-
-                      <SmallIconButton
-                        variant="destructive"
-                        tabIndex={-1}
-                        icon={<MinusIcon />}
-                        onClick={() => {
-                          const newAnimations = [...value.animations];
-                          newAnimations.splice(index, 1);
-
-                          const newValue = {
-                            ...value,
-                            animations: newAnimations,
-                          };
-                          handleChange(newValue, false);
-                        }}
-                      />
-                    </>
-                  }
-                />
-              </FloatingPanel>
-            );
-          })}
-          {placementIndicator}
-        </Grid>
-      </CssValueListArrowFocus>
-    </CollapsibleSectionRoot>
+                      </>
+                    }
+                  />
+                </FloatingPanel>
+              );
+            })}
+            {placementIndicator}
+          </Grid>
+        </CssValueListArrowFocus>
+      </CollapsibleSectionRoot>
+    </AnimationContextMenu>
   );
 };
