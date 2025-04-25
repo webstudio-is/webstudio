@@ -70,6 +70,28 @@ const floatingPanelOffset = { alignmentAxis: -100 };
 
 const copyAttribute = "data-animation-index";
 
+const clipboardNamespace = "@webstudio/animation/v0.1";
+
+const serialize = (animations: (ScrollAnimation | ViewAnimation)[]) => {
+  return JSON.stringify({ [clipboardNamespace]: animations });
+};
+
+const parseViewAnimations = (text: string): ViewAnimation[] => {
+  const data = JSON.parse(text);
+  const parsed = z
+    .object({ [clipboardNamespace]: z.array(viewAnimationSchema) })
+    .parse(data);
+  return parsed[clipboardNamespace];
+};
+
+const parseScrollAnimations = (text: string): ScrollAnimation[] => {
+  const data = JSON.parse(text);
+  const parsed = z
+    .object({ [clipboardNamespace]: z.array(scrollAnimationSchema) })
+    .parse(data);
+  return parsed[clipboardNamespace];
+};
+
 const AnimationContextMenu = ({
   action,
   onChange,
@@ -85,27 +107,26 @@ const AnimationContextMenu = ({
     const index = lastClickedAnimationIndex.current;
     const animations =
       index === -1 ? action.animations : [action.animations[index]];
-    navigator.clipboard.writeText(JSON.stringify(animations));
+    navigator.clipboard.writeText(serialize(animations));
   };
 
   const copyAllAnimations = () => {
-    navigator.clipboard.writeText(JSON.stringify(action.animations));
+    navigator.clipboard.writeText(serialize(action.animations));
   };
 
   const pasteAnimations = () => {
     const index = lastClickedAnimationIndex.current;
     navigator.clipboard
       .readText()
-      .then((string) => {
-        const data = JSON.parse(string);
+      .then((text) => {
         if (action.type === "scroll") {
-          const animations = z.array(scrollAnimationSchema).parse(data);
+          const animations = parseScrollAnimations(text);
           const newAction = structuredClone(action);
           newAction.animations.splice(index + 1, 0, ...animations);
           onChange(newAction);
         }
         if (action.type === "view") {
-          const animations = z.array(viewAnimationSchema).parse(data);
+          const animations = parseViewAnimations(text);
           const newAction = structuredClone(action);
           newAction.animations.splice(index + 1, 0, ...animations);
           onChange(newAction);
