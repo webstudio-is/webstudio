@@ -83,6 +83,7 @@ test("generate jsx element with children and without them", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body">Children</$.Body>),
     })
@@ -100,6 +101,7 @@ test("generate jsx element with children and without them", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(<$.Image ws:id="image"></$.Image>),
     })
@@ -119,6 +121,7 @@ test("generate jsx element with namespaces components", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<library.Body ws:id="body"></library.Body>),
     })
@@ -134,6 +137,7 @@ test("generate jsx element with namespaces components", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(<library.Image ws:id="image"></library.Image>),
     })
@@ -152,6 +156,7 @@ test("generate jsx element with literal props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
@@ -169,6 +174,7 @@ test("generate jsx element with literal props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(
         <$.Image
@@ -195,6 +201,7 @@ test("ignore asset and page props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -220,6 +227,7 @@ test("generate jsx element with data sources and action", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -251,6 +259,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
@@ -266,6 +275,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
     })
@@ -276,6 +286,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box ws:id="box" data-ws-show={expression`${condition}`}></$.Box>
@@ -296,6 +307,7 @@ test("generate jsx children with text", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "text", value: "Some\ntext" },
         { type: "text", value: 'Escaped "text"' },
@@ -322,6 +334,7 @@ test("exclude text placeholders", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "text", value: "Text" },
         { type: "text", value: "Placeholder text", placeholder: true },
@@ -346,6 +359,7 @@ test("generate jsx children with expression", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "expression", value: "'Hello ' + $ws$dataSource$var" },
       ],
@@ -376,6 +390,7 @@ test("generate jsx children with nested instances", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [{ type: "id", value: "form" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -404,6 +419,7 @@ test("deduplicate base and namespaced components with same short name", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "id", value: "button1" },
         { type: "id", value: "button2" },
@@ -431,6 +447,7 @@ test("generate collection component as map", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [{ type: "id", value: "list" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -1396,7 +1413,7 @@ test("convert attributes to react compatible when render ws:element", () => {
   );
 });
 
-test("ignore props similar to standard attributes on react components", () => {
+test("convert attributes to react compatible when render components with tags", () => {
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -1404,7 +1421,7 @@ test("ignore props similar to standard attributes on react components", () => {
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map(),
+      metas: new Map([["Box", { icon: "", presetStyle: { div: [] } }]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
@@ -1417,6 +1434,41 @@ test("ignore props similar to standard attributes on react components", () => {
        const Page = () => {
        return <Body>
        <Box
+       htmlFor={"my-id"}
+       autoComplete={"off"}
+       className={\`\${"my-class"}\`} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("ignore props similar to standard attributes on react components without tags", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["HeadSlot", { icon: "" }]]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.HeadSlot
+            class="my-class"
+            for="my-id"
+            autocomplete="off"
+          ></$.HeadSlot>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <HeadSlot
        class={"my-class"}
        for={"my-id"}
        autocomplete={"off"} />

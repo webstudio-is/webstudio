@@ -1,11 +1,4 @@
 import { aria } from "aria-query";
-import {
-  findTags,
-  getAttr,
-  getTextContent,
-  loadPage,
-  parseHtml,
-} from "./crawler";
 import { mkdir, writeFile } from "node:fs/promises";
 import {
   createScope,
@@ -16,6 +9,13 @@ import {
   type Props,
 } from "@webstudio-is/sdk";
 import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
+import {
+  findTags,
+  getAttr,
+  getTextContent,
+  loadPage,
+  parseHtml,
+} from "./crawler";
 
 type Attribute = {
   name: string;
@@ -45,7 +45,14 @@ for (let index = 0; index < terms.length; index += 1) {
   descriptions.set(term, detail);
 }
 
-const attributes: Attribute[] = [];
+const attributes: Attribute[] = [
+  {
+    name: "role",
+    description:
+      "Defines an explicit role for an element for use by assistive technologies.",
+    type: "string",
+  },
+];
 for (const [name, meta] of aria.entries()) {
   const attribute: Attribute = {
     name,

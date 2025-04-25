@@ -1,6 +1,7 @@
 const Page = () => {
   return (
     <div
+      role={""}
       aria-activedescendant={""}
       aria-atomic={true}
       aria-autocomplete={"inline"}
