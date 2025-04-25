@@ -17,7 +17,7 @@ import {
 } from "./crawler";
 import { possibleStandardNames } from "./possible-standard-names";
 
-let validHtmlAttributes = new Set<string>();
+const validHtmlAttributes = new Set<string>();
 
 type Attribute = {
   name: string;
