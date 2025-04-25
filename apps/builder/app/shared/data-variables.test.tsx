@@ -3,6 +3,7 @@ import {
   $,
   ActionValue,
   expression,
+  Parameter,
   renderData,
   ResourceValue,
   Variable,
@@ -571,6 +572,60 @@ test("prevent rebinding tree variables from slots", () => {
   });
   expect(data.instances.get("boxId")?.children).toEqual([
     { type: "expression", value: "myVariable" },
+  ]);
+});
+
+test("prevent rebinding with nested collection item", () => {
+  const collectionItem = new Parameter("collectionITem");
+  const nestedCollectionItem = new Parameter("collectionITem");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection ws:id="collectionId" data={[]} item={collectionItem}>
+        <ws.collection
+          ws:id="nestedCollectionId"
+          data={expression`${collectionItem}`}
+          item={nestedCollectionItem}
+        >
+          <ws.element ws:id="divId" ws:tag="div">
+            {expression`${nestedCollectionItem}`}
+          </ws.element>
+        </ws.collection>
+      </ws.collection>
+    </$.Body>
+  );
+  expect(Array.from(data.dataSources.values())).toEqual([
+    expect.objectContaining({ scopeInstanceId: "collectionId" }),
+    expect.objectContaining({ scopeInstanceId: "nestedCollectionId" }),
+  ]);
+  const [collectionItemId, nestedCollectionItemId] = data.dataSources.keys();
+  rebindTreeVariablesMutable({
+    startingInstanceId: "bodyId",
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...data,
+  });
+  expect(Array.from(data.props.values())).toEqual([
+    expect.objectContaining({
+      instanceId: "collectionId",
+      name: "data",
+    }),
+    expect.objectContaining({
+      instanceId: "collectionId",
+      name: "item",
+      value: collectionItemId,
+    }),
+    expect.objectContaining({
+      instanceId: "nestedCollectionId",
+      name: "data",
+      value: encodeDataVariableId(collectionItemId),
+    }),
+    expect.objectContaining({
+      instanceId: "nestedCollectionId",
+      name: "item",
+      value: nestedCollectionItemId,
+    }),
+  ]);
+  expect(data.instances.get("divId")?.children).toEqual([
+    { type: "expression", value: encodeDataVariableId(nestedCollectionItemId) },
   ]);
 });
 
