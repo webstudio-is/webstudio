@@ -1,7 +1,4 @@
-import {
-  categoriesByTag,
-  childrenCategoriesByTag,
-} from "@webstudio-is/html-data";
+import { elementsByTag } from "@webstudio-is/html-data";
 import {
   parseComponentName,
   type ContentModel,
@@ -55,7 +52,7 @@ const isIntersected = (arrayA: string[], arrayB: string[]) => {
  * so img can be put into links and buttons
  */
 const isTagInteractive = (tag: string) => {
-  return tag !== "img" && categoriesByTag[tag].includes("interactive");
+  return tag !== "img" && elementsByTag[tag].categories.includes("interactive");
 };
 
 const isTagSatisfyingContentModel = ({
@@ -87,7 +84,7 @@ const isTagSatisfyingContentModel = ({
   // valid way to nest interactive elements
   if (
     allowedCategories.includes("labelable") &&
-    categoriesByTag[tag].includes("labelable")
+    elementsByTag[tag].categories.includes("labelable")
   ) {
     return true;
   }
@@ -102,22 +99,22 @@ const isTagSatisfyingContentModel = ({
     return false;
   }
   // instance matches parent constraints
-  return isIntersected(allowedCategories, categoriesByTag[tag]);
+  return isIntersected(allowedCategories, elementsByTag[tag].categories);
 };
 
 /**
  * compute possible categories for tag children
  */
-const getTagChildrenCategories = (
+const getElementChildren = (
   tag: undefined | string,
   allowedCategories: undefined | string[]
 ) => {
   // components without tag behave like transparent category
   // and pass through parent constraints
-  let childrenCategories: string[] =
-    tag === undefined ? ["transparent"] : childrenCategoriesByTag[tag];
-  if (childrenCategories.includes("transparent") && allowedCategories) {
-    childrenCategories = allowedCategories;
+  let elementChildren: string[] =
+    tag === undefined ? ["transparent"] : elementsByTag[tag].children;
+  if (elementChildren.includes("transparent") && allowedCategories) {
+    elementChildren = allowedCategories;
   }
   // introduce custom non-interactive category to restrict nesting interactive elements
   // like button > button or a > input
@@ -125,7 +122,7 @@ const getTagChildrenCategories = (
     tag &&
     (isTagInteractive(tag) || allowedCategories?.includes("non-interactive"))
   ) {
-    childrenCategories = [...childrenCategories, "non-interactive"];
+    elementChildren = [...elementChildren, "non-interactive"];
   }
   // interactive exception, label > input or label > button are considered
   // valid way to nest interactive elements
@@ -133,16 +130,16 @@ const getTagChildrenCategories = (
   if (tag === "label" || allowedCategories?.includes("labelable")) {
     // stop passing through labelable to control children
     // to prevent label > button > input
-    if (tag && categoriesByTag[tag].includes("labelable") === false) {
-      childrenCategories = [...childrenCategories, "labelable"];
+    if (tag && elementsByTag[tag].categories.includes("labelable") === false) {
+      elementChildren = [...elementChildren, "labelable"];
     }
   }
   // introduce custom non-form category to restrict nesting form elements
   // like form > div > form
   if (tag === "form" || allowedCategories?.includes("non-form")) {
-    childrenCategories = [...childrenCategories, "non-form"];
+    elementChildren = [...elementChildren, "non-form"];
   }
-  return childrenCategories;
+  return elementChildren;
 };
 
 /**
@@ -171,7 +168,7 @@ const computeAllowedCategories = ({
       continue;
     }
     const tag = getTag({ instance, metas, props });
-    allowedCategories = getTagChildrenCategories(tag, allowedCategories);
+    allowedCategories = getElementChildren(tag, allowedCategories);
   }
   return allowedCategories;
 };
@@ -375,7 +372,7 @@ export const isTreeSatisfyingContentModel = ({
   }
   let isSatisfying = isTagSatisfying && isComponentSatisfying;
   const contentModel = getComponentContentModel(metas.get(instance.component));
-  allowedCategories = getTagChildrenCategories(tag, allowedCategories);
+  allowedCategories = getElementChildren(tag, allowedCategories);
   allowedParentCategories = contentModel.children;
   if (contentModel.descendants) {
     allowedAncestorCategories ??= [];
@@ -584,11 +581,11 @@ export const findClosestContainer = ({
     }
     const tag = getTag({ instance, props, metas });
     const meta = metas.get(instance.component);
-    const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
-    const childrenComponentCategories = getComponentContentModel(meta).children;
+    const elementChildren = tag ? elementsByTag[tag].children : undefined;
+    const componentChildren = getComponentContentModel(meta).children;
     if (
-      childrenComponentCategories.length === 0 ||
-      (childrenCategories && childrenCategories.length === 0)
+      componentChildren.length === 0 ||
+      (elementChildren && elementChildren.length === 0)
     ) {
       continue;
     }
@@ -621,11 +618,11 @@ export const findClosestNonTextualContainer = ({
     }
     const tag = getTag({ instance, props, metas });
     const meta = metas.get(instance.component);
-    const childrenCategories = tag ? childrenCategoriesByTag[tag] : undefined;
-    const childrenComponentCategories = getComponentContentModel(meta).children;
+    const elementChildren = tag ? elementsByTag[tag].children : undefined;
+    const componentChildren = getComponentContentModel(meta).children;
     if (
-      childrenComponentCategories.length === 0 ||
-      (childrenCategories && childrenCategories.length === 0)
+      componentChildren.length === 0 ||
+      (elementChildren && elementChildren.length === 0)
     ) {
       continue;
     }

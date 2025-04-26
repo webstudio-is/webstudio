@@ -12,8 +12,13 @@ import {
 const html = await loadHtmlIndices();
 const document = parseHtml(html);
 
-const categoriesByTag: Record<string, string[]> = {};
-const childrenCategoriesByTag: Record<string, string[]> = {};
+type Element = {
+  description: string;
+  categories: string[];
+  children: string[];
+};
+
+const elementsByTag: Record<string, Element> = {};
 
 /**
  * scrape elements table with content model
@@ -39,18 +44,27 @@ const childrenCategoriesByTag: Record<string, string[]> = {};
         // skip "SVG svg" amd "MathML math"
         return !tag.includes(" ");
       });
+    const description = getTextContent(row.childNodes[1]);
     const categories = parseList(getTextContent(row.childNodes[2]));
     const children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
-      categoriesByTag[tag] = categories;
-      childrenCategoriesByTag[tag] = children.includes("empty") ? [] : children;
+      elementsByTag[tag] = {
+        description,
+        categories,
+        children: children.includes("empty") ? [] : children,
+      };
     }
   }
 }
 
-let contentModel = ``;
-contentModel += `export const categoriesByTag: Record<string, string[]> = ${JSON.stringify(categoriesByTag, null, 2)};\n`;
-contentModel += `export const childrenCategoriesByTag: Record<string, string[]> = ${JSON.stringify(childrenCategoriesByTag, null, 2)};\n`;
-const contentModelFile = "./src/__generated__/content-model.ts";
+const contentModel = `type Element = {
+  description: string;
+  categories: string[];
+  children: string[];
+};
+
+export const elementsByTag: Record<string, Element> = ${JSON.stringify(elementsByTag, null, 2)};
+`;
+const contentModelFile = "./src/__generated__/elements.ts";
 await mkdir(dirname(contentModelFile), { recursive: true });
 await writeFile(contentModelFile, contentModel);
