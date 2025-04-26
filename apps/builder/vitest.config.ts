@@ -9,6 +9,8 @@ export default defineConfig({
         replacement: resolve("app"),
       },
     ],
+    conditions: ["webstudio", "browser", "development|production"],
+    // conditions: ["webstudio", ...defaultClientConditions],
   },
   // resolve webstudio condition in tests
   ssr: {
