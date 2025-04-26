@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/fontkit": "^2.0.7",
     "@webstudio-is/tsconfig": "workspace:*",
-    "vitest": "^3.0.8",
+    "vitest": "^3.1.2",
     "zod": "^3.24.2"
   },
   "exports": {

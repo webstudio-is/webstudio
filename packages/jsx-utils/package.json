@@ -14,7 +14,7 @@
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.3.2",
     "type-fest": "^4.37.0",
-    "vitest": "^3.0.8"
+    "vitest": "^3.1.2"
   },
   "exports": {
     ".": {
@@ -29,8 +29,8 @@
   "dependencies": {
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
-    "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
     "acorn": "^8.14.1",
     "acorn-jsx": "^5.3.2",
     "json5": "^2.2.3",

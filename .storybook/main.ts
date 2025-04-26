@@ -1,6 +1,7 @@
 import * as path from "node:path";
-import type { StorybookConfig } from "@storybook/react-vite";
 import { existsSync, readdirSync } from "node:fs";
+import { defaultClientConditions } from "vite";
+import type { StorybookConfig } from "@storybook/react-vite";
 
 const isFolderEmpty = (folderPath: string) => {
   if (!existsSync(folderPath)) {
@@ -82,15 +83,8 @@ export default {
       resolve: {
         ...config.resolve,
         conditions: hasPrivateFolders
-          ? [
-              "webstudio-private",
-              "webstudio",
-              "import",
-              "module",
-              "browser",
-              "default",
-            ]
-          : ["webstudio", "import", "module", "browser", "default"],
+          ? ["webstudio-private", "webstudio", ...defaultClientConditions]
+          : ["webstudio", ...defaultClientConditions],
 
         alias: [
           {
