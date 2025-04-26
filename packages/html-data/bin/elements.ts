@@ -57,7 +57,7 @@ const elementsByTag: Record<string, Element> = {};
   }
 }
 
-let contentModel = `type Element = {
+const contentModel = `type Element = {
   description: string;
   categories: string[];
   children: string[];
