@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
-import { Select } from "@webstudio-is/design-system";
+import { Box, Select, theme } from "@webstudio-is/design-system";
+import { elementsByTag } from "@webstudio-is/html-data";
 import { $selectedInstance } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { type ControlProps, VerticalLayout } from "../shared";
@@ -39,6 +40,11 @@ export const TagControl = ({ meta, prop }: ControlProps<"tag">) => {
             }
           });
         }}
+        getDescription={(item) => (
+          <Box css={{ width: theme.spacing[28] }}>
+            {elementsByTag[item].description}
+          </Box>
+        )}
       />
     </VerticalLayout>
   );
