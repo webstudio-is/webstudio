@@ -285,6 +285,7 @@ const $jsx = computed(
 
     const jsx = generateJsxElement({
       scope,
+      metas,
       instance,
       props,
       dataSources,
@@ -292,6 +293,7 @@ const $jsx = computed(
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
+        metas,
         children: instance.children,
         instances,
         props,
