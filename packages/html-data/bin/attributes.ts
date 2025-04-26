@@ -256,6 +256,8 @@ await writeFile(
   }) + "export { Page }"
 );
 
+// react does not have this one
+possibleStandardNames["dirname"] = "dirName";
 const standardAttributesToReactProps: Record<string, string> = {};
 const reactPropsToStandardAttributes: Record<string, string> = {};
 for (const [htmlAttribute, reactProperty] of Object.entries(

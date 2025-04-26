@@ -48,6 +48,7 @@ export const standardAttributesToReactProps: Record<string, string> = {
   usemap: "useMap",
   popovertarget: "popoverTarget",
   popovertargetaction: "popoverTargetAction",
+  dirname: "dirName",
 };
 
 export const reactPropsToStandardAttributes: Record<string, string> = {
@@ -100,4 +101,5 @@ export const reactPropsToStandardAttributes: Record<string, string> = {
   useMap: "usemap",
   popoverTarget: "popovertarget",
   popoverTargetAction: "popovertargetaction",
+  dirName: "dirname",
 };
