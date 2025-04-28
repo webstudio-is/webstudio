@@ -262,7 +262,7 @@ const Story = {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container {
-    rotate: --accordion-trigger-icon-transform;
+    rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
     flex-shrink: 0;
@@ -311,7 +311,7 @@ const Story = {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container-1 {
-    rotate: --accordion-trigger-icon-transform;
+    rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
     flex-shrink: 0;
@@ -360,7 +360,7 @@ const Story = {
     --accordion-trigger-icon-transform: 180deg
   }
   .w-icon-container-2 {
-    rotate: --accordion-trigger-icon-transform;
+    rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
     flex-shrink: 0;
