@@ -14,7 +14,7 @@
     "dev": "pnpm build:http-client && remix vite:dev",
     "dev:auth": "pnpm build:http-client && DEBUG=OAuth2Strategy,ws:* remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "pnpm build:http-client && vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.5.2",
@@ -138,7 +138,7 @@
     "type-fest": "^4.37.0",
     "typescript": "5.8.2",
     "vite": "^5.4.11",
-    "vitest": "^3.0.8"
+    "vitest": "^3.1.2"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"

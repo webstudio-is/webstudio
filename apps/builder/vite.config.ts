@@ -22,22 +22,6 @@ const hasPrivateFolders =
   }).length > 0;
 
 export default defineConfig(({ mode }) => {
-  if (mode === "test") {
-    return {
-      resolve: {
-        conditions: hasPrivateFolders
-          ? ["webstudio-private", "webstudio"]
-          : ["webstudio"],
-        alias: [
-          {
-            find: "~",
-            replacement: resolve("app"),
-          },
-        ],
-      },
-    };
-  }
-
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
