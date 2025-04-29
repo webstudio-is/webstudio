@@ -126,13 +126,13 @@ export const Section = () => {
             {
               child: <CropIcon />,
               description:
-                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+                "Content that exceeds the container's size is clipped without scrollbars.",
               value: "clip",
             },
             {
               child: <EyeClosedIcon />,
               description:
-                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+                "Content that exceeds the container's size is hidden without scrollbars.",
               value: "hidden",
             },
             {
