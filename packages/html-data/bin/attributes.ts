@@ -15,6 +15,9 @@ import {
   loadHtmlIndices,
   parseHtml,
 } from "./crawler";
+import { possibleStandardNames } from "./possible-standard-names";
+
+const validHtmlAttributes = new Set<string>();
 
 type Attribute = {
   name: string;
@@ -110,6 +113,7 @@ for (const row of rows) {
   ) {
     type = "number";
   }
+  validHtmlAttributes.add(attribute);
   for (let tag of tags) {
     tag = tag.toLowerCase().trim();
     if (/custom elements/i.test(tag)) {
@@ -250,4 +254,30 @@ await writeFile(
     parameters: [],
     metas: new Map(),
   }) + "export { Page }"
+);
+
+// react does not have this one
+possibleStandardNames["dirname"] = "dirName";
+const standardAttributesToReactProps: Record<string, string> = {};
+const reactPropsToStandardAttributes: Record<string, string> = {};
+for (const [htmlAttribute, reactProperty] of Object.entries(
+  possibleStandardNames
+)) {
+  if (
+    validHtmlAttributes.has(htmlAttribute) &&
+    htmlAttribute !== reactProperty
+  ) {
+    standardAttributesToReactProps[htmlAttribute] = reactProperty;
+    reactPropsToStandardAttributes[reactProperty] = htmlAttribute;
+  }
+}
+
+let standardAttributesContent = "";
+standardAttributesContent += `export const standardAttributesToReactProps: Record<string, string> = ${JSON.stringify(standardAttributesToReactProps, null, 2)};\n\n`;
+standardAttributesContent += `export const reactPropsToStandardAttributes: Record<string, string> = ${JSON.stringify(reactPropsToStandardAttributes, null, 2)};\n`;
+
+await mkdir("../react-sdk/src/__generated__", { recursive: true });
+await writeFile(
+  "../react-sdk/src/__generated__/standard-attributes.ts",
+  standardAttributesContent
 );

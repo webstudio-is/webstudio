@@ -36,6 +36,7 @@ import {
   selectorIdAttribute,
   type AnyComponent,
   textContentAttribute,
+  standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
@@ -285,13 +286,23 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         $propValuesByInstanceSelectorWithMemoryProps,
         $instances,
         $indexesWithinAncestors,
+        $registeredComponentMetas,
       ],
-      (propValuesByInstanceSelector, instances, indexesWithinAncestors) => {
+      (
+        propValuesByInstanceSelector,
+        instances,
+        indexesWithinAncestors,
+        metas
+      ) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
-        const tag = instances.get(instanceId)?.tag;
+        const instance = instances.get(instanceId);
+        const tag = instance?.tag;
         if (tag !== undefined) {
           instancePropsObject[tagProperty] = tag;
         }
+        const hasTags =
+          Object.keys(metas.get(instance?.component ?? "")?.presetStyle ?? {})
+            .length > 0;
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
           instancePropsObject[indexProperty] = index.toString();
@@ -299,7 +310,12 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
           for (const [name, value] of instanceProps) {
-            instancePropsObject[name] = value;
+            if (hasTags) {
+              const reactName = standardAttributesToReactProps[name] ?? name;
+              instancePropsObject[reactName] = value;
+            } else {
+              instancePropsObject[name] = value;
+            }
           }
         }
         return instancePropsObject;

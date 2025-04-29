@@ -5,12 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// https://github.com/facebook/react/blob/6377903074d4b3a2de48c4da91783a5af9fc5237/packages/react-dom-bindings/src/shared/possibleStandardNames.js
-
 // When adding attributes to the HTML or SVG allowed attribute list, be sure to
 // also add them to this module to ensure casing and incorrect name
 // warnings.
-export const standardAttributesToReactProps: Record<string, string> = {
+export const possibleStandardNames: Record<string, string> = {
   // HTML
   accept: "accept",
   acceptcharset: "acceptCharset",
@@ -506,6 +504,4 @@ export const standardAttributesToReactProps: Record<string, string> = {
   ychannelselector: "yChannelSelector",
   z: "z",
   zoomandpan: "zoomAndPan",
-  // added by us
-  dirname: "dirName",
 };

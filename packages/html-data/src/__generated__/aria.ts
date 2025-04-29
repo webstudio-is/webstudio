@@ -7,6 +7,12 @@ type Attribute = {
 
 export const ariaAttributes: Attribute[] = [
   {
+    name: "role",
+    description:
+      "Defines an explicit role for an element for use by assistive technologies.",
+    type: "string",
+  },
+  {
     name: "aria-activedescendant",
     description:
       "Identifies the currently active element when DOM focus is on a composite widget, combobox, textbox, group, or application.",

@@ -8,3 +8,4 @@ export {
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";
+export * from "./__generated__/standard-attributes";

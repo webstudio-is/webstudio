@@ -23,7 +23,7 @@ import {
 } from "@webstudio-is/sdk";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import { isAttributeNameSafe, showAttribute } from "./props";
-import { standardAttributesToReactProps } from "./standard-attributes";
+import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
 
 /**
  * (arg1) => {
@@ -144,6 +144,7 @@ const generatePropValue = ({
 export const generateJsxElement = ({
   context = "jsx",
   scope,
+  metas,
   instance,
   props,
   dataSources,
@@ -154,6 +155,7 @@ export const generateJsxElement = ({
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
   instance: Instance;
   props: Props;
   dataSources: DataSources;
@@ -167,6 +169,9 @@ export const generateJsxElement = ({
   if (instance.component === descendantComponent) {
     return "";
   }
+
+  const hasTags =
+    Object.keys(metas.get(instance.component)?.presetStyle ?? {}).length > 0;
 
   let generatedProps = "";
 
@@ -199,7 +204,7 @@ export const generateJsxElement = ({
       continue;
     }
     let name = prop.name;
-    if (instance.component === elementComponent) {
+    if (instance.component === elementComponent || hasTags) {
       name = standardAttributesToReactProps[prop.name] ?? prop.name;
     }
 
@@ -327,6 +332,7 @@ export const generateJsxElement = ({
 
 export const generateJsxChildren = ({
   scope,
+  metas,
   children,
   instances,
   props,
@@ -337,6 +343,7 @@ export const generateJsxChildren = ({
   excludePlaceholders,
 }: {
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
   children: Instance["children"];
   instances: Instances;
   props: Props;
@@ -379,6 +386,7 @@ export const generateJsxChildren = ({
       generatedChildren += generateJsxElement({
         context: "jsx",
         scope,
+        metas,
         instance,
         props,
         dataSources,
@@ -388,6 +396,7 @@ export const generateJsxChildren = ({
         children: generateJsxChildren({
           classesMap,
           scope,
+          metas,
           children: instance.children,
           instances,
           props,
@@ -437,6 +446,7 @@ export const generateWebstudioComponent = ({
     generatedJsx = generateJsxElement({
       context: "expression",
       scope,
+      metas,
       instance,
       props,
       dataSources,
@@ -445,6 +455,7 @@ export const generateWebstudioComponent = ({
       classesMap,
       children: generateJsxChildren({
         scope,
+        metas,
         children: instance.children,
         instances,
         props,
