@@ -1855,6 +1855,30 @@ export const CopyIcon: IconComponent = forwardRef(
 );
 CopyIcon.displayName = "CopyIcon";
 
+export const CropIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.167 1.5v9.333A1.333 1.333 0 0 0 5.5 12.167h9.333m-2.666 2.666V5.5a1.333 1.333 0 0 0-1.334-1.333H1.5"
+        />
+      </svg>
+    );
+  }
+);
+CropIcon.displayName = "CropIcon";
+
 export const DashedBorderIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4125,30 +4149,6 @@ export const ResourceIcon: IconComponent = forwardRef(
   }
 );
 ResourceIcon.displayName = "ResourceIcon";
-
-export const ScrollIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 4v4M6 6l2-2 2 2M8 12V8M10 10l-2 2-2-2M2 14V2M14.003 14V2"
-        />
-      </svg>
-    );
-  }
-);
-ScrollIcon.displayName = "ScrollIcon";
 
 export const SearchIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
