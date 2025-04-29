@@ -3,7 +3,6 @@ import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import { ariaAttributes } from "@webstudio-is/html-data";
 import {
   type Instance,
   type Props,
@@ -17,7 +16,11 @@ import {
   Box,
   Grid,
 } from "@webstudio-is/design-system";
-import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
+import {
+  isAttributeNameSafe,
+  reactPropsToStandardAttributes,
+  standardAttributesToReactProps,
+} from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
@@ -34,11 +37,9 @@ import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
-import {
-  $instanceTags,
-  $matchingBreakpoints,
-} from "../../style-panel/shared/model";
+import { $matchingBreakpoints } from "../../style-panel/shared/model";
 import { matchMediaBreakpoints } from "./match-media-breakpoints";
+import { $selectedInstancePropsMetas } from "../shared";
 
 type Item = {
   name: string;
@@ -80,7 +81,11 @@ const renderProperty = (
     instanceId,
     meta,
     prop,
-    computedValue: propValues.get(propName) ?? meta.defaultValue,
+    computedValue:
+      propValues.get(propName) ??
+      // support legacy html props with react names
+      propValues.get(standardAttributesToReactProps[propName]) ??
+      meta.defaultValue,
     propName,
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
@@ -99,33 +104,31 @@ const renderProperty = (
 const forbiddenProperties = new Set(["style", "class", "className"]);
 
 const $availableProps = computed(
-  [$selectedInstance, $props, $registeredComponentPropsMetas, $instanceTags],
-  (instance, props, propsMetas, instanceTags) => {
+  [
+    $selectedInstance,
+    $props,
+    $registeredComponentPropsMetas,
+    $selectedInstancePropsMetas,
+  ],
+  (instance, props, componentPropsMetas, instancePropsMetas) => {
     const availableProps = new Map<Item["name"], Item>();
+    for (const [name, { label, description }] of instancePropsMetas) {
+      availableProps.set(name, { name, label, description });
+    }
     if (instance === undefined) {
       return [];
     }
-    // add component props
-    const metas = propsMetas.get(instance.component);
-    for (const [name, propMeta] of Object.entries(metas?.props ?? {})) {
-      const { label, description } = propMeta;
-      availableProps.set(name, { name, label, description });
-    }
-    // add aria attributes only for components with tags
-    const tag = instanceTags.get(instance.id);
-    if (tag) {
-      for (const { name, description } of ariaAttributes) {
-        availableProps.set(name, { name, description });
-      }
-    }
+    const propsMetas = componentPropsMetas.get(instance.component);
     // remove initial props
-    for (const name of metas?.initialProps ?? []) {
+    for (const name of propsMetas?.initialProps ?? []) {
       availableProps.delete(name);
+      availableProps.delete(reactPropsToStandardAttributes[name]);
     }
     // remove defined props
     for (const prop of props.values()) {
       if (prop.instanceId === instance.id) {
         availableProps.delete(prop.name);
+        availableProps.delete(reactPropsToStandardAttributes[prop.name]);
       }
     }
     return Array.from(availableProps.values());
@@ -336,10 +339,9 @@ export const PropsSectionContainer = ({
     },
   });
 
-  const hasMetaProps = Object.keys(logic.meta.props).length !== 0;
-
-  if (hasMetaProps === false) {
-    return null;
+  const propsMetas = useStore($selectedInstancePropsMetas);
+  if (propsMetas.size === 0) {
+    return;
   }
 
   return (

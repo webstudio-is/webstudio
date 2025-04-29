@@ -11,6 +11,11 @@ import {
   type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
+import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
+import {
+  reactPropsToStandardAttributes,
+  standardAttributesToReactProps,
+} from "@webstudio-is/react-sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
@@ -33,11 +38,16 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
+  $registeredComponentPropsMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedInstanceKeyWithRoot } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKeyWithRoot,
+} from "~/shared/awareness";
+import { $instanceTags } from "../style-panel/shared/model";
 
 export const showAttributeMeta: PropMeta = {
   label: "Show",
@@ -403,11 +413,96 @@ export const humanizeAttribute = (string: string) => {
   if (string.includes("-")) {
     return string;
   }
-  if (string === "className") {
+  if (string === "class" || string === "className") {
     return "Class";
   }
-  if (string === "htmlFor") {
+  if (string === "for" || string === "htmlFor") {
     return "For";
   }
-  return humanizeString(string);
+  return humanizeString(standardAttributesToReactProps[string] ?? string);
 };
+
+type Attribute = (typeof ariaAttributes)[number];
+
+const attributeToMeta = (attribute: Attribute): PropMeta => {
+  if (attribute.type === "string") {
+    return {
+      type: "string",
+      control: "text",
+      required: false,
+      description: attribute.description,
+    };
+  }
+  if (attribute.type === "select") {
+    const options = attribute.options ?? [];
+    return {
+      type: "string",
+      control: options.length > 3 ? "select" : "radio",
+      required: false,
+      options,
+      description: attribute.description,
+    };
+  }
+  if (attribute.type === "number") {
+    return {
+      type: "number",
+      control: "number",
+      required: false,
+      description: attribute.description,
+    };
+  }
+  if (attribute.type === "boolean") {
+    return {
+      type: "boolean",
+      control: "boolean",
+      required: false,
+      description: attribute.description,
+    };
+  }
+  attribute.type satisfies never;
+  throw Error("impossible case");
+};
+
+export const $selectedInstancePropsMetas = computed(
+  [$selectedInstance, $registeredComponentPropsMetas, $instanceTags],
+  (instance, componentPropsMetas, instanceTags): Map<string, PropMeta> => {
+    if (instance === undefined) {
+      return new Map();
+    }
+    const propsMetas = componentPropsMetas.get(instance.component)?.props ?? {};
+    const tag = instanceTags.get(instance.id);
+    const metas = new Map<Prop["name"], PropMeta>();
+    // add html attributes only when instance has tag
+    if (tag) {
+      for (const attribute of [...ariaAttributes].reverse()) {
+        metas.set(attribute.name, attributeToMeta(attribute));
+      }
+      if (attributesByTag["*"]) {
+        for (const attribute of [...attributesByTag["*"]].reverse()) {
+          metas.set(attribute.name, attributeToMeta(attribute));
+        }
+      }
+      if (attributesByTag[tag]) {
+        for (const attribute of [...attributesByTag[tag]].reverse()) {
+          metas.set(attribute.name, attributeToMeta(attribute));
+        }
+      }
+    }
+    for (const [name, propMeta] of Object.entries(propsMetas).reverse()) {
+      // when component property has the same name as html attribute in react
+      // override to deduplicate similar properties
+      // for example component can have own "className" and html has "class"
+      const htmlName = reactPropsToStandardAttributes[name];
+      if (htmlName) {
+        metas.delete(htmlName);
+      }
+      metas.set(name, propMeta);
+    }
+    // ui should render in the following order
+    // 1. component properties
+    // 2. specific tag attributes
+    // 3. global html attributes
+    // 4. aria attributes
+    return new Map(Array.from(metas.entries()).reverse());
+  }
+);
