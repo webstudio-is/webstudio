@@ -308,8 +308,6 @@ export const ResetIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1
 
 export const ResourceIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.667 5.333h4M4.667 8H10M14 8.75V3.5A1.5 1.5 0 0 0 12.5 2h-9A1.5 1.5 0 0 0 2 3.5v9.252c0 .69.56 1.25 1.25 1.25v0H6"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.45 14.5h-.7a1.75 1.75 0 1 1 0-3.5h.7M12.55 11h.7a1.75 1.75 0 1 1 0 3.5h-.7M10.1 12.75h2.8"/></svg>`;
 
-export const ScrollIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 4v4M6 6l2-2 2 2M8 12V8M10 10l-2 2-2-2M2 14V2M14.003 14V2"/></svg>`;
-
 export const SearchIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.333 12.667A5.333 5.333 0 1 0 7.333 2a5.333 5.333 0 0 0 0 10.667ZM14 14l-2.867-2.867"/></svg>`;
 
 export const SectionLinkIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.667 14.667H12a1.333 1.333 0 0 0 1.333-1.334V4.667L10 1.333H4a1.333 1.333 0 0 0-1.333 1.334v2.666"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.333 1.333V4a1.333 1.333 0 0 0 1.334 1.333h2.666M2 10h4"/></svg>`;

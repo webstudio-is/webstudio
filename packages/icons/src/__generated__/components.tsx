@@ -4150,30 +4150,6 @@ export const ResourceIcon: IconComponent = forwardRef(
 );
 ResourceIcon.displayName = "ResourceIcon";
 
-export const ScrollIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 4v4M6 6l2-2 2 2M8 12V8M10 10l-2 2-2-2M2 14V2M14.003 14V2"
-        />
-      </svg>
-    );
-  }
-);
-ScrollIcon.displayName = "ScrollIcon";
-
 export const SearchIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

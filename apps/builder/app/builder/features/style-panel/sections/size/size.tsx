@@ -15,10 +15,10 @@ import {
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
   EyeOpenIcon,
-  ScrollIcon,
   AutoScrollIcon,
   EllipsesIcon,
   CropIcon,
+  EyeClosedIcon,
 } from "@webstudio-is/icons";
 import { StyleSection } from "../../shared/style-section";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
@@ -130,12 +130,11 @@ export const Section = () => {
               value: "clip",
             },
             {
-              child: <ScrollIcon />,
+              child: <EyeClosedIcon />,
               description:
-                "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
-              value: "scroll",
+                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+              value: "hidden",
             },
-
             {
               child: <AutoScrollIcon />,
               description:
