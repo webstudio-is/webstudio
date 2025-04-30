@@ -3,7 +3,12 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
 import { descendantComponent } from "@webstudio-is/sdk";
-import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
+import {
+  reactPropsToStandardAttributes,
+  showAttribute,
+  standardAttributesToReactProps,
+  textContentAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   $instances,
   $isContentMode,
@@ -13,8 +18,11 @@ import {
 } from "~/shared/nano-states";
 import { isRichText } from "~/shared/content-model";
 import { $selectedInstancePath } from "~/shared/awareness";
-import { showAttributeMeta, type PropValue } from "../shared";
-import { ariaAttributes } from "@webstudio-is/html-data";
+import {
+  $selectedInstancePropsMetas,
+  showAttributeMeta,
+  type PropValue,
+} from "../shared";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -154,42 +162,6 @@ const $canHaveTextContent = computed(
     });
   }
 );
-type Attribute = (typeof ariaAttributes)[number];
-
-const attributeToMeta = (attribute: Attribute): PropMeta => {
-  if (attribute.type === "string") {
-    return {
-      type: "string",
-      control: "text",
-      required: false,
-    };
-  }
-  if (attribute.type === "select") {
-    const options = attribute.options ?? [];
-    return {
-      type: "string",
-      control: options.length > 3 ? "select" : "radio",
-      required: false,
-      options,
-    };
-  }
-  if (attribute.type === "number") {
-    return {
-      type: "number",
-      control: "number",
-      required: false,
-    };
-  }
-  if (attribute.type === "boolean") {
-    return {
-      type: "boolean",
-      control: "boolean",
-      required: false,
-    };
-  }
-  attribute.type satisfies never;
-  throw Error("impossible case");
-};
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
@@ -219,27 +191,17 @@ export const usePropsLogic = ({
     return propsWhiteList.includes(propName);
   };
 
-  const meta = useStore($registeredComponentPropsMetas).get(
-    instance.component
-  ) ?? {
-    props: {},
-    initialProps: [],
-  };
-
   const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
 
-  const metas = new Map<Prop["name"], PropMeta>();
-  for (const attribute of ariaAttributes) {
-    metas.set(attribute.name, attributeToMeta(attribute));
-  }
-  for (const [name, propMeta] of Object.entries(meta.props)) {
-    metas.set(name, propMeta);
-  }
+  const propsMetas = useStore($selectedInstancePropsMetas);
 
-  const initialPropsNames = new Set(meta.initialProps ?? []);
+  const componentPropsMeta = useStore($registeredComponentPropsMetas).get(
+    instance.component
+  );
+  const initialPropsNames = new Set(componentPropsMeta?.initialProps);
 
   const systemProps: PropAndMeta[] = [];
   // descendant component is not actually rendered
@@ -278,9 +240,13 @@ export const usePropsLogic = ({
   }
 
   const initialProps: PropAndMeta[] = [];
-  for (const name of initialPropsNames) {
-    const saved = getAndDelete<Prop>(unprocessedSaved, name);
-    const propMeta = metas.get(name);
+  for (let name of initialPropsNames) {
+    let propMeta = propsMetas.get(name);
+    // className -> class
+    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
+      name = reactPropsToStandardAttributes[name];
+      propMeta = propsMetas.get(name);
+    }
 
     if (propMeta === undefined) {
       console.error(
@@ -289,7 +255,16 @@ export const usePropsLogic = ({
       continue;
     }
 
-    let prop = saved;
+    let prop =
+      getAndDelete<Prop>(unprocessedSaved, name) ??
+      // support legacy html props stored with react names
+      getAndDelete<Prop>(
+        unprocessedSaved,
+        standardAttributesToReactProps[name]
+      );
+    if (prop) {
+      prop = { ...prop, name };
+    }
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
@@ -312,13 +287,20 @@ export const usePropsLogic = ({
   }
 
   const addedProps: PropAndMeta[] = [];
-  for (const prop of Array.from(unprocessedSaved.values()).reverse()) {
+  for (let prop of Array.from(unprocessedSaved.values()).reverse()) {
     // ignore parameter props
     if (prop.type === "parameter") {
       continue;
     }
-
-    const propMeta = metas.get(prop.name) ?? getDefaultMetaForType("string");
+    let name = prop.name;
+    let propMeta = propsMetas.get(name);
+    // support legacy html props stored with react names
+    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
+      name = reactPropsToStandardAttributes[name];
+      propMeta = propsMetas.get(name);
+    }
+    prop = { ...prop, name };
+    propMeta ??= getDefaultMetaForType("string");
 
     addedProps.push({
       prop,
@@ -329,7 +311,8 @@ export const usePropsLogic = ({
 
   const handleAdd = (propName: string) => {
     // In case of custom property/attribute we get a string.
-    const propMeta = metas.get(propName) ?? getDefaultMetaForType("string");
+    const propMeta =
+      propsMetas.get(propName) ?? getDefaultMetaForType("string");
     const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);
@@ -358,7 +341,6 @@ export const usePropsLogic = ({
     handleAdd,
     handleChange,
     handleChangeByPropName,
-    meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.
      * Currentrly used only for the ID prop. */
     systemProps: systemProps.filter(({ propName }) => isPropVisible(propName)),

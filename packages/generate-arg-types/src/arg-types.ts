@@ -20,10 +20,10 @@ export const propsToArgTypes = (
       // Exclude props that are in the exclude list
       .filter(([propName]) => exclude.includes(propName) === false)
       .filter(([_propName, propItem]) => {
-        for (const { fileName, name } of propItem.declarations ?? []) {
+        for (const { fileName } of propItem.declarations ?? []) {
           // ignore aria attributes
           if (fileName.endsWith("/@types/react/index.d.ts")) {
-            return name !== "AriaAttributes";
+            return false;
           }
         }
         return true;
