@@ -10,10 +10,13 @@ export const getTagFromProps = (
   return props[tagProperty] as string | undefined;
 };
 
-export const indexProperty = "data-ws-index" as const;
+export const indexProperty = "data-ws-index";
 
 export const getIndexWithinAncestorFromProps = (
   props: Record<string, unknown>
 ) => {
   return props[indexProperty] as string | undefined;
 };
+
+export const animationCanPlayOnCanvasProperty =
+  "data-ws-animation-can-play-on-canvas";

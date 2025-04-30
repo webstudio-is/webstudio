@@ -20,10 +20,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
-import {
-  animationCanPlayOnCanvasAttribute,
-  showAttribute,
-} from "@webstudio-is/react-sdk";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
@@ -34,6 +31,7 @@ import {
   type Instance,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
@@ -675,7 +673,7 @@ export const NavigatorTree = () => {
 
           // Hook memory prop
           const isAnimationSelected =
-            propValues?.get(animationCanPlayOnCanvasAttribute) === true;
+            propValues?.get(animationCanPlayOnCanvasProperty) === true;
 
           const props = propsByInstanceId.get(item.instance.id);
           const actionProp = props?.find(
