@@ -12,26 +12,18 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { AlertIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
 import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
-import { humanizeAttribute, showAttributeMeta } from "./shared";
+import { $selectedInstancePropsMetas, humanizeAttribute } from "./shared";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
-    return computed(
-      [$selectedInstance, $registeredComponentPropsMetas],
-      (instance, propsMetas) => {
-        if (name === showAttribute) {
-          return showAttributeMeta;
-        }
-        const metas = propsMetas.get(instance?.component ?? "");
-        const propMeta = metas?.props[name];
-        return propMeta;
-      }
+    return computed($selectedInstancePropsMetas, (propsMetas) =>
+      propsMetas.get(name)
     );
   }, [name]);
   return useStore(store);
@@ -144,6 +136,18 @@ export const PropertyLabel = ({
                 {label}
               </Text>
               {propMeta?.description && <Text>{propMeta.description}</Text>}
+              {readOnly && (
+                <Flex gap="1">
+                  <AlertIcon
+                    color={rawTheme.colors.backgroundAlertMain}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <Text>
+                    The value is controlled by an expression and cannot be
+                    changed.
+                  </Text>
+                </Flex>
+              )}
               {isDeletable && (
                 <Button
                   color="dark"
@@ -167,17 +171,6 @@ export const PropertyLabel = ({
           </Label>
         </Tooltip>
       </div>
-      {readOnly && (
-        <Tooltip
-          content="The value is controlled by an expression and cannot be changed."
-          variant="wrapped"
-        >
-          <InfoCircleIcon
-            color={rawTheme.colors.foregroundSubtle}
-            tabIndex={0}
-          />
-        </Tooltip>
-      )}
     </Flex>
   );
 };
