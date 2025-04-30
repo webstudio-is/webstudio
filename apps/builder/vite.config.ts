@@ -1,5 +1,10 @@
 import path, { resolve } from "node:path";
-import { defineConfig, type CorsOptions } from "vite";
+import {
+  defaultClientConditions,
+  defaultServerConditions,
+  defineConfig,
+  type CorsOptions,
+} from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
@@ -20,6 +25,10 @@ const hasPrivateFolders =
   fg.sync([path.join(rootDir ?? "", "packages/*/private-src/*")], {
     ignore: ["**/node_modules/**"],
   }).length > 0;
+
+const conditions = hasPrivateFolders
+  ? ["webstudio-private", "webstudio"]
+  : ["webstudio"];
 
 export default defineConfig(({ mode }) => {
   if (mode === "development") {
@@ -65,10 +74,7 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      conditions: hasPrivateFolders
-        ? ["webstudio-private", "webstudio"]
-        : ["webstudio"],
-
+      conditions: [...conditions, "browser", "development|production"],
       alias: [
         {
           find: "~",
@@ -81,6 +87,11 @@ export default defineConfig(({ mode }) => {
           replacement: resolve("./app/shared/empty.ts"),
         },
       ],
+    },
+    ssr: {
+      resolve: {
+        conditions: [...conditions, "node", "development|production"],
+      },
     },
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),

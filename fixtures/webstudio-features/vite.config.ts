@@ -24,11 +24,11 @@ const conditions = hasPrivateFolders
 
 export default defineConfig({
   resolve: {
-    conditions,
+    conditions: [...conditions, "browser", "development|production"],
   },
   ssr: {
     resolve: {
-      conditions,
+      conditions: [...conditions, "node", "development|production"],
     },
   },
   plugins: [reactRouter(), dedupeMeta],
