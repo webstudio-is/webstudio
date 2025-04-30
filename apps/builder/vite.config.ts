@@ -1,10 +1,5 @@
 import path, { resolve } from "node:path";
-import {
-  defaultClientConditions,
-  defaultServerConditions,
-  defineConfig,
-  type CorsOptions,
-} from "vite";
+import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
 import type { IncomingMessage } from "node:http";
