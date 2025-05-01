@@ -14,6 +14,7 @@ import equal from "fast-deep-equal";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import {
   reactPropsToStandardAttributes,
+  showAttribute,
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import {
@@ -498,11 +499,13 @@ export const $selectedInstancePropsMetas = computed(
       }
       metas.set(name, propMeta);
     }
+    metas.set(showAttribute, showAttributeMeta);
     // ui should render in the following order
-    // 1. component properties
-    // 2. specific tag attributes
-    // 3. global html attributes
-    // 4. aria attributes
+    // 1. system properties
+    // 2. component properties
+    // 3. specific tag attributes
+    // 4. global html attributes
+    // 5. aria attributes
     return new Map(Array.from(metas.entries()).reverse());
   }
 );
