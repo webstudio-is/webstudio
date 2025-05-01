@@ -91,4 +91,9 @@ export const INTERNAL_TEMPLATES = [
     label: "Cloudflare",
     expand: ["defaults", "cloudflare"],
   },
+  {
+    value: "cloudflare-new",
+    label: "Cloudflare (new)",
+    expand: ["react-router", "react-router-cloudflare"],
+  },
 ];
