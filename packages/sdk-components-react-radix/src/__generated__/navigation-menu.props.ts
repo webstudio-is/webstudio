@@ -14,8 +14,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["ltr", "rtl"],
-    description:
-      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+    description: "The text directionality of the element",
   },
   skipDelayDuration: {
     description:
@@ -28,8 +27,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsNavigationMenuList: Record<string, PropMeta> = {};
@@ -40,8 +38,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsNavigationMenuLink: Record<string, PropMeta> = {

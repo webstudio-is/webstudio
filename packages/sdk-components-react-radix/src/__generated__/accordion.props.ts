@@ -58,8 +58,7 @@ export const propsAccordionItem: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsAccordionHeader: Record<string, PropMeta> = {};

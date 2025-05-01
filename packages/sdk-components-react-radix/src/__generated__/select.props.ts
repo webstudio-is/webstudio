@@ -5,8 +5,7 @@ export const propsSelect: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Indicates whether controls in this form can by default have their valuesautomatically completed by the browser.",
+    description: "Hint for form autofill feature",
   },
   defaultValue: { required: false, control: "text", type: "string" },
   dir: {
@@ -14,48 +13,44 @@ export const propsSelect: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["ltr", "rtl"],
-    description:
-      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+    description: "The text directionality of the element",
   },
   disabled: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description: "Indicates whether the user can interact with the element.",
+    description: "Whether the form control is disabled",
   },
   form: {
     required: false,
     control: "text",
     type: "string",
-    description: "Indicates the form that is the owner of the element.",
+    description: "Associates the element with a form element",
   },
   name: {
     required: false,
     control: "text",
     type: "string",
     description:
-      "This name is important when submitting form data to the server, as it identifies the data associated with the input. When multiple inputs share the same name attribute, they are treated as part of the same group (e.g., radio buttons or checkboxes).",
+      "Name of the element to use for form submission and in the form.elements API",
   },
   open: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether the contents are currently visible (in the case of a <details> element) or whether the dialog is active and can be interacted with (in the case of a <dialog> element).",
+    description: "Whether the dialog box is showing",
   },
   required: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether this form element must be filled before the form can be submitted.",
+    description: "Whether the control is required for form submission",
   },
   value: {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsSelectTrigger: Record<string, PropMeta> = {};
@@ -64,8 +59,7 @@ export const propsSelectValue: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
+    description: "User-visible label to be placed within the form control",
   },
 };
 export const propsSelectContent: Record<string, PropMeta> = {
@@ -74,7 +68,6 @@ export const propsSelectContent: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["center", "start", "end"],
-    description: "Specifies the horizontal alignment of the element.",
   },
   alignOffset: { required: false, control: "number", type: "number" },
   arrowPadding: { required: false, control: "number", type: "number" },
@@ -95,22 +88,27 @@ export const propsSelectContent: Record<string, PropMeta> = {
   },
 };
 export const propsSelectViewport: Record<string, PropMeta> = {
-  nonce: { required: false, control: "text", type: "string" },
+  nonce: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Cryptographic nonce used in Content Security Policy checks [CSP]",
+  },
 };
 export const propsSelectItem: Record<string, PropMeta> = {
   disabled: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description: "Indicates whether the user can interact with the element.",
+    description: "Whether the form control is disabled",
   },
   textValue: { required: false, control: "text", type: "string" },
   value: {
     required: true,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsSelectItemIndicator: Record<string, PropMeta> = {};

@@ -5,15 +5,13 @@ export const propsSwitch: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether the element should be checked on page load.",
+    description: "Whether the control is checked",
   },
   required: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether this form element must be filled before the form can be submitted.",
+    description: "Whether the control is required for form submission",
   },
 };
 export const propsSwitchThumb: Record<string, PropMeta> = {};

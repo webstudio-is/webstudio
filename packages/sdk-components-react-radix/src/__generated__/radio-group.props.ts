@@ -7,28 +7,26 @@ export const propsRadioGroup: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["ltr", "rtl"],
-    description:
-      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+    description: "The text directionality of the element",
   },
   disabled: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description: "Indicates whether the user can interact with the element.",
+    description: "Whether the form control is disabled",
   },
   loop: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether the media should start playing from the start when it's finished.",
+    description: "Whether to loop the media resource",
   },
   name: {
     required: false,
     control: "text",
     type: "string",
     description:
-      "This name is important when submitting form data to the server, as it identifies the data associated with the input. When multiple inputs share the same name attribute, they are treated as part of the same group (e.g., radio buttons or checkboxes).",
+      "Name of the element to use for form submission and in the form.elements API",
   },
   orientation: {
     required: false,
@@ -40,15 +38,13 @@ export const propsRadioGroup: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether this form element must be filled before the form can be submitted.",
+    description: "Whether the control is required for form submission",
   },
   value: {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsRadioGroupItem: Record<string, PropMeta> = {
@@ -56,22 +52,19 @@ export const propsRadioGroupItem: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether the element should be checked on page load.",
+    description: "Whether the control is checked",
   },
   required: {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether this form element must be filled before the form can be submitted.",
+    description: "Whether the control is required for form submission",
   },
   value: {
     required: true,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsRadioGroupIndicator: Record<string, PropMeta> = {};

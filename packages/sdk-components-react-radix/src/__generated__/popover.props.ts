@@ -17,7 +17,6 @@ export const propsPopoverContent: Record<string, PropMeta> = {
     type: "string",
     defaultValue: "center",
     options: ["center", "start", "end"],
-    description: "Specifies the horizontal alignment of the element.",
   },
   alignOffset: {
     required: false,

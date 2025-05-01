@@ -5,7 +5,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
