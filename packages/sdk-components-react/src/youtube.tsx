@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VimeoContext, requestFullscreen } from "./vimeo";
+import { VideoContext, requestFullscreen } from "./shared/video";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -518,7 +518,7 @@ export const YouTube = forwardRef<Ref, Props>(
     );
 
     return (
-      <VimeoContext.Provider
+      <VideoContext.Provider
         value={{
           status,
           previewImageUrl,
@@ -551,7 +551,7 @@ export const YouTube = forwardRef<Ref, Props>(
             </>
           )}
         </div>
-      </VimeoContext.Provider>
+      </VideoContext.Provider>
     );
   }
 );
