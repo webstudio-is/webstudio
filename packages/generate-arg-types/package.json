@@ -11,6 +11,7 @@
   "dependencies": {
     "@webstudio-is/html-data": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
     "fast-glob": "^3.3.2",
     "react-docgen-typescript": "^2.2.2",
     "typescript": "5.8.2",

@@ -220,6 +220,7 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
     defaultValue: "dateTime attribute is not set",
+    description: "Machine-readable value",
   },
   language: {
     required: false,
@@ -299,7 +300,6 @@ export const props: Record<string, PropMeta> = {
       "vi",
       "zh",
     ],
-    description: "Defines the script language used in the element.",
   },
   timeStyle: {
     required: false,

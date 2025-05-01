@@ -34,8 +34,7 @@ export const propsTabs: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsTabsList: Record<string, PropMeta> = {
@@ -43,8 +42,7 @@ export const propsTabsList: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    description:
-      "Indicates whether the media should start playing from the start when it's finished.",
+    description: "Whether to loop the media resource",
   },
 };
 export const propsTabsTrigger: Record<string, PropMeta> = {
@@ -52,8 +50,7 @@ export const propsTabsTrigger: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };
 export const propsTabsContent: Record<string, PropMeta> = {
@@ -61,7 +58,6 @@ export const propsTabsContent: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description:
-      "Defines a default value which will be displayed in the element on pageload.",
+    description: "Current value of the element",
   },
 };

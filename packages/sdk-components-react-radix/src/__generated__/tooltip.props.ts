@@ -30,7 +30,6 @@ export const propsTooltipContent: Record<string, PropMeta> = {
     control: "radio",
     type: "string",
     options: ["center", "start", "end"],
-    description: "Specifies the horizontal alignment of the element.",
   },
   alignOffset: {
     required: false,
@@ -40,8 +39,7 @@ export const propsTooltipContent: Record<string, PropMeta> = {
       "The offset in pixels from the “start“ or “end“ alignment options.",
   },
   "aria-label": {
-    description:
-      "Provides the accessible name that describes an interactive element if no other accessible name exists, for example in a button that contains an image with no text.",
+    description: "A more descriptive label for accessibility purpose",
     required: false,
     control: "text",
     type: "string",

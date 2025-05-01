@@ -5,7 +5,7 @@ export const propsCollapsible: Record<string, PropMeta> = {
     required: false,
     control: "boolean",
     type: "boolean",
-    description: "Indicates whether the user can interact with the element.",
+    description: "Whether the form control is disabled",
   },
   open: {
     required: false,
