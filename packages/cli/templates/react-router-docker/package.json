@@ -3,8 +3,8 @@
     "start": "react-router-serve ./build/server/index.js"
   },
   "dependencies": {
-    "@react-router/node": "^7.5.0",
-    "@react-router/serve": "^7.5.0",
+    "@react-router/node": "^7.5.3",
+    "@react-router/serve": "^7.5.3",
     "h3": "^1.15.1",
     "ipx": "^3.0.3"
   }
