@@ -6,17 +6,21 @@
 
 import { colord } from "colord";
 import {
+  type ElementRef,
+  type ComponentProps,
+  type ContextType,
   forwardRef,
   useState,
   useEffect,
-  type ElementRef,
-  type ComponentProps,
   useContext,
-  createContext,
-  type ContextType,
   useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  requestFullscreen,
+  VideoContext,
+  type PlayerStatus,
+} from "./shared/video";
 
 // https://developer.vimeo.com/player/sdk/embed
 type VimeoPlayerOptions = {
@@ -247,17 +251,6 @@ const EmptyState = () => {
   );
 };
 
-export const requestFullscreen = (element: HTMLIFrameElement) => {
-  const isTouchDevice = "ontouchstart" in window;
-  // Allows it to work on small screens on desktop too and makes it easy to test.
-  const isMobileResolution = window.matchMedia("(max-width: 1024px)").matches;
-  if (isMobileResolution || isTouchDevice) {
-    element.requestFullscreen();
-  }
-};
-
-type PlayerStatus = "initial" | "loading" | "ready";
-
 type PlayerProps = Pick<
   VimeoOptions,
   "loading" | "autoplay" | "showPreview" | "playsinline"
@@ -349,15 +342,6 @@ const Player = ({
   );
 };
 
-export const VimeoContext = createContext<{
-  previewImageUrl?: URL;
-  onInitPlayer: () => void;
-  status: PlayerStatus;
-}>({
-  onInitPlayer: () => {},
-  status: "initial",
-});
-
 const defaultTag = "div";
 
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoOptions> &
@@ -429,7 +413,7 @@ export const Vimeo = forwardRef<Ref, Props>(
     });
 
     return (
-      <VimeoContext.Provider
+      <VideoContext.Provider
         value={{
           status,
           previewImageUrl,
@@ -469,7 +453,7 @@ export const Vimeo = forwardRef<Ref, Props>(
             </>
           )}
         </div>
-      </VimeoContext.Provider>
+      </VideoContext.Provider>
     );
   }
 );

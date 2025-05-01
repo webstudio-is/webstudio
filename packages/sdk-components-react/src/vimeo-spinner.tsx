@@ -4,7 +4,7 @@ import {
   type ComponentProps,
   useContext,
 } from "react";
-import { VimeoContext } from "./vimeo";
+import { VideoContext } from "./shared/video";
 
 const defaultTag = "div";
 
@@ -12,9 +12,9 @@ type Props = ComponentProps<typeof defaultTag>;
 
 export const VimeoSpinner = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
-    const vimeoContext = useContext(VimeoContext);
+    const videoContext = useContext(VideoContext);
 
-    if (vimeoContext.status !== "loading") {
+    if (videoContext.status !== "loading") {
       return;
     }
 

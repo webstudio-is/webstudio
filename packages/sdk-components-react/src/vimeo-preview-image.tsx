@@ -5,7 +5,7 @@ import {
   useContext,
 } from "react";
 import { Image, defaultTag } from "./image";
-import { VimeoContext } from "./vimeo";
+import { VideoContext } from "./shared/video";
 
 // Generated using https://png-pixel.com/
 const base64Preview = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkOAMAANIAzr59FiYAAAAASUVORK5CYII=`;
@@ -16,12 +16,12 @@ export const VimeoPreviewImage = forwardRef<
   ElementRef<typeof defaultTag>,
   Props
 >(({ src, ...rest }, ref) => {
-  const vimeoContext = useContext(VimeoContext);
+  const videoContext = useContext(VideoContext);
 
   return (
     <Image
       {...rest}
-      src={String(vimeoContext.previewImageUrl ?? src ?? base64Preview)}
+      src={String(videoContext.previewImageUrl ?? src ?? base64Preview)}
       ref={ref}
     />
   );

@@ -1,447 +1,374 @@
 import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
+  about: { required: false, control: "text", type: "string" },
   accessKey: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/accessKey)",
-    required: true,
+    required: false,
     control: "text",
     type: "string",
+    description: "Keyboard shortcut to activate or add focus to the element.",
   },
-  accessKeyLabel: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/accessKeyLabel)",
-    required: true,
+  autoCapitalize: {
+    required: false,
     control: "text",
     type: "string",
-  },
-  align: {
     description:
-      "Sets or retrieves how the object is aligned with adjacent text.",
-    required: true,
-    control: "text",
-    type: "string",
+      "Sets whether input is automatically capitalized when entered by user.",
   },
-  allow: {
+  autoCorrect: { required: false, control: "text", type: "string" },
+  autoFocus: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/allow)",
-    required: true,
-    control: "text",
-    type: "string",
+      "Indicates that an element should be focused on page load, or when its parent dialog is displayed.",
   },
-  allowFullscreen: {
+  autopause: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/allowFullscreen)",
-    required: true,
+      "Whether to pause the current video when another Vimeo video on the same page starts to play. Set this value to false to permit simultaneous playback of all the videos on the page. This option has no effect if you've disabled cookies in your browser, either through browser settings or with an extension or plugin.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
+  autopip: {
+    description:
+      "Whether to enable the browser to enter picture-in-picture mode automatically when switching tabs or windows, where supported.",
+    required: false,
     control: "boolean",
     type: "boolean",
   },
-  autocapitalize: {
+  autoplay: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/autocapitalize)",
-    required: true,
-    control: "text",
-    type: "string",
+      "Whether to start playback of the video automatically. This feature might not work on all devices.\nSome browsers require the `muted` parameter to be set to `true` for autoplay to work.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
-  autofocus: {
+  autoSave: { required: false, control: "text", type: "string" },
+  backgroundMode: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/autofocus)",
-    required: true,
+      "Whether the player is in background mode, which hides the playback controls, enables autoplay, and loops the video.",
+    required: false,
     control: "boolean",
     type: "boolean",
   },
-  baseURI: {
+  className: { required: false, control: "text", type: "string" },
+  color: {
+    required: false,
+    control: "color",
+    type: "string",
     description:
-      "Returns node's node document's document base URL.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/baseURI)",
-    required: true,
+      "This attribute sets the text color using either a named color or a  color specified in the hexadecimal #RRGGBB format. Note: This is a legacy attribute. Please use the CSS color property instead.",
+  },
+  content: {
+    required: false,
     control: "text",
     type: "string",
-  },
-  childElementCount: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Document/childElementCount)",
-    required: true,
-    control: "number",
-    type: "number",
+      "A value associated with http-equiv orname depending on the context.",
   },
-  className: {
-    description:
-      "Returns the value of element's class content attribute. Can be set to change it.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/className)",
-    required: true,
+  contextMenu: {
+    required: false,
     control: "text",
     type: "string",
-  },
-  clientHeight: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/clientHeight)",
-    required: true,
-    control: "number",
-    type: "number",
+      "Defines the ID of a menu element which willserve as the element's context menu.",
   },
-  clientLeft: {
+  controlsColor: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/clientLeft)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  clientTop: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/clientTop)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  clientWidth: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/clientWidth)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  contentEditable: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/contentEditable)",
-    required: true,
-    control: "text",
+      "A color value of the playback controls, which is normally #00ADEF. The embed settings of the video might override this value.",
+    required: false,
+    control: "color",
     type: "string",
   },
-  currentCSSZoom: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/currentCSSZoom)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
+  datatype: { required: false, control: "text", type: "string" },
+  defaultChecked: { required: false, control: "boolean", type: "boolean" },
+  defaultValue: { required: false, control: "text", type: "string" },
   dir: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/dir)",
-    required: true,
+    required: false,
     control: "text",
     type: "string",
+    description:
+      "Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl (Right-To-Left)",
+  },
+  doNotTrack: {
+    description:
+      "Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
   draggable: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/draggable)",
-    required: true,
+    required: false,
     control: "boolean",
     type: "boolean",
-  },
-  enterKeyHint: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/enterKeyHint)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  frameBorder: {
-    description: "Sets or retrieves whether to display a border for the frame.",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  height: {
-    description:
-      "Sets or retrieves the height of the object.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/height)",
-    required: true,
-    control: "text",
-    type: "string",
+    description: "Defines whether the element can be dragged.",
   },
   hidden: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/hidden)",
-    required: true,
+    required: false,
     control: "boolean",
     type: "boolean",
+    description:
+      "Prevents rendering of given element, while keeping child elements, e.g. script elements, active.",
   },
   id: {
-    description:
-      "Returns the value of element's id content attribute. Can be set to change it.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/id)",
-    required: true,
+    required: false,
     control: "text",
     type: "string",
-  },
-  inert: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/inert)",
-    required: true,
-    control: "boolean",
-    type: "boolean",
-  },
-  innerHTML: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/innerHTML)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  innerText: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/innerText)",
-    required: true,
-    control: "text",
-    type: "string",
+      "Often used with CSS to style a specific element. The value of this attribute must be unique.",
   },
   inputMode: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/inputMode)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  isConnected: {
-    description:
-      "Returns true if node is connected and false otherwise.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/isConnected)",
-    required: true,
-    control: "boolean",
-    type: "boolean",
-  },
-  isContentEditable: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/isContentEditable)",
-    required: true,
-    control: "boolean",
-    type: "boolean",
-  },
-  lang: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/lang)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  loading: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/loading)",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
-    control: "text",
-    type: "string",
-    defaultValue: "lazy",
-  },
-  localName: {
-    description:
-      "Returns the local name.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/localName)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  longDesc: {
-    description: "Sets or retrieves a URI to a long description of the object.",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  marginHeight: {
-    description:
-      "Sets or retrieves the top and bottom margin heights before displaying the text in a frame.",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  marginWidth: {
-    description:
-      "Sets or retrieves the left and right margin widths before displaying the text in a frame.",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  name: {
-    description:
-      "Sets or retrieves the frame name.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/name)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  nodeName: {
-    description:
-      "Returns a string appropriate for the type of node.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/nodeName)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  nodeType: {
-    description:
-      "Returns the type of node.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/nodeType)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  nonce: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/nonce)",
-    required: false,
-    control: "text",
-    type: "string",
-  },
-  offsetHeight: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetHeight)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  offsetLeft: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetLeft)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  offsetTop: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetTop)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  offsetWidth: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetWidth)",
-    required: true,
-    control: "number",
-    type: "number",
-  },
-  outerHTML: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/outerHTML)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  outerText: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/outerText)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  referrerPolicy: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/referrerPolicy)",
-    required: true,
     control: "select",
     type: "string",
     options: [
-      "",
-      "no-referrer",
-      "no-referrer-when-downgrade",
-      "origin",
-      "origin-when-cross-origin",
-      "same-origin",
-      "strict-origin",
-      "strict-origin-when-cross-origin",
-      "unsafe-url",
+      "search",
+      "text",
+      "url",
+      "none",
+      "tel",
+      "email",
+      "numeric",
+      "decimal",
     ],
   },
+  interactiveParams: {
+    description:
+      "Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive.",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  is: {
+    description:
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
+    required: false,
+    control: "text",
+    type: "string",
+  },
+  itemID: { required: false, control: "text", type: "string" },
+  itemProp: { required: false, control: "text", type: "string" },
+  itemRef: { required: false, control: "text", type: "string" },
+  itemScope: { required: false, control: "boolean", type: "boolean" },
+  itemType: { required: false, control: "text", type: "string" },
+  keyboard: {
+    description:
+      "Whether to enable keyboard input to trigger player events. This setting doesn't affect tab control.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
+  lang: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Defines the language used in the element.",
+  },
+  loading: {
+    description:
+      "Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source",
+    required: false,
+    control: "radio",
+    type: "string",
+    defaultValue: "lazy",
+    options: ["eager", "lazy"],
+  },
+  loop: {
+    description:
+      "Whether to restart the video automatically after reaching the end.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  muted: {
+    description:
+      "Whether the video is muted upon loading. The true value is required for the autoplay behavior in some browsers.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  nonce: { required: false, control: "text", type: "string" },
+  pip: {
+    description:
+      "Whether to include the picture-in-picture button among the player controls and enable the picture-in-picture API.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  playsinline: {
+    description:
+      "Whether the video plays inline on supported mobile devices. To force the device to play the video in fullscreen mode instead, set this value to false.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  prefix: { required: false, control: "text", type: "string" },
+  property: { required: false, control: "text", type: "string" },
+  quality: {
+    description:
+      "For videos on a Vimeo Plus account or higher: the playback quality of the video. Use auto for the best possible quality given available bandwidth and other factors. You can also specify 360p, 540p, 720p, 1080p, 2k, and 4k.",
+    required: false,
+    control: "select",
+    type: "string",
+    defaultValue: "auto",
+    options: ["auto", "360p", "540p", "720p", "1080p", "2k", "4k"],
+  },
+  radioGroup: { required: false, control: "text", type: "string" },
+  rel: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Specifies the relationship of the target object to the link object.",
+  },
+  resource: { required: false, control: "text", type: "string" },
+  responsive: {
+    description:
+      "Whether to return a responsive embed code, or one that provides intelligent adjustments based on viewing conditions. We recommend this option for mobile-optimized sites.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
+  },
+  results: { required: false, control: "number", type: "number" },
+  rev: { required: false, control: "text", type: "string" },
   role: {
-    required: true,
+    required: false,
     control: "text",
     type: "string",
     description:
       "Defines an explicit role for an element for use by assistive technologies.",
   },
-  scrollHeight: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/scrollHeight)",
-    required: true,
-    control: "number",
-    type: "number",
+  security: { required: false, control: "text", type: "string" },
+  showByline: {
+    description: "Whether to display the video owner's name.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
-  scrolling: {
-    description: "Sets or retrieves whether the frame can be scrolled.",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  scrollLeft: {
+  showControls: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/scrollLeft)",
-    required: true,
-    control: "number",
-    type: "number",
+      "Whether to display the player's interactive elements, including the play bar and sharing buttons. Set this option to false for a chromeless experience. To control playback when the play/pause button is hidden, set autoplay to true, use keyboard controls (which remain active), or implement our player SDK.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
   },
-  scrollTop: {
+  showPortrait: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/scrollTop)",
-    required: true,
-    control: "number",
-    type: "number",
+      "Whether to display the video owner's portrait. Only works if either title or byline are also enabled",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: true,
   },
-  scrollWidth: {
+  showPreview: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/scrollWidth)",
-    required: true,
-    control: "number",
-    type: "number",
+      "Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  showTitle: {
+    description: "Whether the player displays the title overlay.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
   },
   slot: {
-    description:
-      "Returns the value of element's slot content attribute. Can be set to change it.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/slot)",
-    required: true,
+    required: false,
     control: "text",
     type: "string",
+    description: "Assigns a slot in a shadow DOM shadow tree to an element.",
   },
-  spellcheck: {
+  speed: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/spellcheck)",
-    required: true,
+      "Whether the player displays speed controls in the preferences menu and enables the playback rate API.",
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    defaultValue: false,
+  },
+  spellCheck: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
+    description: "Indicates whether spell checking is allowed for the element.",
+  },
+  suppressContentEditableWarning: {
+    required: false,
     control: "boolean",
     type: "boolean",
   },
-  src: {
-    description:
-      "Sets or retrieves a URL to be loaded by the object.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/src)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
-  srcdoc: {
-    description:
-      "Sets or retrives the content of the page that is to contain.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/srcdoc)",
-    required: true,
-    control: "text",
-    type: "string",
+  suppressHydrationWarning: {
+    required: false,
+    control: "boolean",
+    type: "boolean",
   },
   tabIndex: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/tabIndex)",
-    required: true,
+    required: false,
     control: "number",
     type: "number",
-  },
-  tagName: {
     description:
-      "Returns the HTML-uppercased qualified name.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Element/tagName)",
-    required: true,
+      "Overrides the browser's default tab order and follows the one specified instead.",
+  },
+  texttrack: {
+    description:
+      "The text track to display with the video. Specify the text track by its language code (en), the language code and locale (en-US), or the language code and kind (en.captions). For this argument to work, the video must already have a text track of the given type; see our Help Center or Working with Text Track Uploads for more information.\nTo enable automatically generated closed captions instead, provide the value en-x-autogen. Please note that, at the present time, automatic captions are always in English.",
+    required: false,
     control: "text",
     type: "string",
   },
   title: {
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/title)",
-    required: true,
+      'The `title` attribute for the iframe.\nImproves accessibility by providing a brief description of the video content for screen readers.\nExample: "Video about web development tips".',
+    required: false,
     control: "text",
     type: "string",
   },
   translate: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["yes", "no"],
     description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/translate)",
-    required: true,
+      "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
+  },
+  transparent: {
+    description:
+      "Whether the responsive player and transparent background are enabled.",
+    required: false,
     control: "boolean",
     type: "boolean",
+    defaultValue: true,
   },
-  width: {
+  typeof: { required: false, control: "text", type: "string" },
+  unselectable: {
+    required: false,
+    control: "radio",
+    type: "string",
+    options: ["on", "off"],
+  },
+  url: {
     description:
-      "Sets or retrieves the width of the object.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLIFrameElement/width)",
-    required: true,
+      "The ID or the URL of the video on Vimeo. You must supply one of these values to identify the video. When the video's privacy setting is Private, you must use the URL, and the URL must include the h parameter. For more information, see Vimeo’s introductory guide.",
+    required: false,
     control: "text",
     type: "string",
   },
-  writingSuggestions: {
-    description:
-      "[MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/writingSuggestions)",
-    required: true,
-    control: "text",
-    type: "string",
-  },
+  vocab: { required: false, control: "text", type: "string" },
 };
