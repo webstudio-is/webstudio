@@ -14,7 +14,7 @@ export const Tabs = forwardRef<
 >(({ defaultValue, ...props }, ref) => {
   const [value, onValueChange] = useControllableState({
     prop: props.value,
-    defaultProp: defaultValue,
+    defaultProp: defaultValue ?? "",
     onChange: props.onValueChange,
   });
 

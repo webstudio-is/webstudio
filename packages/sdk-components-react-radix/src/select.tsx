@@ -5,6 +5,7 @@ import {
   forwardRef,
   type RefAttributes,
   useContext,
+  type ComponentPropsWithRef,
 } from "react";
 import {
   Root,
@@ -23,11 +24,11 @@ import {
   ReactSdkContext,
 } from "@webstudio-is/react-sdk/runtime";
 
-export const Select = forwardRef<HTMLDivElement, ComponentProps<typeof Root>>(
-  ({ value, defaultValue, ...props }, _ref) => {
-    return <Root {...props} defaultValue={value ?? defaultValue} />;
-  }
-);
+export const Select: ForwardRefExoticComponent<
+  ComponentPropsWithRef<typeof Root>
+> = forwardRef(({ value, defaultValue, ...props }, _ref) => {
+  return <Root {...props} defaultValue={value ?? defaultValue} />;
+});
 
 export const SelectTrigger = forwardRef<
   HTMLButtonElement,
