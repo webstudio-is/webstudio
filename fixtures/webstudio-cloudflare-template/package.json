@@ -27,11 +27,11 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@remix-run/cloudflare": "2.16.4",
-    "@remix-run/cloudflare-pages": "2.16.4",
-    "@remix-run/node": "2.16.4",
-    "@remix-run/react": "2.16.4",
-    "@remix-run/server-runtime": "2.16.4",
+    "@remix-run/cloudflare": "2.16.5",
+    "@remix-run/cloudflare-pages": "2.16.5",
+    "@remix-run/node": "2.16.5",
+    "@remix-run/react": "2.16.5",
+    "@remix-run/server-runtime": "2.16.5",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -48,12 +48,12 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
-    "@remix-run/dev": "2.16.4",
+    "@remix-run/dev": "2.16.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "fast-glob": "^3.3.2",
     "typescript": "5.8.2",
-    "vite": "^6.3.3",
+    "vite": "^6.3.4",
     "wrangler": "^3.63.2"
   }
 }
