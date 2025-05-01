@@ -21,6 +21,10 @@ const hasPrivateFolders =
     ignore: ["**/node_modules/**"],
   }).length > 0;
 
+const conditions = hasPrivateFolders
+  ? ["webstudio-private", "webstudio"]
+  : ["webstudio"];
+
 export default defineConfig(({ mode }) => {
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
@@ -65,10 +69,7 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      conditions: hasPrivateFolders
-        ? ["webstudio-private", "webstudio"]
-        : ["webstudio"],
-
+      conditions: [...conditions, "browser", "development|production"],
       alias: [
         {
           find: "~",
@@ -81,6 +82,11 @@ export default defineConfig(({ mode }) => {
           replacement: resolve("./app/shared/empty.ts"),
         },
       ],
+    },
+    ssr: {
+      resolve: {
+        conditions: [...conditions, "node", "development|production"],
+      },
     },
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),

@@ -18,4 +18,12 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ].filter(Boolean),
+  resolve: {
+    conditions: ["browser", "development|production"],
+  },
+  ssr: {
+    resolve: {
+      conditions: ["node", "development|production"],
+    },
+  },
 }));

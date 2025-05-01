@@ -39,7 +39,7 @@
     "@types/css-tree": "^2.3.1",
     "@types/node": "^22.13.10",
     "@types/react": "^18.2.70",
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.3",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-unicorn": "^57.0.0",

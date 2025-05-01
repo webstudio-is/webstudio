@@ -25,11 +25,11 @@ const conditions = hasPrivateFolders
 
 export default defineConfig(({ mode }) => ({
   resolve: {
-    conditions,
+    conditions: [...conditions, "browser", "development|production"],
   },
   ssr: {
     resolve: {
-      conditions,
+      conditions: [...conditions, "node", "development|production"],
     },
   },
   plugins: [
