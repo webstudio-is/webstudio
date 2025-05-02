@@ -39,7 +39,7 @@ export const sections = new Map<
   ["filter", filter],
   ["backdropFilters", backdropFilter],
   ["transitions", transitions],
-  ["transfrom", transforms],
+  ["transforms", transforms],
   ["outline", outline],
   ["advanced", advanced],
 ]);
