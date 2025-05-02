@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "typecheck": "wrangler types && tsc",
+    "typegen": "wrangler types",
+    "preview": "react-router build && vite preview",
+    "deploy": "react-router build && wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/vite-plugin": "^1.1.0",
+    "wrangler": "^4.14.1"
+  }
+}
