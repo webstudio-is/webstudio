@@ -4,7 +4,6 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": [
       "./worker-configuration.d.ts",
-      "./.react-router/types/+virtual.d.ts",
       "vite/client",
       "@webstudio-is/react-sdk/placeholder"
     ],
