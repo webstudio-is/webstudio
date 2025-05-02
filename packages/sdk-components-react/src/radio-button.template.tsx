@@ -8,7 +8,7 @@ export const meta: TemplateMeta = {
   template: (
     <$.Label ws:label="Radio Field">
       <$.RadioButton />
-      <$.Text ws:label="Radio Label" tag="span">
+      <$.Text ws:label="Radio Label" ws:tag="span">
         {new PlaceholderValue("Radio")}
       </$.Text>
     </$.Label>

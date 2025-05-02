@@ -1,7 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import { useEffect } from "react";
-import { initialBreakpoints } from "@webstudio-is/sdk";
-import { coreMetas } from "@webstudio-is/react-sdk";
+import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import {
@@ -41,16 +40,12 @@ $breakpoints.set(
   )
 );
 
-const pages = createDefaultPages({
-  rootInstanceId: "",
-  systemDataSourceId: "",
-});
+const pages = createDefaultPages({ rootInstanceId: "" });
 pages.pages.push({
   id: "page2",
   path: "",
   name: "Second Page",
   rootInstanceId: "",
-  systemDataSourceId: "",
   title: "",
   meta: {},
 });
@@ -59,7 +54,6 @@ pages.pages.push({
   path: "",
   name: "Thrid Page",
   rootInstanceId: "",
-  systemDataSourceId: "",
   title: "",
   meta: {},
 });
@@ -87,7 +81,7 @@ export const CommandPanel: StoryFn = () => {
       <button onClick={openCommandPanel}>Open command panel</button>
       <br />
       <input
-        defaultValue="Press cmd+k to open command panel"
+        defaultValue="Press meta+k to open command panel"
         style={{ width: 300 }}
       />
       <CommandPanelComponent />

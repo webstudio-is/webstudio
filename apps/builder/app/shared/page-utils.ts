@@ -15,7 +15,13 @@ import {
 import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
+  unwrap,
 } from "./instance-utils";
+import {
+  findAvailableVariables,
+  restoreExpressionVariables,
+  unsetExpressionVariables,
+} from "./data-variables";
 
 const deduplicateName = (
   pages: Pages,
@@ -99,67 +105,83 @@ export const insertPageCopyMutable = ({
   insertWebstudioFragmentCopy({
     data: target.data,
     fragment: extractWebstudioFragment(source.data, ROOT_INSTANCE_ID),
-    availableDataSources: new Set(),
+    availableVariables: findAvailableVariables({
+      ...target.data,
+      startingInstanceId: ROOT_INSTANCE_ID,
+    }),
   });
+  const unsetVariables = new Set<DataSource["id"]>();
+  const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
+  // replace legacy page system with global variable
+  if (page.systemDataSourceId) {
+    unsetVariables.add(page.systemDataSourceId);
+    unsetNameById.set(page.systemDataSourceId, "system");
+  }
+  const availableVariables = findAvailableVariables({
+    ...target.data,
+    startingInstanceId: ROOT_INSTANCE_ID,
+  });
+  const maskedIdByName = new Map<DataSource["name"], DataSource["id"]>();
+  for (const dataSource of availableVariables) {
+    maskedIdByName.set(dataSource.name, dataSource.id);
+  }
   // copy paste page body
   const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
     data: target.data,
-    fragment: extractWebstudioFragment(source.data, page.rootInstanceId),
-    availableDataSources: new Set(),
+    fragment: extractWebstudioFragment(source.data, page.rootInstanceId, {
+      unsetVariables,
+    }),
+    availableVariables,
   });
-  const newPageId = nanoid();
-  const newRootInstanceId =
+  // unwrap page draft
+  const newPage = structuredClone(unwrap(page));
+  newPage.id = nanoid();
+  delete newPage.systemDataSourceId;
+  newPage.rootInstanceId =
     newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
-  const newSystemDataSourceId =
-    newDataSourceIds.get(page.systemDataSourceId) ?? page.systemDataSourceId;
-  const newPage: Page = {
-    ...page,
-    id: newPageId,
-    rootInstanceId: newRootInstanceId,
-    systemDataSourceId: newSystemDataSourceId,
-    name: deduplicateName(target.data.pages, target.folderId, page.name),
-    path: deduplicatePath(target.data.pages, target.folderId, page.path),
-    title: replaceDataSources(page.title, newDataSourceIds),
-    meta: {
-      ...page.meta,
-      description:
-        page.meta.description === undefined
-          ? undefined
-          : replaceDataSources(page.meta.description, newDataSourceIds),
-      excludePageFromSearch:
-        page.meta.excludePageFromSearch === undefined
-          ? undefined
-          : replaceDataSources(
-              page.meta.excludePageFromSearch,
-              newDataSourceIds
-            ),
-      socialImageUrl:
-        page.meta.socialImageUrl === undefined
-          ? undefined
-          : replaceDataSources(page.meta.socialImageUrl, newDataSourceIds),
-      language:
-        page.meta.language === undefined
-          ? undefined
-          : replaceDataSources(page.meta.language, newDataSourceIds),
-      status:
-        page.meta.status === undefined
-          ? undefined
-          : replaceDataSources(page.meta.status, newDataSourceIds),
-      redirect:
-        page.meta.redirect === undefined
-          ? undefined
-          : replaceDataSources(page.meta.redirect, newDataSourceIds),
-      custom: page.meta.custom?.map(({ property, content }) => ({
-        property,
-        content: replaceDataSources(content, newDataSourceIds),
-      })),
-    },
+  newPage.name = deduplicateName(target.data.pages, target.folderId, page.name);
+  newPage.path = deduplicatePath(target.data.pages, target.folderId, page.path);
+  const transformExpression = (expression: string) => {
+    // rebind expressions with from page system variable to global one
+    expression = unsetExpressionVariables({ expression, unsetNameById });
+    expression = restoreExpressionVariables({ expression, maskedIdByName });
+    expression = replaceDataSources(expression, newDataSourceIds);
+    return expression;
   };
+  newPage.title = transformExpression(newPage.title);
+  if (newPage.meta.description !== undefined) {
+    newPage.meta.description = transformExpression(newPage.meta.description);
+  }
+  if (newPage.meta.excludePageFromSearch !== undefined) {
+    newPage.meta.excludePageFromSearch = transformExpression(
+      newPage.meta.excludePageFromSearch
+    );
+  }
+  if (newPage.meta.socialImageUrl !== undefined) {
+    newPage.meta.socialImageUrl = transformExpression(
+      newPage.meta.socialImageUrl
+    );
+  }
+  if (newPage.meta.language !== undefined) {
+    newPage.meta.language = transformExpression(newPage.meta.language);
+  }
+  if (newPage.meta.status !== undefined) {
+    newPage.meta.status = transformExpression(newPage.meta.status);
+  }
+  if (newPage.meta.redirect !== undefined) {
+    newPage.meta.redirect = transformExpression(newPage.meta.redirect);
+  }
+  if (newPage.meta.custom) {
+    newPage.meta.custom = newPage.meta.custom.map(({ property, content }) => ({
+      property,
+      content: transformExpression(content),
+    }));
+  }
   target.data.pages.pages.push(newPage);
   for (const folder of target.data.pages.folders) {
     if (folder.id === target.folderId) {
-      folder.children.push(newPageId);
+      folder.children.push(newPage.id);
     }
   }
-  return newPageId;
+  return newPage.id;
 };

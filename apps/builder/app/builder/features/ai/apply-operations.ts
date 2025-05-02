@@ -1,19 +1,24 @@
 import { nanoid } from "nanoid";
-import { getStyleDeclKey, Instance, type StyleSource } from "@webstudio-is/sdk";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
+import {
+  getStyleDeclKey,
+  Instance,
+  isComponentDetachable,
+  type StyleSource,
+} from "@webstudio-is/sdk";
 import type { copywriter, operations } from "@webstudio-is/ai";
 import { serverSyncStore } from "~/shared/sync";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
+  findClosestInsertable,
   insertWebstudioFragmentAt,
-  isInstanceDetachable,
   updateWebstudioData,
   type Insertable,
 } from "~/shared/instance-utils";
 import {
   $breakpoints,
   $instances,
+  $props,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $styleSourceSelections,
@@ -21,7 +26,9 @@ import {
   $styles,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $selectedInstance } from "~/shared/awareness";
+import { $selectedInstance, getInstancePath } from "~/shared/awareness";
+import { isRichTextTree } from "~/shared/content-model";
+import { generateDataFromEmbedTemplate } from "./embed-template";
 
 export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {
@@ -47,7 +54,7 @@ const insertTemplateByOp = (
   operation: operations.generateInsertTemplateWsOperation
 ) => {
   const metas = $registeredComponentMetas.get();
-  const templateData = generateDataFromEmbedTemplate(operation.template, metas);
+  const fragment = generateDataFromEmbedTemplate(operation.template, metas);
 
   // @todo Find a way to avoid the workaround below, peharps improving the prompt.
   // Occasionally the LLM picks a component name or the entire data-ws-id attribute as the insertion point.
@@ -63,26 +70,18 @@ const insertTemplateByOp = (
     }
   }
 
-  const rootInstanceIds = templateData.children
+  const rootInstanceIds = fragment.children
     .filter((child) => child.type === "id")
     .map((child) => child.value);
 
   const instanceSelector = computeSelectorForInstanceId(operation.addTo);
   if (instanceSelector) {
-    const currentInstance = $instances.get().get(instanceSelector[0]);
-    // Only container components are allowed to have child elements.
-    if (
-      currentInstance &&
-      metas.get(currentInstance.component)?.type !== "container"
-    ) {
-      return;
-    }
-
-    const dropTarget: Insertable = {
+    let insertable: Insertable = {
       parentSelector: instanceSelector,
       position: operation.addAtIndex + 1,
     };
-    insertWebstudioFragmentAt(templateData, dropTarget);
+    insertable = findClosestInsertable(fragment, insertable) ?? insertable;
+    insertWebstudioFragmentAt(fragment, insertable);
     return rootInstanceIds;
   }
 };
@@ -97,10 +96,15 @@ const deleteInstanceByOp = (
       return;
     }
     updateWebstudioData((data) => {
-      if (isInstanceDetachable(data.instances, instanceSelector) === false) {
+      const [instanceId] = instanceSelector;
+      const instance = data.instances.get(instanceId);
+      if (instance && !isComponentDetachable(instance.component)) {
         return;
       }
-      deleteInstanceMutable(data, instanceSelector);
+      deleteInstanceMutable(
+        data,
+        getInstancePath(instanceSelector, data.instances)
+      );
     });
   }
 };
@@ -204,39 +208,47 @@ const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
 };
 
 export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
-  serverSyncStore.createTransaction([$instances], (instances) => {
-    const currentInstance = instances.get(textInstance.instanceId);
+  serverSyncStore.createTransaction(
+    [$instances, $props],
+    (instances, props) => {
+      const currentInstance = instances.get(textInstance.instanceId);
 
-    if (currentInstance === undefined) {
-      return;
-    }
-
-    const meta = $registeredComponentMetas.get().get(currentInstance.component);
-
-    // Only container components are allowed to have child elements.
-    if (meta?.type !== "container") {
-      return;
-    }
-
-    if (currentInstance.children.length === 0) {
-      currentInstance.children = [{ type: "text", value: textInstance.text }];
-      return;
-    }
-
-    // Instances can have a number of text child nodes without interleaving components.
-    // When this is the case we treat the child nodes as a single text node,
-    // otherwise the AI would generate children.length chunks of separate text.
-    // We can identify this case of "joint" text instances when the index is -1.
-    const replaceAll = textInstance.index === -1;
-    if (replaceAll) {
-      if (currentInstance.children.every((child) => child.type === "text")) {
-        currentInstance.children = [{ type: "text", value: textInstance.text }];
+      if (currentInstance === undefined) {
+        return;
       }
-      return;
-    }
 
-    if (currentInstance.children[textInstance.index].type === "text") {
-      currentInstance.children[textInstance.index].value = textInstance.text;
+      const canBeEdited = isRichTextTree({
+        instanceId: textInstance.instanceId,
+        instances,
+        props,
+        metas: $registeredComponentMetas.get(),
+      });
+      if (!canBeEdited) {
+        return;
+      }
+
+      if (currentInstance.children.length === 0) {
+        currentInstance.children = [{ type: "text", value: textInstance.text }];
+        return;
+      }
+
+      // Instances can have a number of text child nodes without interleaving components.
+      // When this is the case we treat the child nodes as a single text node,
+      // otherwise the AI would generate children.length chunks of separate text.
+      // We can identify this case of "joint" text instances when the index is -1.
+      const replaceAll = textInstance.index === -1;
+      if (replaceAll) {
+        if (currentInstance.children.every((child) => child.type === "text")) {
+          currentInstance.children = [
+            { type: "text", value: textInstance.text },
+          ];
+        }
+        return;
+      }
+
+      if (currentInstance.children[textInstance.index].type === "text") {
+        currentInstance.children[textInstance.index].value = textInstance.text;
+      }
     }
-  });
+  );
 };

@@ -5,6 +5,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import {
   Box,
+  keyframes,
   rawTheme,
   ScrollArea,
   SmallIconButton,
@@ -19,15 +20,18 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
+  ROOT_INSTANCE_ID,
   collectionComponent,
   blockComponent,
   rootComponent,
-  showAttribute,
-  WsComponentMeta,
   blockTemplateComponent,
-} from "@webstudio-is/react-sdk";
-import { ROOT_INSTANCE_ID, type Instance } from "@webstudio-is/sdk";
+  descendantComponent,
+  type Instance,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
+import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
@@ -47,6 +51,7 @@ import {
   $selectedInstanceSelector,
   getIndexedInstanceId,
   type ItemDropTarget,
+  $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -59,7 +64,11 @@ import {
   getInstanceKey,
   selectInstance,
 } from "~/shared/awareness";
-import { findClosestContainer, isTreeMatching } from "~/shared/matcher";
+import {
+  findClosestContainer,
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
 
 type TreeItemAncestor =
   | undefined
@@ -280,23 +289,44 @@ const handleExpand = (item: TreeItem, isExpanded: boolean, all: boolean) => {
   $expandedItems.set(expandedItems);
 };
 
+const pulse = keyframes({
+  "0%": { fillOpacity: 0 },
+  "100%": { fillOpacity: 1 },
+});
+
+const AnimatedEyeOpenIcon = styled(EyeOpenIcon, {
+  "& .ws-eye-open-pupil": {
+    transformOrigin: "center",
+    animation: `${pulse} 1.5s ease-in-out infinite alternate`,
+    fill: "currentColor",
+  },
+});
+
 const ShowToggle = ({
-  instanceId,
+  instance,
   value,
+  isAnimating,
 }: {
-  instanceId: Instance["id"];
+  instance: Instance;
   value: boolean;
+  isAnimating: boolean;
 }) => {
+  // descendant component is not actually rendered
+  // but affects styling of nested elements
+  // hiding descendant does not hide nested elements and confuse users
+  if (instance.component === descendantComponent) {
+    return;
+  }
   const toggleShow = () => {
     const newValue = value === false;
     serverSyncStore.createTransaction([$props], (props) => {
       const { propsByInstanceId } = $propsIndex.get();
-      const instanceProps = propsByInstanceId.get(instanceId);
+      const instanceProps = propsByInstanceId.get(instance.id);
       let showProp = instanceProps?.find((prop) => prop.name === showAttribute);
       if (showProp === undefined) {
         showProp = {
           id: nanoid(),
-          instanceId,
+          instanceId: instance.id,
           name: showAttribute,
           type: "boolean",
           value: newValue,
@@ -307,18 +337,45 @@ const ShowToggle = ({
       }
     });
   };
+
+  const EyeIcon = isAnimating ? AnimatedEyeOpenIcon : EyeOpenIcon;
+
   return (
     <Tooltip
       // If you are changing it, change the other one too
-      content="Removes the instance from the DOM. Breakpoints have no effect on this setting."
+      content={
+        <Text>
+          Removes the instance from the DOM. Breakpoints have no effect on this
+          setting.
+          {isAnimating && value && (
+            <>
+              <br />
+              <Text css={{ color: theme.colors.foregroundPrimary }}>
+                Animation is running on canvas.
+              </Text>
+            </>
+          )}
+        </Text>
+      }
       disableHoverableContent
       variant="wrapped"
     >
       <SmallIconButton
+        css={
+          value && isAnimating
+            ? {
+                color: theme.colors.foregroundPrimary,
+                "&:hover": {
+                  color: theme.colors.foregroundPrimary,
+                  filter: "brightness(80%)",
+                },
+              }
+            : undefined
+        }
         tabIndex={-1}
         aria-label="Show"
         onClick={toggleShow}
-        icon={value ? <EyeOpenIcon /> : <EyeClosedIcon />}
+        icon={value ? <EyeIcon /> : <EyeClosedIcon />}
       />
     </Tooltip>
   );
@@ -378,7 +435,9 @@ const TreeNodeContent = ({
         ref={mergeRefs(editableRef, ref)}
         {...handlers}
         isEditing={isEditing}
-      />
+      >
+        {label}
+      </EditableTreeNodeLabel>
     </TreeNodeLabel>
   );
 };
@@ -430,6 +489,16 @@ const getBuilderDropTarget = (
 };
 
 const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
+  // forbid moving root instance
+  if (instanceSelector.length === 1) {
+    return false;
+  }
+
+  // Do not drag if the instance name is being edited
+  if ($editingItemSelector.get()?.join(",") === instanceSelector.join(",")) {
+    return false;
+  }
+
   if ($isContentMode.get()) {
     const parentId = instanceSelector[1];
     const parentInstance = $instances.get().get(parentId);
@@ -445,17 +514,18 @@ const canDrag = (instance: Instance, instanceSelector: InstanceSelector) => {
     return false;
   }
 
-  const meta = $registeredComponentMetas.get().get(instance.component);
-  if (meta === undefined) {
-    return true;
-  }
-  const detachable = meta.type !== "rich-text-child";
-  if (detachable === false) {
+  const isContent = isRichTextContent({
+    instanceSelector,
+    instances: $instances.get(),
+    props: $props.get(),
+    metas: $registeredComponentMetas.get(),
+  });
+  if (isContent) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
   }
-  return detachable;
+  return !isContent;
 };
 
 const canDrop = (
@@ -464,6 +534,7 @@ const canDrop = (
 ) => {
   const dropSelector = dropTarget.itemSelector;
   const instances = $instances.get();
+  const props = $props.get();
   const metas = $registeredComponentMetas.get();
   // in content mode allow drop only within same block
   if ($isContentMode.get()) {
@@ -477,23 +548,24 @@ const canDrop = (
     }
   }
   // prevent dropping into non-container instances
-  const closestContainerIndex = findClosestContainer({
+  const containerSelector = findClosestContainer({
     metas,
+    props,
     instances,
     instanceSelector: dropSelector,
   });
-  if (closestContainerIndex !== 0) {
+  if (dropSelector.length !== containerSelector.length) {
     return false;
   }
-  return isTreeMatching({
+  // make sure dragging tree can be put inside of drop instance
+  const containerInstanceSelector = [dragSelector[0], ...dropSelector];
+  const matches = isTreeSatisfyingContentModel({
     instances,
     metas,
-    // make sure dragging tree can be put inside of drop instance
-    instanceSelector: [
-      dragSelector[0],
-      ...dropSelector.slice(closestContainerIndex),
-    ],
+    props,
+    instanceSelector: containerInstanceSelector,
   });
+  return matches;
 };
 
 export const NavigatorTree = () => {
@@ -503,7 +575,11 @@ export const NavigatorTree = () => {
   const selectedKey = selectedInstanceSelector?.join();
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const hoveredKey = hoveredInstanceSelector?.join();
-  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const propValuesByInstanceSelectorWithMemoryProps = useStore(
+    $propValuesByInstanceSelectorWithMemoryProps
+  );
+  const { propsByInstanceId } = useStore($propsIndex);
+
   const metas = useStore($registeredComponentMetas);
   const editingItemSelector = useStore($editingItemSelector);
   const dragAndDropState = useStore($dragAndDropState);
@@ -530,6 +606,20 @@ export const NavigatorTree = () => {
     }
   }, [selectedInstanceSelector]);
 
+  const selectInstanceAndClearSelection = (
+    instanceSelector: undefined | Instance["id"][],
+    event: React.MouseEvent | React.FocusEvent
+  ) => {
+    if (event.currentTarget.querySelector("[contenteditable]") === null) {
+      // Allow text selection and edits inside current TreeNode
+      // Outside if text is selected, it needs to be unselected before selecting the instance.
+      // Otherwise user will cmd+c the text instead of copying the instance.
+      window.getSelection()?.removeAllRanges();
+    }
+
+    selectInstance(instanceSelector);
+  };
+
   return (
     <ScrollArea
       direction="both"
@@ -546,8 +636,10 @@ export const NavigatorTree = () => {
             level={0}
             isSelected={selectedKey === ROOT_INSTANCE_ID}
             buttonProps={{
-              onClick: () => selectInstance([ROOT_INSTANCE_ID]),
-              onFocus: () => selectInstance([ROOT_INSTANCE_ID]),
+              onClick: (event) =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID], event),
+              onFocus: (event) =>
+                selectInstanceAndClearSelection([ROOT_INSTANCE_ID], event),
             }}
             action={
               <Tooltip
@@ -574,14 +666,30 @@ export const NavigatorTree = () => {
         {flatTree.map((item) => {
           const level = item.visibleAncestors.length - 1;
           const key = item.selector.join();
-          const propValues = propValuesByInstanceSelector.get(
+          const propValues = propValuesByInstanceSelectorWithMemoryProps.get(
             getInstanceKey(item.selector)
           );
           const show = Boolean(propValues?.get(showAttribute) ?? true);
+
+          // Hook memory prop
+          const isAnimationSelected =
+            propValues?.get(animationCanPlayOnCanvasProperty) === true;
+
+          const props = propsByInstanceId.get(item.instance.id);
+          const actionProp = props?.find(
+            (prop) => prop.type === "animationAction"
+          );
+
+          const isAnimationPinned = actionProp?.value?.isPinned === true;
+
+          const isAnimating = isAnimationSelected || isAnimationPinned;
+
           const meta = metas.get(item.instance.component);
+
           if (meta === undefined) {
             return;
           }
+
           return (
             <TreeSortableItem
               key={key}
@@ -635,6 +743,7 @@ export const NavigatorTree = () => {
                 isSelected={selectedKey === key}
                 isHighlighted={hoveredKey === key || dropTargetKey === key}
                 isExpanded={item.isExpanded}
+                isActionVisible={isAnimating}
                 onExpand={(isExpanded, all) =>
                   handleExpand(item, isExpanded, all)
                 }
@@ -652,8 +761,10 @@ export const NavigatorTree = () => {
                     $blockChildOutline.set(undefined);
                   },
                   onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-                  onClick: () => selectInstance(item.selector),
-                  onFocus: () => selectInstance(item.selector),
+                  onClick: (event) =>
+                    selectInstanceAndClearSelection(item.selector, event),
+                  onFocus: (event) =>
+                    selectInstanceAndClearSelection(item.selector, event),
                   onKeyDown: (event) => {
                     if (event.key === "Enter") {
                       emitCommand("editInstanceText");
@@ -661,7 +772,11 @@ export const NavigatorTree = () => {
                   },
                 }}
                 action={
-                  <ShowToggle instanceId={item.instance.id} value={show} />
+                  <ShowToggle
+                    instance={item.instance}
+                    value={show}
+                    isAnimating={isAnimating}
+                  />
                 }
               >
                 <TreeNodeContent

@@ -1,3 +1,4 @@
+import type { Simplify } from "type-fest";
 import { atom, computed, onSet } from "nanostores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -15,18 +16,15 @@ import type {
   StyleSources,
   StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import type { Style } from "@webstudio-is/css-engine";
+import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import type { Project } from "@webstudio-is/project";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
-import { $selectedInstanceSelector } from "./instances";
-import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
-import type { Simplify } from "type-fest";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
-import { $selectedInstance } from "../awareness";
+import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
 
 export const $project = atom<Project | undefined>();
@@ -62,10 +60,25 @@ export const $propsIndex = computed($props, (props) => {
   };
 });
 
+/**
+ * $styles contains actual styling rules
+ * (breakpointId, styleSourceId, property, value, listed), tied to styleSourceIds
+ * $styles.styleSourceId -> $styleSources.id
+ */
 export const $styles = atom<Styles>(new Map());
 
+/**
+ * styleSources defines where styles come from (local or token).
+ *
+ * $styles contains actual styling rules, tied to styleSourceIds.
+ * $styles.styleSourceId -> $styleSources.id
+ */
 export const $styleSources = atom<StyleSources>(new Map());
 
+/**
+ * This is a list of connections between instances (instanceIds) and styleSources.
+ * $styleSourceSelections.values[] -> $styleSources.id[]
+ */
 export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {
@@ -78,7 +91,7 @@ export const $selectedStyleSources = atom(
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
 // reset style state whenever selected instance change
-onSet($selectedInstanceSelector, () => {
+onSet($awareness, () => {
   $selectedStyleState.set(undefined);
 });
 
@@ -146,16 +159,28 @@ export type UploadingFileData = Simplify<
 
 export const $uploadingFilesDataStore = atom<UploadingFileData[]>([]);
 
-export const $selectedInstanceBrowserStyle = atom<undefined | Style>();
+export const convertibleUnits = ["px", "ch", "vw", "vh", "em", "rem"] as const;
+
+export type ConvertibleUnit = (typeof convertibleUnits)[number];
+
+export type UnitSizes = Record<ConvertibleUnit, number>;
+
+export type PropertySizes = Partial<Record<CssProperty, UnitValue>>;
 
 // Init with some defaults to avoid undefined
-export const $selectedInstanceUnitSizes = atom<UnitSizes>({
-  ch: 8,
-  vw: 3.2,
-  vh: 4.8,
-  em: 16,
-  rem: 16,
-  px: 1,
+export const $selectedInstanceSizes = atom<{
+  unitSizes: UnitSizes;
+  propertySizes: PropertySizes;
+}>({
+  unitSizes: {
+    ch: 8,
+    vw: 3.2,
+    vh: 4.8,
+    em: 16,
+    rem: 16,
+    px: 1,
+  },
+  propertySizes: {},
 });
 
 /**
@@ -291,6 +316,7 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
   allowDynamicData: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 1,
+  maxPublishesAllowedPerUser: 1,
   hasSubscription: false,
   hasProPlan: false,
 });

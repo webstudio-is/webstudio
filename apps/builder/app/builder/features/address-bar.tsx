@@ -31,23 +31,16 @@ import {
   findParentFolderByChildId,
   ROOT_FOLDER_ID,
   getPagePath,
-  type System,
 } from "@webstudio-is/sdk";
-import {
-  $dataSourceVariables,
-  $pages,
-  $publishedOrigin,
-  $selectedPageDefaultSystem,
-  updateSystem,
-} from "~/shared/nano-states";
+import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import {
   compilePathnamePattern,
   isPathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { savePathInHistory } from "~/shared/pages";
 import { $selectedPage } from "~/shared/awareness";
+import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 
 const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
   if (pages === undefined || page === undefined) {
@@ -61,19 +54,6 @@ const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
     .join("/")
     .replace(/\/+/g, "/");
 });
-
-const $selectedPagePathParams = computed(
-  [$selectedPageDefaultSystem, $selectedPage, $dataSourceVariables],
-  (defaultSystem, selectedPage, dataSourceVariables) => {
-    if (selectedPage === undefined) {
-      return defaultSystem.params;
-    }
-    const system = dataSourceVariables.get(selectedPage.systemDataSourceId) as
-      | undefined
-      | System;
-    return system?.params ?? defaultSystem.params;
-  }
-);
 
 const $selectedPageHistory = computed(
   $selectedPage,
@@ -278,7 +258,7 @@ const AddressBar = forwardRef<
     return history.filter((item) => matchPathnamePattern(path, item));
   }, [history, path]);
   const [pathParams, setPathParams] = useState(
-    () => $selectedPagePathParams.get() ?? {}
+    () => $currentSystem.get().params
   );
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams);
@@ -307,26 +287,11 @@ const AddressBar = forwardRef<
   return (
     <form
       ref={mergeRefs(ref, containerRef)}
-      style={{ position: "relative" }}
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const path = $selectedPagePath.get();
-        const tokens = tokenizePathnamePattern(path);
-        // delete stale fields
-        const newParams: Record<string, string> = {};
-        for (const token of tokens) {
-          if (token.type === "param") {
-            newParams[token.name] = String(formData.get(token.name) ?? "");
-          }
-        }
-        const page = $selectedPage.get();
-        if (page === undefined) {
-          return;
-        }
-        updateSystem(page, { params: newParams });
-        const compiledPath = compilePathnamePattern(tokens, newParams);
-        savePathInHistory(page.id, compiledPath);
+        const params = Object.fromEntries(formData) as Record<string, string>;
+        updateCurrentSystem({ params });
         if (errors.size === 0) {
           onSubmit();
         }
@@ -357,6 +322,7 @@ const AddressBar = forwardRef<
                     key={index}
                     name={token.name}
                     fieldSizing="content"
+                    autoComplete="off"
                     css={{ minWidth: theme.spacing[15] }}
                     color={errors.has(token.name) ? "error" : undefined}
                     placeholder={token.name}

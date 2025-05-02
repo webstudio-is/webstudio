@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   type Diagnostic,
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
+  decodeDataVariableId,
+  encodeDataVariableId,
   executeExpression,
   isLiteralExpression,
   lintExpression,
@@ -10,6 +10,7 @@ import {
   getExpressionIdentifiers,
   parseObjectExpression,
   generateObjectExpression,
+  SYSTEM_VARIABLE_ID,
 } from "./expression";
 
 describe("lint expression", () => {
@@ -17,6 +18,13 @@ describe("lint expression", () => {
     from,
     to,
     severity: "error",
+    message,
+  });
+
+  const warn = (from: number, to: number, message: string): Diagnostic => ({
+    from,
+    to,
+    severity: "warning",
     message,
   });
 
@@ -32,6 +40,9 @@ describe("lint expression", () => {
   test("output parse error as diagnostic", () => {
     expect(lintExpression({ expression: `a + ` })).toEqual([
       error(4, 4, "Unexpected token"),
+    ]);
+    expect(lintExpression({ expression: `"string" + a)` })).toEqual([
+      error(13, 13, "Unexpected token"),
     ]);
   });
 
@@ -119,8 +130,8 @@ describe("lint expression", () => {
     expect(
       lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
     ).toEqual([
-      error(5, 6, `"b" is not defined in the scope`),
-      error(1, 2, `"a" is not defined in the scope`),
+      warn(5, 6, `"b" is not defined in the scope`),
+      warn(1, 2, `"a" is not defined in the scope`),
     ]);
     expect(
       lintExpression({
@@ -218,6 +229,7 @@ test("check simple literals", () => {
   expect(isLiteralExpression(`true`)).toEqual(true);
   expect(isLiteralExpression(`[]`)).toEqual(true);
   expect(isLiteralExpression(`{}`)).toEqual(true);
+  expect(isLiteralExpression(`undefined`)).toEqual(true);
   expect(isLiteralExpression(`"" + ""`)).toEqual(false);
   expect(isLiteralExpression(`{}.field`)).toEqual(false);
   expect(isLiteralExpression(`variable`)).toEqual(false);
@@ -388,13 +400,17 @@ describe("object expression transformations", () => {
 });
 
 test("encode/decode variable names", () => {
-  expect(encodeDataSourceVariable("my--id")).toEqual(
+  expect(encodeDataVariableId("my--id")).toEqual(
     "$ws$dataSource$my__DASH____DASH__id"
   );
-  expect(decodeDataSourceVariable(encodeDataSourceVariable("my--id"))).toEqual(
+  expect(decodeDataVariableId(encodeDataVariableId("my--id"))).toEqual(
     "my--id"
   );
-  expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
+  expect(decodeDataVariableId("myVarName")).toEqual(undefined);
+  expect(encodeDataVariableId(SYSTEM_VARIABLE_ID)).toEqual("$ws$system");
+  expect(
+    decodeDataVariableId(encodeDataVariableId(SYSTEM_VARIABLE_ID))
+  ).toEqual(SYSTEM_VARIABLE_ID);
 });
 
 test("execute expression", () => {

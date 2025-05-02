@@ -1,15 +1,14 @@
-import { camelCase } from "change-case";
 import {
   getStyleDeclKey,
   type StyleDecl,
   type WebstudioData,
 } from "@webstudio-is/sdk";
+import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
 import {
-  hyphenateProperty,
-  toValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
-import { expandShorthands, parseCssValue } from "@webstudio-is/css-data";
+  camelCaseProperty,
+  expandShorthands,
+  parseCssValue,
+} from "@webstudio-is/css-data";
 
 /**
  *
@@ -25,7 +24,7 @@ import { expandShorthands, parseCssValue } from "@webstudio-is/css-data";
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   for (const [styleDeclKey, styleDecl] of data.styles) {
-    const property = hyphenateProperty(styleDecl.property);
+    const property = hyphenateProperty(styleDecl.property) as string;
 
     // expands overflow shorthand into overflow-x and overflow-y longhands
     // expands transition shorthand into transition-property, transition-duration, transition-timing-function, transition-delay longhands
@@ -41,11 +40,10 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
         [property, toValue(styleDecl.value)],
       ]);
       for (const [hyphenedProperty, value] of longhands) {
-        const longhandProperty = camelCase(hyphenedProperty) as StyleProperty;
         const longhandStyleDecl: StyleDecl = {
           ...styleDecl,
-          property: longhandProperty,
-          value: parseCssValue(longhandProperty, value),
+          property: camelCaseProperty(hyphenedProperty),
+          value: parseCssValue(hyphenedProperty, value),
         };
         data.styles.set(getStyleDeclKey(longhandStyleDecl), longhandStyleDecl);
       }

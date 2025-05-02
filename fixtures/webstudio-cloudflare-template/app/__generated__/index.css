@@ -1,4 +1,4 @@
-@media all {
+@layer presets {
   :root {
     display: grid;
     min-height: 100%;
@@ -8,7 +8,7 @@
     white-space: pre-wrap;
     white-space-collapse: preserve;
   }
-  :where(body.w-body) {
+  body.w-body {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -18,7 +18,7 @@
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
   }
-  :where(h1.w-heading) {
+  h1.w-heading {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -26,47 +26,7 @@
     border-left-width: 1px;
     outline-width: 1px;
   }
-  :where(h2.w-heading) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  :where(h3.w-heading) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  :where(h4.w-heading) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  :where(h5.w-heading) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  :where(h6.w-heading) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-  }
-  :where(div.w-text) {
+  div.w-text {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -75,7 +35,7 @@
     outline-width: 1px;
     min-height: 1em;
   }
-  :where(a.w-link) {
+  a.w-link {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -84,7 +44,7 @@
     outline-width: 1px;
     display: inline-block;
   }
-  :where(img.w-image) {
+  img.w-image {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;

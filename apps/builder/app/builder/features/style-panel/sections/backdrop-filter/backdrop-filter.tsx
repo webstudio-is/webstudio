@@ -1,6 +1,6 @@
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { Tooltip, Flex, Text } from "@webstudio-is/design-system";
@@ -16,12 +16,11 @@ import {
 } from "../../shared/repeated-style";
 import { useComputedStyleDecl } from "../../shared/model";
 
-export const properties = ["backdropFilter"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
+export const properties = ["backdrop-filter"] satisfies [
+  CssProperty,
+  ...CssProperty[],
 ];
 
-const property: StyleProperty = properties[0];
 const label = "Backdrop Filters";
 const initialBackdropFilter = "blur(0px)";
 
@@ -34,7 +33,7 @@ const getItemProps = (_index: number, value: StyleValue) => {
 };
 
 export const Section = () => {
-  const styleDecl = useComputedStyleDecl("backdropFilter");
+  const styleDecl = useComputedStyleDecl("backdrop-filter");
 
   return (
     <RepeatedStyleSection
@@ -44,7 +43,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialBackdropFilter, ["backdropFilter"])
+          parseCssFragment(initialBackdropFilter, ["backdrop-filter"])
         );
       }}
     >
@@ -55,14 +54,14 @@ export const Section = () => {
         renderItemContent={(index, primaryValue) => (
           <FilterSectionContent
             index={index}
-            property={property}
+            property="backdrop-filter"
             propertyValue={toValue(primaryValue)}
             layer={primaryValue}
             onEditLayer={(index, value, options) => {
               editRepeatedStyleItem(
                 [styleDecl],
                 index,
-                new Map([["backdropFilter", value]]),
+                new Map([["backdrop-filter", value]]),
                 options
               );
             }}

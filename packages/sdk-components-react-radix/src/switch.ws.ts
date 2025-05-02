@@ -3,18 +3,19 @@ import {
   defaultStates,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { radix } from "./shared/meta";
+import { buttonReset } from "./shared/preset-styles";
 import { propsSwitch, propsSwitchThumb } from "./__generated__/switch.props";
 
 export const metaSwitch: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: "SwitchThumb" },
-  },
   icon: SwitchIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.SwitchThumb],
+  },
   states: [
     ...defaultStates,
     {
@@ -34,12 +35,11 @@ export const metaSwitch: WsComponentMeta = {
 };
 
 export const metaSwitchThumb: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Switch" },
-  },
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
   states: [
     ...defaultStates,
     {

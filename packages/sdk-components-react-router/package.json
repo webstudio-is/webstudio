@@ -1,0 +1,54 @@
+{
+  "name": "@webstudio-is/sdk-components-react-router",
+  "version": "0.0.0-webstudio-version",
+  "description": "Webstudio components for React Router",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "type": "module",
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "webstudio": "./src/components.ts",
+      "types": "./lib/types/components.d.ts",
+      "import": "./lib/components.js"
+    },
+    "./metas": {
+      "webstudio": "./src/metas.ts",
+      "types": "./lib/types/metas.d.ts",
+      "import": "./lib/metas.js"
+    },
+    "./props": {
+      "webstudio": "./src/props.ts",
+      "types": "./lib/types/props.d.ts",
+      "import": "./lib/props.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build --config ../../vite.sdk-components.config.ts",
+    "dts": "tsc --project tsconfig.dts.json",
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+  },
+  "dependencies": {
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "react-router": "^7.5.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+  }
+}

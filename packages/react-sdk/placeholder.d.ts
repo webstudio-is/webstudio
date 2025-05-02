@@ -1,26 +1,30 @@
 declare module "__CONSTANTS__" {
   import type { ImageLoader } from "@webstudio-is/image";
   export const assetBaseUrl: string;
-  export const imageBaseUrl: string;
   export const imageLoader: ImageLoader;
 }
 
 declare module "__CLIENT__" {
-  import type {
-    FontAsset,
-    ImageAsset,
-    ResourceRequest,
-    System,
-  } from "@webstudio-is/sdk";
+  import type { ResourceRequest, System } from "@webstudio-is/sdk";
+
+  export const projectId: string;
+
+  export const lastPublished: string;
 
   export const siteName: string;
 
-  export const favIconAsset: ImageAsset | undefined;
+  export const favIconAsset: string | undefined;
+
+  export const breakpoints: {
+    id: string;
+    minWidth?: number;
+    maxWidth?: number;
+  }[];
 
   // Font assets on current page (can be preloaded)
-  export const pageFontAssets: FontAsset[];
+  export const pageFontAssets: string[];
 
-  export const pageBackgroundImageAssets: ImageAsset[];
+  export const pageBackgroundImageAssets: string[];
 
   export const CustomCode: () => ReactNode;
 
@@ -42,8 +46,6 @@ declare module "__SERVER__" {
 
   type Params = Record<string, string | undefined>;
   export const getRemixParams: ({ ...params }: Params) => Params;
-
-  export const projectId: string;
 
   export const contactEmail: undefined | string;
 }

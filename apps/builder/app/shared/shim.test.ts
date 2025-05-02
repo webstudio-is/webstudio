@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { mapGroupBy, setDifference, setUnion } from "./shim";
+import { mapGroupBy, setDifference, setIsSubsetOf, setUnion } from "./shim";
 
 test("Set.prototype.difference", () => {
   // this set is bigger than other
@@ -16,6 +16,15 @@ test("Set.prototype.union", () => {
   expect(setUnion(new Set([2, 4, 6, 8]), new Set([1, 4, 9]))).toEqual(
     new Set([2, 4, 6, 8, 1, 9])
   );
+});
+
+test("Set.prototype.isSubsetOf", () => {
+  expect(setIsSubsetOf(new Set([1, 2, 3]), new Set([1, 2, 3]))).toBeTruthy();
+  expect(setIsSubsetOf(new Set([1, 2]), new Set([1, 2, 3]))).toBeTruthy();
+  expect(setIsSubsetOf(new Set(), new Set([1, 2, 3]))).toBeTruthy();
+  expect(setIsSubsetOf(new Set(), new Set())).toBeTruthy();
+  expect(setIsSubsetOf(new Set([1, 2, 3]), new Set([1, 2]))).toBeFalsy();
+  expect(setIsSubsetOf(new Set([1, 2, 3]), new Set())).toBeFalsy();
 });
 
 test("Map.groupBy", () => {

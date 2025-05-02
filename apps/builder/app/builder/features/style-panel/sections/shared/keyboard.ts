@@ -9,24 +9,6 @@ const movementKeys = [
   "ArrowLeft",
 ] as const;
 
-export const movementMapSpace = {
-  marginTop: ["marginBottom", "marginRight", "paddingTop", "marginLeft"],
-  marginRight: ["marginTop", "marginLeft", "marginBottom", "paddingRight"],
-  marginBottom: ["paddingBottom", "marginRight", "marginTop", "marginLeft"],
-  marginLeft: ["marginTop", "paddingLeft", "marginBottom", "marginRight"],
-  paddingTop: ["marginTop", "paddingRight", "paddingBottom", "paddingLeft"],
-  paddingRight: ["paddingTop", "marginRight", "paddingBottom", "paddingBottom"],
-  paddingBottom: ["paddingTop", "paddingRight", "marginBottom", "paddingLeft"],
-  paddingLeft: ["paddingTop", "paddingTop", "paddingBottom", "marginLeft"],
-} as const;
-
-export const movementMapInset = {
-  top: ["bottom", "right", "bottom", "left"],
-  right: ["top", "left", "bottom", "left"],
-  bottom: ["top", "right", "top", "left"],
-  left: ["top", "right", "bottom", "right"],
-} as const;
-
 /**
  * useFocusWithin does't work with popovers, implement it using debounce
  */

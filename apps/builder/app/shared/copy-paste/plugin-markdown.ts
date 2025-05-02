@@ -41,7 +41,7 @@ const astTypeComponentMap: Record<string, Instance["component"]> = {
   thematicBreak: "Separator",
 };
 
-type Options = { generateId?: typeof nanoid };
+type Options = { generateId?: typeof nanoid<string> };
 
 type Root = ReturnType<typeof fromMarkdown>;
 
@@ -80,13 +80,7 @@ const toInstanceData = (
     children.push({ type: "id", value: instanceId });
 
     if (child.type === "heading") {
-      props.push({
-        id: generateId(),
-        type: "string",
-        name: "tag",
-        instanceId,
-        value: `h${child.depth}`,
-      });
+      instance.tag = `h${child.depth}`;
     }
     if (child.type === "link") {
       props.push({

@@ -1,0 +1,4 @@
+[submodule "packages/sdk-components-animation/private-src"]
+	path = packages/sdk-components-animation/private-src
+	url = git@github.com:webstudio-is/sdk-components-animation.git
+	branch = main

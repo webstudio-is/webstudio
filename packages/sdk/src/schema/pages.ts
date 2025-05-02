@@ -50,7 +50,7 @@ const commonPageFields = {
   title: PageTitle,
   history: z.optional(z.array(z.string())),
   rootInstanceId: z.string(),
-  systemDataSourceId: z.string(),
+  systemDataSourceId: z.string().optional(),
   meta: z.object({
     description: z.string().optional(),
     title: z.string().optional(),
@@ -88,11 +88,10 @@ const HomePage = z.object({
   path: HomePagePath,
 });
 
-export const PagePath = z
+const DefaultPagePage = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
   .refine((path) => path !== "/", "Can't be just a /")
-  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
   .refine(
@@ -110,6 +109,17 @@ export const PagePath = z
     (path) => path !== "/build" && path.startsWith("/build/") === false,
     "/build prefix is reserved for the system"
   );
+
+export const PagePath = DefaultPagePage.refine(
+  (path) => path === "" || path.startsWith("/"),
+  "Must start with a / or a full URL e.g. https://website.org"
+);
+
+// added this for old path input under redirect section of page settings
+export const OldPagePath = DefaultPagePage.refine(
+  (path) => path === "" || path.startsWith("/"),
+  "Must start with a / and it must be full path e.g. /project/id"
+);
 
 const Page = z.object({
   ...commonPageFields,

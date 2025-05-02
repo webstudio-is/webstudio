@@ -1,10 +1,12 @@
 import type { Meta } from "@storybook/react";
 import { Box } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import { InsetControl } from "./inset-control";
 import { registerContainers } from "~/shared/sync";
 import {
   $breakpoints,
+  $pages,
   $selectedBreakpointId,
   $styles,
   $styleSources,
@@ -41,8 +43,14 @@ $styles.set(new Map([[getStyleDeclKey(right), right]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
+$pages.set(
+  createDefaultPages({
+    homePageId: "homePageId",
+    rootInstanceId: "box",
+  })
+);
 $awareness.set({
-  pageId: "",
+  pageId: "homePageId",
   instanceSelector: ["box"],
 });
 

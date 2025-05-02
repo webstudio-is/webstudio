@@ -4,7 +4,7 @@ import {
   type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import type { defaultTag } from "./radio-button";
 import { radio } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/radio-button.props";
@@ -13,18 +13,13 @@ const presetStyle = {
   input: [
     ...radio,
     {
-      property: "marginRight",
+      property: "margin-right",
       value: { type: "unit", unit: "em", value: 0.5 },
     },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
-  type: "control",
   label: "Radio",
   icon: RadioCheckedIcon,
   presetStyle,

@@ -1,11 +1,9 @@
 import { join } from "node:path";
 import { readFile, rm } from "node:fs/promises";
-import {
-  generateRemixRoute,
-  namespaceMeta,
-  WsComponentMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { generateRemixRoute } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { Framework } from "./framework";
@@ -36,11 +34,13 @@ export const createFramework = async (): Promise<Framework> => {
   const radixComponentNamespacedMetas: Record<string, WsComponentMeta> = {};
   for (const [name, meta] of Object.entries(radixComponentMetas)) {
     const namespace = "@webstudio-is/sdk-components-react-radix";
-    radixComponentNamespacedMetas[`${namespace}:${name}`] = namespaceMeta(
-      meta,
-      namespace,
-      new Set(Object.keys(radixComponentMetas))
-    );
+    radixComponentNamespacedMetas[`${namespace}:${name}`] = meta;
+  }
+
+  const animationComponentNamespacedMetas: Record<string, WsComponentMeta> = {};
+  for (const [name, meta] of Object.entries(animationComponentMetas)) {
+    const namespace = "@webstudio-is/sdk-components-animation";
+    animationComponentNamespacedMetas[`${namespace}:${name}`] = meta;
   }
 
   return {
@@ -48,6 +48,10 @@ export const createFramework = async (): Promise<Framework> => {
       {
         source: "@webstudio-is/sdk-components-react",
         metas: baseComponentMetas,
+      },
+      {
+        source: "@webstudio-is/sdk-components-animation",
+        metas: animationComponentNamespacedMetas,
       },
       {
         source: "@webstudio-is/sdk-components-react-radix",

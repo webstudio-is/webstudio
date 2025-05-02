@@ -1,11 +1,19 @@
+import { generate, walk } from "css-tree";
 import type { HtmlTags } from "html-tags";
-import { html, properties } from "@webstudio-is/css-data";
-import type {
-  StyleValue,
-  StyleProperty,
-  VarFallback,
-  VarValue,
-  UnparsedValue,
+import {
+  camelCaseProperty,
+  cssTryParseValue,
+  html,
+  parseCssVar,
+  propertiesData,
+} from "@webstudio-is/css-data";
+import {
+  type StyleValue,
+  type VarFallback,
+  type VarValue,
+  type UnparsedValue,
+  type CssProperty,
+  toValue,
 } from "@webstudio-is/css-engine";
 import {
   type Instance,
@@ -46,7 +54,6 @@ import {
  */
 
 type InstanceSelector = string[];
-type Property = string;
 
 export type StyleValueSourceColor =
   | "default"
@@ -93,7 +100,7 @@ export const getPresetStyleDeclKey = ({
   component: string;
   tag: string;
   state?: string;
-  property: string;
+  property: CssProperty;
 }) => `${component}:${tag}:${state ?? ""}:${property}`;
 
 /**
@@ -125,7 +132,7 @@ const getCascadedValue = ({
   instanceId: Instance["id"];
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
-  property: Property;
+  property: CssProperty;
 }) => {
   const {
     styles,
@@ -147,7 +154,7 @@ const getCascadedValue = ({
 
   // browser styles
   if (tag) {
-    const key = `${tag}:${property}` as const;
+    const key = `${tag}:${property}`;
     const browserValue = html.get(key);
     if (browserValue) {
       declaredValues.push(browserValue);
@@ -169,7 +176,12 @@ const getCascadedValue = ({
   // preset component styles
   if (component && tag) {
     for (const state of states) {
-      const key = getPresetStyleDeclKey({ component, tag, state, property });
+      const key = getPresetStyleDeclKey({
+        component,
+        tag,
+        state,
+        property,
+      });
       const styleValue = presetStyles.get(key);
       if (styleValue) {
         source = { name: "preset", state, instanceId };
@@ -188,7 +200,7 @@ const getCascadedValue = ({
           styleSourceId,
           breakpointId,
           state,
-          property: property as StyleProperty,
+          property: camelCaseProperty(property),
         });
         const styleDecl = styles.get(key);
         if (
@@ -254,30 +266,72 @@ const substituteVars = (
   if (styleValue.type === "var") {
     return mapper(styleValue);
   }
+  if (styleValue.type === "shadow") {
+    const newShadowValue = { ...styleValue };
+    if (newShadowValue.offsetX.type === "var") {
+      newShadowValue.offsetX = mapper(newShadowValue.offsetX) as VarValue;
+    }
+    if (newShadowValue.offsetY.type === "var") {
+      newShadowValue.offsetY = mapper(newShadowValue.offsetY) as VarValue;
+    }
+    if (newShadowValue.blur?.type === "var") {
+      newShadowValue.blur = mapper(newShadowValue.blur) as VarValue;
+    }
+    if (newShadowValue.spread?.type === "var") {
+      newShadowValue.spread = mapper(newShadowValue.spread) as VarValue;
+    }
+    if (newShadowValue.color?.type === "var") {
+      newShadowValue.color = mapper(newShadowValue.color) as VarValue;
+    }
+    return newShadowValue;
+  }
+  // slightly optimize to not parse without variables
+  if (styleValue.type === "unparsed" && styleValue.value.includes("var(")) {
+    // parse, replace variables and serialize back to unparsed value
+    const ast = cssTryParseValue(styleValue.value);
+    if (ast) {
+      walk(ast, {
+        enter(node, item, list) {
+          if (node.type === "Function" && node.name === "var") {
+            const varValue = parseCssVar(node);
+            if (varValue) {
+              const newValue = mapper(varValue);
+              list.replace(
+                item,
+                node.children.createItem({
+                  type: "Raw",
+                  value: toValue(newValue),
+                })
+              );
+            }
+          }
+        },
+      });
+      return {
+        type: "unparsed",
+        value: generate(ast),
+      };
+    }
+    return styleValue;
+  }
   if (styleValue.type === "layers" || styleValue.type === "tuple") {
-    const newItems: UnparsedValue[] = [];
-    let hasVars = false;
-    for (const item of styleValue.value) {
-      if (item.type === "var") {
-        hasVars = true;
-        newItems.push(mapper(item) as UnparsedValue);
-      } else {
-        newItems.push(item as UnparsedValue);
-      }
-    }
-    if (hasVars) {
-      return { ...styleValue, value: newItems };
-    }
+    const newItems = styleValue.value.map((item) => {
+      return substituteVars(item, mapper) as UnparsedValue;
+    });
+    return { ...styleValue, value: newItems };
   }
   return styleValue;
 };
 
 export type ComputedStyleDecl = {
-  property: string;
+  property: CssProperty;
   source: StyleValueSource;
   cascadedValue: StyleValue;
   computedValue: StyleValue;
   usedValue: StyleValue;
+  // @todo We will delete it once we have added additional filters to advanced panel and
+  // don't need to differentiate this any more.
+  listed?: boolean;
 };
 
 /**
@@ -296,16 +350,16 @@ export const getComputedStyleDecl = ({
   instanceSelector?: InstanceSelector;
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
-  property: Property;
+  property: CssProperty;
   /**
    * for internal use only
    */
-  customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
+  customPropertiesGraph?: Map<Instance["id"], Set<CssProperty>>;
 }): ComputedStyleDecl => {
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
-    : (properties[property as keyof typeof properties] ?? invalidPropertyData);
+    : (propertiesData[property] ?? invalidPropertyData);
   const inherited = propertyData.inherited;
   const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
@@ -334,6 +388,7 @@ export const getComputedStyleDecl = ({
       state,
       property,
     });
+    const inheritedCascadedValue = cascadedValue;
     cascadedValue = cascaded?.value;
     source = cascaded?.source ?? { name: "default" };
 
@@ -364,6 +419,7 @@ export const getComputedStyleDecl = ({
     // defaulting https://drafts.csswg.org/css-cascade-5/#defaulting
     else if (inherited) {
       specifiedValue = inheritedValue;
+      cascadedValue = inheritedCascadedValue;
       source = inheritedSource;
     } else {
       specifiedValue = initialValue;
@@ -376,10 +432,10 @@ export const getComputedStyleDecl = ({
     // check whether the property was used with parent node
     // to support var(--var1), var(--var1) layers
     const parentUsedCustomProperties = usedCustomProperties;
-    usedCustomProperties = new Set<string>(usedCustomProperties);
+    usedCustomProperties = new Set<CssProperty>(usedCustomProperties);
     customPropertiesGraph.set(instanceId, usedCustomProperties);
     computedValue = substituteVars(computedValue, (varValue) => {
-      const customProperty = `--${varValue.value}`;
+      const customProperty = `--${varValue.value}` as const;
       // https://www.w3.org/TR/css-variables-1/#cycles
       if (parentUsedCustomProperties.has(customProperty)) {
         invalid = true;
@@ -428,8 +484,8 @@ export const getComputedStyleDecl = ({
     usedValue = currentColor.usedValue;
   }
 
-  // fallback to inherited value
-  cascadedValue ??= computedValue;
+  // fallback to initial value
+  cascadedValue ??= initialValue;
 
   return { property, source, cascadedValue, computedValue, usedValue };
 };

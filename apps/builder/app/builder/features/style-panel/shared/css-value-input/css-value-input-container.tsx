@@ -1,25 +1,30 @@
 import { type ComponentProps, useState } from "react";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
-import type { DeleteProperty, SetValue } from "../use-style-data";
+import type { StyleUpdateOptions } from "../use-style-data";
 
-type CssValueInputContainerProps = {
-  setValue: SetValue;
-  deleteProperty: DeleteProperty;
-} & Omit<
+type CssValueInputContainerProps = Omit<
   ComponentProps<typeof CssValueInput>,
   | "onChange"
   | "onHighlight"
-  | "onChangeComplete"
   | "onReset"
   | "onAbort"
   | "intermediateValue"
->;
+  | "onChangeComplete"
+  | "setProperty"
+> & {
+  onUpdate: (style: StyleValue, options?: StyleUpdateOptions) => void;
+  onDelete: (options?: StyleUpdateOptions) => void;
+  onChangeComplete?: ComponentProps<typeof CssValueInput>["onChangeComplete"];
+  onReset?: ComponentProps<typeof CssValueInput>["onReset"];
+};
 
 export const CssValueInputContainer = ({
   property,
-  setValue,
-  deleteProperty,
+  onUpdate,
+  onDelete,
+  onChangeComplete,
+  onReset,
   ...props
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
@@ -35,30 +40,33 @@ export const CssValueInputContainer = ({
         setIntermediateValue(styleValue);
 
         if (styleValue === undefined) {
-          deleteProperty(property, { isEphemeral: true });
+          onDelete({ isEphemeral: true });
           return;
         }
 
         if (styleValue.type !== "intermediate") {
-          setValue(styleValue, { isEphemeral: true });
+          onUpdate(styleValue, { isEphemeral: true });
         }
       }}
       onHighlight={(styleValue) => {
         if (styleValue !== undefined) {
-          setValue(styleValue, { isEphemeral: true });
+          onUpdate(styleValue, { isEphemeral: true });
         } else {
-          deleteProperty(property, { isEphemeral: true });
+          onDelete({ isEphemeral: true });
         }
       }}
-      onChangeComplete={({ value }) => {
-        setValue(value);
+      onChangeComplete={(event) => {
+        onUpdate(event.value);
         setIntermediateValue(undefined);
+        onChangeComplete?.(event);
       }}
       onAbort={() => {
-        deleteProperty(property, { isEphemeral: true });
+        onDelete({ isEphemeral: true });
       }}
       onReset={() => {
-        deleteProperty(property);
+        setIntermediateValue(undefined);
+        onDelete();
+        onReset?.();
       }}
     />
   );

@@ -64,8 +64,13 @@ export const builderUrl = (props: {
   return url.href;
 };
 
-export const dashboardPath = () => {
-  return "/dashboard";
+export const dashboardPath = (
+  view: "templates" | "search" | "projects" = "projects"
+) => {
+  if (view === "projects") {
+    return `/dashboard`;
+  }
+  return `/dashboard/${view}`;
 };
 
 export const dashboardUrl = (props: { origin: string }) => {
@@ -118,7 +123,27 @@ export const restAssetsPath = () => {
   return `/rest/assets`;
 };
 
-export const restAssetsUploadPath = ({ name }: { name: string }) => {
+export const restAssetsUploadPath = ({
+  name,
+  width,
+  height,
+}: {
+  name: string;
+  width?: number | undefined;
+  height?: number | undefined;
+}) => {
+  const urlSearchParams = new URLSearchParams();
+  if (width !== undefined) {
+    urlSearchParams.set("width", String(width));
+  }
+  if (height !== undefined) {
+    urlSearchParams.set("height", String(height));
+  }
+
+  if (urlSearchParams.size > 0) {
+    return `/rest/assets/${name}?${urlSearchParams.toString()}`;
+  }
+
   return `/rest/assets/${name}`;
 };
 

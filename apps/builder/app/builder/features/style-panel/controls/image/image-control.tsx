@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Button,
@@ -5,10 +6,9 @@ import {
   Flex,
   FloatingPanel,
 } from "@webstudio-is/design-system";
+import type { CssProperty, InvalidValue } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/nano-states";
 import { ImageManager } from "~/builder/shared/image-manager";
-import { useEffect, useState } from "react";
-import type { InvalidValue, StyleProperty } from "@webstudio-is/css-engine";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -32,7 +32,7 @@ export const ImageControl = ({
   property,
   index,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   index: number;
 }) => {
   const assets = useStore($assets);

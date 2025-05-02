@@ -10,26 +10,19 @@ import {
 } from "@webstudio-is/design-system";
 import { forwardRef, type ComponentProps } from "react";
 
+const borderColorVar = "--ws-dashboard-card-border-color";
+
 const cardStyle = css({
+  position: "relative",
   display: "flex",
   padding: 0,
   height: "100%",
   flexDirection: "column",
   alignItems: "center",
   flexShrink: 0,
-  overflow: "hidden",
-  aspectRatio: "8 / 7",
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
-  borderRadius: theme.borderRadius[4],
-  background: theme.colors.brandBackgroundProjectCardFront,
   outline: "none",
-  "&:hover, &:focus-within": {
-    boxShadow: theme.shadows.brandElevationBig,
-  },
-  "&:focus-visible": {
-    borderColor: theme.colors.borderFocus,
+  "&:focus-within, &[aria-selected=true]": {
+    [borderColorVar]: theme.colors.borderFocus,
   },
 });
 
@@ -48,8 +41,17 @@ Card.displayName = "Card";
 export const CardContent = styled(Grid, {
   position: "relative",
   overflow: "hidden",
-  minWidth: "100%",
-  height: "100%",
+  width: "100%",
+  aspectRatio: "1.91/1",
+  borderRadius: theme.borderRadius[5],
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    inset: 0,
+    border: `1px solid var(${borderColorVar}, transparent)`,
+    borderRadius: theme.borderRadius[5],
+    pointerEvents: "none",
+  },
 });
 
 export const CardFooter = styled(Flex, {
@@ -59,5 +61,5 @@ export const CardFooter = styled(Flex, {
   flexGap: theme.spacing[3],
   background: theme.colors.brandBackgroundProjectCardTextArea,
   height: theme.spacing[17],
-  padding: theme.panel.padding,
+  paddingBlock: theme.panel.paddingBlock,
 });

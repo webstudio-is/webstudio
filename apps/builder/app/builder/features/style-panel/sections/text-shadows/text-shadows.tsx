@@ -1,7 +1,8 @@
-import { colord, type RgbaColor } from "colord";
+import { colord, extend, type RgbaColor } from "colord";
+import namesPlugin from "colord/plugins/names";
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { RepeatedStyleSection } from "../../shared/style-section";
@@ -15,48 +16,40 @@ import {
 import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
 
-export const properties = ["textShadow"] satisfies [
-  StyleProperty,
-  ...StyleProperty[],
+// To support color names
+extend([namesPlugin]);
+
+export const properties = ["text-shadow"] satisfies [
+  CssProperty,
+  ...CssProperty[],
 ];
 
-const property: StyleProperty = properties[0];
 const label = "Text Shadows";
 const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
-  let values: StyleValue[] = [];
-  if (layer.type === "tuple") {
-    values = layer.value;
-  }
-  if (layer.type === "var" && computedLayer?.type === "tuple") {
-    values = computedLayer.value;
-  }
-  const labels = ["Text Shadow:"];
-  let color: RgbaColor | undefined;
-
+  const shadowValue =
+    computedLayer?.type === "shadow" ? computedLayer : undefined;
+  const labels = [];
   if (layer.type === "var") {
     labels.push(`--${layer.value}`);
+  } else if (shadowValue) {
+    labels.push(toValue(shadowValue.offsetX));
+    labels.push(toValue(shadowValue.offsetY));
+    labels.push(toValue(shadowValue.blur));
+  } else {
+    labels.push(toValue(shadowValue));
   }
-  for (const item of values) {
-    if (item.type === "rgb") {
-      color = colord(toValue(item)).toRgb();
-      continue;
-    }
-    if (item.type === "keyword" && colord(item.value).isValid()) {
-      color = colord(item.value).toRgb();
-      continue;
-    }
-    if (layer.type !== "var") {
-      labels.push(toValue(item));
-    }
+  let color: undefined | RgbaColor;
+  const colordValue = colord(toValue(shadowValue?.color));
+  if (colordValue.isValid()) {
+    color = colordValue.toRgb();
   }
-
   return { label: labels.join(" "), color };
 };
 
 export const Section = () => {
-  const styleDecl = useComputedStyleDecl("textShadow");
+  const styleDecl = useComputedStyleDecl("text-shadow");
 
   return (
     <RepeatedStyleSection
@@ -66,7 +59,7 @@ export const Section = () => {
       onAdd={() => {
         addRepeatedStyleItem(
           [styleDecl],
-          parseCssFragment(initialTextShadow, ["textShadow"])
+          parseCssFragment(initialTextShadow, ["text-shadow"])
         );
       }}
     >
@@ -81,13 +74,13 @@ export const Section = () => {
             index={index}
             layer={value}
             computedLayer={getComputedRepeatedItem(styleDecl, index)}
-            property={property}
+            property="text-shadow"
             propertyValue={toValue(value)}
             onEditLayer={(index, value, options) => {
               editRepeatedStyleItem(
                 [styleDecl],
                 index,
-                new Map([["textShadow", value]]),
+                new Map([["text-shadow", value]]),
                 options
               );
             }}

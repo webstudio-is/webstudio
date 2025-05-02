@@ -1,3 +1,5 @@
+import stripIndent from "strip-indent";
+import { computed } from "nanostores";
 import {
   useEffect,
   useState,
@@ -34,16 +36,25 @@ import {
   PopoverTitle,
   PopoverClose,
   PopoverTitleActions,
+  css,
+  textVariants,
 } from "@webstudio-is/design-system";
-import stripIndent from "strip-indent";
-import { $publishDialog } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
+  $awareness,
+  findAwarenessByInstanceId,
+  type Awareness,
+} from "~/shared/awareness";
+import {
   $authTokenPermissions,
+  $dataSources,
+  $instances,
+  $pages,
   $project,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
+import { $publishDialog } from "../../shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -52,21 +63,26 @@ import {
   AlertIcon,
   CopyIcon,
   GearIcon,
+  UpgradeIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import type { Templates } from "@webstudio-is/sdk";
-import { formatDistance } from "date-fns/formatDistance";
+import {
+  isPathnamePattern,
+  parseComponentName,
+  type Templates,
+} from "@webstudio-is/sdk";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import { RelativeTime } from "~/builder/shared/relative-time";
+import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
-  refresh: () => void;
+  refresh: () => Promise<void>;
 };
 
 const ChangeProjectDomain = ({
@@ -128,7 +144,9 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <Tooltip content={error !== undefined ? error : statusText}>
+          <Tooltip
+            content={error !== undefined ? error : <Text>{statusText}</Text>}
+          >
             <Flex
               align="center"
               justify="center"
@@ -198,15 +216,77 @@ const ChangeProjectDomain = ({
   );
 };
 
+const $usedProFeatures = computed(
+  [$pages, $dataSources, $instances],
+  (pages, dataSources, instances) => {
+    const features = new Map<string, undefined | Awareness>();
+    if (pages === undefined) {
+      return features;
+    }
+    // specified emails for default webhook form
+    if ((pages?.meta?.contactEmail ?? "").trim()) {
+      features.set("Custom contact email", undefined);
+    }
+    // pages with dynamic paths
+    for (const page of [pages.homePage, ...pages.pages]) {
+      if (isPathnamePattern(page.path)) {
+        features.set("Dynamic path", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
+      }
+      if (page.meta.status && page.meta.status !== `200`) {
+        features.set("Page status code", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
+      }
+      if (page.meta.redirect && page.meta.redirect !== `""`) {
+        features.set("Redirect", {
+          pageId: page.id,
+          instanceSelector: [page.rootInstanceId],
+        });
+      }
+    }
+    // has resource variables
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type === "resource") {
+        const instanceId = dataSource.scopeInstanceId ?? "";
+        features.set(
+          "Resource variable",
+          findAwarenessByInstanceId(pages, instances, instanceId)
+        );
+      }
+    }
+    // instances with animations
+    for (const instance of instances.values()) {
+      const [namespace] = parseComponentName(instance.component);
+      if (namespace === "@webstudio-is/sdk-components-animation") {
+        features.set(
+          "Animation component",
+          findAwarenessByInstanceId(pages, instances, instance.id)
+        );
+      }
+    }
+    return features;
+  }
+);
+
 const Publish = ({
   project,
+  timesLeft,
+  disabled,
   refresh,
 }: {
   project: Project;
-
+  timesLeft: number;
+  disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
-  const [publishError, setPublishError] = useState<string | undefined>();
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  const [publishError, setPublishError] = useState<
+    undefined | JSX.Element | string
+  >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -276,8 +356,33 @@ const Publish = ({
     if (publishResult.success === false) {
       console.error(publishResult.error);
 
-      setPublishError(publishResult.error);
-      toast.error(publishResult.error);
+      let error: JSX.Element | string = publishResult.error;
+      if (publishResult.error === "NOT_IMPLEMENTED") {
+        error = (
+          <>
+            <Tooltip
+              content={
+                <Text userSelect="text">
+                  {project.latestBuildVirtual?.buildId}
+                </Text>
+              }
+            >
+              <span>Build data</span>
+            </Tooltip>{" "}
+            for publishing has been successfully created. Use{" "}
+            <Link href="https://docs.webstudio.is/university/self-hosting/cli">
+              Webstudio&nbsp;CLI
+            </Link>{" "}
+            to generate the code.
+          </>
+        );
+      }
+      setPublishError(error);
+      if (publishResult.error === "NOT_IMPLEMENTED") {
+        toast.info(error);
+      } else {
+        toast.error(error);
+      }
 
       if (process.env.NODE_ENV === "development") {
         // Refresh locally as it's always an error
@@ -309,6 +414,19 @@ const Publish = ({
             };
 
       if (status === "PUBLISHED") {
+        toast.success(
+          <>
+            The project has been successfully published.{" "}
+            {hasProPlan === false && (
+              <div>
+                On the free plan, you have {timesLeft} out of{" "}
+                {maxPublishesAllowedPerUser} daily publications remaining. The
+                counter resets tomorrow.
+              </div>
+            )}
+          </>,
+          { duration: 10000 }
+        );
         break;
       }
 
@@ -348,7 +466,7 @@ const Publish = ({
           formAction={handlePublish}
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
-          disabled={hasSelectedDomains === false}
+          disabled={hasSelectedDomains === false || disabled}
         >
           Publish
         </Button>
@@ -380,13 +498,11 @@ const getStaticPublishStatusAndText = ({
         ? "Download failed"
         : "Download started";
 
-  const statusText = `${textStart} ${formatDistance(
-    new Date(updatedAt),
-    new Date(),
-    {
-      addSuffix: true,
-    }
-  )}`;
+  const statusText = (
+    <>
+      {textStart} <RelativeTime time={new Date(updatedAt)} />
+    </>
+  );
 
   return { statusText, status };
 };
@@ -533,6 +649,18 @@ const useCanAddDomain = () => {
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
+const useUserPublishCount = () => {
+  const { load, data } = trpcClient.project.userPublishCount.useQuery();
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  useEffect(() => {
+    load();
+  }, [load]);
+  return {
+    userPublishCount: data?.success ? data.data : 0,
+    maxPublishesAllowedPerUser,
+  };
+};
+
 const refreshProject = async () => {
   const result = await nativeClient.domain.project.query(
     {
@@ -550,10 +678,18 @@ const refreshProject = async () => {
   toast.error(result.error);
 };
 
+const buttonLinkClass = css({
+  all: "unset",
+  cursor: "pointer",
+  ...textVariants.link,
+}).toString();
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
 }) => {
+  const usedProFeatures = useStore($usedProFeatures);
+  const { hasProPlan } = useStore($userPlanFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const project = useStore($project);
@@ -564,11 +700,70 @@ const Content = (props: {
   const projectState = "idle";
 
   const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { userPublishCount, maxPublishesAllowedPerUser } =
+    useUserPublishCount();
 
   return (
     <form>
       <ScrollArea>
-        {canAddDomain === false && (
+        {userPublishCount >= maxPublishesAllowedPerUser ? (
+          <PanelBanner>
+            <Text variant="regularBold">
+              Upgrade to publish more than {maxPublishesAllowedPerUser} times
+              per day:
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        ) : usedProFeatures.size > 0 && hasProPlan === false ? (
+          <PanelBanner>
+            <img
+              src={cmsUpgradeBanner}
+              alt="Upgrade for CMS"
+              width={rawTheme.spacing[28]}
+              style={{ aspectRatio: "4.1" }}
+            />
+            <Text variant="regularBold">
+              Upgrade to publish with following features:
+            </Text>
+            <Text as="ul">
+              {Array.from(usedProFeatures).map(
+                ([message, awareness], index) => (
+                  <li key={index}>
+                    {awareness ? (
+                      <button
+                        className={buttonLinkClass}
+                        type="button"
+                        onClick={() => $awareness.set(awareness)}
+                      >
+                        {message}
+                      </button>
+                    ) : (
+                      message
+                    )}
+                  </li>
+                )
+              )}
+            </Text>
+            <Flex align="center" gap={1}>
+              <UpgradeIcon />
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://webstudio.is/pricing"
+              >
+                Upgrade to Pro
+              </Link>
+            </Flex>
+          </PanelBanner>
+        ) : canAddDomain === false ? (
           <PanelBanner>
             <Text variant="regularBold">Free domains limit reached</Text>
             <Text variant="regular">
@@ -589,7 +784,7 @@ const Content = (props: {
               Upgrade
             </Link>
           </PanelBanner>
-        )}
+        ) : null}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
             refresh={refreshProject}
@@ -619,36 +814,52 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
-        <Publish project={project} refresh={refreshProject} />
+        <Publish
+          project={project}
+          refresh={refreshProject}
+          timesLeft={maxPublishesAllowedPerUser - userPublishCount}
+          disabled={
+            (usedProFeatures.size > 0 && hasProPlan === false) ||
+            userPublishCount >= maxPublishesAllowedPerUser
+          }
+        />
       </Flex>
     </form>
   );
 };
 
-const deployTargets = {
-  vanilla: {
+type DeployTarget = {
+  docs?: string;
+  command?: string;
+  ssgTemplates?: Templates[];
+};
+
+const deployTargets: Record<string, DeployTarget> = {
+  docker: {
+    docs: "https://docs.docker.com",
     command: `
-      npm install
-      npm run dev
+      docker build -t my-image .
+      docker run my-image
     `,
-    docs: "https://remix.run/",
+  },
+  static: {
     ssgTemplates: ["ssg"],
   },
   vercel: {
-    command: "npx vercel@latest",
     docs: "https://vercel.com/docs/cli",
+    command: "npx vercel@latest",
     ssgTemplates: ["ssg-vercel"],
   },
   netlify: {
+    docs: "https://docs.netlify.com/cli/get-started/",
     command: `
 npx netlify-cli@latest login
 npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
-    docs: "https://docs.netlify.com/cli/get-started/",
     ssgTemplates: ["ssg-netlify"],
   },
-} as const;
+};
 
 type DeployTargets = keyof typeof deployTargets;
 
@@ -657,7 +868,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
 
 const ExportContent = (props: { projectId: Project["id"] }) => {
   const npxCommand = "npx webstudio@latest";
-  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vanilla");
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("docker");
 
   return (
     <Grid columns={1} gap={3} css={{ padding: theme.panel.padding }}>
@@ -682,152 +893,151 @@ const ExportContent = (props: { projectId: Project["id"] }) => {
         </Grid>
       </Grid>
 
-      <Grid columns={1} gap={1}>
-        {isFeatureEnabled("staticExport") && (
-          <>
-            <PublishStatic
-              projectId={props.projectId}
-              templates={deployTargets[deployTarget].ssgTemplates}
-            />
-            <div />
+      {deployTargets[deployTarget].ssgTemplates && (
+        <Grid columns={1} gap={1}>
+          <PublishStatic
+            projectId={props.projectId}
+            templates={deployTargets[deployTarget].ssgTemplates}
+          />
+          <div />
+          <Text color="subtle">
+            Learn about deploying static sites{" "}
+            <Link
+              variant="inherit"
+              color="inherit"
+              href="https://wstd.us/ssg"
+              target="_blank"
+              rel="noreferrer"
+            >
+              here
+            </Link>
+          </Text>
+        </Grid>
+      )}
+
+      {deployTargets[deployTarget].command && (
+        <Grid columns={1} gap={2}>
+          <Grid
+            gap={2}
+            align={"center"}
+            css={{
+              gridTemplateColumns: `1fr auto 1fr`,
+            }}
+          >
+            <Separator css={{ alignSelf: "unset" }} />
+            <Text color="main">CLI</Text>
+            <Separator css={{ alignSelf: "unset" }} />
+          </Grid>
+          <Grid columns={1} gap={1}>
+            <Text color="main" variant="labelsTitleCase">
+              Step 1
+            </Text>
             <Text color="subtle">
-              Learn about deploying static sites{" "}
+              Download and install Node v20+ from{" "}
               <Link
                 variant="inherit"
                 color="inherit"
-                href="https://wstd.us/ssg"
+                href="https://nodejs.org/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                nodejs.org
+              </Link>{" "}
+              or with{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://nodejs.org/en/download/package-manager"
+                target="_blank"
+                rel="noreferrer"
+              >
+                a package manager
+              </Link>
+              .
+            </Text>
+          </Grid>
+
+          <Grid columns={1} gap={2}>
+            <Grid columns={1} gap={1}>
+              <Text color="main" variant="labelsTitleCase">
+                Step 2
+              </Text>
+              <Text color="subtle">
+                Run this command in your Terminal to install Webstudio CLI and
+                sync your project.
+              </Text>
+            </Grid>
+            <Flex gap={2}>
+              <InputField
+                css={{ flex: 1 }}
+                text="mono"
+                readOnly
+                value={npxCommand}
+              />
+              <CopyToClipboard text={npxCommand}>
+                <Button type="button" color="neutral" prefix={<CopyIcon />}>
+                  Copy
+                </Button>
+              </CopyToClipboard>
+            </Flex>
+          </Grid>
+
+          <Grid columns={1} gap={2}>
+            <Grid columns={1} gap={1}>
+              <Text color="main" variant="labelsTitleCase">
+                Step 3
+              </Text>
+              <Text color="subtle">
+                Run this command to publish to{" "}
+                <Link
+                  variant="inherit"
+                  color="inherit"
+                  href={deployTargets[deployTarget].docs}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {humanizeString(deployTarget)}
+                </Link>{" "}
+              </Text>
+            </Grid>
+            <Flex gap={2} align="end">
+              <TextArea
+                css={{ flex: 1 }}
+                variant="mono"
+                readOnly
+                value={stripIndent(deployTargets[deployTarget].command)
+                  .trimStart()
+                  .replace(/ +$/, "")}
+              />
+              <CopyToClipboard text={deployTargets[deployTarget].command}>
+                <Button
+                  type="button"
+                  css={{ flexShrink: 0 }}
+                  color="neutral"
+                  prefix={<CopyIcon />}
+                >
+                  Copy
+                </Button>
+              </CopyToClipboard>
+            </Flex>
+          </Grid>
+
+          <Grid columns={1} gap={1}>
+            <Text color="subtle">
+              Read the detailed documentation{" "}
+              <Link
+                variant="inherit"
+                color="inherit"
+                href="https://wstd.us/cli"
                 target="_blank"
                 rel="noreferrer"
               >
                 here
               </Link>
             </Text>
-
-            <div />
-            <div />
-            <Grid
-              gap={2}
-              align={"center"}
-              css={{
-                gridTemplateColumns: `1fr auto 1fr`,
-              }}
-            >
-              <Separator css={{ alignSelf: "unset" }} />
-              <Text color="main">CLI</Text>
-              <Separator css={{ alignSelf: "unset" }} />
-            </Grid>
-          </>
-        )}
-
-        <Text color="main" variant="labelsTitleCase">
-          Step 1
-        </Text>
-        <Text color="subtle">
-          Download and install Node v20+ from{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://nodejs.org/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            nodejs.org
-          </Link>{" "}
-          or with{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://nodejs.org/en/download/package-manager"
-            target="_blank"
-            rel="noreferrer"
-          >
-            a package manager
-          </Link>
-          .
-        </Text>
-      </Grid>
-
-      <Grid columns={1} gap={2}>
-        <Grid columns={1} gap={1}>
-          <Text color="main" variant="labelsTitleCase">
-            Step 2
-          </Text>
-          <Text color="subtle">
-            Run this command in your Terminal to install Webstudio CLI and sync
-            your project.
-          </Text>
+          </Grid>
         </Grid>
-
-        <Flex gap={2}>
-          <InputField
-            css={{ flex: 1 }}
-            text="mono"
-            readOnly
-            value={npxCommand}
-          />
-
-          <CopyToClipboard text={npxCommand}>
-            <Button type="button" color="neutral" prefix={<CopyIcon />}>
-              Copy
-            </Button>
-          </CopyToClipboard>
-        </Flex>
-      </Grid>
-      <Grid columns={1} gap={2}>
-        <Grid columns={1} gap={1}>
-          <Text color="main" variant="labelsTitleCase">
-            Step 3
-          </Text>
-          <Text color="subtle">
-            Run this command to publish to{" "}
-            <Link
-              variant="inherit"
-              color="inherit"
-              href={deployTargets[deployTarget].docs}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {humanizeString(deployTarget)}
-            </Link>{" "}
-          </Text>
-        </Grid>
-
-        <Flex gap={2} align="end">
-          <TextArea
-            css={{ flex: 1 }}
-            variant="mono"
-            readOnly
-            value={stripIndent(deployTargets[deployTarget].command)
-              .trimStart()
-              .replace(/ +$/, "")}
-          />
-
-          <CopyToClipboard text={deployTargets[deployTarget].command}>
-            <Button
-              type="button"
-              css={{ flexShrink: 0 }}
-              color="neutral"
-              prefix={<CopyIcon />}
-            >
-              Copy
-            </Button>
-          </CopyToClipboard>
-        </Flex>
-      </Grid>
-      <Grid columns={1} gap={1}>
-        <Text color="subtle">
-          Read the detailed documentation{" "}
-          <Link
-            variant="inherit"
-            color="inherit"
-            href="https://wstd.us/cli"
-            target="_blank"
-            rel="noreferrer"
-          >
-            here
-          </Link>
-        </Text>
-      </Grid>
+      )}
     </Grid>
   );
 };

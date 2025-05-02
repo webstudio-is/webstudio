@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { body } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/body.props";
 import type { defaultTag } from "./body";
@@ -13,18 +13,17 @@ const presetStyle = {
   body: [
     ...body,
     {
-      property: "WebkitFontSmoothing",
+      property: "-webkit-font-smoothing",
       value: { type: "keyword", value: "antialiased" },
     },
     {
-      property: "MozOsxFontSmoothing",
+      property: "-moz-osx-font-smoothing",
       value: { type: "keyword", value: "grayscale" },
     },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: BodyIcon,
   states: defaultStates,
   presetStyle,

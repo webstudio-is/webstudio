@@ -18,18 +18,41 @@ jobs:
   checks:
     timeout-minutes: 20
 
+    strategy:
+      matrix:
+        environment:
+          - empty
+          - development
+
+    environment:
+      name: ${{ matrix.environment }}
+
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - uses: ./.github/actions/ci-setup
+      # Will not checkout submodules on empty environment, and will on development
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Pnpm install
+        run: |
+          pnpm install
 
       - uses: actions/cache@v4
         with:
@@ -41,21 +64,48 @@ jobs:
 
       - run: echo ===SHA USED=== ${{ github.event.pull_request.head.sha || github.sha }} # todo: remove after check whats happening on main
 
-      - run: pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
+      - run: |
+          pnpm prettier --cache --check "**/*.{js,md,ts,tsx}"
 
-      - run: pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
+      - name: Lint
+        run: |
+          pnpm lint --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
-      - run: pnpm -r test
-      - run: pnpm --filter=@webstudio-is/prisma-client build
-      - run: pnpm -r typecheck
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Playwright init
+        run: |
+          pnpm playwright install
+        working-directory: packages/sdk-components-animation
+
+      - name: Test
+        run: |
+          pnpm -r test
+
+      - name: Typecheck
+        run: |
+          pnpm -r typecheck
 
   check-size:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
+
+    environment:
+      name: development
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: ./.github/actions/ci-setup
 
@@ -83,9 +133,9 @@ jobs:
               }
             }
             const results = [
-              await assertSize('./fixtures/ssg/dist/client', 352),
-              await assertSize('./fixtures/webstudio-remix-netlify-functions/build/client', 440),
-              await assertSize('./fixtures/webstudio-remix-vercel/build/client', 908),
+              await assertSize('./fixtures/ssg/dist/client', 356),
+              await assertSize('./fixtures/react-router-netlify/build/client', 376),
+              await assertSize('./fixtures/webstudio-features/build/client', 1056),
             ]
             for (const result of results) {
               if (result.passed) {

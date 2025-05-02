@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { img } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./image";
 import { props } from "./__generated__/image.props";
@@ -15,7 +15,7 @@ const presetStyle = {
 
     // Otherwise on new image insert onto canvas it can overfit screen size multiple times
     {
-      property: "maxWidth",
+      property: "max-width",
       value: { type: "unit", unit: "%", value: 100 },
     },
     // inline | inline-block is not suitable because without line-height: 0 on the parent you get unsuitable spaces/margins
@@ -36,7 +36,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "media",
-  type: "embed",
   description:
     "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
   icon: ImageIcon,
@@ -45,24 +44,16 @@ export const meta: WsComponentMeta = {
   order: 0,
 };
 
-// Automatically generated props don't have the right control.
-export const propsOverrides = {
-  src: {
-    type: "string",
-    control: "file",
-    label: "Source",
-    required: false,
-  },
-} as const;
-
-const optimize = props.optimize;
-optimize.description = "Optimize the image for enhanced performance.";
-
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
-    ...propsOverrides,
-    optimize,
+    // Automatically generated props don't have the right control.
+    src: {
+      type: "string",
+      control: "file",
+      label: "Source",
+      required: false,
+    },
   },
   initialProps: [
     "id",

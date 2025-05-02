@@ -1,0 +1,16 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": [
+    "src",
+    "../../@types/**/scroll-timeline.d.ts",
+    "private-src",
+    "../sdk/src/schema/animation-schema.ts",
+    "../../@types/navigator.d.ts"
+  ],
+  "exclude": ["private-src/perf/**/*"],
+  "compilerOptions": {
+    "target": "ESNext",
+
+    "types": ["react/experimental", "react-dom/experimental", "@types/node"]
+  }
+}

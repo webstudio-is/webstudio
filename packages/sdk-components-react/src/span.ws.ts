@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { span } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./span";
 import { props } from "./__generated__/span.props";
@@ -14,7 +14,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "rich-text-child",
   label: "Text",
   icon: PaintBrushIcon,
   states: defaultStates,

@@ -30,12 +30,21 @@ jobs:
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
+      # Do not checkout submodules, they are not needed for this workflow
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
+
+      # TRY FIX cloudlare incident
+      - uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: "2.22.35"
+          verbose: false
+          arch: amd64
 
       - name: pnpm instal
         run: pnpm install --ignore-scripts
@@ -96,7 +105,7 @@ jobs:
         run: tar --use-compress-program="zstd -d" -xf ssg-template.tar.zst -C .
 
       - name: Webstudio Build
-        run: pnpm webstudio build --template ssg --template internal --preview
+        run: pnpm webstudio build --template ssg --template internal
         working-directory: ${{ github.workspace }}/ssg-template
 
       - name: Build

@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { hr } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/separator.props";
 import type { defaultTag } from "./separator";
@@ -18,23 +18,23 @@ const presetStyle = {
       value: { type: "keyword", value: "1px" },
     },
     {
-      property: "backgroundColor",
+      property: "background-color",
       value: { type: "keyword", value: "gray" },
     },
     {
-      property: "borderTopStyle",
+      property: "border-top-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderRightStyle",
+      property: "border-right-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderLeftStyle",
+      property: "border-left-style",
       value: { type: "keyword", value: "none" },
     },
     {
-      property: "borderBottomStyle",
+      property: "border-bottom-style",
       value: { type: "keyword", value: "none" },
     },
   ],
@@ -42,13 +42,12 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "embed",
   description:
     "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
   icon: MinusIcon,
   states: defaultStates,
   presetStyle,
-  order: 5,
+  order: 3,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

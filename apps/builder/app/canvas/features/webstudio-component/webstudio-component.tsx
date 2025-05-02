@@ -14,24 +14,29 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
-import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
-import { findTreeInstanceIds } from "@webstudio-is/sdk";
+import type {
+  Instance,
+  Instances,
+  Prop,
+  WsComponentMeta,
+} from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  collectionComponent,
+  descendantComponent,
+  blockComponent,
+  blockTemplateComponent,
+  getIndexesWithinAncestors,
+} from "@webstudio-is/sdk";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import {
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
-  indexAttribute,
-  getIndexesWithinAncestors,
-  collectionComponent,
   type AnyComponent,
   textContentAttribute,
-  descendantComponent,
-  blockComponent,
-  blockTemplateComponent,
-  editingPlaceholderVariable,
-  WsComponentMeta,
-  editablePlaceholderVariable,
+  standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import {
@@ -41,6 +46,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
+  $props,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -62,8 +68,10 @@ import {
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
 import { BlockTemplate } from "../build-mode/block-template";
-import { getInstanceLabel } from "~/shared/instance-utils";
-import { editablePlaceholderComponents } from "~/canvas/shared/styles";
+import {
+  editablePlaceholderAttribute,
+  editingPlaceholderVariable,
+} from "~/canvas/shared/styles";
 
 const ContentEditable = ({
   placeholder,
@@ -103,7 +111,7 @@ const ContentEditable = ({
     // Issue: <button> with contentEditable does not allow pressing space.
     // Solution: Add space on space keydown.
     const abortController = new AbortController();
-    if (rootElement.tagName === "BUTTON") {
+    if (rootElement.closest("button")) {
       rootElement.addEventListener(
         "keydown",
         (event) => {
@@ -274,17 +282,40 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
-      [$propValuesByInstanceSelectorWithMemoryProps, $indexesWithinAncestors],
-      (propValuesByInstanceSelector, indexesWithinAncestors) => {
+      [
+        $propValuesByInstanceSelectorWithMemoryProps,
+        $instances,
+        $indexesWithinAncestors,
+        $registeredComponentMetas,
+      ],
+      (
+        propValuesByInstanceSelector,
+        instances,
+        indexesWithinAncestors,
+        metas
+      ) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const instance = instances.get(instanceId);
+        const tag = instance?.tag;
+        if (tag !== undefined) {
+          instancePropsObject[tagProperty] = tag;
+        }
+        const hasTags =
+          Object.keys(metas.get(instance?.component ?? "")?.presetStyle ?? {})
+            .length > 0;
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
-          instancePropsObject[indexAttribute] = index.toString();
+          instancePropsObject[indexProperty] = index.toString();
         }
         const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
           for (const [name, value] of instanceProps) {
-            instancePropsObject[name] = value;
+            if (hasTags) {
+              const reactName = standardAttributesToReactProps[name] ?? name;
+              instancePropsObject[reactName] = value;
+            } else {
+              instancePropsObject[name] = value;
+            }
           }
         }
         return instancePropsObject;
@@ -364,25 +395,19 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
 };
 
 const getEditableComponentPlaceholder = (
+  instance: Instance,
   instanceSelector: InstanceSelector,
   instances: Instances,
   metas: Map<string, WsComponentMeta>,
   mode: "editing" | "editable"
 ) => {
-  const instance = instances.get(instanceSelector[0])!;
-
-  if (!editablePlaceholderComponents.includes(instance.component)) {
+  const meta = metas.get(instance.component);
+  if (meta?.placeholder === undefined) {
     return;
   }
 
   const isContentBlockChild =
     undefined !== findBlockSelector(instanceSelector, instances);
-
-  const meta = metas.get(instance.component);
-
-  const label = meta
-    ? getInstanceLabel(instance, meta)
-    : (instance.label ?? instance.component);
 
   const isParagraph = instance.component === "Paragraph";
 
@@ -393,7 +418,7 @@ const getEditableComponentPlaceholder = (
         undefined;
   }
 
-  return label;
+  return meta.placeholder;
 };
 
 export const WebstudioComponentCanvas = forwardRef<
@@ -402,6 +427,7 @@ export const WebstudioComponentCanvas = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const allProps = useStore($props);
   const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -493,13 +519,6 @@ export const WebstudioComponentCanvas = forwardRef<
     Component = BlockTemplate;
   }
 
-  const placeholder = getEditableComponentPlaceholder(
-    instanceSelector,
-    instances,
-    metas,
-    "editable"
-  );
-
   const mergedProps = mergeProps(restProps, instanceProps, "delete");
 
   const props: {
@@ -508,20 +527,19 @@ export const WebstudioComponentCanvas = forwardRef<
     [selectorIdAttribute]: string;
   } & Record<string, unknown> = {
     ...mergedProps,
-    ...(placeholder !== undefined
-      ? {
-          style: {
-            ...mergedProps.style,
-            [editablePlaceholderVariable]: `'${placeholder.replaceAll("'", "\\'")}'`,
-          },
-        }
-      : null),
     // current props should override bypassed from parent
     // important for data-ws-* props
     tabIndex: 0,
     [selectorIdAttribute]: instanceSelector.join(","),
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
+    [editablePlaceholderAttribute]: getEditableComponentPlaceholder(
+      instance,
+      instanceSelector,
+      instances,
+      metas,
+      "editable"
+    ),
   };
 
   // React ignores defaultValue changes after first render.
@@ -551,9 +569,11 @@ export const WebstudioComponentCanvas = forwardRef<
     <TextEditor
       rootInstanceSelector={instanceSelector}
       instances={instances}
+      props={allProps}
       contentEditable={
         <ContentEditable
           placeholder={getEditableComponentPlaceholder(
+            instance,
             instanceSelector,
             instances,
             metas,

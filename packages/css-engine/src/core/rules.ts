@@ -50,17 +50,22 @@ const mergeDeclarations = (declarations: Iterable<Declaration>) => {
   return newDeclarations;
 };
 
+/**
+ * Use CssStyleMap instead to enforce hyphenated properties.
+ * @deprecated
+ */
 export type StyleMap = Map<string, StyleValue>;
 
-export const generateStyleMap = ({
-  style,
-  indent = 0,
-  transformValue,
-}: {
-  style: StyleMap;
-  indent?: number;
-  transformValue?: TransformValue;
-}) => {
+export const generateStyleMap = (
+  style: StyleMap,
+  {
+    indent = 0,
+    transformValue,
+  }: {
+    indent?: number;
+    transformValue?: TransformValue;
+  } = {}
+) => {
   const spaces = " ".repeat(indent);
   let lines = "";
   for (const [property, value] of style) {
@@ -269,8 +274,7 @@ export class NestingRule {
         leftSelector.localeCompare(rightSelector)
       )
       .map(([selector, style]) => {
-        const content = generateStyleMap({
-          style: prefixStyles(style),
+        const content = generateStyleMap(prefixStyles(style), {
           indent: indent + 2,
           transformValue,
         });

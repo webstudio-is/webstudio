@@ -3,55 +3,43 @@ import {
   TriggerIcon,
   ContentIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsCollapsible,
   propsCollapsibleContent,
   propsCollapsibleTrigger,
 } from "./__generated__/collapsible.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 export const metaCollapsible: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "CollapsibleTrigger" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "CollapsibleContent" },
-    },
-  ],
-  presetStyle,
   icon: CollapsibleIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.CollapsibleTrigger, radix.CollapsibleContent],
+  },
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaCollapsibleTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  stylable: false,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Collapsible" },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
-  type: "container",
-  presetStyle,
   icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Collapsible" },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
+  presetStyle: {
+    div,
   },
 };
 

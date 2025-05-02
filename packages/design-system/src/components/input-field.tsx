@@ -89,6 +89,7 @@ const containerStyle = css({
   },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
+    outline: "none",
   },
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
@@ -99,6 +100,7 @@ const containerStyle = css({
   "&:has([data-input-field-input]:is(:disabled, [aria-disabled=true]))": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },
+
   variants: {
     variant: {
       chromeless: {
@@ -245,8 +247,17 @@ export const InputField = forwardRef(
     });
     const unfocusContainerRef = useRef<HTMLDivElement>(null);
     const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (event) => {
+      // If Radix is preventing the Escape key from closing the dialog,
+      // it intercepts the key event at the document level.
+      // However, we still want to allow the user to unfocus the input field.
+      // This means we should not check `defaultPrevented`, but only verify
+      // if our event handler explicitly prevented it.
+      const isPreventedBefore = event.defaultPrevented;
       onKeyDown?.(event);
-      if (event.key === "Escape" && event.defaultPrevented === false) {
+      const isPreventedAfter = event.defaultPrevented;
+      const isEventPrevented = !isPreventedBefore && isPreventedAfter;
+
+      if (event.key === "Escape" && !isEventPrevented) {
         event.preventDefault();
         unfocusContainerRef.current?.focus();
       }

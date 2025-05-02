@@ -1,12 +1,9 @@
-import { type ComponentPropsWithoutRef, forwardRef, useCallback } from "react";
-import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
-import {
-  getClosestInstance,
-  getIndexWithinAncestorFromComponentProps,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import interactionResponse from "await-interaction-response";
+import { type ComponentPropsWithoutRef, forwardRef, useCallback } from "react";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
+import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
 
 export const Tabs = forwardRef<
   HTMLDivElement,
@@ -17,7 +14,7 @@ export const Tabs = forwardRef<
 >(({ defaultValue, ...props }, ref) => {
   const [value, onValueChange] = useControllableState({
     prop: props.value,
-    defaultProp: defaultValue,
+    defaultProp: defaultValue ?? "",
     onChange: props.onValueChange,
   });
 
@@ -45,7 +42,7 @@ export const TabsTrigger = forwardRef<
   HTMLButtonElement,
   Omit<ComponentPropsWithoutRef<typeof Trigger>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
-  const index = getIndexWithinAncestorFromComponentProps(props);
+  const index = getIndexWithinAncestorFromProps(props);
   return <Trigger ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
@@ -53,7 +50,7 @@ export const TabsContent = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof Content>, "value"> & { value?: string }
 >(({ value, ...props }, ref) => {
-  const index = getIndexWithinAncestorFromComponentProps(props);
+  const index = getIndexWithinAncestorFromProps(props);
   return <Content ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 

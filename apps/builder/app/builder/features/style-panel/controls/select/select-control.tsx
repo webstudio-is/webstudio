@@ -1,12 +1,15 @@
-import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
 import {
-  StyleValue,
+  camelCaseProperty,
+  declarationDescriptions,
+  keywordValues,
+  parseCssValue,
+} from "@webstudio-is/css-data";
+import {
   toValue,
-  type StyleProperty,
+  type StyleValue,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
-import { toKebabCase } from "../../shared/keyword-utils";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   resetEphemeralStyles,
@@ -17,14 +20,13 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { noCase } from "change-case";
 
 export const SelectControl = ({
   property,
   index,
-  items = styleConfigByName(property).items,
+  items,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   index?: number;
   items?: Array<{ label: string; name: string }>;
 }) => {
@@ -40,7 +42,9 @@ export const SelectControl = ({
       setRepeatedStyleItem(styleDecl, index, value, options);
     }
   };
-  const options = items.map(({ name }) => name);
+  const options =
+    items?.map(({ name }) => name) ?? keywordValues[property] ?? [];
+
   // We can't render an empty string as a value when display was added but without a value.
   // One case is when advanced property is being added, but no value is set.
   const valueString = toValue(value) || "empty";
@@ -54,7 +58,9 @@ export const SelectControl = ({
   const hasDescription =
     options.length > 0 &&
     options.some(
-      (option) => declarationDescriptions[`${property}:${option}`] !== undefined
+      (option) =>
+        declarationDescriptions[`${camelCaseProperty(property)}:${option}`] !==
+        undefined
     );
 
   return (
@@ -62,7 +68,6 @@ export const SelectControl = ({
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={toKebabCase}
       value={valueString}
       onChange={(name) => setValue({ type: "keyword", value: name })}
       onItemHighlight={(name) => {
@@ -88,10 +93,11 @@ export const SelectControl = ({
           return;
         }
 
-        const description = declarationDescriptions[`${property}:${option}`];
+        const description =
+          declarationDescriptions[`${camelCaseProperty(property)}:${option}`];
         return (
           <Box css={{ width: theme.spacing[26] }}>
-            {description ?? `The ${noCase(property)} is ${option}`}
+            {description ?? `The ${property} is ${option}`}
           </Box>
         );
       }}

@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
+import { atom } from "nanostores";
 
 export default {
   component: StyleSourceInput,
@@ -67,6 +68,7 @@ export const Basic: StoryFn<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState([localItem, ...getItems()]);
   return (
     <StyleSourceInput
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
@@ -77,7 +79,7 @@ export const Basic: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemId) => {
+      onDetachItem={(itemId) => {
         removeItem(itemId, value, setValue);
       }}
       onSort={setValue}
@@ -98,6 +100,7 @@ export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
   ]);
   return (
     <StyleSourceInput
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
@@ -108,7 +111,7 @@ export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
+      onDetachItem={(itemToRemove) => {
         removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
@@ -135,6 +138,7 @@ export const Complete: StoryFn<typeof StyleSourceInput> = () => {
 
   return (
     <StyleSourceInput
+      $styleSourceInputElement={atom()}
       css={{ width: 300 }}
       items={getItems()}
       value={value}
@@ -148,7 +152,7 @@ export const Complete: StoryFn<typeof StyleSourceInput> = () => {
       onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemoveItem={(itemToRemove) => {
+      onDetachItem={(itemToRemove) => {
         removeItem(itemToRemove, value, setValue);
       }}
       onChangeItem={(changedItem) => {

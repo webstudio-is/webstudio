@@ -24,6 +24,14 @@ test("support multiline command with backslashes", () => {
   });
 });
 
+test("forgive missing closed quotes", () => {
+  expect(parseCurl(`curl "https://my-url/hello-world`)).toEqual({
+    url: "https://my-url/hello-world",
+    method: "get",
+    headers: [],
+  });
+});
+
 test("skip when invalid", () => {
   expect(parseCurl(``)).toEqual(undefined);
   expect(parseCurl(`  `)).toEqual(undefined);
@@ -48,6 +56,28 @@ test("support method with --request and -X flags", () => {
   expect(
     parseCurl(`curl -X put https://my-url/hello-world --request post`)
   ).toEqual(result);
+});
+
+test("support --get and -G flags", () => {
+  expect(
+    parseCurl(`curl --get https://my-url --data limit=3 --data first=0`)
+  ).toEqual({
+    url: "https://my-url?limit=3&first=0",
+    method: "get",
+    headers: [],
+  });
+  expect(parseCurl(`curl -G https://my-url -d limit=3 -d first=0`)).toEqual({
+    url: "https://my-url?limit=3&first=0",
+    method: "get",
+    headers: [],
+  });
+  expect(
+    parseCurl(`curl -G https://my-url?filter=1 -d limit=3 -d first=0`)
+  ).toEqual({
+    url: "https://my-url?filter=1&limit=3&first=0",
+    method: "get",
+    headers: [],
+  });
 });
 
 test("support headers with --header and -H flags", () => {
@@ -79,34 +109,85 @@ test("support headers with --header and -H flags", () => {
   });
 });
 
+test("default to post method and urlencoded header when data is specified", () => {
+  expect(
+    parseCurl(`
+      curl https://my-url \\\
+        -d param=1 \\\
+        --data param=2 \\\
+        --data-ascii param=3 \\\
+        --data-raw param=4
+    `)
+  ).toEqual({
+    url: "https://my-url",
+    method: "post",
+    headers: [
+      { name: "content-type", value: "application/x-www-form-urlencoded" },
+    ],
+    body: `param=1&param=2&param=3&param=4`,
+  });
+});
+
+test("encode data for get request", () => {
+  expect(
+    parseCurl(`curl -G https://my-url --data-urlencode param=привет`)
+  ).toEqual({
+    url: "https://my-url?param=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82",
+    method: "get",
+    headers: [],
+  });
+});
+
+test("encode data for post request", () => {
+  expect(
+    parseCurl(`curl https://my-url --data-urlencode param=привет`)
+  ).toEqual({
+    url: "https://my-url",
+    method: "post",
+    headers: [
+      { name: "content-type", value: "application/x-www-form-urlencoded" },
+    ],
+    body: `param=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82`,
+  });
+});
+
 test("support text body", () => {
   expect(
-    parseCurl(`curl https://my-url/hello-world --data '{"param":"value"}'`)
+    parseCurl(`
+      curl https://my-url/hello-world \\
+        -H content-type:plain/text \\
+        --data '{"param":"value"}'
+    `)
   ).toEqual({
     url: "https://my-url/hello-world",
     method: "post",
-    headers: [],
+    headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
   });
   expect(
-    parseCurl(`curl https://my-url/hello-world -d '{"param":"value"}'`)
+    parseCurl(
+      `curl https://my-url/hello-world -H content-type:plain/text -d '{"param":"value"}'`
+    )
   ).toEqual({
     url: "https://my-url/hello-world",
     method: "post",
-    headers: [],
+    headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
   });
 });
 
 test("support text body with explicit method", () => {
   expect(
-    parseCurl(
-      `curl https://my-url/hello-world -X put --data '{"param":"value"}'`
-    )
+    parseCurl(`
+      curl https://my-url/hello-world \\
+        -X put \\
+        -H content-type:plain/text \\
+        --data '{"param":"value"}'
+    `)
   ).toEqual({
     url: "https://my-url/hello-world",
     method: "put",
-    headers: [],
+    headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
   });
 });
@@ -191,4 +272,17 @@ test("multiline graphql is idempotent", () => {
     },
   };
   expect(parseCurl(generateCurl(request))).toEqual(request);
+});
+
+test("support basic http authentication", () => {
+  expect(parseCurl(`curl https://my-url.com -u "user:password"`)).toEqual({
+    url: "https://my-url.com",
+    method: "get",
+    headers: [
+      {
+        name: "Authorization",
+        value: `Basic ${btoa("user:password")}`,
+      },
+    ],
+  });
 });

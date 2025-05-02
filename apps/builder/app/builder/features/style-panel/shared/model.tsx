@@ -2,28 +2,27 @@ import { useMemo, useRef } from "react";
 import type { HtmlTags } from "html-tags";
 import { computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { properties } from "@webstudio-is/css-data";
+import { propertiesData } from "@webstudio-is/css-data";
 import {
   compareMedia,
+  hyphenateProperty,
   toVarFallback,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
-  Instances,
   ROOT_INSTANCE_ID,
-  Styles,
-  StyleSourceSelections,
+  type Styles,
+  type StyleSourceSelections,
   type Breakpoint,
   type Instance,
-  type StyleDecl,
+  type WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { rootComponent, WsComponentMeta } from "@webstudio-is/react-sdk";
+import { rootComponent } from "@webstudio-is/sdk";
 import {
   $breakpoints,
-  $instances,
-  $propsIndex,
+  $props,
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedInstanceStates,
@@ -37,8 +36,11 @@ import {
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
+import {
+  $selectedInstancePathWithRoot,
+  type InstancePath,
+} from "~/shared/awareness";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { $selectedInstancePath } from "~/shared/awareness";
 
 const $presetStyles = computed($registeredComponentMetas, (metas) => {
   const presetStyles = new Map<string, StyleValue>();
@@ -58,52 +60,54 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   return presetStyles;
 });
 
+const $tagByInstanceId = computed($props, (props) => {
+  const tagByInstanceId = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.type === "string" && prop.name === "tag") {
+      tagByInstanceId.set(prop.instanceId, prop.value);
+    }
+  }
+  return tagByInstanceId;
+});
+
 export const $instanceTags = computed(
-  [$registeredComponentMetas, $selectedInstancePath, $propsIndex],
-  (metas, instancePath, propsIndex) => {
+  [$registeredComponentMetas, $selectedInstancePathWithRoot, $tagByInstanceId],
+  (metas, instancePath, tagByInstanceId) => {
     const instanceTags = new Map<Instance["id"], HtmlTags>();
     if (instancePath === undefined) {
       return instanceTags;
     }
     for (const { instance } of instancePath) {
       const meta = metas.get(instance.component);
-      if (meta === undefined) {
-        continue;
-      }
-      const tags = Object.keys(meta.presetStyle ?? {}) as HtmlTags[];
+      const tags = Object.keys(meta?.presetStyle ?? {});
       if (tags.length > 0) {
-        // take first tag from preset
-        let currentTag = tags[0];
-        // when more than one tag is defined in preset look for specific one in props
-        if (tags.length > 1) {
-          const props = propsIndex.propsByInstanceId.get(instance.id);
-          // @todo rewrite adhoc solution when ws:tag is supported
-          const tagProp = props?.find((prop) => prop.name === "tag");
-          if (tagProp) {
-            currentTag = tagProp.value as HtmlTags;
-          }
-        }
-        instanceTags.set(instance.id, currentTag);
+        const metaTag = tags[0];
+        const propTag = tagByInstanceId.get(instance.id);
+        const tag = instance.tag ?? propTag ?? metaTag;
+        instanceTags.set(instance.id, tag as HtmlTags);
       }
     }
     return instanceTags;
   }
 );
 
-const $instanceComponents = computed($selectedInstancePath, (instancePath) => {
-  const instanceComponents = new Map<Instance["id"], Instance["component"]>([
-    [ROOT_INSTANCE_ID, rootComponent],
-  ]);
-  if (instancePath === undefined) {
+const $instanceComponents = computed(
+  $selectedInstancePathWithRoot,
+  (instancePath) => {
+    const instanceComponents = new Map<Instance["id"], Instance["component"]>([
+      [ROOT_INSTANCE_ID, rootComponent],
+    ]);
+    if (instancePath === undefined) {
+      return instanceComponents;
+    }
+    // store only component for selected instance and ancestors
+    // to avoid iterating over all instances in the project
+    for (const { instance } of instancePath) {
+      instanceComponents.set(instance.id, instance.component);
+    }
     return instanceComponents;
   }
-  // store only component for selected instance and ancestors
-  // to avoid iterating over all instances in the project
-  for (const { instance } of instancePath) {
-    instanceComponents.set(instance.id, instance.component);
-  }
-  return instanceComponents;
-});
+);
 
 export const $matchingBreakpoints = computed(
   [$breakpoints, $selectedBreakpoint],
@@ -122,42 +126,44 @@ export const $matchingBreakpoints = computed(
   }
 );
 
-export const getDefinedStyles = ({
-  instanceSelector,
-  instances,
+const getDefinedStyles = ({
+  instancePath,
   metas,
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
 }: {
-  instanceSelector: InstanceSelector;
-  instances: Instances;
+  instancePath: InstancePath;
   metas: Map<string, WsComponentMeta>;
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
 }) => {
-  const definedStyles = new Set<{
-    property: StyleProperty;
+  type Defined = {
+    property: CssProperty;
     listed?: boolean;
-  }>();
+  };
+
   const inheritedStyleSources = new Set();
   const instanceStyleSources = new Set();
   const matchingBreakpoints = new Set(matchingBreakpointsArray);
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    const meta = instance?.component
-      ? metas.get(instance.component)
-      : undefined;
-    for (const presetStyles of Object.values(meta?.presetStyle ?? {})) {
-      for (const styleDecl of presetStyles) {
-        definedStyles.add(styleDecl);
+  const startingInstanceSelector = instancePath[0].instanceSelector;
+
+  const instanceStyles = new Set<Defined>();
+  const inheritedStyles = new Set<Defined>();
+  const presetStyles = new Set<Defined>();
+
+  for (const { instance } of instancePath) {
+    const meta = metas.get(instance.component);
+    for (const preset of Object.values(meta?.presetStyle ?? {})) {
+      for (const styleDecl of preset) {
+        presetStyles.add({ property: styleDecl.property });
       }
     }
-    const styleSources = styleSourceSelections.get(instanceId)?.values;
+    const styleSources = styleSourceSelections.get(instance.id)?.values;
     if (styleSources) {
       for (const styleSourceId of styleSources) {
-        if (instanceId === instanceSelector[0]) {
+        if (instance.id === startingInstanceSelector[0]) {
           instanceStyleSources.add(styleSourceId);
         } else {
           inheritedStyleSources.add(styleSourceId);
@@ -166,71 +172,41 @@ export const getDefinedStyles = ({
     }
   }
   for (const styleDecl of styles.values()) {
+    const property = hyphenateProperty(styleDecl.property);
     if (
       matchingBreakpoints.has(styleDecl.breakpointId) &&
       instanceStyleSources.has(styleDecl.styleSourceId)
     ) {
-      definedStyles.add(styleDecl);
+      instanceStyles.add({
+        property,
+        listed: styleDecl.listed,
+      });
     }
-    const inherited =
-      properties[styleDecl.property as keyof typeof properties]?.inherited ??
-      // custom properties are always inherited
-      true;
+    // custom properties are always inherited
+    const inherited = propertiesData[property]?.inherited ?? true;
     if (
       matchingBreakpoints.has(styleDecl.breakpointId) &&
       inheritedStyleSources.has(styleDecl.styleSourceId) &&
       inherited
     ) {
-      definedStyles.add(styleDecl);
+      inheritedStyles.add({
+        property,
+        listed: styleDecl.listed,
+      });
     }
   }
-  return definedStyles;
+
+  // We are sorting by alphabet within each group.
+  const sortByProperty = (a: { property: string }, b: { property: string }) => {
+    return Intl.Collator().compare(a.property, b.property);
+  };
+
+  return [
+    ...Array.from(instanceStyles).sort(sortByProperty),
+    ...Array.from(inheritedStyles).sort(sortByProperty),
+    ...Array.from(presetStyles).sort(sortByProperty),
+  ];
 };
-
-const $instanceAndRootSelector = computed(
-  $selectedInstancePath,
-  (instancePath) => {
-    if (instancePath === undefined) {
-      return;
-    }
-    const [selectedItem] = instancePath;
-    if (selectedItem.instance.id === ROOT_INSTANCE_ID) {
-      return selectedItem.instanceSelector;
-    }
-    return [...selectedItem.instanceSelector, ROOT_INSTANCE_ID];
-  }
-);
-
-export const $definedStyles = computed(
-  [
-    $instanceAndRootSelector,
-    $instances,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-  ],
-  (
-    instanceSelector,
-    instances,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles
-  ) => {
-    if (instanceSelector === undefined) {
-      return new Set<StyleDecl>();
-    }
-    return getDefinedStyles({
-      instanceSelector,
-      instances,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-  }
-);
 
 const $model = computed(
   [
@@ -263,27 +239,61 @@ const $model = computed(
   }
 );
 
-export const $definedComputedStyles = computed(
+export const $computedStyleDeclarations = computed(
   [
-    $definedStyles,
     $model,
-    $instanceAndRootSelector,
+    $selectedInstancePathWithRoot,
     $selectedOrLastStyleSourceSelector,
+    $registeredComponentMetas,
+    $matchingBreakpoints,
+    $styleSourceSelections,
+    $styles,
   ],
-  (definedStyles, model, instanceSelector, styleSourceSelector) => {
+  (
+    model,
+    instancePath,
+    styleSourceSelector,
+    metas,
+    matchingBreakpoints,
+    styleSourceSelections,
+    styles
+  ) => {
+    if (instancePath === undefined) {
+      return [];
+    }
+    const definedStyles = getDefinedStyles({
+      instancePath,
+      metas,
+      matchingBreakpoints,
+      styleSourceSelections,
+      styles,
+    });
+    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
+    // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
+    definedStyles.push(
+      { property: "cursor" },
+      { property: "mix-blend-mode" },
+      { property: "opacity" },
+      { property: "pointer-events" },
+      { property: "user-select" }
+    );
     const computedStyles = new Map<string, ComputedStyleDecl>();
-    for (const { property } of definedStyles) {
+    for (const { property, listed } of definedStyles) {
       // deduplicate by property name
       if (computedStyles.has(property)) {
         continue;
       }
       const computedStyleDecl = getComputedStyleDecl({
         model,
-        instanceSelector,
+        instanceSelector: instancePath?.[0].instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,
       });
+      // @todo We will delete it once we have added additional filters to advanced panel and
+      // don't need to differentiate this any more.
+      computedStyleDecl.listed = listed;
+
       computedStyles.set(property, computedStyleDecl);
     }
     return Array.from(computedStyles.values());
@@ -291,7 +301,7 @@ export const $definedComputedStyles = computed(
 );
 
 export const $availableVariables = computed(
-  $definedComputedStyles,
+  $computedStyleDeclarations,
   (computedStyles) => {
     const availableVariables: VarValue[] = [];
     for (const styleDecl of computedStyles) {
@@ -319,13 +329,13 @@ export const $availableColorVariables = computed(
     availableVariables.filter((value) => value.fallback?.type !== "unit")
 );
 
-export const createComputedStyleDeclStore = (property: StyleProperty) => {
+export const createComputedStyleDeclStore = (property: CssProperty) => {
   return computed(
-    [$model, $instanceAndRootSelector, $selectedOrLastStyleSourceSelector],
-    (model, instanceSelector, styleSourceSelector) => {
+    [$model, $selectedInstancePathWithRoot, $selectedOrLastStyleSourceSelector],
+    (model, instancePath, styleSourceSelector) => {
       return getComputedStyleDecl({
         model,
-        instanceSelector,
+        instanceSelector: instancePath?.[0].instanceSelector,
         styleSourceId: styleSourceSelector?.styleSourceId,
         state: styleSourceSelector?.state,
         property,
@@ -338,7 +348,7 @@ export const useStyleObjectModel = () => {
   return useStore($model);
 };
 
-export const useComputedStyleDecl = (property: StyleProperty) => {
+export const useComputedStyleDecl = (property: CssProperty) => {
   const $store = useMemo(
     () => createComputedStyleDeclStore(property),
     [property]
@@ -347,32 +357,24 @@ export const useComputedStyleDecl = (property: StyleProperty) => {
 };
 
 const $closestStylableInstanceSelector = computed(
-  [$instanceAndRootSelector, $instances, $registeredComponentMetas],
-  (instanceSelector, instances, metas) => {
+  [$selectedInstancePathWithRoot, $registeredComponentMetas],
+  (instancePath, metas) => {
     // ignore unstylable instances which do not affect parent/child relationships
-    if (instanceSelector === undefined) {
+    if (instancePath === undefined) {
       return;
     }
-    const closestStylableIndex = instanceSelector.findIndex(
-      (instanceId, index) => {
-        // start with parent
-        if (index === 0) {
-          return false;
-        }
-        const component = instances.get(instanceId)?.component;
-        if (component) {
-          return metas.get(component)?.stylable ?? true;
-        }
-        // ids without instances are collection items
-        // they are not stylable
+    const match = instancePath.find(({ instance }, index) => {
+      // start with parent
+      if (index === 0) {
         return false;
       }
-    );
-    return instanceSelector.slice(closestStylableIndex);
+      return metas.get(instance.component)?.presetStyle !== undefined;
+    });
+    return match?.instanceSelector;
   }
 );
 
-export const useParentComputedStyleDecl = (property: StyleProperty) => {
+export const useParentComputedStyleDecl = (property: CssProperty) => {
   const $store = useMemo(
     () =>
       computed(
@@ -390,10 +392,21 @@ export const useParentComputedStyleDecl = (property: StyleProperty) => {
   return useStore($store);
 };
 
-export const useComputedStyles = (properties: StyleProperty[]) => {
+export const getInstanceStyleDecl = (
+  property: CssProperty,
+  instanceSelector: InstanceSelector
+) => {
+  return getComputedStyleDecl({
+    model: $model.get(),
+    instanceSelector,
+    property,
+  });
+};
+
+export const useComputedStyles = (properties: CssProperty[]) => {
   // cache each computed style store
   const cachedStores = useRef(
-    new Map<StyleProperty, ReadableAtom<ComputedStyleDecl>>()
+    new Map<CssProperty, ReadableAtom<ComputedStyleDecl>>()
   );
   const stores: ReadableAtom<ComputedStyleDecl>[] = [];
   for (const property of properties) {

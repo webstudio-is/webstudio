@@ -34,9 +34,9 @@ const shouldHideDot = ({
 
 export const FlexGrid = () => {
   const styles = useComputedStyles([
-    "flexDirection",
-    "justifyContent",
-    "alignItems",
+    "flex-direction",
+    "justify-content",
+    "align-items",
   ]);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
   const [flexDirection, justifyContent, alignItems] = styles;
@@ -127,11 +127,11 @@ export const FlexGrid = () => {
                 const justifyContent = alignment[x];
                 const alignItems = alignment[y];
                 const batch = createBatchUpdate();
-                batch.setProperty("alignItems")({
+                batch.setProperty("align-items")({
                   type: "keyword",
                   value: alignItems,
                 });
-                batch.setProperty("justifyContent")({
+                batch.setProperty("justify-content")({
                   type: "keyword",
                   value: justifyContent,
                 });

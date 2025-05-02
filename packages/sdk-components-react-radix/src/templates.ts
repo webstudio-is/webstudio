@@ -10,3 +10,4 @@ export { meta as Tooltip } from "./tooltip.template";
 export { meta as Popover } from "./popover.template";
 export { meta as RadioGroup } from "./radio-group.template";
 export { meta as Select } from "./select.template";
+export { meta as NavigationMenu } from "./navigation-menu.template";

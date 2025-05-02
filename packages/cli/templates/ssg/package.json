@@ -8,21 +8,22 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
-    "@webstudio-is/sdk-components-react-radix": "0.0.0-webstudio-version",
-    "@webstudio-is/sdk-components-react": "0.0.0-webstudio-version",
     "@webstudio-is/image": "0.0.0-webstudio-version",
+    "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-react": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-animation": "0.0.0-webstudio-version",
+    "@webstudio-is/sdk-components-react-radix": "0.0.0-webstudio-version",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vike": "^0.4.210"
+    "vike": "^0.4.229"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "5.7.2",
-    "vite": "^5.4.11"
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "5.8.2",
+    "vite": "^6.3.4"
   },
   "engines": {
     "node": ">=20.0.0"

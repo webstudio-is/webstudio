@@ -1,4 +1,3 @@
-import { formatDistance } from "date-fns/formatDistance";
 import {
   AutogrowTextArea,
   Box,
@@ -41,6 +40,7 @@ import { AiApiException, RateLimitException } from "./api-exceptions";
 import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import { flushSync } from "react-dom";
 import { $selectedPage } from "~/shared/awareness";
+import { RelativeTime } from "~/builder/shared/relative-time";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -117,13 +117,10 @@ export const AiCommandBar = () => {
       } catch (error) {
         if (error instanceof RateLimitException) {
           toast.info(
-            `Temporary AI rate limit reached. Please wait ${formatDistance(
-              Date.now(),
-              new Date(error.meta.reset),
-              {
-                includeSeconds: true,
-              }
-            )} and try again.`
+            <>
+              Temporary AI rate limit reached. Please wait{" "}
+              <RelativeTime time={new Date(error.meta.reset)} /> and try again.
+            </>
           );
           return;
         }
@@ -219,13 +216,10 @@ export const AiCommandBar = () => {
 
       if (error instanceof RateLimitException) {
         toast.info(
-          `Temporary AI rate limit reached. Please wait ${formatDistance(
-            Date.now(),
-            new Date(error.meta.reset),
-            {
-              includeSeconds: true,
-            }
-          )} and try again.`
+          <>
+            Temporary AI rate limit reached. Please wait{" "}
+            <RelativeTime time={new Date(error.meta.reset)} /> and try again.
+          </>
         );
         return;
       }

@@ -34,7 +34,7 @@ const useCloneProject = ({
     const parsed = Title.safeParse(title);
     const errors =
       "error" in parsed
-        ? parsed.error.issues.map((issue) => issue.message).join("\n")
+        ? parsed.error?.issues.map((issue) => issue.message).join("\n")
         : undefined;
 
     setErrors(errors);

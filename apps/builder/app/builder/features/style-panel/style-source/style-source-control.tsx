@@ -1,7 +1,6 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
   Text,
   styled,
@@ -97,14 +96,12 @@ const Menu = (props: MenuProps) => {
           <ChevronDownIcon style={{ position: "relative" }} />
         </MenuTrigger>
       </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          onCloseAutoFocus={(event) => event.preventDefault()}
-          css={{ maxWidth: theme.spacing[24] }}
-        >
-          {props.children}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+      <DropdownMenuContent
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        css={{ maxWidth: theme.spacing[24] }}
+      >
+        {props.children}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
@@ -139,12 +136,16 @@ const EditableText = ({
       spellCheck={false}
       userSelect={isEditing ? "text" : "none"}
       css={{
+        // prevent collapsing horizontally editable text when empty
+        flexGrow: 1,
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
         cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
-    />
+    >
+      {value}
+    </Text>
   );
 };
 
@@ -323,37 +324,34 @@ export const StyleSourceControl = ({
         role="button"
         hasError={error !== undefined}
       >
-        <Flex
-          grow
-          css={{
-            position: "relative",
-            paddingBlock: theme.spacing[3],
-            paddingInline: theme.spacing[4],
-          }}
-        >
+        <Flex grow css={{ padding: theme.spacing[2] }}>
           <StyleSourceButton
             disabled={disabled || isEditing}
             isEditing={isEditing}
-            onClick={onSelect}
             tabIndex={-1}
+            onClick={onSelect}
           >
-            <Flex align="center" justify="center" gap="1">
-              {source === "local" ? (
+            {source === "local" ? (
+              <Flex justify="center" align="center">
+                <Box
+                  // We need this so that the small local button has a bigger clickable surface
+                  css={{ position: "absolute", inset: 0 }}
+                />
                 <LocalStyleIcon showDot={hasStyles} />
-              ) : (
-                <>
-                  <EditableText
-                    isEditing={isEditing}
-                    onChangeEditing={onChangeEditing}
-                    onChangeValue={onChangeValue}
-                    value={label}
-                  />
-                  {hasStyles === false && isEditing === false && (
-                    <LocalStyleIcon showDot={hasStyles} />
-                  )}
-                </>
-              )}
-            </Flex>
+              </Flex>
+            ) : (
+              <Flex align="center" justify="center" gap="1">
+                <EditableText
+                  isEditing={isEditing}
+                  onChangeEditing={onChangeEditing}
+                  onChangeValue={onChangeValue}
+                  value={label}
+                />
+                {hasStyles === false && isEditing === false && (
+                  <LocalStyleIcon showDot={hasStyles} />
+                )}
+              </Flex>
+            )}
           </StyleSourceButton>
         </Flex>
         {stateLabel !== undefined && (

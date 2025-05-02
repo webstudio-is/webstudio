@@ -1,5 +1,5 @@
 import type { PropItem } from "react-docgen-typescript";
-import { PropMeta } from "@webstudio-is/react-sdk";
+import { PropMeta } from "@webstudio-is/sdk";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
@@ -16,8 +16,18 @@ export const propsToArgTypes = (
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
       .filter(([propName]) => propName.startsWith("$webstudio") === false)
+      .filter(([propName]) => propName.startsWith("$") === false)
       // Exclude props that are in the exclude list
       .filter(([propName]) => exclude.includes(propName) === false)
+      .filter(([_propName, propItem]) => {
+        for (const { fileName } of propItem.declarations ?? []) {
+          // ignore aria attributes
+          if (fileName.endsWith("/@types/react/index.d.ts")) {
+            return false;
+          }
+        }
+        return true;
+      })
       .map(([propName, propItem]) => {
         // Remove @see and @deprecated from description also {@link ...} is removed as it always go after @see
         propItem.description = propItem.description

@@ -2,6 +2,7 @@ import { styled, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
+  $pages,
   $selectedBreakpointId,
   $styles,
   $styleSources,
@@ -10,6 +11,7 @@ import {
 import { registerContainers } from "~/shared/sync";
 import { Section } from "./transitions";
 import { $awareness } from "~/shared/awareness";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 const Panel = styled("div", {
   width: theme.spacing[30],
@@ -50,8 +52,14 @@ $styles.set(
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
+$pages.set(
+  createDefaultPages({
+    homePageId: "homePageId",
+    rootInstanceId: "box",
+  })
+);
 $awareness.set({
-  pageId: "",
+  pageId: "homePageId",
   instanceSelector: ["box"],
 });
 

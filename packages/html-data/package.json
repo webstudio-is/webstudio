@@ -6,17 +6,23 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:elements": "tsx --conditions=webstudio ./bin/elements.ts && prettier --write ./src/__generated__",
+    "build:attributes": "tsx --conditions=webstudio ./bin/attributes.ts && prettier --write ./src/__generated__ ../react-sdk/src/__generated__",
+    "build:aria": "tsx --conditions=webstudio ./bin/aria.ts && prettier --write ./src/__generated__"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@types/aria-query": "^5.0.4",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "aria-query": "^5.3.2",
+    "parse5": "7.2.1"
   },
-  "peerDependencies": {},
   "exports": {
     "webstudio": "./src/index.ts"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,
-  "sideEffects": false,
-  "dependencies": {}
+  "sideEffects": false
 }

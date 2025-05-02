@@ -1,12 +1,17 @@
 import { expect, test } from "vitest";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   $,
+  ActionValue,
   AssetValue,
-  ExpressionValue,
+  expression,
   PageValue,
-  ParameterValue,
+  Parameter,
   PlaceholderValue,
   renderTemplate,
+  ResourceValue,
+  Variable,
+  ws,
 } from "./jsx";
 import { css } from "./css";
 
@@ -149,10 +154,7 @@ test("render literal props", () => {
 
 test("render defined props", () => {
   const { props } = renderTemplate(
-    <$.Body
-      data-expression={new ExpressionValue("1 + 1")}
-      data-parameter={new ParameterValue("parameterId")}
-    >
+    <$.Body>
       <$.Box
         data-asset={new AssetValue("assetId")}
         data-page={new PageValue("pageId")}
@@ -161,20 +163,6 @@ test("render defined props", () => {
     </$.Body>
   );
   expect(props).toEqual([
-    {
-      id: "0:data-expression",
-      instanceId: "0",
-      name: "data-expression",
-      type: "expression",
-      value: "1 + 1",
-    },
-    {
-      id: "0:data-parameter",
-      instanceId: "0",
-      name: "data-parameter",
-      type: "parameter",
-      value: "parameterId",
-    },
     {
       id: "1:data-asset",
       instanceId: "1",
@@ -290,4 +278,343 @@ test("avoid generating style data without styles", () => {
   expect(styleSources).toEqual([]);
   expect(styleSourceSelections).toEqual([]);
   expect(styles).toEqual([]);
+});
+
+test("render variable used in prop expression", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body ws:id="body" data-count={expression`${count}`}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render variable used in child expression", () => {
+  const count = new Variable("count", 1);
+  const { instances, dataSources } = renderTemplate(
+    <$.Body ws:id="body">{expression`${count}`}</$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "expression", value: "$ws$dataSource$0" }],
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("compose expression from multiple variables", () => {
+  const count = new Variable("count", 1);
+  const step = new Variable("step", 2);
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-count={expression`Count is ${count} + ${step}`}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "Count is $ws$dataSource$0 + $ws$dataSource$1",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+    {
+      type: "variable",
+      id: "1",
+      scopeInstanceId: "body",
+      name: "step",
+      value: { type: "number", value: 2 },
+    },
+  ]);
+});
+
+test("preserve same variable on multiple instances", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body ws:id="body" data-count={expression`${count}`}>
+      <$.Box ws:id="box" data-count={expression`${count}`}></$.Box>
+    </$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+    {
+      id: "box:data-count",
+      instanceId: "box",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render variable inside of action", () => {
+  const count = new Variable("count", 1);
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-count={expression`${count}`}
+      onInc={new ActionValue(["step"], expression`${count} = ${count} + step`)}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-count",
+      instanceId: "body",
+      name: "data-count",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+    {
+      id: "body:onInc",
+      instanceId: "body",
+      name: "onInc",
+      type: "action",
+      value: [
+        {
+          type: "execute",
+          args: ["step"],
+          code: "$ws$dataSource$0 = $ws$dataSource$0 + step",
+        },
+      ],
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "variable",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "count",
+      value: { type: "number", value: 1 },
+    },
+  ]);
+});
+
+test("render parameter bound to prop expression", () => {
+  const system = new Parameter("system");
+  const { props, dataSources } = renderTemplate(
+    <$.Body
+      ws:id="body"
+      data-param={system}
+      data-value={expression`${system}`}
+    ></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-param",
+      instanceId: "body",
+      name: "data-param",
+      type: "parameter",
+      value: "0",
+    },
+    {
+      id: "body:data-value",
+      instanceId: "body",
+      name: "data-value",
+      type: "expression",
+      value: "$ws$dataSource$0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      type: "parameter",
+      id: "0",
+      scopeInstanceId: "body",
+      name: "system",
+    },
+  ]);
+});
+
+test("render resource variable", () => {
+  const value = new Variable("value", "value");
+  const myResource = new ResourceValue("myResource", {
+    url: expression`"https://my-url.com/" + ${value}`,
+    method: "get",
+    headers: [{ name: "auth", value: expression`${value}` }],
+    body: expression`${value}`,
+  });
+  const { dataSources, resources } = renderTemplate(
+    <$.Body ws:id="body">{expression`${myResource}.title`}</$.Body>
+  );
+  expect(dataSources).toEqual([
+    {
+      id: "1",
+      name: "value",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "value" },
+    },
+    {
+      id: "0",
+      scopeInstanceId: "body",
+      name: "myResource",
+      type: "resource",
+      resourceId: "resource:0",
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "myResource",
+      url: `"https://my-url.com/" + $ws$dataSource$1`,
+      method: "get",
+      headers: [{ name: "auth", value: `$ws$dataSource$1` }],
+      body: `$ws$dataSource$1`,
+    },
+  ]);
+});
+
+test("render resource prop", () => {
+  const value = new Variable("value", "value");
+  const myResource = new ResourceValue("myResource", {
+    url: expression`"https://my-url.com/" + ${value}`,
+    method: "get",
+    headers: [{ name: "auth", value: expression`${value}` }],
+    body: expression`${value}`,
+  });
+  const { props, dataSources, resources } = renderTemplate(
+    <$.Body ws:id="body" action={myResource}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:action",
+      instanceId: "body",
+      name: "action",
+      type: "resource",
+      value: "resource:0",
+    },
+  ]);
+  expect(dataSources).toEqual([
+    {
+      id: "1",
+      name: "value",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "value" },
+    },
+  ]);
+  expect(resources).toEqual([
+    {
+      id: "resource:0",
+      name: "myResource",
+      url: `"https://my-url.com/" + $ws$dataSource$1`,
+      method: "get",
+      headers: [{ name: "auth", value: `$ws$dataSource$1` }],
+      body: `$ws$dataSource$1`,
+    },
+  ]);
+});
+
+test("render ws:show attribute", () => {
+  const { props } = renderTemplate(
+    <$.Body ws:id="body" ws:show={true}></$.Body>
+  );
+  expect(props).toEqual([
+    {
+      id: "body:data-ws-show",
+      instanceId: "body",
+      name: showAttribute,
+      type: "boolean",
+      value: true,
+    },
+  ]);
+});
+
+test("render ws:tag property", () => {
+  const { instances, props } = renderTemplate(
+    <$.Body ws:id="body">
+      <$.Box ws:tag="span"></$.Box>
+    </$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "0" }],
+    },
+    {
+      type: "instance",
+      id: "0",
+      component: "Box",
+      tag: "span",
+      children: [],
+    },
+  ]);
+  expect(props).toEqual([]);
+});
+
+test("render ws:element with ws:tag prop", () => {
+  const { instances, props } = renderTemplate(
+    <$.Body ws:id="body">
+      <ws.element ws:tag="span"></ws.element>
+    </$.Body>
+  );
+  expect(instances).toEqual([
+    {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "0" }],
+    },
+    {
+      type: "instance",
+      id: "0",
+      component: "ws:element",
+      tag: "span",
+      children: [],
+    },
+  ]);
+  expect(props).toEqual([]);
 });

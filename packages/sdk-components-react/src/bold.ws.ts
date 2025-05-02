@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { b } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/bold.props";
 import type { defaultTag } from "./bold";
@@ -14,7 +14,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  type: "rich-text-child",
   label: "Bold Text",
   icon: BoldIcon,
   states: defaultStates,

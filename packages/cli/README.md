@@ -129,13 +129,7 @@ You can configure the project to support netlify serverless/edge-functions respe
 You can manually change it using the `build` command. For serverless functions:
 
 ```bash
-webstudio build --template netlify-functions
-```
-
-and for edge functions:
-
-```bash
-webstudio build --template netlify-edge-functions
+webstudio build --template netlify
 ```
 
 ## Important Notes

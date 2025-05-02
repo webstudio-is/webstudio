@@ -1,12 +1,9 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import { blockComponent, blockTemplateComponent } from "@webstudio-is/sdk";
 import type { FontWeight } from "@webstudio-is/fonts";
 import { $instances } from "./instances";
 import type { InstanceSelector } from "../tree-utils";
-import {
-  blockComponent,
-  blockTemplateComponent,
-} from "@webstudio-is/react-sdk";
 
 export type TextToolbarState = {
   selectionRect: undefined | DOMRect;

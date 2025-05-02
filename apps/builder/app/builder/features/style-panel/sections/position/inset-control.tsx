@@ -1,15 +1,22 @@
-import { Grid, theme } from "@webstudio-is/design-system";
 import { useRef, useState } from "react";
-import { movementMapInset, useKeyboardNavigation } from "../shared/keyboard";
+import { Grid, theme } from "@webstudio-is/design-system";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
+import { useKeyboardNavigation } from "../shared/keyboard";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import { getInsetModifiersGroup, useScrub } from "../shared/scrub";
+import { useScrub } from "../shared/scrub";
 import { ValueText } from "../shared/value-text";
-import type { StyleValue } from "@webstudio-is/css-engine";
-import { InputPopover } from "../shared/input-popover";
-import { InsetLayout, type InsetProperty } from "./inset-layout";
-import { InsetTooltip } from "./inset-tooltip";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import { InputPopover } from "../shared/input-popover";
+import { InsetLayout, type InsetProperty } from "./inset-layout";
+import { getInsetModifiersGroup, InsetTooltip } from "./inset-tooltip";
+
+const movementMapInset = {
+  top: ["bottom", "right", "bottom", "left"],
+  right: ["top", "left", "bottom", "left"],
+  bottom: ["top", "right", "top", "left"],
+  left: ["top", "right", "bottom", "right"],
+} as const;
 
 const Cell = ({
   scrubStatus,
@@ -23,7 +30,7 @@ const Cell = ({
   onPopoverClose: () => void;
   scrubStatus: ReturnType<typeof useScrub>;
   property: InsetProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly InsetProperty[];
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   onHover: (target: HoverTarget | undefined) => void;
 }) => {
   const styleDecl = useComputedStyleDecl(property);
@@ -43,15 +50,6 @@ const Cell = ({
       />
       <InsetTooltip property={property} preventOpen={scrubStatus.isActive}>
         <ValueText
-          css={{
-            // We want value to have `default` cursor to indicate that it's clickable,
-            // unlike the rest of the value area that has cursor that indicates scrubbing.
-            // Click and scrub works everywhere anyway, but we want cursors to be different.
-            //
-            // In order to have control over cursor we're setting pointerEvents to "all" here
-            // because SpaceLayout sets it to "none" for cells' content.
-            pointerEvents: "all",
-          }}
           value={finalValue}
           source={styleDecl.source.name}
           onMouseEnter={(event) =>
@@ -93,7 +91,7 @@ export const InsetControl = () => {
 
   const [openProperty, setOpenProperty] = useState<InsetProperty>();
   const [activePopoverProperties, setActivePopoverProperties] = useState<
-    undefined | readonly InsetProperty[]
+    undefined | CssProperty[]
   >();
   const modifiers = useModifierKeys();
   const handleOpenProperty = (property: undefined | InsetProperty) => {
@@ -111,11 +109,14 @@ export const InsetControl = () => {
   });
 
   // by deafult highlight hovered or scrubbed properties
-  // if keyboard navigation is active, highlight its active property
   // if popover is open, highlight its property and hovered properties
   const activeProperties = [
     ...(activePopoverProperties ?? scrubStatus.properties),
   ];
+  // if keyboard navigation is active, highlight its active property
+  if (keyboardNavigation.isActive) {
+    activeProperties.push(keyboardNavigation.activeProperty);
+  }
   const getActiveProperties = (modifiers?: Modifiers) => {
     return modifiers && openProperty
       ? getInsetModifiersGroup(openProperty, modifiers)

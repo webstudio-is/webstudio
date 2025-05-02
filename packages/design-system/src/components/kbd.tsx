@@ -4,9 +4,9 @@ const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
 
 const shortcutSymbolMap: Record<string, string> = {
-  cmd: isMac ? "⌘" : "Ctrl",
+  meta: isMac ? "⌘" : "Ctrl",
   shift: "⇧",
-  option: isMac ? "⌥" : "Alt",
+  alt: isMac ? "⌥" : "Alt",
   backspace: "⌫",
   enter: "↵",
   tab: isMac ? "tab" : "Tab",

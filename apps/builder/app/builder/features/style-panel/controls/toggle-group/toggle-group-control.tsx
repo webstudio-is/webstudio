@@ -1,5 +1,8 @@
 import { useState, type JSX, type ReactNode } from "react";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  declarationDescriptions,
+} from "@webstudio-is/css-data";
 import { AlertIcon } from "@webstudio-is/icons";
 import {
   Flex,
@@ -8,11 +11,7 @@ import {
   ToggleGroupButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import {
-  hyphenateProperty,
-  toValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
@@ -38,7 +37,7 @@ export const ToggleGroupTooltip = ({
   label?: string;
   code?: string;
   description: string | undefined;
-  properties: StyleProperty[];
+  properties: CssProperty[];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
@@ -99,7 +98,7 @@ export const ToggleGroupControl = ({
   items,
 }: {
   label?: string;
-  properties: [StyleProperty, ...StyleProperty[]];
+  properties: [CssProperty, ...CssProperty[]];
   items: Array<{
     child: JSX.Element;
     value: string;
@@ -147,12 +146,12 @@ export const ToggleGroupControl = ({
           isAdvanced={isAdvanced}
           label={label}
           code={properties
-            .map((property) => `${hyphenateProperty(property)}: ${item.value};`)
+            .map((property) => `${property}: ${item.value};`)
             .join("\n")}
           description={
             item.description ??
             declarationDescriptions[
-              `${properties[0]}:${item.value}` as keyof typeof declarationDescriptions
+              `${camelCaseProperty(properties[0])}:${item.value}`
             ]
           }
           properties={properties}

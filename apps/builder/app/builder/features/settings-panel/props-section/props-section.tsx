@@ -1,8 +1,13 @@
-import { computed } from "nanostores";
+import { nanoid } from "nanoid";
 import { useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { matchSorter } from "match-sorter";
-import type { Instance } from "@webstudio-is/sdk";
+import {
+  type Instance,
+  type Props,
+  descendantComponent,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Combobox,
@@ -12,8 +17,9 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import {
-  descendantComponent,
   isAttributeNameSafe,
+  reactPropsToStandardAttributes,
+  standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -21,12 +27,19 @@ import {
   $props,
   $isDesignMode,
   $isContentMode,
+  $memoryProps,
+  $selectedBreakpoint,
+  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
+import { serverSyncStore } from "~/shared/sync";
+import { $selectedInstance, $selectedInstanceKey } from "~/shared/awareness";
 import { renderControl } from "../controls/combined";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
-import { serverSyncStore } from "~/shared/sync";
-import { $selectedInstanceKey } from "~/shared/awareness";
+import { AnimationSection } from "./animation/animation-section";
+import { $matchingBreakpoints } from "../../style-panel/shared/model";
+import { matchMediaBreakpoints } from "./match-media-breakpoints";
+import { $selectedInstancePropsMetas } from "../shared";
 
 type Item = {
   name: string;
@@ -41,14 +54,15 @@ const matchOrSuggestToCreate = (
   items: Array<Item>,
   itemToString: (item: Item) => string
 ): Array<Item> => {
+  if (search.trim() === "") {
+    return items;
+  }
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-
   if (
-    search.trim() !== "" &&
     itemToString(matched[0]).toLocaleLowerCase() !==
-      search.toLocaleLowerCase().trim()
+    search.toLocaleLowerCase().trim()
   ) {
     matched.unshift({
       name: search.trim(),
@@ -60,32 +74,24 @@ const matchOrSuggestToCreate = (
 
 const renderProperty = (
   { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta,
-  { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
+  { prop, propName, meta }: PropAndMeta
 ) =>
   renderControl({
-    autoFocus,
     key: propName,
     instanceId,
     meta,
     prop,
-    computedValue: propValues.get(propName) ?? meta.defaultValue,
+    computedValue:
+      propValues.get(propName) ??
+      // support legacy html props with react names
+      propValues.get(standardAttributesToReactProps[propName]) ??
+      meta.defaultValue,
     propName,
-    deletable: deletable ?? false,
-    onDelete: () => {
-      if (prop) {
-        logic.handleDelete(prop);
-        if (component === "Image" && propName === "src") {
-          logic.handleDeleteByPropName("width");
-          logic.handleDeleteByPropName("height");
-        }
-      }
-    },
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
 
       if (
-        component === "Image" &&
+        (component === "Image" || component === "Video") &&
         propName === "src" &&
         propValue.type === "asset"
       ) {
@@ -97,11 +103,41 @@ const renderProperty = (
 
 const forbiddenProperties = new Set(["style", "class", "className"]);
 
+const $availableProps = computed(
+  [
+    $selectedInstance,
+    $props,
+    $registeredComponentPropsMetas,
+    $selectedInstancePropsMetas,
+  ],
+  (instance, props, componentPropsMetas, instancePropsMetas) => {
+    const availableProps = new Map<Item["name"], Item>();
+    for (const [name, { label, description }] of instancePropsMetas) {
+      availableProps.set(name, { name, label, description });
+    }
+    if (instance === undefined) {
+      return [];
+    }
+    const propsMetas = componentPropsMetas.get(instance.component);
+    // remove initial props
+    for (const name of propsMetas?.initialProps ?? []) {
+      availableProps.delete(name);
+      availableProps.delete(reactPropsToStandardAttributes[name]);
+    }
+    // remove defined props
+    for (const prop of props.values()) {
+      if (prop.instanceId === instance.id) {
+        availableProps.delete(prop.name);
+        availableProps.delete(reactPropsToStandardAttributes[prop.name]);
+      }
+    }
+    return Array.from(availableProps.values());
+  }
+);
+
 const AddPropertyOrAttribute = ({
-  availableProps,
   onPropSelected,
 }: {
-  availableProps: Item[];
   onPropSelected: (propName: string) => void;
 }) => {
   const [value, setValue] = useState("");
@@ -117,7 +153,8 @@ const AddPropertyOrAttribute = ({
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"
-        getItems={() => availableProps}
+        // lazily load available props to not bloat component renders
+        getItems={() => $availableProps.get()}
         itemToString={itemToString}
         onItemSelect={(item) => {
           if (
@@ -152,6 +189,7 @@ type PropsSectionProps = {
   propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
+  selectedInstanceKey: string;
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
@@ -160,14 +198,69 @@ export const PropsSection = (props: PropsSectionProps) => {
   const [addingProp, setAddingProp] = useState(false);
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
+  const matchingBreakpoints = useStore($matchingBreakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+
+  const matchMediaValue = matchMediaBreakpoints(matchingBreakpoints);
 
   const hasItems =
     logic.addedProps.length > 0 || addingProp || logic.initialProps.length > 0;
 
+  const animationAction = logic.initialProps.find(
+    (prop) => prop.meta.type === "animationAction"
+  );
+
+  const hasAnimation = animationAction !== undefined;
+
   const showPropertiesSection =
     isDesignMode || (isContentMode && logic.initialProps.length > 0);
 
-  return (
+  return hasAnimation && selectedBreakpoint?.id !== undefined ? (
+    <>
+      <AnimationSection
+        animationAction={animationAction}
+        isAnimationEnabled={matchMediaValue}
+        selectedBreakpointId={selectedBreakpoint?.id}
+        onChange={(value, isEphemeral) => {
+          const memoryProps = new Map($memoryProps.get());
+          const memoryInstanceProp: Props = new Map(
+            memoryProps.get(props.selectedInstanceKey)
+          );
+
+          if (isEphemeral && value !== undefined) {
+            memoryInstanceProp.set(animationAction.propName, {
+              id: nanoid(),
+              instanceId: props.instanceId,
+              type: "animationAction",
+              name: animationAction.propName,
+              value,
+            });
+            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
+            $memoryProps.set(memoryProps);
+            return;
+          }
+
+          if (memoryInstanceProp.has(animationAction.propName)) {
+            memoryInstanceProp.delete(animationAction.propName);
+            memoryProps.set(props.selectedInstanceKey, memoryInstanceProp);
+
+            $memoryProps.set(memoryProps);
+          }
+
+          if (isEphemeral || value === undefined) {
+            return;
+          }
+
+          isEphemeral satisfies false;
+
+          logic.handleChangeByPropName(animationAction.propName, {
+            type: "animationAction",
+            value,
+          });
+        }}
+      />
+    </>
+  ) : (
     <>
       <Grid
         css={{
@@ -194,16 +287,13 @@ export const PropsSection = (props: PropsSectionProps) => {
           <Flex gap="1" direction="column">
             {addingProp && (
               <AddPropertyOrAttribute
-                availableProps={logic.availableProps}
                 onPropSelected={(propName) => {
                   setAddingProp(false);
                   logic.handleAdd(propName);
                 }}
               />
             )}
-            {logic.addedProps.map((item) =>
-              renderProperty(props, item, { deletable: true })
-            )}
+            {logic.addedProps.map((item) => renderProperty(props, item))}
             {logic.initialProps.map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
@@ -220,8 +310,10 @@ const $propValues = computed(
 
 export const PropsSectionContainer = ({
   selectedInstance: instance,
+  selectedInstanceKey,
 }: {
   selectedInstance: Instance;
+  selectedInstanceKey: string;
 }) => {
   const { propsByInstanceId } = useStore($propsIndex);
   const propValues = useStore($propValues);
@@ -245,18 +337,11 @@ export const PropsSectionContainer = ({
         props.set(update.id, update);
       });
     },
-
-    deleteProp: (propId) => {
-      serverSyncStore.createTransaction([$props], (props) => {
-        props.delete(propId);
-      });
-    },
   });
 
-  const hasMetaProps = Object.keys(logic.meta.props).length !== 0;
-
-  if (hasMetaProps === false) {
-    return null;
+  const propsMetas = useStore($selectedInstancePropsMetas);
+  if (propsMetas.size === 0) {
+    return;
   }
 
   return (
@@ -269,6 +354,7 @@ export const PropsSectionContainer = ({
         propValues={propValues ?? new Map()}
         component={instance.component}
         instanceId={instance.id}
+        selectedInstanceKey={selectedInstanceKey}
       />
     </fieldset>
   );

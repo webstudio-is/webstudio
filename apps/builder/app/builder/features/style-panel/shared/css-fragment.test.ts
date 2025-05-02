@@ -7,14 +7,14 @@ setEnv("*");
 
 test("parse var()", () => {
   const result = new Map([
-    ["backgroundImage", parseCssValue("backgroundImage", "var(--bg)")],
+    ["background-image", parseCssValue("background-image", "var(--bg)")],
   ]);
   expect(
-    parseCssFragment("var(--bg)", ["backgroundImage", "background"])
+    parseCssFragment("var(--bg)", ["background-image", "background"])
   ).toEqual(result);
   expect(
     parseCssFragment("background-image: var(--bg)", [
-      "backgroundImage",
+      "background-image",
       "background",
     ])
   ).toEqual(result);
@@ -22,34 +22,34 @@ test("parse var()", () => {
 
 test("fallback further to valid values", () => {
   const result = new Map([
-    ["backgroundImage", parseCssValue("backgroundImage", "none")],
-    ["backgroundPositionX", parseCssValue("backgroundPositionX", "0%")],
-    ["backgroundPositionY", parseCssValue("backgroundPositionY", "0%")],
-    ["backgroundSize", parseCssValue("backgroundSize", "auto auto")],
-    ["backgroundRepeat", parseCssValue("backgroundRepeat", "repeat")],
-    ["backgroundAttachment", parseCssValue("backgroundAttachment", "scroll")],
-    ["backgroundOrigin", parseCssValue("backgroundOrigin", "padding-box")],
-    ["backgroundClip", parseCssValue("backgroundClip", "border-box")],
+    ["background-image", parseCssValue("background-image", "none")],
+    ["background-position-x", parseCssValue("background-position-x", "0%")],
+    ["background-position-y", parseCssValue("background-position-y", "0%")],
+    ["background-size", parseCssValue("background-size", "auto auto")],
+    ["background-repeat", parseCssValue("background-repeat", "repeat")],
+    ["background-attachment", parseCssValue("background-attachment", "scroll")],
+    ["background-origin", parseCssValue("background-origin", "padding-box")],
+    ["background-clip", parseCssValue("background-clip", "border-box")],
     [
-      "backgroundColor",
-      parseCssValue("backgroundColor", "rgba(255, 255, 255, 1)"),
+      "background-color",
+      parseCssValue("background-color", "rgba(255, 255, 255, 1)"),
     ],
   ]);
-  expect(parseCssFragment("#fff", ["backgroundImage", "background"])).toEqual(
+  expect(parseCssFragment("#fff", ["background-image", "background"])).toEqual(
     result
   );
 });
 
 test("parse shorthand property", () => {
   const result = new Map([
-    ["transitionProperty", parseCssValue("transitionProperty", "opacity")],
-    ["transitionDuration", parseCssValue("transitionDuration", "1s")],
+    ["transition-property", parseCssValue("transition-property", "opacity")],
+    ["transition-duration", parseCssValue("transition-duration", "1s")],
     [
-      "transitionTimingFunction",
-      parseCssValue("transitionTimingFunction", "ease"),
+      "transition-timing-function",
+      parseCssValue("transition-timing-function", "ease"),
     ],
-    ["transitionDelay", parseCssValue("transitionDelay", "0s")],
-    ["transitionBehavior", parseCssValue("transitionBehavior", "normal")],
+    ["transition-delay", parseCssValue("transition-delay", "0s")],
+    ["transition-behavior", parseCssValue("transition-behavior", "normal")],
   ]);
   expect(parseCssFragment("opacity 1s", ["transition"])).toEqual(result);
   expect(parseCssFragment("transition: opacity 1s", ["transition"])).toEqual(
@@ -68,8 +68,8 @@ test("parse longhand properties", () => {
     )
   ).toEqual(
     new Map([
-      ["transitionProperty", parseCssValue("transitionProperty", "opacity")],
-      ["transitionDuration", parseCssValue("transitionDuration", "1s")],
+      ["transition-property", parseCssValue("transition-property", "opacity")],
+      ["transition-duration", parseCssValue("transition-duration", "1s")],
     ])
   );
 });

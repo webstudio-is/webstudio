@@ -1,3 +1,4 @@
+import { shallowEqual } from "shallow-equal";
 import { useStore } from "@nanostores/react";
 import {
   $blockChildOutline,
@@ -7,14 +8,12 @@ import {
   $isContentMode,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
+import { findClosestSlot } from "~/shared/instance-utils";
+import { isDescendantOrSelf } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
-import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import { findClosestSlot } from "~/shared/instance-utils";
-import { shallowEqual } from "shallow-equal";
-import { isDescendantOrSelf } from "~/shared/tree-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);
@@ -34,7 +33,7 @@ export const HoveredInstanceOutline = () => {
     return;
   }
 
-  if (isFeatureEnabled("contentEditableMode") && isContentMode) {
+  if (isContentMode) {
     if (shallowEqual(blockChildOutline?.selector, hoveredInstanceSelector)) {
       return;
     }

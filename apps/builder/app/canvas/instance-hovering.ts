@@ -3,7 +3,6 @@ import {
   $blockChildOutline,
   $hoveredInstanceSelector,
   $instances,
-  $selectedInstanceSelector,
   $textEditingInstanceSelector,
   findBlockChildSelector,
 } from "~/shared/nano-states";
@@ -15,6 +14,7 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "./shared/scroll-state";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
+import { $awareness } from "~/shared/awareness";
 
 type TimeoutId = undefined | ReturnType<typeof setTimeout>;
 
@@ -203,15 +203,14 @@ export const subscribeInstanceHovering = ({
   );
 
   // selected instance selection can change hovered instance outlines (example Block/Template/Child)
-  const usubscribeSelectedInstanceSelector =
-    $selectedInstanceSelector.subscribe(() => {
-      const instanceSelector = $hoveredInstanceSelector.get();
-      if (instanceSelector) {
-        updateHoveredRect(instanceSelector);
-      } else {
-        $hoveredInstanceOutline.set(undefined);
-      }
-    });
+  const usubscribeSelectedInstanceSelector = $awareness.subscribe(() => {
+    const instanceSelector = $hoveredInstanceSelector.get();
+    if (instanceSelector) {
+      updateHoveredRect(instanceSelector);
+    } else {
+      $hoveredInstanceOutline.set(undefined);
+    }
+  });
 
   signal.addEventListener("abort", () => {
     unsubscribeScrollState();

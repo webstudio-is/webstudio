@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import hotToast, {
   resolveValue,
@@ -9,7 +10,6 @@ import { keyframes, rawTheme, styled, type CSS } from "../stitches.config";
 import { Box } from "./box";
 import { theme } from "../stitches.config";
 import { Grid } from "./grid";
-
 import { Text } from "./text";
 import { Flex } from "./flex";
 import { Tooltip } from "./tooltip";
@@ -383,9 +383,12 @@ export const Toaster = () => {
 type Options = Pick<ToastOptions, "duration" | "id" | "icon">;
 
 export const toast = {
-  info: (value: string, options?: Options) => hotToast(value, options),
-  error: (value: string, options?: Options) => hotToast.error(value, options),
-  warn: (value: string, options?: Options) => hotToast.custom(value, options),
-  success: (value: string, options?: Options) =>
+  info: (value: JSX.Element | string, options?: Options) =>
+    hotToast(value, options),
+  error: (value: JSX.Element | string, options?: Options) =>
+    hotToast.error(value, options),
+  warn: (value: JSX.Element | string, options?: Options) =>
+    hotToast.custom(value, options),
+  success: (value: JSX.Element | string, options?: Options) =>
     hotToast.success(value, options),
 };

@@ -8,12 +8,9 @@ import {
   TextIcon,
   CheckMarkIcon,
 } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsSelect,
   propsSelectContent,
@@ -25,116 +22,81 @@ import {
   propsSelectViewport,
 } from "./__generated__/select.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 export const metaSelect: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "SelectTrigger" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectContent" },
-    },
-  ],
   icon: SelectIcon,
-  stylable: false,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.SelectTrigger, radix.SelectContent],
+  },
 };
 
 export const metaSelectTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectValue],
+  },
   presetStyle: {
     button,
   },
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "Select" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectValue" },
-    },
-  ],
 };
 
 export const metaSelectValue: WsComponentMeta = {
-  type: "container",
   label: "Value",
   icon: FormTextFieldIcon,
+  contentModel: {
+    category: "none",
+    children: [],
+  },
   presetStyle: {
     span,
-  },
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "SelectTrigger" },
   },
 };
 
 export const metaSelectContent: WsComponentMeta = {
-  type: "container",
   icon: ContentIcon,
-  presetStyle,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "Select" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectViewport" },
-    },
-  ],
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectViewport],
+  },
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaSelectViewport: WsComponentMeta = {
-  type: "container",
   icon: ViewportIcon,
-  presetStyle,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "SelectContent" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectItem" },
-    },
-  ],
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectItem],
+  },
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaSelectItem: WsComponentMeta = {
-  type: "container",
   icon: ItemIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "SelectViewport" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectItemIndicator" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "SelectItemText" },
-    },
-  ],
-  presetStyle,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.SelectItemIndicator, radix.SelectItemText],
+  },
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaSelectItemIndicator: WsComponentMeta = {
-  type: "container",
   label: "Indicator",
   icon: CheckMarkIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "SelectItem" },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   presetStyle: {
     span,
@@ -142,12 +104,11 @@ export const metaSelectItemIndicator: WsComponentMeta = {
 };
 
 export const metaSelectItemText: WsComponentMeta = {
-  type: "container",
   label: "Item Text",
   icon: TextIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "SelectItem" },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
   presetStyle: {
     span,

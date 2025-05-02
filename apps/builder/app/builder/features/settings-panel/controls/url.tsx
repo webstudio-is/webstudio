@@ -42,6 +42,7 @@ import {
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 import { createRootFolder } from "@webstudio-is/project-build";
+import { PropertyLabel } from "../property-label";
 
 type UrlControlProps = ControlProps<"url">;
 
@@ -52,7 +53,6 @@ type BaseControlProps = {
   prop: UrlControlProps["prop"];
   value: string;
   onChange: UrlControlProps["onChange"];
-  onDelete: UrlControlProps["onDelete"];
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -404,12 +404,11 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
   );
 };
 
-const BaseAttachment = ({ prop, onChange, onDelete }: BaseControlProps) => (
+const BaseAttachment = ({ prop, onChange }: BaseControlProps) => (
   <Row>
     <SelectAsset
       prop={prop?.type === "asset" ? prop : undefined}
       onChange={onChange}
-      onDelete={onDelete}
     />
   </Row>
 );
@@ -461,9 +460,7 @@ export const UrlControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: UrlControlProps) => {
   const value = String(computedValue ?? "");
   const { value: mode, set: setMode } = useLocalValue<Mode>(
@@ -484,15 +481,7 @@ export const UrlControl = ({
   );
 
   return (
-    <VerticalLayout
-      label={
-        <Label htmlFor={id} description={meta.description}>
-          {label}
-        </Label>
-      }
-      deletable={deletable}
-      onDelete={onDelete}
-    >
+    <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex
         css={{
           py: theme.spacing[2],
@@ -528,7 +517,6 @@ export const UrlControl = ({
           prop={prop}
           value={value}
           onChange={onChange}
-          onDelete={onDelete}
         />
         <BindingPopover
           scope={scope}

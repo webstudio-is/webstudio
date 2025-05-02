@@ -5,7 +5,7 @@ on:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
-  group: vercel-deploy-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  group: vercel-deploy-${{ github.workflow }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -38,9 +38,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -85,6 +90,11 @@ jobs:
     with:
       builder-url: ${{ needs.deployment.outputs.builder-url }}
       builder-host: ${{ needs.deployment.outputs.builder-host }}
+      environment: development
+    secrets:
+      # We are not passing the secret here (as it does not exist in the current environment).
+      # Instead, this serves as a signal to the calling workflow that it has permission to extract it from the environment.
+      PRIVATE_GITHUB_DEPLOY_TOKEN: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
   delete-github-deployments:
     needs: fixtures-test

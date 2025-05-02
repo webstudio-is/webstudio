@@ -9,13 +9,13 @@ import {
   type ControlProps,
   VerticalLayout,
   useLocalValue,
-  Label,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
   humanizeAttribute,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { PropertyLabel } from "../property-label";
 
 const UrlInput = ({
   id,
@@ -47,9 +47,7 @@ export const FileControl = ({
   prop,
   propName,
   computedValue,
-  deletable,
   onChange,
-  onDelete,
 }: ControlProps<"file">) => {
   const id = useId();
 
@@ -62,8 +60,6 @@ export const FileControl = ({
     (value) => {
       if (value === undefined) {
         return;
-      } else if (value === "") {
-        onDelete();
       } else if (prop?.type === "expression") {
         updateExpressionValue(prop.value, value);
       } else {
@@ -81,15 +77,7 @@ export const FileControl = ({
   );
 
   return (
-    <VerticalLayout
-      label={
-        <Label htmlFor={id} description={meta.description}>
-          {label}
-        </Label>
-      }
-      deletable={deletable}
-      onDelete={onDelete}
-    >
+    <VerticalLayout label={<PropertyLabel name={propName} />}>
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
         <BindingControl>
           <UrlInput
@@ -119,7 +107,6 @@ export const FileControl = ({
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}
           onChange={onChange}
-          onDelete={onDelete}
         />
       </Flex>
     </VerticalLayout>

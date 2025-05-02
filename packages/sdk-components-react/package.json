@@ -41,7 +41,8 @@
   },
   "scripts": {
     "build": "vite build --config ../../vite.sdk-components.config.ts",
-    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts' && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.test.{ts,tsx} !./src/*.ws.ts !./src/*.ws.ts !./src/*.template.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
     "typecheck": "tsc"
@@ -51,25 +52,28 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
-    "@react-aria/utils": "^3.26.0",
+    "@react-aria/utils": "^3.27.0",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "await-interaction-response": "^0.0.2",
     "colord": "^2.9.3",
-    "micromark": "^4.0.1",
-    "micromark-extension-gfm-table": "^2.1.0"
+    "micromark": "^4.0.2",
+    "micromark-extension-gfm-table": "^2.1.1"
   },
   "devDependencies": {
-    "@testing-library/react": "^14.2.2",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/sdk-cli": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "nanostores": "^0.11.3",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "vitest": "^2.1.8"
+    "vitest": "^3.1.2"
   }
 }

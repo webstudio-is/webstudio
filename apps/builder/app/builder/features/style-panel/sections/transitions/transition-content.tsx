@@ -17,7 +17,7 @@ import {
   Grid,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { properties, propertyDescriptions } from "@webstudio-is/css-data";
+import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { parseCssFragment } from "../../shared/css-fragment";
@@ -38,11 +38,11 @@ const getLayer = (value: undefined | StyleValue, index: number) =>
 
 export const TransitionContent = ({ index }: { index: number }) => {
   const styles = useComputedStyles([
-    "transitionProperty",
-    "transitionDuration",
-    "transitionTimingFunction",
-    "transitionDelay",
-    "transitionBehavior",
+    "transition-property",
+    "transition-duration",
+    "transition-timing-function",
+    "transition-delay",
+    "transition-behavior",
   ]);
   const [
     transitionProperty,
@@ -125,10 +125,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Property"
           description={propertyDescriptions.transitionProperty}
-          properties={["transitionProperty"]}
+          properties={["transition-property"]}
         />
         <TransitionProperty
-          value={property ?? properties.transitionProperty.initial}
+          value={property ?? propertiesData["transition-property"].initial}
           onChange={(value) => {
             updateIntermediateValue({ property: value });
             setRepeatedStyleItem(transitionProperty, index, value);
@@ -138,15 +138,15 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Duration"
           description={propertyDescriptions.transitionDuration}
-          properties={["transitionDuration"]}
+          properties={["transition-duration"]}
         />
         <CssValueInputContainer
-          property="transitionDuration"
+          property="transition-duration"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={duration ?? properties.transitionDuration.initial}
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          value={duration ?? propertiesData["transition-duration"].initial}
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }
@@ -163,15 +163,15 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Delay"
           description={propertyDescriptions.transitionDelay}
-          properties={["transitionDelay"]}
+          properties={["transition-delay"]}
         />
         <CssValueInputContainer
-          property="transitionDelay"
+          property="transition-delay"
           styleSource="local"
           getOptions={() => $availableUnitVariables.get()}
-          value={delay ?? properties.transitionDelay.initial}
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          value={delay ?? propertiesData["transition-delay"].initial}
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }
@@ -188,10 +188,10 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <PropertyInlineLabel
           label="Easing"
           description={propertyDescriptions.transitionTimingFunction}
-          properties={["transitionTimingFunction"]}
+          properties={["transition-timing-function"]}
         />
         <CssValueInputContainer
-          property="transitionTimingFunction"
+          property="transition-timing-function"
           styleSource="local"
           getOptions={() => [
             { type: "keyword", value: "linear" },
@@ -203,9 +203,12 @@ export const TransitionContent = ({ index }: { index: number }) => {
             { type: "keyword", value: "step-end" },
             ...$availableVariables.get(),
           ]}
-          value={timingFunction ?? properties.transitionTimingFunction.initial}
-          deleteProperty={() => {}}
-          setValue={(value, options) => {
+          value={
+            timingFunction ??
+            propertiesData["transition-timing-function"].initial
+          }
+          onDelete={() => {}}
+          onUpdate={(value, options) => {
             if (value === undefined) {
               return;
             }

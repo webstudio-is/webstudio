@@ -21,15 +21,15 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/postrest": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "@webstudio-is/authorization-token": "workspace:*",
-    "nanoid": "^5.0.8",
-    "zod": "^3.22.4"
+    "nanoid": "^5.1.5",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "vitest": "^2.1.8"
+    "vitest": "^3.1.2"
   }
 }

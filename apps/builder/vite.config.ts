@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import path, { resolve } from "node:path";
 import { defineConfig, type CorsOptions } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
 import { vercelPreset } from "@vercel/remix/vite";
@@ -9,23 +9,23 @@ import {
   getAuthorizationServerOrigin,
   isBuilderUrl,
 } from "./app/shared/router-utils/origins";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import fg from "fast-glob";
+
+const rootDir = ["..", "../..", "../../.."]
+  .map((dir) => path.join(__dirname, dir))
+  .find((dir) => existsSync(path.join(dir, ".git")));
+
+const hasPrivateFolders =
+  fg.sync([path.join(rootDir ?? "", "packages/*/private-src/*")], {
+    ignore: ["**/node_modules/**"],
+  }).length > 0;
+
+const conditions = hasPrivateFolders
+  ? ["webstudio-private", "webstudio"]
+  : ["webstudio"];
 
 export default defineConfig(({ mode }) => {
-  if (mode === "test") {
-    return {
-      resolve: {
-        conditions: ["webstudio"],
-        alias: [
-          {
-            find: "~",
-            replacement: resolve("app"),
-          },
-        ],
-      },
-    };
-  }
-
   if (mode === "development") {
     // Enable self-signed certificates for development service 2 service fetch calls.
     // This is particularly important for secure communication with the oauth.ws.token endpoint.
@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
-      conditions: ["webstudio"],
+      conditions: [...conditions, "browser", "development|production"],
       alias: [
         {
           find: "~",
@@ -82,6 +82,11 @@ export default defineConfig(({ mode }) => {
           replacement: resolve("./app/shared/empty.ts"),
         },
       ],
+    },
+    ssr: {
+      resolve: {
+        conditions: [...conditions, "node", "development|production"],
+      },
     },
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),

@@ -122,6 +122,10 @@ const editorContentStyle = css({
     textDecoration: "underline wavy red",
     backgroundColor: "rgba(255, 0, 0, 0.1)",
   },
+  ".cm-lintRange-warning": {
+    textDecoration: "underline wavy orange",
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+  },
   ".cm-gutters": {
     backgroundColor: "transparent",
     border: 0,
@@ -268,7 +272,6 @@ export const EditorContent = ({
   }, []);
 
   // setup editor
-
   useEffect(() => {
     if (editorRef.current === null) {
       return;
@@ -277,13 +280,17 @@ export const EditorContent = ({
       doc: "",
       parent: editorRef.current,
     });
-    if (autoFocus) {
-      view.focus();
-    }
+
     viewRef.current = view;
     return () => {
       view.destroy();
     };
+  }, []);
+
+  useEffect(() => {
+    if (autoFocus) {
+      viewRef.current?.focus();
+    }
   }, [autoFocus]);
 
   // update extensions whenever variables data is changed
@@ -364,6 +371,7 @@ export const EditorContent = ({
     if (value === view.state.doc.toString()) {
       return;
     }
+
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
       annotations: [ExternalChange.of(true)],
@@ -376,6 +384,7 @@ export const EditorContent = ({
       if (view === undefined) {
         return;
       }
+
       view.dispatch(view.state.replaceSelection(string));
       view.focus();
     },
@@ -393,7 +402,7 @@ export const EditorContent = ({
       {showShortcuts && (
         <Flex align="center" justify="end" gap="1" className={shortcutStyle()}>
           <Text variant="small">Submit</Text>
-          <Kbd value={["cmd", "enter"]} />
+          <Kbd value={["meta", "enter"]} />
         </Flex>
       )}
     </div>
@@ -457,7 +466,7 @@ export const EditorDialog = ({
       height={height}
       placement={placement}
       maximizable
-      resize="auto"
+      resize="both"
       content={
         <Grid
           align="stretch"

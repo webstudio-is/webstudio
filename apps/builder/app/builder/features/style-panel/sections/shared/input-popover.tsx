@@ -5,17 +5,21 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  Flex,
+  theme,
 } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import { createBatchUpdate } from "../../shared/use-style-data";
-import { theme } from "@webstudio-is/design-system";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
 import { $availableUnitVariables } from "../../shared/model";
 import type { Modifiers } from "../../shared/modifier-keys";
+import { PropertyLabel } from "../../property-label";
+import { humanizeString } from "~/shared/string-utils";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -30,8 +34,8 @@ const Input = ({
   onClosePopover,
 }: {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
+  property: CssProperty;
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   value: StyleValue;
   onClosePopover: () => void;
 }) => {
@@ -41,11 +45,13 @@ const Input = ({
 
   return (
     <CssValueInput
+      minWidth="6ch"
       styleSource={styleSource}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
       getOptions={() => $availableUnitVariables.get()}
+      fieldSizing="content"
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         const activeProperties = getActiveProperties();
@@ -120,9 +126,10 @@ const Input = ({
 const Trigger = styled("div", { position: "absolute", width: 0, height: 0 });
 
 const PopoverContentStyled = styled(PopoverContent, {
+  flexDirection: "row",
+  gap: theme.spacing[5],
   minWidth: 0,
   minHeight: 0,
-  width: theme.spacing[20],
   border: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[7],
   background: theme.colors.backgroundPanel,
@@ -142,8 +149,8 @@ export const InputPopover = ({
   onClose,
 }: {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
-  getActiveProperties: (modifiers?: Modifiers) => readonly StyleProperty[];
+  property: CssProperty;
+  getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   value: StyleValue;
   isOpen: boolean;
   onClose: () => void;
@@ -166,13 +173,20 @@ export const InputPopover = ({
         // and closing popover before applying changes
         onClick={(event) => event.stopPropagation()}
       >
-        <Input
-          styleSource={styleSource}
-          value={value}
-          property={property}
-          getActiveProperties={getActiveProperties}
-          onClosePopover={onClose}
+        <PropertyLabel
+          label={humanizeString(property)}
+          description={propertyDescriptions[property]}
+          properties={[property]}
         />
+        <Flex css={{ maxWidth: theme.spacing[30] }}>
+          <Input
+            styleSource={styleSource}
+            value={value}
+            property={property}
+            getActiveProperties={getActiveProperties}
+            onClosePopover={onClose}
+          />
+        </Flex>
       </PopoverContentStyled>
     </Popover>
   );

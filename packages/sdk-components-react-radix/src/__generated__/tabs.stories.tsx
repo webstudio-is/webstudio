@@ -52,16 +52,6 @@ const Story = {
         <style>
           {`
 @media all {
-  :where(body.w-body) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0
-  }
   :where(div.w-box) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -150,6 +140,14 @@ const Story = {
     border-left-width: 1px;
     outline-width: 1px
   }
+  :where(div.w-tab-content) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px
+  }
   :where(div.w-tabs-list) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -169,14 +167,6 @@ const Story = {
     border: 0px solid rgba(226, 232, 240, 1);
     margin: 0;
     padding: 0px
-  }
-  :where(div.w-tab-content) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px
   }
 }
 @media all {
@@ -201,17 +191,19 @@ const Story = {
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
     padding-top: 0.375rem;
+    padding-right: 0.75rem;
     padding-bottom: 0.375rem;
+    padding-left: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 500;
     transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
-    white-space: normal;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0s;
+    transition-behavior: normal;
+    white-space: nowrap;
     white-space-collapse: collapse
   }
   .w-tab-trigger-1:disabled {
@@ -220,11 +212,11 @@ const Story = {
   }
   .w-tab-trigger-1:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  .w-tab-trigger-1[data-state=active] {
-    background-color: rgba(255, 255, 255, 0.8);
+  .w-tab-trigger-1[data-state="active"] {
+    background-color: rgba(255, 255, 255, 1);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
@@ -236,17 +228,19 @@ const Story = {
     border-top-right-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
     border-bottom-left-radius: 0.375rem;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
     padding-top: 0.375rem;
+    padding-right: 0.75rem;
     padding-bottom: 0.375rem;
+    padding-left: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 500;
     transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
-    white-space: normal;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0s;
+    transition-behavior: normal;
+    white-space: nowrap;
     white-space-collapse: collapse
   }
   .w-tab-trigger-2:disabled {
@@ -255,11 +249,11 @@ const Story = {
   }
   .w-tab-trigger-2:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
     outline: 2px solid transparent
   }
-  .w-tab-trigger-2[data-state=active] {
-    background-color: rgba(255, 255, 255, 0.8);
+  .w-tab-trigger-2[data-state="active"] {
+    background-color: rgba(255, 255, 255, 1);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
@@ -267,17 +261,15 @@ const Story = {
     margin-top: 0.5rem
   }
   .w-tab-content-1:focus-visible {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
   .w-tab-content-2 {
     margin-top: 0.5rem
   }
   .w-tab-content-2:focus-visible {
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1);
-    outline: 2px solid transparent
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 1), 0 0 0 calc(2px + 2px) rgba(148, 163, 184, 1);
+    outline: medium none currentcolor
   }
 }
       `}

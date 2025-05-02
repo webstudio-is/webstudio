@@ -1,10 +1,5 @@
-import {
-  forwardRef,
-  useState,
-  type ElementRef,
-  type ComponentProps,
-} from "react";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   CssValueListArrowFocus,
@@ -12,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuTrigger,
   Flex,
   Grid,
@@ -33,7 +27,20 @@ import {
   EyeOpenIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
+import { humanizeString } from "~/shared/string-utils";
+import { getDots } from "../../shared/style-section";
+import {
+  getPriorityStyleValueSource,
+  PropertyLabel,
+  PropertySectionLabel,
+} from "../../property-label";
+import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
+import { TextControl } from "../../controls";
 import {
   addDefaultsForTransormSection,
   isTransformPanelPropertyUsed,
@@ -47,33 +54,23 @@ import { TranslatePanelContent } from "./transform-translate";
 import { ScalePanelContent } from "./transform-scale";
 import { RotatePanelContent } from "./transform-rotate";
 import { SkewPanelContent } from "./transform-skew";
-import { humanizeString } from "~/shared/string-utils";
-import { getDots } from "../../shared/style-section";
 import { TransformAndPerspectiveOrigin } from "./transform-and-perspective-origin";
-import {
-  getPriorityStyleValueSource,
-  PropertyLabel,
-  PropertySectionLabel,
-} from "../../property-label";
-import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { createBatchUpdate } from "../../shared/use-style-data";
-import { TextControl } from "../../controls";
 
 const label = "Transforms";
 
 const advancedProperties = [
-  "transformOrigin",
-  "backfaceVisibility",
+  "transform-origin",
+  "backface-visibility",
   "perspective",
-  "perspectiveOrigin",
-] satisfies [StyleProperty, ...StyleProperty[]];
+  "perspective-origin",
+] satisfies [CssProperty, ...CssProperty[]];
 
 export const properties = [
   "transform",
   "translate",
   "scale",
   ...advancedProperties,
-] satisfies [StyleProperty, ...StyleProperty[]];
+] satisfies [CssProperty, ...CssProperty[]];
 
 const TransformAdvancedButton = forwardRef<
   ElementRef<"button">,
@@ -116,11 +113,11 @@ const TransformAdvancedPopover = () => {
             <PropertyLabel
               label="Backface Visibility"
               description={propertyDescriptions.backfaceVisibility}
-              properties={["backfaceVisibility"]}
+              properties={["backface-visibility"]}
             />
-            <TextControl property="backfaceVisibility" />
+            <TextControl property="backface-visibility" />
           </Grid>
-          <TransformAndPerspectiveOrigin property="transformOrigin" />
+          <TransformAndPerspectiveOrigin property="transform-origin" />
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>
             <PropertyLabel
               label="Perspective"
@@ -129,7 +126,7 @@ const TransformAdvancedPopover = () => {
             />
             <TextControl property="perspective" />
           </Grid>
-          <TransformAndPerspectiveOrigin property="perspectiveOrigin" />
+          <TransformAndPerspectiveOrigin property="perspective-origin" />
         </Grid>
       }
     >
@@ -139,7 +136,7 @@ const TransformAdvancedPopover = () => {
 };
 
 export const Section = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useOpenState(label);
 
   const styles = useComputedStyles(properties);
   const isAnyTransformPropertyAdded = transformPanels.some((panel) =>
@@ -170,31 +167,29 @@ export const Section = () => {
                     prefix={<PlusIcon />}
                   ></SectionTitleButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuContent
-                    collisionPadding={16}
-                    css={{ width: theme.spacing[24] }}
-                  >
-                    {transformPanels.map((panel) => (
-                      <DropdownMenuItem
-                        disabled={isTransformPanelPropertyUsed({
+                <DropdownMenuContent
+                  collisionPadding={16}
+                  css={{ width: theme.spacing[24] }}
+                >
+                  {transformPanels.map((panel) => (
+                    <DropdownMenuItem
+                      disabled={isTransformPanelPropertyUsed({
+                        panel,
+                        styles,
+                      })}
+                      key={panel}
+                      onSelect={() => {
+                        addDefaultsForTransormSection({
                           panel,
                           styles,
-                        })}
-                        key={panel}
-                        onSelect={() => {
-                          addDefaultsForTransormSection({
-                            panel,
-                            styles,
-                          });
-                          setIsOpen(true);
-                        }}
-                      >
-                        {humanizeString(panel)}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenuPortal>
+                        });
+                        setIsOpen(true);
+                      }}
+                    >
+                      {humanizeString(panel)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
               </DropdownMenu>
             </Flex>
           }

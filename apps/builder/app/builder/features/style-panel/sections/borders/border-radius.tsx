@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   BorderRadiusIndividualIcon,
   BorderRadiusBottomRightIcon,
@@ -9,26 +9,26 @@ import {
 import { BorderProperty } from "./border-property";
 
 export const properties = [
-  "borderTopLeftRadius",
-  "borderTopRightRadius",
-  "borderBottomLeftRadius",
-  "borderBottomRightRadius",
-] satisfies Array<StyleProperty>;
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-left-radius",
+  "border-bottom-right-radius",
+] satisfies Array<CssProperty>;
 
 const borderPropertyOptions = {
-  borderTopLeftRadius: {
+  "border-top-left-radius": {
     icon: <BorderRadiusTopLeftIcon />,
   },
-  borderTopRightRadius: {
+  "border-top-right-radius": {
     icon: <BorderRadiusTopRightIcon />,
   },
-  borderBottomLeftRadius: {
+  "border-bottom-left-radius": {
     icon: <BorderRadiusBottomLeftIcon />,
   },
-  borderBottomRightRadius: {
+  "border-bottom-right-radius": {
     icon: <BorderRadiusBottomRightIcon />,
   },
-} as const satisfies Partial<{ [property in StyleProperty]: unknown }>;
+} as const satisfies Partial<{ [property in CssProperty]: unknown }>;
 
 export const BorderRadius = () => {
   return (

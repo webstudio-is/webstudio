@@ -6,9 +6,10 @@ import { XIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type WsComponentMeta,
-  collectionComponent,
   componentCategories,
-} from "@webstudio-is/react-sdk";
+  collectionComponent,
+  parseComponentName,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Flex,
@@ -59,6 +60,22 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
+      const [namespace, shortName] = parseComponentName(name);
+      if (
+        isFeatureEnabled("animation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation"
+      ) {
+        continue;
+      }
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       // only set available components from component meta
       availableComponents.add(name);
       metas.push({
@@ -71,13 +88,26 @@ const $metas = computed(
       });
     }
     for (const [name, templateMeta] of templates) {
+      const componentMeta = componentMetas.get(name);
+      const [namespace, shortName] = parseComponentName(name);
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       metas.push({
         name,
         category: templateMeta.category ?? "hidden",
         order: templateMeta.order,
-        label: getInstanceLabel({ component: name }, templateMeta),
+        label:
+          templateMeta.label ??
+          componentMeta?.label ??
+          getInstanceLabel({ component: name }, templateMeta),
         description: templateMeta.description,
-        icon: templateMeta.icon ?? componentMetas.get(name)?.icon ?? "",
+        icon: templateMeta.icon ?? componentMeta?.icon ?? "",
       });
     }
     const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
@@ -207,7 +237,7 @@ export const ComponentsPanel = ({
 
   const searchFieldProps = useSearchFieldKeys({
     onChange: resetSelectedComponent,
-    onCancel: resetSelectedComponent,
+    onAbort: resetSelectedComponent,
     onMove({ direction }) {
       if (direction === "current") {
         const component = getSelectedComponent();

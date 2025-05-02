@@ -1,9 +1,9 @@
 import { ItemIcon } from "@webstudio-is/icons/svg";
-import {
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import type {
+  PresetStyle,
+  WsComponentMeta,
+  WsComponentPropsMeta,
+} from "@webstudio-is/sdk";
 
 import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";
@@ -11,7 +11,7 @@ import { props } from "./__generated__/option.props";
 const presetStyle = {
   option: [
     {
-      property: "backgroundColor",
+      property: "background-color",
       state: ":checked",
       value: {
         type: "rgb",
@@ -26,11 +26,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "hidden",
-  constraints: {
-    relation: "parent",
-    component: { $eq: "Select" },
-  },
-  type: "control",
   description:
     "An item within a drop-down menu that users can select as their chosen value.",
   icon: ItemIcon,

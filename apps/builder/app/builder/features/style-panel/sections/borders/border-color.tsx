@@ -1,6 +1,5 @@
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ColorPicker } from "../../shared/color-picker";
@@ -9,15 +8,14 @@ import {
   useComputedStyles,
 } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
+import { keywordValues } from "@webstudio-is/css-data";
 
 export const properties = [
-  "borderTopColor",
-  "borderRightColor",
-  "borderBottomColor",
-  "borderLeftColor",
-] satisfies [StyleProperty, ...StyleProperty[]];
-
-const { items } = styleConfigByName("borderTopColor");
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+] satisfies [CssProperty, ...CssProperty[]];
 
 export const BorderColor = () => {
   const styles = useComputedStyles(properties);
@@ -54,12 +52,12 @@ export const BorderColor = () => {
             <ColorPicker
               disabled={isAdvanced}
               currentColor={currentColor}
-              property={local.property as StyleProperty}
+              property={local.property}
               value={value}
               getOptions={() => [
-                ...items.map((item) => ({
+                ...keywordValues["border-top-color"].map((value) => ({
                   type: "keyword" as const,
-                  value: item.name,
+                  value,
                 })),
                 ...$availableColorVariables.get(),
               ]}

@@ -1,10 +1,16 @@
-import { colord } from "colord";
-import * as csstree from "css-tree";
-import { type CssNode, generate, lexer, List } from "css-tree";
+import { colord, extend } from "colord";
+import namesPlugin from "colord/plugins/names";
+import {
+  type CssNode,
+  type FunctionNode,
+  generate,
+  lexer,
+  List,
+  parse,
+} from "css-tree";
 import warnOnce from "warn-once";
 import {
   cssWideKeywords,
-  hyphenateProperty,
   type ImageValue,
   type KeywordValue,
   type LayersValue,
@@ -12,19 +18,24 @@ import {
   type UnitValue,
   type LayerValueItem,
   type RgbValue,
-  type StyleProperty,
   type StyleValue,
   type Unit,
   type VarValue,
   type FunctionValue,
   type TupleValueItem,
+  type CssProperty,
+  type ShadowValue,
+  type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 
+// To support color names
+extend([namesPlugin]);
+
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
-    const ast = csstree.parse(input, { context: "value" });
+    const ast = parse(input, { context: "value" });
     return ast;
   } catch {
     return;
@@ -46,11 +57,9 @@ const splitRepeated = (nodes: CssNode[]) => {
 // Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
 // and fall back to csstree.
 export const isValidDeclaration = (
-  property: string,
+  property: CssProperty,
   value: string
 ): boolean => {
-  const cssPropertyName = hyphenateProperty(property);
-
   if (property.startsWith("--") || value.includes("var(")) {
     return true;
   }
@@ -58,23 +67,15 @@ export const isValidDeclaration = (
   // these properties have poor support natively and in csstree
   // though rendered styles are merged as shorthand
   // so validate artifically
-  if (cssPropertyName === "white-space-collapse") {
-    return keywordValues.whiteSpaceCollapse.includes(
-      value as (typeof keywordValues.whiteSpaceCollapse)[0]
-    );
-  }
-  if (cssPropertyName === "text-wrap-mode") {
-    return keywordValues.textWrapMode.includes(
-      value as (typeof keywordValues.textWrapMode)[0]
-    );
-  }
-  if (cssPropertyName === "text-wrap-style") {
-    return keywordValues.textWrapStyle.includes(
-      value as (typeof keywordValues.textWrapStyle)[0]
-    );
+  if (
+    property === "white-space-collapse" ||
+    property === "text-wrap-mode" ||
+    property === "text-wrap-style"
+  ) {
+    return keywordValues[property].includes(value);
   }
 
-  if (cssPropertyName === "transition-behavior") {
+  if (property === "transition-behavior") {
     return true;
   }
 
@@ -83,7 +84,7 @@ export const isValidDeclaration = (
   // - https://github.com/csstree/csstree/issues/164
   if (typeof CSSStyleValue !== "undefined") {
     try {
-      CSSStyleValue.parse(cssPropertyName, value);
+      CSSStyleValue.parse(property, value);
       return true;
     } catch {
       return false;
@@ -95,17 +96,27 @@ export const isValidDeclaration = (
   if (ast == null) {
     return false;
   }
-
   // scale css-proeprty accepts both number and percentage.
   // The syntax from MDN is incorrect and should be updated.
   // Here is a PR that fixes the same, but it is not merged yet.
   // https://github.com/mdn/data/pull/746
-  if (cssPropertyName === "scale") {
+  if (property === "scale") {
     const syntax = "none | [ <number> | <percentage> ]{1,3}";
     return lexer.match(syntax, ast).matched !== null;
   }
 
-  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
+  if (
+    property === "transition-timing-function" ||
+    property === "animation-timing-function"
+  ) {
+    if (
+      lexer.match("linear( [ <number> && <percentage>{0,2} ]# )", ast).matched
+    ) {
+      return true;
+    }
+  }
+
+  const matchResult = lexer.matchProperty(property, ast);
 
   // allow to parse unknown properties as unparsed
   if (matchResult.error?.message.includes("Unknown property")) {
@@ -115,36 +126,34 @@ export const isValidDeclaration = (
   return matchResult.matched != null;
 };
 
-const repeatedProps = new Set<StyleProperty>([
-  "backgroundAttachment",
-  "backgroundClip",
-  "backgroundBlendMode",
-  "backgroundOrigin",
-  "backgroundPositionX",
-  "backgroundPositionY",
-  "backgroundRepeat",
-  "backgroundSize",
-  "backgroundImage",
-  "transitionProperty",
-  "transitionDuration",
-  "transitionDelay",
-  "transitionTimingFunction",
-  "transitionBehavior",
-  "boxShadow",
-  "textShadow",
+const repeatedProps = new Set<CssProperty>([
+  "background-attachment",
+  "background-clip",
+  "background-blend-mode",
+  "background-origin",
+  "background-position-x",
+  "background-position-y",
+  "background-repeat",
+  "background-size",
+  "background-image",
+  "transition-property",
+  "transition-duration",
+  "transition-delay",
+  "transition-timing-function",
+  "transition-behavior",
+  "box-shadow",
+  "text-shadow",
 ]);
 
-const tupleProps = new Set<StyleProperty>([
-  "boxShadow",
-  "textShadow",
+const tupleProps = new Set<CssProperty>([
   "scale",
   "translate",
   "rotate",
   "transform",
   "filter",
-  "backdropFilter",
-  "transformOrigin",
-  "perspectiveOrigin",
+  "backdrop-filter",
+  "transform-origin",
+  "perspective-origin",
 ]);
 
 const availableUnits = new Set<string>(Object.values(units).flat());
@@ -160,6 +169,67 @@ const parseColor = (colorString: string): undefined | RgbValue => {
       g: rgb.g,
       b: rgb.b,
     };
+  }
+};
+
+const parseShadow = (
+  nodes: CssNode[],
+  input: string
+): ShadowValue | UnparsedValue => {
+  // https://drafts.csswg.org/css-borders-4/#box-shadow-position
+  let position: "inset" | "outset" = "outset";
+  let color: undefined | RgbValue | KeywordValue;
+  const units: UnitValue[] = [];
+  for (const node of nodes) {
+    const item = parseLiteral(node, ["inset"]);
+    if (item?.type === "keyword" && item.value === "inset") {
+      position = item.value;
+    } else if (item?.type === "keyword" && parseColor(item.value)) {
+      color = item;
+    } else if (item?.type === "rgb") {
+      color = item;
+    } else if (item?.type === "unit") {
+      units.push(item);
+    } else {
+      return { type: "unparsed", value: input };
+    }
+  }
+  if (units.length < 2) {
+    return { type: "unparsed", value: input };
+  }
+  const shadowValue: ShadowValue = {
+    type: "shadow",
+    position,
+    offsetX: units[0],
+    offsetY: units[1],
+  };
+  if (units.length > 2) {
+    shadowValue.blur = units[2];
+  }
+  if (units.length > 3) {
+    shadowValue.spread = units[3];
+  }
+  if (color) {
+    shadowValue.color = color;
+  }
+  return shadowValue;
+};
+
+export const parseCssVar = (node: FunctionNode): undefined | VarValue => {
+  const [name, _comma, ...fallback] = node.children;
+  const fallbackString = generate({
+    type: "Value",
+    children: new List<CssNode>().fromArray(fallback),
+  }).trim();
+  if (name.type === "Identifier") {
+    const value: VarValue = {
+      type: "var",
+      value: name.name.slice("--".length),
+    };
+    if (fallback.length > 0) {
+      value.fallback = { type: "unparsed", value: fallbackString };
+    }
+    return value;
   }
 };
 
@@ -197,7 +267,10 @@ const parseLiteral = (
   }
   if (node?.type === "Identifier") {
     const name = node.name.toLowerCase();
-    if (keywords?.map((keyword) => keyword.toLowerCase()).includes(name)) {
+    if (
+      keywords?.map((keyword) => keyword.toLowerCase()).includes(name) ||
+      parseColor(name)
+    ) {
       return {
         type: "keyword",
         value: name,
@@ -233,21 +306,7 @@ const parseLiteral = (
       }
     }
     if (node.name === "var") {
-      const [name, _comma, ...fallback] = node.children;
-      const fallbackString = generate({
-        type: "Value",
-        children: new List<CssNode>().fromArray(fallback),
-      }).trim();
-      if (name.type === "Identifier") {
-        const value: VarValue = {
-          type: "var",
-          value: name.name.slice("--".length),
-        };
-        if (fallback.length > 0) {
-          value.fallback = { type: "unparsed", value: fallbackString };
-        }
-        return value;
-      }
+      return parseCssVar(node);
     }
 
     // functions with comma-separated arguments
@@ -277,9 +336,9 @@ const parseLiteral = (
       node.name === "rotateZ" ||
       node.name === "perspective" ||
       // <easing-function>
-      node.name === "linear" ||
       node.name === "cubic-bezier" ||
       node.name === "steps"
+      // treat linear function as unparsed
     ) {
       const args: LayersValue = { type: "layers", value: [] };
       for (const arg of node.children) {
@@ -300,7 +359,6 @@ const parseLiteral = (
       node.name === "blur" ||
       node.name === "brightness" ||
       node.name === "contrast" ||
-      node.name === "drop-shadow" ||
       node.name === "grayscale" ||
       node.name === "hue-rotate" ||
       node.name === "invert" ||
@@ -314,17 +372,24 @@ const parseLiteral = (
         if (matchedValue) {
           args.value.push(matchedValue as TupleValueItem);
         }
-        if (arg.type === "Identifier") {
-          args.value.push({ type: "keyword", value: arg.name });
-        }
       }
       return { type: "function", args, name: node.name };
+    }
+    if (node.name === "drop-shadow") {
+      return {
+        type: "function",
+        args: parseShadow(
+          node.children.toArray(),
+          generate({ type: "Value", children: node.children })
+        ),
+        name: node.name,
+      };
     }
   }
 };
 
 export const parseCssValue = (
-  property: StyleProperty, // Handles only long-hand values.
+  property: CssProperty, // Handles only long-hand values.
   input: string,
   topLevel = true
 ): StyleValue => {
@@ -333,7 +398,7 @@ export const parseCssValue = (
     return { type: "keyword", value: potentialKeyword };
   }
 
-  if (property === "transitionProperty" && potentialKeyword === "none") {
+  if (property === "transition-property" && potentialKeyword === "none") {
     if (topLevel) {
       return { type: "keyword", value: potentialKeyword };
     } else {
@@ -397,9 +462,9 @@ export const parseCssValue = (
     const layersValue: StyleValue = {
       type: "layers",
       value: splitRepeated(nodes).map((nodes) => {
-        const value = csstree.generate({
+        const value = generate({
           type: "Value",
-          children: new csstree.List<CssNode>().fromArray(nodes),
+          children: new List<CssNode>().fromArray(nodes),
         });
         const parsed = parseCssValue(property, value, false) as LayerValueItem;
         if (parsed.type === "invalid") {
@@ -417,7 +482,7 @@ export const parseCssValue = (
 
   // csstree does not support transition-behavior
   // so check keywords manually
-  if (property === "transitionBehavior") {
+  if (property === "transition-behavior") {
     const node = ast.type === "Value" ? ast.children.first : ast;
     const keyword = parseLiteral(node, keywordValues[property]);
     if (keyword?.type === "keyword") {
@@ -426,7 +491,7 @@ export const parseCssValue = (
     return invalidValue;
   }
 
-  if (property === "fontFamily") {
+  if (property === "font-family") {
     return {
       type: "fontFamily",
       value: splitRepeated(nodes).map((nodes) => {
@@ -440,6 +505,10 @@ export const parseCssValue = (
         });
       }),
     };
+  }
+
+  if (property === "box-shadow" || property === "text-shadow") {
+    return parseShadow(nodes, input);
   }
 
   // Probably a tuple like background-size or box-shadow
@@ -456,7 +525,7 @@ export const parseCssValue = (
       if (node.type === "Operator") {
         return { type: "unparsed", value: input };
       }
-      const matchedValue = parseLiteral(node, keywordValues[property as never]);
+      const matchedValue = parseLiteral(node, keywordValues[property]);
       if (matchedValue) {
         tuple.value.push(matchedValue as never);
       } else {
@@ -469,7 +538,7 @@ export const parseCssValue = (
   if (ast.type === "Value" && ast.children.size === 1) {
     // Try extract units from 1st children
     const first = ast.children.first;
-    const matchedValue = parseLiteral(first, keywordValues[property as never]);
+    const matchedValue = parseLiteral(first, keywordValues[property]);
     if (matchedValue) {
       return matchedValue;
     }

@@ -11,13 +11,12 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon, PlusIcon } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { isLiteralExpression } from "@webstudio-is/sdk";
+import { computeExpression } from "~/shared/data-variables";
 import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { computeExpression } from "~/shared/nano-states";
 import { $pageRootScope } from "./page-utils";
 
 type Meta = {
@@ -72,20 +71,18 @@ const MetadataItem = (props: {
         Content
       </Label>
       <BindingControl>
-        {isFeatureEnabled("cms") && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(props.content) ? "default" : "bound"}
-            value={props.content}
-            onChange={(value) => {
-              props.onChange(props.property, value);
-            }}
-            onRemove={(evaluatedValue) => {
-              props.onChange(props.property, JSON.stringify(evaluatedValue));
-            }}
-          />
-        )}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(props.content) ? "default" : "bound"}
+          value={props.content}
+          onChange={(value) => {
+            props.onChange(props.property, value);
+          }}
+          onRemove={(evaluatedValue) => {
+            props.onChange(props.property, JSON.stringify(evaluatedValue));
+          }}
+        />
         <InputErrorsTooltip errors={undefined}>
           <InputField
             css={{

@@ -54,22 +54,24 @@ export type GlobalConfig = z.infer<typeof zGlobalConfig>;
 
 export const PROJECT_TEMPLATES = [
   {
-    value: "vanilla" as const,
-    label: "Vanilla",
-    expand: ["defaults"],
-  },
-  { value: "vercel" as const, label: "Vercel", expand: ["defaults", "vercel"] },
-  {
-    value: "netlify-functions" as const,
-    label: "Netlify Functions",
-    expand: ["defaults", "netlify-functions"],
+    value: "docker" as const,
+    label: "Docker",
+    expand: ["react-router", "react-router-docker"],
   },
   {
-    value: "netlify-edge-functions" as const,
-    label: "Netlify Edge Functions",
-    expand: ["defaults", "netlify-edge-functions"],
+    value: "vercel" as const,
+    label: "Vercel",
+    expand: ["react-router", "react-router-vercel"],
   },
-  { value: "ssg" as const, label: "Static Site Generation (SSG)" },
+  {
+    value: "netlify" as const,
+    label: "Netlify",
+    expand: ["react-router", "react-router-netlify"],
+  },
+  {
+    value: "ssg" as const,
+    label: "Static Site Generation (SSG)",
+  },
   {
     value: "ssg-netlify" as const,
     label: "Static Site Generation (SSG) Netlify",

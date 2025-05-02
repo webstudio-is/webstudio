@@ -1,7 +1,22 @@
-import { type Expression, type Identifier, parseExpressionAt } from "acorn";
+import {
+  type Expression,
+  type Identifier,
+  parse,
+  parseExpressionAt,
+} from "acorn";
 import { simple } from "acorn-walk";
-import type { DataSources } from "./schema/data-sources";
+import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Scope } from "./scope";
+import { ROOT_INSTANCE_ID } from "./instances-utils";
+
+export const SYSTEM_VARIABLE_ID = ":system";
+
+export const systemParameter: DataSource = {
+  id: SYSTEM_VARIABLE_ID,
+  scopeInstanceId: ROOT_INSTANCE_ID,
+  type: "parameter",
+  name: "system",
+};
 
 export type Diagnostic = {
   from: number;
@@ -24,13 +39,16 @@ export const lintExpression = ({
   allowAssignment?: boolean;
 }): Diagnostic[] => {
   const diagnostics: Diagnostic[] = [];
-  const addError = (message: string) => {
+  const addMessage = (
+    message: string,
+    severity: "error" | "warning" = "error"
+  ) => {
     return (node: Expression) => {
       diagnostics.push({
         // tune error position after wrapping expression with parentheses
         from: node.start - 1,
         to: node.end - 1,
-        severity: "error",
+        severity,
         message: message,
       });
     };
@@ -48,8 +66,7 @@ export const lintExpression = ({
   try {
     // wrap expression with parentheses to force acorn parse whole expression
     // instead of just first valid part
-    // https://github.com/acornjs/acorn/tree/master/acorn
-    const root = parseExpressionAt(`(${expression})`, 0, {
+    const root = parse(`(${expression})`, {
       ecmaVersion: "latest",
       // support parsing import to forbid explicitly
       sourceType: "module",
@@ -57,7 +74,10 @@ export const lintExpression = ({
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
-          addError(`"${node.name}" is not defined in the scope`)(node);
+          addMessage(
+            `"${node.name}" is not defined in the scope`,
+            "warning"
+          )(node);
         }
       },
       Literal() {},
@@ -73,31 +93,34 @@ export const lintExpression = ({
       ParenthesizedExpression() {},
       AssignmentExpression(node) {
         if (allowAssignment === false) {
-          addError("Assignment is supported only inside actions")(node);
+          addMessage("Assignment is supported only inside actions")(node);
           return;
         }
         simple(node.left, {
           Identifier(node) {
             if (availableVariables.has(node.name) === false) {
-              addError(`"${node.name}" is not defined in the scope`)(node);
+              addMessage(
+                `"${node.name}" is not defined in the scope`,
+                "warning"
+              )(node);
             }
           },
         });
       },
       // parser forbids to yield inside module
       YieldExpression() {},
-      ThisExpression: addError(`"this" keyword is not supported`),
-      FunctionExpression: addError("Functions are not supported"),
-      UpdateExpression: addError("Increment and decrement are not supported"),
-      CallExpression: addError("Functions are not supported"),
-      NewExpression: addError("Classes are not supported"),
-      SequenceExpression: addError(`Only single expression is supported`),
-      ArrowFunctionExpression: addError("Functions are not supported"),
-      TaggedTemplateExpression: addError("Tagged template is not supported"),
-      ClassExpression: addError("Classes are not supported"),
-      MetaProperty: addError("Imports are not supported"),
-      AwaitExpression: addError(`"await" keyword is not supported`),
-      ImportExpression: addError("Imports are not supported"),
+      ThisExpression: addMessage(`"this" keyword is not supported`),
+      FunctionExpression: addMessage("Functions are not supported"),
+      UpdateExpression: addMessage("Increment and decrement are not supported"),
+      CallExpression: addMessage("Functions are not supported"),
+      NewExpression: addMessage("Classes are not supported"),
+      SequenceExpression: addMessage(`Only single expression is supported`),
+      ArrowFunctionExpression: addMessage("Functions are not supported"),
+      TaggedTemplateExpression: addMessage("Tagged template is not supported"),
+      ClassExpression: addMessage("Classes are not supported"),
+      MetaProperty: addMessage("Imports are not supported"),
+      AwaitExpression: addMessage(`"await" keyword is not supported`),
+      ImportExpression: addMessage("Imports are not supported"),
     } satisfies ExpressionVisitor);
   } catch (error) {
     const castedError = error as { message: string; pos: number };
@@ -115,6 +138,9 @@ export const lintExpression = ({
 };
 
 const isLiteralNode = (node: Expression): boolean => {
+  if (node.type === "Identifier" && node.name === "undefined") {
+    return true;
+  }
   if (node.type === "Literal") {
     return true;
   }
@@ -304,18 +330,26 @@ const dataSourceVariablePrefix = "$ws$dataSource$";
 // here "-" is encoded with "__DASH__' in variable name
 // https://github.com/ai/nanoid/blob/047686abad8f15aff05f3a2eeedb7c98b6847392/url-alphabet/index.js
 
-export const encodeDataSourceVariable = (id: string) => {
+export const encodeDataVariableId = (id: string) => {
+  if (id === SYSTEM_VARIABLE_ID) {
+    return "$ws$system";
+  }
   const encoded = id.replaceAll("-", "__DASH__");
   return `${dataSourceVariablePrefix}${encoded}`;
 };
+export { encodeDataVariableId as encodeDataSourceVariable };
 
-export const decodeDataSourceVariable = (name: string) => {
+export const decodeDataVariableId = (name: string) => {
+  if (name === "$ws$system") {
+    return SYSTEM_VARIABLE_ID;
+  }
   if (name.startsWith(dataSourceVariablePrefix)) {
     const encoded = name.slice(dataSourceVariablePrefix.length);
     return encoded.replaceAll("__DASH__", "-");
   }
   return;
 };
+export { decodeDataVariableId as decodeDataSourceVariable };
 
 export const generateExpression = ({
   expression,
@@ -332,16 +366,23 @@ export const generateExpression = ({
     expression,
     executable: true,
     replaceVariable: (identifier) => {
-      const depId = decodeDataSourceVariable(identifier);
-      const dep = depId ? dataSources.get(depId) : undefined;
+      const depId = decodeDataVariableId(identifier);
+      let dep = depId ? dataSources.get(depId) : undefined;
+      if (depId === SYSTEM_VARIABLE_ID) {
+        dep = systemParameter;
+      }
       if (dep) {
         usedDataSources?.set(dep.id, dep);
         return scope.getName(dep.id, dep.name);
       }
+      return "undefined";
     },
   });
 };
 
+/**
+ * edge case utility for "statoc" expression without variables
+ */
 export const executeExpression = (expression: undefined | string) => {
   try {
     const fn = new Function(`return (${expression})`);

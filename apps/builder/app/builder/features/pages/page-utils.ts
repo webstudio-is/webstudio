@@ -11,6 +11,9 @@ import {
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
   isRootFolder,
+  ROOT_INSTANCE_ID,
+  systemParameter,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -23,7 +26,12 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { insertPageCopyMutable } from "~/shared/page-utils";
-import { $selectedPage, getInstanceKey, selectPage } from "~/shared/awareness";
+import {
+  $selectedPage,
+  getInstanceKey,
+  getInstancePath,
+  selectPage,
+} from "~/shared/awareness";
 
 /**
  * When page or folder needs to be deleted or moved to a different parent,
@@ -159,6 +167,15 @@ export const reparentPageOrFolderMutable = (
   newFolderId: string,
   newPosition: number
 ) => {
+  const childrenAndSelf = getAllChildrenAndSelf(
+    pageOrFolderId,
+    folders,
+    "folder"
+  );
+  // make sure target folder is not self or descendants
+  if (childrenAndSelf.includes(newFolderId)) {
+    return;
+  }
   const prevParent = findParentFolderByChildId(pageOrFolderId, folders);
   const nextParent = folders.find((folder) => folder.id === newFolderId);
   if (prevParent === undefined || nextParent === undefined) {
@@ -209,7 +226,10 @@ export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
-    deleteInstanceMutable(data, [rootInstanceId]);
+    deleteInstanceMutable(
+      data,
+      getInstancePath([rootInstanceId], data.instances)
+    );
   }
   removeByMutable(pages.pages, (page) => page.id === pageId);
   cleanupChildRefsMutable(pageId, pages.folders);
@@ -247,10 +267,13 @@ export const $pageRootScope = computed(
     }
     const values =
       variableValuesByInstanceSelector.get(
-        getInstanceKey([page.rootInstanceId])
+        getInstanceKey([page.rootInstanceId, ROOT_INSTANCE_ID])
       ) ?? new Map<string, unknown>();
     for (const [dataSourceId, value] of values) {
-      const dataSource = dataSources.get(dataSourceId);
+      let dataSource = dataSources.get(dataSourceId);
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        dataSource = systemParameter;
+      }
       if (dataSource === undefined) {
         continue;
       }

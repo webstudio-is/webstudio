@@ -1,5 +1,3 @@
-import type { WritableDeep } from "type-fest";
-
 export { html } from "./__generated__/html";
 export * from "./__generated__/keyword-values";
 export * from "./__generated__/units";
@@ -11,18 +9,12 @@ export {
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";
 
-// longhand property parsers
-export * from "./property-parsers/index";
 // shorthand property parsers
 export * from "./parse-css-value";
 export * from "./parse-css";
 export * from "./shorthands";
+export { shorthandProperties } from "./__generated__/shorthand-properties";
 
 export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
 
-import { properties as generatedProperties } from "./__generated__/properties";
-
-// convert to writable to avoid conflicts with schema type
-export const properties = generatedProperties as WritableDeep<
-  typeof generatedProperties
->;
+export { properties as propertiesData } from "./__generated__/properties";

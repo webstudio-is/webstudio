@@ -15,7 +15,6 @@ export const labelColors = [
   "local",
   "overwritten",
   "remote",
-  "code",
   "inactive",
 ] as const;
 
@@ -34,7 +33,7 @@ const StyledLabel = styled(RadixLabel, {
   px: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
-  transition: "200ms color, 200ms background-color",
+  transition: "150ms color, 150ms background-color",
   color: theme.colors.foregroundMain,
 
   // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
@@ -65,7 +64,7 @@ const StyledLabel = styled(RadixLabel, {
       },
       preset: {
         backgroundColor: theme.colors.backgroundPresetMain,
-        color: theme.colors.foregroundMain,
+        color: theme.colors.foregroundTextSubtle,
         "&:hover": {
           backgroundColor: theme.colors.backgroundPresetHover,
         },
@@ -89,12 +88,6 @@ const StyledLabel = styled(RadixLabel, {
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundRemoteHover,
-        },
-      },
-      code: {
-        color: theme.colors.foregroundLocalMain,
-        "&:hover": {
-          backgroundColor: theme.colors.backgroundHover,
         },
       },
       // Example is collapsible section title label when section has no content.
@@ -127,6 +120,7 @@ const StyledLabel = styled(RadixLabel, {
 });
 
 type Props = {
+  tag?: "button" | "label";
   color?: (typeof labelColors)[number];
   text?: "title" | "sentence" | "mono";
   disabled?: boolean;
@@ -137,13 +131,17 @@ type Props = {
 export const isLabelButton = (color: Props["color"]) => color !== undefined;
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
-  const { disabled, children, ...rest } = props;
+  const { tag, disabled, children, ...rest } = props;
 
   // To enable keyboard accessibility for users who rely on the spacebar to activate the radix
   // when using a preset, locala, overwritten or remote color, we need to wrap the label with
   // a button that has a "label" role.
   // (Radix adds role="button" to the label)
-  const isButton = isLabelButton(props.color);
+  let isButton = isLabelButton(props.color) || tag === "button";
+  // when explicit label
+  if (tag === "label") {
+    isButton = false;
+  }
 
   return (
     <StyledLabel

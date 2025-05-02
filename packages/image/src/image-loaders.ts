@@ -60,11 +60,3 @@ export const wsImageLoader: ImageLoader = (props) => {
   // Cloudflare docs say that we don't need to urlencode the path params
   return resultUrl.href;
 };
-
-type ImageLoaderOptions = {
-  imageBaseUrl?: string;
-};
-
-export const createImageLoader = (
-  _loaderOptions: ImageLoaderOptions
-): ImageLoader => wsImageLoader;

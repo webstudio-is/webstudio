@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { renderJsx, $ } from "@webstudio-is/template";
+import { $, renderData } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
@@ -15,13 +15,13 @@ registerContainers();
 
 const metas = new Map(Object.entries(baseMetas));
 $registeredComponentMetas.set(metas);
-$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
+$pages.set(createDefaultPages({ rootInstanceId: "" }));
 $awareness.set({ pageId: "" });
 
 describe("deleteInstance", () => {
   test("delete selected instance and select next one", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id="parent">
             <$.Box ws:id="child1"></$.Box>
@@ -42,7 +42,7 @@ describe("deleteInstance", () => {
 
   test("delete selected instance and select previous one", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id="parent">
             <$.Box ws:id="child1"></$.Box>
@@ -63,7 +63,7 @@ describe("deleteInstance", () => {
 
   test("delete selected instance and select parent one", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id="parent">
             <$.Box ws:id="child1"></$.Box>
@@ -80,7 +80,7 @@ describe("deleteInstance", () => {
 describe("wrap in", () => {
   test("wrap instance in link", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id="box"></$.Box>
         </$.Body>
@@ -89,7 +89,7 @@ describe("wrap in", () => {
     selectInstance(["box", "body"]);
     wrapIn("Link");
     expect($instances.get()).toEqual(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Link ws:id={expect.any(String)}>
             <$.Box ws:id="box"></$.Box>
@@ -101,7 +101,7 @@ describe("wrap in", () => {
 
   test("wrap image in box", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Image ws:id="image" />
         </$.Body>
@@ -110,7 +110,7 @@ describe("wrap in", () => {
     selectInstance(["image", "body"]);
     wrapIn("Box");
     expect($instances.get()).toEqual(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id={expect.any(String)}>
             <$.Image ws:id="image" />
@@ -121,7 +121,7 @@ describe("wrap in", () => {
   });
 
   test("avoid wrapping text with link in link", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="body">
         <$.Text ws:id="text">
           <$.RichTextLink ws:id="richtextlink"></$.RichTextLink>
@@ -136,7 +136,7 @@ describe("wrap in", () => {
   });
 
   test("avoid wrapping textual content", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="body">
         <$.Text ws:id="text">
           <$.Bold ws:id="bold"></$.Bold>
@@ -154,7 +154,7 @@ describe("wrap in", () => {
 describe("unwrap", () => {
   test("unwrap instance", () => {
     $instances.set(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Box ws:id="box">
             <$.Image ws:id="image" />
@@ -166,7 +166,7 @@ describe("unwrap", () => {
     selectInstance(["box", "body"]);
     unwrap();
     expect($instances.get()).toEqual(
-      renderJsx(
+      renderData(
         <$.Body ws:id="body">
           <$.Image ws:id="image" />
           <$.Text ws:id="text">text</$.Text>
@@ -176,7 +176,7 @@ describe("unwrap", () => {
   });
 
   test("avoid unwrapping textual instance", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="body">
         <$.Text ws:id="text1">text</$.Text>
         <$.Text ws:id="text2">
@@ -193,7 +193,7 @@ describe("unwrap", () => {
   });
 
   test("avoid unwrapping constrained instances", () => {
-    const { instances } = renderJsx(
+    const { instances } = renderData(
       <$.Body ws:id="body">
         <$.List ws:id="list">
           <$.ListItem ws:id="listitem"></$.ListItem>

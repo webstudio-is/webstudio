@@ -2,26 +2,23 @@ import type { ComponentProps } from "react";
 import { VimeoIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
-  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/vimeo.props";
-import { Vimeo } from "./vimeo";
-
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
+import type { Vimeo } from "./vimeo";
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: VimeoIcon,
   states: defaultStates,
-  presetStyle,
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link", "Heading"] },
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: ["VimeoSpinner", "VimeoPlayButton", "VimeoPreviewImage"],
+  },
+  presetStyle: {
+    div,
   },
 };
 
@@ -29,6 +26,7 @@ const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "id",
   "className",
   "url",
+  "title",
   "quality",
   "loading",
   "showPreview",
@@ -41,6 +39,7 @@ const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "showTitle",
   "showControls",
   "controlsColor",
+  "playsinline",
 ];
 
 export const propsMeta: WsComponentPropsMeta = {

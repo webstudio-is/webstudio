@@ -9,9 +9,8 @@ for (const styleDecl of parsed) {
   result.push([`${styleDecl.selector}:${styleDecl.property}`, styleDecl.value]);
 }
 let code = "";
-code += `import type { HtmlTags } from "html-tags";\n`;
 code += `import type { StyleValue } from "@webstudio-is/css-engine";\n\n`;
-const type = "Map<`${HtmlTags}:${string}`, StyleValue>";
+const type = "Map<string, StyleValue>";
 code += `export const html: ${type} = new Map(${JSON.stringify(result)})`;
 
 mkdirSync("./src/__generated__", { recursive: true });

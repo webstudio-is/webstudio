@@ -91,7 +91,8 @@ type CustomDescriptionsType = {
       }
     }
 
-    const generatedFile = `${path.basename(filePath, ".tsx")}.props.ts`;
+    const basename = path.basename(filePath, ".tsx");
+    const generatedFile = `${basename}.props.ts`;
     const generatedPath = path.join(generatedDir, generatedFile);
 
     const componentDocs = tsConfigParser.parse(filePath);
@@ -101,7 +102,7 @@ type CustomDescriptionsType = {
       continue;
     }
 
-    let fileContent = `import type { PropMeta } from "@webstudio-is/react-sdk";\n`;
+    let fileContent = `import type { PropMeta } from "@webstudio-is/sdk";\n`;
 
     if (componentDocs.length === 1) {
       const argTypes = propsToArgTypes(

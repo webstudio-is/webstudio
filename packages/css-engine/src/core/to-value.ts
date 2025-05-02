@@ -1,4 +1,3 @@
-import { captureError } from "@webstudio-is/error-utils";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 import type { StyleValue } from "../schema";
 
@@ -132,6 +131,23 @@ export const toValue = (
       .join(" ");
   }
 
+  if (value.type === "shadow") {
+    let shadow = `${toValue(value.offsetX)} ${toValue(value.offsetY)}`;
+    if (value.blur) {
+      shadow += ` ${toValue(value.blur)}`;
+    }
+    if (value.spread) {
+      shadow += ` ${toValue(value.spread)}`;
+    }
+    if (value.color) {
+      shadow += ` ${toValue(value.color)}`;
+    }
+    if (value.position === "inset") {
+      shadow += ` inset`;
+    }
+    return shadow;
+  }
+
   if (value.type === "function") {
     // Right now, we are using function-value only for filter and backdrop-filter functions
     if (value.hidden === true) {
@@ -146,5 +162,6 @@ export const toValue = (
     return "";
   }
 
-  return captureError(new Error("Unknown value type"), value);
+  value satisfies never;
+  return "";
 };

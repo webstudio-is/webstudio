@@ -1,3 +1,5 @@
+import { matchSorter } from "match-sorter";
+import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import {
   Combobox,
   EnhancedTooltip,
@@ -5,15 +7,12 @@ import {
   NestedInputButton,
   FloatingPanel,
 } from "@webstudio-is/design-system";
-import { FontsManager } from "~/builder/shared/fonts-manager";
-import { forwardRef, useMemo, useState, type ComponentProps } from "react";
 import { toValue } from "@webstudio-is/css-engine";
-import { matchSorter } from "match-sorter";
+import { UploadIcon } from "@webstudio-is/icons";
+import { keywordValues, parseCssValue } from "@webstudio-is/css-data";
+import { FontsManager } from "~/builder/shared/fonts-manager";
 import { useAssets } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
-import { UploadIcon } from "@webstudio-is/icons";
-import { styleConfigByName } from "../../shared/configs";
-import { parseCssValue } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
 
@@ -42,18 +41,19 @@ const matchOrSuggestToCreate = (
 };
 
 export const FontFamilyControl = () => {
-  const fontFamily = useComputedStyleDecl("fontFamily");
+  const fontFamily = useComputedStyleDecl("font-family");
   const value = fontFamily.cascadedValue;
-  const setValue = setProperty("fontFamily");
+  const setValue = setProperty("font-family");
   const [intermediateValue, setIntermediateValue] = useState<
     string | undefined
   >();
   const { assetContainers } = useAssets("font");
   const items = useMemo(() => {
-    const fallbacks = styleConfigByName("fontFamily").items;
-    return [...toItems(assetContainers), ...fallbacks].map(({ label }) => ({
-      value: label,
-    }));
+    const fallbacks = keywordValues["font-family"];
+    return [
+      ...toItems(assetContainers).map(({ label }) => ({ value: label })),
+      ...fallbacks.map((value) => ({ value })),
+    ];
   }, [assetContainers]);
   const [isFontManagerOpen, setIsFontMangerOpen] = useState(false);
 
@@ -86,7 +86,7 @@ export const FontFamilyControl = () => {
         itemToString={(item) => item?.label ?? item?.value ?? ""}
         onItemHighlight={(item) => {
           if (item === null) {
-            setValue(parseCssValue("fontFamily", itemValue), {
+            setValue(parseCssValue("font-family", itemValue), {
               isEphemeral: true,
             });
             return;
@@ -97,7 +97,7 @@ export const FontFamilyControl = () => {
           );
         }}
         onItemSelect={(item) => {
-          setValue(parseCssValue("fontFamily", item.value));
+          setValue(parseCssValue("font-family", item.value));
           setIntermediateValue(undefined);
         }}
         value={{ value: intermediateValue ?? itemValue }}
@@ -108,7 +108,7 @@ export const FontFamilyControl = () => {
           if (isFontManagerOpen) {
             return;
           }
-          setValue(parseCssValue("fontFamily", itemValue));
+          setValue(parseCssValue("font-family", itemValue));
         }}
         match={matchOrSuggestToCreate}
       />
@@ -121,13 +121,11 @@ const FontsManagerButton = forwardRef<
   ComponentProps<typeof NestedInputButton>
 >((props, ref) => {
   return (
-    <Flex>
-      <EnhancedTooltip content="Open Font Manager">
-        <NestedInputButton {...props} ref={ref} tabIndex={-1}>
-          <UploadIcon />
-        </NestedInputButton>
-      </EnhancedTooltip>
-    </Flex>
+    <EnhancedTooltip content="Open Font Manager">
+      <NestedInputButton {...props} ref={ref} tabIndex={-1}>
+        <UploadIcon />
+      </NestedInputButton>
+    </EnhancedTooltip>
   );
 });
 FontsManagerButton.displayName = "FontsManagerButton";

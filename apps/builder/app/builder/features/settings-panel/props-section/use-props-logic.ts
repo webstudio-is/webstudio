@@ -1,20 +1,31 @@
 import { nanoid } from "nanoid";
-import type { Instance, Prop } from "@webstudio-is/sdk";
-import {
-  type PropMeta,
-  showAttribute,
-  textContentAttribute,
-  collectionComponent,
-} from "@webstudio-is/react-sdk";
-import type { PropValue } from "../shared";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import type { PropMeta, Instance, Prop } from "@webstudio-is/sdk";
+import { descendantComponent } from "@webstudio-is/sdk";
 import {
+  reactPropsToStandardAttributes,
+  showAttribute,
+  standardAttributesToReactProps,
+  textContentAttribute,
+} from "@webstudio-is/react-sdk";
+import {
+  $instances,
   $isContentMode,
+  $props,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
+import { isRichText } from "~/shared/content-model";
+import { $selectedInstancePath } from "~/shared/awareness";
+import {
+  $selectedInstancePropsMetas,
+  showAttributeMeta,
+  type PropValue,
+} from "../shared";
 
 type PropOrName = { prop?: Prop; propName: string };
+
 export type PropAndMeta = {
   prop?: Prop;
   propName: string;
@@ -96,6 +107,13 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
+
+    case "animationAction":
+      return {
+        type: "animationAction",
+        control: "animationAction",
+        required: false,
+      };
     case "json":
       throw new Error(
         "A prop with type json must have a meta, we can't provide a default one because we need a list of options"
@@ -121,7 +139,6 @@ type UsePropsLogicInput = {
   instance: Instance;
   props: Prop[];
   updateProp: (update: Prop) => void;
-  deleteProp: (id: Prop["id"]) => void;
 };
 
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
@@ -130,28 +147,27 @@ const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   return value;
 };
 
-const systemPropsMeta: { name: string; meta: PropMeta }[] = [
-  {
-    name: showAttribute,
-    meta: {
-      label: "Show",
-      required: false,
-      control: "boolean",
-      type: "boolean",
-      defaultValue: true,
-      // If you are changing it, change the other one too
-      description:
-        "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
-    },
-  },
-];
+const $canHaveTextContent = computed(
+  [$instances, $props, $registeredComponentMetas, $selectedInstancePath],
+  (instances, props, metas, instancePath) => {
+    if (instancePath === undefined) {
+      return false;
+    }
+    const [{ instanceSelector }] = instancePath;
+    return isRichText({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+    });
+  }
+);
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
   props,
   updateProp,
-  deleteProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
 
@@ -175,43 +191,31 @@ export const usePropsLogic = ({
     return propsWhiteList.includes(propName);
   };
 
-  const instanceMeta = useStore($registeredComponentMetas).get(
-    instance.component
-  );
-  const meta = useStore($registeredComponentPropsMetas).get(
-    instance.component
-  ) ?? {
-    props: {},
-    initialProps: [],
-  };
-
   const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
-  const unprocessedKnown = new Map<Prop["name"], PropMeta>(
-    Object.entries(meta.props)
+
+  const propsMetas = useStore($selectedInstancePropsMetas);
+
+  const componentPropsMeta = useStore($registeredComponentPropsMetas).get(
+    instance.component
   );
+  const initialPropsNames = new Set(componentPropsMeta?.initialProps);
 
-  const initialPropsNames = new Set(meta.initialProps ?? []);
+  const systemProps: PropAndMeta[] = [];
+  // descendant component is not actually rendered
+  // but affects styling of nested elements
+  // hiding descendant does not hide nested elements and confuse users
+  if (instance.component !== descendantComponent) {
+    systemProps.push({
+      propName: showAttribute,
+      prop: getAndDelete(unprocessedSaved, showAttribute),
+      meta: showAttributeMeta,
+    });
+  }
 
-  const systemProps: PropAndMeta[] = systemPropsMeta.map(({ name, meta }) => {
-    let saved = getAndDelete<Prop>(unprocessedSaved, name);
-    if (saved === undefined && meta.defaultValue !== undefined) {
-      saved = getStartingProp(instance.id, meta, name);
-    }
-    getAndDelete(unprocessedKnown, name);
-    initialPropsNames.delete(name);
-    return {
-      prop: saved,
-      propName: name,
-      meta,
-    };
-  });
-
-  const canHaveTextContent =
-    instanceMeta?.type === "container" &&
-    instance.component !== collectionComponent;
+  const canHaveTextContent = useStore($canHaveTextContent);
 
   const hasNoChildren = instance.children.length === 0;
   const hasOnlyTextChild =
@@ -236,18 +240,31 @@ export const usePropsLogic = ({
   }
 
   const initialProps: PropAndMeta[] = [];
-  for (const name of initialPropsNames) {
-    const saved = getAndDelete<Prop>(unprocessedSaved, name);
-    const known = getAndDelete(unprocessedKnown, name);
+  for (let name of initialPropsNames) {
+    let propMeta = propsMetas.get(name);
+    // className -> class
+    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
+      name = reactPropsToStandardAttributes[name];
+      propMeta = propsMetas.get(name);
+    }
 
-    if (known === undefined) {
+    if (propMeta === undefined) {
       console.error(
         `The prop "${name}" is defined in meta.initialProps but not in meta.props`
       );
       continue;
     }
 
-    let prop = saved;
+    let prop =
+      getAndDelete<Prop>(unprocessedSaved, name) ??
+      // support legacy html props stored with react names
+      getAndDelete<Prop>(
+        unprocessedSaved,
+        standardAttributesToReactProps[name]
+      );
+    if (prop) {
+      prop = { ...prop, name };
+    }
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
@@ -258,40 +275,44 @@ export const usePropsLogic = ({
     //   - where 0 is a fallback when no default is available
     //   - they think that width is set to 0, but it's actually not set at all
     //
-    if (prop === undefined && known.defaultValue !== undefined) {
-      prop = getStartingProp(instance.id, known, name);
+    if (prop === undefined && propMeta.defaultValue !== undefined) {
+      prop = getStartingProp(instance.id, propMeta, name);
     }
 
     initialProps.push({
       prop,
       propName: name,
-      meta: known,
+      meta: propMeta,
     });
   }
 
   const addedProps: PropAndMeta[] = [];
-  for (const prop of Array.from(unprocessedSaved.values()).reverse()) {
+  for (let prop of Array.from(unprocessedSaved.values()).reverse()) {
     // ignore parameter props
     if (prop.type === "parameter") {
       continue;
     }
-
-    const meta =
-      getAndDelete(unprocessedKnown, prop.name) ??
-      getDefaultMetaForType("string");
+    let name = prop.name;
+    let propMeta = propsMetas.get(name);
+    // support legacy html props stored with react names
+    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
+      name = reactPropsToStandardAttributes[name];
+      propMeta = propsMetas.get(name);
+    }
+    prop = { ...prop, name };
+    propMeta ??= getDefaultMetaForType("string");
 
     addedProps.push({
       prop,
       propName: prop.name,
-      meta,
+      meta: propMeta,
     });
   }
 
   const handleAdd = (propName: string) => {
+    // In case of custom property/attribute we get a string.
     const propMeta =
-      unprocessedKnown.get(propName) ??
-      // In case of custom property/attribute we get a string.
-      getDefaultMetaForType("string");
+      propsMetas.get(propName) ?? getDefaultMetaForType("string");
     const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);
@@ -316,25 +337,10 @@ export const usePropsLogic = ({
     );
   };
 
-  const handleDeleteByPropName = (propName: string) => {
-    const prop = props.find((prop) => prop.name === propName);
-
-    if (prop) {
-      deleteProp(prop.id);
-    }
-  };
-
-  const handleDelete = (prop: Prop) => {
-    deleteProp(prop.id);
-  };
-
   return {
     handleAdd,
     handleChange,
-    handleDelete,
     handleChangeByPropName,
-    handleDeleteByPropName,
-    meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.
      * Currentrly used only for the ID prop. */
     systemProps: systemProps.filter(({ propName }) => isPropVisible(propName)),
@@ -344,10 +350,5 @@ export const usePropsLogic = ({
     ),
     /** Optional props that were added by user */
     addedProps: addedProps.filter(({ propName }) => isPropVisible(propName)),
-    /** List of remaining props still available to add */
-    availableProps: Array.from(
-      unprocessedKnown.entries(),
-      ([name, { label, description }]) => ({ name, label, description })
-    ),
   };
 };

@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { select } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./select";
 import { props } from "./__generated__/select.props";
@@ -20,11 +20,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
-  type: "container",
   icon: SelectIcon,
   presetStyle,
   states: [

@@ -4,7 +4,7 @@
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
     "fixtures:sync": "pnpm cli sync --buildId a2e8de30-03d5-4514-a3a6-406b3266a3af && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal --preview && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
+    "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsc",
@@ -27,31 +27,33 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@remix-run/cloudflare": "2.15.2",
-    "@remix-run/cloudflare-pages": "2.15.2",
-    "@remix-run/node": "2.15.2",
-    "@remix-run/react": "2.15.2",
-    "@remix-run/server-runtime": "2.15.2",
+    "@remix-run/cloudflare": "2.16.5",
+    "@remix-run/cloudflare-pages": "2.16.5",
+    "@remix-run/node": "2.16.5",
+    "@remix-run/react": "2.16.5",
+    "@remix-run/server-runtime": "2.16.5",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-animation": "workspace:*",
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
-    "isbot": "^5.1.19",
+    "isbot": "^5.1.25",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "webstudio": "workspace:*",
     "worktop": "0.8.0-next.18",
-    "zod": "^3.22.4"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240620.0",
-    "@remix-run/dev": "2.15.2",
+    "@remix-run/dev": "2.16.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "typescript": "5.7.2",
-    "vite": "^5.4.11",
+    "fast-glob": "^3.3.2",
+    "typescript": "5.8.2",
+    "vite": "^6.3.4",
     "wrangler": "^3.63.2"
   }
 }

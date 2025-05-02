@@ -13,6 +13,7 @@
 
 import { nanoid } from "nanoid";
 import { useFocusWithin } from "@react-aria/interactions";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   ComboboxListbox,
@@ -36,6 +37,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import type { StyleSource } from "@webstudio-is/sdk";
 import {
   forwardRef,
   useState,
@@ -48,7 +50,7 @@ import {
   useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { type ComponentState, stateCategories } from "@webstudio-is/react-sdk";
+import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
 import {
   type ItemSource,
   type StyleSourceError,
@@ -59,9 +61,9 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { $definedStyles } from "../shared/model";
-import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
-import { useStore } from "@nanostores/react";
+import { $computedStyleDeclarations } from "../shared/model";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import type { WritableAtom } from "nanostores";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -119,7 +121,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  definedStyles: Set<Partial<StyleDecl>>
+  computedStyleDeclarations: Array<ComputedStyleDecl>
 ) => {
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
@@ -127,8 +129,8 @@ const getHasStylesMap = <Item extends IntermediateItem>(
     if (item.states.length > 0) {
       map.set(item.id, true);
     }
-    for (const style of definedStyles) {
-      if (item.id === style.styleSourceId) {
+    for (const style of computedStyleDeclarations) {
+      if (item.id === style.source.styleSourceId) {
         map.set(item.id, true);
         break;
       }
@@ -177,14 +179,14 @@ const TextFieldBase: ForwardRefRenderFunction<
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
-  const definedStyles = useStore($definedStyles);
+  const computedStyleDeclarations = useStore($computedStyleDeclarations);
 
   const hasStyles = useCallback(
     (styleSourceId: string) => {
-      const hasStylesMap = getHasStylesMap(value, definedStyles);
+      const hasStylesMap = getHasStylesMap(value, computedStyleDeclarations);
       return hasStylesMap.get(styleSourceId) ?? false;
     },
-    [value, definedStyles]
+    [value, computedStyleDeclarations]
   );
 
   return (
@@ -204,28 +206,25 @@ const TextFieldBase: ForwardRefRenderFunction<
       onKeyDown={onKeyDown}
     >
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
-        <InputField
-          {...textFieldProps}
-          variant="chromeless"
-          css={{
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1,
-            order: 1,
-            flex: 1,
-            "&:focus-within, &:hover": {
-              borderColor: "transparent",
-            },
-          }}
-          size="1"
-          value={label}
-          onClick={onClick}
-          ref={inputRef}
-          inputRef={internalInputRef}
-          spellCheck={false}
-          aria-label="New Style Source Input"
-        />
-      )}
+      <InputField
+        {...textFieldProps}
+        variant="chromeless"
+        css={{
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+          order: 1,
+          flex: 1,
+          "&:focus-within, &:hover": {
+            borderColor: "transparent",
+          },
+        }}
+        size="1"
+        value={label}
+        onClick={onClick}
+        inputRef={mergeRefs(internalInputRef, inputRef)}
+        spellCheck={false}
+        aria-label="New Style Source Input"
+      />
       {value.map((item) => (
         <StyleSourceControl
           key={item.id}
@@ -270,6 +269,7 @@ const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
+  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
   error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
@@ -277,7 +277,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   editingItemId?: Item["id"];
   componentStates?: ComponentState[];
   onSelectAutocompleteItem?: (item: Item) => void;
-  onRemoveItem?: (id: Item["id"]) => void;
+  onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
@@ -351,7 +351,7 @@ const renderMenuItems = (props: {
   onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
   onDisable?: (itemId: IntermediateItem["id"]) => void;
   onEnable?: (itemId: IntermediateItem["id"]) => void;
-  onRemove?: (itemId: IntermediateItem["id"]) => void;
+  onDetach?: (itemId: IntermediateItem["id"]) => void;
   onDelete?: (itemId: IntermediateItem["id"]) => void;
   onClearStyles?: (itemId: IntermediateItem["id"]) => void;
 }) => {
@@ -404,8 +404,8 @@ const renderMenuItems = (props: {
     )}
     */}
       {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onRemove?.(props.item.id)}>
-          Remove
+        <DropdownMenuItem onSelect={() => props.onDetach?.(props.item.id)}>
+          Detach
         </DropdownMenuItem>
       )}
       {props.item.source !== "local" && (
@@ -537,7 +537,7 @@ export const StyleSourceInput = (
       ) {
         const item = value[value.length - 2];
         if (item) {
-          props.onRemoveItem?.(item.id);
+          props.onDetachItem?.(item.id);
         }
       }
     },
@@ -555,6 +555,9 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            inputRef={(element) =>
+              props.$styleSourceInputElement.set(element ?? undefined)
+            }
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({
@@ -568,7 +571,7 @@ export const StyleSourceInput = (
                 onEnable: props.onEnableItem,
                 onDisable: props.onDisableItem,
                 onEdit: props.onEditItem,
-                onRemove: props.onRemoveItem,
+                onDetach: props.onDetachItem,
                 onDelete: props.onDeleteItem,
                 onClearStyles: props.onClearStyles,
               })

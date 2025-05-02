@@ -5,7 +5,8 @@ import type { StoryFn, Meta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box, Button, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, Props } from "@webstudio-is/sdk";
+import { $, renderData } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
@@ -15,7 +16,6 @@ import {
 } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
-import { $, renderJsx } from "@webstudio-is/template";
 import { $awareness } from "~/shared/awareness";
 
 export default {
@@ -57,6 +57,8 @@ const instances: Instances = new Map([
     { type: "text", value: " la la la subtext" },
   ]),
 ]);
+
+const props: Props = new Map();
 
 export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
   const state = useStore($textToolbar);
@@ -129,6 +131,7 @@ export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
         <TextEditor
           rootInstanceSelector={["1"]}
           instances={instances}
+          props={props}
           contentEditable={<ContentEditable />}
           onChange={onChange}
           onSelectInstance={(instanceId) =>
@@ -176,6 +179,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
           <TextEditor
             rootInstanceSelector={["1"]}
             instances={instances}
+            props={props}
             contentEditable={<ContentEditable />}
             onChange={onChange}
             onSelectInstance={(instanceId) =>
@@ -223,7 +227,6 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
         path: "",
         title: "",
         name: "",
-        systemDataSourceId: "",
       },
       pages: [
         {
@@ -232,7 +235,6 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
           path: "",
           title: "",
           name: "",
-          systemDataSourceId: "",
           meta: {},
         },
       ],
@@ -242,24 +244,12 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
 
     $registeredComponentMetas.set(
       new Map([
-        [
-          "Box",
-          {
-            type: "container",
-            icon: "icon",
-          },
-        ],
-        [
-          "Bold",
-          {
-            type: "rich-text-child",
-            icon: "icon",
-          },
-        ],
+        ["Box", { icon: "icon" }],
+        ["Bold", { icon: "icon" }],
       ])
     );
 
-    return renderJsx(
+    return renderData(
       <$.Body ws:id="bodyId">
         <$.Box ws:id="boxAId">
           Hello world <$.Bold ws:id="boldA">Hello world</$.Bold> Hello world
@@ -313,6 +303,7 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
             }
             rootInstanceSelector={["boxAId", "bodyId"]}
             instances={instances}
+            props={props}
             contentEditable={<ContentEditable />}
             onChange={(data) => {
               setState((prev) => {
@@ -338,6 +329,7 @@ export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
             editable={textEditingInstanceSelector?.selector[0] === "boxBId"}
             rootInstanceSelector={["boxBId", "bodyId"]}
             instances={instances}
+            props={props}
             contentEditable={<ContentEditable />}
             onChange={(data) => {
               setState((prev) => {

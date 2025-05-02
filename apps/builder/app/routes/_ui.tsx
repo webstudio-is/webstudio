@@ -5,6 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
   type ClientLoaderFunctionArgs,
+  type ShouldRevalidateFunction,
 } from "@remix-run/react";
 import interFont from "@fontsource-variable/inter/index.css?url";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
@@ -106,3 +107,7 @@ export default function Layout() {
     </Document>
   );
 }
+
+export const shouldRevalidate: ShouldRevalidateFunction = () => {
+  return false;
+};

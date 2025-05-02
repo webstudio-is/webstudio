@@ -30,8 +30,12 @@ certbot/dns-cloudflare certonly \
 -d wstd.dev \
 -d '*.wstd.dev'
 
-sudo chown -R $USER:$USER /tmp/letsencrypt
+sudo chown -R $USER:$(id -g) /tmp/letsencrypt
 
 cp /tmp/letsencrypt/data/live/wstd.dev/fullchain.pem ./https/fullchain.pem
 cp /tmp/letsencrypt/data/live/wstd.dev/privkey.pem ./https/privkey.pem
+
+# Haproxy key
+cd https
+cat ./fullchain.pem ./privkey.pem > ./haproxy.pem
 ```

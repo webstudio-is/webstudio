@@ -1,5 +1,20 @@
 import * as path from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { defaultClientConditions } from "vite";
 import type { StorybookConfig } from "@storybook/react-vite";
+
+const isFolderEmpty = (folderPath: string) => {
+  if (!existsSync(folderPath)) {
+    return true; // Folder does not exist
+  }
+  const contents = readdirSync(folderPath);
+
+  return contents.length === 0;
+};
+
+const hasPrivateFolders = !isFolderEmpty(
+  path.join(__dirname, "../../packages/sdk-components-animation/private-src")
+);
 
 const visualTestingStories: StorybookConfig["stories"] = [
   {
@@ -19,7 +34,7 @@ export default {
         ...visualTestingStories,
         {
           directory: "../packages/css-engine",
-          titlePrefix: "Css Engine",
+          titlePrefix: "CSS Engine",
         },
         {
           directory: "../packages/image",
@@ -31,11 +46,15 @@ export default {
         },
         {
           directory: "../packages/sdk-components-react",
-          titlePrefix: "Sdk Components React",
+          titlePrefix: "SDK Components React",
         },
         {
           directory: "../packages/sdk-components-react-radix",
-          titlePrefix: "Sdk Components React Radix",
+          titlePrefix: "SDK Components React Radix",
+        },
+        {
+          directory: "../packages/sdk-components-animation",
+          titlePrefix: "SDK Components Animation",
         },
       ],
   framework: {
@@ -50,16 +69,23 @@ export default {
   async viteFinal(config) {
     return {
       ...config,
+      optimizeDeps: {
+        exclude: ["scroll-timeline-polyfill"],
+      },
+
       define: {
         ...config.define,
         // storybook use "util" package internally which is bundled with stories
-        // and gives and error that process is undefined
+        // and gives an error that process is undefined
         "process.env.NODE_DEBUG": "undefined",
         "process.env.IS_STROYBOOK": "true",
       },
       resolve: {
         ...config.resolve,
-        conditions: ["webstudio", "import", "module", "browser", "default"],
+        conditions: hasPrivateFolders
+          ? ["webstudio-private", "webstudio", ...defaultClientConditions]
+          : ["webstudio", ...defaultClientConditions],
+
         alias: [
           {
             find: "~",

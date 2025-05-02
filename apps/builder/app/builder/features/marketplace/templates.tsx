@@ -45,11 +45,23 @@ const insertSection = ({
   instanceId: string;
 }) => {
   const fragment = extractWebstudioFragment(data, instanceId);
-  fragment.instances = fragment.instances.filter(
-    (instance) => instance.component !== "Body"
+  const body = fragment.instances.find(
+    (instance) => instance.component === "Body"
   );
+  // remove body and use its children as root insrances
+  if (body) {
+    fragment.instances = fragment.instances.filter(
+      (instance) => instance.component !== "Body"
+    );
+    fragment.children = body.children;
+  }
   const insertable = findClosestInsertable(fragment);
   if (insertable) {
+    // numeric position means the instance already
+    // insertd after or even into ancestor
+    if (insertable.position === "end") {
+      insertable.position = "after";
+    }
     insertWebstudioFragmentAt(fragment, insertable);
   }
 };

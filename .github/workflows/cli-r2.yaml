@@ -31,12 +31,24 @@ jobs:
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
+      # We need submodules here as this is used for the cloudflare build
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
+
+      # TRY FIX cloudlare incident
+      - uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: "2.22.35"
+          verbose: false
+          arch: amd64
 
       - name: pnpm instal
         run: pnpm install --ignore-scripts

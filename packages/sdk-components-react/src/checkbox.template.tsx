@@ -8,7 +8,7 @@ export const meta: TemplateMeta = {
   template: (
     <$.Label ws:label="Checkbox Field">
       <$.Checkbox />
-      <$.Text ws:label="Checkbox Label" tag="span">
+      <$.Text ws:label="Checkbox Label" ws:tag="span">
         {new PlaceholderValue("Checkbox")}
       </$.Text>
     </$.Label>

@@ -51,7 +51,7 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -89,6 +89,7 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import {
   $selectedPage,
   addTemporaryInstance,
+  getInstancePath,
   selectInstance,
 } from "~/shared/awareness";
 import { shallowEqual } from "shallow-equal";
@@ -96,7 +97,6 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
-import { editablePlaceholderComponents } from "~/canvas/shared/styles";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -177,6 +177,11 @@ const CaretColorPlugin = () => {
   return null;
 };
 
+const isChrome = () =>
+  navigator.userAgentData?.brands.some(
+    (brand) => brand.brand === "Google Chrome"
+  );
+
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
@@ -184,8 +189,32 @@ const OnChangeOnBlurPlugin = ({
 }) => {
   const [editor] = useLexicalComposerContext();
   const handleChange = useEffectEvent(onChange);
+
   useEffect(
     () => () => {
+      // Ensures editable content is saved if no blur event occurs before unmount.
+      // This can happen in Firefox and Safari.
+      // To reproduce: create a Content Block, edit a paragraph, then type `/` and select Heading or Paragraph from the menu.
+      // Without this, changes may be lost on unmount in FF and Safari.
+
+      if (isChrome()) {
+        // Fixes an issue in DEV MODE where, if text is center-aligned inside Flex/Grid,
+        // the code below causes Chrome to scroll the editable text block to the center of the view.
+        return;
+      }
+      // The issue is related to React’s development mode.
+      // When we set the initial selection in the Editor, we disable Lexical’s internal
+      // scrolling using the update operation tag tag: "skip-scroll-into-view".
+      // The problem is that a read operation forces all pending update operations to commit,
+      // and for some reason, this forced commit does not respect tags.
+      // In React’s development mode, useEffect runs twice, which causes scrollIntoView
+      // to be called during the first read.
+      // To prevent this, we disconnect the editor from the DOM
+      // by setting editor._rootElement = null;.
+      // This makes Lexical assume it’s in headless mode,
+      // preventing it from executing DOM operations.
+      editor._rootElement = null;
+
       // Safari and FF support as no blur event is triggered in some cases
       editor.read(() => {
         handleChange(editor.getEditorState(), "unmount");
@@ -559,192 +588,200 @@ const InitCursorPlugin = () => {
       return;
     }
 
-    editor.update(() => {
-      const textEditingInstanceSelector = $textEditingInstanceSelector.get();
-      if (textEditingInstanceSelector === undefined) {
-        return;
-      }
+    editor.update(
+      () => {
+        const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+        if (textEditingInstanceSelector === undefined) {
+          return;
+        }
 
-      const { reason } = textEditingInstanceSelector;
+        const { reason } = textEditingInstanceSelector;
 
-      if (reason === undefined) {
-        return;
-      }
+        if (reason === undefined) {
+          return;
+        }
 
-      if (reason === "click") {
-        const { mouseX, mouseY } = textEditingInstanceSelector;
+        if (reason === "click") {
+          const { mouseX, mouseY } = textEditingInstanceSelector;
 
-        const eventRange = caretFromPoint(mouseX, mouseY);
+          const eventRange = caretFromPoint(mouseX, mouseY);
 
-        if (eventRange !== null) {
-          const { offset: domOffset, node: domNode } = eventRange;
-          const node = $getNearestNodeFromDOMNode(domNode);
+          if (eventRange !== null) {
+            const { offset: domOffset, node: domNode } = eventRange;
+            const node = $getNearestNodeFromDOMNode(domNode);
 
-          if (node !== null) {
-            const selection = $createRangeSelection();
-            if ($isTextNode(node)) {
+            if (node !== null) {
+              const selection = $createRangeSelection();
+              if ($isTextNode(node)) {
+                selection.anchor.set(node.getKey(), domOffset, "text");
+                selection.focus.set(node.getKey(), domOffset, "text");
+                const normalizedSelection =
+                  $normalizeSelection__EXPERIMENTAL(selection);
+
+                $setSelection(normalizedSelection);
+                return;
+              }
+            }
+
+            if (domNode instanceof Element) {
+              const rect = domNode.getBoundingClientRect();
+              if (mouseX > rect.right) {
+                const selection = $getRoot().selectEnd();
+                $setSelection(selection);
+                return;
+              }
+            }
+          }
+        }
+
+        while (reason === "down" || reason === "up") {
+          const { cursorX } = textEditingInstanceSelector;
+
+          const [topRects, bottomRects] = getTopBottomRects(editor);
+
+          // Smoodge the cursor a little to the left and right to find the nearest text node
+          const smoodgeOffsets = [1, 2, 4];
+          const maxOffset = Math.max(...smoodgeOffsets);
+
+          const rects = reason === "down" ? topRects : bottomRects;
+
+          rects.sort((a, b) => a.left - b.left);
+
+          const rectWithText = rects.find(
+            (rect, index) =>
+              rect.left - (index === 0 ? maxOffset : 0) <= cursorX &&
+              cursorX <=
+                rect.right + (index === rects.length - 1 ? maxOffset : 0)
+          );
+
+          if (rectWithText === undefined) {
+            break;
+          }
+
+          const newCursorY = rectWithText.top + rectWithText.height / 2;
+
+          const eventRanges = [caretFromPoint(cursorX, newCursorY)];
+          for (const offset of smoodgeOffsets) {
+            eventRanges.push(caretFromPoint(cursorX - offset, newCursorY));
+            eventRanges.push(caretFromPoint(cursorX + offset, newCursorY));
+          }
+
+          for (const eventRange of eventRanges) {
+            if (eventRange === null) {
+              continue;
+            }
+
+            const { offset: domOffset, node: domNode } = eventRange;
+            const node = $getNearestNodeFromDOMNode(domNode);
+
+            if (node !== null && $isTextNode(node)) {
+              const selection = $createRangeSelection();
               selection.anchor.set(node.getKey(), domOffset, "text");
               selection.focus.set(node.getKey(), domOffset, "text");
               const normalizedSelection =
                 $normalizeSelection__EXPERIMENTAL(selection);
-
               $setSelection(normalizedSelection);
+
               return;
             }
           }
 
-          if (domNode instanceof Element) {
-            const rect = domNode.getBoundingClientRect();
-            if (mouseX > rect.right) {
-              const selection = $getRoot().selectEnd();
-              $setSelection(selection);
-              return;
-            }
-          }
-        }
-      }
-
-      while (reason === "down" || reason === "up") {
-        const { cursorX } = textEditingInstanceSelector;
-
-        const [topRects, bottomRects] = getTopBottomRects(editor);
-
-        // Smoodge the cursor a little to the left and right to find the nearest text node
-        const smoodgeOffsets = [1, 2, 4];
-        const maxOffset = Math.max(...smoodgeOffsets);
-
-        const rects = reason === "down" ? topRects : bottomRects;
-
-        rects.sort((a, b) => a.left - b.left);
-
-        const rectWithText = rects.find(
-          (rect, index) =>
-            rect.left - (index === 0 ? maxOffset : 0) <= cursorX &&
-            cursorX <= rect.right + (index === rects.length - 1 ? maxOffset : 0)
-        );
-
-        if (rectWithText === undefined) {
           break;
         }
 
-        const newCursorY = rectWithText.top + rectWithText.height / 2;
+        if (
+          reason === "down" ||
+          reason === "right" ||
+          reason === "enter" ||
+          reason === "click"
+        ) {
+          const firstNode = $getRoot().getFirstDescendant();
 
-        const eventRanges = [caretFromPoint(cursorX, newCursorY)];
-        for (const offset of smoodgeOffsets) {
-          eventRanges.push(caretFromPoint(cursorX - offset, newCursorY));
-          eventRanges.push(caretFromPoint(cursorX + offset, newCursorY));
-        }
-
-        for (const eventRange of eventRanges) {
-          if (eventRange === null) {
-            continue;
-          }
-
-          const { offset: domOffset, node: domNode } = eventRange;
-          const node = $getNearestNodeFromDOMNode(domNode);
-
-          if (node !== null && $isTextNode(node)) {
-            const selection = $createRangeSelection();
-            selection.anchor.set(node.getKey(), domOffset, "text");
-            selection.focus.set(node.getKey(), domOffset, "text");
-            const normalizedSelection =
-              $normalizeSelection__EXPERIMENTAL(selection);
-            $setSelection(normalizedSelection);
-
+          if (firstNode === null) {
             return;
           }
-        }
 
-        break;
-      }
-
-      if (
-        reason === "down" ||
-        reason === "right" ||
-        reason === "enter" ||
-        reason === "click"
-      ) {
-        const firstNode = $getRoot().getFirstDescendant();
-
-        if (firstNode === null) {
-          return;
-        }
-
-        if ($isTextNode(firstNode)) {
-          const selection = $createRangeSelection();
-          selection.anchor.set(firstNode.getKey(), 0, "text");
-          selection.focus.set(firstNode.getKey(), 0, "text");
-          $setSelection(selection);
-        }
-
-        if ($isElementNode(firstNode)) {
-          // e.g. Box is empty
-          const selection = $createRangeSelection();
-          selection.anchor.set(firstNode.getKey(), 0, "element");
-          selection.focus.set(firstNode.getKey(), 0, "element");
-          $setSelection(selection);
-        }
-
-        if ($isLineBreakNode(firstNode)) {
-          // e.g. Box contains 2+ empty lines
-          const selection = $createRangeSelection();
-          $setSelection(selection);
-        }
-
-        return;
-      }
-
-      if (reason === "up" || reason === "left") {
-        const selection = $createRangeSelection();
-        const lastNode = $getRoot().getLastDescendant();
-
-        if (lastNode === null) {
-          return;
-        }
-
-        if ($isTextNode(lastNode)) {
-          const contentSize = lastNode.getTextContentSize();
-          selection.anchor.set(lastNode.getKey(), contentSize, "text");
-          selection.focus.set(lastNode.getKey(), contentSize, "text");
-          $setSelection(selection);
-        }
-
-        if ($isElementNode(lastNode)) {
-          // e.g. Box is empty
-          const selection = $createRangeSelection();
-          selection.anchor.set(lastNode.getKey(), 0, "element");
-          selection.focus.set(lastNode.getKey(), 0, "element");
-          $setSelection(selection);
-        }
-
-        if ($isLineBreakNode(lastNode)) {
-          // e.g. Box contains 2+ empty lines
-          const parent = lastNode.getParent();
-          if ($isElementNode(parent)) {
+          if ($isTextNode(firstNode)) {
             const selection = $createRangeSelection();
-            selection.anchor.set(
-              parent.getKey(),
-              parent.getChildrenSize(),
-              "element"
-            );
-            selection.focus.set(
-              parent.getKey(),
-              parent.getChildrenSize(),
-              "element"
-            );
+            selection.anchor.set(firstNode.getKey(), 0, "text");
+            selection.focus.set(firstNode.getKey(), 0, "text");
             $setSelection(selection);
           }
+
+          if ($isElementNode(firstNode)) {
+            // e.g. Box is empty
+            const selection = $createRangeSelection();
+            selection.anchor.set(firstNode.getKey(), 0, "element");
+            selection.focus.set(firstNode.getKey(), 0, "element");
+            $setSelection(selection);
+          }
+
+          if ($isLineBreakNode(firstNode)) {
+            // e.g. Box contains 2+ empty lines
+            const selection = $createRangeSelection();
+            $setSelection(selection);
+          }
+
+          return;
         }
 
-        return;
-      }
-      if (reason === "new") {
-        $selectAll();
-        return;
-      }
+        if (reason === "up" || reason === "left") {
+          const selection = $createRangeSelection();
+          const lastNode = $getRoot().getLastDescendant();
 
-      reason satisfies never;
-    });
+          if (lastNode === null) {
+            return;
+          }
+
+          if ($isTextNode(lastNode)) {
+            const contentSize = lastNode.getTextContentSize();
+            selection.anchor.set(lastNode.getKey(), contentSize, "text");
+            selection.focus.set(lastNode.getKey(), contentSize, "text");
+            $setSelection(selection);
+          }
+
+          if ($isElementNode(lastNode)) {
+            // e.g. Box is empty
+            const selection = $createRangeSelection();
+            selection.anchor.set(lastNode.getKey(), 0, "element");
+            selection.focus.set(lastNode.getKey(), 0, "element");
+            $setSelection(selection);
+          }
+
+          if ($isLineBreakNode(lastNode)) {
+            // e.g. Box contains 2+ empty lines
+            const parent = lastNode.getParent();
+            if ($isElementNode(parent)) {
+              const selection = $createRangeSelection();
+              selection.anchor.set(
+                parent.getKey(),
+                parent.getChildrenSize(),
+                "element"
+              );
+              selection.focus.set(
+                parent.getKey(),
+                parent.getChildrenSize(),
+                "element"
+              );
+              $setSelection(selection);
+            }
+          }
+
+          return;
+        }
+        if (reason === "new") {
+          $selectAll();
+          return;
+        }
+
+        reason satisfies never;
+      },
+      {
+        // We are controlling scroll ourself in instance-selected.ts see updateScroll.
+        // Without skipping we are getting side effects of composition in scrollBy, scrollIntoView calls
+        tag: "skip-scroll-into-view",
+      }
+    );
   }, [editor]);
 
   return null;
@@ -1044,7 +1081,10 @@ const RichTextContentPluginInternal = ({
 
           if (blockChildSelector) {
             updateWebstudioData((data) => {
-              deleteInstanceMutable(data, rootInstanceSelector);
+              deleteInstanceMutable(
+                data,
+                getInstancePath(rootInstanceSelector, data.instances)
+              );
             });
           }
         }
@@ -1113,7 +1153,10 @@ const RichTextContentPluginInternal = ({
               updateWebstudioData((data) => {
                 deleteInstanceMutable(
                   data,
-                  isLastChild ? parentInstanceSelector : rootInstanceSelector
+                  getInstancePath(
+                    isLastChild ? parentInstanceSelector : rootInstanceSelector,
+                    data.instances
+                  )
                 );
               });
 
@@ -1128,7 +1171,10 @@ const RichTextContentPluginInternal = ({
               onNext(editor.getEditorState(), { reason: "left" });
 
               updateWebstudioData((data) => {
-                deleteInstanceMutable(data, blockChildSelector);
+                deleteInstanceMutable(
+                  data,
+                  getInstancePath(blockChildSelector, data.instances)
+                );
               });
 
               event.preventDefault();
@@ -1218,7 +1264,12 @@ const RichTextContentPluginInternal = ({
                 updateWebstudioData((data) => {
                   deleteInstanceMutable(
                     data,
-                    isLastChild ? parentInstanceSelector : rootInstanceSelector
+                    getInstancePath(
+                      isLastChild
+                        ? parentInstanceSelector
+                        : rootInstanceSelector,
+                      data.instances
+                    )
                   );
                 });
               }
@@ -1389,6 +1440,7 @@ const onError = (error: Error) => {
 type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
+  props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
   onChange: (instancesList: Instance[]) => void;
@@ -1469,6 +1521,7 @@ const AnyKeyDownPlugin = ({
 export const TextEditor = ({
   rootInstanceSelector: rootInstanceSelectorUnstable,
   instances,
+  props,
   contentEditable,
   editable,
   onChange,
@@ -1565,18 +1618,20 @@ export const TextEditor = ({
   const handleNext = useEffectEvent(
     (state: EditorState, args: HandleNextParams) => {
       const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+      const metas = $registeredComponentMetas.get();
 
       if (rootInstanceId === undefined) {
         return;
       }
 
       const editableInstanceSelectors: InstanceSelector[] = [];
-      findAllEditableInstanceSelector(
-        [rootInstanceId],
+      findAllEditableInstanceSelector({
+        instanceSelector: [rootInstanceId],
         instances,
-        $registeredComponentMetas.get(),
-        editableInstanceSelectors
-      );
+        props,
+        metas,
+        results: editableInstanceSelectors,
+      });
 
       const currentIndex = editableInstanceSelectors.findIndex(
         (instanceSelector) => {
@@ -1623,14 +1678,12 @@ export const TextEditor = ({
         if (instance === undefined) {
           continue;
         }
-
-        // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-        const componentsWithPseudoElementChildren =
-          editablePlaceholderComponents;
+        const meta = metas.get(instance.component);
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
-          !componentsWithPseudoElementChildren.includes(instance.component) &&
+          // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
+          meta?.placeholder === undefined &&
           instance?.children.length === 0
         ) {
           const elt = getElementByInstanceSelector(nextSelector);

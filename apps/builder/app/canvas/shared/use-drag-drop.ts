@@ -10,6 +10,7 @@ import {
 import {
   $dragAndDropState,
   $instances,
+  $props,
   $registeredComponentMetas,
   type ItemDropTarget,
 } from "~/shared/nano-states";
@@ -27,12 +28,13 @@ import {
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
-  getAncestorInstanceSelector,
 } from "~/shared/tree-utils";
+import { findClosestInstanceMatchingFragment } from "~/shared/matcher";
 import {
-  findClosestInstanceMatchingFragment,
-  isTreeMatching,
-} from "~/shared/matcher";
+  findClosestContainer,
+  findClosestRichText,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -65,14 +67,23 @@ const findClosestDroppableInstanceSelector = (
   dragPayload: DragStartPayload
 ) => {
   const instances = $instances.get();
+  const props = $props.get();
   const metas = $registeredComponentMetas.get();
 
+  // prevent dropping anything into non containers like image
+  instanceSelector = findClosestContainer({
+    metas,
+    props,
+    instances,
+    instanceSelector,
+  });
   let droppableIndex = -1;
   if (dragPayload?.type === "insert") {
     const fragment = getComponentTemplateData(dragPayload.dragComponent);
     if (fragment) {
       droppableIndex = findClosestInstanceMatchingFragment({
         instances,
+        props,
         metas,
         instanceSelector,
         fragment,
@@ -80,13 +91,15 @@ const findClosestDroppableInstanceSelector = (
     }
   }
   if (dragPayload?.type === "reparent") {
-    const matches = isTreeMatching({
+    const dropInstanceSelector = [
+      dragPayload.dragInstanceSelector[0],
+      ...instanceSelector,
+    ];
+    const matches = isTreeSatisfyingContentModel({
       instances,
+      props,
       metas,
-      instanceSelector: [
-        dragPayload.dragInstanceSelector[0],
-        ...instanceSelector,
-      ],
+      instanceSelector: dropInstanceSelector,
     });
     droppableIndex = matches ? 0 : -1;
   }
@@ -112,26 +125,6 @@ const sharedDropOptions = {
       (child) => getInstanceIdFromElement(child) !== undefined
     );
   },
-};
-
-const findClosestDraggable = (instanceSelector: InstanceSelector) => {
-  // cannot drag root
-  if (instanceSelector.length === 1) {
-    return;
-  }
-  const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-    const meta = metas.get(instance.component);
-    if (meta?.type === "rich-text-child") {
-      continue;
-    }
-    return getAncestorInstanceSelector(instanceSelector, instanceId);
-  }
 };
 
 export const useDragAndDrop = () => {
@@ -226,7 +219,14 @@ export const useDragAndDrop = () => {
         return false;
       }
       // When trying to drag an instance inside editor, drag the editor instead
-      return findClosestDraggable(instanceSelector) ?? false;
+      return (
+        findClosestRichText({
+          instanceSelector,
+          instances: $instances.get(),
+          props: $props.get(),
+          metas: $registeredComponentMetas.get(),
+        }) ?? instanceSelector
+      );
     },
 
     onStart({ data: dragInstanceSelector }) {

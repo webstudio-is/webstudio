@@ -4,7 +4,6 @@ import {
   $textEditingInstanceSelector,
 } from "../nano-states";
 import * as instance from "./plugin-instance";
-import * as embedTemplate from "./plugin-embed-template";
 import * as markdown from "./plugin-markdown";
 import * as webflow from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
@@ -49,23 +48,10 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
   // Allows native selection of text in the Builder panels, such as CSS Preview.
   if (event.type === "copy") {
     const isInBuilderContext = window.self === window.top;
+    const selection = window.getSelection();
 
-    if (isInBuilderContext) {
-      // Note on event.target:
-      //
-      //   The spec (https://w3c.github.io/clipboard-apis/#to-fire-a-clipboard-event)
-      //   says that if the context is not editable, the target should be the focused node.
-      //
-      //   But in practice it seems that the target is based
-      //   on where the cursor is, rather than which element has focus.
-      //   For example, if a <button> has focus, the target is the <body> element.
-      //   If some text is selected, the target is a wrapping element of the text.
-      //   (at least in Chrome).
-
-      // We are using the behavior described above: if some text is selected, the target is usually (at least in the cases we need) not the body.
-      if (event.target !== window.document.body) {
-        return false;
-      }
+    if (isInBuilderContext && selection && selection.isCollapsed === false) {
+      return false;
     }
   }
 
@@ -92,13 +78,14 @@ const initPlugins = ({
   plugins: Array<Plugin>;
   signal: AbortSignal;
 }) => {
-  const handleCopy = async (event: ClipboardEvent) => {
+  const handleCopy = (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
 
     for (const { mimeType = defaultMimeType, onCopy } of plugins) {
-      const data = await onCopy?.();
+      const data = onCopy?.();
+
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();
@@ -147,7 +134,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instance, embedTemplate, markdown, webflow],
+    plugins: [instance, markdown, webflow],
     signal,
   });
 };

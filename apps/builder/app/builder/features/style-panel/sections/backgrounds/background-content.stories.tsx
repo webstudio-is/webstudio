@@ -4,8 +4,10 @@ import {
   FloatingPanel,
   FloatingPanelProvider,
 } from "@webstudio-is/design-system";
+import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $breakpoints,
+  $pages,
   $selectedBreakpointId,
   $styles,
   $styleSourceSelections,
@@ -31,8 +33,14 @@ $styles.set(new Map([[getStyleDeclKey(backgroundImage), backgroundImage]]));
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
 );
+$pages.set(
+  createDefaultPages({
+    homePageId: "homePageId",
+    rootInstanceId: "box",
+  })
+);
 $awareness.set({
-  pageId: "",
+  pageId: "homePageId",
   instanceSelector: ["box"],
 });
 

@@ -1,26 +1,28 @@
 import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
-import { portalComponent } from "@webstudio-is/react-sdk";
 import {
   Instance,
   Instances,
   WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
+  isComponentDetachable,
+  portalComponent,
 } from "@webstudio-is/sdk";
 import { $selectedInstanceSelector, $instances } from "../nano-states";
-import type { InstanceSelector, DroppableTarget } from "../tree-utils";
+import type { InstanceSelector } from "../tree-utils";
 import {
   deleteInstanceMutable,
-  findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  isInstanceDetachable,
   updateWebstudioData,
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
+  type Insertable,
 } from "../instance-utils";
+import { $selectedInstancePath } from "../awareness";
+import { findAvailableVariables } from "../data-variables";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -30,9 +32,11 @@ const InstanceData = WebstudioFragment.extend({
 
 type InstanceData = z.infer<typeof InstanceData>;
 
-const getTreeData = (targetInstanceSelector: InstanceSelector) => {
+const getTreeData = (instanceSelector: InstanceSelector) => {
   const instances = $instances.get();
-  if (isInstanceDetachable(instances, targetInstanceSelector) === false) {
+  const [targetInstanceId] = instanceSelector;
+  const instance = instances.get(targetInstanceId);
+  if (instance && !isComponentDetachable(instance.component)) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -40,14 +44,12 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   }
 
   // @todo tell user they can't copy or cut root
-  if (targetInstanceSelector.length === 1) {
+  if (instanceSelector.length === 1) {
     return;
   }
 
-  const [targetInstanceId] = targetInstanceSelector;
-
   return {
-    instanceSelector: targetInstanceSelector,
+    instanceSelector,
     ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
   };
 };
@@ -85,7 +87,7 @@ export const getPortalFragmentSelector = (
   return [instance.children[0].value, ...instanceSelector];
 };
 
-const findPasteTarget = (data: InstanceData): undefined | DroppableTarget => {
+const findPasteTarget = (data: InstanceData): undefined | Insertable => {
   const instances = $instances.get();
 
   const instanceSelector = $selectedInstanceSelector.get();
@@ -166,11 +168,10 @@ export const onPaste = (clipboardData: string) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        pasteTarget.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: pasteTarget.parentSelector[0],
+      }),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
@@ -198,20 +199,20 @@ export const onCopy = () => {
 };
 
 export const onCut = () => {
-  const selectedInstanceSelector = $selectedInstanceSelector.get();
-  if (selectedInstanceSelector === undefined) {
+  const instancePath = $selectedInstancePath.get();
+  if (instancePath === undefined) {
     return;
   }
   // @todo tell user they can't delete root
-  if (selectedInstanceSelector.length === 1) {
+  if (instancePath.length === 1) {
     return;
   }
-  const data = getTreeData(selectedInstanceSelector);
+  const data = getTreeData(instancePath[0].instanceSelector);
   if (data === undefined) {
     return;
   }
   updateWebstudioData((data) => {
-    deleteInstanceMutable(data, selectedInstanceSelector);
+    deleteInstanceMutable(data, instancePath);
   });
   if (data === undefined) {
     return;

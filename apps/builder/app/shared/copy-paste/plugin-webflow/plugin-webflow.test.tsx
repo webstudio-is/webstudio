@@ -10,7 +10,7 @@ import {
   type WebstudioFragment,
   type Instance,
 } from "@webstudio-is/sdk";
-import { $, renderJsx } from "@webstudio-is/template";
+import { $, renderData } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import { __testing__ } from "./plugin-webflow";
 import {
@@ -41,7 +41,7 @@ const equalFragment = (fragment: WebstudioFragment, jsx: JSX.Element) => {
     });
   });
 
-  const expected = renderJsx(jsx);
+  const expected = renderData(jsx);
 
   const expectedInstances = new Map();
   for (const instance of expected.instances.values()) {
@@ -140,7 +140,7 @@ test("Heading", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Heading tag="h1">Turtle in the sea</$.Heading>);
+  equalFragment(fragment, <$.Heading ws:tag="h1">Turtle in the sea</$.Heading>);
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       h1 {
@@ -325,7 +325,7 @@ test("Text", async () => {
 
   equalFragment(
     fragment,
-    <$.Text>This is some text inside of a div block.</$.Text>
+    <$.Text ws:tag="div">This is some text inside of a div block.</$.Text>
   );
 
   expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
@@ -525,7 +525,7 @@ test("Section", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Box tag="section" />);
+  equalFragment(fragment, <$.Box ws:tag="section" />);
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       section {
@@ -553,7 +553,7 @@ test("Figure", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Box tag="figure" />);
+  equalFragment(fragment, <$.Box ws:tag="figure" />);
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       figure {
@@ -655,7 +655,7 @@ test("Block", async () => {
     },
   });
 
-  equalFragment(fragment, <$.Box />);
+  equalFragment(fragment, <$.Box ws:tag="div" />);
   expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 
@@ -1403,12 +1403,12 @@ test("RichText", async () => {
   equalFragment(
     fragment,
     <$.Box>
-      <$.Heading tag="h1">Heading 1</$.Heading>
-      <$.Heading tag="h2">Heading 2</$.Heading>
-      <$.Heading tag="h3">Heading 3</$.Heading>
-      <$.Heading tag="h4">Heading 4</$.Heading>
-      <$.Heading tag="h5">Heading 5</$.Heading>
-      <$.Heading tag="h6">Heading 6</$.Heading>
+      <$.Heading ws:tag="h1">Heading 1</$.Heading>
+      <$.Heading ws:tag="h2">Heading 2</$.Heading>
+      <$.Heading ws:tag="h3">Heading 3</$.Heading>
+      <$.Heading ws:tag="h4">Heading 4</$.Heading>
+      <$.Heading ws:tag="h5">Heading 5</$.Heading>
+      <$.Heading ws:tag="h6">Heading 6</$.Heading>
       <$.Paragraph>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
         tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
@@ -2124,7 +2124,7 @@ test("FormCheckboxWrapper, FormCheckboxInput, FormInlineLabel", async () => {
         required={false}
         defaultChecked={false}
       />
-      <$.Text tag="span" ws:label="Label">
+      <$.Text ws:tag="span" ws:label="Label">
         Checkbox
       </$.Text>
     </$.Label>
@@ -2249,7 +2249,7 @@ test("FormRadioWrapper, FormRadioInput, FormInlineLabel", async () => {
     fragment,
     <$.Label ws:label="Radio Field">
       <$.RadioButton id="radio" name="radio" required={false} value="Radio" />
-      <$.Text tag="span" ws:label="Label">
+      <$.Text ws:tag="span" ws:label="Label">
         Radio
       </$.Text>
     </$.Label>
@@ -2430,7 +2430,7 @@ test("Multiline text", async () => {
 
   equalFragment(
     fragment,
-    <$.Box>
+    <$.Box ws:tag="div">
       {"a"}
       {"\n"}
       {"b"}
@@ -2466,7 +2466,7 @@ describe("Custom attributes", () => {
         assets: [],
       },
     });
-    equalFragment(fragment, <$.Heading tag="h1" at="b" />);
+    equalFragment(fragment, <$.Heading ws:tag="h1" at="b" />);
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
@@ -2505,7 +2505,7 @@ test("Set show false when visibility's only condition is false", async () => {
       assets: [],
     },
   });
-  equalFragment(fragment, <$.Box data-ws-show={false} />);
+  equalFragment(fragment, <$.Box data-ws-show={false} ws:tag="div" />);
   expect(toCss(fragment)).toMatchInlineSnapshot(`""`);
 });
 

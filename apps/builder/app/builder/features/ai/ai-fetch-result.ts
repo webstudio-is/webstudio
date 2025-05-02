@@ -4,17 +4,21 @@ import {
   operations,
   handleAiRequest,
   commandDetect,
+  WsEmbedTemplate,
 } from "@webstudio-is/ai";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
   generateJsxElement,
   generateJsxChildren,
-  getIndexesWithinAncestors,
   idAttribute,
   componentAttribute,
-  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
-import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
+import {
+  Instance,
+  createScope,
+  findTreeInstanceIds,
+  getIndexesWithinAncestors,
+} from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import {
   $dataSources,
@@ -281,6 +285,7 @@ const $jsx = computed(
 
     const jsx = generateJsxElement({
       scope,
+      metas,
       instance,
       props,
       dataSources,
@@ -288,6 +293,7 @@ const $jsx = computed(
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
+        metas,
         children: instance.children,
         instances,
         props,

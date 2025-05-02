@@ -26,10 +26,20 @@ export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
 export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
-export const DropdownMenuContent = styled(
+const DropdownMenuContentStyled = styled(
   DropdownMenuPrimitive.Content,
   menuCss
 );
+export const DropdownMenuContent = forwardRef<
+  ElementRef<typeof DropdownMenuContentStyled>,
+  ComponentProps<typeof DropdownMenuContentStyled>
+>((props, ref) => {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuContentStyled {...props} ref={ref} />
+    </DropdownMenuPrimitive.Portal>
+  );
+});
 
 const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss);
 export const DropdownMenuSubContent = forwardRef<
@@ -140,5 +150,3 @@ DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
 export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
-
-export const DropdownMenuPortal = DropdownMenuPrimitive.Portal;

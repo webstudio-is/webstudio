@@ -1,21 +1,21 @@
+import { useEffect, useState } from "react";
 import {
   NestedInputButton,
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
+import type {
+  CssProperty,
+  InvalidValue,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import { EditorDialog } from "~/builder/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type {
   CssValueInputValue,
   IntermediateStyleValue,
 } from "./css-value-input";
-import {
-  type InvalidValue,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/css-engine";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 export const cssButtonDisplay = "--ws-css-value-input-maximize-button-display";
@@ -44,7 +44,7 @@ export const ValueEditorDialog = ({
   value,
   onChangeComplete,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   value: string;
   onChangeComplete: (value: StyleValue) => void;
 }) => {
@@ -92,7 +92,7 @@ export const ValueEditorDialog = ({
       title="CSS Value"
       placement="bottom"
       height={200}
-      width={Number(rawTheme.sizes.sidebarWidth)}
+      width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
       content={
         <CssFragmentEditorContent
           autoFocus

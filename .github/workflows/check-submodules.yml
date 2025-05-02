@@ -1,0 +1,67 @@
+name: Check submodules
+
+on:
+  pull_request:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    environment:
+      name: development
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
+      - name: Check if any submodule branch matches github.ref_name
+        run: |
+          echo "C ${{ github.workflow }}-${{ github.event.number || github.sha }}"
+          # Get the current branch or tag name
+          REF_NAME="${{ github.event.pull_request.head.ref || github.ref_name }}"
+
+          echo "Branch is:" $REF_NAME
+
+          # List all submodule paths
+          SUBMODULES=$(git submodule status | awk '{print $2}')
+
+          # Check each submodule's branch
+          for SUBMODULE in $SUBMODULES; do
+            echo "Checking submodule: $SUBMODULE"
+            (
+              cd "$SUBMODULE"
+              # Get the current branch of the submodule
+              SUBMODULE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+              echo "Submodule branch: $SUBMODULE_BRANCH"
+
+              # Compare the submodule branch to the ref_name
+              if [ "$SUBMODULE_BRANCH" = "$REF_NAME" ]; then
+                echo "::error::Submodule '$SUBMODULE' is on branch '$SUBMODULE_BRANCH', which matches the current ref '$REF_NAME'."
+                exit 1
+              fi
+            )
+            if [ $? -ne 0 ]; then
+              exit 1 # Fail the workflow if any submodule branch matches
+            fi
+          done
+
+          echo "No submodule is on the same branch as the current ref '$REF_NAME'."

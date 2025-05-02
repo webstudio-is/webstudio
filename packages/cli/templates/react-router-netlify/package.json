@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "npx netlify-cli serve",
+    "deploy": "npx netlify-cli deploy --build --prod"
+  },
+  "dependencies": {
+    "@netlify/vite-plugin-react-router": "^1.0.1",
+    "@react-router/node": "^7.5.3"
+  }
+}

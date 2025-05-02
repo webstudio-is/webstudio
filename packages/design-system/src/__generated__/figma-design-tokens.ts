@@ -26,7 +26,7 @@ export const lineHeights = {
   "7": "58px",
   "8": "22px",
   "9": "38px",
-  "10": "360px",
+  "10": "260px",
 } as const;
 
 export const fontWeights = {
@@ -231,8 +231,8 @@ export const typography = {
   brandThumbnailLargeDefault: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 200,
-    fontSize: "360px",
-    lineHeight: "360px",
+    fontSize: "260px",
+    lineHeight: "260px",
     letterSpacing: "-0.05em",
     textTransform: "none",
     textDecoration: "none",
@@ -241,8 +241,8 @@ export const typography = {
   brandThumbnailLargeHover: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 800,
-    fontSize: "360px",
-    lineHeight: "360px",
+    fontSize: "260px",
+    lineHeight: "260px",
     letterSpacing: "-0.05em",
     textTransform: "none",
     textDecoration: "none",
@@ -467,7 +467,8 @@ export const color = {
   brandBackgroundPublishedMain: "#39fbbb",
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
-  brandBackgroundDashboard: "#ededed",
+  brandBackgroundDashboard:
+    "radial-gradient(65.88% 47.48% at 50% 50%, #FFFFFF 0%, #ffffff00 100%),linear-gradient(0deg, #ffffff00 49.46%, #ffffff54 100%), linear-gradient(180deg, #ffae3c00 0%, #e63cfe54 100%),radial-gradient(211.58% 161.63% at 3.13% 100%, #ffae3c4d 0%, #e335ff00 100%), radial-gradient(107.1% 32.15% at 92.96% 5.04%, #35ffb633 0%, #4a4efa33 100%), #EBFFFC;",
   brandBackgroundRegularButtonSelected:
     "linear-gradient(180deg, #bffeec 0%, #fbfff6 100%)",
   brandBackgroundCtaButton: "linear-gradient(135deg, #4a4efa 0%, #bd2fdb 100%)",
@@ -553,7 +554,7 @@ export const fontSizes = {
   fontSize_4: "20px",
   fontSize_5: "32px",
   fontSize_6: "48px",
-  fontSize_7: "360px",
+  fontSize_7: "260px",
 } as const;
 
 export const other = { tokenSetOrder_0: "global" } as const;

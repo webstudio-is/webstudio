@@ -1,19 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  hyphenateProperty,
   toValue,
+  type ShadowValue,
   type InvalidValue,
   type LayersValue,
-  type RgbValue,
   type StyleValue,
-  type TupleValue,
-  type UnitValue,
   type VarValue,
+  type CssProperty,
+  type RgbValue,
 } from "@webstudio-is/css-engine";
 import {
-  extractShadowProperties,
+  keywordValues,
+  parseCssValue,
   propertySyntaxes,
-  type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -31,18 +30,18 @@ import {
   ShadowInsetIcon,
   ShadowNormalIcon,
 } from "@webstudio-is/icons";
-import type { IntermediateStyleValue } from "../shared/css-value-input";
-import { CssValueInputContainer } from "../shared/css-value-input";
-import { toPascalCase } from "../shared/keyword-utils";
-import type { StyleUpdateOptions } from "../shared/use-style-data";
+import { humanizeString } from "~/shared/string-utils";
+import { PropertyInlineLabel } from "../property-label";
+import type { IntermediateStyleValue } from "./css-value-input";
+import { CssValueInputContainer } from "./css-value-input";
+import type { StyleUpdateOptions } from "./use-style-data";
 import {
   CssFragmentEditor,
   CssFragmentEditorContent,
   parseCssFragment,
 } from "./css-fragment";
-import { PropertyInlineLabel } from "../property-label";
-import { styleConfigByName } from "./configs";
 import { ColorPicker } from "./color-picker";
+import { $availableColorVariables, $availableUnitVariables } from "./model";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -70,7 +69,7 @@ import { ColorPicker } from "./color-picker";
 
 type ShadowContentProps = {
   index: number;
-  property: "boxShadow" | "textShadow" | "dropShadow";
+  property: "box-shadow" | "text-shadow" | "drop-shadow";
   layer: StyleValue;
   computedLayer?: StyleValue;
   propertyValue: string;
@@ -82,25 +81,8 @@ type ShadowContentProps = {
   hideCodeEditor?: boolean;
 };
 
-const convertValuesToTupple = (
-  values: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
-): TupleValue => {
-  return {
-    type: "tuple",
-    value: (Object.values(values) as Array<StyleValue>).filter(
-      (item: StyleValue): item is UnitValue | RgbValue =>
-        item !== null && item !== undefined
-    ),
-  };
-};
-
-const boxShadowInsetValues = [
-  { value: "normal", Icon: ShadowNormalIcon },
-  { value: "inset", Icon: ShadowInsetIcon },
-] as const;
-
 const shadowPropertySyntaxes = {
-  boxShadow: {
+  "box-shadow": {
     x: propertySyntaxes.boxShadowOffsetX,
     y: propertySyntaxes.boxShadowOffsetY,
     blur: propertySyntaxes.boxShadowBlurRadius,
@@ -108,19 +90,27 @@ const shadowPropertySyntaxes = {
     color: propertySyntaxes.boxShadowColor,
     position: propertySyntaxes.boxShadowPosition,
   },
-  textShadow: {
+  "text-shadow": {
     x: propertySyntaxes.textShadowOffsetX,
     y: propertySyntaxes.textShadowOffsetY,
     blur: propertySyntaxes.textShadowBlurRadius,
     color: propertySyntaxes.textShadowColor,
   },
-  dropShadow: {
+  "drop-shadow": {
     x: propertySyntaxes.dropShadowOffsetX,
     y: propertySyntaxes.dropShadowOffsetY,
     blur: propertySyntaxes.dropShadowBlurRadius,
     color: propertySyntaxes.dropShadowColor,
   },
 } as const;
+
+const defaultColor: RgbValue = {
+  type: "rgb",
+  r: 0,
+  g: 0,
+  b: 0,
+  alpha: 1,
+};
 
 export const ShadowContent = ({
   layer,
@@ -137,25 +127,35 @@ export const ShadowContent = ({
   useEffect(() => {
     setIntermediateValue({ type: "intermediate", value: propertyValue });
   }, [propertyValue]);
-  const layerValues = useMemo<ExtractedShadowProperties>(() => {
-    let value: TupleValue = { type: "tuple", value: [] };
-    if (layer.type === "tuple") {
-      value = layer;
+  const parsedShadowProperty: CssProperty =
+    property === "drop-shadow" ? "text-shadow" : property;
+  // try to reparse computed value
+  // which can contain parsable value after variables substitution
+  if (computedLayer?.type === "unparsed") {
+    const styleValue = parseCssValue(parsedShadowProperty, computedLayer.value);
+    if (styleValue.type === "layers") {
+      [computedLayer] = styleValue.value;
     }
-    if (layer.type === "var" && computedLayer?.type === "tuple") {
-      value = computedLayer;
-    }
-    return extractShadowProperties(value);
-  }, [layer, computedLayer]);
-
-  const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
-  const colorControlProp = color ?? {
-    type: "rgb",
-    r: 0,
-    g: 0,
-    b: 0,
-    alpha: 1,
+  }
+  let shadowValue: ShadowValue = {
+    type: "shadow",
+    position: "outset",
+    offsetX: { type: "unit", value: 0, unit: "px" },
+    offsetY: { type: "unit", value: 0, unit: "px" },
   };
+  if (layer.type === "shadow") {
+    shadowValue = layer;
+  }
+  if (layer.type === "var" && computedLayer?.type === "shadow") {
+    shadowValue = computedLayer;
+  }
+  if (layer.type === "unparsed" && computedLayer?.type === "shadow") {
+    shadowValue = computedLayer;
+  }
+  const computedShadow =
+    computedLayer?.type === "shadow" ? computedLayer : shadowValue;
+
+  const disabledControls = layer.type === "var" || layer.type === "unparsed";
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -168,17 +168,21 @@ export const ShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
+    // prevent reparsing value from string when not changed
+    // because it may contain css variables
+    // which cannot be safely parsed into ShadowValue
+    if (intermediateValue.value === propertyValue) {
+      return;
+    }
     // dropShadow is a function under the filter property.
     // To parse the value correctly, we need to change the property to textShadow.
     // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/drop-shadow#formal_syntax
     // https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow#formal_syntax
     // Both share a similar syntax but the property name is different.
     const parsed = parseCssFragment(intermediateValue.value, [
-      property === "dropShadow" ? "textShadow" : property,
+      parsedShadowProperty,
     ]);
-    const parsedValue = parsed.get(
-      property === "dropShadow" ? "textShadow" : property
-    );
+    const parsedValue = parsed.get(parsedShadowProperty);
     if (parsedValue?.type === "layers" || parsedValue?.type === "var") {
       onEditLayer(index, parsedValue, { isEphemeral: false });
       return;
@@ -189,11 +193,11 @@ export const ShadowContent = ({
     });
   };
 
-  const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>,
+  const updateShadow = (
+    params: Partial<ShadowValue>,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const newLayer = convertValuesToTupple({ ...layerValues, ...params });
+    const newLayer: ShadowValue = { ...shadowValue, ...params };
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
@@ -208,7 +212,7 @@ export const ShadowContent = ({
         css={{
           padding: theme.panel.padding,
           gridTemplateColumns:
-            property === "boxShadow" ? "1fr 1fr" : "1fr 1fr 1fr",
+            property === "box-shadow" ? "1fr 1fr" : "1fr 1fr 1fr",
         }}
       >
         <Flex direction="column" gap="1">
@@ -218,19 +222,19 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].x}
           />
           <CssValueInputContainer
-            key="boxShadowOffsetX"
             // outline-offset is a fake property for validating box-shadow's offsetX.
-            property="outlineOffset"
+            property="outline-offset"
             styleSource="local"
-            disabled={layer.type === "var"}
-            value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
-              handlePropertyChange({ offsetX: value }, options)
-            }
-            deleteProperty={() =>
-              handlePropertyChange({
-                offsetX: offsetX ?? undefined,
-              })
+            aria-disabled={disabledControls}
+            getOptions={() => $availableUnitVariables.get()}
+            value={shadowValue.offsetX}
+            onUpdate={(value, options) => {
+              if (value.type === "unit" || value.type === "var") {
+                updateShadow({ offsetX: value }, options);
+              }
+            }}
+            onDelete={(options) =>
+              updateShadow({ offsetX: shadowValue.offsetX }, options)
             }
           />
         </Flex>
@@ -242,19 +246,19 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].y}
           />
           <CssValueInputContainer
-            key="boxShadowOffsetY"
             // outline-offset is a fake property for validating box-shadow's offsetY.
-            property="outlineOffset"
+            property="outline-offset"
             styleSource="local"
-            disabled={layer.type === "var"}
-            value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
-              handlePropertyChange({ offsetY: value }, options)
-            }
-            deleteProperty={() =>
-              handlePropertyChange({
-                offsetY: offsetY ?? undefined,
-              })
+            aria-disabled={disabledControls}
+            getOptions={() => $availableUnitVariables.get()}
+            value={shadowValue.offsetY}
+            onUpdate={(value, options) => {
+              if (value.type === "unit" || value.type === "var") {
+                updateShadow({ offsetY: value }, options);
+              }
+            }}
+            onDelete={(options) =>
+              updateShadow({ offsetY: shadowValue.offsetY }, options)
             }
           />
         </Flex>
@@ -266,44 +270,46 @@ export const ShadowContent = ({
             description={shadowPropertySyntaxes[property].blur}
           />
           <CssValueInputContainer
-            key="boxShadowBlur"
             // border-top-width is a fake property for validating box-shadow's blur.
-            property="borderTopWidth"
+            property="border-top-width"
             styleSource="local"
-            disabled={layer.type === "var"}
-            value={blur ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value, options) =>
-              handlePropertyChange({ blur: value }, options)
-            }
-            deleteProperty={() =>
-              handlePropertyChange({
-                blur: blur ?? undefined,
-              })
+            aria-disabled={disabledControls}
+            getOptions={() => $availableUnitVariables.get()}
+            value={shadowValue.blur ?? { type: "unit", value: 0, unit: "px" }}
+            onUpdate={(value, options) => {
+              if (value.type === "unit" || value.type === "var") {
+                updateShadow({ blur: value }, options);
+              }
+            }}
+            onDelete={(options) =>
+              updateShadow({ blur: shadowValue.blur }, options)
             }
           />
         </Flex>
 
-        {property === "boxShadow" ? (
+        {property === "box-shadow" ? (
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Spread"
               title="Spread Radius"
-              description={shadowPropertySyntaxes.boxShadow.spread}
+              description={shadowPropertySyntaxes["box-shadow"].spread}
             />
             <CssValueInputContainer
-              key="boxShadowSpread"
               // outline-offset is a fake property for validating box-shadow's spread.
-              property="outlineOffset"
+              property="outline-offset"
               styleSource="local"
-              disabled={layer.type === "var"}
-              value={spread ?? { type: "unit", value: 0, unit: "px" }}
-              setValue={(value, options) =>
-                handlePropertyChange({ spread: value }, options)
+              aria-disabled={disabledControls}
+              getOptions={() => $availableUnitVariables.get()}
+              value={
+                shadowValue.spread ?? { type: "unit", value: 0, unit: "px" }
               }
-              deleteProperty={() =>
-                handlePropertyChange({
-                  spread: spread ?? undefined,
-                })
+              onUpdate={(value, options) => {
+                if (value.type === "unit" || value.type === "var") {
+                  updateShadow({ spread: value }, options);
+                }
+              }}
+              onDelete={(options) =>
+                updateShadow({ spread: shadowValue.spread }, options)
               }
             />
           </Flex>
@@ -314,7 +320,7 @@ export const ShadowContent = ({
         gap="2"
         css={{
           padding: theme.panel.padding,
-          ...(property === "boxShadow" && { gridTemplateColumns: "3fr 1fr" }),
+          ...(property === "box-shadow" && { gridTemplateColumns: "3fr 1fr" }),
         }}
       >
         <Flex direction="column" gap="1">
@@ -324,56 +330,56 @@ export const ShadowContent = ({
           />
           <ColorPicker
             property="color"
-            disabled={layer.type === "var"}
-            value={colorControlProp}
-            currentColor={colorControlProp}
-            getOptions={() =>
-              styleConfigByName("color").items.map((item) => ({
-                type: "keyword",
-                value: item.name,
-              }))
-            }
-            onChange={(styleValue) =>
-              handlePropertyChange({ color: styleValue }, { isEphemeral: true })
-            }
-            onChangeComplete={(styleValue) =>
-              handlePropertyChange({ color: styleValue })
-            }
-            onAbort={() => handlePropertyChange({ color: colorControlProp })}
-            onReset={() => {
-              handlePropertyChange({ color: undefined });
+            aria-disabled={disabledControls}
+            value={shadowValue.color ?? defaultColor}
+            currentColor={computedShadow?.color ?? defaultColor}
+            getOptions={() => [
+              ...(keywordValues.color ?? []).map((item) => ({
+                type: "keyword" as const,
+                value: item,
+              })),
+              ...$availableColorVariables.get(),
+            ]}
+            onChange={(value) => {
+              if (value.type === "rgb" || value.type === "var") {
+                updateShadow({ color: value }, { isEphemeral: true });
+              }
             }}
+            onChangeComplete={(value) => {
+              if (value.type === "rgb" || value.type === "var") {
+                updateShadow({ color: value });
+              }
+            }}
+            onAbort={() => updateShadow({ color: shadowValue.color })}
+            onReset={() => updateShadow({ color: undefined })}
           />
         </Flex>
 
-        {property === "boxShadow" ? (
+        {property === "box-shadow" ? (
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
-              label="Inset"
-              description={shadowPropertySyntaxes.boxShadow.position}
+              label={humanizeString(shadowValue.position)}
+              description={shadowPropertySyntaxes["box-shadow"].position}
             />
             <ToggleGroup
               type="single"
-              disabled={layer.type === "var"}
-              value={inset?.value ?? "normal"}
+              aria-disabled={disabledControls}
+              value={shadowValue.position}
               defaultValue="inset"
-              onValueChange={(value) => {
-                if (value === "inset") {
-                  handlePropertyChange({
-                    inset: { type: "keyword", value: "inset" },
-                  });
-                } else {
-                  handlePropertyChange({ inset: undefined });
-                }
-              }}
+              onValueChange={(value) =>
+                updateShadow({ position: value as ShadowValue["position"] })
+              }
             >
-              {boxShadowInsetValues.map(({ value, Icon }) => (
-                <Tooltip key={value} content={toPascalCase(value)}>
-                  <ToggleGroupButton value={value}>
-                    <Icon />
-                  </ToggleGroupButton>
-                </Tooltip>
-              ))}
+              <Tooltip content="Outset">
+                <ToggleGroupButton value="outset">
+                  <ShadowNormalIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip content="Inset">
+                <ToggleGroupButton value="inset">
+                  <ShadowInsetIcon />
+                </ToggleGroupButton>
+              </Tooltip>
             </ToggleGroup>
           </Flex>
         ) : null}
@@ -397,8 +403,8 @@ export const ShadowContent = ({
                   variant="wrapped"
                   content={
                     <Text>
-                      Paste a {hyphenateProperty(property)} CSS code without the
-                      property name, for example:
+                      Paste a {property} CSS code without the property name, for
+                      example:
                       <br /> <br />
                       <Text variant="monoBold">
                         0px 2px 5px 0px rgba(0, 0, 0, 0.2)
@@ -414,7 +420,7 @@ export const ShadowContent = ({
               content={
                 <CssFragmentEditorContent
                   invalid={intermediateValue?.type === "invalid"}
-                  autoFocus={layer.type === "var"}
+                  autoFocus={disabledControls}
                   value={intermediateValue?.value ?? propertyValue ?? ""}
                   onChange={handleChange}
                   onChangeComplete={handleComplete}

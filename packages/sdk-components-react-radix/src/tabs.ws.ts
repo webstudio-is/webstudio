@@ -6,12 +6,12 @@ import {
 } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
-  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { radix } from "./shared/meta";
+import { buttonReset } from "./shared/preset-styles";
 import {
   propsTabs,
   propsTabsList,
@@ -19,55 +19,38 @@ import {
   propsTabsContent,
 } from "./__generated__/tabs.props";
 
-const presetStyle = {
-  div,
-} satisfies PresetStyle<"div">;
-
 export const metaTabs: WsComponentMeta = {
-  type: "container",
   icon: TabsIcon,
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "TabsTrigger" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "TabsList" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "TabsContent" },
-    },
-  ],
-  presetStyle,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.TabsList, radix.TabsContent],
+  },
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaTabsList: WsComponentMeta = {
-  type: "container",
   icon: HeaderIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Tabs" },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.TabsTrigger],
   },
-  presetStyle,
+  presetStyle: {
+    div,
+  },
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "TabsList" },
-    },
-    {
-      relation: "ancestor",
-      component: { $neq: "TabsTrigger" },
-    },
-  ],
-  indexWithinAncestor: "Tabs",
   label: "Tab Trigger",
+  indexWithinAncestor: radix.Tabs,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   states: [
     ...defaultStates,
     {
@@ -82,15 +65,16 @@ export const metaTabsTrigger: WsComponentMeta = {
 };
 
 export const metaTabsContent: WsComponentMeta = {
-  type: "container",
   label: "Tab Content",
   icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Tabs" },
+  indexWithinAncestor: radix.Tabs,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
-  indexWithinAncestor: "Tabs",
-  presetStyle,
+  presetStyle: {
+    div,
+  },
 };
 
 export const propsMetaTabs: WsComponentPropsMeta = {

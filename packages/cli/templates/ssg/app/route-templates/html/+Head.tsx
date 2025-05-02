@@ -60,7 +60,7 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
         <link
           rel="icon"
           href={imageLoader({
-            src: favIconAsset.name,
+            src: `${assetBaseUrl}${favIconAsset}`,
             // width,height must be multiple of 48 https://developers.google.com/search/docs/appearance/favicon-in-search
             width: 144,
             height: 144,
@@ -72,18 +72,18 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
       )}
       {pageFontAssets.map((asset) => (
         <link
-          key={asset.id}
+          key={asset}
           rel="preload"
-          href={`${assetBaseUrl}${asset.name}`}
+          href={`${assetBaseUrl}${asset}`}
           as="font"
           crossOrigin="anonymous"
         />
       ))}
       {pageBackgroundImageAssets.map((asset) => (
         <link
-          key={asset.id}
+          key={asset}
           rel="preload"
-          href={`${assetBaseUrl}${asset.name}`}
+          href={`${assetBaseUrl}${asset}`}
           as="image"
         />
       ))}

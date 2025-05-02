@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { Select, Text } from "@webstudio-is/design-system";
 import {
   type FontWeight,
@@ -5,12 +7,10 @@ import {
   fontWeights,
 } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
-import { useEffect } from "react";
+import { canvasApi } from "~/shared/canvas-api";
+import { $detectedFontsWeights } from "~/shared/nano-states";
 import { useComputedStyles } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
-import { canvasApi } from "~/shared/canvas-api";
-import { useStore } from "@nanostores/react";
-import { $detectedFontsWeights } from "~/shared/nano-states";
 
 const allFontWeights = Object.keys(fontWeights) as Array<FontWeight>;
 
@@ -24,8 +24,8 @@ const labels = new Map(
 export const FontWeightControl = () => {
   // We need the font family to determine which font weights are available
   const [fontWeight, fontFamily] = useComputedStyles([
-    "fontWeight",
-    "fontFamily",
+    "font-weight",
+    "font-family",
   ]);
   const detectedFontsWeights = useStore($detectedFontsWeights);
   const fontFamilyCss = toValue(fontFamily.usedValue);
@@ -39,7 +39,7 @@ export const FontWeightControl = () => {
   const selectedWeight =
     fontWeightNames.get(fontWeightCss) ?? (fontWeightCss as FontWeight);
 
-  const setValue = setProperty("fontWeight");
+  const setValue = setProperty("font-weight");
 
   const setFontWeight = (
     nextWeight: FontWeight,

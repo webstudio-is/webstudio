@@ -1,12 +1,16 @@
 import { expect, test } from "vitest";
-import { renderJsx, $ } from "@webstudio-is/template";
+import {
+  renderData,
+  $,
+  expression,
+  ResourceValue,
+} from "@webstudio-is/template";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import {
   generateResources,
   replaceFormActionsWithResources,
 } from "./resources-generator";
-import type { Resource } from "./schema/resources";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -67,7 +71,6 @@ test("generate variable and use in resources loader", () => {
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        systemDataSourceId: "variableSystemId",
       } as Page,
       dataSources: toMap([
         {
@@ -127,7 +130,7 @@ test("generate variable and use in resources loader", () => {
   `);
 });
 
-test("generate system variable and use in resources loader", () => {
+test("generate page system variable and use in resources loader", () => {
   expect(
     generateResources({
       scope: createScope(),
@@ -178,6 +181,48 @@ test("generate system variable and use in resources loader", () => {
       }
       const _data = new Map<string, ResourceRequest>([
         ["resourceName", resourceName],
+      ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
+test("generate global system variable and use in resources loader", () => {
+  const myResource = new ResourceValue("My Resource", {
+    url: expression`"https://my-json.com/" + $ws$system.params.slug`,
+    method: "post",
+    headers: [{ name: "Content-Type", value: expression`"application/json"` }],
+    body: expression`{ body: true }`,
+  });
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: {
+        rootInstanceId: "bodyId",
+      } as Page,
+      ...renderData(
+        <$.Body ws:id="bodyId" vars={expression`${myResource}`}></$.Body>
+      ),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      const system = _props.system
+      const MyResource: ResourceRequest = {
+        id: "resource:0",
+        name: "My Resource",
+        url: "https://my-json.com/" + system?.params?.slug,
+        method: "post",
+        headers: [
+          { name: "Content-Type", value: "application/json" },
+        ],
+        body: { body: true },
+      }
+      const _data = new Map<string, ResourceRequest>([
+        ["MyResource", MyResource],
       ])
       const _action = new Map<string, ResourceRequest>([
       ])
@@ -322,10 +367,9 @@ test("generate action resource", () => {
 });
 
 test("replace form action with resource", () => {
-  const data = {
-    resources: toMap<Resource>([]),
-    ...renderJsx(<$.Form ws:id="formId" action="https://my-url.com"></$.Form>),
-  };
+  const data = renderData(
+    <$.Form ws:id="formId" action="https://my-url.com"></$.Form>
+  );
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([
@@ -341,7 +385,7 @@ test("replace form action with resource", () => {
   expect(data.resources).toEqual(
     toMap([
       {
-        headers: [],
+        headers: [{ name: "Content-Type", value: `"application/json"` }],
         id: "formId",
         method: "post",
         name: "action",
@@ -352,10 +396,7 @@ test("replace form action with resource", () => {
 });
 
 test("ignore empty form action", () => {
-  const data = {
-    resources: toMap<Resource>([]),
-    ...renderJsx(<$.Form ws:id="formId" action=""></$.Form>),
-  };
+  const data = renderData(<$.Form ws:id="formId" action=""></$.Form>);
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([

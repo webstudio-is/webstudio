@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { imageSize } from "image-size";
+import { imageMeta } from "image-meta";
 import { FontMeta } from "@webstudio-is/fonts";
 import { ImageMeta } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
@@ -34,7 +34,7 @@ export const getAssetData = async (
   if (options.type === "image") {
     let image: undefined | { format: string; width: number; height: number };
     try {
-      const parsed = imageSize(Buffer.from(options.data));
+      const parsed = imageMeta(Buffer.from(options.data));
       if (parsed.type && parsed.width && parsed.height) {
         image = {
           format: parsed.type,

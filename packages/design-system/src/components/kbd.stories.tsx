@@ -4,6 +4,6 @@ export default {
   title: "Library/Kbd",
 };
 
-const KbdStory = () => <Kbd value={["cmd", "z"]} />;
+const KbdStory = () => <Kbd value={["meta", "z"]} />;
 
 export { KbdStory as Kbd };

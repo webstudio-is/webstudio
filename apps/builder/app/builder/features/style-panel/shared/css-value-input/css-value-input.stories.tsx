@@ -67,7 +67,7 @@ export const WithIcons = () => {
   return (
     <CssValueInput
       styleSource="preset"
-      property="alignItems"
+      property="align-items"
       value={value}
       intermediateValue={intermediateValue}
       getOptions={() => [
@@ -116,7 +116,7 @@ export const WithUnits = () => {
     <Flex css={{ gap: theme.spacing[9] }}>
       <CssValueInput
         styleSource="preset"
-        property="rowGap"
+        property="row-gap"
         value={value}
         intermediateValue={intermediateValue}
         getOptions={() => [
@@ -172,7 +172,7 @@ export const Oversized = () => {
     <Flex css={{ width: 100 }}>
       <CssValueInput
         styleSource="preset"
-        property="alignItems"
+        property="align-items"
         value={value}
         intermediateValue={intermediateValue}
         onChange={(newValue) => {

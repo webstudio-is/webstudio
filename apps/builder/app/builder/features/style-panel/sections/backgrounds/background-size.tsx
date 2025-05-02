@@ -1,12 +1,11 @@
 import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   type StyleValue,
   TupleValue,
   TupleValueItem,
 } from "@webstudio-is/css-engine";
-import { styleConfigByName } from "../../shared/configs";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
 import { PropertyInlineLabel } from "../../property-label";
@@ -37,16 +36,11 @@ const toTuple = (
 };
 
 export const BackgroundSize = ({ index }: { index: number }) => {
-  const property = "backgroundSize";
+  const property = "background-size";
   const styleDecl = useComputedStyleDecl(property);
   const styleValue = getRepeatedStyleItem(styleDecl, index);
 
-  const { items: defaultItems } = styleConfigByName(property);
-
-  const selectOptions = [
-    ...defaultItems,
-    { name: "custom", label: "Custom" },
-  ].map(({ name }) => name);
+  const selectOptions = [...keywordValues[property], "custom"];
   const selectValue =
     styleValue?.type === "keyword" ? toValue(styleValue) : "custom";
 
@@ -129,14 +123,14 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         gapY={1}
       >
         <PropertyInlineLabel
-          properties={["backgroundSize"]}
+          properties={["background-size"]}
           label="Width"
           description="The width of the background image."
           disabled={customSizeDisabled}
         />
 
         <PropertyInlineLabel
-          properties={["backgroundSize"]}
+          properties={["background-size"]}
           label="Height"
           description="The height of the background image."
           disabled={customSizeDisabled}
@@ -148,8 +142,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           styleSource="default"
           getOptions={() => customSizeOptions}
           value={customSizeValue.value[0]}
-          setValue={setValueX}
-          deleteProperty={() => {}}
+          onUpdate={setValueX}
+          onDelete={() => {}}
         />
 
         <CssValueInputContainer
@@ -158,8 +152,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
           styleSource="default"
           getOptions={() => customSizeOptions}
           value={customSizeValue.value[1]}
-          setValue={setValueY}
-          deleteProperty={() => {}}
+          onUpdate={setValueY}
+          onDelete={() => {}}
         />
       </Grid>
     </>

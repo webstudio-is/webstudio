@@ -146,12 +146,10 @@ const { styled, css, getCssText, globalCss, keyframes, config, reset } =
         marginLeft: value,
       }),
       mx: (value: Stitches.PropertyValue<"marginLeft">) => ({
-        marginLeft: value,
-        marginRight: value,
+        marginInline: value,
       }),
       my: (value: Stitches.PropertyValue<"marginTop">) => ({
-        marginTop: value,
-        marginBottom: value,
+        marginBlock: value,
       }),
 
       userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({

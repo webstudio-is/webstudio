@@ -19,8 +19,8 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import type {
+  CssProperty,
   KeywordValue,
-  StyleProperty,
   StyleValue,
   Unit,
   VarValue,
@@ -35,19 +35,18 @@ import {
   useState,
   useMemo,
   type ComponentProps,
+  type RefObject,
 } from "react";
-import { useUnitSelect } from "./unit-select";
+import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import {
+  camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
-  properties,
+  propertiesData,
 } from "@webstudio-is/css-data";
-import {
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
-} from "~/shared/nano-states";
+import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
@@ -58,11 +57,12 @@ import {
   isComplexValue,
   ValueEditorDialog,
 } from "./value-editor-dialog";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { scrollByPointer } from "../scroll-by-pointer";
 
 // We need to enable scrub on properties that can have numeric value.
-const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
-  const unitGroups =
-    properties[property as keyof typeof properties]?.unitGroups ?? [];
+const canBeNumber = (property: CssProperty, value: CssValueInputValue) => {
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
   // allow scrubbing css variables with unit value
   return unitGroups.length !== 0 || value.type === "unit";
 };
@@ -81,31 +81,45 @@ const scrubUnitAcceleration = new Map<Unit, number>([
 
 const useScrub = ({
   value,
+  intermediateValue,
+  defaultUnit,
   property,
   onChange,
   onChangeComplete,
+  onAbort,
   shouldHandleEvent,
 }: {
+  defaultUnit: Unit | undefined;
   value: CssValueInputValue;
-  property: StyleProperty;
-  onChange: (value: CssValueInputValue) => void;
+  intermediateValue: CssValueInputValue | undefined;
+  property: CssProperty;
+  onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
+  onAbort: () => void;
   shouldHandleEvent?: (node: Node) => boolean;
 }): [
-  React.RefObject<HTMLDivElement | null>,
-  React.RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
+  RefObject<HTMLInputElement | null>,
 ] => {
-  const scrubRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const scrubRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
 
+  const intermediateValueRef = useRef(intermediateValue);
+
   onChangeCompleteRef.current = onChangeComplete;
   onChangeRef.current = onChange;
 
   valueRef.current = value;
+
+  const updateIntermediateValue = useEffectEvent(() => {
+    intermediateValueRef.current = intermediateValue;
+  });
+
+  const onAbortStable = useEffectEvent(onAbort);
 
   // const type = valueRef.current.type;
 
@@ -124,7 +138,7 @@ const useScrub = ({
       return;
     }
 
-    let unit: Unit = "number";
+    let unit: Unit = defaultUnit ?? "number";
 
     const validateValue = (numericValue: number) => {
       let value: CssValueInputValue = {
@@ -193,6 +207,20 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           unit = valueRef.current.unit;
         }
+
+        updateIntermediateValue();
+      },
+      onAbort() {
+        onAbortStable();
+        // Returning focus that we've moved above
+        scrubRef.current?.removeAttribute("tabindex");
+        onChangeRef.current(intermediateValueRef.current);
+
+        // Otherwise selectionchange event can be triggered after 300-1000ms after focus
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        });
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
@@ -212,12 +240,22 @@ const useScrub = ({
 
         // Returning focus that we've moved above
         scrubRef.current?.removeAttribute("tabindex");
-        inputRef.current?.focus();
-        inputRef.current?.select();
+
+        // Otherwise selectionchange event can be triggered after 300-1000ms after focus
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+          inputRef.current?.select();
+        });
       },
       shouldHandleEvent,
     });
-  }, [shouldHandleEvent, property]);
+  }, [
+    shouldHandleEvent,
+    property,
+    updateIntermediateValue,
+    onAbortStable,
+    defaultUnit,
+  ]);
 
   return [scrubRef, inputRef];
 };
@@ -263,20 +301,28 @@ type CssValueInputProps = Pick<
   | "inputRef"
 > & {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty;
+  property: CssProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
    * Selected item in the dropdown
    */
-  getOptions?: () => Array<KeywordValue | VarValue>;
+  getOptions?: () => Array<
+    KeywordValue | VarValue | (KeywordValue & { description?: string })
+  >;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onHighlight: (value: StyleValue | undefined) => void;
+  // Does not reset intermediate changes.
   onAbort: () => void;
+  // Resets the value to default even if it has intermediate changes.
   onReset: () => void;
   icon?: ReactNode;
   showSuffix?: boolean;
+  unitOptions?: UnitOption[];
+  id?: string;
+  placeholder?: string;
+  minWidth?: string;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -299,93 +345,6 @@ const itemToString = (item: CssValueInputValue | null) => {
     return String(item.value);
   }
   return toValue(item);
-};
-
-const scrollAhead = ({ target, clientX }: MouseEvent) => {
-  const element = target as HTMLInputElement;
-
-  if (element.scrollWidth === element.clientWidth) {
-    // Nothing to scroll.
-    return false;
-  }
-  const inputRect = element.getBoundingClientRect();
-
-  // Calculate the relative x position of the mouse within the input element
-  const relativeMouseX = clientX - inputRect.x;
-
-  // Calculate the percentage position (0% at the beginning, 100% at the end)
-  const inputWidth = inputRect.width;
-  const mousePercentageX = Math.ceil((relativeMouseX / inputWidth) * 100);
-
-  // Apply acceleration based on the relative position of the mouse
-  // Closer to the beginning (-20%), closer to the end (+20%)
-  const accelerationFactor = (mousePercentageX - 50) / 50;
-  const adjustedMousePercentageX = Math.min(
-    Math.max(mousePercentageX + accelerationFactor * 20, 0),
-    100
-  );
-
-  // Calculate the scroll position corresponding to the adjusted percentage
-  const scrollPosition =
-    (adjustedMousePercentageX / 100) *
-    (element.scrollWidth - element.clientWidth);
-
-  // Scroll the input element
-  element.scroll({ left: scrollPosition });
-  return true;
-};
-
-const getAutoScrollProps = () => {
-  let abortController = new AbortController();
-
-  const abort = (reason: string) => {
-    abortController.abort(reason);
-  };
-
-  return {
-    abort,
-    onMouseOver(event: MouseEvent) {
-      if (event.target === document.activeElement) {
-        abort("focused");
-        return;
-      }
-      if (scrollAhead(event) === false) {
-        return;
-      }
-
-      abortController = new AbortController();
-      event.target?.addEventListener(
-        "mousemove",
-        (event) => {
-          if (event.target === document.activeElement) {
-            abort("focused");
-            return;
-          }
-          requestAnimationFrame(() => {
-            scrollAhead(event as MouseEvent);
-          });
-        },
-        {
-          signal: abortController.signal,
-          passive: true,
-        }
-      );
-    },
-    onMouseOut(event: MouseEvent) {
-      if (event.target === document.activeElement) {
-        abort("focused");
-        return;
-      }
-      (event.target as HTMLInputElement).scroll({
-        left: 0,
-        behavior: "smooth",
-      });
-      abort("mouseout");
-    },
-    onFocus() {
-      abort("focus");
-    },
-  };
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
@@ -423,6 +382,7 @@ const Description = styled(Box, { width: theme.spacing[27] });
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  id,
   autoFocus,
   icon,
   prefix,
@@ -438,16 +398,21 @@ export const CssValueInput = ({
   fieldSizing,
   variant,
   text,
+  unitOptions,
+  placeholder,
+  minWidth = "2ch",
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
-
   // Used to show description
   const [highlightedValue, setHighlighedValue] = useState<
     StyleValue | undefined
   >();
+
+  const defaultUnit =
+    unitOptions?.[0]?.type === "unit" ? unitOptions[0].id : undefined;
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -494,7 +459,11 @@ export const CssValueInput = ({
       return;
     }
 
-    const parsedValue = parseIntermediateOrInvalidValue(property, value);
+    const parsedValue = parseIntermediateOrInvalidValue(
+      property,
+      value,
+      defaultUnit
+    );
 
     if (parsedValue.type === "invalid") {
       props.onChange(parsedValue);
@@ -521,6 +490,7 @@ export const CssValueInput = ({
     highlightedIndex,
     closeMenu,
   } = useCombobox<CssValueInputValue>({
+    inputId: id,
     // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
     getItems: getOptions,
     value,
@@ -549,6 +519,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    options: unitOptions,
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -569,7 +540,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = $selectedInstanceUnitSizes.get();
+      const { unitSizes, propertySizes } = $selectedInstanceSizes.get();
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -592,20 +563,10 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = $selectedInstanceBrowserStyle.get();
-        const browserPropertyValue = browserStyle?.[property];
-        const propertyValue =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.value
-            : 0;
-        const propertyUnit =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.unit
-            : "number";
-
+        const styleValue = propertySizes[property];
         const convertedValue = convertUnits(unitSizes)(
-          propertyValue,
-          propertyUnit,
+          styleValue?.value ?? 0,
+          styleValue?.unit ?? "number",
           unit
         );
 
@@ -650,11 +611,14 @@ export const CssValueInput = ({
   }, []);
 
   const [scrubRef, inputRef] = useScrub({
+    defaultUnit,
     value,
     property,
+    intermediateValue: props.intermediateValue,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete({ value, type: "scrub-end" }),
     shouldHandleEvent,
+    onAbort,
   });
 
   const menuProps = getMenuProps();
@@ -696,14 +660,7 @@ export const CssValueInput = ({
 
   const finalPrefix =
     prefix ||
-    (icon && (
-      <NestedIconLabel
-        color={styleSource}
-        css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
-      >
-        {icon}
-      </NestedIconLabel>
-    ));
+    (icon && <NestedIconLabel color={styleSource}>{icon}</NestedIconLabel>);
 
   const keywordButtonElement =
     value.type === "keyword" && items.length !== 0 ? (
@@ -728,10 +685,22 @@ export const CssValueInput = ({
             : undefined;
 
   if (valueForDescription) {
-    const key = `${property}:${toValue(
-      valueForDescription
-    )}` as keyof typeof declarationDescriptions;
-    description = declarationDescriptions[key];
+    const option = getOptions().find(
+      (item) =>
+        item.type === "keyword" && item.value === valueForDescription.value
+    );
+    if (
+      option !== undefined &&
+      "description" in option &&
+      option?.description
+    ) {
+      description = option.description;
+    } else {
+      const key = `${camelCaseProperty(property)}:${toValue(
+        valueForDescription
+      )}` as keyof typeof declarationDescriptions;
+      description = declarationDescriptions[key];
+    }
   } else if (highlightedValue?.type === "var") {
     description = "CSS custom property (variable)";
   } else if (highlightedValue === undefined) {
@@ -745,7 +714,7 @@ export const CssValueInput = ({
     .map((item) =>
       item.type === "keyword"
         ? declarationDescriptions[
-            `${property}:${toValue(
+            `${camelCaseProperty(property)}:${toValue(
               item
             )}` as keyof typeof declarationDescriptions
           ]
@@ -794,7 +763,7 @@ export const CssValueInput = ({
     }
   };
 
-  const handleMetaEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (
       isUnitsOpen ||
       (isOpen && !menuProps.empty && highlightedIndex !== -1)
@@ -809,20 +778,82 @@ export const CssValueInput = ({
     }
   };
 
+  const handleDelete = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && inputProps.value === "") {
+      // - allows to close the menu
+      // - prevents baspace from deleting the value AFTER its already reseted to default, e.g. we get "aut" instead of "auto"
+      event.preventDefault();
+      closeMenu();
+      onReset();
+    }
+  };
+
   const { abort, ...autoScrollProps } = useMemo(() => {
-    return getAutoScrollProps();
+    return scrollByPointer();
   }, []);
 
   useEffect(() => {
     return () => abort("unmount");
   }, [abort]);
 
+  useEffect(() => {
+    if (inputRef.current === null) {
+      return;
+    }
+
+    const abortController = new AbortController();
+
+    const options = {
+      signal: abortController.signal,
+    };
+
+    let focusTime = 0;
+    inputRef.current.addEventListener(
+      "selectionchange",
+      () => {
+        if (Date.now() - focusTime < 150) {
+          inputRef.current?.select();
+        }
+      },
+      options
+    );
+    inputRef.current.addEventListener(
+      "focus",
+      () => {
+        if (inputRef.current === null) {
+          return;
+        }
+
+        focusTime = Date.now();
+      },
+      options
+    );
+
+    return () => {
+      abortController.abort();
+    };
+  }, [inputRef]);
+
   const inputPropsHandleKeyDown = composeEventHandlers(
-    composeEventHandlers(handleUpDownNumeric, inputProps.onKeyDown, {
+    [
+      handleUpDownNumeric,
+      inputProps.onKeyDown,
+      handleEnter,
+      handleDelete,
+      (event: KeyboardEvent) => {
+        // When dropdown is open - we are loosing focus to the combobox.
+        // When menu gets closed via Escape - we want to restore the focus.
+        if (event.key === "Escape" && isOpen) {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      },
+    ],
+    {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,
-    }),
-    handleMetaEnter
+    }
   );
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
@@ -851,10 +882,12 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor asChild>
           <InputField
+            id={id}
             variant={variant}
             disabled={disabled}
             aria-disabled={ariaDisabled}
             fieldSizing={fieldSizing}
+            placeholder={placeholder}
             {...inputProps}
             {...autoScrollProps}
             value={getInputValue()}
@@ -863,14 +896,16 @@ export const CssValueInput = ({
                 // We are setting the value on focus because we might have removed the var() from the value,
                 // but once focused, we need to show the full value
                 event.target.value = itemToString(value);
-                event.target.select();
               }
             }}
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={inputPropsHandleKeyDown}
-            containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
+            inputRef={mergeRefs(
+              inputRef,
+              props.inputRef,
+              disabled ? undefined : scrubRef
+            )}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
@@ -881,7 +916,7 @@ export const CssValueInput = ({
             }
             css={{
               cursor: "default",
-              minWidth: "2em",
+              minWidth,
               "&:hover": {
                 [cssButtonDisplay]: "block",
               },

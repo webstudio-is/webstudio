@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/button.props";
 import type { defaultTag } from "./button";
@@ -15,11 +15,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   icon: ButtonElementIcon,
-  type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
-  },
   presetStyle,
   states: [
     ...defaultStates,

@@ -3,9 +3,10 @@ import {
   defaultStates,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { radix } from "./shared/meta";
+import { buttonReset } from "./shared/preset-styles";
 import {
   propsRadioGroup,
   propsRadioGroupIndicator,
@@ -13,12 +14,12 @@ import {
 } from "./__generated__/radio-group.props";
 
 export const metaRadioGroup: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: "RadioGroupItem" },
-  },
   icon: RadioGroupIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.RadioGroupItem],
+  },
   states: [
     ...defaultStates,
     {
@@ -38,18 +39,12 @@ export const metaRadioGroup: WsComponentMeta = {
 };
 
 export const metaRadioGroupItem: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "RadioGroup" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "RadioGroupIndicator" },
-    },
-  ],
   icon: ItemIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.RadioGroupIndicator],
+  },
   states: defaultStates,
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -57,11 +52,10 @@ export const metaRadioGroupItem: WsComponentMeta = {
 };
 
 export const metaRadioGroupIndicator: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "RadioGroupItem" },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   states: defaultStates,
   presetStyle: {

@@ -2,19 +2,13 @@
  * We use mjs extension as constants in this file is shared with the build script
  * and we use `node --eval` to extract the constants.
  */
-import { UrlCanParse } from "@webstudio-is/image";
 
 export const assetBaseUrl = "/assets/";
-export const imageBaseUrl = "/assets/";
 
 /**
  * @type {import("@webstudio-is/image").ImageLoader}
  */
 export const imageLoader = (props) => {
-  if (UrlCanParse(props.src)) {
-    return props.src;
-  }
-
   if (process.env.NODE_ENV !== "production") {
     return props.src;
   }
@@ -24,12 +18,13 @@ export const imageLoader = (props) => {
   }
 
   // https://docs.netlify.com/image-cdn/overview/
-  return (
-    "/.netlify/images?url=" +
-    encodeURIComponent(props.src) +
-    "&w=" +
-    props.width +
-    "&q=" +
-    props.quality
-  );
+  const searchParams = new URLSearchParams();
+  searchParams.set("url", props.src);
+  searchParams.set("w", props.width.toString());
+  if (props.height) {
+    searchParams.set("h", props.height.toString());
+  }
+  searchParams.set("q", props.quality.toString());
+  // fit=contain by default
+  return `/.netlify/images?${searchParams}`;
 };

@@ -16,11 +16,6 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
       default: true,
       describe: "[Experimental] Download assets",
     })
-    .option("preview", {
-      type: "boolean",
-      default: false,
-      describe: "[Experimental] Use preview version of the project",
-    })
     .option("template", {
       type: "array",
       string: true,

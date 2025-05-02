@@ -13,7 +13,7 @@ import {
   useSyncServer,
 } from "./shared/sync/sync-server";
 import { SidebarLeft } from "./sidebar-left";
-import { Inspector } from "./features/inspector";
+import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
 import {
@@ -376,7 +376,12 @@ export const Builder = ({
             </Workspace>
           </Main>
 
-          <SidePanel gridArea="sidebar">
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel

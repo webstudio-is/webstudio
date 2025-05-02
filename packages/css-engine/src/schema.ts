@@ -1,13 +1,18 @@
 import { z } from "zod";
 import type {
-  Property as GeneratedProperty,
+  CamelCasedProperty,
+  HyphenatedProperty,
   Unit as GeneratedUnit,
 } from "./__generated__/types";
 import { toValue, type TransformValue } from "./core/to-value";
 
 export type CustomProperty = `--${string}`;
 
-export type StyleProperty = GeneratedProperty | CustomProperty;
+export type StyleProperty = CamelCasedProperty | CustomProperty;
+
+export type CssProperty = HyphenatedProperty | CustomProperty;
+
+export type CssStyleMap = Map<CssProperty, StyleValue>;
 
 const Unit = z.string() as z.ZodType<GeneratedUnit | "number">;
 
@@ -104,6 +109,10 @@ export const InvalidValue = z.object({
 });
 export type InvalidValue = z.infer<typeof InvalidValue>;
 
+/**
+ * Use GuaranteedInvalidValue if you need a temp placeholder before user enters a value
+ * @deprecated
+ */
 const UnsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
@@ -162,12 +171,26 @@ export const TupleValue = z.object({
 
 export type TupleValue = z.infer<typeof TupleValue>;
 
+export const ShadowValue = z.object({
+  type: z.literal("shadow"),
+  hidden: z.boolean().optional(),
+  position: z.union([z.literal("inset"), z.literal("outset")]),
+  offsetX: z.union([UnitValue, VarValue]),
+  offsetY: z.union([UnitValue, VarValue]),
+  blur: z.union([UnitValue, VarValue]).optional(),
+  spread: z.union([UnitValue, VarValue]).optional(),
+  color: z.union([RgbValue, KeywordValue, VarValue]).optional(),
+});
+
+export type ShadowValue = z.infer<typeof ShadowValue>;
+
 const LayerValueItem = z.union([
   UnitValue,
   KeywordValue,
   UnparsedValue,
   ImageValue,
   TupleValue,
+  ShadowValue,
   RgbValue,
   InvalidValue,
   FunctionValue,
@@ -200,12 +223,7 @@ export const StyleValue = z.union([
   InvalidValue,
   UnsetValue,
   VarValue,
+  ShadowValue,
 ]);
 
 export type StyleValue = z.infer<typeof StyleValue>;
-
-const Style = z.record(z.string(), StyleValue);
-
-export type Style = {
-  [property in StyleProperty]?: StyleValue;
-} & { [property: CustomProperty]: StyleValue };

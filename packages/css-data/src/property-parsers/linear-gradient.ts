@@ -131,7 +131,7 @@ const mapPercenTageOrDimentionToUnit = (
 
   return {
     type: "unit",
-    value: parseFloat(node.value),
+    value: Number.parseFloat(node.value),
     unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
   };
 };

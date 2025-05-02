@@ -1,21 +1,9 @@
+import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  $blockChildOutline,
-  $hoveredInstanceOutline,
-  $hoveredInstanceSelector,
-  $instances,
-  $isContentMode,
-  $modifierKeys,
-  $registeredComponentMetas,
-  findBlockSelector,
-  findTemplates,
-  type BlockChildOutline,
-} from "~/shared/nano-states";
 import {
   Box,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -29,26 +17,34 @@ import {
   DropdownMenuSeparator,
   menuItemCss,
 } from "@webstudio-is/design-system";
-import { Outline } from "./outline";
-import { applyScale } from "./apply-scale";
-import { $clampingRect, $scale } from "~/builder/shared/nano-states";
+import type { Instance } from "@webstudio-is/sdk";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import { useRef, useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {
+  $blockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
+  $instances,
+  $isContentMode,
+  $modifierKeys,
+  $registeredComponentMetas,
+  findBlockSelector,
+  findTemplates,
+  type BlockChildOutline,
+} from "~/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import type { Instance } from "@webstudio-is/sdk";
-
 import {
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
-
-import { insertTemplateAt } from "./block-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { getInstancePath } from "~/shared/awareness";
+import { insertTemplateAt } from "./block-utils";
+import { Outline } from "./outline";
+import { applyScale } from "./apply-scale";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -123,103 +119,103 @@ export const TemplatesMenu = ({
       >
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       </Tooltip>
-      <DropdownMenuPortal>
-        <DropdownMenuContent
-          align="start"
-          sideOffset={4}
-          collisionPadding={16}
-          side="bottom"
-          loop
-          // @todo remove inert after creation
-          {...(inert ? { inert: "" } : {})}
-        >
-          {templates.length > 0 ? (
-            <>
-              <DropdownMenuRadioGroup
-                value={value !== undefined ? JSON.stringify(value) : value}
-                onValueChange={handleValueChangeComplete}
-              >
-                {menuItems?.map(({ icon, title, id, value }) => (
-                  <DropdownMenuRadioItem
-                    onPointerEnter={() => {
-                      handleValueChange(value);
-                    }}
-                    onPointerMove={
-                      preventFocusOnHover
-                        ? (e) => {
-                            e.preventDefault();
-                          }
-                        : undefined
-                    }
-                    onPointerLeave={
-                      preventFocusOnHover
-                        ? (e) => {
-                            handleValueChange(undefined);
-                            e.preventDefault();
-                          }
-                        : undefined
-                    }
-                    onPointerDown={
-                      preventFocusOnHover
-                        ? (event) => {
-                            event.preventDefault();
-                          }
-                        : undefined
-                    }
-                    key={id}
-                    value={JSON.stringify(value)}
-                    {...{ [skipInertHandlersAttribute]: true }}
-                  >
-                    <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
-                      {icon}
-                      <Box>{title}</Box>
-                    </Flex>
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <div className={menuItemCss({ hint: true })}>
-                <Grid css={{ width: theme.spacing[25] }}>
-                  <Flex
-                    gap={1}
-                    css={{ display: hasChildren ? "none" : undefined }}
-                  >
-                    <Kbd value={["click"]} />
-                    <Text>to add before</Text>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={4}
+        collisionPadding={16}
+        side="bottom"
+        loop
+        // @todo remove inert after creation
+        {...(inert ? { inert: "" } : {})}
+      >
+        {templates.length > 0 ? (
+          <>
+            <DropdownMenuRadioGroup
+              value={value !== undefined ? JSON.stringify(value) : value}
+              onValueChange={handleValueChangeComplete}
+            >
+              {menuItems?.map((item) => (
+                <DropdownMenuRadioItem
+                  aria-selected={
+                    JSON.stringify(item.value) === JSON.stringify(value)
+                  }
+                  onPointerEnter={() => {
+                    handleValueChange(value);
+                  }}
+                  onPointerMove={
+                    preventFocusOnHover
+                      ? (e) => {
+                          e.preventDefault();
+                        }
+                      : undefined
+                  }
+                  onPointerLeave={
+                    preventFocusOnHover
+                      ? (e) => {
+                          handleValueChange(undefined);
+                          e.preventDefault();
+                        }
+                      : undefined
+                  }
+                  onPointerDown={
+                    preventFocusOnHover
+                      ? (event) => {
+                          event.preventDefault();
+                        }
+                      : undefined
+                  }
+                  key={item.id}
+                  value={JSON.stringify(item.value)}
+                  {...{ [skipInertHandlersAttribute]: true }}
+                >
+                  <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
+                    {item.icon}
+                    <Box>{item.title}</Box>
                   </Flex>
-
-                  <Flex
-                    gap={1}
-                    css={{
-                      order: modifierKeys.altKey ? 2 : 0,
-                      display: hasChildren ? undefined : "none",
-                    }}
-                  >
-                    <Kbd value={["click"]} />
-                    <Text>to add after</Text>
-                  </Flex>
-                  <Flex
-                    gap={1}
-                    css={{
-                      order: 1,
-                      display: hasChildren ? undefined : "none",
-                    }}
-                  >
-                    <Kbd value={["option", "click"]} />{" "}
-                    <Text>to add before</Text>
-                  </Flex>
-                </Grid>
-              </div>
-            </>
-          ) : (
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
             <div className={menuItemCss({ hint: true })}>
               <Grid css={{ width: theme.spacing[25] }}>
-                <Text>No Results</Text>
+                <Flex
+                  gap={1}
+                  css={{ display: hasChildren ? "none" : undefined }}
+                >
+                  <Kbd value={["click"]} />
+                  <Text>to add before</Text>
+                </Flex>
+
+                <Flex
+                  gap={1}
+                  css={{
+                    order: modifierKeys.altKey ? 2 : 0,
+                    display: hasChildren ? undefined : "none",
+                  }}
+                >
+                  <Kbd value={["click"]} />
+                  <Text>to add after</Text>
+                </Flex>
+                <Flex
+                  gap={1}
+                  css={{
+                    order: 1,
+                    display: hasChildren ? undefined : "none",
+                  }}
+                >
+                  <Kbd value={["alt", "click"]} /> <Text>to add before</Text>
+                </Flex>
               </Grid>
             </div>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+          </>
+        ) : (
+          <div className={menuItemCss({ hint: true })}>
+            <Grid css={{ width: theme.spacing[25] }}>
+              <Text>No Results</Text>
+            </Grid>
+          </div>
+        )}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
@@ -251,10 +247,6 @@ export const BlockChildHoveredInstanceOutline = () => {
   const outline = blockChildOutline ?? buttonOutline;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  if (isFeatureEnabled("contentEditableMode") === false) {
-    return;
-  }
 
   if (!isContentMode) {
     return;
@@ -307,7 +299,7 @@ export const BlockChildHoveredInstanceOutline = () => {
         gap={1}
         css={{ order: 1, display: !hasChildren ? "none" : undefined }}
       >
-        <Kbd value={["option", "click"]} color="contrast" />{" "}
+        <Kbd value={["alt", "click"]} color="contrast" />{" "}
         <Text color="subtle">to delete</Text>
       </Flex>
     </Grid>
@@ -386,7 +378,10 @@ export const BlockChildHoveredInstanceOutline = () => {
                 }
 
                 updateWebstudioData((data) => {
-                  deleteInstanceMutable(data, outline.selector);
+                  deleteInstanceMutable(
+                    data,
+                    getInstancePath(outline.selector, data.instances)
+                  );
                 });
 
                 setButtonOutline(undefined);

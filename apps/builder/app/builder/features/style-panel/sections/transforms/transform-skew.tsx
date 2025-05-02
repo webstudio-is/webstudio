@@ -50,10 +50,10 @@ export const SkewPanelContent = () => {
           styleSource="local"
           property={fakeProperty}
           value={skewX}
-          setValue={(value, options) =>
+          onUpdate={(value, options) =>
             updateTransformFunction(styleDecl, "skewX", value, options)
           }
-          deleteProperty={() => {}}
+          onDelete={() => {}}
         />
       </Grid>
       <Grid
@@ -69,10 +69,10 @@ export const SkewPanelContent = () => {
           styleSource="local"
           property={fakeProperty}
           value={skewY}
-          setValue={(value, options) =>
+          onUpdate={(value, options) =>
             updateTransformFunction(styleDecl, "skewY", value, options)
           }
-          deleteProperty={() => {}}
+          onDelete={() => {}}
         />
       </Grid>
     </Flex>

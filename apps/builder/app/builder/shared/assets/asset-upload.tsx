@@ -71,7 +71,7 @@ export const acceptUploadType = (
   file: File
 ) => {
   if (accept !== undefined) {
-    acceptFileTypeSpecifier(accept, file);
+    return acceptFileTypeSpecifier(accept, file);
   }
 
   return acceptFileTypeSpecifier(acceptMap[assetType], file);

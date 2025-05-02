@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { parseCss } from "@webstudio-is/css-data";
 import htmlTags from "html-tags";
+import { parseCss } from "@webstudio-is/css-data";
 
 const mapGroupBy = <Item, Key>(
   array: Item[] | Iterable<Item>,
@@ -33,11 +33,11 @@ const validTags = [
 const cache = new Map<string, string>();
 
 let code = "";
-code += `import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";\n`;
+code += `import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";\n`;
 code += `
 type StyleDecl = {
   state?: string;
-  property: StyleProperty;
+  property: CssProperty;
   value: StyleValue;
 }
 

@@ -58,13 +58,14 @@ const thumbStyle = css({
   },
 });
 
-type Props = Omit<ComponentProps<"button">, "color"> & {
+type Props = Omit<ComponentProps<"button" | "span">, "color"> & {
+  interactive?: boolean;
   color?: RgbaColor;
   css?: CSS;
 };
 
 export const ColorThumb = forwardRef<ElementRef<"button">, Props>(
-  ({ color = transparentColor, css, ...rest }, ref) => {
+  ({ interactive, color = transparentColor, css, ...rest }, ref) => {
     const background =
       color === undefined || color.a < 1
         ? // Chessboard pattern 5x5
@@ -72,8 +73,10 @@ export const ColorThumb = forwardRef<ElementRef<"button">, Props>(
         : colord(color).toRgbString();
     const borderColor = calcBorderColor(color);
 
+    const Component = interactive ? "button" : "span";
+
     return (
-      <button
+      <Component
         {...rest}
         ref={ref}
         style={{

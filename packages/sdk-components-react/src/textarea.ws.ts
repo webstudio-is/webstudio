@@ -4,7 +4,7 @@ import {
   type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { textarea } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
@@ -23,16 +23,15 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  type: "control",
   label: "Text Area",
   description:
     "A multi-line text input for collecting longer string data from your users.",
   icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
-  constraints: {
-    relation: "ancestor",
-    component: { $nin: ["Button", "Link"] },
+  contentModel: {
+    category: "instance",
+    children: [],
   },
   states: [
     ...defaultStates,

@@ -35,6 +35,8 @@ const App = (props: {
         imageLoader: () => "",
         renderer: props.renderer,
         resources: {},
+        breakpoints: [],
+        onError: console.error,
       }}
     >
       <div key={page}>
@@ -281,6 +283,8 @@ describe("Builder renderer= canvas | preview", () => {
             imageLoader: () => "",
             renderer: "canvas",
             resources: {},
+            breakpoints: [],
+            onError: console.error,
           }}
         >
           <HtmlEmbed code={code} executeScriptOnCanvas={true} />

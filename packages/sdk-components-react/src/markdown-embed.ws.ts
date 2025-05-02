@@ -1,13 +1,17 @@
 import { MarkdownEmbedIcon } from "@webstudio-is/icons/svg";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+import {
+  descendantComponent,
+  type WsComponentMeta,
+  type WsComponentPropsMeta,
+} from "@webstudio-is/sdk";
 import { props } from "./__generated__/markdown-embed.props";
 
 export const meta: WsComponentMeta = {
-  type: "embed",
   icon: MarkdownEmbedIcon,
+  contentModel: {
+    category: "instance",
+    children: [descendantComponent],
+  },
   presetStyle: {
     div: [
       {
@@ -15,7 +19,7 @@ export const meta: WsComponentMeta = {
         value: { type: "keyword", value: "contents" },
       },
       {
-        property: "whiteSpaceCollapse",
+        property: "white-space-collapse",
         value: { type: "keyword", value: "collapse" },
       },
     ],

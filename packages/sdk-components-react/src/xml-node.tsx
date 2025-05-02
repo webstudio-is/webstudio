@@ -1,4 +1,7 @@
-import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  ReactSdkContext,
+  xmlNodeTagSuffix,
+} from "@webstudio-is/react-sdk/runtime";
 import {
   Children,
   createElement,
@@ -30,12 +33,23 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
         ([key]) =>
           key.startsWith("data-") === false && key.startsWith("aria-") === false
       )
-      .filter(([key]) => key !== "tabIndex")
+      .filter(([key]) => key.toLowerCase() !== "tabindex")
       .filter(([, value]) => typeof value !== "function");
+
+    const elementName = tag
+      // Must start from letter or underscore
+      .replace(/^[^\p{L}_]+/u, "")
+      // Clear all non letter, number, underscore, dot, and dash
+      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "")
+      .trim();
 
     if (renderer === undefined) {
       const attrProps = Object.fromEntries(attributeEntries);
-      return createElement(tag, attrProps, children);
+      return createElement(
+        `${elementName}${xmlNodeTagSuffix}`,
+        attrProps,
+        children
+      );
     }
 
     const childrenArray = Children.toArray(children);
@@ -43,35 +57,44 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       childrenArray.length > 0 &&
       childrenArray.every((child) => typeof child === "string");
 
-    const elementName = tag
-      // Must start from letter or underscore
-      .replace(/^[^\p{L}_]+/u, "")
-      // Clear all non letter, number, underscore, dot, and dash
-      .replaceAll(/[^\p{L}\p{N}\-._:]+/gu, "");
-
-    const attributes = attributeEntries.map(
-      ([key, value]) => `${key}=${JSON.stringify(value)}`
-    );
+    const renderAttributes = (attrs: [string, string][]) => {
+      return attrs.map(([name, value], index) => {
+        return (
+          <span key={index}>
+            {" "}
+            <span style={{ color: "#FF0000" }}>{name}</span>
+            <span style={{ color: "#000000" }}>=</span>
+            <span style={{ color: "#0000FF" }}>"{value}"</span>
+          </span>
+        );
+      });
+    };
 
     return (
       <div {...props}>
-        <span style={{ color: "rgb(16, 23, 233)" }}>
-          &lt;{[elementName, ...attributes].join(" ")}&gt;
+        <span>
+          <span style={{ color: "#800000" }}>&lt;{elementName}</span>
+          {attributeEntries.length > 0 && renderAttributes(attributeEntries)}
+          {childrenArray.length === 0 ? (
+            <span style={{ color: "#800000" }}>/&gt;</span>
+          ) : (
+            <span style={{ color: "#800000" }}>&gt;</span>
+          )}
         </span>
         {childrenArray.length > 0 && (
-          <div
-            ref={ref}
-            style={{
-              display: isTextChild ? "inline" : "block",
-              marginLeft: isTextChild ? 0 : "1rem",
-            }}
-          >
-            {children}
-          </div>
+          <>
+            <div
+              ref={ref}
+              style={{
+                display: isTextChild ? "inline" : "block",
+                marginLeft: isTextChild ? 0 : "1rem",
+              }}
+            >
+              {children}
+            </div>
+            <span style={{ color: "#800000" }}>&lt;/{elementName}&gt;</span>
+          </>
         )}
-        <span style={{ color: "rgb(16, 23, 233)" }}>
-          &lt;/{elementName}&gt;
-        </span>
       </div>
     );
   }

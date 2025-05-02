@@ -6,21 +6,24 @@ import type {
   DataSources,
   Prop,
   DataSource,
+  WsComponentMeta,
+  IndexesWithinAncestors,
 } from "@webstudio-is/sdk";
 import {
   parseComponentName,
   generateExpression,
   decodeDataSourceVariable,
   transpileExpression,
-} from "@webstudio-is/sdk";
-import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
-import {
   blockComponent,
   blockTemplateComponent,
   collectionComponent,
   descendantComponent,
-} from "./core-components";
-import type { IndexesWithinAncestors } from "./instance-utils";
+  getIndexesWithinAncestors,
+  elementComponent,
+} from "@webstudio-is/sdk";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import { isAttributeNameSafe, showAttribute } from "./props";
+import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
 
 /**
  * (arg1) => {
@@ -106,7 +109,8 @@ const generatePropValue = ({
     prop.type === "number" ||
     prop.type === "boolean" ||
     prop.type === "string[]" ||
-    prop.type === "json"
+    prop.type === "json" ||
+    prop.type === "animationAction"
   ) {
     return JSON.stringify(prop.value);
   }
@@ -140,6 +144,7 @@ const generatePropValue = ({
 export const generateJsxElement = ({
   context = "jsx",
   scope,
+  metas,
   instance,
   props,
   dataSources,
@@ -150,6 +155,7 @@ export const generateJsxElement = ({
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
   instance: Instance;
   props: Props;
   dataSources: DataSources;
@@ -164,22 +170,23 @@ export const generateJsxElement = ({
     return "";
   }
 
+  const hasTags =
+    Object.keys(metas.get(instance.component)?.presetStyle ?? {}).length > 0;
+
   let generatedProps = "";
 
   const index = indexesWithinAncestors.get(instance.id);
   if (index !== undefined) {
-    generatedProps += `\n${indexAttribute}="${index}"`;
+    generatedProps += `\n${indexProperty}="${index}"`;
+  }
+  if (instance.tag !== undefined && instance.component !== elementComponent) {
+    generatedProps += `\n${tagProperty}=${JSON.stringify(instance.tag)}`;
   }
 
   let conditionValue: undefined | string;
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
-
-  const classMapArray = classesMap?.get(instance.id);
-  const classes =
-    classMapArray !== undefined
-      ? [JSON.stringify(classMapArray.join(" "))]
-      : [];
+  let classNameValue: undefined | string;
 
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
@@ -195,6 +202,10 @@ export const generateJsxElement = ({
 
     if (isAttributeNameSafe(prop.name) === false) {
       continue;
+    }
+    let name = prop.name;
+    if (instance.component === elementComponent || hasTags) {
+      name = standardAttributesToReactProps[prop.name] ?? prop.name;
     }
 
     // show prop controls conditional rendering and need to be handled separately
@@ -221,18 +232,27 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className" && propValue !== undefined) {
-      classes.push(propValue);
-
+    if (name === "className" && propValue !== undefined) {
+      classNameValue = propValue;
       continue;
     }
     if (propValue !== undefined) {
-      generatedProps += `\n${prop.name}={${propValue}}`;
+      generatedProps += `\n${name}={${propValue}}`;
     }
   }
 
-  if (classes.length !== 0) {
-    generatedProps += `\nclassName={${classes.join(` + " " + `)}}`;
+  const classMapArray = classesMap?.get(instance.id);
+  if (classMapArray || classNameValue) {
+    let classNameTemplate = classMapArray ? classMapArray.join(" ") : "";
+    if (classNameValue) {
+      if (classNameTemplate) {
+        classNameTemplate += " ";
+      }
+      classNameTemplate += "${" + classNameValue + "}";
+    }
+    // wrap class expression with template literal to properly group
+    // for exaple expressions
+    generatedProps += "\nclassName={`" + classNameTemplate + "`}";
   }
 
   let generatedElement = "";
@@ -249,14 +269,24 @@ export const generateJsxElement = ({
       return "";
     }
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
-    // fix implicit any error
-    generatedElement += `{${collectionDataValue}?.map((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
+    // collection can be nullable or invalid type
+    // fix implicitly on published sites
+    generatedElement += `{${collectionDataValue}?.map?.((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
     generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
     generatedElement += `)}\n`;
   } else if (instance.component === blockComponent) {
     generatedElement += children;
+  } else if (instance.component === elementComponent) {
+    const tagName = instance.tag ?? "div";
+    if (instance.children.length === 0) {
+      generatedElement += `<${tagName}${generatedProps} />\n`;
+    } else {
+      generatedElement += `<${tagName}${generatedProps}>\n`;
+      generatedElement += children;
+      generatedElement += `</${tagName}>\n`;
+    }
   } else {
     const [_namespace, shortName] = parseComponentName(instance.component);
     const componentVariable = scope.getName(instance.component, shortName);
@@ -302,6 +332,7 @@ export const generateJsxElement = ({
 
 export const generateJsxChildren = ({
   scope,
+  metas,
   children,
   instances,
   props,
@@ -312,6 +343,7 @@ export const generateJsxChildren = ({
   excludePlaceholders,
 }: {
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
   children: Instance["children"];
   instances: Instances;
   props: Props;
@@ -354,6 +386,7 @@ export const generateJsxChildren = ({
       generatedChildren += generateJsxElement({
         context: "jsx",
         scope,
+        metas,
         instance,
         props,
         dataSources,
@@ -363,6 +396,7 @@ export const generateJsxChildren = ({
         children: generateJsxChildren({
           classesMap,
           scope,
+          metas,
           children: instance.children,
           instances,
           props,
@@ -387,7 +421,7 @@ export const generateWebstudioComponent = ({
   instances,
   props,
   dataSources,
-  indexesWithinAncestors,
+  metas,
   classesMap,
 }: {
   scope: Scope;
@@ -397,52 +431,61 @@ export const generateWebstudioComponent = ({
   instances: Instances;
   props: Props;
   dataSources: DataSources;
-  indexesWithinAncestors: IndexesWithinAncestors;
   classesMap: Map<string, Array<string>>;
+  metas: Map<Instance["component"], WsComponentMeta>;
 }) => {
   const instance = instances.get(rootInstanceId);
-  if (instance === undefined) {
-    return "";
-  }
+  const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
+    rootInstanceId,
+  ]);
 
   const usedDataSources: DataSources = new Map();
-  const generatedJsx = generateJsxElement({
-    context: "expression",
-    scope,
-    instance,
-    props,
-    dataSources,
-    usedDataSources,
-    indexesWithinAncestors,
-    classesMap,
-    children: generateJsxChildren({
+  let generatedJsx = "<></>\n";
+  // instance can be missing when generate xml
+  if (instance) {
+    generatedJsx = generateJsxElement({
+      context: "expression",
       scope,
-      children: instance.children,
-      instances,
+      metas,
+      instance,
       props,
       dataSources,
       usedDataSources,
       indexesWithinAncestors,
       classesMap,
-    }),
-  });
+      children: generateJsxChildren({
+        scope,
+        metas,
+        children: instance.children,
+        instances,
+        props,
+        dataSources,
+        usedDataSources,
+        indexesWithinAncestors,
+        classesMap,
+      }),
+    });
+  }
 
   let generatedProps = "";
+  let generatedParameters = "";
+  const uniqueParameters = new Set(
+    parameters.map((parameter) => parameter.name)
+  );
   if (parameters.length > 0) {
-    let generatedPropsValue = "{ ";
-    let generatedPropsType = "{ ";
+    let generatedPropsType = "";
+    for (const parameterName of uniqueParameters) {
+      generatedPropsType += `${parameterName}: any; `;
+    }
+    generatedProps = `_props: { ${generatedPropsType}}`;
     for (const parameter of parameters) {
       const dataSource = usedDataSources.get(parameter.value);
       // always generate type and avoid generating value when unused
       if (dataSource) {
         const valueName = scope.getName(dataSource.id, dataSource.name);
-        generatedPropsValue += `${parameter.name}: ${valueName}, `;
+        generatedParameters += `const ${valueName} = _props.${parameter.name};\n`;
       }
-      generatedPropsType += `${parameter.name}: any; `;
     }
-    generatedPropsValue += `}`;
-    generatedPropsType += `}`;
-    generatedProps = `${generatedPropsValue}: ${generatedPropsType}`;
   }
 
   let generatedDataSources = "";
@@ -472,6 +515,7 @@ export const generateWebstudioComponent = ({
 
   let generatedComponent = "";
   generatedComponent += `const ${name} = (${generatedProps}) => {\n`;
+  generatedComponent += `${generatedParameters}`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

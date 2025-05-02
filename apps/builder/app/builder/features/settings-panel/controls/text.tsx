@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import { TextArea } from "@webstudio-is/design-system";
 import {
@@ -9,22 +9,19 @@ import {
   type ControlProps,
   useLocalValue,
   ResponsiveLayout,
-  Label,
   updateExpressionValue,
   $selectedInstanceScope,
   useBindingState,
   humanizeAttribute,
 } from "../shared";
+import { PropertyLabel } from "../property-label";
 
 export const TextControl = ({
   meta,
   prop,
   propName,
-  deletable,
   computedValue,
-  autoFocus,
   onChange,
-  onDelete,
 }: ControlProps<"text">) => {
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
@@ -35,7 +32,6 @@ export const TextControl = ({
   });
   const id = useId();
   const label = humanizeAttribute(meta.label || propName);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -43,16 +39,9 @@ export const TextControl = ({
     prop?.type === "expression" ? prop.value : undefined
   );
 
-  useEffect(() => {
-    if (autoFocus) {
-      textAreaRef.current?.focus();
-    }
-  }, [autoFocus]);
-
   const input = (
     <BindingControl>
       <TextArea
-        ref={textAreaRef}
         id={id}
         disabled={overwritable === false}
         autoGrow
@@ -85,21 +74,11 @@ export const TextControl = ({
     </BindingControl>
   );
 
-  const labelElement = (
-    <Label
-      htmlFor={id}
-      description={meta.description}
-      readOnly={overwritable === false}
-    >
-      {label}
-    </Label>
-  );
-
   return (
     <ResponsiveLayout
-      label={labelElement}
-      deletable={deletable}
-      onDelete={onDelete}
+      label={
+        <PropertyLabel name={propName} readOnly={overwritable === false} />
+      }
     >
       {input}
     </ResponsiveLayout>

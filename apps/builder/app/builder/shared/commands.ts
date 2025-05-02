@@ -1,5 +1,8 @@
 import { nanoid } from "nanoid";
-import { blockTemplateComponent } from "@webstudio-is/react-sdk";
+import {
+  blockTemplateComponent,
+  isComponentDetachable,
+} from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
@@ -20,11 +23,9 @@ import {
 } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
-  findAvailableDataSources,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
-  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -38,11 +39,16 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-
+import { getSetting, setSetting } from "./client-settings";
+import { findAvailableVariables } from "~/shared/data-variables";
+import { atom } from "nanostores";
 import {
   findClosestNonTextualContainer,
-  isTreeMatching,
-} from "~/shared/matcher";
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
+
+export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -51,8 +57,7 @@ const makeBreakpointCommand = <CommandName extends string>(
   name,
   hidden: true,
   defaultHotkeys: [`${number}`],
-  disableHotkeyOnFormTags: true,
-  disableHotkeyOnContentEditable: true,
+  disableOnInputLikeControls: true,
   handler: () => {
     selectBreakpointByOrder(number);
   },
@@ -60,7 +65,6 @@ const makeBreakpointCommand = <CommandName extends string>(
 
 export const deleteSelectedInstance = () => {
   if ($isPreviewMode.get()) {
-    builderApi.toast.info("Deleting is not allowed in preview mode.");
     return;
   }
   const textEditingInstanceSelector = $textEditingInstanceSelector.get();
@@ -75,7 +79,7 @@ export const deleteSelectedInstance = () => {
   const [selectedItem, parentItem] = instancePath;
   const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
-  if (isInstanceDetachable(instances, selectedInstanceSelector) === false) {
+  if (!isComponentDetachable(selectedItem.instance.component)) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -101,12 +105,12 @@ export const deleteSelectedInstance = () => {
       blockTemplateComponent;
 
     if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
 
     if (!isChildOfBlock) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
   }
@@ -127,7 +131,7 @@ export const deleteSelectedInstance = () => {
     newSelectedInstanceSelector = parentInstanceSelector;
   }
   updateWebstudioData((data) => {
-    if (deleteInstanceMutable(data, selectedInstanceSelector)) {
+    if (deleteInstanceMutable(data, instancePath)) {
       selectInstance(newSelectedInstanceSelector);
     }
   });
@@ -146,8 +150,13 @@ export const wrapIn = (component: string) => {
   const metas = $registeredComponentMetas.get();
   try {
     updateWebstudioData((data) => {
-      const meta = metas.get(selectedInstance.component);
-      if (meta?.type === "rich-text-child") {
+      const isContent = isRichTextContent({
+        instanceSelector: selectedItem.instanceSelector,
+        instances: data.instances,
+        props: data.props,
+        metas,
+      });
+      if (isContent) {
         toast.error(`Cannot wrap textual content`);
         throw Error("Abort transaction");
       }
@@ -166,9 +175,10 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      const matches = isTreeMatching({
-        metas,
+      const matches = isTreeSatisfyingContentModel({
         instances: data.instances,
+        props: data.props,
+        metas,
         instanceSelector: newInstanceSelector,
       });
       if (matches === false) {
@@ -191,12 +201,13 @@ export const unwrap = () => {
   const [selectedItem, parentItem] = instancePath;
   try {
     updateWebstudioData((data) => {
-      const nonTextualIndex = findClosestNonTextualContainer({
+      const instanceSelector = findClosestNonTextualContainer({
         metas: $registeredComponentMetas.get(),
+        props: data.props,
         instances: data.instances,
         instanceSelector: selectedItem.instanceSelector,
       });
-      if (nonTextualIndex !== 0) {
+      if (selectedItem.instanceSelector.join() !== instanceSelector.join()) {
         toast.error(`Cannot unwrap textual instance`);
         throw Error("Abort transaction");
       }
@@ -210,9 +221,10 @@ export const unwrap = () => {
         );
         parentInstance.children.splice(index, 1, ...selectedInstance.children);
       }
-      const matches = isTreeMatching({
-        metas: $registeredComponentMetas.get(),
+      const matches = isTreeSatisfyingContentModel({
         instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
         instanceSelector: parentItem.instanceSelector,
       });
       if (matches === false) {
@@ -299,8 +311,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("publish");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "openExportDialog",
@@ -308,8 +319,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $publishDialog.set("export");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "toggleComponentsPanel",
@@ -323,8 +333,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         toggleActiveSidebarPanel("components");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "toggleNavigatorPanel",
@@ -332,8 +341,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         toggleActiveSidebarPanel("navigator");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     {
       name: "openStylePanel",
@@ -347,8 +355,46 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         $activeInspectorPanel.set("style");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
+    },
+    {
+      name: "focusStyleSources",
+      defaultHotkeys: ["meta+enter", "ctrl+enter"],
+      handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Style panel is only available in design mode."
+          );
+          return;
+        }
+        $activeInspectorPanel.set("style");
+        requestAnimationFrame(() => {
+          $styleSourceInputElement.get()?.focus();
+        });
+      },
+      disableOnInputLikeControls: true,
+    },
+    {
+      name: "toggleStylePanelFocusMode",
+      defaultHotkeys: ["alt+shift+s"],
+      handler: () => {
+        setSetting(
+          "stylePanelMode",
+          getSetting("stylePanelMode") === "focus" ? "default" : "focus"
+        );
+      },
+      disableOnInputLikeControls: true,
+    },
+    {
+      name: "toggleStylePanelAdvancedMode",
+      defaultHotkeys: ["alt+shift+a"],
+      handler: () => {
+        setSetting(
+          "stylePanelMode",
+          getSetting("stylePanelMode") === "advanced" ? "default" : "advanced"
+        );
+      },
+      disableOnInputLikeControls: true,
     },
     {
       name: "openSettingsPanel",
@@ -356,8 +402,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         $activeInspectorPanel.set("settings");
       },
-      disableHotkeyOnFormTags: true,
-      disableHotkeyOnContentEditable: true,
+      disableOnInputLikeControls: true,
     },
     makeBreakpointCommand("selectBreakpoint1", 1),
     makeBreakpointCommand("selectBreakpoint2", 2),
@@ -373,25 +418,21 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "toggleAiCommandBar",
       defaultHotkeys: ["space"],
-      disableHotkeyOnContentEditable: true,
       // this disables hotkey for inputs on style panel
       // but still work for input on canvas which call event.preventDefault() in keydown handler
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         $isAiCommandBarVisible.set($isAiCommandBarVisible.get() === false);
       },
     },
     */
 
-    // instances
-
     {
-      name: "deleteInstance",
+      name: "deleteInstanceBuilder",
       defaultHotkeys: ["backspace", "delete"],
-      disableHotkeyOnContentEditable: true,
-      // this disables hotkey for inputs on style panel
-      // but still work for input on canvas which call event.preventDefault() in keydown handler
-      disableHotkeyOnFormTags: true,
+      // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
+      disableHotkeyOutsideApp: true,
+      disableOnInputLikeControls: true,
       handler: deleteSelectedInstance,
     },
     {
@@ -417,11 +458,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
             fragment,
-            availableDataSources: findAvailableDataSources(
-              data.dataSources,
-              data.instances,
-              parentItem.instanceSelector
-            ),
+            availableVariables: findAvailableVariables({
+              ...data,
+              startingInstanceId: parentItem.instanceSelector[0],
+            }),
           });
           const newRootInstanceId = newInstanceIds.get(
             selectedItem.instance.id
@@ -477,20 +517,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "undo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
-      disableHotkeyOnContentEditable: true,
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.undo();
       },
     },
     {
       name: "redo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
-      disableHotkeyOnContentEditable: true,
-      disableHotkeyOnFormTags: true,
+      disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.redo();
       },

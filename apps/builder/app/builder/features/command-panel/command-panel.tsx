@@ -3,11 +3,6 @@ import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import {
-  collectionComponent,
-  componentCategories,
-} from "@webstudio-is/react-sdk";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import {
   Command,
   CommandDialog,
   CommandInput,
@@ -25,6 +20,11 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
+import {
+  componentCategories,
+  collectionComponent,
+  parseComponentName,
+} from "@webstudio-is/sdk";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
 import {
@@ -49,6 +49,7 @@ import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const $commandPanel = atom<
   | undefined
@@ -58,9 +59,6 @@ const $commandPanel = atom<
 >();
 
 export const openCommandPanel = () => {
-  if (isFeatureEnabled("command") === false) {
-    return;
-  }
   const activeElement =
     document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -110,6 +108,24 @@ const $componentOptions = computed(
       if (category === "hidden" || category === "internal") {
         continue;
       }
+
+      if (
+        category === "animations" &&
+        isFeatureEnabled("animation") === false
+      ) {
+        continue;
+      }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
@@ -133,17 +149,32 @@ const $componentOptions = computed(
       });
     }
     for (const [name, meta] of templates) {
-      const label = getInstanceLabel({ component: name }, meta);
       if (meta.category === "hidden" || meta.category === "internal") {
         continue;
       }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
+      const componentMeta = metas.get(name);
+      const label =
+        meta.label ??
+        componentMeta?.label ??
+        getInstanceLabel({ component: name }, meta);
       componentOptions.push({
         tokens: ["components", label, meta.category],
         type: "component",
         component: name,
         label,
         category: meta.category,
-        icon: meta.icon ?? metas.get(name)?.icon ?? "",
+        icon: meta.icon ?? componentMeta?.icon ?? "",
         order: meta.order,
       });
     }
@@ -345,9 +376,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   for (const [name, meta] of commandMetas) {
     if (!meta.hidden) {
       const label = humanizeString(name);
-      const keys = meta.defaultHotkeys?.[0]
-        ?.split("+")
-        .map((key) => (key === "meta" ? "cmd" : key));
+      const keys = meta.defaultHotkeys?.[0]?.split("+");
       shortcutOptions.push({
         tokens: ["shortcuts", "commands", label],
         type: "shortcut",

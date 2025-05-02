@@ -126,13 +126,8 @@ export const idAttribute = "data-ws-id" as const;
 export const selectorIdAttribute = "data-ws-selector" as const;
 export const componentAttribute = "data-ws-component" as const;
 export const showAttribute = "data-ws-show" as const;
-export const indexAttribute = "data-ws-index" as const;
 export const collapsedAttribute = "data-ws-collapsed" as const;
 export const textContentAttribute = "data-ws-text-content" as const;
-export const editablePlaceholderVariable =
-  "--data-ws-editable-placeholder" as const;
-export const editingPlaceholderVariable =
-  "--data-ws-editing-placeholder" as const;
 
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.

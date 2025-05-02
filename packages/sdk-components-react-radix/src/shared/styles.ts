@@ -64,6 +64,13 @@ const defaultButtonStyle = css`
   padding: ${spacing[2]} ${spacing[4]};
 `;
 
+// h-9 rounded-md px-3
+const smButtonStyle = css`
+  height: ${height[9]};
+  border-radius: ${borderRadius.md};
+  padding: 0 ${spacing[3]};
+`;
+
 // Set explicit paddings for IOS Safari to prevent the icon from collapsing
 // h-10 w-10
 const iconButtonStyle = css`
@@ -74,7 +81,7 @@ const iconButtonStyle = css`
 
 export const getButtonStyle = (
   variant: "outline" | "ghost",
-  size: "default" | /*"sm" |*/ "icon" = "default"
+  size: "default" | "sm" | "icon" = "default"
 ) => {
   const style: TemplateStyleDecl[] = [...buttonStyle];
   if (variant === "ghost") {
@@ -85,6 +92,9 @@ export const getButtonStyle = (
   }
   if (size === "default") {
     style.push(...defaultButtonStyle);
+  }
+  if (size === "sm") {
+    style.push(...smButtonStyle);
   }
   if (size === "icon") {
     style.push(...iconButtonStyle);

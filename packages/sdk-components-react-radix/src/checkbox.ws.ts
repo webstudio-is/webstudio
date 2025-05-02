@@ -3,21 +3,22 @@ import {
   defaultStates,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
-import { buttonReset } from "./theme/styles";
+import { radix } from "./shared/meta";
+import { buttonReset } from "./shared/preset-styles";
 import {
   propsCheckbox,
   propsCheckboxIndicator,
 } from "./__generated__/checkbox.props";
 
 export const metaCheckbox: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: "CheckboxIndicator" },
-  },
   icon: CheckboxCheckedIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.CheckboxIndicator],
+  },
   states: [
     ...defaultStates,
     {
@@ -37,12 +38,11 @@ export const metaCheckbox: WsComponentMeta = {
 };
 
 export const metaCheckboxIndicator: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Checkbox" },
-  },
   icon: TriggerIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
   states: defaultStates,
   presetStyle: {
     span,

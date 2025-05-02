@@ -4,7 +4,7 @@ import {
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { ol, ul } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/list.props";
 import type { ListTag } from "./list";
@@ -13,37 +13,36 @@ const presetStyle = {
   ol: [
     ...ol,
     {
-      property: "marginTop",
+      property: "margin-top",
       value: { type: "keyword", value: "0" },
     },
     {
-      property: "marginBottom",
+      property: "margin-bottom",
       value: { type: "keyword", value: "10px" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "keyword", value: "40px" },
     },
   ],
   ul: [
     ...ul,
     {
-      property: "marginTop",
+      property: "margin-top",
       value: { type: "keyword", value: "0" },
     },
     {
-      property: "marginBottom",
+      property: "margin-bottom",
       value: { type: "keyword", value: "10px" },
     },
     {
-      property: "paddingLeft",
+      property: "padding-left",
       value: { type: "keyword", value: "40px" },
     },
   ],
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  type: "container",
   icon: ListIcon,
   states: defaultStates,
   presetStyle,

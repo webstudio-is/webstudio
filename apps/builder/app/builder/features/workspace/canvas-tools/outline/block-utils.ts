@@ -1,11 +1,11 @@
-import { blockTemplateComponent } from "@webstudio-is/react-sdk";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/awareness";
+import { findAvailableVariables } from "~/shared/data-variables";
 import {
   extractWebstudioFragment,
   findAllEditableInstanceSelector,
-  findAvailableDataSources,
   getWebstudioData,
   insertInstanceChildrenMutable,
   insertWebstudioFragmentCopy,
@@ -107,11 +107,10 @@ export const insertListItemAt = (listItemSelector: InstanceSelector) => {
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        target.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: target.parentSelector[0],
+      }),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
@@ -170,11 +169,10 @@ export const insertTemplateAt = (
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
-      availableDataSources: findAvailableDataSources(
-        data.dataSources,
-        data.instances,
-        target.parentSelector
-      ),
+      availableVariables: findAvailableVariables({
+        ...data,
+        startingInstanceId: target.parentSelector[0],
+      }),
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
@@ -193,12 +191,13 @@ export const insertTemplateAt = (
 
     const selectors: InstanceSelector[] = [];
 
-    findAllEditableInstanceSelector(
-      selectedInstanceSelector,
-      data.instances,
-      $registeredComponentMetas.get(),
-      selectors
-    );
+    findAllEditableInstanceSelector({
+      instanceSelector: selectedInstanceSelector,
+      instances: data.instances,
+      props: data.props,
+      metas: $registeredComponentMetas.get(),
+      results: selectors,
+    });
 
     const editableInstanceSelector = selectors[0];
 

@@ -19,7 +19,7 @@
   "dependencies": {
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
-    "@webstudio-is/sdk-components-react": "workspace:^",
+    "@webstudio-is/template": "workspace:^",
     "change-case": "^5.4.4"
   },
   "devDependencies": {

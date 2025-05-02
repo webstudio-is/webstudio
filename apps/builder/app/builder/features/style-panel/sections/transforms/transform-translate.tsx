@@ -1,5 +1,5 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { XAxisIcon, YAxisIcon, ZAxisIcon } from "@webstudio-is/icons";
 import { propertySyntaxes } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -13,7 +13,7 @@ import {
   useComputedStyleDecl,
 } from "../../shared/model";
 
-const property: StyleProperty = "translate";
+const property: CssProperty = "translate";
 
 export const TranslatePanelContent = () => {
   const styleDecl = useComputedStyleDecl(property);
@@ -63,8 +63,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateX}
-          setValue={(newValue, options) => setAxis(0, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(0, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />
@@ -83,8 +83,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateY}
-          setValue={(newValue, options) => setAxis(1, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(1, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />
@@ -103,8 +103,8 @@ export const TranslatePanelContent = () => {
           property={property}
           getOptions={() => $availableUnitVariables.get()}
           value={translateZ}
-          setValue={(newValue, options) => setAxis(2, newValue, options)}
-          deleteProperty={(property, options) =>
+          onUpdate={(newValue, options) => setAxis(2, newValue, options)}
+          onDelete={(options) =>
             setProperty(property)(styleDecl.cascadedValue, options)
           }
         />

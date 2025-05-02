@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
   Box,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -16,7 +15,10 @@ import {
   MenuCheckedIcon,
   theme,
 } from "@webstudio-is/design-system";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  declarationDescriptions,
+} from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
@@ -26,7 +28,7 @@ export const MenuControl = ({
   property,
   items,
 }: {
-  property: StyleProperty;
+  property: CssProperty;
   items: Array<{
     name: string;
     label: string;
@@ -42,7 +44,7 @@ export const MenuControl = ({
   const Icon = currentItem?.icon ?? items[0].icon;
   const description =
     declarationDescriptions[
-      `${property}:${
+      `${camelCaseProperty(property)}:${
         descriptionValue ?? currentValue
       }` as keyof typeof declarationDescriptions
     ];
@@ -74,57 +76,55 @@ export const MenuControl = ({
           </IconButton>
         </DropdownMenuTrigger>
       </PropertyValueTooltip>
-      <DropdownMenuPortal>
-        <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
-          <DropdownMenuRadioGroup
-            value={currentValue}
-            onValueChange={(value) => setValue({ type: "keyword", value })}
-          >
-            {items.map(({ name, label, icon: Icon }) => {
-              return (
-                <DropdownMenuRadioItem
-                  text="sentence"
-                  key={name}
-                  value={name}
-                  icon={<MenuCheckedIcon />}
-                  onFocus={() => {
-                    setValue(
-                      { type: "keyword", value: name },
-                      { isEphemeral: true }
-                    );
-                    setDescriptionValue(name);
-                  }}
-                  onBlur={() => {
-                    setValue(
-                      { type: "keyword", value: currentValue },
-                      { isEphemeral: true }
-                    );
-                    setDescriptionValue(undefined);
-                  }}
-                >
-                  <Flex gap="1">
-                    <Flex
-                      css={{
-                        width: theme.spacing[9],
-                        height: theme.spacing[9],
-                      }}
-                      align="center"
-                      justify="center"
-                    >
-                      <Icon />
-                    </Flex>
-                    {label}
+      <DropdownMenuContent sideOffset={4} collisionPadding={16} side="bottom">
+        <DropdownMenuRadioGroup
+          value={currentValue}
+          onValueChange={(value) => setValue({ type: "keyword", value })}
+        >
+          {items.map(({ name, label, icon: Icon }) => {
+            return (
+              <DropdownMenuRadioItem
+                text="sentence"
+                key={name}
+                value={name}
+                icon={<MenuCheckedIcon />}
+                onFocus={() => {
+                  setValue(
+                    { type: "keyword", value: name },
+                    { isEphemeral: true }
+                  );
+                  setDescriptionValue(name);
+                }}
+                onBlur={() => {
+                  setValue(
+                    { type: "keyword", value: currentValue },
+                    { isEphemeral: true }
+                  );
+                  setDescriptionValue(undefined);
+                }}
+              >
+                <Flex gap="1">
+                  <Flex
+                    css={{
+                      width: theme.spacing[9],
+                      height: theme.spacing[9],
+                    }}
+                    align="center"
+                    justify="center"
+                  >
+                    <Icon />
                   </Flex>
-                </DropdownMenuRadioItem>
-              );
-            })}
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem hint>
-            <Box css={{ width: theme.spacing[25] }}>{description}</Box>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
+                  {label}
+                </Flex>
+              </DropdownMenuRadioItem>
+            );
+          })}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem hint>
+          <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

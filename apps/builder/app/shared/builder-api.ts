@@ -5,9 +5,16 @@ import { uploadAssets } from "~/builder/shared/assets/use-assets";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
+type ToastHandler = (message: string) => void;
+
 const _builderApi = {
   isInitialized: () => true,
-  toast,
+  toast: {
+    info: toast.info as ToastHandler,
+    warn: toast.warn as ToastHandler,
+    error: toast.error as ToastHandler,
+    success: toast.success as ToastHandler,
+  },
   uploadImages: async (srcs: string[]) => {
     const urlToIds = await uploadAssets(
       "image",

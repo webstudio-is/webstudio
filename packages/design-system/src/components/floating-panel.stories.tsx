@@ -74,7 +74,7 @@ export const Center = () => {
         placement="center"
         open
         maximizable
-        resize="auto"
+        resize="both"
         title="Title"
         content={<Text>Content</Text>}
       >

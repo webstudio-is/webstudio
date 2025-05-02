@@ -5,25 +5,19 @@ import type {
   Instance,
   Prop,
   ResourceRequest,
-  System,
   ImageAsset,
 } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
-} from "@webstudio-is/sdk";
-import {
-  createJsonStringifyProxy,
-  isPlainObject,
-} from "@webstudio-is/sdk/runtime";
-import {
   collectionComponent,
-  normalizeProps,
   portalComponent,
-  textContentAttribute,
-} from "@webstudio-is/react-sdk";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+  ROOT_INSTANCE_ID,
+  SYSTEM_VARIABLE_ID,
+  findTreeInstanceIds,
+} from "@webstudio-is/sdk";
+import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
 import {
@@ -38,15 +32,12 @@ import {
 import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { restResourcesLoader } from "../router-utils";
-import {
-  $dataSourceVariables,
-  $resourceValues,
-  $selectedPageDefaultSystem,
-  mergeSystem,
-} from "./variables";
+import { $dataSourceVariables, $resourceValues } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { fetch } from "~/shared/fetch.client";
 import { $selectedPage, getInstanceKey } from "../awareness";
+import { computeExpression } from "../data-variables";
+import { $currentSystem } from "../system";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -142,10 +133,12 @@ const $unscopedVariableValues = computed(
     $dataSourceVariables,
     $resourceValues,
     $selectedPage,
-    $selectedPageDefaultSystem,
+    $currentSystem,
   ],
-  (dataSources, dataSourceVariables, resourceValues, page, defaultSystem) => {
+  (dataSources, dataSourceVariables, resourceValues, page, system) => {
     const values = new Map<string, unknown>();
+    // support global system
+    values.set(SYSTEM_VARIABLE_ID, system);
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
         values.set(
@@ -155,8 +148,9 @@ const $unscopedVariableValues = computed(
       }
       if (dataSource.type === "parameter") {
         let value = dataSourceVariables.get(dataSourceId);
+        // support page system
         if (dataSource.id === page?.systemDataSourceId) {
-          value = mergeSystem(defaultSystem, value as undefined | System);
+          value = system;
         }
         values.set(dataSourceId, value);
       }
@@ -168,11 +162,6 @@ const $unscopedVariableValues = computed(
   }
 );
 
-const $selectedPageSystemId = computed(
-  $selectedPage,
-  (page) => page?.systemDataSourceId
-);
-
 /**
  * similar to above but should not depend on resource values
  * because these values are used to load resources
@@ -180,105 +169,24 @@ const $selectedPageSystemId = computed(
  * circular updates
  */
 const $loaderVariableValues = computed(
-  [
-    $dataSources,
-    $dataSourceVariables,
-    $selectedPageSystemId,
-    $selectedPageDefaultSystem,
-  ],
-  (dataSources, dataSourceVariables, systemId, defaultSystem) => {
+  [$dataSources, $selectedPage, $currentSystem],
+  (dataSources, selectedPage, system) => {
     const values = new Map<string, unknown>();
+    values.set(SYSTEM_VARIABLE_ID, system);
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
-        values.set(
-          dataSourceId,
-          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value
-        );
+        values.set(dataSourceId, dataSource.value.value);
       }
-      if (dataSource.type === "parameter") {
-        let value = dataSourceVariables.get(dataSourceId);
-        if (dataSource.id === systemId) {
-          value = mergeSystem(defaultSystem, value as undefined | System);
-        }
-        values.set(dataSourceId, value);
+      if (
+        dataSource.type === "parameter" ||
+        dataSource.id === selectedPage?.systemDataSourceId
+      ) {
+        values.set(dataSourceId, system);
       }
     }
     return values;
   }
 );
-
-export const computeExpression = (
-  expression: string,
-  variables: Map<DataSource["id"], unknown>
-) => {
-  try {
-    const usedVariables = new Map();
-    const transpiled = transpileExpression({
-      expression,
-      executable: true,
-      replaceVariable: (identifier) => {
-        const id = decodeDataSourceVariable(identifier);
-        if (id) {
-          usedVariables.set(identifier, id);
-        }
-      },
-    });
-    let code = "";
-    // add only used variables in expression and get values
-    // from variables map without additional serializing of these values
-    for (const [identifier, id] of usedVariables) {
-      code += `let ${identifier} = _variables.get("${id}");\n`;
-    }
-    code += `return (${transpiled})`;
-
-    /**
-     *
-     * We are using structuredClone on frozen values because, for some reason,
-     * the Proxy example below throws a cryptic error:
-     * TypeError: 'get' on proxy: property 'data' is a read-only and non-configurable
-     * data property on the proxy target, but the proxy did not return its actual value
-     * (expected '[object Array]' but got '[object Array]').
-     *
-     * ```
-     * const createJsonStringifyProxy = (target) => {
-     *   return new Proxy(target, {
-     *     get(target, prop, receiver) {
-     *
-     *       console.log((prop in target), prop)
-     *
-     *       const value = Reflect.get(target, prop, receiver);
-     *
-     *       if (typeof value === "object" && value !== null) {
-     *         return createJsonStringifyProxy(value);
-     *       }
-     *
-     *       return value;
-     *     },
-     *   });
-     * };
-     * const obj = Object.freeze({ data: [1, 2, 3, 4] });
-     * const proxy = createJsonStringifyProxy(obj)
-     * proxy.data
-     *
-     * ```
-     */
-    const proxiedVariables = new Map(
-      [...variables.entries()].map(([key, value]) => [
-        key,
-        isPlainObject(value)
-          ? createJsonStringifyProxy(
-              Object.isFrozen(value) ? structuredClone(value) : value
-            )
-          : value,
-      ])
-    );
-
-    const result = new Function("_variables", code)(proxiedVariables);
-    return result;
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 /**
  * compute prop values within context of instance ancestors
@@ -305,6 +213,7 @@ export const $propValuesByInstanceSelector = computed(
     assets,
     uploadingFilesDataStore
   ) => {
+    // already includes global variables
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
     let propsList = Array.from(props.values());
@@ -464,7 +373,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
-    $selectedPageDefaultSystem,
+    $currentSystem,
   ],
   (
     instances,
@@ -473,7 +382,7 @@ export const $variableValuesByInstanceSelector = computed(
     dataSources,
     dataSourceVariables,
     resourceValues,
-    defaultSystem
+    system
   ) => {
     const propsByInstanceId = mapGroupBy(
       props.values(),
@@ -493,27 +402,31 @@ export const $variableValuesByInstanceSelector = computed(
     if (page === undefined) {
       return variableValuesByInstanceSelector;
     }
-    const traverseInstances = (
+
+    const collectVariables = (
       instanceSelector: InstanceSelector,
-      parentVariableValues: Map<string, unknown>
+      parentVariableValues = new Map<string, unknown>(),
+      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
     ) => {
       const [instanceId] = instanceSelector;
-      const instance = instances.get(instanceId);
-
-      let variableValues = new Map<string, unknown>(parentVariableValues);
+      const variableNames = new Map(parentVariableNames);
+      const variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         getInstanceKey(instanceSelector),
         variableValues
       );
       const variables = variablesByInstanceId.get(instanceId);
+      // set global system value
+      if (instanceId === ROOT_INSTANCE_ID) {
+        variableNames.set("system", SYSTEM_VARIABLE_ID);
+        variableValues.set(SYSTEM_VARIABLE_ID, system);
+      }
       if (variables) {
         for (const variable of variables) {
-          if (
-            variable.id === page.systemDataSourceId &&
-            isFeatureEnabled("filters") === false
-          ) {
-            continue;
-          }
+          // delete previous variable with the same name
+          // because it is masked and no longer available
+          variableValues.delete(variableNames.get(variable.name) ?? "");
+          variableNames.set(variable.name, variable.id);
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
@@ -521,11 +434,9 @@ export const $variableValuesByInstanceSelector = computed(
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
+            // set page system value
             if (variable.id === page.systemDataSourceId) {
-              variableValues.set(
-                variable.id,
-                mergeSystem(defaultSystem, value as undefined | System)
-              );
+              variableValues.set(variable.id, system);
             }
           }
           if (variable.type === "resource") {
@@ -534,7 +445,21 @@ export const $variableValuesByInstanceSelector = computed(
           }
         }
       }
+      return { variableValues, variableNames };
+    };
 
+    const traverseInstances = (
+      instanceSelector: InstanceSelector,
+      parentVariableValues = new Map<string, unknown>(),
+      parentVariableNames = new Map<DataSource["name"], DataSource["id"]>()
+    ) => {
+      let { variableValues, variableNames } = collectVariables(
+        instanceSelector,
+        parentVariableValues,
+        parentVariableNames
+      );
+
+      const [instanceId] = instanceSelector;
       const propValues = new Map<Prop["name"], unknown>();
       const props = propsByInstanceId.get(instanceId);
       const parameters = new Map<Prop["name"], DataSource["id"]>();
@@ -562,6 +487,7 @@ export const $variableValuesByInstanceSelector = computed(
         }
       }
 
+      const instance = instances.get(instanceId);
       if (instance === undefined) {
         return;
       }
@@ -593,20 +519,34 @@ export const $variableValuesByInstanceSelector = computed(
       }
       // reset values for slot children to let slots behave as isolated components
       if (instance.component === portalComponent) {
-        variableValues = new Map();
+        // allow accessing global variables in slots
+        variableValues = globalVariableValues;
+        variableNames = globalVariableNames;
       }
       for (const child of instance.children) {
         if (child.type === "id") {
-          traverseInstances([child.value, ...instanceSelector], variableValues);
+          traverseInstances(
+            [child.value, ...instanceSelector],
+            variableValues,
+            variableNames
+          );
         }
       }
     };
-    traverseInstances([page.rootInstanceId], new Map());
+    const {
+      variableValues: globalVariableValues,
+      variableNames: globalVariableNames,
+    } = collectVariables([ROOT_INSTANCE_ID]);
+    traverseInstances(
+      [page.rootInstanceId, ROOT_INSTANCE_ID],
+      globalVariableValues,
+      globalVariableNames
+    );
     return variableValuesByInstanceSelector;
   }
 );
 
-const computeResource = (
+const computeResourceRequest = (
   resource: Resource,
   values: Map<DataSource["id"], unknown>
 ): ResourceRequest => {
@@ -626,14 +566,31 @@ const computeResource = (
   return request;
 };
 
-const $computedResources = computed(
-  [$resources, $loaderVariableValues],
-  (resources, values) => {
-    const computedResources: ResourceRequest[] = [];
-    for (const resource of resources.values()) {
-      computedResources.push(computeResource(resource, values));
+const $computedResourceRequests = computed(
+  [$selectedPage, $instances, $dataSources, $resources, $loaderVariableValues],
+  (page, instances, dataSources, resources, values) => {
+    const computedResourceRequests: ResourceRequest[] = [];
+    if (page === undefined) {
+      return computedResourceRequests;
     }
-    return computedResources;
+    const instanceIds = findTreeInstanceIds(instances, page.rootInstanceId);
+    instanceIds.add(ROOT_INSTANCE_ID);
+    // load only resources bound to variables on current page
+    // action resources should not be loaded automatically
+    for (const dataSource of dataSources.values()) {
+      if (
+        instanceIds.has(dataSource.scopeInstanceId ?? "") &&
+        dataSource.type === "resource"
+      ) {
+        const resource = resources.get(dataSource.resourceId);
+        if (resource) {
+          computedResourceRequests.push(
+            computeResourceRequest(resource, values)
+          );
+        }
+      }
+    }
+    return computedResourceRequests;
   }
 );
 
@@ -660,19 +617,19 @@ const cacheByKeys = new Map<string, unknown>();
 
 const $invalidator = atom(0);
 
-export const getComputedResource = (resourceId: Resource["id"]) => {
+export const getComputedResourceRequest = (resourceId: Resource["id"]) => {
   const resources = $resources.get();
   const resource = resources.get(resourceId);
   if (resource === undefined) {
     return;
   }
   const values = $loaderVariableValues.get();
-  return computeResource(resource, values);
+  return computeResourceRequest(resource, values);
 };
 
 // bump index of resource to invaldate cache entry
 export const invalidateResource = (resourceId: Resource["id"]) => {
-  const request = getComputedResource(resourceId);
+  const request = getComputedResourceRequest(resourceId);
   if (request === undefined) {
     return;
   }
@@ -691,10 +648,10 @@ export const subscribeResources = () => {
   let frameId: undefined | number;
   // subscribe changing resources or global invalidation
   return computed(
-    [$computedResources, $invalidator],
-    (computedResources, invalidator) =>
-      [computedResources, invalidator] as const
-  ).subscribe(([computedResources]) => {
+    [$computedResourceRequests, $invalidator],
+    (computedResourceRequests, invalidator) =>
+      [computedResourceRequests, invalidator] as const
+  ).subscribe(([computedResourceRequests]) => {
     if (frameId) {
       cancelAnimationFrame(frameId);
     }
@@ -703,7 +660,7 @@ export const subscribeResources = () => {
     frameId = requestAnimationFrame(async () => {
       const matched = new Map<Resource["id"], ResourceRequest>();
       const missing = new Map<Resource["id"], ResourceRequest>();
-      for (const request of computedResources) {
+      for (const request of computedResourceRequests) {
         const cacheKey = JSON.stringify(request);
         if (cacheByKeys.has(cacheKey)) {
           matched.set(request.id, request);
@@ -718,9 +675,12 @@ export const subscribeResources = () => {
         cacheByKeys.set(cacheKey, undefined);
       }
 
-      const result = await loadResources(Array.from(missing.values()));
+      let result = new Map<string, unknown>();
+      if (missing.size > 0) {
+        result = await loadResources(Array.from(missing.values()));
+      }
       const newResourceValues = new Map();
-      for (const request of computedResources) {
+      for (const request of computedResourceRequests) {
         const cacheKey = JSON.stringify(request);
         // read from cache or store in cache
         const response = result.get(request.id) ?? cacheByKeys.get(cacheKey);

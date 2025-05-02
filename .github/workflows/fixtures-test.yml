@@ -9,6 +9,12 @@ on:
       builder-host:
         required: true
         type: string
+      environment:
+        required: true
+        type: string
+    secrets:
+      PRIVATE_GITHUB_DEPLOY_TOKEN:
+        required: true
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -23,6 +29,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    environment:
+      name: ${{ inputs.environment }}
+
     env:
       DATABASE_URL: postgres://
       AUTH_SECRET: test
@@ -32,13 +41,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Test that everything is working with submodules
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: ./.github/actions/ci-setup
 
         # Testing fixtures for vercel template
       - name: Test cli --help flag
-        working-directory: ./fixtures/webstudio-remix-vercel
+        working-directory: ./fixtures/webstudio-features
         run: pnpm cli --help
 
       - name: Testing cli link command
@@ -49,6 +62,11 @@ jobs:
 
       - name: Testing cli build command
         run: pnpm --filter='./fixtures/*' run --parallel fixtures:build
+
+      - name: Prepare for diffing
+        shell: bash
+        run: |
+          find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken

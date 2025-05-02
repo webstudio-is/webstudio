@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   type ReactNode,
@@ -12,11 +13,13 @@ import {
   useRef,
   createContext,
   useEffect,
+  useCallback,
 } from "react";
 import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
+  Combobox,
   DialogClose,
   DialogTitle,
   DialogTitleActions,
@@ -41,6 +44,7 @@ import {
   type DataSource,
   transpileExpression,
   lintExpression,
+  SYSTEM_VARIABLE_ID,
 } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -51,11 +55,12 @@ import {
   $resources,
   $areResourcesLoading,
   invalidateResource,
-  getComputedResource,
+  getComputedResourceRequest,
   $userPlanFeatures,
+  $instances,
+  $props,
 } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
-
+import { $selectedInstance } from "~/shared/awareness";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
   EditorDialog,
@@ -68,31 +73,101 @@ import {
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
-import { $selectedInstance } from "~/shared/awareness";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import {
+  findUnsetVariableNames,
+  rebindTreeVariablesMutable,
+} from "~/shared/data-variables";
 
-const validateName = (value: string) =>
-  value.trim().length === 0 ? "Name is required" : "";
+const $variablesByName = computed(
+  [$selectedInstance, $dataSources],
+  (instance, dataSources) => {
+    const variablesByName = new Map<DataSource["name"], DataSource["id"]>();
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.scopeInstanceId === instance?.id) {
+        variablesByName.set(dataSource.name, dataSource.id);
+      }
+    }
+    return variablesByName;
+  }
+);
 
-const NameField = ({ defaultValue }: { defaultValue: string }) => {
+const $unsetVariableNames = computed(
+  [$selectedInstance, $instances, $props, $dataSources, $resources],
+  (selectedInstance, instances, props, dataSources, resources) => {
+    if (selectedInstance === undefined) {
+      return [];
+    }
+    return findUnsetVariableNames({
+      startingInstanceId: selectedInstance.id,
+      instances,
+      props,
+      dataSources,
+      resources,
+    });
+  }
+);
+
+const NameField = ({
+  variableId,
+  defaultValue,
+}: {
+  variableId: undefined | DataSource["id"];
+  defaultValue: string;
+}) => {
   const ref = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const nameId = useId();
+  const variablesByName = useStore($variablesByName);
+  const unsetVariableNames = useStore($unsetVariableNames);
+  const validateName = useCallback(
+    (value: string) => {
+      if (
+        variablesByName.has(value) &&
+        variablesByName.get(value) !== variableId
+      ) {
+        return "Name is already used by another variable on this instance";
+      }
+      if (value.trim().length === 0) {
+        return "Name is required";
+      }
+      return "";
+    },
+    [variablesByName, variableId]
+  );
+  const [value, setValue] = useState(defaultValue);
   useEffect(() => {
-    ref.current?.setCustomValidity(validateName(defaultValue));
-  }, [defaultValue]);
+    ref.current?.setCustomValidity(validateName(value));
+  }, [value, validateName]);
   return (
     <Grid gap={1}>
       <Label htmlFor={nameId}>Name</Label>
       <InputErrorsTooltip errors={error ? [error] : undefined}>
-        <InputField
+        <Combobox<string>
           inputRef={ref}
           name="name"
           id={nameId}
-          autoComplete="off"
           color={error ? "error" : undefined}
-          defaultValue={defaultValue}
-          onChange={(event) => {
-            event.target.setCustomValidity(validateName(event.target.value));
+          itemToString={(item) => item ?? ""}
+          getDescription={() => (
+            <>
+              Enter a new variable or select
+              <br />
+              a variable that has been used
+              <br />
+              in expressions but not yet created
+            </>
+          )}
+          getItems={() => unsetVariableNames}
+          value={value}
+          onItemSelect={(newValue) => {
+            ref.current?.setCustomValidity(validateName(newValue));
+            setValue(newValue);
+            setError("");
+          }}
+          onChange={(newValue = "") => {
+            ref.current?.setCustomValidity(validateName(newValue));
+            setValue(newValue);
             setError("");
           }}
           onBlur={() => ref.current?.checkValidity()}
@@ -214,13 +289,19 @@ const ParameterForm = forwardRef<
 >(({ variable }, ref) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
+        return;
+      }
       // only existing parameter variables can be renamed
       if (variable === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
-      serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-        dataSources.set(variable.id, { ...variable, name });
+      updateWebstudioData((data) => {
+        data.dataSources.set(variable.id, { ...variable, name });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
       });
     },
   }));
@@ -239,30 +320,29 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const instanceId = $selectedInstance.get()?.id;
-      if (instanceId === undefined) {
+      const selectedInstance = $selectedInstance.get();
+      if (selectedInstance === undefined) {
         return;
       }
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
-      const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
+      const scopeInstanceId = variable?.scopeInstanceId ?? selectedInstance.id;
       const name = z.string().parse(formData.get("name"));
-      serverSyncStore.createTransaction(
-        [$dataSources, $resources],
-        (dataSources, resources) => {
-          // cleanup resource when value variable is set
-          if (variable?.type === "resource") {
-            resources.delete(variable.resourceId);
-          }
-          dataSources.set(dataSourceId, {
-            id: dataSourceId,
-            scopeInstanceId,
-            name,
-            type: "variable",
-            value: variableValue,
-          });
+      updateWebstudioData((data) => {
+        // cleanup resource when value variable is set
+        if (variable?.type === "resource") {
+          data.resources.delete(variable.resourceId);
         }
-      );
+        data.dataSources.set(dataSourceId, {
+          id: dataSourceId,
+          scopeInstanceId,
+          name,
+          type: "variable",
+          value: variableValue,
+        });
+        const startingInstanceId = selectedInstance.id;
+        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+      });
     },
   }));
 };
@@ -409,6 +489,7 @@ BooleanForm.displayName = "BooleanForm";
 
 const validateJsonValue = (expression: string) => {
   const diagnostics = lintExpression({ expression });
+  // prevent saving with any message including unset variable
   return diagnostics.length > 0 ? "error" : "";
 };
 
@@ -477,11 +558,10 @@ JsonForm.displayName = "JsonForm";
 
 const VariablePanel = forwardRef<
   undefined | PanelApi,
-  {
-    variable?: DataSource;
-  }
+  { variable?: DataSource }
 >(({ variable }, ref) => {
   const resources = useStore($resources);
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (variable?.type === "resource") {
@@ -507,45 +587,37 @@ const VariablePanel = forwardRef<
     return "string";
   });
 
+  let fields: ReactNode;
   if (variableType === "parameter") {
-    return (
-      <>
-        <NameField defaultValue={variable?.name ?? ""} />
-        <ParameterForm ref={ref} variable={variable} />
-      </>
-    );
+    fields = <ParameterForm ref={ref} variable={variable} />;
   }
   if (variableType === "string") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <StringForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "number") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <NumberForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "boolean") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <BooleanForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "json") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <JsonForm ref={ref} variable={variable} />
       </>
@@ -553,38 +625,70 @@ const VariablePanel = forwardRef<
   }
 
   if (variableType === "resource") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <ResourceForm ref={ref} variable={variable} />
       </>
     );
   }
-
   if (variableType === "graphql-resource") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <GraphqlResourceForm ref={ref} variable={variable} />
       </>
     );
   }
-
   if (variableType === "system-resource") {
-    return (
+    fields = (
       <>
-        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
         <SystemResourceForm ref={ref} variable={variable} />
       </>
     );
   }
 
-  variableType satisfies never;
+  const isResource =
+    variableType === "resource" ||
+    variableType === "graphql-resource" ||
+    variableType === "system-resource";
+  const requiresUpgrade = allowDynamicData === false && isResource;
+  return (
+    <>
+      {requiresUpgrade && (
+        <PanelBanner>
+          <Text>Resource fetching is part of the CMS functionality.</Text>
+          <Flex align="center" gap={1}>
+            <UpgradeIcon />
+            <Link
+              color="inherit"
+              target="_blank"
+              href="https://webstudio.is/pricing"
+            >
+              Upgrade to Pro
+            </Link>
+          </Flex>
+        </PanelBanner>
+      )}
+      <Flex
+        direction="column"
+        css={{
+          overflow: "hidden",
+          gap: theme.spacing[7],
+          p: theme.panel.padding,
+        }}
+      >
+        <NameField
+          variableId={variable?.id}
+          defaultValue={variable?.name ?? ""}
+        />
+        {fields}
+      </Flex>
+    </>
+  );
 });
-VariablePanel.displayName = "VariablePanel";
+VariablePanel.displayName = "VariableForm";
 
 const VariablePopoverContext = createContext<{
   containerRef?: RefObject<null | HTMLElement>;
@@ -628,9 +732,7 @@ export const VariablePopoverTrigger = ({
   const panelRef = useRef<undefined | PanelApi>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
-  const { allowDynamicData } = useStore($userPlanFeatures);
-  const [isResource, setIsResource] = useState(variable?.type === "resource");
-  const requiresUpgrade = allowDynamicData === false && isResource;
+  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
 
   return (
     <FloatingPanel
@@ -670,7 +772,7 @@ export const VariablePopoverTrigger = ({
                           prefix={<CopyIcon />}
                           color="ghost"
                           onClick={() => {
-                            const resourceRequest = getComputedResource(
+                            const resourceRequest = getComputedResourceRequest(
                               variable.resourceId
                             );
                             if (resourceRequest) {
@@ -715,66 +817,48 @@ export const VariablePopoverTrigger = ({
             width: theme.spacing[30],
           }}
         >
-          <Flex
-            direction="column"
-            css={{
-              overflow: "hidden",
-              gap: theme.spacing[7],
-              p: theme.panel.padding,
+          <form
+            ref={formRef}
+            noValidate={true}
+            // exclude from the flow
+            style={{ display: "contents" }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (isSystemVariable) {
+                return;
+              }
+              const nameElement =
+                event.currentTarget.elements.namedItem("name");
+              // make sure only name is valid and allow to save everything else
+              // to avoid loosing complex configuration when closed accidentally
+              if (
+                nameElement instanceof HTMLInputElement &&
+                nameElement.checkValidity()
+              ) {
+                const formData = new FormData(event.currentTarget);
+                panelRef.current?.save(formData);
+                // close popover whenever new variable is created
+                // to prevent creating duplicated variable
+                if (variable === undefined) {
+                  setOpen(false);
+                }
+              }
             }}
           >
-            {requiresUpgrade && (
-              <PanelBanner>
-                <Text>Resource fetching is part of the CMS functionality.</Text>
-                <Flex align="center" gap={1}>
-                  <UpgradeIcon />
-                  <Link
-                    color="inherit"
-                    target="_blank"
-                    href="https://webstudio.is/pricing"
-                  >
-                    Upgrade to Pro
-                  </Link>
-                </Flex>
-              </PanelBanner>
-            )}
-            <form
-              ref={formRef}
-              noValidate={true}
-              // exclude from the flow
+            {/* submit is not triggered when press enter on input without submit button */}
+            <button hidden></button>
+            <fieldset
               style={{ display: "contents" }}
-              onChange={(event) => {
-                const { name, value } = event.target as HTMLSelectElement;
-                // When type is changing, we need to show the upgrade banner.
-                if (name === "type") {
-                  setIsResource(value.includes("resource"));
-                }
-              }}
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (requiresUpgrade) {
-                  return;
-                }
-                if (event.currentTarget.checkValidity()) {
-                  const formData = new FormData(event.currentTarget);
-                  panelRef.current?.save(formData);
-                  // close popover whenever new variable is created
-                  // to prevent creating duplicated variable
-                  if (variable === undefined) {
-                    setOpen(false);
-                  }
-                }
-              }}
+              // forbid editing system variable
+              disabled={isSystemVariable}
             >
-              {/* submit is not triggered when press enter on input without submit button */}
-              <button hidden></button>
               <BindingPopoverProvider
                 value={{ containerRef: bindingPopoverContainerRef }}
               >
                 <VariablePanel ref={panelRef} variable={variable} />
               </BindingPopoverProvider>
-            </form>
-          </Flex>
+            </fieldset>
+          </form>
         </ScrollArea>
       }
     >

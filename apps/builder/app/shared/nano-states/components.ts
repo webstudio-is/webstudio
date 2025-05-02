@@ -2,17 +2,18 @@ import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom, computed } from "nanostores";
+import type {
+  AnyComponent,
+  Hook,
+  HookContext,
+  InstanceData,
+} from "@webstudio-is/react-sdk";
 import {
-  type AnyComponent,
+  getIndexesWithinAncestors,
+  type Instance,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-  type Hook,
-  type HookContext,
-  namespaceMeta,
-  getIndexesWithinAncestors,
-  type InstanceData,
-} from "@webstudio-is/react-sdk";
-import type { Instance } from "@webstudio-is/sdk";
+} from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";
 import { $instances } from "./instances";
@@ -208,12 +209,7 @@ export const registerComponentLibrary = ({
   const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
-    nextMetas.set(
-      `${prefix}${componentName}`,
-      namespace === undefined
-        ? meta
-        : namespaceMeta(meta, namespace, new Set(Object.keys(metas)))
-    );
+    nextMetas.set(`${prefix}${componentName}`, meta);
   }
   $registeredComponentMetas.set(nextMetas);
 

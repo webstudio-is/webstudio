@@ -5,25 +5,25 @@ import { styled, theme } from "@webstudio-is/design-system";
 import {
   StyleValue,
   toValue,
-  type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { toPascalCase } from "../../shared/keyword-utils";
+import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
 import { getComputedRepeatedItem } from "../../shared/repeated-style";
 
 export const repeatedProperties = [
-  "backgroundImage",
-  "backgroundAttachment",
-  "backgroundClip",
-  "backgroundOrigin",
-  "backgroundPositionX",
-  "backgroundPositionY",
-  "backgroundRepeat",
-  "backgroundSize",
-  "backgroundBlendMode",
-] satisfies [StyleProperty, ...StyleProperty[]];
+  "background-image",
+  "background-attachment",
+  "background-clip",
+  "background-origin",
+  "background-position-x",
+  "background-position-y",
+  "background-repeat",
+  "background-size",
+  "background-blend-mode",
+] satisfies [CssProperty, ...CssProperty[]];
 
 const thumbSize = theme.spacing[9];
 
@@ -105,7 +105,7 @@ export const getBackgroundLabel = (
       backgroundImageStyle.value.includes(name)
     );
 
-    return gradientName ? toPascalCase(gradientName) : "Gradient";
+    return gradientName ? humanizeString(gradientName) : "Gradient";
   }
 
   return "None";

@@ -15,6 +15,7 @@ import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { Flex } from "./flex";
+import { mergeRefs } from "@react-aria/utils";
 
 const SearchIconStyled = styled(SearchIcon, {
   // need to center icon vertically
@@ -34,11 +35,11 @@ const AbortButton = styled(SmallIconButton, {
 
 const SearchFieldBase: ForwardRefRenderFunction<
   HTMLInputElement,
-  ComponentProps<typeof InputField> & { onCancel?: () => void }
+  ComponentProps<typeof InputField> & { onAbort?: () => void }
 > = (props, ref) => {
   const {
     onChange,
-    onCancel,
+    onAbort,
     value: propsValue = "",
     onKeyDown,
     ...rest
@@ -50,7 +51,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
   }, [propsValue]);
   const handleCancel = () => {
     setValue("");
-    onCancel?.();
+    onAbort?.();
   };
   return (
     <InputField
@@ -61,7 +62,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       // brings native reset button
       type="text"
       value={value}
-      inputRef={inputRef}
+      inputRef={mergeRefs(inputRef, rest.inputRef)}
       prefix={<SearchIconStyled />}
       suffix={
         <Flex align="center" css={{ padding: theme.spacing[2] }}>
@@ -97,13 +98,13 @@ export const SearchField = forwardRef(SearchFieldBase);
 type UseSearchFieldKeys = {
   onMove: (event: { direction: "next" | "previous" | "current" }) => void;
   onChange?: FormEventHandler<HTMLInputElement>;
-  onCancel?: () => void;
+  onAbort?: () => void;
 };
 
 export const useSearchFieldKeys = ({
   onMove,
   onChange,
-  onCancel,
+  onAbort,
 }: UseSearchFieldKeys) => {
   const [search, setSearch] = useState("");
   const handleKeyDown: KeyboardEventHandler = ({ code }) => {
@@ -126,12 +127,12 @@ export const useSearchFieldKeys = ({
 
   const handleCancel = () => {
     setSearch("");
-    onCancel?.();
+    onAbort?.();
   };
 
   return {
     value: search,
-    onCancel: handleCancel,
+    onAbort: handleCancel,
     onChange: handleChange,
     onKeyDown: handleKeyDown,
   };

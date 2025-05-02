@@ -8,13 +8,13 @@ import type {
   DataSource,
   DataSources,
 } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
-import type { Project } from "@webstudio-is/project";
 import {
+  encodeDataSourceVariable,
   collectionComponent,
   coreMetas,
   portalComponent,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
+import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync";
 import {
@@ -25,7 +25,7 @@ import {
   $props,
   $registeredComponentMetas,
 } from "../nano-states";
-import { onCopy, onCut, onPaste } from "./plugin-instance";
+import { onCopy, onPaste } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $awareness, selectInstance } from "../awareness";
 
@@ -42,7 +42,6 @@ $pages.set(
   createDefaultPages({
     homePageId: "home-page",
     rootInstanceId: "body0",
-    systemDataSourceId: "",
   })
 );
 $awareness.set({ pageId: "home-page" });
@@ -250,53 +249,6 @@ describe("data sources", () => {
               code: `${encodeDataSourceVariable(newDataSource1)} = value`,
             },
           ],
-        },
-      ])
-    );
-  });
-
-  test("are inlined into props when not scoped to copied instances or depends on not scoped data source", () => {
-    $instances.set(instances);
-    $props.set(props);
-    $dataSources.set(dataSources);
-    selectInstance(["box2", "box1", "body0"]);
-    const clipboardData = onCopy() ?? "";
-    selectInstance(["body0"]);
-    onPaste(clipboardData);
-
-    const instancesDifference = getMapDifference(instances, $instances.get());
-    const [newBox2] = instancesDifference.keys();
-
-    const dataSourcesDifference = getMapDifference(
-      dataSources,
-      $dataSources.get()
-    );
-    expect(dataSourcesDifference).toEqual(new Map());
-
-    const propsDifference = getMapDifference(props, $props.get());
-    const [newProp1, newProp2, newProp3] = propsDifference.keys();
-    expect(propsDifference).toEqual(
-      toMap([
-        {
-          id: newProp1,
-          instanceId: newBox2,
-          name: "state",
-          type: "expression",
-          value: `"initial"`,
-        },
-        {
-          id: newProp2,
-          instanceId: newBox2,
-          name: "show",
-          type: "expression",
-          value: `"initial" === 'initial'`,
-        },
-        {
-          id: newProp3,
-          instanceId: newBox2,
-          type: "action",
-          name: "onChange",
-          value: [],
         },
       ])
     );
@@ -591,69 +543,6 @@ test("insert into portal fragment when portal is a target", () => {
       createInstance("box", "Box", []),
       createInstance(boxId, "Box", []),
       createInstance(expectString, "Box", []),
-    ])
-  );
-});
-
-test("inline data source not available in portal when copy paste inside the portal", () => {
-  const instances = toMap([
-    createInstance("body", "Body", [
-      { type: "id", value: "box" },
-      { type: "id", value: "portal" },
-    ]),
-    createInstance("box", "Box", []),
-    createInstance("portal", portalComponent, [
-      { type: "id", value: "fragment" },
-    ]),
-    createInstance("fragment", "Fragment", []),
-  ]);
-  $instances.set(instances);
-  const dataSources = toMap<DataSource>([
-    {
-      id: "variableId",
-      scopeInstanceId: "body",
-      name: "variableName",
-      type: "variable",
-      value: { type: "string", value: "value" },
-    },
-  ]);
-  $dataSources.set(dataSources);
-  const props = toMap<Prop>([
-    {
-      id: "propId",
-      instanceId: "box",
-      name: "data-value",
-      type: "expression",
-      value: "$ws$dataSource$variableId",
-    },
-  ]);
-  $props.set(props);
-  selectInstance(["box", "body"]);
-  const clipboardData = onCut() ?? "";
-  selectInstance(["fragment", "portal", "body"]);
-  onPaste(clipboardData);
-  expect($instances.get()).toEqual(
-    toMap([
-      createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-      createInstance("portal", portalComponent, [
-        { type: "id", value: "fragment" },
-      ]),
-      createInstance("fragment", "Fragment", [
-        { type: "id", value: expectString },
-      ]),
-      createInstance(expectString, "Box", []),
-    ])
-  );
-  expect($dataSources.get()).toEqual(dataSources);
-  expect($props.get()).toEqual(
-    toMap<Prop>([
-      {
-        id: expectString,
-        instanceId: expectString,
-        name: "data-value",
-        type: "expression",
-        value: `"value"`,
-      },
     ])
   );
 });

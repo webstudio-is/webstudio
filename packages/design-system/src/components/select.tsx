@@ -7,6 +7,8 @@ import {
   useMemo,
   forwardRef,
   useState,
+  useEffect,
+  useRef,
 } from "react";
 import { styled, theme } from "../stitches.config";
 import {
@@ -221,9 +223,23 @@ const SelectBase = <Option,>(
 
   const descriptions = options.map((option) => getDescription?.(option));
 
+  // Allow reset select fix https://github.com/radix-ui/primitives/issues/2706
+  const [selectResetKeyFix, setSelectResetKeyFix] = useState(0);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (prevValue.current !== undefined && value === undefined) {
+      setSelectResetKeyFix((prev) => prev + 1);
+    }
+
+    prevValue.current = value;
+  }, [value]);
+
   return (
     <Primitive.Root
+      key={selectResetKeyFix}
       name={name}
+      // null because of https://github.com/radix-ui/primitives/issues/2706
       value={value === undefined ? undefined : getValue(value)}
       defaultValue={
         defaultValue === undefined ? undefined : getValue(defaultValue)
