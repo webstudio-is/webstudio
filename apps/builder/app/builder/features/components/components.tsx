@@ -9,6 +9,7 @@ import {
   componentCategories,
   collectionComponent,
   parseComponentName,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -95,6 +96,9 @@ const $metas = computed(
         namespace === "@webstudio-is/sdk-components-animation" &&
         shortName === "VideoAnimation"
       ) {
+        continue;
+      }
+      if (isFeatureEnabled("element") === false && name === elementComponent) {
         continue;
       }
 

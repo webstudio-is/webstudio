@@ -27,6 +27,7 @@ import {
   blockComponent,
   blockTemplateComponent,
   getIndexesWithinAncestors,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import {
@@ -471,9 +472,13 @@ export const WebstudioComponentCanvas = forwardRef<
     return <></>;
   }
 
-  let Component =
+  let Component: string | AnyComponent =
     components.get(instance.component) ??
     (MissingComponentStub as AnyComponent);
+
+  if (instance.component === elementComponent) {
+    Component = instance.tag ?? "div";
+  }
 
   if (instance.component === collectionComponent) {
     const data = instanceProps.data;
@@ -662,7 +667,13 @@ export const WebstudioComponentPreview = forwardRef<
     return <></>;
   }
 
-  let Component = components.get(instance.component);
+  let Component: undefined | string | AnyComponent = components.get(
+    instance.component
+  );
+
+  if (instance.component === elementComponent) {
+    Component = instance.tag ?? "div";
+  }
 
   if (instance.component === blockComponent) {
     Component = Block;

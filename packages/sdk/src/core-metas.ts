@@ -7,11 +7,14 @@ import {
   HtmlElementIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
+import * as normalize from "./__generated__/normalize.css";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
+import { tagProperty } from "./runtime";
+import { tags } from "./__generated__/tags";
 
 export const rootComponent = "ws:root";
 
@@ -32,10 +35,19 @@ export const elementComponent = "ws:element";
 const elementMeta: WsComponentMeta = {
   label: "Element",
   icon: HtmlElementIcon,
+  // convert [object Module] to [object Object] to enable structured cloning
+  presetStyle: { ...normalize },
 };
 
 const elementPropsMeta: WsComponentPropsMeta = {
-  props: {},
+  props: {
+    [tagProperty]: {
+      type: "string",
+      control: "tag",
+      required: true,
+      options: tags,
+    },
+  },
 };
 
 export const portalComponent = "Slot";

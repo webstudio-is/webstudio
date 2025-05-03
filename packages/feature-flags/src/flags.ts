@@ -5,3 +5,4 @@ export const aiRadixComponents = false;
 export const animation = false;
 export const videoAnimation = false;
 export const resourceProp = false;
+export const element = false;

@@ -30,6 +30,7 @@ import {
   Prop,
   parseComponentName,
   Props,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -171,14 +172,16 @@ const getLabelFromComponentName = (component: Instance["component"]) => {
 };
 
 export const getInstanceLabel = (
-  instance: { component: string; label?: string },
+  instance: { component: string; label?: string; tag?: string },
   meta: { label?: string }
 ) => {
-  return (
-    instance.label ||
-    meta.label ||
-    getLabelFromComponentName(instance.component)
-  );
+  if (instance.label) {
+    return instance.label;
+  }
+  if (instance.component === elementComponent && instance.tag) {
+    return `<${instance.tag}>`;
+  }
+  return meta.label || getLabelFromComponentName(instance.component);
 };
 
 export const findAllEditableInstanceSelector = ({

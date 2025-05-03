@@ -68,3 +68,20 @@ export const elementsByTag: Record<string, Element> = ${JSON.stringify(elementsB
 const contentModelFile = "./src/__generated__/elements.ts";
 await mkdir(dirname(contentModelFile), { recursive: true });
 await writeFile(contentModelFile, contentModel);
+
+const tags: string[] = [];
+for (const [tag, element] of Object.entries(elementsByTag)) {
+  if (element.categories.includes("metadata")) {
+    continue;
+  }
+  // @todo remove when element insert can adapt to parent
+  if (element.categories.includes("none")) {
+    continue;
+  }
+  tags.push(tag);
+}
+const tagsContent = `export const tags: string[] = ${JSON.stringify(tags, null, 2)};
+`;
+const tagsFile = "../sdk/src/__generated__/tags.ts";
+await mkdir(dirname(tagsFile), { recursive: true });
+await writeFile(tagsFile, tagsContent);

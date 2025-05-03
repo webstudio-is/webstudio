@@ -42,7 +42,7 @@ export const TagControl = ({ meta, prop }: ControlProps<"tag">) => {
         }}
         getDescription={(item) => (
           <Box css={{ width: theme.spacing[28] }}>
-            {elementsByTag[item].description}
+            {elementsByTag[item]?.description}
           </Box>
         )}
       />
