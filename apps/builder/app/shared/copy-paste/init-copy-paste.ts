@@ -3,7 +3,7 @@ import {
   $authTokenPermissions,
   $textEditingInstanceSelector,
 } from "../nano-states";
-import * as instance from "./plugin-instance";
+import { instanceText, instanceJson } from "./plugin-instance";
 import * as markdown from "./plugin-markdown";
 import * as webflow from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
@@ -64,7 +64,7 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
 
 const defaultMimeType = "application/json";
 
-type Plugin = {
+export type Plugin = {
   mimeType?: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
@@ -134,7 +134,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instance, markdown, webflow],
+    plugins: [instanceJson, instanceText, markdown, webflow],
     signal,
   });
 };
