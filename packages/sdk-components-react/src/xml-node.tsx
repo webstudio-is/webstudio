@@ -71,7 +71,7 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
     };
 
     return (
-      <div {...props}>
+      <div {...props} style={{ backgroundColor: "rgba(255,255,255,1)" }}>
         <span>
           <span style={{ color: "#800000" }}>&lt;{elementName}</span>
           {attributeEntries.length > 0 && renderAttributes(attributeEntries)}
