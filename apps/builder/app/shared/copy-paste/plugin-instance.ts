@@ -23,6 +23,7 @@ import {
 } from "../instance-utils";
 import { $selectedInstancePath } from "../awareness";
 import { findAvailableVariables } from "../data-variables";
+import type { Plugin } from "./init-copy-paste";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -69,9 +70,7 @@ const parse = (clipboardData: string): InstanceData | undefined => {
   }
 };
 
-export const mimeType = "application/json";
-
-export const getPortalFragmentSelector = (
+const getPortalFragmentSelector = (
   instances: Instances,
   instanceSelector: InstanceSelector
 ) => {
@@ -152,7 +151,7 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
   return insertable;
 };
 
-export const onPaste = (clipboardData: string) => {
+const onPaste = (clipboardData: string) => {
   const fragment = parse(clipboardData);
 
   if (fragment === undefined) {
@@ -186,7 +185,7 @@ export const onPaste = (clipboardData: string) => {
   return true;
 };
 
-export const onCopy = () => {
+const onCopy = () => {
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   if (selectedInstanceSelector === undefined) {
     return;
@@ -198,7 +197,7 @@ export const onCopy = () => {
   return stringify(data);
 };
 
-export const onCut = () => {
+const onCut = () => {
   const instancePath = $selectedInstancePath.get();
   if (instancePath === undefined) {
     return;
@@ -218,4 +217,16 @@ export const onCut = () => {
     return;
   }
   return stringify(data);
+};
+
+export const instanceText: Plugin = {
+  mimeType: "text/plain",
+  onCopy,
+  onCut,
+  onPaste,
+};
+
+export const instanceJson: Plugin = {
+  mimeType: "application/json",
+  onPaste,
 };

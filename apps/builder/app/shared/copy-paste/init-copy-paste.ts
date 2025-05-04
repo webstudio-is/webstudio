@@ -3,7 +3,7 @@ import {
   $authTokenPermissions,
   $textEditingInstanceSelector,
 } from "../nano-states";
-import * as instance from "./plugin-instance";
+import { instanceText, instanceJson } from "./plugin-instance";
 import * as markdown from "./plugin-markdown";
 import * as webflow from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
@@ -62,10 +62,8 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-const defaultMimeType = "application/json";
-
-type Plugin = {
-  mimeType?: string;
+export type Plugin = {
+  mimeType: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
   onPaste?: (data: string) => boolean | Promise<boolean>;
@@ -83,7 +81,7 @@ const initPlugins = ({
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onCopy } of plugins) {
+    for (const { mimeType, onCopy } of plugins) {
       const data = onCopy?.();
 
       if (data) {
@@ -99,7 +97,7 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    for (const { mimeType = defaultMimeType, onCut } of plugins) {
+    for (const { mimeType, onCut } of plugins) {
       const data = onCut?.();
       if (data) {
         // must prevent default, otherwise setData() will not work
@@ -115,7 +113,7 @@ const initPlugins = ({
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onPaste } of plugins) {
+    for (const { mimeType, onPaste } of plugins) {
       // this shouldn't matter, but just in case
       event.preventDefault();
       const data = event.clipboardData?.getData(mimeType).trim();
@@ -134,7 +132,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instance, markdown, webflow],
+    plugins: [instanceJson, instanceText, markdown, webflow],
     signal,
   });
 };
