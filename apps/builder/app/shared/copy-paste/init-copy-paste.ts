@@ -62,10 +62,8 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-const defaultMimeType = "application/json";
-
 export type Plugin = {
-  mimeType?: string;
+  mimeType: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
   onPaste?: (data: string) => boolean | Promise<boolean>;
@@ -83,7 +81,7 @@ const initPlugins = ({
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onCopy } of plugins) {
+    for (const { mimeType, onCopy } of plugins) {
       const data = onCopy?.();
 
       if (data) {
@@ -99,7 +97,7 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    for (const { mimeType = defaultMimeType, onCut } of plugins) {
+    for (const { mimeType, onCut } of plugins) {
       const data = onCut?.();
       if (data) {
         // must prevent default, otherwise setData() will not work
@@ -115,7 +113,7 @@ const initPlugins = ({
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onPaste } of plugins) {
+    for (const { mimeType, onPaste } of plugins) {
       // this shouldn't matter, but just in case
       event.preventDefault();
       const data = event.clipboardData?.getData(mimeType).trim();
