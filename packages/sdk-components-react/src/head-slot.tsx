@@ -26,7 +26,6 @@ export const HeadSlot = forwardRef<
     <div
       ref={ref}
       style={{
-        backgroundColor: "rgba(255,255,255,1)",
         padding: "8px",
         position: "fixed",
         top: 0,
