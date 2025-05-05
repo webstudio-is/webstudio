@@ -38,7 +38,6 @@ import {
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import {
-  findClosestInsertable,
   getComponentTemplateData,
   getInstanceLabel,
   insertWebstudioFragmentAt,
