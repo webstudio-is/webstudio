@@ -66,12 +66,14 @@ export const PageSettingsMeta = ({
   siteName,
   pageMeta,
   imageLoader,
+  assetBaseUrl,
 }: {
   url?: string;
   host: string;
   siteName: string;
   pageMeta: PageMeta;
   imageLoader: ImageLoader;
+  assetBaseUrl: string;
 }) => {
   const metas: // | { title: string }
   { property?: string; name?: string; content: string }[] = [];
@@ -121,7 +123,7 @@ export const PageSettingsMeta = ({
     metas.push({
       property: "og:image",
       content: `https://${host}${imageLoader({
-        src: pageMeta.socialImageAssetName,
+        src: `${assetBaseUrl}${pageMeta.socialImageAssetName}`,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",
       })}`,

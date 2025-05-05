@@ -285,6 +285,7 @@ const Outlet = () => {
         host={host}
         siteName={siteName}
         imageLoader={imageLoader}
+        assetBaseUrl={assetBaseUrl}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
     </ReactSdkContext.Provider>
