@@ -20,7 +20,7 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
   let socialImageUrl = pageMeta.socialImageUrl;
   if (pageMeta.socialImageAssetName) {
     socialImageUrl = `${origin}${imageLoader({
-      src: pageMeta.socialImageAssetName,
+      src: `${assetBaseUrl}/${pageMeta.socialImageAssetName}`,
       // Do not transform social image (not enough information do we need to do this)
       format: "raw",
     })}`;

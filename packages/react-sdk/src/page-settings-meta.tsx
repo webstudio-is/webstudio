@@ -123,9 +123,7 @@ export const PageSettingsMeta = ({
     metas.push({
       property: "og:image",
       content: `https://${host}${imageLoader({
-        src: assetBaseUrl
-          ? `${assetBaseUrl}${pageMeta.socialImageAssetName}`
-          : pageMeta.socialImageAssetName,
+        src: `${assetBaseUrl}${pageMeta.socialImageAssetName}`,
         // Do not transform social image (not enough information do we need to do this)
         format: "raw",
       })}`,
