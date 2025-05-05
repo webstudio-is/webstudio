@@ -10,7 +10,16 @@ import {
   blockComponent,
   collectionComponent,
   descendantComponent,
+  elementComponent,
 } from "./core-metas";
+
+const elementMeta: TemplateMeta = {
+  category: "general",
+  order: 0,
+  description:
+    "An HTML element is a core building block for web pages, structuring and displaying content like text, images, and links.",
+  template: <ws.element ws:tag="div"></ws.element>,
+};
 
 const collectionItem = new Parameter("collectionItem");
 
@@ -97,6 +106,7 @@ const blockMeta: TemplateMeta = {
 };
 
 export const coreTemplates = {
+  [elementComponent]: elementMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,

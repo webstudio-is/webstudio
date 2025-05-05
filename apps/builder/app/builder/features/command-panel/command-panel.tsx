@@ -24,6 +24,7 @@ import {
   componentCategories,
   collectionComponent,
   parseComponentName,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
@@ -160,6 +161,9 @@ const $componentOptions = computed(
         namespace === "@webstudio-is/sdk-components-animation" &&
         shortName === "VideoAnimation"
       ) {
+        continue;
+      }
+      if (isFeatureEnabled("element") === false && name === elementComponent) {
         continue;
       }
 
