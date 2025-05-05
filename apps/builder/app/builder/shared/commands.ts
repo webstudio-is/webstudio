@@ -16,6 +16,7 @@ import {
   $isContentMode,
   $registeredComponentMetas,
   findBlockSelector,
+  $project,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -439,6 +440,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
+        const project = $project.get();
+        if (project === undefined) {
+          return;
+        }
         if ($isDesignMode.get() === false) {
           builderApi.toast.info("Duplicating is only allowed in design mode.");
           return;
@@ -462,6 +467,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
               ...data,
               startingInstanceId: parentItem.instanceSelector[0],
             }),
+            projectId: project.id,
           });
           const newRootInstanceId = newInstanceIds.get(
             selectedItem.instance.id

@@ -7,10 +7,7 @@ import type {
   Instance,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
-import {
-  findClosestInsertable,
-  insertWebstudioFragmentAt,
-} from "../instance-utils";
+import { insertWebstudioFragmentAt } from "../instance-utils";
 import { $breakpoints } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 import { denormalizeSrcProps } from "./asset-upload";
@@ -213,12 +210,7 @@ export const onPaste = async (clipboardData: string) => {
     return false;
   }
   fragment = await denormalizeSrcProps(fragment);
-  const insertable = findClosestInsertable(fragment);
-  if (insertable === undefined) {
-    return false;
-  }
-  insertWebstudioFragmentAt(fragment, insertable);
-  return true;
+  return insertWebstudioFragmentAt(fragment);
 };
 
 export const __testing__ = {

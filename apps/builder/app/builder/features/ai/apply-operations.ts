@@ -10,7 +10,6 @@ import { serverSyncStore } from "~/shared/sync";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,
-  findClosestInsertable,
   insertWebstudioFragmentAt,
   updateWebstudioData,
   type Insertable,
@@ -76,11 +75,10 @@ const insertTemplateByOp = (
 
   const instanceSelector = computeSelectorForInstanceId(operation.addTo);
   if (instanceSelector) {
-    let insertable: Insertable = {
+    const insertable: Insertable = {
       parentSelector: instanceSelector,
       position: operation.addAtIndex + 1,
     };
-    insertable = findClosestInsertable(fragment, insertable) ?? insertable;
     insertWebstudioFragmentAt(fragment, insertable);
     return rootInstanceIds;
   }

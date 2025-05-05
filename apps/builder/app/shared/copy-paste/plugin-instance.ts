@@ -9,7 +9,11 @@ import {
   isComponentDetachable,
   portalComponent,
 } from "@webstudio-is/sdk";
-import { $selectedInstanceSelector, $instances } from "../nano-states";
+import {
+  $selectedInstanceSelector,
+  $instances,
+  $project,
+} from "../nano-states";
 import type { InstanceSelector } from "../tree-utils";
 import {
   deleteInstanceMutable,
@@ -152,9 +156,9 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
 };
 
 const onPaste = (clipboardData: string) => {
+  const project = $project.get();
   const fragment = parse(clipboardData);
-
-  if (fragment === undefined) {
+  if (fragment === undefined || project === undefined) {
     return false;
   }
 
@@ -171,6 +175,7 @@ const onPaste = (clipboardData: string) => {
         ...data,
         startingInstanceId: pasteTarget.parentSelector[0],
       }),
+      projectId: project.id,
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {

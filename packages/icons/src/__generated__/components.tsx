@@ -2738,36 +2738,6 @@ export const HomeIcon: IconComponent = forwardRef(
 );
 HomeIcon.displayName = "HomeIcon";
 
-export const HtmlElementIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M13.556 2H3.444C2.647 2 2 2.647 2 3.444v10.112C2 14.353 2.647 15 3.444 15h10.112c.797 0 1.444-.647 1.444-1.444V3.444C15 2.647 14.353 2 13.556 2Z"
-        />
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M10.5 10 12 8.5 10.5 7M6 7 4.5 8.5 6 10m3.188-4.5-1.876 6"
-        />
-      </svg>
-    );
-  }
-);
-HtmlElementIcon.displayName = "HtmlElementIcon";
-
 export const ImageIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

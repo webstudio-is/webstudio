@@ -1050,6 +1050,7 @@ describe("insert webstudio fragment copy", () => {
         assets: [createImageAsset("asset1", "name", "another_project")],
       },
       availableVariables: [],
+      projectId: "current_project",
     });
     expect(Array.from(data.assets.values())).toEqual([
       createImageAsset("asset1", "name", "current_project"),
@@ -1068,6 +1069,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "current_project",
     });
     expect(Array.from(data.assets.values())).toEqual([
       // preserve any user changes
@@ -1102,6 +1104,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.breakpoints.values())).toEqual([
       { id: "existing_base", label: "base" },
@@ -1141,6 +1144,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSources.values())).toEqual([
       { id: "token1", type: "token", name: "oldLabel" },
@@ -1193,6 +1197,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSourceSelections.values())).toEqual([
       {
@@ -1258,6 +1263,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSourceSelections.values())).toEqual([
       { instanceId: "fragment", values: ["localId", "tokenId"] },

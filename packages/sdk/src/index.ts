@@ -22,6 +22,7 @@ export * from "./resources-generator";
 export * from "./page-meta-generator";
 export * from "./url-pattern";
 export * from "./css";
+export * from "./__generated__/tags";
 
 export type {
   AnimationAction,

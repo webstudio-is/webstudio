@@ -207,10 +207,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
               closeCommandPanel();
               const fragment = getComponentTemplateData(component);
               if (fragment) {
-                const insertable = findClosestInsertable(fragment);
-                if (insertable) {
-                  insertWebstudioFragmentAt(fragment, insertable);
-                }
+                insertWebstudioFragmentAt(fragment);
               }
             }}
           >

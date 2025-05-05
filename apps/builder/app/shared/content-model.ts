@@ -398,7 +398,7 @@ export const isTreeSatisfyingContentModel = ({
   return isSatisfying;
 };
 
-const richTextContentTags = new Set<undefined | string>([
+export const richTextContentTags = new Set<undefined | string>([
   "sup",
   "sub",
   "b",

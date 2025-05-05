@@ -74,10 +74,6 @@ for (const [tag, element] of Object.entries(elementsByTag)) {
   if (element.categories.includes("metadata")) {
     continue;
   }
-  // @todo remove when element insert can adapt to parent
-  if (element.categories.includes("none")) {
-    continue;
-  }
   tags.push(tag);
 }
 const tagsContent = `export const tags: string[] = ${JSON.stringify(tags, null, 2)};

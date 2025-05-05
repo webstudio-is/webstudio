@@ -37,7 +37,6 @@ import {
   $registeredTemplates,
 } from "~/shared/nano-states";
 import {
-  findClosestInsertable,
   getComponentTemplateData,
   getInstanceLabel,
   insertWebstudioFragmentAt,
@@ -218,10 +217,7 @@ export const ComponentsPanel = ({
   const handleInsert = (component: string) => {
     const fragment = getComponentTemplateData(component);
     if (fragment) {
-      const insertable = findClosestInsertable(fragment);
-      if (insertable) {
-        insertWebstudioFragmentAt(fragment, insertable);
-      }
+      insertWebstudioFragmentAt(fragment);
     }
     onClose();
   };
