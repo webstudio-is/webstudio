@@ -166,8 +166,9 @@ const parse = (clipboardData: string) => {
 };
 
 export const onPaste = async (clipboardData: string) => {
+  const project = $project.get();
   const wfData = parse(clipboardData);
-  if (wfData === undefined) {
+  if (wfData === undefined || project === undefined) {
     return false;
   }
 
@@ -190,6 +191,7 @@ export const onPaste = async (clipboardData: string) => {
         ...data,
         startingInstanceId: insertable.parentSelector[0],
       }),
+      projectId: project.id,
     });
 
     const children = fragment.children

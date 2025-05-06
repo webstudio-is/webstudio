@@ -4,6 +4,7 @@ import {
   $textEditingInstanceSelector,
 } from "../nano-states";
 import { instanceText, instanceJson } from "./plugin-instance";
+import { html } from "./plugin-html";
 import * as markdown from "./plugin-markdown";
 import * as webflow from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
@@ -132,7 +133,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instanceJson, instanceText, markdown, webflow],
+    plugins: [instanceJson, instanceText, html, markdown, webflow],
     signal,
   });
 };

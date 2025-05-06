@@ -17,7 +17,7 @@
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "aria-query": "^5.3.2",
-    "parse5": "7.2.1"
+    "parse5": "7.3.0"
   },
   "exports": {
     "webstudio": "./src/index.ts"

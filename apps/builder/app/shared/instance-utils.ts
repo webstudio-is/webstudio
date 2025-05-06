@@ -41,11 +41,11 @@ import {
   $registeredComponentMetas,
   $dataSources,
   $assets,
-  $project,
   $breakpoints,
   $pages,
   $resources,
   $registeredTemplates,
+  $project,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -77,6 +77,7 @@ import {
   findClosestNonTextualContainer,
   isRichTextTree,
 } from "./content-model";
+import type { Project } from "@webstudio-is/project";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -259,8 +260,17 @@ export const insertInstanceChildrenMutable = (
 
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
-  insertable: Insertable
-) => {
+  insertable?: Insertable
+): boolean => {
+  // cannot insert empty fragment
+  if (fragment.children.length === 0) {
+    return false;
+  }
+  const project = $project.get();
+  insertable = findClosestInsertable(fragment, insertable) ?? insertable;
+  if (project === undefined || insertable === undefined) {
+    return false;
+  }
   let newInstanceSelector: undefined | InstanceSelector;
   updateWebstudioData((data) => {
     const instancePath = getInstancePath(
@@ -277,6 +287,7 @@ export const insertWebstudioFragmentAt = (
         ...data,
         startingInstanceId: instancePath[0].instance.id,
       }),
+      projectId: project.id,
     });
     const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -314,6 +325,7 @@ export const insertWebstudioFragmentAt = (
   if (newInstanceSelector) {
     selectInstance(newInstanceSelector);
   }
+  return true;
 };
 
 export const getComponentTemplateData = (
@@ -349,6 +361,10 @@ export const reparentInstanceMutable = (
   sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
+  const project = $project.get();
+  if (project === undefined) {
+    return;
+  }
   const [rootInstanceId] = sourceInstanceSelector;
   // delect is target is one of own descendants
   // prevent reparenting to avoid infinite loop
@@ -420,6 +436,7 @@ export const reparentInstanceMutable = (
       ...data,
       startingInstanceId: dropTarget.parentSelector[0],
     }),
+    projectId: project.id,
   });
   const [newParentId] = dropTarget.parentSelector;
   const newRootInstanceId =
@@ -810,10 +827,12 @@ export const insertWebstudioFragmentCopy = ({
   data,
   fragment,
   availableVariables,
+  projectId,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
+  projectId: Project["id"];
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -821,10 +840,6 @@ export const insertWebstudioFragmentCopy = ({
     newInstanceIds,
     newDataSourceIds,
   };
-  const projectId = $project.get()?.id;
-  if (projectId === undefined) {
-    return newDataIds;
-  }
 
   const fragmentInstances: Instances = new Map();
   const portalContentRootIds = new Set<Instance["id"]>();
