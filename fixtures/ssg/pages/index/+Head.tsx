@@ -25,7 +25,7 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
       format: "raw",
     })}`;
   }
-  const isTwitterCardSizeExists = pageMeta.custom.some(
+  const isTwitterCardSizeDefined = pageMeta.custom.some(
     (meta) => meta.property === "twitter:card"
   );
   return (
@@ -58,9 +58,11 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
       {pageMeta.custom.map(({ property, content }) => (
         <meta key={property} property={property} content={content} />
       ))}
-      {isTwitterCardSizeExists === false && (
-        <meta property="twitter:card" content="summary_large_image" />
-      )}
+      {(pageMeta.socialImageAssetName !== undefined ||
+        pageMeta.socialImageUrl !== undefined) &&
+        isTwitterCardSizeDefined === false && (
+          <meta property="twitter:card" content="summary_large_image" />
+        )}
 
       {favIconAsset && (
         <link
