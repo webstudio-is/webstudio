@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { renderTemplate, ws } from "@webstudio-is/template";
+import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromHtml } from "./html";
 
 test("generate instances from html", () => {
@@ -187,6 +187,38 @@ test("do not wrap text with span when spotted near link", () => {
         div
         <ws.element ws:tag="a">link</ws.element>
       </ws.element>
+    )
+  );
+});
+
+test("collapse any spacing characters inside text", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        line
+        another line
+      </div>
+   `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">{" line another line "}</ws.element>
+    )
+  );
+});
+
+test("generate style attribute as local styles", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div style="display: inline"></div>
+   `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element
+        ws:tag="div"
+        ws:style={css`
+          display: inline;
+        `}
+      ></ws.element>
     )
   );
 });
