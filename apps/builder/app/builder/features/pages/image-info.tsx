@@ -44,11 +44,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         >
           <Grid flow={"column"} gap={1} align={"center"}>
             <ImageIcon />
-            <Text
-              truncate
-              variant={"labelsTitleCase"}
-              css={{ overflow: "hidden" }}
-            >
+            <Text truncate variant={"labelsTitleCase"}>
               {asset.name}
             </Text>
           </Grid>
