@@ -9,10 +9,15 @@ import {
   elementComponent,
   Prop,
   tags,
+  StyleDecl,
+  Breakpoint,
+  StyleSource,
+  StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -65,12 +70,43 @@ const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
 export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   const attributeTypes = getAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
+  const styleSourceSelections: StyleSourceSelection[] = [];
+  const styleSources: StyleSource[] = [];
+  const styles: StyleDecl[] = [];
+  const breakpoints: Breakpoint[] = [];
   const props: Prop[] = [];
   let lastId = -1;
   const getNewId = () => {
     lastId += 1;
     return lastId.toString();
   };
+
+  let baseBreakpoint: undefined | Breakpoint;
+  const getBaseBreakpointId = () => {
+    if (baseBreakpoint) {
+      return baseBreakpoint.id;
+    }
+    baseBreakpoint = { id: "base", label: "" };
+    breakpoints.push(baseBreakpoint);
+    return baseBreakpoint.id;
+  };
+  const createLocalStyles = (instanceId: string, css: string) => {
+    const localStyleSource: StyleSource = {
+      type: "local",
+      id: `${instanceId}:ws:style`,
+    };
+    styleSources.push(localStyleSource);
+    styleSourceSelections.push({ instanceId, values: [localStyleSource.id] });
+    for (const { property, value } of parseCss(`.styles{${css}}`)) {
+      styles.push({
+        styleSourceId: localStyleSource.id,
+        breakpointId: getBaseBreakpointId(),
+        property: camelCaseProperty(property),
+        value,
+      });
+    }
+  };
+
   const convertElementToInstance = (node: ElementNode) => {
     if (!tags.includes(node.tagName)) {
       return;
@@ -92,6 +128,11 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
         attributeTypes.get(`${node.tagName}:${name}`) ??
         attributeTypes.get(name) ??
         "string";
+      // ignore style attribute to not conflict with react
+      if (attr.name === "style") {
+        createLocalStyles(instanceId, attr.value);
+        continue;
+      }
       if (type === "string") {
         props.push({ id, instanceId, name, type, value: attr.value });
         continue;
@@ -124,7 +165,8 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
         }
         let child: Instance["children"][number] = {
           type: "text",
-          value: childNode.value,
+          // collapse spacing characters inside of text to avoid preserved newlines
+          value: childNode.value.replaceAll(/\s+/g, " "),
         };
         // when element has content elements other than supported by rich text
         // wrap its text children with span, for example
@@ -153,6 +195,7 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     }
     return { type: "id" as const, value: instance.id };
   };
+
   const documentFragment = parseFragment(html, { scriptingEnabled: false });
   const children: Instance["children"] = [];
   for (const childNode of documentFragment.childNodes) {
@@ -169,10 +212,10 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     props,
     dataSources: [],
     resources: [],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: [],
-    breakpoints: [],
+    styleSourceSelections,
+    styleSources,
+    styles,
+    breakpoints,
     assets: [],
   };
 };
