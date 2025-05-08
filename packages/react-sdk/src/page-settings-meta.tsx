@@ -137,5 +137,16 @@ export const PageSettingsMeta = ({
 
   metas.push(...pageMeta.custom);
 
+  const isTwitterCardSizeDefined = pageMeta.custom.some(
+    (meta) => meta.property === "twitter:card"
+  );
+  if (
+    (pageMeta.socialImageAssetName !== undefined ||
+      pageMeta.socialImageUrl !== undefined) &&
+    isTwitterCardSizeDefined === false
+  ) {
+    metas.push({ property: "twitter:card", content: "summary_large_image" });
+  }
+
   return metas.map((meta, index) => <Meta key={index} {...meta} />);
 };
