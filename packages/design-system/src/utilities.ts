@@ -145,5 +145,5 @@ export const useResize = ({
 export const truncate = (): CSS => ({
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
-  overflow: "clip",
+  overflow: "hidden",
 });
