@@ -39,6 +39,8 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { useIds } from "../form-utils";
 import type { BuilderMode } from "../nano-states";
 
+export const MARKETPLACE_SHARE_LINK = "wstd-marketplace-link";
+
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
@@ -109,7 +111,10 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
   };
 
   const saveCustomLinkName = () => {
-    if (customLinkName.length === 0) {
+    if (
+      customLinkName.length === 0 ||
+      customLinkName === MARKETPLACE_SHARE_LINK
+    ) {
       return;
     }
 
@@ -137,7 +142,12 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           <Label htmlFor={ids.name}>Name</Label>
           <InputField
             id={ids.name}
-            color={customLinkName.length === 0 ? "error" : undefined}
+            color={
+              customLinkName.length === 0 ||
+              customLinkName.trim() === MARKETPLACE_SHARE_LINK
+                ? "error"
+                : undefined
+            }
             value={customLinkName}
             onChange={(event) => setCustomLinkName(event.target.value)}
             onKeyDown={(event) => {
