@@ -462,10 +462,15 @@ export const isRichTextTree = ({
   if (instance === undefined) {
     return false;
   }
+  const tag = getTag({ instance, metas, props });
+  const elementContentModel = tag ? elementsByTag[tag] : undefined;
   const componentContentModel = getComponentContentModel(
     metas.get(instance.component)
   );
-  const isRichText = componentContentModel.children.includes("rich-text");
+  const isRichText =
+    (elementContentModel === undefined ||
+      elementContentModel.children.length > 0) &&
+    componentContentModel.children.includes("rich-text");
   // only empty instance with rich text content can be edited
   if (instance.children.length === 0) {
     return isRichText;
