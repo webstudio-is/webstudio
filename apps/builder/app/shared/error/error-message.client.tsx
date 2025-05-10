@@ -16,6 +16,8 @@ const pageStyle = css({
   inset: 0,
   background: theme.colors.brandBackgroundDashboard,
   paddingTop: "10vh",
+  // prevent global root styles override error color
+  color: theme.colors.black,
 });
 
 export const ErrorMessage = ({

@@ -230,11 +230,9 @@ export const usePropsLogic = ({
     systemProps.push({
       propName: textContentAttribute,
       meta: {
-        label: "Text Content",
         required: false,
         control: "textContent",
         type: "string",
-        defaultValue: "",
       },
     });
   }

@@ -1,5 +1,5 @@
 import { micromark } from "micromark";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -182,9 +182,9 @@ export const FieldLabel = ({
   children,
 }: {
   /**
-   * Markdown text to show in tooltip
+   * Markdown text to show in tooltip or react element
    */
-  description?: string;
+  description?: string | ReactNode;
   /**
    * when true means field has value and colored true
    */
@@ -193,6 +193,18 @@ export const FieldLabel = ({
   children: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  if (typeof description === "string") {
+    description = (
+      <Text
+        css={{
+          "> *": { marginTop: 0 },
+        }}
+        dangerouslySetInnerHTML={{ __html: micromark(description) }}
+      ></Text>
+    );
+  } else if (description) {
+    description = <Text>{description}</Text>;
+  }
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
       {/* prevent label growing */}
@@ -221,16 +233,7 @@ export const FieldLabel = ({
               <Text variant="titles" css={{ textTransform: "none" }}>
                 {children}
               </Text>
-              {description && (
-                <Text
-                  css={{
-                    "> *": {
-                      marginTop: 0,
-                    },
-                  }}
-                  dangerouslySetInnerHTML={{ __html: micromark(description) }}
-                ></Text>
-              )}
+              {description}
               {resettable && (
                 <Button
                   color="dark"

@@ -799,6 +799,22 @@ describe("rich text tree", () => {
       })
     ).toEqual(["divId", "bodyId"]);
   });
+
+  test("does not treat image component as rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <$.Image ws:id="imgId" />
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["imgId", "divId", "bodyId"],
+      })
+    ).toEqual(undefined);
+  });
 });
 
 describe("closest container", () => {

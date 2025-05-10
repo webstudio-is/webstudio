@@ -1,24 +1,24 @@
 import { useId, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import { TextArea } from "@webstudio-is/design-system";
+import { Flex, rawTheme, Text, TextArea } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
+import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
 import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
+import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   type ControlProps,
   useLocalValue,
   VerticalLayout,
   $selectedInstanceScope,
-  Label,
   updateExpressionValue,
   useBindingState,
-  humanizeAttribute,
 } from "../shared";
+import { FieldLabel } from "../property-label";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -32,22 +32,20 @@ const updateChildren = (
   type: "text" | "expression",
   value: string
 ) => {
-  serverSyncStore.createTransaction([$instances], (instances) => {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
+  updateWebstudioData((data) => {
+    const instance = data.instances.get(instanceId);
+    if (instance) {
+      instance.children = [{ type, value }];
     }
-    instance.children = [{ type, value }];
   });
 };
 
 export const TextContent = ({
   instanceId,
-  meta,
-  propName,
   computedValue,
 }: ControlProps<"textContent">) => {
   const instance = useInstance(instanceId);
+  const hasChildren = (instance?.children.length ?? 0) > 0;
   // text content control is rendered only when empty or single child are present
   const child = instance?.children?.[0] ?? { type: "text", value: "" };
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
@@ -58,7 +56,6 @@ export const TextContent = ({
     }
   });
   const id = useId();
-  const label = humanizeAttribute(meta.label || propName);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;
@@ -76,13 +73,37 @@ export const TextContent = ({
   return (
     <VerticalLayout
       label={
-        <Label
-          htmlFor={id}
-          description={meta.description}
-          readOnly={overwritable === false}
+        <FieldLabel
+          description={
+            <>
+              Plain text content that can be bound to either a variable or a
+              resource value.
+              {overwritable === false && (
+                <Flex gap="1">
+                  <AlertIcon
+                    color={rawTheme.colors.backgroundAlertMain}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <Text>
+                    The value is controlled by an expression and cannot be
+                    changed.
+                  </Text>
+                </Flex>
+              )}
+            </>
+          }
+          resettable={hasChildren}
+          onReset={() => {
+            updateWebstudioData((data) => {
+              const instance = data.instances.get(instanceId);
+              if (instance) {
+                instance.children = [];
+              }
+            });
+          }}
         >
-          {label}
-        </Label>
+          Text Content
+        </FieldLabel>
       }
     >
       <BindingControl>
@@ -102,7 +123,7 @@ export const TextContent = ({
             aliases={aliases}
             validate={(value) => {
               if (value !== undefined && typeof value !== "string") {
-                return `${label} expects a string value`;
+                return `Text Content expects a string value`;
               }
             }}
             variant={variant}
