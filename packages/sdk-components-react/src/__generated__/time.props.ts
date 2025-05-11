@@ -215,13 +215,6 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "medium",
     options: ["full", "long", "medium", "short", "none"],
   },
-  datetime: {
-    required: false,
-    control: "text",
-    type: "string",
-    defaultValue: "dateTime attribute is not set",
-    description: "Machine-readable value",
-  },
   language: {
     required: false,
     control: "select",
