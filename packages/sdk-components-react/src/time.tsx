@@ -1,4 +1,4 @@
-import { forwardRef, type ElementRef } from "react";
+import { forwardRef, type ComponentProps, type ElementRef } from "react";
 
 const languages = [
   "af",
@@ -345,8 +345,7 @@ const parseDate = (datetimeString: string) => {
   }
 };
 
-type TimeProps = {
-  dateTime?: string;
+type TimeProps = Pick<ComponentProps<"time">, "dateTime"> & {
   language?: Language;
   country?: Country;
   dateStyle?: DateStyle;
@@ -360,6 +359,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       country = DEFAULT_COUNTRY,
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
+      // native html attribute in react style
       dateTime = INITIAL_DATE_STRING,
       ...props
     },
