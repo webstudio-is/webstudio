@@ -119,26 +119,22 @@ export const Section = () => {
           items={[
             {
               child: <EyeOpenIcon />,
-              description:
-                "Content is fully visible and extends beyond the container if it exceeds its size.",
+              description: propertyDescriptions["overflowX:visible"],
               value: "visible",
             },
             {
               child: <CropIcon />,
-              description:
-                "Content that exceeds the container's size is clipped without scrollbars.",
+              description: propertyDescriptions["overflowX:clip"],
               value: "clip",
             },
             {
               child: <EyeClosedIcon />,
-              description:
-                "Content that exceeds the container's size is hidden without scrollbars.",
+              description: propertyDescriptions["overflowX:hidden"],
               value: "hidden",
             },
             {
               child: <AutoScrollIcon />,
-              description:
-                "Scrollbars are added to the container only when necessary, based on the content size.",
+              description: propertyDescriptions["overflowX:auto"],
               value: "auto",
             },
           ]}
