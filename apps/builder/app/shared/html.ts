@@ -108,6 +108,38 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   };
 
   const convertElementToInstance = (node: ElementNode) => {
+    if (node.tagName === "svg" && node.sourceCodeLocation) {
+      const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
+      const indent = startCol - 1;
+      const htmlFragment = html
+        .slice(startOffset, endOffset)
+        // try to preserve indentation
+        .split("\n")
+        .map((line, index) => {
+          if (index > 0 && /^\s+$/.test(line.slice(0, indent))) {
+            return line.slice(indent);
+          }
+          return line;
+        })
+        .join("\n");
+      const instance: Instance = {
+        type: "instance",
+        id: getNewId(),
+        component: "HtmlEmbed",
+        children: [],
+      };
+      instances.set(instance.id, instance);
+      const name = "code";
+      const codeProp: Prop = {
+        id: `${instance.id}:${name}`,
+        instanceId: instance.id,
+        name,
+        type: "string",
+        value: htmlFragment,
+      };
+      props.push(codeProp);
+      return { type: "id" as const, value: instance.id };
+    }
     if (!tags.includes(node.tagName)) {
       return;
     }
@@ -196,7 +228,10 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
     return { type: "id" as const, value: instance.id };
   };
 
-  const documentFragment = parseFragment(html, { scriptingEnabled: false });
+  const documentFragment = parseFragment(html, {
+    scriptingEnabled: false,
+    sourceCodeLocationInfo: true,
+  });
   const children: Instance["children"] = [];
   for (const childNode of documentFragment.childNodes) {
     if (defaultTreeAdapter.isElementNode(childNode)) {
