@@ -215,7 +215,7 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "medium",
     options: ["full", "long", "medium", "short", "none"],
   },
-  datetime: {
+  dateTime: {
     required: false,
     control: "text",
     type: "string",
