@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { css, renderTemplate, ws } from "@webstudio-is/template";
+import { $, css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromHtml } from "./html";
 
 test("generate instances from html", () => {
@@ -219,6 +219,28 @@ test("generate style attribute as local styles", () => {
           display: inline;
         `}
       ></ws.element>
+    )
+  );
+});
+
+test("paste svg as html embed", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <svg viewBox="0 0 20 20">
+          <rect x="5" y="5" width="10" height="10" />
+        </svg>
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <$.HtmlEmbed
+          code={`<svg viewBox="0 0 20 20">
+  <rect x="5" y="5" width="10" height="10" />
+</svg>`}
+        />
+      </ws.element>
     )
   );
 });
