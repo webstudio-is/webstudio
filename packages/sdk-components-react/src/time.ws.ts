@@ -23,5 +23,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["datetime", "language", "country", "dateStyle", "timeStyle"],
+  initialProps: ["dateTime", "language", "country", "dateStyle", "timeStyle"],
 };
