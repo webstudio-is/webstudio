@@ -31,6 +31,7 @@ import {
   parseComponentName,
   Props,
   elementComponent,
+  tags,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -62,6 +63,7 @@ import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import {
   $awareness,
+  $selectedInstancePath,
   $selectedPage,
   getInstancePath,
   selectInstance,
@@ -76,6 +78,7 @@ import {
 import {
   findClosestNonTextualContainer,
   isRichTextTree,
+  isTreeSatisfyingContentModel,
 } from "./content-model";
 import type { Project } from "@webstudio-is/project";
 
@@ -256,6 +259,80 @@ export const insertInstanceChildrenMutable = (
   } else {
     parentInstance.children.splice(dropTarget.position, 0, ...children);
   }
+};
+
+export const insertWebstudioElementAt = (insertable?: Insertable) => {
+  const instances = $instances.get();
+  const props = $props.get();
+  const metas = $registeredComponentMetas.get();
+  // find closest container and try to match new element with it
+  if (insertable === undefined) {
+    const instancePath = $selectedInstancePath.get();
+    if (instancePath === undefined) {
+      return false;
+    }
+    const [{ instanceSelector }] = instancePath;
+    const containerSelector = findClosestNonTextualContainer({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+    });
+    const insertableIndex = instanceSelector.length - containerSelector.length;
+    if (insertableIndex === 0) {
+      insertable = {
+        parentSelector: containerSelector,
+        position: "end",
+      };
+    } else {
+      const containerInstance = instances.get(containerSelector[0]);
+      if (containerInstance === undefined) {
+        return false;
+      }
+      const lastChildInstanceId = instanceSelector[insertableIndex - 1];
+      const lastChildPosition = containerInstance.children.findIndex(
+        (child) => child.type === "id" && child.value === lastChildInstanceId
+      );
+      insertable = {
+        parentSelector: containerSelector,
+        position: lastChildPosition + 1,
+      };
+    }
+  }
+  // create element and find matching tag
+  const element: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: elementComponent,
+    children: [],
+  };
+  const newInstances = new Map(instances);
+  newInstances.set(element.id, element);
+  let matchingTag: undefined | string;
+  for (const tag of tags) {
+    element.tag = tag;
+    const isMatching = isTreeSatisfyingContentModel({
+      instances: newInstances,
+      props,
+      metas,
+      instanceSelector: [element.id, ...insertable.parentSelector],
+    });
+    if (isMatching) {
+      matchingTag = tag;
+      break;
+    }
+  }
+  if (matchingTag === undefined) {
+    return false;
+  }
+  // insert element
+  updateWebstudioData((data) => {
+    data.instances.set(element.id, element);
+    const children: Instance["children"] = [{ type: "id", value: element.id }];
+    insertInstanceChildrenMutable(data, children, insertable);
+  });
+  selectInstance([element.id, ...insertable.parentSelector]);
+  return true;
 };
 
 export const insertWebstudioFragmentAt = (

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import type { Instance } from "@webstudio-is/sdk";
+import { elementComponent, type Instance } from "@webstudio-is/sdk";
 import {
   type Point,
   useAutoScroll,
@@ -17,6 +17,7 @@ import {
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   getComponentTemplateData,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
   reparentInstance,
 } from "~/shared/instance-utils";
@@ -79,15 +80,20 @@ const findClosestDroppableInstanceSelector = (
   });
   let droppableIndex = -1;
   if (dragPayload?.type === "insert") {
-    const fragment = getComponentTemplateData(dragPayload.dragComponent);
-    if (fragment) {
-      droppableIndex = findClosestInstanceMatchingFragment({
-        instances,
-        props,
-        metas,
-        instanceSelector,
-        fragment,
-      });
+    // allow dropping element into any container
+    if (dragPayload.dragComponent === elementComponent) {
+      droppableIndex = 0;
+    } else {
+      const fragment = getComponentTemplateData(dragPayload.dragComponent);
+      if (fragment) {
+        droppableIndex = findClosestInstanceMatchingFragment({
+          instances,
+          props,
+          metas,
+          instanceSelector,
+          fragment,
+        });
+      }
     }
   }
   if (dragPayload?.type === "reparent") {
@@ -316,23 +322,22 @@ export const useDragAndDrop = () => {
     const { dropTarget, dragPayload } = state.current;
 
     if (dropTarget && dragPayload && isCanceled === false) {
+      const insertable = {
+        parentSelector: dropTarget.itemSelector,
+        position: dropTarget.indexWithinChildren,
+      };
       if (dragPayload.type === "insert") {
-        const templateData = getComponentTemplateData(
-          dragPayload.dragComponent
-        );
-        if (templateData === undefined) {
-          return;
+        if (dragPayload.dragComponent === elementComponent) {
+          insertWebstudioElementAt(insertable);
+        } else {
+          const fragment = getComponentTemplateData(dragPayload.dragComponent);
+          if (fragment) {
+            insertWebstudioFragmentAt(fragment, insertable);
+          }
         }
-        insertWebstudioFragmentAt(templateData, {
-          parentSelector: dropTarget.itemSelector,
-          position: dropTarget.indexWithinChildren,
-        });
       }
       if (dragPayload.type === "reparent") {
-        reparentInstance(dragPayload.dragInstanceSelector, {
-          parentSelector: dropTarget.itemSelector,
-          position: dropTarget.indexWithinChildren,
-        });
+        reparentInstance(dragPayload.dragInstanceSelector, insertable);
       }
     }
 

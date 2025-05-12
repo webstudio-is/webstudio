@@ -1,4 +1,6 @@
 export const tags: string[] = [
+  "div",
+  "span",
   "a",
   "abbr",
   "address",
@@ -26,7 +28,6 @@ export const tags: string[] = [
   "details",
   "dfn",
   "dialog",
-  "div",
   "dl",
   "dt",
   "em",
@@ -83,7 +84,6 @@ export const tags: string[] = [
   "slot",
   "small",
   "source",
-  "span",
   "strong",
   "sub",
   "summary",
