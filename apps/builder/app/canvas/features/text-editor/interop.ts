@@ -12,17 +12,28 @@ import {
   $isLineBreakNode,
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import {
+  elementComponent,
+  type Instance,
+  type Instances,
+} from "@webstudio-is/sdk";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>
 export type Refs = Map<string, string>;
 
-const lexicalFormats = [
+const legacyLexicalFormats = [
   ["bold", "Bold"],
   ["italic", "Italic"],
   ["superscript", "Superscript"],
   ["subscript", "Subscript"],
+] as const;
+
+const elementLexicalFormats = [
+  ["bold", "b"],
+  ["italic", "i"],
+  ["superscript", "sup"],
+  ["subscript", "sub"],
 ] as const;
 
 const $writeUpdates = (
@@ -30,7 +41,8 @@ const $writeUpdates = (
   instanceChildren: Instance["children"],
   instancesList: Instance[],
   refs: Refs,
-  newLinkKeyToInstanceId: Refs
+  newLinkKeyToInstanceId: Refs,
+  isElement: boolean
 ) => {
   const children = node.getChildren();
   for (const child of children) {
@@ -40,7 +52,8 @@ const $writeUpdates = (
         instanceChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId
+        newLinkKeyToInstanceId,
+        isElement
       );
     }
     if ($isLineBreakNode(child)) {
@@ -60,14 +73,25 @@ const $writeUpdates = (
         childChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId
+        newLinkKeyToInstanceId,
+        isElement
       );
-      instancesList.push({
-        type: "instance",
-        id,
-        component: "RichTextLink",
-        children: childChildren,
-      });
+      if (isElement) {
+        instancesList.push({
+          type: "instance",
+          id,
+          component: elementComponent,
+          tag: "a",
+          children: childChildren,
+        });
+      } else {
+        instancesList.push({
+          type: "instance",
+          id,
+          component: "RichTextLink",
+          children: childChildren,
+        });
+      }
     }
     if ($isTextNode(child)) {
       // support nesting bold into italic and vice versa
@@ -80,31 +104,61 @@ const $writeUpdates = (
         const key = `${child.getKey()}:span`;
         const id = refs.get(key) ?? nanoid();
         refs.set(key, id);
-        const childInstance: Instance = {
-          type: "instance",
-          id,
-          component: "Span",
-          children: [],
-        };
-        instancesList.push(childInstance);
-        parentUpdates.push({ type: "id", value: id });
-        parentUpdates = childInstance.children;
-      }
-      // convert all lexical formats
-      for (const [format, component] of lexicalFormats) {
-        if (child.hasFormat(format)) {
-          const key = `${child.getKey()}:${format}`;
-          const id = refs.get(key) ?? nanoid();
-          refs.set(key, id);
-          const childInstance: Instance = {
+        const childChildren: Instance["children"] = [];
+        if (isElement) {
+          instancesList.push({
             type: "instance",
             id,
-            component,
-            children: [],
-          };
-          instancesList.push(childInstance);
-          parentUpdates.push({ type: "id", value: id });
-          parentUpdates = childInstance.children;
+            component: elementComponent,
+            tag: "span",
+            children: childChildren,
+          });
+        } else {
+          instancesList.push({
+            type: "instance",
+            id,
+            component: "Span",
+            children: childChildren,
+          });
+        }
+        parentUpdates.push({ type: "id", value: id });
+        parentUpdates = childChildren;
+      }
+      // convert all lexical formats
+      if (isElement) {
+        for (const [format, tag] of elementLexicalFormats) {
+          if (child.hasFormat(format)) {
+            const key = `${child.getKey()}:${format}`;
+            const id = refs.get(key) ?? nanoid();
+            refs.set(key, id);
+            const childInstance: Instance = {
+              type: "instance",
+              id,
+              component: elementComponent,
+              tag,
+              children: [],
+            };
+            instancesList.push(childInstance);
+            parentUpdates.push({ type: "id", value: id });
+            parentUpdates = childInstance.children;
+          }
+        }
+      } else {
+        for (const [format, component] of legacyLexicalFormats) {
+          if (child.hasFormat(format)) {
+            const key = `${child.getKey()}:${format}`;
+            const id = refs.get(key) ?? nanoid();
+            refs.set(key, id);
+            const childInstance: Instance = {
+              type: "instance",
+              id,
+              component,
+              children: [],
+            };
+            instancesList.push(childInstance);
+            parentUpdates.push({ type: "id", value: id });
+            parentUpdates = childInstance.children;
+          }
         }
       }
       parentUpdates.push({ type: "text", value: text });
@@ -130,7 +184,8 @@ export const $convertToUpdates = (
     treeRootInstanceChildren,
     instancesList,
     refs,
-    newLinkKeyToInstanceId
+    newLinkKeyToInstanceId,
+    treeRootInstance.component === elementComponent
   );
   return instancesList;
 };
@@ -164,13 +219,19 @@ const $writeLexical = (
     }
 
     // convert instances
-    if (instance.component === "RichTextLink" && $isElementNode(parent)) {
+    const isLinkInstance =
+      instance.component === "RichTextLink" ||
+      (instance.component === elementComponent && instance.tag === "a");
+    if (isLinkInstance && $isElementNode(parent)) {
       const linkNode = $createLinkNode("");
       refs.set(linkNode.getKey(), instance.id);
       parent.append(linkNode);
       $writeLexical(linkNode, instance.children, instances, refs);
     }
-    if (instance.component === "Span") {
+    if (
+      instance.component === "Span" ||
+      (instance.component === elementComponent && instance.tag === "span")
+    ) {
       let textNode;
       if ($isTextNode(parent)) {
         textNode = parent;
@@ -183,8 +244,23 @@ const $writeLexical = (
       $writeLexical(textNode, instance.children, instances, refs);
     }
     // convert all lexical formats
-    for (const [format, component] of lexicalFormats) {
+    for (const [format, component] of legacyLexicalFormats) {
       if (instance.component === component) {
+        let textNode;
+        if ($isTextNode(parent)) {
+          textNode = parent;
+        } else {
+          textNode = $createTextNode("");
+          parent.append(textNode);
+        }
+        textNode.toggleFormat(format);
+        refs.set(`${textNode.getKey()}:${format}`, instance.id);
+        $writeLexical(textNode, instance.children, instances, refs);
+      }
+    }
+    // convert all lexical formats
+    for (const [format, tag] of elementLexicalFormats) {
+      if (instance.component === elementComponent && instance.tag === tag) {
         let textNode;
         if ($isTextNode(parent)) {
           textNode = parent;
