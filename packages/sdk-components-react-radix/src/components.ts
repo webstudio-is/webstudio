@@ -12,7 +12,12 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./dialog";
-export { Popover, PopoverTrigger, PopoverContent } from "./popover";
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverClose,
+} from "./popover";
 export { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Label } from "./label";

@@ -61,3 +61,4 @@ export const propsPopoverContent: Record<string, PropMeta> = {
     options: ["always", "optimized"],
   },
 };
+export const propsPopoverClose: Record<string, PropMeta> = {};

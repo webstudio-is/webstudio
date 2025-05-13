@@ -16,6 +16,7 @@ export {
   propsMetaPopover as Popover,
   propsMetaPopoverTrigger as PopoverTrigger,
   propsMetaPopoverContent as PopoverContent,
+  propsMetaPopoverClose as PopoverClose,
 } from "./popover.ws";
 export {
   propsMetaTooltip as Tooltip,
