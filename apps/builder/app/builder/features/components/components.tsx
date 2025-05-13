@@ -39,6 +39,7 @@ import {
 import {
   getComponentTemplateData,
   getInstanceLabel,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import type { Publish } from "~/shared/pubsub";
@@ -215,9 +216,13 @@ export const ComponentsPanel = ({
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
   const handleInsert = (component: string) => {
-    const fragment = getComponentTemplateData(component);
-    if (fragment) {
-      insertWebstudioFragmentAt(fragment);
+    if (component === elementComponent) {
+      insertWebstudioElementAt();
+    } else {
+      const fragment = getComponentTemplateData(component);
+      if (fragment) {
+        insertWebstudioFragmentAt(fragment);
+      }
     }
     onClose();
   };

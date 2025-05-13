@@ -76,6 +76,17 @@ for (const [tag, element] of Object.entries(elementsByTag)) {
   }
   tags.push(tag);
 }
+const getTagScore = (tag: string) => {
+  if (tag === "div") {
+    return 20;
+  }
+  if (tag === "span") {
+    return 10;
+  }
+  return 0;
+};
+// put div and span first
+tags.sort((left, right) => getTagScore(right) - getTagScore(left));
 const tagsContent = `export const tags: string[] = ${JSON.stringify(tags, null, 2)};
 `;
 const tagsFile = "../sdk/src/__generated__/tags.ts";

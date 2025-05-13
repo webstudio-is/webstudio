@@ -35,6 +35,7 @@ import {
   insertInstanceChildrenMutable,
   findClosestInsertable,
   insertWebstudioFragmentAt,
+  insertWebstudioElementAt,
 } from "./instance-utils";
 import {
   $assets,
@@ -51,7 +52,12 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import { $awareness, getInstancePath, selectInstance } from "./awareness";
+import {
+  $awareness,
+  getInstancePath,
+  selectInstance,
+  selectPage,
+} from "./awareness";
 
 enableMapSet();
 registerContainers();
@@ -335,6 +341,143 @@ describe("insert instance children", () => {
           value: "span",
         },
       ])
+    );
+  });
+});
+
+describe("insert webstudio element at", () => {
+  beforeEach(() => {
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $breakpoints.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $props.set(new Map());
+    $assets.set(new Map());
+  });
+
+  test("insert element with div tag into body", () => {
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    insertWebstudioElementAt({
+      parentSelector: ["bodyId"],
+      position: "end",
+    });
+    const [_bodyId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element with li tag into ul", () => {
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="listId" ws:tag="ul"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    insertWebstudioElementAt({
+      parentSelector: ["listId", "bodyId"],
+      position: "end",
+    });
+    const [_bodyId, _listId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="listId" ws:tag="ul">
+            <ws.element ws:id={newInstanceId} ws:tag="li" />
+          </ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into selected instance", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["divId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _divId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            <ws.element ws:id={newInstanceId} ws:tag="div" />
+          </ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into closest non-textual container", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            text
+          </ws.element>
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["divId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _divId, _spanId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            text
+          </ws.element>
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into closest non-empty container", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="imgId" ws:tag="img"></ws.element>
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["imgId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _imgId, _spanId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="imgId" ws:tag="img"></ws.element>
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
     );
   });
 });

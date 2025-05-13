@@ -18,7 +18,7 @@ const elementMeta: TemplateMeta = {
   order: 0,
   description:
     "An HTML element is a core building block for web pages, structuring and displaying content like text, images, and links.",
-  template: <ws.element ws:tag="div"></ws.element>,
+  template: <ws.element></ws.element>,
 };
 
 const collectionItem = new Parameter("collectionItem");
