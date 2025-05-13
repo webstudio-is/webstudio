@@ -311,13 +311,13 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
   let matchingTag: undefined | string;
   for (const tag of tags) {
     element.tag = tag;
-    const isMatching = isTreeSatisfyingContentModel({
+    const isSatisfying = isTreeSatisfyingContentModel({
       instances: newInstances,
       props,
       metas,
       instanceSelector: [element.id, ...insertable.parentSelector],
     });
-    if (isMatching) {
+    if (isSatisfying) {
       matchingTag = tag;
       break;
     }
