@@ -54,6 +54,8 @@ export const PopoverContent = forwardRef<
   )
 );
 
+export const PopoverClose = PopoverPrimitive.Close;
+
 /* BUILDER HOOKS */
 
 const namespace = "@webstudio-is/sdk-components-react-radix";
