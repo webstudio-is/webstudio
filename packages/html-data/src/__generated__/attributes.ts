@@ -1,7 +1,8 @@
 type Attribute = {
   name: string;
   description: string;
-  type: "string" | "boolean" | "number" | "select";
+  required?: boolean;
+  type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
 };
 
@@ -156,12 +157,14 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "download",
       description:
         "Whether to download the resource instead of navigating to it, and its filename if so",
-      type: "string",
+      type: "boolean",
+      required: true,
     },
     {
       name: "href",
       description: "Address of the hyperlink",
-      type: "string",
+      type: "url",
+      required: true,
     },
     {
       name: "hreflang",
@@ -187,7 +190,9 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "target",
       description: "Navigable for hyperlink navigation",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
+      required: true,
     },
     {
       name: "type",
@@ -244,7 +249,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "target",
       description: "Navigable for hyperlink navigation",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
   ],
   audio: [
@@ -298,7 +304,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "target",
       description:
         "Default navigable for hyperlink navigation and form submission",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
   ],
   bdo: [
@@ -357,7 +364,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formtarget",
       description: "Navigable for form submission",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
     {
       name: "name",
@@ -500,6 +508,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "action",
       description: "URL to use for form submission",
       type: "string",
+      required: true,
     },
     {
       name: "autocomplete",
@@ -523,6 +532,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description: "Variant to use for form submission",
       type: "select",
       options: ["get", "post", "dialog"],
+      required: true,
     },
     {
       name: "name",
@@ -537,7 +547,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "target",
       description: "Navigable for form submission",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
   ],
   iframe: [
@@ -566,7 +577,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "name",
       description: "Name of content navigable",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
     {
       name: "referrerpolicy",
@@ -722,7 +734,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "formtarget",
       description: "Navigable for form submission",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
     {
       name: "height",
@@ -941,7 +954,8 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "name",
       description: "Name of content navigable",
-      type: "string",
+      type: "select",
+      options: ["_blank", "_self", "_parent", "_top"],
     },
     {
       name: "type",

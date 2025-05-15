@@ -22,7 +22,8 @@ const validHtmlAttributes = new Set<string>();
 type Attribute = {
   name: string;
   description: string;
-  type: "string" | "boolean" | "number" | "select";
+  required?: boolean;
+  type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
 };
 
@@ -48,10 +49,21 @@ const overrides: Record<
       options: undefined,
     },
   },
+  a: {
+    href: { type: "url", required: true },
+    target: { required: true },
+    download: { type: "boolean", required: true },
+  },
+  form: {
+    action: { required: true },
+    method: { required: true },
+    enctype: { required: true },
+  },
   area: {
     ping: false,
   },
   button: {
+    type: { required: true },
     command: false,
     commandfor: false,
     popovertarget: false,
@@ -95,10 +107,13 @@ for (const row of rows) {
   if (value.endsWith(";")) {
     value = value.slice(0, -1);
   }
-  const possibleOptions = value
+  let possibleOptions = value
     .split(/\s*;\s*/)
     .filter((item) => item.startsWith('"') && item.endsWith('"'))
     .map((item) => item.slice(1, -1));
+  if (value.includes("valid navigable target name or keyword")) {
+    possibleOptions = ["_blank", "_self", "_parent", "_top"];
+  }
   let type: "string" | "boolean" | "number" | "select" = "string";
   let options: undefined | string[];
   if (possibleOptions.length > 0) {
@@ -156,7 +171,8 @@ for (const tag of tags) {
 const attributesContent = `type Attribute = {
   name: string,
   description: string,
-  type: 'string' | 'boolean' | 'number' | 'select',
+  required?: boolean,
+  type: 'string' | 'boolean' | 'number' | 'select' | 'url',
   options?: string[]
 }
 
@@ -204,8 +220,8 @@ for (const entry of Object.entries(attributesByTag)) {
   for (const { name, type, options } of attributes) {
     const id = getId();
     const instanceId = instance.id;
-    if (type === "string") {
-      const prop: Prop = { id, instanceId, type, name, value: "" };
+    if (type === "string" || type === "url") {
+      const prop: Prop = { id, instanceId, type: "string", name, value: "" };
       props.set(prop.id, prop);
       continue;
     }
@@ -236,6 +252,7 @@ for (const entry of Object.entries(attributesByTag)) {
       props.set(prop.id, prop);
       continue;
     }
+    (type) satisfies never;
     throw Error(`Unknown attribute ${name} with type ${type}`);
   }
 }

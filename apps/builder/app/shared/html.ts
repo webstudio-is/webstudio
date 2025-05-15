@@ -26,7 +26,11 @@ const spaceRegex = /^\s*$/;
 const getAttributeType = (
   attribute: (typeof ariaAttributes)[number]
 ): "string" | "boolean" | "number" => {
-  if (attribute.type === "string" || attribute.type === "select") {
+  if (
+    attribute.type === "string" ||
+    attribute.type === "select" ||
+    attribute.type === "url"
+  ) {
     return "string";
   }
   if (attribute.type === "number" || attribute.type === "boolean") {

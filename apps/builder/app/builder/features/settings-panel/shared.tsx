@@ -426,39 +426,29 @@ export const humanizeAttribute = (string: string) => {
 type Attribute = (typeof ariaAttributes)[number];
 
 const attributeToMeta = (attribute: Attribute): PropMeta => {
-  if (attribute.type === "string") {
-    return {
-      type: "string",
-      control: "text",
-      required: false,
-      description: attribute.description,
-    };
-  }
+  const required = attribute.required ?? false;
+  const description = attribute.description;
   if (attribute.type === "select") {
     const options = attribute.options ?? [];
     return {
       type: "string",
       control: options.length > 3 ? "select" : "radio",
-      required: false,
+      required,
       options,
-      description: attribute.description,
+      description,
     };
+  }
+  if (attribute.type === "url") {
+    return { type: "string", control: "url", required, description };
+  }
+  if (attribute.type === "string") {
+    return { type: "string", control: "text", required, description };
   }
   if (attribute.type === "number") {
-    return {
-      type: "number",
-      control: "number",
-      required: false,
-      description: attribute.description,
-    };
+    return { type: "number", control: "number", required, description };
   }
   if (attribute.type === "boolean") {
-    return {
-      type: "boolean",
-      control: "boolean",
-      required: false,
-      description: attribute.description,
-    };
+    return { type: "boolean", control: "boolean", required, description };
   }
   attribute.type satisfies never;
   throw Error("impossible case");
@@ -507,5 +497,38 @@ export const $selectedInstancePropsMetas = computed(
     // 4. global html attributes
     // 5. aria attributes
     return new Map(Array.from(metas.entries()).reverse());
+  }
+);
+
+export const $selectedInstanceInitialPropNames = computed(
+  [
+    $selectedInstance,
+    $registeredComponentPropsMetas,
+    $selectedInstancePropsMetas,
+  ],
+  (selectedInstance, componentPropsMetas, instancePropsMetas) => {
+    const initialPropNames = new Set<string>();
+    if (selectedInstance) {
+      const initialProps =
+        componentPropsMetas.get(selectedInstance.component)?.initialProps ?? [];
+      for (const propName of initialProps) {
+        // className -> class
+        if (instancePropsMetas.has(reactPropsToStandardAttributes[propName])) {
+          initialPropNames.add(reactPropsToStandardAttributes[propName]);
+        } else {
+          initialPropNames.add(propName);
+        }
+      }
+    }
+    for (const [propName, propMeta] of instancePropsMetas) {
+      // skip show attribute which is added as system prop
+      if (propName === showAttribute) {
+        continue;
+      }
+      if (propMeta.required) {
+        initialPropNames.add(propName);
+      }
+    }
+    return initialPropNames;
   }
 );
