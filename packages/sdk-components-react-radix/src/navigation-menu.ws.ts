@@ -7,7 +7,7 @@ import {
   ViewportIcon,
   NavigationMenuIcon,
 } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -30,6 +30,7 @@ export const metaNavigationMenu: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  props: propsNavigationMenu,
 };
 
 export const metaNavigationMenuList: WsComponentMeta = {
@@ -43,6 +44,7 @@ export const metaNavigationMenuList: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  props: propsNavigationMenuList,
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
@@ -61,6 +63,7 @@ export const metaNavigationMenuItem: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  props: propsNavigationMenuItem,
 };
 
 export const metaNavigationMenuTrigger: WsComponentMeta = {
@@ -70,6 +73,7 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  props: propsNavigationMenuTrigger,
 };
 
 export const metaNavigationMenuContent: WsComponentMeta = {
@@ -83,6 +87,7 @@ export const metaNavigationMenuContent: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  props: propsNavigationMenuContent,
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
@@ -92,6 +97,7 @@ export const metaNavigationMenuLink: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  props: propsNavigationMenuLink,
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
@@ -104,26 +110,5 @@ export const metaNavigationMenuViewport: WsComponentMeta = {
   presetStyle: {
     div,
   },
-};
-
-export const propsMetaNavigationMenu: WsComponentPropsMeta = {
-  props: propsNavigationMenu,
-};
-export const propsMetaNavigationMenuItem: WsComponentPropsMeta = {
-  props: propsNavigationMenuItem,
-};
-export const propsMetaNavigationMenuTrigger: WsComponentPropsMeta = {
-  props: propsNavigationMenuTrigger,
-};
-export const propsMetaNavigationMenuContent: WsComponentPropsMeta = {
-  props: propsNavigationMenuContent,
-};
-export const propsMetaNavigationMenuLink: WsComponentPropsMeta = {
-  props: propsNavigationMenuLink,
-};
-export const propsMetaNavigationMenuList: WsComponentPropsMeta = {
-  props: propsNavigationMenuList,
-};
-export const propsMetaNavigationMenuViewport: WsComponentPropsMeta = {
   props: propsNavigationMenuViewport,
 };

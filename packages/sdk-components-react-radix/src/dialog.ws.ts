@@ -7,11 +7,7 @@ import {
   TextIcon,
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { div, button, h2, p } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -32,6 +28,7 @@ export const metaDialogTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  props: propsDialogTrigger,
 };
 
 export const metaDialogOverlay: WsComponentMeta = {
@@ -41,9 +38,8 @@ export const metaDialogOverlay: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.DialogContent],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsDialogOverlay,
 };
 
 export const metaDialogContent: WsComponentMeta = {
@@ -57,9 +53,8 @@ export const metaDialogContent: WsComponentMeta = {
       radix.DialogClose,
     ],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsDialogContent,
 };
 
 export const metaDialogTitle: WsComponentMeta = {
@@ -68,9 +63,8 @@ export const metaDialogTitle: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  presetStyle: {
-    h2,
-  },
+  presetStyle: { h2 },
+  props: propsDialogTitle,
 };
 
 export const metaDialogDescription: WsComponentMeta = {
@@ -79,9 +73,8 @@ export const metaDialogDescription: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  presetStyle: {
-    p,
-  },
+  presetStyle: { p },
+  props: propsDialogDescription,
 };
 
 export const metaDialogClose: WsComponentMeta = {
@@ -95,6 +88,7 @@ export const metaDialogClose: WsComponentMeta = {
   presetStyle: {
     button: [buttonReset, button].flat(),
   },
+  props: propsDialogClose,
 };
 
 export const metaDialog: WsComponentMeta = {
@@ -104,38 +98,5 @@ export const metaDialog: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.DialogTrigger, radix.DialogOverlay],
   },
-};
-
-export const propsMetaDialog: WsComponentPropsMeta = {
   props: propsDialog,
-  initialProps: [],
-};
-
-export const propsMetaDialogTrigger: WsComponentPropsMeta = {
-  props: propsDialogTrigger,
-};
-
-export const propsMetaDialogContent: WsComponentPropsMeta = {
-  props: propsDialogContent,
-  initialProps: [],
-};
-
-export const propsMetaDialogOverlay: WsComponentPropsMeta = {
-  props: propsDialogOverlay,
-  initialProps: [],
-};
-
-export const propsMetaDialogClose: WsComponentPropsMeta = {
-  props: propsDialogClose,
-  initialProps: [],
-};
-
-export const propsMetaDialogTitle: WsComponentPropsMeta = {
-  props: propsDialogTitle,
-  initialProps: [],
-};
-
-export const propsMetaDialogDescription: WsComponentPropsMeta = {
-  props: propsDialogDescription,
-  initialProps: [],
 };

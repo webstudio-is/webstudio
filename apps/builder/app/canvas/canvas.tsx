@@ -18,7 +18,6 @@ import * as animationTemplates from "@webstudio-is/sdk-components-animation/temp
 import { hooks as animationComponentHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { ErrorMessage } from "~/shared/error";
@@ -267,7 +266,7 @@ export const Canvas = () => {
       namespace: "@webstudio-is/sdk-components-react-radix",
       components: radixComponents,
       metas: radixComponentMetas,
-      propsMetas: radixComponentPropsMetas,
+      propsMetas: {},
       hooks: radixComponentHooks,
       templates: radixTemplates,
     });

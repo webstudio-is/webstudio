@@ -23,11 +23,6 @@
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js"
     },
-    "./props": {
-      "webstudio": "./src/props.ts",
-      "types": "./lib/types/props.d.ts",
-      "import": "./lib/props.js"
-    },
     "./hooks": {
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",

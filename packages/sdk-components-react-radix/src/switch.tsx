@@ -5,13 +5,23 @@ import {
   forwardRef,
 } from "react";
 import { Root, Thumb } from "@radix-ui/react-switch";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 export const Switch = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof Root>
->(({ defaultChecked, checked, ...props }, ref) => {
+>(({ defaultChecked, ...props }, ref) => {
+  const [checked, onCheckedChange] = useControllableState({
+    prop: props.checked ?? defaultChecked ?? false,
+    defaultProp: false,
+  });
   return (
-    <Root {...props} ref={ref} defaultChecked={checked ?? defaultChecked} />
+    <Root
+      {...props}
+      ref={ref}
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+    />
   );
 });
 

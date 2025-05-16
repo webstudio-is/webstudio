@@ -8,7 +8,7 @@ import {
   TextIcon,
   CheckMarkIcon,
 } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -29,6 +29,8 @@ export const metaSelect: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectTrigger, radix.SelectContent],
   },
+  initialProps: ["name", "value", "open", "required"],
+  props: propsSelect,
 };
 
 export const metaSelectTrigger: WsComponentMeta = {
@@ -38,9 +40,8 @@ export const metaSelectTrigger: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectValue],
   },
-  presetStyle: {
-    button,
-  },
+  presetStyle: { button },
+  props: propsSelectTrigger,
 };
 
 export const metaSelectValue: WsComponentMeta = {
@@ -50,9 +51,9 @@ export const metaSelectValue: WsComponentMeta = {
     category: "none",
     children: [],
   },
-  presetStyle: {
-    span,
-  },
+  presetStyle: { span },
+  initialProps: ["placeholder"],
+  props: propsSelectValue,
 };
 
 export const metaSelectContent: WsComponentMeta = {
@@ -62,9 +63,8 @@ export const metaSelectContent: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectViewport],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsSelectContent,
 };
 
 export const metaSelectViewport: WsComponentMeta = {
@@ -74,9 +74,8 @@ export const metaSelectViewport: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectItem],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsSelectViewport,
 };
 
 export const metaSelectItem: WsComponentMeta = {
@@ -86,9 +85,9 @@ export const metaSelectItem: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.SelectItemIndicator, radix.SelectItemText],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  initialProps: ["value"],
+  props: propsSelectItem,
 };
 
 export const metaSelectItemIndicator: WsComponentMeta = {
@@ -98,9 +97,8 @@ export const metaSelectItemIndicator: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  presetStyle: {
-    span,
-  },
+  presetStyle: { span },
+  props: propsSelectItemIndicator,
 };
 
 export const metaSelectItemText: WsComponentMeta = {
@@ -110,42 +108,6 @@ export const metaSelectItemText: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  presetStyle: {
-    span,
-  },
-};
-
-export const propsMetaSelect: WsComponentPropsMeta = {
-  props: propsSelect,
-  initialProps: ["name", "value", "open", "required"],
-};
-
-export const propsMetaSelectTrigger: WsComponentPropsMeta = {
-  props: propsSelectTrigger,
-};
-
-export const propsMetaSelectValue: WsComponentPropsMeta = {
-  props: propsSelectValue,
-  initialProps: ["placeholder"],
-};
-
-export const propsMetaSelectContent: WsComponentPropsMeta = {
-  props: propsSelectContent,
-};
-
-export const propsMetaSelectViewport: WsComponentPropsMeta = {
-  props: propsSelectViewport,
-};
-
-export const propsMetaSelectItem: WsComponentPropsMeta = {
-  props: propsSelectItem,
-  initialProps: ["value"],
-};
-
-export const propsMetaSelectItemIndicator: WsComponentPropsMeta = {
-  props: propsSelectItemIndicator,
-};
-
-export const propsMetaSelectItemText: WsComponentPropsMeta = {
+  presetStyle: { span },
   props: propsSelectItemText,
 };

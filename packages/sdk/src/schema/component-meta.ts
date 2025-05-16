@@ -109,6 +109,9 @@ export const WsComponentMeta = z.object({
   presetStyle: z.optional(z.record(z.string(), z.array(PresetStyleDecl))),
   states: z.optional(z.array(ComponentState)),
   order: z.number().optional(),
+  // properties and html attributes that will be always visible in properties panel
+  initialProps: z.array(z.string()).optional(),
+  props: z.record(PropMeta).optional(),
 });
 
 export type WsComponentMeta = Omit<
