@@ -26,6 +26,6 @@ export const meta: WsComponentMeta = {
   icon: BodyIcon,
   states: defaultStates,
   presetStyle,
-  initialProps: ["id", "className"],
+  initialProps: ["id", "class"],
   props,
 };
