@@ -85,6 +85,7 @@ test("generate jsx element with children and without them", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body">Children</$.Body>),
     })
@@ -103,6 +104,7 @@ test("generate jsx element with children and without them", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(<$.Image ws:id="image"></$.Image>),
     })
@@ -123,6 +125,7 @@ test("generate jsx element with namespaces components", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<library.Body ws:id="body"></library.Body>),
     })
@@ -139,6 +142,7 @@ test("generate jsx element with namespaces components", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(<library.Image ws:id="image"></library.Image>),
     })
@@ -158,6 +162,7 @@ test("generate jsx element with literal props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
@@ -176,6 +181,7 @@ test("generate jsx element with literal props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(
         <$.Image
@@ -203,6 +209,7 @@ test("ignore asset and page props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -229,6 +236,7 @@ test("generate jsx element with data sources and action", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -261,6 +269,7 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
@@ -277,6 +286,7 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
     })
@@ -288,6 +298,7 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box ws:id="box" data-ws-show={expression`${condition}`}></$.Box>
@@ -309,6 +320,7 @@ test("generate jsx children with text", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [
         { type: "text", value: "Some\ntext" },
         { type: "text", value: 'Escaped "text"' },
@@ -336,6 +348,7 @@ test("exclude text placeholders", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [
         { type: "text", value: "Text" },
         { type: "text", value: "Placeholder text", placeholder: true },
@@ -361,6 +374,7 @@ test("generate jsx children with expression", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [
         { type: "expression", value: "'Hello ' + $ws$dataSource$var" },
       ],
@@ -392,6 +406,7 @@ test("generate jsx children with nested instances", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "form" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -421,6 +436,7 @@ test("deduplicate base and namespaced components with same short name", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [
         { type: "id", value: "button1" },
         { type: "id", value: "button2" },
@@ -449,6 +465,7 @@ test("generate collection component as map", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
+      tagsOverrides: {},
       children: [{ type: "id", value: "list" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
