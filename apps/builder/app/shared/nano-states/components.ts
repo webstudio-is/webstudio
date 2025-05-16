@@ -12,7 +12,6 @@ import {
   getIndexesWithinAncestors,
   type Instance,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";
@@ -176,15 +175,10 @@ export const $registeredTemplates = atom(
   new Map<string, GeneratedTemplateMeta>()
 );
 
-export const $registeredComponentPropsMetas = atom(
-  new Map<string, WsComponentPropsMeta>()
-);
-
 export const registerComponentLibrary = ({
   namespace,
   components,
   metas,
-  propsMetas,
   hooks,
   templates,
 }: {
@@ -193,7 +187,6 @@ export const registerComponentLibrary = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
-  propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
   hooks?: Hook[];
   templates: Record<Instance["component"], TemplateMeta>;
 }) => {
@@ -206,22 +199,10 @@ export const registerComponentLibrary = ({
   }
   $registeredComponents.set(nextComponents);
 
-  const prevPropsMetas = $registeredComponentPropsMetas.get();
-  const nextPropsMetas = new Map(prevPropsMetas);
-  for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
-    nextPropsMetas.set(`${prefix}${componentName}`, propsMeta);
-  }
-
   const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
     nextMetas.set(`${prefix}${componentName}`, meta);
-    if (meta.initialProps || meta.props) {
-      nextPropsMetas.set(`${prefix}${componentName}`, {
-        initialProps: meta.initialProps,
-        props: meta.props ?? {},
-      });
-    }
   }
   $registeredComponentMetas.set(nextMetas);
 
@@ -241,6 +222,4 @@ export const registerComponentLibrary = ({
     const nextHooks = [...prevHooks, ...hooks];
     $registeredComponentHooks.set(nextHooks);
   }
-
-  $registeredComponentPropsMetas.set(nextPropsMetas);
 };

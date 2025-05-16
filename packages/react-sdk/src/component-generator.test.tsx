@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import {
   createScope,
+  elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   WsComponentMeta,
@@ -1386,7 +1387,9 @@ test("convert attributes to react compatible when render ws:element", () => {
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map(),
+      metas: new Map([
+        [elementComponent, { icon: "", presetStyle: { div: [] } }],
+      ]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <ws.element
@@ -1437,6 +1440,46 @@ test("convert attributes to react compatible when render components with tags", 
        htmlFor={"my-id"}
        autoComplete={"off"}
        className={\`\${"my-class"}\`} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("ignore props similar to standard attributes when react components defines them", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([
+        [
+          "Vimeo",
+          {
+            icon: "",
+            presetStyle: { div: [] },
+            props: {
+              autoplay: { type: "boolean", control: "boolean", required: true },
+            },
+          },
+        ],
+      ]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Vimeo autoplay={true}></$.Vimeo>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Vimeo
+       autoplay={true} />
        </Body>
        }
      `)

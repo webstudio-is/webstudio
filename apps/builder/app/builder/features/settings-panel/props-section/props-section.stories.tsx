@@ -199,10 +199,10 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
 
 registerComponentLibrary({
   components: {},
-  metas: {},
   templates: {},
-  propsMetas: {
+  metas: {
     Box: {
+      icon: "",
       props: {
         initialText: textProp("", "multi\nline"),
         initialShortText: shortTextProp(),

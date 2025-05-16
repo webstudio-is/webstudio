@@ -170,8 +170,8 @@ export const generateJsxElement = ({
     return "";
   }
 
-  const hasTags =
-    Object.keys(metas.get(instance.component)?.presetStyle ?? {}).length > 0;
+  const meta = metas.get(instance.component);
+  const hasTags = Object.keys(meta?.presetStyle ?? {}).length > 0;
 
   let generatedProps = "";
 
@@ -204,7 +204,9 @@ export const generateJsxElement = ({
       continue;
     }
     let name = prop.name;
-    if (instance.component === elementComponent || hasTags) {
+    // convert html attribute only when component has tags
+    // and does not specify own property with this name
+    if (hasTags && !meta?.props?.[prop.name]) {
       name = standardAttributesToReactProps[prop.name] ?? prop.name;
     }
 
