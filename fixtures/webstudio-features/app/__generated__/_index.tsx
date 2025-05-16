@@ -6,6 +6,7 @@ import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import {
   Body as Body,
   Link as Link,
+  Link as Link_1,
 } from "@webstudio-is/sdk-components-react-router";
 import {
   Heading as Heading,
@@ -17,7 +18,7 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2025-04-14T09:45:34.257Z";
+export const lastPublished = "2025-05-15T22:04:05.511Z";
 
 export const siteName = "KittyGuardedZone";
 
@@ -72,9 +73,9 @@ const Page = (_props: { system: any }) => {
               "a little kitten painted in black and white gouache with a thick brush"
             }
           </Paragraph>
-          <Link href={"https://github.com/"} className={`w-link`}>
+          <Link_1 href={"https://github.com/"} className={`w-element ch2exr5`}>
             {"Click here to adore more kittens"}
-          </Link>
+          </Link_1>
           <Text tag={"span"} className={`w-text`}>
             {" or "}
           </Text>
