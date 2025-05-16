@@ -15,7 +15,6 @@ export default defineConfig({
       entry: [
         hasPrivateFolders ? "private-src/components.ts" : "src/components.ts",
         "src/metas.ts",
-        "src/props.ts",
         "src/hooks.ts",
         "src/templates.ts",
       ],

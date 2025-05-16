@@ -1,7 +1,6 @@
 import { LabelIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
-  type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/sdk";
@@ -21,9 +20,6 @@ export const meta: WsComponentMeta = {
   icon: LabelIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "for"],
   props,
-  initialProps: ["id", "className", "htmlFor"],
 };

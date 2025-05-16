@@ -1,9 +1,5 @@
 import { ItemIcon } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 
 import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";
@@ -40,9 +36,6 @@ export const meta: WsComponentMeta = {
     { selector: ":hover", label: "Hover" },
     { selector: ":disabled", label: "Disabled" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: ["label", "selected", "value", "label", "disabled"],
+  props,
 };

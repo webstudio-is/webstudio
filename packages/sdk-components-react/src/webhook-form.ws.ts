@@ -1,5 +1,5 @@
 import { WebhookFormIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/webhook-form.props";
 
@@ -13,9 +13,7 @@ export const meta: WsComponentMeta = {
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "state", "action"],
   props: {
     ...props,
     action: {
@@ -26,5 +24,4 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: ["id", "className", "state", "action"],
 };

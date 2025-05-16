@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { img } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./image";
@@ -42,9 +41,16 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 0,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: [
+    "id",
+    "class",
+    "src",
+    "width",
+    "height",
+    "alt",
+    "loading",
+    "optimize",
+  ],
   props: {
     ...props,
     // Automatically generated props don't have the right control.
@@ -55,14 +61,4 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: [
-    "id",
-    "className",
-    "src",
-    "width",
-    "height",
-    "alt",
-    "loading",
-    "optimize",
-  ],
 };

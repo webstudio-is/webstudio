@@ -1,9 +1,5 @@
 import { TextIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/text.props";
 
@@ -19,9 +15,7 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["tag", "id", "class"],
   props: {
     ...props,
     tag: {
@@ -31,5 +25,4 @@ export const propsMeta: WsComponentPropsMeta = {
       options: ["div", "cite", "figcaption", "span"],
     },
   },
-  initialProps: ["tag", "id", "className"],
 };

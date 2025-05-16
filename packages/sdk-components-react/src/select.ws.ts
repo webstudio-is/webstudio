@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { select } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./select";
@@ -30,17 +29,14 @@ export const meta: WsComponentMeta = {
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: [
     "id",
-    "className",
+    "class",
     "name",
     "value",
     "multiple",
     "required",
-    "autoFocus",
+    "autofocus",
   ],
+  props,
 };
