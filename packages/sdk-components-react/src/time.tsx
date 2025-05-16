@@ -1,4 +1,10 @@
-import { forwardRef, type ComponentProps, type ElementRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ElementRef,
+} from "react";
 
 const languages = [
   "af",
@@ -281,7 +287,15 @@ type Country = (typeof countries)[number];
 type DateStyle = Intl.DateTimeFormatOptions["dateStyle"] | "none";
 type TimeStyle = Intl.DateTimeFormatOptions["timeStyle"] | "none";
 
-const INITIAL_DATE_STRING = "dateTime attribute is not set";
+const createInitialDate = () => {
+  const date = new Date();
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return date;
+};
+
+const INITIAL_DATE_STRING =
+  typeof window === "undefined" ? createInitialDate() : null;
 const INVALID_DATE_STRING = "";
 
 const DEFAULT_LANGUAGE = "en";
@@ -365,6 +379,9 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     },
     ref
   ) => {
+    const [clientSideDate, setClientSideDate] = useState<string | Date | null>(
+      null
+    );
     const locale = `${languageOrDefault(language)}-${countryOrDefault(
       country
     )}`;
@@ -374,8 +391,21 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       timeStyle: timeStyleOrUndefined(timeStyle),
     };
 
+    useEffect(() => {
+      if (dateTime === INITIAL_DATE_STRING) {
+        setClientSideDate(new Date());
+      }
+    }, [dateTime]);
+
+    const dateToUse =
+      typeof window !== "undefined" &&
+      clientSideDate !== null &&
+      dateTime === INITIAL_DATE_STRING
+        ? clientSideDate
+        : dateTime;
+
     const datetimeString =
-      dateTime === null ? INVALID_DATE_STRING : dateTime.toString();
+      dateToUse === null ? INVALID_DATE_STRING : dateToUse.toString();
 
     const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
@@ -389,7 +419,12 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     }
 
     return (
-      <time ref={ref} dateTime={datetimeString} {...props}>
+      <time
+        ref={ref}
+        dateTime={datetimeString}
+        {...props}
+        suppressHydrationWarning
+      >
         {formattedDate}
       </time>
     );
