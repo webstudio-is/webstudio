@@ -470,6 +470,8 @@ type Props = Omit<
      * Example: "Video about web development tips".
      */
     title?: string | undefined;
+    // temporary prop until props render is fixed
+    autoPlay?: boolean;
   };
 type Ref = ElementRef<typeof defaultTag>;
 
@@ -478,7 +480,8 @@ export const YouTube = forwardRef<Ref, Props>(
     {
       url,
       loading = "lazy",
-      autoplay,
+      autoPlay,
+      autoplay = autoPlay ?? false,
       showPreview,
       showAnnotations,
       showCaptions,

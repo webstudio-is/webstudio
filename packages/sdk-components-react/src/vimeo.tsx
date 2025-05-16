@@ -352,6 +352,8 @@ type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoOptions> &
      * Example: "Video about web development tips".
      */
     title?: string | undefined;
+    // temporary prop until props render is fixed
+    autoPlay?: boolean;
   };
 type Ref = ElementRef<typeof defaultTag>;
 
@@ -360,7 +362,8 @@ export const Vimeo = forwardRef<Ref, Props>(
     {
       url,
       loading = "lazy",
-      autoplay = false,
+      autoPlay,
+      autoplay = autoPlay ?? false,
       autopause = true,
       showByline = false,
       showControls = true,
