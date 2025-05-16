@@ -1,9 +1,5 @@
 import { ItemIcon, RadioGroupIcon, TriggerIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -36,6 +32,8 @@ export const metaRadioGroup: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  initialProps: ["id", "class", "name", "value", "required"],
+  props: propsRadioGroup,
 };
 
 export const metaRadioGroupItem: WsComponentMeta = {
@@ -49,6 +47,8 @@ export const metaRadioGroupItem: WsComponentMeta = {
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  initialProps: ["value"],
+  props: propsRadioGroupItem,
 };
 
 export const metaRadioGroupIndicator: WsComponentMeta = {
@@ -61,18 +61,5 @@ export const metaRadioGroupIndicator: WsComponentMeta = {
   presetStyle: {
     span,
   },
-};
-
-export const propsMetaRadioGroup: WsComponentPropsMeta = {
-  props: propsRadioGroup,
-  initialProps: ["id", "className", "name", "value", "required"],
-};
-
-export const propsMetaRadioGroupItem: WsComponentPropsMeta = {
-  props: propsRadioGroupItem,
-  initialProps: ["value"],
-};
-
-export const propsMetaRadioGroupIndicator: WsComponentPropsMeta = {
   props: propsRadioGroupIndicator,
 };

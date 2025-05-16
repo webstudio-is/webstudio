@@ -5,6 +5,7 @@ import {
   type ComponentProps,
 } from "react";
 import { Root, Indicator } from "@radix-ui/react-checkbox";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 export const Checkbox = forwardRef<
   HTMLButtonElement,
@@ -14,9 +15,18 @@ export const Checkbox = forwardRef<
     checked?: boolean;
     defaultChecked?: boolean;
   }
->(({ checked, defaultChecked, ...props }, ref) => {
+>(({ defaultChecked, ...props }, ref) => {
+  const [checked, onCheckedChange] = useControllableState({
+    prop: props.checked ?? defaultChecked ?? false,
+    defaultProp: false,
+  });
   return (
-    <Root {...props} ref={ref} defaultChecked={checked ?? defaultChecked} />
+    <Root
+      {...props}
+      ref={ref}
+      checked={checked}
+      onCheckedChange={(open) => onCheckedChange(open === true)}
+    />
   );
 });
 

@@ -19,6 +19,7 @@ import {
 import {
   isAttributeNameSafe,
   reactPropsToStandardAttributes,
+  showAttribute,
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import {
@@ -115,6 +116,9 @@ const $availableProps = computed(
   (instance, props, propsMetas, initialPropNames) => {
     const availableProps = new Map<Item["name"], Item>();
     for (const [name, { label, description }] of propsMetas) {
+      if (name === showAttribute) {
+        continue;
+      }
       availableProps.set(name, { name, label, description });
     }
     if (instance === undefined) {

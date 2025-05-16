@@ -206,10 +206,22 @@ export const registerComponentLibrary = ({
   }
   $registeredComponents.set(nextComponents);
 
+  const prevPropsMetas = $registeredComponentPropsMetas.get();
+  const nextPropsMetas = new Map(prevPropsMetas);
+  for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
+    nextPropsMetas.set(`${prefix}${componentName}`, propsMeta);
+  }
+
   const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
     nextMetas.set(`${prefix}${componentName}`, meta);
+    if (meta.initialProps || meta.props) {
+      nextPropsMetas.set(`${prefix}${componentName}`, {
+        initialProps: meta.initialProps,
+        props: meta.props ?? {},
+      });
+    }
   }
   $registeredComponentMetas.set(nextMetas);
 
@@ -230,10 +242,5 @@ export const registerComponentLibrary = ({
     $registeredComponentHooks.set(nextHooks);
   }
 
-  const prevPropsMetas = $registeredComponentPropsMetas.get();
-  const nextPropsMetas = new Map(prevPropsMetas);
-  for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
-    nextPropsMetas.set(`${prefix}${componentName}`, propsMeta);
-  }
   $registeredComponentPropsMetas.set(nextPropsMetas);
 };
