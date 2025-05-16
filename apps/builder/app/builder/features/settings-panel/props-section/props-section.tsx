@@ -29,7 +29,6 @@ import {
   $isContentMode,
   $memoryProps,
   $selectedBreakpoint,
-  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { serverSyncStore } from "~/shared/sync";
@@ -39,7 +38,10 @@ import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
 import { $matchingBreakpoints } from "../../style-panel/shared/model";
 import { matchMediaBreakpoints } from "./match-media-breakpoints";
-import { $selectedInstancePropsMetas } from "../shared";
+import {
+  $selectedInstanceInitialPropNames,
+  $selectedInstancePropsMetas,
+} from "../shared";
 
 type Item = {
   name: string;
@@ -107,22 +109,20 @@ const $availableProps = computed(
   [
     $selectedInstance,
     $props,
-    $registeredComponentPropsMetas,
     $selectedInstancePropsMetas,
+    $selectedInstanceInitialPropNames,
   ],
-  (instance, props, componentPropsMetas, instancePropsMetas) => {
+  (instance, props, propsMetas, initialPropNames) => {
     const availableProps = new Map<Item["name"], Item>();
-    for (const [name, { label, description }] of instancePropsMetas) {
+    for (const [name, { label, description }] of propsMetas) {
       availableProps.set(name, { name, label, description });
     }
     if (instance === undefined) {
       return [];
     }
-    const propsMetas = componentPropsMetas.get(instance.component);
     // remove initial props
-    for (const name of propsMetas?.initialProps ?? []) {
+    for (const name of initialPropNames) {
       availableProps.delete(name);
-      availableProps.delete(reactPropsToStandardAttributes[name]);
     }
     // remove defined props
     for (const prop of props.values()) {

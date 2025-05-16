@@ -233,18 +233,7 @@ export const registerComponentLibrary = ({
   const prevPropsMetas = $registeredComponentPropsMetas.get();
   const nextPropsMetas = new Map(prevPropsMetas);
   for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
-    const { initialProps = [], props } = propsMeta;
-    const requiredProps: string[] = [];
-    for (const [name, value] of Object.entries(props)) {
-      if (value.required && initialProps.includes(name) === false) {
-        requiredProps.push(name);
-      }
-    }
-    nextPropsMetas.set(`${prefix}${componentName}`, {
-      // order of initialProps must be preserved
-      initialProps: [...initialProps, ...requiredProps],
-      props,
-    });
+    nextPropsMetas.set(`${prefix}${componentName}`, propsMeta);
   }
   $registeredComponentPropsMetas.set(nextPropsMetas);
 };

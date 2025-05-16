@@ -1,7 +1,8 @@
 type Attribute = {
   name: string;
   description: string;
-  type: "string" | "boolean" | "number" | "select";
+  required?: boolean;
+  type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
 };
 

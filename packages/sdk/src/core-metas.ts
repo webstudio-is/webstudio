@@ -40,6 +40,7 @@ const elementMeta: WsComponentMeta = {
 };
 
 const elementPropsMeta: WsComponentPropsMeta = {
+  initialProps: [tagProperty, "id", "class"],
   props: {
     [tagProperty]: {
       type: "string",

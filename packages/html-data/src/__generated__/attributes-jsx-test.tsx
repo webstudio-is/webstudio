@@ -28,13 +28,13 @@ const Page = () => {
         className={`${""}`}
       />
       <a
-        download={""}
+        download={true}
         href={""}
         hrefLang={""}
         ping={""}
         referrerPolicy={""}
         rel={""}
-        target={""}
+        target={"_blank"}
         type={""}
       />
       <abbr title={""} />
@@ -46,7 +46,7 @@ const Page = () => {
         referrerPolicy={""}
         rel={""}
         shape={"circle"}
-        target={""}
+        target={"_blank"}
       />
       <audio
         autoPlay={true}
@@ -57,7 +57,7 @@ const Page = () => {
         preload={"none"}
         src={""}
       />
-      <base href={""} target={""} />
+      <base href={""} target={"_blank"} />
       <bdo dir={"ltr"} />
       <blockquote cite={""} />
       <button
@@ -67,7 +67,7 @@ const Page = () => {
         formEncType={"application/x-www-form-urlencoded"}
         formMethod={"get"}
         formNoValidate={true}
-        formTarget={""}
+        formTarget={"_blank"}
         name={""}
         type={"submit"}
         value={""}
@@ -90,14 +90,14 @@ const Page = () => {
         method={"get"}
         name={""}
         noValidate={true}
-        target={""}
+        target={"_blank"}
       />
       <iframe
         allow={""}
         allowFullScreen={true}
         height={0}
         loading={"lazy"}
-        name={""}
+        name={"_blank"}
         referrerPolicy={""}
         sandbox={""}
         src={""}
@@ -129,7 +129,7 @@ const Page = () => {
         formEncType={"application/x-www-form-urlencoded"}
         formMethod={"get"}
         formNoValidate={true}
-        formTarget={""}
+        formTarget={"_blank"}
         height={0}
         list={""}
         max={""}
@@ -162,7 +162,14 @@ const Page = () => {
         name={""}
       />
       <meter high={0} low={0} max={0} min={0} optimum={0} value={0} />
-      <object data={""} form={""} height={0} name={""} type={""} width={0} />
+      <object
+        data={""}
+        form={""}
+        height={0}
+        name={"_blank"}
+        type={""}
+        width={0}
+      />
       <ol reversed={true} start={0} type={"1"} />
       <optgroup disabled={true} label={""} />
       <option disabled={true} label={""} selected={true} value={""} />
