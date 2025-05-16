@@ -1,26 +1,9 @@
 import type { ComponentProps } from "react";
 import { VimeoIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/vimeo.props";
 import type { Vimeo } from "./vimeo";
-
-export const meta: WsComponentMeta = {
-  icon: VimeoIcon,
-  states: defaultStates,
-  contentModel: {
-    category: "instance",
-    children: ["instance"],
-    descendants: ["VimeoSpinner", "VimeoPlayButton", "VimeoPreviewImage"],
-  },
-  presetStyle: {
-    div,
-  },
-};
 
 const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "id",
@@ -42,7 +25,15 @@ const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "playsinline",
 ];
 
-export const propsMeta: WsComponentPropsMeta = {
-  props,
+export const meta: WsComponentMeta = {
+  icon: VimeoIcon,
+  states: defaultStates,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: ["VimeoSpinner", "VimeoPlayButton", "VimeoPreviewImage"],
+  },
+  presetStyle: { div },
   initialProps,
+  props,
 };

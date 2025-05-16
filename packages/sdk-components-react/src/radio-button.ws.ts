@@ -1,7 +1,6 @@
 import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
-  type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/sdk";
@@ -34,9 +33,6 @@ export const meta: WsComponentMeta = {
     //{ selector: ":read-only", label: "Read Only" },
     //{ selector: ":read-write", label: "Read Write" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "name", "value", "required", "checked"],
   props,
-  initialProps: ["id", "className", "name", "value", "required", "checked"],
 };

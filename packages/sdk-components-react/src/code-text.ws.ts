@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./code-text";
@@ -51,9 +50,7 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 5,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "lang", "code"],
   props: {
     ...props,
     code: {
@@ -62,5 +59,4 @@ export const propsMeta: WsComponentPropsMeta = {
       type: "string",
     },
   },
-  initialProps: ["id", "className", "lang", "code"],
 };

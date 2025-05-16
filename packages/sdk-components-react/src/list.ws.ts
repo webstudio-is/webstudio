@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { ol, ul } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/list.props";
@@ -46,9 +45,6 @@ export const meta: WsComponentMeta = {
   icon: ListIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "ordered", "start", "reversed"],
   props,
-  initialProps: ["id", "className", "ordered", "start", "reversed"],
 };

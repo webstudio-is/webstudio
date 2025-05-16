@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { hr } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/separator.props";
@@ -48,9 +47,6 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 3,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class"],
   props,
-  initialProps: ["id", "className"],
 };

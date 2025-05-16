@@ -1,7 +1,6 @@
 import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
-  type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/sdk";
@@ -46,17 +45,14 @@ export const meta: WsComponentMeta = {
     //{ selector: ":read-only", label: "Read Only" },
     //{ selector: ":read-write", label: "Read Write" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: [
     "id",
-    "className",
+    "class",
     "name",
     "value",
     "placeholder",
     "required",
-    "autoFocus",
+    "autofocus",
   ],
+  props,
 };

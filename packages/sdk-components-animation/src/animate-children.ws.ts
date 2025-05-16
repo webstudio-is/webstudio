@@ -1,5 +1,5 @@
 import { AnimationGroupIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { animation } from "./shared/meta";
 
 export const meta: WsComponentMeta = {
@@ -17,9 +17,7 @@ export const meta: WsComponentMeta = {
       animation.VideoAnimation,
     ],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["action"],
   props: {
     action: {
       required: false,
@@ -28,5 +26,4 @@ export const propsMeta: WsComponentPropsMeta = {
       description: "Animation Action",
     },
   },
-  initialProps: ["action"],
 };

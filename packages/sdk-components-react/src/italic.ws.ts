@@ -4,7 +4,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { i } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/italic.props";
@@ -24,9 +23,6 @@ export const meta: WsComponentMeta = {
   icon: TextItalicIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class"],
   props,
-  initialProps: ["id", "className"],
 };

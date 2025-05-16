@@ -3,7 +3,6 @@ import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { p } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./paragraph";
@@ -18,9 +17,6 @@ export const meta: WsComponentMeta = {
   icon: TextAlignLeftIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class"],
   props,
-  initialProps: ["id", "className"],
 };

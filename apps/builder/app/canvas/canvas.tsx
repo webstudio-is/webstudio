@@ -8,12 +8,10 @@ import { wsImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
 import * as animationComponents from "@webstudio-is/sdk-components-animation";
 import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as animationComponentPropsMetas from "@webstudio-is/sdk-components-animation/props";
 import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
 import { hooks as animationComponentHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
@@ -248,7 +246,7 @@ export const Canvas = () => {
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,
-      propsMetas: baseComponentPropsMetas,
+      propsMetas: {},
       hooks: baseComponentHooks,
       templates: baseComponentTemplates,
     });
@@ -274,7 +272,7 @@ export const Canvas = () => {
       namespace: "@webstudio-is/sdk-components-animation",
       components: animationComponents,
       metas: animationComponentMetas,
-      propsMetas: animationComponentPropsMetas,
+      propsMetas: {},
       hooks: animationComponentHooks,
       templates: animationTemplates,
     });

@@ -1,8 +1,5 @@
 import { VideoIcon } from "@webstudio-is/icons/svg";
-import {
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 
 import { props } from "./__generated__/video.props";
 
@@ -20,9 +17,19 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: [
+    "id",
+    "class",
+    "width",
+    "height",
+    "src",
+    "autoPlay",
+    "controls",
+    "loop",
+    "muted",
+    "preload",
+    "playsInline",
+  ],
   props: {
     ...props,
     // Automatically generated props don't have the right control.
@@ -34,17 +41,4 @@ export const propsMeta: WsComponentPropsMeta = {
       accept: ".mp4,.webm,.mpg,.mpeg,.mov",
     },
   },
-  initialProps: [
-    "id",
-    "className",
-    "width",
-    "height",
-    "src",
-    "autoPlay",
-    "controls",
-    "loop",
-    "muted",
-    "preload",
-    "playsInline",
-  ],
 };

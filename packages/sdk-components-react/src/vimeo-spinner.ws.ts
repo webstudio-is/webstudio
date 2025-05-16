@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { props } from "./__generated__/vimeo-spinner.props";
@@ -16,12 +12,7 @@ export const meta: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  presetStyle: {
-    div,
-  },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  presetStyle: { div },
+  initialProps: ["id", "class"],
   props,
-  initialProps: ["id", "className"],
 };

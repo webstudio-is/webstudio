@@ -1,9 +1,5 @@
 import { BoxIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import {
   div,
   address,
@@ -37,9 +33,7 @@ export const meta: WsComponentMeta = {
     section,
   },
   order: 0,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["tag", "id", "class"],
   props: {
     ...props,
     tag: {
@@ -61,5 +55,4 @@ export const propsMeta: WsComponentPropsMeta = {
       ],
     },
   },
-  initialProps: ["tag", "id", "className"],
 };

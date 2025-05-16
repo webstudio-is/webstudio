@@ -1,5 +1,5 @@
 import { TextAnimationIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/animate-text.props";
 
@@ -14,12 +14,7 @@ export const meta: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  presetStyle: {
-    div,
-  },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
+  presetStyle: { div },
   initialProps: ["slidingWindow", "easing", "splitBy"],
+  props,
 };
