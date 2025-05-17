@@ -525,7 +525,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "pasteHtmlWithTailwindClasses",
       handler: async () => {
-        let html = await navigator.clipboard.readText();
+        const html = await navigator.clipboard.readText();
         let fragment = generateFragmentFromHtml(html);
         fragment = await generateFragmentFromTailwind(fragment);
         return insertWebstudioFragmentAt(fragment);

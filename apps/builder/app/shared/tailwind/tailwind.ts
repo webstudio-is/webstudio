@@ -36,7 +36,7 @@ const parseTailwindClasses = async (classes: string) => {
   // to prevent bloating css with preflights from previous calls
   const generator = await createUnoGenerator();
   const generated = await generator.generate(classes);
-  let css = generated.css;
+  const css = generated.css;
   let parsedStyles: Omit<ParsedStyleDecl, "selector">[] = [];
   // @todo probably builtin in v4
   if (css.includes("border")) {
