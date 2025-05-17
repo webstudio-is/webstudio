@@ -19,7 +19,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  placeholder: "Link",
   icon: LinkIcon,
   presetStyle,
   states: [

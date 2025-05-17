@@ -73,6 +73,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
+import { richTextPlaceholders } from "~/shared/content-model";
 
 const ContentEditable = ({
   placeholder,
@@ -403,23 +404,19 @@ const getEditableComponentPlaceholder = (
   mode: "editing" | "editable"
 ) => {
   const meta = metas.get(instance.component);
-  if (meta?.placeholder === undefined) {
+  const tags = Object.keys(meta?.presetStyle ?? {});
+  const tag = instance.tag ?? tags[0];
+  const placeholder = richTextPlaceholders.get(tag);
+  if (placeholder === undefined) {
     return;
   }
-
   const isContentBlockChild =
     undefined !== findBlockSelector(instanceSelector, instances);
-
-  const isParagraph = instance.component === "Paragraph";
-
-  if (isParagraph && isContentBlockChild) {
-    return mode === "editing"
-      ? "Write something or press '/' for commands..."
-      : // The paragraph contains only an "editing" placeholder within the content block.
-        undefined;
+  // The paragraph contains only an "editing" placeholder within the content block.
+  if (tag === "p" && isContentBlockChild && mode === "editing") {
+    return "Write something or press '/' for commands...";
   }
-
-  return meta.placeholder;
+  return placeholder;
 };
 
 export const WebstudioComponentCanvas = forwardRef<

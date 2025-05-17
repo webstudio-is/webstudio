@@ -8,6 +8,10 @@ export const meta: WsComponentMeta = {
   description:
     "Converts machine-readable date and time to a human-readable format.",
   icon: CalendarIcon,
+  contentModel: {
+    category: "instance",
+    children: [],
+  },
   states: defaultStates,
   presetStyle: {
     time,

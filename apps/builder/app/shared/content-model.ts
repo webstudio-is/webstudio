@@ -409,7 +409,23 @@ export const richTextContentTags = new Set<undefined | string>([
   "span",
 ]);
 
-const richTextContainerTags = new Set<undefined | string>(["a", "span"]);
+/**
+ * textual placeholder is used when no content specified while in builder
+ * also signals to not insert components inside unless dropped explicitly
+ */
+export const richTextPlaceholders: Map<undefined | string, string> = new Map([
+  ["h1", "Heading 1"],
+  ["h2", "Heading 2"],
+  ["h3", "Heading 3"],
+  ["h4", "Heading 4"],
+  ["h5", "Heading 5"],
+  ["h6", "Heading 6"],
+  ["p", "Paragraph"],
+  ["blockquote", "Blockquote"],
+  ["li", "List item"],
+  ["a", "Link"],
+  ["span", "Span"],
+]);
 
 const findContentTags = ({
   instances,
@@ -492,7 +508,7 @@ export const isRichTextTree = ({
     setIsSubsetOf(contentTags, richTextContentTags) &&
     // rich text cannot contain only span and only link
     // those links and spans are containers in such cases
-    !setIsSubsetOf(contentTags, richTextContainerTags)
+    !setIsSubsetOf(contentTags, new Set(richTextPlaceholders.keys()))
   );
 };
 
@@ -633,7 +649,7 @@ export const findClosestNonTextualContainer = ({
     }
     if (
       instance.children.length === 0 &&
-      !meta?.placeholder &&
+      !richTextPlaceholders.has(tag) &&
       !richTextContentTags.has(tag)
     ) {
       return instanceSelector.slice(index);

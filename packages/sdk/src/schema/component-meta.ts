@@ -82,11 +82,6 @@ export type ContentModel = z.infer<typeof ContentModel>;
 
 export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  /**
-   * a property used as textual placeholder when no content specified while in builder
-   * also signals to not insert components inside unless dropped explicitly
-   */
-  placeholder: z.string().optional(),
   contentModel: ContentModel.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor
