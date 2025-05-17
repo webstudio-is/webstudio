@@ -85,7 +85,6 @@ test("generate jsx element with children and without them", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body">Children</$.Body>),
     })
@@ -104,7 +103,6 @@ test("generate jsx element with children and without them", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(<$.Image ws:id="image"></$.Image>),
     })
@@ -125,7 +123,6 @@ test("generate jsx element with namespaces components", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<library.Body ws:id="body"></library.Body>),
     })
@@ -142,7 +139,6 @@ test("generate jsx element with namespaces components", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(<library.Image ws:id="image"></library.Image>),
     })
@@ -162,7 +158,6 @@ test("generate jsx element with literal props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
@@ -181,7 +176,6 @@ test("generate jsx element with literal props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "image" }],
       ...renderData(
         <$.Image
@@ -209,7 +203,6 @@ test("ignore asset and page props", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -236,7 +229,6 @@ test("generate jsx element with data sources and action", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -269,7 +261,6 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
@@ -286,7 +277,6 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
     })
@@ -298,7 +288,6 @@ test("generate jsx element with condition based on show prop", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box ws:id="box" data-ws-show={expression`${condition}`}></$.Box>
@@ -320,7 +309,6 @@ test("generate jsx children with text", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [
         { type: "text", value: "Some\ntext" },
         { type: "text", value: 'Escaped "text"' },
@@ -348,7 +336,6 @@ test("exclude text placeholders", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [
         { type: "text", value: "Text" },
         { type: "text", value: "Placeholder text", placeholder: true },
@@ -374,7 +361,6 @@ test("generate jsx children with expression", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [
         { type: "expression", value: "'Hello ' + $ws$dataSource$var" },
       ],
@@ -406,7 +392,6 @@ test("generate jsx children with nested instances", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "form" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -436,7 +421,6 @@ test("deduplicate base and namespaced components with same short name", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [
         { type: "id", value: "button1" },
         { type: "id", value: "button2" },
@@ -465,7 +449,6 @@ test("generate collection component as map", () => {
     generateJsxChildren({
       scope: createScope(),
       metas: new Map(),
-      tagsOverrides: {},
       children: [{ type: "id", value: "list" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -501,7 +484,6 @@ test("generate component with variables and actions", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <$.Input
@@ -541,7 +523,6 @@ test("merge classes if no className", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(<$.Body ws:id="body"></$.Body>),
     })
   ).toEqual(
@@ -565,7 +546,6 @@ test("add classes and merge classes", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
@@ -589,7 +569,6 @@ test("add classes", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(<$.Body ws:id="body" className='cls2 "cls3"'></$.Body>),
     })
   ).toEqual(
@@ -614,7 +593,6 @@ test("add bind classes and merge classes", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body
           ws:id="body"
@@ -646,7 +624,6 @@ test("avoid generating collection parameter variable as state", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <ws.collection
@@ -708,7 +685,6 @@ test("generate both page system and global system variables when present", () =>
         },
       ],
       metas: new Map(),
-      tagsOverrides: {},
       ...data,
     })
   ).toEqual(
@@ -741,7 +717,6 @@ test("generate resources loading", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body
           ws:id="body"
@@ -803,7 +778,6 @@ test("avoid generating unused variables", () => {
         },
       ],
       metas: new Map(),
-      tagsOverrides: {},
       ...data,
     })
   ).toMatchInlineSnapshot(`
@@ -825,7 +799,6 @@ test("avoid generating descendant component", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <ws.descendant></ws.descendant>
@@ -852,7 +825,6 @@ test("generate conditional collection", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <ws.collection
@@ -892,7 +864,6 @@ test("generate conditional body", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body" data-ws-show={expression`${condition}`}></$.Body>
       ),
@@ -927,7 +898,6 @@ test("generate resource prop", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <$.Form ws:id="form1" action={myResource}></$.Form>
@@ -957,7 +927,6 @@ test("skip unsafe properties", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body
           ws:id="body"
@@ -990,7 +959,6 @@ test("variable names can be js identifiers", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <$.Input
@@ -1031,7 +999,6 @@ test("renders nothing if only templates are present in block", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
@@ -1065,7 +1032,6 @@ test("renders only block children", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <ws.block ws:id="block">
@@ -1101,7 +1067,6 @@ test("generate unset variables as undefined", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <$.Box>{expression`a + b`}</$.Box>
@@ -1141,7 +1106,6 @@ test("generate global variables", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...data,
     })
   ).toEqual(
@@ -1178,7 +1142,6 @@ test("ignore unused global variables", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...data,
     })
   ).toEqual(
@@ -1206,7 +1169,6 @@ test("generate prop with index within ancestor", () => {
         ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
         ["TabsContent", { indexWithinAncestor: "Tabs" }],
       ]),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="body">
           <$.Tabs>
@@ -1264,7 +1226,6 @@ test("ignore ws:block-template when generate index attribute", () => {
       metas: new Map<string, WsComponentMeta>([
         ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
       ]),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Tabs>
@@ -1308,7 +1269,6 @@ test("render empty component when no instances found", () => {
       rootInstanceId: "",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(<$.Body ws:id="bodyId"></$.Body>),
     })
   ).toEqual(
@@ -1331,7 +1291,6 @@ test("render tag property on components", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Box ws:id="spanId" ws:tag="span"></$.Box>
@@ -1361,7 +1320,6 @@ test("render ws:element component with div tag by default", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="bodyId">
           <ws.element id="element1">
@@ -1396,7 +1354,6 @@ test("render ws:element component with ws:tag", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map(),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="bodyId">
           <ws.element ws:tag="p" id="paragraph">
@@ -1466,7 +1423,6 @@ test("convert attributes to react compatible when render components with tags", 
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map([["Box", { presetStyle: { div: [] } }]]),
-      tagsOverrides: {},
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
