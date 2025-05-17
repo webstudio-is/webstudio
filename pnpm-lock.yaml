@@ -226,6 +226,15 @@ importers:
       '@tsndr/cloudflare-worker-jwt':
         specifier: ^2.5.3
         version: 2.5.3
+      '@unocss/core':
+        specifier: 66.1.2
+        version: 66.1.2
+      '@unocss/preset-legacy-compat':
+        specifier: 66.1.2
+        version: 66.1.2
+      '@unocss/preset-wind3':
+        specifier: 66.1.2
+        version: 66.1.2
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.5(typescript@5.8.2))(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3)(typescript@5.8.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.5(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -1269,14 +1278,14 @@ importers:
   packages/css-data:
     dependencies:
       '@unocss/core':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@unocss/preset-legacy-compat':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@unocss/preset-wind3':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -5573,23 +5582,23 @@ packages:
     resolution: {integrity: sha512-AjOC3zfnxd6S4Eiy3jwktJPclqhFHNyd8L6Gycf9WUPoKZpgM5PjkxY1X7uSy61xVpiJDhhk7XT2NVsN3ALTWg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@unocss/core@66.1.0-beta.7':
-    resolution: {integrity: sha512-l1/r+Jd9TbsRqR/geEdIV/Erzvs26GitTtMVsGcJfuaK1/WWOLtbSHRUDQAB/UpcOOWvuNuAv4UWsXX9Z0DFmw==}
+  '@unocss/core@66.1.2':
+    resolution: {integrity: sha512-mN9h1hHEuhDcdbI4z74o7UnxlBZYVsJpYcdC1YLWBKROcLYTkuyZ7hgBzpo1FBNox2Bt3JnrSinVDmc44Bxjow==}
 
-  '@unocss/extractor-arbitrary-variants@66.1.0-beta.7':
-    resolution: {integrity: sha512-LD8W9PlpHnFmuynI+TJzdE5z9OKY/tVaagY/Ak1mICFEWveH3jFuN13KH2jaI3/V2KaTwkcY/8tGQJXv8dKWAw==}
+  '@unocss/extractor-arbitrary-variants@66.1.2':
+    resolution: {integrity: sha512-F570wH9VYeFTb4r8qgcbN5QpEVIAvFC1zOnrAPUr6B6kbU2YChMXxHP7PHK0AzLHnEr458Pwpzl6hmP6bzxZ8g==}
 
-  '@unocss/preset-legacy-compat@66.1.0-beta.7':
-    resolution: {integrity: sha512-AZBC95jFCyiJetxFa/GfM+FCVIrNT6Kd8mVBiighSQfhUEmfTLhTen41/tUrCtUtxpbwgyxRmmkSUZjvsymodw==}
+  '@unocss/preset-legacy-compat@66.1.2':
+    resolution: {integrity: sha512-s1SnCXm9ywmp0plWQsXr8APxRhQEeblF7E6UmanFMj012/DU0bxWVUafnXBbeYUjtfBKCFlDvbW2pm30UGNQOw==}
 
-  '@unocss/preset-mini@66.1.0-beta.7':
-    resolution: {integrity: sha512-5v9RNFTk2OMLbE45JVoYA0HtZKCDCI3j7uRAcuRLVP3O/yAd9JlP/b8ou3wvtgxHTXFEgk6Pt8dFDKPadA3Hrw==}
+  '@unocss/preset-mini@66.1.2':
+    resolution: {integrity: sha512-oiDe+VhwZ8B5Z0UGfggtOwgpRZMLtH1RTDFvmJmJEXYYX5BPWknS6wYcQzxy0i/y9ym0xp2QnEaTpGmR7LKdkg==}
 
-  '@unocss/preset-wind3@66.1.0-beta.7':
-    resolution: {integrity: sha512-JgiHl2L0J6VdmowGk45WB9NLYxO1tTQpr6GspMyhMz63pkcqjJtP5g8JfeIw5G0uwfWhoGubqG3RxKKaWHsoyg==}
+  '@unocss/preset-wind3@66.1.2':
+    resolution: {integrity: sha512-S09imGOngAAOXCBCHb3JAtxD1/L7nDWrgEeX6NT0ElDp3X1T6XxUXYJlpjCfcqV/klMoXyYouKvp0YuG9QSgVg==}
 
-  '@unocss/rule-utils@66.1.0-beta.7':
-    resolution: {integrity: sha512-oJ5lcHRgN1aabsszkBXoiYp0G6LLM011BJoAEfKOeRZ14FGFlg0zuOi/h7aKlVuIvBt6q8BWosJLlZSAQnNypg==}
+  '@unocss/rule-utils@66.1.2':
+    resolution: {integrity: sha512-nn0ehvDh7yyWq2mcBDLVpmMAivjRATUroZ8ETinyN1rmfsGesm71R0d1gV3K+Z6YC7a3+dMLc+/qzI7VK3AG/Q==}
     engines: {node: '>=14'}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
@@ -13112,31 +13121,31 @@ snapshots:
       '@typescript-eslint/types': 8.26.1
       eslint-visitor-keys: 4.2.0
 
-  '@unocss/core@66.1.0-beta.7': {}
+  '@unocss/core@66.1.2': {}
 
-  '@unocss/extractor-arbitrary-variants@66.1.0-beta.7':
+  '@unocss/extractor-arbitrary-variants@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
 
-  '@unocss/preset-legacy-compat@66.1.0-beta.7':
+  '@unocss/preset-legacy-compat@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
 
-  '@unocss/preset-mini@66.1.0-beta.7':
+  '@unocss/preset-mini@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
-      '@unocss/extractor-arbitrary-variants': 66.1.0-beta.7
-      '@unocss/rule-utils': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
+      '@unocss/extractor-arbitrary-variants': 66.1.2
+      '@unocss/rule-utils': 66.1.2
 
-  '@unocss/preset-wind3@66.1.0-beta.7':
+  '@unocss/preset-wind3@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
-      '@unocss/preset-mini': 66.1.0-beta.7
-      '@unocss/rule-utils': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
+      '@unocss/preset-mini': 66.1.2
+      '@unocss/rule-utils': 66.1.2
 
-  '@unocss/rule-utils@66.1.0-beta.7':
+  '@unocss/rule-utils@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
       magic-string: 0.30.17
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':

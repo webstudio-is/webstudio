@@ -223,15 +223,20 @@ test("generate style attribute as local styles", () => {
   );
 });
 
-test("paste svg as html embed", () => {
+test("optionally paste svg as html embed", () => {
   expect(
-    generateFragmentFromHtml(`
-      <div>
-        <svg viewBox="0 0 20 20">
-          <rect x="5" y="5" width="10" height="10" />
-        </svg>
-      </div>
-    `)
+    generateFragmentFromHtml(
+      `
+        <div>
+          <svg viewBox="0 0 20 20">
+            <rect x="5" y="5" width="10" height="10" />
+          </svg>
+        </div>
+      `,
+      {
+        unknownTags: true,
+      }
+    )
   ).toEqual(
     renderTemplate(
       <ws.element ws:tag="div">

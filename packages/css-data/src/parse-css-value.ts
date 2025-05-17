@@ -413,6 +413,11 @@ export const parseCssValue = (
   } as const;
 
   if (input.length === 0) {
+    // custom properties can be empty
+    // in case interpolated value need to be avoided
+    if (property.startsWith("--")) {
+      return { type: "unparsed", value: "" };
+    }
     return invalidValue;
   }
 
