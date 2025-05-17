@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import { type Instances, coreMetas, corePropsMetas } from "@webstudio-is/sdk";
+import { type Instances, coreMetas } from "@webstudio-is/sdk";
 import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader } from "@webstudio-is/image";
@@ -240,13 +240,11 @@ export const Canvas = () => {
     registerComponentLibrary({
       components: {},
       metas: coreMetas,
-      propsMetas: corePropsMetas,
       templates: coreTemplates,
     });
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,
-      propsMetas: {},
       hooks: baseComponentHooks,
       templates: baseComponentTemplates,
     });
@@ -257,14 +255,12 @@ export const Canvas = () => {
         Body,
       },
       metas: {},
-      propsMetas: {},
       templates: {},
     });
     registerComponentLibrary({
       namespace: "@webstudio-is/sdk-components-react-radix",
       components: radixComponents,
       metas: radixComponentMetas,
-      propsMetas: {},
       hooks: radixComponentHooks,
       templates: radixTemplates,
     });
@@ -272,7 +268,6 @@ export const Canvas = () => {
       namespace: "@webstudio-is/sdk-components-animation",
       components: animationComponents,
       metas: animationComponentMetas,
-      propsMetas: {},
       hooks: animationComponentHooks,
       templates: animationTemplates,
     });
