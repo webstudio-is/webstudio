@@ -160,7 +160,7 @@ export const generateJsxElement = ({
   /**
    * Record<tag, componentDescriptor>
    */
-  tagsOverrides: Record<string, string>;
+  tagsOverrides?: Record<string, string>;
   instance: Instance;
   props: Props;
   dataSources: DataSources;
@@ -290,7 +290,7 @@ export const generateJsxElement = ({
     if (instance.component === elementComponent) {
       componentVariable = instance.tag ?? "div";
       // replace html tag with component if available
-      const componentDescriptor = tagsOverrides[componentVariable];
+      const componentDescriptor = tagsOverrides?.[componentVariable];
       if (componentDescriptor !== undefined) {
         const [_importSource, importSpecifier] = componentDescriptor.split(":");
         componentVariable = scope.getName(componentDescriptor, importSpecifier);
@@ -355,7 +355,7 @@ export const generateJsxChildren = ({
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
   // Record<tag, componentDescriptor>
-  tagsOverrides: Record<string, string>;
+  tagsOverrides?: Record<string, string>;
   children: Instance["children"];
   instances: Instances;
   props: Props;
@@ -451,7 +451,7 @@ export const generateWebstudioComponent = ({
   /**
    * Record<tag, componentDescriptor>
    */
-  tagsOverrides: Record<string, string>;
+  tagsOverrides?: Record<string, string>;
 }) => {
   const instance = instances.get(rootInstanceId);
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
