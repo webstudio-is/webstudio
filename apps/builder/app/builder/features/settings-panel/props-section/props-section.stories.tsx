@@ -202,7 +202,6 @@ registerComponentLibrary({
   templates: {},
   metas: {
     Box: {
-      icon: "",
       props: {
         initialText: textProp("", "multi\nline"),
         initialShortText: shortTextProp(),
