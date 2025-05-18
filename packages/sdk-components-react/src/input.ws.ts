@@ -1,4 +1,3 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -23,7 +22,6 @@ export const meta: WsComponentMeta = {
   label: "Text Input",
   description:
     "A single-line text input for collecting string data from your users.",
-  icon: FormTextFieldIcon,
   presetStyle,
   order: 3,
   states: [

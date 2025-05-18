@@ -1,4 +1,3 @@
-import { TextItalicIcon } from "@webstudio-is/icons/svg";
 import type { defaultTag } from "./italic";
 import {
   defaultStates,
@@ -20,7 +19,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Italic Text",
-  icon: TextItalicIcon,
   states: defaultStates,
   presetStyle,
   initialProps: ["id", "class"],

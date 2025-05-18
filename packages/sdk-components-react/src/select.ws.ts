@@ -1,4 +1,3 @@
-import { SelectIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -19,7 +18,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  icon: SelectIcon,
   presetStyle,
   states: [
     ...defaultStates,

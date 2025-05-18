@@ -1,4 +1,3 @@
-import { ImageIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -37,7 +36,6 @@ export const meta: WsComponentMeta = {
   category: "media",
   description:
     "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
-  icon: ImageIcon,
   states: defaultStates,
   presetStyle,
   order: 0,

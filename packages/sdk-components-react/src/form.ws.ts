@@ -1,4 +1,3 @@
-import { FormIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -19,7 +18,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   label: "Form",
   description: "Create filters, surveys, searches and more.",
-  icon: FormIcon,
   states: defaultStates,
   presetStyle,
   order: 0,

@@ -4,9 +4,9 @@ import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
 import { $instances, $registeredComponentMetas } from "~/shared/nano-states";
 import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
-import { getInstanceLabel } from "~/shared/instance-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const saveLabel = (label: string, selectedInstance: Instance) => {
   serverSyncStore.createTransaction([$instances], (instances) => {
@@ -32,9 +32,6 @@ export const SettingsSection = () => {
   }
 
   const meta = metas.get(selectedInstance.component);
-  if (meta === undefined) {
-    return;
-  }
   const placeholder = getInstanceLabel(selectedInstance, meta);
 
   return (

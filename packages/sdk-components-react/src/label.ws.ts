@@ -1,4 +1,3 @@
-import { LabelIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type PresetStyle,
@@ -17,7 +16,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Input Label",
-  icon: LabelIcon,
   states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "for"],
