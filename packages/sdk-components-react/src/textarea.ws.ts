@@ -1,4 +1,3 @@
-import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type PresetStyle,
@@ -25,7 +24,6 @@ export const meta: WsComponentMeta = {
   label: "Text Area",
   description:
     "A multi-line text input for collecting longer string data from your users.",
-  icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
   contentModel: {

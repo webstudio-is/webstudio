@@ -1166,8 +1166,8 @@ test("generate prop with index within ancestor", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
-        ["TabsContent", { icon: "", indexWithinAncestor: "Tabs" }],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
+        ["TabsContent", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="body">
@@ -1224,7 +1224,7 @@ test("ignore ws:block-template when generate index attribute", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="bodyId">
@@ -1387,9 +1387,7 @@ test("convert attributes to react compatible when render ws:element", () => {
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map([
-        [elementComponent, { icon: "", presetStyle: { div: [] } }],
-      ]),
+      metas: new Map([[elementComponent, { presetStyle: { div: [] } }]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <ws.element
@@ -1424,7 +1422,7 @@ test("convert attributes to react compatible when render components with tags", 
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map([["Box", { icon: "", presetStyle: { div: [] } }]]),
+      metas: new Map([["Box", { presetStyle: { div: [] } }]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
@@ -1459,7 +1457,6 @@ test("ignore props similar to standard attributes when react components defines 
         [
           "Vimeo",
           {
-            icon: "",
             presetStyle: { div: [] },
             props: {
               autoplay: { type: "boolean", control: "boolean", required: true },
@@ -1495,7 +1492,7 @@ test("ignore props similar to standard attributes on react components without ta
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map([["HeadSlot", { icon: "" }]]),
+      metas: new Map([["HeadSlot", {}]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.HeadSlot

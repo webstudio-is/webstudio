@@ -1,4 +1,3 @@
-import { ItemIcon } from "@webstudio-is/icons/svg";
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 
 import type { defaultTag } from "./option";
@@ -24,7 +23,6 @@ export const meta: WsComponentMeta = {
   category: "hidden",
   description:
     "An item within a drop-down menu that users can select as their chosen value.",
-  icon: ItemIcon,
   presetStyle,
   states: [
     // Applies when option is being activated (clicked)

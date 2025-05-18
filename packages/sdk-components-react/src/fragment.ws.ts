@@ -1,5 +1,3 @@
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 
-export const meta: WsComponentMeta = {
-  icon: "",
-};
+export const meta: WsComponentMeta = {};

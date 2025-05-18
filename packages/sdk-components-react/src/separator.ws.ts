@@ -1,4 +1,3 @@
-import { MinusIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -43,7 +42,6 @@ export const meta: WsComponentMeta = {
   category: "general",
   description:
     "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
-  icon: MinusIcon,
   states: defaultStates,
   presetStyle,
   order: 3,

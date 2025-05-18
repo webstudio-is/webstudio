@@ -15,9 +15,9 @@ import {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
-import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 

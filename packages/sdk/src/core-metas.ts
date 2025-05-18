@@ -4,7 +4,6 @@ import {
   PaintBrushIcon,
   SettingsIcon,
   AddTemplateInstanceIcon,
-  BoxIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
 import * as normalize from "./__generated__/normalize.css";
@@ -27,7 +26,6 @@ export const elementComponent = "ws:element";
 
 const elementMeta: WsComponentMeta = {
   label: "Element",
-  icon: BoxIcon,
   // convert [object Module] to [object Object] to enable structured cloning
   presetStyle: { ...normalize },
   initialProps: [tagProperty, "id", "class"],

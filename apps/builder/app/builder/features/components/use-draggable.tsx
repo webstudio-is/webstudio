@@ -10,11 +10,9 @@ import {
   useDisableCanvasPointerEvents,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { $registeredComponentMetas } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $canvasRect, $scale } from "~/builder/shared/nano-states";
-import { getInstanceLabel } from "~/shared/instance-utils";
-import { MetaIcon } from "~/builder/shared/meta-icon";
+import { InstanceIcon, InstanceLabel } from "~/builder/shared/instance-label";
 
 const DragLayer = ({
   component,
@@ -23,12 +21,6 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
-  const metas = useStore($registeredComponentMetas);
-  const meta = metas.get(component);
-  if (meta === undefined) {
-    return null;
-  }
-
   return createPortal(
     <Flex
       // Container is used to position card
@@ -40,8 +32,8 @@ const DragLayer = ({
       }}
     >
       <ComponentCard
-        label={getInstanceLabel({ component }, meta)}
-        icon={<MetaIcon size="auto" icon={meta.icon} />}
+        label={<InstanceLabel instance={{ component }} />}
+        icon={<InstanceIcon size="auto" instance={{ component }} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
           width: rawTheme.spacing[20],

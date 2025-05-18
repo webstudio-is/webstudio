@@ -27,8 +27,6 @@ import {
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/features/navigator";
 import type { Settings } from "~/builder/shared/client-settings";
-import { MetaIcon } from "~/builder/shared/meta-icon";
-import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import {
@@ -37,19 +35,14 @@ import {
   $selectedPage,
 } from "~/shared/awareness";
 import { $styleSourceInputElement } from "./shared/commands";
+import { InstanceIcon, InstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
-  const metas = useStore($registeredComponentMetas);
-  const componentMeta = metas.get(instance.component);
-  if (componentMeta === undefined) {
-    return null;
-  }
-  const label = getInstanceLabel(instance, componentMeta);
   return (
     <Flex shrink={false} gap="1" align="center">
-      <MetaIcon icon={componentMeta.icon} />
+      <InstanceIcon instance={instance} />
       <Text truncate variant="labelsSentenceCase">
-        {label}
+        <InstanceLabel instance={instance} />
       </Text>
     </Flex>
   );

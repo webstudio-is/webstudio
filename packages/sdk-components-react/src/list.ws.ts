@@ -1,4 +1,3 @@
-import { ListIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
@@ -42,7 +41,6 @@ const presetStyle = {
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  icon: ListIcon,
   states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "ordered", "start", "reversed"],

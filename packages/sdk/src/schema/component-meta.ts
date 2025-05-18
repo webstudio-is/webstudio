@@ -90,7 +90,7 @@ export const WsComponentMeta = z.object({
   indexWithinAncestor: z.optional(z.string()),
   label: z.optional(z.string()),
   description: z.string().optional(),
-  icon: z.string(),
+  icon: z.string().optional(),
   presetStyle: z.optional(z.record(z.string(), z.array(PresetStyleDecl))),
   states: z.optional(z.array(ComponentState)),
   order: z.number().optional(),

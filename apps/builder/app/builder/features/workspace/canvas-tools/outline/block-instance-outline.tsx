@@ -19,7 +19,6 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import { BoxIcon } from "@webstudio-is/icons/svg";
 import {
   $blockChildOutline,
   $hoveredInstanceOutline,
@@ -27,7 +26,6 @@ import {
   $instances,
   $isContentMode,
   $modifierKeys,
-  $registeredComponentMetas,
   findBlockSelector,
   findTemplates,
   type BlockChildOutline,
@@ -38,13 +36,13 @@ import {
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { getInstancePath } from "~/shared/awareness";
 import { insertTemplateAt } from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
+import { InstanceIcon } from "~/builder/shared/instance-label";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -74,7 +72,6 @@ export const TemplatesMenu = ({
   preventFocusOnHover: boolean;
 }) => {
   const instances = useStore($instances);
-  const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
   const blockInstanceSelector = findBlockSelector(anchor, instances);
@@ -105,7 +102,7 @@ export const TemplatesMenu = ({
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
-    icon: <MetaIcon icon={metas.get(template.component)?.icon ?? BoxIcon} />,
+    icon: <InstanceIcon instance={{ component: template.component }} />,
     title: template.label ?? template.component,
     value: templateSelector,
   }));
