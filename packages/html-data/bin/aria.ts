@@ -159,6 +159,5 @@ await writeFile(
     classesMap: new Map(),
     parameters: [],
     metas: new Map(),
-    tagsOverrides: {},
   }) + "export { Page }"
 );
