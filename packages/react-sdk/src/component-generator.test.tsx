@@ -1518,3 +1518,37 @@ test("ignore props similar to standard attributes on react components without ta
     )
   );
 });
+
+test("overrides some element tags with provided components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["HeadSlot", { icon: "" }]]),
+      tagsOverrides: {
+        body: "namespace:Body",
+        a: "namespace:Link",
+      },
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a"></ws.element>
+          <ws.element ws:tag="div"></ws.element>
+        </ws.element>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Link />
+       <div />
+       </Body>
+       }
+     `)
+    )
+  );
+});

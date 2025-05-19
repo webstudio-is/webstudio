@@ -36,7 +36,6 @@ import {
   createScope,
   findTreeInstanceIds,
   getPagePath,
-  parseComponentName,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
@@ -46,6 +45,7 @@ import {
   SYSTEM_VARIABLE_ID,
   generateCss,
   ROOT_INSTANCE_ID,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -285,16 +285,6 @@ export const prebuild = async (options: {
     );
   }
 
-  // collect all possible component metas
-  const metas = new Map<string, WsComponentMeta>();
-  const componentSources = new Map<string, string>();
-  for (const entry of framework.components) {
-    for (const [componentName, meta] of Object.entries(entry.metas)) {
-      metas.set(componentName, meta);
-      componentSources.set(componentName, entry.source);
-    }
-  }
-
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
@@ -325,7 +315,7 @@ export const prebuild = async (options: {
     for (const [_instanceId, instance] of siteData.build.instances) {
       if (pageInstanceSet.has(instance.id)) {
         instances.push([instance.id, instance]);
-        const meta = metas.get(instance.component);
+        const meta = framework.metas[instance.component];
         if (meta) {
           usedMetas.set(instance.component, meta);
         }
@@ -518,38 +508,36 @@ export const prebuild = async (options: {
       }
     }
 
-    const pageComponents = new Set<Instance["component"]>();
+    // generate component imports
+    // Map<importSource, Map<id, importSpecifier>>
+    const imports = new Map<string, Map<string, string>>();
     for (const instance of instances.values()) {
-      pageComponents.add(instance.component);
-    }
-    const namespaces = new Map<
-      string,
-      Set<[shortName: string, componentName: string]>
-    >();
-    for (const component of pageComponents) {
-      const namespace = componentSources.get(component);
-      if (namespace === undefined) {
+      let descriptor = framework.components[instance.component];
+      let id = instance.component;
+      if (instance.component === elementComponent && instance.tag) {
+        descriptor = framework.tags[instance.tag];
+        id = descriptor;
+      }
+      if (descriptor === undefined) {
         continue;
       }
-      if (namespaces.has(namespace) === false) {
-        namespaces.set(
-          namespace,
-          new Set<[shortName: string, componentName: string]>()
-        );
+      const [importSource, importSpecifier] = descriptor.split(":");
+      let specifiers = imports.get(importSource);
+      if (specifiers === undefined) {
+        specifiers = new Map();
+        imports.set(importSource, specifiers);
       }
-      const [_namespace, shortName] = parseComponentName(component);
-      namespaces.get(namespace)?.add([shortName, component]);
+      specifiers.set(id, importSpecifier);
     }
-
-    let componentImports = "";
-    for (const [namespace, componentsSet] of namespaces.entries()) {
-      const specifiers = Array.from(componentsSet)
+    let importsString = "";
+    for (const [importSource, specifiers] of imports) {
+      const specifiersString = Array.from(specifiers)
         .map(
-          ([shortName, component]) =>
-            `${shortName} as ${scope.getName(component, shortName)}`
+          ([id, importSpecifier]) =>
+            `${importSpecifier} as ${scope.getName(id, importSpecifier)}`
         )
         .join(", ");
-      componentImports += `import { ${specifiers} } from "${namespace}";\n`;
+      importsString += `import { ${specifiersString} } from "${importSource}";\n`;
     }
 
     const pageFontAssets = fontAssetsByPage[page.id];
@@ -588,6 +576,7 @@ export const prebuild = async (options: {
       dataSources,
       classesMap: classes,
       metas: usedMetas,
+      tagsOverrides: framework.tags,
     });
 
     const projectMeta = siteData.build.pages.meta;
@@ -612,7 +601,7 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${componentImports}
+      ${importsString}
 
       export const projectId = "${siteData.build.projectId}";
 
