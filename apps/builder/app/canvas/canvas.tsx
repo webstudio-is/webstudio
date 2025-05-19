@@ -71,7 +71,6 @@ import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
-import { Body } from "./shared/body";
 import { subscribeScrollbarSize } from "./scrollbar-width";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { builderApi } from "~/shared/builder-api";
@@ -249,15 +248,6 @@ export const Canvas = () => {
       templates: baseComponentTemplates,
     });
     registerComponentLibrary({
-      components: {
-        // override only canvas specific body component
-        // not related to sdk-components-react-remix anymore
-        Body,
-      },
-      metas: {},
-      templates: {},
-    });
-    registerComponentLibrary({
       namespace: "@webstudio-is/sdk-components-react-radix",
       components: radixComponents,
       metas: radixComponentMetas,
@@ -321,7 +311,7 @@ export const Canvas = () => {
   }, []);
 
   if (components.size === 0 || instances.size === 0) {
-    return <Body />;
+    return;
   }
 
   return (
