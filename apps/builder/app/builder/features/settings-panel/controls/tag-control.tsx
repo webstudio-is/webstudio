@@ -46,7 +46,11 @@ export const TagControl = ({ meta, prop }: ControlProps<"tag">) => {
   const instanceTag = instance?.tag;
   const defaultTag = meta.options[0];
   const computedTag = instanceTag ?? propTag ?? defaultTag;
-  const satisfyingTags = useStore($satisfyingTags);
+  let satisfyingTags = useStore($satisfyingTags);
+  // forbid changing tag on body element
+  if (computedTag === "body") {
+    satisfyingTags = ["body"];
+  }
   const options = meta.options.filter((tag) => satisfyingTags.includes(tag));
   const [value, setValue] = useState<undefined | string>();
   const updateTag = (value: string) => {

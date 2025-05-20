@@ -29,6 +29,7 @@ import {
   isLiteralExpression,
   documentTypes,
   isRootFolder,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -1307,7 +1308,8 @@ const createPage = (pageId: Page["id"], values: Values) => {
       instances.set(rootInstanceId, {
         type: "instance",
         id: rootInstanceId,
-        component: "Body",
+        component: elementComponent,
+        tag: "body",
         children: [],
       });
       registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
