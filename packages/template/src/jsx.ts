@@ -110,37 +110,14 @@ const isChildValue = (child: unknown) =>
   child instanceof PlaceholderValue ||
   child instanceof Expression;
 
-const traverseJsx = (
-  element: JSX.Element,
-  callback: (
-    element: JSX.Element,
-    children: JSX.Element[]
-  ) => Instance["children"][number]
-) => {
-  const children = Array.isArray(element.props?.children)
-    ? element.props?.children
-    : element.props?.children
-      ? [element.props?.children]
-      : [];
-  const result: Instance["children"] = [];
-  if (element.type === Fragment) {
-    for (const child of children) {
-      if (isChildValue(child)) {
-        continue;
-      }
-      result.push(...traverseJsx(child, callback));
-    }
-    return result;
+const getElementChildren = (element: JSX.Element): JSX.Element[] => {
+  if (Array.isArray(element.props?.children)) {
+    return element.props?.children;
   }
-  const child = callback(element, children);
-  result.push(child);
-  for (const child of children) {
-    if (isChildValue(child)) {
-      continue;
-    }
-    traverseJsx(child, callback);
+  if (element.props?.children) {
+    return [element.props?.children];
   }
-  return result;
+  return [];
 };
 
 export const renderTemplate = (
@@ -253,7 +230,9 @@ export const renderTemplate = (
     });
     return breakpointId;
   };
-  const children = traverseJsx(root, (element, children) => {
+  const convertElementToInstance = (
+    element: JSX.Element
+  ): Instance["children"][number] => {
     const instanceId = element.props?.["ws:id"] ?? getId(element);
     let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
@@ -347,7 +326,17 @@ export const renderTemplate = (
       type: "instance",
       id: instanceId,
       component,
-      children: children.map((child): Instance["children"][number] => {
+      children: [],
+    };
+    instances.push(instance);
+    if (element.props?.["ws:label"]) {
+      instance.label = element.props?.["ws:label"];
+    }
+    if (tag) {
+      instance.tag = tag;
+    }
+    instance.children = getElementChildren(element).map(
+      (child): Instance["children"][number] => {
         if (typeof child === "string") {
           return { type: "text", value: child };
         }
@@ -358,18 +347,22 @@ export const renderTemplate = (
           const expression = compileExpression(instanceId, child);
           return { type: "expression", value: expression };
         }
-        return { type: "id", value: child.props?.["ws:id"] ?? getId(child) };
-      }),
-    };
-    if (element.props?.["ws:label"]) {
-      instance.label = element.props?.["ws:label"];
-    }
-    if (tag) {
-      instance.tag = tag;
-    }
-    instances.push(instance);
+        return convertElementToInstance(child);
+      }
+    );
     return { type: "id", value: instance.id };
-  });
+  };
+  const children: Instance["children"] = [];
+  if (root.type === Fragment) {
+    for (const child of getElementChildren(root)) {
+      if (isChildValue(child)) {
+        continue;
+      }
+      children.push(convertElementToInstance(child));
+    }
+  } else {
+    children.push(convertElementToInstance(root));
+  }
   return {
     children,
     instances,

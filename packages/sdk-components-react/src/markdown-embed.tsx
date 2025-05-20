@@ -1,10 +1,9 @@
 import { micromark } from "micromark";
 import { gfmTable, gfmTableHtml } from "micromark-extension-gfm-table";
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo, type ComponentProps } from "react";
 
-type MarkdownEmbedProps = {
+type MarkdownEmbedProps = ComponentProps<"div"> & {
   code: string;
-  className?: string;
   // avoid builder passing it to dom
   children?: never;
 };
