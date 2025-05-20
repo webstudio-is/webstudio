@@ -43,7 +43,6 @@ import {
   $blockChildOutline,
   $textToolbar,
   $registeredComponentMetas,
-  $registeredComponentPropsMetas,
   $registeredTemplates,
   $modifierKeys,
 } from "~/shared/nano-states";
@@ -146,10 +145,6 @@ export const createObjectPool = () => {
     new NanostoresSyncObject(
       "registeredComponentMetas",
       $registeredComponentMetas
-    ),
-    new NanostoresSyncObject(
-      "registeredComponentPropsMetas",
-      $registeredComponentPropsMetas
     ),
     new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),

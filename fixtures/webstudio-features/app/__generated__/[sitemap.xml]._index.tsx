@@ -10,7 +10,7 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2025-04-14T09:45:34.257Z";
+export const lastPublished = "2025-05-15T22:04:05.511Z";
 
 export const siteName = "KittyGuardedZone";
 

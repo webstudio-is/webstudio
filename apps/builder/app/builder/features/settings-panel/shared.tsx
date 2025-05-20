@@ -39,7 +39,7 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
-  $registeredComponentPropsMetas,
+  $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
@@ -426,86 +426,107 @@ export const humanizeAttribute = (string: string) => {
 type Attribute = (typeof ariaAttributes)[number];
 
 const attributeToMeta = (attribute: Attribute): PropMeta => {
-  if (attribute.type === "string") {
-    return {
-      type: "string",
-      control: "text",
-      required: false,
-      description: attribute.description,
-    };
-  }
+  const required = attribute.required ?? false;
+  const description = attribute.description;
   if (attribute.type === "select") {
     const options = attribute.options ?? [];
     return {
       type: "string",
       control: options.length > 3 ? "select" : "radio",
-      required: false,
+      required,
       options,
-      description: attribute.description,
+      description,
     };
+  }
+  if (attribute.type === "url") {
+    return { type: "string", control: "url", required, description };
+  }
+  if (attribute.type === "string") {
+    return { type: "string", control: "text", required, description };
   }
   if (attribute.type === "number") {
-    return {
-      type: "number",
-      control: "number",
-      required: false,
-      description: attribute.description,
-    };
+    return { type: "number", control: "number", required, description };
   }
   if (attribute.type === "boolean") {
-    return {
-      type: "boolean",
-      control: "boolean",
-      required: false,
-      description: attribute.description,
-    };
+    return { type: "boolean", control: "boolean", required, description };
   }
   attribute.type satisfies never;
   throw Error("impossible case");
 };
 
 export const $selectedInstancePropsMetas = computed(
-  [$selectedInstance, $registeredComponentPropsMetas, $instanceTags],
-  (instance, componentPropsMetas, instanceTags): Map<string, PropMeta> => {
+  [$selectedInstance, $registeredComponentMetas, $instanceTags],
+  (instance, metas, instanceTags): Map<string, PropMeta> => {
     if (instance === undefined) {
       return new Map();
     }
-    const propsMetas = componentPropsMetas.get(instance.component)?.props ?? {};
+    const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
-    const metas = new Map<Prop["name"], PropMeta>();
+    const propsMetas = new Map<Prop["name"], PropMeta>();
     // add html attributes only when instance has tag
     if (tag) {
       for (const attribute of [...ariaAttributes].reverse()) {
-        metas.set(attribute.name, attributeToMeta(attribute));
+        propsMetas.set(attribute.name, attributeToMeta(attribute));
       }
       if (attributesByTag["*"]) {
         for (const attribute of [...attributesByTag["*"]].reverse()) {
-          metas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, attributeToMeta(attribute));
         }
       }
       if (attributesByTag[tag]) {
         for (const attribute of [...attributesByTag[tag]].reverse()) {
-          metas.set(attribute.name, attributeToMeta(attribute));
+          propsMetas.set(attribute.name, attributeToMeta(attribute));
         }
       }
     }
-    for (const [name, propMeta] of Object.entries(propsMetas).reverse()) {
+    for (const [name, propMeta] of Object.entries(
+      meta?.props ?? {}
+    ).reverse()) {
       // when component property has the same name as html attribute in react
       // override to deduplicate similar properties
       // for example component can have own "className" and html has "class"
       const htmlName = reactPropsToStandardAttributes[name];
       if (htmlName) {
-        metas.delete(htmlName);
+        propsMetas.delete(htmlName);
       }
-      metas.set(name, propMeta);
+      propsMetas.set(name, propMeta);
     }
-    metas.set(showAttribute, showAttributeMeta);
+    propsMetas.set(showAttribute, showAttributeMeta);
     // ui should render in the following order
     // 1. system properties
     // 2. component properties
     // 3. specific tag attributes
     // 4. global html attributes
     // 5. aria attributes
-    return new Map(Array.from(metas.entries()).reverse());
+    return new Map(Array.from(propsMetas.entries()).reverse());
+  }
+);
+
+export const $selectedInstanceInitialPropNames = computed(
+  [$selectedInstance, $registeredComponentMetas, $selectedInstancePropsMetas],
+  (selectedInstance, metas, instancePropsMetas) => {
+    const initialPropNames = new Set<string>();
+    if (selectedInstance) {
+      const initialProps =
+        metas.get(selectedInstance.component)?.initialProps ?? [];
+      for (const propName of initialProps) {
+        // className -> class
+        if (instancePropsMetas.has(reactPropsToStandardAttributes[propName])) {
+          initialPropNames.add(reactPropsToStandardAttributes[propName]);
+        } else {
+          initialPropNames.add(propName);
+        }
+      }
+    }
+    for (const [propName, propMeta] of instancePropsMetas) {
+      // skip show attribute which is added as system prop
+      if (propName === showAttribute) {
+        continue;
+      }
+      if (propMeta.required) {
+        initialPropNames.add(propName);
+      }
+    }
+    return initialPropNames;
   }
 );

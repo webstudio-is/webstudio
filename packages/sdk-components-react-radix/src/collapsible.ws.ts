@@ -3,7 +3,7 @@ import {
   TriggerIcon,
   ContentIcon,
 } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -22,6 +22,8 @@ export const metaCollapsible: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  initialProps: ["open"],
+  props: propsCollapsible,
 };
 
 export const metaCollapsibleTrigger: WsComponentMeta = {
@@ -30,6 +32,7 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
+  props: propsCollapsibleTrigger,
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
@@ -41,24 +44,5 @@ export const metaCollapsibleContent: WsComponentMeta = {
   presetStyle: {
     div,
   },
-};
-
-export const propsMetaCollapsible: WsComponentPropsMeta = {
-  props: {
-    ...propsCollapsible,
-    onOpenChange: {
-      type: "action",
-      control: "action",
-      required: false,
-    },
-  },
-  initialProps: ["open", "onOpenChange"],
-};
-
-export const propsMetaCollapsibleTrigger: WsComponentPropsMeta = {
-  props: propsCollapsibleTrigger,
-};
-
-export const propsMetaCollapsibleContent: WsComponentPropsMeta = {
   props: propsCollapsibleContent,
 };

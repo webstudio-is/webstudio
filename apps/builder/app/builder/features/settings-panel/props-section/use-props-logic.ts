@@ -14,11 +14,11 @@ import {
   $isContentMode,
   $props,
   $registeredComponentMetas,
-  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { isRichText } from "~/shared/content-model";
 import { $selectedInstancePath } from "~/shared/awareness";
 import {
+  $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
@@ -198,10 +198,7 @@ export const usePropsLogic = ({
 
   const propsMetas = useStore($selectedInstancePropsMetas);
 
-  const componentPropsMeta = useStore($registeredComponentPropsMetas).get(
-    instance.component
-  );
-  const initialPropsNames = new Set(componentPropsMeta?.initialProps);
+  const initialPropNames = useStore($selectedInstanceInitialPropNames);
 
   const systemProps: PropAndMeta[] = [];
   // descendant component is not actually rendered
@@ -238,13 +235,8 @@ export const usePropsLogic = ({
   }
 
   const initialProps: PropAndMeta[] = [];
-  for (let name of initialPropsNames) {
-    let propMeta = propsMetas.get(name);
-    // className -> class
-    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
-      name = reactPropsToStandardAttributes[name];
-      propMeta = propsMetas.get(name);
-    }
+  for (const name of initialPropNames) {
+    const propMeta = propsMetas.get(name);
 
     if (propMeta === undefined) {
       console.error(

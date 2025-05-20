@@ -1,9 +1,7 @@
-import { BodyIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { body } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/body.props";
@@ -24,12 +22,8 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  icon: BodyIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class"],
   props,
-  initialProps: ["id", "className"],
 };

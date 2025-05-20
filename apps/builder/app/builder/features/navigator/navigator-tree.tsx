@@ -55,8 +55,7 @@ import {
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
-import { MetaIcon } from "~/builder/shared/meta-icon";
-import { getInstanceLabel, reparentInstance } from "~/shared/instance-utils";
+import { reparentInstance } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";
 import {
@@ -69,6 +68,10 @@ import {
   isRichTextContent,
   isTreeSatisfyingContentModel,
 } from "~/shared/content-model";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
 
 type TreeItemAncestor =
   | undefined
@@ -430,7 +433,7 @@ const TreeNodeContent = ({
   });
 
   return (
-    <TreeNodeLabel prefix={<MetaIcon icon={meta.icon} />}>
+    <TreeNodeLabel prefix={<InstanceIcon instance={instance} />}>
       <EditableTreeNodeLabel
         ref={mergeRefs(editableRef, ref)}
         {...handlers}
@@ -657,7 +660,9 @@ export const NavigatorTree = () => {
               </Tooltip>
             }
           >
-            <TreeNodeLabel prefix={<MetaIcon icon={rootMeta.icon} />}>
+            <TreeNodeLabel
+              prefix={<InstanceIcon instance={{ component: rootComponent }} />}
+            >
               {rootMeta.label}
             </TreeNodeLabel>
           </TreeNode>

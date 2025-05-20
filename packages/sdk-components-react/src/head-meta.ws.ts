@@ -1,8 +1,5 @@
 import { WindowInfoIcon } from "@webstudio-is/icons/svg";
-import {
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/head-meta.props";
 
 export const meta: WsComponentMeta = {
@@ -11,9 +8,6 @@ export const meta: WsComponentMeta = {
     category: "none",
     children: [],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: ["name", "property", "content"],
+  props,
 };

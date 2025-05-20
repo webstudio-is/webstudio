@@ -4,14 +4,10 @@ import {
   PaintBrushIcon,
   SettingsIcon,
   AddTemplateInstanceIcon,
-  BoxIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
 import * as normalize from "./__generated__/normalize.css";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "./schema/component-meta";
+import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 import { tagProperty } from "./runtime";
 import { tags } from "./__generated__/tags";
@@ -26,20 +22,13 @@ const rootMeta: WsComponentMeta = {
   },
 };
 
-const rootPropsMeta: WsComponentPropsMeta = {
-  props: {},
-};
-
 export const elementComponent = "ws:element";
 
 const elementMeta: WsComponentMeta = {
   label: "Element",
-  icon: BoxIcon,
   // convert [object Module] to [object Object] to enable structured cloning
   presetStyle: { ...normalize },
-};
-
-const elementPropsMeta: WsComponentPropsMeta = {
+  initialProps: [tagProperty, "id", "class"],
   props: {
     [tagProperty]: {
       type: "string",
@@ -61,9 +50,7 @@ const collectionMeta: WsComponentMeta = {
     category: "instance",
     children: ["instance"],
   },
-};
-
-const collectionPropsMeta: WsComponentPropsMeta = {
+  initialProps: ["data"],
   props: {
     data: {
       required: true,
@@ -71,7 +58,6 @@ const collectionPropsMeta: WsComponentPropsMeta = {
       type: "json",
     },
   },
-  initialProps: ["data"],
 };
 
 export const descendantComponent = "ws:descendant";
@@ -85,9 +71,7 @@ const descendantMeta: WsComponentMeta = {
   },
   // @todo infer possible presets
   presetStyle: {},
-};
-
-const descendantPropsMeta: WsComponentPropsMeta = {
+  initialProps: ["selector"],
   props: {
     selector: {
       required: true,
@@ -113,7 +97,6 @@ const descendantPropsMeta: WsComponentPropsMeta = {
       ],
     },
   },
-  initialProps: ["selector"],
 };
 
 export const blockComponent = "ws:block";
@@ -128,10 +111,6 @@ export const blockTemplateMeta: WsComponentMeta = {
   },
 };
 
-const blockTemplatePropsMeta: WsComponentPropsMeta = {
-  props: {},
-};
-
 const blockMeta: WsComponentMeta = {
   label: "Content Block",
   icon: ContentBlockIcon,
@@ -141,10 +120,6 @@ const blockMeta: WsComponentMeta = {
   },
 };
 
-const blockPropsMeta: WsComponentPropsMeta = {
-  props: {},
-};
-
 export const coreMetas = {
   [rootComponent]: rootMeta,
   [elementComponent]: elementMeta,
@@ -152,15 +127,6 @@ export const coreMetas = {
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
   [blockTemplateComponent]: blockTemplateMeta,
-};
-
-export const corePropsMetas = {
-  [rootComponent]: rootPropsMeta,
-  [elementComponent]: elementPropsMeta,
-  [collectionComponent]: collectionPropsMeta,
-  [descendantComponent]: descendantPropsMeta,
-  [blockComponent]: blockPropsMeta,
-  [blockTemplateComponent]: blockTemplatePropsMeta,
 };
 
 // components with custom implementation

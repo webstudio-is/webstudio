@@ -8,6 +8,14 @@
     white-space: pre-wrap;
     white-space-collapse: preserve;
   }
+  a.w-element {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
   body.w-body {
     box-sizing: border-box;
     border-top-width: 1px;

@@ -9,10 +9,6 @@ import {
 import type { WsComponentMeta } from "./schema/component-meta";
 import type { Instance } from "./schema/instances";
 
-const createMeta = (meta?: Partial<WsComponentMeta>) => {
-  return { type: "container", label: "", icon: "", ...meta } as const;
-};
-
 test("find all tree instances", () => {
   const { instances } = renderData(
     <$.Body ws:id="1">
@@ -80,9 +76,9 @@ test("get indexes within ancestors", () => {
     </$.Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
-    ["TabsList", createMeta({ indexWithinAncestor: "Tabs" })],
-    ["TabsTrigger", createMeta({ indexWithinAncestor: "TabsList" })],
-    ["TabsContent", createMeta({ indexWithinAncestor: "Tabs" })],
+    ["TabsList", { indexWithinAncestor: "Tabs" }],
+    ["TabsTrigger", { indexWithinAncestor: "TabsList" }],
+    ["TabsContent", { indexWithinAncestor: "Tabs" }],
   ]);
   expect(getIndexesWithinAncestors(metas, instances, ["body0"])).toEqual(
     new Map([
@@ -113,7 +109,7 @@ test("ignore ws:block-template when compute indexes within ancestors", () => {
     </$.Body>
   );
   const metas = new Map<Instance["component"], WsComponentMeta>([
-    ["TabsTrigger", createMeta({ indexWithinAncestor: "Tabs" })],
+    ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
   ]);
   expect(getIndexesWithinAncestors(metas, instances, ["body0"])).toEqual(
     new Map([

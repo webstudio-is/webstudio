@@ -31,20 +31,22 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
-import { MetaIcon } from "~/builder/shared/meta-icon";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
 import {
   getComponentTemplateData,
-  getInstanceLabel,
   insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
 
 type Meta = {
   name: string;
@@ -52,7 +54,7 @@ type Meta = {
   order: undefined | number;
   label: string;
   description: undefined | string;
-  icon: string;
+  icon?: string;
 };
 
 const $metas = computed(
@@ -85,7 +87,6 @@ const $metas = computed(
         order: componentMeta.order,
         label: getInstanceLabel({ component: name }, componentMeta),
         description: componentMeta.description,
-        icon: componentMeta.icon,
       });
     }
     for (const [name, templateMeta] of templates) {
@@ -111,7 +112,7 @@ const $metas = computed(
           componentMeta?.label ??
           getInstanceLabel({ component: name }, templateMeta),
         description: templateMeta.description,
-        icon: templateMeta.icon ?? componentMeta?.icon ?? "",
+        icon: templateMeta.icon,
       });
     }
     const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
@@ -335,7 +336,14 @@ export const ComponentsPanel = ({
                       {...{ [dragItemAttribute]: meta.name }}
                       label={meta.label}
                       description={meta.description}
-                      icon={<MetaIcon size="auto" icon={meta.icon} />}
+                      icon={
+                        <InstanceIcon
+                          size="auto"
+                          instance={{ component: meta.name }}
+                          // for cases like Sheet template
+                          icon={meta.icon}
+                        />
+                      }
                     />
                   </ListItem>
                 ))}

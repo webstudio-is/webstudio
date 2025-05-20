@@ -1,9 +1,7 @@
-import { BlockquoteIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import type { defaultTag } from "./blockquote";
 import { props } from "./__generated__/blockquote.props";
@@ -60,13 +58,8 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  placeholder: "Blockquote",
-  icon: BlockquoteIcon,
   states: defaultStates,
   presetStyle,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "cite"],
   props,
-  initialProps: ["id", "className", "cite"],
 };

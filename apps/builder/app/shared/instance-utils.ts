@@ -28,7 +28,6 @@ import {
   portalComponent,
   collectionComponent,
   Prop,
-  parseComponentName,
   Props,
   elementComponent,
   tags,
@@ -57,7 +56,6 @@ import {
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
-import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
@@ -81,6 +79,7 @@ import {
   isTreeSatisfyingContentModel,
 } from "./content-model";
 import type { Project } from "@webstudio-is/project";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -164,28 +163,6 @@ export const getWebstudioData = (): WebstudioData => {
     styles: $styles.get(),
     assets: $assets.get(),
   };
-};
-
-const getLabelFromComponentName = (component: Instance["component"]) => {
-  if (component.includes(":")) {
-    // strip namespace
-    const [_namespace, baseName] = component.split(":");
-    component = baseName;
-  }
-  return humanizeString(component);
-};
-
-export const getInstanceLabel = (
-  instance: { component: string; label?: string; tag?: string },
-  meta: { label?: string }
-) => {
-  if (instance.label) {
-    return instance.label;
-  }
-  if (instance.component === elementComponent && instance.tag) {
-    return `<${instance.tag}>`;
-  }
-  return meta.label || getLabelFromComponentName(instance.component);
 };
 
 export const findAllEditableInstanceSelector = ({
@@ -1349,10 +1326,8 @@ export const findClosestInsertable = (
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
     onError: (message) => {
-      const [_namespace, componentName] = parseComponentName(
-        fragment.instances[0].component
-      );
-      const label = humanizeString(componentName);
+      const component = fragment.instances[0].component;
+      const label = getInstanceLabel({ component }, {});
       toast.warn(message || `"${label}" has no place here`);
     },
   });

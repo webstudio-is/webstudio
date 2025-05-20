@@ -1,5 +1,5 @@
 import { PlayIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/video-animation.props";
 import { div } from "@webstudio-is/sdk/normalize.css";
 
@@ -10,12 +10,7 @@ export const meta: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  presetStyle: {
-    div,
-  },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  presetStyle: { div },
   props,
   initialProps: ["timeline"],
 };

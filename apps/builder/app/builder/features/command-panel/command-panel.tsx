@@ -39,7 +39,6 @@ import {
 } from "~/shared/nano-states";
 import {
   getComponentTemplateData,
-  getInstanceLabel,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
@@ -50,6 +49,10 @@ import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
 
 const $commandPanel = atom<
   | undefined
@@ -88,7 +91,7 @@ type ComponentOption = {
   component: string;
   label: string;
   category: TemplateMeta["category"];
-  icon: string;
+  icon: undefined | string;
   order: undefined | number;
 };
 
@@ -177,7 +180,7 @@ const $componentOptions = computed(
         component: name,
         label,
         category: meta.category,
-        icon: meta.icon ?? componentMeta?.icon ?? "",
+        icon: meta.icon ?? componentMeta?.icon,
         order: meta.order,
       });
     }
@@ -211,9 +214,9 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
             }}
           >
             <Flex gap={2}>
-              <CommandIcon
-                dangerouslySetInnerHTML={{ __html: icon }}
-              ></CommandIcon>
+              <CommandIcon>
+                <InstanceIcon instance={{ component }} icon={icon} />
+              </CommandIcon>
               <Text variant="labelsTitleCase">
                 {label}{" "}
                 <Text as="span" color="moreSubtle">

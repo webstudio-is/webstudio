@@ -15,9 +15,9 @@ import {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
+import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
-import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -26,7 +26,11 @@ const spaceRegex = /^\s*$/;
 const getAttributeType = (
   attribute: (typeof ariaAttributes)[number]
 ): "string" | "boolean" | "number" => {
-  if (attribute.type === "string" || attribute.type === "select") {
+  if (
+    attribute.type === "string" ||
+    attribute.type === "select" ||
+    attribute.type === "url"
+  ) {
     return "string";
   }
   if (attribute.type === "number" || attribute.type === "boolean") {

@@ -1,9 +1,7 @@
-import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import { input } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./input";
@@ -24,7 +22,6 @@ export const meta: WsComponentMeta = {
   label: "Text Input",
   description:
     "A single-line text input for collecting string data from your users.",
-  icon: FormTextFieldIcon,
   presetStyle,
   order: 3,
   states: [
@@ -40,18 +37,15 @@ export const meta: WsComponentMeta = {
     //{ selector: ":read-only", label: "Read Only" },
     //{ selector: ":read-write", label: "Read Write" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: [
     "id",
-    "className",
+    "class",
     "name",
     "value",
     "type",
     "placeholder",
     "required",
-    "autoFocus",
+    "autofocus",
   ],
+  props,
 };

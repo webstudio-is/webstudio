@@ -17,8 +17,12 @@ import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
-import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
-import { $selectedInstancePropsMetas, humanizeAttribute } from "./shared";
+import { $props } from "~/shared/nano-states";
+import {
+  $selectedInstanceInitialPropNames,
+  $selectedInstancePropsMetas,
+  humanizeAttribute,
+} from "./shared";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -78,14 +82,8 @@ const deleteProp = (name: string) => {
 const useIsResettable = (name: string) => {
   const store = useMemo(() => {
     return computed(
-      [$selectedInstance, $registeredComponentPropsMetas],
-      (instance, propsMetas) => {
-        if (name === showAttribute) {
-          return true;
-        }
-        const metas = propsMetas.get(instance?.component ?? "");
-        return metas?.initialProps?.includes(name);
-      }
+      [$selectedInstanceInitialPropNames],
+      (initialPropNames) => name === showAttribute || initialPropNames.has(name)
     );
   }, [name]);
   return useStore(store);
@@ -102,10 +100,8 @@ export const PropertyLabel = ({
   const propMeta = usePropMeta(name);
   const prop = useProp(name);
   const label = propMeta?.label ?? humanizeAttribute(name);
-  // 1. not existing properties cannot be deleted
-  // 2. required properties cannot be deleted
-  // 3. custom attributes like data-* do not have meta and can be deleted
-  const isDeletable = prop && !propMeta?.required;
+  // not existing properties cannot be deleted
+  const isDeletable = prop !== undefined;
   const isResettable = useIsResettable(name);
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>

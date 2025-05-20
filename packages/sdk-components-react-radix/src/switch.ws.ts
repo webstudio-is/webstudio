@@ -1,9 +1,5 @@
 import { SwitchIcon, TriggerIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -32,6 +28,8 @@ export const metaSwitch: WsComponentMeta = {
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  initialProps: ["id", "class", "name", "value", "checked", "required"],
+  props: propsSwitch,
 };
 
 export const metaSwitchThumb: WsComponentMeta = {
@@ -56,13 +54,5 @@ export const metaSwitchThumb: WsComponentMeta = {
   presetStyle: {
     span,
   },
-};
-
-export const propsMetaSwitch: WsComponentPropsMeta = {
-  props: propsSwitch,
-  initialProps: ["id", "className", "name", "value", "checked", "required"],
-};
-
-export const propsMetaSwitchThumb: WsComponentPropsMeta = {
   props: propsSwitchThumb,
 };

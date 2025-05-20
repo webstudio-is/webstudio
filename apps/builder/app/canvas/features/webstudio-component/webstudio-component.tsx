@@ -73,6 +73,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
+import { richTextPlaceholders } from "~/shared/content-model";
 
 const ContentEditable = ({
   placeholder,
@@ -301,9 +302,8 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         if (tag !== undefined) {
           instancePropsObject[tagProperty] = tag;
         }
-        const hasTags =
-          Object.keys(metas.get(instance?.component ?? "")?.presetStyle ?? {})
-            .length > 0;
+        const meta = metas.get(instance?.component ?? "");
+        const hasTags = Object.keys(meta?.presetStyle ?? {}).length > 0;
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
           instancePropsObject[indexProperty] = index.toString();
@@ -311,12 +311,13 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
         const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
           for (const [name, value] of instanceProps) {
-            if (hasTags) {
-              const reactName = standardAttributesToReactProps[name] ?? name;
-              instancePropsObject[reactName] = value;
-            } else {
-              instancePropsObject[name] = value;
+            let propName = name;
+            // convert html attribute only when component has tags
+            // and does not specify own property with this name
+            if (hasTags && !meta?.props?.[propName]) {
+              propName = standardAttributesToReactProps[propName] ?? propName;
             }
+            instancePropsObject[propName] = value;
           }
         }
         return instancePropsObject;
@@ -403,23 +404,19 @@ const getEditableComponentPlaceholder = (
   mode: "editing" | "editable"
 ) => {
   const meta = metas.get(instance.component);
-  if (meta?.placeholder === undefined) {
+  const tags = Object.keys(meta?.presetStyle ?? {});
+  const tag = instance.tag ?? tags[0];
+  const placeholder = richTextPlaceholders.get(tag);
+  if (placeholder === undefined) {
     return;
   }
-
   const isContentBlockChild =
     undefined !== findBlockSelector(instanceSelector, instances);
-
-  const isParagraph = instance.component === "Paragraph";
-
-  if (isParagraph && isContentBlockChild) {
-    return mode === "editing"
-      ? "Write something or press '/' for commands..."
-      : // The paragraph contains only an "editing" placeholder within the content block.
-        undefined;
+  // The paragraph contains only an "editing" placeholder within the content block.
+  if (tag === "p" && isContentBlockChild && mode === "editing") {
+    return "Write something or press '/' for commands...";
   }
-
-  return meta.placeholder;
+  return placeholder;
 };
 
 export const WebstudioComponentCanvas = forwardRef<

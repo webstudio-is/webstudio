@@ -1,9 +1,4 @@
-import { ItemIcon } from "@webstudio-is/icons/svg";
-import type {
-  PresetStyle,
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 
 import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";
@@ -28,7 +23,6 @@ export const meta: WsComponentMeta = {
   category: "hidden",
   description:
     "An item within a drop-down menu that users can select as their chosen value.",
-  icon: ItemIcon,
   presetStyle,
   states: [
     // Applies when option is being activated (clicked)
@@ -40,9 +34,6 @@ export const meta: WsComponentMeta = {
     { selector: ":hover", label: "Hover" },
     { selector: ":disabled", label: "Disabled" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: ["label", "selected", "value", "label", "disabled"],
+  props,
 };

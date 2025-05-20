@@ -4,11 +4,7 @@ import {
   ContentIcon,
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -26,6 +22,7 @@ export const metaPopoverTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  props: propsPopoverTrigger,
 };
 
 export const metaPopoverContent: WsComponentMeta = {
@@ -38,6 +35,8 @@ export const metaPopoverContent: WsComponentMeta = {
   presetStyle: {
     div,
   },
+  initialProps: ["side", "sideOffset", "align", "alignOffset"],
+  props: propsPopoverContent,
 };
 
 export const metaPopover: WsComponentMeta = {
@@ -47,6 +46,8 @@ export const metaPopover: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.PopoverTrigger, radix.PopoverContent],
   },
+  initialProps: ["open"],
+  props: propsPopover,
 };
 
 export const metaPopoverClose: WsComponentMeta = {
@@ -60,23 +61,5 @@ export const metaPopoverClose: WsComponentMeta = {
   presetStyle: {
     button: [buttonReset, button].flat(),
   },
-};
-
-export const propsMetaPopover: WsComponentPropsMeta = {
-  props: propsPopover,
-  initialProps: ["open"],
-};
-
-export const propsMetaPopoverTrigger: WsComponentPropsMeta = {
-  props: propsPopoverTrigger,
-};
-
-export const propsMetaPopoverContent: WsComponentPropsMeta = {
-  props: propsPopoverContent,
-  initialProps: ["side", "sideOffset", "align", "alignOffset"],
-};
-
-export const propsMetaPopoverClose: WsComponentPropsMeta = {
   props: propsPopoverClose,
-  initialProps: [],
 };

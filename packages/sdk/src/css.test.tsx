@@ -163,8 +163,6 @@ test("generate component presets with multiple tags", () => {
       [
         "ListItem",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: block;
@@ -219,8 +217,6 @@ test("deduplicate component presets for similarly named components", () => {
       [
         "ListItem",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: block;
@@ -231,8 +227,6 @@ test("deduplicate component presets for similarly named components", () => {
       [
         "@webstudio/radix:ListItem",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: flex;
@@ -243,8 +237,6 @@ test("deduplicate component presets for similarly named components", () => {
       [
         "@webstudio/aria:ListItem",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: grid;
@@ -301,8 +293,6 @@ test("expose preset classes to instances", () => {
       [
         "Body",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: block;
@@ -313,8 +303,6 @@ test("expose preset classes to instances", () => {
       [
         "Box",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: flex;
@@ -391,8 +379,6 @@ test("generate classes with instance and meta label", () => {
       [
         "Body",
         {
-          type: "container",
-          icon: "",
           label: "body meta label",
           presetStyle: {
             div: css`
@@ -404,8 +390,6 @@ test("generate classes with instance and meta label", () => {
       [
         "Box",
         {
-          type: "container",
-          icon: "",
           label: "box meta label",
           presetStyle: {
             div: css`
@@ -484,8 +468,6 @@ test("generate :root preset and user styles", () => {
       [
         rootComponent,
         {
-          type: "container",
-          icon: "",
           label: "Global Root",
           presetStyle: {
             html: css`
@@ -547,8 +529,6 @@ test("generate presets only for used tags", () => {
       [
         "Box",
         {
-          type: "container",
-          icon: "",
           presetStyle: {
             div: css`
               display: block;

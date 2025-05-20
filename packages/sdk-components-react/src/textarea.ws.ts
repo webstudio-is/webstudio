@@ -1,7 +1,5 @@
-import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
-  type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/sdk";
@@ -26,7 +24,6 @@ export const meta: WsComponentMeta = {
   label: "Text Area",
   description:
     "A multi-line text input for collecting longer string data from your users.",
-  icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
   contentModel: {
@@ -46,17 +43,14 @@ export const meta: WsComponentMeta = {
     //{ selector: ":read-only", label: "Read Only" },
     //{ selector: ":read-write", label: "Read Write" },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: [
     "id",
-    "className",
+    "class",
     "name",
     "value",
     "placeholder",
     "required",
-    "autoFocus",
+    "autofocus",
   ],
+  props,
 };

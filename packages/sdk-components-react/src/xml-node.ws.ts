@@ -1,5 +1,5 @@
 import { XmlIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/xml-node.props";
 
 export const meta: WsComponentMeta = {
@@ -7,9 +7,6 @@ export const meta: WsComponentMeta = {
   order: 6,
   icon: XmlIcon,
   description: "XML Node",
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: ["tag"],
+  props,
 };

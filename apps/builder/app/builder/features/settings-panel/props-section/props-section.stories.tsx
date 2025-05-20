@@ -199,9 +199,8 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
 
 registerComponentLibrary({
   components: {},
-  metas: {},
   templates: {},
-  propsMetas: {
+  metas: {
     Box: {
       props: {
         initialText: textProp("", "multi\nline"),
