@@ -6,8 +6,6 @@ import { generateFragmentFromHtml } from "../html";
 
 export const mimeType = "text/plain";
 
-// @todo Definition, Strikethrough, Table
-
 const parse = (clipboardData: string) => {
   const html = micromark(clipboardData, "utf-8", {
     extensions: [gfm()],
