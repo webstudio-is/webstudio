@@ -374,38 +374,31 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
       // native html attribute in react style
-      dateTime = INITIAL_DATE_STRING,
+      dateTime,
       ...props
     },
     ref
   ) => {
-    const [clientSideDate, setClientSideDate] = useState<string | Date | null>(
-      null
+    const [currentDate, setCurrentDate] = useState<string | Date | null>(
+      dateTime ?? INITIAL_DATE_STRING
     );
     const locale = `${languageOrDefault(language)}-${countryOrDefault(
       country
     )}`;
+
+    useEffect(() => {
+      if (dateTime === undefined) {
+        setCurrentDate(new Date());
+      }
+    }, [dateTime]);
 
     const options: Intl.DateTimeFormatOptions = {
       dateStyle: dateStyleOrUndefined(dateStyle),
       timeStyle: timeStyleOrUndefined(timeStyle),
     };
 
-    useEffect(() => {
-      if (dateTime === INITIAL_DATE_STRING) {
-        setClientSideDate(new Date());
-      }
-    }, [dateTime]);
-
-    const dateToUse =
-      typeof window !== "undefined" &&
-      clientSideDate !== null &&
-      dateTime === INITIAL_DATE_STRING
-        ? clientSideDate
-        : dateTime;
-
     const datetimeString =
-      dateToUse === null ? INVALID_DATE_STRING : dateToUse.toString();
+      currentDate === null ? INVALID_DATE_STRING : currentDate.toString();
 
     const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
@@ -419,12 +412,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     }
 
     return (
-      <time
-        ref={ref}
-        dateTime={datetimeString}
-        {...props}
-        suppressHydrationWarning
-      >
+      <time ref={ref} dateTime={datetimeString} {...props}>
         {formattedDate}
       </time>
     );
