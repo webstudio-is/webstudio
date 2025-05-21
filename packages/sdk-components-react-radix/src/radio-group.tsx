@@ -4,24 +4,20 @@ import {
   type RefAttributes,
   type ElementRef,
   forwardRef,
+  useState,
+  useEffect,
 } from "react";
 import { Root, Item, Indicator } from "@radix-ui/react-radio-group";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
-
-const defaultTag = "div";
 
 export const RadioGroup = forwardRef<
-  ElementRef<typeof defaultTag>,
-  ComponentProps<typeof Root> & RefAttributes<typeof defaultTag>
-  // Make sure children are not passed down to an input, because this will result in error.
+  ElementRef<"div">,
+  ComponentProps<typeof Root>
 >(({ defaultValue, ...props }, ref) => {
-  const [value, onValueChange] = useControllableState({
-    prop: props.value ?? defaultValue ?? "",
-    defaultProp: "",
-  });
-  return (
-    <Root {...props} value={value} onValueChange={onValueChange} ref={ref} />
-  );
+  const currentValue = props.value ?? defaultValue ?? "";
+  const [value, setValue] = useState(currentValue);
+  // synchronize external value with local one when changed
+  useEffect(() => setValue(currentValue), [currentValue]);
+  return <Root {...props} ref={ref} value={value} onValueChange={setValue} />;
 });
 
 export const RadioGroupItem: ForwardRefExoticComponent<

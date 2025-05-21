@@ -98,5 +98,6 @@ export const metaDialog: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.DialogTrigger, radix.DialogOverlay],
   },
+  initialProps: ["open"],
   props: propsDialog,
 };

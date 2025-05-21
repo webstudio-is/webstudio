@@ -31,10 +31,10 @@ export const propsTabs: Record<string, PropMeta> = {
     options: ["horizontal", "vertical"],
   },
   value: {
+    description: "The value for the selected tab, if controlled",
     required: false,
     control: "text",
     type: "string",
-    description: "Current value of the element",
   },
 };
 export const propsTabsList: Record<string, PropMeta> = {

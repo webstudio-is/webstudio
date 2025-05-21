@@ -3,25 +3,21 @@ import {
   type ComponentProps,
   type RefAttributes,
   forwardRef,
+  useEffect,
+  useState,
 } from "react";
 import { Root, Thumb } from "@radix-ui/react-switch";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 export const Switch = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof Root>
 >(({ defaultChecked, ...props }, ref) => {
-  const [checked, onCheckedChange] = useControllableState({
-    prop: props.checked ?? defaultChecked ?? false,
-    defaultProp: false,
-  });
+  const currentChecked = props.checked ?? defaultChecked ?? false;
+  const [checked, setChecked] = useState(currentChecked);
+  // synchronize external value with local one when changed
+  useEffect(() => setChecked(currentChecked), [currentChecked]);
   return (
-    <Root
-      {...props}
-      ref={ref}
-      checked={checked}
-      onCheckedChange={onCheckedChange}
-    />
+    <Root {...props} ref={ref} checked={checked} onCheckedChange={setChecked} />
   );
 });
 
