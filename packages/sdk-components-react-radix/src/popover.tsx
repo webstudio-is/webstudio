@@ -3,6 +3,8 @@ import {
   type ReactNode,
   forwardRef,
   Children,
+  useState,
+  useEffect,
 } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
@@ -12,7 +14,13 @@ export const Popover = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
-  return <PopoverPrimitive.Root {...props} />;
+  const currentOpen = props.open ?? false;
+  const [open, setOpen] = useState(currentOpen);
+  // synchronize external value with local one when changed
+  useEffect(() => setOpen(currentOpen), [currentOpen]);
+  return (
+    <PopoverPrimitive.Root {...props} open={open} onOpenChange={setOpen} />
+  );
 });
 
 /**

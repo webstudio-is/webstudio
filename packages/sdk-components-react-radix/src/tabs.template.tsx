@@ -73,7 +73,7 @@ export const meta: TemplateMeta = {
     "A set of panels with content that are displayed one at a time. Duplicate both a tab trigger and tab content to add more tabs. Triggers and content are connected according to their order in the Navigator.",
   order: 2,
   template: (
-    <radix.Tabs defaultValue="0">
+    <radix.Tabs value="0">
       <radix.TabsList
         // inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground
         ws:style={css`

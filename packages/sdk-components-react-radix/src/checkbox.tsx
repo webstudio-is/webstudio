@@ -3,9 +3,10 @@ import {
   type ComponentPropsWithRef,
   forwardRef,
   type ComponentProps,
+  useState,
+  useEffect,
 } from "react";
 import { Root, Indicator } from "@radix-ui/react-checkbox";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 export const Checkbox = forwardRef<
   HTMLButtonElement,
@@ -16,16 +17,16 @@ export const Checkbox = forwardRef<
     defaultChecked?: boolean;
   }
 >(({ defaultChecked, ...props }, ref) => {
-  const [checked, onCheckedChange] = useControllableState({
-    prop: props.checked ?? defaultChecked ?? false,
-    defaultProp: false,
-  });
+  const currentChecked = props.checked ?? defaultChecked ?? false;
+  const [checked, setChecked] = useState(currentChecked);
+  // synchronize external value with local one when changed
+  useEffect(() => setChecked(currentChecked), [currentChecked]);
   return (
     <Root
       {...props}
       ref={ref}
       checked={checked}
-      onCheckedChange={(open) => onCheckedChange(open === true)}
+      onCheckedChange={(open) => setChecked(open === true)}
     />
   );
 });
