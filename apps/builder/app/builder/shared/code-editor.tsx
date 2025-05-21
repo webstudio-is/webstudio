@@ -43,7 +43,7 @@ const wrapperStyle = css({
   variants: {
     size: {
       default: getMinMaxHeightVars({ minHeight: "160px", maxHeight: "320px" }),
-      keyframe: getMinMaxHeightVars({ minHeight: "60px", maxHeight: "120px" }),
+      small: getMinMaxHeightVars({ minHeight: "16px", maxHeight: "120px" }),
     },
   },
   defaultVariants: {
@@ -120,7 +120,7 @@ export const CodeEditor = forwardRef<
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
     lang?: "html" | "markdown" | "css-properties";
     title?: ReactNode;
-    size?: "default" | "keyframe";
+    size?: "default" | "small";
   }
 >(({ lang, title, size, ...editorContentProps }, ref) => {
   const extensions = useMemo(() => {

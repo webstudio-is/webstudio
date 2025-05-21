@@ -55,6 +55,7 @@ type Meta = {
   label: string;
   description: undefined | string;
   icon?: string;
+  firstInstance: { component: string; tag?: string };
 };
 
 const $metas = computed(
@@ -87,6 +88,7 @@ const $metas = computed(
         order: componentMeta.order,
         label: getInstanceLabel({ component: name }, componentMeta),
         description: componentMeta.description,
+        firstInstance: { component: name },
       });
     }
     for (const [name, templateMeta] of templates) {
@@ -103,6 +105,7 @@ const $metas = computed(
         continue;
       }
 
+      availableComponents.add(name);
       metas.push({
         name,
         category: templateMeta.category ?? "hidden",
@@ -113,6 +116,7 @@ const $metas = computed(
           getInstanceLabel({ component: name }, templateMeta),
         description: templateMeta.description,
         icon: templateMeta.icon,
+        firstInstance: templateMeta.template.instances[0],
       });
     }
     const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
@@ -339,7 +343,7 @@ export const ComponentsPanel = ({
                       icon={
                         <InstanceIcon
                           size="auto"
-                          instance={{ component: meta.name }}
+                          instance={meta.firstInstance}
                           // for cases like Sheet template
                           icon={meta.icon}
                         />

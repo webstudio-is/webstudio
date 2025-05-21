@@ -322,6 +322,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description:
         "Link to the source of the quotation or more information about the edit",
       type: "string",
+      required: true,
     },
   ],
   button: [
@@ -378,6 +379,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description: "Type of button",
       type: "select",
       options: ["submit", "reset", "button"],
+      required: true,
     },
     {
       name: "value",
@@ -526,6 +528,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
         "multipart/form-data",
         "text/plain",
       ],
+      required: true,
     },
     {
       name: "method",

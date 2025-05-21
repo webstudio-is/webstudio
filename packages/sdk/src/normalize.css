@@ -103,9 +103,6 @@ hr {
   height: 0;
   /* 2 */
   color: inherit;
-  /* webstudio custom opinionated presets */
-  box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -138,8 +135,8 @@ kbd,
 samp,
 pre {
   /* 1 */
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo,
-    monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   /* 2 */
   font-size: 1em;
   /* webstudio custom opinionated presets */

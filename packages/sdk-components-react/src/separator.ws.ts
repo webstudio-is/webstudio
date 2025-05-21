@@ -10,7 +10,6 @@ import type { defaultTag } from "./separator";
 const presetStyle = {
   hr: [
     ...hr,
-
     {
       property: "height",
       value: { type: "keyword", value: "1px" },
@@ -39,12 +38,8 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
-  description:
-    "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
   states: defaultStates,
   presetStyle,
-  order: 3,
   initialProps: ["id", "class"],
   props,
 };

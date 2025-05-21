@@ -133,23 +133,6 @@ export const body: StyleDecl[] = [
 export const hr: StyleDecl[] = [
   { property: "height", value: { type: "unit", unit: "number", value: 0 } },
   { property: "color", value: { type: "keyword", value: "inherit" } },
-  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const b: StyleDecl[] = [
