@@ -424,6 +424,7 @@ export const richTextPlaceholders: Map<undefined | string, string> = new Map([
   ["blockquote", "Blockquote"],
   ["li", "List item"],
   ["a", "Link"],
+  ["span", ""],
 ]);
 
 const findContentTags = ({
