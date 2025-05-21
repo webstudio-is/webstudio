@@ -39,9 +39,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
-  description:
-    "Use this component when you want to display code as text on the page.",
   icon: BracesIcon,
   contentModel: {
     category: "instance",
@@ -49,7 +46,6 @@ export const meta: WsComponentMeta = {
   },
   states: defaultStates,
   presetStyle,
-  order: 5,
   initialProps: ["id", "class", "lang", "code"],
   props: {
     ...props,

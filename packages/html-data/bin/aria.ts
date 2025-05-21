@@ -1,6 +1,7 @@
 import { aria } from "aria-query";
 import { mkdir, writeFile } from "node:fs/promises";
 import {
+  coreMetas,
   createScope,
   elementComponent,
   Prop,
@@ -152,12 +153,12 @@ await writeFile(
   generateWebstudioComponent({
     name: "Page",
     scope: createScope(),
+    metas: new Map(Object.entries(coreMetas)),
     instances,
     props,
     dataSources: new Map(),
     rootInstanceId: instance.id,
     classesMap: new Map(),
     parameters: [],
-    metas: new Map(),
   }) + "export { Page }"
 );

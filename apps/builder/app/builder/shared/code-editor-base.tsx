@@ -81,7 +81,7 @@ const editorContentStyle = css({
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
-  border: `1px solid ${theme.colors.borderMain}`,
+  border: `1px solid transparent`,
   background: theme.colors.backgroundControls,
   paddingTop: 4,
   paddingBottom: 2,
@@ -89,6 +89,9 @@ const editorContentStyle = css({
   paddingLeft: theme.spacing[3],
   // required to support copying selected text
   userSelect: "text",
+  "&:hover": {
+    borderColor: theme.colors.borderMain,
+  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
   },

@@ -1,7 +1,15 @@
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import { Flex, rawTheme, Text, TextArea } from "@webstudio-is/design-system";
+import {
+  DialogClose,
+  DialogMaximize,
+  DialogTitle,
+  DialogTitleActions,
+  Flex,
+  rawTheme,
+  Text,
+} from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/nano-states";
@@ -10,6 +18,7 @@ import {
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { updateWebstudioData } from "~/shared/instance-utils";
+import { CodeEditor } from "~/builder/shared/code-editor";
 import {
   type ControlProps,
   useLocalValue,
@@ -55,7 +64,6 @@ export const TextContent = ({
       updateChildren(instanceId, "text", value);
     }
   });
-  const id = useId();
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;
@@ -107,15 +115,24 @@ export const TextContent = ({
       }
     >
       <BindingControl>
-        <TextArea
-          id={id}
-          disabled={overwritable === false}
-          autoGrow
+        <CodeEditor
+          title={
+            <DialogTitle
+              suffix={
+                <DialogTitleActions>
+                  <DialogMaximize />
+                  <DialogClose />
+                </DialogTitleActions>
+              }
+            >
+              <Text variant="labelsTitleCase">Text Content</Text>
+            </DialogTitle>
+          }
+          size="small"
+          readOnly={overwritable === false}
           value={localValue.value}
-          rows={1}
           onChange={localValue.set}
-          onBlur={localValue.save}
-          onSubmit={localValue.save}
+          onChangeComplete={localValue.save}
         />
         {expression !== undefined && (
           <BindingPopover
