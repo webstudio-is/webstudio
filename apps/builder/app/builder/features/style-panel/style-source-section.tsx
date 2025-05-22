@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed, type WritableAtom } from "nanostores";
+import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import {
   type Instance,
   type StyleSource,
@@ -42,7 +43,6 @@ import { cloneStyles } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
-import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import { humanizeString } from "~/shared/string-utils";
 
 const selectStyleSource = (
