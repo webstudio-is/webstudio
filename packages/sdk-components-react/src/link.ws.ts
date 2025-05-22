@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { a } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./link";
 import { props } from "./__generated__/link.props";
@@ -19,18 +15,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   presetStyle,
-  states: [
-    ...defaultStates,
-    {
-      selector: ":visited",
-      label: "Visited",
-    },
-    {
-      category: "component-states",
-      selector: "[aria-current=page]",
-      label: "Current page",
-    },
-  ],
+  states: [{ label: "Current page", selector: "[aria-current=page]" }],
   initialProps: ["id", "class", "href", "target", "prefetch", "download"],
   props: {
     ...props,

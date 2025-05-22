@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { ol, ul } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/list.props";
 import type { ListTag } from "./list";
@@ -41,7 +37,6 @@ const presetStyle = {
 } satisfies PresetStyle<ListTag>;
 
 export const meta: WsComponentMeta = {
-  states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "ordered", "start", "reversed"],
   props,

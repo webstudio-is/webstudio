@@ -4,7 +4,7 @@ import {
   TabsIcon,
   TriggerIcon,
 } from "@webstudio-is/icons/svg";
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -45,14 +45,7 @@ export const metaTabsTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: [
-    ...defaultStates,
-    {
-      category: "component-states",
-      label: "Active",
-      selector: "[data-state=active]",
-    },
-  ],
+  states: [{ label: "Active", selector: "[data-state=active]" }],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },

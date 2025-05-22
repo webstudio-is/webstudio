@@ -41,6 +41,9 @@ import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
+import { $instanceTags } from "./shared/model";
+import { pseudoClassesByTag } from "@webstudio-is/html-data";
+import { humanizeString } from "~/shared/string-utils";
 
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
@@ -325,12 +328,26 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
 };
 
 const $componentStates = computed(
-  [$selectedInstance, $registeredComponentMetas],
-  (selectedInstance, registeredComponentMetas) => {
+  [$selectedInstance, $registeredComponentMetas, $instanceTags],
+  (selectedInstance, registeredComponentMetas, instanceTags) => {
     if (selectedInstance === undefined) {
       return;
     }
-    return registeredComponentMetas.get(selectedInstance.component)?.states;
+    const tag = instanceTags.get(selectedInstance.id);
+    const tagStates = [
+      ...pseudoClassesByTag["*"],
+      ...(pseudoClassesByTag[tag ?? ""] ?? []),
+    ].map((state) => ({
+      category: "states" as const,
+      label: humanizeString(state),
+      selector: state,
+    }));
+    const meta = registeredComponentMetas.get(selectedInstance.component);
+    const componentStates = (meta?.states ?? []).map((item) => ({
+      category: "component-states" as const,
+      ...item,
+    }));
+    return [...tagStates, ...componentStates];
   }
 );
 

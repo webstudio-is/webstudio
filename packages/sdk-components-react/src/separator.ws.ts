@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { hr } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/separator.props";
 import type { defaultTag } from "./separator";
@@ -38,7 +34,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  states: defaultStates,
   presetStyle,
   initialProps: ["id", "class"],
   props,
