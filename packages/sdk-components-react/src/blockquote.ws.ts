@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import type { defaultTag } from "./blockquote";
 import { props } from "./__generated__/blockquote.props";
 
@@ -58,7 +54,6 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "cite"],
   props,

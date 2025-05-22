@@ -1,5 +1,5 @@
 import { CheckboxCheckedIcon, TriggerIcon } from "@webstudio-is/icons/svg";
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, span } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -16,17 +16,8 @@ export const metaCheckbox: WsComponentMeta = {
     descendants: [radix.CheckboxIndicator],
   },
   states: [
-    ...defaultStates,
-    {
-      label: "Checked",
-      selector: "[data-state=checked]",
-      category: "component-states",
-    },
-    {
-      label: "Unchecked",
-      selector: "[data-state=unchecked]",
-      category: "component-states",
-    },
+    { label: "Checked", selector: "[data-state=checked]" },
+    { label: "Unchecked", selector: "[data-state=unchecked]" },
   ],
   presetStyle: {
     button: [button, buttonReset].flat(),
@@ -41,7 +32,6 @@ export const metaCheckboxIndicator: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: defaultStates,
   presetStyle: {
     span,
   },

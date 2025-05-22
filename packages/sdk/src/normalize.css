@@ -92,6 +92,8 @@ body {
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
   border-width: 1px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /**

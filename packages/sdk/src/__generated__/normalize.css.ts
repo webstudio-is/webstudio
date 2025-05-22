@@ -128,6 +128,14 @@ export const body: StyleDecl[] = [
     property: "border-left-width",
     value: { type: "unit", unit: "px", value: 1 },
   },
+  {
+    property: "-webkit-font-smoothing",
+    value: { type: "keyword", value: "antialiased" },
+  },
+  {
+    property: "-moz-osx-font-smoothing",
+    value: { type: "keyword", value: "grayscale" },
+  },
 ];
 
 export const hr: StyleDecl[] = [

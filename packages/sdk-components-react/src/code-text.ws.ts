@@ -1,9 +1,5 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./code-text";
 import { props } from "./__generated__/code-text.props";
@@ -44,7 +40,6 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: [],
   },
-  states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "lang", "code"],
   props: {

@@ -7,7 +7,7 @@ import {
   TextIcon,
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div, button, h2, p } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -84,7 +84,6 @@ export const metaDialogClose: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: defaultStates,
   presetStyle: {
     button: [buttonReset, button].flat(),
   },
