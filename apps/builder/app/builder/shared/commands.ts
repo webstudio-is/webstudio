@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import {
   blockTemplateComponent,
+  elementComponent,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
@@ -51,6 +52,7 @@ import {
 } from "~/shared/content-model";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
+import { getInstanceLabel } from "./instance-label";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -141,7 +143,7 @@ export const deleteSelectedInstance = () => {
   });
 };
 
-export const wrapIn = (component: string) => {
+export const wrapIn = (component: string, tag?: string) => {
   const instancePath = $selectedInstancePath.get();
   // global root or body are selected
   if (instancePath === undefined || instancePath.length === 1) {
@@ -170,6 +172,9 @@ export const wrapIn = (component: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
+      if (tag || elementComponent) {
+        newInstance.tag = tag ?? "div";
+      }
       const parentInstance = data.instances.get(parentItem.instance.id);
       data.instances.set(newInstanceId, newInstance);
       if (parentInstance) {
@@ -179,14 +184,15 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      const matches = isTreeSatisfyingContentModel({
+      const isSatisfying = isTreeSatisfyingContentModel({
         instances: data.instances,
         props: data.props,
         metas,
         instanceSelector: newInstanceSelector,
       });
-      if (matches === false) {
-        toast.error(`Cannot wrap in "${component}"`);
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot wrap in ${label}`);
         throw Error("Abort transaction");
       }
     });
@@ -510,12 +516,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "wrapInBox",
-      handler: () => wrapIn("Box"),
+      name: "wrapInElement",
+      handler: () => wrapIn(elementComponent),
     },
     {
       name: "wrapInLink",
-      handler: () => wrapIn("Link"),
+      handler: () => wrapIn(elementComponent, "a"),
     },
     {
       name: "unwrap",
