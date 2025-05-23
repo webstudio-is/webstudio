@@ -226,6 +226,15 @@ importers:
       '@tsndr/cloudflare-worker-jwt':
         specifier: ^2.5.3
         version: 2.5.3
+      '@unocss/core':
+        specifier: 66.1.2
+        version: 66.1.2
+      '@unocss/preset-legacy-compat':
+        specifier: 66.1.2
+        version: 66.1.2
+      '@unocss/preset-wind3':
+        specifier: 66.1.2
+        version: 66.1.2
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.5(typescript@5.8.2))(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3)(typescript@5.8.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.5(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -343,12 +352,6 @@ importers:
       match-sorter:
         specifier: ^8.0.0
         version: 8.0.0
-      mdast-util-from-markdown:
-        specifier: ^2.0.2
-        version: 2.0.2
-      mdast-util-gfm:
-        specifier: ^3.1.0
-        version: 3.1.0
       micromark:
         specifier: ^4.0.2
         version: 4.0.2
@@ -1275,14 +1278,14 @@ importers:
   packages/css-data:
     dependencies:
       '@unocss/core':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@unocss/preset-legacy-compat':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@unocss/preset-wind3':
-        specifier: 66.1.0-beta.7
-        version: 66.1.0-beta.7
+        specifier: 66.1.2
+        version: 66.1.2
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -2138,9 +2141,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@radix-ui/react-use-controllable-state':
-        specifier: ^1.2.2
-        version: 1.2.2(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -5582,23 +5582,23 @@ packages:
     resolution: {integrity: sha512-AjOC3zfnxd6S4Eiy3jwktJPclqhFHNyd8L6Gycf9WUPoKZpgM5PjkxY1X7uSy61xVpiJDhhk7XT2NVsN3ALTWg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@unocss/core@66.1.0-beta.7':
-    resolution: {integrity: sha512-l1/r+Jd9TbsRqR/geEdIV/Erzvs26GitTtMVsGcJfuaK1/WWOLtbSHRUDQAB/UpcOOWvuNuAv4UWsXX9Z0DFmw==}
+  '@unocss/core@66.1.2':
+    resolution: {integrity: sha512-mN9h1hHEuhDcdbI4z74o7UnxlBZYVsJpYcdC1YLWBKROcLYTkuyZ7hgBzpo1FBNox2Bt3JnrSinVDmc44Bxjow==}
 
-  '@unocss/extractor-arbitrary-variants@66.1.0-beta.7':
-    resolution: {integrity: sha512-LD8W9PlpHnFmuynI+TJzdE5z9OKY/tVaagY/Ak1mICFEWveH3jFuN13KH2jaI3/V2KaTwkcY/8tGQJXv8dKWAw==}
+  '@unocss/extractor-arbitrary-variants@66.1.2':
+    resolution: {integrity: sha512-F570wH9VYeFTb4r8qgcbN5QpEVIAvFC1zOnrAPUr6B6kbU2YChMXxHP7PHK0AzLHnEr458Pwpzl6hmP6bzxZ8g==}
 
-  '@unocss/preset-legacy-compat@66.1.0-beta.7':
-    resolution: {integrity: sha512-AZBC95jFCyiJetxFa/GfM+FCVIrNT6Kd8mVBiighSQfhUEmfTLhTen41/tUrCtUtxpbwgyxRmmkSUZjvsymodw==}
+  '@unocss/preset-legacy-compat@66.1.2':
+    resolution: {integrity: sha512-s1SnCXm9ywmp0plWQsXr8APxRhQEeblF7E6UmanFMj012/DU0bxWVUafnXBbeYUjtfBKCFlDvbW2pm30UGNQOw==}
 
-  '@unocss/preset-mini@66.1.0-beta.7':
-    resolution: {integrity: sha512-5v9RNFTk2OMLbE45JVoYA0HtZKCDCI3j7uRAcuRLVP3O/yAd9JlP/b8ou3wvtgxHTXFEgk6Pt8dFDKPadA3Hrw==}
+  '@unocss/preset-mini@66.1.2':
+    resolution: {integrity: sha512-oiDe+VhwZ8B5Z0UGfggtOwgpRZMLtH1RTDFvmJmJEXYYX5BPWknS6wYcQzxy0i/y9ym0xp2QnEaTpGmR7LKdkg==}
 
-  '@unocss/preset-wind3@66.1.0-beta.7':
-    resolution: {integrity: sha512-JgiHl2L0J6VdmowGk45WB9NLYxO1tTQpr6GspMyhMz63pkcqjJtP5g8JfeIw5G0uwfWhoGubqG3RxKKaWHsoyg==}
+  '@unocss/preset-wind3@66.1.2':
+    resolution: {integrity: sha512-S09imGOngAAOXCBCHb3JAtxD1/L7nDWrgEeX6NT0ElDp3X1T6XxUXYJlpjCfcqV/klMoXyYouKvp0YuG9QSgVg==}
 
-  '@unocss/rule-utils@66.1.0-beta.7':
-    resolution: {integrity: sha512-oJ5lcHRgN1aabsszkBXoiYp0G6LLM011BJoAEfKOeRZ14FGFlg0zuOi/h7aKlVuIvBt6q8BWosJLlZSAQnNypg==}
+  '@unocss/rule-utils@66.1.2':
+    resolution: {integrity: sha512-nn0ehvDh7yyWq2mcBDLVpmMAivjRATUroZ8ETinyN1rmfsGesm71R0d1gV3K+Z6YC7a3+dMLc+/qzI7VK3AG/Q==}
     engines: {node: '>=14'}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
@@ -7443,9 +7443,6 @@ packages:
     resolution: {integrity: sha512-WWC0ZuMzCyDHYCasEGs4IPvLyTGftYwh6wIEOULOF0HXcqZlhwRzrK0w2VUlxWA98xnvb/jszw4ZSkJ6ADpM6Q==}
     engines: {node: '>=0.10.0'}
 
-  markdown-table@3.0.3:
-    resolution: {integrity: sha512-Z1NL3Tb1M9wH4XESsCDEksWoKTdlUafKc4pt0GRwjUyXaCFZ+dc3g2erqB6zm3szA2IUSi7VnPI+o/9jnxh9hw==}
-
   match-sorter@8.0.0:
     resolution: {integrity: sha512-bGJ6Zb+OhzXe+ptP5d80OLVx7AkqfRbtGEh30vNSfjNwllu+hHI+tcbMIT/fbkx/FKN1PmKuDb65+Oofg+XUxw==}
 
@@ -7455,9 +7452,6 @@ packages:
   mdast-util-definitions@5.1.2:
     resolution: {integrity: sha512-8SVPMuHqlPME/z3gqVwWY4zVXn8lqKv/pAhC57FuJ40ImXyBpmO5ukh98zB2v7Blql2FiHjHv9LVztSIqjY+MA==}
 
-  mdast-util-find-and-replace@3.0.2:
-    resolution: {integrity: sha512-Tmd1Vg/m3Xz43afeNxDIhWRtFZgM2VLyaf4vSTYwudTyeuTneoL3qtWMA5jeLyz/O1vDJmmV4QuScFCA2tBPwg==}
-
   mdast-util-from-markdown@1.3.1:
     resolution: {integrity: sha512-4xTO/M8c82qBcnQc1tgpNtubGUW/Y1tBQ1B0i5CtSoelOLKFYlElIr3bvgREYYO5iRqbMY1YuqZng0GVOI8Qww==}
 
@@ -7466,24 +7460,6 @@ packages:
 
   mdast-util-frontmatter@1.0.1:
     resolution: {integrity: sha512-JjA2OjxRqAa8wEG8hloD0uTU0kdn8kbtOWpPP94NBkfAlbxn4S8gCGf/9DwFtEeGPXrDcNXdiDjVaRdUFqYokw==}
-
-  mdast-util-gfm-autolink-literal@2.0.1:
-    resolution: {integrity: sha512-5HVP2MKaP6L+G6YaxPNjuL0BPrq9orG3TsrZ9YXbA3vDw/ACI4MEsnoDpn6ZNm7GnZgtAcONJyPhOP8tNJQavQ==}
-
-  mdast-util-gfm-footnote@2.1.0:
-    resolution: {integrity: sha512-sqpDWlsHn7Ac9GNZQMeUzPQSMzR6Wv0WKRNvQRg0KqHh02fpTz69Qc1QSseNX29bhz1ROIyNyxExfawVKTm1GQ==}
-
-  mdast-util-gfm-strikethrough@2.0.0:
-    resolution: {integrity: sha512-mKKb915TF+OC5ptj5bJ7WFRPdYtuHv0yTRxK2tJvi+BDqbkiG7h7u/9SI89nRAYcmap2xHQL9D+QG/6wSrTtXg==}
-
-  mdast-util-gfm-table@2.0.0:
-    resolution: {integrity: sha512-78UEvebzz/rJIxLvE7ZtDd/vIQ0RHv+3Mh5DR96p7cS7HsBhYIICDBCu8csTNWNO6tBWfqXPWekRuj2FNOGOZg==}
-
-  mdast-util-gfm-task-list-item@2.0.0:
-    resolution: {integrity: sha512-IrtvNvjxC1o06taBAVJznEnkiHxLFTzgonUdy8hzFVeDun0uTjxxrRGVaNFqkU1wJR3RBPEfsxmU6jDWPofrTQ==}
-
-  mdast-util-gfm@3.1.0:
-    resolution: {integrity: sha512-0ulfdQOM3ysHhCJ1p06l0b0VKlhU0wuQs3thxZQagjcjPrlFRqY215uZGHHJan9GEAXd9MbfPjFJz+qMkVR6zQ==}
 
   mdast-util-mdx-expression@1.3.2:
     resolution: {integrity: sha512-xIPmR5ReJDu/DHH1OoIT1HkuybIfRGYRywC+gJtI7qHjCJp/M9jrmBEJW22O8lskDWm562BX2W8TiAwRTb0rKA==}
@@ -7500,17 +7476,11 @@ packages:
   mdast-util-phrasing@3.0.1:
     resolution: {integrity: sha512-WmI1gTXUBJo4/ZmSk79Wcb2HcjPJBzM1nlI/OUWA8yk2X9ik3ffNbBGsU+09BFmXaL1IBb9fiuvq6/KMiNycSg==}
 
-  mdast-util-phrasing@4.1.0:
-    resolution: {integrity: sha512-TqICwyvJJpBwvGAMZjj4J2n0X8QWp21b9l0o7eXyVJ25YNWYbJDVIyD1bZXE6WtV6RmKJVYmQAKWa0zWOABz2w==}
-
   mdast-util-to-hast@12.3.0:
     resolution: {integrity: sha512-pits93r8PhnIoU4Vy9bjW39M2jJ6/tdHyja9rrot9uujkN7UTU9SDnE6WNJz/IGyQk3XHX6yNNtrBH6cQzm8Hw==}
 
   mdast-util-to-markdown@1.5.0:
     resolution: {integrity: sha512-bbv7TPv/WC49thZPg3jXuqzuvI45IL2EVAr/KxF0BSdHsU0ceFHOmwQn6evxAh1GaoK/6GQ1wp4R4oW2+LFL/A==}
-
-  mdast-util-to-markdown@2.1.2:
-    resolution: {integrity: sha512-xj68wMTvGXVOKonmog6LwyJKrYXZPvlwabaryTjLh9LuvovB/KAH+kvi8Gjj+7rJjsFi23nkUxRQv1KqSroMqA==}
 
   mdast-util-to-string@3.2.0:
     resolution: {integrity: sha512-V4Zn/ncyN1QNSqSBxTrMOLpjr+IKdHl2v3KVLoWmDPscP4r9GcCi71gjgvUV1SFSKh92AjAG4peFuBl2/YgCJg==}
@@ -9256,9 +9226,6 @@ packages:
 
   unist-util-visit@4.1.2:
     resolution: {integrity: sha512-MSd8OUGISqHdVvfY9TPhyK2VdUrPgxkUtWSuMHF6XAAFuL4LokseigBnZtPnJMu+FbynTkFNnFlyjxpVKujMRg==}
-
-  unist-util-visit@5.0.0:
-    resolution: {integrity: sha512-MR04uvD+07cwl/yhVuVWAtw+3GOR/knlL55Nd/wAdblk27GCVt3lqpTivy/tkJcZoNPzTwS1Y+KMojlLDhoTzg==}
 
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
@@ -13154,31 +13121,31 @@ snapshots:
       '@typescript-eslint/types': 8.26.1
       eslint-visitor-keys: 4.2.0
 
-  '@unocss/core@66.1.0-beta.7': {}
+  '@unocss/core@66.1.2': {}
 
-  '@unocss/extractor-arbitrary-variants@66.1.0-beta.7':
+  '@unocss/extractor-arbitrary-variants@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
 
-  '@unocss/preset-legacy-compat@66.1.0-beta.7':
+  '@unocss/preset-legacy-compat@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
 
-  '@unocss/preset-mini@66.1.0-beta.7':
+  '@unocss/preset-mini@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
-      '@unocss/extractor-arbitrary-variants': 66.1.0-beta.7
-      '@unocss/rule-utils': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
+      '@unocss/extractor-arbitrary-variants': 66.1.2
+      '@unocss/rule-utils': 66.1.2
 
-  '@unocss/preset-wind3@66.1.0-beta.7':
+  '@unocss/preset-wind3@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
-      '@unocss/preset-mini': 66.1.0-beta.7
-      '@unocss/rule-utils': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
+      '@unocss/preset-mini': 66.1.2
+      '@unocss/rule-utils': 66.1.2
 
-  '@unocss/rule-utils@66.1.0-beta.7':
+  '@unocss/rule-utils@66.1.2':
     dependencies:
-      '@unocss/core': 66.1.0-beta.7
+      '@unocss/core': 66.1.2
       magic-string: 0.30.17
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
@@ -15328,8 +15295,6 @@ snapshots:
 
   markdown-extensions@1.1.1: {}
 
-  markdown-table@3.0.3: {}
-
   match-sorter@8.0.0:
     dependencies:
       '@babel/runtime': 7.25.0
@@ -15346,13 +15311,6 @@ snapshots:
       '@types/mdast': 3.0.15
       '@types/unist': 2.0.6
       unist-util-visit: 4.1.2
-
-  mdast-util-find-and-replace@3.0.2:
-    dependencies:
-      '@types/mdast': 4.0.4
-      escape-string-regexp: 5.0.0
-      unist-util-is: 6.0.0
-      unist-util-visit-parents: 6.0.1
 
   mdast-util-from-markdown@1.3.1:
     dependencies:
@@ -15393,63 +15351,6 @@ snapshots:
       '@types/mdast': 3.0.15
       mdast-util-to-markdown: 1.5.0
       micromark-extension-frontmatter: 1.1.1
-
-  mdast-util-gfm-autolink-literal@2.0.1:
-    dependencies:
-      '@types/mdast': 4.0.4
-      ccount: 2.0.1
-      devlop: 1.1.0
-      mdast-util-find-and-replace: 3.0.2
-      micromark-util-character: 2.1.1
-
-  mdast-util-gfm-footnote@2.1.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.2
-      mdast-util-to-markdown: 2.1.2
-      micromark-util-normalize-identifier: 2.0.1
-    transitivePeerDependencies:
-      - supports-color
-
-  mdast-util-gfm-strikethrough@2.0.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      mdast-util-from-markdown: 2.0.2
-      mdast-util-to-markdown: 2.1.2
-    transitivePeerDependencies:
-      - supports-color
-
-  mdast-util-gfm-table@2.0.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      devlop: 1.1.0
-      markdown-table: 3.0.3
-      mdast-util-from-markdown: 2.0.2
-      mdast-util-to-markdown: 2.1.2
-    transitivePeerDependencies:
-      - supports-color
-
-  mdast-util-gfm-task-list-item@2.0.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.2
-      mdast-util-to-markdown: 2.1.2
-    transitivePeerDependencies:
-      - supports-color
-
-  mdast-util-gfm@3.1.0:
-    dependencies:
-      mdast-util-from-markdown: 2.0.2
-      mdast-util-gfm-autolink-literal: 2.0.1
-      mdast-util-gfm-footnote: 2.1.0
-      mdast-util-gfm-strikethrough: 2.0.0
-      mdast-util-gfm-table: 2.0.0
-      mdast-util-gfm-task-list-item: 2.0.0
-      mdast-util-to-markdown: 2.1.2
-    transitivePeerDependencies:
-      - supports-color
 
   mdast-util-mdx-expression@1.3.2:
     dependencies:
@@ -15503,11 +15404,6 @@ snapshots:
       '@types/mdast': 3.0.15
       unist-util-is: 5.2.0
 
-  mdast-util-phrasing@4.1.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      unist-util-is: 6.0.0
-
   mdast-util-to-hast@12.3.0:
     dependencies:
       '@types/hast': 2.3.4
@@ -15528,18 +15424,6 @@ snapshots:
       mdast-util-to-string: 3.2.0
       micromark-util-decode-string: 1.1.0
       unist-util-visit: 4.1.2
-      zwitch: 2.0.4
-
-  mdast-util-to-markdown@2.1.2:
-    dependencies:
-      '@types/mdast': 4.0.4
-      '@types/unist': 3.0.0
-      longest-streak: 3.1.0
-      mdast-util-phrasing: 4.1.0
-      mdast-util-to-string: 4.0.0
-      micromark-util-classify-character: 2.0.1
-      micromark-util-decode-string: 2.0.1
-      unist-util-visit: 5.0.0
       zwitch: 2.0.4
 
   mdast-util-to-string@3.2.0:
@@ -17585,12 +17469,6 @@ snapshots:
       '@types/unist': 2.0.6
       unist-util-is: 5.2.0
       unist-util-visit-parents: 5.1.3
-
-  unist-util-visit@5.0.0:
-    dependencies:
-      '@types/unist': 3.0.0
-      unist-util-is: 6.0.0
-      unist-util-visit-parents: 6.0.1
 
   universalify@0.2.0:
     optional: true

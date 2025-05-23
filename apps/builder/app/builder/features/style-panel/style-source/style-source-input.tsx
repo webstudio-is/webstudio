@@ -50,7 +50,6 @@ import {
   useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
 import {
   type ItemSource,
   type StyleSourceError,
@@ -268,6 +267,17 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
+type ComponentState = {
+  category: "states" | "component-states";
+  selector: string;
+  label: string;
+};
+
+const categories = [
+  "states",
+  "component-states",
+] satisfies ComponentState["category"][];
+
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
   error?: StyleSourceError;
@@ -417,9 +427,9 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      {stateCategories.map((currentCategory) => {
+      {categories.map((currentCategory) => {
         const categoryStates = props.states.filter(
-          ({ category }) => (category ?? "states") === currentCategory
+          ({ category }) => category === currentCategory
         );
         // prevent rendering empty category
         if (categoryStates.length === 0) {

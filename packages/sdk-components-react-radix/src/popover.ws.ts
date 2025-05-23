@@ -4,7 +4,7 @@ import {
   ContentIcon,
   ButtonElementIcon,
 } from "@webstudio-is/icons/svg";
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -57,7 +57,6 @@ export const metaPopoverClose: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: defaultStates,
   presetStyle: {
     button: [buttonReset, button].flat(),
   },

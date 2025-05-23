@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
@@ -18,7 +14,6 @@ export const meta: WsComponentMeta = {
   category: "forms",
   label: "Form",
   description: "Create filters, surveys, searches and more.",
-  states: defaultStates,
   presetStyle,
   order: 0,
   initialProps: ["id", "class", "action"],

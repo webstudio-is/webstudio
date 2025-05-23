@@ -417,6 +417,16 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("parse empty custom property", () => {
+    expect(parseCss(`a { --my-property: ; }`)).toEqual([
+      {
+        selector: "a",
+        property: "--my-property",
+        value: { type: "unparsed", value: "" },
+      },
+    ]);
+  });
+
   test("parse variable as var value", () => {
     expect(
       parseCss(

@@ -1,8 +1,4 @@
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { img } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./image";
 import { props } from "./__generated__/image.props";
@@ -36,7 +32,6 @@ export const meta: WsComponentMeta = {
   category: "media",
   description:
     "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
-  states: defaultStates,
   presetStyle,
   order: 0,
   initialProps: [

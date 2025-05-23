@@ -35,23 +35,12 @@ export const componentCategories = [
   "internal",
 ] as const;
 
-export const stateCategories = ["states", "component-states"] as const;
-
 export const ComponentState = z.object({
-  category: z.enum(stateCategories).optional(),
   selector: z.string(),
   label: z.string(),
 });
 
 export type ComponentState = z.infer<typeof ComponentState>;
-
-export const defaultStates: ComponentState[] = [
-  { selector: ":hover", label: "Hover" },
-  { selector: ":active", label: "Active" },
-  { selector: ":focus", label: "Focus" },
-  { selector: ":focus-visible", label: "Focus Visible" },
-  { selector: ":focus-within", label: "Focus Within" },
-];
 
 /**
  * rich-text - can be edited as rich text

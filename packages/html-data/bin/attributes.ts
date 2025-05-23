@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import {
+  coreMetas,
   createScope,
   elementComponent,
   type Instance,
@@ -53,6 +54,9 @@ const overrides: Record<
     href: { type: "url", required: true },
     target: { required: true },
     download: { type: "boolean", required: true },
+  },
+  blockquote: {
+    cite: { required: true },
   },
   form: {
     action: { required: true },
@@ -263,13 +267,13 @@ await writeFile(
   generateWebstudioComponent({
     name: "Page",
     scope: createScope(),
+    metas: new Map(Object.entries(coreMetas)),
     instances,
     props,
     dataSources: new Map(),
     rootInstanceId: body.id,
     classesMap: new Map(),
     parameters: [],
-    metas: new Map(),
   }) + "export { Page }"
 );
 

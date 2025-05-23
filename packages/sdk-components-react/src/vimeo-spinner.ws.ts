@@ -1,11 +1,10 @@
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { BoxIcon } from "@webstudio-is/icons/svg";
 import { props } from "./__generated__/vimeo-spinner.props";
 
 export const meta: WsComponentMeta = {
   icon: BoxIcon,
-  states: defaultStates,
   category: "hidden",
   label: "Spinner",
   contentModel: {

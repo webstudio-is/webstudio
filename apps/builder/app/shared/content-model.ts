@@ -422,9 +422,10 @@ export const richTextPlaceholders: Map<undefined | string, string> = new Map([
   ["h6", "Heading 6"],
   ["p", "Paragraph"],
   ["blockquote", "Blockquote"],
+  ["code", "Code Text"],
   ["li", "List item"],
   ["a", "Link"],
-  ["span", "Span"],
+  ["span", ""],
 ]);
 
 const findContentTags = ({

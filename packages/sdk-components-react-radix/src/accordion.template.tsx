@@ -98,7 +98,7 @@ export const meta: TemplateMeta = {
     "A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.",
   order: 3,
   template: (
-    <radix.Accordion collapsible={true} defaultValue="0">
+    <radix.Accordion collapsible={true} value="0">
       {createAccordionItem(
         "Is it accessible?",
         "Yes. It adheres to the WAI-ARIA design pattern."

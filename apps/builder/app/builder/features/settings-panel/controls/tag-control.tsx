@@ -79,15 +79,15 @@ export const TagControl = ({ meta, prop }: ControlProps<"tag">) => {
     >
       {options.length > 10 ? (
         <Combobox<string>
-          defaultHighlightedIndex={0}
           getItems={() => options}
+          itemToString={(item) => item ?? options[0]}
+          value={value ?? computedTag}
+          selectedItem={computedTag}
+          onChange={(value) => setValue(value ?? undefined)}
           onItemSelect={(item) => {
             updateTag(item);
             setValue(undefined);
           }}
-          itemToString={(item) => item ?? options[0]}
-          value={value ?? computedTag}
-          onChange={(value) => setValue(value ?? undefined)}
           getDescription={(item) => (
             <Box css={{ width: theme.spacing[28] }}>
               {elementsByTag[item ?? ""]?.description}

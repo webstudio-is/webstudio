@@ -4,6 +4,8 @@ import {
   forwardRef,
   type ComponentProps,
   type RefAttributes,
+  useState,
+  useEffect,
 } from "react";
 import {
   Root,
@@ -21,8 +23,20 @@ export const Accordion = forwardRef<
     Extract<ComponentPropsWithoutRef<typeof Root>, { type: "single" }>,
     "type" | "asChild"
   >
->((props, ref) => {
-  return <Root ref={ref} type="single" {...props} />;
+>(({ defaultValue, ...props }, ref) => {
+  const currentValue = props.value ?? defaultValue ?? "";
+  const [value, setValue] = useState(currentValue);
+  // synchronize external value with local one when changed
+  useEffect(() => setValue(currentValue), [currentValue]);
+  return (
+    <Root
+      {...props}
+      ref={ref}
+      type="single"
+      value={value}
+      onValueChange={setValue}
+    />
+  );
 });
 
 export const AccordionItem = forwardRef<

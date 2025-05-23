@@ -1,8 +1,4 @@
-import {
-  type WsComponentMeta,
-  type PresetStyle,
-  defaultStates,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta, PresetStyle } from "@webstudio-is/sdk";
 import { label } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/label.props";
 import type { defaultTag } from "./label";
@@ -16,7 +12,6 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Input Label",
-  states: defaultStates,
   presetStyle,
   initialProps: ["id", "class", "for"],
   props,

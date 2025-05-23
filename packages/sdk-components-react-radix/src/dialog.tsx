@@ -1,13 +1,14 @@
+import interactionResponse from "await-interaction-response";
 import {
-  type ComponentPropsWithoutRef,
   type ReactNode,
+  type ComponentProps,
   forwardRef,
   Children,
-  type ComponentProps,
   useEffect,
   useRef,
   useContext,
   useCallback,
+  useState,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
@@ -15,8 +16,6 @@ import {
   getClosestInstance,
   type Hook,
 } from "@webstudio-is/react-sdk/runtime";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import interactionResponse from "await-interaction-response";
 
 /**
  * Naive heuristic to determine if a click event will cause navigate
@@ -50,23 +49,19 @@ const willNavigate = (event: MouseEvent) => {
 // wrap in forwardRef because Root is functional component without ref
 export const Dialog = forwardRef<
   HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Root>, "defaultOpen">
+  Omit<ComponentProps<typeof DialogPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
   const { renderer } = useContext(ReactSdkContext);
 
-  const [open, onOpenChange] = useControllableState({
-    prop: props.open,
-    defaultProp: false,
-    onChange: props.onOpenChange,
-  });
+  const currentOpen = props.open ?? false;
+  const [open, setOpen] = useState(currentOpen);
+  // synchronize external value with local one when changed
+  useEffect(() => setOpen(currentOpen), [currentOpen]);
 
-  const onOpenChangeHandler = useCallback(
-    async (open: boolean) => {
-      await interactionResponse();
-      onOpenChange(open);
-    },
-    [onOpenChange]
-  );
+  const onOpenChangeHandler = useCallback(async (open: boolean) => {
+    await interactionResponse();
+    setOpen(open);
+  }, []);
 
   /**
    * Close the dialog when a navigable link within it is clicked.
@@ -130,7 +125,7 @@ export const DialogTrigger = forwardRef<
 
 export const DialogOverlay = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+  ComponentProps<typeof DialogPrimitive.Overlay>
 >((props, ref) => {
   return (
     <DialogPrimitive.DialogPortal>
@@ -141,7 +136,7 @@ export const DialogOverlay = forwardRef<
 
 export const DialogContent = forwardRef<
   HTMLDivElement,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+  ComponentProps<typeof DialogPrimitive.Content>
 >((props, ref) => {
   const preventAutoFocusOnClose = useRef(false);
   const { renderer } = useContext(ReactSdkContext);

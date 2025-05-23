@@ -1,4 +1,4 @@
-import { defaultStates, type WsComponentMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { time } from "@webstudio-is/sdk/normalize.css";
 import { props } from "./__generated__/time.props";
 
@@ -10,7 +10,6 @@ export const meta: WsComponentMeta = {
     category: "instance",
     children: [],
   },
-  states: defaultStates,
   presetStyle: {
     time,
   },

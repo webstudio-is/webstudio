@@ -6,15 +6,21 @@ import {
   type ComponentPropsWithoutRef,
   type ReactNode,
   Children,
+  useState,
+  useEffect,
 } from "react";
 
 export const Tooltip = forwardRef<
   HTMLDivElement,
   Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "defaultOpen">
 >((props, _ref) => {
+  const currentOpen = props.open ?? false;
+  const [open, setOpen] = useState(currentOpen);
+  // synchronize external value with local one when changed
+  useEffect(() => setOpen(currentOpen), [currentOpen]);
   return (
     <TooltipPrimitive.Provider>
-      <TooltipPrimitive.Root {...props} />
+      <TooltipPrimitive.Root {...props} open={open} onOpenChange={setOpen} />
     </TooltipPrimitive.Provider>
   );
 });
