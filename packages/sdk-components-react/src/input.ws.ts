@@ -1,6 +1,5 @@
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { input } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./input";
 import { props } from "./__generated__/input.props";
 
 const presetStyle = {
@@ -11,15 +10,11 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
   ],
-} satisfies PresetStyle<typeof defaultTag>;
+} satisfies PresetStyle<"input">;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   label: "Text Input",
-  description:
-    "A single-line text input for collecting string data from your users.",
   presetStyle,
-  order: 3,
   initialProps: [
     "id",
     "class",

@@ -40,6 +40,7 @@ import {
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
+import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
@@ -475,6 +476,16 @@ export const WebstudioComponentCanvas = forwardRef<
 
   if (instance.component === elementComponent) {
     Component = instance.tag ?? "div";
+    // replace to enable uncontrolled state
+    if (Component === "input") {
+      Component = Input as AnyComponent;
+    }
+    if (Component === "textarea") {
+      Component = Textarea as AnyComponent;
+    }
+    if (Component === "select") {
+      Component = Select as AnyComponent;
+    }
   }
 
   if (instance.component === collectionComponent) {
@@ -670,6 +681,16 @@ export const WebstudioComponentPreview = forwardRef<
 
   if (instance.component === elementComponent) {
     Component = instance.tag ?? "div";
+    // replace to enable uncontrolled state
+    if (Component === "input") {
+      Component = Input as AnyComponent;
+    }
+    if (Component === "textarea") {
+      Component = Textarea as AnyComponent;
+    }
+    if (Component === "select") {
+      Component = Select as AnyComponent;
+    }
   }
 
   if (instance.component === blockComponent) {

@@ -3,6 +3,7 @@ import {
   css,
   expression,
   Parameter,
+  PlaceholderValue,
   ws,
   type TemplateMeta,
 } from "@webstudio-is/template";
@@ -12,6 +13,7 @@ import {
   descendantComponent,
   elementComponent,
 } from "./core-metas";
+import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
 
 const elementMeta: TemplateMeta = {
   category: "general",
@@ -108,7 +110,6 @@ const blockMeta: TemplateMeta = {
 const typography: Record<string, TemplateMeta> = {
   heading: {
     category: "typography",
-    order: 1,
     description:
       "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
     template: <ws.element ws:tag="h1"></ws.element>,
@@ -116,14 +117,12 @@ const typography: Record<string, TemplateMeta> = {
 
   paragraph: {
     category: "typography",
-    order: 2,
     description: "A container for multi-line text.",
     template: <ws.element ws:tag="p"></ws.element>,
   },
 
   blockquote: {
     category: "typography",
-    order: 3,
     description:
       "Use to style a quote from an external source like an article or book.",
     template: (
@@ -141,7 +140,6 @@ const typography: Record<string, TemplateMeta> = {
 
   list: {
     category: "typography",
-    order: 4,
     description: "Groups content, like links in a menu or steps in a recipe.",
     template: (
       <ws.element ws:tag="ul">
@@ -154,14 +152,12 @@ const typography: Record<string, TemplateMeta> = {
 
   list_item: {
     category: "typography",
-    order: 5,
     description: "Adds a new item to an existing list.",
     template: <ws.element ws:tag="li"></ws.element>,
   },
 
   code_text: {
     category: "typography",
-    order: 6,
     template: (
       <ws.element
         ws:tag="code"
@@ -179,7 +175,6 @@ const typography: Record<string, TemplateMeta> = {
 
   thematic_break: {
     category: "typography",
-    order: 7,
     description:
       "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
     template: (
@@ -194,10 +189,157 @@ const typography: Record<string, TemplateMeta> = {
   },
 };
 
+const forms: Record<string, TemplateMeta> = {
+  form: {
+    category: "forms",
+    description: "Create filters, surveys, searches and more.",
+    template: (
+      <ws.element ws:tag="form">
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            display: block;
+          `}
+        />
+        <ws.element ws:tag="button">
+          {new PlaceholderValue("Submit")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+
+  button: {
+    category: "forms",
+    description:
+      "Use a button to submit forms or trigger actions within a page. Do not use a button to navigate users to another resource or another page - that’s what a link is used for.",
+    template: (
+      <ws.element ws:tag="button">{new PlaceholderValue("Button")}</ws.element>
+    ),
+  },
+
+  input_label: {
+    category: "forms",
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        {new PlaceholderValue("Label")}
+      </ws.element>
+    ),
+  },
+
+  text_input: {
+    category: "forms",
+    description:
+      "A single-line text input for collecting string data from your users.",
+    template: (
+      <ws.element
+        ws:tag="input"
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
+  text_area: {
+    category: "forms",
+    description:
+      "A multi-line text input for collecting longer string data from your users.",
+    template: (
+      <ws.element
+        ws:tag="textarea"
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
+  select: {
+    category: "forms",
+    description:
+      "A drop-down menu for users to select a single option from a predefined list.",
+    template: (
+      <ws.element
+        ws:tag="select"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element ws:tag="option" label="Please choose an option" value="" />
+        <ws.element ws:tag="option" label="Option A" value="a" />
+        <ws.element ws:tag="option" label="Option B" value="b" />
+        <ws.element ws:tag="option" label="Option C" value="c" />
+      </ws.element>
+    ),
+  },
+
+  radio: {
+    category: "forms",
+    description:
+      "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
+    icon: RadioCheckedIcon,
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:label="Radio Field"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            border-style: none;
+            margin-right: 0.5em;
+          `}
+          type="radio"
+        />
+        <ws.element ws:tag="span" ws:label="Radio Label">
+          {new PlaceholderValue("Radio")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+
+  checkbox: {
+    category: "forms",
+    description:
+      "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
+    icon: CheckboxCheckedIcon,
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:label="Checkbox Field"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            border-style: none;
+            margin-right: 0.5em;
+          `}
+          type="checkbox"
+        />
+        <ws.element ws:tag="span" ws:label="Checkbox Label">
+          {new PlaceholderValue("Checkbox")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+};
+
 export const coreTemplates = {
   [elementComponent]: elementMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
   ...typography,
+  ...forms,
 };

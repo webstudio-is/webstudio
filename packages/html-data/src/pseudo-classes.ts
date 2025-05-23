@@ -62,7 +62,7 @@ export const pseudoClassesByTag: Record<string, string[]> = {
     // ":open"
   ],
   optgroup: [...ability],
-  option: [...ability, ":checked"],
+  option: [...ability, ":checked", ":default"],
   fieldset: [...ability, ...validity],
   progress: [":indeterminate"],
   details: [":open"],

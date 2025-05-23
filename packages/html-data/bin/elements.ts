@@ -46,8 +46,13 @@ const elementsByTag: Record<string, Element> = {};
       });
     const description = getTextContent(row.childNodes[1]);
     const categories = parseList(getTextContent(row.childNodes[2]));
-    const children = parseList(getTextContent(row.childNodes[4]));
+    let children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
+      // textarea does not have value attribute and text content is used as initial value
+      // introduce fake value attribute to manage initial state similar to input
+      if (tag === "textarea") {
+        children = [];
+      }
       elementsByTag[tag] = {
         description,
         categories,

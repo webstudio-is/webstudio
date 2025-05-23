@@ -73,6 +73,9 @@ const overrides: Record<
     popovertarget: false,
     popovertargetaction: false,
   },
+  label: {
+    for: { required: true },
+  },
   dialog: {
     closedby: false,
   },
@@ -80,12 +83,40 @@ const overrides: Record<
     ismap: false,
   },
   input: {
+    name: { required: true },
+    value: { required: true },
+    checked: { required: true },
+    type: { required: true },
+    placeholder: { required: true },
+    required: { required: true },
+    autofocus: { required: true },
     alpha: false,
     colorspace: false,
     // react types have it only in textarea
     dirname: false,
     popovertarget: false,
     popovertargetaction: false,
+  },
+  textarea: {
+    name: { required: true },
+    placeholder: { required: true },
+    required: { required: true },
+    autofocus: { required: true },
+  },
+  select: {
+    name: { required: true },
+    required: { required: true },
+    autofocus: { required: true },
+    // mutltiple mode is not considered accessible
+    // and we cannot express it in builder so easier to remove
+    multiple: false,
+  },
+  option: {
+    label: { required: true },
+    value: { required: true },
+    disabled: { required: true },
+    // enforce fake value attribute on select element
+    selected: false,
   },
 };
 
@@ -99,6 +130,26 @@ const [tbody] = findTags(table, "tbody");
 const rows = findTags(tbody, "tr");
 
 const attributesByTag: Record<string, Attribute[]> = {};
+// textarea does not have value attribute and text content is used as initial value
+// introduce fake value attribute to manage initial state similar to input
+attributesByTag.textarea = [
+  {
+    name: "value",
+    description: "Value of the form control",
+    type: "string",
+    required: true,
+  },
+];
+// select does not have value attribute and selected options are used as initial value
+// introduce fake value attribute to manage initial state similar to input
+attributesByTag.select = [
+  {
+    name: "value",
+    description: "Value of the form control",
+    type: "string",
+    required: true,
+  },
+];
 
 for (const row of rows) {
   const attribute = getTextContent(row.childNodes[0]).trim();
@@ -117,6 +168,32 @@ for (const row of rows) {
     .map((item) => item.slice(1, -1));
   if (value.includes("valid navigable target name or keyword")) {
     possibleOptions = ["_blank", "_self", "_parent", "_top"];
+  }
+  if (value.includes("input type keyword")) {
+    possibleOptions = [
+      "hidden",
+      "text",
+      "search",
+      "tel",
+      "url",
+      "email",
+      "password",
+      "date",
+      "month",
+      "week",
+      "time",
+      "datetime-local",
+      "number",
+      "range",
+      "color",
+      "checkbox",
+      "radio",
+      "file",
+      "submit",
+      "image",
+      "reset",
+      "button",
+    ];
   }
   let type: "string" | "boolean" | "number" | "select" = "string";
   let options: undefined | string[];

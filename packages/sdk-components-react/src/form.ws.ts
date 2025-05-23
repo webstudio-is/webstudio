@@ -11,11 +11,8 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   label: "Form",
-  description: "Create filters, surveys, searches and more.",
   presetStyle,
-  order: 0,
   initialProps: ["id", "class", "action"],
   props,
 };

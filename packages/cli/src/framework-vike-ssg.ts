@@ -53,7 +53,11 @@ export const createFramework = async (): Promise<Framework> => {
   return {
     metas,
     components,
-    tags: {},
+    tags: {
+      textarea: `${base}:Textarea`,
+      input: `${base}:Input`,
+      select: `${base}:Select`,
+    },
     html: ({ pagePath }: { pagePath: string }) => {
       // ignore dynamic pages in static export
       if (isPathnamePattern(pagePath)) {
