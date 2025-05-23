@@ -35,6 +35,30 @@ const parseTailwindClasses = async (classes: string) => {
   // avoid caching uno generator instance
   // to prevent bloating css with preflights from previous calls
   const generator = await createUnoGenerator();
+  let hasColumnGaps = false;
+  let hasRowGaps = false;
+  let hasFlexOrGrid = false;
+  classes = classes
+    .split(" ")
+    .map((item) => {
+      // styles data cannot express space-x and space-y selectors
+      // with lobotomized owl so replace with gaps
+      const spaceX = "space-x-";
+      if (item.startsWith(spaceX)) {
+        hasColumnGaps = true;
+        return `gap-x-${item.slice(spaceX.length)}`;
+      }
+      const spaceY = "space-y-";
+      if (item.startsWith(spaceY)) {
+        hasRowGaps = true;
+        return `gap-y-${item.slice(spaceY.length)}`;
+      }
+      if (item.endsWith("flex") || item.endsWith("grid")) {
+        hasFlexOrGrid = true;
+      }
+      return item;
+    })
+    .join(" ");
   const generated = await generator.generate(classes);
   const css = generated.css;
   let parsedStyles: Omit<ParsedStyleDecl, "selector">[] = [];
@@ -54,6 +78,20 @@ const parseTailwindClasses = async (classes: string) => {
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")
   );
+  // gaps work only with flex and grid
+  // so try to use one or another for different axes
+  if (hasColumnGaps && !hasFlexOrGrid) {
+    parsedStyles.unshift({
+      property: "display",
+      value: { type: "keyword", value: "flex" },
+    });
+  }
+  if (hasRowGaps && !hasFlexOrGrid) {
+    parsedStyles.unshift({
+      property: "display",
+      value: { type: "keyword", value: "grid" },
+    });
+  }
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))

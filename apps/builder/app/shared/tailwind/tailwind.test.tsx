@@ -320,3 +320,73 @@ test("merge tailwind breakpoints with already defined ones", async () => {
     )
   );
 });
+
+test("generate space without display property", async () => {
+  expect(
+    await generateFragmentFromTailwind(
+      renderTemplate(
+        <>
+          <ws.element ws:tag="div" class="space-x-4"></ws.element>
+          <ws.element ws:tag="div" class="space-y-4"></ws.element>
+        </>
+      )
+    )
+  ).toEqual(
+    renderTemplate(
+      <>
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            display: flex;
+            column-gap: 1rem;
+          `}
+        ></ws.element>
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            display: grid;
+            row-gap: 1rem;
+          `}
+        ></ws.element>
+      </>
+    )
+  );
+});
+
+test("generate space with display property", async () => {
+  expect(
+    await generateFragmentFromTailwind(
+      renderTemplate(
+        <>
+          <ws.element ws:tag="div" class="flex space-x-4"></ws.element>
+          <ws.element
+            ws:tag="div"
+            class="hidden md:flex space-y-4"
+          ></ws.element>
+        </>
+      )
+    )
+  ).toEqual(
+    renderTemplate(
+      <>
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            display: flex;
+            column-gap: 1rem;
+          `}
+        ></ws.element>
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            display: none;
+            row-gap: 1rem;
+            @media (min-width: 768px) {
+              display: flex;
+            }
+          `}
+        ></ws.element>
+      </>
+    )
+  );
+});
