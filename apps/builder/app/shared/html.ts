@@ -71,7 +71,10 @@ const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
   return tags;
 };
 
-export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
+export const generateFragmentFromHtml = (
+  html: string,
+  options?: { unknownTags?: boolean }
+): WebstudioFragment => {
   const attributeTypes = getAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
   const styleSourceSelections: StyleSourceSelection[] = [];
@@ -112,7 +115,11 @@ export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   };
 
   const convertElementToInstance = (node: ElementNode) => {
-    if (node.tagName === "svg" && node.sourceCodeLocation) {
+    if (
+      node.tagName === "svg" &&
+      node.sourceCodeLocation &&
+      options?.unknownTags
+    ) {
       const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
       const indent = startCol - 1;
       const htmlFragment = html

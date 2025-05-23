@@ -14,7 +14,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { TemplateStyleDecl } from "./css";
-import { camelCaseProperty } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
 export class Variable {
   name: string;
@@ -124,7 +124,6 @@ export const renderTemplate = (
   root: JSX.Element,
   generateId?: () => string
 ): WebstudioFragment => {
-  let lastId = -1;
   const instances: Instance[] = [];
   const props: Prop[] = [];
   const breakpoints: Breakpoint[] = [];
@@ -133,13 +132,23 @@ export const renderTemplate = (
   const styles: StyleDecl[] = [];
   const dataSources = new Map<Variable | Parameter, DataSource>();
   const resources = new Map<ResourceValue, Resource>();
-  const ids = new Map<unknown, string>();
-  const getId = (key: unknown) => {
-    let id = ids.get(key);
+  const idsByKey = new Map<unknown, string>();
+  const lastIdsByList = new Map<unknown, number>();
+  // ensure ids are stable for specific list
+  const getIdForList = (list: unknown) => {
+    if (generateId) {
+      return generateId();
+    }
+    let lastId = lastIdsByList.get(list) ?? -1;
+    lastId += 1;
+    lastIdsByList.set(list, lastId);
+    return lastId.toString();
+  };
+  const getIdByKey = (key: unknown) => {
+    let id = idsByKey.get(key);
     if (id === undefined) {
-      lastId += 1;
-      id = generateId?.() ?? lastId.toString();
-      ids.set(key, id);
+      id = getIdForList(idsByKey);
+      idsByKey.set(key, id);
     }
     return id;
   };
@@ -147,7 +156,7 @@ export const renderTemplate = (
     instanceId: string,
     variable: Variable | Parameter
   ) => {
-    const id = getId(variable);
+    const id = getIdByKey(variable);
     if (dataSources.has(variable)) {
       return id;
     }
@@ -199,7 +208,7 @@ export const renderTemplate = (
     );
   };
   const getResourceId = (instanceId: string, resourceValue: ResourceValue) => {
-    const id = `resource:${getId(resourceValue)}`;
+    const id = `resource:${getIdByKey(resourceValue)}`;
     if (resources.has(resourceValue)) {
       return id;
     }
@@ -219,21 +228,42 @@ export const renderTemplate = (
     return id;
   };
   // lazily create breakpoint
-  const getBreakpointId = () => {
-    if (breakpoints.length > 0) {
-      return breakpoints[0].id;
+  const getBreakpointId = (mediaQuery: undefined | string) => {
+    if (mediaQuery === undefined) {
+      let baseBreakpoint = breakpoints.find(
+        (item) => item.minWidth === undefined && item.maxWidth === undefined
+      );
+      if (baseBreakpoint === undefined) {
+        baseBreakpoint = { id: "base", label: "" };
+        breakpoints.push(baseBreakpoint);
+      }
+      return baseBreakpoint.id;
     }
-    const breakpointId = "base";
-    breakpoints.push({
-      id: breakpointId,
-      label: "",
-    });
-    return breakpointId;
+    const parsedMediaQuery = parseMediaQuery(mediaQuery);
+    if (parsedMediaQuery === undefined) {
+      return;
+    }
+    let breakpoint = breakpoints.find(
+      (item) =>
+        item.minWidth === parsedMediaQuery.minWidth &&
+        item.maxWidth === parsedMediaQuery.maxWidth
+    );
+    if (breakpoint === undefined) {
+      const id = getIdForList(breakpoints);
+      const label = `${parsedMediaQuery.minWidth ?? parsedMediaQuery.maxWidth}`;
+      breakpoint = { id, label, ...parsedMediaQuery };
+      breakpoints.push(breakpoint);
+    }
+    return breakpoint.id;
   };
+  const localStylesByInstanceId = new Map<
+    Instance["id"],
+    TemplateStyleDecl[]
+  >();
   const convertElementToInstance = (
     element: JSX.Element
   ): Instance["children"][number] => {
-    const instanceId = element.props?.["ws:id"] ?? getId(element);
+    const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
       const [_name, value] = entry;
@@ -246,25 +276,9 @@ export const renderTemplate = (
         continue;
       }
       if (name === "ws:style") {
-        const styleSourceId = `${instanceId}:${name}`;
-        styleSources.push({
-          type: "local",
-          id: styleSourceId,
-        });
-        styleSourceSelections.push({
-          instanceId,
-          values: [styleSourceId],
-        });
         const localStyles = value as TemplateStyleDecl[];
-        for (const { state, property, value } of localStyles) {
-          styles.push({
-            breakpointId: getBreakpointId(),
-            styleSourceId,
-            state,
-            property: camelCaseProperty(property),
-            value,
-          });
-        }
+        // create styles with breakpoints later to ensure more stable ids
+        localStylesByInstanceId.set(instanceId, localStyles);
         continue;
       }
       if (name === "ws:show") {
@@ -362,6 +376,30 @@ export const renderTemplate = (
     }
   } else {
     children.push(convertElementToInstance(root));
+  }
+  for (const [instanceId, localStyles] of localStylesByInstanceId) {
+    const styleSourceId = `${instanceId}:ws:style`;
+    styleSources.push({
+      type: "local",
+      id: styleSourceId,
+    });
+    styleSourceSelections.push({
+      instanceId,
+      values: [styleSourceId],
+    });
+    for (const { breakpoint, state, property, value } of localStyles) {
+      const breakpointId = getBreakpointId(breakpoint);
+      if (breakpointId === undefined) {
+        continue;
+      }
+      styles.push({
+        breakpointId,
+        styleSourceId,
+        state,
+        property: camelCaseProperty(property),
+        value,
+      });
+    }
   }
   return {
     children,

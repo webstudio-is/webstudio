@@ -25,6 +25,7 @@ import {
 import {
   deleteInstanceMutable,
   extractWebstudioFragment,
+  insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -48,6 +49,8 @@ import {
   isRichTextContent,
   isTreeSatisfyingContentModel,
 } from "~/shared/content-model";
+import { generateFragmentFromHtml } from "~/shared/html";
+import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -517,6 +520,16 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "unwrap",
       handler: () => unwrap(),
+    },
+
+    {
+      name: "pasteHtmlWithTailwindClasses",
+      handler: async () => {
+        const html = await navigator.clipboard.readText();
+        let fragment = generateFragmentFromHtml(html);
+        fragment = await generateFragmentFromTailwind(fragment);
+        return insertWebstudioFragmentAt(fragment);
+      },
     },
 
     // history
