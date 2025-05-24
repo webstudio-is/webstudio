@@ -1,6 +1,5 @@
 import type { WsComponentMeta, PresetStyle } from "@webstudio-is/sdk";
 import { textarea } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./textarea";
 import { props } from "./__generated__/textarea.props";
 
 const presetStyle = {
@@ -13,15 +12,11 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
   ],
-} satisfies PresetStyle<typeof defaultTag>;
+} satisfies PresetStyle<"textarea">;
 
 export const meta: WsComponentMeta = {
-  category: "forms",
   label: "Text Area",
-  description:
-    "A multi-line text input for collecting longer string data from your users.",
   presetStyle,
-  order: 4,
   contentModel: {
     category: "instance",
     children: [],

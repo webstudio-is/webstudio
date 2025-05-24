@@ -697,6 +697,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "checked",
       description: "Whether the control is checked",
       type: "boolean",
+      required: true,
     },
     {
       name: "disabled",
@@ -780,6 +781,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description:
         "Name of the element to use for form submission and in the form.elements API",
       type: "string",
+      required: true,
     },
     {
       name: "pattern",
@@ -790,6 +792,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "placeholder",
       description: "User-visible label to be placed within the form control",
       type: "string",
+      required: true,
     },
     {
       name: "readonly",
@@ -800,6 +803,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "required",
       description: "Whether the control is required for form submission",
       type: "boolean",
+      required: true,
     },
     {
       name: "size",
@@ -824,12 +828,38 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     {
       name: "type",
       description: "Type of form control",
-      type: "string",
+      type: "select",
+      options: [
+        "hidden",
+        "text",
+        "search",
+        "tel",
+        "url",
+        "email",
+        "password",
+        "date",
+        "month",
+        "week",
+        "time",
+        "datetime-local",
+        "number",
+        "range",
+        "color",
+        "checkbox",
+        "radio",
+        "file",
+        "submit",
+        "image",
+        "reset",
+        "button",
+      ],
+      required: true,
     },
     {
       name: "value",
       description: "Value of the form control",
       type: "string",
+      required: true,
     },
     {
       name: "width",
@@ -855,6 +885,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "for",
       description: "Associate the label with form control",
       type: "string",
+      required: true,
     },
   ],
   li: [
@@ -1006,21 +1037,19 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "disabled",
       description: "Whether the form control is disabled",
       type: "boolean",
+      required: true,
     },
     {
       name: "label",
       description: "User-visible label",
       type: "string",
-    },
-    {
-      name: "selected",
-      description: "Whether the option is selected by default",
-      type: "boolean",
+      required: true,
     },
     {
       name: "value",
       description: "Value to be used for form submission",
       type: "string",
+      required: true,
     },
   ],
   output: [
@@ -1063,6 +1092,12 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
   ],
   select: [
     {
+      name: "value",
+      description: "Value of the form control",
+      type: "string",
+      required: true,
+    },
+    {
       name: "autocomplete",
       description: "Hint for form autofill feature",
       type: "string",
@@ -1078,20 +1113,17 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       type: "string",
     },
     {
-      name: "multiple",
-      description: "Whether to allow multiple values",
-      type: "boolean",
-    },
-    {
       name: "name",
       description:
         "Name of the element to use for form submission and in the form.elements API",
       type: "string",
+      required: true,
     },
     {
       name: "required",
       description: "Whether the control is required for form submission",
       type: "boolean",
+      required: true,
     },
     {
       name: "size",
@@ -1163,6 +1195,12 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
   ],
   textarea: [
     {
+      name: "value",
+      description: "Value of the form control",
+      type: "string",
+      required: true,
+    },
+    {
       name: "autocomplete",
       description: "Hint for form autofill feature",
       type: "string",
@@ -1203,11 +1241,13 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description:
         "Name of the element to use for form submission and in the form.elements API",
       type: "string",
+      required: true,
     },
     {
       name: "placeholder",
       description: "User-visible label to be placed within the form control",
       type: "string",
+      required: true,
     },
     {
       name: "readonly",
@@ -1218,6 +1258,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "required",
       description: "Whether the control is required for form submission",
       type: "boolean",
+      required: true,
     },
     {
       name: "rows",

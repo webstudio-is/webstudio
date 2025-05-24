@@ -1,6 +1,5 @@
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { select } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./select";
 import { props } from "./__generated__/select.props";
 
 const presetStyle = {
@@ -11,7 +10,7 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
   ],
-} satisfies PresetStyle<typeof defaultTag>;
+} satisfies PresetStyle<"select">;
 
 export const meta: WsComponentMeta = {
   presetStyle,

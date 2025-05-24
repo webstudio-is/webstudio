@@ -146,7 +146,7 @@ const Page = () => {
         src={""}
         step={0}
         title={""}
-        type={""}
+        type={"hidden"}
         value={""}
         width={0}
       />
@@ -172,15 +172,15 @@ const Page = () => {
       />
       <ol reversed={true} start={0} type={"1"} />
       <optgroup disabled={true} label={""} />
-      <option disabled={true} label={""} selected={true} value={""} />
+      <option disabled={true} label={""} value={""} />
       <output htmlFor={""} form={""} name={""} />
       <progress max={0} value={0} />
       <q cite={""} />
       <select
+        value={""}
         autoComplete={""}
         disabled={true}
         form={""}
-        multiple={true}
         name={""}
         required={true}
         size={0}
@@ -197,6 +197,7 @@ const Page = () => {
       />
       <td colSpan={0} headers={""} rowSpan={0} />
       <textarea
+        value={""}
         autoComplete={""}
         cols={0}
         dirName={""}

@@ -5,6 +5,6 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description: "Current value of the element",
+    description: "Value of the form control",
   },
 };

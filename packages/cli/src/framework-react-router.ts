@@ -56,6 +56,9 @@ export const createFramework = async (): Promise<Framework> => {
     metas,
     components,
     tags: {
+      textarea: `${base}:Textarea`,
+      input: `${base}:Input`,
+      select: `${base}:Select`,
       body: `${reactRouter}:Body`,
       a: `${reactRouter}:Link`,
       form: `${reactRouter}:RemixForm`,

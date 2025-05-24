@@ -249,3 +249,55 @@ test("optionally paste svg as html embed", () => {
     )
   );
 });
+
+test("generate textarea element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <textarea>
+          my text
+        </textarea>
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="textarea" value="my text" />
+      </ws.element>
+    )
+  );
+});
+
+test("generate select element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <select>
+          <option value="one">One</option>
+          <option value="two" selected>Two</option>
+        </select>
+        <select>
+          <option>One</option>
+          <option selected>Two</option>
+        </select>
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="select" value="two">
+          <ws.element ws:tag="option" value="one">
+            One
+          </ws.element>
+          <ws.element ws:tag="option" value="two">
+            Two
+          </ws.element>
+        </ws.element>
+        <ws.element ws:tag="select" value="Two">
+          <ws.element ws:tag="option">One</ws.element>
+          <ws.element ws:tag="option">Two</ws.element>
+        </ws.element>
+      </ws.element>
+    )
+  );
+});

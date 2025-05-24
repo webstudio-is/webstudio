@@ -176,6 +176,10 @@ export const generateFragmentFromHtml = (
         createLocalStyles(instanceId, attr.value);
         continue;
       }
+      // selected option is represented as fake value attribute on select element
+      if (node.tagName === "option" && attr.name === "selected") {
+        continue;
+      }
       if (type === "string") {
         props.push({ id, instanceId, name, type, value: attr.value });
         continue;
@@ -195,6 +199,32 @@ export const generateFragmentFromHtml = (
       contentTags,
       richTextContentTags
     );
+    if (node.tagName === "select") {
+      for (const childNode of node.childNodes) {
+        if (defaultTreeAdapter.isElementNode(childNode)) {
+          if (
+            childNode.tagName === "option" &&
+            childNode.attrs.find((attr) => attr.name === "selected")
+          ) {
+            const valueAttr = childNode.attrs.find(
+              (attr) => attr.name === "value"
+            );
+            // if value attribute is omitted, the value is taken from the text content of the option element
+            const childText = childNode.childNodes.find((childNode) =>
+              defaultTreeAdapter.isTextNode(childNode)
+            );
+            // selected option is represented as fake value attribute on select element
+            props.push({
+              id: `${instance.id}:value`,
+              instanceId: instance.id,
+              name: "value",
+              type: "string",
+              value: valueAttr?.value ?? childText?.value.trim() ?? "",
+            });
+          }
+        }
+      }
+    }
     for (const childNode of node.childNodes) {
       if (defaultTreeAdapter.isElementNode(childNode)) {
         const child = convertElementToInstance(childNode);
@@ -211,6 +241,18 @@ export const generateFragmentFromHtml = (
           // collapse spacing characters inside of text to avoid preserved newlines
           value: childNode.value.replaceAll(/\s+/g, " "),
         };
+        // textarea content is initial value
+        // and represented with fake value attribute
+        if (node.tagName === "textarea") {
+          props.push({
+            id: `${instance.id}:value`,
+            instanceId: instance.id,
+            name: "value",
+            type: "string",
+            value: child.value.trim(),
+          });
+          continue;
+        }
         // when element has content elements other than supported by rich text
         // wrap its text children with span, for example
         // <div>

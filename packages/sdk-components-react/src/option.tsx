@@ -1,10 +1,7 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
 
-export const defaultTag = "option";
-
-export const Option = forwardRef<
-  ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag>
->((props, ref) => <option {...props} ref={ref} />);
+export const Option = forwardRef<HTMLOptionElement, ComponentProps<"option">>(
+  (props, ref) => <option {...props} ref={ref} />
+);
 
 Option.displayName = "Option";

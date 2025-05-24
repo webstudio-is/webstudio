@@ -1,6 +1,4 @@
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
-
-import type { defaultTag } from "./option";
 import { props } from "./__generated__/option.props";
 
 const presetStyle = {
@@ -17,7 +15,7 @@ const presetStyle = {
       },
     },
   ],
-} satisfies PresetStyle<typeof defaultTag>;
+} satisfies PresetStyle<"option">;
 
 export const meta: WsComponentMeta = {
   category: "hidden",
@@ -34,6 +32,6 @@ export const meta: WsComponentMeta = {
     { selector: ":hover", label: "Hover" },
     { selector: ":disabled", label: "Disabled" },
   ],
-  initialProps: ["label", "selected", "value", "label", "disabled"],
+  initialProps: ["label", "value", "label", "disabled"],
   props,
 };
