@@ -7,20 +7,35 @@ import {
   ws,
   type TemplateMeta,
 } from "@webstudio-is/template";
+import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   blockComponent,
   collectionComponent,
   descendantComponent,
   elementComponent,
 } from "./core-metas";
-import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
 
 const elementMeta: TemplateMeta = {
   category: "general",
-  order: 0,
+  order: 1,
   description:
     "An HTML element is a core building block for web pages, structuring and displaying content like text, images, and links.",
   template: <ws.element></ws.element>,
+};
+
+const linkMeta: TemplateMeta = {
+  category: "general",
+  description:
+    "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
+  order: 2,
+  template: (
+    <ws.element
+      ws:tag="a"
+      ws:style={css`
+        display: inline-block;
+      `}
+    ></ws.element>
+  ),
 };
 
 const collectionItem = new Parameter("collectionItem");
@@ -33,9 +48,9 @@ const collectionMeta: TemplateMeta = {
       data={["Collection Item 1", "Collection Item 2", "Collection Item 3"]}
       item={collectionItem}
     >
-      <$.Box>
-        <$.Text>{expression`${collectionItem}`}</$.Text>
-      </$.Box>
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="div">{expression`${collectionItem}`}</ws.element>
+      </ws.element>
     </ws.collection>
   ),
 };
@@ -52,20 +67,20 @@ const blockMeta: TemplateMeta = {
   template: (
     <ws.block>
       <BlockTemplate ws:label="Templates">
-        <$.Paragraph></$.Paragraph>
-        <$.Heading ws:label="Heading 1" ws:tag="h1"></$.Heading>
-        <$.Heading ws:label="Heading 2" ws:tag="h2"></$.Heading>
-        <$.Heading ws:label="Heading 3" ws:tag="h3"></$.Heading>
-        <$.Heading ws:label="Heading 4" ws:tag="h4"></$.Heading>
-        <$.Heading ws:label="Heading 5" ws:tag="h5"></$.Heading>
-        <$.Heading ws:label="Heading 6" ws:tag="h6"></$.Heading>
-        <$.List ws:label="List (Unordered)">
-          <$.ListItem></$.ListItem>
-        </$.List>
-        <$.List ws:label="List (Ordered)" ordered={true}>
-          <$.ListItem></$.ListItem>
-        </$.List>
-        <$.Link></$.Link>
+        <ws.element ws:tag="p"></ws.element>
+        <ws.element ws:label="Heading 1" ws:tag="h1"></ws.element>
+        <ws.element ws:label="Heading 2" ws:tag="h2"></ws.element>
+        <ws.element ws:label="Heading 3" ws:tag="h3"></ws.element>
+        <ws.element ws:label="Heading 4" ws:tag="h4"></ws.element>
+        <ws.element ws:label="Heading 5" ws:tag="h5"></ws.element>
+        <ws.element ws:label="Heading 6" ws:tag="h6"></ws.element>
+        <ws.element ws:tag="ul">
+          <ws.element ws:tag="li"></ws.element>
+        </ws.element>
+        <ws.element ws:tag="ol">
+          <ws.element ws:tag="li"></ws.element>
+        </ws.element>
+        <ws.element ws:tag="a"></ws.element>
         <$.Image
           ws:style={css`
             margin-right: auto;
@@ -74,35 +89,35 @@ const blockMeta: TemplateMeta = {
             height: auto;
           `}
         />
-        <$.Separator />
-        <$.Blockquote></$.Blockquote>
+        <ws.element ws:tag="hr" />
+        <ws.element ws:tag="blockquote"></ws.element>
         <$.HtmlEmbed />
-        <$.CodeText />
+        <ws.element ws:tag="code" />
       </BlockTemplate>
-      <$.Paragraph>
+      <ws.element ws:tag="p">
         The Content Block component designates regions on the page where
         pre-styled instances can be inserted in{" "}
-        <$.RichTextLink href="https://wstd.us/content-block">
+        <ws.element ws:tag="a" href="https://wstd.us/content-block">
           Content mode
-        </$.RichTextLink>
+        </ws.element>
         .
-      </$.Paragraph>
-      <$.List>
-        <$.ListItem>
+      </ws.element>
+      <ws.element ws:tag="ul">
+        <ws.element ws:tag="li">
           In Content mode, you can edit any direct child instances that were
           pre-added to the Content Block, as well as add new instances
           predefined in Templates.
-        </$.ListItem>
-        <$.ListItem>
+        </ws.element>
+        <ws.element ws:tag="li">
           To predefine instances for insertion in Content mode, switch to Design
           mode and add them to the Templates container.
-        </$.ListItem>
-        <$.ListItem>
+        </ws.element>
+        <ws.element ws:tag="li">
           To insert predefined instances in Content mode, click the + button
           while hovering over the Content Block on the canvas and choose an
           instance from the list.
-        </$.ListItem>
-      </$.List>
+        </ws.element>
+      </ws.element>
     </ws.block>
   ),
 };
@@ -337,6 +352,7 @@ const forms: Record<string, TemplateMeta> = {
 
 export const coreTemplates = {
   [elementComponent]: elementMeta,
+  link: linkMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,

@@ -101,9 +101,6 @@ const $metas = computed(
       ) {
         continue;
       }
-      if (isFeatureEnabled("element") === false && name === elementComponent) {
-        continue;
-      }
 
       availableComponents.add(name);
       metas.push({

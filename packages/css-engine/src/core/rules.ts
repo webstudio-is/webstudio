@@ -258,7 +258,11 @@ export class NestingRule {
       if (declaration.breakpoint !== breakpoint) {
         continue;
       }
-      const { selector: nestedSelector } = declaration;
+      let nestedSelector = declaration.selector;
+      // polyfill :local-link with framework specific logic
+      if (nestedSelector === ":local-link") {
+        nestedSelector = "[aria-current=page]";
+      }
       const selector = this.#selector + this.#descendantSuffix + nestedSelector;
       let style = styleBySelector.get(selector);
       if (style === undefined) {
