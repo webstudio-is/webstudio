@@ -279,3 +279,23 @@ test("generate merged properties as single rule", () => {
 }"
 `);
 });
+
+test("convert :local-link to [aria-current=page] selector", () => {
+  const sheet = createRegularStyleSheet();
+  const rule = sheet.addNestingRule(".instance");
+  sheet.addMediaRule("x");
+  rule.setDeclaration({
+    breakpoint: "x",
+    selector: ":local-link",
+    property: "color",
+    value: { type: "keyword", value: "green" },
+  });
+  expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
+    .toMatchInlineSnapshot(`
+    "@media all {
+      .c3mubaz[aria-current=page] {
+        color: green
+      }
+    }"
+  `);
+});

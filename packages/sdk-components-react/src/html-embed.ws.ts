@@ -7,7 +7,7 @@ export const meta: WsComponentMeta = {
   label: "HTML Embed",
   description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
-  order: 2,
+  order: 3,
   contentModel: {
     category: "instance",
     children: [descendantComponent],

@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
@@ -528,15 +529,19 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => unwrap(),
     },
 
-    {
-      name: "pasteHtmlWithTailwindClasses",
-      handler: async () => {
-        const html = await navigator.clipboard.readText();
-        let fragment = generateFragmentFromHtml(html);
-        fragment = await generateFragmentFromTailwind(fragment);
-        return insertWebstudioFragmentAt(fragment);
-      },
-    },
+    ...(isFeatureEnabled("tailwind")
+      ? [
+          {
+            name: "pasteHtmlWithTailwindClasses",
+            handler: async () => {
+              const html = await navigator.clipboard.readText();
+              let fragment = generateFragmentFromHtml(html);
+              fragment = await generateFragmentFromTailwind(fragment);
+              return insertWebstudioFragmentAt(fragment);
+            },
+          },
+        ]
+      : []),
 
     // history
 

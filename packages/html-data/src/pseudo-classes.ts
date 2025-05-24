@@ -4,7 +4,7 @@ const location = [
   // ':link',
   ":visited",
   // ':any-link',
-  // ':local-link',
+  ":local-link",
   // ':target',
   // ':target-within',
 ];
