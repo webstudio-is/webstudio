@@ -154,7 +154,7 @@ export const generateFragmentFromHtml = (
     if (!tags.includes(node.tagName)) {
       return;
     }
-    let instance: Instance = {
+    const instance: Instance = {
       type: "instance",
       id: getNewId(),
       component: elementComponent,
