@@ -154,13 +154,19 @@ export const generateFragmentFromHtml = (
     if (!tags.includes(node.tagName)) {
       return;
     }
-    const instance: Instance = {
+    let instance: Instance = {
       type: "instance",
       id: getNewId(),
       component: elementComponent,
       tag: node.tagName,
       children: [],
     };
+    // users expect to get optimized images by default
+    // though still able to create raw img element
+    if (node.tagName === "img") {
+      instance.component = "Image";
+      delete instance.tag;
+    }
     instances.set(instance.id, instance);
     for (const attr of node.attrs) {
       const id = `${instance.id}:${attr.name}`;

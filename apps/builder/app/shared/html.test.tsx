@@ -162,14 +162,14 @@ test("wrap text with span when spotted outside of rich text", () => {
   );
   expect(
     generateFragmentFromHtml(`
-      <div>div<b><img></b></div>
+      <div>div<b><br></b></div>
    `)
   ).toEqual(
     renderTemplate(
       <ws.element ws:tag="div">
         <ws.element ws:tag="span">div</ws.element>
         <ws.element ws:tag="b">
-          <ws.element ws:tag="img"></ws.element>
+          <ws.element ws:tag="br"></ws.element>
         </ws.element>
       </ws.element>
     )
@@ -297,6 +297,22 @@ test("generate select element", () => {
           <ws.element ws:tag="option">One</ws.element>
           <ws.element ws:tag="option">Two</ws.element>
         </ws.element>
+      </ws.element>
+    )
+  );
+});
+
+test("generate Image component instead of img element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <img src="./my-url">
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <$.Image src="./my-url" />
       </ws.element>
     )
   );
