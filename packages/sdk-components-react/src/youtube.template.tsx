@@ -1,5 +1,5 @@
 import { PlayIcon, SpinnerIcon } from "@webstudio-is/icons/svg";
-import { type TemplateMeta, $, css } from "@webstudio-is/template";
+import { type TemplateMeta, $, css, ws } from "@webstudio-is/template";
 
 export const meta: TemplateMeta = {
   label: "YouTube",
@@ -68,7 +68,8 @@ export const meta: TemplateMeta = {
         `}
         aria-label="Play button"
       >
-        <$.Box
+        <ws.element
+          ws:tag="div"
           ws:label="Play Icon"
           ws:style={css`
             width: 60px;
@@ -77,7 +78,7 @@ export const meta: TemplateMeta = {
           aria-hidden={true}
         >
           <$.HtmlEmbed ws:label="Play SVG" code={PlayIcon} />
-        </$.Box>
+        </ws.element>
       </$.VimeoPlayButton>
     </$.YouTube>
   ),

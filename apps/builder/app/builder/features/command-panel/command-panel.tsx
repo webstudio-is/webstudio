@@ -39,6 +39,7 @@ import {
 } from "~/shared/nano-states";
 import {
   getComponentTemplateData,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
@@ -165,9 +166,6 @@ const $componentOptions = computed(
       ) {
         continue;
       }
-      if (isFeatureEnabled("element") === false && name === elementComponent) {
-        continue;
-      }
 
       const componentMeta = metas.get(name);
       const label =
@@ -207,9 +205,13 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
             value={component}
             onSelect={() => {
               closeCommandPanel();
-              const fragment = getComponentTemplateData(component);
-              if (fragment) {
-                insertWebstudioFragmentAt(fragment);
+              if (component === elementComponent) {
+                insertWebstudioElementAt();
+              } else {
+                const fragment = getComponentTemplateData(component);
+                if (fragment) {
+                  insertWebstudioFragmentAt(fragment);
+                }
               }
             }}
           >

@@ -104,7 +104,7 @@ const renderProperty = (
     },
   });
 
-const forbiddenProperties = new Set(["style", "class", "className"]);
+const forbiddenProperties = new Set(["style"]);
 
 const $availableProps = computed(
   [

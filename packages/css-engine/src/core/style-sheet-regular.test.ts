@@ -765,3 +765,19 @@ test("generate merged properties as single rule", () => {
 }"
 `);
 });
+
+test("convert :local-link to [aria-current=page] selector", () => {
+  const sheet = createRegularStyleSheet();
+  const rule = sheet.addNestingRule(".instance");
+  rule.setDeclaration({
+    breakpoint: "base",
+    selector: ":local-link",
+    property: "color",
+    value: { type: "keyword", value: "green" },
+  });
+  expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    ".instance[aria-current=page] {
+      color: green
+    }"
+  `);
+});
