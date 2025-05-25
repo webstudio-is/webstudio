@@ -24,6 +24,7 @@ import {
   componentCategories,
   collectionComponent,
   parseComponentName,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { Breakpoint, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
@@ -38,6 +39,7 @@ import {
 } from "~/shared/nano-states";
 import {
   getComponentTemplateData,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
@@ -203,9 +205,13 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
             value={component}
             onSelect={() => {
               closeCommandPanel();
-              const fragment = getComponentTemplateData(component);
-              if (fragment) {
-                insertWebstudioFragmentAt(fragment);
+              if (component === elementComponent) {
+                insertWebstudioElementAt();
+              } else {
+                const fragment = getComponentTemplateData(component);
+                if (fragment) {
+                  insertWebstudioFragmentAt(fragment);
+                }
               }
             }}
           >
