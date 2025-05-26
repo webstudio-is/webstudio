@@ -11,7 +11,7 @@ import { html } from "./plugin-html";
 setEnv("*");
 registerContainers();
 
-test("paste html fragment", () => {
+test("paste html fragment", async () => {
   const data = renderData(
     <ws.element ws:tag="body" ws:id="bodyId">
       <ws.element ws:tag="div" ws:id="divId"></ws.element>
@@ -24,7 +24,7 @@ test("paste html fragment", () => {
   );
   $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
   expect(
-    html.onPaste?.(`
+    await html.onPaste?.(`
       <section>
         <h1>It works</h1>
       </section>
@@ -48,7 +48,7 @@ test("paste html fragment", () => {
   );
 });
 
-test("ignore html without any tags", () => {
+test("ignore html without any tags", async () => {
   const data = renderData(
     <ws.element ws:tag="body" ws:id="bodyId">
       <ws.element ws:tag="div" ws:id="divId"></ws.element>
@@ -60,6 +60,6 @@ test("ignore html without any tags", () => {
     createDefaultPages({ rootInstanceId: "bodyId", homePageId: "pageId" })
   );
   $awareness.set({ pageId: "pageId", instanceSelector: ["divId", "bodyId"] });
-  expect(html.onPaste?.(`It works`)).toEqual(false);
+  expect(await html.onPaste?.(`It works`)).toEqual(false);
   expect($instances.get()).toEqual(data.instances);
 });

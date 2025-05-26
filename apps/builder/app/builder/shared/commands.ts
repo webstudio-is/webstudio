@@ -53,6 +53,7 @@ import {
 } from "~/shared/content-model";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
+import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
@@ -536,6 +537,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             handler: async () => {
               const html = await navigator.clipboard.readText();
               let fragment = generateFragmentFromHtml(html);
+              fragment = await denormalizeSrcProps(fragment);
               fragment = await generateFragmentFromTailwind(fragment);
               return insertWebstudioFragmentAt(fragment);
             },
