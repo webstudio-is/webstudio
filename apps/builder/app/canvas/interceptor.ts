@@ -76,13 +76,12 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
 
 export const subscribeInterceptedEvents = () => {
   const handleClick = (event: MouseEvent) => {
-    // Prevent forwarding the click event on an input element when the associated label has a "for" attribute
-    if (
-      event.target instanceof Element &&
-      event.target.closest("label[for]") &&
-      !$isPreviewMode.get()
-    ) {
-      event.preventDefault();
+    if (event.target instanceof Element && !$isPreviewMode.get()) {
+      // Prevent forwarding the click event on an input element when the associated label has a "for" attribute
+      // and prevent checkbox or radio inputs changing when clicked
+      if (event.target.closest("label[for]") || event.target.closest("input")) {
+        event.preventDefault();
+      }
     }
 
     if (
