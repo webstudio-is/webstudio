@@ -16,7 +16,6 @@ import type {
   Asset,
   Breakpoint,
   Instance,
-  Prop,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -172,175 +171,186 @@ const createFontAsset = (id: string, family: string): Asset => {
 
 describe("insert instance children", () => {
   test("insert instance children into empty target", () => {
-    const instances = toMap([createInstance("body", "Body", [])]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId"></ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: "end",
     });
-    expect(data.instances).toEqual(
-      toMap([createInstance("body", "Body", [{ type: "id", value: "box" }])])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children into the end of target", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId"></ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: "end",
     });
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "text" },
-          { type: "id", value: "box" },
-        ]),
-      ])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId"></ws.element>
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children into the start of target", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId"></ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: 0,
     });
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: "text" },
-        ]),
-      ])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          <ws.element ws:tag="div" ws:id="textId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children at the start of text", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [{ type: "text", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          text
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: 0,
     });
-    const [_bodyId, _textId, spanId] = data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: "box" },
-          { type: "id", value: spanId },
-        ]),
-        createInstance(spanId, "Text", [{ type: "text", value: "text" }]),
-      ])
-    );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: spanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+    const [_bodyId, _textId, _divId, spanId] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+            <ws.element ws:tag="span" ws:id={spanId}>
+              text
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children at the end of text", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [{ type: "text", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          text
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: "end",
     });
-    const [_bodyId, _textId, spanId] = data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: spanId },
-          { type: "id", value: "box" },
-        ]),
-        createInstance(spanId, "Text", [{ type: "text", value: "text" }]),
-      ])
-    );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: spanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+    const [_bodyId, _textId, _divId, spanId] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="span" ws:id={spanId}>
+              text
+            </ws.element>
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children between text children", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [
-        { type: "id", value: "bold" },
-        { type: "text", value: "text" },
-        { type: "id", value: "italic" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "bold" }]),
-      createInstance("italic", "Italic", [{ type: "text", value: "italic" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          <ws.element ws:tag="strong" ws:id="strongId">
+            strong
+          </ws.element>
+          text
+          <ws.element ws:tag="em" ws:id="emId">
+            emphasis
+          </ws.element>
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: 1,
     });
-    const [_bodyId, _textId, _boldId, _italicId, leftSpanId, rightSpanId] =
-      data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: leftSpanId },
-          { type: "id", value: "box" },
-          { type: "id", value: rightSpanId },
-        ]),
-        createInstance("bold", "Bold", [{ type: "text", value: "bold" }]),
-        createInstance("italic", "Italic", [{ type: "text", value: "italic" }]),
-        createInstance(leftSpanId, "Text", [{ type: "id", value: "bold" }]),
-        createInstance(rightSpanId, "Text", [
-          { type: "text", value: "text" },
-          { type: "id", value: "italic" },
-        ]),
-      ])
-    );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: leftSpanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: rightSpanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+    const [
+      _bodyId,
+      _textId,
+      _strongId,
+      _emId,
+      _divId,
+      leftSpanId,
+      rightSpanId,
+    ] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="span" ws:id={leftSpanId}>
+              <ws.element ws:tag="strong" ws:id="strongId">
+                strong
+              </ws.element>
+            </ws.element>
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+            <ws.element ws:tag="span" ws:id={rightSpanId}>
+              text
+              <ws.element ws:tag="em" ws:id="emId">
+                emphasis
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 });
