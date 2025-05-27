@@ -5,8 +5,8 @@ import {
 } from "../nano-states";
 import { instanceText, instanceJson } from "./plugin-instance";
 import { html } from "./plugin-html";
-import * as markdown from "./plugin-markdown";
-import * as webflow from "./plugin-webflow/plugin-webflow";
+import { markdown } from "./plugin-markdown";
+import { webflow } from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
 
 const isTextEditing = (event: ClipboardEvent) => {
@@ -64,6 +64,7 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
 };
 
 export type Plugin = {
+  name: string;
   mimeType: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
@@ -109,7 +110,7 @@ const initPlugins = ({
     }
   };
 
-  const handlePaste = (event: ClipboardEvent) => {
+  const handlePaste = async (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
@@ -118,7 +119,7 @@ const initPlugins = ({
       // this shouldn't matter, but just in case
       event.preventDefault();
       const data = event.clipboardData?.getData(mimeType).trim();
-      if (data && onPaste?.(data)) {
+      if (data && (await onPaste?.(data))) {
         break;
       }
     }
