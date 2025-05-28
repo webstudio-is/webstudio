@@ -3,7 +3,6 @@ import { shallowEqual } from "shallow-equal";
 import type {
   Instance,
   Instances,
-  Prop,
   Props,
   StyleDecl,
   Styles,
@@ -11,7 +10,7 @@ import type {
   StyleSourceSelection,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/sdk";
+import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
 import { isRichTextTree } from "./content-model";
 
 // slots can have multiple parents so instance should be addressed
@@ -170,19 +169,12 @@ export const wrapEditableChildrenAroundDropTargetMutable = (
     const leftSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "Text",
+      component: elementComponent,
+      tag: "span",
       children: parentInstance.children.slice(0, position),
     };
     newChildren.push({ type: "id", value: leftSpan.id });
     instances.set(leftSpan.id, leftSpan);
-    const tagProp: Prop = {
-      id: nanoid(),
-      instanceId: leftSpan.id,
-      type: "string",
-      name: "tag",
-      value: "span",
-    };
-    props.set(tagProp.id, tagProp);
     newPosition = 1;
   }
   // create right span when not in the end
@@ -190,19 +182,12 @@ export const wrapEditableChildrenAroundDropTargetMutable = (
     const rightSpan: Instance = {
       id: nanoid(),
       type: "instance",
-      component: "Text",
+      component: elementComponent,
+      tag: "span",
       children: parentInstance.children.slice(position),
     };
     newChildren.push({ type: "id", value: rightSpan.id });
     instances.set(rightSpan.id, rightSpan);
-    const tagProp: Prop = {
-      id: nanoid(),
-      instanceId: rightSpan.id,
-      type: "string",
-      name: "tag",
-      value: "span",
-    };
-    props.set(tagProp.id, tagProp);
   }
   parentInstance.children = newChildren;
   return {
