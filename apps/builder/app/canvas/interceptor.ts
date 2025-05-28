@@ -93,13 +93,13 @@ export const subscribeInterceptedEvents = () => {
     const a = event.target.closest("a");
     if (a) {
       if (isPreviewMode) {
-        if (a.hasAttribute("download")) {
-          return;
-        }
         // use attribute instead of a.href to get raw unresolved value
         const href = a.getAttribute("href") ?? "";
         if (isAbsoluteUrl(href)) {
           window.open(href, "_blank");
+          // relative paths can be safely downloaded
+        } else if (a.hasAttribute("download")) {
+          return;
         } else {
           switchPageAndUpdateSystem(href);
         }
