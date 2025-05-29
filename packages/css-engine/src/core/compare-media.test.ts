@@ -41,25 +41,31 @@ describe("Compare media", () => {
   });
 
   test("mixed max and min", () => {
-    const initial = [
+    expect(
+      [
+        {},
+        { maxWidth: 991 },
+        { maxWidth: 479 },
+        { maxWidth: 767 },
+        { minWidth: 1440 },
+        { minWidth: 1280 },
+        { minWidth: 1920 },
+      ].toSorted(compareMedia)
+    ).toStrictEqual([
       {},
-      { maxWidth: 991 },
-      { maxWidth: 479 },
-      { maxWidth: 767 },
-      { minWidth: 1440 },
-      { minWidth: 1280 },
-      { minWidth: 1920 },
-    ];
-    const expected = [
-      {},
-      { maxWidth: 991 },
-      { maxWidth: 767 },
-      { maxWidth: 479 },
       { minWidth: 1280 },
       { minWidth: 1440 },
       { minWidth: 1920 },
-    ];
-    const sorted = initial.sort(compareMedia);
-    expect(sorted).toStrictEqual(expected);
+      { maxWidth: 991 },
+      { maxWidth: 767 },
+      { maxWidth: 479 },
+    ]);
+    // test both directions of sorting
+    expect(
+      [{ maxWidth: 479 }, { minWidth: 991 }, {}].toSorted(compareMedia)
+    ).toStrictEqual([{}, { minWidth: 991 }, { maxWidth: 479 }]);
+    expect(
+      [{ minWidth: 991 }, {}, { maxWidth: 479 }].toSorted(compareMedia)
+    ).toStrictEqual([{}, { minWidth: 991 }, { maxWidth: 479 }]);
   });
 });
