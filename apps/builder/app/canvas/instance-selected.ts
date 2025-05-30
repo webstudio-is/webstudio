@@ -27,10 +27,7 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
-import {
-  hasCollapsedMutationRecord,
-  setDataCollapsed,
-} from "~/canvas/collapsed";
+import { setDataCollapsed } from "~/canvas/collapsed";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 
@@ -236,7 +233,7 @@ const subscribeSelectedInstance = (
 
   // Lightweight update
   const updateOutline: MutationCallback = (mutationRecords) => {
-    if (hasCollapsedMutationRecord(mutationRecords)) {
+    if (hasDoNotTrackMutationRecord(mutationRecords)) {
       return;
     }
 
@@ -247,10 +244,6 @@ const subscribeSelectedInstance = (
 
   const mutationHandler: MutationCallback = (mutationRecords) => {
     if (hasDoNotTrackMutationRecord(mutationRecords)) {
-      return;
-    }
-
-    if (hasCollapsedMutationRecord(mutationRecords)) {
       return;
     }
 
