@@ -219,6 +219,10 @@ export const getAllElementsBoundingBox = (
 
 const doNotTrackMutationAttribute = "data-ws-do-not-track-mutation";
 
+export const doNotTrackMutation = (element: Element) => {
+  element.setAttribute(doNotTrackMutationAttribute, "true");
+};
+
 export const hasDoNotTrackMutationAttribute = (element: Element) => {
   return element.hasAttribute(doNotTrackMutationAttribute);
 };
@@ -363,7 +367,10 @@ export const scrollIntoView = (anchor: HTMLElement, rect: DOMRect) => {
 
   requestAnimationFrame(() => {
     const savedPosition = (scrollParent as HTMLElement).style.position;
-    (scrollParent as HTMLElement).style.position = "relative";
+    // avoid updating <html> to prevent full page repaint and freeze on big projects
+    if (scrollParent.tagName !== "HTML") {
+      (scrollParent as HTMLElement).style.position = "relative";
+    }
 
     const matrix = getViewportToLocalMatrix(scrollParent);
 
@@ -387,6 +394,9 @@ export const scrollIntoView = (anchor: HTMLElement, rect: DOMRect) => {
 
     scrollParent.removeChild(scrollDiv);
 
-    (scrollParent as HTMLElement).style.position = savedPosition;
+    // avoid updating <html> to prevent full page repaint and freeze on big projects
+    if (scrollParent.tagName !== "HTML") {
+      (scrollParent as HTMLElement).style.position = savedPosition;
+    }
   });
 };

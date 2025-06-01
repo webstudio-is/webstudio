@@ -10,6 +10,7 @@ import {
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { $selectedPage } from "~/shared/awareness";
 import { serverSyncStore } from "~/shared/sync";
+import { doNotTrackMutation } from "~/shared/dom-utils";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
@@ -32,22 +33,6 @@ const isSelectorSupported = (selector: string) => {
   } catch {
     return false;
   }
-};
-
-// This mark helps us detect if mutations were caused by the collapse algorithm
-const markCollapsedMutationProperty = `--ws-sys-collapsed-mutation`;
-
-/**
- * Avoid infinite loop of mutations
- */
-export const hasCollapsedMutationRecord = (
-  mutationRecords: MutationRecord[]
-) => {
-  return mutationRecords.some((record) =>
-    record.type === "attributes"
-      ? (record.oldValue?.includes(markCollapsedMutationProperty) ?? false)
-      : false
-  );
 };
 
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
@@ -246,14 +231,25 @@ const recalculate = () => {
   // If most elements are collapsed at the next step, scrollHeight becomes equal to clientHeight,
   // which resets the scroll position. To prevent this, we set the document's height to the current scrollHeight
   // to preserve the scroll position.
-  const preserveHeight = document.documentElement.style.height;
-
-  // Mark that we are in the process of recalculating collapsed elements
-  document.documentElement.style.setProperty(
-    markCollapsedMutationProperty,
-    `true`
-  );
-  document.documentElement.style.height = `${document.documentElement.scrollHeight}px`;
+  // use nested element to avoid full page repaint and freeze on big projects
+  let collapsedElement = document.querySelector(
+    "#ws-collapsed"
+  ) as null | HTMLElement;
+  if (!collapsedElement) {
+    collapsedElement = document.createElement("div") as HTMLElement;
+    collapsedElement.style.position = "absolute";
+    collapsedElement.style.top = "0px";
+    collapsedElement.style.left = "0px";
+    collapsedElement.style.right = "0px";
+    collapsedElement.setAttribute("id", "ws-collapsed");
+    collapsedElement.setAttribute("hidden", "true");
+    // Mark that we are in the process of recalculating collapsed elements
+    // to avoid infinite loop of mutations
+    doNotTrackMutation(collapsedElement);
+    document.documentElement.appendChild(collapsedElement);
+  }
+  collapsedElement.removeAttribute("hidden");
+  collapsedElement.style.height = `${document.documentElement.scrollHeight}px`;
 
   // Now combine all operations in batches.
 
@@ -299,8 +295,7 @@ const recalculate = () => {
     element.setAttribute(collapsedAttribute, value);
   }
 
-  document.documentElement.style.height = preserveHeight;
-  document.documentElement.style.removeProperty(markCollapsedMutationProperty);
+  collapsedElement.setAttribute("hidden", "true");
 };
 
 /**
