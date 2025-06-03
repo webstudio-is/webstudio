@@ -1,20 +1,27 @@
 import { describe, expect, test } from "vitest";
+import { coreMetas } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData, ws } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
+  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { $awareness, selectInstance } from "~/shared/awareness";
-import { deleteSelectedInstance, unwrap, wrapIn } from "./commands";
+import {
+  deleteSelectedInstance,
+  replaceWith,
+  unwrap,
+  wrapIn,
+} from "./commands";
 import { elementComponent } from "@webstudio-is/sdk";
 
 registerContainers();
 
-const metas = new Map(Object.entries(baseMetas));
+const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
 $registeredComponentMetas.set(metas);
 $pages.set(createDefaultPages({ rootInstanceId: "" }));
 $awareness.set({ pageId: "" });
@@ -164,6 +171,86 @@ describe("wrap in", () => {
     wrapIn(elementComponent);
     // nothing is changed
     expect($instances.get()).toEqual(instances);
+  });
+});
+
+describe("replace with", () => {
+  test("replace legacy tag with element", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box tag="article" ws:id="articleId"></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["articleId", "bodyId"]);
+    replaceWith(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
+  test("preserve currently specified tag", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:tag="article" ws:id="articleId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["articleId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("replace with first tag from presets", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Heading ws:id="headingId"></$.Heading>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["headingId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="h1" ws:id="headingId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("fallback to div", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="divId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["divId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      ).instances
+    );
   });
 });
 
