@@ -196,6 +196,37 @@ describe("replace with", () => {
     });
   });
 
+  test("migrate legacy properties as well", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box
+          ws:tag="div"
+          ws:id="divId"
+          className="my-class"
+          htmlFor="my-id"
+        ></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["divId", "bodyId"]);
+    replaceWith(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element
+          ws:tag="div"
+          ws:id="divId"
+          class="my-class"
+          for="my-id"
+        ></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
   test("preserve currently specified tag", () => {
     $instances.set(
       renderData(

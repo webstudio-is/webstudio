@@ -56,6 +56,7 @@ import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
 import { $instanceTags } from "../features/style-panel/shared/model";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -228,8 +229,18 @@ export const replaceWith = (component: string, tag?: string) => {
         instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
         // delete legacy tag prop if specified
         for (const prop of data.props.values()) {
-          if (prop.instanceId === selectedInstance.id && prop.name === "tag") {
+          if (prop.instanceId !== selectedInstance.id) {
+            continue;
+          }
+          if (prop.name === "tag") {
             data.props.delete(prop.id);
+            continue;
+          }
+          const newName = reactPropsToStandardAttributes[prop.name];
+          if (newName) {
+            const newId = `${prop.instanceId}:${newName}`;
+            data.props.delete(prop.id);
+            data.props.set(newId, { ...prop, id: newId, name: newName });
           }
         }
       }
