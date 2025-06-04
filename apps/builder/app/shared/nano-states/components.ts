@@ -129,6 +129,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });
@@ -147,6 +148,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });

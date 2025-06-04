@@ -4,7 +4,7 @@ const location = [
   // ':link',
   ":visited",
   // ':any-link',
-  // ':local-link',
+  ":local-link",
   // ':target',
   // ':target-within',
 ];
@@ -62,7 +62,7 @@ export const pseudoClassesByTag: Record<string, string[]> = {
     // ":open"
   ],
   optgroup: [...ability],
-  option: [...ability, ":checked"],
+  option: [...ability, ":checked", ":default"],
   fieldset: [...ability, ...validity],
   progress: [":indeterminate"],
   details: [":open"],

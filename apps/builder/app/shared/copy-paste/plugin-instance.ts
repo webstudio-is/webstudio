@@ -225,6 +225,7 @@ const onCut = () => {
 };
 
 export const instanceText: Plugin = {
+  name: "instance-text",
   mimeType: "text/plain",
   onCopy,
   onCut,
@@ -232,6 +233,7 @@ export const instanceText: Plugin = {
 };
 
 export const instanceJson: Plugin = {
+  name: "instance-json",
   mimeType: "application/json",
   onPaste,
 };

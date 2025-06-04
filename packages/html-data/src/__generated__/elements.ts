@@ -584,7 +584,7 @@ export const elementsByTag: Record<string, Element> = {
       "form-associated",
       "palpable",
     ],
-    children: ["text"],
+    children: [],
   },
   tfoot: {
     description: "Group of footer rows in a table",

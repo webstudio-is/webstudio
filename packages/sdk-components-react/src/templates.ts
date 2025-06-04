@@ -1,12 +1,6 @@
 export { meta as ContentEmbed } from "./content-embed.template";
 export { meta as MarkdownEmbed } from "./markdown-embed.template";
-export { meta as Link } from "./link.template";
-export { meta as Button } from "./button.template";
 export { meta as Form } from "./webhook-form.template";
-export { meta as Label } from "./label.template";
-export { meta as RadioButton } from "./radio-button.template";
-export { meta as Checkbox } from "./checkbox.template";
 export { meta as Vimeo } from "./vimeo.template";
 export { meta as YouTube } from "./youtube.template";
-export { meta as Select } from "./select.template";
 export { meta as HeadSlot } from "./head-slot.template";

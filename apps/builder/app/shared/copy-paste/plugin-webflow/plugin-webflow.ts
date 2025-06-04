@@ -19,10 +19,9 @@ import { builderApi } from "~/shared/builder-api";
 import { denormalizeSrcProps } from "../asset-upload";
 import { nanoHash } from "~/shared/nano-hash";
 import { findAvailableVariables } from "~/shared/data-variables";
+import type { Plugin } from "../init-copy-paste";
 
 const { toast } = builderApi;
-
-export const mimeType = "application/json";
 
 const toWebstudioFragment = async (wfData: WfData) => {
   const fragment: WebstudioFragment = {
@@ -165,7 +164,7 @@ const parse = (clipboardData: string) => {
   console.error(result.error.message);
 };
 
-export const onPaste = async (clipboardData: string) => {
+const onPaste = async (clipboardData: string) => {
   const project = $project.get();
   const wfData = parse(clipboardData);
   if (wfData === undefined || project === undefined) {
@@ -209,6 +208,12 @@ export const onPaste = async (clipboardData: string) => {
   });
 
   return true;
+};
+
+export const webflow: Plugin = {
+  name: "webflow",
+  mimeType: "application/json",
+  onPaste,
 };
 
 export const __testing__ = {

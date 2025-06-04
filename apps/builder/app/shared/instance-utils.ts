@@ -207,7 +207,7 @@ export const findAllEditableInstanceSelector = ({
 };
 
 export const insertInstanceChildrenMutable = (
-  data: WebstudioData,
+  data: Omit<WebstudioData, "pages">,
   children: Instance["children"],
   insertTarget: Insertable
 ) => {

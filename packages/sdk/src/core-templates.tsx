@@ -3,9 +3,11 @@ import {
   css,
   expression,
   Parameter,
+  PlaceholderValue,
   ws,
   type TemplateMeta,
 } from "@webstudio-is/template";
+import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   blockComponent,
   collectionComponent,
@@ -15,10 +17,25 @@ import {
 
 const elementMeta: TemplateMeta = {
   category: "general",
-  order: 0,
+  order: 1,
   description:
     "An HTML element is a core building block for web pages, structuring and displaying content like text, images, and links.",
   template: <ws.element></ws.element>,
+};
+
+const linkMeta: TemplateMeta = {
+  category: "general",
+  description:
+    "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
+  order: 2,
+  template: (
+    <ws.element
+      ws:tag="a"
+      ws:style={css`
+        display: inline-block;
+      `}
+    ></ws.element>
+  ),
 };
 
 const collectionItem = new Parameter("collectionItem");
@@ -31,9 +48,9 @@ const collectionMeta: TemplateMeta = {
       data={["Collection Item 1", "Collection Item 2", "Collection Item 3"]}
       item={collectionItem}
     >
-      <$.Box>
-        <$.Text>{expression`${collectionItem}`}</$.Text>
-      </$.Box>
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="div">{expression`${collectionItem}`}</ws.element>
+      </ws.element>
     </ws.collection>
   ),
 };
@@ -50,20 +67,20 @@ const blockMeta: TemplateMeta = {
   template: (
     <ws.block>
       <BlockTemplate ws:label="Templates">
-        <$.Paragraph></$.Paragraph>
-        <$.Heading ws:label="Heading 1" ws:tag="h1"></$.Heading>
-        <$.Heading ws:label="Heading 2" ws:tag="h2"></$.Heading>
-        <$.Heading ws:label="Heading 3" ws:tag="h3"></$.Heading>
-        <$.Heading ws:label="Heading 4" ws:tag="h4"></$.Heading>
-        <$.Heading ws:label="Heading 5" ws:tag="h5"></$.Heading>
-        <$.Heading ws:label="Heading 6" ws:tag="h6"></$.Heading>
-        <$.List ws:label="List (Unordered)">
-          <$.ListItem></$.ListItem>
-        </$.List>
-        <$.List ws:label="List (Ordered)" ordered={true}>
-          <$.ListItem></$.ListItem>
-        </$.List>
-        <$.Link></$.Link>
+        <ws.element ws:tag="p"></ws.element>
+        <ws.element ws:label="Heading 1" ws:tag="h1"></ws.element>
+        <ws.element ws:label="Heading 2" ws:tag="h2"></ws.element>
+        <ws.element ws:label="Heading 3" ws:tag="h3"></ws.element>
+        <ws.element ws:label="Heading 4" ws:tag="h4"></ws.element>
+        <ws.element ws:label="Heading 5" ws:tag="h5"></ws.element>
+        <ws.element ws:label="Heading 6" ws:tag="h6"></ws.element>
+        <ws.element ws:tag="ul">
+          <ws.element ws:tag="li"></ws.element>
+        </ws.element>
+        <ws.element ws:tag="ol">
+          <ws.element ws:tag="li"></ws.element>
+        </ws.element>
+        <ws.element ws:tag="a"></ws.element>
         <$.Image
           ws:style={css`
             margin-right: auto;
@@ -72,35 +89,35 @@ const blockMeta: TemplateMeta = {
             height: auto;
           `}
         />
-        <$.Separator />
-        <$.Blockquote></$.Blockquote>
+        <ws.element ws:tag="hr" />
+        <ws.element ws:tag="blockquote"></ws.element>
         <$.HtmlEmbed />
-        <$.CodeText />
+        <ws.element ws:tag="code" />
       </BlockTemplate>
-      <$.Paragraph>
+      <ws.element ws:tag="p">
         The Content Block component designates regions on the page where
         pre-styled instances can be inserted in{" "}
-        <$.RichTextLink href="https://wstd.us/content-block">
+        <ws.element ws:tag="a" href="https://wstd.us/content-block">
           Content mode
-        </$.RichTextLink>
+        </ws.element>
         .
-      </$.Paragraph>
-      <$.List>
-        <$.ListItem>
+      </ws.element>
+      <ws.element ws:tag="ul">
+        <ws.element ws:tag="li">
           In Content mode, you can edit any direct child instances that were
           pre-added to the Content Block, as well as add new instances
           predefined in Templates.
-        </$.ListItem>
-        <$.ListItem>
+        </ws.element>
+        <ws.element ws:tag="li">
           To predefine instances for insertion in Content mode, switch to Design
           mode and add them to the Templates container.
-        </$.ListItem>
-        <$.ListItem>
+        </ws.element>
+        <ws.element ws:tag="li">
           To insert predefined instances in Content mode, click the + button
           while hovering over the Content Block on the canvas and choose an
           instance from the list.
-        </$.ListItem>
-      </$.List>
+        </ws.element>
+      </ws.element>
     </ws.block>
   ),
 };
@@ -108,7 +125,6 @@ const blockMeta: TemplateMeta = {
 const typography: Record<string, TemplateMeta> = {
   heading: {
     category: "typography",
-    order: 1,
     description:
       "Use HTML headings to structure and organize content. Use the Tag property in settings to change the heading level (h1-h6).",
     template: <ws.element ws:tag="h1"></ws.element>,
@@ -116,14 +132,12 @@ const typography: Record<string, TemplateMeta> = {
 
   paragraph: {
     category: "typography",
-    order: 2,
     description: "A container for multi-line text.",
     template: <ws.element ws:tag="p"></ws.element>,
   },
 
   blockquote: {
     category: "typography",
-    order: 3,
     description:
       "Use to style a quote from an external source like an article or book.",
     template: (
@@ -141,7 +155,6 @@ const typography: Record<string, TemplateMeta> = {
 
   list: {
     category: "typography",
-    order: 4,
     description: "Groups content, like links in a menu or steps in a recipe.",
     template: (
       <ws.element ws:tag="ul">
@@ -154,14 +167,12 @@ const typography: Record<string, TemplateMeta> = {
 
   list_item: {
     category: "typography",
-    order: 5,
     description: "Adds a new item to an existing list.",
     template: <ws.element ws:tag="li"></ws.element>,
   },
 
   code_text: {
     category: "typography",
-    order: 6,
     template: (
       <ws.element
         ws:tag="code"
@@ -179,7 +190,6 @@ const typography: Record<string, TemplateMeta> = {
 
   thematic_break: {
     category: "typography",
-    order: 7,
     description:
       "Used to visually divide sections of content, helping to improve readability and organization within a webpage.",
     template: (
@@ -194,10 +204,158 @@ const typography: Record<string, TemplateMeta> = {
   },
 };
 
+const forms: Record<string, TemplateMeta> = {
+  form: {
+    category: "forms",
+    description: "Create filters, surveys, searches and more.",
+    template: (
+      <ws.element ws:tag="form">
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            display: block;
+          `}
+        />
+        <ws.element ws:tag="button">
+          {new PlaceholderValue("Submit")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+
+  button: {
+    category: "forms",
+    description:
+      "Use a button to submit forms or trigger actions within a page. Do not use a button to navigate users to another resource or another page - that’s what a link is used for.",
+    template: (
+      <ws.element ws:tag="button">{new PlaceholderValue("Button")}</ws.element>
+    ),
+  },
+
+  input_label: {
+    category: "forms",
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        {new PlaceholderValue("Label")}
+      </ws.element>
+    ),
+  },
+
+  text_input: {
+    category: "forms",
+    description:
+      "A single-line text input for collecting string data from your users.",
+    template: (
+      <ws.element
+        ws:tag="input"
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
+  text_area: {
+    category: "forms",
+    description:
+      "A multi-line text input for collecting longer string data from your users.",
+    template: (
+      <ws.element
+        ws:tag="textarea"
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
+  select: {
+    category: "forms",
+    description:
+      "A drop-down menu for users to select a single option from a predefined list.",
+    template: (
+      <ws.element
+        ws:tag="select"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element ws:tag="option" label="Please choose an option" value="" />
+        <ws.element ws:tag="option" label="Option A" value="a" />
+        <ws.element ws:tag="option" label="Option B" value="b" />
+        <ws.element ws:tag="option" label="Option C" value="c" />
+      </ws.element>
+    ),
+  },
+
+  radio: {
+    category: "forms",
+    description:
+      "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
+    icon: RadioCheckedIcon,
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:label="Radio Field"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            border-style: none;
+            margin-right: 0.5em;
+          `}
+          type="radio"
+        />
+        <ws.element ws:tag="span" ws:label="Radio Label">
+          {new PlaceholderValue("Radio")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+
+  checkbox: {
+    category: "forms",
+    description:
+      "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
+    icon: CheckboxCheckedIcon,
+    template: (
+      <ws.element
+        ws:tag="label"
+        ws:label="Checkbox Field"
+        ws:style={css`
+          display: block;
+        `}
+      >
+        <ws.element
+          ws:tag="input"
+          ws:style={css`
+            border-style: none;
+            margin-right: 0.5em;
+          `}
+          type="checkbox"
+        />
+        <ws.element ws:tag="span" ws:label="Checkbox Label">
+          {new PlaceholderValue("Checkbox")}
+        </ws.element>
+      </ws.element>
+    ),
+  },
+};
+
 export const coreTemplates = {
   [elementComponent]: elementMeta,
+  link: linkMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
   ...typography,
+  ...forms,
 };

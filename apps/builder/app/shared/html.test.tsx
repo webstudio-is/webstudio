@@ -162,14 +162,14 @@ test("wrap text with span when spotted outside of rich text", () => {
   );
   expect(
     generateFragmentFromHtml(`
-      <div>div<b><img></b></div>
+      <div>div<b><br></b></div>
    `)
   ).toEqual(
     renderTemplate(
       <ws.element ws:tag="div">
         <ws.element ws:tag="span">div</ws.element>
         <ws.element ws:tag="b">
-          <ws.element ws:tag="img"></ws.element>
+          <ws.element ws:tag="br"></ws.element>
         </ws.element>
       </ws.element>
     )
@@ -245,6 +245,74 @@ test("optionally paste svg as html embed", () => {
   <rect x="5" y="5" width="10" height="10" />
 </svg>`}
         />
+      </ws.element>
+    )
+  );
+});
+
+test("generate textarea element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <textarea>
+          my text
+        </textarea>
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="textarea" value="my text" />
+      </ws.element>
+    )
+  );
+});
+
+test("generate select element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <select>
+          <option value="one">One</option>
+          <option value="two" selected>Two</option>
+        </select>
+        <select>
+          <option>One</option>
+          <option selected>Two</option>
+        </select>
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="select" value="two">
+          <ws.element ws:tag="option" value="one">
+            One
+          </ws.element>
+          <ws.element ws:tag="option" value="two">
+            Two
+          </ws.element>
+        </ws.element>
+        <ws.element ws:tag="select" value="Two">
+          <ws.element ws:tag="option">One</ws.element>
+          <ws.element ws:tag="option">Two</ws.element>
+        </ws.element>
+      </ws.element>
+    )
+  );
+});
+
+test("generate Image component instead of img element", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <img src="./my-url">
+      </div>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <ws.element ws:tag="div">
+        <$.Image src="./my-url" />
       </ws.element>
     )
   );

@@ -7,6 +7,7 @@ import {
   type Instance,
   type Props,
   descendantComponent,
+  rootComponent,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -104,7 +105,7 @@ const renderProperty = (
     },
   });
 
-const forbiddenProperties = new Set(["style", "class", "className"]);
+const forbiddenProperties = new Set(["style"]);
 
 const $availableProps = computed(
   [
@@ -344,7 +345,7 @@ export const PropsSectionContainer = ({
   });
 
   const propsMetas = useStore($selectedInstancePropsMetas);
-  if (propsMetas.size === 0) {
+  if (propsMetas.size === 0 || instance.component === rootComponent) {
     return;
   }
 
