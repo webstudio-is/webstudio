@@ -55,6 +55,8 @@ import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
+import { $instanceTags } from "../features/style-panel/shared/model";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -174,7 +176,7 @@ export const wrapIn = (component: string, tag?: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
-      if (tag || elementComponent) {
+      if (tag || component === elementComponent) {
         newInstance.tag = tag ?? "div";
       }
       const parentInstance = data.instances.get(parentItem.instance.id);
@@ -199,6 +201,61 @@ export const wrapIn = (component: string, tag?: string) => {
       }
     });
     selectInstance(newInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
+export const replaceWith = (component: string, tag?: string) => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
+  const metas = $registeredComponentMetas.get();
+  const instanceTags = $instanceTags.get();
+  try {
+    updateWebstudioData((data) => {
+      const instance = data.instances.get(selectedInstance.id);
+      if (instance === undefined) {
+        return;
+      }
+      instance.component = component;
+      // replace with specified tag or with currently used
+      if (tag || component === elementComponent) {
+        instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
+        // delete legacy tag prop if specified
+        for (const prop of data.props.values()) {
+          if (prop.instanceId !== selectedInstance.id) {
+            continue;
+          }
+          if (prop.name === "tag") {
+            data.props.delete(prop.id);
+            continue;
+          }
+          const newName = reactPropsToStandardAttributes[prop.name];
+          if (newName) {
+            const newId = `${prop.instanceId}:${newName}`;
+            data.props.delete(prop.id);
+            data.props.set(newId, { ...prop, id: newId, name: newName });
+          }
+        }
+      }
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas,
+        instanceSelector: selectedInstanceSelector,
+      });
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot replace with ${label}`);
+        throw Error("Abort transaction");
+      }
+    });
   } catch {
     // do nothing
   }
@@ -528,6 +585,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "unwrap",
       handler: () => unwrap(),
+    },
+    {
+      name: "replaceWithElement",
+      handler: () => replaceWith(elementComponent),
+    },
+    {
+      name: "replaceWithLink",
+      handler: () => replaceWith(elementComponent, "a"),
     },
 
     ...(isFeatureEnabled("tailwind")
