@@ -411,7 +411,7 @@ const builtWithWebstudioMeta: TemplateMeta = {
         `}
       ></$.HtmlEmbed>
       <ws.element ws:tag="div" ws:label="Text">
-        {new PlaceholderValue("Built with Webstudio")}
+        Built with Webstudio
       </ws.element>
     </ws.element>
   ),
