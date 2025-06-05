@@ -384,10 +384,8 @@ const builtWithWebstudioMeta: TemplateMeta = {
         border-radius: 9px;
         text-decoration-line: none;
         text-wrap-mode: nowrap;
-        background-image:
-          linear-gradient(#fff, #fff),
-          linear-gradient(135deg, #1774ff 0%, #bd2fdb 100%);
         background-clip: padding-box, border-box;
+        background-origin: padding-box, border-box;
         background-image:
           linear-gradient(135deg, #4a4efa 0%, #bd2fdb 66%, #ec59ce 100%),
           linear-gradient(
@@ -397,7 +395,6 @@ const builtWithWebstudioMeta: TemplateMeta = {
             #ed72fe 64.24%,
             #fdd791 100%
           );
-        background-origin: padding-box, border-box;
       `}
     >
       <$.HtmlEmbed
