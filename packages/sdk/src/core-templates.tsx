@@ -371,7 +371,7 @@ const builtWithWebstudioMeta: TemplateMeta = {
         align-items: center;
         justify-content: center;
         position: fixed;
-        z-index: 10;
+        z-index: 1000;
         padding: 6px 10px;
         right: 16px;
         bottom: 16px;
