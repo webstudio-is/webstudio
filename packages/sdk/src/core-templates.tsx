@@ -7,7 +7,11 @@ import {
   ws,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import {
+  CheckboxCheckedIcon,
+  RadioCheckedIcon,
+  Webstudio1cIcon,
+} from "@webstudio-is/icons/svg";
 import {
   blockComponent,
   collectionComponent,
@@ -350,6 +354,69 @@ const forms: Record<string, TemplateMeta> = {
   },
 };
 
+const builtWithWebstudioMeta: TemplateMeta = {
+  category: "other",
+  description:
+    "A “Built with Webstudio” badge should be added to every project page on the free plan. This helps Webstudio spread awareness as a platform.",
+  icon: Webstudio1cIcon,
+  template: (
+    <ws.element
+      ws:tag="a"
+      ws:label="Built with Webstudio"
+      href="https://webstudio.is"
+      target="_blank"
+      ws:style={css`
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        z-index: 10;
+        padding: 6px 10px;
+        right: 16px;
+        bottom: 16px;
+        color: rgba(251, 252, 253, 1);
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        text-decoration-line: none;
+        text-wrap-mode: nowrap;
+        background-image:
+          linear-gradient(#fff, #fff),
+          linear-gradient(135deg, #1774ff 0%, #bd2fdb 100%);
+        background-clip: padding-box, border-box;
+        background-image:
+          linear-gradient(135deg, #4a4efa 0%, #bd2fdb 66%, #ec59ce 100%),
+          linear-gradient(
+            135deg,
+            #92fddc 0%,
+            #7d7ffb 31.94%,
+            #ed72fe 64.24%,
+            #fdd791 100%
+          );
+        background-origin: padding-box, border-box;
+      `}
+    >
+      <$.HtmlEmbed
+        ws:label="Logo"
+        code={Webstudio1cIcon}
+        ws:style={css`
+          display: block;
+          width: 16px;
+          height: 16px;
+          flex-shrink: 0;
+        `}
+      ></$.HtmlEmbed>
+      <ws.element ws:tag="div" ws:label="Text">
+        {new PlaceholderValue("Built with Webstudio")}
+      </ws.element>
+    </ws.element>
+  ),
+};
+
 export const coreTemplates = {
   [elementComponent]: elementMeta,
   link: linkMeta,
@@ -358,4 +425,5 @@ export const coreTemplates = {
   [blockComponent]: blockMeta,
   ...typography,
   ...forms,
+  builtWithWebstudio: builtWithWebstudioMeta,
 };
