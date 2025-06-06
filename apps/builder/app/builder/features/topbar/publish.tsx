@@ -70,6 +70,7 @@ import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import {
+  findTreeInstanceIds,
   isPathnamePattern,
   parseComponentName,
   type Templates,
@@ -260,21 +261,32 @@ const $usedProFeatures = computed(
       }
     }
 
-    const badgeFeature = "Made with Webstudio badge removal";
-    // Badge should be rendered on free sites.
-    features.set(badgeFeature, undefined);
-
+    // Instances with animations.
     for (const instance of instances.values()) {
       const [namespace] = parseComponentName(instance.component);
-      // instances with animations
       if (namespace === "@webstudio-is/sdk-components-animation") {
         features.set(
           "Animation component",
           findAwarenessByInstanceId(pages, instances, instance.id)
         );
       }
+    }
 
-      // Made with Webstudio badge
+    const badgeFeature = 'No "Built with Webstudio" badge';
+    // Badge should be rendered on free sites on every page.
+    features.set(badgeFeature, undefined);
+    // We want to check the badge only on the home page
+    const homePageInstanceIds = findTreeInstanceIds(
+      instances,
+      pages.homePage.rootInstanceId
+    );
+    // @todo add a check inside the slot that could be on the home page
+    for (const instanceId of homePageInstanceIds) {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        continue;
+      }
+      // Built with Webstudio badge
       if (instance.tag === "a") {
         const props = propsIndex.propsByInstanceId.get(instance.id);
         for (const prop of props ?? []) {
