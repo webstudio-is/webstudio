@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromTailwind } from "./tailwind";
 
@@ -246,79 +246,238 @@ test("extract states from tailwind classes", async () => {
   );
 });
 
-test("extract new breakpoints from tailwind classes", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          class="opacity-10 sm:opacity-20 md:opacity-30 lg:opacity-40 xl:opacity-50 2xl:opacity-60"
-        ></ws.element>
+describe("extract breakpoints", () => {
+  test("extract new breakpoints from tailwind classes", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20 md:opacity-30 lg:opacity-40 xl:opacity-50 2xl:opacity-60"
+          ></ws.element>
+        )
       )
-    )
-  ).toEqual(
-    renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          opacity: 0.1;
-          @media (min-width: 640px) {
-            opacity: 0.2;
-          }
-          @media (min-width: 768px) {
-            opacity: 0.3;
-          }
-          @media (min-width: 1024px) {
-            opacity: 0.4;
-          }
-          @media (min-width: 1280px) {
-            opacity: 0.5;
-          }
-          @media (min-width: 1536px) {
-            opacity: 0.6;
-          }
-        `}
-      ></ws.element>
-    )
-  );
-});
-
-test("merge tailwind breakpoints with already defined ones", async () => {
-  expect(
-    await generateFragmentFromTailwind(
+    ).toEqual(
       renderTemplate(
         <ws.element
           ws:tag="div"
           ws:style={css`
-            color: red;
-            @media (min-width: 640px) {
-              color: green;
+            /* base -> max-width: 479px */
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            /* min-width: 640px -> max-width: 767px */
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
+            /* min-width: 768px -> max-width: 991px */
+            @media (max-width: 991px) {
+              opacity: 0.3;
+            }
+            /* min-width: 1024px -> base */
+            opacity: 0.4;
+            /* unchanged */
+            @media (min-width: 1280px) {
+              opacity: 0.5;
+            }
+            /* min-width: 1536px -> min-width: 1440px */
+            @media (min-width: 1440px) {
+              opacity: 0.6;
             }
           `}
-          class="opacity-10 sm:opacity-20 md:opacity-30"
         ></ws.element>
       )
-    )
-  ).toEqual(
-    renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          color: red;
-          @media (min-width: 640px) {
-            color: green;
-          }
-          opacity: 0.1;
-          @media (min-width: 640px) {
+    );
+  });
+
+  test("base is first breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
             opacity: 0.2;
-          }
-          @media (min-width: 768px) {
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("base is first breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            opacity: 0.2;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("base is last breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 xl:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+            @media (min-width: 1280px) {
+              opacity: 0.2;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("base is middle breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20 xl:opacity-30"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            opacity: 0.2;
+            @media (min-width: 1280px) {
+              opacity: 0.3;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("preserve breakpoint when no base breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element ws:tag="div" class="sm:opacity-10"></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (min-width: 480px) {
+              opacity: 0.1;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("merge tailwind breakpoints with already defined ones", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            ws:style={css`
+              @media (max-width: 479px) {
+                color: red;
+              }
+              color: green;
+            `}
+            class="opacity-10 sm:opacity-20 md:opacity-30"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              color: red;
+            }
+            color: green;
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
             opacity: 0.3;
-          }
-        `}
-      ></ws.element>
-    )
-  );
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("state", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:hover:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+            @media (min-width: 480px) {
+              &:hover {
+                opacity: 0.2;
+              }
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
 });
 
 test("generate space without display property", async () => {
@@ -379,11 +538,11 @@ test("generate space with display property", async () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            display: none;
-            row-gap: 1rem;
-            @media (min-width: 768px) {
-              display: flex;
+            @media (max-width: 767px) {
+              display: none;
             }
+            row-gap: 1rem;
+            display: flex;
           `}
         ></ws.element>
       </>

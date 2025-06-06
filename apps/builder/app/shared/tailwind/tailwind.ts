@@ -16,6 +16,154 @@ import {
 import { isBaseBreakpoint } from "../nano-states";
 import { preflight } from "./__generated__/preflight";
 
+const availableBreakpoints = [
+  { id: "1920", minWidth: 1920 },
+  { id: "1440", minWidth: 1440 },
+  { id: "1280", minWidth: 1280 },
+  { id: "base" },
+  { id: "991", maxWidth: 991 },
+  { id: "767", maxWidth: 767 },
+  { id: "479", maxWidth: 479 },
+];
+
+const tailwindToWebstudioMappings: Record<number, undefined | number> = {
+  639: 479,
+  640: 480,
+  1023: 991,
+  1024: 992,
+  1535: 1439,
+  1536: 1440,
+};
+
+type Breakpoint = {
+  key: string;
+  minWidth?: number;
+  maxWidth?: number;
+};
+
+type Range = {
+  key: string;
+  start: number;
+  end: number;
+};
+
+const serializeBreakpoint = (breakpoint: Breakpoint) => {
+  if (breakpoint?.minWidth) {
+    return `(min-width: ${breakpoint.minWidth}px)`;
+  }
+  if (breakpoint?.maxWidth) {
+    return `(max-width: ${breakpoint.maxWidth}px)`;
+  }
+};
+
+const UPPER_BOUND = Number.MAX_SAFE_INTEGER;
+
+const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
+  // collect lower bounds and ids
+  const values = new Set<number>([0]);
+  const keys = new Map<undefined | number, string>();
+  for (const breakpoint of breakpoints) {
+    if (breakpoint.minWidth !== undefined) {
+      values.add(breakpoint.minWidth);
+      keys.set(breakpoint.minWidth, breakpoint.key);
+    } else if (breakpoint.maxWidth !== undefined) {
+      values.add(breakpoint.maxWidth + 1);
+      keys.set(breakpoint.maxWidth, breakpoint.key);
+    } else {
+      // base breakpoint
+      keys.set(undefined, breakpoint.key);
+    }
+  }
+  const sortedValues = Array.from(values).sort((left, right) => left - right);
+  const ranges: Range[] = [];
+  for (let index = 0; index < sortedValues.length; index += 1) {
+    const start = sortedValues[index];
+    let end;
+    if (index === sortedValues.length - 1) {
+      end = UPPER_BOUND;
+    } else {
+      end = sortedValues[index + 1] - 1;
+    }
+    const key = keys.get(start) ?? keys.get(end) ?? keys.get(undefined);
+    if (key) {
+      ranges.push({ key, start, end });
+    }
+  }
+  return ranges;
+};
+
+const rangesToBreakpoints = (ranges: Range[]) => {
+  const breakpoints: Breakpoint[] = [];
+  for (const range of ranges) {
+    let matchedBreakpoint;
+    for (const breakpoint of availableBreakpoints) {
+      if (breakpoint.minWidth === range.start) {
+        matchedBreakpoint = { key: range.key, minWidth: range.start };
+      }
+      if (breakpoint.maxWidth === range.end) {
+        matchedBreakpoint = { key: range.key, maxWidth: range.end };
+      }
+      if (
+        breakpoint.minWidth === undefined &&
+        breakpoint.maxWidth === undefined
+      ) {
+        matchedBreakpoint ??= { key: range.key };
+      }
+    }
+    if (matchedBreakpoint) {
+      breakpoints.push(matchedBreakpoint);
+    }
+  }
+  return breakpoints;
+};
+
+const adaptBreakpoints = (
+  parsedStyles: Omit<ParsedStyleDecl, "selector">[]
+) => {
+  const breakpointGroups = new Map<string, Breakpoint[]>();
+  for (const styleDecl of parsedStyles) {
+    const mediaQuery = styleDecl.breakpoint
+      ? parseMediaQuery(styleDecl.breakpoint)
+      : undefined;
+    if (mediaQuery?.minWidth) {
+      mediaQuery.minWidth =
+        tailwindToWebstudioMappings[mediaQuery.minWidth] ?? mediaQuery.minWidth;
+    }
+    if (mediaQuery?.maxWidth) {
+      mediaQuery.maxWidth =
+        tailwindToWebstudioMappings[mediaQuery.maxWidth] ?? mediaQuery.maxWidth;
+    }
+    const groupKey = `${styleDecl.property}:${styleDecl.state ?? ""}`;
+    let group = breakpointGroups.get(groupKey);
+    if (group === undefined) {
+      group = [];
+      breakpointGroups.set(groupKey, group);
+    }
+    const styleDeclKey = `${styleDecl.breakpoint ?? ""}:${styleDecl.property}:${styleDecl.state ?? ""}`;
+    group.push({ key: styleDeclKey, ...mediaQuery });
+  }
+  const breakpointsByKey = new Map<string, Breakpoint>();
+  for (let group of breakpointGroups.values()) {
+    const ranges = breakpointsToRanges(group);
+    // adapt breakpoints only when first range is defined
+    // for example opacity-10 sm:opacity-20 will work
+    // but sm:opacity-20 alone does not have the base to switch to
+    if (ranges[0].start === 0) {
+      group = rangesToBreakpoints(ranges);
+    }
+    for (const breakpoint of group) {
+      breakpointsByKey.set(breakpoint.key, breakpoint);
+    }
+  }
+  for (const styleDecl of parsedStyles) {
+    const styleDeclKey = `${styleDecl.breakpoint ?? ""}:${styleDecl.property}:${styleDecl.state ?? ""}`;
+    const breakpoint = breakpointsByKey.get(styleDeclKey);
+    if (breakpoint) {
+      styleDecl.breakpoint = serializeBreakpoint(breakpoint);
+    }
+  }
+};
+
 const createUnoGenerator = async () => {
   return await createGenerator({
     presets: [
@@ -92,6 +240,7 @@ const parseTailwindClasses = async (classes: string) => {
       value: { type: "keyword", value: "grid" },
     });
   }
+  adaptBreakpoints(parsedStyles);
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))
