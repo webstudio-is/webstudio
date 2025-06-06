@@ -51,6 +51,7 @@ import {
   $instances,
   $pages,
   $project,
+  $propsIndex,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
@@ -217,8 +218,8 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
+  [$pages, $dataSources, $instances, $propsIndex],
+  (pages, dataSources, instances, propsIndex) => {
     const features = new Map<string, undefined | Awareness>();
     if (pages === undefined) {
       return features;
@@ -258,14 +259,32 @@ const $usedProFeatures = computed(
         );
       }
     }
-    // instances with animations
+
+    const badgeFeature = "Made with Webstudio badge removal";
+    // Badge should be rendered on free sites.
+    features.set(badgeFeature, undefined);
+
     for (const instance of instances.values()) {
       const [namespace] = parseComponentName(instance.component);
+      // instances with animations
       if (namespace === "@webstudio-is/sdk-components-animation") {
         features.set(
           "Animation component",
           findAwarenessByInstanceId(pages, instances, instance.id)
         );
+      }
+
+      // Made with Webstudio badge
+      if (instance.tag === "a") {
+        const props = propsIndex.propsByInstanceId.get(instance.id);
+        for (const prop of props ?? []) {
+          if (
+            prop.name === "href" &&
+            prop.value === "https://webstudio.is?via=badge"
+          ) {
+            features.delete(badgeFeature);
+          }
+        }
       }
     }
     return features;
