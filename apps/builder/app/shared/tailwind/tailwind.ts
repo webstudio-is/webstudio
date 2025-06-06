@@ -186,6 +186,7 @@ const parseTailwindClasses = async (classes: string) => {
   let hasColumnGaps = false;
   let hasRowGaps = false;
   let hasFlexOrGrid = false;
+  let hasContainer = false;
   classes = classes
     .split(" ")
     .map((item) => {
@@ -201,9 +202,8 @@ const parseTailwindClasses = async (classes: string) => {
         hasRowGaps = true;
         return `gap-y-${item.slice(spaceY.length)}`;
       }
-      if (item.endsWith("flex") || item.endsWith("grid")) {
-        hasFlexOrGrid = true;
-      }
+      hasFlexOrGrid ||= item.endsWith("flex") || item.endsWith("grid");
+      hasContainer ||= item === "container";
       return item;
     })
     .join(" ");
@@ -226,6 +226,14 @@ const parseTailwindClasses = async (classes: string) => {
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")
   );
+  // setup base breakpoint for container class
+  // to avoid hole in ranges
+  if (hasContainer) {
+    parsedStyles.unshift({
+      property: "max-width",
+      value: { type: "keyword", value: "none" },
+    });
+  }
   // gaps work only with flex and grid
   // so try to use one or another for different axes
   if (hasColumnGaps && !hasFlexOrGrid) {

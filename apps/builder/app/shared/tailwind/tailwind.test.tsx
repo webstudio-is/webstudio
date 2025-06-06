@@ -414,6 +414,39 @@ describe("extract breakpoints", () => {
     );
   });
 
+  test("extract container class", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(<ws.element ws:tag="div" class="container"></ws.element>)
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              max-width: none;
+            }
+            width: 100%;
+            @media (max-width: 767px) {
+              max-width: 640px;
+            }
+            @media (max-width: 991px) {
+              max-width: 768px;
+            }
+            max-width: 1024px;
+            @media (min-width: 1280px) {
+              max-width: 1280px;
+            }
+            @media (min-width: 1440px) {
+              max-width: 1536px;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
   test("merge tailwind breakpoints with already defined ones", async () => {
     expect(
       await generateFragmentFromTailwind(
