@@ -363,7 +363,7 @@ const builtWithWebstudioMeta: TemplateMeta = {
     <ws.element
       ws:tag="a"
       ws:label="Built with Webstudio"
-      href="https://webstudio.is"
+      href="https://webstudio.is?via=badge"
       target="_blank"
       ws:style={css`
         display: inline-flex;
