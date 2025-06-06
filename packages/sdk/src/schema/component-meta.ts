@@ -31,6 +31,7 @@ export const componentCategories = [
   "localization",
   "radix",
   "xml",
+  "other",
   "hidden",
   "internal",
 ] as const;
