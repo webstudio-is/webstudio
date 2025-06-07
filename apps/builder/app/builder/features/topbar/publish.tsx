@@ -38,6 +38,7 @@ import {
   PopoverTitleActions,
   css,
   textVariants,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
@@ -51,6 +52,7 @@ import {
   $instances,
   $pages,
   $project,
+  $propsIndex,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
@@ -64,11 +66,13 @@ import {
   CopyIcon,
   GearIcon,
   UpgradeIcon,
+  HelpIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import {
+  findTreeInstanceIds,
   isPathnamePattern,
   parseComponentName,
   type Templates,
@@ -217,9 +221,12 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
-    const features = new Map<string, undefined | Awareness>();
+  [$pages, $dataSources, $instances, $propsIndex],
+  (pages, dataSources, instances, propsIndex) => {
+    const features = new Map<
+      string,
+      undefined | { awareness?: Awareness; info?: string }
+    >();
     if (pages === undefined) {
       return features;
     }
@@ -229,43 +236,63 @@ const $usedProFeatures = computed(
     }
     // pages with dynamic paths
     for (const page of [pages.homePage, ...pages.pages]) {
+      const awareness = {
+        pageId: page.id,
+        instanceSelector: [page.rootInstanceId],
+      };
       if (isPathnamePattern(page.path)) {
-        features.set("Dynamic path", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
+        features.set("Dynamic path", { awareness });
       }
       if (page.meta.status && page.meta.status !== `200`) {
-        features.set("Page status code", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
+        features.set("Page status code", { awareness });
       }
       if (page.meta.redirect && page.meta.redirect !== `""`) {
-        features.set("Redirect", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
+        features.set("Redirect", { awareness });
       }
     }
     // has resource variables
     for (const dataSource of dataSources.values()) {
       if (dataSource.type === "resource") {
         const instanceId = dataSource.scopeInstanceId ?? "";
-        features.set(
-          "Resource variable",
-          findAwarenessByInstanceId(pages, instances, instanceId)
-        );
+        features.set("Resource variable", {
+          awareness: findAwarenessByInstanceId(pages, instances, instanceId),
+        });
       }
     }
-    // instances with animations
+
+    // Instances with animations.
     for (const instance of instances.values()) {
       const [namespace] = parseComponentName(instance.component);
       if (namespace === "@webstudio-is/sdk-components-animation") {
-        features.set(
-          "Animation component",
-          findAwarenessByInstanceId(pages, instances, instance.id)
-        );
+        features.set("Animation component", {
+          awareness: findAwarenessByInstanceId(pages, instances, instance.id),
+        });
+      }
+    }
+
+    const badgeFeature = 'No "Built with Webstudio" badge';
+    // Badge should be rendered on free sites on every page.
+    features.set(badgeFeature, {
+      info: "Adding the badge to your homepage helps us offer a free version of the service. Please open the Components panel by clicking the “+” icon on the left, and add the “Built with Webstudio” component to your page. Feel free to adjust the badge’s styles to match your design.",
+    });
+    // We want to check the badge only on the home page
+    const homePageInstanceIds = findTreeInstanceIds(
+      instances,
+      pages.homePage.rootInstanceId
+    );
+    for (const instanceId of homePageInstanceIds) {
+      const instance = instances.get(instanceId);
+      // Find a potential link that looks like a badge.
+      if (instance?.tag === "a") {
+        const props = propsIndex.propsByInstanceId.get(instance.id);
+        for (const prop of props ?? []) {
+          if (
+            prop.name === "href" &&
+            prop.value === "https://webstudio.is/?via=badge"
+          ) {
+            features.delete(badgeFeature);
+          }
+        }
       }
     }
     return features;
@@ -735,19 +762,26 @@ const Content = (props: {
             </Text>
             <Text as="ul">
               {Array.from(usedProFeatures).map(
-                ([message, awareness], index) => (
+                ([message, { awareness, info } = {}], index) => (
                   <li key={index}>
-                    {awareness ? (
-                      <button
-                        className={buttonLinkClass}
-                        type="button"
-                        onClick={() => $awareness.set(awareness)}
-                      >
-                        {message}
-                      </button>
-                    ) : (
-                      message
-                    )}
+                    <Flex align="center" gap="1">
+                      {awareness ? (
+                        <button
+                          className={buttonLinkClass}
+                          type="button"
+                          onClick={() => $awareness.set(awareness)}
+                        >
+                          {message}
+                        </button>
+                      ) : (
+                        message
+                      )}
+                      {info && (
+                        <Tooltip variant="wrapped" content={info}>
+                          <SmallIconButton icon={<HelpIcon />} />
+                        </Tooltip>
+                      )}
+                    </Flex>
                   </li>
                 )
               )}
