@@ -270,7 +270,7 @@ const $usedProFeatures = computed(
       }
     }
 
-    const badgeFeature = 'Remove "Built with Webstudio" badge';
+    const badgeFeature = 'No "Built with Webstudio" badge';
     // Badge should be rendered on free sites on every page.
     features.set(badgeFeature, {
       info: "Adding the badge to your homepage helps us offer a free version of the service. Please open the Components panel by clicking the “+” icon on the left, and add the “Built with Webstudio” component to your page. Feel free to adjust the badge’s styles to match your design.",
