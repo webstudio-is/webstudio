@@ -364,7 +364,7 @@ const builtWithWebstudioMeta: TemplateMeta = {
       ws:tag="a"
       ws:label="Built with Webstudio"
       // If you change this, you need to also update this link in publish checks
-      href="https://webstudio.is?via=badge"
+      href="https://webstudio.is/?via=badge"
       target="_blank"
       ws:style={css`
         display: inline-flex;
