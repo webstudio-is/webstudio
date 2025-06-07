@@ -66,8 +66,6 @@ import {
   CopyIcon,
   GearIcon,
   UpgradeIcon,
-  DotIcon,
-  EllipsesIcon,
   HelpIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
