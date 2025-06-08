@@ -25,13 +25,16 @@ import {
   collectionComponent,
   parseComponentName,
   elementComponent,
+  tags,
 } from "@webstudio-is/sdk";
-import type { Breakpoint, Page } from "@webstudio-is/sdk";
+import type { Breakpoint, Instance, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
 import {
   $breakpoints,
   $editingPageId,
+  $instances,
   $pages,
+  $props,
   $registeredComponentMetas,
   $registeredTemplates,
   $selectedBreakpoint,
@@ -44,7 +47,11 @@ import {
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import {
+  $selectedInstancePath,
+  $selectedPage,
+  selectPage,
+} from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
@@ -54,6 +61,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 
 const $commandPanel = atom<
   | undefined
@@ -225,6 +233,101 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
                   {humanizeString(category)}
                 </Text>
               </Text>
+            </Flex>
+          </CommandItem>
+        );
+      })}
+    </CommandGroup>
+  );
+};
+
+type TagOption = {
+  tokens: string[];
+  type: "tag";
+  tag: string;
+};
+
+const $tagOptions = computed(
+  [$selectedInstancePath, $instances, $props, $registeredComponentMetas],
+  (instancePath, instances, props, metas) => {
+    const tagOptions: TagOption[] = [];
+    if (instancePath === undefined) {
+      return tagOptions;
+    }
+    const [{ instance, instanceSelector }] = instancePath;
+    const childInstance: Instance = {
+      type: "instance",
+      id: "new_instance",
+      component: elementComponent,
+      children: [],
+    };
+    const newInstances = new Map(instances);
+    newInstances.set(childInstance.id, childInstance);
+    newInstances.set(instance.id, {
+      ...instance,
+      children: [...instance.children, { type: "id", value: childInstance.id }],
+    });
+    for (const tag of tags) {
+      childInstance.tag = tag;
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: newInstances,
+        props,
+        metas,
+        instanceSelector,
+      });
+      if (isSatisfying) {
+        tagOptions.push({
+          tokens: ["tags", tag, `<${tag}>`],
+          type: "tag",
+          tag,
+        });
+      }
+    }
+    return tagOptions;
+  }
+);
+
+const TagOptionsGroup = ({ options }: { options: TagOption[] }) => {
+  return (
+    <CommandGroup
+      name="tag"
+      heading={<CommandGroupHeading>Tags</CommandGroupHeading>}
+      actions={["add"]}
+    >
+      {options.map(({ tag }) => {
+        return (
+          <CommandItem
+            key={tag}
+            // preserve selected state when rerender
+            value={tag}
+            onSelect={() => {
+              closeCommandPanel();
+              const newInstance: Instance = {
+                type: "instance",
+                id: "new_instance",
+                component: elementComponent,
+                tag,
+                children: [],
+              };
+              insertWebstudioFragmentAt({
+                children: [{ type: "id", value: newInstance.id }],
+                instances: [newInstance],
+                props: [],
+                dataSources: [],
+                styleSourceSelections: [],
+                styleSources: [],
+                styles: [],
+                breakpoints: [],
+                assets: [],
+                resources: [],
+              });
+            }}
+          >
+            <Flex gap={2}>
+              <CommandIcon>
+                <InstanceIcon instance={{ component: elementComponent, tag }} />
+              </CommandIcon>
+              <Text variant="labelsSentenceCase">{`<${tag}>`}</Text>
             </Flex>
           </CommandItem>
         );
@@ -423,12 +526,25 @@ const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
 };
 
 const $options = computed(
-  [$componentOptions, $breakpointOptions, $pageOptions, $shortcutOptions],
-  (componentOptions, breakpointOptions, pageOptions, commandOptions) => [
+  [
+    $componentOptions,
+    $breakpointOptions,
+    $pageOptions,
+    $shortcutOptions,
+    $tagOptions,
+  ],
+  (
+    componentOptions,
+    breakpointOptions,
+    pageOptions,
+    commandOptions,
+    tagOptions
+  ) => [
     ...componentOptions,
     ...breakpointOptions,
     ...pageOptions,
     ...commandOptions,
+    ...tagOptions,
   ]
 );
 
@@ -458,6 +574,14 @@ const CommandDialogContent = () => {
                   <ComponentOptionsGroup
                     key={group}
                     options={matches as ComponentOption[]}
+                  />
+                );
+              }
+              if (group === "tag") {
+                return (
+                  <TagOptionsGroup
+                    key={group}
+                    options={matches as TagOption[]}
                   />
                 );
               }
