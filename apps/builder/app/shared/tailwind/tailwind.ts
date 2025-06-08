@@ -243,10 +243,20 @@ const parseTailwindClasses = async (classes: string) => {
     });
   }
   if (hasRowGaps && !hasFlexOrGrid) {
-    parsedStyles.unshift({
-      property: "display",
-      value: { type: "keyword", value: "grid" },
-    });
+    parsedStyles.unshift(
+      {
+        property: "display",
+        value: { type: "keyword", value: "flex" },
+      },
+      {
+        property: "flex-direction",
+        value: { type: "keyword", value: "column" },
+      },
+      {
+        property: "align-items",
+        value: { type: "keyword", value: "start" },
+      }
+    );
   }
   adaptBreakpoints(parsedStyles);
   const newClasses = classes

@@ -536,7 +536,9 @@ test("generate space without display property", async () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            display: grid;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
             row-gap: 1rem;
           `}
         ></ws.element>
