@@ -200,8 +200,24 @@ test("collapse any spacing characters inside text", () => {
       </div>
    `)
   ).toEqual(
+    renderTemplate(<ws.element ws:tag="div">{"line another line"}</ws.element>)
+  );
+});
+
+test("collapse any spacing characters inside rich text", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <div>
+        <span> line </span>
+        <b> another line </b>
+      </div>
+   `)
+  ).toEqual(
     renderTemplate(
-      <ws.element ws:tag="div">{" line another line "}</ws.element>
+      <ws.element ws:tag="div">
+        <ws.element ws:tag="span">line</ws.element>{" "}
+        <ws.element ws:tag="b">another line</ws.element>
+      </ws.element>
     )
   );
 });

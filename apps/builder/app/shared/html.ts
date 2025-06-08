@@ -231,7 +231,8 @@ export const generateFragmentFromHtml = (
         }
       }
     }
-    for (const childNode of node.childNodes) {
+    for (let index = 0; index < node.childNodes.length; index += 1) {
+      const childNode = node.childNodes[index];
       if (defaultTreeAdapter.isElementNode(childNode)) {
         const child = convertElementToInstance(childNode);
         if (child) {
@@ -239,13 +240,17 @@ export const generateFragmentFromHtml = (
         }
       }
       if (defaultTreeAdapter.isTextNode(childNode)) {
+        // trim spaces around rich text
         if (spaceRegex.test(childNode.value)) {
-          continue;
+          if (index === 0 || index === node.childNodes.length - 1) {
+            continue;
+          }
         }
+        const childValue = childNode.value.replaceAll(/\s+/g, " ");
         let child: Instance["children"][number] = {
           type: "text",
           // collapse spacing characters inside of text to avoid preserved newlines
-          value: childNode.value.replaceAll(/\s+/g, " "),
+          value: childValue === " " ? childValue : childValue.trim(),
         };
         // textarea content is initial value
         // and represented with fake value attribute
@@ -271,6 +276,10 @@ export const generateFragmentFromHtml = (
         //   <article></article>
         // </div>
         if (hasNonRichTextContent) {
+          // remove spaces between elements outside of rich text
+          if (spaceRegex.test(childNode.value)) {
+            continue;
+          }
           const span: Instance = {
             type: "instance",
             id: getNewId(),
