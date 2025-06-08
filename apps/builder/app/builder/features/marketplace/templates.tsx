@@ -12,6 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
+  elementComponent,
   ROOT_FOLDER_ID,
   type Asset,
   type Page,
@@ -50,9 +51,12 @@ const insertSection = ({
   );
   // remove body and use its children as root insrances
   if (body) {
-    fragment.instances = fragment.instances.filter(
-      (instance) => instance.component !== "Body"
-    );
+    fragment.instances = fragment.instances.filter((instance) => {
+      const isBody =
+        instance.component === "Body" ||
+        (instance.component === elementComponent && instance.tag === "body");
+      return !isBody;
+    });
     fragment.children = body.children;
   }
   const insertable = findClosestInsertable(fragment);

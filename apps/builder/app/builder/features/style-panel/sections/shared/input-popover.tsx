@@ -45,11 +45,13 @@ const Input = ({
 
   return (
     <CssValueInput
+      minWidth="6ch"
       styleSource={styleSource}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
       getOptions={() => $availableUnitVariables.get()}
+      fieldSizing="content"
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         const activeProperties = getActiveProperties();
@@ -176,7 +178,7 @@ export const InputPopover = ({
           description={propertyDescriptions[property]}
           properties={[property]}
         />
-        <Flex css={{ width: theme.spacing[20] }}>
+        <Flex css={{ maxWidth: theme.spacing[30] }}>
           <Input
             styleSource={styleSource}
             value={value}

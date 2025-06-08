@@ -3,8 +3,9 @@ import {
   TriggerIcon,
   ContentIcon,
 } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsCollapsible,
   propsCollapsibleContent,
@@ -12,60 +13,36 @@ import {
 } from "./__generated__/collapsible.props";
 
 export const metaCollapsible: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "CollapsibleTrigger" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "CollapsibleContent" },
-    },
-  ],
+  icon: CollapsibleIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.CollapsibleTrigger, radix.CollapsibleContent],
+  },
   presetStyle: {
     div,
   },
-  icon: CollapsibleIcon,
+  initialProps: ["open"],
+  props: propsCollapsible,
 };
 
 export const metaCollapsibleTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Collapsible" },
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
   },
-};
-
-export const metaCollapsibleContent: WsComponentMeta = {
-  type: "container",
-  presetStyle: {
-    div,
-  },
-  icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Collapsible" },
-  },
-};
-
-export const propsMetaCollapsible: WsComponentPropsMeta = {
-  props: {
-    ...propsCollapsible,
-    onOpenChange: {
-      type: "action",
-      control: "action",
-      required: false,
-    },
-  },
-  initialProps: ["open", "onOpenChange"],
-};
-
-export const propsMetaCollapsibleTrigger: WsComponentPropsMeta = {
   props: propsCollapsibleTrigger,
 };
 
-export const propsMetaCollapsibleContent: WsComponentPropsMeta = {
+export const metaCollapsibleContent: WsComponentMeta = {
+  icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
+  presetStyle: {
+    div,
+  },
   props: propsCollapsibleContent,
 };

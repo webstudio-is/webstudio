@@ -11,7 +11,6 @@ export * from "./schema/styles";
 export * from "./schema/deployment";
 export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
-export * from "./schema/embed-template";
 export * from "./schema/component-meta";
 
 export * from "./core-metas";
@@ -23,6 +22,7 @@ export * from "./resources-generator";
 export * from "./page-meta-generator";
 export * from "./url-pattern";
 export * from "./css";
+export * from "./__generated__/tags";
 
 export type {
   AnimationAction,
@@ -39,6 +39,8 @@ export type {
   ScrollAnimation,
   ViewAnimation,
   InsetUnitValue,
+  DurationUnitValue,
+  TimeUnit,
 } from "./schema/animation-schema";
 
 export {
@@ -48,5 +50,6 @@ export {
   rangeUnitValueSchema,
   animationKeyframeSchema,
   insetUnitValueSchema,
+  durationUnitValueSchema,
   RANGE_UNITS,
 } from "./schema/animation-schema";

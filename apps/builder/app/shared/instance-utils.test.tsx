@@ -16,8 +16,6 @@ import type {
   Asset,
   Breakpoint,
   Instance,
-  Instances,
-  Prop,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -25,22 +23,18 @@ import type {
   WebstudioFragment,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
-import {
-  coreMetas,
-  portalComponent,
-  collectionComponent,
-} from "@webstudio-is/sdk";
+import { coreMetas, portalComponent } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  findClosestEditableInstanceSelector,
   deleteInstanceMutable,
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
-  reparentInstance,
+  reparentInstanceMutable,
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
   insertWebstudioFragmentAt,
+  insertWebstudioElementAt,
 } from "./instance-utils";
 import {
   $assets,
@@ -57,7 +51,12 @@ import {
   $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
-import { $awareness, getInstancePath, selectInstance } from "./awareness";
+import {
+  $awareness,
+  getInstancePath,
+  selectInstance,
+  selectPage,
+} from "./awareness";
 
 enableMapSet();
 registerContainers();
@@ -94,14 +93,14 @@ const createFakeComponentMetas = (
     Icon: () => null,
   };
   const configs = {
-    Item: { ...base, type: "container", ...itemMeta },
-    AnotherItem: { ...base, type: "container", ...anotherItemMeta },
-    Bold: { ...base, type: "rich-text-child" },
-    Text: { ...base, type: "container" },
-    Form: { ...base, type: "container" },
-    Box: { ...base, type: "container" },
-    Div: { ...base, type: "container" },
-    Body: { ...base, type: "container" },
+    Item: { ...base, ...itemMeta },
+    AnotherItem: { ...base, ...anotherItemMeta },
+    Bold: base,
+    Text: base,
+    Form: base,
+    Box: base,
+    Div: base,
+    Body: base,
   } as const;
   return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
 };
@@ -170,251 +169,325 @@ const createFontAsset = (id: string, family: string): Asset => {
   };
 };
 
-describe("find closest editable instance selector", () => {
-  test("searches closest container", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", [
-        { type: "text", value: "some text" },
-        { type: "id", value: "bold" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["bold", "box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-  });
-
-  test("skips when container has anything except rich-text-child or text", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "box" }]),
-      createInstance("box", "Box", [
-        { type: "text", value: "some text" },
-        { type: "id", value: "bold" },
-        { type: "id", value: "child-box" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
-      createInstance("child-box", "Box", [
-        { type: "text", value: "child-box" },
-      ]),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["bold", "box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(undefined);
-  });
-
-  test("considers empty container as editable", () => {
-    const instances: Instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "body" }]),
-      createInstance("box", "Box", []),
-    ]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["box", "body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(["box", "body"]);
-  });
-
-  test("prevent editing Body instance", () => {
-    const instances: Instances = toMap([createInstance("body", "Body", [])]);
-    expect(
-      findClosestEditableInstanceSelector(
-        ["body"],
-        instances,
-        createFakeComponentMetas({})
-      )
-    ).toEqual(undefined);
-  });
-});
-
 describe("insert instance children", () => {
   test("insert instance children into empty target", () => {
-    const instances = toMap([createInstance("body", "Body", [])]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId"></ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: "end",
     });
-    expect(data.instances).toEqual(
-      toMap([createInstance("body", "Body", [{ type: "id", value: "box" }])])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children into the end of target", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId"></ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: "end",
     });
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "text" },
-          { type: "id", value: "box" },
-        ]),
-      ])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId"></ws.element>
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children into the start of target", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId"></ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["bodyId"],
       position: 0,
     });
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: "text" },
-        ]),
-      ])
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          <ws.element ws:tag="div" ws:id="textId"></ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children at the start of text", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [{ type: "text", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          text
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: 0,
     });
-    const [_bodyId, _textId, spanId] = data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: "box" },
-          { type: "id", value: spanId },
-        ]),
-        createInstance(spanId, "Text", [{ type: "text", value: "text" }]),
-      ])
-    );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: spanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+    const [_bodyId, _textId, _divId, spanId] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+            <ws.element ws:tag="span" ws:id={spanId}>
+              text
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children at the end of text", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [{ type: "text", value: "text" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          text
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: "end",
     });
-    const [_bodyId, _textId, spanId] = data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: spanId },
-          { type: "id", value: "box" },
-        ]),
-        createInstance(spanId, "Text", [{ type: "text", value: "text" }]),
-      ])
-    );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: spanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+    const [_bodyId, _textId, _divId, spanId] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="span" ws:id={spanId}>
+              text
+            </ws.element>
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
   });
 
   test("insert instance children between text children", () => {
-    const instances = toMap([
-      createInstance("body", "Body", [{ type: "id", value: "text" }]),
-      createInstance("text", "Text", [
-        { type: "id", value: "bold" },
-        { type: "text", value: "text" },
-        { type: "id", value: "italic" },
-      ]),
-      createInstance("bold", "Bold", [{ type: "text", value: "bold" }]),
-      createInstance("italic", "Italic", [{ type: "text", value: "italic" }]),
-    ]);
-    const data = getWebstudioDataStub({ instances });
-    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
-      parentSelector: ["text", "body"],
+    const data = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          <ws.element ws:tag="strong" ws:id="strongId">
+            strong
+          </ws.element>
+          text
+          <ws.element ws:tag="em" ws:id="emId">
+            emphasis
+          </ws.element>
+        </ws.element>
+      </ws.element>
+    );
+    const [div] = renderTemplate(
+      <ws.element ws:tag="div" ws:id="divId"></ws.element>
+    ).instances;
+    data.instances.set(div.id, div);
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "divId" }], {
+      parentSelector: ["textId", "bodyId"],
       position: 1,
     });
-    const [_bodyId, _textId, _boldId, _italicId, leftSpanId, rightSpanId] =
-      data.instances.keys();
-    expect(data.instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", [
-          { type: "id", value: leftSpanId },
-          { type: "id", value: "box" },
-          { type: "id", value: rightSpanId },
-        ]),
-        createInstance("bold", "Bold", [{ type: "text", value: "bold" }]),
-        createInstance("italic", "Italic", [{ type: "text", value: "italic" }]),
-        createInstance(leftSpanId, "Text", [{ type: "id", value: "bold" }]),
-        createInstance(rightSpanId, "Text", [
-          { type: "text", value: "text" },
-          { type: "id", value: "italic" },
-        ]),
-      ])
+    const [
+      _bodyId,
+      _textId,
+      _strongId,
+      _emId,
+      _divId,
+      leftSpanId,
+      rightSpanId,
+    ] = data.instances.keys();
+    expect(data).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="textId">
+            <ws.element ws:tag="span" ws:id={leftSpanId}>
+              <ws.element ws:tag="strong" ws:id="strongId">
+                strong
+              </ws.element>
+            </ws.element>
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+            <ws.element ws:tag="span" ws:id={rightSpanId}>
+              text
+              <ws.element ws:tag="em" ws:id="emId">
+                emphasis
+              </ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      )
     );
-    expect(data.props).toEqual(
-      toMap<Prop>([
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: leftSpanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-        {
-          id: expect.any(String) as unknown as string,
-          instanceId: rightSpanId,
-          name: "tag",
-          type: "string",
-          value: "span",
-        },
-      ])
+  });
+});
+
+describe("insert webstudio element at", () => {
+  beforeEach(() => {
+    $styleSourceSelections.set(new Map());
+    $styleSources.set(new Map());
+    $breakpoints.set(new Map());
+    $styles.set(new Map());
+    $dataSources.set(new Map());
+    $resources.set(new Map());
+    $props.set(new Map());
+    $assets.set(new Map());
+  });
+
+  test("insert element with div tag into body", () => {
+    $instances.set(renderData(<$.Body ws:id="bodyId"></$.Body>).instances);
+    insertWebstudioElementAt({
+      parentSelector: ["bodyId"],
+      position: "end",
+    });
+    const [_bodyId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element with li tag into ul", () => {
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="listId" ws:tag="ul"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    insertWebstudioElementAt({
+      parentSelector: ["listId", "bodyId"],
+      position: "end",
+    });
+    const [_bodyId, _listId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="listId" ws:tag="ul">
+            <ws.element ws:id={newInstanceId} ws:tag="li" />
+          </ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into selected instance", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["divId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _divId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            <ws.element ws:id={newInstanceId} ws:tag="div" />
+          </ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into closest non-textual container", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            text
+          </ws.element>
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["divId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _divId, _spanId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            text
+          </ws.element>
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("insert element into closest non-empty container", () => {
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "bodyId" })
+    );
+    $instances.set(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="imgId" ws:tag="img"></ws.element>
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
+    );
+    selectPage("homePageId");
+    selectInstance(["imgId", "bodyId"]);
+    insertWebstudioElementAt();
+    const [_bodyId, _imgId, _spanId, newInstanceId] = $instances.get().keys();
+    expect($instances.get()).toEqual(
+      renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:id="imgId" ws:tag="img"></ws.element>
+          <ws.element ws:id={newInstanceId} ws:tag="div" />
+          <ws.element ws:id="spanId" ws:tag="span"></ws.element>
+        </$.Body>
+      ).instances
     );
   });
 });
@@ -501,249 +574,267 @@ describe("insert webstudio fragment at", () => {
 
 describe("reparent instance", () => {
   test("between instances", () => {
-    // body
-    //   box
-    //     text
-    //   button
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: "button" },
-        ]),
-        createInstance("box", "Box", [{ type: "id", value: "text" }]),
-        createInstance("button", "Button", []),
-        createInstance("text", "Text", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box">
+          <$.Text ws:id="text"></$.Text>
+        </$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["text", "box", "body"], {
+    reparentInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: 1,
     });
-    const instances = $instances.get();
-    const newTextId = instances.get("body")?.children[1].value as string;
-    // body
-    //   box
-    //   text
-    //   button
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: newTextId },
-          { type: "id", value: "button" },
-        ]),
-        createInstance("box", "Box", []),
-        createInstance("button", "Button", []),
-        createInstance(newTextId, "Text", []),
-      ])
+    const newTextId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box"></$.Box>
+          <$.Text ws:id={newTextId}></$.Text>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
   test("to the end", () => {
-    // body
-    //   box
-    //     text
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "box" }]),
-        createInstance("box", "Box", [{ type: "id", value: "text" }]),
-        createInstance("text", "Text", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box">
+          <$.Text ws:id="text"></$.Text>
+        </$.Box>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["text", "box", "body"], {
+    reparentInstanceMutable(data, ["text", "box", "body"], {
       parentSelector: ["body"],
       position: "end",
     });
-    const instances = $instances.get();
-    const newTextId = instances.get("body")?.children[1].value as string;
-    // body
-    //   box
-    //   text
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "box" },
-          { type: "id", value: newTextId },
-        ]),
-        createInstance("box", "Box", []),
-        createInstance(newTextId, "Text", []),
-      ])
+    const newTextId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Box ws:id="box"></$.Box>
+          <$.Text ws:id={newTextId}></$.Text>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("wrap with fragment when reparent into empty portal", () => {
-    // body
-    //   portal
-    //   box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "portal" },
-          { type: "id", value: "box" },
-        ]),
-        createInstance("portal", portalComponent, []),
-        createInstance("box", "Box", []),
-      ])
+  test("before itself", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Text ws:id="text"></$.Text>
+        <$.Box ws:id="box"></$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "body"], {
-      parentSelector: ["portal", "body"],
-      position: "end",
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["body"],
+      position: 1,
     });
-    const instances = $instances.get();
-    const newFragmentId = instances.get("portal")?.children[0].value as string;
-    const newBoxId = instances.get(newFragmentId)?.children[0].value as string;
-    // body
-    //   portal
-    //     fragment
-    //       box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: newFragmentId },
-        ]),
-        createInstance(newFragmentId, "Fragment", [
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance(newBoxId, "Box", []),
-      ])
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Text ws:id="text"></$.Text>
+          <$.Box ws:id="box"></$.Box>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("reuse existing fragment when reparent into portal", () => {
-    // body
-    //   portal
-    //     fragment
-    //   box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "portal" },
-          { type: "id", value: "box" },
-        ]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-        createInstance("box", "Box", []),
-      ])
+  test("after itself", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Text ws:id="text"></$.Text>
+        <$.Box ws:id="box"></$.Box>
+        <$.Button ws:id="button"></$.Button>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "body"], {
-      parentSelector: ["portal", "body"],
-      position: "end",
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["body"],
+      position: 2,
     });
-    const instances = $instances.get();
-    const newBoxId = instances.get("fragment")?.children[0].value as string;
-    // body
-    //   portal
-    //     fragment
-    //       box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", [
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance(newBoxId, "Box", []),
-      ])
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Text ws:id="text"></$.Text>
+          <$.Box ws:id="box"></$.Box>
+          <$.Button ws:id="button"></$.Button>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("prevent portal reparenting into own children to avoid infinite loop", () => {
-    // body
-    //   portal
-    //     fragment
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-      ])
+  test("wrap with fragment when reparent into empty slot", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot"></$.Slot>
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["portal", "body"], {
-      parentSelector: ["fragment", "portal", "body"],
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["slot", "body"],
       position: "end",
     });
-    const instances = $instances.get();
-    // body
-    //   portal
-    //     fragment
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
-        createInstance("portal", portalComponent, [
-          { type: "id", value: "fragment" },
-        ]),
-        createInstance("fragment", "Fragment", []),
-      ])
+    const newFragmentId = data.instances.get("slot")?.children[0]
+      .value as string;
+    const newBoxId = data.instances.get(newFragmentId)?.children[0]
+      .value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id={newFragmentId}>
+              <$.Box ws:id={newBoxId}></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("reuse existing fragment when reparent into slot", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot">
+          <$.Fragment ws:id="fragment"></$.Fragment>
+        </$.Slot>
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["box", "body"], {
+      parentSelector: ["slot", "body"],
+      position: "end",
+    });
+    const newBoxId = data.instances.get("fragment")?.children[0]
+      .value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id={newBoxId}></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("reparent slot child from one instance of this slot into another", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot1">
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+        <$.Slot ws:id="slot2">
+          {/* same ids */}
+          <$.Fragment ws:id="fragment">
+            <$.Box ws:id="box"></$.Box>
+          </$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["box", "fragment", "slot1", "body"], {
+      parentSelector: ["slot2", "body"],
+      position: "end",
+    });
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot1">
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id="box"></$.Box>
+            </$.Fragment>
+          </$.Slot>
+          <$.Slot ws:id="slot2">
+            {/* same ids */}
+            <$.Fragment ws:id="fragment">
+              <$.Box ws:id="box"></$.Box>
+            </$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
+    );
+  });
+
+  test("prevent slot reparenting into own children to avoid infinite loop", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Slot ws:id="slot">
+          <$.Fragment ws:id="fragment"></$.Fragment>
+        </$.Slot>
+      </$.Body>
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstanceMutable(data, ["slot", "body"], {
+      parentSelector: ["fragment", "slot", "body"],
+      position: "end",
+    });
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <$.Slot ws:id="slot">
+            <$.Fragment ws:id="fragment"></$.Fragment>
+          </$.Slot>
+        </$.Body>
+      ).instances
     );
   });
 
   test("from collection item", () => {
-    // body
-    //   list
-    //     box
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "list" }]),
-        createInstance("list", collectionComponent, [
-          { type: "id", value: "box" },
-        ]),
-        createInstance("box", "Box", []),
-      ])
+    const data = renderData(
+      <$.Body ws:id="body">
+        <ws.collection ws:id="collection">
+          <$.Box ws:id="box"></$.Box>
+        </ws.collection>
+      </$.Body>
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    reparentInstance(["box", "list[0]", "list", "body"], {
-      parentSelector: ["body"],
-      position: "end",
-    });
-    const instances = $instances.get();
-    const newBoxId = instances.get("body")?.children[1].value as string;
-    // body
-    //   list
-    //   box
-    expect(instances).toEqual(
-      toMap([
-        createInstance("body", "Body", [
-          { type: "id", value: "list" },
-          { type: "id", value: newBoxId },
-        ]),
-        createInstance("list", collectionComponent, []),
-        createInstance(newBoxId, "Box", []),
-      ])
+    reparentInstanceMutable(
+      data,
+      ["box", "collection[0]", "collection", "body"],
+      { parentSelector: ["body"], position: "end" }
+    );
+    const newBoxId = data.instances.get("body")?.children[1].value as string;
+    expect(data.instances).toEqual(
+      renderData(
+        <$.Body ws:id="body">
+          <ws.collection ws:id="collection"></ws.collection>
+          <$.Box ws:id={newBoxId}></$.Box>
+        </$.Body>
+      ).instances
     );
   });
 
-  test("reparent required child", () => {
-    $instances.set(
-      renderData(
-        <$.Body ws:id="body">
-          <$.Tooltip ws:id="tooltip">
-            <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
-            <$.TooltipContent ws:id="content"></$.TooltipContent>
-          </$.Tooltip>
-        </$.Body>
-      ).instances
+  test("move required child within same instance", () => {
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Tooltip ws:id="tooltip">
+          <$.TooltipTrigger ws:id="trigger"></$.TooltipTrigger>
+          <$.TooltipContent ws:id="content"></$.TooltipContent>
+        </$.Tooltip>
+      </$.Body>
     );
     $registeredComponentMetas.set(
       new Map(Object.entries({ ...defaultMetas, ...radixMetas }))
     );
-    reparentInstance(["trigger", "tooltip", "body"], {
+    reparentInstanceMutable(data, ["trigger", "tooltip", "body"], {
       parentSelector: ["tooltip", "body"],
       position: "end",
     });
-    expect($instances.get()).toEqual(
+    expect(data.instances).toEqual(
       renderData(
         <$.Body ws:id="body">
           <$.Tooltip ws:id="tooltip">
@@ -1112,6 +1203,7 @@ describe("insert webstudio fragment copy", () => {
         assets: [createImageAsset("asset1", "name", "another_project")],
       },
       availableVariables: [],
+      projectId: "current_project",
     });
     expect(Array.from(data.assets.values())).toEqual([
       createImageAsset("asset1", "name", "current_project"),
@@ -1130,6 +1222,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "current_project",
     });
     expect(Array.from(data.assets.values())).toEqual([
       // preserve any user changes
@@ -1164,6 +1257,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.breakpoints.values())).toEqual([
       { id: "existing_base", label: "base" },
@@ -1203,6 +1297,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSources.values())).toEqual([
       { id: "token1", type: "token", name: "oldLabel" },
@@ -1255,6 +1350,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSourceSelections.values())).toEqual([
       {
@@ -1320,6 +1416,7 @@ describe("insert webstudio fragment copy", () => {
         ],
       },
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.styleSourceSelections.values())).toEqual([
       { instanceId: "fragment", values: ["localId", "tokenId"] },
@@ -1452,15 +1549,17 @@ describe("find closest insertable", () => {
     const { instances } = renderData(
       <$.Body ws:id="bodyId">
         <$.Paragraph ws:id="paragraphId">
-          <$.Box ws:id="spanId" tag="span"></$.Box>
+          <$.Image ws:id="imageId"></$.Image>
         </$.Paragraph>
       </$.Body>
     );
     $instances.set(instances);
-    selectInstance(["boxId", "paragraphId", "bodyId"]);
-    expect(findClosestInsertable(newBoxFragment)).toEqual({
+    selectInstance(["imageId", "paragraphId", "bodyId"]);
+    expect(
+      findClosestInsertable(renderTemplate(<$.Box ws:tag="span"></$.Box>))
+    ).toEqual({
       parentSelector: ["paragraphId", "bodyId"],
-      position: 0,
+      position: 1,
     });
   });
 
@@ -1487,21 +1586,20 @@ describe("find closest insertable", () => {
     });
   });
 
-  test("forbid inserting list item in body", () => {
+  test("allow inserting list item in body even though validation fails", () => {
     const { instances } = renderData(<$.Body ws:id="bodyId"></$.Body>);
     $instances.set(instances);
     selectInstance(["bodyId"]);
-    const newListItemFragment = createFragment({
-      children: [{ type: "id", value: "newListItemId" }],
-      instances: [
-        {
-          type: "instance",
-          id: "newListItemId",
-          component: "ListItem",
-          children: [],
-        },
-      ],
+    const newListItemFragment = renderTemplate(
+      <$.ListItem ws:id="newListItemId"></$.ListItem>
+    );
+    expect(findClosestInsertable(newListItemFragment)).toEqual({
+      parentSelector: ["bodyId"],
+      position: "end",
     });
-    expect(findClosestInsertable(newListItemFragment)).toEqual(undefined);
   });
+});
+
+test("get undefined instead of instance path when no instances found", () => {
+  expect(getInstancePath(["boxId"], new Map())).toEqual(undefined);
 });

@@ -27,17 +27,20 @@ import {
   blockComponent,
   blockTemplateComponent,
   getIndexesWithinAncestors,
+  elementComponent,
 } from "@webstudio-is/sdk";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import {
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
-  indexAttribute,
   type AnyComponent,
   textContentAttribute,
+  standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
+import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
@@ -45,6 +48,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceRenderState,
   findBlockSelector,
+  $props,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import {
@@ -70,6 +74,7 @@ import {
   editablePlaceholderAttribute,
   editingPlaceholderVariable,
 } from "~/canvas/shared/styles";
+import { richTextPlaceholders } from "~/shared/content-model";
 
 const ContentEditable = ({
   placeholder,
@@ -280,17 +285,40 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const [instanceId] = instanceSelector;
   const $instancePropsObject = useMemo(() => {
     return computed(
-      [$propValuesByInstanceSelectorWithMemoryProps, $indexesWithinAncestors],
-      (propValuesByInstanceSelector, indexesWithinAncestors) => {
+      [
+        $propValuesByInstanceSelectorWithMemoryProps,
+        $instances,
+        $indexesWithinAncestors,
+        $registeredComponentMetas,
+      ],
+      (
+        propValuesByInstanceSelector,
+        instances,
+        indexesWithinAncestors,
+        metas
+      ) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const instance = instances.get(instanceId);
+        const tag = instance?.tag;
+        if (tag !== undefined) {
+          instancePropsObject[tagProperty] = tag;
+        }
+        const meta = metas.get(instance?.component ?? "");
+        const hasTags = Object.keys(meta?.presetStyle ?? {}).length > 0;
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
-          instancePropsObject[indexAttribute] = index.toString();
+          instancePropsObject[indexProperty] = index.toString();
         }
         const instanceProps = propValuesByInstanceSelector.get(instanceKey);
         if (instanceProps) {
           for (const [name, value] of instanceProps) {
-            instancePropsObject[name] = value;
+            let propName = name;
+            // convert html attribute only when component has tags
+            // and does not specify own property with this name
+            if (hasTags && !meta?.props?.[propName]) {
+              propName = standardAttributesToReactProps[propName] ?? propName;
+            }
+            instancePropsObject[propName] = value;
           }
         }
         return instancePropsObject;
@@ -377,23 +405,19 @@ const getEditableComponentPlaceholder = (
   mode: "editing" | "editable"
 ) => {
   const meta = metas.get(instance.component);
-  if (meta?.placeholder === undefined) {
+  const tags = Object.keys(meta?.presetStyle ?? {});
+  const tag = instance.tag ?? tags[0];
+  const placeholder = richTextPlaceholders.get(tag);
+  if (placeholder === undefined) {
     return;
   }
-
   const isContentBlockChild =
     undefined !== findBlockSelector(instanceSelector, instances);
-
-  const isParagraph = instance.component === "Paragraph";
-
-  if (isParagraph && isContentBlockChild) {
-    return mode === "editing"
-      ? "Write something or press '/' for commands..."
-      : // The paragraph contains only an "editing" placeholder within the content block.
-        undefined;
+  // The paragraph contains only an "editing" placeholder within the content block.
+  if (tag === "p" && isContentBlockChild && mode === "editing") {
+    return "Write something or press '/' for commands...";
   }
-
-  return meta.placeholder;
+  return placeholder;
 };
 
 export const WebstudioComponentCanvas = forwardRef<
@@ -402,6 +426,7 @@ export const WebstudioComponentCanvas = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const allProps = useStore($props);
   const metas = useStore($registeredComponentMetas);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -445,9 +470,23 @@ export const WebstudioComponentCanvas = forwardRef<
     return <></>;
   }
 
-  let Component =
+  let Component: string | AnyComponent =
     components.get(instance.component) ??
     (MissingComponentStub as AnyComponent);
+
+  if (instance.component === elementComponent) {
+    Component = instance.tag ?? "div";
+    // replace to enable uncontrolled state
+    if (Component === "input") {
+      Component = Input as AnyComponent;
+    }
+    if (Component === "textarea") {
+      Component = Textarea as AnyComponent;
+    }
+    if (Component === "select") {
+      Component = Select as AnyComponent;
+    }
+  }
 
   if (instance.component === collectionComponent) {
     const data = instanceProps.data;
@@ -543,6 +582,7 @@ export const WebstudioComponentCanvas = forwardRef<
     <TextEditor
       rootInstanceSelector={instanceSelector}
       instances={instances}
+      props={allProps}
       contentEditable={
         <ContentEditable
           placeholder={getEditableComponentPlaceholder(
@@ -635,7 +675,23 @@ export const WebstudioComponentPreview = forwardRef<
     return <></>;
   }
 
-  let Component = components.get(instance.component);
+  let Component: undefined | string | AnyComponent = components.get(
+    instance.component
+  );
+
+  if (instance.component === elementComponent) {
+    Component = instance.tag ?? "div";
+    // replace to enable uncontrolled state
+    if (Component === "input") {
+      Component = Input as AnyComponent;
+    }
+    if (Component === "textarea") {
+      Component = Textarea as AnyComponent;
+    }
+    if (Component === "select") {
+      Component = Select as AnyComponent;
+    }
+  }
 
   if (instance.component === blockComponent) {
     Component = Block;

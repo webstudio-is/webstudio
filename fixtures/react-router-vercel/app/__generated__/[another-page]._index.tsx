@@ -6,7 +6,18 @@ import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
+export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const lastPublished = "2025-01-04T11:01:50.091Z";
+
 export const siteName = "";
+
+export const breakpoints = [
+  { id: "rKj-wYctg3-GnqL3WHN9I" },
+  { id: "yH9RXhqCyeaVkrOt8MzLc", maxWidth: 991 },
+  { id: "8nSCZbeS002IVwkTdoIes", maxWidth: 767 },
+  { id: "7gBD25KrrbBdJYNDlhPz7", maxWidth: 479 },
+];
 
 export const favIconAsset: string | undefined =
   "147-1478573_cat-icon-png-black-cat-png-icon.png_ZJ6-qJjk1RlFzuYwyCXdp.jpeg";

@@ -39,7 +39,7 @@ export const useModifierKeys = () => {
     window.addEventListener("keydown", handler);
     window.addEventListener("keyup", handler);
     // The use of only the keyup/keydown events may not be sufficient.
-    // on a Mac, when the cmd-shift-4 (printscreen) combination is triggered, there is a possibility of losing the keyup event.
+    // on a Mac, when the meta-shift-4 (printscreen) combination is triggered, there is a possibility of losing the keyup event.
     window.addEventListener("mousemove", handler);
 
     return () => {

@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -19,10 +19,9 @@ import {
 } from "../../shared/use-style-data";
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
-import { CssEditor, type CssEditorApi } from "../../../../shared/css-editor";
-import { $advancedStylesLonghands } from "./stores";
+import { CssEditor } from "../../../../shared/css-editor";
+import { $advancedStyleDeclarations } from "./stores";
 import { $selectedInstanceKey } from "~/shared/awareness";
-import { getSetting } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -38,7 +37,6 @@ const AdvancedStyleSection = (props: {
   const styles = useComputedStyles(properties);
   return (
     <CollapsibleSectionRoot
-      label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
@@ -65,15 +63,17 @@ const AdvancedStyleSection = (props: {
 };
 
 export const Section = () => {
-  const styleMap = useStore($advancedStylesLonghands);
-  const apiRef = useRef<CssEditorApi>();
-  const properties = Array.from(styleMap.keys());
+  const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
+  const properties = advancedStyleDeclarations.map(
+    (styleDecl) => styleDecl.property
+  );
   const selectedInstanceKey = useStore($selectedInstanceKey);
   // Memorizing recent properties by instance id, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
     Map<string, Array<CssProperty>>
   >(new Map());
+  const [showAddStyleInput, setShowAddStyleInput] = useState<boolean>(false);
 
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
@@ -131,18 +131,18 @@ export const Section = () => {
       label="Advanced"
       properties={properties}
       onAdd={() => {
-        apiRef.current?.showAddStyleInput();
+        setShowAddStyleInput(true);
       }}
     >
       <CssEditor
-        styleMap={styleMap}
+        declarations={advancedStyleDeclarations}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}
         onAddDeclarations={handleAddDeclarations}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
-        apiRef={apiRef}
         recentProperties={recentProperties}
-        memorizeMinHeight={getSetting("stylePanelMode") !== "advanced"}
+        showAddStyleInput={showAddStyleInput}
+        onToggleAddStyleInput={setShowAddStyleInput}
       />
     </AdvancedStyleSection>
   );

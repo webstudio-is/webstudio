@@ -16,6 +16,14 @@ const common = {
   required: z.boolean(),
 };
 
+const Tag = z.object({
+  ...common,
+  control: z.literal("tag"),
+  type: z.literal("string"),
+  defaultValue: z.undefined().optional(),
+  options: z.array(z.string()),
+});
+
 const Number = z.object({
   ...common,
   control: z.literal("number"),
@@ -40,6 +48,13 @@ const Text = z.object({
    * In line with Storybook team's plan: https://github.com/storybookjs/storybook/issues/21100
    */
   rows: z.number().optional(),
+});
+
+const Resource = z.object({
+  ...common,
+  control: z.literal("resource"),
+  type: z.literal("resource"),
+  defaultValue: z.string().optional(),
 });
 
 const Code = z.object({
@@ -175,9 +190,11 @@ const AnimationAction = z.object({
 });
 
 export const PropMeta = z.union([
+  Tag,
   Number,
   Range,
   Text,
+  Resource,
   Code,
   CodeText,
   Color,

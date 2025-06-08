@@ -9,7 +9,10 @@ const StyleDeclRaw = z.object({
   // @todo can't figure out how to make property to be enum
   property: z.string(),
   value: StyleValue,
-  listed: z.boolean().optional(),
+  listed: z
+    .boolean()
+    .optional()
+    .describe("Whether the style is from the Advanced panel"),
 });
 
 export type StyleDecl = Simplify<

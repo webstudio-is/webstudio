@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { CssProperty, StyleProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   SectionTitle,
   SectionTitleButton,
@@ -19,10 +19,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 
   for (const styleDecl of styles) {
     // Unparsed values are not editable directly in the section, so we don't show the dot
-    if (
-      styleDecl.usedValue.type === "unparsed" ||
-      styleDecl.usedValue.type === "guaranteedInvalid"
-    ) {
+    if (styleDecl.usedValue.type === "guaranteedInvalid") {
       return [];
     }
 
@@ -37,7 +34,7 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 
 export const StyleSection = (props: {
   label: string;
-  properties: (StyleProperty | CssProperty)[];
+  properties: CssProperty[];
   // @todo remove to keep sections consistent
   fullWidth?: boolean;
   children: ReactNode;
@@ -65,7 +62,7 @@ export const StyleSection = (props: {
 export const RepeatedStyleSection = (props: {
   label: string;
   description: string;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
   collapsible?: boolean;
   onAdd: () => void;
   children: ReactNode;

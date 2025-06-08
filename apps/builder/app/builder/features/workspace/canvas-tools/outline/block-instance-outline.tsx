@@ -1,16 +1,5 @@
+import { useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  $blockChildOutline,
-  $hoveredInstanceOutline,
-  $hoveredInstanceSelector,
-  $instances,
-  $isContentMode,
-  $modifierKeys,
-  $registeredComponentMetas,
-  findBlockSelector,
-  findTemplates,
-  type BlockChildOutline,
-} from "~/shared/nano-states";
 import {
   Box,
   DropdownMenu,
@@ -28,27 +17,32 @@ import {
   DropdownMenuSeparator,
   menuItemCss,
 } from "@webstudio-is/design-system";
-import { Outline } from "./outline";
-import { applyScale } from "./apply-scale";
-import { $clampingRect, $scale } from "~/builder/shared/nano-states";
-import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import { BoxIcon } from "@webstudio-is/icons/svg";
-import { useRef, useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import type { InstanceSelector } from "~/shared/tree-utils";
 import type { Instance } from "@webstudio-is/sdk";
-
+import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  $blockChildOutline,
+  $hoveredInstanceOutline,
+  $hoveredInstanceSelector,
+  $instances,
+  $isContentMode,
+  $modifierKeys,
+  findBlockSelector,
+  findTemplates,
+  type BlockChildOutline,
+} from "~/shared/nano-states";
+import { $clampingRect, $scale } from "~/builder/shared/nano-states";
+import type { InstanceSelector } from "~/shared/tree-utils";
 import {
   deleteInstanceMutable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-
-import { MetaIcon } from "~/builder/shared/meta-icon";
 import { skipInertHandlersAttribute } from "~/builder/shared/inert-handlers";
-
-import { insertTemplateAt } from "./block-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { getInstancePath } from "~/shared/awareness";
+import { insertTemplateAt } from "./block-utils";
+import { Outline } from "./outline";
+import { applyScale } from "./apply-scale";
+import { InstanceIcon } from "~/builder/shared/instance-label";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -78,7 +72,6 @@ export const TemplatesMenu = ({
   preventFocusOnHover: boolean;
 }) => {
   const instances = useStore($instances);
-  const metas = useStore($registeredComponentMetas);
   const modifierKeys = useStore($modifierKeys);
 
   const blockInstanceSelector = findBlockSelector(anchor, instances);
@@ -109,7 +102,7 @@ export const TemplatesMenu = ({
 
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
-    icon: <MetaIcon icon={metas.get(template.component)?.icon ?? BoxIcon} />,
+    icon: <InstanceIcon instance={{ component: template.component }} />,
     title: template.label ?? template.component,
     value: templateSelector,
   }));
@@ -251,10 +244,6 @@ export const BlockChildHoveredInstanceOutline = () => {
   const outline = blockChildOutline ?? buttonOutline;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  if (isFeatureEnabled("contentEditableMode") === false) {
-    return;
-  }
 
   if (!isContentMode) {
     return;

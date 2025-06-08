@@ -32,6 +32,7 @@ const userPlanFeatures: UserPlanFeatures = {
   allowDynamicData: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 1,
+  maxPublishesAllowedPerUser: 1,
 };
 
 const projects = [

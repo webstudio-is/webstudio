@@ -46,7 +46,7 @@ export default {
       control: "select",
       options: valueOptions,
       labels: Object.fromEntries(
-        valueOptions.map((value) => [value, parseCssValue("marginTop", value)])
+        valueOptions.map((value) => [value, parseCssValue("margin-top", value)])
       ),
     },
   },

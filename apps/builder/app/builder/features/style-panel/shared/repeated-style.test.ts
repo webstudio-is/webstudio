@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { setEnv } from "@webstudio-is/feature-flags";
 import {
   toValue,
-  type StyleProperty,
+  type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
@@ -50,7 +50,7 @@ beforeEach(() => {
   $styles.set(new Map());
 });
 
-const setRawProperty = (property: StyleProperty, value: string) => {
+const setRawProperty = (property: CssProperty, value: string) => {
   setProperty(property)(parseCssValue(property, value));
 };
 
@@ -101,13 +101,14 @@ test("get repeated style item by index", () => {
 
 describe("add repeated item", () => {
   test("add layer to var", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "var(--my-property)");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "var(--my-property)");
     expect($transitionProperty.get().cascadedValue.type).toEqual("var");
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("opacity", ["transitionProperty"])
+      parseCssFragment("opacity", ["transition-property"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "var(--my-property), opacity"
@@ -115,15 +116,16 @@ describe("add repeated item", () => {
   });
 
   test("add layer to repeated style", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    addRepeatedStyleItem(
-      [$transitionProperty.get()],
-      parseCssFragment("opacity", ["transitionProperty"])
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
     );
     addRepeatedStyleItem(
       [$transitionProperty.get()],
-      parseCssFragment("transform", ["transitionProperty"])
+      parseCssFragment("opacity", ["transition-property"])
+    );
+    addRepeatedStyleItem(
+      [$transitionProperty.get()],
+      parseCssFragment("transform", ["transition-property"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, transform"
@@ -146,7 +148,7 @@ describe("add repeated item", () => {
   });
 
   test("ignore when new item is not layers or tuple", () => {
-    const $backgroundColor = createComputedStyleDeclStore("backgroundColor");
+    const $backgroundColor = createComputedStyleDeclStore("background-color");
     addRepeatedStyleItem(
       [$backgroundColor.get()],
       parseCssFragment("none", ["background"])
@@ -158,13 +160,15 @@ describe("add repeated item", () => {
   });
 
   test("align properties with primary property", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    const $transitionDuration =
-      createComputedStyleDeclStore("transitionDuration");
-    const $transitionDelay = createComputedStyleDeclStore("transitionDelay");
-    setRawProperty("transitionProperty", "opacity, transform");
-    setRawProperty("transitionDuration", "1s");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    const $transitionDuration = createComputedStyleDeclStore(
+      "transition-duration"
+    );
+    const $transitionDelay = createComputedStyleDeclStore("transition-delay");
+    setRawProperty("transition-property", "opacity, transform");
+    setRawProperty("transition-duration", "1s");
     addRepeatedStyleItem(
       [
         $transitionProperty.get(),
@@ -185,12 +189,12 @@ describe("add repeated item", () => {
 
 describe("edit item in repeated style", () => {
   test("edit single variable", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
-    setRawProperty("backgroundImage", "none");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
+    setRawProperty("background-image", "none");
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       0,
-      parseCssFragment("var(--gradient1)", ["backgroundImage"])
+      parseCssFragment("var(--gradient1)", ["background-image"])
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "var(--gradient1)"
@@ -200,7 +204,7 @@ describe("edit item in repeated style", () => {
       [$backgroundImage.get()],
       // use greater index when access computed items
       2,
-      parseCssFragment("var(--gradient2)", ["backgroundImage"])
+      parseCssFragment("var(--gradient2)", ["background-image"])
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "var(--gradient2)"
@@ -209,12 +213,12 @@ describe("edit item in repeated style", () => {
   });
 
   test("edit variable in multiple layers", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
-    setRawProperty("backgroundImage", "none, none");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
+    setRawProperty("background-image", "none, none");
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       1,
-      parseCssFragment("var(--gradient1)", ["backgroundImage"])
+      parseCssFragment("var(--gradient1)", ["background-image"])
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "none, var(--gradient1)"
@@ -223,7 +227,7 @@ describe("edit item in repeated style", () => {
     editRepeatedStyleItem(
       [$backgroundImage.get()],
       1,
-      parseCssFragment("var(--gradient2)", ["backgroundImage"])
+      parseCssFragment("var(--gradient2)", ["background-image"])
     );
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual(
       "none, var(--gradient2)"
@@ -232,13 +236,14 @@ describe("edit item in repeated style", () => {
   });
 
   test("edit layer", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "opacity, transform");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "opacity, transform");
     editRepeatedStyleItem(
       [$transitionProperty.get()],
       1,
-      parseCssFragment("width", ["transitionProperty"])
+      parseCssFragment("width", ["transition-property"])
     );
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "opacity, width"
@@ -260,9 +265,10 @@ describe("edit item in repeated style", () => {
 });
 
 test("set layers item into repeated style", () => {
-  const $transitionProperty =
-    createComputedStyleDeclStore("transitionProperty");
-  setRawProperty("transitionProperty", "opacity, transform");
+  const $transitionProperty = createComputedStyleDeclStore(
+    "transition-property"
+  );
+  setRawProperty("transition-property", "opacity, transform");
   setRepeatedStyleItem($transitionProperty.get(), 0, {
     type: "unparsed",
     value: "width",
@@ -281,9 +287,10 @@ test("set layers item into repeated style", () => {
 });
 
 test("unpack item from layers value in repeated style", () => {
-  const $transitionProperty =
-    createComputedStyleDeclStore("transitionProperty");
-  setRawProperty("transitionProperty", "opacity, transform");
+  const $transitionProperty = createComputedStyleDeclStore(
+    "transition-property"
+  );
+  setRawProperty("transition-property", "opacity, transform");
   setRepeatedStyleItem($transitionProperty.get(), 1, {
     type: "layers",
     value: [{ type: "unparsed", value: "width" }],
@@ -295,30 +302,31 @@ test("unpack item from layers value in repeated style", () => {
 
 describe("delete repeated item", () => {
   test("delete var or other not releated value in repeated style", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
     // var()
-    setRawProperty("backgroundImage", "var(--my-bg)");
+    setRawProperty("background-image", "var(--my-bg)");
     deleteRepeatedStyleItem([$backgroundImage.get()], 0);
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual("none");
     // inherit
-    setRawProperty("backgroundImage", "inherit");
+    setRawProperty("background-image", "inherit");
     deleteRepeatedStyleItem([$backgroundImage.get()], 0);
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual("none");
   });
 
   test("convert to var when it is the only left in repeated style", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
     // var()
-    setRawProperty("backgroundImage", "var(--bg1), var(--bg2)");
+    setRawProperty("background-image", "var(--bg1), var(--bg2)");
     deleteRepeatedStyleItem([$backgroundImage.get()], 1);
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual("var(--bg1)");
     expect($backgroundImage.get().cascadedValue.type).toEqual("var");
   });
 
   test("delete layer from repeated style", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "opacity, transform");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "opacity, transform");
     deleteRepeatedStyleItem([$transitionProperty.get()], 0);
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "transform"
@@ -326,9 +334,10 @@ describe("delete repeated item", () => {
   });
 
   test("delete value without layers from repeated style", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "opacity");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "opacity");
     expect($transitionProperty.get().source.name).toEqual("local");
     deleteRepeatedStyleItem([$transitionProperty.get()], 0);
     expect($transitionProperty.get().source.name).toEqual("default");
@@ -336,12 +345,14 @@ describe("delete repeated item", () => {
   });
 
   test("align layers with primary when toggling toggle", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    const $transitionDuration =
-      createComputedStyleDeclStore("transitionDuration");
-    setRawProperty("transitionProperty", "opacity, transform, color");
-    setRawProperty("transitionDuration", "1s, 2s");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    const $transitionDuration = createComputedStyleDeclStore(
+      "transition-duration"
+    );
+    setRawProperty("transition-property", "opacity, transform, color");
+    setRawProperty("transition-duration", "1s, 2s");
     deleteRepeatedStyleItem(
       [$transitionProperty.get(), $transitionDuration.get()],
       0
@@ -363,8 +374,8 @@ describe("delete repeated item", () => {
 
 describe("toggle repeated item", () => {
   test("toggle var in repeated style", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
-    setRawProperty("backgroundImage", "var(--my-bg)");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
+    setRawProperty("background-image", "var(--my-bg)");
     toggleRepeatedStyleItem([$backgroundImage.get()], 0);
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual("");
     toggleRepeatedStyleItem([$backgroundImage.get()], 0);
@@ -374,16 +385,17 @@ describe("toggle repeated item", () => {
   });
 
   test("ignore toggling not repeated value in repeated style", () => {
-    const $backgroundImage = createComputedStyleDeclStore("backgroundImage");
-    setRawProperty("backgroundImage", "inherit");
+    const $backgroundImage = createComputedStyleDeclStore("background-image");
+    setRawProperty("background-image", "inherit");
     toggleRepeatedStyleItem([$backgroundImage.get()], 0);
     expect(toValue($backgroundImage.get().cascadedValue)).toEqual("inherit");
   });
 
   test("toggle layer in repeated style", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "opacity, transform");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "opacity, transform");
     toggleRepeatedStyleItem([$transitionProperty.get()], 0);
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "transform"
@@ -406,12 +418,14 @@ describe("toggle repeated item", () => {
   });
 
   test("align layers with primary when toggling toggle", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    const $transitionDuration =
-      createComputedStyleDeclStore("transitionDuration");
-    setRawProperty("transitionProperty", "opacity, transform, color");
-    setRawProperty("transitionDuration", "1s, 2s");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    const $transitionDuration = createComputedStyleDeclStore(
+      "transition-duration"
+    );
+    setRawProperty("transition-property", "opacity, transform, color");
+    setRawProperty("transition-duration", "1s, 2s");
     toggleRepeatedStyleItem(
       [$transitionProperty.get(), $transitionDuration.get()],
       0
@@ -426,9 +440,10 @@ describe("toggle repeated item", () => {
 
 describe("swap repeated items", () => {
   test("swap layers in repeated style", () => {
-    const $transitionProperty =
-      createComputedStyleDeclStore("transitionProperty");
-    setRawProperty("transitionProperty", "opacity, transform");
+    const $transitionProperty = createComputedStyleDeclStore(
+      "transition-property"
+    );
+    setRawProperty("transition-property", "opacity, transform");
     swapRepeatedStyleItems([$transitionProperty.get()], 0, 1);
     expect(toValue($transitionProperty.get().cascadedValue)).toEqual(
       "transform, opacity"

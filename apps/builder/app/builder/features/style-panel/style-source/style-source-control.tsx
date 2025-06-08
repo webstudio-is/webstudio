@@ -98,7 +98,7 @@ const Menu = (props: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         onCloseAutoFocus={(event) => event.preventDefault()}
-        css={{ maxWidth: theme.spacing[24] }}
+        css={{ maxWidth: theme.spacing[26] }}
       >
         {props.children}
       </DropdownMenuContent>
@@ -136,12 +136,16 @@ const EditableText = ({
       spellCheck={false}
       userSelect={isEditing ? "text" : "none"}
       css={{
+        // prevent collapsing horizontally editable text when empty
+        flexGrow: 1,
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
         cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
-    />
+    >
+      {value}
+    </Text>
   );
 };
 

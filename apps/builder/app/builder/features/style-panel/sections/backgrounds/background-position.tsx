@@ -79,10 +79,10 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
               { type: "keyword", value: "right" },
             ]}
             value={xValue}
-            setValue={(value, options) => {
+            onUpdate={(value, options) => {
               setRepeatedStyleItem(backgroundPositionX, index, value, options);
             }}
-            deleteProperty={() => {
+            onDelete={() => {
               if (xValue) {
                 setRepeatedStyleItem(backgroundPositionX, index, xValue);
               }
@@ -102,10 +102,10 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
               { type: "keyword", value: "bottom" },
             ]}
             value={yValue}
-            setValue={(value, options) => {
+            onUpdate={(value, options) => {
               setRepeatedStyleItem(backgroundPositionY, index, value, options);
             }}
-            deleteProperty={() => {
+            onDelete={() => {
               if (yValue) {
                 setRepeatedStyleItem(backgroundPositionY, index, yValue);
               }

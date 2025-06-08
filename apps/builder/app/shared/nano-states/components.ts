@@ -2,18 +2,16 @@ import { nanoid } from "nanoid";
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom, computed } from "nanostores";
-import {
-  type AnyComponent,
-  type Hook,
-  type HookContext,
-  namespaceMeta,
-  type InstanceData,
+import type {
+  AnyComponent,
+  Hook,
+  HookContext,
+  InstanceData,
 } from "@webstudio-is/react-sdk";
 import {
   getIndexesWithinAncestors,
   type Instance,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";
@@ -131,6 +129,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });
@@ -149,6 +148,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });
@@ -177,15 +177,10 @@ export const $registeredTemplates = atom(
   new Map<string, GeneratedTemplateMeta>()
 );
 
-export const $registeredComponentPropsMetas = atom(
-  new Map<string, WsComponentPropsMeta>()
-);
-
 export const registerComponentLibrary = ({
   namespace,
   components,
   metas,
-  propsMetas,
   hooks,
   templates,
 }: {
@@ -194,7 +189,6 @@ export const registerComponentLibrary = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
-  propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
   hooks?: Hook[];
   templates: Record<Instance["component"], TemplateMeta>;
 }) => {
@@ -210,12 +204,7 @@ export const registerComponentLibrary = ({
   const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
-    nextMetas.set(
-      `${prefix}${componentName}`,
-      namespace === undefined
-        ? meta
-        : namespaceMeta(meta, namespace, new Set(Object.keys(metas)))
-    );
+    nextMetas.set(`${prefix}${componentName}`, meta);
   }
   $registeredComponentMetas.set(nextMetas);
 
@@ -235,22 +224,4 @@ export const registerComponentLibrary = ({
     const nextHooks = [...prevHooks, ...hooks];
     $registeredComponentHooks.set(nextHooks);
   }
-
-  const prevPropsMetas = $registeredComponentPropsMetas.get();
-  const nextPropsMetas = new Map(prevPropsMetas);
-  for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
-    const { initialProps = [], props } = propsMeta;
-    const requiredProps: string[] = [];
-    for (const [name, value] of Object.entries(props)) {
-      if (value.required && initialProps.includes(name) === false) {
-        requiredProps.push(name);
-      }
-    }
-    nextPropsMetas.set(`${prefix}${componentName}`, {
-      // order of initialProps must be preserved
-      initialProps: [...initialProps, ...requiredProps],
-      props,
-    });
-  }
-  $registeredComponentPropsMetas.set(nextPropsMetas);
 };

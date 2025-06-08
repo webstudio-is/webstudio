@@ -13,5 +13,6 @@ export const props: Record<string, PropMeta> = {
     control: "text",
     type: "string",
     defaultValue: "dateTime attribute is not set",
+    description: "Machine-readable value",
   },
 };

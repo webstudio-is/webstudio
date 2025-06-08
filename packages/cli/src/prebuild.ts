@@ -36,7 +36,6 @@ import {
   createScope,
   findTreeInstanceIds,
   getPagePath,
-  parseComponentName,
   generateResources,
   generatePageMeta,
   getStaticSiteMapXml,
@@ -46,6 +45,7 @@ import {
   SYSTEM_VARIABLE_ID,
   generateCss,
   ROOT_INSTANCE_ID,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -59,6 +59,7 @@ import { htmlToJsx } from "./html-to-jsx";
 import { createFramework as createRemixFramework } from "./framework-remix";
 import { createFramework as createReactRouterFramework } from "./framework-react-router";
 import { createFramework as createVikeSsgFramework } from "./framework-vike-ssg";
+import { compareMedia } from "@webstudio-is/css-engine";
 
 const limit = pLimit(10);
 
@@ -284,22 +285,22 @@ export const prebuild = async (options: {
     );
   }
 
-  // collect all possible component metas
-  const metas = new Map<string, WsComponentMeta>();
-  const componentSources = new Map<string, string>();
-  for (const entry of framework.components) {
-    for (const [componentName, meta] of Object.entries(entry.metas)) {
-      metas.set(componentName, meta);
-      componentSources.set(componentName, entry.source);
-    }
-  }
-
   const usedMetas = new Map<Instance["component"], WsComponentMeta>(
     Object.entries(coreMetas)
   );
   const siteDataByPage: SiteDataByPage = {};
   const fontAssetsByPage: Record<Page["id"], string[]> = {};
   const backgroundImageAssetsByPage: Record<Page["id"], string[]> = {};
+
+  // use whole project props to access id props from other pages
+  const normalizedProps = normalizeProps({
+    props: siteData.build.props.map(([_id, prop]) => prop),
+    assetBaseUrl,
+    assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
+    uploadingImageAssets: [],
+    pages: siteData.build.pages,
+    source: "prebuild",
+  });
 
   for (const page of Object.values(siteData.pages)) {
     const instanceMap = new Map(siteData.build.instances);
@@ -309,33 +310,33 @@ export const prebuild = async (options: {
     );
     // support global data variables
     pageInstanceSet.add(ROOT_INSTANCE_ID);
-    const instances: [Instance["id"], Instance][] =
-      siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
-    const dataSources: [DataSource["id"], DataSource][] = [];
+    // collect used instances and metas
+    const instances: [Instance["id"], Instance][] = [];
+    for (const [_instanceId, instance] of siteData.build.instances) {
+      if (pageInstanceSet.has(instance.id)) {
+        instances.push([instance.id, instance]);
+        const meta = framework.metas[instance.component];
+        if (meta) {
+          usedMetas.set(instance.component, meta);
+        }
+      }
+    }
 
-    // use whole project props to access id props from other pages
-    const normalizedProps = normalizeProps({
-      props: siteData.build.props.map(([_id, prop]) => prop),
-      assetBaseUrl,
-      assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
-      uploadingImageAssets: [],
-      pages: siteData.build.pages,
-      source: "prebuild",
-    });
+    const resourceIds = new Set<Resource["id"]>();
 
     const props: [Prop["id"], Prop][] = [];
     for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
+        if (prop.type === "resource") {
+          resourceIds.add(prop.value);
+        }
       }
     }
 
-    const resourceIds = new Set<Resource["id"]>();
+    const dataSources: [DataSource["id"], DataSource][] = [];
     for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
-      if (
-        dataSource.scopeInstanceId === undefined ||
-        pageInstanceSet.has(dataSource.scopeInstanceId)
-      ) {
+      if (pageInstanceSet.has(dataSource.scopeInstanceId ?? "")) {
         dataSources.push([dataSourceId, dataSource]);
         if (dataSource.type === "resource") {
           resourceIds.add(dataSource.resourceId);
@@ -361,13 +362,6 @@ export const prebuild = async (options: {
       page,
       assets: siteData.assets,
     };
-
-    for (const [_instanceId, instance] of instances) {
-      const meta = metas.get(instance.component);
-      if (meta) {
-        usedMetas.set(instance.component, meta);
-      }
-    }
 
     // Extract background SVGs and Font assets
     const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];
@@ -514,38 +508,36 @@ export const prebuild = async (options: {
       }
     }
 
-    const pageComponents = new Set<Instance["component"]>();
+    // generate component imports
+    // Map<importSource, Map<id, importSpecifier>>
+    const imports = new Map<string, Map<string, string>>();
     for (const instance of instances.values()) {
-      pageComponents.add(instance.component);
-    }
-    const namespaces = new Map<
-      string,
-      Set<[shortName: string, componentName: string]>
-    >();
-    for (const component of pageComponents) {
-      const namespace = componentSources.get(component);
-      if (namespace === undefined) {
+      let descriptor = framework.components[instance.component];
+      let id = instance.component;
+      if (instance.component === elementComponent && instance.tag) {
+        descriptor = framework.tags[instance.tag];
+        id = descriptor;
+      }
+      if (descriptor === undefined) {
         continue;
       }
-      if (namespaces.has(namespace) === false) {
-        namespaces.set(
-          namespace,
-          new Set<[shortName: string, componentName: string]>()
-        );
+      const [importSource, importSpecifier] = descriptor.split(":");
+      let specifiers = imports.get(importSource);
+      if (specifiers === undefined) {
+        specifiers = new Map();
+        imports.set(importSource, specifiers);
       }
-      const [_namespace, shortName] = parseComponentName(component);
-      namespaces.get(namespace)?.add([shortName, component]);
+      specifiers.set(id, importSpecifier);
     }
-
-    let componentImports = "";
-    for (const [namespace, componentsSet] of namespaces.entries()) {
-      const specifiers = Array.from(componentsSet)
+    let importsString = "";
+    for (const [importSource, specifiers] of imports) {
+      const specifiersString = Array.from(specifiers)
         .map(
-          ([shortName, component]) =>
-            `${shortName} as ${scope.getName(component, shortName)}`
+          ([id, importSpecifier]) =>
+            `${importSpecifier} as ${scope.getName(id, importSpecifier)}`
         )
         .join(", ");
-      componentImports += `import { ${specifiers} } from "${namespace}";\n`;
+      importsString += `import { ${specifiersString} } from "${importSource}";\n`;
     }
 
     const pageFontAssets = fontAssetsByPage[page.id];
@@ -584,6 +576,7 @@ export const prebuild = async (options: {
       dataSources,
       classesMap: classes,
       metas: usedMetas,
+      tagsOverrides: framework.tags,
     });
 
     const projectMeta = siteData.build.pages.meta;
@@ -594,15 +587,29 @@ export const prebuild = async (options: {
 
     const pagePath = getPagePath(page.id, siteData.build.pages);
 
+    const breakpoints = siteData.build.breakpoints
+      .map(([_, value]) => ({
+        id: value.id,
+        minWidth: value.minWidth,
+        maxWidth: value.maxWidth,
+      }))
+      .sort(compareMedia);
+
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
       /* This is a auto generated file for building the project */ \n
 
       import { Fragment, useState } from "react";
       import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${componentImports}
+      ${importsString}
+
+      export const projectId = "${siteData.build.projectId}";
+
+      export const lastPublished = "${new Date(siteData.build.createdAt).toISOString()}";
 
       export const siteName = ${JSON.stringify(projectMeta?.siteName)};
+
+      export const breakpoints = ${JSON.stringify(breakpoints)};
 
       export const favIconAsset: string | undefined =
         ${JSON.stringify(favIconAsset)};
@@ -670,8 +677,6 @@ export const prebuild = async (options: {
       })}
 
       ${generateRemixParams(page.path)}
-
-      export const projectId = "${siteData.build.projectId}";
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;

@@ -1,16 +1,16 @@
-import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
-import {
-  getClosestInstance,
-  getIndexWithinAncestorFromComponentProps,
-  ReactSdkContext,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
 import {
   Children,
   forwardRef,
   type ComponentPropsWithoutRef,
   useContext,
 } from "react";
+import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
+import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
+import {
+  getClosestInstance,
+  ReactSdkContext,
+  type Hook,
+} from "@webstudio-is/react-sdk/runtime";
 
 export const NavigationMenu = forwardRef<
   HTMLLIElement,
@@ -43,7 +43,7 @@ export const NavigationMenuItem = forwardRef<
   HTMLLIElement,
   Omit<ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Item>, "asChild">
 >(({ value, ...props }, ref) => {
-  const index = getIndexWithinAncestorFromComponentProps(props);
+  const index = getIndexWithinAncestorFromProps(props);
   return (
     <NavigationMenuPrimitive.Item ref={ref} value={value ?? index} {...props} />
   );

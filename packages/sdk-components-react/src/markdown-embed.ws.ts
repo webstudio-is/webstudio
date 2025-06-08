@@ -1,10 +1,13 @@
 import { MarkdownEmbedIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import { descendantComponent, type WsComponentMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/markdown-embed.props";
 
 export const meta: WsComponentMeta = {
-  type: "embed",
   icon: MarkdownEmbedIcon,
+  contentModel: {
+    category: "instance",
+    children: [descendantComponent],
+  },
   presetStyle: {
     div: [
       {
@@ -17,9 +20,7 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["class"],
   props: {
     ...props,
     code: {
@@ -29,5 +30,4 @@ export const propsMeta: WsComponentPropsMeta = {
       type: "string",
     },
   },
-  initialProps: ["className"],
 };

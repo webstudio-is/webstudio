@@ -6,11 +6,13 @@ import {
   ROOT_INSTANCE_ID,
   type Page,
   rootComponent,
+  Pages,
 } from "@webstudio-is/sdk";
 import { $pages } from "./nano-states/pages";
 import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
+import type { InstanceSelector } from "./tree-utils";
 
-type Awareness = {
+export type Awareness = {
   pageId: Page["id"];
   instanceSelector?: Instance["id"][];
 };
@@ -99,7 +101,7 @@ export const getInstancePath = (
   instances: Instances,
   virtualInstances?: Instances,
   temporaryInstances?: Instances
-): InstancePath => {
+): undefined | InstancePath => {
   const instancePath: InstancePath = [];
   for (let index = 0; index < instanceSelector.length; index += 1) {
     const instanceId = instanceSelector[index];
@@ -115,6 +117,11 @@ export const getInstancePath = (
       instance,
       instanceSelector: instanceSelector.slice(index),
     });
+  }
+  // all consuming code expect at least one instance to be selected
+  // though it is possible to get empty array when undo created page
+  if (instancePath.length === 0) {
+    return undefined;
   }
   return instancePath;
 };
@@ -171,10 +178,62 @@ export const selectInstance = (
   instanceSelector: undefined | Instance["id"][]
 ) => {
   const awareness = $awareness.get();
-  if (awareness) {
+  if (
+    awareness &&
+    // prevent triggering select across the builder when selector is the same
+    // useful when click and focus events have to select instance
+    awareness.instanceSelector?.join() !== instanceSelector?.join()
+  ) {
     $awareness.set({
       pageId: awareness.pageId,
       instanceSelector,
     });
   }
+};
+
+const findPageId = (pages: Pages, instanceSelector: InstanceSelector) => {
+  const rootInstanceId = instanceSelector.at(-1);
+  for (const page of [pages.homePage, ...pages.pages]) {
+    if (page.rootInstanceId === rootInstanceId) {
+      return page.id;
+    }
+  }
+  return pages.homePage.id;
+};
+
+const parentInstanceByIdCache = new WeakMap<
+  Instances,
+  Map<Instance["id"], Instance["id"]>
+>();
+
+/**
+ * traverse the tree up until body to build awareness
+ * when instance id is inside of slot last matching parent is used to further
+ */
+export const findAwarenessByInstanceId = (
+  pages: Pages,
+  instances: Instances,
+  startingInstanceId: Instance["id"]
+): Awareness => {
+  // recompute parent instances only when instances are changed
+  let parentInstanceById = parentInstanceByIdCache.get(instances);
+  if (parentInstanceById === undefined) {
+    parentInstanceById = new Map<Instance["id"], Instance["id"]>();
+    for (const instance of instances.values()) {
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          parentInstanceById.set(child.value, instance.id);
+        }
+      }
+    }
+    parentInstanceByIdCache.set(instances, parentInstanceById);
+  }
+  const instanceSelector = [];
+  let currentInstanceId: undefined | Instance["id"] = startingInstanceId;
+  while (currentInstanceId) {
+    instanceSelector.push(currentInstanceId);
+    currentInstanceId = parentInstanceById.get(currentInstanceId);
+  }
+  const pageId = findPageId(pages, instanceSelector);
+  return { pageId, instanceSelector };
 };

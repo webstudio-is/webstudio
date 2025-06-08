@@ -1,22 +1,22 @@
+import { nanoid } from "nanoid";
+import { url } from "css-tree";
 import type {
   Breakpoint,
   Instance,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
-import type { WfAsset, WfElementNode, WfNode, WfStyle } from "./schema";
-import { nanoid } from "nanoid";
-import { $styleSources } from "~/shared/nano-states";
+import { equalMedia, hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
   parseCss,
   pseudoElements,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
-import { equalMedia, hyphenateProperty } from "@webstudio-is/css-engine";
-import type { WfStylePresets } from "./style-presets-overrides";
+import { $styleSources } from "~/shared/nano-states";
 import { builderApi } from "~/shared/builder-api";
-import { url } from "css-tree";
 import { mapGroupBy } from "~/shared/shim";
+import type { WfStylePresets } from "./style-presets-overrides";
+import type { WfAsset, WfElementNode, WfNode, WfStyle } from "./schema";
 
 const { toast } = builderApi;
 
@@ -202,7 +202,7 @@ const addNodeStyles = ({
         state: style.state,
       });
       if (style.value.type === "invalid") {
-        const error = `Invalid style value: Local "${hyphenateProperty(style.property)}: ${style.value.value}"`;
+        const error = `Invalid style value: Local "${style.property}: ${style.value.value}"`;
         toast.error(error);
         console.error(error);
       }

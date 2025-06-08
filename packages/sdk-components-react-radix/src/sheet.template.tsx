@@ -89,7 +89,7 @@ export const meta: TemplateMeta = {
             flex-grow: 1;
           `}
         >
-          <$.Box ws:label="Navigation" tag="nav" role="navigation">
+          <$.Box ws:label="Navigation" ws:tag="nav">
             <$.Box
               ws:label="Sheet Header"
               ws:style={css`

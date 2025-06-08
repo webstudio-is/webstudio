@@ -123,7 +123,27 @@ export const restAssetsPath = () => {
   return `/rest/assets`;
 };
 
-export const restAssetsUploadPath = ({ name }: { name: string }) => {
+export const restAssetsUploadPath = ({
+  name,
+  width,
+  height,
+}: {
+  name: string;
+  width?: number | undefined;
+  height?: number | undefined;
+}) => {
+  const urlSearchParams = new URLSearchParams();
+  if (width !== undefined) {
+    urlSearchParams.set("width", String(width));
+  }
+  if (height !== undefined) {
+    urlSearchParams.set("height", String(height));
+  }
+
+  if (urlSearchParams.size > 0) {
+    return `/rest/assets/${name}?${urlSearchParams.toString()}`;
+  }
+
   return `/rest/assets/${name}`;
 };
 

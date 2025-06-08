@@ -746,6 +746,30 @@ export const AlignStartHorizontalIcon: IconComponent = forwardRef(
 );
 AlignStartHorizontalIcon.displayName = "AlignStartHorizontalIcon";
 
+export const AnimationGroupIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.5 8.3C6.3 7.7 7.8 8 9.3 11c.3-1.8 1.2-4.5 2.1-6M4.208 1.5H2.944A1.444 1.444 0 0 0 1.5 2.944v1.264m13 0V2.944A1.444 1.444 0 0 0 13.056 1.5h-1.264M14.5 13.056c0 .023 0 .046-.002.069M11.792 14.5h1.264a1.444 1.444 0 0 0 1.442-1.375m0 0v-1.333m-12.998 0v1.264A1.444 1.444 0 0 0 2.944 14.5h1.264m2.709-13h2.166m-2.166 13h2.166M1.5 6.917v2.166m13-2.166v2.166"
+        />
+      </svg>
+    );
+  }
+);
+AnimationGroupIcon.displayName = "AnimationGroupIcon";
+
 export const ArrowDownIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -1831,6 +1855,30 @@ export const CopyIcon: IconComponent = forwardRef(
 );
 CopyIcon.displayName = "CopyIcon";
 
+export const CropIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.167 1.5v9.333A1.333 1.333 0 0 0 5.5 12.167h9.333m-2.666 2.666V5.5a1.333 1.333 0 0 0-1.334-1.333H1.5"
+        />
+      </svg>
+    );
+  }
+);
+CropIcon.displayName = "CropIcon";
+
 export const DashedBorderIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -2254,6 +2302,7 @@ export const EyeOpenIcon: IconComponent = forwardRef(
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+          className="ws-eye-open-pupil"
         />
       </svg>
     );
@@ -3850,6 +3899,78 @@ export const RadioUncheckedIcon: IconComponent = forwardRef(
 );
 RadioUncheckedIcon.displayName = "RadioUncheckedIcon";
 
+export const RangeContain50Icon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M11 8.5v-1c0-.552-.597-1-1.333-1H6.333C5.597 6.5 5 6.948 5 7.5v1c0 .552.597 1 1.333 1h3.334c.736 0 1.333-.448 1.333-1ZM1.452 1.5h13M1.5 14.507h13"
+        />
+      </svg>
+    );
+  }
+);
+RangeContain50Icon.displayName = "RangeContain50Icon";
+
+export const RangeContainIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 14.507h13M11 11.5v-1c0-.552-.597-1-1.333-1H6.333C5.597 9.5 5 9.948 5 10.5v1c0 .552.597 1 1.333 1h3.334c.736 0 1.333-.448 1.333-1ZM1.452 1.5h13"
+        />
+      </svg>
+    );
+  }
+);
+RangeContainIcon.displayName = "RangeContainIcon";
+
+export const RangeCoverIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M11 13.5v-1c0-.552-.597-1-1.333-1H6.333c-.736 0-1.333.448-1.333 1v1c0 .552.597 1 1.333 1h3.334c.736 0 1.333-.448 1.333-1ZM1.5 9.5h13M1.452 1.5h13"
+        />
+      </svg>
+    );
+  }
+);
+RangeCoverIcon.displayName = "RangeCoverIcon";
+
 export const RefreshIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -3998,30 +4119,6 @@ export const ResourceIcon: IconComponent = forwardRef(
   }
 );
 ResourceIcon.displayName = "ResourceIcon";
-
-export const ScrollIcon: IconComponent = forwardRef(
-  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 16 16"
-        width={size}
-        height={size}
-        fill={fill}
-        {...props}
-        ref={forwardedRef}
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 4v4M6 6l2-2 2 2M8 12V8M10 10l-2 2-2-2M2 14V2M14.003 14V2"
-        />
-      </svg>
-    );
-  }
-);
-ScrollIcon.displayName = "ScrollIcon";
 
 export const SearchIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -4331,6 +4428,30 @@ export const SpinnerIcon: IconComponent = forwardRef(
 );
 SpinnerIcon.displayName = "SpinnerIcon";
 
+export const StaggerAnimationIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14.222 5H8.778A.778.778 0 0 0 8 5.778v5.444c0 .43.348.778.778.778h5.444c.43 0 .778-.348.778-.778V5.778A.778.778 0 0 0 14.222 5ZM5.444 6H1.556A.556.556 0 0 0 1 6.556v3.888c0 .307.249.556.556.556h3.888A.556.556 0 0 0 6 10.444V6.556A.556.556 0 0 0 5.444 6Z"
+        />
+      </svg>
+    );
+  }
+);
+StaggerAnimationIcon.displayName = "StaggerAnimationIcon";
+
 export const StopIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -4602,6 +4723,30 @@ export const TextAlignRightIcon: IconComponent = forwardRef(
   }
 );
 TextAlignRightIcon.displayName = "TextAlignRightIcon";
+
+export const TextAnimationIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M7.476 4.3 7.817 3l6.935 1.817-.34 1.3m-6.245 4.386 2.601.682m.517-7.276-1.817 6.935M2 9.938V9h5v.938M3.562 14h1.875M4.5 9v5"
+        />
+      </svg>
+    );
+  }
+);
+TextAnimationIcon.displayName = "TextAnimationIcon";
 
 export const TextCapitalizeIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {

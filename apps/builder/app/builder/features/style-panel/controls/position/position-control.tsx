@@ -1,17 +1,16 @@
 import {
   camelCaseProperty,
+  keywordValues,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
   TupleValue,
   TupleValueItem,
   type StyleValue,
-  type StyleProperty,
   type CssProperty,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { styleConfigByName } from "../../shared/configs";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   deleteProperty,
@@ -57,14 +56,13 @@ export const PositionControl = ({
   property,
   styleDecl,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   styleDecl: ComputedStyleDecl;
 }) => {
-  const { items } = styleConfigByName(property);
   const value = toTuple(styleDecl.cascadedValue);
-  const keywords = items.map((item) => ({
+  const keywords = (keywordValues[property] ?? []).map((value) => ({
     type: "keyword" as const,
-    value: item.name,
+    value,
   }));
 
   const setValue = setProperty(property);
@@ -114,8 +112,8 @@ export const PositionControl = ({
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
             value={value.value[0]}
-            setValue={setValueX}
-            deleteProperty={deleteProperty}
+            onUpdate={setValueX}
+            onDelete={(options) => deleteProperty(property, options)}
           />
           <PropertyInlineLabel
             label="Top"
@@ -127,8 +125,8 @@ export const PositionControl = ({
             styleSource={styleDecl.source.name}
             getOptions={() => keywords}
             value={value.value[1]}
-            setValue={setValueY}
-            deleteProperty={deleteProperty}
+            onUpdate={setValueY}
+            onDelete={(options) => deleteProperty(property, options)}
           />
         </Grid>
       </Flex>

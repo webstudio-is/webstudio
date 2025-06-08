@@ -6,9 +6,10 @@ import {
   type ComponentProps,
   useContext,
   type ContextType,
+  useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { VimeoContext } from "./vimeo";
+import { VideoContext, requestFullscreen } from "./shared/video";
 
 /**
  * Options for configuring the YouTube player parameters.
@@ -188,7 +189,10 @@ const getVideoId = (url?: string) => {
   }
 };
 
-const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
+const getVideoUrl = (
+  options: YouTubePlayerOptions & { enablejsapi: boolean },
+  videoUrlOrigin: string
+) => {
   const videoId = getVideoId(options.url);
   const url = new URL(videoUrlOrigin);
 
@@ -207,14 +211,21 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
     }
   }
 
-  const optionsKeys = Object.keys(options) as (keyof YouTubePlayerParameters)[];
+  const optionsKeys = Object.keys(options) as (
+    | keyof YouTubePlayerParameters
+    | "enablejsapi"
+  )[];
 
   const parameters: Record<string, string | undefined> = {};
+  parameters.autoplay = "1";
 
   for (const optionsKey of optionsKeys) {
+    if (options[optionsKey] === undefined) {
+      continue;
+    }
     switch (optionsKey) {
       case "autoplay":
-        parameters.autoplay = options.autoplay ? "1" : "0";
+        // parameters.autoplay = options.autoplay ? "1" : "0";
         // Mute video if autoplay is enabled and muted is not touched
         if (options.autoplay && options.muted === undefined) {
           parameters.mute = "1";
@@ -302,7 +313,9 @@ const getVideoUrl = (options: YouTubePlayerOptions, videoUrlOrigin: string) => {
       case "playlist":
         parameters.playlist = options.playlist;
         break;
-
+      case "enablejsapi":
+        parameters.enablejsapi = options.enablejsapi ? "1" : "0";
+        break;
       default:
         optionsKey satisfies never;
     }
@@ -362,7 +375,7 @@ const EmptyState = () => {
 
 type PlayerProps = Pick<
   YouTubePlayerOptions,
-  "loading" | "autoplay" | "showPreview"
+  "loading" | "autoplay" | "showPreview" | "inline"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -380,12 +393,14 @@ const Player = ({
   videoUrl,
   previewImageUrl,
   autoplay,
+  inline,
   renderer,
   showPreview,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
+  const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (autoplay && renderer !== "canvas" && status === "initial") {
@@ -417,6 +432,7 @@ const Player = ({
 
   return (
     <iframe
+      ref={ref}
       title={title}
       src={videoUrl}
       loading={loading}
@@ -433,6 +449,9 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
+        if (!inline && !autoplay && ref.current) {
+          requestFullscreen(ref.current);
+        }
       }}
     />
   );
@@ -461,8 +480,14 @@ export const YouTube = forwardRef<Ref, Props>(
       loading = "lazy",
       autoplay,
       showPreview,
+      showAnnotations,
+      showCaptions,
+      showControls,
+      allowFullscreen,
+      keyboard,
       children,
       privacyEnhancedMode,
+      inline = false,
       ...rest
     },
     ref
@@ -475,17 +500,25 @@ export const YouTube = forwardRef<Ref, Props>(
       (privacyEnhancedMode ?? true)
         ? PLAYER_PRIVACY_ENHANVED_MODE_CDN
         : PLAYER_ORIGINAL_CDN;
+
     const videoUrl = getVideoUrl(
       {
         ...rest,
+        inline,
         url,
-        autoplay: true,
+        keyboard,
+        showAnnotations,
+        showCaptions,
+        allowFullscreen,
+        showControls,
+        autoplay,
+        enablejsapi: false,
       },
       videoUrlOrigin
     );
 
     return (
-      <VimeoContext.Provider
+      <VideoContext.Provider
         value={{
           status,
           previewImageUrl,
@@ -508,6 +541,7 @@ export const YouTube = forwardRef<Ref, Props>(
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}
                 loading={loading}
+                inline={inline}
                 showPreview={showPreview}
                 renderer={renderer}
                 status={status}
@@ -517,7 +551,7 @@ export const YouTube = forwardRef<Ref, Props>(
             </>
           )}
         </div>
-      </VimeoContext.Provider>
+      </VideoContext.Provider>
     );
   }
 );

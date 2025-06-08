@@ -20,6 +20,7 @@ import {
   type StyleDecl,
   Pages,
   initialBreakpoints,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
@@ -229,7 +230,8 @@ const createNewPageInstances = (): Build["instances"] => {
       {
         type: "instance",
         id: instanceId,
-        component: "Body",
+        component: elementComponent,
+        tag: "body",
         children: [],
       },
     ],

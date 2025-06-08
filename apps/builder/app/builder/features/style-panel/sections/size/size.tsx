@@ -15,10 +15,10 @@ import {
 import { PositionControl, SelectControl, TextControl } from "../../controls";
 import {
   EyeOpenIcon,
-  EyeClosedIcon,
-  ScrollIcon,
   AutoScrollIcon,
   EllipsesIcon,
+  CropIcon,
+  EyeClosedIcon,
 } from "@webstudio-is/icons";
 import { StyleSection } from "../../shared/style-section";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
@@ -119,27 +119,22 @@ export const Section = () => {
           items={[
             {
               child: <EyeOpenIcon />,
-              description:
-                "Content is fully visible and extends beyond the container if it exceeds its size.",
+              description: propertyDescriptions["overflowX:visible"],
               value: "visible",
             },
             {
+              child: <CropIcon />,
+              description: propertyDescriptions["overflowX:clip"],
+              value: "clip",
+            },
+            {
               child: <EyeClosedIcon />,
-              description:
-                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+              description: propertyDescriptions["overflowX:hidden"],
               value: "hidden",
             },
             {
-              child: <ScrollIcon />,
-              description:
-                "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
-              value: "scroll",
-            },
-
-            {
               child: <AutoScrollIcon />,
-              description:
-                "Scrollbars are added to the container only when necessary, based on the content size.",
+              description: propertyDescriptions["overflowX:auto"],
               value: "auto",
             },
           ]}

@@ -1,3 +1,4 @@
+import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
@@ -27,8 +28,10 @@ import {
   portalComponent,
   collectionComponent,
   Prop,
+  Props,
+  elementComponent,
+  tags,
 } from "@webstudio-is/sdk";
-import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   $props,
   $styles,
@@ -38,43 +41,45 @@ import {
   $registeredComponentMetas,
   $dataSources,
   $assets,
-  $project,
   $breakpoints,
   $pages,
   $resources,
   $registeredTemplates,
+  $project,
 } from "./nano-states";
 import {
   type DroppableTarget,
   type InstanceSelector,
   findLocalStyleSourcesWithinInstances,
-  getAncestorInstanceSelector,
   getReparentDropTargetMutable,
   getInstanceOrCreateFragmentIfNecessary,
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
-import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import {
   $awareness,
+  $selectedInstancePath,
   $selectedPage,
   getInstancePath,
   selectInstance,
   type InstancePath,
 } from "./awareness";
-import {
-  findClosestNonTextualContainer,
-  findClosestInstanceMatchingFragment,
-} from "./matcher";
+import { findClosestInstanceMatchingFragment } from "./matcher";
 import {
   findAvailableVariables,
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
-import { current, isDraft } from "immer";
+import {
+  findClosestNonTextualContainer,
+  isRichTextTree,
+  isTreeSatisfyingContentModel,
+} from "./content-model";
+import type { Project } from "@webstudio-is/project";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -160,121 +165,49 @@ export const getWebstudioData = (): WebstudioData => {
   };
 };
 
-const getLabelFromComponentName = (component: Instance["component"]) => {
-  if (component.includes(":")) {
-    // strip namespace
-    const [_namespace, baseName] = component.split(":");
-    component = baseName;
-  }
-  return humanizeString(component);
-};
-
-export const getInstanceLabel = (
-  instance: { component: string; label?: string },
-  meta: { label?: string }
-) => {
-  return (
-    instance.label ||
-    meta.label ||
-    getLabelFromComponentName(instance.component)
-  );
-};
-
-const isTextEditingInstance = (
-  instance: Instance,
-  instances: Instances,
-  metas: Map<string, WsComponentMeta>
-) => {
-  // when start editing empty body all text content
-  // including style and scripts appear in editor
-  // assume body is root and stop checking further
-  if (instance.component === "Body") {
-    return false;
-  }
-
-  const meta = metas.get(instance.component);
-
-  if (meta === undefined) {
-    return false;
-  }
-
-  if (meta.type !== "container") {
-    return false;
-  }
-  // only container with rich-text-child children and text can be edited
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      const childInstance = instances.get(child.value);
-      if (childInstance === undefined) {
-        return;
-      }
-      const childMeta = metas.get(childInstance.component);
-      if (childMeta?.type !== "rich-text-child") {
-        return;
-      }
-    }
-  }
-
-  return true;
-};
-
-export const findAllEditableInstanceSelector = (
-  currentPath: InstanceSelector,
-  instances: Map<string, Instance>,
-  metas: Map<string, WsComponentMeta>,
-  results: InstanceSelector[]
-) => {
-  const instanceId = currentPath[0];
+export const findAllEditableInstanceSelector = ({
+  instanceSelector,
+  instances,
+  props,
+  metas,
+  results,
+}: {
+  instanceSelector: InstanceSelector;
+  instances: Instances;
+  props: Props;
+  metas: Map<string, WsComponentMeta>;
+  results: InstanceSelector[];
+}) => {
+  const [instanceId] = instanceSelector;
 
   if (instanceId === undefined) {
     return;
   }
 
-  const instance = instances.get(instanceId);
-  if (instance === undefined) {
-    return;
-  }
-
   // Check if current instance is text editing instance
-  if (isTextEditingInstance(instance, instances, metas)) {
-    results.push(currentPath);
+  if (isRichTextTree({ instanceId, instances, props, metas })) {
+    results.push(instanceSelector);
     return;
   }
 
-  // If not, traverse its children
-  for (const child of instance.children) {
-    if (child.type === "id") {
-      findAllEditableInstanceSelector(
-        [child.value, ...currentPath],
-        instances,
-        metas,
-        results
-      );
-    }
-  }
-
-  return null;
-};
-
-export const findClosestEditableInstanceSelector = (
-  instanceSelector: InstanceSelector,
-  instances: Instances,
-  metas: Map<string, WsComponentMeta>
-) => {
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      return;
-    }
-
-    if (isTextEditingInstance(instance, instances, metas)) {
-      return getAncestorInstanceSelector(instanceSelector, instanceId);
+  const instance = instances.get(instanceId);
+  if (instance) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        findAllEditableInstanceSelector({
+          instanceSelector: [child.value, ...instanceSelector],
+          instances,
+          props,
+          metas,
+          results,
+        });
+      }
     }
   }
 };
 
 export const insertInstanceChildrenMutable = (
-  data: WebstudioData,
+  data: Omit<WebstudioData, "pages">,
   children: Instance["children"],
   insertTarget: Insertable
 ) => {
@@ -305,16 +238,102 @@ export const insertInstanceChildrenMutable = (
   }
 };
 
+export const insertWebstudioElementAt = (insertable?: Insertable) => {
+  const instances = $instances.get();
+  const props = $props.get();
+  const metas = $registeredComponentMetas.get();
+  // find closest container and try to match new element with it
+  if (insertable === undefined) {
+    const instancePath = $selectedInstancePath.get();
+    if (instancePath === undefined) {
+      return false;
+    }
+    const [{ instanceSelector }] = instancePath;
+    const containerSelector = findClosestNonTextualContainer({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+    });
+    const insertableIndex = instanceSelector.length - containerSelector.length;
+    if (insertableIndex === 0) {
+      insertable = {
+        parentSelector: containerSelector,
+        position: "end",
+      };
+    } else {
+      const containerInstance = instances.get(containerSelector[0]);
+      if (containerInstance === undefined) {
+        return false;
+      }
+      const lastChildInstanceId = instanceSelector[insertableIndex - 1];
+      const lastChildPosition = containerInstance.children.findIndex(
+        (child) => child.type === "id" && child.value === lastChildInstanceId
+      );
+      insertable = {
+        parentSelector: containerSelector,
+        position: lastChildPosition + 1,
+      };
+    }
+  }
+  // create element and find matching tag
+  const element: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: elementComponent,
+    children: [],
+  };
+  const newInstances = new Map(instances);
+  newInstances.set(element.id, element);
+  let matchingTag: undefined | string;
+  for (const tag of tags) {
+    element.tag = tag;
+    const isSatisfying = isTreeSatisfyingContentModel({
+      instances: newInstances,
+      props,
+      metas,
+      instanceSelector: [element.id, ...insertable.parentSelector],
+    });
+    if (isSatisfying) {
+      matchingTag = tag;
+      break;
+    }
+  }
+  if (matchingTag === undefined) {
+    return false;
+  }
+  // insert element
+  updateWebstudioData((data) => {
+    data.instances.set(element.id, element);
+    const children: Instance["children"] = [{ type: "id", value: element.id }];
+    insertInstanceChildrenMutable(data, children, insertable);
+  });
+  selectInstance([element.id, ...insertable.parentSelector]);
+  return true;
+};
+
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
-  insertable: Insertable
-) => {
+  insertable?: Insertable
+): boolean => {
+  // cannot insert empty fragment
+  if (fragment.children.length === 0) {
+    return false;
+  }
+  const project = $project.get();
+  insertable = findClosestInsertable(fragment, insertable) ?? insertable;
+  if (project === undefined || insertable === undefined) {
+    return false;
+  }
   let newInstanceSelector: undefined | InstanceSelector;
   updateWebstudioData((data) => {
     const instancePath = getInstancePath(
       insertable.parentSelector,
       data.instances
     );
+    if (instancePath === undefined) {
+      return;
+    }
     const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,
@@ -322,6 +341,7 @@ export const insertWebstudioFragmentAt = (
         ...data,
         startingInstanceId: instancePath[0].instance.id,
       }),
+      projectId: project.id,
     });
     const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -359,6 +379,7 @@ export const insertWebstudioFragmentAt = (
   if (newInstanceSelector) {
     selectInstance(newInstanceSelector);
   }
+  return true;
 };
 
 export const getComponentTemplateData = (
@@ -369,71 +390,142 @@ export const getComponentTemplateData = (
   if (templateMeta) {
     return templateMeta.template;
   }
-  const metas = $registeredComponentMetas.get();
-  const componentMeta = metas.get(componentOrTemplate);
-  // when template not specified fallback to template with the component
-  const template = componentMeta?.template ?? [
-    {
-      type: "instance",
-      component: componentOrTemplate,
-      children: [],
-    },
-  ];
-  return generateDataFromEmbedTemplate(template, metas);
+  const newInstance: Instance = {
+    id: nanoid(),
+    type: "instance",
+    component: componentOrTemplate,
+    children: [],
+  };
+  return {
+    children: [{ type: "id", value: newInstance.id }],
+    instances: [newInstance],
+    props: [],
+    dataSources: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    breakpoints: [],
+    assets: [],
+    resources: [],
+  };
+};
+
+export const reparentInstanceMutable = (
+  data: Omit<WebstudioData, "pages">,
+  sourceInstanceSelector: InstanceSelector,
+  dropTarget: DroppableTarget
+) => {
+  const project = $project.get();
+  if (project === undefined) {
+    return;
+  }
+  const [rootInstanceId] = sourceInstanceSelector;
+  // delect is target is one of own descendants
+  // prevent reparenting to avoid infinite loop
+  const instanceDescendants = findTreeInstanceIds(
+    data.instances,
+    rootInstanceId
+  );
+  for (const instanceId of instanceDescendants) {
+    if (dropTarget.parentSelector.includes(instanceId)) {
+      return;
+    }
+  }
+  // try to use slot fragment as target instead of slot itself
+  const parentInstance = data.instances.get(dropTarget.parentSelector[0]);
+  if (
+    parentInstance?.component === portalComponent &&
+    parentInstance.children.length > 0 &&
+    parentInstance.children[0].type === "id"
+  ) {
+    const fragmentId = parentInstance.children[0].value;
+    dropTarget = {
+      parentSelector: [fragmentId, ...dropTarget.parentSelector],
+      position: dropTarget.position,
+    };
+  }
+  // move within same parent
+  if (sourceInstanceSelector[1] === dropTarget.parentSelector[0]) {
+    const [parentId] = dropTarget.parentSelector;
+    const parent = data.instances.get(parentId);
+    if (parent === undefined) {
+      return;
+    }
+    const prevPosition = parent.children.findIndex(
+      (child) => child.type === "id" && child.value === rootInstanceId
+    );
+    const child = parent.children[prevPosition];
+    parent?.children.splice(prevPosition, 1);
+    if (dropTarget.position === "end") {
+      parent?.children.push(child);
+    } else {
+      // when parent is the same, we need to adjust the position
+      // to account for the removal of the instance.
+      let nextPosition = dropTarget.position;
+      if (prevPosition < nextPosition) {
+        nextPosition -= 1;
+      }
+      parent?.children.splice(nextPosition, 0, child);
+    }
+    return sourceInstanceSelector;
+  }
+  // move into another parent
+  const fragment = extractWebstudioFragment(data, rootInstanceId);
+  deleteInstanceMutable(
+    data,
+    getInstancePath(sourceInstanceSelector, data.instances)
+  );
+  // prepare drop target after deleting instance to recreate new slot fragment
+  dropTarget =
+    getReparentDropTargetMutable(
+      data.instances,
+      data.props,
+      $registeredComponentMetas.get(),
+      dropTarget
+    ) ?? dropTarget;
+  const { newInstanceIds } = insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: findAvailableVariables({
+      ...data,
+      startingInstanceId: dropTarget.parentSelector[0],
+    }),
+    projectId: project.id,
+  });
+  const [newParentId] = dropTarget.parentSelector;
+  const newRootInstanceId =
+    newInstanceIds.get(rootInstanceId) ?? rootInstanceId;
+  const newParent = data.instances.get(newParentId);
+  const newChild = { type: "id" as const, value: newRootInstanceId };
+  if (dropTarget.position === "end") {
+    newParent?.children.push(newChild);
+  } else {
+    newParent?.children.splice(dropTarget.position, 0, newChild);
+  }
+  return [newRootInstanceId, ...dropTarget.parentSelector];
 };
 
 export const reparentInstance = (
   sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  const [rootInstanceId] = sourceInstanceSelector;
   updateWebstudioData((data) => {
-    const fragment = extractWebstudioFragment(data, rootInstanceId);
-    const reparentDropTarget = getReparentDropTargetMutable(
-      data.instances,
-      data.props,
-      $registeredComponentMetas.get(),
+    const newSelector = reparentInstanceMutable(
+      data,
       sourceInstanceSelector,
       dropTarget
     );
-    if (reparentDropTarget === undefined) {
-      return;
-    }
-    deleteInstanceMutable(
-      data,
-      getInstancePath(sourceInstanceSelector, data.instances)
-    );
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
-      fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: reparentDropTarget.parentSelector[0],
-      }),
-    });
-    const newRootInstanceId = newInstanceIds.get(rootInstanceId);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const [newParentId] = reparentDropTarget.parentSelector;
-    const newParent = data.instances.get(newParentId);
-    if (newParent === undefined) {
-      return;
-    }
-    const newChild = { type: "id" as const, value: newRootInstanceId };
-    if (reparentDropTarget.position === "end") {
-      newParent.children.push(newChild);
-    } else {
-      newParent.children.splice(reparentDropTarget.position, 0, newChild);
-    }
-    selectInstance([newRootInstanceId, ...reparentDropTarget.parentSelector]);
+    selectInstance(newSelector);
   });
 };
 
 export const deleteInstanceMutable = (
   data: Omit<WebstudioData, "pages">,
-  instancePath: InstancePath
+  instancePath: undefined | InstancePath
 ) => {
+  if (instancePath === undefined) {
+    return false;
+  }
   const {
     instances,
     props,
@@ -543,6 +635,20 @@ const traverseStyleValue = (
   if (value.type === "tuple" || value.type === "layers") {
     for (const item of value.value) {
       traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  if (value.type === "shadow") {
+    traverseStyleValue(value.offsetX, callback);
+    traverseStyleValue(value.offsetY, callback);
+    if (value.blur) {
+      traverseStyleValue(value.blur, callback);
+    }
+    if (value.spread) {
+      traverseStyleValue(value.spread, callback);
+    }
+    if (value.color) {
+      traverseStyleValue(value.color, callback);
     }
     return;
   }
@@ -775,10 +881,12 @@ export const insertWebstudioFragmentCopy = ({
   data,
   fragment,
   availableVariables,
+  projectId,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
+  projectId: Project["id"];
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -786,10 +894,6 @@ export const insertWebstudioFragmentCopy = ({
     newInstanceIds,
     newDataSourceIds,
   };
-  const projectId = $project.get()?.id;
-  if (projectId === undefined) {
-    return newDataIds;
-  }
 
   const fragmentInstances: Instances = new Map();
   const portalContentRootIds = new Set<Instance["id"]>();
@@ -1186,7 +1290,8 @@ export type Insertable = {
 };
 
 export const findClosestInsertable = (
-  fragment: WebstudioFragment
+  fragment: WebstudioFragment,
+  from?: Insertable
 ): undefined | Insertable => {
   const selectedPage = $selectedPage.get();
   const awareness = $awareness.get();
@@ -1194,42 +1299,49 @@ export const findClosestInsertable = (
     return;
   }
   // paste to the page root if nothing is selected
-  const instanceSelector = awareness?.instanceSelector ?? [
-    selectedPage.rootInstanceId,
-  ];
+  const instanceSelector = from?.parentSelector ??
+    awareness?.instanceSelector ?? [selectedPage.rootInstanceId];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
     toast.error(`Cannot insert into Global Root`);
     return;
   }
   const metas = $registeredComponentMetas.get();
   const instances = $instances.get();
-  const closestContainerIndex = findClosestNonTextualContainer({
+  const props = $props.get();
+  const containerSelector = findClosestNonTextualContainer({
     metas,
+    props,
     instances,
     instanceSelector,
   });
+  const closestContainerIndex =
+    instanceSelector.length - containerSelector.length;
   if (closestContainerIndex === -1) {
     return;
   }
   let insertableIndex = findClosestInstanceMatchingFragment({
     metas,
     instances,
+    props,
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
-    onError: (message) => toast.error(message),
+    onError: (message) => {
+      const component = fragment.instances[0].component;
+      const label = getInstanceLabel({ component }, {});
+      toast.warn(message || `"${label}" has no place here`);
+    },
   });
   if (insertableIndex === -1) {
-    return;
+    // fallback to closest container to always insert something
+    // even when validation fails
+    insertableIndex = 0;
   }
 
   // adjust with container lookup
   insertableIndex = insertableIndex + closestContainerIndex;
   const parentSelector = instanceSelector.slice(insertableIndex);
   if (insertableIndex === 0) {
-    return {
-      parentSelector,
-      position: "end",
-    };
+    return from ?? { parentSelector, position: "end" };
   }
   const instance = instances.get(instanceSelector[insertableIndex]);
   if (instance === undefined) {

@@ -127,7 +127,7 @@ export const TextArea = forwardRef(
   ) => {
     const [textValue, setTextValue] = useControllableState({
       prop: value,
-      defaultProp: defaultValue,
+      defaultProp: defaultValue ?? "",
       onChange,
     });
 

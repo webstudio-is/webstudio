@@ -13,7 +13,7 @@
     "@prisma/client": "^5.12.1",
     "@webstudio-is/tsconfig": "workspace:*",
     "prisma": "5.12.1",
-    "zod": "^3.22.4"
+    "zod": "^3.24.2"
   },
   "exports": {
     "types": "./lib/prisma.d.ts",
@@ -23,7 +23,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "dependencies": {
-    "nanoid": "^5.0.9",
+    "nanoid": "^5.1.5",
     "tinyexec": "^0.3.2",
     "umzug": "^3.2.1"
   },

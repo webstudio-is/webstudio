@@ -10,6 +10,7 @@ import {
   Pages,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
+  collectionComponent,
   decodeDataVariableId,
   encodeDataVariableId,
   findTreeInstanceIds,
@@ -208,10 +209,12 @@ const getParentInstanceById = (instances: Instances) => {
 const findMaskedVariablesByInstanceId = ({
   startingInstanceId,
   parentInstanceById,
+  instances,
   dataSources,
 }: {
   startingInstanceId: Instance["id"];
   parentInstanceById: Map<Instance["id"], Instance["id"]>;
+  instances: Instances;
   dataSources: DataSources;
 }) => {
   let currentId: undefined | string = startingInstanceId;
@@ -228,8 +231,19 @@ const findMaskedVariablesByInstanceId = ({
   // start from the root to descendant
   // so child variables override parent variables
   for (const instanceId of instanceIdsPath.reverse()) {
+    const instance = instances.get(instanceId);
     for (const dataSource of dataSources.values()) {
       if (dataSource.scopeInstanceId === instanceId) {
+        // when current instance is collection
+        // ignore its collection item parameter
+        // when rebind variables
+        if (
+          instanceId === startingInstanceId &&
+          instance?.component === collectionComponent &&
+          dataSource.type === "parameter"
+        ) {
+          continue;
+        }
         maskedVariables.set(dataSource.name, dataSource.id);
       }
     }
@@ -249,6 +263,7 @@ export const findAvailableVariables = ({
   const maskedVariables = findMaskedVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(instances),
+    instances,
     dataSources,
   });
   const availableVariables: DataSource[] = [];
@@ -504,6 +519,7 @@ export const rebindTreeVariablesMutable = ({
       const maskedVariables = findMaskedVariablesByInstanceId({
         startingInstanceId: instanceId,
         parentInstanceById,
+        instances,
         dataSources,
       });
       let maskedIdByName = new Map(maskedVariables);
@@ -544,6 +560,7 @@ export const deleteVariableMutable = (
   const maskedIdByName = findMaskedVariablesByInstanceId({
     startingInstanceId,
     parentInstanceById: getParentInstanceById(data.instances),
+    instances: data.instances,
     dataSources: data.dataSources,
   });
   // unset deleted variable in expressions

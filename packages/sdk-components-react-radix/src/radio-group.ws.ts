@@ -1,10 +1,7 @@
 import { ItemIcon, RadioGroupIcon, TriggerIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
   propsRadioGroup,
@@ -13,72 +10,45 @@ import {
 } from "./__generated__/radio-group.props";
 
 export const metaRadioGroup: WsComponentMeta = {
-  type: "container",
-  constraints: {
-    relation: "descendant",
-    component: { $eq: "RadioGroupItem" },
-  },
   icon: RadioGroupIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.RadioGroupItem],
+  },
   states: [
-    ...defaultStates,
-    {
-      label: "Checked",
-      selector: "[data-state=checked]",
-      category: "component-states",
-    },
-    {
-      label: "Unchecked",
-      selector: "[data-state=unchecked]",
-      category: "component-states",
-    },
+    { label: "Checked", selector: "[data-state=checked]" },
+    { label: "Unchecked", selector: "[data-state=unchecked]" },
   ],
   presetStyle: {
     div,
   },
+  initialProps: ["id", "class", "name", "value", "required"],
+  props: propsRadioGroup,
 };
 
 export const metaRadioGroupItem: WsComponentMeta = {
-  type: "container",
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "RadioGroup" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "RadioGroupIndicator" },
-    },
-  ],
   icon: ItemIcon,
-  states: defaultStates,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.RadioGroupIndicator],
+  },
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  initialProps: ["value"],
+  props: propsRadioGroupItem,
 };
 
 export const metaRadioGroupIndicator: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "RadioGroupItem" },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
-  states: defaultStates,
   presetStyle: {
     span,
   },
-};
-
-export const propsMetaRadioGroup: WsComponentPropsMeta = {
-  props: propsRadioGroup,
-  initialProps: ["id", "className", "name", "value", "required"],
-};
-
-export const propsMetaRadioGroupItem: WsComponentPropsMeta = {
-  props: propsRadioGroupItem,
-  initialProps: ["value"],
-};
-
-export const propsMetaRadioGroupIndicator: WsComponentPropsMeta = {
   props: propsRadioGroupIndicator,
 };

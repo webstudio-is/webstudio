@@ -13,20 +13,21 @@ import {
   type CssProperty,
   type CssStyleMap,
 } from "@webstudio-is/css-engine";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 export const copyAttribute = "data-declaration";
 
 export const CssEditorContextMenu = ({
   children,
-  properties,
-  styleMap,
+  foundProperties,
+  declarations,
   onPaste,
   onDeleteProperty,
   onDeleteAllDeclarations,
 }: {
   children: ReactNode;
-  properties: Array<CssProperty>;
-  styleMap: CssStyleMap;
+  foundProperties: Array<CssProperty>;
+  declarations: Array<ComputedStyleDecl>;
   onPaste: (cssText: string) => void;
   onDeleteProperty: (property: CssProperty) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
@@ -42,10 +43,11 @@ export const CssEditorContextMenu = ({
     // We want to only copy properties that are currently in front of the user.
     // That includes search or any future filters.
     const currentStyleMap: CssStyleMap = new Map();
-    for (const [property, value] of styleMap) {
-      const isEmpty = toValue(value) === "";
-      if (properties.includes(property) && isEmpty === false) {
-        currentStyleMap.set(property, value);
+
+    for (const styleDecl of declarations) {
+      const isEmpty = toValue(styleDecl.cascadedValue) === "";
+      if (foundProperties.includes(styleDecl.property) && isEmpty === false) {
+        currentStyleMap.set(styleDecl.property, styleDecl.cascadedValue);
       }
     }
     return currentStyleMap;
@@ -63,20 +65,26 @@ export const CssEditorContextMenu = ({
     if (property === undefined) {
       return;
     }
-    const value = styleMap.get(property);
+    const styleDecl = declarations.find(
+      (styleDecl) => styleDecl.property === property
+    );
 
-    if (value === undefined) {
+    if (styleDecl === undefined) {
       return;
     }
 
-    const css = generateStyleMap(new Map([[property, value]]));
+    const css = generateStyleMap(
+      new Map([[styleDecl.property, styleDecl.cascadedValue]])
+    );
     navigator.clipboard.writeText(css);
   };
 
   const handleDelete = () => {
     const property = lastClickedProperty.current as CssProperty;
-    const value = styleMap.get(property);
-    if (value === undefined) {
+    const styleDecl = declarations.find(
+      (styleDecl) => styleDecl.property === property
+    );
+    if (styleDecl === undefined) {
       return;
     }
     onDeleteProperty(property);

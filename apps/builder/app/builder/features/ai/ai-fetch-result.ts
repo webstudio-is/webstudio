@@ -4,6 +4,7 @@ import {
   operations,
   handleAiRequest,
   commandDetect,
+  WsEmbedTemplate,
 } from "@webstudio-is/ai";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
@@ -13,7 +14,6 @@ import {
   componentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
-  type WsEmbedTemplate,
   Instance,
   createScope,
   findTreeInstanceIds,
@@ -285,6 +285,7 @@ const $jsx = computed(
 
     const jsx = generateJsxElement({
       scope,
+      metas,
       instance,
       props,
       dataSources,
@@ -292,6 +293,7 @@ const $jsx = computed(
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
+        metas,
         children: instance.children,
         instances,
         props,

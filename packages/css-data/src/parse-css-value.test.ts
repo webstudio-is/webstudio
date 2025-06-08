@@ -332,7 +332,7 @@ test("parse transition-timing-function property", () => {
     value: "ease, testing",
   });
   expect(
-    parseCssValue("transitionTimingFunction", "linear(0 0%, 1 100%)")
+    parseCssValue("transition-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({
     type: "layers",
     value: [{ type: "unparsed", value: "linear(0 0%,1 100%)" }],
@@ -377,7 +377,7 @@ test("parse unknown properties as unparsed", () => {
     }
   );
   expect(
-    parseCssValue("animationTimingFunction", "linear(0 0%, 1 100%)")
+    parseCssValue("animation-timing-function", "linear(0 0%, 1 100%)")
   ).toEqual({ type: "unparsed", value: "linear(0 0%, 1 100%)" });
 });
 
@@ -628,6 +628,13 @@ test("support custom properties var reference in custom property", () => {
   });
 });
 
+test("parse empty custom property as empty unparsed", () => {
+  expect(parseCssValue("--inset", "")).toEqual({
+    type: "unparsed",
+    value: "",
+  });
+});
+
 test("parse single var in repeated value without layers or tuples", () => {
   expect(parseCssValue("background-image", "var(--gradient)")).toEqual({
     type: "var",
@@ -654,22 +661,6 @@ test("parse multiple var in repeated value as layers and tuples", () => {
     value: [
       { type: "var", value: "noise-1" },
       { type: "var", value: "noise-2" },
-    ],
-  });
-});
-
-test("parse var in box-shadow", () => {
-  expect(parseCssValue("box-shadow", "var(--shadow)")).toEqual({
-    type: "var",
-    value: "shadow",
-  });
-  expect(
-    parseCssValue("box-shadow", "var(--shadow-1), var(--shadow-2)")
-  ).toEqual({
-    type: "layers",
-    value: [
-      { type: "var", value: "shadow-1" },
-      { type: "var", value: "shadow-2" },
     ],
   });
 });
@@ -701,13 +692,12 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "px", value: 1 },
-            { type: "unit", unit: "px", value: 1 },
-            { type: "unit", unit: "px", value: 2 },
-            { type: "keyword", value: "black" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "px", value: 1 },
+          offsetY: { type: "unit", unit: "px", value: 1 },
+          blur: { type: "unit", unit: "px", value: 2 },
+          color: { type: "keyword", value: "black" },
         },
       ],
     });
@@ -718,14 +708,12 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "keyword", value: "inset" },
-            { type: "unit", unit: "px", value: 10 },
-            { type: "unit", unit: "px", value: 10 },
-            { type: "unit", unit: "px", value: 5 },
-            { type: "keyword", value: "black" },
-          ],
+          type: "shadow",
+          position: "inset",
+          offsetX: { type: "unit", unit: "px", value: 10 },
+          offsetY: { type: "unit", unit: "px", value: 10 },
+          blur: { type: "unit", unit: "px", value: 5 },
+          color: { type: "keyword", value: "black" },
         },
       ],
     });
@@ -736,13 +724,11 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "keyword", value: "inset" },
-            { type: "unit", unit: "em", value: 5 },
-            { type: "unit", unit: "em", value: 1 },
-            { type: "keyword", value: "gold" },
-          ],
+          type: "shadow",
+          position: "inset",
+          offsetX: { type: "unit", unit: "em", value: 5 },
+          offsetY: { type: "unit", unit: "em", value: 1 },
+          color: { type: "keyword", value: "gold" },
         },
       ],
     });
@@ -753,12 +739,11 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "px", value: 60 },
-            { type: "unit", unit: "px", value: -16 },
-            { type: "keyword", value: "teal" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "px", value: 60 },
+          offsetY: { type: "unit", unit: "px", value: -16 },
+          color: { type: "keyword", value: "teal" },
         },
       ],
     });
@@ -774,22 +759,20 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "px", value: 60 },
-            { type: "unit", unit: "px", value: 80 },
-            { alpha: 0.6, b: 0, g: 0, r: 0, type: "rgb" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "number", value: 0 },
+          offsetY: { type: "unit", unit: "px", value: 60 },
+          blur: { type: "unit", unit: "px", value: 80 },
+          color: { alpha: 0.6, b: 0, g: 0, r: 0, type: "rgb" },
         },
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "px", value: 45 },
-            { type: "unit", unit: "px", value: 26 },
-            { alpha: 0.14, b: 0, g: 0, r: 0, type: "rgb" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "number", value: 0 },
+          offsetY: { type: "unit", unit: "px", value: 45 },
+          blur: { type: "unit", unit: "px", value: 26 },
+          color: { alpha: 0.14, b: 0, g: 0, r: 0, type: "rgb" },
         },
       ],
     });
@@ -809,33 +792,45 @@ describe("parse shadows", () => {
       type: "layers",
       value: [
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "px", value: 5 },
-            { alpha: 0.2, b: 0, g: 0, r: 0, type: "rgb" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "number", value: 0 },
+          offsetY: { type: "unit", unit: "number", value: 0 },
+          blur: { type: "unit", unit: "px", value: 5 },
+          color: { alpha: 0.2, b: 0, g: 0, r: 0, type: "rgb" },
         },
         {
-          type: "tuple",
-          value: [
-            { type: "keyword", value: "inset" },
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "px", value: 10 },
-            { alpha: 0.3, b: 0, g: 0, r: 0, type: "rgb" },
-          ],
+          type: "shadow",
+          position: "inset",
+          offsetX: { type: "unit", unit: "number", value: 0 },
+          offsetY: { type: "unit", unit: "number", value: 0 },
+          blur: { type: "unit", unit: "px", value: 10 },
+          color: { alpha: 0.3, b: 0, g: 0, r: 0, type: "rgb" },
         },
         {
-          type: "tuple",
-          value: [
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "number", value: 0 },
-            { type: "unit", unit: "px", value: 15 },
-            { alpha: 0.4, b: 0, g: 0, r: 0, type: "rgb" },
-          ],
+          type: "shadow",
+          position: "outset",
+          offsetX: { type: "unit", unit: "number", value: 0 },
+          offsetY: { type: "unit", unit: "number", value: 0 },
+          blur: { type: "unit", unit: "px", value: 15 },
+          color: { alpha: 0.4, b: 0, g: 0, r: 0, type: "rgb" },
         },
+      ],
+    });
+  });
+
+  test("parse var in box-shadow", () => {
+    expect(parseCssValue("box-shadow", "var(--shadow)")).toEqual({
+      type: "var",
+      value: "shadow",
+    });
+    expect(
+      parseCssValue("box-shadow", "var(--shadow-1), var(--shadow-2)")
+    ).toEqual({
+      type: "layers",
+      value: [
+        { type: "var", value: "shadow-1" },
+        { type: "var", value: "shadow-2" },
       ],
     });
   });
@@ -865,13 +860,12 @@ describe("parse filters", () => {
           type: "function",
           name: "drop-shadow",
           args: {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 10 },
-              { type: "unit", unit: "px", value: 10 },
-              { type: "unit", unit: "px", value: 25 },
-              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
-            ],
+            type: "shadow",
+            position: "outset",
+            offsetX: { type: "unit", unit: "px", value: 10 },
+            offsetY: { type: "unit", unit: "px", value: 10 },
+            blur: { type: "unit", unit: "px", value: 25 },
+            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
           },
         },
       ],
@@ -885,13 +879,27 @@ describe("parse filters", () => {
           type: "function",
           name: "drop-shadow",
           args: {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 10 },
-              { type: "unit", unit: "px", value: 10 },
-              { type: "unit", unit: "px", value: 25 },
-              { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
-            ],
+            type: "shadow",
+            position: "outset",
+            offsetX: { type: "unit", unit: "px", value: 10 },
+            offsetY: { type: "unit", unit: "px", value: 10 },
+            blur: { type: "unit", unit: "px", value: 25 },
+            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+          },
+        },
+      ],
+    });
+    expect(
+      parseCssValue("filter", "drop-shadow(10px 10px 25px var(--color))")
+    ).toEqual({
+      type: "tuple",
+      value: [
+        {
+          type: "function",
+          name: "drop-shadow",
+          args: {
+            type: "unparsed",
+            value: "10px 10px 25px var(--color)",
           },
         },
       ],
@@ -935,13 +943,12 @@ describe("parse filters", () => {
           type: "function",
           name: "drop-shadow",
           args: {
-            type: "tuple",
-            value: [
-              { type: "unit", unit: "px", value: 16 },
-              { type: "unit", unit: "px", value: 16 },
-              { type: "unit", unit: "px", value: 20 },
-              { type: "keyword", value: "blue" },
-            ],
+            type: "shadow",
+            position: "outset",
+            offsetX: { type: "unit", unit: "px", value: 16 },
+            offsetY: { type: "unit", unit: "px", value: 16 },
+            blur: { type: "unit", unit: "px", value: 20 },
+            color: { type: "keyword", value: "blue" },
           },
         },
         {

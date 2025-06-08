@@ -112,7 +112,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
   test("parses transform-origin and returns the individual properties from the value", () => {
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "center") as TupleValue
+        parseCssValue("transform-origin", "center") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "center" },
@@ -122,7 +122,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "top") as TupleValue
+        parseCssValue("transform-origin", "top") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "center" },
@@ -132,7 +132,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "right") as TupleValue
+        parseCssValue("transform-origin", "right") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "right" },
@@ -142,7 +142,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "45px") as TupleValue
+        parseCssValue("transform-origin", "45px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 45 },
@@ -152,7 +152,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "20px 40px") as TupleValue
+        parseCssValue("transform-origin", "20px 40px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 20 },
@@ -162,7 +162,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "10px 20px 30px") as TupleValue
+        parseCssValue("transform-origin", "10px 20px 30px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", unit: "px", value: 10 },
@@ -172,7 +172,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "left top 30px") as TupleValue
+        parseCssValue("transform-origin", "left top 30px") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "left" },
@@ -182,7 +182,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "bottom right 60px") as TupleValue
+        parseCssValue("transform-origin", "bottom right 60px") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "right" },
@@ -192,7 +192,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "left 50% 60px") as TupleValue
+        parseCssValue("transform-origin", "left 50% 60px") as TupleValue
       )
     ).toEqual({
       x: { type: "keyword", value: "left" },
@@ -202,7 +202,7 @@ describe("extractTransformOrPerspectiveOriginValues", () => {
 
     expect(
       extractTransformOrPerspectiveOriginValues(
-        parseCssValue("transformOrigin", "50% bottom 60px") as TupleValue
+        parseCssValue("transform-origin", "50% bottom 60px") as TupleValue
       )
     ).toEqual({
       x: { type: "unit", value: 50, unit: "%" },

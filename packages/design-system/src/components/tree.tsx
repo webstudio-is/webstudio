@@ -350,7 +350,7 @@ export const TreeSortableItem = <Data,>({
           window.clearTimeout(expandTimeout.current);
           expandTimeout.current = window.setTimeout(() => {
             handleExpand.current(true);
-          }, 600);
+          }, 1000);
           setIsDropOver(true);
         },
         onDragLeave: (args) => {
@@ -408,6 +408,7 @@ export const TreeNode = ({
   isSelected,
   isHighlighted,
   isExpanded,
+  isActionVisible,
   onExpand,
   nodeProps,
   buttonProps,
@@ -419,10 +420,11 @@ export const TreeNode = ({
   isSelected: boolean;
   isHighlighted?: boolean;
   isExpanded?: undefined | boolean;
+  isActionVisible?: boolean;
   onExpand?: (expanded: boolean, all: boolean) => void;
   nodeProps?: ComponentPropsWithoutRef<"div">;
   buttonProps: ComponentPropsWithoutRef<"button">;
-  action?: ReactNode;
+  action: ReactNode;
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -463,7 +465,10 @@ export const TreeNode = ({
   return (
     <NodeContainer
       {...nodeProps}
-      css={{ [treeNodeLevel]: level }}
+      css={{
+        [treeNodeLevel]: level,
+        ...(isActionVisible && { [treeActionOpacity]: 1 }),
+      }}
       onKeyDown={handleKeydown}
     >
       <DepthBars />
@@ -489,7 +494,7 @@ export const TreeNode = ({
           )}
         </ExpandButton>
       )}
-      {action && <ActionContainer data-tree-action>{action}</ActionContainer>}
+      <ActionContainer data-tree-action>{action}</ActionContainer>
     </NodeContainer>
   );
 };

@@ -34,9 +34,7 @@ export const ToggleControl = ({
   const isAdvanced =
     computedStyleDecl.source.name !== "default" && currentItem === undefined;
   const description =
-    declarationDescriptions[
-      `${camelCaseProperty(property)}:${currentValue}` as keyof typeof declarationDescriptions
-    ];
+    declarationDescriptions[`${camelCaseProperty(property)}:${currentValue}`];
 
   return (
     <PropertyValueTooltip

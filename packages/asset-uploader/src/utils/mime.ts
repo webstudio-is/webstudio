@@ -131,6 +131,10 @@ export const doesAssetMatchMimePatterns = (
   return patterns.has(mime) || patterns.has(`${getCategory(mime)}/*`);
 };
 
+export const getMimeByExtension = (ext: string): string => {
+  return extensionToMime.get(ext) ?? "unknown";
+};
+
 // Didn't delete because we may need this later
 // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 // const extentionToMime: [

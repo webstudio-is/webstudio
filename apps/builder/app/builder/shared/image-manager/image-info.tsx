@@ -1,24 +1,25 @@
 import { useStore } from "@nanostores/react";
-import prettyBytes from "pretty-bytes";
+import { getMimeByExtension } from "@webstudio-is/asset-uploader";
 import {
-  theme,
   Box,
+  Button,
   Flex,
   Grid,
   Text,
-  Button,
+  theme,
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
-  CloudIcon,
   AspectRatioIcon,
+  CloudIcon,
   DimensionsIcon,
+  PageIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
 import type { Asset } from "@webstudio-is/sdk";
-import { Filename } from "./filename";
-import { getFormattedAspectRatio } from "./utils";
+import prettyBytes from "pretty-bytes";
 import { $authPermit } from "~/shared/nano-states";
+import { getFormattedAspectRatio } from "./utils";
 
 type ImageInfoProps = {
   asset: Asset;
@@ -27,6 +28,10 @@ type ImageInfoProps = {
 
 export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
+
+  const parts = name.split(".");
+  const extension = "." + parts.pop();
+
   const authPermit = useStore($authPermit);
 
   const isDeleteDisabled = authPermit === "view";
@@ -36,35 +41,44 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
 
   return (
     <>
+      <Box css={{ width: 250, padding: theme.panel.padding }}>
+        <Text truncate>{name}</Text>
+      </Box>
       <Box css={{ padding: theme.panel.padding }}>
-        <Grid columns={2} align="center" gap={2}>
-          <Box css={{ width: 100 }}>
-            <Filename variant="labelsSentenceCase">{name}</Filename>
-          </Box>
+        <Grid
+          columns={2}
+          css={{ gridTemplateColumns: "auto auto" }}
+          align="center"
+          gap={3}
+        >
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <CloudIcon />
             <Text variant="labelsSentenceCase">{prettyBytes(size)}</Text>
           </Flex>
+          <Flex align="center" css={{ gap: theme.spacing[3] }}>
+            <PageIcon />
+            <Text variant="labelsSentenceCase">
+              {getMimeByExtension(extension)}
+            </Text>
+          </Flex>
+          {"width" in meta && "height" in meta ? (
+            <>
+              <Flex align="center" gap={1}>
+                <DimensionsIcon />
+                <Text variant="labelsSentenceCase">
+                  {meta.width} x {meta.height}
+                </Text>
+              </Flex>
+              <Flex align="center" gap={1}>
+                <AspectRatioIcon />
+                <Text variant="labelsSentenceCase">
+                  {getFormattedAspectRatio(meta)}
+                </Text>
+              </Flex>
+            </>
+          ) : null}
         </Grid>
       </Box>
-      {"width" in meta && "height" in meta ? (
-        <Box css={{ padding: theme.panel.padding }}>
-          <Grid columns={2} gap={2} align="center">
-            <Flex align="center" gap={1}>
-              <DimensionsIcon />
-              <Text variant="labelsSentenceCase">
-                {meta.width} x {meta.height}
-              </Text>
-            </Flex>{" "}
-            <Flex align="center" gap={1}>
-              <AspectRatioIcon />
-              <Text variant="labelsSentenceCase">
-                {getFormattedAspectRatio(meta)}
-              </Text>
-            </Flex>
-          </Grid>
-        </Box>
-      ) : null}
       <Box css={{ padding: theme.panel.padding }}>
         <Tooltip side="bottom" content={tooltipContent}>
           <Button

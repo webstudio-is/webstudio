@@ -64,7 +64,7 @@ export const AutogrowTextArea = forwardRef(
     // use
     const [textValue, setTextValue] = useControllableState({
       prop: value,
-      defaultProp: defaultValue,
+      defaultProp: defaultValue ?? "",
       onChange,
     });
 

@@ -1,18 +1,22 @@
+import { shallowEqual } from "shallow-equal";
+import warnOnce from "warn-once";
 import type { Instance } from "@webstudio-is/sdk";
+import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
+import { propertiesData } from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
   $isResizingCanvas,
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
+  $selectedInstanceSizes,
   $selectedInstanceRenderState,
   $stylesIndex,
   $instances,
-  $selectedInstanceSelector,
   $propValuesByInstanceSelectorWithMemoryProps,
   $styles,
   $selectedInstanceStates,
   $styleSourceSelections,
+  type UnitSizes,
+  type PropertySizes,
 } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
@@ -23,15 +27,9 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
-import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
-import {
-  hasCollapsedMutationRecord,
-  setDataCollapsed,
-} from "~/canvas/collapsed";
-import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
+import { setDataCollapsed } from "~/canvas/collapsed";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { shallowEqual } from "shallow-equal";
-import warnOnce from "warn-once";
+import { $awareness } from "~/shared/awareness";
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
   $selectedInstanceOutline.set({
@@ -76,6 +74,30 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
     rem, // 1rem in pixels
     px: 1, // always 1, simplifies conversions and types, i.e valueTo = valueFrom * unitSizes[from] / unitSizes[to]
   };
+};
+
+const calculatePropertySizes = (element: HTMLElement) => {
+  const computedStyle = getComputedStyle(element);
+  const propertySizes: PropertySizes = {};
+  for (const property in propertiesData) {
+    try {
+      const propertyValue = computedStyle.getPropertyValue(property);
+      const value = CSSStyleValue.parse(property, propertyValue);
+      if (value instanceof CSSUnitValue) {
+        propertySizes[property as CssProperty] = {
+          type: "unit",
+          // px | number | percent etc
+          unit:
+            value.unit === "percent" ? "%" : (value.unit as UnitValue["unit"]),
+          value: value.value,
+        };
+      }
+    } catch (error) {
+      // failed with unknown property like -moz-osx-font-smoothing
+      // also firefox does not support CSSStyleValue
+    }
+  }
+  return propertySizes;
 };
 
 const subscribeSelectedInstance = (
@@ -151,10 +173,9 @@ const subscribeSelectedInstance = (
 
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
-    $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
-
     const unitSizes = calculateUnitSizes(element);
-    $selectedInstanceUnitSizes.set(unitSizes);
+    const propertySizes = calculatePropertySizes(element);
+    $selectedInstanceSizes.set({ unitSizes, propertySizes });
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(
@@ -212,7 +233,7 @@ const subscribeSelectedInstance = (
 
   // Lightweight update
   const updateOutline: MutationCallback = (mutationRecords) => {
-    if (hasCollapsedMutationRecord(mutationRecords)) {
+    if (hasDoNotTrackMutationRecord(mutationRecords)) {
       return;
     }
 
@@ -223,10 +244,6 @@ const subscribeSelectedInstance = (
 
   const mutationHandler: MutationCallback = (mutationRecords) => {
     if (hasDoNotTrackMutationRecord(mutationRecords)) {
-      return;
-    }
-
-    if (hasCollapsedMutationRecord(mutationRecords)) {
       return;
     }
 
@@ -323,17 +340,16 @@ export const subscribeSelected = (
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
-  const unsubscribe = $selectedInstanceSelector.subscribe(
-    (instanceSelector) => {
-      if (instanceSelector !== previousSelectedInstance) {
-        unsubscribeSelectedInstance();
-        unsubscribeSelectedInstance =
-          subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
-          (() => {});
-        previousSelectedInstance = instanceSelector;
-      }
+  const unsubscribe = $awareness.subscribe((awareness) => {
+    const instanceSelector = awareness?.instanceSelector;
+    if (instanceSelector !== previousSelectedInstance) {
+      unsubscribeSelectedInstance();
+      unsubscribeSelectedInstance =
+        subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
+        (() => {});
+      previousSelectedInstance = instanceSelector;
     }
-  );
+  });
 
   return () => {
     unsubscribe();

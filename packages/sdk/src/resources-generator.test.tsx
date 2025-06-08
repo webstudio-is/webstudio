@@ -385,7 +385,7 @@ test("replace form action with resource", () => {
   expect(data.resources).toEqual(
     toMap([
       {
-        headers: [],
+        headers: [{ name: "Content-Type", value: `"application/json"` }],
         id: "formId",
         method: "post",
         name: "action",

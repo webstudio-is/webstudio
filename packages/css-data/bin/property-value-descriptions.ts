@@ -199,7 +199,7 @@ Object.entries(keywordValues)
   // Slice to generate only X - useful for testing.
   // .slice(0, 10)
   .forEach(([keyword, values]) => {
-    return values.forEach((value) => {
+    values?.forEach((value) => {
       const descriptionKey = `${keyword}:${value}`;
       if (
         !forceRegenerate &&

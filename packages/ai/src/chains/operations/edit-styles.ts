@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { EmbedTemplateStyleDecl } from "@webstudio-is/sdk";
 import { idAttribute } from "@webstudio-is/react-sdk";
+import { EmbedTemplateStyleDecl } from "@webstudio-is/jsx-utils";
 
 export const name = "edit-styles";
 

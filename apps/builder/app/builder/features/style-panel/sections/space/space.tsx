@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
-import { theme } from "@webstudio-is/design-system";
-import { hyphenateProperty, type CssProperty } from "@webstudio-is/css-engine";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { useScrub } from "../shared/scrub";
@@ -10,11 +9,10 @@ import {
   type SpaceStyleProperty,
 } from "./properties";
 import { InputPopover } from "../shared/input-popover";
-import { SpaceTooltip } from "./tooltip";
 import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
-import { createBatchUpdate } from "../../shared/use-style-data";
+import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
 
 const movementMapSpace = {
@@ -120,27 +118,19 @@ const Cell = ({
         getActiveProperties={getActiveProperties}
         onClose={onPopoverClose}
       />
-      <SpaceTooltip property={property} preventOpen={scrubStatus.isActive}>
-        <ValueText
-          truncate
-          css={{
-            // We want value to have `default` cursor to indicate that it's clickable,
-            // unlike the rest of the value area that has cursor that indicates scrubbing.
-            // Click and scrub works everywhere anyway, but we want cursors to be different.
-            //
-            // In order to have control over cursor we're setting pointerEvents to "all" here
-            // because SpaceLayout sets it to "none" for cells' content.
-            pointerEvents: "all",
-            maxWidth: theme.spacing[18],
-          }}
-          value={finalValue}
-          source={styleDecl.source.name}
-          onMouseEnter={(event) =>
-            onHover({ property, element: event.currentTarget })
+      <ValueText
+        value={finalValue}
+        source={styleDecl.source.name}
+        onMouseEnter={(event) =>
+          onHover({ property, element: event.currentTarget })
+        }
+        onMouseLeave={() => onHover(undefined)}
+        onClick={(event) => {
+          if (event.altKey) {
+            deleteProperty(property);
           }
-          onMouseLeave={() => onHover(undefined)}
-        />
-      </SpaceTooltip>
+        }}
+      />
     </>
   );
 };
@@ -153,8 +143,7 @@ export const Section = () => {
 
   const scrubStatus = useScrub({
     value: styles.find(
-      (styleDecl) =>
-        hyphenateProperty(styleDecl.property) === hoverTarget?.property
+      (styleDecl) => styleDecl.property === hoverTarget?.property
     )?.usedValue,
     target: hoverTarget,
     getModifiersGroup: getSpaceModifiersGroup,
@@ -217,7 +206,7 @@ export const Section = () => {
         onClick={(event) => {
           const property = hoverTarget?.property;
           const styleValueSource = styles.find(
-            (styleDecl) => hyphenateProperty(styleDecl.property) === property
+            (styleDecl) => styleDecl.property === property
           )?.source.name;
 
           if (

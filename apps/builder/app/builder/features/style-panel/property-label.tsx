@@ -2,12 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
-import {
-  hyphenateProperty,
-  toValue,
-  type CssProperty,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { propertiesData } from "@webstudio-is/css-data";
 import {
   Button,
@@ -28,7 +23,6 @@ import {
   $registeredComponentMetas,
   $styleSources,
 } from "~/shared/nano-states";
-import { getInstanceLabel } from "~/shared/instance-utils";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
@@ -37,6 +31,7 @@ import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/awareness";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {
@@ -55,14 +50,13 @@ if (typeof window !== "undefined") {
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
   for (const styleDecl of styles) {
-    const property = hyphenateProperty(styleDecl.property);
     let value;
     if (isComputed) {
       value = toValue(styleDecl.usedValue);
     } else {
       value = toValue(styleDecl.cascadedValue);
     }
-    css += `${property}: ${value};\n`;
+    css += `${styleDecl.property}: ${value};\n`;
   }
   return css;
 };
@@ -239,7 +233,7 @@ export const PropertyLabel = ({
 }: {
   label: string;
   description?: string;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -280,7 +274,7 @@ export const PropertyLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+            link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
       >
@@ -301,7 +295,7 @@ export const PropertySectionLabel = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -340,7 +334,7 @@ export const PropertySectionLabel = ({
               resetProperty();
               setIsOpen(false);
             }}
-            link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+            link={propertiesData[properties[0]]?.mdnUrl}
           />
         }
       >
@@ -370,10 +364,7 @@ export const PropertyInlineLabel = ({
   label: string;
   title?: string;
   description?: string;
-  properties?: [
-    StyleProperty | CssProperty,
-    ...(StyleProperty | CssProperty)[],
-  ];
+  properties?: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -402,7 +393,7 @@ export const PropertyInlineLabel = ({
                   userSelect="text"
                   css={{ whiteSpace: "break-spaces", cursor: "text" }}
                 >
-                  {properties.map(hyphenateProperty).join("\n")}
+                  {properties.join("\n")}
                 </Text>
               )}
               <Text>{description}</Text>
@@ -429,7 +420,7 @@ export const PropertyValueTooltip = ({
 }: {
   label: string;
   description: string | undefined;
-  properties: [StyleProperty | CssProperty, ...(StyleProperty | CssProperty)[]];
+  properties: [CssProperty, ...CssProperty[]];
   isAdvanced?: boolean;
   children: ReactNode;
 }) => {
@@ -477,7 +468,7 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={propertiesData[hyphenateProperty(properties[0])]?.mdnUrl}
+          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >

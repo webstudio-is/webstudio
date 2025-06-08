@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import {
   createScope,
+  elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   WsComponentMeta,
@@ -83,6 +84,7 @@ test("generate jsx element with children and without them", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body">Children</$.Body>),
     })
@@ -100,6 +102,7 @@ test("generate jsx element with children and without them", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(<$.Image ws:id="image"></$.Image>),
     })
@@ -119,6 +122,7 @@ test("generate jsx element with namespaces components", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<library.Body ws:id="body"></library.Body>),
     })
@@ -134,6 +138,7 @@ test("generate jsx element with namespaces components", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(<library.Image ws:id="image"></library.Image>),
     })
@@ -152,6 +157,7 @@ test("generate jsx element with literal props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "body" }],
       ...renderData(<$.Body ws:id="body" string="string" number={0}></$.Body>),
     })
@@ -169,6 +175,7 @@ test("generate jsx element with literal props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "image" }],
       ...renderData(
         <$.Image
@@ -195,6 +202,7 @@ test("ignore asset and page props", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -220,6 +228,7 @@ test("generate jsx element with data sources and action", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box
@@ -251,6 +260,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={true}></$.Box>),
     })
@@ -266,6 +276,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(<$.Box ws:id="box" data-ws-show={false}></$.Box>),
     })
@@ -276,6 +287,7 @@ test("generate jsx element with condition based on show prop", () => {
       scope: createScope(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      metas: new Map(),
       children: [{ type: "id", value: "box" }],
       ...renderData(
         <$.Box ws:id="box" data-ws-show={expression`${condition}`}></$.Box>
@@ -296,6 +308,7 @@ test("generate jsx children with text", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "text", value: "Some\ntext" },
         { type: "text", value: 'Escaped "text"' },
@@ -322,6 +335,7 @@ test("exclude text placeholders", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "text", value: "Text" },
         { type: "text", value: "Placeholder text", placeholder: true },
@@ -346,6 +360,7 @@ test("generate jsx children with expression", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "expression", value: "'Hello ' + $ws$dataSource$var" },
       ],
@@ -376,6 +391,7 @@ test("generate jsx children with nested instances", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [{ type: "id", value: "form" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -404,6 +420,7 @@ test("deduplicate base and namespaced components with same short name", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [
         { type: "id", value: "button1" },
         { type: "id", value: "button2" },
@@ -431,6 +448,7 @@ test("generate collection component as map", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
+      metas: new Map(),
       children: [{ type: "id", value: "list" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
@@ -1148,14 +1166,8 @@ test("generate prop with index within ancestor", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        [
-          "TabsTrigger",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
-        [
-          "TabsContent",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
+        ["TabsContent", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="body">
@@ -1212,10 +1224,7 @@ test("ignore ws:block-template when generate index attribute", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        [
-          "TabsTrigger",
-          { type: "container", icon: "", indexWithinAncestor: "Tabs" },
-        ],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="bodyId">
@@ -1269,6 +1278,277 @@ test("render empty component when no instances found", () => {
       return <></>
       }
     `)
+    )
+  );
+});
+
+test("render tag property on components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box ws:id="spanId" ws:tag="span"></$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+      const Page = () => {
+      return <Body>
+      <Box
+      data-ws-tag="span" />
+      </Body>
+      }
+    `)
+    )
+  );
+});
+
+test("render ws:element component with div tag by default", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element id="element1">
+            <ws.element id="element2"></ws.element>
+          </ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <div
+       id={"element1"}>
+       <div
+       id={"element2"} />
+       </div>
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("render ws:element component with ws:tag", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map(),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element ws:tag="p" id="paragraph">
+            <ws.element ws:tag="span" id="span"></ws.element>
+          </ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <p
+       id={"paragraph"}>
+       <span
+       id={"span"} />
+       </p>
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("convert attributes to react compatible when render ws:element", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([[elementComponent, { presetStyle: { div: [] } }]]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <ws.element
+            class="my-class"
+            for="my-id"
+            autocomplete="off"
+          ></ws.element>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <div
+       htmlFor={"my-id"}
+       autoComplete={"off"}
+       className={\`\${"my-class"}\`} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("convert attributes to react compatible when render components with tags", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["Box", { presetStyle: { div: [] } }]]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Box
+       htmlFor={"my-id"}
+       autoComplete={"off"}
+       className={\`\${"my-class"}\`} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("ignore props similar to standard attributes when react components defines them", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([
+        [
+          "Vimeo",
+          {
+            presetStyle: { div: [] },
+            props: {
+              autoplay: { type: "boolean", control: "boolean", required: true },
+            },
+          },
+        ],
+      ]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Vimeo autoplay={true}></$.Vimeo>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Vimeo
+       autoplay={true} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("ignore props similar to standard attributes on react components without tags", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["HeadSlot", {}]]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.HeadSlot
+            class="my-class"
+            for="my-id"
+            autocomplete="off"
+          ></$.HeadSlot>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <HeadSlot
+       class={"my-class"}
+       for={"my-id"}
+       autocomplete={"off"} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("overrides some element tags with provided components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["HeadSlot", { icon: "" }]]),
+      tagsOverrides: {
+        body: "namespace:Body",
+        a: "namespace:Link",
+      },
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a"></ws.element>
+          <ws.element ws:tag="div"></ws.element>
+        </ws.element>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Link />
+       <div />
+       </Body>
+       }
+     `)
     )
   );
 });

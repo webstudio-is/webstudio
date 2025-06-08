@@ -68,9 +68,9 @@ export const Tooltip = forwardRef(
   ) => {
     const triggerRef = useRef<HTMLButtonElement>(null);
     // We need to intercept tooltip open
-    const [open = false, setOpen] = useControllableState({
+    const [open, setOpen] = useControllableState({
       prop: openProp,
-      defaultProp: defaultOpen,
+      defaultProp: defaultOpen ?? false,
       onChange: (open) => {
         onOpenChange?.(open);
       },

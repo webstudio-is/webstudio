@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   ChevronDownIcon,
@@ -31,8 +32,6 @@ import {
   isBuilderMode,
   setBuilderMode,
 } from "~/shared/nano-states";
-import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { emitCommand } from "~/builder/shared/commands";
 
 export const BuilderModeDropDown = () => {
@@ -45,15 +44,15 @@ export const BuilderModeDropDown = () => {
       icon: <PaintBrushIcon />,
       description: "Edit components, styles, and properties",
       title: "Design",
-      shortcut: ["cmd", "shift", "d"],
+      shortcut: ["meta", "shift", "d"],
       enabled: isDesignModeAllowed,
     },
     content: {
       icon: <NotebookAndPenIcon />,
       description: "Modify the page content",
       title: "Content",
-      shortcut: ["cmd", "shift", "c"],
-      enabled: isContentModeAllowed && isFeatureEnabled("contentEditableMode"),
+      shortcut: ["meta", "shift", "c"],
+      enabled: isContentModeAllowed,
     },
   } as const;
 
@@ -75,7 +74,7 @@ export const BuilderModeDropDown = () => {
         content={
           <Flex gap="1">
             <Text variant="regular">Toggle preview</Text>
-            <Kbd value={["cmd", "shift", "p"]} />
+            <Kbd value={["meta", "shift", "p"]} />
           </Flex>
         }
       >

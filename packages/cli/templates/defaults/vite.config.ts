@@ -13,4 +13,12 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    conditions: ["browser", "development|production"],
+  },
+  ssr: {
+    resolve: {
+      conditions: ["node", "development|production"],
+    },
+  },
 });

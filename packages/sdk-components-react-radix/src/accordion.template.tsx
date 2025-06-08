@@ -55,7 +55,7 @@ const createAccordionItem = (triggerText: string, contentText: string) => {
             ws:label="Icon Container"
             // h-4 w-4 shrink-0 transition-transform duration-200
             ws:style={css`
-              rotate: --accordion-trigger-icon-transform;
+              rotate: var(--accordion-trigger-icon-transform);
               height: ${height[4]};
               width: ${width[4]};
               flex-shrink: 0;
@@ -98,7 +98,7 @@ export const meta: TemplateMeta = {
     "A vertically stacked set of interactive headings that each reveal an associated section of content. Clicking on the heading will open the item and close other items.",
   order: 3,
   template: (
-    <radix.Accordion collapsible={true} defaultValue="0">
+    <radix.Accordion collapsible={true} value="0">
       {createAccordionItem(
         "Is it accessible?",
         "Yes. It adheres to the WAI-ARIA design pattern."

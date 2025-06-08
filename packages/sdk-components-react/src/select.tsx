@@ -1,32 +1,41 @@
-import { type Hook } from "@webstudio-is/react-sdk/runtime";
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, useContext, type ComponentProps } from "react";
+import { ReactSdkContext, type Hook } from "@webstudio-is/react-sdk/runtime";
 
-export const defaultTag = "select";
-
-export const Select = forwardRef<
-  ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag>
->(({ value, defaultValue, ...props }, ref) => (
-  <select {...props} defaultValue={value ?? defaultValue} ref={ref} />
-));
+export const Select = forwardRef<HTMLSelectElement, ComponentProps<"select">>(
+  ({ value, defaultValue, ...props }, ref) => {
+    const { renderer } = useContext(ReactSdkContext);
+    // enfroce default value update
+    const key =
+      renderer === "canvas" ? String(value ?? defaultValue) : undefined;
+    return (
+      <select
+        {...props}
+        key={key}
+        defaultValue={value ?? defaultValue}
+        ref={ref}
+      />
+    );
+  }
+);
 
 Select.displayName = "Select";
 
-// For each CollapsibleContent component within the selection,
-// we identify its closest parent Collapsible component
-// and update its open prop bound to variable.
 export const hooksSelect: Hook = {
   onNavigatorUnselect: (context, event) => {
     for (const instance of event.instancePath) {
-      if (instance.component === `Option`) {
-        context.setMemoryProp(instance, "selected", undefined);
+      if (instance.component === "Select" || instance.tag === "select") {
+        context.setMemoryProp(instance, "value", undefined);
       }
     }
   },
   onNavigatorSelect: (context, event) => {
+    let selectedOption: undefined | string;
     for (const instance of event.instancePath) {
-      if (instance.component === `Option`) {
-        context.setMemoryProp(instance, "selected", true);
+      if (instance.component === "Option" || instance.tag === "option") {
+        selectedOption = context.getPropValue(instance, "value") as string;
+      }
+      if (instance.component === "Select" || instance.tag === "select") {
+        context.setMemoryProp(instance, "value", selectedOption);
       }
     }
   },

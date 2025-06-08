@@ -33,6 +33,7 @@ export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
     () => $pages.get()?.redirects ?? []
   );
+
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [httpStatus, setHttpStatus] =
@@ -224,7 +225,7 @@ export const SectionRedirects = () => {
       {redirectKeys.length > 0 ? (
         <Grid css={sectionSpacing}>
           <List asChild>
-            <Flex direction="column" gap="1">
+            <Flex direction="column" gap="1" align="stretch">
               {redirects.map((redirect, index) => {
                 return (
                   <ListItem asChild key={redirect.old} index={index}>
@@ -245,7 +246,10 @@ export const SectionRedirects = () => {
                               redirect.old,
                               publishedOrigin
                             ).toString()}
-                            css={truncate()}
+                            css={{
+                              width: theme.spacing[18],
+                              wordBreak: "break-all",
+                            }}
                             target="_blank"
                           >
                             {redirect.old}
@@ -262,19 +266,24 @@ export const SectionRedirects = () => {
                               redirect.new,
                               publishedOrigin
                             ).toString()}
-                            css={truncate()}
+                            css={{
+                              wordBreak: "break-all",
+                              maxWidth: theme.spacing[30],
+                            }}
                             target="_blank"
                           >
                             {redirect.new}
                           </Link>
                         </Tooltip>
                       </Flex>
-                      <SmallIconButton
-                        variant="destructive"
-                        icon={<TrashIcon />}
-                        aria-label={`Delete redirect from ${redirect.old}`}
-                        onClick={() => handleDeleteRedirect(index)}
-                      />
+                      <Flex gap="2">
+                        <SmallIconButton
+                          variant="destructive"
+                          icon={<TrashIcon />}
+                          aria-label={`Delete redirect from ${redirect.old}`}
+                          onClick={() => handleDeleteRedirect(index)}
+                        />
+                      </Flex>
                     </Flex>
                   </ListItem>
                 );

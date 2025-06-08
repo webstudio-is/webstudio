@@ -1,18 +1,16 @@
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
-import { propsMeta as imagePropsMeta, meta as imageMeta } from "./image.ws";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { meta as imageMeta } from "./image.ws";
 import { props } from "./__generated__/vimeo-preview-image.props";
 
 export const meta: WsComponentMeta = {
   ...imageMeta,
   category: "hidden",
   label: "Preview Image",
-  constraints: {
-    relation: "ancestor",
-    component: { $in: ["Vimeo", "YouTube"] },
+  contentModel: {
+    category: "none",
+    children: [],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: imageMeta.initialProps,
   props: {
     ...props,
     // Automatically generated props don't have the right control.
@@ -23,5 +21,4 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: imagePropsMeta.initialProps,
 };

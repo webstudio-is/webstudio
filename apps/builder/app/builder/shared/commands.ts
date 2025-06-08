@@ -1,7 +1,12 @@
 import { nanoid } from "nanoid";
-import { blockTemplateComponent } from "@webstudio-is/sdk";
+import {
+  blockTemplateComponent,
+  elementComponent,
+  isComponentDetachable,
+} from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
@@ -13,6 +18,7 @@ import {
   $isContentMode,
   $registeredComponentMetas,
   findBlockSelector,
+  $project,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -21,6 +27,7 @@ import {
 import {
   deleteInstanceMutable,
   extractWebstudioFragment,
+  insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -36,13 +43,22 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { builderApi } from "~/shared/builder-api";
-import {
-  findClosestNonTextualContainer,
-  isInstanceDetachable,
-  isTreeMatching,
-} from "~/shared/matcher";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
+import { atom } from "nanostores";
+import {
+  findClosestNonTextualContainer,
+  isRichTextContent,
+  isTreeSatisfyingContentModel,
+} from "~/shared/content-model";
+import { generateFragmentFromHtml } from "~/shared/html";
+import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
+import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
+import { getInstanceLabel } from "./instance-label";
+import { $instanceTags } from "../features/style-panel/shared/model";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
+
+export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -73,14 +89,7 @@ export const deleteSelectedInstance = () => {
   const [selectedItem, parentItem] = instancePath;
   const selectedInstanceSelector = selectedItem.instanceSelector;
   const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
-  if (
-    isInstanceDetachable({
-      metas,
-      instances,
-      instanceSelector: selectedInstanceSelector,
-    }) === false
-  ) {
+  if (!isComponentDetachable(selectedItem.instance.component)) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -106,12 +115,12 @@ export const deleteSelectedInstance = () => {
       blockTemplateComponent;
 
     if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
 
     if (!isChildOfBlock) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
+      builderApi.toast.info("You can't delete this instance in content mode.");
       return;
     }
   }
@@ -138,7 +147,7 @@ export const deleteSelectedInstance = () => {
   });
 };
 
-export const wrapIn = (component: string) => {
+export const wrapIn = (component: string, tag?: string) => {
   const instancePath = $selectedInstancePath.get();
   // global root or body are selected
   if (instancePath === undefined || instancePath.length === 1) {
@@ -151,8 +160,13 @@ export const wrapIn = (component: string) => {
   const metas = $registeredComponentMetas.get();
   try {
     updateWebstudioData((data) => {
-      const meta = metas.get(selectedInstance.component);
-      if (meta?.type === "rich-text-child") {
+      const isContent = isRichTextContent({
+        instanceSelector: selectedItem.instanceSelector,
+        instances: data.instances,
+        props: data.props,
+        metas,
+      });
+      if (isContent) {
         toast.error(`Cannot wrap textual content`);
         throw Error("Abort transaction");
       }
@@ -162,6 +176,9 @@ export const wrapIn = (component: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
+      if (tag || component === elementComponent) {
+        newInstance.tag = tag ?? "div";
+      }
       const parentInstance = data.instances.get(parentItem.instance.id);
       data.instances.set(newInstanceId, newInstance);
       if (parentInstance) {
@@ -171,17 +188,74 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      const matches = isTreeMatching({
-        metas,
+      const isSatisfying = isTreeSatisfyingContentModel({
         instances: data.instances,
+        props: data.props,
+        metas,
         instanceSelector: newInstanceSelector,
       });
-      if (matches === false) {
-        toast.error(`Cannot wrap in "${component}"`);
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot wrap in ${label}`);
         throw Error("Abort transaction");
       }
     });
     selectInstance(newInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
+export const replaceWith = (component: string, tag?: string) => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
+  const metas = $registeredComponentMetas.get();
+  const instanceTags = $instanceTags.get();
+  try {
+    updateWebstudioData((data) => {
+      const instance = data.instances.get(selectedInstance.id);
+      if (instance === undefined) {
+        return;
+      }
+      instance.component = component;
+      // replace with specified tag or with currently used
+      if (tag || component === elementComponent) {
+        instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
+        // delete legacy tag prop if specified
+        for (const prop of data.props.values()) {
+          if (prop.instanceId !== selectedInstance.id) {
+            continue;
+          }
+          if (prop.name === "tag") {
+            data.props.delete(prop.id);
+            continue;
+          }
+          const newName = reactPropsToStandardAttributes[prop.name];
+          if (newName) {
+            const newId = `${prop.instanceId}:${newName}`;
+            data.props.delete(prop.id);
+            data.props.set(newId, { ...prop, id: newId, name: newName });
+          }
+        }
+      }
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas,
+        instanceSelector: selectedInstanceSelector,
+      });
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot replace with ${label}`);
+        throw Error("Abort transaction");
+      }
+    });
   } catch {
     // do nothing
   }
@@ -196,12 +270,13 @@ export const unwrap = () => {
   const [selectedItem, parentItem] = instancePath;
   try {
     updateWebstudioData((data) => {
-      const nonTextualIndex = findClosestNonTextualContainer({
+      const instanceSelector = findClosestNonTextualContainer({
         metas: $registeredComponentMetas.get(),
+        props: data.props,
         instances: data.instances,
         instanceSelector: selectedItem.instanceSelector,
       });
-      if (nonTextualIndex !== 0) {
+      if (selectedItem.instanceSelector.join() !== instanceSelector.join()) {
         toast.error(`Cannot unwrap textual instance`);
         throw Error("Abort transaction");
       }
@@ -215,9 +290,10 @@ export const unwrap = () => {
         );
         parentInstance.children.splice(index, 1, ...selectedInstance.children);
       }
-      const matches = isTreeMatching({
-        metas: $registeredComponentMetas.get(),
+      const matches = isTreeSatisfyingContentModel({
         instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
         instanceSelector: parentItem.instanceSelector,
       });
       if (matches === false) {
@@ -351,6 +427,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableOnInputLikeControls: true,
     },
     {
+      name: "focusStyleSources",
+      defaultHotkeys: ["meta+enter", "ctrl+enter"],
+      handler: () => {
+        if ($isDesignMode.get() === false) {
+          builderApi.toast.info(
+            "Style panel is only available in design mode."
+          );
+          return;
+        }
+        $activeInspectorPanel.set("style");
+        requestAnimationFrame(() => {
+          $styleSourceInputElement.get()?.focus();
+        });
+      },
+      disableOnInputLikeControls: true,
+    },
+    {
       name: "toggleStylePanelFocusMode",
       defaultHotkeys: ["alt+shift+s"],
       handler: () => {
@@ -415,6 +508,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
+        const project = $project.get();
+        if (project === undefined) {
+          return;
+        }
         if ($isDesignMode.get() === false) {
           builderApi.toast.info("Duplicating is only allowed in design mode.");
           return;
@@ -438,6 +535,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
               ...data,
               startingInstanceId: parentItem.instanceSelector[0],
             }),
+            projectId: project.id,
           });
           const newRootInstanceId = newInstanceIds.get(
             selectedItem.instance.id
@@ -477,23 +575,46 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "wrapInBox",
-      handler: () => wrapIn("Box"),
+      name: "wrapInElement",
+      handler: () => wrapIn(elementComponent),
     },
     {
       name: "wrapInLink",
-      handler: () => wrapIn("Link"),
+      handler: () => wrapIn(elementComponent, "a"),
     },
     {
       name: "unwrap",
       handler: () => unwrap(),
     },
+    {
+      name: "replaceWithElement",
+      handler: () => replaceWith(elementComponent),
+    },
+    {
+      name: "replaceWithLink",
+      handler: () => replaceWith(elementComponent, "a"),
+    },
+
+    ...(isFeatureEnabled("tailwind")
+      ? [
+          {
+            name: "pasteHtmlWithTailwindClasses",
+            handler: async () => {
+              const html = await navigator.clipboard.readText();
+              let fragment = generateFragmentFromHtml(html);
+              fragment = await denormalizeSrcProps(fragment);
+              fragment = await generateFragmentFromTailwind(fragment);
+              return insertWebstudioFragmentAt(fragment);
+            },
+          },
+        ]
+      : []),
 
     // history
 
     {
       name: "undo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
       handler: () => {
@@ -502,7 +623,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "redo",
-      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
       handler: () => {

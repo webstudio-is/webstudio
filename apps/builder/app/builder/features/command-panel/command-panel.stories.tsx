@@ -81,7 +81,7 @@ export const CommandPanel: StoryFn = () => {
       <button onClick={openCommandPanel}>Open command panel</button>
       <br />
       <input
-        defaultValue="Press cmd+k to open command panel"
+        defaultValue="Press meta+k to open command panel"
         style={{ width: 300 }}
       />
       <CommandPanelComponent />

@@ -13,9 +13,7 @@ import {
   $styleSourceSelections,
   $assets,
   $selectedPageHash,
-  $selectedInstanceSelector,
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
+  $selectedInstanceSizes,
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $authTokenPermissions,
@@ -45,7 +43,6 @@ import {
   $blockChildOutline,
   $textToolbar,
   $registeredComponentMetas,
-  $registeredComponentPropsMetas,
   $registeredTemplates,
   $modifierKeys,
 } from "~/shared/nano-states";
@@ -87,10 +84,6 @@ export const createObjectPool = () => {
   return new SyncObjectPool([
     new ImmerhinSyncObject("server", serverSyncStore),
     new ImmerhinSyncObject("client", clientSyncStore),
-    new NanostoresSyncObject(
-      "selectedInstanceSelector",
-      $selectedInstanceSelector
-    ),
     new NanostoresSyncObject("awareness", $awareness),
     new NanostoresSyncObject("temporaryInstances", $temporaryInstances),
 
@@ -98,14 +91,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
     new NanostoresSyncObject("resourceValues", $resourceValues),
     new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
-    new NanostoresSyncObject(
-      "selectedInstanceBrowserStyle",
-      $selectedInstanceBrowserStyle
-    ),
-    new NanostoresSyncObject(
-      "selectedInstanceUnitSizes",
-      $selectedInstanceUnitSizes
-    ),
+    new NanostoresSyncObject("selectedInstanceSizes", $selectedInstanceSizes),
     new NanostoresSyncObject(
       "selectedInstanceRenderState",
       $selectedInstanceRenderState
@@ -159,10 +145,6 @@ export const createObjectPool = () => {
     new NanostoresSyncObject(
       "registeredComponentMetas",
       $registeredComponentMetas
-    ),
-    new NanostoresSyncObject(
-      "registeredComponentPropsMetas",
-      $registeredComponentPropsMetas
     ),
     new NanostoresSyncObject("registeredTemplates", $registeredTemplates),
     new NanostoresSyncObject("canvasScrollbarWidth", $canvasScrollbarSize),

@@ -1,3 +1,5 @@
+import stripIndent from "strip-indent";
+import { computed } from "nanostores";
 import {
   useEffect,
   useState,
@@ -34,16 +36,27 @@ import {
   PopoverTitle,
   PopoverClose,
   PopoverTitleActions,
+  css,
+  textVariants,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
-import stripIndent from "strip-indent";
-import { $publishDialog } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
+  $awareness,
+  findAwarenessByInstanceId,
+  type Awareness,
+} from "~/shared/awareness";
+import {
   $authTokenPermissions,
+  $dataSources,
+  $instances,
+  $pages,
   $project,
+  $propsIndex,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
+import { $publishDialog } from "../../shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -52,15 +65,23 @@ import {
   AlertIcon,
   CopyIcon,
   GearIcon,
+  UpgradeIcon,
+  HelpIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
-import type { Templates } from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  isPathnamePattern,
+  parseComponentName,
+  type Templates,
+} from "@webstudio-is/sdk";
 import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -127,7 +148,9 @@ const ChangeProjectDomain = ({
       }
       suffix={
         <Grid flow="column" align="center">
-          <Tooltip content={error !== undefined ? error : statusText}>
+          <Tooltip
+            content={error !== undefined ? error : <Text>{statusText}</Text>}
+          >
             <Flex
               align="center"
               justify="center"
@@ -197,14 +220,97 @@ const ChangeProjectDomain = ({
   );
 };
 
+const $usedProFeatures = computed(
+  [$pages, $dataSources, $instances, $propsIndex],
+  (pages, dataSources, instances, propsIndex) => {
+    const features = new Map<
+      string,
+      undefined | { awareness?: Awareness; info?: string }
+    >();
+    if (pages === undefined) {
+      return features;
+    }
+    // specified emails for default webhook form
+    if ((pages?.meta?.contactEmail ?? "").trim()) {
+      features.set("Custom contact email", undefined);
+    }
+    // pages with dynamic paths
+    for (const page of [pages.homePage, ...pages.pages]) {
+      const awareness = {
+        pageId: page.id,
+        instanceSelector: [page.rootInstanceId],
+      };
+      if (isPathnamePattern(page.path)) {
+        features.set("Dynamic path", { awareness });
+      }
+      if (page.meta.status && page.meta.status !== `200`) {
+        features.set("Page status code", { awareness });
+      }
+      if (page.meta.redirect && page.meta.redirect !== `""`) {
+        features.set("Redirect", { awareness });
+      }
+    }
+    // has resource variables
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type === "resource") {
+        const instanceId = dataSource.scopeInstanceId ?? "";
+        features.set("Resource variable", {
+          awareness: findAwarenessByInstanceId(pages, instances, instanceId),
+        });
+      }
+    }
+
+    // Instances with animations.
+    for (const instance of instances.values()) {
+      const [namespace] = parseComponentName(instance.component);
+      if (namespace === "@webstudio-is/sdk-components-animation") {
+        features.set("Animation component", {
+          awareness: findAwarenessByInstanceId(pages, instances, instance.id),
+        });
+      }
+    }
+
+    const badgeFeature = 'No "Built with Webstudio" badge';
+    // Badge should be rendered on free sites on every page.
+    features.set(badgeFeature, {
+      info: "Adding the badge to your homepage helps us offer a free version of the service. Please open the Components panel by clicking the “+” icon on the left, and add the “Built with Webstudio” component to your page. Feel free to adjust the badge’s styles to match your design.",
+    });
+    // We want to check the badge only on the home page
+    const homePageInstanceIds = findTreeInstanceIds(
+      instances,
+      pages.homePage.rootInstanceId
+    );
+    for (const instanceId of homePageInstanceIds) {
+      const instance = instances.get(instanceId);
+      // Find a potential link that looks like a badge.
+      if (instance?.tag === "a") {
+        const props = propsIndex.propsByInstanceId.get(instance.id);
+        for (const prop of props ?? []) {
+          if (
+            prop.name === "href" &&
+            prop.value === "https://webstudio.is/?via=badge"
+          ) {
+            features.delete(badgeFeature);
+          }
+        }
+      }
+    }
+    return features;
+  }
+);
+
 const Publish = ({
   project,
+  timesLeft,
+  disabled,
   refresh,
 }: {
   project: Project;
-
+  timesLeft: number;
+  disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
@@ -281,7 +387,16 @@ const Publish = ({
       if (publishResult.error === "NOT_IMPLEMENTED") {
         error = (
           <>
-            Build data for publishing has been successfully created. Use{" "}
+            <Tooltip
+              content={
+                <Text userSelect="text">
+                  {project.latestBuildVirtual?.buildId}
+                </Text>
+              }
+            >
+              <span>Build data</span>
+            </Tooltip>{" "}
+            for publishing has been successfully created. Use{" "}
             <Link href="https://docs.webstudio.is/university/self-hosting/cli">
               Webstudio&nbsp;CLI
             </Link>{" "}
@@ -326,6 +441,19 @@ const Publish = ({
             };
 
       if (status === "PUBLISHED") {
+        toast.success(
+          <>
+            The project has been successfully published.{" "}
+            {hasProPlan === false && (
+              <div>
+                On the free plan, you have {timesLeft} out of{" "}
+                {maxPublishesAllowedPerUser} daily publications remaining. The
+                counter resets tomorrow.
+              </div>
+            )}
+          </>,
+          { duration: 10000 }
+        );
         break;
       }
 
@@ -365,7 +493,7 @@ const Publish = ({
           formAction={handlePublish}
           color="positive"
           state={isPublishInProgress ? "pending" : undefined}
-          disabled={hasSelectedDomains === false}
+          disabled={hasSelectedDomains === false || disabled}
         >
           Publish
         </Button>
@@ -548,6 +676,18 @@ const useCanAddDomain = () => {
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
+const useUserPublishCount = () => {
+  const { load, data } = trpcClient.project.userPublishCount.useQuery();
+  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  useEffect(() => {
+    load();
+  }, [load]);
+  return {
+    userPublishCount: data?.success ? data.data : 0,
+    maxPublishesAllowedPerUser,
+  };
+};
+
 const refreshProject = async () => {
   const result = await nativeClient.domain.project.query(
     {
@@ -565,10 +705,18 @@ const refreshProject = async () => {
   toast.error(result.error);
 };
 
+const buttonLinkClass = css({
+  all: "unset",
+  cursor: "pointer",
+  ...textVariants.link,
+}).toString();
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
 }) => {
+  const usedProFeatures = useStore($usedProFeatures);
+  const { hasProPlan } = useStore($userPlanFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const project = useStore($project);
@@ -579,11 +727,77 @@ const Content = (props: {
   const projectState = "idle";
 
   const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { userPublishCount, maxPublishesAllowedPerUser } =
+    useUserPublishCount();
 
   return (
     <form>
       <ScrollArea>
-        {canAddDomain === false && (
+        {userPublishCount >= maxPublishesAllowedPerUser ? (
+          <PanelBanner>
+            <Text variant="regularBold">
+              Upgrade to publish more than {maxPublishesAllowedPerUser} times
+              per day:
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        ) : usedProFeatures.size > 0 && hasProPlan === false ? (
+          <PanelBanner>
+            <img
+              src={cmsUpgradeBanner}
+              alt="Upgrade for CMS"
+              width={rawTheme.spacing[28]}
+              style={{ aspectRatio: "4.1" }}
+            />
+            <Text variant="regularBold">
+              Upgrade to publish with following features:
+            </Text>
+            <Text as="ul">
+              {Array.from(usedProFeatures).map(
+                ([message, { awareness, info } = {}], index) => (
+                  <li key={index}>
+                    <Flex align="center" gap="1">
+                      {awareness ? (
+                        <button
+                          className={buttonLinkClass}
+                          type="button"
+                          onClick={() => $awareness.set(awareness)}
+                        >
+                          {message}
+                        </button>
+                      ) : (
+                        message
+                      )}
+                      {info && (
+                        <Tooltip variant="wrapped" content={info}>
+                          <SmallIconButton icon={<HelpIcon />} />
+                        </Tooltip>
+                      )}
+                    </Flex>
+                  </li>
+                )
+              )}
+            </Text>
+            <Flex align="center" gap={1}>
+              <UpgradeIcon />
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://webstudio.is/pricing"
+              >
+                Upgrade to Pro
+              </Link>
+            </Flex>
+          </PanelBanner>
+        ) : canAddDomain === false ? (
           <PanelBanner>
             <Text variant="regularBold">Free domains limit reached</Text>
             <Text variant="regular">
@@ -604,7 +818,7 @@ const Content = (props: {
               Upgrade
             </Link>
           </PanelBanner>
-        )}
+        ) : null}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
             refresh={refreshProject}
@@ -634,7 +848,15 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
-        <Publish project={project} refresh={refreshProject} />
+        <Publish
+          project={project}
+          refresh={refreshProject}
+          timesLeft={maxPublishesAllowedPerUser - userPublishCount}
+          disabled={
+            (usedProFeatures.size > 0 && hasProPlan === false) ||
+            userPublishCount >= maxPublishesAllowedPerUser
+          }
+        />
       </Flex>
     </form>
   );

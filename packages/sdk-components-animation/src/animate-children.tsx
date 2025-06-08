@@ -1,7 +1,7 @@
+import { forwardRef, type ElementRef } from "react";
 import type { Hook } from "@webstudio-is/react-sdk";
 import type { AnimationAction } from "@webstudio-is/sdk";
-import { forwardRef, type ElementRef } from "react";
-import { animationCanPlayOnCanvasProperty } from "./shared/consts";
+import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 
 type ScrollProps = {
   debug?: boolean;

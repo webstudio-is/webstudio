@@ -19,8 +19,11 @@ import {
   collectionComponent,
   descendantComponent,
   getIndexesWithinAncestors,
+  elementComponent,
 } from "@webstudio-is/sdk";
-import { indexAttribute, isAttributeNameSafe, showAttribute } from "./props";
+import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
+import { isAttributeNameSafe, showAttribute } from "./props";
+import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
 
 /**
  * (arg1) => {
@@ -141,6 +144,8 @@ const generatePropValue = ({
 export const generateJsxElement = ({
   context = "jsx",
   scope,
+  metas,
+  tagsOverrides,
   instance,
   props,
   dataSources,
@@ -151,6 +156,11 @@ export const generateJsxElement = ({
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  /**
+   * Record<tag, componentDescriptor>
+   */
+  tagsOverrides?: Record<string, string>;
   instance: Instance;
   props: Props;
   dataSources: DataSources;
@@ -165,11 +175,17 @@ export const generateJsxElement = ({
     return "";
   }
 
+  const meta = metas.get(instance.component);
+  const hasTags = Object.keys(meta?.presetStyle ?? {}).length > 0;
+
   let generatedProps = "";
 
   const index = indexesWithinAncestors.get(instance.id);
   if (index !== undefined) {
-    generatedProps += `\n${indexAttribute}="${index}"`;
+    generatedProps += `\n${indexProperty}="${index}"`;
+  }
+  if (instance.tag !== undefined && instance.component !== elementComponent) {
+    generatedProps += `\n${tagProperty}=${JSON.stringify(instance.tag)}`;
   }
 
   let conditionValue: undefined | string;
@@ -191,6 +207,12 @@ export const generateJsxElement = ({
 
     if (isAttributeNameSafe(prop.name) === false) {
       continue;
+    }
+    let name = prop.name;
+    // convert html attribute only when component has tags
+    // and does not specify own property with this name
+    if (hasTags && !meta?.props?.[prop.name]) {
+      name = standardAttributesToReactProps[prop.name] ?? prop.name;
     }
 
     // show prop controls conditional rendering and need to be handled separately
@@ -217,12 +239,12 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className" && propValue !== undefined) {
+    if (name === "className" && propValue !== undefined) {
       classNameValue = propValue;
       continue;
     }
     if (propValue !== undefined) {
-      generatedProps += `\n${prop.name}={${propValue}}`;
+      generatedProps += `\n${name}={${propValue}}`;
     }
   }
 
@@ -264,8 +286,19 @@ export const generateJsxElement = ({
   } else if (instance.component === blockComponent) {
     generatedElement += children;
   } else {
-    const [_namespace, shortName] = parseComponentName(instance.component);
-    const componentVariable = scope.getName(instance.component, shortName);
+    let componentVariable;
+    if (instance.component === elementComponent) {
+      componentVariable = instance.tag ?? "div";
+      // replace html tag with component if available
+      const componentDescriptor = tagsOverrides?.[componentVariable];
+      if (componentDescriptor !== undefined) {
+        const [_importSource, importSpecifier] = componentDescriptor.split(":");
+        componentVariable = scope.getName(componentDescriptor, importSpecifier);
+      }
+    } else {
+      const [_namespace, shortName] = parseComponentName(instance.component);
+      componentVariable = scope.getName(instance.component, shortName);
+    }
     if (instance.children.length === 0) {
       generatedElement += `<${componentVariable}${generatedProps} />\n`;
     } else {
@@ -308,6 +341,8 @@ export const generateJsxElement = ({
 
 export const generateJsxChildren = ({
   scope,
+  metas,
+  tagsOverrides,
   children,
   instances,
   props,
@@ -318,6 +353,9 @@ export const generateJsxChildren = ({
   excludePlaceholders,
 }: {
   scope: Scope;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  // Record<tag, componentDescriptor>
+  tagsOverrides?: Record<string, string>;
   children: Instance["children"];
   instances: Instances;
   props: Props;
@@ -360,6 +398,8 @@ export const generateJsxChildren = ({
       generatedChildren += generateJsxElement({
         context: "jsx",
         scope,
+        metas,
+        tagsOverrides,
         instance,
         props,
         dataSources,
@@ -369,6 +409,8 @@ export const generateJsxChildren = ({
         children: generateJsxChildren({
           classesMap,
           scope,
+          metas,
+          tagsOverrides,
           children: instance.children,
           instances,
           props,
@@ -394,6 +436,7 @@ export const generateWebstudioComponent = ({
   props,
   dataSources,
   metas,
+  tagsOverrides,
   classesMap,
 }: {
   scope: Scope;
@@ -405,6 +448,10 @@ export const generateWebstudioComponent = ({
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
   metas: Map<Instance["component"], WsComponentMeta>;
+  /**
+   * Record<tag, componentDescriptor>
+   */
+  tagsOverrides?: Record<string, string>;
 }) => {
   const instance = instances.get(rootInstanceId);
   const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
@@ -418,6 +465,8 @@ export const generateWebstudioComponent = ({
     generatedJsx = generateJsxElement({
       context: "expression",
       scope,
+      metas,
+      tagsOverrides,
       instance,
       props,
       dataSources,
@@ -426,6 +475,8 @@ export const generateWebstudioComponent = ({
       classesMap,
       children: generateJsxChildren({
         scope,
+        metas,
+        tagsOverrides,
         children: instance.children,
         instances,
         props,

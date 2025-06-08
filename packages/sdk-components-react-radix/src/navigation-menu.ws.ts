@@ -7,8 +7,9 @@ import {
   ViewportIcon,
   NavigationMenuIcon,
 } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsNavigationMenu,
   propsNavigationMenuItem,
@@ -20,127 +21,94 @@ import {
 } from "./__generated__/navigation-menu.props";
 
 export const metaNavigationMenu: WsComponentMeta = {
-  type: "container",
   icon: NavigationMenuIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuList, radix.NavigationMenuViewport],
+  },
   presetStyle: {
     div,
   },
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "NavigationMenuList" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "NavigationMenuViewport" },
-    },
-  ],
+  props: propsNavigationMenu,
 };
 
 export const metaNavigationMenuList: WsComponentMeta = {
-  type: "container",
   icon: ListIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "NavigationMenu" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "NavigationMenuItem" },
-    },
-  ],
+  label: "Menu List",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuItem],
+  },
   presetStyle: {
     div,
   },
-  label: "Menu List",
+  props: propsNavigationMenuList,
 };
 
 export const metaNavigationMenuItem: WsComponentMeta = {
-  type: "container",
   icon: ListItemIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenuList" },
+  label: "Menu Item",
+  indexWithinAncestor: radix.NavigationMenu,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [
+      radix.NavigationMenuTrigger,
+      radix.NavigationMenuContent,
+      radix.NavigationMenuLink,
+    ],
   },
   presetStyle: {
     div,
   },
-  indexWithinAncestor: "NavigationMenu",
-  label: "Menu Item",
+  props: propsNavigationMenuItem,
 };
 
 export const metaNavigationMenuTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenuItem" },
-  },
   label: "Menu Trigger",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
+  props: propsNavigationMenuTrigger,
 };
 
 export const metaNavigationMenuContent: WsComponentMeta = {
-  type: "container",
   icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenuItem" },
+  label: "Menu Content",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.NavigationMenuLink],
   },
-  indexWithinAncestor: "NavigationMenu",
   presetStyle: {
     div,
   },
-  label: "Menu Content",
+  props: propsNavigationMenuContent,
 };
 
 export const metaNavigationMenuLink: WsComponentMeta = {
-  type: "container",
   icon: BoxIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $eq: "NavigationMenu" },
-    },
-    {
-      relation: "ancestor",
-      component: { $in: ["NavigationMenuContent", "NavigationMenuItem"] },
-    },
-  ],
   label: "Accessible Link Wrapper",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+  },
+  props: propsNavigationMenuLink,
 };
 
 export const metaNavigationMenuViewport: WsComponentMeta = {
-  type: "container",
   icon: ViewportIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "NavigationMenu" },
+  label: "Menu Viewport",
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
   presetStyle: {
     div,
   },
-  label: "Menu Viewport",
-};
-
-export const propsMetaNavigationMenu: WsComponentPropsMeta = {
-  props: propsNavigationMenu,
-};
-export const propsMetaNavigationMenuItem: WsComponentPropsMeta = {
-  props: propsNavigationMenuItem,
-};
-export const propsMetaNavigationMenuTrigger: WsComponentPropsMeta = {
-  props: propsNavigationMenuTrigger,
-};
-export const propsMetaNavigationMenuContent: WsComponentPropsMeta = {
-  props: propsNavigationMenuContent,
-};
-export const propsMetaNavigationMenuLink: WsComponentPropsMeta = {
-  props: propsNavigationMenuLink,
-};
-export const propsMetaNavigationMenuList: WsComponentPropsMeta = {
-  props: propsNavigationMenuList,
-};
-export const propsMetaNavigationMenuViewport: WsComponentPropsMeta = {
   props: propsNavigationMenuViewport,
 };

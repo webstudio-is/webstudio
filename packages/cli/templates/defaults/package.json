@@ -8,9 +8,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@remix-run/node": "2.15.2",
-    "@remix-run/react": "2.15.2",
-    "@remix-run/server-runtime": "2.15.2",
+    "@remix-run/node": "2.16.5",
+    "@remix-run/react": "2.16.5",
+    "@remix-run/server-runtime": "2.16.5",
     "@webstudio-is/image": "0.0.0-webstudio-version",
     "@webstudio-is/react-sdk": "0.0.0-webstudio-version",
     "@webstudio-is/sdk": "0.0.0-webstudio-version",
@@ -18,16 +18,16 @@
     "@webstudio-is/sdk-components-animation": "0.0.0-webstudio-version",
     "@webstudio-is/sdk-components-react-radix": "0.0.0-webstudio-version",
     "@webstudio-is/sdk-components-react-remix": "0.0.0-webstudio-version",
-    "isbot": "^5.1.23",
+    "isbot": "^5.1.25",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {
-    "@remix-run/dev": "2.15.2",
+    "@remix-run/dev": "2.16.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "typescript": "5.7.3",
-    "vite": "^5.4.11"
+    "typescript": "5.8.2",
+    "vite": "^6.3.4"
   },
   "engines": {
     "node": ">=20.0.0"

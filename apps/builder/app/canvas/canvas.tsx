@@ -1,24 +1,21 @@
 import { useMemo, useEffect, useState, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import { type Instances, coreMetas, corePropsMetas } from "@webstudio-is/sdk";
+import { type Instances, coreMetas } from "@webstudio-is/sdk";
 import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import { hooks as baseComponentHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseComponentTemplates from "@webstudio-is/sdk-components-react/templates";
 import * as animationComponents from "@webstudio-is/sdk-components-animation";
 import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as animationComponentPropsMetas from "@webstudio-is/sdk-components-animation/props";
 import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
 import { hooks as animationComponentHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
-import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { ErrorMessage } from "~/shared/error";
@@ -51,6 +48,7 @@ import {
   $isContentMode,
   subscribeModifierKeys,
   assetBaseUrl,
+  $breakpoints,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
@@ -73,8 +71,9 @@ import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
-import { Body } from "./shared/body";
 import { subscribeScrollbarSize } from "./scrollbar-width";
+import { compareMedia } from "@webstudio-is/css-engine";
+import { builderApi } from "~/shared/builder-api";
 
 registerContainers();
 
@@ -96,9 +95,20 @@ const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
   );
 };
 
+const handleError = (error: unknown) => {
+  if (error instanceof Error) {
+    builderApi.toast.error(error.message);
+    return;
+  }
+
+  builderApi.toast.error(`Unknown error: ${String(error)}`);
+  console.error(error);
+};
+
 const useElementsTree = (components: Components, instances: Instances) => {
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
+  const breakpointsMap = useStore($breakpoints);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
@@ -111,6 +121,11 @@ const useElementsTree = (components: Components, instances: Instances) => {
     });
   }
 
+  const breakpoints = useMemo(
+    () => [...breakpointsMap.values()].sort(compareMedia),
+    [breakpointsMap]
+  );
+
   return useMemo(() => {
     return (
       <ReactSdkContext.Provider
@@ -119,6 +134,9 @@ const useElementsTree = (components: Components, instances: Instances) => {
           assetBaseUrl,
           imageLoader: wsImageLoader,
           resources: {},
+          breakpoints,
+          // error reporting
+          onError: handleError,
         }}
       >
         {createInstanceElement({
@@ -132,7 +150,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
         })}
       </ReactSdkContext.Provider>
     );
-  }, [instances, rootInstanceId, components, isPreviewMode]);
+  }, [instances, rootInstanceId, components, isPreviewMode, breakpoints]);
 };
 
 const DesignMode = () => {
@@ -221,31 +239,18 @@ export const Canvas = () => {
     registerComponentLibrary({
       components: {},
       metas: coreMetas,
-      propsMetas: corePropsMetas,
       templates: coreTemplates,
     });
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,
-      propsMetas: baseComponentPropsMetas,
       hooks: baseComponentHooks,
       templates: baseComponentTemplates,
-    });
-    registerComponentLibrary({
-      components: {
-        // override only canvas specific body component
-        // not related to sdk-components-react-remix anymore
-        Body,
-      },
-      metas: {},
-      propsMetas: {},
-      templates: {},
     });
     registerComponentLibrary({
       namespace: "@webstudio-is/sdk-components-react-radix",
       components: radixComponents,
       metas: radixComponentMetas,
-      propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
       templates: radixTemplates,
     });
@@ -253,7 +258,6 @@ export const Canvas = () => {
       namespace: "@webstudio-is/sdk-components-animation",
       components: animationComponents,
       metas: animationComponentMetas,
-      propsMetas: animationComponentPropsMetas,
       hooks: animationComponentHooks,
       templates: animationTemplates,
     });
@@ -307,7 +311,7 @@ export const Canvas = () => {
   }, []);
 
   if (components.size === 0 || instances.size === 0) {
-    return <Body />;
+    return;
   }
 
   return (

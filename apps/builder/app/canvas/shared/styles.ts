@@ -18,6 +18,7 @@ import {
   type TransformValue,
   type VarValue,
   createRegularStyleSheet,
+  hyphenateProperty,
   toValue,
   toVarFallback,
 } from "@webstudio-is/css-engine";
@@ -205,12 +206,13 @@ const subscribeContentEditModeHelperStyles = () => {
       const editableInstanceSelectors: InstanceSelector[] = [];
       const instances = $instances.get();
 
-      findAllEditableInstanceSelector(
-        [rootInstanceId],
+      findAllEditableInstanceSelector({
+        instanceSelector: [rootInstanceId],
         instances,
-        $registeredComponentMetas.get(),
-        editableInstanceSelectors
-      );
+        props: $props.get(),
+        metas: $registeredComponentMetas.get(),
+        results: editableInstanceSelectors,
+      });
 
       // Group IDs into chunks of 20 since :is() allows for more efficient grouping
       const chunkSize = 20;
@@ -658,7 +660,7 @@ const subscribeEphemeralStyle = () => {
 
           // Use the actual style value as a fallback (non-ephemeral); see the “Lazy” comment above.
           const computedStyleDecl = createComputedStyleDeclStore(
-            styleDecl.property
+            hyphenateProperty(styleDecl.property)
           ).get();
 
           const value =

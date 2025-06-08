@@ -13,7 +13,6 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type Page,
   type Pages,
@@ -30,6 +29,7 @@ import {
   isLiteralExpression,
   documentTypes,
   isRootFolder,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -56,6 +56,7 @@ import {
   PanelTitle,
   TitleSuffixSpacer,
   FloatingPanelProvider,
+  ProBadge,
 } from "@webstudio-is/design-system";
 import {
   ChevronsLeftIcon,
@@ -81,20 +82,23 @@ import {
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
-import { SearchPreview } from "./search-preview";
 // @todo should be moved to shared because features should not depend on features
 import { ImageControl } from "~/builder/features/project-settings";
-import { ImageInfo } from "./image-info";
-import { SocialPreview } from "./social-preview";
 // @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import { CustomMetadata } from "./custom-metadata";
 import {
   compilePathnamePattern,
-  isPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "~/builder/shared/url-pattern";
+import { useUnmount } from "~/shared/hook-utils/use-mount";
+import { selectInstance } from "~/shared/awareness";
+import { computeExpression } from "~/shared/data-variables";
+import { $currentSystem } from "~/shared/system";
+import { Card } from "../marketplace/card";
+import { ImageInfo } from "./image-info";
+import { SearchPreview } from "./search-preview";
+import { SocialPreview } from "./social-preview";
 import {
   registerFolderChildMutable,
   deletePageMutable,
@@ -103,12 +107,7 @@ import {
   isPathAvailable,
 } from "./page-utils";
 import { Form } from "./form";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { Card } from "../marketplace/card";
-import { selectInstance } from "~/shared/awareness";
-import { computeExpression } from "~/shared/data-variables";
-import { $currentSystem } from "~/shared/system";
+import { CustomMetadata } from "./custom-metadata";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -121,7 +120,7 @@ const fieldDefaultValues = {
   language: `""`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
-  status: `200`,
+  status: undefined as string | undefined,
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
   customMetas: [{ property: "", content: `""` }],
@@ -150,30 +149,6 @@ type OnChange = (
 type Errors = {
   [fieldName in FieldName]?: string[];
 };
-
-// @todo needs to be removed
-const LegacyPagePath = z
-  .string()
-  .refine((path) => path !== "", "Can't be empty")
-  .refine((path) => path !== "/", "Can't be just a /")
-  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
-  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
-  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
-  .refine(
-    (path) => /^[-_a-z0-9\\/]*$/.test(path),
-    "Only a-z, 0-9, -, _, / are allowed"
-  )
-  .refine(
-    // We use /s for our system stuff like /s/css or /s/uploads
-    (path) => path !== "/s" && path.startsWith("/s/") === false,
-    "/s prefix is reserved for the system"
-  )
-  .refine(
-    // Remix serves build artefacts like JS bundles from /build
-    // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
-    (path) => path !== "/build" && path.startsWith("/build/") === false,
-    "/build prefix is reserved for the system"
-  );
 
 const EmptyString = z.string().refine((string) => string === "");
 
@@ -218,7 +193,7 @@ const HomePageValues = SharedPageValues.extend({
 });
 
 const PageValues = SharedPageValues.extend({
-  path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
+  path: PagePath,
 });
 
 const validateValues = (
@@ -226,8 +201,7 @@ const validateValues = (
   // undefined page id means new page
   pageId: undefined | Page["id"],
   values: Values,
-  variableValues: Map<string, unknown>,
-  userPlanFeatures: UserPlanFeatures
+  variableValues: Map<string, unknown>
 ): Errors => {
   // Null or undefined in the field value is only possible if it’s a dynamic (expression) value.
   // We do not validate dynamic values but instead provide a default value for validation.
@@ -246,7 +220,7 @@ const validateValues = (
     ),
     language: computeExpression(values.language, variableValues),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
-    status: computeExpression(values.status, variableValues),
+    status: computeExpression(values.status ?? `undefined`, variableValues),
     redirect: computeExpression(values.redirect, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
@@ -276,14 +250,6 @@ const validateValues = (
     if (messages.length > 0) {
       errors.path = errors.path ?? [];
       errors.path.push(...messages);
-    }
-
-    if (
-      userPlanFeatures.allowDynamicData === false &&
-      isPathnamePattern(values.path)
-    ) {
-      errors.path = errors.path ?? [];
-      errors.path.push("Dynamic path is supported only in Pro");
     }
   }
   return errors;
@@ -336,59 +302,47 @@ const PathField = ({
   const id = useId();
   return (
     <Grid gap={1}>
-      {allowDynamicData && isFeatureEnabled("cms") ? (
-        <Flex align="center" gap={1}>
-          <Label htmlFor={id}>Dynamic Path</Label>
-          <Tooltip
-            content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-            variant="wrapped"
-          >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={-1}
-            />
-          </Tooltip>
-        </Flex>
-      ) : (
-        <Flex align="center" gap={1}>
-          <Label htmlFor={id}>Path</Label>
-          <Tooltip
-            content={
-              <>
-                <Text>
-                  Path is a subset of the URL that looks like this:
-                  &quot;/blog&quot;.
-                </Text>
-                {allowDynamicData === false && isFeatureEnabled("cms") && (
-                  <>
-                    <Text>
-                      To make the path dynamic and use it with CMS, you can use
-                      parameters and other features. CMS features are part of
-                      the Pro plan.
-                    </Text>
-                    <Link
-                      className={buttonStyle({ color: "gradient" })}
-                      css={{ marginTop: theme.spacing[5], width: "100%" }}
-                      color="contrast"
-                      underline="none"
-                      target="_blank"
-                      href="https://webstudio.is/pricing"
-                    >
-                      Upgrade
-                    </Link>
-                  </>
-                )}
-              </>
-            }
-            variant="wrapped"
-          >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={-1}
-            />
-          </Tooltip>
-        </Flex>
-      )}
+      <Flex align="center" gap={1}>
+        <Label htmlFor={id}>Path</Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
+        <Tooltip
+          content={
+            <>
+              <Text>
+                The path can include dynamic parameters like :name, which could
+                be made optional using :name?, or have a wildcard such as /* or
+                /:name* to store whole remaining part at the end of the URL.
+              </Text>
+              {allowDynamicData === false && (
+                <>
+                  <br />
+                  <Text>
+                    To make the path dynamic and use it with CMS, you can use
+                    parameters and other features. CMS features are part of the
+                    Pro plan.
+                  </Text>
+                  <Link
+                    className={buttonStyle({ color: "gradient" })}
+                    css={{ marginTop: theme.spacing[5], width: "100%" }}
+                    color="contrast"
+                    underline="none"
+                    target="_blank"
+                    href="https://webstudio.is/pricing"
+                  >
+                    Upgrade
+                  </Link>
+                </>
+              )}
+            </>
+          }
+          variant="wrapped"
+        >
+          <InfoCircleIcon
+            color={rawTheme.colors.foregroundSubtle}
+            tabIndex={-1}
+          />
+        </Tooltip>
+      </Flex>
       <InputErrorsTooltip errors={errors}>
         <InputField
           color={errors && "error"}
@@ -404,12 +358,12 @@ const PathField = ({
 
 const StatusField = ({
   errors,
-  value,
+  value = `undefined`,
   onChange,
 }: {
   errors?: string[];
-  value: string;
-  onChange: (value: string) => void;
+  value: undefined | string;
+  onChange: (value: undefined | string) => void;
 }) => {
   const id = useId();
   const { allowDynamicData } = useStore($userPlanFeatures);
@@ -418,6 +372,7 @@ const StatusField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Status Code </Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content={
             <Text>
@@ -442,35 +397,35 @@ const StatusField = ({
         </Tooltip>
       </Flex>
       <BindingControl>
-        {allowDynamicData && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
-        )}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue ?? ""))
+          }
+        />
         <InputErrorsTooltip errors={errors}>
           <InputField
             inputMode="numeric"
             color={errors && "error"}
             id={id}
             placeholder="200"
-            disabled={
-              allowDynamicData === false || isLiteralExpression(value) === false
-            }
-            value={String(computeExpression(value, variableValues))}
+            disabled={isLiteralExpression(value) === false}
+            value={String(computeExpression(value, variableValues) ?? "")}
             onChange={(event) => {
-              const number = Number(event.target.value);
-              const status =
-                Number.isNaN(number) || String(number) !== event.target.value
-                  ? event.target.value
-                  : number;
-              onChange(JSON.stringify(status));
+              if (event.target.value === "") {
+                onChange(undefined);
+              } else {
+                const number = Number(event.target.value);
+                const status =
+                  Number.isNaN(number) || String(number) !== event.target.value
+                    ? event.target.value
+                    : number;
+                onChange(JSON.stringify(status));
+              }
             }}
           />
         </InputErrorsTooltip>
@@ -495,6 +450,7 @@ const RedirectField = ({
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Redirect </Label>
+        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
           variant="wrapped"
@@ -507,26 +463,22 @@ const RedirectField = ({
       </Flex>
 
       <BindingControl>
-        {allowDynamicData && (
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={onChange}
-            onRemove={(evaluatedValue) =>
-              onChange(JSON.stringify(evaluatedValue ?? ""))
-            }
-          />
-        )}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue ?? ""))
+          }
+        />
         <InputErrorsTooltip errors={errors}>
           <InputField
             color={errors && "error"}
             id={id}
             placeholder="/another-path"
-            disabled={
-              allowDynamicData === false || isLiteralExpression(value) === false
-            }
+            disabled={isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -836,61 +788,53 @@ const FormFields = ({
             />
           )}
 
-          {isFeatureEnabled("cms") && (
-            <>
-              <StatusField
-                errors={errors.status}
-                value={values.status}
-                onChange={(value) => onChange({ field: "status", value })}
-              />
-              <RedirectField
-                errors={errors.redirect}
-                value={values.redirect}
-                onChange={(value) => onChange({ field: "redirect", value })}
-              />
-              {allowDynamicData === false && (
-                <PanelBanner>
-                  <Text>
-                    Dynamic routing, redirect and status code are a part of the
-                    CMS functionality.
-                  </Text>
-                  <Flex align="center" gap={1}>
-                    <UploadIcon />
-                    <Link
-                      color="inherit"
-                      target="_blank"
-                      href="https://webstudio.is/pricing"
-                    >
-                      Upgrade to Pro
-                    </Link>
-                  </Flex>
-                </PanelBanner>
-              )}
-
-              {isFeatureEnabled("xmlElement") && (
-                <Grid gap={1}>
-                  <Label htmlFor={fieldIds.documentType}>Document Type</Label>
-                  <Select
-                    options={documentTypes}
-                    getValue={(docType: (typeof documentTypes)[number]) =>
-                      docType
-                    }
-                    getLabel={(docType: (typeof documentTypes)[number]) =>
-                      docType.toLocaleUpperCase()
-                    }
-                    value={values.documentType}
-                    disabled={values.isHomePage}
-                    onChange={(value) => {
-                      onChange({
-                        field: "documentType",
-                        value,
-                      });
-                    }}
-                  />
-                </Grid>
-              )}
-            </>
+          <StatusField
+            errors={errors.status}
+            value={values.status}
+            onChange={(value) => onChange({ field: "status", value })}
+          />
+          <RedirectField
+            errors={errors.redirect}
+            value={values.redirect}
+            onChange={(value) => onChange({ field: "redirect", value })}
+          />
+          {allowDynamicData === false && (
+            <PanelBanner>
+              <Text>
+                Dynamic routing, redirect and status code are a part of the CMS
+                functionality.
+              </Text>
+              <Flex align="center" gap={1}>
+                <UploadIcon />
+                <Link
+                  color="inherit"
+                  target="_blank"
+                  href="https://webstudio.is/pricing"
+                >
+                  Upgrade to Pro
+                </Link>
+              </Flex>
+            </PanelBanner>
           )}
+
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.documentType}>Document Type</Label>
+            <Select
+              options={documentTypes}
+              getValue={(docType: (typeof documentTypes)[number]) => docType}
+              getLabel={(docType: (typeof documentTypes)[number]) =>
+                docType.toLocaleUpperCase()
+              }
+              value={values.documentType}
+              disabled={values.isHomePage}
+              onChange={(value) => {
+                onChange({
+                  field: "documentType",
+                  value,
+                });
+              }}
+            />
+          </Grid>
         </Grid>
 
         <Separator />
@@ -942,28 +886,26 @@ const FormFields = ({
             <Grid gap={1}>
               <Label htmlFor={fieldIds.title}>Title</Label>
               <BindingControl>
-                {isFeatureEnabled("cms") && (
-                  <BindingPopover
-                    scope={scope}
-                    aliases={aliases}
-                    variant={
-                      isLiteralExpression(values.title) ? "default" : "bound"
-                    }
-                    value={values.title}
-                    onChange={(value) => {
-                      onChange({
-                        field: "title",
-                        value,
-                      });
-                    }}
-                    onRemove={(evaluatedValue) => {
-                      onChange({
-                        field: "title",
-                        value: JSON.stringify(evaluatedValue ?? ""),
-                      });
-                    }}
-                  />
-                )}
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.title) ? "default" : "bound"
+                  }
+                  value={values.title}
+                  onChange={(value) => {
+                    onChange({
+                      field: "title",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "title",
+                      value: JSON.stringify(evaluatedValue ?? ""),
+                    });
+                  }}
+                />
                 <InputErrorsTooltip errors={errors.title}>
                   <InputField
                     color={errors.title && "error"}
@@ -986,30 +928,28 @@ const FormFields = ({
             <Grid gap={1}>
               <Label htmlFor={fieldIds.description}>Description</Label>
               <BindingControl>
-                {isFeatureEnabled("cms") && (
-                  <BindingPopover
-                    scope={scope}
-                    aliases={aliases}
-                    variant={
-                      isLiteralExpression(values.description)
-                        ? "default"
-                        : "bound"
-                    }
-                    value={values.description}
-                    onChange={(value) => {
-                      onChange({
-                        field: "description",
-                        value,
-                      });
-                    }}
-                    onRemove={(evaluatedValue) => {
-                      onChange({
-                        field: "description",
-                        value: JSON.stringify(evaluatedValue ?? ""),
-                      });
-                    }}
-                  />
-                )}
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.description)
+                      ? "default"
+                      : "bound"
+                  }
+                  value={values.description}
+                  onChange={(value) => {
+                    onChange({
+                      field: "description",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "description",
+                      value: JSON.stringify(evaluatedValue ?? ""),
+                    });
+                  }}
+                />
                 <InputErrorsTooltip errors={errors.description}>
                   <TextArea
                     color={errors.description ? "error" : undefined}
@@ -1036,30 +976,28 @@ const FormFields = ({
                   align={"center"}
                   css={{ py: theme.spacing[2] }}
                 >
-                  {isFeatureEnabled("cms") && (
-                    <BindingPopover
-                      scope={scope}
-                      aliases={aliases}
-                      variant={
-                        isLiteralExpression(values.excludePageFromSearch)
-                          ? "default"
-                          : "bound"
-                      }
-                      value={values.excludePageFromSearch}
-                      onChange={(value) => {
-                        onChange({
-                          field: "excludePageFromSearch",
-                          value,
-                        });
-                      }}
-                      onRemove={(evaluatedValue) => {
-                        onChange({
-                          field: "excludePageFromSearch",
-                          value: JSON.stringify(evaluatedValue ?? ""),
-                        });
-                      }}
-                    />
-                  )}
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.excludePageFromSearch)
+                        ? "default"
+                        : "bound"
+                    }
+                    value={values.excludePageFromSearch}
+                    onChange={(value) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value,
+                      });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value: JSON.stringify(evaluatedValue ?? ""),
+                      });
+                    }}
+                  />
                   <Checkbox
                     id={fieldIds.excludePageFromSearch}
                     disabled={
@@ -1085,13 +1023,11 @@ const FormFields = ({
               </BindingControl>
             </Grid>
 
-            {isFeatureEnabled("cms") && (
-              <LanguageField
-                errors={errors.language}
-                value={values.language}
-                onChange={(value) => onChange({ field: "language", value })}
-              />
-            )}
+            <LanguageField
+              errors={errors.language}
+              value={values.language}
+              onChange={(value) => onChange({ field: "language", value })}
+            />
           </Grid>
 
           <Separator />
@@ -1109,49 +1045,47 @@ const FormFields = ({
               Project Settings will be used. The optimal dimensions for the
               image are 1200x630 px or larger with a 1.91:1 aspect ratio.
             </Text>
-            {isFeatureEnabled("cms") && (
-              <BindingControl>
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.socialImageUrl)
-                      ? "default"
-                      : "bound"
+            <BindingControl>
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.socialImageUrl)
+                    ? "default"
+                    : "bound"
+                }
+                value={values.socialImageUrl}
+                onChange={(value) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value,
+                  });
+                }}
+                onRemove={(evaluatedValue) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value: JSON.stringify(evaluatedValue ?? ""),
+                  });
+                }}
+              />
+              <InputErrorsTooltip errors={errors.socialImageUrl}>
+                <InputField
+                  placeholder="https://www.url.com"
+                  disabled={
+                    isLiteralExpression(values.socialImageUrl) === false
                   }
-                  value={values.socialImageUrl}
-                  onChange={(value) => {
+                  color={errors.socialImageUrl && "error"}
+                  value={socialImageUrl}
+                  onChange={(event) => {
                     onChange({
                       field: "socialImageUrl",
-                      value,
+                      value: JSON.stringify(event.target.value),
                     });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "socialImageUrl",
-                      value: JSON.stringify(evaluatedValue ?? ""),
-                    });
+                    onChange({ field: "socialImageAssetId", value: "" });
                   }}
                 />
-                <InputErrorsTooltip errors={errors.socialImageUrl}>
-                  <InputField
-                    placeholder="https://www.url.com"
-                    disabled={
-                      isLiteralExpression(values.socialImageUrl) === false
-                    }
-                    color={errors.socialImageUrl && "error"}
-                    value={socialImageUrl}
-                    onChange={(event) => {
-                      onChange({
-                        field: "socialImageUrl",
-                        value: JSON.stringify(event.target.value),
-                      });
-                      onChange({ field: "socialImageAssetId", value: "" });
-                    }}
-                  />
-                </InputErrorsTooltip>
-              </BindingControl>
-            )}
+              </InputErrorsTooltip>
+            </BindingControl>
             <Grid gap={1} flow={"column"}>
               <ImageControl
                 onAssetIdChange={(socialImageAssetId) => {
@@ -1267,15 +1201,8 @@ export const NewPageSettings = ({
     ...fieldDefaultValues,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
-  const userPlanFeatures = useStore($userPlanFeatures);
   const { variableValues } = useStore($pageRootScope);
-  const errors = validateValues(
-    pages,
-    undefined,
-    values,
-    variableValues,
-    userPlanFeatures
-  );
+  const errors = validateValues(pages, undefined, values, variableValues);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -1381,7 +1308,8 @@ const createPage = (pageId: Page["id"], values: Values) => {
       instances.set(rootInstanceId, {
         type: "instance",
         id: rootInstanceId,
-        component: "Body",
+        component: elementComponent,
+        tag: "body",
         children: [],
       });
       registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
@@ -1419,7 +1347,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         values.language.length > 0 ? values.language : undefined;
     }
 
-    if (values.status !== undefined) {
+    if ("status" in values) {
       page.meta.status = values.status;
     }
 
@@ -1557,14 +1485,7 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const errors = validateValues(
-    pages,
-    pageId,
-    values,
-    variableValues,
-    userPlanFeatures
-  );
+  const errors = validateValues(pages, pageId, values, variableValues);
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -1678,16 +1599,17 @@ const PageSettingsView = ({
                 />
               </Tooltip>
             )}
-
-            <Tooltip content="Duplicate page" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<CopyIcon />}
-                onClick={onDuplicate}
-                aria-label="Duplicate page"
-                tabIndex={2}
-              />
-            </Tooltip>
+            {isDesignMode && (
+              <Tooltip content="Duplicate page" side="bottom">
+                <Button
+                  color="ghost"
+                  prefix={<CopyIcon />}
+                  onClick={onDuplicate}
+                  aria-label="Duplicate page"
+                  tabIndex={2}
+                />
+              </Tooltip>
+            )}
 
             <Tooltip content="Close page settings" side="bottom">
               <Button

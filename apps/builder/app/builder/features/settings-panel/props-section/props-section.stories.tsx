@@ -199,9 +199,8 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
 
 registerComponentLibrary({
   components: {},
-  metas: {},
   templates: {},
-  propsMetas: {
+  metas: {
     Box: {
       props: {
         initialText: textProp("", "multi\nline"),
@@ -370,10 +369,6 @@ const startingProps: Prop[] = [
 export const Story = () => {
   const [props, setProps] = useState(startingProps);
 
-  const handleDelete = (id: Prop["id"]) => {
-    setProps((current) => current.filter((prop) => prop.id !== id));
-  };
-
   const handleUpdate = (prop: Prop) => {
     setProps((current) => {
       const exists = current.find((item) => item.id === prop.id) !== undefined;
@@ -387,7 +382,6 @@ export const Story = () => {
     instance,
     props,
     updateProp: handleUpdate,
-    deleteProp: handleDelete,
   });
 
   return (
@@ -398,6 +392,7 @@ export const Story = () => {
           propsLogic={logic}
           propValues={new Map()}
           component="Button"
+          selectedInstanceKey={instanceId}
         />
       </div>
       <pre style={textVariants.mono}>

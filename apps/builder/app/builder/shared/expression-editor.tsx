@@ -255,8 +255,10 @@ const scopeCompletionSource: CompletionSource = (context) => {
  */
 
 class VariableWidget extends WidgetType {
-  constructor(readonly text: string) {
+  text: string;
+  constructor(text: string) {
     super();
+    this.text = text;
   }
   toDOM(): HTMLElement {
     const span = document.createElement("span");

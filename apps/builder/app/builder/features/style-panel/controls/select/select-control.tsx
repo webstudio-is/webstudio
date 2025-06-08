@@ -1,17 +1,15 @@
 import {
   camelCaseProperty,
   declarationDescriptions,
+  keywordValues,
   parseCssValue,
 } from "@webstudio-is/css-data";
 import {
-  StyleValue,
   toValue,
+  type StyleValue,
   type CssProperty,
-  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
-import { toKebabCase } from "../../shared/keyword-utils";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   resetEphemeralStyles,
@@ -22,14 +20,13 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { noCase } from "change-case";
 
 export const SelectControl = ({
   property,
   index,
-  items = styleConfigByName(property).items,
+  items,
 }: {
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   index?: number;
   items?: Array<{ label: string; name: string }>;
 }) => {
@@ -45,7 +42,9 @@ export const SelectControl = ({
       setRepeatedStyleItem(styleDecl, index, value, options);
     }
   };
-  const options = items.map(({ name }) => name);
+  const options =
+    items?.map(({ name }) => name) ?? keywordValues[property] ?? [];
+
   // We can't render an empty string as a value when display was added but without a value.
   // One case is when advanced property is being added, but no value is set.
   const valueString = toValue(value) || "empty";
@@ -69,7 +68,6 @@ export const SelectControl = ({
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={toKebabCase}
       value={valueString}
       onChange={(name) => setValue({ type: "keyword", value: name })}
       onItemHighlight={(name) => {
@@ -81,7 +79,7 @@ export const SelectControl = ({
           return;
         }
         // Preview on mouse enter or focus.
-        const nextValue = parseCssValue(camelCaseProperty(property), name);
+        const nextValue = parseCssValue(property, name);
         setValue(nextValue, { isEphemeral: true });
       }}
       onOpenChange={(isOpen) => {
@@ -99,7 +97,7 @@ export const SelectControl = ({
           declarationDescriptions[`${camelCaseProperty(property)}:${option}`];
         return (
           <Box css={{ width: theme.spacing[26] }}>
-            {description ?? `The ${noCase(property)} is ${option}`}
+            {description ?? `The ${property} is ${option}`}
           </Box>
         );
       }}

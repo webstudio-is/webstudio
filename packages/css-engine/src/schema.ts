@@ -171,12 +171,26 @@ export const TupleValue = z.object({
 
 export type TupleValue = z.infer<typeof TupleValue>;
 
+export const ShadowValue = z.object({
+  type: z.literal("shadow"),
+  hidden: z.boolean().optional(),
+  position: z.union([z.literal("inset"), z.literal("outset")]),
+  offsetX: z.union([UnitValue, VarValue]),
+  offsetY: z.union([UnitValue, VarValue]),
+  blur: z.union([UnitValue, VarValue]).optional(),
+  spread: z.union([UnitValue, VarValue]).optional(),
+  color: z.union([RgbValue, KeywordValue, VarValue]).optional(),
+});
+
+export type ShadowValue = z.infer<typeof ShadowValue>;
+
 const LayerValueItem = z.union([
   UnitValue,
   KeywordValue,
   UnparsedValue,
   ImageValue,
   TupleValue,
+  ShadowValue,
   RgbValue,
   InvalidValue,
   FunctionValue,
@@ -209,12 +223,7 @@ export const StyleValue = z.union([
   InvalidValue,
   UnsetValue,
   VarValue,
+  ShadowValue,
 ]);
 
 export type StyleValue = z.infer<typeof StyleValue>;
-
-const Style = z.record(z.string(), StyleValue);
-
-export type Style = {
-  [property in StyleProperty]?: StyleValue;
-} & { [property: CustomProperty]: StyleValue };

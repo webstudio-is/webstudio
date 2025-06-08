@@ -28,6 +28,7 @@ import {
 } from "./instance-utils";
 import { $project } from "./nano-states";
 import { findAvailableVariables } from "./data-variables";
+import { camelCaseProperty } from "@webstudio-is/css-data";
 
 $project.set({ id: "current_project" } as Project);
 
@@ -83,8 +84,14 @@ const insertStyles = ({
   styleSourceId: string;
   style: TemplateStyleDecl[];
 }) => {
-  for (const styleDecl of style) {
-    const newStyleDecl = { breakpointId, styleSourceId, ...styleDecl };
+  for (const { state, property, value } of style) {
+    const newStyleDecl = {
+      breakpointId,
+      styleSourceId,
+      state,
+      property: camelCaseProperty(property),
+      value,
+    };
     data.styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
   }
 };
@@ -122,12 +129,14 @@ test("insert instances with slots", () => {
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(4);
   insertWebstudioFragmentCopy({
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(5);
   expect(Array.from(data.instances.values())).toEqual([
@@ -157,6 +166,7 @@ test("insert instances with multiple roots", () => {
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(5);
 });
@@ -178,6 +188,7 @@ test("should add :root local styles", () => {
     data: newProject,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -216,6 +227,7 @@ test("should merge :root local styles", () => {
     data: newProject,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -245,6 +257,7 @@ test("should copy local styles of duplicated instance", () => {
     data: project,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   const newInstanceId = Array.from(project.instances.keys()).at(-1);
   expect(toCss(project)).toEqual(
@@ -310,6 +323,7 @@ describe("props", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -338,6 +352,7 @@ describe("props", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -430,6 +445,7 @@ describe("variables", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     const [newDataSourceId] = data.dataSources.keys();
     expect(Array.from(data.dataSources.values())).toEqual([
@@ -481,6 +497,7 @@ describe("variables", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({
@@ -533,6 +550,7 @@ describe("variables", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1) ?? "";
     expect(newInstanceId).not.toEqual("boxId");
@@ -629,6 +647,7 @@ describe("resources", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
@@ -717,6 +736,7 @@ describe("resources", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
@@ -760,6 +780,7 @@ describe("resources", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     const [newPropResourceId, newVariableResourceId] = data.resources.keys();
     const [newBoxVariableId] = data.dataSources.keys();
@@ -826,6 +847,7 @@ describe("resources", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({

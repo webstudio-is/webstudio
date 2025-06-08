@@ -1,9 +1,9 @@
 import { camelCase } from "change-case";
 import * as csstree from "css-tree";
-import {
+import type {
   StyleValue,
-  type CssProperty,
-  type StyleProperty,
+  CssProperty,
+  StyleProperty,
 } from "@webstudio-is/css-engine";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import { expandShorthands } from "./shorthands";
@@ -71,20 +71,10 @@ export const camelCaseProperty = (
   return camelCase(property) as StyleProperty;
 };
 
-const parseCssValue = (
-  property: CssProperty,
-  value: string
-): Map<StyleProperty, StyleValue> => {
+const parseCssValue = (property: CssProperty, value: string) => {
   const expanded = new Map(expandShorthands([[property, value]]));
-  const final = new Map();
+  const final = new Map<CssProperty, StyleValue>();
   for (const [property, value] of expanded) {
-    if (value === "") {
-      // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
-      // It may override some existing value and effectively set it to "unset";
-      final.set(property, { type: "keyword", value: "unset" });
-      continue;
-    }
-
     final.set(property, parseCssValueLonghand(property, value));
   }
   return final;

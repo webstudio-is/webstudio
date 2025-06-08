@@ -5,9 +5,9 @@ import {
   useContext,
   useCallback,
 } from "react";
-import { VimeoContext } from "./vimeo";
-import { Button, defaultTag } from "./button";
 import interactionResponse from "await-interaction-response";
+import { Button, defaultTag } from "./button";
+import { VideoContext } from "./shared/video";
 
 export { defaultTag };
 
@@ -15,14 +15,14 @@ type Props = ComponentProps<typeof Button>;
 
 export const VimeoPlayButton = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
-    const vimeoContext = useContext(VimeoContext);
+    const videoContext = useContext(VideoContext);
 
     const handleClick = useCallback(async () => {
       await interactionResponse();
-      vimeoContext.onInitPlayer();
-    }, [vimeoContext]);
+      videoContext.onInitPlayer();
+    }, [videoContext]);
 
-    if (vimeoContext.status !== "initial") {
+    if (videoContext.status !== "initial") {
       return;
     }
 

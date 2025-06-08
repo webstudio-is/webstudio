@@ -1,10 +1,3 @@
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 
-export const meta: WsComponentMeta = {
-  type: "container",
-  icon: "",
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props: {},
-};
+export const meta: WsComponentMeta = {};

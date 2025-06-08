@@ -3,10 +3,10 @@ import {
   $authTokenPermissions,
   $textEditingInstanceSelector,
 } from "../nano-states";
-import * as instance from "./plugin-instance";
-import * as embedTemplate from "./plugin-embed-template";
-import * as markdown from "./plugin-markdown";
-import * as webflow from "./plugin-webflow/plugin-webflow";
+import { instanceText, instanceJson } from "./plugin-instance";
+import { html } from "./plugin-html";
+import { markdown } from "./plugin-markdown";
+import { webflow } from "./plugin-webflow/plugin-webflow";
 import { builderApi } from "../builder-api";
 
 const isTextEditing = (event: ClipboardEvent) => {
@@ -63,10 +63,9 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
   return true;
 };
 
-const defaultMimeType = "application/json";
-
-type Plugin = {
-  mimeType?: string;
+export type Plugin = {
+  name: string;
+  mimeType: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
   onPaste?: (data: string) => boolean | Promise<boolean>;
@@ -84,7 +83,7 @@ const initPlugins = ({
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onCopy } of plugins) {
+    for (const { mimeType, onCopy } of plugins) {
       const data = onCopy?.();
 
       if (data) {
@@ -100,7 +99,7 @@ const initPlugins = ({
     if (validateClipboardEvent(event) === false) {
       return;
     }
-    for (const { mimeType = defaultMimeType, onCut } of plugins) {
+    for (const { mimeType, onCut } of plugins) {
       const data = onCut?.();
       if (data) {
         // must prevent default, otherwise setData() will not work
@@ -111,16 +110,16 @@ const initPlugins = ({
     }
   };
 
-  const handlePaste = (event: ClipboardEvent) => {
+  const handlePaste = async (event: ClipboardEvent) => {
     if (validateClipboardEvent(event) === false) {
       return;
     }
 
-    for (const { mimeType = defaultMimeType, onPaste } of plugins) {
+    for (const { mimeType, onPaste } of plugins) {
       // this shouldn't matter, but just in case
       event.preventDefault();
       const data = event.clipboardData?.getData(mimeType).trim();
-      if (data && onPaste?.(data)) {
+      if (data && (await onPaste?.(data))) {
         break;
       }
     }
@@ -135,7 +134,7 @@ const initPlugins = ({
 
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
-    plugins: [instance, embedTemplate, markdown, webflow],
+    plugins: [instanceJson, instanceText, html, markdown, webflow],
     signal,
   });
 };

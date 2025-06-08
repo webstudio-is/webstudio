@@ -62,7 +62,7 @@ const newFadeOutViewAnimation: ViewAnimation = {
 
 const newFlyInViewAnimation: ViewAnimation = {
   name: "Fly In",
-  description: "Fly in the element as it scrolls into view.",
+  description: "A fly in animation moves an element as it scrolls into view.",
 
   timing: {
     rangeStart: ["entry", { type: "unit", value: 0, unit: "%" }],
@@ -82,7 +82,8 @@ const newFlyInViewAnimation: ViewAnimation = {
 
 const newFlyOutViewAnimation: ViewAnimation = {
   name: "Fly Out",
-  description: "Fly out the element as it scrolls out of view.",
+  description:
+    "A fly out animation moves an element as it scrolls out of view.",
 
   timing: {
     rangeStart: ["exit", { type: "unit", value: 0, unit: "%" }],
@@ -102,7 +103,8 @@ const newFlyOutViewAnimation: ViewAnimation = {
 
 const newWipeInViewAnimation: ViewAnimation = {
   name: "Wipe In",
-  description: "Wipe in the element as it scrolls into view.",
+  description:
+    "A wipe in is an animation where one scene gradually replaces another as it scrolls into the view.",
 
   timing: {
     rangeStart: ["contain", { type: "unit", value: 0, unit: "%" }],
@@ -114,13 +116,13 @@ const newWipeInViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 100% 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 100% 0 0)"),
       },
     },
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 0)"),
       },
     },
   ],
@@ -128,7 +130,8 @@ const newWipeInViewAnimation: ViewAnimation = {
 
 const newWipeOutViewAnimation: ViewAnimation = {
   name: "Wipe Out",
-  description: "Wipe out the element as it scrolls out of view.",
+  description:
+    "A wipe out is an animation where one scene gradually replaces another as it scrolls out of view.",
 
   timing: {
     rangeStart: ["contain", { type: "unit", value: 50, unit: "%" }],
@@ -140,14 +143,14 @@ const newWipeOutViewAnimation: ViewAnimation = {
     {
       offset: 0,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 0)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 0)"),
       },
     },
 
     {
       offset: 1,
       styles: {
-        "clip-path": parseCssValue("clipPath", "inset(0 0 0 100%)"),
+        "clip-path": parseCssValue("clip-path", "inset(0 0 0 100%)"),
       },
     },
   ],
@@ -155,7 +158,7 @@ const newWipeOutViewAnimation: ViewAnimation = {
 
 const newParallaxInAnimation: ViewAnimation = {
   name: "Parallax In",
-  description: "Parallax the element as it scrolls out of view.",
+  description: "Parallax the element as it scrolls into the view.",
 
   timing: {
     rangeStart: ["cover", { type: "unit", value: 0, unit: "%" }],

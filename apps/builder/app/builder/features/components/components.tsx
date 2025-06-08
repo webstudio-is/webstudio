@@ -8,6 +8,8 @@ import {
   type WsComponentMeta,
   componentCategories,
   collectionComponent,
+  parseComponentName,
+  elementComponent,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -29,20 +31,22 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
-import { MetaIcon } from "~/builder/shared/meta-icon";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
 } from "~/shared/nano-states";
 import {
-  findClosestInsertable,
   getComponentTemplateData,
-  getInstanceLabel,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
 
 type Meta = {
   name: string;
@@ -50,7 +54,8 @@ type Meta = {
   order: undefined | number;
   label: string;
   description: undefined | string;
-  icon: string;
+  icon?: string;
+  firstInstance: { component: string; tag?: string };
 };
 
 const $metas = computed(
@@ -59,33 +64,45 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
+      const [namespace, shortName] = parseComponentName(name);
       if (
         isFeatureEnabled("animation") === false &&
-        name.endsWith(":AnimateChildren")
+        namespace === "@webstudio-is/sdk-components-animation"
+      ) {
+        continue;
+      }
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
       ) {
         continue;
       }
 
       // only set available components from component meta
       availableComponents.add(name);
-      if (
-        isFeatureEnabled("headSlotComponent") === false &&
-        name === "HeadSlot"
-      ) {
-        continue;
-      }
-
       metas.push({
         name,
         category: componentMeta.category ?? "hidden",
         order: componentMeta.order,
         label: getInstanceLabel({ component: name }, componentMeta),
         description: componentMeta.description,
-        icon: componentMeta.icon,
+        firstInstance: { component: name },
       });
     }
     for (const [name, templateMeta] of templates) {
       const componentMeta = componentMetas.get(name);
+      const [namespace, shortName] = parseComponentName(name);
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
+      availableComponents.add(name);
       metas.push({
         name,
         category: templateMeta.category ?? "hidden",
@@ -95,7 +112,8 @@ const $metas = computed(
           componentMeta?.label ??
           getInstanceLabel({ component: name }, templateMeta),
         description: templateMeta.description,
-        icon: templateMeta.icon ?? componentMeta?.icon ?? "",
+        icon: templateMeta.icon,
+        firstInstance: templateMeta.template.instances[0],
       });
     }
     const metasByCategory = mapGroupBy(metas, (meta) => meta.category);
@@ -200,11 +218,12 @@ export const ComponentsPanel = ({
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
   const handleInsert = (component: string) => {
-    const fragment = getComponentTemplateData(component);
-    if (fragment) {
-      const insertable = findClosestInsertable(fragment);
-      if (insertable) {
-        insertWebstudioFragmentAt(fragment, insertable);
+    if (component === elementComponent) {
+      insertWebstudioElementAt();
+    } else {
+      const fragment = getComponentTemplateData(component);
+      if (fragment) {
+        insertWebstudioFragmentAt(fragment);
       }
     }
     onClose();
@@ -318,7 +337,14 @@ export const ComponentsPanel = ({
                       {...{ [dragItemAttribute]: meta.name }}
                       label={meta.label}
                       description={meta.description}
-                      icon={<MetaIcon size="auto" icon={meta.icon} />}
+                      icon={
+                        <InstanceIcon
+                          size="auto"
+                          instance={meta.firstInstance}
+                          // for cases like Sheet template
+                          icon={meta.icon}
+                        />
+                      }
                     />
                   </ListItem>
                 ))}

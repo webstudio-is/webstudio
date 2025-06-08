@@ -24,6 +24,18 @@ export const setUnion = <Item>(current: Set<Item>, other: Set<Item>) => {
   return result;
 };
 
+export const setIsSubsetOf = <Item>(current: Set<Item>, other: Set<Item>) => {
+  if (current.size > other.size) {
+    return false;
+  }
+  for (const item of current) {
+    if (!other.has(item)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 export const mapGroupBy = <Item, Key>(
   array: Item[] | Iterable<Item>,
   getKey: (item: Item) => Key

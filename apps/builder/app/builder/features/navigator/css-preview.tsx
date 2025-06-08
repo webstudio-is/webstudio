@@ -6,16 +6,12 @@ import {
   textVariants,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  generateStyleMap,
-  hyphenateProperty,
-  mergeStyles,
-} from "@webstudio-is/css-engine";
+import { generateStyleMap, mergeStyles } from "@webstudio-is/css-engine";
 import type { StyleMap } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { highlightCss } from "~/builder/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { $definedComputedStyles } from "~/builder/features/style-panel/shared/model";
+import { $computedStyleDeclarations } from "~/builder/features/style-panel/shared/model";
 import { $selectedInstance } from "~/shared/awareness";
 
 const preStyle = css(textVariants.mono, {
@@ -37,7 +33,6 @@ const getCssText = (
 
   // Aggregate styles by category so we can group them when rendering.
   for (const styleDecl of definedComputedStyles) {
-    const property = hyphenateProperty(styleDecl.property);
     let group;
     if (
       styleDecl.source.name === "local" ||
@@ -53,7 +48,7 @@ const getCssText = (
     }
     if (group) {
       if (styleDecl.source.instanceId === instanceId) {
-        group.set(property, styleDecl.cascadedValue);
+        group.set(styleDecl.property, styleDecl.cascadedValue);
       }
     }
   }
@@ -76,12 +71,12 @@ const getCssText = (
 };
 
 const $highlightedCss = computed(
-  [$selectedInstance, $definedComputedStyles],
-  (instance, definedComputedStyles) => {
+  [$selectedInstance, $computedStyleDeclarations],
+  (instance, computedStyleDeclarations) => {
     if (instance === undefined) {
       return;
     }
-    const cssText = getCssText(definedComputedStyles, instance.id);
+    const cssText = getCssText(computedStyleDeclarations, instance.id);
     return highlightCss(cssText);
   }
 );

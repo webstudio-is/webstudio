@@ -1,5 +1,8 @@
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import type { ReactNode } from "react";
 import {
+  Button,
   css,
   Flex,
   Popover,
@@ -23,7 +26,19 @@ const contentStyle = css({
   color: theme.colors.foregroundDestructive,
 });
 
-export const Alert = ({ message }: { message: string | ReactNode }) => {
+const $isAlertDismissed = atom(false);
+
+export const Alert = ({
+  message,
+  isDismissable,
+}: {
+  message: string | ReactNode;
+  isDismissable?: boolean;
+}) => {
+  const isAlertDismissed = useStore($isAlertDismissed);
+  if (isAlertDismissed) {
+    return;
+  }
   return (
     <Popover open>
       <PopoverContent css={{ zIndex: theme.zIndices.max }}>
@@ -38,6 +53,14 @@ export const Alert = ({ message }: { message: string | ReactNode }) => {
             <Text color="contrast" align="center">
               {message}
             </Text>
+            {isDismissable && (
+              <Button
+                color="destructive"
+                onClick={() => $isAlertDismissed.set(true)}
+              >
+                Dismiss
+              </Button>
+            )}
           </Flex>
         </Flex>
       </PopoverContent>

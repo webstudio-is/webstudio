@@ -2,12 +2,10 @@ import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createCommandsEmitter } from "~/shared/commands-emitter";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
-import {
-  findClosestEditableInstanceSelector,
-  findAllEditableInstanceSelector,
-} from "~/shared/instance-utils";
+import { findAllEditableInstanceSelector } from "~/shared/instance-utils";
 import {
   $instances,
+  $props,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
@@ -22,6 +20,7 @@ import {
 import { selectInstance } from "~/shared/awareness";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { deleteSelectedInstance } from "~/builder/shared/commands";
+import { findClosestRichText } from "~/shared/content-model";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
@@ -30,6 +29,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteInstanceCanvas",
       defaultHotkeys: ["backspace", "delete"],
+      preventDefault: false,
       disableHotkeyOutsideApp: true,
       // We are not disabling "Backspace" or "Delete" on the canvas. This is the main reason we have separate functions: deleteInstanceCanvas and deleteInstanceBuilder.
       disableOnInputLikeControls: false,
@@ -59,21 +59,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
 
-        let editableInstanceSelector = findClosestEditableInstanceSelector(
-          selectedInstanceSelector,
-          $instances.get(),
-          $registeredComponentMetas.get()
-        );
+        let editableInstanceSelector = findClosestRichText({
+          instanceSelector: selectedInstanceSelector,
+          instances: $instances.get(),
+          props: $props.get(),
+          metas: $registeredComponentMetas.get(),
+        });
 
         if (editableInstanceSelector === undefined) {
           const selectors: InstanceSelector[] = [];
 
-          findAllEditableInstanceSelector(
-            selectedInstanceSelector,
-            $instances.get(),
-            $registeredComponentMetas.get(),
-            selectors
-          );
+          findAllEditableInstanceSelector({
+            instanceSelector: selectedInstanceSelector,
+            instances: $instances.get(),
+            props: $props.get(),
+            metas: $registeredComponentMetas.get(),
+            results: selectors,
+          });
 
           if (selectors.length === 0) {
             $textEditingInstanceSelector.set(undefined);

@@ -3,7 +3,7 @@
   "display": "Default",
   "compilerOptions": {
     "module": "ES2022",
-    "target": "ES2022",
+    "target": "ES2023",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictBuiltinIteratorReturn": true,
+    "erasableSyntaxOnly": true,
     "allowJs": false,
     "jsx": "react-jsx",
     "resolveJsonModule": true,

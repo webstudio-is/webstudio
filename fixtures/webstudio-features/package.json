@@ -6,16 +6,16 @@
     "dev": "react-router dev",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-cddc1d44-af37-4cb6-a430-d300cf6f932d-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
-    "fixtures:sync": "pnpm cli sync --buildId 6f14cdae-073c-4f2c-b535-da3f404f3e36 && pnpm prettier --write ./.webstudio/",
+    "fixtures:sync": "pnpm cli sync --buildId 043bda3f-0d77-4656-aa9c-652c1a1f272e && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template react-router --template ./.template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,
   "sideEffects": false,
   "dependencies": {
     "@miniflare/html-rewriter": "^2.14.4",
-    "@react-router/dev": "^7.3.0",
-    "@react-router/fs-routes": "^7.3.0",
-    "@react-router/node": "^7.3.0",
+    "@react-router/dev": "^7.5.3",
+    "@react-router/fs-routes": "^7.5.3",
+    "@react-router/node": "^7.5.3",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
@@ -23,18 +23,18 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-router": "workspace:*",
-    "isbot": "^5.1.23",
+    "isbot": "^5.1.25",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "react-router": "^7.3.0",
-    "vite": "^5.4.11",
+    "react-router": "^7.5.3",
+    "vite": "^6.3.4",
     "webstudio": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "fast-glob": "^3.3.2",
-    "typescript": "5.7.3",
+    "typescript": "5.8.2",
     "webstudio": "workspace:*"
   },
   "engines": {

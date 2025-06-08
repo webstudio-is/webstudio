@@ -9,7 +9,7 @@ export const getResources = (_props: { system: System }) => {
     name: "action",
     url: "/custom",
     method: "get",
-    headers: [],
+    headers: [{ name: "Content-Type", value: "application/json" }],
   };
   const _data = new Map<string, ResourceRequest>([]);
   const _action = new Map<string, ResourceRequest>([["action", action]]);
@@ -40,7 +40,5 @@ type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
-
-export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 export const contactEmail = "hello@webstudio.is";

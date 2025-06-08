@@ -1,4 +1,3 @@
-import { camelCase } from "change-case";
 import {
   type InvalidValue,
   type TupleValue,
@@ -40,7 +39,7 @@ import { parseCssFragment } from "./css-fragment";
 const filterFunctions = {
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/blur#syntax
   // length
-  blur: { default: "0px", fakeProperty: "outlineOffset" },
+  blur: { default: "0px", fakeProperty: "outline-offset" },
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/brightness#formal_syntax
   // number | percentage
   brightness: { default: "0%", fakeProperty: "opacity" },
@@ -51,7 +50,7 @@ const filterFunctions = {
   // and pass the args as value and property
   "drop-shadow": {
     default: "0px 2px 5px rgba(0, 0, 0, 0.2)",
-    fakeProperty: "textShadow",
+    fakeProperty: "text-shadow",
   },
   // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/grayscale#syntax
   // number  | percentage
@@ -150,7 +149,7 @@ export const FilterSectionContent = ({
     value: string,
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
-    const parsed = parseCssFragment(value, [camelCase(property)]);
+    const parsed = parseCssFragment(value, [property]);
     const parsedValue = parsed.get(property);
     const invalid = parsedValue === undefined || parsedValue.type === "invalid";
     setIntermediateValue({
@@ -199,7 +198,7 @@ export const FilterSectionContent = ({
               property={
                 filterFunction
                   ? filterFunctions[filterFunction].fakeProperty
-                  : "outlineOffset"
+                  : "outline-offset"
               }
               styleSource="local"
               value={
@@ -209,30 +208,28 @@ export const FilterSectionContent = ({
                   unit: "px",
                 }
               }
-              setValue={handleFilterFunctionValueChange}
-              deleteProperty={() => {}}
+              onUpdate={handleFilterFunctionValueChange}
+              onDelete={() => {}}
             />
           </Grid>
         ) : undefined}
       </Flex>
 
-      {filterFunction === "drop-shadow" &&
-      layer.type === "function" &&
-      layer.args.type === "tuple" ? (
+      {filterFunction === "drop-shadow" && layer.type === "function" && (
         <ShadowContent
           index={index}
           property="drop-shadow"
           layer={layer.args}
           propertyValue={toValue(layer.args)}
+          hideCodeEditor={true}
           onEditLayer={(_, dropShadowLayers, options) => {
             handleComplete(
               `drop-shadow(${toValue(dropShadowLayers)})`,
               options
             );
           }}
-          hideCodeEditor={true}
         />
-      ) : undefined}
+      )}
 
       <Separator css={{ gridAutoColumns: "span 2" }} />
       <Flex

@@ -1,40 +1,24 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, useContext, type ComponentProps } from "react";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
-export const defaultTag = "input";
-
-export const Input = forwardRef<
-  ElementRef<typeof defaultTag>,
-  ComponentProps<typeof defaultTag> & {
-    type?:
-      | "color"
-      | "date"
-      | "datetime-local"
-      | "email"
-      | "hidden"
-      | "month"
-      | "number"
-      | "password"
-      | "range"
-      | "search"
-      | "tel"
-      | "text"
-      | "time"
-      | "url"
-      | "week";
+export const Input = forwardRef<HTMLInputElement, ComponentProps<"input">>(
+  ({ value, defaultValue, checked, defaultChecked, ...props }, ref) => {
+    const { renderer } = useContext(ReactSdkContext);
+    // enfroce default value update
+    const key =
+      renderer === "canvas"
+        ? String(value ?? defaultValue) + String(checked ?? defaultChecked)
+        : undefined;
+    return (
+      <input
+        {...props}
+        key={key}
+        defaultValue={value ?? defaultValue}
+        defaultChecked={checked ?? defaultChecked}
+        ref={ref}
+      />
+    );
   }
-  // Make sure children are not passed down to an input, because this will result in error.
->(
-  (
-    { children: _children, type = "text", value, defaultValue, ...props },
-    ref
-  ) => (
-    <input
-      {...props}
-      defaultValue={value ?? defaultValue}
-      type={type}
-      ref={ref}
-    />
-  )
 );
 
 Input.displayName = "Input";

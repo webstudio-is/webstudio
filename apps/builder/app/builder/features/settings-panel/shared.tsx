@@ -11,6 +11,12 @@ import {
   type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
+import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
+import {
+  reactPropsToStandardAttributes,
+  showAttribute,
+  standardAttributesToReactProps,
+} from "@webstudio-is/react-sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
@@ -18,9 +24,8 @@ import {
   systemParameter,
 } from "@webstudio-is/sdk";
 import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
-import { InfoCircleIcon, MinusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
-  SmallIconButton,
   Label as BaseLabel,
   useIsTruncated,
   Tooltip,
@@ -34,11 +39,27 @@ import {
 import {
   $dataSourceVariables,
   $dataSources,
+  $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
-import { $selectedInstanceKeyWithRoot } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKeyWithRoot,
+} from "~/shared/awareness";
+import { $instanceTags } from "../style-panel/shared/model";
+
+export const showAttributeMeta: PropMeta = {
+  label: "Show",
+  required: false,
+  control: "boolean",
+  type: "boolean",
+  defaultValue: true,
+  // If you are changing it, change the other one too
+  description:
+    "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
+};
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -60,7 +81,6 @@ export type PropValue =
 type PropMetaByControl<Control> = Control extends string
   ? Extract<PropMeta, { control: Control }>
   : never;
-
 export type ControlProps<Control> = {
   instanceId: string;
   meta: PropMetaByControl<Control>;
@@ -69,15 +89,8 @@ export type ControlProps<Control> = {
   prop: Prop | undefined;
   propName: string;
   computedValue: unknown;
-  deletable: boolean;
   onChange: (value: PropValue) => void;
-  onDelete: () => void;
-  autoFocus?: boolean;
 };
-
-export const RemovePropButton = (props: { onClick: () => void }) => (
-  <SmallIconButton icon={<MinusIcon />} variant="destructive" {...props} />
-);
 
 const SimpleLabel = ({
   children,
@@ -142,7 +155,7 @@ export const Label = ({
 
   return (
     <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
-      {label}
+      <Box>{label}</Box>
       {readOnly && (
         <Tooltip
           content={
@@ -235,21 +248,14 @@ export const useLocalValue = <Type,>(
 
 type LayoutProps = {
   label: ReturnType<typeof Label>;
-  deletable: boolean;
-  onDelete: () => void;
   children: ReactNode;
 };
 
-export const VerticalLayout = ({
-  label,
-  deletable,
-  onDelete,
-  children,
-}: LayoutProps) => (
+export const VerticalLayout = ({ label, children }: LayoutProps) => (
   <Box>
     <Grid
       css={{
-        gridTemplateColumns: deletable ? `1fr max-content` : `1fr`,
+        gridTemplateColumns: `1fr`,
         justifyItems: "start",
       }}
       align="center"
@@ -257,23 +263,15 @@ export const VerticalLayout = ({
       justify="between"
     >
       {label}
-      {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
     <Box css={{ py: theme.spacing[2] }}>{children}</Box>
   </Box>
 );
 
-export const HorizontalLayout = ({
-  label,
-  deletable,
-  onDelete,
-  children,
-}: LayoutProps) => (
+export const HorizontalLayout = ({ label, children }: LayoutProps) => (
   <Grid
     css={{
-      gridTemplateColumns: deletable
-        ? `${theme.spacing[19]} 1fr max-content`
-        : `${theme.spacing[19]} 1fr`,
+      gridTemplateColumns: `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[12],
     }}
     align="center"
@@ -281,29 +279,36 @@ export const HorizontalLayout = ({
   >
     {label}
     {children}
-    {deletable && <RemovePropButton onClick={onDelete} />}
   </Grid>
 );
 
-export const ResponsiveLayout = ({
-  label,
-  deletable,
-  onDelete,
-  children,
-}: LayoutProps) => {
-  // more than 9 characters in label trigger ellipsis
-  // might not cover all cases though
-  if (label.props.children.length <= 8) {
-    return (
-      <HorizontalLayout label={label} deletable={deletable} onDelete={onDelete}>
-        {children}
-      </HorizontalLayout>
-    );
-  }
+export const ResponsiveLayout = ({ label, children }: LayoutProps) => {
   return (
-    <VerticalLayout label={label} deletable={deletable} onDelete={onDelete}>
-      {children}
-    </VerticalLayout>
+    <Flex
+      align="center"
+      wrap="wrap"
+      css={{
+        columnGap: theme.spacing[5],
+        rowGap: theme.spacing[3],
+        paddingBlock: theme.spacing[2],
+      }}
+    >
+      <Box
+        css={{
+          // wrap label and input when label is more than ~9 characters
+          flexBasis: `calc(30% - ${theme.spacing[5]} / 2)`,
+          // allow content overflow flex basis
+          minWidth: "auto",
+        }}
+      >
+        {label}
+      </Box>
+      <Box
+        css={{ flexBasis: `calc(70% - ${theme.spacing[5]} / 2)`, flexGrow: 1 }}
+      >
+        {children}
+      </Box>
+    </Flex>
   );
 };
 
@@ -409,11 +414,119 @@ export const humanizeAttribute = (string: string) => {
   if (string.includes("-")) {
     return string;
   }
-  if (string === "className") {
+  if (string === "class" || string === "className") {
     return "Class";
   }
-  if (string === "htmlFor") {
+  if (string === "for" || string === "htmlFor") {
     return "For";
   }
-  return humanizeString(string);
+  return humanizeString(standardAttributesToReactProps[string] ?? string);
 };
+
+type Attribute = (typeof ariaAttributes)[number];
+
+const attributeToMeta = (attribute: Attribute): PropMeta => {
+  const required = attribute.required ?? false;
+  const description = attribute.description;
+  if (attribute.type === "select") {
+    const options = attribute.options ?? [];
+    return {
+      type: "string",
+      control: options.length > 3 ? "select" : "radio",
+      required,
+      options,
+      description,
+    };
+  }
+  if (attribute.type === "url") {
+    return { type: "string", control: "url", required, description };
+  }
+  if (attribute.type === "string") {
+    return { type: "string", control: "text", required, description };
+  }
+  if (attribute.type === "number") {
+    return { type: "number", control: "number", required, description };
+  }
+  if (attribute.type === "boolean") {
+    return { type: "boolean", control: "boolean", required, description };
+  }
+  attribute.type satisfies never;
+  throw Error("impossible case");
+};
+
+export const $selectedInstancePropsMetas = computed(
+  [$selectedInstance, $registeredComponentMetas, $instanceTags],
+  (instance, metas, instanceTags): Map<string, PropMeta> => {
+    if (instance === undefined) {
+      return new Map();
+    }
+    const meta = metas.get(instance.component);
+    const tag = instanceTags.get(instance.id);
+    const propsMetas = new Map<Prop["name"], PropMeta>();
+    // add html attributes only when instance has tag
+    if (tag) {
+      for (const attribute of [...ariaAttributes].reverse()) {
+        propsMetas.set(attribute.name, attributeToMeta(attribute));
+      }
+      if (attributesByTag["*"]) {
+        for (const attribute of [...attributesByTag["*"]].reverse()) {
+          propsMetas.set(attribute.name, attributeToMeta(attribute));
+        }
+      }
+      if (attributesByTag[tag]) {
+        for (const attribute of [...attributesByTag[tag]].reverse()) {
+          propsMetas.set(attribute.name, attributeToMeta(attribute));
+        }
+      }
+    }
+    for (const [name, propMeta] of Object.entries(
+      meta?.props ?? {}
+    ).reverse()) {
+      // when component property has the same name as html attribute in react
+      // override to deduplicate similar properties
+      // for example component can have own "className" and html has "class"
+      const htmlName = reactPropsToStandardAttributes[name];
+      if (htmlName) {
+        propsMetas.delete(htmlName);
+      }
+      propsMetas.set(name, propMeta);
+    }
+    propsMetas.set(showAttribute, showAttributeMeta);
+    // ui should render in the following order
+    // 1. system properties
+    // 2. component properties
+    // 3. specific tag attributes
+    // 4. global html attributes
+    // 5. aria attributes
+    return new Map(Array.from(propsMetas.entries()).reverse());
+  }
+);
+
+export const $selectedInstanceInitialPropNames = computed(
+  [$selectedInstance, $registeredComponentMetas, $selectedInstancePropsMetas],
+  (selectedInstance, metas, instancePropsMetas) => {
+    const initialPropNames = new Set<string>();
+    if (selectedInstance) {
+      const initialProps =
+        metas.get(selectedInstance.component)?.initialProps ?? [];
+      for (const propName of initialProps) {
+        // className -> class
+        if (instancePropsMetas.has(reactPropsToStandardAttributes[propName])) {
+          initialPropNames.add(reactPropsToStandardAttributes[propName]);
+        } else {
+          initialPropNames.add(propName);
+        }
+      }
+    }
+    for (const [propName, propMeta] of instancePropsMetas) {
+      // skip show attribute which is added as system prop
+      if (propName === showAttribute) {
+        continue;
+      }
+      if (propMeta.required) {
+        initialPropNames.add(propName);
+      }
+    }
+    return initialPropNames;
+  }
+);

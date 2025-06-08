@@ -36,6 +36,4 @@ export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
 
-export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
-
 export const contactEmail = "hello@webstudio.is";

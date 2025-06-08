@@ -6,15 +6,15 @@ import {
   AddTemplateInstanceIcon,
 } from "@webstudio-is/icons/svg";
 import { html } from "./__generated__/normalize.css";
-import type {
-  WsComponentMeta,
-  WsComponentPropsMeta,
-} from "./schema/component-meta";
+import * as normalize from "./__generated__/normalize.css";
+import type { WsComponentMeta } from "./schema/component-meta";
+import type { Instance } from "./schema/instances";
+import { tagProperty } from "./runtime";
+import { tags } from "./__generated__/tags";
 
 export const rootComponent = "ws:root";
 
 const rootMeta: WsComponentMeta = {
-  type: "container",
   label: "Global Root",
   icon: SettingsIcon,
   presetStyle: {
@@ -22,8 +22,21 @@ const rootMeta: WsComponentMeta = {
   },
 };
 
-const rootPropsMeta: WsComponentPropsMeta = {
-  props: {},
+export const elementComponent = "ws:element";
+
+const elementMeta: WsComponentMeta = {
+  label: "Element",
+  // convert [object Module] to [object Object] to enable structured cloning
+  presetStyle: { ...normalize },
+  initialProps: [tagProperty, "id", "class"],
+  props: {
+    [tagProperty]: {
+      type: "string",
+      control: "tag",
+      required: true,
+      options: tags,
+    },
+  },
 };
 
 export const portalComponent = "Slot";
@@ -31,12 +44,13 @@ export const portalComponent = "Slot";
 export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
-  type: "container",
   label: "Collection",
   icon: ListViewIcon,
-};
-
-const collectionPropsMeta: WsComponentPropsMeta = {
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+  },
+  initialProps: ["data"],
   props: {
     data: {
       required: true,
@@ -44,24 +58,20 @@ const collectionPropsMeta: WsComponentPropsMeta = {
       type: "json",
     },
   },
-  initialProps: ["data"],
 };
 
 export const descendantComponent = "ws:descendant";
 
 const descendantMeta: WsComponentMeta = {
-  type: "control",
   label: "Descendant",
   icon: PaintBrushIcon,
+  contentModel: {
+    category: "none",
+    children: [],
+  },
   // @todo infer possible presets
   presetStyle: {},
-  constraints: {
-    relation: "parent",
-    component: { $in: ["HtmlEmbed", "MarkdownEmbed"] },
-  },
-};
-
-const descendantPropsMeta: WsComponentPropsMeta = {
+  initialProps: ["selector"],
   props: {
     selector: {
       required: true,
@@ -87,7 +97,6 @@ const descendantPropsMeta: WsComponentPropsMeta = {
       ],
     },
   },
-  initialProps: ["selector"],
 };
 
 export const blockComponent = "ws:block";
@@ -95,59 +104,42 @@ export const blockComponent = "ws:block";
 export const blockTemplateComponent = "ws:block-template";
 
 export const blockTemplateMeta: WsComponentMeta = {
-  type: "container",
   icon: AddTemplateInstanceIcon,
-  constraints: {
-    relation: "parent",
-    component: { $eq: blockComponent },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
 };
 
-const blockTemplatePropsMeta: WsComponentPropsMeta = {
-  props: {},
-};
-
 const blockMeta: WsComponentMeta = {
-  type: "container",
   label: "Content Block",
   icon: ContentBlockIcon,
-  constraints: [
-    {
-      relation: "ancestor",
-      component: { $nin: [collectionComponent, blockComponent] },
-    },
-    {
-      relation: "child",
-      component: { $eq: blockTemplateComponent },
-    },
-  ],
-};
-
-const blockPropsMeta: WsComponentPropsMeta = {
-  props: {},
+  contentModel: {
+    category: "instance",
+    children: [blockTemplateComponent, "instance"],
+  },
 };
 
 export const coreMetas = {
   [rootComponent]: rootMeta,
+  [elementComponent]: elementMeta,
   [collectionComponent]: collectionMeta,
   [descendantComponent]: descendantMeta,
   [blockComponent]: blockMeta,
   [blockTemplateComponent]: blockTemplateMeta,
 };
 
-export const corePropsMetas = {
-  [rootComponent]: rootPropsMeta,
-  [collectionComponent]: collectionPropsMeta,
-  [descendantComponent]: descendantPropsMeta,
-  [blockComponent]: blockPropsMeta,
-  [blockTemplateComponent]: blockTemplatePropsMeta,
-};
-
 // components with custom implementation
 // should not be imported as react component
-export const isCoreComponent = (component: string) =>
+export const isCoreComponent = (component: Instance["component"]) =>
   component === rootComponent ||
+  component === elementComponent ||
   component === collectionComponent ||
   component === descendantComponent ||
   component === blockComponent ||
   component === blockTemplateComponent;
+
+export const isComponentDetachable = (component: Instance["component"]) =>
+  component !== rootComponent &&
+  component !== blockTemplateComponent &&
+  component !== descendantComponent;

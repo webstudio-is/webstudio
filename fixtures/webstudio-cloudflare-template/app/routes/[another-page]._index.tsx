@@ -23,17 +23,18 @@ import {
   PageSettingsCanonicalLink,
 } from "@webstudio-is/react-sdk/runtime";
 import {
+  projectId,
   Page,
   siteName,
   favIconAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
+  breakpoints,
 } from "../__generated__/[another-page]._index";
 import {
   getResources,
   getPageMeta,
   getRemixParams,
-  projectId,
   contactEmail,
 } from "../__generated__/[another-page]._index.server";
 import { assetBaseUrl, imageLoader } from "../constants.mjs";
@@ -232,10 +233,6 @@ export const action = async ({
     formData.delete(formBotFieldName);
 
     if (resource) {
-      resource.headers.push({
-        name: "Content-Type",
-        value: "application/json",
-      });
       resource.body = Object.fromEntries(formData);
     } else {
       if (contactEmail === undefined) {
@@ -277,6 +274,8 @@ const Outlet = () => {
         imageLoader,
         assetBaseUrl,
         resources,
+        breakpoints,
+        onError: console.error,
       }}
     >
       {/* Use the URL as the key to force scripts in HTML Embed to reload on dynamic pages */}
@@ -287,6 +286,7 @@ const Outlet = () => {
         host={host}
         siteName={siteName}
         imageLoader={imageLoader}
+        assetBaseUrl={assetBaseUrl}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
       <PageSettingsCanonicalLink href={url} />

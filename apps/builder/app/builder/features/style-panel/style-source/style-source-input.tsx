@@ -13,6 +13,7 @@
 
 import { nanoid } from "nanoid";
 import { useFocusWithin } from "@react-aria/interactions";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   ComboboxListbox,
@@ -36,6 +37,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import type { StyleSource } from "@webstudio-is/sdk";
 import {
   forwardRef,
   useState,
@@ -48,7 +50,6 @@ import {
   useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { type ComponentState, stateCategories } from "@webstudio-is/sdk";
 import {
   type ItemSource,
   type StyleSourceError,
@@ -59,9 +60,9 @@ import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
-import { $definedStyles } from "../shared/model";
-import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
-import { useStore } from "@nanostores/react";
+import { $computedStyleDeclarations } from "../shared/model";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import type { WritableAtom } from "nanostores";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -119,7 +120,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  definedStyles: Set<Partial<StyleDecl>>
+  computedStyleDeclarations: Array<ComputedStyleDecl>
 ) => {
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
@@ -127,8 +128,8 @@ const getHasStylesMap = <Item extends IntermediateItem>(
     if (item.states.length > 0) {
       map.set(item.id, true);
     }
-    for (const style of definedStyles) {
-      if (item.id === style.styleSourceId) {
+    for (const style of computedStyleDeclarations) {
+      if (item.id === style.source.styleSourceId) {
         map.set(item.id, true);
         break;
       }
@@ -177,14 +178,14 @@ const TextFieldBase: ForwardRefRenderFunction<
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
-  const definedStyles = useStore($definedStyles);
+  const computedStyleDeclarations = useStore($computedStyleDeclarations);
 
   const hasStyles = useCallback(
     (styleSourceId: string) => {
-      const hasStylesMap = getHasStylesMap(value, definedStyles);
+      const hasStylesMap = getHasStylesMap(value, computedStyleDeclarations);
       return hasStylesMap.get(styleSourceId) ?? false;
     },
-    [value, definedStyles]
+    [value, computedStyleDeclarations]
   );
 
   return (
@@ -219,8 +220,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         size="1"
         value={label}
         onClick={onClick}
-        ref={inputRef}
-        inputRef={internalInputRef}
+        inputRef={mergeRefs(internalInputRef, inputRef)}
         spellCheck={false}
         aria-label="New Style Source Input"
       />
@@ -267,7 +267,19 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
+type ComponentState = {
+  category: "states" | "component-states";
+  selector: string;
+  label: string;
+};
+
+const categories = [
+  "states",
+  "component-states",
+] satisfies ComponentState["category"][];
+
 type StyleSourceInputProps<Item extends IntermediateItem> = {
+  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
   error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
@@ -415,9 +427,9 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      {stateCategories.map((currentCategory) => {
+      {categories.map((currentCategory) => {
         const categoryStates = props.states.filter(
-          ({ category }) => (category ?? "states") === currentCategory
+          ({ category }) => category === currentCategory
         );
         // prevent rendering empty category
         if (categoryStates.length === 0) {
@@ -553,6 +565,9 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            inputRef={(element) =>
+              props.$styleSourceInputElement.set(element ?? undefined)
+            }
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({

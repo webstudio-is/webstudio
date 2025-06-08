@@ -21,7 +21,6 @@ import {
 import type {
   CssProperty,
   KeywordValue,
-  StyleProperty,
   StyleValue,
   Unit,
   VarValue,
@@ -40,17 +39,14 @@ import {
 } from "react";
 import { useUnitSelect, type UnitOption } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
   propertiesData,
 } from "@webstudio-is/css-data";
-import {
-  $selectedInstanceBrowserStyle,
-  $selectedInstanceUnitSizes,
-} from "~/shared/nano-states";
+import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
@@ -62,11 +58,11 @@ import {
   ValueEditorDialog,
 } from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
+import { scrollByPointer } from "../scroll-by-pointer";
 
 // We need to enable scrub on properties that can have numeric value.
-const canBeNumber = (property: StyleProperty, value: CssValueInputValue) => {
-  const unitGroups =
-    propertiesData[hyphenateProperty(property)]?.unitGroups ?? [];
+const canBeNumber = (property: CssProperty, value: CssValueInputValue) => {
+  const unitGroups = propertiesData[property]?.unitGroups ?? [];
   // allow scrubbing css variables with unit value
   return unitGroups.length !== 0 || value.type === "unit";
 };
@@ -96,7 +92,7 @@ const useScrub = ({
   defaultUnit: Unit | undefined;
   value: CssValueInputValue;
   intermediateValue: CssValueInputValue | undefined;
-  property: StyleProperty;
+  property: CssProperty;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   onAbort: () => void;
@@ -305,7 +301,7 @@ type CssValueInputProps = Pick<
   | "inputRef"
 > & {
   styleSource: StyleValueSourceColor;
-  property: StyleProperty | CssProperty;
+  property: CssProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
@@ -326,6 +322,7 @@ type CssValueInputProps = Pick<
   unitOptions?: UnitOption[];
   id?: string;
   placeholder?: string;
+  minWidth?: string;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -348,93 +345,6 @@ const itemToString = (item: CssValueInputValue | null) => {
     return String(item.value);
   }
   return toValue(item);
-};
-
-const scrollAhead = ({ target, clientX }: MouseEvent) => {
-  const element = target as HTMLInputElement;
-
-  if (element.scrollWidth === element.clientWidth) {
-    // Nothing to scroll.
-    return false;
-  }
-  const inputRect = element.getBoundingClientRect();
-
-  // Calculate the relative x position of the mouse within the input element
-  const relativeMouseX = clientX - inputRect.x;
-
-  // Calculate the percentage position (0% at the beginning, 100% at the end)
-  const inputWidth = inputRect.width;
-  const mousePercentageX = Math.ceil((relativeMouseX / inputWidth) * 100);
-
-  // Apply acceleration based on the relative position of the mouse
-  // Closer to the beginning (-20%), closer to the end (+20%)
-  const accelerationFactor = (mousePercentageX - 50) / 50;
-  const adjustedMousePercentageX = Math.min(
-    Math.max(mousePercentageX + accelerationFactor * 20, 0),
-    100
-  );
-
-  // Calculate the scroll position corresponding to the adjusted percentage
-  const scrollPosition =
-    (adjustedMousePercentageX / 100) *
-    (element.scrollWidth - element.clientWidth);
-
-  // Scroll the input element
-  element.scroll({ left: scrollPosition });
-  return true;
-};
-
-const getAutoScrollProps = () => {
-  let abortController = new AbortController();
-
-  const abort = (reason: string) => {
-    abortController.abort(reason);
-  };
-
-  return {
-    abort,
-    onMouseOver(event: MouseEvent) {
-      if (event.target === document.activeElement) {
-        abort("focused");
-        return;
-      }
-      if (scrollAhead(event) === false) {
-        return;
-      }
-
-      abortController = new AbortController();
-      event.target?.addEventListener(
-        "mousemove",
-        (event) => {
-          if (event.target === document.activeElement) {
-            abort("focused");
-            return;
-          }
-          requestAnimationFrame(() => {
-            scrollAhead(event as MouseEvent);
-          });
-        },
-        {
-          signal: abortController.signal,
-          passive: true,
-        }
-      );
-    },
-    onMouseOut(event: MouseEvent) {
-      if (event.target === document.activeElement) {
-        abort("focused");
-        return;
-      }
-      (event.target as HTMLInputElement).scroll({
-        left: 0,
-        behavior: "smooth",
-      });
-      abort("mouseout");
-    },
-    onFocus() {
-      abort("focus");
-    },
-  };
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
@@ -478,7 +388,7 @@ export const CssValueInput = ({
   prefix,
   showSuffix = true,
   styleSource,
-  property: multiCaseProperty,
+  property,
   getOptions = () => [],
   onHighlight,
   onAbort,
@@ -490,9 +400,9 @@ export const CssValueInput = ({
   text,
   unitOptions,
   placeholder,
+  minWidth = "2ch",
   ...props
 }: CssValueInputProps) => {
-  const property = camelCaseProperty(multiCaseProperty);
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -610,7 +520,7 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     options: unitOptions,
-    property: hyphenateProperty(multiCaseProperty),
+    property,
     value,
     onChange: (unitOrKeyword) => {
       if (unitOrKeyword.type === "keyword") {
@@ -630,7 +540,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = $selectedInstanceUnitSizes.get();
+      const { unitSizes, propertySizes } = $selectedInstanceSizes.get();
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -653,20 +563,10 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = $selectedInstanceBrowserStyle.get();
-        const browserPropertyValue = browserStyle?.[property];
-        const propertyValue =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.value
-            : 0;
-        const propertyUnit =
-          browserPropertyValue?.type === "unit"
-            ? browserPropertyValue.unit
-            : "number";
-
+        const styleValue = propertySizes[property];
         const convertedValue = convertUnits(unitSizes)(
-          propertyValue,
-          propertyUnit,
+          styleValue?.value ?? 0,
+          styleValue?.unit ?? "number",
           unit
         );
 
@@ -760,14 +660,7 @@ export const CssValueInput = ({
 
   const finalPrefix =
     prefix ||
-    (icon && (
-      <NestedIconLabel
-        color={styleSource}
-        css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
-      >
-        {icon}
-      </NestedIconLabel>
-    ));
+    (icon && <NestedIconLabel color={styleSource}>{icon}</NestedIconLabel>);
 
   const keywordButtonElement =
     value.type === "keyword" && items.length !== 0 ? (
@@ -803,7 +696,7 @@ export const CssValueInput = ({
     ) {
       description = option.description;
     } else {
-      const key = `${property}:${toValue(
+      const key = `${camelCaseProperty(property)}:${toValue(
         valueForDescription
       )}` as keyof typeof declarationDescriptions;
       description = declarationDescriptions[key];
@@ -821,7 +714,7 @@ export const CssValueInput = ({
     .map((item) =>
       item.type === "keyword"
         ? declarationDescriptions[
-            `${property}:${toValue(
+            `${camelCaseProperty(property)}:${toValue(
               item
             )}` as keyof typeof declarationDescriptions
           ]
@@ -896,7 +789,7 @@ export const CssValueInput = ({
   };
 
   const { abort, ...autoScrollProps } = useMemo(() => {
-    return getAutoScrollProps();
+    return scrollByPointer();
   }, []);
 
   useEffect(() => {
@@ -942,7 +835,21 @@ export const CssValueInput = ({
   }, [inputRef]);
 
   const inputPropsHandleKeyDown = composeEventHandlers(
-    [handleUpDownNumeric, inputProps.onKeyDown, handleEnter, handleDelete],
+    [
+      handleUpDownNumeric,
+      inputProps.onKeyDown,
+      handleEnter,
+      handleDelete,
+      (event: KeyboardEvent) => {
+        // When dropdown is open - we are loosing focus to the combobox.
+        // When menu gets closed via Escape - we want to restore the focus.
+        if (event.key === "Escape" && isOpen) {
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      },
+    ],
     {
       // Pass prevented events to the combobox (e.g., the Escape key doesn't work otherwise, as it's blocked by Radix)
       checkForDefaultPrevented: false,
@@ -1009,7 +916,7 @@ export const CssValueInput = ({
             }
             css={{
               cursor: "default",
-              minWidth: "2em",
+              minWidth,
               "&:hover": {
                 [cssButtonDisplay]: "block",
               },

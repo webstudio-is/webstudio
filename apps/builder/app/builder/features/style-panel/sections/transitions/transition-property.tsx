@@ -17,14 +17,13 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import {
-  hyphenateProperty,
   toValue,
   type KeywordValue,
   type StyleValue,
   type UnparsedValue,
 } from "@webstudio-is/css-engine";
 import { setUnion } from "~/shared/shim";
-import { $definedStyles } from "../../shared/model";
+import { $computedStyleDeclarations } from "../../shared/model";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
 
@@ -66,13 +65,12 @@ const commonPropertiesSet = new Set(commonTransitionProperties);
  * on current breakpoints across all states
  */
 const $animatableDefinedProperties = computed(
-  [$definedStyles],
-  (definedStyles) => {
+  [$computedStyleDeclarations],
+  (computedStyleDeclarations) => {
     const animatableProperties = new Set<string>();
-    for (const { property } of definedStyles) {
-      const hyphenatedProperty = hyphenateProperty(property);
-      if (isAnimatableProperty(hyphenatedProperty)) {
-        animatableProperties.add(hyphenatedProperty);
+    for (const { property } of computedStyleDeclarations) {
+      if (isAnimatableProperty(property)) {
+        animatableProperties.add(property);
       }
     }
     return animatableProperties;

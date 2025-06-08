@@ -1,9 +1,9 @@
 import { type ReactNode } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import { Box, Grid, ToggleButton } from "@webstudio-is/design-system";
+import { keywordValues } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import { styleConfigByName } from "../../shared/configs";
 import { rowCss } from "./utils";
 import { useSelectedInstanceKv } from "../../shared/instances-kv";
 import {
@@ -79,21 +79,21 @@ export const BorderProperty = ({
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
             getOptions={() => [
-              ...styleConfigByName(firstPropertyName).items.map((item) => ({
+              ...(keywordValues[firstPropertyName] ?? []).map((value) => ({
                 type: "keyword" as const,
-                value: item.name,
+                value,
               })),
               ...$availableUnitVariables.get(),
             ]}
             value={value}
-            setValue={(newValue, options) => {
+            onUpdate={(newValue, options) => {
               const batch = createBatchUpdate();
               for (const property of borderProperties) {
                 batch.setProperty(property)(newValue);
               }
               batch.publish(options);
             }}
-            deleteProperty={(_property, options) => {
+            onDelete={(options) => {
               const batch = createBatchUpdate();
               for (const property of borderProperties) {
                 batch.deleteProperty(property);
@@ -117,21 +117,20 @@ export const BorderProperty = ({
           {styles.map((styleDecl) => (
             <CssValueInputContainer
               key={styleDecl.property}
-              icon={
-                borderPropertyOptions[hyphenateProperty(styleDecl.property)]
-                  ?.icon
-              }
+              icon={borderPropertyOptions[styleDecl.property]?.icon}
               property={styleDecl.property}
               styleSource={styleDecl.source.name}
               getOptions={() =>
-                styleConfigByName(firstPropertyName).items.map((item) => ({
+                (keywordValues[firstPropertyName] ?? []).map((value) => ({
                   type: "keyword" as const,
-                  value: item.name,
+                  value,
                 }))
               }
               value={styleDecl.cascadedValue}
-              setValue={setProperty(styleDecl.property)}
-              deleteProperty={deleteProperty}
+              onUpdate={setProperty(styleDecl.property)}
+              onDelete={(options) =>
+                deleteProperty(styleDecl.property, options)
+              }
             />
           ))}
         </Grid>

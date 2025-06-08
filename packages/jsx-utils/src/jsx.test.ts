@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { EmbedTemplateProp, WsEmbedTemplate } from "@webstudio-is/sdk";
 import { jsxToWSEmbedTemplate } from "./jsx";
 import { traverseTemplate } from "./traverse-template";
+import { EmbedTemplateProp, WsEmbedTemplate } from "./embed-template";
 
 describe("jsx", () => {
   test("valid template", async () => {

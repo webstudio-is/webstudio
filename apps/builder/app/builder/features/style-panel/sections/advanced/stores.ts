@@ -1,89 +1,56 @@
 import { computed } from "nanostores";
-import {
-  hyphenateProperty,
-  type CssProperty,
-  type CssStyleMap,
-} from "@webstudio-is/css-engine";
-import { $matchingBreakpoints, getDefinedStyles } from "../../shared/model";
-import { sections } from "../sections";
-import {
-  $registeredComponentMetas,
-  $styles,
-  $styleSourceSelections,
-} from "~/shared/nano-states";
-import { $selectedInstancePath } from "~/shared/awareness";
+import type { CssProperty } from "@webstudio-is/css-engine";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $settings } from "~/builder/shared/client-settings";
+import { $selectedInstance } from "~/shared/awareness";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { $computedStyleDeclarations } from "../../shared/model";
+import { sections } from "../sections";
 
-// @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
-const initialProperties = new Set<CssProperty>([
-  "cursor",
-  "mix-blend-mode",
-  "opacity",
-  "pointer-events",
-  "user-select",
-]);
-
-export const $advancedStylesLonghands = computed(
-  [
-    // prevent showing properties inherited from root
-    // to not bloat advanced panel
-    $selectedInstancePath,
-    $registeredComponentMetas,
-    $styleSourceSelections,
-    $matchingBreakpoints,
-    $styles,
-    $settings,
-  ],
-  (
-    instancePath,
-    metas,
-    styleSourceSelections,
-    matchingBreakpoints,
-    styles,
-    settings
-  ) => {
-    const advancedStyles: CssStyleMap = new Map();
-
-    if (instancePath === undefined) {
-      return advancedStyles;
-    }
-
-    const definedStyles = getDefinedStyles({
-      instancePath,
-      metas,
-      matchingBreakpoints,
-      styleSourceSelections,
-      styles,
-    });
-
+export const $advancedStyleDeclarations = computed(
+  [$computedStyleDeclarations, $settings, $selectedInstance],
+  (computedStyleDeclarations, settings, selectedInstance) => {
+    const advancedStyles = new Map<
+      ComputedStyleDecl["property"],
+      ComputedStyleDecl
+    >();
     // All properties used by the panels except the advanced panel
     const visualProperties = new Set<CssProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        visualProperties.add(hyphenateProperty(property));
+        visualProperties.add(property);
       }
     }
-    for (const style of definedStyles) {
-      const { property, value, listed } = style;
-      const hyphenatedProperty = hyphenateProperty(property);
+    for (const styleDecl of computedStyleDeclarations) {
+      // We don't want to show the massive amount of root variables on child instances.
+      // @todo add filters to the UI to allow user decide.
+      if (
+        styleDecl.source.name === "remote" &&
+        styleDecl.source.instanceId === ROOT_INSTANCE_ID &&
+        styleDecl.source.instanceId !== selectedInstance?.id
+      ) {
+        continue;
+      }
+      // ignore predefined styles in advanced mode
+      // @todo will be deleted https://github.com/webstudio-is/webstudio/issues/4871
+      if (
+        styleDecl.source.name === "default" &&
+        settings.stylePanelMode === "advanced"
+      ) {
+        continue;
+      }
+      const { property, listed } = styleDecl;
       // When property is listed, it was added from advanced panel.
       // If we are in advanced mode, we show them all.
       if (
-        visualProperties.has(hyphenatedProperty) === false ||
+        visualProperties.has(property) === false ||
         listed ||
         settings.stylePanelMode === "advanced"
       ) {
-        advancedStyles.set(hyphenatedProperty, value);
-      }
-    }
-    // In advanced mode we assume user knows the properties they need, so we don't need to show these.
-    // @todo https://github.com/webstudio-is/webstudio/issues/4871
-    if (settings.stylePanelMode !== "advanced") {
-      for (const initialProperty of initialProperties) {
-        advancedStyles.set(initialProperty, { type: "guaranteedInvalid" });
+        advancedStyles.set(styleDecl.property, styleDecl);
       }
     }
 
-    return advancedStyles;
+    return Array.from(advancedStyles.values());
   }
 );

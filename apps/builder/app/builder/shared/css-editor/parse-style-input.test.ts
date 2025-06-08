@@ -5,7 +5,7 @@ describe("parseStyleInput", () => {
   test("parses custom property", () => {
     const result = parseStyleInput("--custom-color");
     expect(result).toEqual(
-      new Map([["--custom-color", { type: "keyword", value: "unset" }]])
+      new Map([["--custom-color", { type: "unparsed", value: "" }]])
     );
   });
 
@@ -43,7 +43,7 @@ describe("parseStyleInput", () => {
   test("converts unknown property to custom property assuming user forgot to add --", () => {
     const result = parseStyleInput("notaproperty");
     expect(result).toEqual(
-      new Map([["--notaproperty", { type: "keyword", value: "unset" }]])
+      new Map([["--notaproperty", { type: "unparsed", value: "" }]])
     );
   });
 
@@ -85,6 +85,13 @@ describe("parseStyleInput", () => {
     const result = parseStyleInput("color: red; invalid;");
     expect(result).toEqual(
       new Map([["color", { type: "keyword", value: "red" }]])
+    );
+  });
+
+  test("output property with invalid value", () => {
+    const result = parseStyleInput("rotate: z 0;");
+    expect(result).toEqual(
+      new Map([["rotate", { type: "invalid", value: "z 0" }]])
     );
   });
 });

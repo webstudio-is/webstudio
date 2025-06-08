@@ -5,15 +5,20 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description: "The URL of a linked resource.",
+    description: "Document base URL",
   },
-  hreflang: { required: false, control: "text", type: "string" },
+  hreflang: {
+    required: false,
+    control: "text",
+    type: "string",
+    description: "Language of the linked resource",
+  },
   rel: {
     required: false,
     control: "text",
     type: "string",
     description:
-      "Specifies the relationship of the target object to the link object.",
+      "Relationship between the location in the document containing the hyperlink and the destination resource",
   },
   tag: { required: false, control: "text", type: "string", defaultValue: "" },
   xmlns: { required: false, control: "text", type: "string" },

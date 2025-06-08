@@ -1,22 +1,21 @@
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import {
+  forwardRef,
+  createElement,
+  type ElementRef,
+  type ComponentProps,
+} from "react";
+import { getTagFromProps } from "@webstudio-is/sdk/runtime";
 
-export const defaultTag = "div";
+const defaultTag = "div";
 
-// We don't want to enable all tags because Box is usually a container and we have specific components for many tags.
 type Props = ComponentProps<typeof defaultTag> & {
-  /** Use this property to change the HTML tag of this element to semantically structure and describe the content of a webpage. This can be important for accessibility tools and search engine optimization. */
-  tag?: "div" | "span" | "figcaption" | "cite";
+  tag?: string;
 };
 
 export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ tag = defaultTag, children, ...props }, ref) => {
-    // Can't map it in the destricturing, default type won't be generated correctly
-    const Tag = tag;
-    return (
-      <Tag {...props} ref={ref}>
-        {children}
-      </Tag>
-    );
+  ({ tag: legacyTag, ...props }, ref) => {
+    const tag = getTagFromProps(props) ?? legacyTag ?? defaultTag;
+    return createElement(tag, { ...props, ref });
   }
 );
 

@@ -1,59 +1,64 @@
-import { PopoverIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
-import { div } from "@webstudio-is/sdk/normalize.css";
+import {
+  PopoverIcon,
+  TriggerIcon,
+  ContentIcon,
+  ButtonElementIcon,
+} from "@webstudio-is/icons/svg";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
+import { button, div } from "@webstudio-is/sdk/normalize.css";
+import { radix } from "./shared/meta";
 import {
   propsPopover,
   propsPopoverContent,
   propsPopoverTrigger,
+  propsPopoverClose,
 } from "./__generated__/popover.props";
+import { buttonReset } from "./shared/preset-styles";
 
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
-  type: "container",
   icon: TriggerIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Popover" },
+  contentModel: {
+    category: "none",
+    children: ["instance"],
   },
-};
-
-export const metaPopoverContent: WsComponentMeta = {
-  type: "container",
-  presetStyle: {
-    div,
-  },
-  icon: ContentIcon,
-  constraints: {
-    relation: "ancestor",
-    component: { $eq: "Popover" },
-  },
-};
-
-export const metaPopover: WsComponentMeta = {
-  type: "container",
-  icon: PopoverIcon,
-  constraints: [
-    {
-      relation: "descendant",
-      component: { $eq: "PopoverTrigger" },
-    },
-    {
-      relation: "descendant",
-      component: { $eq: "PopoverContent" },
-    },
-  ],
-};
-
-export const propsMetaPopover: WsComponentPropsMeta = {
-  props: propsPopover,
-  initialProps: ["open"],
-};
-
-export const propsMetaPopoverTrigger: WsComponentPropsMeta = {
   props: propsPopoverTrigger,
 };
 
-export const propsMetaPopoverContent: WsComponentPropsMeta = {
-  props: propsPopoverContent,
+export const metaPopoverContent: WsComponentMeta = {
+  icon: ContentIcon,
+  contentModel: {
+    category: "none",
+    children: ["instance"],
+    descendants: [radix.PopoverClose],
+  },
+  presetStyle: {
+    div,
+  },
   initialProps: ["side", "sideOffset", "align", "alignOffset"],
+  props: propsPopoverContent,
+};
+
+export const metaPopover: WsComponentMeta = {
+  icon: PopoverIcon,
+  contentModel: {
+    category: "instance",
+    children: ["instance"],
+    descendants: [radix.PopoverTrigger, radix.PopoverContent],
+  },
+  initialProps: ["open"],
+  props: propsPopover,
+};
+
+export const metaPopoverClose: WsComponentMeta = {
+  icon: ButtonElementIcon,
+  label: "Close Button",
+  contentModel: {
+    category: "none",
+    children: ["instance", "rich-text"],
+  },
+  presetStyle: {
+    button: [buttonReset, button].flat(),
+  },
+  props: propsPopoverClose,
 };

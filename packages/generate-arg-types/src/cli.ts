@@ -91,7 +91,8 @@ type CustomDescriptionsType = {
       }
     }
 
-    const generatedFile = `${path.basename(filePath, ".tsx")}.props.ts`;
+    const basename = path.basename(filePath, ".tsx");
+    const generatedFile = `${basename}.props.ts`;
     const generatedPath = path.join(generatedDir, generatedFile);
 
     const componentDocs = tsConfigParser.parse(filePath);

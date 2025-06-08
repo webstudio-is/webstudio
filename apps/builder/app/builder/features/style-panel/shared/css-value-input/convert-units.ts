@@ -1,10 +1,9 @@
 import type { Unit } from "@webstudio-is/css-engine";
-
-const convertibleUnits = ["px", "ch", "vw", "vh", "em", "rem"] as const;
-
-type ConvertibleUnit = (typeof convertibleUnits)[number];
-
-export type UnitSizes = Record<ConvertibleUnit, number>;
+import {
+  convertibleUnits,
+  type ConvertibleUnit,
+  type UnitSizes,
+} from "~/shared/nano-states";
 
 const isConvertibleUnit = (unit: Unit): unit is ConvertibleUnit =>
   convertibleUnits.includes(unit as ConvertibleUnit);

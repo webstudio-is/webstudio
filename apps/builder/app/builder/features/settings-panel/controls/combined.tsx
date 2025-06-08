@@ -10,6 +10,8 @@ import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 import { JsonControl } from "./json";
 import { TextContent } from "./text-content";
+import { ResourceControl } from "./resource-control";
+import { TagControl } from "./tag-control";
 
 export const renderControl = ({
   meta,
@@ -21,6 +23,10 @@ export const renderControl = ({
 
   if (meta.control === "textContent") {
     return <TextContent key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "tag") {
+    return <TagControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   // never render parameter props
@@ -43,6 +49,10 @@ export const renderControl = ({
 
   if (meta.control === "text") {
     return <TextControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
+  if (meta.control === "resource") {
+    return <ResourceControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "code") {

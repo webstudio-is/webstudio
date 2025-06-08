@@ -5,7 +5,7 @@ import {
   ReactSdkContext,
   xmlNodeTagSuffix,
 } from "@webstudio-is/react-sdk/runtime";
-import { Page } from "__CLIENT__";
+import { Page, breakpoints } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { sitemap } from "__SITEMAP__";
@@ -65,6 +65,8 @@ export const loader = async (arg: LoaderFunctionArgs) => {
         imageLoader,
         assetBaseUrl,
         resources,
+        breakpoints,
+        onError: console.error,
       }}
     >
       <Page system={system} />

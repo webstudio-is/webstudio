@@ -69,6 +69,25 @@ export const rangeUnitValueSchema = z.union([
     type: z.literal("unparsed"),
     value: z.string(),
   }),
+  z.object({
+    type: z.literal("var"),
+    value: z.string(),
+  }),
+]);
+
+export const TIME_UNITS = ["ms", "s"] as const;
+const timeUnitSchema = literalUnion(TIME_UNITS);
+
+export const durationUnitValueSchema = z.union([
+  z.object({
+    type: z.literal("unit"),
+    value: z.number(),
+    unit: timeUnitSchema,
+  }),
+  z.object({
+    type: z.literal("var"),
+    value: z.string(),
+  }),
 ]);
 
 // view-timeline-inset
@@ -81,6 +100,7 @@ export const insetUnitValueSchema = z.union([
 ]);
 
 // @todo: Fix Keyframe Styles
+// Can we use CssStyleMap for this? This type ends up not enforcing kebab case like.
 export const keyframeStylesSchema = z.record(StyleValue);
 
 // Animation Keyframe
@@ -100,6 +120,7 @@ export const keyframeEffectOptionsSchema = z.object({
       z.literal("both"),
     ])
     .optional(), // FillMode
+  duration: durationUnitValueSchema.optional(),
 });
 
 // Scroll Named Range
@@ -153,6 +174,9 @@ export const viewRangeOptionsSchema = z.object({
 const baseAnimation = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
+  enabled: z
+    .array(z.tuple([z.string().describe("breakpointId"), z.boolean()]))
+    .optional(),
   keyframes: z.array(animationKeyframeSchema),
 });
 
@@ -210,6 +234,8 @@ export const isRangeUnit = (
 // Type exports
 export type RangeUnit = z.infer<typeof rangeUnitSchema>;
 export type RangeUnitValue = z.infer<typeof rangeUnitValueSchema>;
+export type DurationUnitValue = z.infer<typeof durationUnitValueSchema>;
+export type TimeUnit = z.infer<typeof timeUnitSchema>;
 export type KeyframeStyles = z.infer<typeof keyframeStylesSchema>;
 export type AnimationKeyframe = z.infer<typeof animationKeyframeSchema>;
 export type ScrollNamedRange = z.infer<typeof scrollNamedRangeSchema>;

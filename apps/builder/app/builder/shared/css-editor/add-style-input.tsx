@@ -25,44 +25,60 @@ import {
 import {
   cssWideKeywords,
   generateStyleMap,
-  hyphenateProperty,
   mergeStyles,
   toValue,
-  type StyleProperty,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
+import { composeEventHandlers } from "~/shared/event-utils";
 import {
   deleteProperty,
   setProperty,
-} from "../../features/style-panel/shared/use-style-data";
-import { composeEventHandlers } from "~/shared/event-utils";
+} from "~/builder/features/style-panel/shared/use-style-data";
+import { $availableVariables } from "~/builder/features/style-panel/shared/model";
 import { parseStyleInput } from "./parse-style-input";
 
-type SearchItem = { property: string; label: string; value?: string };
-
-const autoCompleteItems: Array<SearchItem> = [];
+type SearchItem = {
+  property: string;
+  label: string;
+  value?: string;
+  key: string;
+};
 
 const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description: string | undefined = `Create CSS variable.`;
-  if (item && item.property in propertyDescriptions) {
+  let description: string | undefined = "Add CSS property.";
+  if (item?.property.startsWith("--")) {
+    description = "Create CSS variable.";
+  }
+  if (item && propertyDescriptions[item.property]) {
     description = propertyDescriptions[item.property];
   }
   return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
 };
 
 const getAutocompleteItems = () => {
-  if (autoCompleteItems.length > 0) {
-    return autoCompleteItems;
+  const autoCompleteItems: SearchItem[] = [];
+  for (const varValue of $availableVariables.get()) {
+    const property = `--${varValue.value}`;
+    autoCompleteItems.push({
+      // consider additional properties to be custom properties
+      key: property,
+      property,
+      label: property,
+    });
   }
   for (const property in propertiesData) {
-    const hyphenatedProperty = hyphenateProperty(property);
     autoCompleteItems.push({
-      property: hyphenatedProperty,
-      label: hyphenatedProperty,
+      // Allow matching "gr te co" -> "grid-template-columns"
+      key: property.replaceAll("-", " "),
+      property,
+      label: property,
     });
   }
 
   for (const property of shorthandProperties) {
     autoCompleteItems.push({
+      // Allow matching "gr te co" -> "grid-template-columns"
+      key: property.replaceAll("-", " "),
       property,
       label: property,
     });
@@ -70,17 +86,17 @@ const getAutocompleteItems = () => {
 
   const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
 
-  for (const property in keywordValues) {
-    const values = keywordValues[property as keyof typeof keywordValues];
-    for (const value of values) {
+  for (const [property, values] of Object.entries(keywordValues)) {
+    for (const value of values ?? []) {
       if (ignoreValues.has(value)) {
         continue;
       }
-      const hyphenatedProperty = hyphenateProperty(property);
       autoCompleteItems.push({
-        property: hyphenatedProperty,
+        // Allow matching "gr te co" -> "grid-template-columns"
+        key: `${property.replaceAll("-", " ")} ${value}`,
+        property,
         value,
-        label: `${hyphenatedProperty}: ${value}`,
+        label: `${property}: ${value}`,
       });
     }
   }
@@ -92,13 +108,12 @@ const getAutocompleteItems = () => {
   return autoCompleteItems;
 };
 
-const matchOrSuggestToCreate = (
-  search: string,
-  items: Array<SearchItem>,
-  itemToString: (item: SearchItem) => string
-) => {
-  const matched = matchSorter(items, search, {
-    keys: [itemToString],
+const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
+  const searchWithSpaces = search.startsWith("--")
+    ? search
+    : search.replaceAll("-", " ");
+  const matched = matchSorter(items, searchWithSpaces, {
+    keys: ["key"],
   });
 
   // Limit the array to 100 elements
@@ -112,6 +127,7 @@ const matchOrSuggestToCreate = (
     // We will suggest to insert their shorthand first.
     if (styleMap.size > 1) {
       matched.push({
+        key: "",
         property: search,
         label: `Create "${search}"`,
       });
@@ -119,6 +135,7 @@ const matchOrSuggestToCreate = (
     // Now we will suggest to insert each longhand separately.
     for (const [property, value] of styleMap) {
       matched.push({
+        key: "",
         property,
         value: toValue(value),
         label: `Create "${generateStyleMap(new Map([[property, value]]))}"`,
@@ -150,6 +167,7 @@ export const AddStyleInput = forwardRef<
   const [item, setItem] = useState<SearchItem>({
     property: "",
     label: "",
+    key: "",
   });
   const highlightedItemRef = useRef<SearchItem>();
 
@@ -160,7 +178,13 @@ export const AddStyleInput = forwardRef<
     defaultHighlightedIndex: 0,
     getItemProps: () => ({ text: "sentence" }),
     match: matchOrSuggestToCreate,
-    onChange: (value) => setItem({ property: value ?? "", label: value ?? "" }),
+    onChange: (input) => {
+      return setItem({
+        property: input ?? "",
+        label: input ?? "",
+        key: input ?? "",
+      });
+    },
     onItemSelect: (item) => {
       clear();
       // When there is no value, property can be:
@@ -175,7 +199,7 @@ export const AddStyleInput = forwardRef<
     onItemHighlight: (item) => {
       const previousHighlightedItem = highlightedItemRef.current;
       if (item?.value === undefined && previousHighlightedItem) {
-        deleteProperty(previousHighlightedItem.property as StyleProperty, {
+        deleteProperty(previousHighlightedItem.property as CssProperty, {
           isEphemeral: true,
         });
         highlightedItemRef.current = undefined;
@@ -183,8 +207,8 @@ export const AddStyleInput = forwardRef<
       }
 
       if (item?.value) {
-        const value = parseCssValue(item.property as StyleProperty, item.value);
-        setProperty(item.property as StyleProperty)(value, {
+        const value = parseCssValue(item.property as CssProperty, item.value);
+        setProperty(item.property as CssProperty)(value, {
           isEphemeral: true,
         });
         highlightedItemRef.current = item;
@@ -198,7 +222,7 @@ export const AddStyleInput = forwardRef<
   const inputProps = combobox.getInputProps();
 
   const clear = () => {
-    setItem({ property: "", label: "" });
+    setItem({ property: "", label: "", key: "" });
   };
 
   const handleEnter = (event: KeyboardEvent) => {

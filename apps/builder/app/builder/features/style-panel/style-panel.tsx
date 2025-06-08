@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { computed, type WritableAtom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   theme,
   Box,
@@ -18,24 +21,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@webstudio-is/design-system";
-import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
-import { StyleSourcesSection } from "./style-source-section";
-import { $selectedInstanceRenderState } from "~/shared/nano-states";
-import { sections } from "./sections";
 import { toValue } from "@webstudio-is/css-engine";
-import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
+import { EllipsesIcon } from "@webstudio-is/icons";
+import { $selectedInstanceRenderState } from "~/shared/nano-states";
 import { $selectedInstance } from "~/shared/awareness";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
-import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   $settings,
   getSetting,
   setSetting,
   type Settings,
 } from "~/builder/shared/client-settings";
-import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { sections } from "./sections";
+import { StyleSourcesSection } from "./style-source-section";
+import {
+  $instanceTags,
+  useComputedStyleDecl,
+  useParentComputedStyleDecl,
+} from "./shared/model";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -85,18 +88,16 @@ export const ModeMenu = () => {
               <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
-          {isFeatureEnabled("stylePanelAdvancedMode") && (
-            <DropdownMenuRadioItem
-              value="advanced"
-              icon={<MenuCheckedIcon />}
-              onFocus={() => setFocusedValue("advanced")}
-            >
-              <Flex justify="between" grow>
-                <Text variant="labelsTitleCase">Advanced mode</Text>
-                <Kbd value={["alt", "shift", "a"]} />
-              </Flex>
-            </DropdownMenuRadioItem>
-          )}
+          <DropdownMenuRadioItem
+            value="advanced"
+            icon={<MenuCheckedIcon />}
+            onFocus={() => setFocusedValue("advanced")}
+          >
+            <Flex justify="between" grow>
+              <Text variant="labelsTitleCase">Advanced mode</Text>
+              <Kbd value={["alt", "shift", "a"]} />
+            </Flex>
+          </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
 
@@ -118,12 +119,18 @@ export const ModeMenu = () => {
   );
 };
 
-export const StylePanel = () => {
+export const StylePanel = ({
+  $styleSourceInputElement,
+}: {
+  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
+}) => {
   const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
-  const display = useParentComputedStyleDecl("display");
-  const displayValue = toValue(display.computedValue);
+  const display = toValue(useComputedStyleDecl("display").computedValue);
+  const parentDisplay = toValue(
+    useParentComputedStyleDecl("display").computedValue
+  );
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
@@ -146,7 +153,7 @@ export const StylePanel = () => {
       continue;
     }
     // show flex child UI only when parent is flex or inline-flex
-    if (category === "flexChild" && displayValue.includes("flex") === false) {
+    if (category === "flexChild" && parentDisplay.includes("flex") === false) {
       continue;
     }
     // allow customizing list item type only for list and list item
@@ -155,6 +162,16 @@ export const StylePanel = () => {
       tag !== "ul" &&
       tag !== "ol" &&
       tag !== "li"
+    ) {
+      continue;
+    }
+    // non-replaced inline boxes cannot be transformed
+    // https://drafts.csswg.org/css-transforms-1/#css-values
+    if (
+      category === "transforms" &&
+      (display === "inline" ||
+        display === "table-column" ||
+        display === "table-column-group")
     ) {
       continue;
     }
@@ -167,7 +184,9 @@ export const StylePanel = () => {
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style Sources
         </Text>
-        <StyleSourcesSection />
+        <StyleSourcesSection
+          $styleSourceInputElement={$styleSourceInputElement}
+        />
       </Box>
       <Separator />
       <ScrollArea>

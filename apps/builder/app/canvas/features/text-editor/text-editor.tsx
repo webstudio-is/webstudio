@@ -51,7 +51,7 @@ import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -97,6 +97,7 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { richTextPlaceholders } from "~/shared/content-model";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -177,6 +178,11 @@ const CaretColorPlugin = () => {
   return null;
 };
 
+const isChrome = () =>
+  navigator.userAgentData?.brands.some(
+    (brand) => brand.brand === "Google Chrome"
+  );
+
 const OnChangeOnBlurPlugin = ({
   onChange,
 }: {
@@ -187,6 +193,16 @@ const OnChangeOnBlurPlugin = ({
 
   useEffect(
     () => () => {
+      // Ensures editable content is saved if no blur event occurs before unmount.
+      // This can happen in Firefox and Safari.
+      // To reproduce: create a Content Block, edit a paragraph, then type `/` and select Heading or Paragraph from the menu.
+      // Without this, changes may be lost on unmount in FF and Safari.
+
+      if (isChrome()) {
+        // Fixes an issue in DEV MODE where, if text is center-aligned inside Flex/Grid,
+        // the code below causes Chrome to scroll the editable text block to the center of the view.
+        return;
+      }
       // The issue is related to React’s development mode.
       // When we set the initial selection in the Editor, we disable Lexical’s internal
       // scrolling using the update operation tag tag: "skip-scroll-into-view".
@@ -1009,6 +1025,18 @@ const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
   return <RichTextContentPluginInternal {...props} templates={templates} />;
 };
 
+const getTag = (instanceId: Instance["id"]) => {
+  const instances = $instances.get();
+  const metas = $registeredComponentMetas.get();
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  const meta = metas.get(instance.component);
+  const tags = Object.keys(meta?.presetStyle ?? {});
+  return instance.tag ?? tags[0];
+};
+
 const RichTextContentPluginInternal = ({
   rootInstanceSelector,
   onOpen,
@@ -1121,20 +1149,14 @@ const RichTextContentPluginInternal = ({
 
         if (event.key === "Backspace" || event.key === "Delete") {
           if ($getRoot().getTextContentSize() === 0) {
-            const currentInstance = $instances
-              .get()
-              .get(rootInstanceSelector[0]);
-
-            if (currentInstance?.component === "ListItem") {
+            const tag = getTag(rootInstanceSelector[0]);
+            if (tag === "li") {
               onNext(editor.getEditorState(), { reason: "left" });
-
               const parentInstanceSelector = rootInstanceSelector.slice(1);
               const parentInstance = $instances
                 .get()
                 .get(parentInstanceSelector[0]);
-
               const isLastChild = parentInstance?.children.length === 1;
-
               updateWebstudioData((data) => {
                 deleteInstanceMutable(
                   data,
@@ -1144,7 +1166,6 @@ const RichTextContentPluginInternal = ({
                   )
                 );
               });
-
               event.preventDefault();
               return true;
             }
@@ -1170,16 +1191,10 @@ const RichTextContentPluginInternal = ({
 
         if (menuState === "closed") {
           if (event.key === "Enter" && !event.shiftKey) {
-            // Custom logic if we are editing ListItem
-            const currentInstance = $instances
-              .get()
-              .get(rootInstanceSelector[0]);
-
-            if (
-              currentInstance?.component === "ListItem" &&
-              $getRoot().getTextContentSize() > 0
-            ) {
-              // Instead of creating block component we need to add a new ListItem
+            // Custom logic if we are editing list item
+            const tag = getTag(rootInstanceSelector[0]);
+            if (tag === "li" && $getRoot().getTextContentSize() > 0) {
+              // Instead of creating block component we need to add a new list item
               insertListItemAt(rootInstanceSelector);
               event.preventDefault();
               return true;
@@ -1187,11 +1202,11 @@ const RichTextContentPluginInternal = ({
 
             // Check if it pressed on the last line, last symbol
 
-            const allowedComponents = ["Paragraph", "Text", "Heading"];
+            const allowedTags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"];
 
-            for (const component of allowedComponents) {
+            for (const tag of allowedTags) {
               const templateSelector = templates.find(
-                ([instance]) => instance.component === component
+                ([instance]) => getTag(instance.id) === tag
               )?.[1];
 
               if (templateSelector === undefined) {
@@ -1234,10 +1249,7 @@ const RichTextContentPluginInternal = ({
 
               insertTemplateAt(templateSelector, rootInstanceSelector, false);
 
-              if (
-                currentInstance?.component === "ListItem" &&
-                $getRoot().getTextContentSize() === 0
-              ) {
+              if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
                 const parentInstance = $instances
                   .get()
@@ -1425,6 +1437,7 @@ const onError = (error: Error) => {
 type TextEditorProps = {
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
+  props: Props;
   contentEditable: JSX.Element;
   editable?: boolean;
   onChange: (instancesList: Instance[]) => void;
@@ -1505,6 +1518,7 @@ const AnyKeyDownPlugin = ({
 export const TextEditor = ({
   rootInstanceSelector: rootInstanceSelectorUnstable,
   instances,
+  props,
   contentEditable,
   editable,
   onChange,
@@ -1608,12 +1622,13 @@ export const TextEditor = ({
       }
 
       const editableInstanceSelectors: InstanceSelector[] = [];
-      findAllEditableInstanceSelector(
-        [rootInstanceId],
+      findAllEditableInstanceSelector({
+        instanceSelector: [rootInstanceId],
         instances,
+        props,
         metas,
-        editableInstanceSelectors
-      );
+        results: editableInstanceSelectors,
+      });
 
       const currentIndex = editableInstanceSelectors.findIndex(
         (instanceSelector) => {
@@ -1661,11 +1676,13 @@ export const TextEditor = ({
           continue;
         }
         const meta = metas.get(instance.component);
+        const tags = Object.keys(meta?.presetStyle ?? {});
+        const tag = instance.tag ?? tags[0];
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
           // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-          meta?.placeholder === undefined &&
+          richTextPlaceholders.has(tag) === false &&
           instance?.children.length === 0
         ) {
           const elt = getElementByInstanceSelector(nextSelector);

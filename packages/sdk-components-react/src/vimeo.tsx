@@ -6,16 +6,21 @@
 
 import { colord } from "colord";
 import {
+  type ElementRef,
+  type ComponentProps,
+  type ContextType,
   forwardRef,
   useState,
   useEffect,
-  type ElementRef,
-  type ComponentProps,
   useContext,
-  createContext,
-  type ContextType,
+  useRef,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  requestFullscreen,
+  VideoContext,
+  type PlayerStatus,
+} from "./shared/video";
 
 // https://developer.vimeo.com/player/sdk/embed
 type VimeoPlayerOptions = {
@@ -246,11 +251,9 @@ const EmptyState = () => {
   );
 };
 
-type PlayerStatus = "initial" | "loading" | "ready";
-
 type PlayerProps = Pick<
   VimeoOptions,
-  "loading" | "autoplay" | "showPreview"
+  "loading" | "autoplay" | "showPreview" | "playsinline"
 > & {
   videoUrl: string;
   title: string | undefined;
@@ -270,10 +273,12 @@ const Player = ({
   autoplay,
   renderer,
   showPreview,
+  playsinline,
   onStatusChange,
   onPreviewImageUrlChange,
 }: PlayerProps) => {
   const [opacity, setOpacity] = useState(0);
+  const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (autoplay && renderer !== "canvas" && status === "initial") {
@@ -312,6 +317,7 @@ const Player = ({
 
   return (
     <iframe
+      ref={ref}
       title={title}
       src={videoUrl}
       loading={loading}
@@ -328,19 +334,13 @@ const Player = ({
       onLoad={() => {
         onStatusChange("ready");
         setOpacity(1);
+        if (ref.current && !playsinline && !autoplay) {
+          requestFullscreen(ref.current);
+        }
       }}
     />
   );
 };
-
-export const VimeoContext = createContext<{
-  previewImageUrl?: URL;
-  onInitPlayer: () => void;
-  status: PlayerStatus;
-}>({
-  onInitPlayer: () => {},
-  status: "initial",
-});
 
 const defaultTag = "div";
 
@@ -369,7 +369,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       loop = false,
       muted = false,
       pip = false,
-      playsinline = true,
+      playsinline = false,
       showPortrait = true,
       quality = "auto",
       responsive = true,
@@ -413,7 +413,7 @@ export const Vimeo = forwardRef<Ref, Props>(
     });
 
     return (
-      <VimeoContext.Provider
+      <VideoContext.Provider
         value={{
           status,
           previewImageUrl,
@@ -440,6 +440,7 @@ export const Vimeo = forwardRef<Ref, Props>(
               <Player
                 title={rest.title}
                 autoplay={autoplay}
+                playsinline={playsinline}
                 videoUrl={videoUrl}
                 previewImageUrl={previewImageUrl}
                 loading={loading}
@@ -452,7 +453,7 @@ export const Vimeo = forwardRef<Ref, Props>(
             </>
           )}
         </div>
-      </VimeoContext.Provider>
+      </VideoContext.Provider>
     );
   }
 );

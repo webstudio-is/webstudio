@@ -5,11 +5,13 @@ export const templateCategories = [
   "general",
   "typography",
   "media",
+  "animations",
   "data",
   "forms",
   "localization",
   "radix",
   "xml",
+  "other",
   "hidden",
   "internal",
 ] as const;

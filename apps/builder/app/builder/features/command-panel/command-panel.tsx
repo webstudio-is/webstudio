@@ -2,7 +2,6 @@ import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import { matchSorter } from "match-sorter";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Command,
   CommandDialog,
@@ -21,31 +20,48 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { compareMedia } from "@webstudio-is/css-engine";
-import { componentCategories, collectionComponent } from "@webstudio-is/sdk";
-import type { Breakpoint, Page } from "@webstudio-is/sdk";
+import {
+  componentCategories,
+  collectionComponent,
+  parseComponentName,
+  elementComponent,
+  tags,
+} from "@webstudio-is/sdk";
+import type { Breakpoint, Instance, Page } from "@webstudio-is/sdk";
 import type { TemplateMeta } from "@webstudio-is/template";
 import {
   $breakpoints,
   $editingPageId,
+  $instances,
   $pages,
+  $props,
   $registeredComponentMetas,
   $registeredTemplates,
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import {
-  findClosestInsertable,
   getComponentTemplateData,
-  getInstanceLabel,
+  insertWebstudioElementAt,
   insertWebstudioFragmentAt,
 } from "~/shared/instance-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
-import { $selectedPage, selectPage } from "~/shared/awareness";
+import {
+  $selectedInstancePath,
+  $selectedPage,
+  selectPage,
+} from "~/shared/awareness";
 import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 
 const $commandPanel = atom<
   | undefined
@@ -55,9 +71,6 @@ const $commandPanel = atom<
 >();
 
 export const openCommandPanel = () => {
-  if (isFeatureEnabled("command") === false) {
-    return;
-  }
   const activeElement =
     document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -87,7 +100,7 @@ type ComponentOption = {
   component: string;
   label: string;
   category: TemplateMeta["category"];
-  icon: string;
+  icon: undefined | string;
   order: undefined | number;
 };
 
@@ -107,6 +120,24 @@ const $componentOptions = computed(
       if (category === "hidden" || category === "internal") {
         continue;
       }
+
+      if (
+        category === "animations" &&
+        isFeatureEnabled("animation") === false
+      ) {
+        continue;
+      }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
@@ -133,6 +164,17 @@ const $componentOptions = computed(
       if (meta.category === "hidden" || meta.category === "internal") {
         continue;
       }
+
+      const [namespace, shortName] = parseComponentName(name);
+
+      if (
+        isFeatureEnabled("videoAnimation") === false &&
+        namespace === "@webstudio-is/sdk-components-animation" &&
+        shortName === "VideoAnimation"
+      ) {
+        continue;
+      }
+
       const componentMeta = metas.get(name);
       const label =
         meta.label ??
@@ -144,7 +186,7 @@ const $componentOptions = computed(
         component: name,
         label,
         category: meta.category,
-        icon: meta.icon ?? componentMeta?.icon ?? "",
+        icon: meta.icon ?? componentMeta?.icon,
         order: meta.order,
       });
     }
@@ -171,25 +213,121 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
             value={component}
             onSelect={() => {
               closeCommandPanel();
-              const fragment = getComponentTemplateData(component);
-              if (fragment) {
-                const insertable = findClosestInsertable(fragment);
-                if (insertable) {
-                  insertWebstudioFragmentAt(fragment, insertable);
+              if (component === elementComponent) {
+                insertWebstudioElementAt();
+              } else {
+                const fragment = getComponentTemplateData(component);
+                if (fragment) {
+                  insertWebstudioFragmentAt(fragment);
                 }
               }
             }}
           >
             <Flex gap={2}>
-              <CommandIcon
-                dangerouslySetInnerHTML={{ __html: icon }}
-              ></CommandIcon>
+              <CommandIcon>
+                <InstanceIcon instance={{ component }} icon={icon} />
+              </CommandIcon>
               <Text variant="labelsTitleCase">
                 {label}{" "}
                 <Text as="span" color="moreSubtle">
                   {humanizeString(category)}
                 </Text>
               </Text>
+            </Flex>
+          </CommandItem>
+        );
+      })}
+    </CommandGroup>
+  );
+};
+
+type TagOption = {
+  tokens: string[];
+  type: "tag";
+  tag: string;
+};
+
+const $tagOptions = computed(
+  [$selectedInstancePath, $instances, $props, $registeredComponentMetas],
+  (instancePath, instances, props, metas) => {
+    const tagOptions: TagOption[] = [];
+    if (instancePath === undefined) {
+      return tagOptions;
+    }
+    const [{ instance, instanceSelector }] = instancePath;
+    const childInstance: Instance = {
+      type: "instance",
+      id: "new_instance",
+      component: elementComponent,
+      children: [],
+    };
+    const newInstances = new Map(instances);
+    newInstances.set(childInstance.id, childInstance);
+    newInstances.set(instance.id, {
+      ...instance,
+      children: [...instance.children, { type: "id", value: childInstance.id }],
+    });
+    for (const tag of tags) {
+      childInstance.tag = tag;
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: newInstances,
+        props,
+        metas,
+        instanceSelector,
+      });
+      if (isSatisfying) {
+        tagOptions.push({
+          tokens: ["tags", tag, `<${tag}>`],
+          type: "tag",
+          tag,
+        });
+      }
+    }
+    return tagOptions;
+  }
+);
+
+const TagOptionsGroup = ({ options }: { options: TagOption[] }) => {
+  return (
+    <CommandGroup
+      name="tag"
+      heading={<CommandGroupHeading>Tags</CommandGroupHeading>}
+      actions={["add"]}
+    >
+      {options.map(({ tag }) => {
+        return (
+          <CommandItem
+            key={tag}
+            // preserve selected state when rerender
+            value={tag}
+            onSelect={() => {
+              closeCommandPanel();
+              const newInstance: Instance = {
+                type: "instance",
+                id: "new_instance",
+                component: elementComponent,
+                tag,
+                children: [],
+              };
+              insertWebstudioFragmentAt({
+                children: [{ type: "id", value: newInstance.id }],
+                instances: [newInstance],
+                props: [],
+                dataSources: [],
+                styleSourceSelections: [],
+                styleSources: [],
+                styles: [],
+                breakpoints: [],
+                assets: [],
+                resources: [],
+              });
+            }}
+          >
+            <Flex gap={2}>
+              <CommandIcon>
+                <InstanceIcon instance={{ component: elementComponent, tag }} />
+              </CommandIcon>
+              <Text variant="labelsSentenceCase">{`<${tag}>`}</Text>
             </Flex>
           </CommandItem>
         );
@@ -346,9 +484,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   for (const [name, meta] of commandMetas) {
     if (!meta.hidden) {
       const label = humanizeString(name);
-      const keys = meta.defaultHotkeys?.[0]
-        ?.split("+")
-        .map((key) => (key === "meta" ? "cmd" : key));
+      const keys = meta.defaultHotkeys?.[0]?.split("+");
       shortcutOptions.push({
         tokens: ["shortcuts", "commands", label],
         type: "shortcut",
@@ -390,12 +526,25 @@ const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
 };
 
 const $options = computed(
-  [$componentOptions, $breakpointOptions, $pageOptions, $shortcutOptions],
-  (componentOptions, breakpointOptions, pageOptions, commandOptions) => [
+  [
+    $componentOptions,
+    $breakpointOptions,
+    $pageOptions,
+    $shortcutOptions,
+    $tagOptions,
+  ],
+  (
+    componentOptions,
+    breakpointOptions,
+    pageOptions,
+    commandOptions,
+    tagOptions
+  ) => [
     ...componentOptions,
     ...breakpointOptions,
     ...pageOptions,
     ...commandOptions,
+    ...tagOptions,
   ]
 );
 
@@ -425,6 +574,14 @@ const CommandDialogContent = () => {
                   <ComponentOptionsGroup
                     key={group}
                     options={matches as ComponentOption[]}
+                  />
+                );
+              }
+              if (group === "tag") {
+                return (
+                  <TagOptionsGroup
+                    key={group}
+                    options={matches as TagOption[]}
                   />
                 );
               }

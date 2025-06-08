@@ -316,6 +316,7 @@ export const action = async ({
     const dbBuildData: Database["public"]["Tables"]["Build"]["Update"] = {
       version: clientVersion + 1,
       lastTransactionId,
+      updatedAt: new Date().toISOString(),
     };
 
     if (buildData.pages) {

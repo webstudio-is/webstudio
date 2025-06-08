@@ -13,6 +13,7 @@ import {
 } from "~/shared/instance-utils";
 import {
   $instances,
+  $project,
   $registeredComponentMetas,
   $textEditingInstanceSelector,
   findBlockChildSelector,
@@ -69,7 +70,11 @@ const getInsertionIndex = (
 };
 
 export const insertListItemAt = (listItemSelector: InstanceSelector) => {
+  const project = $project.get();
   const instances = $instances.get();
+  if (project === undefined) {
+    return;
+  }
 
   const parentSelector = listItemSelector.slice(1);
 
@@ -111,6 +116,7 @@ export const insertListItemAt = (listItemSelector: InstanceSelector) => {
         ...data,
         startingInstanceId: target.parentSelector[0],
       }),
+      projectId: project.id,
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
@@ -141,7 +147,11 @@ export const insertTemplateAt = (
   anchor: InstanceSelector,
   insertBefore: boolean
 ) => {
+  const project = $project.get();
   const instances = $instances.get();
+  if (project === undefined) {
+    return;
+  }
 
   const fragment = extractWebstudioFragment(
     getWebstudioData(),
@@ -173,6 +183,7 @@ export const insertTemplateAt = (
         ...data,
         startingInstanceId: target.parentSelector[0],
       }),
+      projectId: project.id,
     });
     const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
     if (newRootInstanceId === undefined) {
@@ -191,12 +202,13 @@ export const insertTemplateAt = (
 
     const selectors: InstanceSelector[] = [];
 
-    findAllEditableInstanceSelector(
-      selectedInstanceSelector,
-      data.instances,
-      $registeredComponentMetas.get(),
-      selectors
-    );
+    findAllEditableInstanceSelector({
+      instanceSelector: selectedInstanceSelector,
+      instances: data.instances,
+      props: data.props,
+      metas: $registeredComponentMetas.get(),
+      results: selectors,
+    });
 
     const editableInstanceSelector = selectors[0];
 

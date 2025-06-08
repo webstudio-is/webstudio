@@ -48,14 +48,14 @@
     "acorn-walk": "^8.3.4",
     "change-case": "^5.4.4",
     "reserved-identifiers": "^1.0.0",
-    "type-fest": "^4.32.0",
-    "zod": "^3.22.4"
+    "type-fest": "^4.37.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/template": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
-    "vitest": "^3.0.4"
+    "vitest": "^3.1.2"
   }
 }
