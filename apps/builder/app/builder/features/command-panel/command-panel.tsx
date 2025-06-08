@@ -283,7 +283,6 @@ const $tagOptions = computed(
         });
       }
     }
-
     return tagOptions;
   }
 );
