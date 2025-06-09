@@ -241,17 +241,27 @@ export const generateFragmentFromHtml = (
       }
       if (defaultTreeAdapter.isTextNode(childNode)) {
         // trim spaces around rich text
-        if (spaceRegex.test(childNode.value)) {
+        // do not for code
+        if (spaceRegex.test(childNode.value) && node.tagName !== "code") {
           if (index === 0 || index === node.childNodes.length - 1) {
             continue;
           }
         }
-        const childValue = childNode.value.replaceAll(/\s+/g, " ");
         let child: Instance["children"][number] = {
           type: "text",
-          // collapse spacing characters inside of text to avoid preserved newlines
-          value: childValue === " " ? childValue : childValue.trim(),
+          value: childNode.value,
         };
+        if (node.tagName !== "code") {
+          // collapse spacing characters inside of text to avoid preserved newlines
+          child.value = child.value.replaceAll(/\s+/g, " ");
+          // remove unnecessary spacing in nodes
+          if (index === 0) {
+            child.value = child.value.trimStart();
+          }
+          if (index === node.childNodes.length - 1) {
+            child.value = child.value.trimEnd();
+          }
+        }
         // textarea content is initial value
         // and represented with fake value attribute
         if (node.tagName === "textarea") {
