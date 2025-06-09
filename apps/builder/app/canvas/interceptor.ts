@@ -159,8 +159,13 @@ export const subscribeInterceptedEvents = () => {
     if ($isPreviewMode.get()) {
       return;
     }
-    // prevent typing in inputs only in canvas mode
-    event.preventDefault();
+    if (
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement
+    ) {
+      // prevent typing in inputs only in canvas mode
+      event.preventDefault();
+    }
   };
 
   // Note: Event handlers behave unexpectedly when used inside a dialog component.
