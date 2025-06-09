@@ -141,11 +141,11 @@ test("inline code", () => {
 });
 
 test("code", () => {
-  expect(parse("```js meta\nfoo\n```")).toEqual(
+  expect(parse("```js meta\nfoo\nbar\n```")).toEqual(
     renderTemplate(
       <ws.element ws:tag="pre">
         <ws.element ws:tag="code" class="language-js">
-          {"foo "}
+          {"foo\nbar\n"}
         </ws.element>
       </ws.element>
     )
@@ -177,13 +177,30 @@ test("thematic break | separator", () => {
 });
 
 test("strikethrough", () => {
-  expect(parse("~One~ ~~two~~ ~~~three~~~.")).toEqual(
+  expect(parse("~One~\n\n~~two~~")).toEqual(
     renderTemplate(
-      <ws.element ws:tag="p">
-        <ws.element ws:tag="del">One</ws.element>
-        <ws.element ws:tag="del">two</ws.element>
-        <ws.element ws:tag="span"> ~~~three~~~.</ws.element>
-      </ws.element>
+      <>
+        <ws.element ws:tag="p">
+          <ws.element ws:tag="del">One</ws.element>
+        </ws.element>
+        <ws.element ws:tag="p">
+          <ws.element ws:tag="del">two</ws.element>
+        </ws.element>
+      </>
+    )
+  );
+});
+
+test("preserve spaces between strong and em", () => {
+  expect(parse("**One** *two* text")).toEqual(
+    renderTemplate(
+      <>
+        <ws.element ws:tag="p">
+          <ws.element ws:tag="strong">One</ws.element>{" "}
+          <ws.element ws:tag="em">two</ws.element>
+          {" text"}
+        </ws.element>
+      </>
     )
   );
 });
