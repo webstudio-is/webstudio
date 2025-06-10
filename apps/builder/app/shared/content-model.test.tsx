@@ -489,6 +489,22 @@ test("edge case: support a > img", () => {
   ).toBeTruthy();
 });
 
+test("support video > source", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="video">
+            <ws.element ws:tag="source" />
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
 describe("component content model", () => {
   test("restrict children with specific component", () => {
     expect(
