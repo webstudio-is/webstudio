@@ -288,7 +288,8 @@ const $usedProFeatures = computed(
         for (const prop of props ?? []) {
           if (
             prop.name === "href" &&
-            prop.value === "https://webstudio.is/?via=badge"
+            typeof prop.value === "string" &&
+            prop.value.includes("https://webstudio.is")
           ) {
             features.delete(badgeFeature);
           }
