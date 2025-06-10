@@ -489,7 +489,7 @@ test("edge case: support a > img", () => {
   ).toBeTruthy();
 });
 
-test.only("support video > source", () => {
+test("support video > source", () => {
   expect(
     isTreeSatisfyingContentModel({
       ...renderData(
