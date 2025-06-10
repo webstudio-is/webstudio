@@ -268,7 +268,9 @@ const $tagOptions = computed(
     newInstances.set(childInstance.id, childInstance);
     newInstances.set(instance.id, {
       ...instance,
-      children: [...instance.children, { type: "id", value: childInstance.id }],
+      // avoid preserving original children to not invalidate tag
+      // when some descendants do not satisfy content model
+      children: [{ type: "id", value: childInstance.id }],
     });
     for (const tag of tags) {
       childInstance.tag = tag;
