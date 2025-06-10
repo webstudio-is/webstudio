@@ -114,7 +114,10 @@ const getElementChildren = (
   let elementChildren: string[] =
     tag === undefined ? ["transparent"] : elementsByTag[tag].children;
   if (elementChildren.includes("transparent") && allowedCategories) {
-    elementChildren = allowedCategories;
+    // merge categories from parent and current element when transparent occured
+    elementChildren = elementChildren.flatMap((category) =>
+      category === "transparent" ? allowedCategories : category
+    );
   }
   // introduce custom non-interactive category to restrict nesting interactive elements
   // like button > button or a > input
