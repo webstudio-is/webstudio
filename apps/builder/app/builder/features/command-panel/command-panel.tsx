@@ -102,6 +102,7 @@ type ComponentOption = {
   category: TemplateMeta["category"];
   icon: undefined | string;
   order: undefined | number;
+  firstInstance: { component: string };
 };
 
 const getComponentScore = (meta: ComponentOption) => {
@@ -158,6 +159,7 @@ const $componentOptions = computed(
         category,
         icon: meta.icon,
         order: meta.order,
+        firstInstance: { component: name },
       });
     }
     for (const [name, meta] of templates) {
@@ -188,6 +190,7 @@ const $componentOptions = computed(
         category: meta.category,
         icon: meta.icon ?? componentMeta?.icon,
         order: meta.order,
+        firstInstance: meta.template.instances[0],
       });
     }
     componentOptions.sort(
@@ -205,7 +208,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
       heading={<CommandGroupHeading>Components</CommandGroupHeading>}
       actions={["add"]}
     >
-      {options.map(({ component, label, category, icon }) => {
+      {options.map(({ component, label, category, icon, firstInstance }) => {
         return (
           <CommandItem
             key={component}
@@ -225,7 +228,7 @@ const ComponentOptionsGroup = ({ options }: { options: ComponentOption[] }) => {
           >
             <Flex gap={2}>
               <CommandIcon>
-                <InstanceIcon instance={{ component }} icon={icon} />
+                <InstanceIcon instance={firstInstance} icon={icon} />
               </CommandIcon>
               <Text variant="labelsTitleCase">
                 {label}{" "}
