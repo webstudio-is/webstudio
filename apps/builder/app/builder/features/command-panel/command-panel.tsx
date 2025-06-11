@@ -23,7 +23,6 @@ import { compareMedia } from "@webstudio-is/css-engine";
 import {
   componentCategories,
   collectionComponent,
-  parseComponentName,
   elementComponent,
   tags,
 } from "@webstudio-is/sdk";
@@ -56,7 +55,6 @@ import { mapGroupBy } from "~/shared/shim";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   getInstanceLabel,
   InstanceIcon,
@@ -122,23 +120,6 @@ const $componentOptions = computed(
         continue;
       }
 
-      if (
-        category === "animations" &&
-        isFeatureEnabled("animation") === false
-      ) {
-        continue;
-      }
-
-      const [namespace, shortName] = parseComponentName(name);
-
-      if (
-        isFeatureEnabled("videoAnimation") === false &&
-        namespace === "@webstudio-is/sdk-components-animation" &&
-        shortName === "VideoAnimation"
-      ) {
-        continue;
-      }
-
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
@@ -164,16 +145,6 @@ const $componentOptions = computed(
     }
     for (const [name, meta] of templates) {
       if (meta.category === "hidden" || meta.category === "internal") {
-        continue;
-      }
-
-      const [namespace, shortName] = parseComponentName(name);
-
-      if (
-        isFeatureEnabled("videoAnimation") === false &&
-        namespace === "@webstudio-is/sdk-components-animation" &&
-        shortName === "VideoAnimation"
-      ) {
         continue;
       }
 
