@@ -37,6 +37,10 @@ const getTag = ({
   metas: Metas;
   props: Props;
 }) => {
+  // ignore tag property on xml nodes
+  if (instance.component === "XmlNode") {
+    return;
+  }
   const meta = metas.get(instance.component);
   const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
   return instance.tag ?? getTagByInstanceId(props).get(instance.id) ?? metaTag;
