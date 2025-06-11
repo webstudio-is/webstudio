@@ -505,6 +505,22 @@ test("support video > source", () => {
   ).toBeTruthy();
 });
 
+test("support xml node with tags", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.XmlNode tag="url">
+            <$.XmlNode tag="loc"></$.XmlNode>
+          </$.XmlNode>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
 describe("component content model", () => {
   test("restrict children with specific component", () => {
     expect(
