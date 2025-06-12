@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   type ReactNode,
@@ -67,73 +66,49 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import {
+  findUnsetVariableNames,
+  rebindTreeVariablesMutable,
+} from "~/shared/data-variables";
 import {
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
-import { updateWebstudioData } from "~/shared/instance-utils";
-import {
-  findUnsetVariableNames,
-  rebindTreeVariablesMutable,
-} from "~/shared/data-variables";
-
-const $variablesByName = computed(
-  [$selectedInstance, $dataSources],
-  (instance, dataSources) => {
-    const variablesByName = new Map<DataSource["name"], DataSource["id"]>();
-    for (const dataSource of dataSources.values()) {
-      if (dataSource.scopeInstanceId === instance?.id) {
-        variablesByName.set(dataSource.name, dataSource.id);
-      }
-    }
-    return variablesByName;
-  }
-);
-
-const $unsetVariableNames = computed(
-  [$selectedInstance, $instances, $props, $dataSources, $resources],
-  (selectedInstance, instances, props, dataSources, resources) => {
-    if (selectedInstance === undefined) {
-      return [];
-    }
-    return findUnsetVariableNames({
-      startingInstanceId: selectedInstance.id,
-      instances,
-      props,
-      dataSources,
-      resources,
-    });
-  }
-);
 
 const NameField = ({
-  variableId,
+  variable,
   defaultValue,
 }: {
-  variableId: undefined | DataSource["id"];
+  variable: undefined | DataSource;
   defaultValue: string;
 }) => {
   const ref = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const nameId = useId();
-  const variablesByName = useStore($variablesByName);
-  const unsetVariableNames = useStore($unsetVariableNames);
   const validateName = useCallback(
     (value: string) => {
-      if (
-        variablesByName.has(value) &&
-        variablesByName.get(value) !== variableId
-      ) {
-        return "Name is already used by another variable on this instance";
+      // validate same name on variable instance
+      // and fallback to selected instance for new variables
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get();
+      for (const dataSource of $dataSources.get().values()) {
+        if (
+          dataSource.scopeInstanceId === scopeInstanceId &&
+          dataSource.name === value &&
+          dataSource.id !== variable?.id
+        ) {
+          return "Name is already used by another variable on this instance";
+        }
       }
       if (value.trim().length === 0) {
         return "Name is required";
       }
       return "";
     },
-    [variablesByName, variableId]
+    [variable]
   );
   const [value, setValue] = useState(defaultValue);
   useEffect(() => {
@@ -158,7 +133,22 @@ const NameField = ({
               in expressions but not yet created
             </>
           )}
-          getItems={() => unsetVariableNames}
+          getItems={() => {
+            // find unset variables for variable instance
+            // and fallback to selected instance for new variables
+            const scopeInstanceId =
+              variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+            if (scopeInstanceId === undefined) {
+              return [];
+            }
+            return findUnsetVariableNames({
+              startingInstanceId: scopeInstanceId,
+              instances: $instances.get(),
+              props: $props.get(),
+              dataSources: $dataSources.get(),
+              resources: $resources.get(),
+            });
+          }}
           value={value}
           onItemSelect={(newValue) => {
             ref.current?.setCustomValidity(validateName(newValue));
@@ -289,19 +279,18 @@ const ParameterForm = forwardRef<
 >(({ variable }, ref) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
-        return;
-      }
       // only existing parameter variables can be renamed
-      if (variable === undefined) {
+      if (variable?.scopeInstanceId === undefined) {
         return;
       }
+      const scopeInstanceId = variable.scopeInstanceId;
       const name = z.string().parse(formData.get("name"));
       updateWebstudioData((data) => {
         data.dataSources.set(variable.id, { ...variable, name });
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
@@ -320,13 +309,13 @@ const useValuePanelRef = ({
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
-        return;
-      }
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
-      const scopeInstanceId = variable?.scopeInstanceId ?? selectedInstance.id;
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
+        return;
+      }
       const name = z.string().parse(formData.get("name"));
       updateWebstudioData((data) => {
         // cleanup resource when value variable is set
@@ -340,8 +329,10 @@ const useValuePanelRef = ({
           type: "variable",
           value: variableValue,
         });
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
@@ -679,10 +670,7 @@ const VariablePanel = forwardRef<
           p: theme.panel.padding,
         }}
       >
-        <NameField
-          variableId={variable?.id}
-          defaultValue={variable?.name ?? ""}
-        />
+        <NameField variable={variable} defaultValue={variable?.name ?? ""} />
         {fields}
       </Flex>
     </>
