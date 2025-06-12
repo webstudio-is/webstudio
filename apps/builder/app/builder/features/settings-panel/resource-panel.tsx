@@ -11,7 +11,12 @@ import {
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { Resource, type DataSource } from "@webstudio-is/sdk";
+import {
+  DataSources,
+  Resource,
+  type DataSource,
+  type Page,
+} from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
   generateObjectExpression,
@@ -53,14 +58,16 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
-import { parseCurl, type CurlRequest } from "./curl";
 import {
   $selectedInstance,
-  $selectedInstanceKeyWithRoot,
+  $selectedInstancePathWithRoot,
   $selectedPage,
+  getInstanceKey,
+  type InstancePath,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { rebindTreeVariablesMutable } from "~/shared/data-variables";
+import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
   id,
@@ -408,85 +415,114 @@ export const Headers = ({
   );
 };
 
-const $hiddenDataSourceIds = computed(
-  [$dataSources, $selectedPage],
-  (dataSources, page) => {
-    const dataSourceIds = new Set<DataSource["id"]>();
-    for (const dataSource of dataSources.values()) {
-      // hide collection item and component parameters from resources
-      // to prevent waterfall and loop requests ans not complicate compiler
-      if (dataSource.type === "parameter") {
-        dataSourceIds.add(dataSource.id);
-      }
-      // prevent resources using data of other resources
-      if (dataSource.type === "resource") {
-        dataSourceIds.add(dataSource.id);
-      }
+export const getResourceScopeForInstance = ({
+  page,
+  instanceKey,
+  dataSources,
+  variableValuesByInstanceSelector,
+}: {
+  page: undefined | Page;
+  instanceKey: undefined | string;
+  dataSources: DataSources;
+  variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
+}) => {
+  const scope: Record<string, unknown> = {};
+  const aliases = new Map<string, string>();
+  const variableValues = new Map<DataSource["id"], unknown>();
+  const hiddenDataSourceIds = new Set<DataSource["id"]>();
+  for (const dataSource of dataSources.values()) {
+    // hide collection item and component parameters from resources
+    // to prevent waterfall and loop requests ans not complicate compiler
+    if (dataSource.type === "parameter") {
+      hiddenDataSourceIds.add(dataSource.id);
     }
-    if (page?.systemDataSourceId) {
-      dataSourceIds.delete(page.systemDataSourceId);
+    // prevent resources using data of other resources
+    if (dataSource.type === "resource") {
+      hiddenDataSourceIds.add(dataSource.id);
     }
-    return dataSourceIds;
   }
-);
+  if (page?.systemDataSourceId) {
+    hiddenDataSourceIds.delete(page.systemDataSourceId);
+  }
+  const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
+  if (values) {
+    for (const [dataSourceId, value] of values) {
+      if (hiddenDataSourceIds.has(dataSourceId)) {
+        continue;
+      }
+      let dataSource = dataSources.get(dataSourceId);
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        dataSource = systemParameter;
+      }
+      if (dataSource) {
+        const name = encodeDataVariableId(dataSourceId);
+        variableValues.set(dataSourceId, value);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+      }
+    }
+  }
+  return { variableValues, scope, aliases };
+};
 
-export const $selectedInstanceResourceScope = computed(
-  [
-    $selectedInstanceKeyWithRoot,
-    $variableValuesByInstanceSelector,
-    $dataSources,
-    $hiddenDataSourceIds,
-  ],
-  (
-    instanceKey,
-    variableValuesByInstanceSelector,
-    dataSources,
-    hiddenDataSourceIds
-  ) => {
-    const scope: Record<string, unknown> = {};
-    const aliases = new Map<string, string>();
-    const variableValues = new Map<DataSource["id"], unknown>();
-    if (instanceKey === undefined) {
-      return { variableValues, scope, aliases };
-    }
-    const values = variableValuesByInstanceSelector.get(instanceKey);
-    if (values) {
-      for (const [dataSourceId, value] of values) {
-        if (hiddenDataSourceIds.has(dataSourceId)) {
-          continue;
-        }
-        let dataSource = dataSources.get(dataSourceId);
-        if (dataSourceId === SYSTEM_VARIABLE_ID) {
-          dataSource = systemParameter;
-        }
-        if (dataSource) {
-          const name = encodeDataVariableId(dataSourceId);
-          variableValues.set(dataSourceId, value);
-          scope[name] = value;
-          aliases.set(name, dataSource.name);
-        }
-      }
-    }
-    return { variableValues, scope, aliases };
+const getVariableInstanceKey = ({
+  variable,
+  instancePath,
+}: {
+  variable: undefined | DataSource;
+  instancePath: undefined | InstancePath;
+}) => {
+  if (instancePath === undefined) {
+    return;
   }
-);
+  // find instance key for variable instance
+  for (const { instance, instanceSelector } of instancePath) {
+    if (instance.id === variable?.scopeInstanceId) {
+      return getInstanceKey(instanceSelector);
+    }
+  }
+  // and fallback to currently selected instance
+  return getInstanceKey(instancePath[0].instanceSelector);
+};
 
 const useScope = ({ variable }: { variable?: DataSource }) => {
-  const { scope: scopeWithCurrentVariable, aliases } = useStore(
-    $selectedInstanceResourceScope
+  return useStore(
+    useMemo(
+      () =>
+        computed(
+          [
+            $selectedPage,
+            $selectedInstancePathWithRoot,
+            $variableValuesByInstanceSelector,
+            $dataSources,
+          ],
+          (
+            page,
+            instancePath,
+            variableValuesByInstanceSelector,
+            dataSources
+          ) => {
+            const { scope, aliases } = getResourceScopeForInstance({
+              page,
+              instanceKey: getVariableInstanceKey({
+                variable,
+                instancePath,
+              }),
+              dataSources,
+              variableValuesByInstanceSelector,
+            });
+            // prevent showing currently edited variable in suggestions
+            // to avoid cirular dependeny
+            const newScope = { ...scope };
+            if (variable) {
+              delete newScope[encodeDataVariableId(variable.id)];
+            }
+            return { scope: newScope, aliases };
+          }
+        ),
+      [variable]
+    )
   );
-  const currentVariableId = variable?.id;
-  // prevent showing currently edited variable in suggestions
-  // to avoid cirular dependeny
-  const scope = useMemo(() => {
-    if (currentVariableId === undefined) {
-      return scopeWithCurrentVariable;
-    }
-    const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
-    delete newScope[encodeDataVariableId(currentVariableId)];
-    return newScope;
-  }, [scopeWithCurrentVariable, currentVariableId]);
-  return { scope, aliases };
 };
 
 type PanelApi = {
@@ -635,8 +671,10 @@ export const ResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
@@ -647,8 +685,7 @@ export const ResourceForm = forwardRef<
       });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
+        scopeInstanceId,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -656,8 +693,10 @@ export const ResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
@@ -756,8 +795,10 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
@@ -771,8 +812,7 @@ export const SystemResourceForm = forwardRef<
       };
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
+        scopeInstanceId,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -780,8 +820,10 @@ export const SystemResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
@@ -865,8 +907,10 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
       const name = z.string().parse(formData.get("name"));
@@ -887,8 +931,7 @@ export const GraphqlResourceForm = forwardRef<
       };
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
+        scopeInstanceId,
         name,
         type: "resource",
         resourceId: newResource.id,
@@ -896,8 +939,10 @@ export const GraphqlResourceForm = forwardRef<
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
