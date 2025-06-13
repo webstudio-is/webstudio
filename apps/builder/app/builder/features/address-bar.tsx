@@ -27,33 +27,15 @@ import {
   MenuList,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
-import {
-  findParentFolderByChildId,
-  ROOT_FOLDER_ID,
-  getPagePath,
-} from "@webstudio-is/sdk";
-import { $pages, $publishedOrigin } from "~/shared/nano-states";
+import { $publishedOrigin } from "~/shared/nano-states";
 import {
   compilePathnamePattern,
   isPathnamePattern,
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { $selectedPage } from "~/shared/awareness";
+import { $selectedPage, $selectedPagePath } from "~/shared/awareness";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
-
-const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
-  if (pages === undefined || page === undefined) {
-    return "/";
-  }
-  const parentFolder = findParentFolderByChildId(page.id, pages.folders);
-  const parentFolderId = parentFolder?.id ?? ROOT_FOLDER_ID;
-  const foldersPath = getPagePath(parentFolderId, pages);
-  return [foldersPath, page?.path ?? ""]
-    .filter(Boolean)
-    .join("/")
-    .replace(/\/+/g, "/");
-});
 
 const $selectedPageHistory = computed(
   $selectedPage,

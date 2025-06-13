@@ -43,6 +43,7 @@ import {
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
   $awareness,
+  $selectedPagePath,
   findAwarenessByInstanceId,
   type Awareness,
 } from "~/shared/awareness";
@@ -95,10 +96,14 @@ const ChangeProjectDomain = ({
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
+  const selectedPagePath = useStore($selectedPagePath);
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
+
+  const pageUrl = new URL(publishedOrigin);
+  pageUrl.pathname = selectedPagePath;
 
   const updateProjectDomain = async () => {
     setIsUpdateInProgress(true);
@@ -138,7 +143,7 @@ const ChangeProjectDomain = ({
 
   return (
     <CollapsibleDomainSection
-      title={new URL(publishedOrigin).host}
+      title={pageUrl.host}
       prefix={
         <DomainCheckbox
           defaultChecked={project.latestBuildVirtual?.domain === domain}
@@ -171,11 +176,18 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-          <Tooltip content={`Proceed to ${publishedOrigin}`}>
+          <Tooltip
+            content={
+              <Text css={{ wordBreak: "break-all" }}>
+                Proceed to ${pageUrl.toString()}
+              </Text>
+            }
+            variant="wrapped"
+          >
             <IconButton
               tabIndex={-1}
               onClick={(event) => {
-                window.open(publishedOrigin, "_blank");
+                window.open(pageUrl, "_blank");
                 event.preventDefault();
               }}
             >
