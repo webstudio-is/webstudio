@@ -85,6 +85,9 @@ import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 import { showAttribute } from "@webstudio-is/react-sdk";
+import { $styleObjectModel } from "../style-panel/shared/model";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import { getComputedStyleDecl } from "~/shared/style-object-model";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -235,8 +238,8 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances, $propsIndex],
-  (pages, dataSources, instances, propsIndex) => {
+  [$pages, $dataSources, $instances, $propsIndex, $styleObjectModel],
+  (pages, dataSources, instances, propsIndex, styleObjectModel) => {
     const features = new Map<
       string,
       undefined | { awareness?: Awareness; info?: ReactNode }
@@ -339,9 +342,31 @@ const $usedProFeatures = computed(
             show = false;
           }
         }
+
+        const getValue = (property: CssProperty) => {
+          return toValue(
+            getComputedStyleDecl({
+              model: styleObjectModel,
+              instanceSelector: [instance.id],
+              property,
+            }).usedValue
+          );
+        };
+
+        // Check styles.
+        if (
+          getValue("display") === "none" ||
+          getValue("visibility") === "hidden" ||
+          getValue("opacity") === "0" ||
+          getValue("opacity") === "0%"
+        ) {
+          show = false;
+        }
+
         // @todo check all parents
         if (hasWsHref && highTrust && show) {
           features.delete(badgeFeature);
+          break;
         }
       }
     }
