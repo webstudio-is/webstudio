@@ -8,6 +8,7 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -238,7 +239,7 @@ const $usedProFeatures = computed(
   (pages, dataSources, instances, propsIndex) => {
     const features = new Map<
       string,
-      undefined | { awareness?: Awareness; info?: string }
+      undefined | { awareness?: Awareness; info?: ReactNode }
     >();
     if (pages === undefined) {
       return features;
@@ -286,7 +287,19 @@ const $usedProFeatures = computed(
     const badgeFeature = 'No "Built with Webstudio" badge';
     // Badge should be rendered on free sites on every page.
     features.set(badgeFeature, {
-      info: "Adding the badge to your homepage helps us offer a free version of the service. Please open the Components panel by clicking the “+” icon on the left, and add the “Built with Webstudio” component to your page. Feel free to adjust the badge's style to match your design - after all, it's just a link, and you can place it wherever you like.",
+      info: (
+        <Text>
+          Adding the badge to your homepage helps us offer a free version of the
+          service. Please open the Components panel by clicking the “+” icon on
+          the left, and add the “Built with Webstudio” component to your page.
+          <br />
+          Feel free to adjust the badge's style to match your design - after
+          all, it's just a link, and you can place it wherever you like.
+          <br />
+          Hiding the link in any way, or using rel="nofollow" or a similar
+          technique, is considered a violation of the terms.
+        </Text>
+      ),
     });
     // We want to check the badge only on the home page
     const homePageInstanceIds = findTreeInstanceIds(
@@ -319,11 +332,11 @@ const $usedProFeatures = computed(
               highTrust = false;
             }
           }
-          // @todo check all parents
           if (prop.name === showAttribute && prop.value === false) {
             show = false;
           }
         }
+        // @todo check all parents
         if (hasWsHref && highTrust && show) {
           features.delete(badgeFeature);
         }
