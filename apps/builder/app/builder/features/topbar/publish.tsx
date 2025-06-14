@@ -83,6 +83,7 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
+import { showAttribute } from "@webstudio-is/react-sdk";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -298,7 +299,8 @@ const $usedProFeatures = computed(
       if (instance?.tag === "a") {
         const props = propsIndex.propsByInstanceId.get(instance.id);
         let hasWsHref = false;
-        let hasNoFollow = false;
+        let highTrust = true;
+        let show = true;
 
         for (const prop of props ?? []) {
           if (
@@ -308,15 +310,21 @@ const $usedProFeatures = computed(
           ) {
             hasWsHref = true;
           }
-          if (
-            prop.name === "rel" &&
-            prop.type === "string" &&
-            prop.value.includes("nofollow")
-          ) {
-            hasNoFollow = true;
+          if (prop.name === "rel" && prop.type === "string") {
+            if (
+              prop.value.includes("nofollow") ||
+              prop.value.includes("ugc") ||
+              prop.value.includes("sponsored")
+            ) {
+              highTrust = false;
+            }
+          }
+          // @todo check all parents
+          if (prop.name === showAttribute && prop.value === false) {
+            show = false;
           }
         }
-        if (hasWsHref && hasNoFollow === false) {
+        if (hasWsHref && highTrust && show) {
           features.delete(badgeFeature);
         }
       }
