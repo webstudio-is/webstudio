@@ -8,6 +8,7 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -83,6 +84,10 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
+import { showAttribute } from "@webstudio-is/react-sdk";
+import { $styleObjectModel } from "../style-panel/shared/model";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import { getComputedStyleDecl } from "~/shared/style-object-model";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -233,11 +238,11 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances, $propsIndex],
-  (pages, dataSources, instances, propsIndex) => {
+  [$pages, $dataSources, $instances, $propsIndex, $styleObjectModel],
+  (pages, dataSources, instances, propsIndex, styleObjectModel) => {
     const features = new Map<
       string,
-      undefined | { awareness?: Awareness; info?: string }
+      undefined | { awareness?: Awareness; info?: ReactNode }
     >();
     if (pages === undefined) {
       return features;
@@ -285,7 +290,22 @@ const $usedProFeatures = computed(
     const badgeFeature = 'No "Built with Webstudio" badge';
     // Badge should be rendered on free sites on every page.
     features.set(badgeFeature, {
-      info: "Adding the badge to your homepage helps us offer a free version of the service. Please open the Components panel by clicking the “+” icon on the left, and add the “Built with Webstudio” component to your page. Feel free to adjust the badge's style to match your design - after all, it's just a link, and you can place it wherever you like.",
+      info: (
+        <Text>
+          Adding the badge to your "home" page helps us offer a free version of
+          the service. Please open the Components panel by clicking the “+” icon
+          on the left, and add the “Built with Webstudio” component to your
+          page.
+          <br />
+          - Feel free to adjust the badge's style to match your design - after
+          all, it's just a link, and you can place it wherever you like.
+          <br />
+          - Please don’t add that badge to every page, because search engines
+          will view it negatively.
+          <br />- Hiding the link in any way is considered a violation of the
+          terms.
+        </Text>
+      ),
     });
     // We want to check the badge only on the home page
     const homePageInstanceIds = findTreeInstanceIds(
@@ -297,14 +317,56 @@ const $usedProFeatures = computed(
       // Find a potential link that looks like a badge.
       if (instance?.tag === "a") {
         const props = propsIndex.propsByInstanceId.get(instance.id);
+        let hasWsHref = false;
+        let highTrust = true;
+        let show = true;
+
         for (const prop of props ?? []) {
           if (
             prop.name === "href" &&
-            typeof prop.value === "string" &&
+            prop.type === "string" &&
             prop.value.includes("https://webstudio.is")
           ) {
-            features.delete(badgeFeature);
+            hasWsHref = true;
           }
+          if (prop.name === "rel" && prop.type === "string") {
+            if (
+              prop.value.includes("nofollow") ||
+              prop.value.includes("ugc") ||
+              prop.value.includes("sponsored")
+            ) {
+              highTrust = false;
+            }
+          }
+          if (prop.name === showAttribute) {
+            show = prop.type === "boolean" && prop.value;
+          }
+        }
+
+        const getValue = (property: CssProperty) => {
+          return toValue(
+            getComputedStyleDecl({
+              model: styleObjectModel,
+              instanceSelector: [instance.id],
+              property,
+            }).usedValue
+          );
+        };
+
+        // Check styles.
+        if (
+          getValue("display") === "none" ||
+          getValue("visibility") === "hidden" ||
+          getValue("opacity") === "0" ||
+          getValue("opacity") === "0%"
+        ) {
+          show = false;
+        }
+
+        // @todo check all parents
+        if (hasWsHref && highTrust && show) {
+          features.delete(badgeFeature);
+          break;
         }
       }
     }
