@@ -73,8 +73,8 @@ export class ImmerhinSyncObject implements SyncObject {
         // Use `clone` to recreate the data with the current realm's classes.
         // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
         $store.set(structuredClone(state.get(namespace)));
-      } catch {
-        // empty block
+      } catch (error) {
+        console.error(error);
       }
     }
   }
@@ -123,8 +123,8 @@ export class NanostoresSyncObject implements SyncObject {
       // Use `clone` to recreate the data with the current realm's classes.
       // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
       this.store.set(structuredClone(transaction.payload));
-    } catch {
-      // empty block
+    } catch (error) {
+      console.error(error);
     }
     this.operation = "local";
   }
