@@ -110,16 +110,34 @@ const DefaultPagePage = z
     "/build prefix is reserved for the system"
   );
 
+export const OldPagePath = z
+  .string()
+  .refine((path) => path !== "", "Can't be empty")
+  .refine((path) => path !== "/", "Can't be just a /")
+  .refine(
+    (path) => path === "" || path.startsWith("/"),
+    "Must start with a / or a full URL e.g. https://website.org"
+  )
+  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
+  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
+  .refine(
+    (path) => /^[-_a-zA-Z0-9*:?\\/.]*$/.test(path), // Allow uppercase letters (A-Z)
+    "Only a-z, A-Z, 0-9, -, _, /, :, ?, . and * are allowed"
+  )
+  .refine(
+    (path) => path !== "/s" && path.startsWith("/s/") === false,
+    "/s prefix is reserved for the system"
+  )
+  .refine(
+    (path) => path !== "/build" && path.startsWith("/build/") === false,
+    "/build prefix is reserved for the system"
+  );
+
 export const PagePath = DefaultPagePage.refine(
   (path) => path === "" || path.startsWith("/"),
   "Must start with a / or a full URL e.g. https://website.org"
 );
 
-// added this for old path input under redirect section of page settings
-export const OldPagePath = DefaultPagePage.refine(
-  (path) => path === "" || path.startsWith("/"),
-  "Must start with a / and it must be full path e.g. /project/id"
-);
 
 const Page = z.object({
   ...commonPageFields,
@@ -152,7 +170,7 @@ export const ProjectNewRedirectPath = PagePath.or(
 );
 
 export const PageRedirect = z.object({
-  old: PagePath,
+  old: OldPagePath,
   new: ProjectNewRedirectPath,
   status: z.enum(["301", "302"]).optional(),
 });
