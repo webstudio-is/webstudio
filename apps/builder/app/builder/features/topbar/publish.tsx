@@ -338,8 +338,8 @@ const $usedProFeatures = computed(
               highTrust = false;
             }
           }
-          if (prop.name === showAttribute && prop.value === false) {
-            show = false;
+          if (prop.name === showAttribute) {
+            show = prop.type === "boolean" && prop.value;
           }
         }
 
