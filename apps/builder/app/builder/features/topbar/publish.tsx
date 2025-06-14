@@ -289,15 +289,18 @@ const $usedProFeatures = computed(
     features.set(badgeFeature, {
       info: (
         <Text>
-          Adding the badge to your homepage helps us offer a free version of the
-          service. Please open the Components panel by clicking the “+” icon on
-          the left, and add the “Built with Webstudio” component to your page.
+          Adding the badge to your "home" page helps us offer a free version of
+          the service. Please open the Components panel by clicking the “+” icon
+          on the left, and add the “Built with Webstudio” component to your
+          page.
           <br />
-          Feel free to adjust the badge's style to match your design - after
+          - Feel free to adjust the badge's style to match your design - after
           all, it's just a link, and you can place it wherever you like.
           <br />
-          Hiding the link in any way, or using rel="nofollow" or a similar
-          technique, is considered a violation of the terms.
+          - Please don’t add that badge to every page, because search engines
+          will view it negatively.
+          <br />- Hiding the link in any way is considered a violation of the
+          terms.
         </Text>
       ),
     });
