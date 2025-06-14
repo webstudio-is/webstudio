@@ -297,14 +297,27 @@ const $usedProFeatures = computed(
       // Find a potential link that looks like a badge.
       if (instance?.tag === "a") {
         const props = propsIndex.propsByInstanceId.get(instance.id);
+        let hasWsHref = false;
+        let hasNoFollow = false;
+
         for (const prop of props ?? []) {
           if (
             prop.name === "href" &&
-            typeof prop.value === "string" &&
+            prop.type === "string" &&
             prop.value.includes("https://webstudio.is")
           ) {
-            features.delete(badgeFeature);
+            hasWsHref = true;
           }
+          if (
+            prop.name === "rel" &&
+            prop.type === "string" &&
+            prop.value.includes("nofollow")
+          ) {
+            hasNoFollow = true;
+          }
+        }
+        if (hasWsHref && hasNoFollow === false) {
+          features.delete(badgeFeature);
         }
       }
     }
