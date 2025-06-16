@@ -136,42 +136,6 @@ test("convert element instances to lexical", async () => {
   );
 });
 
-test("convert lexical to legacy instances updates", async () => {
-  const refs: Refs = new Map();
-  const editor = createHeadlessEditor({
-    nodes: [LinkNode],
-  });
-  await new Promise<void>((resolve) => {
-    editor.update(
-      () => {
-        $convertToLexical(instances, "textBoxId", refs);
-      },
-      { onUpdate: resolve }
-    );
-  });
-  const treeRootInstance = instances.get("textBoxId");
-  if (treeRootInstance === undefined) {
-    throw Error("Tree root instance should be in test data");
-  }
-  const updates = editor.getEditorState().read(() => {
-    return $convertToUpdates(treeRootInstance, refs, new Map());
-  });
-  expect(updates).toEqual(
-    renderTemplate(
-      <$.Box ws:id="textBoxId">
-        Hello{"\n"}
-        <$.Bold ws:id="boldId">
-          <$.Italic ws:id="italicId">world</$.Italic>
-        </$.Bold>
-        {"\n"}
-        <$.Span ws:id="spanId">and</$.Span>
-        {"\n"}
-        <$.RichTextLink ws:id="linkId">other realms</$.RichTextLink>
-      </$.Box>
-    ).instances
-  );
-});
-
 test("convert lexical to element instances updates", async () => {
   const refs: Refs = new Map();
   const editor = createHeadlessEditor({

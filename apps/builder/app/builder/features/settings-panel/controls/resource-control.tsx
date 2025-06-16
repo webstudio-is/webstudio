@@ -25,16 +25,25 @@ import {
   BindingPopover,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
-import { $props, $resources } from "~/shared/nano-states";
+import {
+  $dataSources,
+  $props,
+  $resources,
+  $variableValuesByInstanceSelector,
+} from "~/shared/nano-states";
 import { computeExpression } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { $selectedInstance } from "~/shared/awareness";
 import {
-  $selectedInstanceResourceScope,
+  $selectedInstance,
+  $selectedInstanceKeyWithRoot,
+  $selectedPage,
+} from "~/shared/awareness";
+import {
   UrlField,
   MethodField,
   Headers,
   parseResource,
+  getResourceScopeForInstance,
 } from "../resource-panel";
 import { type ControlProps, useLocalValue, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";
@@ -76,6 +85,23 @@ const ResourceButton = forwardRef<
   );
 });
 ResourceButton.displayName = "ResourceButton";
+
+const $selectedInstanceResourceScope = computed(
+  [
+    $selectedPage,
+    $selectedInstanceKeyWithRoot,
+    $variableValuesByInstanceSelector,
+    $dataSources,
+  ],
+  (page, instanceKey, variableValuesByInstanceSelector, dataSources) => {
+    return getResourceScopeForInstance({
+      page,
+      instanceKey,
+      dataSources,
+      variableValuesByInstanceSelector,
+    });
+  }
+);
 
 const ResourceForm = ({ resource }: { resource: Resource }) => {
   const { scope, aliases } = useStore($selectedInstanceResourceScope);
