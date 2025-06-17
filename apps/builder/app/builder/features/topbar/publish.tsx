@@ -82,11 +82,11 @@ import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
-import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { $styleObjectModel } from "../style-panel/shared/model";
 import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { getComputedStyleDecl } from "~/shared/style-object-model";
+import { $styleObjectModel } from "../style-panel/shared/model";
+import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
   project: Project;
@@ -774,6 +774,108 @@ const buttonLinkClass = css({
   ...textVariants.link,
 }).toString();
 
+const UpgradeBanner = () => {
+  const usedProFeatures = useStore($usedProFeatures);
+  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { userPublishCount, maxPublishesAllowedPerUser } =
+    useUserPublishCount();
+
+  if (userPublishCount >= maxPublishesAllowedPerUser) {
+    return (
+      <PanelBanner>
+        <Text variant="regularBold">
+          Upgrade to publish more than {maxPublishesAllowedPerUser} times per
+          day:
+        </Text>
+        <Link
+          className={buttonStyle({ color: "gradient" })}
+          color="contrast"
+          underline="none"
+          href="https://webstudio.is/pricing"
+          target="_blank"
+        >
+          Upgrade
+        </Link>
+      </PanelBanner>
+    );
+  }
+
+  if (usedProFeatures.size > 0) {
+    return (
+      <PanelBanner>
+        <img
+          src={cmsUpgradeBanner}
+          alt="Upgrade for CMS"
+          width={rawTheme.spacing[28]}
+          style={{ aspectRatio: "4.1" }}
+        />
+        <Text variant="regularBold">Following Pro features are used:</Text>
+        <Text as="ul" color="destructive" css={{ paddingLeft: "1em" }}>
+          {Array.from(usedProFeatures).map(
+            ([message, { awareness, info } = {}], index) => (
+              <li key={index}>
+                <Flex align="center" gap="1">
+                  {awareness ? (
+                    <button
+                      className={buttonLinkClass}
+                      type="button"
+                      onClick={() => $awareness.set(awareness)}
+                    >
+                      {message}
+                    </button>
+                  ) : (
+                    message
+                  )}
+                  {info && (
+                    <Tooltip variant="wrapped" content={info}>
+                      <SmallIconButton icon={<HelpIcon />} />
+                    </Tooltip>
+                  )}
+                </Flex>
+              </li>
+            )
+          )}
+        </Text>
+        <Text>You can delete these features or upgrade.</Text>
+        <Flex align="center" gap={1}>
+          <UpgradeIcon />
+          <Link
+            color="inherit"
+            target="_blank"
+            href="https://webstudio.is/pricing"
+          >
+            Upgrade to Pro
+          </Link>
+        </Flex>
+      </PanelBanner>
+    );
+  }
+  if (canAddDomain === false) {
+    return (
+      <PanelBanner>
+        <Text variant="regularBold">Free domains limit reached</Text>
+        <Text variant="regular">
+          You have reached the limit of {maxDomainsAllowedPerUser} custom
+          domains on your account.{" "}
+          <Text variant="regularBold" inline>
+            Upgrade to a Pro account
+          </Text>{" "}
+          to add unlimited domains and publish to each domain individually.
+        </Text>
+        <Link
+          className={buttonStyle({ color: "gradient" })}
+          color="contrast"
+          underline="none"
+          href="https://webstudio.is/pricing"
+          target="_blank"
+        >
+          Upgrade
+        </Link>
+      </PanelBanner>
+    );
+  }
+};
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
@@ -789,99 +891,12 @@ const Content = (props: {
   }
   const projectState = "idle";
 
-  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
 
   return (
     <form>
       <ScrollArea>
-        {userPublishCount >= maxPublishesAllowedPerUser ? (
-          <PanelBanner>
-            <Text variant="regularBold">
-              Upgrade to publish more than {maxPublishesAllowedPerUser} times
-              per day:
-            </Text>
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </Link>
-          </PanelBanner>
-        ) : usedProFeatures.size > 0 && hasProPlan === false ? (
-          <PanelBanner>
-            <img
-              src={cmsUpgradeBanner}
-              alt="Upgrade for CMS"
-              width={rawTheme.spacing[28]}
-              style={{ aspectRatio: "4.1" }}
-            />
-            <Text variant="regularBold">
-              Upgrade to publish with following features:
-            </Text>
-            <Text as="ul">
-              {Array.from(usedProFeatures).map(
-                ([message, { awareness, info } = {}], index) => (
-                  <li key={index}>
-                    <Flex align="center" gap="1">
-                      {awareness ? (
-                        <button
-                          className={buttonLinkClass}
-                          type="button"
-                          onClick={() => $awareness.set(awareness)}
-                        >
-                          {message}
-                        </button>
-                      ) : (
-                        message
-                      )}
-                      {info && (
-                        <Tooltip variant="wrapped" content={info}>
-                          <SmallIconButton icon={<HelpIcon />} />
-                        </Tooltip>
-                      )}
-                    </Flex>
-                  </li>
-                )
-              )}
-            </Text>
-            <Flex align="center" gap={1}>
-              <UpgradeIcon />
-              <Link
-                color="inherit"
-                target="_blank"
-                href="https://webstudio.is/pricing"
-              >
-                Upgrade to Pro
-              </Link>
-            </Flex>
-          </PanelBanner>
-        ) : canAddDomain === false ? (
-          <PanelBanner>
-            <Text variant="regularBold">Free domains limit reached</Text>
-            <Text variant="regular">
-              You have reached the limit of {maxDomainsAllowedPerUser} custom
-              domains on your account.{" "}
-              <Text variant="regularBold" inline>
-                Upgrade to a Pro account
-              </Text>{" "}
-              to add unlimited domains and publish to each domain individually.
-            </Text>
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </Link>
-          </PanelBanner>
-        ) : null}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
             refresh={refreshProject}
@@ -911,6 +926,7 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
+        {hasProPlan === false && <UpgradeBanner />}
         <Publish
           project={project}
           refresh={refreshProject}
