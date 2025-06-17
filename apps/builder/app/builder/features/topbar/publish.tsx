@@ -881,8 +881,7 @@ const Content = (props: {
   onExportClick: () => void;
 }) => {
   const usedProFeatures = useStore($usedProFeatures);
-  //const { hasProPlan } = useStore($userPlanFeatures);
-  const hasProPlan = false;
+  const { hasProPlan } = useStore($userPlanFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const project = useStore($project);
