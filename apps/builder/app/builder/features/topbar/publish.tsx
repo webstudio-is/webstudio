@@ -938,6 +938,7 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
+        {hasProPlan === false && <UpgradeBanner />}
         <Publish
           project={project}
           refresh={refreshProject}
@@ -947,7 +948,6 @@ const Content = (props: {
             userPublishCount >= maxPublishesAllowedPerUser
           }
         />
-        {hasProPlan === false && <UpgradeBanner />}
       </Flex>
     </form>
   );
