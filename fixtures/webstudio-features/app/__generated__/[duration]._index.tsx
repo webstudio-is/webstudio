@@ -19,8 +19,7 @@ export const breakpoints = [
   { id: "Z8WjyXWkCrr35PXgjHdpY", minWidth: 472 },
 ];
 
-export const favIconAsset: string | undefined =
-  "DALL_E_2023-10-30_12.39.46_-_Photo_logo_with_a_bold_cat_silhouette_centered_on_a_contrasting_background_designed_for_clarity_at_small_32x32_favicon_resolution_00h6cEA8u2pJRvVJv7hRe.png";
+export const favIconAsset: string | undefined = undefined;
 
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: string[] = [];
