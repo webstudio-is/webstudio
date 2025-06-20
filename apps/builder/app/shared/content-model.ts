@@ -341,6 +341,7 @@ export const isTreeSatisfyingContentModel = ({
     tag,
     allowedCategories,
   });
+  console.log(tag, allowedCategories, isTagSatisfying);
   if (isTagSatisfying === false) {
     const parentInstance = instances.get(parentInstanceId);
     let parentTag: undefined | string;

@@ -142,7 +142,7 @@ export const elementsByTag: Record<string, Element> = {
   },
   details: {
     description: "Disclosure control for hiding details",
-    categories: ["flow", "interactive", "palpable"],
+    categories: ["flow", "palpable"],
     children: ["summary", "flow"],
   },
   dfn: {
@@ -209,32 +209,32 @@ export const elementsByTag: Record<string, Element> = {
   },
   h1: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   h2: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   h3: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   h4: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   h5: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   h6: {
     description: "Heading",
-    categories: ["flow", "heading", "palpable"],
+    categories: ["flow", "heading content", "palpable"],
     children: ["phrasing"],
   },
   head: {
@@ -535,7 +535,7 @@ export const elementsByTag: Record<string, Element> = {
   },
   summary: {
     description: "Caption for details",
-    categories: ["none"],
+    categories: ["none", "interactive"],
     children: ["phrasing", "heading content"],
   },
   sup: {
