@@ -838,7 +838,6 @@ const UpgradeBanner = () => {
                       type="button"
                       onClick={() => {
                         $awareness.set(awareness);
-                        console.log(view, awareness.pageId);
                         if (view === "pageSettings") {
                           setActiveSidebarPanel("pages");
                           $editingPageId.set(awareness.pageId);
