@@ -1,20 +1,89 @@
-import { Button, Text } from "@webstudio-is/design-system";
-import {
-  useEntri,
-  entriGlobalStyles,
-  type DnsRecord,
-  type EntriCloseDetail,
-} from "~/shared/entri/entri";
+import * as entri from "entrijs";
+import { useEffect, useState } from "react";
+import { globalCss, Button, Text } from "@webstudio-is/design-system";
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
-export const Entri = ({
-  dnsRecords,
-  domain,
-  onClose,
-}: {
-  dnsRecords: DnsRecord[];
+// https://developers.entri.com/docs/install
+type DnsRecord = {
+  type: "CNAME" | "TXT";
+  host: string;
+  value: string;
+  ttl: number;
+};
+
+type EntriCloseEvent = CustomEvent<entri.EntriCloseEventDetail>;
+
+declare global {
+  // https://developers.entri.com/docs/integrate-with-dns-providers
+  interface WindowEventMap {
+    onEntriClose: EntriCloseEvent;
+  }
+}
+
+/**
+ * Our FloatingPanelPopover adds pointerEvents: "none" to the body.
+ * We open the entry dialog from the popover, so we need to allow pointer events on the entri dialog.
+ */
+const entriGlobalStyles = globalCss({
+  body: {
+    "&>#entriApp": {
+      pointerEvents: "all",
+    },
+  },
+});
+
+type EntriProps = {
   domain: string;
-  onClose: (detail: EntriCloseDetail) => void;
-}) => {
+  dnsRecords: DnsRecord[];
+  onClose: (detail: entri.EntriCloseEventDetail) => void;
+};
+
+const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const {
+    load: entriTokenLoad,
+    data: entriTokenData,
+    error: entriTokenSystemError,
+  } = trpcClient.domain.getEntriToken.useQuery();
+
+  useEffect(() => {
+    const handleOnEntriClose = (event: EntriCloseEvent) => {
+      if (event.detail.domain === domain) {
+        onClose(event.detail);
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("onEntriClose", handleOnEntriClose, false);
+    return () => {
+      window.removeEventListener("onEntriClose", handleOnEntriClose, false);
+    };
+  }, [domain, onClose]);
+
+  const showDialog = () => {
+    setIsOpen(true);
+    entriTokenLoad(undefined, async (data) => {
+      if (data.success) {
+        await entri.showEntri({
+          applicationId: data.applicationId,
+          token: data.token,
+          dnsRecords,
+          prefilledDomain: domain,
+        });
+      }
+    });
+  };
+
+  return {
+    isOpen,
+    showDialog,
+    error:
+      entriTokenSystemError ??
+      (entriTokenData?.success === false ? entriTokenData.error : undefined),
+  };
+};
+
+export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
   const { error, isOpen, showDialog } = useEntri({
     onClose,
@@ -31,9 +100,7 @@ export const Entri = ({
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         type="button"
-        onClick={() => {
-          showDialog();
-        }}
+        onClick={showDialog}
       >
         Configure automatically
       </Button>

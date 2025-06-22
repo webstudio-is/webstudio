@@ -184,7 +184,7 @@ const ChangeProjectDomain = ({
           <Tooltip
             content={
               <Text css={{ wordBreak: "break-all" }}>
-                Proceed to ${pageUrl.toString()}
+                Proceed to {pageUrl.toString()}
               </Text>
             }
             variant="wrapped"
