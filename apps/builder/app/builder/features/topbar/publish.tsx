@@ -344,21 +344,21 @@ const $usedProFeatures = computed(
         }
 
         const getValue = (property: CssProperty) => {
-          return toValue(
-            getComputedStyleDecl({
-              model: styleObjectModel,
-              instanceSelector: [instance.id],
-              property,
-            }).usedValue
-          );
+          const value = getComputedStyleDecl({
+            model: styleObjectModel,
+            instanceSelector: [instance.id],
+            property,
+          }).usedValue;
+          return "value" in value ? value.value : undefined;
         };
 
         // Check styles.
         if (
           getValue("display") === "none" ||
           getValue("visibility") === "hidden" ||
-          getValue("opacity") === "0" ||
-          getValue("opacity") === "0%"
+          getValue("opacity") === 0 ||
+          getValue("width") === 0 ||
+          getValue("height") === 0
         ) {
           show = false;
         }
