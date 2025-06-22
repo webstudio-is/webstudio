@@ -69,6 +69,7 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
           token: data.token,
           dnsRecords,
           prefilledDomain: domain,
+          wwwRedirect: true,
         });
       }
     });
