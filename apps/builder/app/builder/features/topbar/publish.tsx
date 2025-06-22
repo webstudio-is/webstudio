@@ -84,7 +84,7 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import { type CssProperty } from "@webstudio-is/css-engine";
 import { getComputedStyleDecl } from "~/shared/style-object-model";
 import { $styleObjectModel } from "../style-panel/shared/model";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
