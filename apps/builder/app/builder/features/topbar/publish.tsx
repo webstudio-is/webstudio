@@ -190,6 +190,7 @@ const ChangeProjectDomain = ({
             variant="wrapped"
           >
             <IconButton
+              type="button"
               tabIndex={-1}
               onClick={(event) => {
                 window.open(pageUrl, "_blank");
@@ -1231,6 +1232,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               suffix={
                 <PopoverTitleActions>
                   <IconButton
+                    type="button"
                     onClick={() => {
                       $openProjectSettings.set("publish");
                     }}
