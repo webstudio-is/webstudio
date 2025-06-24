@@ -5,7 +5,7 @@ import { trpcClient } from "~/shared/trpc/trpc-client";
 
 // https://developers.entri.com/docs/install
 type DnsRecord = {
-  type: "CNAME" | "TXT";
+  type: "CNAME" | "ALIAS" | "TXT";
   host: string;
   value: string;
   ttl: number;
@@ -27,7 +27,7 @@ declare global {
 const entriGlobalStyles = globalCss({
   body: {
     "&>#entriApp": {
-      pointerEvents: "all",
+      pointerEvents: "auto",
     },
   },
 });
@@ -87,15 +87,13 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
   const { error, isOpen, showDialog } = useEntri({
-    onClose,
     domain,
     dnsRecords,
+    onClose,
   });
-
   return (
     <>
       {error !== undefined && <Text color="destructive">{error}</Text>}
-
       <Button
         disabled={isOpen}
         color="neutral"

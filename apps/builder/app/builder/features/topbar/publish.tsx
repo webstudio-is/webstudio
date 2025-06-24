@@ -79,7 +79,7 @@ import {
   parseComponentName,
   type Templates,
 } from "@webstudio-is/sdk";
-import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
+import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";

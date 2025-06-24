@@ -21,6 +21,7 @@ import {
 } from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
+  Fragment,
   startTransition,
   useEffect,
   useOptimistic,
@@ -29,17 +30,18 @@ import {
   type ReactNode,
 } from "react";
 import { Entri } from "./entri";
-import { nativeClient } from "~/shared/trpc/trpc-client";
+import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
 import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
-import DomainCheckbox from "./domain-checkbox";
+import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
 
 export type Domain = Project["domainsVirtual"][number];
-type DomainStatus = Project["domainsVirtual"][number]["status"];
+
+type DomainStatus = Domain["status"];
 
 const InputEllipsis = styled(InputField, {
   "&>input": {
@@ -164,6 +166,119 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
   );
 };
 
+const DomainConfig = ({
+  projectDomain,
+  onUpdateStatus,
+}: {
+  projectDomain: Domain;
+  onUpdateStatus: () => void;
+}) => {
+  const { load: findDomainRegistrar, data: registrar } =
+    trpcClient.domain.findDomainRegistrar.useQuery();
+  const cname = extractCname(projectDomain.domain);
+  useEffect(() => {
+    if (cname === "@") {
+      findDomainRegistrar({ domain: projectDomain.domain });
+    }
+  }, [projectDomain.domain, cname]);
+  const publisherHost = useStore($publisherHost);
+
+  const cnameRecord = {
+    // use alias for domain root when supported to avoid conflicting
+    // with MX, NS etc records
+    type: cname === "@" && registrar?.alias ? "ALIAS" : "CNAME",
+    host: cname,
+    value: `${projectDomain.cname}.customers.${publisherHost}`,
+    ttl: 300,
+  } as const;
+
+  const txtRecord = {
+    type: "TXT",
+    host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
+    value: projectDomain.expectedTxtRecord,
+    ttl: 300,
+  } as const;
+
+  const dnsRecords = [cnameRecord, txtRecord];
+
+  return (
+    <>
+      <Text color="subtle">
+        <strong>To verify your domain:</strong>
+        <br />
+        Visit the admin console of your domain registrar (the website you
+        purchased your domain from) and create one <strong>CNAME</strong> record
+        and one <strong>TXT</strong> record with the values shown below:
+      </Text>
+
+      <Grid
+        gap={2}
+        css={{ gridTemplateColumns: `${theme.spacing[18]} 1fr 1fr` }}
+      >
+        <Text color="subtle" variant="titles">
+          TYPE
+        </Text>
+        <Text color="subtle" variant="titles">
+          NAME
+        </Text>
+        <Text color="subtle" variant="titles">
+          VALUE
+        </Text>
+
+        {dnsRecords.map((record, index) => (
+          <Fragment key={index}>
+            <InputEllipsis readOnly value={record.type} />
+            <InputEllipsis
+              readOnly
+              value={record.host}
+              suffix={
+                <CopyToClipboard text={record.host}>
+                  <NestedInputButton type="button">
+                    <CopyIcon />
+                  </NestedInputButton>
+                </CopyToClipboard>
+              }
+            />
+            <InputEllipsis
+              readOnly
+              value={record.value}
+              suffix={
+                <CopyToClipboard text={record.value}>
+                  <NestedInputButton type="button">
+                    <CopyIcon />
+                  </NestedInputButton>
+                </CopyToClipboard>
+              }
+            />
+          </Fragment>
+        ))}
+      </Grid>
+
+      <Grid
+        gap={2}
+        align={"center"}
+        css={{
+          gridTemplateColumns: `1fr auto 1fr`,
+        }}
+      >
+        <Separator css={{ alignSelf: "unset" }} />
+        <Text color="main">OR</Text>
+        <Separator css={{ alignSelf: "unset" }} />
+      </Grid>
+
+      <Entri
+        dnsRecords={dnsRecords}
+        domain={projectDomain.domain}
+        onClose={() => {
+          // Sometimes Entri modal dialog hangs even if it's successful,
+          // until they fix that, we'll just refresh the status here on every onClose event
+          onUpdateStatus();
+        }}
+      />
+    </>
+  );
+};
+
 const DomainItem = (props: {
   initiallyOpen: boolean;
   projectDomain: Domain;
@@ -272,32 +387,7 @@ const DomainItem = (props: {
     });
   }, [status, handleVerify, handleUpdateStatus, isStatusLoading]);
 
-  const publisherHost = useStore($publisherHost);
-  const cnameEntryName = extractCname(props.projectDomain.domain);
-  const cnameEntryValue = `${props.projectDomain.cname}.customers.${publisherHost}`;
-
-  const txtEntryName =
-    cnameEntryName === "@"
-      ? "_webstudio_is"
-      : `_webstudio_is.${cnameEntryName}`;
-
   const domainStatus = getStatus(props.projectDomain);
-
-  const cnameRecord = {
-    type: "CNAME",
-    host: cnameEntryName,
-    value: cnameEntryValue,
-    ttl: 300,
-  } as const;
-
-  const txtRecord = {
-    type: "TXT",
-    host: txtEntryName,
-    value: props.projectDomain.expectedTxtRecord,
-    ttl: 300,
-  } as const;
-
-  const dnsRecords = [cnameRecord, txtRecord];
 
   const { isVerifiedActive, text } = getStatusText({
     projectDomain: props.projectDomain,
@@ -413,98 +503,9 @@ const DomainItem = (props: {
           )}
         </Grid>
 
-        <Text color="subtle">
-          <strong>To verify your domain:</strong>
-          <br />
-          Visit the admin console of your domain registrar (the website you
-          purchased your domain from) and create one <strong>CNAME</strong>{" "}
-          record and one <strong>TXT</strong> record with the values shown
-          below:
-        </Text>
-
-        <Grid
-          gap={2}
-          css={{
-            gridTemplateColumns: `${theme.spacing[18]} 1fr 1fr`,
-          }}
-        >
-          <Text color="subtle" variant={"titles"}>
-            TYPE
-          </Text>
-          <Text color="subtle" variant={"titles"}>
-            NAME
-          </Text>
-          <Text color="subtle" variant={"titles"}>
-            VALUE
-          </Text>
-
-          <InputEllipsis readOnly value="CNAME" />
-          <InputEllipsis
-            readOnly
-            value={cnameRecord.host}
-            suffix={
-              <CopyToClipboard text={cnameRecord.host}>
-                <NestedInputButton type="button">
-                  <CopyIcon />
-                </NestedInputButton>
-              </CopyToClipboard>
-            }
-          />
-          <InputEllipsis
-            readOnly
-            value={cnameRecord.value}
-            suffix={
-              <CopyToClipboard text={cnameRecord.value}>
-                <NestedInputButton type="button">
-                  <CopyIcon />
-                </NestedInputButton>
-              </CopyToClipboard>
-            }
-          />
-
-          <InputEllipsis readOnly value="TXT" />
-          <InputEllipsis
-            readOnly
-            value={txtRecord.host}
-            suffix={
-              <CopyToClipboard text={txtRecord.host}>
-                <NestedInputButton type="button">
-                  <CopyIcon />
-                </NestedInputButton>
-              </CopyToClipboard>
-            }
-          />
-          <InputEllipsis
-            readOnly
-            value={txtRecord.value}
-            suffix={
-              <CopyToClipboard text={txtRecord.value}>
-                <NestedInputButton type="button">
-                  <CopyIcon />
-                </NestedInputButton>
-              </CopyToClipboard>
-            }
-          />
-        </Grid>
-
-        <Grid
-          gap={2}
-          align={"center"}
-          css={{
-            gridTemplateColumns: `1fr auto 1fr`,
-          }}
-        >
-          <Separator css={{ alignSelf: "unset" }} />
-          <Text color="main">OR</Text>
-          <Separator css={{ alignSelf: "unset" }} />
-        </Grid>
-
-        <Entri
-          dnsRecords={dnsRecords}
-          domain={props.projectDomain.domain}
-          onClose={() => {
-            // Sometimes Entri modal dialog hangs even if it's successful,
-            // until they fix that, we'll just refresh the status here on every onClose event
+        <DomainConfig
+          projectDomain={props.projectDomain}
+          onUpdateStatus={() => {
             if (status === "UNVERIFIED") {
               startTransition(async () => {
                 await handleVerify();
