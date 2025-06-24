@@ -50,6 +50,7 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   useEffect(() => {
     const handleOnEntriClose = (event: EntriCloseEvent) => {
       if (event.detail.domain === domain) {
+        console.info(event.detail);
         onClose(event.detail);
         setIsOpen(false);
       }
@@ -64,6 +65,7 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
     setIsOpen(true);
     entriTokenLoad(undefined, async (data) => {
       if (data.success) {
+        console.info(dnsRecords);
         await entri.showEntri({
           applicationId: data.applicationId,
           token: data.token,
