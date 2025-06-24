@@ -84,7 +84,7 @@ import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { toValue, type CssProperty } from "@webstudio-is/css-engine";
+import { type CssProperty } from "@webstudio-is/css-engine";
 import { getComputedStyleDecl } from "~/shared/style-object-model";
 import { $styleObjectModel } from "../style-panel/shared/model";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
@@ -344,21 +344,21 @@ const $usedProFeatures = computed(
         }
 
         const getValue = (property: CssProperty) => {
-          return toValue(
-            getComputedStyleDecl({
-              model: styleObjectModel,
-              instanceSelector: [instance.id],
-              property,
-            }).usedValue
-          );
+          const value = getComputedStyleDecl({
+            model: styleObjectModel,
+            instanceSelector: [instance.id],
+            property,
+          }).usedValue;
+          return "value" in value ? value.value : undefined;
         };
 
         // Check styles.
         if (
           getValue("display") === "none" ||
           getValue("visibility") === "hidden" ||
-          getValue("opacity") === "0" ||
-          getValue("opacity") === "0%"
+          getValue("opacity") === 0 ||
+          getValue("width") === 0 ||
+          getValue("height") === 0
         ) {
           show = false;
         }
