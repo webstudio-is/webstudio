@@ -294,7 +294,7 @@ const DomainItem = ({
     if (cname === "@") {
       findDomainRegistrar({ domain: projectDomain.domain });
     }
-  }, [projectDomain.domain, cname]);
+  }, [projectDomain.domain, cname, findDomainRegistrar]);
   const dnsRecords = [
     {
       // use alias for domain root when supported to avoid conflicting
