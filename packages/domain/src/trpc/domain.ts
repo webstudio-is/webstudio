@@ -12,11 +12,14 @@ const registrars = {
     cnameFlattening: true,
     alias: false,
   },
+  /*
+  // ALIAS record is not support by cloudflare custom domains service 
   namecheap: {
     rdap: "https://rdap.namecheap.com/domain/",
     cnameFlattening: false,
     alias: true,
   },
+  */
 } as const;
 
 export const domainRouter = router({

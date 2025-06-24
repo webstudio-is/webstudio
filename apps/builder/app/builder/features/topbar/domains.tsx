@@ -30,7 +30,7 @@ import {
   type ReactNode,
 } from "react";
 import { Entri } from "./entri";
-import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
 import { extractCname } from "./cname";
@@ -287,19 +287,10 @@ const DomainItem = ({
   });
 
   const publisherHost = useStore($publisherHost);
-  const { load: findDomainRegistrar, data: registrar } =
-    trpcClient.domain.findDomainRegistrar.useQuery();
   const cname = extractCname(projectDomain.domain);
-  useEffect(() => {
-    if (cname === "@") {
-      findDomainRegistrar({ domain: projectDomain.domain });
-    }
-  }, [projectDomain.domain, cname, findDomainRegistrar]);
   const dnsRecords = [
     {
-      // use alias for domain root when supported to avoid conflicting
-      // with MX, NS etc records
-      type: cname === "@" && registrar?.alias ? "ALIAS" : "CNAME",
+      type: "CNAME",
       host: cname,
       value: `${projectDomain.cname}.customers.${publisherHost}`,
       ttl: 300,
