@@ -166,136 +166,28 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
   );
 };
 
-const DomainConfig = ({
+const DomainItem = ({
+  initiallyOpen,
   projectDomain,
-  onUpdateStatus,
+  project,
+  refresh,
 }: {
-  projectDomain: Domain;
-  onUpdateStatus: () => void;
-}) => {
-  const { load: findDomainRegistrar, data: registrar } =
-    trpcClient.domain.findDomainRegistrar.useQuery();
-  const cname = extractCname(projectDomain.domain);
-  useEffect(() => {
-    if (cname === "@") {
-      findDomainRegistrar({ domain: projectDomain.domain });
-    }
-  }, [projectDomain.domain, cname]);
-  const publisherHost = useStore($publisherHost);
-
-  const cnameRecord = {
-    // use alias for domain root when supported to avoid conflicting
-    // with MX, NS etc records
-    type: cname === "@" && registrar?.alias ? "ALIAS" : "CNAME",
-    host: cname,
-    value: `${projectDomain.cname}.customers.${publisherHost}`,
-    ttl: 300,
-  } as const;
-
-  const txtRecord = {
-    type: "TXT",
-    host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
-    value: projectDomain.expectedTxtRecord,
-    ttl: 300,
-  } as const;
-
-  const dnsRecords = [cnameRecord, txtRecord];
-
-  return (
-    <>
-      <Text color="subtle">
-        <strong>To verify your domain:</strong>
-        <br />
-        Visit the admin console of your domain registrar (the website you
-        purchased your domain from) and create one <strong>CNAME</strong> record
-        and one <strong>TXT</strong> record with the values shown below:
-      </Text>
-
-      <Grid
-        gap={2}
-        css={{ gridTemplateColumns: `${theme.spacing[18]} 1fr 1fr` }}
-      >
-        <Text color="subtle" variant="titles">
-          TYPE
-        </Text>
-        <Text color="subtle" variant="titles">
-          NAME
-        </Text>
-        <Text color="subtle" variant="titles">
-          VALUE
-        </Text>
-
-        {dnsRecords.map((record, index) => (
-          <Fragment key={index}>
-            <InputEllipsis readOnly value={record.type} />
-            <InputEllipsis
-              readOnly
-              value={record.host}
-              suffix={
-                <CopyToClipboard text={record.host}>
-                  <NestedInputButton type="button">
-                    <CopyIcon />
-                  </NestedInputButton>
-                </CopyToClipboard>
-              }
-            />
-            <InputEllipsis
-              readOnly
-              value={record.value}
-              suffix={
-                <CopyToClipboard text={record.value}>
-                  <NestedInputButton type="button">
-                    <CopyIcon />
-                  </NestedInputButton>
-                </CopyToClipboard>
-              }
-            />
-          </Fragment>
-        ))}
-      </Grid>
-
-      <Grid
-        gap={2}
-        align={"center"}
-        css={{
-          gridTemplateColumns: `1fr auto 1fr`,
-        }}
-      >
-        <Separator css={{ alignSelf: "unset" }} />
-        <Text color="main">OR</Text>
-        <Separator css={{ alignSelf: "unset" }} />
-      </Grid>
-
-      <Entri
-        dnsRecords={dnsRecords}
-        domain={projectDomain.domain}
-        onClose={() => {
-          // Sometimes Entri modal dialog hangs even if it's successful,
-          // until they fix that, we'll just refresh the status here on every onClose event
-          onUpdateStatus();
-        }}
-      />
-    </>
-  );
-};
-
-const DomainItem = (props: {
   initiallyOpen: boolean;
   projectDomain: Domain;
-  refresh: () => Promise<void>;
   project: Project;
+  refresh: () => Promise<void>;
 }) => {
   const timeSinceLastUpdateMs =
-    Date.now() - new Date(props.projectDomain.updatedAt).getTime();
+    Date.now() - new Date(projectDomain.updatedAt).getTime();
 
   const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  const status = props.projectDomain.verified
-    ? (`VERIFIED_${props.projectDomain.status}` as `VERIFIED_${DomainStatus}`)
+  const status = projectDomain.verified
+    ? (`VERIFIED_${projectDomain.status}` as `VERIFIED_${DomainStatus}`)
     : `UNVERIFIED`;
 
   const [isStatusLoading, setIsStatusLoading] = useState(
-    props.initiallyOpen ||
+    initiallyOpen ||
       status === "VERIFIED_ACTIVE" ||
       timeSinceLastUpdateMs > DAY_IN_MS
       ? false
@@ -310,8 +202,8 @@ const DomainItem = (props: {
   const handleRemoveDomain = async () => {
     setIsRemoveInProgress(true);
     const result = await nativeClient.domain.remove.mutate({
-      projectId: props.projectDomain.projectId,
-      domainId: props.projectDomain.domainId,
+      projectId: projectDomain.projectId,
+      domainId: projectDomain.domainId,
     });
 
     if (result.success === false) {
@@ -319,7 +211,7 @@ const DomainItem = (props: {
       return;
     }
 
-    await props.refresh();
+    await refresh();
   };
 
   const [verifyError, setVerifyError] = useState<string | undefined>(undefined);
@@ -329,8 +221,8 @@ const DomainItem = (props: {
     setIsCheckStateInProgress(true);
 
     const verifyResult = await nativeClient.domain.verify.mutate({
-      projectId: props.projectDomain.projectId,
-      domainId: props.projectDomain.domainId,
+      projectId: projectDomain.projectId,
+      domainId: projectDomain.domainId,
     });
 
     if (verifyResult.success === false) {
@@ -338,7 +230,7 @@ const DomainItem = (props: {
       return;
     }
 
-    await props.refresh();
+    await refresh();
   });
 
   const [updateStatusError, setUpdateStatusError] = useState<
@@ -350,8 +242,8 @@ const DomainItem = (props: {
     setIsCheckStateInProgress(true);
 
     const updateStatusResult = await nativeClient.domain.updateStatus.mutate({
-      projectId: props.projectDomain.projectId,
-      domain: props.projectDomain.domain,
+      projectId: projectDomain.projectId,
+      domain: projectDomain.domain,
     });
 
     setIsStatusLoading(false);
@@ -361,7 +253,7 @@ const DomainItem = (props: {
       return;
     }
 
-    await props.refresh();
+    await refresh();
   });
 
   const onceRef = useRef(false);
@@ -387,43 +279,69 @@ const DomainItem = (props: {
     });
   }, [status, handleVerify, handleUpdateStatus, isStatusLoading]);
 
-  const domainStatus = getStatus(props.projectDomain);
+  const domainStatus = getStatus(projectDomain);
 
   const { isVerifiedActive, text } = getStatusText({
-    projectDomain: props.projectDomain,
+    projectDomain,
     isLoading: false,
   });
+
+  const publisherHost = useStore($publisherHost);
+  const { load: findDomainRegistrar, data: registrar } =
+    trpcClient.domain.findDomainRegistrar.useQuery();
+  const cname = extractCname(projectDomain.domain);
+  useEffect(() => {
+    if (cname === "@") {
+      findDomainRegistrar({ domain: projectDomain.domain });
+    }
+  }, [projectDomain.domain, cname]);
+  const dnsRecords = [
+    {
+      // use alias for domain root when supported to avoid conflicting
+      // with MX, NS etc records
+      type: cname === "@" && registrar?.alias ? "ALIAS" : "CNAME",
+      host: cname,
+      value: `${projectDomain.cname}.customers.${publisherHost}`,
+      ttl: 300,
+    } as const,
+    {
+      type: "TXT",
+      host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
+      value: projectDomain.expectedTxtRecord,
+      ttl: 300,
+    } as const,
+  ];
 
   return (
     <CollapsibleDomainSection
       prefix={
         <DomainCheckbox
-          buildId={props.projectDomain.latestBuildVirtual?.buildId}
+          buildId={projectDomain.latestBuildVirtual?.buildId}
           defaultChecked={
-            props.projectDomain.latestBuildVirtual?.buildId != null &&
-            props.projectDomain.latestBuildVirtual?.buildId ===
-              props.project.latestBuildVirtual?.buildId
+            projectDomain.latestBuildVirtual?.buildId != null &&
+            projectDomain.latestBuildVirtual?.buildId ===
+              project.latestBuildVirtual?.buildId
           }
-          domain={props.projectDomain.domain}
+          domain={projectDomain.domain}
           disabled={domainStatus !== "VERIFIED_ACTIVE"}
         />
       }
-      initiallyOpen={props.initiallyOpen}
-      title={props.projectDomain.domain}
+      initiallyOpen={initiallyOpen}
+      title={projectDomain.domain}
       suffix={
         <Grid flow="column">
           <StatusIcon
             isLoading={isStatusLoading}
-            projectDomain={props.projectDomain}
+            projectDomain={projectDomain}
           />
 
-          <Tooltip content={`Proceed to ${props.projectDomain.domain}`}>
+          <Tooltip content={`Proceed to ${projectDomain.domain}`}>
             <IconButton
               type="button"
               tabIndex={-1}
               disabled={status !== "VERIFIED_ACTIVE"}
               onClick={(event) => {
-                const url = new URL(`https://${props.projectDomain.domain}`);
+                const url = new URL(`https://${projectDomain.domain}`);
                 window.open(url.href, "_blank");
                 event.preventDefault();
               }}
@@ -503,9 +421,76 @@ const DomainItem = (props: {
           )}
         </Grid>
 
-        <DomainConfig
-          projectDomain={props.projectDomain}
-          onUpdateStatus={() => {
+        <Text color="subtle">
+          <strong>To verify your domain:</strong>
+          <br />
+          Visit the admin console of your domain registrar (the website you
+          purchased your domain from) and create one <strong>CNAME</strong>{" "}
+          record and one <strong>TXT</strong> record with the values shown
+          below:
+        </Text>
+
+        <Grid
+          gap={2}
+          css={{ gridTemplateColumns: `${theme.spacing[18]} 1fr 1fr` }}
+        >
+          <Text color="subtle" variant="titles">
+            TYPE
+          </Text>
+          <Text color="subtle" variant="titles">
+            NAME
+          </Text>
+          <Text color="subtle" variant="titles">
+            VALUE
+          </Text>
+
+          {dnsRecords.map((record, index) => (
+            <Fragment key={index}>
+              <InputEllipsis readOnly value={record.type} />
+              <InputEllipsis
+                readOnly
+                value={record.host}
+                suffix={
+                  <CopyToClipboard text={record.host}>
+                    <NestedInputButton type="button">
+                      <CopyIcon />
+                    </NestedInputButton>
+                  </CopyToClipboard>
+                }
+              />
+              <InputEllipsis
+                readOnly
+                value={record.value}
+                suffix={
+                  <CopyToClipboard text={record.value}>
+                    <NestedInputButton type="button">
+                      <CopyIcon />
+                    </NestedInputButton>
+                  </CopyToClipboard>
+                }
+              />
+            </Fragment>
+          ))}
+        </Grid>
+
+        <Grid
+          gap={2}
+          align={"center"}
+          css={{
+            gridTemplateColumns: `1fr auto 1fr`,
+          }}
+        >
+          <Separator css={{ alignSelf: "unset" }} />
+          <Text color="main">OR</Text>
+          <Separator css={{ alignSelf: "unset" }} />
+        </Grid>
+
+        <Entri
+          dnsRecords={dnsRecords}
+          domain={projectDomain.domain}
+          onClose={() => {
+            // Sometimes Entri modal dialog hangs even if it's successful,
+            // until they fix that, we'll just refresh the status here on every onClose event
             if (status === "UNVERIFIED") {
               startTransition(async () => {
                 await handleVerify();
