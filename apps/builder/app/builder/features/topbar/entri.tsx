@@ -1,14 +1,8 @@
 import * as entri from "entrijs";
 import { useEffect, useState } from "react";
-import {
-  globalCss,
-  Button,
-  Text,
-  ProBadge,
-  toast,
-} from "@webstudio-is/design-system";
-import { trpcClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
+import { globalCss, Button, Text, toast } from "@webstudio-is/design-system";
+import { trpcClient } from "~/shared/trpc/trpc-client";
 import { $userPlanFeatures } from "~/shared/nano-states";
 import { extractCname } from "./cname";
 
@@ -112,7 +106,7 @@ export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
         type="button"
         onClick={() => {
           // @todo temporary for testing
-          if (hasProPlan || true) {
+          if (hasProPlan) {
             showDialog();
           } else {
             toast.error(
