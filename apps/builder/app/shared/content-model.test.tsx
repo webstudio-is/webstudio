@@ -521,6 +521,40 @@ test("support xml node with tags", () => {
   ).toBeTruthy();
 });
 
+test("support headings inside of summary", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="details">
+            <ws.element ws:tag="summary">
+              <ws.element ws:tag="h3"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
+test("support links inside of details", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="details">
+            <ws.element ws:tag="a"></ws.element>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
 describe("component content model", () => {
   test("restrict children with specific component", () => {
     expect(
