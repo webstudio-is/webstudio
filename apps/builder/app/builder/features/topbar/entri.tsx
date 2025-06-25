@@ -1,7 +1,16 @@
 import * as entri from "entrijs";
 import { useEffect, useState } from "react";
-import { globalCss, Button, Text } from "@webstudio-is/design-system";
+import {
+  globalCss,
+  Button,
+  Text,
+  ProBadge,
+  toast,
+} from "@webstudio-is/design-system";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import { useStore } from "@nanostores/react";
+import { $userPlanFeatures } from "~/shared/nano-states";
+import { extractCname } from "./cname";
 
 // https://developers.entri.com/docs/install
 type DnsRecord = {
@@ -69,7 +78,8 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
           token: data.token,
           dnsRecords,
           prefilledDomain: domain,
-          wwwRedirect: true,
+          // add redirect to www only when registered domain has www subdomain
+          wwwRedirect: extractCname(domain) === "www",
         });
       }
     });
@@ -86,6 +96,7 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
+  const { hasProPlan } = useStore($userPlanFeatures);
   const { error, isOpen, showDialog } = useEntri({
     domain,
     dnsRecords,
@@ -99,7 +110,16 @@ export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
         color="neutral"
         css={{ width: "100%", flexShrink: 0 }}
         type="button"
-        onClick={showDialog}
+        onClick={() => {
+          // @todo temporary for testing
+          if (hasProPlan || true) {
+            showDialog();
+          } else {
+            toast.error(
+              "Please upgrade to the Pro plan or higher to use automatic domain configuration."
+            );
+          }
+        }}
       >
         Configure automatically
       </Button>
