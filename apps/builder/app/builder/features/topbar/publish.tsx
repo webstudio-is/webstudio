@@ -51,6 +51,7 @@ import {
 import {
   $authTokenPermissions,
   $dataSources,
+  $editingPageId,
   $instances,
   $pages,
   $project,
@@ -58,7 +59,10 @@ import {
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
-import { $publishDialog } from "../../shared/nano-states";
+import {
+  $publishDialog,
+  setActiveSidebarPanel,
+} from "../../shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -242,7 +246,8 @@ const $usedProFeatures = computed(
   (pages, dataSources, instances, propsIndex, styleObjectModel) => {
     const features = new Map<
       string,
-      undefined | { awareness?: Awareness; info?: ReactNode }
+      | undefined
+      | { awareness?: Awareness; view?: "pageSettings"; info?: ReactNode }
     >();
     if (pages === undefined) {
       return features;
@@ -258,13 +263,13 @@ const $usedProFeatures = computed(
         instanceSelector: [page.rootInstanceId],
       };
       if (isPathnamePattern(page.path)) {
-        features.set("Dynamic path", { awareness });
+        features.set("Dynamic path", { awareness, view: "pageSettings" });
       }
       if (page.meta.status && page.meta.status !== `200`) {
-        features.set("Page status code", { awareness });
+        features.set("Page status code", { awareness, view: "pageSettings" });
       }
       if (page.meta.redirect && page.meta.redirect !== `""`) {
-        features.set("Redirect", { awareness });
+        features.set("Redirect", { awareness, view: "pageSettings" });
       }
     }
     // has resource variables
@@ -824,14 +829,20 @@ const UpgradeBanner = () => {
         <Text variant="regularBold">Following Pro features are used:</Text>
         <Text as="ul" color="destructive" css={{ paddingLeft: "1em" }}>
           {Array.from(usedProFeatures).map(
-            ([message, { awareness, info } = {}], index) => (
+            ([message, { awareness, view, info } = {}], index) => (
               <li key={index}>
                 <Flex align="center" gap="1">
                   {awareness ? (
                     <button
                       className={buttonLinkClass}
                       type="button"
-                      onClick={() => $awareness.set(awareness)}
+                      onClick={() => {
+                        $awareness.set(awareness);
+                        if (view === "pageSettings") {
+                          setActiveSidebarPanel("pages");
+                          $editingPageId.set(awareness.pageId);
+                        }
+                      }}
                     >
                       {message}
                     </button>
