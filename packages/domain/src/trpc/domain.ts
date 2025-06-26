@@ -6,6 +6,22 @@ import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 
+const registrars = {
+  cloudflare: {
+    rdap: "https://rdap.cloudflare.com/rdap/v1/domain/",
+    cnameFlattening: true,
+    alias: false,
+  },
+  /*
+  // ALIAS record is not support by cloudflare custom domains service 
+  namecheap: {
+    rdap: "https://rdap.namecheap.com/domain/",
+    cnameFlattening: false,
+    alias: true,
+  },
+  */
+} as const;
+
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
     try {
@@ -23,6 +39,30 @@ export const domainRouter = router({
       } as const;
     }
   }),
+
+  findDomainRegistrar: procedure
+    .input(z.object({ domain: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        for (const [name, meta] of Object.entries(registrars)) {
+          const response = await fetch(`${meta.rdap}${input.domain}`);
+          if (response.ok) {
+            return {
+              name: name as keyof typeof registrars,
+              cnameFlattening: meta.cnameFlattening,
+              alias: meta.alias,
+            };
+          }
+        }
+      } catch {
+        // empty block
+      }
+      return {
+        name: "other",
+        cnameFlattening: false,
+        alias: false,
+      };
+    }),
 
   project: procedure
     .input(z.object({ projectId: z.string() }))
