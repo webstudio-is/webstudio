@@ -575,12 +575,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "wrapInElement",
-      label: "Wrap in Element",
+      label: "Wrap in an Element",
       handler: () => wrapIn(elementComponent),
     },
     {
       name: "wrapInLink",
-      label: "Wrap in Link",
+      label: "Wrap in a Link",
       handler: () => wrapIn(elementComponent, "a"),
     },
     {
@@ -589,12 +589,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "replaceWithElement",
-      label: "Replace with Element",
+      label: "Replace with an Element",
       handler: () => replaceWith(elementComponent),
     },
     {
       name: "replaceWithLink",
-      label: "Replace with Link",
+      label: "Replace with a Link",
       handler: () => replaceWith(elementComponent, "a"),
     },
 
