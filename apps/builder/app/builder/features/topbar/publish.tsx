@@ -83,7 +83,7 @@ import {
   parseComponentName,
   type Templates,
 } from "@webstudio-is/sdk";
-import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
+import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
@@ -188,12 +188,13 @@ const ChangeProjectDomain = ({
           <Tooltip
             content={
               <Text css={{ wordBreak: "break-all" }}>
-                Proceed to ${pageUrl.toString()}
+                Proceed to {pageUrl.toString()}
               </Text>
             }
             variant="wrapped"
           >
             <IconButton
+              type="button"
               tabIndex={-1}
               onClick={(event) => {
                 window.open(pageUrl, "_blank");
@@ -1242,6 +1243,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               suffix={
                 <PopoverTitleActions>
                   <IconButton
+                    type="button"
                     onClick={() => {
                       $openProjectSettings.set("publish");
                     }}

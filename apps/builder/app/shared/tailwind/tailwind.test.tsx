@@ -43,8 +43,8 @@ test("ignore dark mode", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-bg-opacity: 1;
-          background-color: rgb(255 255 255 / var(--un-bg-opacity));
+          --tw-bg-opacity: 1;
+          background-color: rgb(255 255 255 / var(--tw-bg-opacity));
         `}
       ></ws.element>
     )
@@ -90,7 +90,7 @@ test("generate border", async () => {
         ws:tag="div"
         ws:style={css`
           border-style: solid;
-          border-color: var(--un-default-border-color, #e5e7eb);
+          border-color: var(--tw-default-border-color, #e5e7eb);
           border-width: 1px;
         `}
       ></ws.element>
@@ -115,8 +115,8 @@ test("override border opacity", async () => {
         ws:style={css`
           border-style: solid;
           border-width: 1px;
-          border-color: rgb(229 231 235 / var(--un-border-opacity));
-          --un-border-opacity: 0.6;
+          border-color: rgb(229 231 235 / var(--tw-border-opacity));
+          --tw-border-opacity: 0.6;
         `}
       ></ws.element>
     )
@@ -133,17 +133,17 @@ test("generate shadow", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-ring-offset-shadow: 0 0 rgb(0 0 0 / 0);
-          --un-ring-shadow: 0 0 rgb(0 0 0 / 0);
-          --un-shadow-inset: ;
-          --un-shadow:
-            var(--un-shadow-inset) 0 1px 3px 0
-              var(--un-shadow-color, rgb(0 0 0 / 0.1)),
-            var(--un-shadow-inset) 0 1px 2px -1px
-              var(--un-shadow-color, rgb(0 0 0 / 0.1));
+          --tw-ring-offset-shadow: 0 0 rgb(0 0 0 / 0);
+          --tw-ring-shadow: 0 0 rgb(0 0 0 / 0);
+          --tw-shadow-inset: ;
+          --tw-shadow:
+            var(--tw-shadow-inset) 0 1px 3px 0
+              var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
+            var(--tw-shadow-inset) 0 1px 2px -1px
+              var(--tw-shadow-color, rgb(0 0 0 / 0.1));
           box-shadow:
-            var(--un-ring-offset-shadow), var(--un-ring-shadow),
-            var(--un-shadow);
+            var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+            var(--tw-shadow);
         `}
       ></ws.element>
     )
@@ -192,7 +192,7 @@ test("add preflight matching tags", async () => {
           /* this one comes from tag preflight */
           margin: 0;
           border-style: solid;
-          border-color: var(--un-default-border-color, #e5e7eb);
+          border-color: var(--tw-default-border-color, #e5e7eb);
           border-width: 1px;
           text-wrap: pretty;
         `}
@@ -234,11 +234,11 @@ test("extract states from tailwind classes", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-bg-opacity: 1;
-          background-color: rgb(79 70 229 / var(--un-bg-opacity));
+          --tw-bg-opacity: 1;
+          background-color: rgb(79 70 229 / var(--tw-bg-opacity));
           &:hover {
-            --un-bg-opacity: 1;
-            background-color: rgb(99 102 241 / var(--un-bg-opacity));
+            --tw-bg-opacity: 1;
+            background-color: rgb(99 102 241 / var(--tw-bg-opacity));
           }
         `}
       ></ws.element>
