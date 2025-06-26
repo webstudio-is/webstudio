@@ -105,7 +105,6 @@ export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
         css={{ width: "100%", flexShrink: 0 }}
         type="button"
         onClick={() => {
-          // @todo temporary for testing
           if (hasProPlan) {
             showDialog();
           } else {
