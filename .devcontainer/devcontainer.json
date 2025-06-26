@@ -9,7 +9,7 @@
     "ghcr.io/robbert229/devcontainer-features/postgresql-client:1": {
       "version": "15"
     },
-    "ghcr.io/devcontainers-contrib/features/fzf:1": {}
+    "ghcr.io/devcontainers-extra/features/fzf:1": {}
   },
 
   // Features to add to the dev container. More info: https://containers.dev/features.
