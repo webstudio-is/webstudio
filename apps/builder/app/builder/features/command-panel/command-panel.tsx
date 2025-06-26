@@ -459,7 +459,7 @@ const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
   const shortcutOptions: ShortcutOption[] = [];
   for (const [name, meta] of commandMetas) {
     if (!meta.hidden) {
-      const label = humanizeString(name);
+      const label = meta.label ?? humanizeString(name);
       const keys = meta.defaultHotkeys?.[0]?.split("+");
       shortcutOptions.push({
         tokens: ["shortcuts", "commands", label],
@@ -493,7 +493,7 @@ const ShortcutOptionsGroup = ({ options }: { options: ShortcutOption[] }) => {
             emitCommand(name as never);
           }}
         >
-          <Text variant="labelsTitleCase">{label}</Text>
+          <Text variant="labelsSentenceCase">{label}</Text>
           {keys && <Kbd value={keys} />}
         </CommandItem>
       ))}
