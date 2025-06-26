@@ -208,7 +208,8 @@ const parseTailwindClasses = async (classes: string) => {
     })
     .join(" ");
   const generated = await generator.generate(classes);
-  const css = generated.css;
+  // use tailwind prefix instead of unocss one
+  const css = generated.css.replaceAll("--un-", "--tw-");
   let parsedStyles: Omit<ParsedStyleDecl, "selector">[] = [];
   // @todo probably builtin in v4
   if (css.includes("border")) {
@@ -216,7 +217,7 @@ const parseTailwindClasses = async (classes: string) => {
     // [UnoCSS]: allow to override the default border color with css var `--un-default-border-color`
     const reset = `.styles {
       border-style: solid;
-      border-color: var(--un-default-border-color, #e5e7eb);
+      border-color: var(--tw-default-border-color, #e5e7eb);
       border-width: 0;
     }`;
     parsedStyles.push(...parseCss(reset));
