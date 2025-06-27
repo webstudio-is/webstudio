@@ -25,6 +25,13 @@ export const compareMedia = (
     return optionB.maxWidth - optionA.maxWidth;
   }
 
+  if (optionA.minWidth !== undefined && optionB.maxWidth !== undefined) {
+    return optionB.maxWidth - optionA.minWidth;
+  }
+  if (optionA.maxWidth !== undefined && optionB.minWidth !== undefined) {
+    return optionB.minWidth - optionA.maxWidth;
+  }
+
   // Media with maxWith should render before minWith just to have the same sorting visually in the UI as in CSSOM.
   return "minWidth" in optionA ? 1 : -1;
 };
