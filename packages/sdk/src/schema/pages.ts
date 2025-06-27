@@ -138,7 +138,6 @@ export const PagePath = DefaultPagePage.refine(
   "Must start with a / or a full URL e.g. https://website.org"
 );
 
-
 const Page = z.object({
   ...commonPageFields,
   path: PagePath,
