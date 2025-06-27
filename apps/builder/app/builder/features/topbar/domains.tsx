@@ -348,7 +348,7 @@ const DomainItem = ({
           <Button
             formAction={handleVerify}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="primary"
+            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -364,7 +364,7 @@ const DomainItem = ({
           <Button
             formAction={handleUpdateStatus}
             state={isCheckStateInProgress ? "pending" : undefined}
-            color="primary"
+            color="neutral"
             css={{ width: "100%", flexShrink: 0, mt: theme.spacing[3] }}
           >
             Check status
@@ -375,7 +375,7 @@ const DomainItem = ({
       <Button
         formAction={handleRemoveDomain}
         state={isRemoveInProgress ? "pending" : undefined}
-        color="neutral"
+        color="destructive"
         css={{ width: "100%", flexShrink: 0 }}
       >
         Remove domain
