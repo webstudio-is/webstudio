@@ -103,6 +103,11 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
   }
 
   csstree.walk(ast, function (node) {
+    // forbid nested at rules
+    if (node.type === "Atrule" && this.atrule) {
+      // @ts-ignore https://github.com/csstree/csstree/blob/v2.3.1/docs/traversal.md
+      return this.break;
+    }
     if (node.type !== "Declaration" || this.rule?.prelude.type === undefined) {
       return;
     }

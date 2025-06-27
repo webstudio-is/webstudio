@@ -511,6 +511,65 @@ describe("extract breakpoints", () => {
       )
     );
   });
+
+  test("adapt max-* breakpoints", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="max-sm:opacity-10 max-md:opacity-20 max-lg:opacity-30 max-xl:opacity-40 max-2xl:opacity-50 opacity-60"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (min-width: 1440px) {
+              opacity: 0.6;
+            }
+            @media (min-width: 1280px) {
+              opacity: 0.5;
+            }
+            opacity: 0.4;
+            @media (max-width: 991px) {
+              opacity: 0.3;
+            }
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("ignore composite breakpoints", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 md:max-xl:flex"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+          `}
+        ></ws.element>
+      )
+    );
+  });
 });
 
 test("generate space without display property", async () => {

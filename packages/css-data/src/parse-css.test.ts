@@ -714,6 +714,30 @@ test("ignore unsupported media queries", () => {
   ]);
 });
 
+test("ignore nested media queries", () => {
+  expect(
+    parseCss(`
+      @media (min-width: 768px)  {
+        a {
+          color: green;
+        }
+        @media (max-width: 1024px) {
+          a {
+            color: red;
+          }
+        }
+      }
+   `)
+  ).toEqual([
+    {
+      breakpoint: "(min-width:768px)",
+      selector: "a",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    },
+  ]);
+});
+
 test("ignore unsupported at rules", () => {
   expect(
     parseCss(`

@@ -27,11 +27,13 @@ const availableBreakpoints = [
 ];
 
 const tailwindToWebstudioMappings: Record<number, undefined | number> = {
-  639: 479,
+  639.9: 479,
   640: 480,
-  1023: 991,
+  767.9: 767,
+  1023.9: 991,
   1024: 992,
-  1535: 1439,
+  1279.9: 1279,
+  1535.9: 1439,
   1536: 1440,
 };
 
@@ -120,8 +122,10 @@ const rangesToBreakpoints = (ranges: Range[]) => {
 const adaptBreakpoints = (
   parsedStyles: Omit<ParsedStyleDecl, "selector">[]
 ) => {
+  const newStyles: typeof parsedStyles = [];
   const breakpointGroups = new Map<string, Breakpoint[]>();
   for (const styleDecl of parsedStyles) {
+    newStyles.push(styleDecl);
     const mediaQuery = styleDecl.breakpoint
       ? parseMediaQuery(styleDecl.breakpoint)
       : undefined;
@@ -155,13 +159,14 @@ const adaptBreakpoints = (
       breakpointsByKey.set(breakpoint.key, breakpoint);
     }
   }
-  for (const styleDecl of parsedStyles) {
+  for (const styleDecl of newStyles) {
     const styleDeclKey = `${styleDecl.breakpoint ?? ""}:${styleDecl.property}:${styleDecl.state ?? ""}`;
     const breakpoint = breakpointsByKey.get(styleDeclKey);
     if (breakpoint) {
       styleDecl.breakpoint = serializeBreakpoint(breakpoint);
     }
   }
+  return newStyles;
 };
 
 const createUnoGenerator = async () => {
