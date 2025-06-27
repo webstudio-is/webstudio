@@ -12,7 +12,7 @@ const literalUnion = <T extends readonly string[]>(arr: T) =>
   );
 
 // Range Units
-export const RANGE_UNITS = ["%", "px", "em", "rem", "vw", "vh"] as const;
+export const RANGE_UNITS = ["%", "px"] as const;
 
 export const rangeUnitSchema = literalUnion(RANGE_UNITS);
 

@@ -24,7 +24,6 @@ const units: Record<string, Array<string>> = {
   // consider % as unit
   percentage: ["%"],
   ...data.units,
-  length: ["%", "px", "em", "rem", "vw", "vh"],
 };
 
 type Property = keyof typeof properties;
