@@ -13,7 +13,6 @@ import {
   Text,
   theme,
   Tooltip,
-  truncate,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import {
