@@ -334,3 +334,23 @@ test("generate Image component instead of img element", () => {
     )
   );
 });
+
+test("strip unsupported attribute names", () => {
+  expect(
+    generateFragmentFromHtml(`
+      <button @click="open = true">Expand</button>
+      <button x-on:click="open = !open">
+        Toggle
+      </button>
+    `)
+  ).toEqual(
+    renderTemplate(
+      <>
+        <ws.element ws:tag="button">Expand</ws.element>
+        <ws.element ws:tag="button" x-on:click="open = !open">
+          Toggle
+        </ws.element>
+      </>
+    )
+  );
+});
