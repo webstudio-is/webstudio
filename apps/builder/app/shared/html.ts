@@ -18,6 +18,7 @@ import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
+import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -169,6 +170,10 @@ export const generateFragmentFromHtml = (
     }
     instances.set(instance.id, instance);
     for (const attr of node.attrs) {
+      // skip attributes which cannot be rendered in jsx
+      if (!isAttributeNameSafe(attr.name)) {
+        continue;
+      }
       const id = `${instance.id}:${attr.name}`;
       const instanceId = instance.id;
       const name = attr.name;
