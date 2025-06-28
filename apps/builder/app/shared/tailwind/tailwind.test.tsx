@@ -114,8 +114,8 @@ test("override border opacity", async () => {
         ws:tag="div"
         ws:style={css`
           border-style: solid;
-          border-width: 1px;
           border-color: rgb(229 231 235 / var(--tw-border-opacity));
+          border-width: 1px;
           --tw-border-opacity: 0.6;
         `}
       ></ws.element>
@@ -315,31 +315,6 @@ describe("extract breakpoints", () => {
     );
   });
 
-  test("base is first breakpoint", async () => {
-    expect(
-      await generateFragmentFromTailwind(
-        renderTemplate(
-          <ws.element
-            ws:tag="div"
-            class="opacity-10 sm:opacity-20"
-          ></ws.element>
-        )
-      )
-    ).toEqual(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          ws:style={css`
-            @media (max-width: 479px) {
-              opacity: 0.1;
-            }
-            opacity: 0.2;
-          `}
-        ></ws.element>
-      )
-    );
-  });
-
   test("base is last breakpoint", async () => {
     expect(
       await generateFragmentFromTailwind(
@@ -393,27 +368,6 @@ describe("extract breakpoints", () => {
     );
   });
 
-  test("preserve breakpoint when no base breakpoint", async () => {
-    expect(
-      await generateFragmentFromTailwind(
-        renderTemplate(
-          <ws.element ws:tag="div" class="sm:opacity-10"></ws.element>
-        )
-      )
-    ).toEqual(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          ws:style={css`
-            @media (min-width: 480px) {
-              opacity: 0.1;
-            }
-          `}
-        ></ws.element>
-      )
-    );
-  });
-
   test("extract container class", async () => {
     expect(
       await generateFragmentFromTailwind(
@@ -427,7 +381,6 @@ describe("extract breakpoints", () => {
             @media (max-width: 479px) {
               max-width: none;
             }
-            width: 100%;
             @media (max-width: 767px) {
               max-width: 640px;
             }
@@ -441,6 +394,7 @@ describe("extract breakpoints", () => {
             @media (min-width: 1440px) {
               max-width: 1536px;
             }
+            width: 100%;
           `}
         ></ws.element>
       )
@@ -501,10 +455,13 @@ describe("extract breakpoints", () => {
           ws:tag="div"
           ws:style={css`
             opacity: 0.1;
-            @media (min-width: 480px) {
+            @media (max-width: 479px) {
               &:hover {
-                opacity: 0.2;
+                opacity: unset;
               }
+            }
+            &:hover {
+              opacity: 0.2;
             }
           `}
         ></ws.element>
@@ -527,21 +484,21 @@ describe("extract breakpoints", () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            @media (min-width: 1440px) {
-              opacity: 0.6;
-            }
-            @media (min-width: 1280px) {
-              opacity: 0.5;
-            }
-            opacity: 0.4;
-            @media (max-width: 991px) {
-              opacity: 0.3;
+            @media (max-width: 479px) {
+              opacity: 0.1;
             }
             @media (max-width: 767px) {
               opacity: 0.2;
             }
-            @media (max-width: 479px) {
-              opacity: 0.1;
+            @media (max-width: 991px) {
+              opacity: 0.3;
+            }
+            opacity: 0.4;
+            @media (min-width: 1280px) {
+              opacity: 0.5;
+            }
+            @media (min-width: 1440px) {
+              opacity: 0.6;
             }
           `}
         ></ws.element>
@@ -565,6 +522,56 @@ describe("extract breakpoints", () => {
           ws:tag="div"
           ws:style={css`
             opacity: 0.1;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("use unset for missing base breakpoint 1", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element ws:tag="div" class="sm:opacity-10"></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: unset;
+            }
+            opacity: 0.1;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("use unset for missing base breakpoint 2", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="max-sm:opacity-10 md:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            @media (max-width: 767px) {
+              opacity: unset;
+            }
+            opacity: 0.2;
           `}
         ></ws.element>
       )
@@ -635,8 +642,8 @@ test("generate space with display property", async () => {
             @media (max-width: 767px) {
               display: none;
             }
-            row-gap: 1rem;
             display: flex;
+            row-gap: 1rem;
           `}
         ></ws.element>
       </>

@@ -37,23 +37,25 @@ const tailwindToWebstudioMappings: Record<number, undefined | number> = {
   1536: 1440,
 };
 
+type StyleDecl = Omit<ParsedStyleDecl, "selector">;
+
 type Breakpoint = {
-  key: string;
+  styleDecl: StyleDecl;
   minWidth?: number;
   maxWidth?: number;
 };
 
 type Range = {
-  key: string;
+  styleDecl: StyleDecl;
   start: number;
   end: number;
 };
 
 const serializeBreakpoint = (breakpoint: Breakpoint) => {
-  if (breakpoint?.minWidth) {
+  if (breakpoint?.minWidth !== undefined) {
     return `(min-width: ${breakpoint.minWidth}px)`;
   }
-  if (breakpoint?.maxWidth) {
+  if (breakpoint?.maxWidth !== undefined) {
     return `(max-width: ${breakpoint.maxWidth}px)`;
   }
 };
@@ -63,17 +65,17 @@ const UPPER_BOUND = Number.MAX_SAFE_INTEGER;
 const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
   // collect lower bounds and ids
   const values = new Set<number>([0]);
-  const keys = new Map<undefined | number, string>();
+  const styles = new Map<undefined | number, StyleDecl>();
   for (const breakpoint of breakpoints) {
     if (breakpoint.minWidth !== undefined) {
       values.add(breakpoint.minWidth);
-      keys.set(breakpoint.minWidth, breakpoint.key);
+      styles.set(breakpoint.minWidth, breakpoint.styleDecl);
     } else if (breakpoint.maxWidth !== undefined) {
       values.add(breakpoint.maxWidth + 1);
-      keys.set(breakpoint.maxWidth, breakpoint.key);
+      styles.set(breakpoint.maxWidth, breakpoint.styleDecl);
     } else {
       // base breakpoint
-      keys.set(undefined, breakpoint.key);
+      styles.set(undefined, breakpoint.styleDecl);
     }
   }
   const sortedValues = Array.from(values).sort((left, right) => left - right);
@@ -86,9 +88,24 @@ const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
     } else {
       end = sortedValues[index + 1] - 1;
     }
-    const key = keys.get(start) ?? keys.get(end) ?? keys.get(undefined);
-    if (key) {
-      ranges.push({ key, start, end });
+    const styleDecl =
+      styles.get(start) ?? styles.get(end) ?? styles.get(undefined);
+    if (styleDecl) {
+      ranges.push({ styleDecl, start, end });
+      continue;
+    }
+    // when declaration is missing add new one with unset value
+    // to fill the hole in breakpoints
+    // for example
+    // "sm:opacity-20" has a hole at the start
+    // "max-sm:opacity-10 md:opacity-20" has a whole in the middle
+    const example = Array.from(styles.values())[0];
+    if (example) {
+      const newStyleDecl: StyleDecl = {
+        ...example,
+        value: { type: "keyword", value: "unset" },
+      };
+      ranges.push({ styleDecl: newStyleDecl, start, end });
     }
   }
   return ranges;
@@ -96,36 +113,33 @@ const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
 
 const rangesToBreakpoints = (ranges: Range[]) => {
   const breakpoints: Breakpoint[] = [];
-  for (const range of ranges) {
+  for (const { styleDecl, start, end } of ranges) {
     let matchedBreakpoint;
     for (const breakpoint of availableBreakpoints) {
-      if (breakpoint.minWidth === range.start) {
-        matchedBreakpoint = { key: range.key, minWidth: range.start };
+      if (breakpoint.minWidth === start) {
+        matchedBreakpoint = { styleDecl, minWidth: start };
       }
-      if (breakpoint.maxWidth === range.end) {
-        matchedBreakpoint = { key: range.key, maxWidth: range.end };
+      if (breakpoint.maxWidth === end) {
+        matchedBreakpoint = { styleDecl, maxWidth: end };
       }
       if (
         breakpoint.minWidth === undefined &&
         breakpoint.maxWidth === undefined
       ) {
-        matchedBreakpoint ??= { key: range.key };
+        matchedBreakpoint ??= { styleDecl };
       }
     }
     if (matchedBreakpoint) {
+      styleDecl.breakpoint = serializeBreakpoint(matchedBreakpoint);
       breakpoints.push(matchedBreakpoint);
     }
   }
   return breakpoints;
 };
 
-const adaptBreakpoints = (
-  parsedStyles: Omit<ParsedStyleDecl, "selector">[]
-) => {
-  const newStyles: typeof parsedStyles = [];
+const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
   const breakpointGroups = new Map<string, Breakpoint[]>();
   for (const styleDecl of parsedStyles) {
-    newStyles.push(styleDecl);
     const mediaQuery = styleDecl.breakpoint
       ? parseMediaQuery(styleDecl.breakpoint)
       : undefined;
@@ -143,27 +157,14 @@ const adaptBreakpoints = (
       group = [];
       breakpointGroups.set(groupKey, group);
     }
-    const styleDeclKey = `${styleDecl.breakpoint ?? ""}:${styleDecl.property}:${styleDecl.state ?? ""}`;
-    group.push({ key: styleDeclKey, ...mediaQuery });
+    group.push({ styleDecl, ...mediaQuery });
   }
-  const breakpointsByKey = new Map<string, Breakpoint>();
-  for (let group of breakpointGroups.values()) {
+  const newStyles: typeof parsedStyles = [];
+  for (const group of breakpointGroups.values()) {
     const ranges = breakpointsToRanges(group);
-    // adapt breakpoints only when first range is defined
-    // for example opacity-10 sm:opacity-20 will work
-    // but sm:opacity-20 alone does not have the base to switch to
-    if (ranges[0].start === 0) {
-      group = rangesToBreakpoints(ranges);
-    }
-    for (const breakpoint of group) {
-      breakpointsByKey.set(breakpoint.key, breakpoint);
-    }
-  }
-  for (const styleDecl of newStyles) {
-    const styleDeclKey = `${styleDecl.breakpoint ?? ""}:${styleDecl.property}:${styleDecl.state ?? ""}`;
-    const breakpoint = breakpointsByKey.get(styleDeclKey);
-    if (breakpoint) {
-      styleDecl.breakpoint = serializeBreakpoint(breakpoint);
+    const newGroup = rangesToBreakpoints(ranges);
+    for (const { styleDecl } of newGroup) {
+      newStyles.push(styleDecl);
     }
   }
   return newStyles;
@@ -215,7 +216,7 @@ const parseTailwindClasses = async (classes: string) => {
   const generated = await generator.generate(classes);
   // use tailwind prefix instead of unocss one
   const css = generated.css.replaceAll("--un-", "--tw-");
-  let parsedStyles: Omit<ParsedStyleDecl, "selector">[] = [];
+  let parsedStyles: StyleDecl[] = [];
   // @todo probably builtin in v4
   if (css.includes("border")) {
     // Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
@@ -264,7 +265,7 @@ const parseTailwindClasses = async (classes: string) => {
       }
     );
   }
-  adaptBreakpoints(parsedStyles);
+  parsedStyles = adaptBreakpoints(parsedStyles);
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))
@@ -353,7 +354,7 @@ export const generateFragmentFromTailwind = async (
   };
   const createOrMergeLocalStyles = (
     instanceId: Instance["id"],
-    newStyles: Omit<ParsedStyleDecl, "selector">[]
+    newStyles: StyleDecl[]
   ) => {
     const localStyleSource =
       getLocalStyleSource(instanceId) ?? createLocalStyleSource(instanceId);
