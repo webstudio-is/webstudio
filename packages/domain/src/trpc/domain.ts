@@ -6,21 +6,10 @@ import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
 
-const registrars = {
-  cloudflare: {
-    rdap: "https://rdap.cloudflare.com/rdap/v1/domain/",
-    cnameFlattening: true,
-    alias: false,
-  },
-  /*
-  // ALIAS record is not support by cloudflare custom domains service 
-  namecheap: {
-    rdap: "https://rdap.namecheap.com/domain/",
-    cnameFlattening: false,
-    alias: true,
-  },
-  */
-} as const;
+const rdap = [
+  "https://rdap.cloudflare.com/rdap/v1/domain/",
+  "https://rdap.namecheap.com/domain/",
+];
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -44,13 +33,13 @@ export const domainRouter = router({
     .input(z.object({ domain: z.string() }))
     .query(async ({ input }) => {
       try {
-        for (const [name, meta] of Object.entries(registrars)) {
-          const response = await fetch(`${meta.rdap}${input.domain}`);
+        for (const rdapEndpoint of rdap) {
+          const response = await fetch(`${rdapEndpoint}${input.domain}`);
           if (response.ok) {
+            const data = await response.text();
             return {
-              name: name as keyof typeof registrars,
-              cnameFlattening: meta.cnameFlattening,
-              alias: meta.alias,
+              // detect by nameservers rather than registrar url
+              cnameFlattening: data.includes(".ns.cloudflare.com"),
             };
           }
         }
@@ -60,7 +49,6 @@ export const domainRouter = router({
       return {
         name: "other",
         cnameFlattening: false,
-        alias: false,
       };
     }),
 
