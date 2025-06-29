@@ -265,10 +265,10 @@ const DomainItem = ({
 
   const publisherHost = useStore($publisherHost);
   const cname = extractCname(projectDomain.domain);
-  let verification: undefined | { name: string; value: string };
+  let verifications;
   try {
-    verification = z
-      .object({ name: z.string(), value: z.string() })
+    verifications = z
+      .array(z.object({ name: z.string(), value: z.string() }))
       .parse(JSON.parse(projectDomain.expectedTxtRecord));
   } catch {
     // empty block
@@ -281,11 +281,11 @@ const DomainItem = ({
       ttl: 300,
     },
   ];
-  if (verification) {
+  for (const { name, value } of verifications ?? []) {
     dnsRecords.push({
       type: "TXT",
-      host: verification.name,
-      value: verification.value,
+      host: name,
+      value,
       ttl: 300,
     });
   }

@@ -89,6 +89,7 @@ export const create = async (
 
   const domainId = domainRow.data.id;
 
+  const verifications = [];
   // @todo: TXT verification and domain initialization should be implemented in the future as queue service
   const createDomainResult = await context.domain.domainTrpc.create.mutate({
     domain,
@@ -96,14 +97,27 @@ export const create = async (
   if (createDomainResult.success === false) {
     return createDomainResult;
   }
-  if (!createDomainResult.data.verification) {
-    return { success: false, error: "Domain verification is missing" };
+  if (createDomainResult.data.verification) {
+    verifications.push(createDomainResult.data.verification);
+  }
+
+  // create additionally root certificate for www subdomain
+  if (domain.startsWith("www.")) {
+    const createDomainResult = await context.domain.domainTrpc.create.mutate({
+      domain: domain.slice("www.".length),
+    });
+    if (createDomainResult.success === false) {
+      return createDomainResult;
+    }
+    if (createDomainResult.data.verification) {
+      verifications.push(createDomainResult.data.verification);
+    }
   }
 
   const result = await context.postgrest.client.from("ProjectDomain").insert({
     domainId,
     projectId: props.projectId,
-    txtRecord: JSON.stringify(createDomainResult.data.verification),
+    txtRecord: JSON.stringify(verifications),
     cname: await cnameFromUserId(ownerId),
   });
   if (result.error) {
