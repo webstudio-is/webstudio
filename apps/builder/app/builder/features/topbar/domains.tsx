@@ -303,7 +303,7 @@ const DomainItem = ({
     } as const,
     {
       type: "TXT",
-      host: "another-one",
+      host: "_webstudio_is",
       value: projectDomain.expectedTxtRecord,
       ttl: 300,
     } as const,
