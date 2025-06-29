@@ -301,6 +301,12 @@ const DomainItem = ({
       value: projectDomain.expectedTxtRecord,
       ttl: 300,
     } as const,
+    {
+      type: "TXT",
+      host: "another-one",
+      value: projectDomain.expectedTxtRecord,
+      ttl: 300,
+    } as const,
   ];
 
   return (
