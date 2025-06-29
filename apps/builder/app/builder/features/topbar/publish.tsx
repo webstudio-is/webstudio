@@ -446,7 +446,7 @@ const Publish = ({
       : [
           project.domain,
           ...project.domainsVirtual
-            .filter((domain) => domain.verified && domain.status === "ACTIVE")
+            .filter((domain) => domain.status === "ACTIVE")
             .map((domain) => domain.domain),
         ];
 
@@ -734,7 +734,7 @@ const useCanAddDomain = () => {
   const project = useStore($project);
 
   const activeDomainsCount = project?.domainsVirtual.filter(
-    (domain) => domain.status === "ACTIVE" && domain.verified
+    (domain) => domain.status === "ACTIVE"
   ).length;
 
   useEffect(() => {

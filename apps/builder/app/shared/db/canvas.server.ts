@@ -38,9 +38,7 @@ export const loadProductionCanvasData = async (
         project.domain === domain ||
         currentProjectDomains.some(
           (projectDomain) =>
-            projectDomain.domain === domain &&
-            projectDomain.status === "ACTIVE" &&
-            projectDomain.verified
+            projectDomain.domain === domain && projectDomain.status === "ACTIVE"
         )
     );
   }

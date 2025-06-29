@@ -107,15 +107,13 @@ export const domainRouter = router({
               currentProjectDomains.some(
                 (projectDomain) =>
                   projectDomain.domain === domain &&
-                  projectDomain.status === "ACTIVE" &&
-                  projectDomain.verified
+                  projectDomain.status === "ACTIVE"
               )
             )
           );
 
           hasCustomDomain = currentProjectDomains.some(
-            (projectDomain) =>
-              projectDomain.status === "ACTIVE" && projectDomain.verified
+            (projectDomain) => projectDomain.status === "ACTIVE"
           );
         }
 
