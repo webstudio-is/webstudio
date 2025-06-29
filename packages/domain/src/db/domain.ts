@@ -9,14 +9,7 @@ import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
 import type { Database } from "@webstudio-is/postrest/index.server";
 
-type Verification = {
-  name: string;
-  value: string;
-};
-
-type Result =
-  | { success: false; error: string }
-  | { success: true; data: { verification?: Verification } };
+type Result = { success: false; error: string } | { success: true };
 
 /**
  * Creates 2 entries in the database:
@@ -95,22 +88,29 @@ export const create = async (
   }
 
   const domainId = domainRow.data.id;
-  const txtRecord = crypto.randomUUID();
+
+  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
+  const createDomainResult = await context.domain.domainTrpc.create.mutate({
+    domain,
+  });
+  if (createDomainResult.success === false) {
+    return createDomainResult;
+  }
+  if (!createDomainResult.data.verification) {
+    return { success: false, error: "Domain verification is missing" };
+  }
 
   const result = await context.postgrest.client.from("ProjectDomain").insert({
     domainId,
     projectId: props.projectId,
-    txtRecord,
+    txtRecord: JSON.stringify(createDomainResult.data.verification),
     cname: await cnameFromUserId(ownerId),
   });
   if (result.error) {
     return { success: false, error: result.error.message };
   }
 
-  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
-  return await context.domain.domainTrpc.create.mutate({
-    domain,
-  });
+  return { success: true };
 };
 
 /**
@@ -177,7 +177,7 @@ export const verify = async (
     return { success: false, error: domainUpdateResult.error.message };
   }
 
-  return { success: true, data: createDomainResult.data };
+  return { success: true };
 };
 
 /**
@@ -210,7 +210,7 @@ export const remove = async (
     return { success: false, error: deleteResult.error.message };
   }
 
-  return { success: true, data: {} };
+  return { success: true };
 };
 
 type Status = "active" | "pending" | "error";

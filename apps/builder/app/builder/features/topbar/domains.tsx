@@ -29,7 +29,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Entri } from "./entri";
+import { Entri, type DnsRecord } from "./entri";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
@@ -38,6 +38,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import { z } from "zod";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -290,20 +291,30 @@ const DomainItem = ({
 
   const publisherHost = useStore($publisherHost);
   const cname = extractCname(projectDomain.domain);
-  const dnsRecords = [
+  let verification: undefined | { name: string; value: string };
+  try {
+    verification = z
+      .object({ name: z.string(), value: z.string() })
+      .parse(JSON.parse(projectDomain.expectedTxtRecord));
+  } catch {
+    // empty block
+  }
+  const dnsRecords: DnsRecord[] = [
     {
       type: "CNAME",
       host: cname,
       value: `${projectDomain.cname}.customers.${publisherHost}`,
       ttl: 300,
-    } as const,
-    {
-      type: "TXT",
-      host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
-      value: projectDomain.expectedTxtRecord,
-      ttl: 300,
-    } as const,
+    },
   ];
+  if (verification) {
+    dnsRecords.push({
+      type: "TXT",
+      host: verification.name,
+      value: verification.value,
+      ttl: 300,
+    });
+  }
 
   return (
     <CollapsibleDomainSection
