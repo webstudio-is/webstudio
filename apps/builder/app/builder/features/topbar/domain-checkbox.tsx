@@ -59,9 +59,8 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
   const disabled = hasProPlan ? props.disabled : true;
 
   const hideDomainCheckbox =
-    project.domainsVirtual.filter(
-      (domain) => domain.status === "ACTIVE" && domain.verified
-    ).length === 0 && hasProPlan;
+    project.domainsVirtual.filter((domain) => domain.status === "ACTIVE")
+      .length === 0 && hasProPlan;
 
   return (
     <div style={{ display: hideDomainCheckbox ? "none" : "contents" }}>

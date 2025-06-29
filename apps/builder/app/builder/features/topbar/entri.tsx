@@ -15,8 +15,8 @@ import { extractCname } from "./cname";
 import { UploadIcon } from "@webstudio-is/icons";
 
 // https://developers.entri.com/docs/install
-type DnsRecord = {
-  type: "CNAME" | "ALIAS" | "TXT";
+export type DnsRecord = {
+  type: "CNAME" | "TXT";
   host: string;
   value: string;
   ttl: number;
