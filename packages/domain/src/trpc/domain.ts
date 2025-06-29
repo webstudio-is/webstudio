@@ -69,6 +69,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   publish: procedure
     .input(
       z.discriminatedUnion("destination", [
@@ -172,6 +173,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   /**
    * Update *.wstd.* domain
    */

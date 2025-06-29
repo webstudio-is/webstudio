@@ -5,8 +5,7 @@
 import { z } from "zod";
 import { router, procedure } from "./trpc";
 
-const CreateInput = z.object({ domain: z.string(), txtRecord: z.string() });
-const Input = z.object({ domain: z.string() });
+const Method = z.union([z.literal("txt"), z.literal("http")]);
 
 const createOutput = <T extends z.ZodType>(data: T) =>
   z.discriminatedUnion("success", [
@@ -33,11 +32,27 @@ export const domainRouter = router({
    * Verify TXT record and add custom domain entry to DNS
    */
   create: procedure
-    .input(CreateInput)
-    .output(createOutput(z.optional(z.undefined())))
+    .input(
+      z.object({
+        domain: z.string(),
+        /**
+         * when missing use txt validation method and instead create txt record
+         */
+        txtRecord: z.string().optional(),
+      })
+    )
+    .output(
+      createOutput(
+        z.object({
+          validation: z.array(
+            z.object({ txtName: z.string(), txtValue: z.string() })
+          ),
+        })
+      )
+    )
     .mutation(async ({ input }) => {
       const record = dnsTxtEntries.get(input.domain);
-      if (record !== input.txtRecord) {
+      if (input.txtRecord && record !== input.txtRecord) {
         // Return an error once then update the record
         dnsTxtEntries.set(input.domain, input.txtRecord);
 
@@ -51,20 +66,21 @@ export const domainRouter = router({
 
       domainStates.set(input.domain, "pending");
 
-      return { success: true };
+      return { success: true, data: { validation: [] } };
     }),
 
   refresh: procedure
-    .input(Input)
-    .output(createOutput(z.optional(z.undefined())))
+    .input(z.object({ domain: z.string(), method: Method.optional() }))
+    .output(createOutput(z.optional(z.unknown())))
     .mutation(async () => {
       return { success: true };
     }),
+
   /**
    * Get status of verified domain
    */
   getStatus: procedure
-    .input(Input)
+    .input(z.object({ domain: z.string(), method: Method.optional() }))
     .output(
       createOutput(
         z.discriminatedUnion("status", [

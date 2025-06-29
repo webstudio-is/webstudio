@@ -9,7 +9,14 @@ import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
 import type { Database } from "@webstudio-is/postrest/index.server";
 
-type Result = { success: false; error: string } | { success: true };
+type DomainValidation = {
+  txtName: string;
+  txtValue: string;
+};
+
+type Result =
+  | { success: false; error: string }
+  | { success: true; data: { validation: DomainValidation[] } };
 
 /**
  * Creates 2 entries in the database:
@@ -54,7 +61,6 @@ export const create = async (
   }
 
   const validationResult = validateDomain(props.domain);
-
   if (validationResult.success === false) {
     return validationResult;
   }
@@ -74,7 +80,6 @@ export const create = async (
       { onConflict: "domain", ignoreDuplicates: true }
     )
     .eq("domain", domain);
-
   if (upsertResult.error) {
     return { success: false, error: upsertResult.error.message };
   }
@@ -85,7 +90,6 @@ export const create = async (
     .select("id")
     .eq("domain", domain)
     .single();
-
   if (domainRow.error) {
     return { success: false, error: domainRow.error.message };
   }
@@ -99,12 +103,14 @@ export const create = async (
     txtRecord,
     cname: await cnameFromUserId(ownerId),
   });
-
   if (result.error) {
     return { success: false, error: result.error.message };
   }
 
-  return { success: true };
+  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
+  return await context.domain.domainTrpc.create.mutate({
+    domain,
+  });
 };
 
 /**
@@ -153,7 +159,6 @@ export const verify = async (
   // @todo: TXT verification and domain initialization should be implemented in the future as queue service
   const createDomainResult = await context.domain.domainTrpc.create.mutate({
     domain,
-    txtRecord: projectDomain.data.txtRecord,
   });
 
   if (createDomainResult.success === false) {
@@ -172,7 +177,7 @@ export const verify = async (
     return { success: false, error: domainUpdateResult.error.message };
   }
 
-  return { success: true };
+  return { success: true, data: createDomainResult.data };
 };
 
 /**
@@ -205,7 +210,7 @@ export const remove = async (
     return { success: false, error: deleteResult.error.message };
   }
 
-  return { success: true };
+  return { success: true, data: { validation: [] } };
 };
 
 type Status = "active" | "pending" | "error";
@@ -254,6 +259,7 @@ export const updateStatus = async (
   // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,
+    method: "txt",
   });
 
   if (statusResult.success === false) {

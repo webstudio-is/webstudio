@@ -63,6 +63,7 @@ export const AddDomain = ({
       domain,
       projectId,
     });
+    console.info(result);
 
     if (result.success === false) {
       toast.error(result.error);
