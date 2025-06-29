@@ -260,6 +260,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   remove: procedure
     .input(
       z.object({
@@ -283,6 +284,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
       if (

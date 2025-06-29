@@ -133,46 +133,10 @@ export const verify = async (
     throw new Error("You don't have access to create this project domains");
   }
 
-  const projectDomain = await context.postgrest.client
-    .from("ProjectDomain")
-    .select(
-      `
-      txtRecord,
-      cname,
-      domain:Domain(*)
-      `
-    )
-    .eq("domainId", props.domainId)
-    .eq("projectId", props.projectId)
-    .single();
-
-  if (projectDomain.error) {
-    return { success: false, error: projectDomain.error.message };
-  }
-
-  const domain = projectDomain.data.domain?.domain;
-
-  if (domain == null) {
-    return { success: false, error: "Domain not found" };
-  }
-
-  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
-  const createDomainResult = await context.domain.domainTrpc.create.mutate({
-    domain,
-  });
-
-  if (createDomainResult.success === false) {
-    return createDomainResult;
-  }
-
   const domainUpdateResult = await context.postgrest.client
     .from("Domain")
-    .update({
-      status: "PENDING",
-      txtRecord: projectDomain.data.txtRecord,
-    })
+    .update({ status: "PENDING" })
     .eq("id", props.domainId);
-
   if (domainUpdateResult.error) {
     return { success: false, error: domainUpdateResult.error.message };
   }

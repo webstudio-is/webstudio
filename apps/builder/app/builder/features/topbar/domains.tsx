@@ -221,7 +221,6 @@ const DomainItem = ({
     setVerifyError(undefined);
     setIsCheckStateInProgress(true);
 
-    /*
     const verifyResult = await nativeClient.domain.verify.mutate({
       projectId: projectDomain.projectId,
       domainId: projectDomain.domainId,
@@ -231,7 +230,6 @@ const DomainItem = ({
       setVerifyError(verifyResult.error);
       return;
     }
-   */
 
     await refresh();
   });
