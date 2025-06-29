@@ -44,9 +44,9 @@ export const domainRouter = router({
     .output(
       createOutput(
         z.object({
-          validation: z.array(
-            z.object({ txtName: z.string(), txtValue: z.string() })
-          ),
+          verification: z
+            .object({ name: z.string(), value: z.string() })
+            .optional(),
         })
       )
     )
@@ -66,7 +66,7 @@ export const domainRouter = router({
 
       domainStates.set(input.domain, "pending");
 
-      return { success: true, data: { validation: [] } };
+      return { success: true, data: {} };
     }),
 
   refresh: procedure

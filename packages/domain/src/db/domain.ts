@@ -9,14 +9,14 @@ import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
 import type { Database } from "@webstudio-is/postrest/index.server";
 
-type DomainValidation = {
-  txtName: string;
-  txtValue: string;
+type Verification = {
+  name: string;
+  value: string;
 };
 
 type Result =
   | { success: false; error: string }
-  | { success: true; data: { validation: DomainValidation[] } };
+  | { success: true; data: { verification?: Verification } };
 
 /**
  * Creates 2 entries in the database:
@@ -210,7 +210,7 @@ export const remove = async (
     return { success: false, error: deleteResult.error.message };
   }
 
-  return { success: true, data: { validation: [] } };
+  return { success: true, data: {} };
 };
 
 type Status = "active" | "pending" | "error";
