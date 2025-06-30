@@ -584,8 +584,8 @@ test("generate space without display property", async () => {
     await generateFragmentFromTailwind(
       renderTemplate(
         <>
-          <ws.element ws:tag="div" class="space-x-4"></ws.element>
-          <ws.element ws:tag="div" class="space-y-4"></ws.element>
+          <ws.element ws:tag="div" class="space-x-4 md:space-x-6"></ws.element>
+          <ws.element ws:tag="div" class="space-y-4 md:space-y-6"></ws.element>
         </>
       )
     )
@@ -596,7 +596,10 @@ test("generate space without display property", async () => {
           ws:tag="div"
           ws:style={css`
             display: flex;
-            column-gap: 1rem;
+            @media (max-width: 767px) {
+              column-gap: 1rem;
+            }
+            column-gap: 1.5rem;
           `}
         ></ws.element>
         <ws.element
@@ -605,7 +608,10 @@ test("generate space without display property", async () => {
             display: flex;
             flex-direction: column;
             align-items: start;
-            row-gap: 1rem;
+            @media (max-width: 767px) {
+              row-gap: 1rem;
+            }
+            row-gap: 1.5rem;
           `}
         ></ws.element>
       </>
