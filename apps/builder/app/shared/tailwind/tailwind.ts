@@ -198,15 +198,13 @@ const parseTailwindClasses = async (classes: string) => {
     .map((item) => {
       // styles data cannot express space-x and space-y selectors
       // with lobotomized owl so replace with gaps
-      const spaceX = "space-x-";
-      if (item.startsWith(spaceX)) {
+      if (item.includes("space-x-")) {
         hasColumnGaps = true;
-        return `gap-x-${item.slice(spaceX.length)}`;
+        return item.replace("space-x-", "gap-x-");
       }
-      const spaceY = "space-y-";
-      if (item.startsWith(spaceY)) {
+      if (item.includes("space-y-")) {
         hasRowGaps = true;
-        return `gap-y-${item.slice(spaceY.length)}`;
+        return item.replace("space-y-", "gap-y-");
       }
       hasFlexOrGrid ||= item.endsWith("flex") || item.endsWith("grid");
       hasContainer ||= item === "container";
