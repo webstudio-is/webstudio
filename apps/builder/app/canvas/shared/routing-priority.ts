@@ -15,7 +15,7 @@ const getSegmentScore = (segment: string) => {
   return STATIC;
 };
 
-export function comparePatterns(leftPattern: string, rightPattern: string) {
+export const comparePatterns = (leftPattern: string, rightPattern: string) => {
   const leftSegments = leftPattern.split("/");
   const rightSegments = rightPattern.split("/");
   const commonLength = Math.min(leftSegments.length, rightSegments.length);
@@ -38,4 +38,4 @@ export function comparePatterns(leftPattern: string, rightPattern: string) {
 
   // sort alphabetically
   return leftPattern.localeCompare(rightPattern);
-}
+};
