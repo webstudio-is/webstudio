@@ -1817,6 +1817,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
