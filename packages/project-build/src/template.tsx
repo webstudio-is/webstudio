@@ -110,9 +110,9 @@ export const createPages = (): WebstudioData => {
     pages: [
       {
         id: notFoundPageId,
-        name: "Not Found",
+        name: "404",
         path: "/*",
-        title: `"Not Found"`,
+        title: `"Page not found"`,
         meta: {
           status: `404`,
           excludePageFromSearch: "false",
