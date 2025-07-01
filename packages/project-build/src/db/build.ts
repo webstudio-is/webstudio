@@ -1,6 +1,5 @@
 /* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
 
-import { nanoid } from "nanoid";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import {
   AuthorizationError,
@@ -8,28 +7,25 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import {
-  type Deployment,
-  type Resource,
-  type StyleSource,
-  type Prop,
-  type DataSource,
-  type Instance,
-  type Breakpoint,
-  type StyleSourceSelection,
-  type StyleDecl,
+import type {
+  Deployment,
+  Resource,
+  StyleSource,
+  Prop,
+  DataSource,
+  Instance,
+  Breakpoint,
+  StyleSourceSelection,
+  StyleDecl,
   Pages,
-  initialBreakpoints,
-  elementComponent,
-  HomePage,
-  type Page,
 } from "@webstudio-is/sdk";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
-import { serializePages } from "./pages";
 import type { MarketplaceProduct } from "../shared//marketplace";
 import { breakCyclesMutable } from "../shared/graph-utils";
-import { createRootFolder } from "../shared/pages-utils";
+import { createPages } from "../template";
+import { serializeStyles } from "./styles";
+import { serializeStyleSourceSelections } from "./style-source-selections";
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
@@ -224,19 +220,6 @@ export const loadApprovedProdBuildByProjectId = async (
   return parseCompactBuild(build.data[0]);
 };
 
-const createInitialBreakpoints = (): [Breakpoint["id"], Breakpoint][] => {
-  return initialBreakpoints.map((breakpoint) => {
-    const id = nanoid();
-    return [
-      id,
-      {
-        ...breakpoint,
-        id,
-      },
-    ];
-  });
-};
-
 /*
  * We create "dev" build in two cases:
  *   1. when we create a new project
@@ -249,58 +232,21 @@ export const createBuild = async (
   },
   context: AppContext
 ): Promise<void> => {
-  // Home page
-  const homeBodyInstance: Instance = {
-    type: "instance",
-    id: nanoid(),
-    component: elementComponent,
-    tag: "body",
-    children: [],
-  };
-  const homePage: HomePage = {
-    id: nanoid(),
-    name: "Home",
-    path: "",
-    title: `"Home"`,
-    meta: {},
-    rootInstanceId: homeBodyInstance.id,
-  };
-  // Not Found page
-  const notFoundBodyInstance: Instance = {
-    type: "instance",
-    id: nanoid(),
-    component: elementComponent,
-    tag: "body",
-    children: [{ type: "text", value: "404 Not Found" }],
-  };
-  const notFoundPage: Page = {
-    id: nanoid(),
-    name: "Not Found",
-    path: "/*",
-    title: `"Not Found"`,
-    meta: {
-      status: `404`,
-    },
-    rootInstanceId: notFoundBodyInstance.id,
-  };
-  // This is a root folder that nobody can delete or going to be able to see.
-  const rootFolder = createRootFolder([homePage.id, notFoundPage.id]);
-  const pages = {
-    meta: {},
-    homePage,
-    pages: [notFoundPage],
-    folders: [rootFolder],
-  };
-  const newInstances = new Map([
-    [homeBodyInstance.id, homeBodyInstance],
-    [notFoundBodyInstance.id, notFoundBodyInstance],
-  ]);
+  const data = createPages();
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: serializePages(pages),
-    breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
-    instances: serializeData<Instance>(newInstances),
+    pages: serializeConfig<Pages>(data.pages),
+    breakpoints: serializeData<Breakpoint>(data.breakpoints),
+    styles: serializeStyles(data.styles),
+    styleSources: serializeData<StyleSource>(data.styleSources),
+    styleSourceSelections: serializeStyleSourceSelections(
+      data.styleSourceSelections
+    ),
+    props: serializeData<Prop>(data.props),
+    dataSources: serializeData<DataSource>(data.dataSources),
+    resources: serializeData<Resource>(data.resources),
+    instances: serializeData<Instance>(data.instances),
   });
   if (newBuild.error) {
     throw newBuild.error;

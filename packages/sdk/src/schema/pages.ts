@@ -83,12 +83,10 @@ export const HomePagePath = z
   .string()
   .refine((path) => path === "", "Home page path must be empty");
 
-export const HomePage = z.object({
+const HomePage = z.object({
   ...commonPageFields,
   path: HomePagePath,
 });
-
-export type HomePage = z.infer<typeof HomePage>;
 
 const DefaultPagePage = z
   .string()
