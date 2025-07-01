@@ -366,13 +366,11 @@ const StatusField = ({
   onChange: (value: undefined | string) => void;
 }) => {
   const id = useId();
-  const { allowDynamicData } = useStore($userPlanFeatures);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   return (
     <Grid gap={1}>
       <Flex align="center" gap={1}>
         <Label htmlFor={id}>Status Code </Label>
-        {allowDynamicData === false && <ProBadge>PRO</ProBadge>}
         <Tooltip
           content={
             <Text>
@@ -801,7 +799,7 @@ const FormFields = ({
           {allowDynamicData === false && (
             <PanelBanner>
               <Text>
-                Dynamic routing, redirect and status code are a part of the CMS
+                Dynamic routing and redirect are a part of the CMS
                 functionality.
               </Text>
               <Flex align="center" gap={1}>

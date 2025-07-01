@@ -21,13 +21,15 @@ import {
   Pages,
   initialBreakpoints,
   elementComponent,
+  HomePage,
+  type Page,
 } from "@webstudio-is/sdk";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
 import { serializePages } from "./pages";
-import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "../shared//marketplace";
 import { breakCyclesMutable } from "../shared/graph-utils";
+import { createRootFolder } from "../shared/pages-utils";
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
@@ -222,22 +224,6 @@ export const loadApprovedProdBuildByProjectId = async (
   return parseCompactBuild(build.data[0]);
 };
 
-const createNewPageInstances = (): Build["instances"] => {
-  const instanceId = nanoid();
-  return [
-    [
-      instanceId,
-      {
-        type: "instance",
-        id: instanceId,
-        component: elementComponent,
-        tag: "body",
-        children: [],
-      },
-    ],
-  ];
-};
-
 const createInitialBreakpoints = (): [Breakpoint["id"], Breakpoint][] => {
   return initialBreakpoints.map((breakpoint) => {
     const id = nanoid();
@@ -263,16 +249,58 @@ export const createBuild = async (
   },
   context: AppContext
 ): Promise<void> => {
-  const newInstances = createNewPageInstances();
-  const [rootInstanceId] = newInstances[0];
-  const defaultPages = createDefaultPages({ rootInstanceId });
-
+  // Home page
+  const homeBodyInstance: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: elementComponent,
+    tag: "body",
+    children: [],
+  };
+  const homePage: HomePage = {
+    id: nanoid(),
+    name: "Home",
+    path: "",
+    title: `"Home"`,
+    meta: {},
+    rootInstanceId: homeBodyInstance.id,
+  };
+  // Not Found page
+  const notFoundBodyInstance: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: elementComponent,
+    tag: "body",
+    children: [{ type: "text", value: "404 Not Found" }],
+  };
+  const notFoundPage: Page = {
+    id: nanoid(),
+    name: "Not Found",
+    path: "/*",
+    title: `"Not Found"`,
+    meta: {
+      status: `404`,
+    },
+    rootInstanceId: notFoundBodyInstance.id,
+  };
+  // This is a root folder that nobody can delete or going to be able to see.
+  const rootFolder = createRootFolder([homePage.id, notFoundPage.id]);
+  const pages = {
+    meta: {},
+    homePage,
+    pages: [notFoundPage],
+    folders: [rootFolder],
+  };
+  const newInstances = new Map([
+    [homeBodyInstance.id, homeBodyInstance],
+    [notFoundBodyInstance.id, notFoundBodyInstance],
+  ]);
   const newBuild = await context.postgrest.client.from("Build").insert({
     id: crypto.randomUUID(),
     projectId: props.projectId,
-    pages: serializePages(defaultPages),
+    pages: serializePages(pages),
     breakpoints: serializeData<Breakpoint>(new Map(createInitialBreakpoints())),
-    instances: serializeData<Instance>(new Map(newInstances)),
+    instances: serializeData<Instance>(newInstances),
   });
   if (newBuild.error) {
     throw newBuild.error;

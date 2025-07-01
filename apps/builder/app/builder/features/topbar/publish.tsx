@@ -263,11 +263,9 @@ const $usedProFeatures = computed(
         pageId: page.id,
         instanceSelector: [page.rootInstanceId],
       };
-      if (isPathnamePattern(page.path)) {
+      // allow catch all for 404 pages on free plan
+      if (isPathnamePattern(page.path) && page.path !== "/*") {
         features.set("Dynamic path", { awareness, view: "pageSettings" });
-      }
-      if (page.meta.status && page.meta.status !== `200`) {
-        features.set("Page status code", { awareness, view: "pageSettings" });
       }
       if (page.meta.redirect && page.meta.redirect !== `""`) {
         features.set("Redirect", { awareness, view: "pageSettings" });
