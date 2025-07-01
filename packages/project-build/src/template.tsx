@@ -115,6 +115,7 @@ export const createPages = (): WebstudioData => {
         title: `"Not Found"`,
         meta: {
           status: `404`,
+          excludePageFromSearch: "false",
         },
         rootInstanceId: notFoundBodyId,
       },
