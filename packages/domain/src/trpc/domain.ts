@@ -5,11 +5,7 @@ import { createProductionBuild } from "@webstudio-is/project-build/index.server"
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
-
-const rdap = [
-  "https://rdap.cloudflare.com/rdap/v1/domain/",
-  "https://rdap.namecheap.com/domain/",
-];
+import { isDomainUsingCloudflareNameservers } from "../rdap";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -32,23 +28,8 @@ export const domainRouter = router({
   findDomainRegistrar: procedure
     .input(z.object({ domain: z.string() }))
     .query(async ({ input }) => {
-      try {
-        for (const rdapEndpoint of rdap) {
-          const response = await fetch(`${rdapEndpoint}${input.domain}`);
-          if (response.ok) {
-            const data = await response.text();
-            return {
-              // detect by nameservers rather than registrar url
-              cnameFlattening: data.includes(".ns.cloudflare.com"),
-            };
-          }
-        }
-      } catch {
-        // empty block
-      }
       return {
-        name: "other",
-        cnameFlattening: false,
+        cnameFlattening: await isDomainUsingCloudflareNameservers(input.domain),
       };
     }),
 
