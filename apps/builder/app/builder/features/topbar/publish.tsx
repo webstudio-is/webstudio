@@ -8,6 +8,7 @@ import {
   startTransition,
   useRef,
   useId,
+  type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -38,23 +39,30 @@ import {
   PopoverTitleActions,
   css,
   textVariants,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import {
   $awareness,
+  $selectedPagePath,
   findAwarenessByInstanceId,
   type Awareness,
 } from "~/shared/awareness";
 import {
   $authTokenPermissions,
   $dataSources,
+  $editingPageId,
   $instances,
   $pages,
   $project,
+  $propsIndex,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
-import { $publishDialog } from "../../shared/nano-states";
+import {
+  $publishDialog,
+  setActiveSidebarPanel,
+} from "../../shared/nano-states";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
@@ -64,19 +72,25 @@ import {
   CopyIcon,
   GearIcon,
   UpgradeIcon,
+  HelpIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import {
+  findTreeInstanceIds,
   isPathnamePattern,
   parseComponentName,
   type Templates,
 } from "@webstudio-is/sdk";
-import DomainCheckbox, { domainToPublishName } from "./domain-checkbox";
+import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import { showAttribute } from "@webstudio-is/react-sdk";
+import { type CssProperty } from "@webstudio-is/css-engine";
+import { getComputedStyleDecl } from "~/shared/style-object-model";
+import { $styleObjectModel } from "../style-panel/shared/model";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
@@ -91,10 +105,14 @@ const ChangeProjectDomain = ({
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
+  const selectedPagePath = useStore($selectedPagePath);
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
+
+  const pageUrl = new URL(publishedOrigin);
+  pageUrl.pathname = selectedPagePath;
 
   const updateProjectDomain = async () => {
     setIsUpdateInProgress(true);
@@ -134,7 +152,7 @@ const ChangeProjectDomain = ({
 
   return (
     <CollapsibleDomainSection
-      title={new URL(publishedOrigin).host}
+      title={pageUrl.host}
       prefix={
         <DomainCheckbox
           defaultChecked={project.latestBuildVirtual?.domain === domain}
@@ -167,11 +185,19 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-          <Tooltip content={`Proceed to ${publishedOrigin}`}>
+          <Tooltip
+            content={
+              <Text css={{ wordBreak: "break-all" }}>
+                Proceed to {pageUrl.toString()}
+              </Text>
+            }
+            variant="wrapped"
+          >
             <IconButton
+              type="button"
               tabIndex={-1}
               onClick={(event) => {
-                window.open(publishedOrigin, "_blank");
+                window.open(pageUrl, "_blank");
                 event.preventDefault();
               }}
             >
@@ -217,9 +243,13 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
-    const features = new Map<string, undefined | Awareness>();
+  [$pages, $dataSources, $instances, $propsIndex, $styleObjectModel],
+  (pages, dataSources, instances, propsIndex, styleObjectModel) => {
+    const features = new Map<
+      string,
+      | undefined
+      | { awareness?: Awareness; view?: "pageSettings"; info?: ReactNode }
+    >();
     if (pages === undefined) {
       return features;
     }
@@ -229,43 +259,119 @@ const $usedProFeatures = computed(
     }
     // pages with dynamic paths
     for (const page of [pages.homePage, ...pages.pages]) {
-      if (isPathnamePattern(page.path)) {
-        features.set("Dynamic path", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
-      }
-      if (page.meta.status && page.meta.status !== `200`) {
-        features.set("Page status code", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
+      const awareness = {
+        pageId: page.id,
+        instanceSelector: [page.rootInstanceId],
+      };
+      // allow catch all for 404 pages on free plan
+      if (isPathnamePattern(page.path) && page.path !== "/*") {
+        features.set("Dynamic path", { awareness, view: "pageSettings" });
       }
       if (page.meta.redirect && page.meta.redirect !== `""`) {
-        features.set("Redirect", {
-          pageId: page.id,
-          instanceSelector: [page.rootInstanceId],
-        });
+        features.set("Redirect", { awareness, view: "pageSettings" });
       }
     }
     // has resource variables
     for (const dataSource of dataSources.values()) {
       if (dataSource.type === "resource") {
         const instanceId = dataSource.scopeInstanceId ?? "";
-        features.set(
-          "Resource variable",
-          findAwarenessByInstanceId(pages, instances, instanceId)
-        );
+        features.set("Resource variable", {
+          awareness: findAwarenessByInstanceId(pages, instances, instanceId),
+        });
       }
     }
-    // instances with animations
+
+    // Instances with animations.
     for (const instance of instances.values()) {
       const [namespace] = parseComponentName(instance.component);
       if (namespace === "@webstudio-is/sdk-components-animation") {
-        features.set(
-          "Animation component",
-          findAwarenessByInstanceId(pages, instances, instance.id)
-        );
+        features.set("Animation component", {
+          awareness: findAwarenessByInstanceId(pages, instances, instance.id),
+        });
+      }
+    }
+
+    const badgeFeature = 'No "Built with Webstudio" badge';
+    // Badge should be rendered on free sites on every page.
+    features.set(badgeFeature, {
+      info: (
+        <Text>
+          Adding the badge to your "home" page helps us offer a free version of
+          the service. Please open the Components panel by clicking the “+” icon
+          on the left, and add the “Built with Webstudio” component to your
+          page.
+          <br />
+          - Feel free to adjust the badge's style to match your design - after
+          all, it's just a link, and you can place it wherever you like.
+          <br />
+          - Please don’t add that badge to every page, because search engines
+          will view it negatively.
+          <br />- Hiding the link in any way is considered a violation of the
+          terms.
+        </Text>
+      ),
+    });
+    // We want to check the badge only on the home page
+    const homePageInstanceIds = findTreeInstanceIds(
+      instances,
+      pages.homePage.rootInstanceId
+    );
+    for (const instanceId of homePageInstanceIds) {
+      const instance = instances.get(instanceId);
+      // Find a potential link that looks like a badge.
+      if (instance?.tag === "a") {
+        const props = propsIndex.propsByInstanceId.get(instance.id);
+        let hasWsHref = false;
+        let highTrust = true;
+        let show = true;
+
+        for (const prop of props ?? []) {
+          if (
+            prop.name === "href" &&
+            prop.type === "string" &&
+            prop.value.includes("https://webstudio.is")
+          ) {
+            hasWsHref = true;
+          }
+          if (prop.name === "rel" && prop.type === "string") {
+            if (
+              prop.value.includes("nofollow") ||
+              prop.value.includes("ugc") ||
+              prop.value.includes("sponsored")
+            ) {
+              highTrust = false;
+            }
+          }
+          if (prop.name === showAttribute) {
+            show = prop.type === "boolean" && prop.value;
+          }
+        }
+
+        const getValue = (property: CssProperty) => {
+          const value = getComputedStyleDecl({
+            model: styleObjectModel,
+            instanceSelector: [instance.id],
+            property,
+          }).usedValue;
+          return "value" in value ? value.value : undefined;
+        };
+
+        // Check styles.
+        if (
+          getValue("display") === "none" ||
+          getValue("visibility") === "hidden" ||
+          getValue("opacity") === 0 ||
+          getValue("width") === 0 ||
+          getValue("height") === 0
+        ) {
+          show = false;
+        }
+
+        // @todo check all parents
+        if (hasWsHref && highTrust && show) {
+          features.delete(badgeFeature);
+          break;
+        }
       }
     }
     return features;
@@ -684,6 +790,114 @@ const buttonLinkClass = css({
   ...textVariants.link,
 }).toString();
 
+const UpgradeBanner = () => {
+  const usedProFeatures = useStore($usedProFeatures);
+  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { userPublishCount, maxPublishesAllowedPerUser } =
+    useUserPublishCount();
+
+  if (userPublishCount >= maxPublishesAllowedPerUser) {
+    return (
+      <PanelBanner>
+        <Text variant="regularBold">
+          Upgrade to publish more than {maxPublishesAllowedPerUser} times per
+          day:
+        </Text>
+        <Link
+          className={buttonStyle({ color: "gradient" })}
+          color="contrast"
+          underline="none"
+          href="https://webstudio.is/pricing"
+          target="_blank"
+        >
+          Upgrade
+        </Link>
+      </PanelBanner>
+    );
+  }
+
+  if (usedProFeatures.size > 0) {
+    return (
+      <PanelBanner>
+        <img
+          src={cmsUpgradeBanner}
+          alt="Upgrade for CMS"
+          width={rawTheme.spacing[28]}
+          style={{ aspectRatio: "4.1" }}
+        />
+        <Text variant="regularBold">Following Pro features are used:</Text>
+        <Text as="ul" color="destructive" css={{ paddingLeft: "1em" }}>
+          {Array.from(usedProFeatures).map(
+            ([message, { awareness, view, info } = {}], index) => (
+              <li key={index}>
+                <Flex align="center" gap="1">
+                  {awareness ? (
+                    <button
+                      className={buttonLinkClass}
+                      type="button"
+                      onClick={() => {
+                        $awareness.set(awareness);
+                        if (view === "pageSettings") {
+                          setActiveSidebarPanel("pages");
+                          $editingPageId.set(awareness.pageId);
+                        }
+                      }}
+                    >
+                      {message}
+                    </button>
+                  ) : (
+                    message
+                  )}
+                  {info && (
+                    <Tooltip variant="wrapped" content={info}>
+                      <SmallIconButton icon={<HelpIcon />} />
+                    </Tooltip>
+                  )}
+                </Flex>
+              </li>
+            )
+          )}
+        </Text>
+        <Text>You can delete these features or upgrade.</Text>
+        <Flex align="center" gap={1}>
+          <UpgradeIcon />
+          <Link
+            color="inherit"
+            target="_blank"
+            href="https://webstudio.is/pricing"
+          >
+            Upgrade to Pro
+          </Link>
+        </Flex>
+      </PanelBanner>
+    );
+  }
+  if (canAddDomain === false) {
+    return (
+      <PanelBanner>
+        <Text variant="regularBold">Free domains limit reached</Text>
+        <Text variant="regular">
+          You have reached the limit of {maxDomainsAllowedPerUser} custom
+          domains on your account.{" "}
+          <Text variant="regularBold" inline>
+            Upgrade to a Pro account
+          </Text>{" "}
+          to add unlimited domains and publish to each domain individually.
+        </Text>
+        <Link
+          className={buttonStyle({ color: "gradient" })}
+          color="contrast"
+          underline="none"
+          href="https://webstudio.is/pricing"
+          target="_blank"
+        >
+          Upgrade
+        </Link>
+      </PanelBanner>
+    );
+  }
+};
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
@@ -699,92 +913,12 @@ const Content = (props: {
   }
   const projectState = "idle";
 
-  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
 
   return (
     <form>
       <ScrollArea>
-        {userPublishCount >= maxPublishesAllowedPerUser ? (
-          <PanelBanner>
-            <Text variant="regularBold">
-              Upgrade to publish more than {maxPublishesAllowedPerUser} times
-              per day:
-            </Text>
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </Link>
-          </PanelBanner>
-        ) : usedProFeatures.size > 0 && hasProPlan === false ? (
-          <PanelBanner>
-            <img
-              src={cmsUpgradeBanner}
-              alt="Upgrade for CMS"
-              width={rawTheme.spacing[28]}
-              style={{ aspectRatio: "4.1" }}
-            />
-            <Text variant="regularBold">
-              Upgrade to publish with following features:
-            </Text>
-            <Text as="ul">
-              {Array.from(usedProFeatures).map(
-                ([message, awareness], index) => (
-                  <li key={index}>
-                    {awareness ? (
-                      <button
-                        className={buttonLinkClass}
-                        type="button"
-                        onClick={() => $awareness.set(awareness)}
-                      >
-                        {message}
-                      </button>
-                    ) : (
-                      message
-                    )}
-                  </li>
-                )
-              )}
-            </Text>
-            <Flex align="center" gap={1}>
-              <UpgradeIcon />
-              <Link
-                color="inherit"
-                target="_blank"
-                href="https://webstudio.is/pricing"
-              >
-                Upgrade to Pro
-              </Link>
-            </Flex>
-          </PanelBanner>
-        ) : canAddDomain === false ? (
-          <PanelBanner>
-            <Text variant="regularBold">Free domains limit reached</Text>
-            <Text variant="regular">
-              You have reached the limit of {maxDomainsAllowedPerUser} custom
-              domains on your account.{" "}
-              <Text variant="regularBold" inline>
-                Upgrade to a Pro account
-              </Text>{" "}
-              to add unlimited domains and publish to each domain individually.
-            </Text>
-            <Link
-              className={buttonStyle({ color: "gradient" })}
-              color="contrast"
-              underline="none"
-              href="https://webstudio.is/pricing"
-              target="_blank"
-            >
-              Upgrade
-            </Link>
-          </PanelBanner>
-        ) : null}
         <RadioGroup name="publishDomain">
           <ChangeProjectDomain
             refresh={refreshProject}
@@ -814,6 +948,7 @@ const Content = (props: {
           }}
           onExportClick={props.onExportClick}
         />
+        {hasProPlan === false && <UpgradeBanner />}
         <Publish
           project={project}
           refresh={refreshProject}
@@ -1106,6 +1241,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
               suffix={
                 <PopoverTitleActions>
                   <IconButton
+                    type="button"
                     onClick={() => {
                       $openProjectSettings.set("publish");
                     }}

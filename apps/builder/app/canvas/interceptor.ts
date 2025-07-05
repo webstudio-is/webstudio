@@ -11,6 +11,7 @@ import {
   $selectedPageHash,
 } from "~/shared/nano-states";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
+import { comparePatterns } from "./shared/routing-priority";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -55,7 +56,11 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");
-  for (const page of [pages.homePage, ...pages.pages]) {
+  // sort pages before matching to not depend on order of page creation
+  const sortedPages = [pages.homePage, ...pages.pages].toSorted(
+    (leftPage, rightPage) => comparePatterns(leftPage.path, rightPage.path)
+  );
+  for (const page of sortedPages) {
     const pagePath = getPagePath(page.id, pages);
     const params = matchPathnamePattern(pagePath, pageHref.pathname);
     if (params) {
@@ -159,8 +164,13 @@ export const subscribeInterceptedEvents = () => {
     if ($isPreviewMode.get()) {
       return;
     }
-    // prevent typing in inputs only in canvas mode
-    event.preventDefault();
+    if (
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement
+    ) {
+      // prevent typing in inputs only in canvas mode
+      event.preventDefault();
+    }
   };
 
   // Note: Event handlers behave unexpectedly when used inside a dialog component.

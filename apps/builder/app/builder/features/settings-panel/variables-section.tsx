@@ -166,7 +166,6 @@ const VariablesItem = ({
             )}
           </Flex>
         }
-        disabled={source === "remote"}
         data-state={isMenuOpen ? "open" : undefined}
         buttons={
           <>

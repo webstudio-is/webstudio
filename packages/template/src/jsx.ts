@@ -122,11 +122,12 @@ const getElementChildren = (element: JSX.Element): JSX.Element[] => {
 
 export const renderTemplate = (
   root: JSX.Element,
-  generateId?: () => string
+  generateId?: () => string,
+  initialBreakpoints: Breakpoint[] = []
 ): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
-  const breakpoints: Breakpoint[] = [];
+  const breakpoints = Array.from(initialBreakpoints);
   const styleSources: StyleSource[] = [];
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
@@ -417,7 +418,8 @@ export const renderTemplate = (
 
 export const renderData = (
   root: JSX.Element,
-  generateId?: () => string
+  generateId?: () => string,
+  initialBreakpoints: Breakpoint[] = []
 ): Omit<WebstudioData, "pages"> => {
   const {
     instances,
@@ -429,7 +431,7 @@ export const renderData = (
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root, generateId);
+  } = renderTemplate(root, generateId, initialBreakpoints);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),

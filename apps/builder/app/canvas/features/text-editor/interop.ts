@@ -41,8 +41,7 @@ const $writeUpdates = (
   instanceChildren: Instance["children"],
   instancesList: Instance[],
   refs: Refs,
-  newLinkKeyToInstanceId: Refs,
-  isElement: boolean
+  newLinkKeyToInstanceId: Refs
 ) => {
   const children = node.getChildren();
   for (const child of children) {
@@ -52,8 +51,7 @@ const $writeUpdates = (
         instanceChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId,
-        isElement
+        newLinkKeyToInstanceId
       );
     }
     if ($isLineBreakNode(child)) {
@@ -73,25 +71,15 @@ const $writeUpdates = (
         childChildren,
         instancesList,
         refs,
-        newLinkKeyToInstanceId,
-        isElement
+        newLinkKeyToInstanceId
       );
-      if (isElement) {
-        instancesList.push({
-          type: "instance",
-          id,
-          component: elementComponent,
-          tag: "a",
-          children: childChildren,
-        });
-      } else {
-        instancesList.push({
-          type: "instance",
-          id,
-          component: "RichTextLink",
-          children: childChildren,
-        });
-      }
+      instancesList.push({
+        type: "instance",
+        id,
+        component: elementComponent,
+        tag: "a",
+        children: childChildren,
+      });
     }
     if ($isTextNode(child)) {
       // support nesting bold into italic and vice versa
@@ -105,60 +93,32 @@ const $writeUpdates = (
         const id = refs.get(key) ?? nanoid();
         refs.set(key, id);
         const childChildren: Instance["children"] = [];
-        if (isElement) {
-          instancesList.push({
-            type: "instance",
-            id,
-            component: elementComponent,
-            tag: "span",
-            children: childChildren,
-          });
-        } else {
-          instancesList.push({
-            type: "instance",
-            id,
-            component: "Span",
-            children: childChildren,
-          });
-        }
+        instancesList.push({
+          type: "instance",
+          id,
+          component: elementComponent,
+          tag: "span",
+          children: childChildren,
+        });
         parentUpdates.push({ type: "id", value: id });
         parentUpdates = childChildren;
       }
       // convert all lexical formats
-      if (isElement) {
-        for (const [format, tag] of elementLexicalFormats) {
-          if (child.hasFormat(format)) {
-            const key = `${child.getKey()}:${format}`;
-            const id = refs.get(key) ?? nanoid();
-            refs.set(key, id);
-            const childInstance: Instance = {
-              type: "instance",
-              id,
-              component: elementComponent,
-              tag,
-              children: [],
-            };
-            instancesList.push(childInstance);
-            parentUpdates.push({ type: "id", value: id });
-            parentUpdates = childInstance.children;
-          }
-        }
-      } else {
-        for (const [format, component] of legacyLexicalFormats) {
-          if (child.hasFormat(format)) {
-            const key = `${child.getKey()}:${format}`;
-            const id = refs.get(key) ?? nanoid();
-            refs.set(key, id);
-            const childInstance: Instance = {
-              type: "instance",
-              id,
-              component,
-              children: [],
-            };
-            instancesList.push(childInstance);
-            parentUpdates.push({ type: "id", value: id });
-            parentUpdates = childInstance.children;
-          }
+      for (const [format, tag] of elementLexicalFormats) {
+        if (child.hasFormat(format)) {
+          const key = `${child.getKey()}:${format}`;
+          const id = refs.get(key) ?? nanoid();
+          refs.set(key, id);
+          const childInstance: Instance = {
+            type: "instance",
+            id,
+            component: elementComponent,
+            tag,
+            children: [],
+          };
+          instancesList.push(childInstance);
+          parentUpdates.push({ type: "id", value: id });
+          parentUpdates = childInstance.children;
         }
       }
       parentUpdates.push({ type: "text", value: text });
@@ -184,8 +144,7 @@ export const $convertToUpdates = (
     treeRootInstanceChildren,
     instancesList,
     refs,
-    newLinkKeyToInstanceId,
-    treeRootInstance.component === elementComponent
+    newLinkKeyToInstanceId
   );
   return instancesList;
 };

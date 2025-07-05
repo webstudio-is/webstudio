@@ -45,13 +45,29 @@ const elementsByTag: Record<string, Element> = {};
         return !tag.includes(" ");
       });
     const description = getTextContent(row.childNodes[1]);
-    const categories = parseList(getTextContent(row.childNodes[2]));
+    let categories = parseList(getTextContent(row.childNodes[2])).map(
+      (item) => {
+        if (item === "heading") {
+          // legend and summary refer to it as heading content
+          return "heading content";
+        }
+        return item;
+      }
+    );
     let children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
       // textarea does not have value attribute and text content is used as initial value
       // introduce fake value attribute to manage initial state similar to input
       if (tag === "textarea") {
         children = [];
+      }
+      // move interactive category from details to summary
+      // so details content could accept other interactive elements
+      if (tag === "details") {
+        categories = categories.filter((item) => item !== "interactive");
+      }
+      if (tag === "summary") {
+        categories.push("interactive");
       }
       elementsByTag[tag] = {
         description,

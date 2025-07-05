@@ -20,7 +20,7 @@ interface DomainCheckboxProps {
   disabled?: boolean;
 }
 
-const DomainCheckbox = (props: DomainCheckboxProps) => {
+export const DomainCheckbox = (props: DomainCheckboxProps) => {
   const hasProPlan = useStore($userPlanFeatures).hasProPlan;
   const project = useStore($project);
 
@@ -78,5 +78,3 @@ const DomainCheckbox = (props: DomainCheckboxProps) => {
     </div>
   );
 };
-
-export default DomainCheckbox;

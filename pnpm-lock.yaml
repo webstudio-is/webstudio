@@ -334,6 +334,9 @@ importers:
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
+      entrijs:
+        specifier: ^0.0.11
+        version: 0.0.11
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -388,9 +391,6 @@ importers:
       react-error-boundary:
         specifier: ^5.0.0
         version: 5.0.0(react@18.3.0-canary-14898b6a9-20240318)
-      react-script-hook:
-        specifier: ^1.7.2
-        version: 1.7.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       remix-auth:
         specifier: ^3.7.0
         version: 3.7.0(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))
@@ -1817,6 +1817,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@webstudio-is/template':
+        specifier: workspace:*
+        version: link:../template
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
@@ -6483,6 +6486,9 @@ packages:
     resolution: {integrity: sha512-aKstq2TDOndCn4diEyp9Uq/Flu2i1GlLkc6XIDQSDMuaFE3OPW5OphLCyQ5SpSJZTb4reN+kTcYru5yIfXoRPw==}
     engines: {node: '>=0.12'}
 
+  entrijs@0.0.11:
+    resolution: {integrity: sha512-ufH4h0JdumikGIHuVQjP6uKJMG00Yv7Av0ZsBvM7PicejO8e9eRAxXKUdIHqoo1ZqogFrquDmmP63x3T0djHlQ==}
+
   env-paths@3.0.0:
     resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -8444,12 +8450,6 @@ packages:
     peerDependenciesMeta:
       react-dom:
         optional: true
-
-  react-script-hook@1.7.2:
-    resolution: {integrity: sha512-fhyCEfXb94fag34UPRF0zry1XGwmVY+79iibWwTqAoOiCzYJQOYTiWJ7CnqglA9tMSV8g45cQpHCMcBwr7dwhA==}
-    peerDependencies:
-      react: 18.3.0-canary-14898b6a9-20240318
-      react-dom: 18.3.0-canary-14898b6a9-20240318
 
   react-shallow-renderer@16.15.0:
     resolution: {integrity: sha512-oScf2FqQ9LFVQgA73vr86xl2NaOIX73rh+YFqcOp68CWj56tSfgtGKrEbyhCj0rSijyG9M1CYprTh39fBi5hzA==}
@@ -14107,6 +14107,10 @@ snapshots:
 
   entities@6.0.0: {}
 
+  entrijs@0.0.11:
+    dependencies:
+      react: 18.3.0-canary-14898b6a9-20240318
+
   env-paths@3.0.0: {}
 
   err-code@2.0.3: {}
@@ -16603,11 +16607,6 @@ snapshots:
       set-cookie-parser: 2.6.0
       turbo-stream: 2.4.0
     optionalDependencies:
-      react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-
-  react-script-hook@1.7.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
-    dependencies:
-      react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
   react-shallow-renderer@16.15.0(react@18.3.0-canary-14898b6a9-20240318):

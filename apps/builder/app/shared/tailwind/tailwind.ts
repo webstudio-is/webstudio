@@ -16,6 +16,160 @@ import {
 import { isBaseBreakpoint } from "../nano-states";
 import { preflight } from "./__generated__/preflight";
 
+const availableBreakpoints = [
+  { id: "1920", minWidth: 1920 },
+  { id: "1440", minWidth: 1440 },
+  { id: "1280", minWidth: 1280 },
+  { id: "base" },
+  { id: "991", maxWidth: 991 },
+  { id: "767", maxWidth: 767 },
+  { id: "479", maxWidth: 479 },
+];
+
+const tailwindToWebstudioMappings: Record<number, undefined | number> = {
+  639.9: 479,
+  640: 480,
+  767.9: 767,
+  1023.9: 991,
+  1024: 992,
+  1279.9: 1279,
+  1535.9: 1439,
+  1536: 1440,
+};
+
+type StyleDecl = Omit<ParsedStyleDecl, "selector">;
+
+type Breakpoint = {
+  styleDecl: StyleDecl;
+  minWidth?: number;
+  maxWidth?: number;
+};
+
+type Range = {
+  styleDecl: StyleDecl;
+  start: number;
+  end: number;
+};
+
+const serializeBreakpoint = (breakpoint: Breakpoint) => {
+  if (breakpoint?.minWidth !== undefined) {
+    return `(min-width: ${breakpoint.minWidth}px)`;
+  }
+  if (breakpoint?.maxWidth !== undefined) {
+    return `(max-width: ${breakpoint.maxWidth}px)`;
+  }
+};
+
+const UPPER_BOUND = Number.MAX_SAFE_INTEGER;
+
+const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
+  // collect lower bounds and ids
+  const values = new Set<number>([0]);
+  const styles = new Map<undefined | number, StyleDecl>();
+  for (const breakpoint of breakpoints) {
+    if (breakpoint.minWidth !== undefined) {
+      values.add(breakpoint.minWidth);
+      styles.set(breakpoint.minWidth, breakpoint.styleDecl);
+    } else if (breakpoint.maxWidth !== undefined) {
+      values.add(breakpoint.maxWidth + 1);
+      styles.set(breakpoint.maxWidth, breakpoint.styleDecl);
+    } else {
+      // base breakpoint
+      styles.set(undefined, breakpoint.styleDecl);
+    }
+  }
+  const sortedValues = Array.from(values).sort((left, right) => left - right);
+  const ranges: Range[] = [];
+  for (let index = 0; index < sortedValues.length; index += 1) {
+    const start = sortedValues[index];
+    let end;
+    if (index === sortedValues.length - 1) {
+      end = UPPER_BOUND;
+    } else {
+      end = sortedValues[index + 1] - 1;
+    }
+    const styleDecl =
+      styles.get(start) ?? styles.get(end) ?? styles.get(undefined);
+    if (styleDecl) {
+      ranges.push({ styleDecl, start, end });
+      continue;
+    }
+    // when declaration is missing add new one with unset value
+    // to fill the hole in breakpoints
+    // for example
+    // "sm:opacity-20" has a hole at the start
+    // "max-sm:opacity-10 md:opacity-20" has a whole in the middle
+    const example = Array.from(styles.values())[0];
+    if (example) {
+      const newStyleDecl: StyleDecl = {
+        ...example,
+        value: { type: "keyword", value: "unset" },
+      };
+      ranges.push({ styleDecl: newStyleDecl, start, end });
+    }
+  }
+  return ranges;
+};
+
+const rangesToBreakpoints = (ranges: Range[]) => {
+  const breakpoints: Breakpoint[] = [];
+  for (const { styleDecl, start, end } of ranges) {
+    let matchedBreakpoint;
+    for (const breakpoint of availableBreakpoints) {
+      if (breakpoint.minWidth === start) {
+        matchedBreakpoint = { styleDecl, minWidth: start };
+      }
+      if (breakpoint.maxWidth === end) {
+        matchedBreakpoint = { styleDecl, maxWidth: end };
+      }
+      if (
+        breakpoint.minWidth === undefined &&
+        breakpoint.maxWidth === undefined
+      ) {
+        matchedBreakpoint ??= { styleDecl };
+      }
+    }
+    if (matchedBreakpoint) {
+      styleDecl.breakpoint = serializeBreakpoint(matchedBreakpoint);
+      breakpoints.push(matchedBreakpoint);
+    }
+  }
+  return breakpoints;
+};
+
+const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
+  const breakpointGroups = new Map<string, Breakpoint[]>();
+  for (const styleDecl of parsedStyles) {
+    const mediaQuery = styleDecl.breakpoint
+      ? parseMediaQuery(styleDecl.breakpoint)
+      : undefined;
+    if (mediaQuery?.minWidth) {
+      mediaQuery.minWidth =
+        tailwindToWebstudioMappings[mediaQuery.minWidth] ?? mediaQuery.minWidth;
+    }
+    if (mediaQuery?.maxWidth) {
+      mediaQuery.maxWidth =
+        tailwindToWebstudioMappings[mediaQuery.maxWidth] ?? mediaQuery.maxWidth;
+    }
+    const groupKey = `${styleDecl.property}:${styleDecl.state ?? ""}`;
+    let group = breakpointGroups.get(groupKey);
+    if (group === undefined) {
+      group = [];
+      breakpointGroups.set(groupKey, group);
+    }
+    group.push({ styleDecl, ...mediaQuery });
+  }
+  const newStyles: typeof parsedStyles = [];
+  for (const group of breakpointGroups.values()) {
+    const ranges = breakpointsToRanges(group);
+    const newGroup = rangesToBreakpoints(ranges);
+    for (const { styleDecl } of newGroup) {
+      newStyles.push(styleDecl);
+    }
+  }
+  return newStyles;
+};
+
 const createUnoGenerator = async () => {
   return await createGenerator({
     presets: [
@@ -38,37 +192,36 @@ const parseTailwindClasses = async (classes: string) => {
   let hasColumnGaps = false;
   let hasRowGaps = false;
   let hasFlexOrGrid = false;
+  let hasContainer = false;
   classes = classes
     .split(" ")
     .map((item) => {
       // styles data cannot express space-x and space-y selectors
       // with lobotomized owl so replace with gaps
-      const spaceX = "space-x-";
-      if (item.startsWith(spaceX)) {
+      if (item.includes("space-x-")) {
         hasColumnGaps = true;
-        return `gap-x-${item.slice(spaceX.length)}`;
+        return item.replace("space-x-", "gap-x-");
       }
-      const spaceY = "space-y-";
-      if (item.startsWith(spaceY)) {
+      if (item.includes("space-y-")) {
         hasRowGaps = true;
-        return `gap-y-${item.slice(spaceY.length)}`;
+        return item.replace("space-y-", "gap-y-");
       }
-      if (item.endsWith("flex") || item.endsWith("grid")) {
-        hasFlexOrGrid = true;
-      }
+      hasFlexOrGrid ||= item.endsWith("flex") || item.endsWith("grid");
+      hasContainer ||= item === "container";
       return item;
     })
     .join(" ");
   const generated = await generator.generate(classes);
-  const css = generated.css;
-  let parsedStyles: Omit<ParsedStyleDecl, "selector">[] = [];
+  // use tailwind prefix instead of unocss one
+  const css = generated.css.replaceAll("--un-", "--tw-");
+  let parsedStyles: StyleDecl[] = [];
   // @todo probably builtin in v4
   if (css.includes("border")) {
     // Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
     // [UnoCSS]: allow to override the default border color with css var `--un-default-border-color`
     const reset = `.styles {
       border-style: solid;
-      border-color: var(--un-default-border-color, #e5e7eb);
+      border-color: var(--tw-default-border-color, #e5e7eb);
       border-width: 0;
     }`;
     parsedStyles.push(...parseCss(reset));
@@ -78,6 +231,14 @@ const parseTailwindClasses = async (classes: string) => {
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")
   );
+  // setup base breakpoint for container class
+  // to avoid hole in ranges
+  if (hasContainer) {
+    parsedStyles.unshift({
+      property: "max-width",
+      value: { type: "keyword", value: "none" },
+    });
+  }
   // gaps work only with flex and grid
   // so try to use one or another for different axes
   if (hasColumnGaps && !hasFlexOrGrid) {
@@ -87,11 +248,22 @@ const parseTailwindClasses = async (classes: string) => {
     });
   }
   if (hasRowGaps && !hasFlexOrGrid) {
-    parsedStyles.unshift({
-      property: "display",
-      value: { type: "keyword", value: "grid" },
-    });
+    parsedStyles.unshift(
+      {
+        property: "display",
+        value: { type: "keyword", value: "flex" },
+      },
+      {
+        property: "flex-direction",
+        value: { type: "keyword", value: "column" },
+      },
+      {
+        property: "align-items",
+        value: { type: "keyword", value: "start" },
+      }
+    );
   }
+  parsedStyles = adaptBreakpoints(parsedStyles);
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))
@@ -180,7 +352,7 @@ export const generateFragmentFromTailwind = async (
   };
   const createOrMergeLocalStyles = (
     instanceId: Instance["id"],
-    newStyles: Omit<ParsedStyleDecl, "selector">[]
+    newStyles: StyleDecl[]
   ) => {
     const localStyleSource =
       getLocalStyleSource(instanceId) ?? createLocalStyleSource(instanceId);

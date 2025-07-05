@@ -5,6 +5,7 @@ import { createProductionBuild } from "@webstudio-is/project-build/index.server"
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
 import { db } from "../db";
+import { isDomainUsingCloudflareNameservers } from "../rdap";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -23,6 +24,14 @@ export const domainRouter = router({
       } as const;
     }
   }),
+
+  findDomainRegistrar: procedure
+    .input(z.object({ domain: z.string() }))
+    .query(async ({ input }) => {
+      return {
+        cnameFlattening: await isDomainUsingCloudflareNameservers(input.domain),
+      };
+    }),
 
   project: procedure
     .input(z.object({ projectId: z.string() }))

@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromTailwind } from "./tailwind";
 
@@ -43,8 +43,8 @@ test("ignore dark mode", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-bg-opacity: 1;
-          background-color: rgb(255 255 255 / var(--un-bg-opacity));
+          --tw-bg-opacity: 1;
+          background-color: rgb(255 255 255 / var(--tw-bg-opacity));
         `}
       ></ws.element>
     )
@@ -90,7 +90,7 @@ test("generate border", async () => {
         ws:tag="div"
         ws:style={css`
           border-style: solid;
-          border-color: var(--un-default-border-color, #e5e7eb);
+          border-color: var(--tw-default-border-color, #e5e7eb);
           border-width: 1px;
         `}
       ></ws.element>
@@ -114,9 +114,9 @@ test("override border opacity", async () => {
         ws:tag="div"
         ws:style={css`
           border-style: solid;
+          border-color: rgb(229 231 235 / var(--tw-border-opacity));
           border-width: 1px;
-          border-color: rgb(229 231 235 / var(--un-border-opacity));
-          --un-border-opacity: 0.6;
+          --tw-border-opacity: 0.6;
         `}
       ></ws.element>
     )
@@ -133,17 +133,17 @@ test("generate shadow", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-ring-offset-shadow: 0 0 rgb(0 0 0 / 0);
-          --un-ring-shadow: 0 0 rgb(0 0 0 / 0);
-          --un-shadow-inset: ;
-          --un-shadow:
-            var(--un-shadow-inset) 0 1px 3px 0
-              var(--un-shadow-color, rgb(0 0 0 / 0.1)),
-            var(--un-shadow-inset) 0 1px 2px -1px
-              var(--un-shadow-color, rgb(0 0 0 / 0.1));
+          --tw-ring-offset-shadow: 0 0 rgb(0 0 0 / 0);
+          --tw-ring-shadow: 0 0 rgb(0 0 0 / 0);
+          --tw-shadow-inset: ;
+          --tw-shadow:
+            var(--tw-shadow-inset) 0 1px 3px 0
+              var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
+            var(--tw-shadow-inset) 0 1px 2px -1px
+              var(--tw-shadow-color, rgb(0 0 0 / 0.1));
           box-shadow:
-            var(--un-ring-offset-shadow), var(--un-ring-shadow),
-            var(--un-shadow);
+            var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+            var(--tw-shadow);
         `}
       ></ws.element>
     )
@@ -192,7 +192,7 @@ test("add preflight matching tags", async () => {
           /* this one comes from tag preflight */
           margin: 0;
           border-style: solid;
-          border-color: var(--un-default-border-color, #e5e7eb);
+          border-color: var(--tw-default-border-color, #e5e7eb);
           border-width: 1px;
           text-wrap: pretty;
         `}
@@ -234,11 +234,11 @@ test("extract states from tailwind classes", async () => {
       <ws.element
         ws:tag="div"
         ws:style={css`
-          --un-bg-opacity: 1;
-          background-color: rgb(79 70 229 / var(--un-bg-opacity));
+          --tw-bg-opacity: 1;
+          background-color: rgb(79 70 229 / var(--tw-bg-opacity));
           &:hover {
-            --un-bg-opacity: 1;
-            background-color: rgb(99 102 241 / var(--un-bg-opacity));
+            --tw-bg-opacity: 1;
+            background-color: rgb(99 102 241 / var(--tw-bg-opacity));
           }
         `}
       ></ws.element>
@@ -246,79 +246,337 @@ test("extract states from tailwind classes", async () => {
   );
 });
 
-test("extract new breakpoints from tailwind classes", async () => {
-  expect(
-    await generateFragmentFromTailwind(
-      renderTemplate(
-        <ws.element
-          ws:tag="div"
-          class="opacity-10 sm:opacity-20 md:opacity-30 lg:opacity-40 xl:opacity-50 2xl:opacity-60"
-        ></ws.element>
+describe("extract breakpoints", () => {
+  test("extract new breakpoints from tailwind classes", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20 md:opacity-30 lg:opacity-40 xl:opacity-50 2xl:opacity-60"
+          ></ws.element>
+        )
       )
-    )
-  ).toEqual(
-    renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          opacity: 0.1;
-          @media (min-width: 640px) {
-            opacity: 0.2;
-          }
-          @media (min-width: 768px) {
-            opacity: 0.3;
-          }
-          @media (min-width: 1024px) {
-            opacity: 0.4;
-          }
-          @media (min-width: 1280px) {
-            opacity: 0.5;
-          }
-          @media (min-width: 1536px) {
-            opacity: 0.6;
-          }
-        `}
-      ></ws.element>
-    )
-  );
-});
-
-test("merge tailwind breakpoints with already defined ones", async () => {
-  expect(
-    await generateFragmentFromTailwind(
+    ).toEqual(
       renderTemplate(
         <ws.element
           ws:tag="div"
           ws:style={css`
-            color: red;
-            @media (min-width: 640px) {
-              color: green;
+            /* base -> max-width: 479px */
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            /* min-width: 640px -> max-width: 767px */
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
+            /* min-width: 768px -> max-width: 991px */
+            @media (max-width: 991px) {
+              opacity: 0.3;
+            }
+            /* min-width: 1024px -> base */
+            opacity: 0.4;
+            /* unchanged */
+            @media (min-width: 1280px) {
+              opacity: 0.5;
+            }
+            /* min-width: 1536px -> min-width: 1440px */
+            @media (min-width: 1440px) {
+              opacity: 0.6;
             }
           `}
-          class="opacity-10 sm:opacity-20 md:opacity-30"
         ></ws.element>
       )
-    )
-  ).toEqual(
-    renderTemplate(
-      <ws.element
-        ws:tag="div"
-        ws:style={css`
-          color: red;
-          @media (min-width: 640px) {
-            color: green;
-          }
-          opacity: 0.1;
-          @media (min-width: 640px) {
+    );
+  });
+
+  test("base is first breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
             opacity: 0.2;
-          }
-          @media (min-width: 768px) {
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("base is last breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 xl:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+            @media (min-width: 1280px) {
+              opacity: 0.2;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("base is middle breakpoint", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:opacity-20 xl:opacity-30"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            opacity: 0.2;
+            @media (min-width: 1280px) {
+              opacity: 0.3;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("extract container class", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(<ws.element ws:tag="div" class="container"></ws.element>)
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              max-width: none;
+            }
+            @media (max-width: 767px) {
+              max-width: 640px;
+            }
+            @media (max-width: 991px) {
+              max-width: 768px;
+            }
+            max-width: 1024px;
+            @media (min-width: 1280px) {
+              max-width: 1280px;
+            }
+            @media (min-width: 1440px) {
+              max-width: 1536px;
+            }
+            width: 100%;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("merge tailwind breakpoints with already defined ones", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            ws:style={css`
+              @media (max-width: 479px) {
+                color: red;
+              }
+              color: green;
+            `}
+            class="opacity-10 sm:opacity-20 md:opacity-30"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              color: red;
+            }
+            color: green;
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
             opacity: 0.3;
-          }
-        `}
-      ></ws.element>
-    )
-  );
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("state", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 sm:hover:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+            @media (max-width: 479px) {
+              &:hover {
+                opacity: unset;
+              }
+            }
+            &:hover {
+              opacity: 0.2;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("adapt max-* breakpoints", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="max-sm:opacity-10 max-md:opacity-20 max-lg:opacity-30 max-xl:opacity-40 max-2xl:opacity-50 opacity-60"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            @media (max-width: 767px) {
+              opacity: 0.2;
+            }
+            @media (max-width: 991px) {
+              opacity: 0.3;
+            }
+            opacity: 0.4;
+            @media (min-width: 1280px) {
+              opacity: 0.5;
+            }
+            @media (min-width: 1440px) {
+              opacity: 0.6;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("ignore composite breakpoints", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="opacity-10 md:max-xl:flex"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            opacity: 0.1;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("use unset for missing base breakpoint 1", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element ws:tag="div" class="sm:opacity-10"></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: unset;
+            }
+            opacity: 0.1;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("use unset for missing base breakpoint 2", async () => {
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            class="max-sm:opacity-10 md:opacity-20"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              opacity: 0.1;
+            }
+            @media (max-width: 767px) {
+              opacity: unset;
+            }
+            opacity: 0.2;
+          `}
+        ></ws.element>
+      )
+    );
+  });
 });
 
 test("generate space without display property", async () => {
@@ -326,8 +584,8 @@ test("generate space without display property", async () => {
     await generateFragmentFromTailwind(
       renderTemplate(
         <>
-          <ws.element ws:tag="div" class="space-x-4"></ws.element>
-          <ws.element ws:tag="div" class="space-y-4"></ws.element>
+          <ws.element ws:tag="div" class="space-x-4 md:space-x-6"></ws.element>
+          <ws.element ws:tag="div" class="space-y-4 md:space-y-6"></ws.element>
         </>
       )
     )
@@ -338,14 +596,22 @@ test("generate space without display property", async () => {
           ws:tag="div"
           ws:style={css`
             display: flex;
-            column-gap: 1rem;
+            @media (max-width: 767px) {
+              column-gap: 1rem;
+            }
+            column-gap: 1.5rem;
           `}
         ></ws.element>
         <ws.element
           ws:tag="div"
           ws:style={css`
-            display: grid;
-            row-gap: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            @media (max-width: 767px) {
+              row-gap: 1rem;
+            }
+            row-gap: 1.5rem;
           `}
         ></ws.element>
       </>
@@ -379,11 +645,11 @@ test("generate space with display property", async () => {
         <ws.element
           ws:tag="div"
           ws:style={css`
-            display: none;
-            row-gap: 1rem;
-            @media (min-width: 768px) {
-              display: flex;
+            @media (max-width: 767px) {
+              display: none;
             }
+            display: flex;
+            row-gap: 1rem;
           `}
         ></ws.element>
       </>

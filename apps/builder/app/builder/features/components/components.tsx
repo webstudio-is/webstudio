@@ -8,7 +8,6 @@ import {
   type WsComponentMeta,
   componentCategories,
   collectionComponent,
-  parseComponentName,
   elementComponent,
 } from "@webstudio-is/sdk";
 import {
@@ -64,22 +63,6 @@ const $metas = computed(
     const availableComponents = new Set<string>();
     const metas: Meta[] = [];
     for (const [name, componentMeta] of componentMetas) {
-      const [namespace, shortName] = parseComponentName(name);
-      if (
-        isFeatureEnabled("animation") === false &&
-        namespace === "@webstudio-is/sdk-components-animation"
-      ) {
-        continue;
-      }
-
-      if (
-        isFeatureEnabled("videoAnimation") === false &&
-        namespace === "@webstudio-is/sdk-components-animation" &&
-        shortName === "VideoAnimation"
-      ) {
-        continue;
-      }
-
       // only set available components from component meta
       availableComponents.add(name);
       metas.push({
@@ -93,15 +76,6 @@ const $metas = computed(
     }
     for (const [name, templateMeta] of templates) {
       const componentMeta = componentMetas.get(name);
-      const [namespace, shortName] = parseComponentName(name);
-      if (
-        isFeatureEnabled("videoAnimation") === false &&
-        namespace === "@webstudio-is/sdk-components-animation" &&
-        shortName === "VideoAnimation"
-      ) {
-        continue;
-      }
-
       availableComponents.add(name);
       metas.push({
         name,

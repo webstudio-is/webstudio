@@ -18,6 +18,7 @@ import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
 import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
+import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -169,6 +170,10 @@ export const generateFragmentFromHtml = (
     }
     instances.set(instance.id, instance);
     for (const attr of node.attrs) {
+      // skip attributes which cannot be rendered in jsx
+      if (!isAttributeNameSafe(attr.name)) {
+        continue;
+      }
       const id = `${instance.id}:${attr.name}`;
       const instanceId = instance.id;
       const name = attr.name;
@@ -231,7 +236,8 @@ export const generateFragmentFromHtml = (
         }
       }
     }
-    for (const childNode of node.childNodes) {
+    for (let index = 0; index < node.childNodes.length; index += 1) {
+      const childNode = node.childNodes[index];
       if (defaultTreeAdapter.isElementNode(childNode)) {
         const child = convertElementToInstance(childNode);
         if (child) {
@@ -239,14 +245,28 @@ export const generateFragmentFromHtml = (
         }
       }
       if (defaultTreeAdapter.isTextNode(childNode)) {
-        if (spaceRegex.test(childNode.value)) {
-          continue;
+        // trim spaces around rich text
+        // do not for code
+        if (spaceRegex.test(childNode.value) && node.tagName !== "code") {
+          if (index === 0 || index === node.childNodes.length - 1) {
+            continue;
+          }
         }
         let child: Instance["children"][number] = {
           type: "text",
-          // collapse spacing characters inside of text to avoid preserved newlines
-          value: childNode.value.replaceAll(/\s+/g, " "),
+          value: childNode.value,
         };
+        if (node.tagName !== "code") {
+          // collapse spacing characters inside of text to avoid preserved newlines
+          child.value = child.value.replaceAll(/\s+/g, " ");
+          // remove unnecessary spacing in nodes
+          if (index === 0) {
+            child.value = child.value.trimStart();
+          }
+          if (index === node.childNodes.length - 1) {
+            child.value = child.value.trimEnd();
+          }
+        }
         // textarea content is initial value
         // and represented with fake value attribute
         if (node.tagName === "textarea") {
@@ -271,6 +291,10 @@ export const generateFragmentFromHtml = (
         //   <article></article>
         // </div>
         if (hasNonRichTextContent) {
+          // remove spaces between elements outside of rich text
+          if (spaceRegex.test(childNode.value)) {
+            continue;
+          }
           const span: Instance = {
             type: "instance",
             id: getNewId(),

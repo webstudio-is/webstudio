@@ -141,6 +141,7 @@ export const body: StyleDecl[] = [
 export const hr: StyleDecl[] = [
   { property: "height", value: { type: "unit", unit: "number", value: 0 } },
   { property: "color", value: { type: "keyword", value: "inherit" } },
+  { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
 ];
 
 export const b: StyleDecl[] = [

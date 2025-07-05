@@ -7,6 +7,9 @@ import {
   type Page,
   rootComponent,
   Pages,
+  findParentFolderByChildId,
+  getPagePath,
+  ROOT_FOLDER_ID,
 } from "@webstudio-is/sdk";
 import { $pages } from "./nano-states/pages";
 import { $instances, $selectedInstanceSelector } from "./nano-states/instances";
@@ -30,6 +33,22 @@ export const $selectedPage = computed(
       return;
     }
     return findPageByIdOrPath(awareness.pageId, pages);
+  }
+);
+
+export const $selectedPagePath = computed(
+  [$selectedPage, $pages],
+  (page, pages) => {
+    if (pages === undefined || page === undefined) {
+      return "/";
+    }
+    const parentFolder = findParentFolderByChildId(page.id, pages.folders);
+    const parentFolderId = parentFolder?.id ?? ROOT_FOLDER_ID;
+    const foldersPath = getPagePath(parentFolderId, pages);
+    return [foldersPath, page?.path ?? ""]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/");
   }
 );
 
