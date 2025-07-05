@@ -1,4 +1,10 @@
-import { forwardRef, type ComponentProps, type ElementRef } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ElementRef,
+} from "react";
 
 const languages = [
   "af",
@@ -281,7 +287,15 @@ type Country = (typeof countries)[number];
 type DateStyle = Intl.DateTimeFormatOptions["dateStyle"] | "none";
 type TimeStyle = Intl.DateTimeFormatOptions["timeStyle"] | "none";
 
-const INITIAL_DATE_STRING = "dateTime attribute is not set";
+const createInitialDate = () => {
+  const date = new Date();
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return date;
+};
+
+const INITIAL_DATE_STRING =
+  typeof window === "undefined" ? createInitialDate() : null;
 const INVALID_DATE_STRING = "";
 
 const DEFAULT_LANGUAGE = "en";
@@ -360,14 +374,23 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
       // native html attribute in react style
-      dateTime = INITIAL_DATE_STRING,
+      dateTime,
       ...props
     },
     ref
   ) => {
+    const [currentDate, setCurrentDate] = useState<string | Date | null>(
+      dateTime ?? INITIAL_DATE_STRING
+    );
     const locale = `${languageOrDefault(language)}-${countryOrDefault(
       country
     )}`;
+
+    useEffect(() => {
+      if (dateTime === undefined) {
+        setCurrentDate(new Date());
+      }
+    }, [dateTime]);
 
     const options: Intl.DateTimeFormatOptions = {
       dateStyle: dateStyleOrUndefined(dateStyle),
@@ -375,7 +398,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     };
 
     const datetimeString =
-      dateTime === null ? INVALID_DATE_STRING : dateTime.toString();
+      currentDate === null ? INVALID_DATE_STRING : currentDate.toString();
 
     const date = parseDate(datetimeString);
     let formattedDate = datetimeString;
