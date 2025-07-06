@@ -91,15 +91,14 @@ export const isDomainUsingCloudflareNameservers = async (domain: string) => {
     console.error(
       "RDAP Server for the given top level domain could not be found."
     );
+    return undefined;
   }
 
-  if (rdapServer) {
-    const data = await fetchRdap(rdapServer, domain);
-    if (data) {
-      // detect by nameservers rather than registrar url
-      // sometimes stored as *.NS.CLOUDFLARE.COM
-      return data.toLowerCase().includes(".ns.cloudflare.com");
-    }
+  const data = await fetchRdap(rdapServer, domain);
+  if (data) {
+    // detect by nameservers rather than registrar url
+    // sometimes stored as *.NS.CLOUDFLARE.COM
+    return data.toLowerCase().includes(".ns.cloudflare.com");
   }
   return false;
 };

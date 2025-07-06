@@ -28,8 +28,12 @@ export const domainRouter = router({
   findDomainRegistrar: procedure
     .input(z.object({ domain: z.string() }))
     .query(async ({ input }) => {
+      const isCloudflare = await isDomainUsingCloudflareNameservers(
+        input.domain
+      );
       return {
-        cnameFlattening: await isDomainUsingCloudflareNameservers(input.domain),
+        known: isCloudflare !== undefined,
+        cnameFlattening: isCloudflare === true,
       };
     }),
 
