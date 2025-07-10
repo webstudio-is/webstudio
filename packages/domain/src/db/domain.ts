@@ -54,7 +54,6 @@ export const create = async (
   }
 
   const validationResult = validateDomain(props.domain);
-
   if (validationResult.success === false) {
     return validationResult;
   }
@@ -74,7 +73,6 @@ export const create = async (
       { onConflict: "domain", ignoreDuplicates: true }
     )
     .eq("domain", domain);
-
   if (upsertResult.error) {
     return { success: false, error: upsertResult.error.message };
   }
@@ -85,21 +83,43 @@ export const create = async (
     .select("id")
     .eq("domain", domain)
     .single();
-
   if (domainRow.error) {
     return { success: false, error: domainRow.error.message };
   }
 
   const domainId = domainRow.data.id;
-  const txtRecord = crypto.randomUUID();
+
+  const verifications = [];
+  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
+  const createDomainResult = await context.domain.domainTrpc.create.mutate({
+    domain,
+  });
+  if (createDomainResult.success === false) {
+    return createDomainResult;
+  }
+  if (createDomainResult.data.verification) {
+    verifications.push(createDomainResult.data.verification);
+  }
+
+  // create additionally root certificate for www subdomain
+  if (domain.startsWith("www.")) {
+    const createDomainResult = await context.domain.domainTrpc.create.mutate({
+      domain: domain.slice("www.".length),
+    });
+    if (createDomainResult.success === false) {
+      return createDomainResult;
+    }
+    if (createDomainResult.data.verification) {
+      verifications.push(createDomainResult.data.verification);
+    }
+  }
 
   const result = await context.postgrest.client.from("ProjectDomain").insert({
     domainId,
     projectId: props.projectId,
-    txtRecord,
+    txtRecord: JSON.stringify(verifications),
     cname: await cnameFromUserId(ownerId),
   });
-
   if (result.error) {
     return { success: false, error: result.error.message };
   }
@@ -127,47 +147,10 @@ export const verify = async (
     throw new Error("You don't have access to create this project domains");
   }
 
-  const projectDomain = await context.postgrest.client
-    .from("ProjectDomain")
-    .select(
-      `
-      txtRecord,
-      cname,
-      domain:Domain(*)
-      `
-    )
-    .eq("domainId", props.domainId)
-    .eq("projectId", props.projectId)
-    .single();
-
-  if (projectDomain.error) {
-    return { success: false, error: projectDomain.error.message };
-  }
-
-  const domain = projectDomain.data.domain?.domain;
-
-  if (domain == null) {
-    return { success: false, error: "Domain not found" };
-  }
-
-  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
-  const createDomainResult = await context.domain.domainTrpc.create.mutate({
-    domain,
-    txtRecord: projectDomain.data.txtRecord,
-  });
-
-  if (createDomainResult.success === false) {
-    return createDomainResult;
-  }
-
   const domainUpdateResult = await context.postgrest.client
     .from("Domain")
-    .update({
-      status: "PENDING",
-      txtRecord: projectDomain.data.txtRecord,
-    })
+    .update({ status: "PENDING" })
     .eq("id", props.domainId);
-
   if (domainUpdateResult.error) {
     return { success: false, error: domainUpdateResult.error.message };
   }
@@ -254,6 +237,7 @@ export const updateStatus = async (
   // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,
+    method: "txt",
   });
 
   if (statusResult.success === false) {

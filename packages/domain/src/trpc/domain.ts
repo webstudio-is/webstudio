@@ -54,6 +54,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   publish: procedure
     .input(
       z.discriminatedUnion("destination", [
@@ -91,15 +92,13 @@ export const domainRouter = router({
               currentProjectDomains.some(
                 (projectDomain) =>
                   projectDomain.domain === domain &&
-                  projectDomain.status === "ACTIVE" &&
-                  projectDomain.verified
+                  projectDomain.status === "ACTIVE"
               )
             )
           );
 
           hasCustomDomain = currentProjectDomains.some(
-            (projectDomain) =>
-              projectDomain.status === "ACTIVE" && projectDomain.verified
+            (projectDomain) => projectDomain.status === "ACTIVE"
           );
         }
 
@@ -157,6 +156,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   /**
    * Update *.wstd.* domain
    */
@@ -243,6 +243,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   remove: procedure
     .input(
       z.object({
@@ -266,6 +267,7 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
   countTotalDomains: procedure.query(async ({ ctx }) => {
     try {
       if (

@@ -29,7 +29,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Entri } from "./entri";
+import { Entri, type DnsRecord } from "./entri";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
 import { $publisherHost } from "~/shared/nano-states";
@@ -38,6 +38,7 @@ import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
+import { z } from "zod";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -50,9 +51,7 @@ const InputEllipsis = styled(InputField, {
 });
 
 export const getStatus = (projectDomain: Domain) =>
-  projectDomain.verified
-    ? (`VERIFIED_${projectDomain.status}` as const)
-    : `UNVERIFIED`;
+  `VERIFIED_${projectDomain.status}` as const;
 
 export const PENDING_TIMEOUT =
   process.env.NODE_ENV === "production" ? 60 * 3 * 1000 : 35000;
@@ -99,10 +98,6 @@ const getStatusText = (props: {
   let text: ReactNode = "Something went wrong";
 
   switch (status) {
-    case "UNVERIFIED":
-      text = "Status: Not verified";
-      break;
-
     case "VERIFIED_INITIALIZING":
       text = "Status: Initializing CNAME";
       break;
@@ -182,9 +177,8 @@ const DomainItem = ({
 
   const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  const status = projectDomain.verified
-    ? (`VERIFIED_${projectDomain.status}` as `VERIFIED_${DomainStatus}`)
-    : `UNVERIFIED`;
+  const status =
+    `VERIFIED_${projectDomain.status}` as `VERIFIED_${DomainStatus}`;
 
   const [isStatusLoading, setIsStatusLoading] = useState(
     initiallyOpen ||
@@ -214,22 +208,12 @@ const DomainItem = ({
     await refresh();
   };
 
-  const [verifyError, setVerifyError] = useState<string | undefined>(undefined);
-
   const handleVerify = useEffectEvent(async () => {
-    setVerifyError(undefined);
     setIsCheckStateInProgress(true);
-
-    const verifyResult = await nativeClient.domain.verify.mutate({
+    await nativeClient.domain.verify.mutate({
       projectId: projectDomain.projectId,
       domainId: projectDomain.domainId,
     });
-
-    if (verifyResult.success === false) {
-      setVerifyError(verifyResult.error);
-      return;
-    }
-
     await refresh();
   });
 
@@ -267,17 +251,10 @@ const DomainItem = ({
       return;
     }
 
-    if (status === "UNVERIFIED") {
-      startTransition(async () => {
-        await handleVerify();
-        await handleUpdateStatus();
-      });
-      return;
-    }
     startTransition(async () => {
       await handleUpdateStatus();
     });
-  }, [status, handleVerify, handleUpdateStatus, isStatusLoading]);
+  }, [status, handleUpdateStatus, isStatusLoading]);
 
   const domainStatus = getStatus(projectDomain);
 
@@ -288,20 +265,30 @@ const DomainItem = ({
 
   const publisherHost = useStore($publisherHost);
   const cname = extractCname(projectDomain.domain);
-  const dnsRecords = [
+  let verifications;
+  try {
+    verifications = z
+      .array(z.object({ name: z.string(), value: z.string() }))
+      .parse(JSON.parse(projectDomain.expectedTxtRecord));
+  } catch {
+    // empty block
+  }
+  const dnsRecords: DnsRecord[] = [
     {
       type: "CNAME",
       host: cname,
       value: `${projectDomain.cname}.customers.${publisherHost}`,
       ttl: 300,
-    } as const,
-    {
-      type: "TXT",
-      host: cname === "@" ? "_webstudio_is" : `_webstudio_is.${cname}`,
-      value: projectDomain.expectedTxtRecord,
-      ttl: 300,
-    } as const,
+    },
   ];
+  for (const { name, value } of verifications ?? []) {
+    dnsRecords.push({
+      type: "TXT",
+      host: name,
+      value,
+      ttl: 300,
+    });
+  }
 
   return (
     <CollapsibleDomainSection
@@ -343,7 +330,7 @@ const DomainItem = ({
         </Grid>
       }
     >
-      {status === "UNVERIFIED" && (
+      {status === "VERIFIED_INITIALIZING" && (
         <>
           <Button
             formAction={handleVerify}
@@ -356,7 +343,7 @@ const DomainItem = ({
         </>
       )}
 
-      {status !== "UNVERIFIED" && (
+      {status !== "VERIFIED_INITIALIZING" && (
         <>
           {updateStatusError && (
             <Text color="destructive">{updateStatusError}</Text>
@@ -383,33 +370,9 @@ const DomainItem = ({
 
       <Grid gap={2} css={{ mt: theme.spacing[5] }}>
         <Grid gap={1}>
-          {status === "UNVERIFIED" && (
-            <>
-              {verifyError ? (
-                <Text color="destructive">
-                  Status: Failed to verify
-                  <br />
-                  {verifyError}
-                </Text>
-              ) : (
-                <>
-                  <Text color="destructive">Status: Not verified</Text>
-                  <Text color="subtle">
-                    Verification may take up to 24 hours but usually takes only
-                    a few minutes.
-                  </Text>
-                </>
-              )}
-            </>
-          )}
-
-          {status !== "UNVERIFIED" && (
-            <>
-              <Text color={isVerifiedActive ? "success" : "destructive"}>
-                {text}
-              </Text>
-            </>
-          )}
+          <Text color={isVerifiedActive ? "success" : "destructive"}>
+            {text}
+          </Text>
         </Grid>
 
         <Text color="subtle">
@@ -480,15 +443,6 @@ const DomainItem = ({
           dnsRecords={dnsRecords}
           domain={projectDomain.domain}
           onClose={() => {
-            // Sometimes Entri modal dialog hangs even if it's successful,
-            // until they fix that, we'll just refresh the status here on every onClose event
-            if (status === "UNVERIFIED") {
-              startTransition(async () => {
-                await handleVerify();
-                await handleUpdateStatus();
-              });
-              return;
-            }
             startTransition(async () => {
               await handleUpdateStatus();
             });
