@@ -64,25 +64,32 @@ export const SectionBackups = () => {
   return (
     <Grid gap={2} css={sectionSpacing}>
       <Text variant="titles">Backups</Text>
-      <Select
-        options={options}
-        getValue={(option) => option.buildId ?? ""}
-        getLabel={(option) => {
-          if (!option.createdAt) {
-            return;
-          }
-          let label = formatPublishDate(option.createdAt);
-          if (option.domains) {
-            label += ` (${option.domains})`;
-          }
-          return label;
-        }}
-        value={backupBuild}
-        onChange={setBackupBuild}
-      />
+      {options.length ? (
+        <Select
+          options={options}
+          getValue={(option) => option.buildId ?? ""}
+          getLabel={(option) => {
+            if (!option.createdAt) {
+              return;
+            }
+            let label = formatPublishDate(option.createdAt);
+            if (option.domains) {
+              label += ` (${option.domains})`;
+            }
+            return label;
+          }}
+          value={backupBuild}
+          onChange={setBackupBuild}
+        />
+      ) : (
+        <Text>No backups</Text>
+      )}
       <Dialog>
         <DialogTrigger asChild>
-          <Button css={{ justifySelf: "start" }} disabled={!hasProPlan}>
+          <Button
+            css={{ justifySelf: "start" }}
+            disabled={!hasProPlan || options.length === 0}
+          >
             Restore
           </Button>
         </DialogTrigger>
