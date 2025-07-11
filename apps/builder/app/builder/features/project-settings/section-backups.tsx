@@ -41,7 +41,7 @@ export const SectionBackups = () => {
   const projectId = $project.get()?.id ?? "";
   useEffect(() => {
     load({ projectId });
-  }, [projectId]);
+  }, [load, projectId]);
   const options = data?.success ? data.data : [];
   const [backupBuild = options.at(0), setBackupBuild] = useState<
     undefined | (typeof options)[number]
