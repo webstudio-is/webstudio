@@ -1,9 +1,4 @@
-import {
-  ContentIcon,
-  DiscordIcon,
-  LifeBuoyIcon,
-  YoutubeIcon,
-} from "@webstudio-is/icons";
+import { ContentIcon, DiscordIcon, YoutubeIcon } from "@webstudio-is/icons";
 
 export const help = [
   {
