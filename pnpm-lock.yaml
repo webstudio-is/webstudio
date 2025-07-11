@@ -1783,6 +1783,9 @@ importers:
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../asset-uploader
+      '@webstudio-is/authorization-token':
+        specifier: workspace:*
+        version: link:../authorization-token
       '@webstudio-is/project-build':
         specifier: workspace:*
         version: link:../project-build
