@@ -102,14 +102,14 @@ export const SectionBackups = () => {
           >
             <Text>
               Are you sure you want to restore the project to its published
-              version?{" "}
-              {backupBuild?.createdAt && (
-                <Text as="span" color="destructive">
-                  All changes made after{" "}
-                  {formatPublishDate(backupBuild.createdAt)} will be lost.
-                </Text>
-              )}
+              version?
             </Text>
+            {backupBuild?.createdAt && (
+              <Text color="destructive">
+                All changes made after{" "}
+                {formatPublishDate(backupBuild.createdAt)} will be lost.
+              </Text>
+            )}
             <Flex gap="2" justify="end">
               <DialogClose>
                 <Button color="ghost">Cancel</Button>
