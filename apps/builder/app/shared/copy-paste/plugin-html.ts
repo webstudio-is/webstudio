@@ -4,7 +4,7 @@ import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
 import type { Plugin } from "./init-copy-paste";
 
-const inceptionMark = `<!-- Generated with Inception by Webstudio -->`;
+const inceptionMark = `<!-- @webstudio/incation/1 -->`;
 
 export const html: Plugin = {
   name: "html",
