@@ -142,6 +142,12 @@ export const Menu = () => {
             <Kbd value={["backspace"]} />
           </DropdownMenuItemRightSlot>
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => emitCommand("save")}>
+          Save
+          <DropdownMenuItemRightSlot>
+            <Kbd value={["meta", "s"]} />
+          </DropdownMenuItemRightSlot>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => emitCommand("togglePreviewMode")}>
           Preview

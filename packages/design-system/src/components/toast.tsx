@@ -391,4 +391,5 @@ export const toast = {
     hotToast.custom(value, options),
   success: (value: JSX.Element | string, options?: Options) =>
     hotToast.success(value, options),
+  dismiss: hotToast.dismiss,
 };
