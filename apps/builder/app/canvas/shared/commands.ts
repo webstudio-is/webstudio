@@ -28,6 +28,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   commands: [
     {
       name: "deleteInstanceCanvas",
+      hidden: true,
       defaultHotkeys: ["backspace", "delete"],
       preventDefault: false,
       disableHotkeyOutsideApp: true,
