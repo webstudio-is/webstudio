@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/sdk";
 import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import {
-  findTags,
+  findByTags,
   getAttr,
   getTextContent,
   loadHtmlIndices,
@@ -123,11 +123,11 @@ const overrides: Record<
 // Crawl WHATWG HTML.
 const html = await loadHtmlIndices();
 const document = parseHtml(html);
-const table = findTags(document, "table").find(
+const table = findByTags(document, "table").find(
   (table) => getAttr(table, "id")?.value === "attributes-1"
 );
-const [tbody] = findTags(table, "tbody");
-const rows = findTags(tbody, "tr");
+const [tbody] = findByTags(table, "tbody");
+const rows = findByTags(tbody, "tr");
 
 const attributesByTag: Record<string, Attribute[]> = {};
 // textarea does not have value attribute and text content is used as initial value
