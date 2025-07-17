@@ -497,6 +497,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "deleteInstanceBuilder",
+      label: "Delete Instance",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
       disableHotkeyOutsideApp: true,
