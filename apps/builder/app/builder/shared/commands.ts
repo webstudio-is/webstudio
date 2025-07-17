@@ -56,6 +56,7 @@ import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
 import { $instanceTags } from "../features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
+import { isSyncIdle } from "./sync/sync-server";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -629,6 +630,22 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.redo();
+      },
+    },
+
+    {
+      name: "save",
+      defaultHotkeys: ["meta+s", "ctrl+s"],
+      handler: async () => {
+        toast.dismiss("save-success");
+        try {
+          await isSyncIdle();
+          toast.success("Project saved successfully", { id: "save-success" });
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(error.message);
+          }
+        }
       },
     },
 

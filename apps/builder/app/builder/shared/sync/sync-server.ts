@@ -324,6 +324,38 @@ export class ServerSyncStorage implements SyncStorage {
   }
 }
 
+/**
+ * Promisify idle state of the queue for a one-off notification when everything is saved.
+ */
+export const isSyncIdle = () => {
+  return new Promise<QueueStatus>((resolve, reject) => {
+    const handle = (status: QueueStatus) => {
+      if (status.status === "idle") {
+        resolve(status);
+        return true;
+      }
+      if (status.status === "fatal") {
+        reject(
+          new Error(
+            "Synchronization is in fatal state. Please reload the page or check your internet connection."
+          )
+        );
+        return true;
+      }
+      return false;
+    };
+    const status = $queueStatus.get();
+
+    if (handle(status) === false) {
+      const unsubscribe = $queueStatus.subscribe((status) => {
+        if (handle(status)) {
+          unsubscribe();
+        }
+      });
+    }
+  });
+};
+
 type SyncServerProps = {
   projectId: Project["id"];
   authPermit: AuthPermit;
