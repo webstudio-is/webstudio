@@ -12,50 +12,7 @@ const literalUnion = <T extends readonly string[]>(arr: T) =>
   );
 
 // Range Units
-export const RANGE_UNITS = [
-  "%",
-  "px",
-  "cm",
-  "mm",
-  "q",
-  "in",
-  "pt",
-  "pc",
-  "em",
-  "rem",
-  "ex",
-  "rex",
-  "cap",
-  "rcap",
-  "ch",
-  "rch",
-  "lh",
-  "rlh",
-  "vw",
-  "svw",
-  "lvw",
-  "dvw",
-  "vh",
-  "svh",
-  "lvh",
-  "dvh",
-  "vi",
-  "svi",
-  "lvi",
-  "dvi",
-  "vb",
-  "svb",
-  "lvb",
-  "dvb",
-  "vmin",
-  "svmin",
-  "lvmin",
-  "dvmin",
-  "vmax",
-  "svmax",
-  "lvmax",
-  "dvmax",
-] as const;
+export const RANGE_UNITS = ["%", "px"] as const;
 
 export const rangeUnitSchema = literalUnion(RANGE_UNITS);
 

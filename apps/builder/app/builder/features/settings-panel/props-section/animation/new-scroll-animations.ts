@@ -25,8 +25,8 @@ const newFadeInScrollAnimation: ScrollAnimation = {
   description: "Fade in the element as it scrolls into view.",
 
   timing: {
-    rangeStart: ["start", { type: "unit", value: 0, unit: "%" }],
-    rangeEnd: ["start", { type: "unit", value: 50, unit: "dvh" }],
+    rangeStart: ["start", { type: "unit", value: 0, unit: "px" }],
+    rangeEnd: ["start", { type: "unit", value: 50, unit: "px" }],
     fill: "backwards",
     easing: "linear",
   },
@@ -45,8 +45,8 @@ const newFadeOutScrollAnimation: ScrollAnimation = {
   description: "Fade out the element as it scrolls out of view.",
 
   timing: {
-    rangeStart: ["end", { type: "unit", value: 50, unit: "dvh" }],
-    rangeEnd: ["end", { type: "unit", value: 0, unit: "%" }],
+    rangeStart: ["end", { type: "unit", value: 50, unit: "px" }],
+    rangeEnd: ["end", { type: "unit", value: 0, unit: "px" }],
     fill: "backwards",
     easing: "linear",
   },
