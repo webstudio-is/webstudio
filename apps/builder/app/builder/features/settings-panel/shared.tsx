@@ -11,7 +11,11 @@ import {
   type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
-import { ariaAttributes, attributesByTag } from "@webstudio-is/html-data";
+import {
+  ariaAttributes,
+  attributesByTag,
+  elementsByTag,
+} from "@webstudio-is/html-data";
 import {
   reactPropsToStandardAttributes,
   showAttribute,
@@ -465,12 +469,15 @@ export const $selectedInstancePropsMetas = computed(
     const propsMetas = new Map<Prop["name"], PropMeta>();
     // add html attributes only when instance has tag
     if (tag) {
-      for (const attribute of [...ariaAttributes].reverse()) {
-        propsMetas.set(attribute.name, attributeToMeta(attribute));
-      }
-      if (attributesByTag["*"]) {
-        for (const attribute of [...attributesByTag["*"]].reverse()) {
+      if (elementsByTag[tag].categories.includes("html-element")) {
+        for (const attribute of [...ariaAttributes].reverse()) {
           propsMetas.set(attribute.name, attributeToMeta(attribute));
+        }
+        // include global attributes only for html elements
+        if (attributesByTag["*"]) {
+          for (const attribute of [...attributesByTag["*"]].reverse()) {
+            propsMetas.set(attribute.name, attributeToMeta(attribute));
+          }
         }
       }
       if (attributesByTag[tag]) {

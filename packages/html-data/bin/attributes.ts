@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import hash from "@emotion/hash";
 import {
   coreMetas,
   createScope,
@@ -10,13 +11,16 @@ import {
 } from "@webstudio-is/sdk";
 import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import {
+  findByClasses,
   findByTags,
   getAttr,
   getTextContent,
   loadHtmlIndices,
+  loadSvgSinglePage,
   parseHtml,
 } from "./crawler";
 import { possibleStandardNames } from "./possible-standard-names";
+import { ignoredTags } from "./overrides";
 
 const validHtmlAttributes = new Set<string>();
 
@@ -28,14 +32,7 @@ type Attribute = {
   options?: string[];
 };
 
-const overrides: Record<
-  string,
-  false | Record<string, false | Partial<Attribute>>
-> = {
-  template: false,
-  link: false,
-  script: false,
-  style: false,
+const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
   "*": {
     // react has own opinions about it
     style: false,
@@ -215,8 +212,7 @@ for (const row of rows) {
     if (/custom elements/i.test(tag)) {
       continue;
     }
-    const tagOverride = overrides[tag];
-    if (tagOverride === false) {
+    if (ignoredTags.includes(tag)) {
       continue;
     }
     if (!attributesByTag[tag]) {
@@ -224,7 +220,7 @@ for (const row of rows) {
     }
     const attributes = attributesByTag[tag];
     if (!attributes.some((item) => item.name === attribute)) {
-      const override = tagOverride?.[attribute];
+      const override = overrides[tag]?.[attribute];
       if (override !== false) {
         attributes.push({
           name: attribute,
@@ -238,18 +234,105 @@ for (const row of rows) {
   }
 }
 
+{
+  const svg = await loadSvgSinglePage();
+  const document = parseHtml(svg);
+  const attributeOptions = new Map<string, string[]>();
+  // find all property definition and extract there keywords
+  for (const propdef of findByClasses(document, "propdef")) {
+    let options: undefined | string[];
+    for (const row of findByTags(propdef, "tr")) {
+      const [nameNode, valueNode] = row.childNodes;
+      const name = getTextContent(nameNode);
+      const list = getTextContent(valueNode)
+        .trim()
+        .split(/\s+\|\s+/);
+      if (
+        name.toLowerCase().includes("value") &&
+        list.every((item) => item.match(/^[a-zA-Z-]+$/))
+      ) {
+        options = list;
+      }
+    }
+    for (const propNameNode of findByClasses(propdef, "propdef-title")) {
+      const propName = getTextContent(propNameNode).slice(1, -1);
+      if (options) {
+        attributeOptions.set(propName, options);
+      }
+    }
+  }
+
+  for (const summary of findByClasses(document, "element-summary")) {
+    const [tag] = findByClasses(summary, "element-summary-name").map((item) =>
+      getTextContent(item).slice(1, -1)
+    );
+    // ignore existing
+    if (attributesByTag[tag] || ignoredTags.includes(tag)) {
+      continue;
+    }
+    const attributes = new Set<string>();
+    const [dl] = findByTags(summary, "dl");
+    for (let index = 0; index < dl.childNodes.length; index += 1) {
+      const child = dl.childNodes[index];
+      if (getTextContent(child).toLowerCase().includes("attributes")) {
+        const dd = dl.childNodes[index + 1];
+        for (const attrNameNode of findByClasses(dd, "attr-name")) {
+          const attrName = getTextContent(attrNameNode).slice(1, -1);
+          // skip events
+          if (attrName.startsWith("on") || attrName === "style") {
+            continue;
+          }
+          validHtmlAttributes.add(attrName);
+          attributes.add(attrName);
+        }
+      }
+    }
+    attributesByTag[tag] = Array.from(attributes)
+      .sort()
+      .map((name) => {
+        let options = attributeOptions.get(name);
+        if (name === "externalResourcesRequired") {
+          options = ["true", "false"];
+        }
+        if (name === "accumulate") {
+          options = ["none", "sum"];
+        }
+        if (name === "additive") {
+          options = ["replace", "sum"];
+        }
+        if (name === "preserveAlpha") {
+          options = ["true", "false"];
+        }
+        if (options) {
+          return { name, description: "", type: "select", options };
+        }
+        return { name, description: "", type: "string" };
+      });
+  }
+}
+
 // sort tags and attributes
 const tags = Object.keys(attributesByTag).sort();
+const attributesByHash = new Map<string, Attribute>();
+const reusableAttributesByHash = new Map<string, Attribute>();
 for (const tag of tags) {
   const attributes = attributesByTag[tag];
   delete attributesByTag[tag];
-  attributes.sort();
+  attributes.sort((left, right) => left.name.localeCompare(right.name));
   if (attributes.length > 0) {
+    for (const attribute of attributes) {
+      const attributeHash = hash(JSON.stringify(attribute));
+      if (attributesByHash.has(attributeHash)) {
+        reusableAttributesByHash.set(attributeHash, attribute);
+      } else {
+        attributesByHash.set(attributeHash, attribute);
+      }
+    }
     attributesByTag[tag] = attributes;
   }
 }
 
-const attributesContent = `type Attribute = {
+let attributesContent = `type Attribute = {
   name: string,
   description: string,
   required?: boolean,
@@ -257,8 +340,43 @@ const attributesContent = `type Attribute = {
   options?: string[]
 }
 
-export const attributesByTag: Record<string, undefined | Attribute[]> = ${JSON.stringify(attributesByTag, null, 2)};
 `;
+
+const attributeVariableByHash = new Map<string, string>();
+for (const [key, attribute] of reusableAttributesByHash) {
+  const normalizedName = attribute.name
+    .replaceAll("-", "_")
+    .replaceAll(":", "_");
+  const variableName = `attribute_${normalizedName}_${key}`;
+  attributeVariableByHash.set(key, variableName);
+  attributesContent += `const ${variableName}: Attribute = ${JSON.stringify(attribute, null, 2)};\n\n`;
+}
+
+const serializableAttributesByTag: Record<
+  string,
+  Array<string | Attribute>
+> = {};
+for (const tag of tags) {
+  const attributes = attributesByTag[tag];
+  serializableAttributesByTag[tag] = attributes.map((attribute) => {
+    const key = hash(JSON.stringify(attribute));
+    const variableName = attributeVariableByHash.get(key);
+    if (variableName) {
+      return variableName;
+    }
+    return attribute;
+  });
+}
+
+attributesContent += `
+export const attributesByTag: Record<string, undefined | Attribute[]> = ${JSON.stringify(serializableAttributesByTag, null, 2)};
+`;
+for (const variableName of attributeVariableByHash.values()) {
+  attributesContent = attributesContent.replaceAll(
+    `"${variableName}"`,
+    variableName
+  );
+}
 
 await mkdir("./src/__generated__", { recursive: true });
 await writeFile("./src/__generated__/attributes.ts", attributesContent);
