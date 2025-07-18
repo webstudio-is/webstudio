@@ -1613,6 +1613,9 @@ importers:
 
   packages/html-data:
     devDependencies:
+      '@emotion/hash':
+        specifier: ^0.9.2
+        version: 0.9.2
       '@types/aria-query':
         specifier: ^5.0.4
         version: 5.0.4
@@ -3961,6 +3964,7 @@ packages:
   '@miniflare/core@2.14.4':
     resolution: {integrity: sha512-FMmZcC1f54YpF4pDWPtdQPIO8NXfgUxCoR9uyrhxKJdZu7M6n8QKopPVNuaxR40jcsdxb7yKoQoFWnHfzJD9GQ==}
     engines: {node: '>=16.13'}
+    deprecated: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
 
   '@miniflare/html-rewriter@2.14.4':
     resolution: {integrity: sha512-GB/vZn7oLbnhw+815SGF+HU5EZqSxbhIa3mu2L5MzZ2q5VOD5NHC833qG8c2GzDPhIaZ99ITY+ZJmbR4d+4aNQ==}
@@ -3970,14 +3974,17 @@ packages:
   '@miniflare/queues@2.14.4':
     resolution: {integrity: sha512-aXQ5Ik8Iq1KGMBzGenmd6Js/jJgqyYvjom95/N9GptCGpiVWE5F0XqC1SL5rCwURbHN+aWY191o8XOFyY2nCUA==}
     engines: {node: '>=16.7'}
+    deprecated: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
 
   '@miniflare/shared@2.14.4':
     resolution: {integrity: sha512-upl4RSB3hyCnITOFmRZjJj4A72GmkVrtfZTilkdq5Qe5TTlzsjVeDJp7AuNUM9bM8vswRo+N5jOiot6O4PVwwQ==}
     engines: {node: '>=16.13'}
+    deprecated: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
 
   '@miniflare/watcher@2.14.4':
     resolution: {integrity: sha512-PYn05ET2USfBAeXF6NZfWl0O32KVyE8ncQ/ngysrh3hoIV7l3qGGH7ubeFx+D8VWQ682qYhwGygUzQv2j1tGGg==}
     engines: {node: '>=16.13'}
+    deprecated: Miniflare v2 is no longer supported. Please upgrade to Miniflare v4
 
   '@mjackson/node-fetch-server@0.2.0':
     resolution: {integrity: sha512-EMlH1e30yzmTpGLQjlFmaDAjyOeZhng1/XCd7DExR8PNAnG/G1tyruZxEoUe11ClnwGhGrtsdnyyUx1frSzjng==}
@@ -7900,6 +7907,7 @@ packages:
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    deprecated: Use your platform's native DOMException instead
 
   node-fetch-native@1.6.4:
     resolution: {integrity: sha512-IhOigYzAKHd244OC0JIMIUrjzctirCmPkaIfhDeGcEETWof5zKYUW7e7MYvChGWh/4CJeXEgsRyGzuF334rOOQ==}
@@ -9039,6 +9047,7 @@ packages:
 
   token-transformer@0.0.28:
     resolution: {integrity: sha512-DINP+5T3ruZwOWMNd5mJMiM3h5YvwZEoRL+NAKZf+e93/5Vy1P0R5eWeaynCWcqprPNm4ceV5CPgjqo1u48big==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     hasBin: true
 
   toml@3.0.0:

@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import hash from "@emotion/hash";
 import {
   coreMetas,
   createScope,
@@ -312,16 +313,26 @@ for (const row of rows) {
 
 // sort tags and attributes
 const tags = Object.keys(attributesByTag).sort();
+const attributesByHash = new Map<string, Attribute>();
+const reusableAttributesByHash = new Map<string, Attribute>();
 for (const tag of tags) {
   const attributes = attributesByTag[tag];
   delete attributesByTag[tag];
-  attributes.sort();
+  attributes.sort((left, right) => left.name.localeCompare(right.name));
   if (attributes.length > 0) {
+    for (const attribute of attributes) {
+      const attributeHash = hash(JSON.stringify(attribute));
+      if (attributesByHash.has(attributeHash)) {
+        reusableAttributesByHash.set(attributeHash, attribute);
+      } else {
+        attributesByHash.set(attributeHash, attribute);
+      }
+    }
     attributesByTag[tag] = attributes;
   }
 }
 
-const attributesContent = `type Attribute = {
+let attributesContent = `type Attribute = {
   name: string,
   description: string,
   required?: boolean,
@@ -329,8 +340,43 @@ const attributesContent = `type Attribute = {
   options?: string[]
 }
 
-export const attributesByTag: Record<string, undefined | Attribute[]> = ${JSON.stringify(attributesByTag, null, 2)};
 `;
+
+const attributeVariableByHash = new Map<string, string>();
+for (const [key, attribute] of reusableAttributesByHash) {
+  const normalizedName = attribute.name
+    .replaceAll("-", "_")
+    .replaceAll(":", "_");
+  const variableName = `attribute_${normalizedName}_${key}`;
+  attributeVariableByHash.set(key, variableName);
+  attributesContent += `const ${variableName}: Attribute = ${JSON.stringify(attribute, null, 2)};\n\n`;
+}
+
+const serializableAttributesByTag: Record<
+  string,
+  Array<string | Attribute>
+> = {};
+for (const tag of tags) {
+  const attributes = attributesByTag[tag];
+  serializableAttributesByTag[tag] = attributes.map((attribute) => {
+    const key = hash(JSON.stringify(attribute));
+    const variableName = attributeVariableByHash.get(key);
+    if (variableName) {
+      return variableName;
+    }
+    return attribute;
+  });
+}
+
+attributesContent += `
+export const attributesByTag: Record<string, undefined | Attribute[]> = ${JSON.stringify(serializableAttributesByTag, null, 2)};
+`;
+for (const variableName of attributeVariableByHash.values()) {
+  attributesContent = attributesContent.replaceAll(
+    `"${variableName}"`,
+    variableName
+  );
+}
 
 await mkdir("./src/__generated__", { recursive: true });
 await writeFile("./src/__generated__/attributes.ts", attributesContent);
