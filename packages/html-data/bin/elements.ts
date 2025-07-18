@@ -8,6 +8,7 @@ import {
   loadSvgSinglePage,
   parseHtml,
 } from "./crawler";
+import { ignoredTags } from "./overrides";
 
 // Crawl WHATWG HTML.
 
@@ -59,6 +60,9 @@ const elementsByTag: Record<string, Element> = {};
     categories.unshift("html-element");
     let children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
+      if (ignoredTags.includes(tag)) {
+        continue;
+      }
       // textarea does not have value attribute and text content is used as initial value
       // introduce fake value attribute to manage initial state similar to input
       if (tag === "textarea") {
@@ -86,9 +90,12 @@ const elementsByTag: Record<string, Element> = {};
   const document = parseHtml(svg);
   const summaries = findByClasses(document, "element-summary");
   for (const summary of summaries) {
-    const [name] = findByClasses(summary, "element-summary-name").map((item) =>
+    const [tag] = findByClasses(summary, "element-summary-name").map((item) =>
       getTextContent(item).slice(1, -1)
     );
+    if (ignoredTags.includes(tag)) {
+      continue;
+    }
     const children: string[] = [];
     const [dl] = findByTags(summary, "dl");
     for (let index = 0; index < dl.childNodes.length; index += 1) {
@@ -100,13 +107,13 @@ const elementsByTag: Record<string, Element> = {};
         }
       }
     }
-    if (elementsByTag[name]) {
-      console.info(`${name} element from SVG specification is skipped`);
+    if (elementsByTag[tag]) {
+      console.info(`${tag} element from SVG specification is skipped`);
       continue;
     }
-    const categories = name === "svg" ? ["flow", "phrasing"] : ["none"];
-    categories.unshift("svg-element");
-    elementsByTag[name] = {
+    const categories = tag === "svg" ? ["flow", "phrasing"] : ["none"];
+    categories.unshift(tag === "svg" ? "html-element" : "svg-element");
+    elementsByTag[tag] = {
       description: "",
       categories,
       children,
@@ -127,10 +134,7 @@ await mkdir(dirname(contentModelFile), { recursive: true });
 await writeFile(contentModelFile, contentModel);
 
 const tags: string[] = [];
-for (const [tag, element] of Object.entries(elementsByTag)) {
-  if (element.categories.includes("metadata")) {
-    continue;
-  }
+for (const tag of Object.keys(elementsByTag)) {
   tags.push(tag);
 }
 const getTagScore = (tag: string) => {

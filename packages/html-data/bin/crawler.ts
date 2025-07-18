@@ -38,7 +38,8 @@ export const findByClasses = (
     if (
       "tagName" in node &&
       node.attrs.some(
-        (item) => item.name === "class" && item.value === className
+        (item) =>
+          item.name === "class" && item.value.split(/\s+/).includes(className)
       )
     ) {
       result.push(node);
