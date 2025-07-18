@@ -1,16 +1,15 @@
 import { dirname } from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import {
-  findTags,
+  findByClasses,
+  findByTags,
   getTextContent,
   loadHtmlIndices,
+  loadSvgSinglePage,
   parseHtml,
 } from "./crawler";
 
 // Crawl WHATWG HTML.
-
-const html = await loadHtmlIndices();
-const document = parseHtml(html);
 
 type Element = {
   description: string;
@@ -24,12 +23,15 @@ const elementsByTag: Record<string, Element> = {};
  * scrape elements table with content model
  */
 {
-  const table = findTags(document, "table").find((table) => {
-    const [caption] = findTags(table, "caption");
+  const html = await loadHtmlIndices();
+  const document = parseHtml(html);
+
+  const table = findByTags(document, "table").find((table) => {
+    const [caption] = findByTags(table, "caption");
     return getTextContent(caption).toLowerCase().includes("list of elements");
   });
-  const [tbody] = findTags(table, "tbody");
-  const rows = findTags(tbody, "tr");
+  const [tbody] = findByTags(table, "tbody");
+  const rows = findByTags(tbody, "tr");
   const parseList = (text: string) => {
     return text
       .trim()
@@ -54,6 +56,7 @@ const elementsByTag: Record<string, Element> = {};
         return item;
       }
     );
+    categories.unshift("html-element");
     let children = parseList(getTextContent(row.childNodes[4]));
     for (const tag of elements) {
       // textarea does not have value attribute and text content is used as initial value
@@ -75,6 +78,39 @@ const elementsByTag: Record<string, Element> = {};
         children: children.includes("empty") ? [] : children,
       };
     }
+  }
+}
+
+{
+  const svg = await loadSvgSinglePage();
+  const document = parseHtml(svg);
+  const summaries = findByClasses(document, "element-summary");
+  for (const summary of summaries) {
+    const [name] = findByClasses(summary, "element-summary-name").map((item) =>
+      getTextContent(item).slice(1, -1)
+    );
+    const children: string[] = [];
+    const [dl] = findByTags(summary, "dl");
+    for (let index = 0; index < dl.childNodes.length; index += 1) {
+      const child = dl.childNodes[index];
+      if (getTextContent(child).toLowerCase().includes("content model")) {
+        const dd = dl.childNodes[index + 1];
+        for (const elementName of findByClasses(dd, "element-name")) {
+          children.push(getTextContent(elementName).slice(1, -1));
+        }
+      }
+    }
+    if (elementsByTag[name]) {
+      console.info(`${name} element from SVG specification is skipped`);
+      continue;
+    }
+    const categories = name === "svg" ? ["flow", "phrasing"] : ["none"];
+    categories.unshift("svg-element");
+    elementsByTag[name] = {
+      description: "",
+      categories,
+      children,
+    };
   }
 }
 
