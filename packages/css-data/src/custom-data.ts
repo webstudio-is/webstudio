@@ -1,37 +1,7 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
 
-const numericTypes = [
-  "number",
-  "percentage",
-  "length",
-  "time",
-  "angle",
-  "resolution",
-  "integer",
-  "x",
-  "y",
-] as const;
-
-export const valueTypes: string[] = [
-  ...numericTypes,
-  "hex-color",
-  "url",
-  "string",
-  "custom-ident",
-  "dashed-ident",
-  "single-animation-composition",
-  "palette-identifier",
-  "flex",
-  "inset-area",
-  "offset-path",
-  "coord-box",
-  "anchor-element",
-  "try-tactic",
-  "try-size",
-];
-
 // Data type used before we generate a the constants.
-export type RawPropertyData = {
+type RawPropertyData = {
   unitGroups: Array<string>;
   inherited: boolean;
   initial: StyleValue;
@@ -119,16 +89,6 @@ keywordValues["list-style-type"] = [
   "trad-chinese-informal",
   "kannada",
   "none",
-  "initial",
-  "inherit",
-  "unset",
-];
-
-// removed auto from keywords
-// fixed in webref btw
-keywordValues["text-wrap-mode"] = [
-  "wrap",
-  "nowrap",
   "initial",
   "inherit",
   "unset",

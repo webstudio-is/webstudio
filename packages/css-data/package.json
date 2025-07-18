@@ -19,7 +19,7 @@
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
-    "mdn-data": "2.8.0",
+    "mdn-data": "2.23.0",
     "vitest": "^3.1.2",
     "zod": "^3.24.2"
   },
