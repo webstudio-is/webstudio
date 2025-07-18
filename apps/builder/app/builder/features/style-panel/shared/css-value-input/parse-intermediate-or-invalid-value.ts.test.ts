@@ -49,7 +49,7 @@ describe("Parse intermediate or invalid value without math evaluation", () => {
   });
 
   test("fallback to % if px is not supported", () => {
-    const result = parseIntermediateOrInvalidValue("font-stretch", {
+    const result = parseIntermediateOrInvalidValue("opacity", {
       type: "intermediate",
       value: "10",
     });
