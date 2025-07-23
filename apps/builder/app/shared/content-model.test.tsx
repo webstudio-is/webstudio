@@ -768,6 +768,24 @@ describe("rich text tree", () => {
     ).toEqual(["paragraphId", "bodyId"]);
   });
 
+  test("treat Link component as container when look for closest rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="span" ws:id="spanId">
+              <$.Link ws:id="linkId">
+                <$.Bold ws:id="boldId">link</$.Bold>
+              </$.Link>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["linkId", "spanId", "bodyId"],
+      })
+    ).toEqual(["linkId", "spanId", "bodyId"]);
+  });
+
   test("treat body as rich text when has text inside", () => {
     expect(
       findClosestRichText({
@@ -1048,5 +1066,23 @@ describe("closest non textual container", () => {
         instanceSelector: ["divId", "bodyId"],
       })
     ).toEqual(["divId", "bodyId"]);
+  });
+
+  test("treat Link component as rich text container", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="span" ws:id="spanId">
+              <$.Link ws:id="linkId">
+                <$.Bold ws:id="boldId">link</$.Bold>
+              </$.Link>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["boldId", "linkId", "spanId", "bodyId"],
+      })
+    ).toEqual(["spanId", "bodyId"]);
   });
 });
