@@ -68,17 +68,12 @@ const handleEdit = (event: MouseEvent) => {
 
   const instances = $instances.get();
 
-  console.log(instanceSelector, instances.get(instanceSelector[0]));
   let editableInstanceSelector = findClosestRichText({
     instanceSelector,
     instances,
     props: $props.get(),
     metas: $registeredComponentMetas.get(),
   });
-  console.log(
-    editableInstanceSelector,
-    instances.get(editableInstanceSelector[0])
-  );
 
   // Do not allow edit bindable text instances with expression children in Content Mode
   if (editableInstanceSelector !== undefined && $isContentMode.get()) {
