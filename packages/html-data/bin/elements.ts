@@ -76,6 +76,12 @@ const elementsByTag: Record<string, Element> = {};
       if (tag === "summary") {
         categories.push("interactive");
       }
+      // hgroup also accepts paragraphs
+      // https://html.spec.whatwg.org/multipage/sections.html#the-hgroup-element
+      // https://github.com/whatwg/html/pull/11524
+      if (tag === "hgroup") {
+        children.push("p");
+      }
       elementsByTag[tag] = {
         description,
         categories,
