@@ -88,6 +88,7 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
               style={{
                 display: isTextChild ? "inline" : "block",
                 marginLeft: isTextChild ? 0 : "1rem",
+                color: "#000000",
               }}
             >
               {children}
