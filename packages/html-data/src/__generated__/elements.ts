@@ -273,6 +273,7 @@ export const elementsByTag: Record<string, Element> = {
       "h5",
       "h6",
       "script-supporting elements",
+      "p",
     ],
   },
   hr: {
