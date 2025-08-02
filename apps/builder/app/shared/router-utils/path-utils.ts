@@ -163,9 +163,6 @@ export const getCanvasUrl = () => {
   return `/canvas`;
 };
 
-export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
-  typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";
-
 export const restResourcesLoader = () => `/rest/resources-loader`;
 
 export const marketplacePath = (method: string) =>
