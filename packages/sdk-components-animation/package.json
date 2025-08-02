@@ -36,7 +36,7 @@
     }
   },
   "scripts": {
-    "build": "vite build --config ../../vite.sdk-components.config.ts",
+    "build": "vite build && esbuild './lib/*' --outdir=./lib --minify --allow-overwrite",
     "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts !./src/*.template.tsx !./src/*.test.{ts,tsx}' -e asChild -e modal -e defaultOpen -e defaultChecked && prettier --write \"**/*.props.ts\"",
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
