@@ -64,8 +64,8 @@ export const wsImageLoader: ImageLoader = (props) => {
 export type VideoLoader = (options: { src: string }) => string;
 
 export const wsVideoLoader: VideoLoader = ({ src }) => {
-  if (src.startsWith("/cgi/asset")) {
-    src = src.slice("/cgi/asset".length);
+  if (src.startsWith("/cgi/asset/")) {
+    src = src.slice("/cgi/asset/".length);
   }
   return `/cgi/video/${src}`;
 };
