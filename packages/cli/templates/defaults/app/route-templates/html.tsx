@@ -37,7 +37,7 @@ import {
   getRemixParams,
   contactEmail,
 } from "__SERVER__";
-import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
+import * as constants from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 
@@ -151,8 +151,8 @@ export const links: LinksFunction = () => {
   if (favIconAsset) {
     result.push({
       rel: "icon",
-      href: imageLoader({
-        src: `${assetBaseUrl}${favIconAsset}`,
+      href: constants.imageLoader({
+        src: `${constants.assetBaseUrl}${favIconAsset}`,
         // width,height must be multiple of 48 https://developers.google.com/search/docs/appearance/favicon-in-search
         width: 144,
         height: 144,
@@ -167,7 +167,7 @@ export const links: LinksFunction = () => {
   for (const asset of pageFontAssets) {
     result.push({
       rel: "preload",
-      href: `${assetBaseUrl}${asset}`,
+      href: `${constants.assetBaseUrl}${asset}`,
       as: "font",
       crossOrigin: "anonymous",
     });
@@ -176,7 +176,7 @@ export const links: LinksFunction = () => {
   for (const backgroundImageAsset of pageBackgroundImageAssets) {
     result.push({
       rel: "preload",
-      href: `${assetBaseUrl}${backgroundImageAsset}`,
+      href: `${constants.assetBaseUrl}${backgroundImageAsset}`,
       as: "image",
     });
   }
@@ -271,8 +271,7 @@ const Outlet = () => {
   return (
     <ReactSdkContext.Provider
       value={{
-        imageLoader,
-        assetBaseUrl,
+        ...constants,
         resources,
         breakpoints,
         onError: console.error,
@@ -285,8 +284,8 @@ const Outlet = () => {
         pageMeta={pageMeta}
         host={host}
         siteName={siteName}
-        imageLoader={imageLoader}
-        assetBaseUrl={assetBaseUrl}
+        imageLoader={constants.imageLoader}
+        assetBaseUrl={constants.assetBaseUrl}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
       <PageSettingsCanonicalLink href={url} />
