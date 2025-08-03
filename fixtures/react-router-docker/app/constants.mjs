@@ -5,6 +5,19 @@
 export const assetBaseUrl = "/assets/";
 
 /**
+ * URL.canParse(props.src)
+ * @type {(url: string) => boolean}
+ */
+const UrlCanParse = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * @type {import("@webstudio-is/image").ImageLoader}
  */
 export const imageLoader = (props) => {
@@ -12,7 +25,7 @@ export const imageLoader = (props) => {
     return props.src;
   }
   // handle absolute urls
-  const path = URL.canParse(props.src) ? `/${props.src}` : props.src;
+  const path = UrlCanParse(props.src) ? `/${props.src}` : props.src;
   // https://github.com/unjs/ipx?tab=readme-ov-file#modifiers
   return `/_image/w_${props.width},q_${props.quality}${path}`;
 };
