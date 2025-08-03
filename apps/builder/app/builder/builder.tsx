@@ -41,7 +41,6 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
-import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
@@ -437,7 +436,6 @@ export const Builder = ({
             }}
           />
         </ChromeWrapper>
-        {isDesignMode && <AiCommandBar />}
         <Loading state={loadingState} />
         <BlockingAlerts />
         <CommandPanel />
