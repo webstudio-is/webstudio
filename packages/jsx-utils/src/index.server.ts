@@ -1,1 +1,0 @@
-export { jsxToWSEmbedTemplate } from "./jsx";

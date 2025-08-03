@@ -1,5 +1,0 @@
-User request:
-
-```
-{prompt}
-```

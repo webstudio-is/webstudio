@@ -1,5 +1,0 @@
-Design request:
-
-```
-{prompt}
-```
