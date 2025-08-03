@@ -152,21 +152,16 @@ const ProjectMeta = z.object({
 });
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
-export const ProjectNewRedirectPath = PagePath.or(
-  z.string().refine((data) => {
-    // Users should be able to redirect from any old-path to the home page in the new project.
-    if (data === "/") {
-      return true;
-    }
-
-    try {
-      new URL(data);
-      return true;
-    } catch {
-      return false;
-    }
-  }, "Must be a valid URL")
-);
+export const ProjectNewRedirectPath = z.string().refine((data) => {
+  // Users should be able to redirect from any old-path to the home page in the new project.
+  try {
+    // can be relative and absolute paths
+    new URL(data, "http://url.com");
+    return true;
+  } catch {
+    return false;
+  }
+}, "Must be a valid URL");
 
 export const PageRedirect = z.object({
   old: OldPagePath,
