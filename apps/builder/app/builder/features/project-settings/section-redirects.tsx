@@ -22,7 +22,6 @@ import {
 } from "@webstudio-is/sdk";
 import { useRef, useState, type ChangeEvent } from "react";
 import { flushSync } from "react-dom";
-import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
@@ -82,32 +81,9 @@ export const SectionRedirects = () => {
 
   const validateNewPath = (newPath: string): string[] => {
     const newPathValidationResult = ProjectNewRedirectPath.safeParse(newPath);
-
-    if (newPathValidationResult.success === true) {
-      /*
-        This is the new path, that users want to redirect to.
-        If the new path doesn't exist, it's not a valid redirect.
-      */
-
-      if (newPath === "/") {
-        return [];
-      }
-
-      if (newPath.startsWith("/") === true) {
-        let matched = false;
-        for (const pattern of existingPaths) {
-          if (matchPathnamePattern(pattern, newPath)) {
-            matched = true;
-          }
-        }
-        if (matched === false) {
-          return ["This path doesn't exist in the project"];
-        }
-      }
-
+    if (newPathValidationResult.success) {
       return [];
     }
-
     return newPathValidationResult.error.format()._errors;
   };
 
