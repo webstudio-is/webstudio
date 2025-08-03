@@ -4,13 +4,11 @@ import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   $dragAndDropState,
   $isContentMode,
-  $isDesignMode,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import {
-  AiIcon,
   ExtensionIcon,
   HelpIcon,
   ImageIcon,
@@ -41,7 +39,7 @@ import {
   useOnDropEffect,
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
-import { getSetting, setSetting } from "~/builder/shared/client-settings";
+import { getSetting } from "~/builder/shared/client-settings";
 import { ComponentsPanel } from "~/builder/features/components";
 import { PagesPanel } from "~/builder/features/pages";
 import { NavigatorPanel } from "~/builder/features/navigator";
@@ -49,23 +47,6 @@ import { AssetsPanel } from "~/builder/features/assets";
 import { MarketplacePanel } from "~/builder/features/marketplace";
 
 const none = { Panel: () => null };
-
-const AiTabTrigger = () => {
-  return (
-    <SidebarButton
-      label="AI"
-      data-state={getSetting("isAiCommandBarVisible") ? "active" : undefined}
-      onClick={() => {
-        setSetting(
-          "isAiCommandBarVisible",
-          getSetting("isAiCommandBarVisible") ? false : true
-        );
-      }}
-    >
-      <AiIcon size={rawTheme.spacing[10]} />
-    </SidebarButton>
-  );
-};
 
 const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
@@ -174,7 +155,6 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
-  const isDesignMode = useStore($isDesignMode);
   const activePanel = useStore($activeSidebarPanel);
   const dragAndDropState = useStore($dragAndDropState);
   const { Panel } = panels.find((item) => item.name === activePanel) ?? none;
@@ -264,7 +244,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 })}
             </SidebarTabsList>
           </div>
-          {isDesignMode && <AiTabTrigger />}
 
           <HelpTabTrigger />
         </Flex>

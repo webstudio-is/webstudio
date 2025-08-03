@@ -238,9 +238,6 @@ importers:
       '@vercel/remix':
         specifier: 2.15.3
         version: 2.15.3(@remix-run/dev@2.16.5(patch_hash=yortwzoeu3uj2blmdikhhw5byy)(@remix-run/react@2.16.5(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.8.2))(@remix-run/serve@2.16.5(typescript@5.8.2))(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3)(typescript@5.8.2)(vite@6.3.4(@types/node@22.13.10)(jiti@2.4.2)(tsx@4.19.3))(wrangler@3.63.2(@cloudflare/workers-types@4.20240701.0)))(@remix-run/node@2.16.5(typescript@5.8.2))(@remix-run/server-runtime@2.16.5(typescript@5.8.2))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@webstudio-is/ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
       '@webstudio-is/asset-uploader':
         specifier: workspace:*
         version: link:../../packages/asset-uploader
@@ -421,9 +418,6 @@ importers:
       title-case:
         specifier: ^4.3.2
         version: 4.3.2
-      untruncate-json:
-        specifier: ^0.0.1
-        version: 0.0.1
       urlpattern-polyfill:
         specifier: ^10.0.0
         version: 10.0.0
@@ -9314,9 +9308,6 @@ packages:
       uploadthing:
         optional: true
 
-  untruncate-json@0.0.1:
-    resolution: {integrity: sha512-4W9enDK4X1y1s2S/Rz7ysw6kDuMS3VmRjMFg7GZrNO+98OSe+x5Lh7PKYoVjy3lW/1wmhs6HW0lusnQRHgMarA==}
-
   untun@0.1.3:
     resolution: {integrity: sha512-4luGP9LMYszMRZwsvyUd9MrxgEGZdZuZgpVQHEEX0lCYFESasVRvZd0EYpCkOIbJKHMuv0LskpXc/8Un+MJzEQ==}
     hasBin: true
@@ -17503,8 +17494,6 @@ snapshots:
       node-fetch-native: 1.6.6
       ofetch: 1.4.1
       ufo: 1.5.4
-
-  untruncate-json@0.0.1: {}
 
   untun@0.1.3:
     dependencies:
