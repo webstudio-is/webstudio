@@ -973,11 +973,10 @@ const attribute_y2_gxmray: Attribute = {
   type: "string",
 };
 
-const attribute_name_1dbhjn1: Attribute = {
+const attribute_name_14zrnwf: Attribute = {
   name: "name",
   description: "Name of content navigable",
-  type: "select",
-  options: ["_blank", "_self", "_parent", "_top"],
+  type: "string",
 };
 
 const attribute_type_1swzf44: Attribute = {
@@ -3726,7 +3725,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     },
     attribute_height_10887hn,
     attribute_loading_yzzdw4,
-    attribute_name_1dbhjn1,
+    attribute_name_14zrnwf,
     attribute_referrerpolicy_tpprqt,
     {
       name: "sandbox",
@@ -4365,7 +4364,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     },
     attribute_form_1v3e5z4,
     attribute_height_10887hn,
-    attribute_name_1dbhjn1,
+    attribute_name_14zrnwf,
     attribute_type_1swzf44,
     attribute_width_d9q964,
   ],

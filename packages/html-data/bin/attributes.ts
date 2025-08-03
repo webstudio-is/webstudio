@@ -163,7 +163,7 @@ for (const row of rows) {
     .split(/\s*;\s*/)
     .filter((item) => item.startsWith('"') && item.endsWith('"'))
     .map((item) => item.slice(1, -1));
-  if (value.includes("valid navigable target name or keyword")) {
+  if (attribute === "target" || attribute === "formtarget") {
     possibleOptions = ["_blank", "_self", "_parent", "_top"];
   }
   if (value.includes("input type keyword")) {

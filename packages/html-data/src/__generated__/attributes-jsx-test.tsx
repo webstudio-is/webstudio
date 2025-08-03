@@ -2075,7 +2075,7 @@ const Page = () => {
         allowFullScreen={true}
         height={0}
         loading={"lazy"}
-        name={"_blank"}
+        name={""}
         referrerPolicy={""}
         sandbox={""}
         src={""}
@@ -2538,14 +2538,7 @@ const Page = () => {
         xmlLang={""}
         xmlSpace={""}
       />
-      <object
-        data={""}
-        form={""}
-        height={0}
-        name={"_blank"}
-        type={""}
-        width={0}
-      />
+      <object data={""} form={""} height={0} name={""} type={""} width={0} />
       <ol reversed={true} start={0} type={"1"} />
       <optgroup disabled={true} label={""} />
       <option disabled={true} label={""} value={""} />
