@@ -31,5 +31,5 @@ Thanks to [Lost Pixel](https://www.lost-pixel.com/) for providing the visual tes
 
 ## License
 
- - **Webstudio core** (all functionality in this repository) is free/open-source under AGPL-3.0-or-later.  
- - **sdk-components-animation** package (optional) is proprietary.  You must accept the Webstudio, Inc. EULA located in [sdk-components-animation/LICENSE](./packages/sdk-components-animation/LICENSE) before using it.
+- **Webstudio core** (all functionality in this repository) is free/open-source under AGPL-3.0-or-later.
+- **sdk-components-animation** package (optional) is proprietary. You must accept the Webstudio, Inc. EULA located in [sdk-components-animation/LICENSE](./packages/sdk-components-animation/LICENSE) before using it.
