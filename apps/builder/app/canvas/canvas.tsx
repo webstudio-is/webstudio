@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { type Instances, coreMetas } from "@webstudio-is/sdk";
 import { coreTemplates } from "@webstudio-is/sdk/core-templates";
 import type { Components } from "@webstudio-is/react-sdk";
-import { wsImageLoader } from "@webstudio-is/image";
+import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -133,6 +133,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
           renderer: isPreviewMode ? "preview" : "canvas",
           assetBaseUrl,
           imageLoader: wsImageLoader,
+          videoLoader: wsVideoLoader,
           resources: {},
           breakpoints,
           // error reporting

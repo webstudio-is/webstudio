@@ -1,7 +1,8 @@
 declare module "__CONSTANTS__" {
-  import type { ImageLoader } from "@webstudio-is/image";
+  import type { ImageLoader, VideoLoader } from "@webstudio-is/image";
   export const assetBaseUrl: string;
   export const imageLoader: ImageLoader;
+  export const videoLoader: undefined | VideoLoader;
 }
 
 declare module "__CLIENT__" {
