@@ -52,7 +52,7 @@ export const Video = forwardRef<
 
     // fallback to provided src
     const src =
-      srcProp && videoLoader ? videoLoader({ src: srcProp }) : undefined;
+      srcProp && videoLoader ? videoLoader({ src: srcProp }) : srcProp;
 
     useEffect(() => {
       if ($progress === undefined) {
