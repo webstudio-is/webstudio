@@ -21,7 +21,7 @@ export const getUserPlanFeatures = async (
 
   const productsResult = await postgrest.client
     .from("Product")
-    .select("name")
+    .select("name, meta")
     .in(
       "id",
       userProducts.map(({ productId }) => productId ?? "")
@@ -34,19 +34,34 @@ export const getUserPlanFeatures = async (
 
   const products = productsResult.data;
 
-  // This is fast and dirty implementation
-  // @todo: implement this using products meta, custom table with aggregated transaction info
   if (userProducts.length > 0) {
     const hasSubscription = userProducts.some(
       (log) => log.subscriptionId !== null
     );
-
+    const productMetas = products.map((product) => {
+      return {
+        allowShareAdminLinks: true,
+        allowDynamicData: true,
+        maxContactEmails: 5,
+        maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        ...(product.meta as Partial<UserPlanFeatures>),
+      };
+    });
     return {
-      allowShareAdminLinks: true,
-      allowDynamicData: true,
-      maxContactEmails: 5,
-      maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
-      maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+      allowShareAdminLinks: productMetas.some(
+        (item) => item.allowShareAdminLinks
+      ),
+      allowDynamicData: productMetas.some((item) => item.allowDynamicData),
+      maxContactEmails: Math.max(
+        ...productMetas.map((item) => item.maxContactEmails)
+      ),
+      maxDomainsAllowedPerUser: Math.max(
+        ...productMetas.map((item) => item.maxDomainsAllowedPerUser)
+      ),
+      maxPublishesAllowedPerUser: Math.max(
+        ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
+      ),
       hasSubscription,
       hasProPlan: true,
       planName: products[0].name,
