@@ -71,20 +71,20 @@ const blockMeta: TemplateMeta = {
   template: (
     <ws.block>
       <BlockTemplate ws:label="Templates">
-        <ws.element ws:tag="p"></ws.element>
+        <ws.element ws:label="Paragraph" ws:tag="p"></ws.element>
         <ws.element ws:label="Heading 1" ws:tag="h1"></ws.element>
         <ws.element ws:label="Heading 2" ws:tag="h2"></ws.element>
         <ws.element ws:label="Heading 3" ws:tag="h3"></ws.element>
         <ws.element ws:label="Heading 4" ws:tag="h4"></ws.element>
         <ws.element ws:label="Heading 5" ws:tag="h5"></ws.element>
         <ws.element ws:label="Heading 6" ws:tag="h6"></ws.element>
-        <ws.element ws:tag="ul">
-          <ws.element ws:tag="li"></ws.element>
+        <ws.element ws:label="Unordered List" ws:tag="ul">
+          <ws.element ws:label="List Item" ws:tag="li"></ws.element>
         </ws.element>
-        <ws.element ws:tag="ol">
-          <ws.element ws:tag="li"></ws.element>
+        <ws.element ws:label="Ordered List" ws:tag="ol">
+          <ws.element ws:label="List Item" ws:tag="li"></ws.element>
         </ws.element>
-        <ws.element ws:tag="a"></ws.element>
+        <ws.element ws:label="Link" ws:tag="a"></ws.element>
         <$.Image
           ws:style={css`
             margin-right: auto;
@@ -93,30 +93,34 @@ const blockMeta: TemplateMeta = {
             height: auto;
           `}
         />
-        <ws.element ws:tag="hr" />
-        <ws.element ws:tag="blockquote"></ws.element>
+        <ws.element ws:label="Separator" ws:tag="hr" />
+        <ws.element ws:label="Blockquote" ws:tag="blockquote"></ws.element>
         <$.HtmlEmbed />
-        <ws.element ws:tag="code" />
+        <ws.element ws:label="Code Text" ws:tag="code" />
       </BlockTemplate>
-      <ws.element ws:tag="p">
+      <ws.element ws:label="Paragraph" ws:tag="p">
         The Content Block component designates regions on the page where
         pre-styled instances can be inserted in{" "}
-        <ws.element ws:tag="a" href="https://wstd.us/content-block">
+        <ws.element
+          ws:label="Link"
+          ws:tag="a"
+          href="https://wstd.us/content-block"
+        >
           Content mode
         </ws.element>
         .
       </ws.element>
-      <ws.element ws:tag="ul">
-        <ws.element ws:tag="li">
+      <ws.element ws:label="Unordered List" ws:tag="ul">
+        <ws.element ws:label="List Item" ws:tag="li">
           In Content mode, you can edit any direct child instances that were
           pre-added to the Content Block, as well as add new instances
           predefined in Templates.
         </ws.element>
-        <ws.element ws:tag="li">
+        <ws.element ws:label="List Item" ws:tag="li">
           To predefine instances for insertion in Content mode, switch to Design
           mode and add them to the Templates container.
         </ws.element>
-        <ws.element ws:tag="li">
+        <ws.element ws:label="List Item" ws:tag="li">
           To insert predefined instances in Content mode, click the + button
           while hovering over the Content Block on the canvas and choose an
           instance from the list.
