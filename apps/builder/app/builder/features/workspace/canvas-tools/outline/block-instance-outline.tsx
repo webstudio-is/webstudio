@@ -42,7 +42,10 @@ import { getInstancePath } from "~/shared/awareness";
 import { insertTemplateAt } from "./block-utils";
 import { Outline } from "./outline";
 import { applyScale } from "./apply-scale";
-import { InstanceIcon } from "~/builder/shared/instance-label";
+import {
+  getInstanceLabel,
+  InstanceIcon,
+} from "~/builder/shared/instance-label";
 
 export const TemplatesMenu = ({
   onOpenChange,
@@ -103,7 +106,7 @@ export const TemplatesMenu = ({
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <InstanceIcon instance={{ component: template.component }} />,
-    title: template.label ?? template.component,
+    title: getInstanceLabel(template, undefined),
     value: templateSelector,
   }));
 
@@ -167,7 +170,7 @@ export const TemplatesMenu = ({
                 >
                   <Flex css={{ px: theme.spacing[3] }} gap={2} data-xxx>
                     {item.icon}
-                    <Box>{item.title}</Box>
+                    <Box css={{ textTransform: "none" }}>{item.title}</Box>
                   </Flex>
                 </DropdownMenuRadioItem>
               ))}
