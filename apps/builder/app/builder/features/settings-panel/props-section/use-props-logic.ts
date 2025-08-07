@@ -43,7 +43,10 @@ export type PropAndMeta = {
 //   - when they open props panel again, the prop is not there
 //
 // We want to avoid this if possible, but for some types like "asset" we can't
-export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
+const getStartingValue = (
+  meta: PropMeta,
+  defaultBooleanValue: boolean
+): PropValue | undefined => {
   if (meta.type === "string" && meta.control !== "file") {
     return {
       type: "string",
@@ -61,7 +64,7 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
   if (meta.type === "boolean") {
     return {
       type: "boolean",
-      value: meta.defaultValue ?? false,
+      value: meta.defaultValue ?? defaultBooleanValue,
     };
   }
 
@@ -78,15 +81,6 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
       value: [],
     };
   }
-};
-
-const getStartingProp = (
-  instanceId: Instance["id"],
-  meta: PropMeta,
-  name: string
-): Prop | undefined => {
-  const value = getStartingValue(meta);
-  return value && { id: nanoid(), instanceId, name, ...value };
 };
 
 const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
@@ -258,7 +252,7 @@ export const usePropsLogic = ({
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
-    // Important to not use getStartingProp if default is not available
+    // Important to not use infer stating value if default is not available
     // beacuse user may have this experience:
     //   - they open props panel of an Image
     //   - they see 0 in the control for "width"
@@ -266,7 +260,11 @@ export const usePropsLogic = ({
     //   - they think that width is set to 0, but it's actually not set at all
     //
     if (prop === undefined && propMeta.defaultValue !== undefined) {
-      prop = getStartingProp(instance.id, propMeta, name);
+      // initial properties are not defined but suggested to default so default boolean is false
+      const value = getStartingValue(propMeta, false);
+      if (value) {
+        prop = { id: nanoid(), instanceId: instance.id, name, ...value };
+      }
     }
 
     initialProps.push({
@@ -303,9 +301,14 @@ export const usePropsLogic = ({
     // In case of custom property/attribute we get a string.
     const propMeta =
       propsMetas.get(propName) ?? getDefaultMetaForType("string");
-    const prop = getStartingProp(instance.id, propMeta, propName);
-    if (prop) {
-      updateProp(prop);
+    const value = getStartingValue(propMeta, true);
+    if (value) {
+      updateProp({
+        id: nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        ...value,
+      });
     }
   };
 
