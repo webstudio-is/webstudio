@@ -153,7 +153,7 @@ const AdvancedPropertyValue = ({
               }
             }}
             onChangeComplete={(styleValue) => {
-              onSetProperty(styleDecl.property)(styleValue);
+              onSetProperty(styleDecl.property)(styleValue, { listed: true });
             }}
           />
         )
