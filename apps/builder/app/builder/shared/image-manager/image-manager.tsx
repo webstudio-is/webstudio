@@ -11,12 +11,7 @@ import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/asset-uploader";
-import {
-  AssetsShell,
-  type AssetContainer,
-  useAssets,
-  deleteAssets,
-} from "../assets";
+import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { ImageThumbnail } from "./image-thumbnail";
 
 const useLogic = ({
@@ -85,7 +80,6 @@ const useLogic = ({
 
   return {
     searchProps,
-    handleDelete: deleteAssets,
     filteredItems,
     handleSelect,
     selectedIndex,
@@ -99,13 +93,10 @@ type ImageManagerProps = {
 };
 
 export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
-  const {
-    handleDelete,
-    handleSelect,
-    filteredItems,
-    searchProps,
-    selectedIndex,
-  } = useLogic({ onChange, accept });
+  const { handleSelect, filteredItems, searchProps, selectedIndex } = useLogic({
+    onChange,
+    accept,
+  });
 
   // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept
   // https://github.com/webstudio-is/webstudio/blob/83503e39b0e1561ea93cfcff92aa35b54c15fefa/packages/sdk-components-react/src/video.ws.ts#L34
@@ -138,7 +129,6 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
           <ImageThumbnail
             key={assetContainer.asset.id}
             assetContainer={assetContainer}
-            onDelete={handleDelete}
             onSelect={handleSelect}
             onChange={(assetContainer) => {
               if (assetContainer.asset.type === "image") {

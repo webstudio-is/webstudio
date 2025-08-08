@@ -1,7 +1,7 @@
 import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, styled } from "@webstudio-is/design-system";
 import { UploadingAnimation } from "./uploading-animation";
-import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
+import { ImageInfo, imageInfoCssVars } from "./image-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Filename } from "./filename";
 import { Image } from "./image";
@@ -73,7 +73,7 @@ const ThumbnailContainer = styled(Box, {
   overflow: "hidden",
   padding: 2,
   "&:hover": {
-    ...imageInfoTriggerCssVars({ show: true }),
+    ...imageInfoCssVars({ show: true }),
     backgroundColor: theme.colors.backgroundAssetcardHover,
   },
   variants: {
@@ -87,7 +87,7 @@ const ThumbnailContainer = styled(Box, {
         outline: `1px solid ${theme.colors.borderFocus}`,
         outlineOffset: -1,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...imageInfoTriggerCssVars({ show: true }),
+        ...imageInfoCssVars({ show: true }),
       },
     },
   },
@@ -102,7 +102,6 @@ const Thumbnail = styled(Box, {
 
 type ImageThumbnailProps = {
   assetContainer: AssetContainer;
-  onDelete: (ids: Array<string>) => void;
   onSelect: (assetContainer?: AssetContainer) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   state?: "selected";
@@ -110,7 +109,6 @@ type ImageThumbnailProps = {
 
 export const ImageThumbnail = ({
   assetContainer,
-  onDelete,
   onSelect,
   onChange,
   state,
@@ -175,12 +173,7 @@ export const ImageThumbnail = ({
         <Filename variant={"tiny"}>{name}</Filename>
       </Box>
       {assetContainer.status === "uploaded" && (
-        <ImageInfoTrigger
-          asset={assetContainer.asset}
-          onDelete={(ids) => {
-            onDelete(ids);
-          }}
-        />
+        <ImageInfo asset={assetContainer.asset} />
       )}
       {isUploading && <UploadingAnimation />}
     </ThumbnailContainer>
