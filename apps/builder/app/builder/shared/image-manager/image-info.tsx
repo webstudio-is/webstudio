@@ -16,6 +16,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
   SmallIconButton,
+  styled,
   Text,
   textVariants,
   theme,
@@ -187,6 +188,16 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
   );
 };
 
+const UsageDot = styled(Box, {
+  width: 6,
+  height: 6,
+  backgroundColor: theme.colors.foregroundDestructive,
+  border: "1px solid white",
+  boxShadow: "0 0 3px rgb(0, 0, 0)",
+  borderRadius: "50%",
+  pointerEvents: "none",
+});
+
 const ImageInfoContent = ({
   asset,
   usages,
@@ -223,7 +234,7 @@ const ImageInfoContent = ({
               {getMimeByExtension(extension)}
             </Text>
           </Flex>
-          {"width" in meta && "height" in meta ? (
+          {"width" in meta && "height" in meta && (
             <>
               <Flex align="center" gap={1}>
                 <DimensionsIcon />
@@ -238,7 +249,20 @@ const ImageInfoContent = ({
                 </Text>
               </Flex>
             </>
-          ) : null}
+          )}
+          <Flex align="center" css={{ gap: theme.spacing[3] }}>
+            <Flex
+              css={{
+                width: 16,
+                height: 16,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <UsageDot />
+            </Flex>
+            <Text variant="labelsSentenceCase">{usages.length} uses</Text>
+          </Flex>
         </Grid>
       </Box>
       <Box css={{ padding: theme.panel.padding }}>
@@ -302,47 +326,38 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   return (
-    <Popover modal>
-      <PopoverTrigger asChild>
-        <SmallIconButton
-          title="Options"
-          tabIndex={-1}
-          data-usage={usages.length > 0 ? "reused" : "unused"}
-          css={{
-            visibility: `var(${triggerVisibilityVar}, hidden)`,
-            position: "absolute",
-            color: theme.colors.backgroundIconSubtle,
-            top: theme.spacing[3],
-            right: theme.spacing[3],
-            cursor: "pointer",
-            transition: "opacity 100ms ease",
-            "& svg": {
-              fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
-            },
-            "&:hover": {
-              color: theme.colors.foregroundIconMain,
-            },
-            "&[data-usage=reused]": {
-              visibility: "visible",
+    <>
+      <Popover modal>
+        <PopoverTrigger asChild>
+          <SmallIconButton
+            title="Options"
+            tabIndex={-1}
+            css={{
+              visibility: `var(${triggerVisibilityVar}, hidden)`,
+              position: "absolute",
+              color: theme.colors.backgroundIconSubtle,
+              top: theme.spacing[3],
+              right: theme.spacing[3],
+              cursor: "pointer",
+              transition: "opacity 100ms ease",
               "& svg": {
-                fill: `color-mix(
-                  in lch,
-                  ${theme.colors.backgroundStyleSourceToken} 30%,
-                  white 70%
-                )`,
+                fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
               },
               "&:hover": {
                 color: theme.colors.foregroundIconMain,
               },
-            },
-          }}
-          icon={<GearIcon />}
-        />
-      </PopoverTrigger>
-      <PopoverContent>
-        <PopoverTitle>Asset Details</PopoverTitle>
-        <ImageInfoContent asset={asset} usages={usages} />
-      </PopoverContent>
-    </Popover>
+            }}
+            icon={<GearIcon />}
+          />
+        </PopoverTrigger>
+        <PopoverContent>
+          <PopoverTitle>Asset Details</PopoverTitle>
+          <ImageInfoContent asset={asset} usages={usages} />
+        </PopoverContent>
+      </Popover>
+      {usages.length === 0 && (
+        <UsageDot css={{ position: "absolute", top: 9, right: 9 }} />
+      )}
+    </>
   );
 };
