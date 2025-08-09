@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { computed, type ReadableAtom } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
 import invariant from "tiny-invariant";
