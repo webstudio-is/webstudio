@@ -259,6 +259,7 @@ const deduplicateAssetName = (name: string) => {
   for (const asset of $assets.get().values()) {
     existingNames.add(formatAssetName(asset));
   }
+  // eslint-disable-next-line no-constant-condition
   for (let index = 0; true; index += 1) {
     const suffix = index === 0 ? "" : `_${index}`;
     const lastDotAt = name.lastIndexOf(".");
