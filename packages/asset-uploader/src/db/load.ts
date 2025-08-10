@@ -32,6 +32,8 @@ export const loadAssetsByProject = async (
       `
         assetId:id,
         projectId,
+        filename,
+        description,
         file:File!inner (*)
       `
     )
@@ -42,9 +44,17 @@ export const loadAssetsByProject = async (
     .order("id");
 
   const result: Asset[] = [];
-  for (const { assetId, projectId, file } of assets.data ?? []) {
+  for (const {
+    assetId,
+    projectId,
+    filename,
+    description,
+    file,
+  } of assets.data ?? []) {
     if (file) {
-      result.push(formatAsset({ assetId, projectId, file }));
+      result.push(
+        formatAsset({ assetId, projectId, filename, description, file })
+      );
     }
   }
 

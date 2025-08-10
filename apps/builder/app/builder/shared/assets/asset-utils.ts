@@ -175,3 +175,31 @@ export const uploadingFileDataToAsset = (
 
   return asset;
 };
+
+type ParsedAssetName = {
+  basename: string;
+  hash: string;
+  ext: string;
+};
+
+export const parseAssetName = (name: string): ParsedAssetName => {
+  let hash = "";
+  let ext = "";
+  const lastDotAt = name.lastIndexOf(".");
+  if (lastDotAt > -1) {
+    ext = name.slice(lastDotAt + 1);
+    name = name.slice(0, lastDotAt);
+  }
+  const lastUnderscoreAt = name.lastIndexOf("_");
+  if (lastUnderscoreAt > -1) {
+    hash = name.slice(lastUnderscoreAt + 1);
+    name = name.slice(0, lastUnderscoreAt);
+  }
+  return { basename: name, hash, ext };
+};
+
+export const formatAssetName = (asset: Pick<Asset, "name" | "filename">) => {
+  const { basename, ext } = parseAssetName(asset.name);
+  const formattedName = `${asset.filename ?? basename}.${ext}`;
+  return formattedName;
+};

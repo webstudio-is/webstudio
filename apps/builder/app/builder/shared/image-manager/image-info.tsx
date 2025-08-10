@@ -1,3 +1,6 @@
+import isValidFilename from "valid-filename";
+import { useEffect, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { useStore } from "@nanostores/react";
 import { getMimeByExtension } from "@webstudio-is/asset-uploader";
@@ -11,6 +14,9 @@ import {
   DialogTrigger,
   Flex,
   Grid,
+  InputErrorsTooltip,
+  InputField,
+  Label,
   Popover,
   PopoverContent,
   PopoverTitle,
@@ -31,7 +37,9 @@ import {
   TrashIcon,
 } from "@webstudio-is/icons";
 import type { Asset, Instance } from "@webstudio-is/sdk";
+import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
+  $assets,
   $authPermit,
   $editingPageId,
   $instances,
@@ -40,16 +48,17 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { deleteAssets, $usagesByAssetId, type AssetUsage } from "../assets";
-import { getFormattedAspectRatio } from "./utils";
-import { hyphenateProperty } from "@webstudio-is/css-engine";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
   $awareness,
   findAwarenessByInstanceId,
   selectPage,
 } from "~/shared/awareness";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import { deleteAssets, $usagesByAssetId, type AssetUsage } from "../assets";
 import { $activeInspectorPanel, setActiveSidebarPanel } from "../nano-states";
+import { parseAssetName } from "../assets/asset-utils";
+import { getFormattedAspectRatio } from "./utils";
 
 const buttonLinkClass = css({
   all: "unset",
@@ -198,6 +207,48 @@ const UsageDot = styled(Box, {
   pointerEvents: "none",
 });
 
+const useLocalValue = <Type extends string>(
+  savedValue: Type,
+  onSave: (value: Type) => void
+) => {
+  const [localValue, setLocalValue] = useState(savedValue);
+
+  const save = () => {
+    if (localValue !== savedValue) {
+      // To synchronize with setState immediately followed by save
+      onSave(localValue);
+    }
+  };
+
+  const saveDebounced = useDebouncedCallback(save, 500);
+  const updateLocalValue = (value: Type) => {
+    setLocalValue(value);
+    saveDebounced();
+  };
+
+  // onBlur will not trigger if control is unmounted when props panel is closed or similar.
+  // So we're saving at the unmount
+  // store save in ref to access latest saved value from render
+  // instead of stale one
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    // access ref in the moment of unmount
+    return () => saveRef.current();
+  }, []);
+
+  return [
+    /**
+     * Contains:
+     *  - either the latest `savedValue`
+     *  - or the latest value set via `set()`
+     * (whichever changed most recently)
+     */
+    localValue,
+    updateLocalValue,
+  ] as const;
+};
+
 const ImageInfoContent = ({
   asset,
   usages,
@@ -206,17 +257,41 @@ const ImageInfoContent = ({
   usages: AssetUsage[];
 }) => {
   const { size, meta, id, name } = asset;
-
-  const parts = name.split(".");
-  const extension = "." + parts.pop();
+  const { basename, ext } = parseAssetName(name);
+  const [filenameError, setFilenameError] = useState<string>();
+  const [filename, setFilename] = useLocalValue(
+    asset.filename ?? basename,
+    (newFilename) => {
+      const assetId = asset.id;
+      // validate filename
+      if (!isValidFilename(newFilename)) {
+        setFilenameError("Invalid filename");
+        return;
+      }
+      // validate duplicates
+      for (const asset of $assets.get().values()) {
+        if (asset.id !== assetId) {
+          const filename =
+            asset.filename ?? parseAssetName(asset.name).basename;
+          if (newFilename === filename) {
+            setFilenameError("Filename already used");
+            return;
+          }
+        }
+      }
+      updateWebstudioData((data) => {
+        const asset = data.assets.get(assetId);
+        if (asset) {
+          asset.filename = newFilename;
+        }
+      });
+    }
+  );
 
   const authPermit = useStore($authPermit);
 
   return (
     <>
-      <Box css={{ width: 250, padding: theme.panel.padding }}>
-        <Text truncate>{name}</Text>
-      </Box>
       <Box css={{ padding: theme.panel.padding }}>
         <Grid
           columns={2}
@@ -231,7 +306,7 @@ const ImageInfoContent = ({
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <PageIcon />
             <Text variant="labelsSentenceCase">
-              {getMimeByExtension(extension)}
+              {getMimeByExtension(`.${ext}`)}
             </Text>
           </Flex>
           {"width" in meta && "height" in meta && (
@@ -265,6 +340,24 @@ const ImageInfoContent = ({
           </Flex>
         </Grid>
       </Box>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <Label htmlFor="image-manager-filename">Name</Label>
+        <InputErrorsTooltip
+          errors={filenameError ? [filenameError] : undefined}
+        >
+          <InputField
+            id="image-manager-filename"
+            color={filenameError ? "error" : undefined}
+            value={filename}
+            onChange={(event) => {
+              setFilename(event.target.value);
+              setFilenameError(undefined);
+            }}
+          />
+        </InputErrorsTooltip>
+      </Grid>
+
       <Box css={{ padding: theme.panel.padding }}>
         {authPermit === "view" ? (
           <Tooltip side="bottom" content="View mode. You can't delete assets.">
@@ -350,7 +443,7 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
             icon={<GearIcon />}
           />
         </PopoverTrigger>
-        <PopoverContent>
+        <PopoverContent css={{ minWidth: 250 }}>
           <PopoverTitle>Asset Details</PopoverTitle>
           <ImageInfoContent asset={asset} usages={usages} />
         </PopoverContent>

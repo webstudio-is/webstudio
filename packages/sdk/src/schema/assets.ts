@@ -8,7 +8,8 @@ const baseAsset = {
   projectId: z.string(),
   size: z.number(),
   name: z.string(),
-  description: z.union([z.string(), z.null()]),
+  filename: z.string().optional(),
+  description: z.union([z.string().optional(), z.null()]),
   createdAt: z.string(),
 };
 

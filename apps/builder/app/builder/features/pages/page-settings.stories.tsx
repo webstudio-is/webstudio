@@ -72,6 +72,8 @@ $project.set({
     projectId: "projectId",
     id: "imageId",
     name: "very-very-very-long-long-image-name.jpg",
+    filename: null,
+    description: null,
   },
   latestBuildVirtual: null,
   domainsVirtual: [],

@@ -12,6 +12,7 @@ import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
 import { getComputedRepeatedItem } from "../../shared/repeated-style";
+import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 
 export const repeatedProperties = [
   "background-image",
@@ -89,7 +90,7 @@ export const getBackgroundLabel = (
   ) {
     const asset = assets.get(backgroundImageStyle.value.value);
     if (asset) {
-      return asset.name;
+      return formatAssetName(asset);
     }
   }
 
