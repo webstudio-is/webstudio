@@ -12,6 +12,7 @@ import {
   ImageIcon,
 } from "@webstudio-is/icons";
 import type { ImageAsset } from "@webstudio-is/sdk";
+import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "~/builder/shared/image-manager/utils";
 
 type ImageInfoProps = {
@@ -42,10 +43,14 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           gap={2}
           align={"center"}
         >
-          <Grid flow={"column"} gap={1} align={"center"}>
+          <Grid
+            gap={1}
+            align="center"
+            css={{ gridTemplateColumns: "max-content 1fr" }}
+          >
             <ImageIcon />
-            <Text truncate variant={"labelsTitleCase"}>
-              {asset.name}
+            <Text truncate variant={"labelsSentenceCase"}>
+              {formatAssetName(asset)}
             </Text>
           </Grid>
           <Grid columns={2} gap={1} align={"center"}>

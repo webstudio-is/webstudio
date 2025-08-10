@@ -14,6 +14,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 
 const isValidURL = (value: string) => {
   try {
@@ -115,7 +116,7 @@ export const ImageControl = ({
           color="neutral"
           css={{ maxWidth: "100%", justifySelf: "right" }}
         >
-          {asset?.name ?? "Choose image..."}
+          {asset ? formatAssetName(asset) : "Choose image..."}
         </Button>
       </FloatingPanel>
     </Flex>

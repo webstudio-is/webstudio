@@ -29,6 +29,7 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import {
+  formatAssetName,
   getFileName,
   getMimeType,
   getSha256Hash,
@@ -253,6 +254,27 @@ const getVideoDimensions = async (file: File) => {
   });
 };
 
+const deduplicateAssetName = (name: string) => {
+  const existingNames = new Set();
+  for (const asset of $assets.get().values()) {
+    existingNames.add(formatAssetName(asset));
+  }
+  // eslint-disable-next-line no-constant-condition
+  for (let index = 0; true; index += 1) {
+    const suffix = index === 0 ? "" : `_${index}`;
+    const lastDotAt = name.lastIndexOf(".");
+    if (lastDotAt === -1) {
+      return name;
+    }
+    const basename = name.slice(0, lastDotAt);
+    const ext = name.slice(lastDotAt);
+    const nameWithSuffix = basename + suffix + ext;
+    if (!existingNames.has(nameWithSuffix)) {
+      return nameWithSuffix;
+    }
+  }
+};
+
 const uploadAsset = async ({
   authToken,
   projectId,
@@ -275,7 +297,10 @@ const uploadAsset = async ({
     metaFormData.append("type", mimeType);
     // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
     // should be removed after fix
-    metaFormData.append("filename", sanitizeS3Key(fileName));
+    metaFormData.append(
+      "filename",
+      deduplicateAssetName(sanitizeS3Key(fileName))
+    );
 
     const authHeaders = new Headers();
     if (authToken !== undefined) {

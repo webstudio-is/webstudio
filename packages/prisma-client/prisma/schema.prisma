@@ -48,6 +48,8 @@ model Asset {
   projectId        String
   file             File               @relation(fields: [name], references: [name])
   name             String
+  filename         String?
+  description      String?
   Project          Project[]
   DashboardProject DashboardProject[]
 

@@ -4,10 +4,14 @@ import { type Asset, ImageMeta } from "@webstudio-is/sdk";
 export const formatAsset = ({
   assetId,
   projectId,
+  filename,
+  description,
   file,
 }: {
   assetId: string;
   projectId: string;
+  filename: string | null;
+  description: string | null;
   file: {
     name: string;
     format: string;
@@ -23,8 +27,9 @@ export const formatAsset = ({
     return {
       id: assetId,
       name: file.name,
-      description: file.description,
       projectId,
+      filename: filename ?? undefined,
+      description: description ?? undefined,
       size: file.size,
       type: "font",
       createdAt: file.createdAt,
@@ -36,8 +41,9 @@ export const formatAsset = ({
   return {
     id: assetId,
     name: file.name,
-    description: file.description,
     projectId,
+    filename: filename ?? undefined,
+    description: description ?? undefined,
     size: file.size,
     type: "image",
     format: file.format,
