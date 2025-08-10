@@ -9,7 +9,7 @@ const baseAsset = {
   size: z.number(),
   name: z.string(),
   filename: z.string().optional(),
-  description: z.union([z.string(), z.null()]),
+  description: z.string().optional(),
   createdAt: z.string(),
 };
 
