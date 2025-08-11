@@ -25,7 +25,7 @@ export const imageLoader = (props) => {
     return props.src;
   }
   // IPX (sharp) does not support ico
-  if (props.src.endsWith('.ico')) {
+  if (props.src.endsWith(".ico")) {
     return props.src;
   }
   // handle absolute urls
