@@ -33,6 +33,7 @@ import {
   CloudIcon,
   DimensionsIcon,
   GearIcon,
+  InfoCircleIcon,
   PageIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
@@ -287,6 +288,18 @@ const ImageInfoContent = ({
       });
     }
   );
+  const [description, setDescription] = useLocalValue(
+    asset.description ?? "",
+    (newDescription) => {
+      const assetId = asset.id;
+      updateWebstudioData((data) => {
+        const asset = data.assets.get(assetId);
+        if (asset) {
+          asset.description = newDescription;
+        }
+      });
+    }
+  );
 
   const authPermit = useStore($authPermit);
 
@@ -356,6 +369,24 @@ const ImageInfoContent = ({
             }}
           />
         </InputErrorsTooltip>
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <Label
+          htmlFor="image-manager-description"
+          css={{ display: "flex", alignItems: "center", gap: 4 }}
+        >
+          Description
+          <Tooltip content="The description is used as the default “alt” text for the image.">
+            <InfoCircleIcon />
+          </Tooltip>
+        </Label>
+        <InputField
+          id="image-manager-description"
+          placeholder='Enter "alt" text'
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+        />
       </Grid>
 
       <Box css={{ padding: theme.panel.padding }}>

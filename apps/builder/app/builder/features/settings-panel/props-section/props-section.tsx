@@ -101,6 +101,7 @@ const renderProperty = (
       ) {
         logic.handleChangeByPropName("width", propValue);
         logic.handleChangeByPropName("height", propValue);
+        logic.handleChangeByPropName("alt", propValue);
       }
     },
   });
