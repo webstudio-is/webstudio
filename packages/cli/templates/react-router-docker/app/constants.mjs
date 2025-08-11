@@ -24,6 +24,10 @@ export const imageLoader = (props) => {
   if (props.format === "raw") {
     return props.src;
   }
+  // IPX (sharp) does not support ico
+  if (props.src.endsWith('.ico')) {
+    return props.src;
+  }
   // handle absolute urls
   const path = UrlCanParse(props.src) ? `/${props.src}` : props.src;
   // https://github.com/unjs/ipx?tab=readme-ov-file#modifiers
