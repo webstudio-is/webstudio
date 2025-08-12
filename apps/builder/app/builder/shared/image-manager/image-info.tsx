@@ -33,6 +33,7 @@ import {
   CloudIcon,
   DimensionsIcon,
   GearIcon,
+  InfoCircleIcon,
   PageIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
@@ -200,7 +201,7 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
 const UsageDot = styled(Box, {
   width: 6,
   height: 6,
-  backgroundColor: theme.colors.foregroundDestructive,
+  backgroundColor: "#000",
   border: "1px solid white",
   boxShadow: "0 0 3px rgb(0, 0, 0)",
   borderRadius: "50%",
@@ -287,6 +288,18 @@ const ImageInfoContent = ({
       });
     }
   );
+  const [description, setDescription] = useLocalValue(
+    asset.description ?? "",
+    (newDescription) => {
+      const assetId = asset.id;
+      updateWebstudioData((data) => {
+        const asset = data.assets.get(assetId);
+        if (asset) {
+          asset.description = newDescription;
+        }
+      });
+    }
+  );
 
   const authPermit = useStore($authPermit);
 
@@ -358,6 +371,27 @@ const ImageInfoContent = ({
         </InputErrorsTooltip>
       </Grid>
 
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <Label
+          htmlFor="image-manager-description"
+          css={{ display: "flex", alignItems: "center", gap: 4 }}
+        >
+          Description
+          <Tooltip
+            variant="wrapped"
+            content="The description is used as the default “alt” text for the image."
+          >
+            <InfoCircleIcon />
+          </Tooltip>
+        </Label>
+        <InputField
+          id="image-manager-description"
+          placeholder='Enter "alt" text'
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+        />
+      </Grid>
+
       <Box css={{ padding: theme.panel.padding }}>
         {authPermit === "view" ? (
           <Tooltip side="bottom" content="View mode. You can't delete assets.">
@@ -376,9 +410,7 @@ const ImageInfoContent = ({
         ) : (
           <Dialog>
             <DialogTrigger asChild>
-              <Button color="destructive" prefix={<TrashIcon />}>
-                Delete
-              </Button>
+              <Button>Review & delete</Button>
             </DialogTrigger>
             <DialogContent minWidth={360}>
               <DialogTitle>Delete asset?</DialogTitle>
