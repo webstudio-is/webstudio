@@ -201,7 +201,7 @@ const AssetUsagesList = ({ usages }: { usages: AssetUsage[] }) => {
 const UsageDot = styled(Box, {
   width: 6,
   height: 6,
-  backgroundColor: theme.colors.foregroundDestructive,
+  backgroundColor: "#000",
   border: "1px solid white",
   boxShadow: "0 0 3px rgb(0, 0, 0)",
   borderRadius: "50%",
@@ -377,7 +377,10 @@ const ImageInfoContent = ({
           css={{ display: "flex", alignItems: "center", gap: 4 }}
         >
           Description
-          <Tooltip content="The description is used as the default “alt” text for the image.">
+          <Tooltip
+            variant="wrapped"
+            content="The description is used as the default “alt” text for the image."
+          >
             <InfoCircleIcon />
           </Tooltip>
         </Label>
@@ -407,9 +410,7 @@ const ImageInfoContent = ({
         ) : (
           <Dialog>
             <DialogTrigger asChild>
-              <Button color="destructive" prefix={<TrashIcon />}>
-                Delete
-              </Button>
+              <Button>Review & delete</Button>
             </DialogTrigger>
             <DialogContent minWidth={360}>
               <DialogTitle>Delete asset?</DialogTitle>
