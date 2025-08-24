@@ -52,7 +52,11 @@ const cachedFetch: typeof fetch = async (input, init) => {
         cache.put(request, response);
       }
     }
-    return new Response(request.headers.get("Cache-Control") ?? "");
+    return new Response(
+      Array.from(request.headers.entries())
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n")
+    );
   }
   return fetch(input, init);
 };
