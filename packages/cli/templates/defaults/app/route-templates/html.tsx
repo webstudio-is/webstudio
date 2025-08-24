@@ -52,15 +52,11 @@ const cachedFetch: typeof fetch = async (input, init) => {
         // put Cache-Control from request into response
         // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
         const requestCacheControl = request.headers.get("Cache-Control");
-        const responseWithCacheControl = response.clone();
-        if (
-          !responseWithCacheControl.headers.has("Cache-Control") &&
-          requestCacheControl
-        ) {
+        response = response.clone();
+        if (!response.headers.has("Cache-Control") && requestCacheControl) {
           response.headers.append("Cache-Control", requestCacheControl);
         }
-
-        cache.put(request, responseWithCacheControl);
+        cache.put(request, response);
       }
     }
     return response;
