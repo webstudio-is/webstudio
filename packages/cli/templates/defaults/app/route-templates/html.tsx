@@ -49,14 +49,21 @@ const cachedFetch: typeof fetch = async (input, init) => {
     if (!response) {
       response = await fetch(request);
       if (response.ok) {
-        cache.put(request, response);
+        // put Cache-Control from request into response
+        // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
+        const requestCacheControl = request.headers.get("Cache-Control");
+        const responseWithCacheControl = response.clone();
+        if (
+          !responseWithCacheControl.headers.has("Cache-Control") &&
+          requestCacheControl
+        ) {
+          response.headers.append("Cache-Control", requestCacheControl);
+        }
+
+        cache.put(request, responseWithCacheControl);
       }
     }
-    return new Response(
-      Array.from(request.headers.entries())
-        .map(([key, value]) => `${key}=${value}`)
-        .join("\n")
-    );
+    return response;
   }
   return fetch(input, init);
 };
