@@ -41,9 +41,25 @@ import * as constants from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 
+const cachedFetch: typeof fetch = async (input, init) => {
+  if (typeof caches !== "undefined") {
+    const cache = await caches.open("resource-cache");
+    const request = new Request(input, init);
+    let response = await cache.match(request);
+    if (!response) {
+      response = await fetch(request);
+      if (response.ok) {
+        cache.put(request, response);
+      }
+    }
+    return response;
+  }
+  return fetch(input, init);
+};
+
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
-    return fetch(input, init);
+    return cachedFetch(input, init);
   }
 
   if (isLocalResource(input, "sitemap.xml")) {
@@ -53,7 +69,7 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
-  return fetch(input, init);
+  return cachedFetch(input, init);
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
