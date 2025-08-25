@@ -15,6 +15,7 @@ import {
   loadResources,
   formIdFieldName,
   formBotFieldName,
+  cachedFetch,
 } from "@webstudio-is/sdk/runtime";
 import {
   ReactSdkContext,
@@ -42,7 +43,7 @@ import { sitemap } from "../__generated__/$resources.sitemap.xml";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
-    return fetch(input, init);
+    return cachedFetch(projectId, input, init);
   }
 
   if (isLocalResource(input, "sitemap.xml")) {
@@ -52,7 +53,7 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
-  return fetch(input, init);
+  return cachedFetch(projectId, input, init);
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
