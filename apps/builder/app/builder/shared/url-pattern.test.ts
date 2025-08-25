@@ -2,9 +2,24 @@ import { expect, test } from "vitest";
 import {
   compilePathnamePattern,
   isPathnamePattern,
+  matchPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+
+test("decode matched params", () => {
+  expect(matchPathnamePattern("/blog/:slug", "/blog/привет")).toEqual({
+    slug: "привет",
+  });
+  expect(
+    matchPathnamePattern(
+      "/blog/:slug",
+      "/blog/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+    )
+  ).toEqual({
+    slug: "привет",
+  });
+});
 
 test("check pathname is pattern", () => {
   expect(isPathnamePattern("/:name")).toEqual(true);

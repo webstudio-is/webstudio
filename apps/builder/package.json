@@ -119,7 +119,7 @@
     "strip-indent": "^4.0.0",
     "tiny-invariant": "^1.3.3",
     "title-case": "^4.3.2",
-    "urlpattern-polyfill": "^10.0.0",
+    "urlpattern-polyfill": "^10.1.0",
     "use-debounce": "^10.0.4",
     "valid-filename": "^4.0.0",
     "warn-once": "^0.1.1",
