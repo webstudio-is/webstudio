@@ -13,6 +13,7 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  cachedFetch,
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
@@ -43,7 +44,7 @@ import { sitemap } from "../__generated__/$resources.sitemap.xml";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
-    return fetch(input, init);
+    return cachedFetch(input, init, projectId);
   }
 
   if (isLocalResource(input, "sitemap.xml")) {
@@ -53,7 +54,7 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
-  return fetch(input, init);
+  return cachedFetch(input, init, projectId);
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
