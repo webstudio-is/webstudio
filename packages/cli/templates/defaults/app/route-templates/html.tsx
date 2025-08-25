@@ -13,6 +13,7 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  cachedFetch,
   formIdFieldName,
   formBotFieldName,
 } from "@webstudio-is/sdk/runtime";
@@ -41,32 +42,9 @@ import * as constants from "__CONSTANTS__";
 import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 
-const cachedFetch: typeof fetch = async (input, init) => {
-  if (typeof caches !== "undefined") {
-    const cache = await caches.open("resource-cache");
-    const request = new Request(input, init);
-    let response = await cache.match(request);
-    if (!response) {
-      response = await fetch(request);
-      if (response.ok) {
-        // put Cache-Control from request into response
-        // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
-        const requestCacheControl = request.headers.get("Cache-Control");
-        response = response.clone();
-        if (requestCacheControl) {
-          response.headers.set("Cache-Control", requestCacheControl);
-        }
-        cache.put(request, response);
-      }
-    }
-    return response;
-  }
-  return fetch(input, init);
-};
-
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
-    return cachedFetch(input, init);
+    return cachedFetch(input, init, projectId);
   }
 
   if (isLocalResource(input, "sitemap.xml")) {
@@ -76,7 +54,7 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
-  return cachedFetch(input, init);
+  return cachedFetch(input, init, projectId);
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {

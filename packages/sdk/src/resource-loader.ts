@@ -1,3 +1,4 @@
+import hash from "@emotion/hash";
 import type { ResourceRequest } from "./schema/resources";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
@@ -88,4 +89,57 @@ export const loadResources = async (
       )
     )
   );
+};
+
+/**
+ * cache api supports only get method
+ * put hash of method and body into url
+ * to support for example graphql queries
+ */
+const getCacheKey = async (request: Request) => {
+  const url = new URL(request.url);
+  const method = request.method;
+  const body = await request.clone().text();
+  // invalidate cache when cache-control is changed
+  const cacheControl = request.headers.get("Cache-Control");
+  const resourceHash = hash(`${method}:${body}:${cacheControl}`);
+  url.searchParams.set("ws-resource-hash", resourceHash);
+  return url;
+};
+
+export const cachedFetch = async (
+  input: RequestInfo | URL,
+  init: RequestInit,
+  namespace: string
+) => {
+  if (globalThis.caches) {
+    const request = new Request(input, init);
+    const requestCacheControl = request.headers.get("Cache-Control");
+    // make cache opt in with cache-control header
+    if (!requestCacheControl) {
+      return fetch(input, init);
+    }
+    const cache = await caches.open(namespace);
+    const cacheKey = await getCacheKey(request);
+    let response = await cache.match(cacheKey);
+    if (response) {
+      // avoid mutating cached response
+      return new Response(response.body, response);
+    }
+    // load response when missing in cache
+    response = await fetch(request);
+    // avoid caching failed responses
+    if (!response.ok) {
+      return response;
+    }
+    // put Cache-Control from request into response
+    // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
+    // response.clone() does not remove read-only constraint from headers
+    response = new Response(response.body, response);
+    response.headers.set("Cache-Control", requestCacheControl);
+    // avoid mutating cached response
+    await cache.put(cacheKey, response.clone());
+    return response;
+  }
+  return fetch(input, init);
 };
