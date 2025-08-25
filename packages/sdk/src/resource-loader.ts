@@ -108,9 +108,9 @@ const getCacheKey = async (request: Request) => {
 };
 
 export const cachedFetch = async (
+  namespace: string,
   input: RequestInfo | URL,
-  init: RequestInit,
-  namespace: string
+  init?: RequestInit
 ) => {
   if (globalThis.caches) {
     const request = new Request(input, init);

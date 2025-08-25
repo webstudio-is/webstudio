@@ -44,7 +44,7 @@ import { sitemap } from "__SITEMAP__";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
-    return cachedFetch(input, init, projectId);
+    return cachedFetch(projectId, input, init);
   }
 
   if (isLocalResource(input, "sitemap.xml")) {
@@ -54,7 +54,7 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
-  return cachedFetch(input, init, projectId);
+  return cachedFetch(projectId, input, init);
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
