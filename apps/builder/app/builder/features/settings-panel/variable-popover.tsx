@@ -23,6 +23,7 @@ import {
   Button,
   Combobox,
   DialogClose,
+  DialogMaximize,
   DialogTitle,
   DialogTitleActions,
   Flex,
@@ -73,7 +74,6 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-  editorDialogControlStyle,
   foldGutterExtension,
 } from "~/builder/shared/code-editor-base";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -744,18 +744,9 @@ const VariablePreview = ({ variable }: { variable: DataSource }) => {
         height: "100%",
         overflow: "hidden",
         boxSizing: "content-box",
-        ...editorDialogControlStyle,
       }}
     >
       <EditorContent {...editorProps} />
-      <EditorDialog
-        title={`Inspect "${variable.name}" value`}
-        maximizable={false}
-        defaultIsMaximized
-        content={<EditorContent {...editorProps} />}
-      >
-        <EditorDialogButton />
-      </EditorDialog>
     </Grid>
   );
 };
@@ -844,6 +835,7 @@ export const VariablePopoverTrigger = ({
                     </Tooltip>
                   </>
                 )}
+                <DialogMaximize />
                 <DialogClose />
               </DialogTitleActions>
             }

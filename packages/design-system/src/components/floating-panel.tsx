@@ -51,7 +51,6 @@ type FloatingPanelProps = {
   content: ReactNode;
   children: ReactNode;
   maximizable?: boolean;
-  defaultIsMaximized?: boolean;
   resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
   height?: number;
@@ -76,7 +75,6 @@ export const FloatingPanel = ({
   children,
   resize,
   maximizable,
-  defaultIsMaximized,
   width,
   height,
   placement = "left-start",
@@ -116,7 +114,6 @@ export const FloatingPanel = ({
       resize={resize}
       open={open}
       modal={false}
-      defaultIsMaximized={defaultIsMaximized}
       onOpenChange={onOpenChange}
     >
       <DialogTrigger asChild ref={triggerRef}>
