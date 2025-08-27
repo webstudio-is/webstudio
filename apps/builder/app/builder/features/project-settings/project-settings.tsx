@@ -55,9 +55,10 @@ export const ProjectSettingsView = ({
     >
       <DialogContent
         width={
-          Number.parseInt(leftPanelWidth) + Number.parseInt(rightPanelWidth)
+          Number.parseInt(leftPanelWidth, 10) +
+          Number.parseInt(rightPanelWidth, 10)
         }
-        height={Number.parseInt(rawTheme.spacing[35])}
+        height={Number.parseInt(rawTheme.spacing[35], 10)}
       >
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
