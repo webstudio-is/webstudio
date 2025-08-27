@@ -56,7 +56,7 @@ export const BackgroundContentStory = () => {
           title="Background"
           content={<BackgroundContent index={0} />}
         >
-          <div>Trigger</div>
+          <button>Trigger</button>
         </FloatingPanel>
       </FloatingPanelProvider>
     </>
