@@ -11,6 +11,7 @@ import {
   List,
   ListItem,
   Text,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import {
   $openProjectSettings,
@@ -53,11 +54,10 @@ export const ProjectSettingsView = ({
       onOpenChange={onOpenChange}
     >
       <DialogContent
-        css={{
-          width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
-          maxWidth: "none",
-          height: theme.spacing[35],
-        }}
+        width={
+          Number.parseInt(leftPanelWidth) + Number.parseInt(rightPanelWidth)
+        }
+        height={Number.parseInt(rawTheme.spacing[35])}
       >
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
