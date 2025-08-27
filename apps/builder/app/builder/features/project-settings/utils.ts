@@ -1,8 +1,8 @@
-import { theme, type CSS } from "@webstudio-is/design-system";
+import { rawTheme, theme, type CSS } from "@webstudio-is/design-system";
 import { getPagePath, type Pages } from "@webstudio-is/sdk";
 
-export const leftPanelWidth = theme.spacing[26];
-export const rightPanelWidth = theme.spacing[35];
+export const leftPanelWidth = rawTheme.spacing[26];
+export const rightPanelWidth = rawTheme.spacing[35];
 export const sectionSpacing: CSS = {
   paddingInline: theme.panel.paddingInline,
 };

@@ -137,14 +137,6 @@ type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
 
-const centeredContent = {
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "100vw",
-  height: "100vh",
-} as const;
-
 type UseDraggableProps = {
   isMaximized: boolean;
   minWidth?: number;
@@ -174,12 +166,27 @@ const useDraggable = ({
 
   const calcStyle = useCallback(() => {
     const style: CSSProperties = isMaximized
-      ? centeredContent
-      : {
-          ...centeredContent,
-          width,
-          height,
-        };
+      ? {
+          top: "calc(20px + 50% - 50vh)",
+          left: "calc(20px + 50% - 50vw)",
+          width: "calc(100vw - 40px)",
+          height: "calc(100vh - 40px)",
+        }
+      : !width || !height
+        ? {
+            inset: 0,
+            margin: "auto",
+            width,
+            height,
+          }
+        : {
+            top: `max(20px, calc(50% - ${height / 2}px))`,
+            bottom: `max(20px, calc(50% - ${height / 2}px))`,
+            left: `max(20px, calc(50% - ${width / 2}px))`,
+            right: `max(20px, calc(50% - ${width / 2}px))`,
+            width,
+            height,
+          };
 
     if (minWidth !== undefined) {
       style.minWidth = minWidth;
@@ -191,11 +198,13 @@ const useDraggable = ({
     if (isMaximized === false) {
       if (x !== undefined) {
         style.left = x;
-        style.transform = "none";
+        style.right = "auto";
+        style.margin = 0;
       }
       if (y !== undefined) {
         style.top = y;
-        style.transform = "none";
+        style.bottom = "auto";
+        style.margin = 0;
       }
     }
     return style;
@@ -230,7 +239,6 @@ const useDraggable = ({
     const rect = target.getBoundingClientRect();
     target.style.left = `${rect.x}px`;
     target.style.top = `${rect.y}px`;
-    target.style.transform = "none";
     lastDragDataRef.current = {
       point: { x: event.pageX, y: event.pageY },
       rect,
@@ -441,6 +449,7 @@ const overlayStyle = css({
 const contentStyle = css(panelStyle, {
   position: "fixed",
   width: "min-content",
+  height: "min-content",
   minWidth: theme.sizes.sidebarWidth,
   minHeight: theme.spacing[22],
   maxWidth: `calc(100vw - ${theme.spacing[15]})`,

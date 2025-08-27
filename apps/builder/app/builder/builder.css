@@ -22,3 +22,8 @@ body {
 [data-radix-scroll-area-viewport]::-webkit-scrollbar {
   display: none;
 }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--colors-foregroundScrollBar) transparent;
+}

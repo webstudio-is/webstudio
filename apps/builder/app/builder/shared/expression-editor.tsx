@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, type RefObject } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet, RangeSetBuilder } from "@codemirror/state";
@@ -33,7 +33,6 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-  foldGutterExtension,
   type EditorApi,
 } from "./code-editor-base";
 import {
@@ -492,47 +491,5 @@ export const ExpressionEditor = ({
         </EditorDialog>
       </EditorDialogControl>
     </div>
-  );
-};
-
-// compute value as json lazily only when dialog is open
-// by spliting into separate component which is invoked
-// only when dialog content is rendered
-const ValuePreviewEditor = ({ value }: { value: unknown }) => {
-  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
-  return (
-    <EditorContent
-      readOnly={true}
-      extensions={extensions}
-      value={JSON.stringify(value, null, 2)}
-      onChange={() => {}}
-      onChangeComplete={() => {}}
-    />
-  );
-};
-
-export const ValuePreviewDialog = ({
-  title,
-  value,
-  children,
-  open,
-  onOpenChange,
-}: {
-  title?: ReactNode;
-  value: unknown;
-  open?: boolean;
-  onOpenChange?: (newOpen: boolean) => void;
-  children: ReactNode;
-}) => {
-  return (
-    <EditorDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      content={<ValuePreviewEditor value={value} />}
-      resize="both"
-    >
-      {children}
-    </EditorDialog>
   );
 };

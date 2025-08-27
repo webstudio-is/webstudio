@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { javascript } from "@codemirror/lang-javascript";
 import {
   type ReactNode,
   type Ref,
@@ -13,6 +15,7 @@ import {
   createContext,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { CopyIcon, RefreshIcon, UpgradeIcon } from "@webstudio-is/icons";
 import {
@@ -20,6 +23,7 @@ import {
   Button,
   Combobox,
   DialogClose,
+  DialogMaximize,
   DialogTitle,
   DialogTitleActions,
   Flex,
@@ -58,13 +62,19 @@ import {
   $userPlanFeatures,
   $instances,
   $props,
+  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $selectedInstance } from "~/shared/awareness";
+import {
+  $selectedInstance,
+  $selectedInstanceKeyWithRoot,
+} from "~/shared/awareness";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
+  EditorContent,
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
+  foldGutterExtension,
 } from "~/builder/shared/code-editor-base";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
@@ -666,8 +676,8 @@ const VariablePanel = forwardRef<
         direction="column"
         css={{
           overflow: "hidden",
+          padding: theme.panel.padding,
           gap: theme.spacing[7],
-          p: theme.panel.padding,
         }}
       >
         <NameField variable={variable} defaultValue={variable?.name ?? ""} />
@@ -707,6 +717,40 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
   return true;
 };
 
+const $instanceVariableValues = computed(
+  [$selectedInstanceKeyWithRoot, $variableValuesByInstanceSelector],
+  (instanceKey, variableValuesByInstanceSelector) =>
+    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
+    new Map<string, unknown>()
+);
+
+const VariablePreview = ({ variable }: { variable: DataSource }) => {
+  const variableValues = useStore($instanceVariableValues);
+  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
+  const editorProps = {
+    readOnly: true,
+    extensions,
+    // compute value as json lazily only when dialog is open
+    // by spliting into separate component which is invoked
+    // only when dialog content is rendered
+    value: JSON.stringify(variableValues.get(variable.id), null, 2),
+    onChange: () => {},
+    onChangeComplete: () => {},
+  };
+  return (
+    <Grid
+      align="stretch"
+      css={{
+        height: "100%",
+        overflow: "hidden",
+        boxSizing: "content-box",
+      }}
+    >
+      <EditorContent {...editorProps} />
+    </Grid>
+  );
+};
+
 export const VariablePopoverTrigger = ({
   variable,
   children,
@@ -724,6 +768,9 @@ export const VariablePopoverTrigger = ({
 
   return (
     <FloatingPanel
+      placement="center"
+      width={variable ? 740 : 320}
+      height={480}
       open={isOpen}
       onOpenChange={(newOpen) => {
         if (newOpen) {
@@ -788,6 +835,7 @@ export const VariablePopoverTrigger = ({
                     </Tooltip>
                   </>
                 )}
+                <DialogMaximize />
                 <DialogClose />
               </DialogTitleActions>
             }
@@ -797,57 +845,61 @@ export const VariablePopoverTrigger = ({
         )
       }
       content={
-        <ScrollArea
+        <Grid
           css={{
-            // flex fixes content overflowing artificial scroll area
-            display: "flex",
-            flexDirection: "column",
-            width: theme.spacing[30],
+            height: "100%",
+            gridTemplateColumns: "320px 1fr",
           }}
         >
-          <form
-            ref={formRef}
-            noValidate={true}
-            // exclude from the flow
-            style={{ display: "contents" }}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (isSystemVariable) {
-                return;
-              }
-              const nameElement =
-                event.currentTarget.elements.namedItem("name");
-              // make sure only name is valid and allow to save everything else
-              // to avoid loosing complex configuration when closed accidentally
-              if (
-                nameElement instanceof HTMLInputElement &&
-                nameElement.checkValidity()
-              ) {
-                const formData = new FormData(event.currentTarget);
-                panelRef.current?.save(formData);
-                // close popover whenever new variable is created
-                // to prevent creating duplicated variable
-                if (variable === undefined) {
-                  setOpen(false);
-                }
-              }
-            }}
+          <ScrollArea
+            // flex fixes content overflowing artificial scroll area
+            css={{ display: "flex", flexDirection: "column" }}
           >
-            {/* submit is not triggered when press enter on input without submit button */}
-            <button hidden></button>
-            <fieldset
+            <form
+              ref={formRef}
+              noValidate={true}
+              // exclude from the flow
               style={{ display: "contents" }}
-              // forbid editing system variable
-              disabled={isSystemVariable}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (isSystemVariable) {
+                  return;
+                }
+                const nameElement =
+                  event.currentTarget.elements.namedItem("name");
+                // make sure only name is valid and allow to save everything else
+                // to avoid loosing complex configuration when closed accidentally
+                if (
+                  nameElement instanceof HTMLInputElement &&
+                  nameElement.checkValidity()
+                ) {
+                  const formData = new FormData(event.currentTarget);
+                  panelRef.current?.save(formData);
+                  // close popover whenever new variable is created
+                  // to prevent creating duplicated variable
+                  if (variable === undefined) {
+                    setOpen(false);
+                  }
+                }
+              }}
             >
-              <BindingPopoverProvider
-                value={{ containerRef: bindingPopoverContainerRef }}
+              {/* submit is not triggered when press enter on input without submit button */}
+              <button hidden></button>
+              <fieldset
+                style={{ display: "contents" }}
+                // forbid editing system variable
+                disabled={isSystemVariable}
               >
-                <VariablePanel ref={panelRef} variable={variable} />
-              </BindingPopoverProvider>
-            </fieldset>
-          </form>
-        </ScrollArea>
+                <BindingPopoverProvider
+                  value={{ containerRef: bindingPopoverContainerRef }}
+                >
+                  <VariablePanel ref={panelRef} variable={variable} />
+                </BindingPopoverProvider>
+              </fieldset>
+            </form>
+          </ScrollArea>
+          {variable && <VariablePreview variable={variable} />}
+        </Grid>
       }
     >
       {children}

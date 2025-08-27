@@ -7,7 +7,6 @@ import {
   useState,
   useRef,
   useLayoutEffect,
-  useCallback,
 } from "react";
 import { css, theme } from "../stitches.config";
 import {
@@ -68,6 +67,8 @@ const contentStyle = css({
   width: theme.sizes.sidebarWidth,
 });
 
+const defaultOffset = { mainAxis: 10 };
+
 export const FloatingPanel = ({
   title,
   content,
@@ -77,7 +78,7 @@ export const FloatingPanel = ({
   width,
   height,
   placement = "left-start",
-  offset: offsetProp = { mainAxis: 10 },
+  offset: offsetProp = defaultOffset,
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
@@ -87,60 +88,25 @@ export const FloatingPanel = ({
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
-  const positionIsSetRef = useRef(false);
 
-  const calcPosition = useCallback(() => {
+  useLayoutEffect(() => {
     if (
       triggerRef.current === null ||
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
-      placement === "center" ||
-      // After we positioned it once, we leave it alone to avoid jumps when user is scrolling the trigger
-      positionIsSetRef.current
+      placement === "center"
     ) {
       return;
     }
 
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const containerRect = containerRef.current.getBoundingClientRect();
-
-    const anchor = {
-      getBoundingClientRect() {
-        return {
-          width: containerRect.width,
-          height: triggerRect.height,
-          x: containerRect.x,
-          y: triggerRect.y,
-          left: containerRect.left,
-          right: containerRect.right,
-          top: triggerRect.top,
-          bottom: triggerRect.bottom,
-        };
-      },
-    };
-
-    computePosition(anchor, contentElement, {
+    computePosition(triggerRef.current, contentElement, {
       placement,
-      middleware: [
-        shift(),
-        placement === "bottom" && flip(),
-        offset(offsetProp),
-      ],
+      middleware: [shift(), flip(), offset(offsetProp)],
     }).then(({ x, y }) => {
       setPosition({ x, y });
-      positionIsSetRef.current = true;
     });
-  }, [
-    positionIsSetRef,
-    contentElement,
-    triggerRef,
-    containerRef,
-    placement,
-    offsetProp,
-  ]);
-
-  useLayoutEffect(calcPosition, [calcPosition]);
+  }, [contentElement, triggerRef, containerRef, placement, offsetProp]);
 
   return (
     <Dialog
