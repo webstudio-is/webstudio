@@ -412,15 +412,15 @@ export const EditorContent = ({
   );
 };
 
-const editorDialogControlStyle = css({
+export const editorDialogControlStyle = {
   position: "relative",
   "&:hover": {
     [maximizeIconVisibilityVar]: "visible",
   },
-});
+};
 
 export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
-  return <div className={editorDialogControlStyle()}>{children}</div>;
+  return <div className={css(editorDialogControlStyle)()}>{children}</div>;
 };
 
 export const EditorDialogButton = forwardRef<
@@ -450,6 +450,8 @@ export const EditorDialog = ({
   placement = "center",
   width = 640,
   height = 480,
+  maximizable = true,
+  defaultIsMaximized = false,
   ...panelProps
 }: {
   title: ReactNode;
@@ -457,6 +459,8 @@ export const EditorDialog = ({
   children: ReactNode;
   width?: number;
   height?: number;
+  maximizable?: boolean;
+  defaultIsMaximized?: boolean;
   placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
@@ -468,7 +472,8 @@ export const EditorDialog = ({
       width={width}
       height={height}
       placement={placement}
-      maximizable
+      maximizable={maximizable}
+      defaultIsMaximized={defaultIsMaximized}
       resize="both"
       content={
         <Grid

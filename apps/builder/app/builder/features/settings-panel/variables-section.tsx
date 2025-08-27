@@ -39,10 +39,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import {
-  ValuePreviewDialog,
-  formatValuePreview,
-} from "~/builder/shared/expression-editor";
+import { formatValuePreview } from "~/builder/shared/expression-editor";
 import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
@@ -145,7 +142,6 @@ const VariablesItem = ({
   usageCount: number;
 }) => {
   const selectedPage = useStore($selectedPage);
-  const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   return (
@@ -169,69 +165,61 @@ const VariablesItem = ({
         data-state={isMenuOpen ? "open" : undefined}
         buttons={
           <>
-            <ValuePreviewDialog
-              open={inspectDialogOpen}
-              onOpenChange={setInspectDialogOpen}
-              title={`Inspect "${variable.name}" value`}
-              value={value}
-            >
-              {undefined}
-            </ValuePreviewDialog>
-
-            <DropdownMenu modal onOpenChange={setIsMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                {/* a11y is completely broken here
-                  focus is not restored to button invoker
-                  @todo fix it eventually and consider restoring from closed value preview dialog
-              */}
-                <SmallIconButton
-                  tabIndex={-1}
-                  aria-label="Open variable menu"
-                  icon={<EllipsesIcon />}
-                  onClick={() => {}}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                css={{ width: theme.spacing[28] }}
-                onCloseAutoFocus={(event) => event.preventDefault()}
-              >
-                <DropdownMenuItem onSelect={() => setInspectDialogOpen(true)}>
-                  Inspect
-                </DropdownMenuItem>
-                {source === "local" && variable.type !== "parameter" && (
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      if (usageCount > 0) {
-                        setIsDeleteDialogOpen(true);
-                      } else {
-                        updateWebstudioData((data) => {
-                          deleteVariableMutable(data, variable.id);
-                        });
-                      }
-                    }}
-                  >
-                    Delete {usageCount > 0 && `(${usageCount} bindings)`}
-                  </DropdownMenuItem>
-                )}
-                {source === "local" &&
-                  variable.id === selectedPage?.systemDataSourceId && (
+            {((source === "local" && variable.type !== "parameter") ||
+              (source === "local" &&
+                variable.id === selectedPage?.systemDataSourceId)) && (
+              <DropdownMenu modal onOpenChange={setIsMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  {/* a11y is completely broken here
+                      focus is not restored to button invoker
+                      @todo fix it eventually and consider restoring from closed value preview dialog
+                  */}
+                  <SmallIconButton
+                    tabIndex={-1}
+                    aria-label="Open variable menu"
+                    icon={<EllipsesIcon />}
+                    onClick={() => {}}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  css={{ width: theme.spacing[28] }}
+                  onCloseAutoFocus={(event) => event.preventDefault()}
+                >
+                  {source === "local" && variable.type !== "parameter" && (
                     <DropdownMenuItem
                       onSelect={() => {
-                        updateWebstudioData((data) => {
-                          const page = findPageByIdOrPath(
-                            selectedPage.id,
-                            data.pages
-                          );
-                          delete page?.systemDataSourceId;
-                          deleteVariableMutable(data, variable.id);
-                        });
+                        if (usageCount > 0) {
+                          setIsDeleteDialogOpen(true);
+                        } else {
+                          updateWebstudioData((data) => {
+                            deleteVariableMutable(data, variable.id);
+                          });
+                        }
                       }}
                     >
-                      Delete
+                      Delete {usageCount > 0 && `(${usageCount} bindings)`}
                     </DropdownMenuItem>
                   )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {source === "local" &&
+                    variable.id === selectedPage?.systemDataSourceId && (
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          updateWebstudioData((data) => {
+                            const page = findPageByIdOrPath(
+                              selectedPage.id,
+                              data.pages
+                            );
+                            delete page?.systemDataSourceId;
+                            deleteVariableMutable(data, variable.id);
+                          });
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <Dialog
               open={isDeleteDialogOpen}

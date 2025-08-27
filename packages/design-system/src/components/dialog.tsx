@@ -68,12 +68,14 @@ export const Dialog = ({
   resize,
   draggable,
   onOpenChange,
+  defaultIsMaximized = false,
   ...props
 }: ComponentProps<typeof Primitive.Dialog> & {
   resize?: "both" | "none";
   draggable?: boolean;
+  defaultIsMaximized?: boolean;
 }) => {
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(defaultIsMaximized);
   return (
     <DialogContext.Provider
       value={{ isMaximized, setIsMaximized, resize, draggable }}
@@ -137,14 +139,6 @@ type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
 
-const centeredContent = {
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "100vw",
-  height: "100vh",
-} as const;
-
 type UseDraggableProps = {
   isMaximized: boolean;
   minWidth?: number;
@@ -174,9 +168,15 @@ const useDraggable = ({
 
   const calcStyle = useCallback(() => {
     const style: CSSProperties = isMaximized
-      ? centeredContent
+      ? {
+          top: "calc(20px + 50% - 50vh)",
+          left: "calc(20px + 50% - 50vw)",
+          width: "calc(100vw - 40px)",
+          height: "calc(100vh - 40px)",
+        }
       : {
-          ...centeredContent,
+          top: `max(20px, calc(50% - ${height ? height / 2 : 0}px))`,
+          left: `max(20px, calc(50% - ${width ? width / 2 : 0}px))`,
           width,
           height,
         };
@@ -191,11 +191,9 @@ const useDraggable = ({
     if (isMaximized === false) {
       if (x !== undefined) {
         style.left = x;
-        style.transform = "none";
       }
       if (y !== undefined) {
         style.top = y;
-        style.transform = "none";
       }
     }
     return style;
@@ -230,7 +228,6 @@ const useDraggable = ({
     const rect = target.getBoundingClientRect();
     target.style.left = `${rect.x}px`;
     target.style.top = `${rect.y}px`;
-    target.style.transform = "none";
     lastDragDataRef.current = {
       point: { x: event.pageX, y: event.pageY },
       rect,
