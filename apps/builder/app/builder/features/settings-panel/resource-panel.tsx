@@ -29,7 +29,6 @@ import {
 import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
   Box,
-  Button,
   Flex,
   Grid,
   InputErrorsTooltip,
