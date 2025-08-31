@@ -47,7 +47,7 @@ export const loadResource = async (
     }
   }
   try {
-    const response = await customFetch(url, requestInit);
+    const response = await customFetch(url.href, requestInit);
 
     let data = await response.text();
 
