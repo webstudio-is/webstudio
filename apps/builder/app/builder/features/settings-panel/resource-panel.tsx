@@ -36,6 +36,7 @@ import {
   Label,
   Select,
   SmallIconButton,
+  Text,
   TextArea,
   Tooltip,
   theme,
@@ -345,6 +346,11 @@ export const SearchParams = ({
             }}
           />
         ))}
+        {searchParams.length === 0 && (
+          <Text color="subtle" align="center">
+            No search params
+          </Text>
+        )}
       </Grid>
     </Grid>
   );
@@ -458,6 +464,11 @@ export const Headers = ({
             }}
           />
         ))}
+        {headers.length === 0 && (
+          <Text color="subtle" align="center">
+            No headers
+          </Text>
+        )}
       </Grid>
     </Grid>
   );
