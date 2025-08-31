@@ -14,6 +14,7 @@ import { useStore } from "@nanostores/react";
 import {
   DataSources,
   Resource,
+  ResourceRequest,
   type DataSource,
   type Page,
 } from "@webstudio-is/sdk";
@@ -78,18 +79,23 @@ export const parseResource = ({
   name: string;
   formData: FormData;
 }) => {
-  const headerNames = formData.getAll("header-name");
-  const headerValues = formData.getAll("header-value");
+  const searchParamNames = formData.getAll("search-param-name") as string[];
+  const searchParamValues = formData.getAll("search-param-value") as string[];
+  const headerNames = formData.getAll("header-name") as string[];
+  const headerValues = formData.getAll("header-value") as string[];
   return Resource.parse({
     id,
     name,
     url: formData.get("url"),
+    searchParams: searchParamNames
+      .map((name, index) => ({ name, value: searchParamValues[index] }))
+      .filter((item) => item.name.trim()),
     method: formData.get("method"),
-    headers: headerNames.map((name, index) => {
-      const value = headerValues[index];
-      return { name, value };
-    }),
-    body: formData.get("body") ?? undefined,
+    headers: headerNames
+      .map((name, index) => ({ name, value: headerValues[index] }))
+      .filter((item) => item.name.trim()),
+    // use undefined instead of empty string
+    body: formData.get("body") || undefined,
   });
 };
 
@@ -119,7 +125,10 @@ export const UrlField = ({
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (
+    urlExpression: string,
+    searchParams?: ResourceRequest["searchParams"]
+  ) => void;
   onCurlPaste: (curl: CurlRequest) => void;
 }) => {
   const urlId = useId();
@@ -163,8 +172,19 @@ export const UrlField = ({
               const curl = parseCurl(value);
               if (curl) {
                 onCurlPaste(curl);
-              } else {
+                return;
+              }
+              try {
+                const url = new URL(value);
+                const searchParams: ResourceRequest["searchParams"] = [];
+                for (const [name, value] of url.searchParams) {
+                  searchParams.push({ name, value: JSON.stringify(value) });
+                }
+                // remove all search params from url
+                url.search = "";
                 // update text value as string literal
+                onChange(JSON.stringify(url.href), searchParams);
+              } catch {
                 onChange(JSON.stringify(value));
               }
             }}
@@ -210,18 +230,121 @@ export const MethodField = ({
   );
 };
 
-const validateHeaderName = (value: string) =>
-  value.trim().length === 0 ? "Header name is required" : "";
+const SearchParamPair = ({
+  aliases,
+  scope,
+  name,
+  value,
+  onChange,
+  onDelete,
+}: {
+  aliases: Map<string, string>;
+  scope: Record<string, unknown>;
+  name: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  onDelete: () => void;
+}) => {
+  return (
+    <Grid
+      gap={2}
+      align="center"
+      css={{ gridTemplateColumns: `120px 1fr min-content` }}
+    >
+      <InputField
+        name="search-param-name"
+        value={name}
+        onChange={(event) => onChange(event.target.value, value)}
+      />
+      <input
+        hidden={true}
+        readOnly={true}
+        name="search-param-value"
+        value={value}
+      />
+      <BindingControl>
+        <InputField
+          name="search-param-value-literal"
+          // expressions with variables cannot be edited
+          disabled={isLiteralExpression(value) === false}
+          value={String(evaluateExpressionWithinScope(value, scope))}
+          // update text value as string literal
+          onChange={(event) =>
+            onChange(name, JSON.stringify(event.target.value))
+          }
+        />
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+          onRemove={(evaluatedValue) =>
+            onChange(name, JSON.stringify(evaluatedValue))
+          }
+        />
+      </BindingControl>
+      <SmallIconButton
+        aria-label="Delete search param"
+        variant="destructive"
+        icon={<TrashIcon />}
+        onClick={onDelete}
+      />
+    </Grid>
+  );
+};
 
-const validateHeaderValue = (value: string, scope: Record<string, unknown>) => {
-  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (typeof evaluatedValue !== "string") {
-    return "Header value expects a string";
-  }
-  if (evaluatedValue.length === 0) {
-    return "Header value is required";
-  }
-  return "";
+export const SearchParams = ({
+  scope,
+  aliases,
+  searchParams,
+  onChange,
+}: {
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  searchParams: NonNullable<Resource["searchParams"]>;
+  onChange: (searchParams: NonNullable<Resource["searchParams"]>) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Flex justify="between" align="center">
+        <Label>Search Params</Label>
+        <SmallIconButton
+          aria-label="Add another search param"
+          icon={<PlusIcon />}
+          onClick={() => {
+            // use empty string expression as default
+            const newSearchParams = [
+              ...searchParams,
+              { name: "", value: `""` },
+            ];
+            onChange(newSearchParams);
+          }}
+        />
+      </Flex>
+      <Grid gap={2}>
+        {searchParams.map((searchParam, index) => (
+          <SearchParamPair
+            key={index}
+            scope={scope}
+            aliases={aliases}
+            name={searchParam.name}
+            value={searchParam.value}
+            onChange={(name, value) => {
+              const newSearchParams = [...searchParams];
+              newSearchParams[index] = { name, value };
+              onChange(newSearchParams);
+            }}
+            onDelete={() => {
+              const newSearchParams = [...searchParams];
+              newSearchParams.splice(index, 1);
+              onChange(newSearchParams);
+            }}
+          />
+        ))}
+      </Grid>
+    </Grid>
+  );
 };
 
 const HeaderPair = ({
@@ -239,126 +362,46 @@ const HeaderPair = ({
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
-  const nameId = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
-  const [nameError, setNameError] = useState("");
-  // revalidate and hide error message
-  // until validity is checks again
-  useEffect(() => {
-    nameRef.current?.setCustomValidity(validateHeaderName(name));
-    setNameError("");
-  }, [name]);
-
-  const valueId = useId();
-  const valueRef = useRef<HTMLInputElement>(null);
-  const [valueError, setValueError] = useState("");
-  useEffect(() => {
-    valueRef.current?.setCustomValidity(validateHeaderValue(value, scope));
-    setValueError("");
-  }, [value, scope]);
-
   return (
     <Grid
       gap={2}
-      align={"center"}
-      css={{
-        gridTemplateColumns: `${theme.spacing[18]} 1fr 19px`,
-        gridTemplateAreas: `
-         "name name-input button"
-         "value  value-input  button"
-        `,
-      }}
+      align="center"
+      css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
-      <Label htmlFor={nameId} css={{ gridArea: "name" }}>
-        Name
-      </Label>
-      <InputErrorsTooltip errors={nameError ? [nameError] : undefined}>
+      <InputField
+        name="header-name"
+        value={name}
+        onChange={(event) => onChange(event.target.value, value)}
+      />
+      <input hidden={true} readOnly={true} name="header-value" value={value} />
+      <BindingControl>
         <InputField
-          inputRef={nameRef}
-          name="header-name"
-          css={{ gridArea: "name-input" }}
-          id={nameId}
-          color={nameError ? "error" : undefined}
-          value={name}
-          onChange={(event) => onChange(event.target.value, value)}
-          // can't use event.currentTarget because InputField
-          // binds focus events to container instead of input
-          onBlur={() => nameRef.current?.checkValidity()}
-          onInvalid={(event) =>
-            setNameError(event.currentTarget.validationMessage)
+          name="header-value-validator"
+          // expressions with variables cannot be edited
+          disabled={isLiteralExpression(value) === false}
+          value={String(evaluateExpressionWithinScope(value, scope))}
+          // update text value as string literal
+          onChange={(event) =>
+            onChange(name, JSON.stringify(event.target.value))
           }
         />
-      </InputErrorsTooltip>
-      <Label htmlFor={valueId} css={{ gridArea: "value" }}>
-        Value
-      </Label>
-      <input hidden={true} readOnly={true} name="header-value" value={value} />
-      <Box css={{ gridArea: "value-input", position: "relative" }}>
-        <BindingControl>
-          <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
-            <InputField
-              inputRef={valueRef}
-              name="header-value-validator"
-              id={valueId}
-              // expressions with variables cannot be edited
-              disabled={isLiteralExpression(value) === false}
-              color={valueError ? "error" : undefined}
-              value={String(evaluateExpressionWithinScope(value, scope))}
-              // update text value as string literal
-              onChange={(event) =>
-                onChange(name, JSON.stringify(event.target.value))
-              }
-              onBlur={() => valueRef.current?.checkValidity()}
-              onInvalid={(event) =>
-                setValueError(event.currentTarget.validationMessage)
-              }
-            />
-          </InputErrorsTooltip>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={(newValue) => onChange(name, newValue)}
-            onRemove={(evaluatedValue) =>
-              onChange(name, JSON.stringify(evaluatedValue))
-            }
-          />
-        </BindingControl>
-      </Box>
-
-      <Grid
-        css={{
-          gridArea: "button",
-          justifyItems: "center",
-          gap: "2px",
-          color: theme.colors.foregroundIconSecondary,
-        }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="19"
-          height="11"
-          viewBox="0 0 19 11"
-          fill="currentColor"
-        >
-          <path d="M10 10.05V6.05005C10 2.73634 7.31371 0.0500488 4 0.0500488H0V1.05005H4C6.76142 1.05005 9 3.28863 9 6.05005V10.05H10Z" />
-        </svg>
-        <SmallIconButton
-          variant="destructive"
-          icon={<TrashIcon />}
-          onClick={onDelete}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+          onRemove={(evaluatedValue) =>
+            onChange(name, JSON.stringify(evaluatedValue))
+          }
         />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="19"
-          height="11"
-          viewBox="0 0 19 11"
-          fill="currentColor"
-        >
-          <path d="M-4.37114e-07 10.05L4 10.05C7.31371 10.05 10 7.36376 10 4.05005L10 0.0500488L9 0.0500488L9 4.05005C9 6.81147 6.76142 9.05005 4 9.05005L-3.93402e-07 9.05005L-4.37114e-07 10.05Z" />
-        </svg>
-      </Grid>
+      </BindingControl>
+      <SmallIconButton
+        aria-label="Delete header"
+        variant="destructive"
+        icon={<TrashIcon />}
+        onClick={onDelete}
+      />
     </Grid>
   );
 };
@@ -376,8 +419,19 @@ export const Headers = ({
 }) => {
   return (
     <Grid gap={1}>
-      <Label>Headers</Label>
-      <Grid gap={3}>
+      <Flex justify="between" align="center">
+        <Label>Headers</Label>
+        <SmallIconButton
+          aria-label="Add another search param"
+          icon={<PlusIcon />}
+          onClick={() => {
+            // use empty string expression as default
+            const newHeaders = [...headers, { name: "", value: `""` }];
+            onChange(newHeaders);
+          }}
+        />
+      </Flex>
+      <Grid gap={2}>
         {headers.map((header, index) => (
           <HeaderPair
             key={index}
@@ -397,19 +451,6 @@ export const Headers = ({
             }}
           />
         ))}
-        <Button
-          type="button"
-          color="neutral"
-          css={{ justifySelf: "center" }}
-          prefix={<PlusIcon />}
-          onClick={() => {
-            // use empty string expression as default
-            const newHeaders = [...headers, { name: "", value: `""` }];
-            onChange(newHeaders);
-          }}
-        >
-          Add another header pair
-        </Button>
       </Grid>
     </Grid>
   );
@@ -659,6 +700,9 @@ export const ResourceForm = forwardRef<
   const [method, setMethod] = useState<Resource["method"]>(
     resource?.method ?? "get"
   );
+  const [searchParams, setSearchParams] = useState(
+    resource?.searchParams ?? []
+  );
   const [headers, setHeaders] = useState<Resource["headers"]>(
     resource?.headers ?? []
   );
@@ -703,15 +747,27 @@ export const ResourceForm = forwardRef<
 
   return (
     <>
+      <MethodField value={method} onChange={setMethod} />
       <UrlField
         scope={scope}
         aliases={aliases}
         value={url}
-        onChange={setUrl}
+        onChange={(urlExpression, searchParams) => {
+          setUrl(urlExpression);
+          if (searchParams) {
+            setSearchParams((prev) => [...prev, ...searchParams]);
+          }
+        }}
         onCurlPaste={(curl) => {
           // update all feilds when curl is paste into url field
-          setUrl(JSON.stringify(curl.url));
           setMethod(curl.method);
+          setUrl(JSON.stringify(curl.url));
+          setSearchParams(
+            (curl.searchParams ?? []).map((header) => ({
+              name: header.name,
+              value: JSON.stringify(header.value),
+            }))
+          );
           setHeaders(
             curl.headers.map((header) => ({
               name: header.name,
@@ -721,7 +777,12 @@ export const ResourceForm = forwardRef<
           setBody(JSON.stringify(curl.body));
         }}
       />
-      <MethodField value={method} onChange={setMethod} />
+      <SearchParams
+        scope={scope}
+        aliases={aliases}
+        searchParams={searchParams}
+        onChange={setSearchParams}
+      />
       <Headers
         scope={scope}
         aliases={aliases}

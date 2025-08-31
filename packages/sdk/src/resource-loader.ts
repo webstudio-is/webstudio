@@ -22,7 +22,15 @@ export const loadResource = async (
   customFetch: typeof fetch,
   resourceRequest: ResourceRequest
 ) => {
-  const { url, method, headers, body } = resourceRequest;
+  const { method, searchParams, headers, body } = resourceRequest;
+  // cloudflare workers fail when fetching url contains spaces
+  // even though new URL suppose to trim them on parsing by spec
+  const url = new URL(resourceRequest.url.trim());
+  if (searchParams) {
+    for (const { name, value } of searchParams) {
+      url.searchParams.append(name, value);
+    }
+  }
   const requestHeaders = new Headers(
     headers.map(({ name, value }): [string, string] => [name, value])
   );
@@ -39,9 +47,7 @@ export const loadResource = async (
     }
   }
   try {
-    // cloudflare workers fail when fetching url contains spaces
-    // even though new URL suppose to trim them on parsing by spec
-    const response = await customFetch(url.trim(), requestInit);
+    const response = await customFetch(url, requestInit);
 
     let data = await response.text();
 

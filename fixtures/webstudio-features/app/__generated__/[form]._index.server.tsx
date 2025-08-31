@@ -8,6 +8,7 @@ export const getResources = (_props: { system: System }) => {
     id: "isNSM3wXcnHFikwNPlEOL",
     name: "action",
     url: "/custom",
+    searchParams: [],
     method: "get",
     headers: [{ name: "Content-Type", value: "application/json" }],
   };
