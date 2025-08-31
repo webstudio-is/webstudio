@@ -251,6 +251,9 @@ const SearchParamPair = ({
       css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
       <InputField
+        // autofocus only new fields
+        autoFocus={name === ""}
+        placeholder="Name"
         name="search-param-name"
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
@@ -263,6 +266,7 @@ const SearchParamPair = ({
       />
       <BindingControl>
         <InputField
+          placeholder="Value"
           name="search-param-value-literal"
           // expressions with variables cannot be edited
           disabled={isLiteralExpression(value) === false}
@@ -368,6 +372,9 @@ const HeaderPair = ({
       css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
       <InputField
+        // autofocus only new fields
+        autoFocus={name === ""}
+        placeholder="Name"
         name="header-name"
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
@@ -375,6 +382,7 @@ const HeaderPair = ({
       <input hidden={true} readOnly={true} name="header-value" value={value} />
       <BindingControl>
         <InputField
+          placeholder="Value"
           name="header-value-validator"
           // expressions with variables cannot be edited
           disabled={isLiteralExpression(value) === false}
