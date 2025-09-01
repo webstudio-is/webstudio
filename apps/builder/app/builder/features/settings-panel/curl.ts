@@ -1,6 +1,7 @@
-import type { ResourceRequest } from "@webstudio-is/sdk";
 import { tokenizeArgs } from "args-tokenizer";
 import { parse as parseArgs } from "@bomb.sh/args";
+import type { ResourceRequest } from "@webstudio-is/sdk";
+import { serializeValue } from "@webstudio-is/sdk/runtime";
 
 /*
 
@@ -144,11 +145,14 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
 export const generateCurl = (request: CurlRequest) => {
   const url = new URL(request.url);
   for (const { name, value } of request.searchParams) {
-    url.searchParams.append(name, value);
+    url.searchParams.append(name, serializeValue(value));
   }
   const args = [`curl ${JSON.stringify(url)}`, `--request ${request.method}`];
   for (const header of request.headers) {
-    args.push(`--header "${header.name}: ${header.value}"`);
+    args.push(
+      // escape json in headers
+      `--header "${header.name}: ${serializeValue(header.value).replaceAll('"', '\\"')}"`
+    );
   }
   if (request.body) {
     let body = request.body;

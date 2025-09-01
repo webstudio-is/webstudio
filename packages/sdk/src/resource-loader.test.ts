@@ -106,4 +106,59 @@ describe("loadResource", () => {
       }
     );
   });
+
+  test("should fetch resource with JSON search params", async () => {
+    const mockResponse = new Response(JSON.stringify({ key: "value" }), {
+      status: 200,
+    });
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const resourceRequest: ResourceRequest = {
+      id: "1",
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [
+        { name: "filter", value: { type: "AND", left: "a", right: "b" } },
+      ],
+      method: "get",
+      headers: [],
+    };
+
+    await loadResource(mockFetch, resourceRequest);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://example.com/resource?filter=%7B%22type%22%3A%22AND%22%2C%22left%22%3A%22a%22%2C%22right%22%3A%22b%22%7D",
+      {
+        method: "get",
+        headers: new Headers(),
+      }
+    );
+  });
+
+  test("should fetch resource with JSON headers", async () => {
+    const mockResponse = new Response(JSON.stringify({ key: "value" }), {
+      status: 200,
+    });
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const resourceRequest: ResourceRequest = {
+      id: "1",
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [],
+      method: "get",
+      headers: [
+        { name: "filter", value: { type: "AND", left: "a", right: "b" } },
+      ],
+    };
+
+    await loadResource(mockFetch, resourceRequest);
+
+    expect(mockFetch).toHaveBeenCalledWith("https://example.com/resource", {
+      method: "get",
+      headers: new Headers([
+        ["filter", '{"type":"AND","left":"a","right":"b"}'],
+      ]),
+    });
+  });
 });

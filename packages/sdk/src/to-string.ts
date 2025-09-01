@@ -25,3 +25,10 @@ export const isPlainObject = (value: unknown): value is object => {
       Object.getPrototypeOf(value) === Object.prototype)
   );
 };
+
+export const serializeValue = (value: unknown) => {
+  if (typeof value === "string") {
+    return value;
+  }
+  return JSON.stringify(value);
+};
