@@ -310,6 +310,39 @@ test("generate curl with search params", () => {
 `);
 });
 
+test("generate curl with JSON search params", () => {
+  expect(
+    generateCurl({
+      url: "https://my-url.com",
+      searchParams: [
+        { name: "filter", value: { type: "AND", left: true, right: false } },
+      ],
+      method: "get",
+      headers: [],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com/?filter=%7B%22type%22%3A%22AND%22%2C%22left%22%3Atrue%2C%22right%22%3Afalse%7D" \\
+  --request get"
+`);
+});
+
+test("generate curl with JSON headers", () => {
+  expect(
+    generateCurl({
+      url: "https://my-url.com",
+      searchParams: [],
+      method: "get",
+      headers: [
+        { name: "x-filter", value: { type: "AND", left: true, right: false } },
+      ],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com/" \\
+  --request get \\
+  --header "x-filter: {\\"type\\":\\"AND\\",\\"left\\":true,\\"right\\":false}""
+`);
+});
+
 test("multiline graphql is idempotent", () => {
   const request: CurlRequest = {
     url: "https://eu-central-1-shared-euc1-02.cdn.hygraph.com/content/clorhpxi8qx7r01t6hfp1b5f6/master",

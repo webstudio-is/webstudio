@@ -1,5 +1,6 @@
 import hash from "@emotion/hash";
 import type { ResourceRequest } from "./schema/resources";
+import { serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
 
@@ -28,23 +29,21 @@ export const loadResource = async (
   const url = new URL(resourceRequest.url.trim());
   if (searchParams) {
     for (const { name, value } of searchParams) {
-      url.searchParams.append(name, value);
+      url.searchParams.append(name, serializeValue(value));
     }
   }
   const requestHeaders = new Headers(
-    headers.map(({ name, value }): [string, string] => [name, value])
+    headers.map(({ name, value }): [string, string] => [
+      name,
+      serializeValue(value),
+    ])
   );
   const requestInit: RequestInit = {
     method,
     headers: requestHeaders,
   };
   if (method !== "get" && body !== undefined) {
-    if (typeof body === "string") {
-      requestInit.body = body;
-    }
-    if (typeof body === "object") {
-      requestInit.body = JSON.stringify(body);
-    }
+    requestInit.body = serializeValue(body);
   }
   try {
     const response = await customFetch(url.href, requestInit);

@@ -14,7 +14,6 @@ import { useStore } from "@nanostores/react";
 import {
   DataSources,
   Resource,
-  ResourceRequest,
   type DataSource,
   type Page,
 } from "@webstudio-is/sdk";
@@ -26,7 +25,7 @@ import {
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
+import { serializeValue, sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
 import {
   Box,
   Flex,
@@ -127,7 +126,7 @@ export const UrlField = ({
   value: string;
   onChange: (
     urlExpression: string,
-    searchParams?: ResourceRequest["searchParams"]
+    searchParams?: Resource["searchParams"]
   ) => void;
   onCurlPaste: (curl: CurlRequest) => void;
 }) => {
@@ -176,7 +175,7 @@ export const UrlField = ({
               }
               try {
                 const url = new URL(value);
-                const searchParams: ResourceRequest["searchParams"] = [];
+                const searchParams: Resource["searchParams"] = [];
                 for (const [name, value] of url.searchParams) {
                   searchParams.push({ name, value: JSON.stringify(value) });
                 }
@@ -245,6 +244,10 @@ const SearchParamPair = ({
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  // expressions with variables or objects cannot be edited from input
+  const isValueUnbound =
+    isLiteralExpression(value) && typeof evaluatedValue === "string";
   return (
     <Grid
       gap={2}
@@ -259,19 +262,13 @@ const SearchParamPair = ({
         value={name}
         onChange={(event) => onChange(event.target.value, value)}
       />
-      <input
-        hidden={true}
-        readOnly={true}
-        name="search-param-value"
-        value={value}
-      />
+      <input type="hidden" name="search-param-value" value={value} />
       <BindingControl>
         <InputField
           placeholder="Value"
           name="search-param-value-literal"
-          // expressions with variables cannot be edited
-          disabled={isLiteralExpression(value) === false}
-          value={String(evaluateExpressionWithinScope(value, scope))}
+          disabled={!isValueUnbound}
+          value={serializeValue(evaluatedValue)}
           // update text value as string literal
           onChange={(event) =>
             onChange(name, JSON.stringify(event.target.value))
@@ -280,7 +277,7 @@ const SearchParamPair = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
+          variant={isValueUnbound ? "default" : "bound"}
           value={value}
           onChange={(newValue) => onChange(name, newValue)}
           onRemove={(evaluatedValue) =>
@@ -371,6 +368,10 @@ const HeaderPair = ({
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  // expressions with variables or objects cannot be edited from input
+  const isValueUnbound =
+    isLiteralExpression(value) && typeof evaluatedValue === "string";
   return (
     <Grid
       gap={2}
@@ -390,9 +391,8 @@ const HeaderPair = ({
         <InputField
           placeholder="Value"
           name="header-value-validator"
-          // expressions with variables cannot be edited
-          disabled={isLiteralExpression(value) === false}
-          value={String(evaluateExpressionWithinScope(value, scope))}
+          disabled={!isValueUnbound}
+          value={serializeValue(evaluatedValue)}
           // update text value as string literal
           onChange={(event) =>
             onChange(name, JSON.stringify(event.target.value))
@@ -401,7 +401,7 @@ const HeaderPair = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          variant={isLiteralExpression(value) ? "default" : "bound"}
+          variant={isValueUnbound ? "default" : "bound"}
           value={value}
           onChange={(newValue) => onChange(name, newValue)}
           onRemove={(evaluatedValue) =>
