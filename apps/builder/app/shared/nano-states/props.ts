@@ -539,8 +539,12 @@ const computeResourceRequest = (
   const request: ResourceRequest = {
     id: resource.id,
     name: resource.name,
-    url: computeExpression(resource.url, values),
     method: resource.method,
+    url: computeExpression(resource.url, values),
+    searchParams: (resource.searchParams ?? []).map(({ name, value }) => ({
+      name,
+      value: computeExpression(value, values),
+    })),
     headers: resource.headers.map(({ name, value }) => ({
       name,
       value: computeExpression(value, values),

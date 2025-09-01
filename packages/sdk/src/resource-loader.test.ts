@@ -23,6 +23,7 @@ describe("loadResource", () => {
       id: "1",
       name: "resource",
       url: "https://example.com/resource",
+      searchParams: [],
       method: "get",
       headers: [],
       body: undefined,
@@ -55,6 +56,7 @@ describe("loadResource", () => {
       id: "1",
       name: "resource",
       url: "https://example.com/resource",
+      searchParams: [],
       method: "get",
       headers: [],
       body: undefined,
@@ -73,5 +75,35 @@ describe("loadResource", () => {
       status: 200,
       statusText: "",
     });
+  });
+
+  test("should fetch resource with search params", async () => {
+    const mockResponse = new Response(JSON.stringify({ key: "value" }), {
+      status: 200,
+    });
+    mockFetch.mockResolvedValue(mockResponse);
+
+    const resourceRequest: ResourceRequest = {
+      id: "1",
+      name: "resource",
+      url: "https://example.com/resource",
+      searchParams: [
+        { name: "search", value: "term1" },
+        { name: "search", value: "term2" },
+        { name: "filter", value: "привет" },
+      ],
+      method: "get",
+      headers: [],
+    };
+
+    await loadResource(mockFetch, resourceRequest);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://example.com/resource?search=term1&search=term2&filter=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82",
+      {
+        method: "get",
+        headers: new Headers(),
+      }
+    );
   });
 });

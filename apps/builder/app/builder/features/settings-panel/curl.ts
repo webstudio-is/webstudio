@@ -26,7 +26,7 @@ const getMethod = (value: string): ResourceRequest["method"] => {
 
 export type CurlRequest = Pick<
   ResourceRequest,
-  "url" | "method" | "headers" | "body"
+  "url" | "searchParams" | "method" | "headers" | "body"
 >;
 
 const encodeSearchParams = (data: string[]) => {
@@ -84,12 +84,18 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
     return;
   }
   // curl url
-  let url = args._[1].toString();
+  const url = new URL(args._[1].toString());
   const defaultMethod = args.data ? "post" : "get";
   const method: CurlRequest["method"] = args.get
     ? "get"
     : getMethod(args.request ?? defaultMethod);
   let contentType: undefined | string;
+  const searchParams: NonNullable<ResourceRequest["searchParams"]> = [];
+  for (const [name, value] of url.searchParams) {
+    searchParams.push({ name, value });
+  }
+  // remove all search params from url
+  url.search = "";
   const headers: ResourceRequest["headers"] = (
     (args.header as string[]) ?? []
   ).map((header) => {
@@ -105,9 +111,10 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
   }
   let body: undefined | unknown;
   if (args.get && args.data) {
-    const separator = url.includes("?") ? "&" : "?";
-    const search = encodeSearchParams(args.data);
-    url = `${url}${separator}${search}`;
+    for (const pair of args.data) {
+      const [name, value = ""] = pair.split("=");
+      searchParams.push({ name, value });
+    }
   } else if (args.data) {
     body = args.data[0];
     if (contentType === "application/json") {
@@ -126,7 +133,8 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
     }
   }
   return {
-    url: url as string,
+    url: url.toString(),
+    searchParams,
     method,
     headers,
     body,
@@ -134,10 +142,11 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
 };
 
 export const generateCurl = (request: CurlRequest) => {
-  const args = [
-    `curl ${JSON.stringify(request.url)}`,
-    `--request ${request.method}`,
-  ];
+  const url = new URL(request.url);
+  for (const { name, value } of request.searchParams) {
+    url.searchParams.append(name, value);
+  }
+  const args = [`curl ${JSON.stringify(url)}`, `--request ${request.method}`];
   for (const header of request.headers) {
     args.push(`--header "${header.name}: ${header.value}"`);
   }

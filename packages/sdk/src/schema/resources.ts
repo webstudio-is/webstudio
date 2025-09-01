@@ -9,6 +9,12 @@ const Method = z.union([
   z.literal("delete"),
 ]);
 
+const SearchParam = z.object({
+  name: z.string(),
+  // expression
+  value: z.string(),
+});
+
 const Header = z.object({
   name: z.string(),
   // expression
@@ -22,6 +28,7 @@ export const Resource = z.object({
   method: Method,
   // expression
   url: z.string(),
+  searchParams: z.array(SearchParam).optional(),
   headers: z.array(Header),
   // expression
   body: z.optional(z.string()),
@@ -35,6 +42,7 @@ export const ResourceRequest = z.object({
   name: z.string(),
   method: Method,
   url: z.string(),
+  searchParams: z.array(SearchParam),
   headers: z.array(Header),
   body: z.optional(z.unknown()),
 });

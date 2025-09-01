@@ -36,6 +36,17 @@ export const generateResources = ({
       scope,
     });
     generatedRequest += `    url: ${url},\n`;
+    generatedRequest += `    searchParams: [\n`;
+    for (const searchParam of resource.searchParams ?? []) {
+      const value = generateExpression({
+        expression: searchParam.value,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generatedRequest += `      { name: "${searchParam.name}", value: ${value} },\n`;
+    }
+    generatedRequest += `    ],\n`;
     generatedRequest += `    method: "${resource.method}",\n`;
     generatedRequest += `    headers: [\n`;
     for (const header of resource.headers) {

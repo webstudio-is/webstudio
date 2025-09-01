@@ -8,6 +8,7 @@ export const getResources = (_props: { system: System }) => {
     id: "fjMzCru8O2U31xY2P1Ovr",
     name: "jsonResourceVariable",
     url: "https://httpbin.org/get?hello=world",
+    searchParams: [],
     method: "get",
     headers: [],
   };

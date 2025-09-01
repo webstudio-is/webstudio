@@ -11,6 +11,7 @@ import {
   generateResources,
   replaceFormActionsWithResources,
 } from "./resources-generator";
+import type { DataSource } from "./schema/data-sources";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -48,6 +49,8 @@ test("generate resources loader", () => {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com",
+        searchParams: [
+        ],
         method: "post",
         headers: [
           { name: "Content-Type", value: "application/json" },
@@ -113,6 +116,8 @@ test("generate variable and use in resources loader", () => {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/",
+        searchParams: [
+        ],
         method: "post",
         headers: [
           { name: "Authorization", value: "Token " + AccessToken },
@@ -158,6 +163,7 @@ test("generate page system variable and use in resources loader", () => {
           id: "resourceId",
           name: "resourceName",
           url: `"https://my-json.com/" + $ws$dataSource$variableSystemId.params.slug`,
+          searchParams: [],
           method: "post",
           headers: [{ name: "Content-Type", value: `"application/json"` }],
           body: `{ body: true }`,
@@ -173,6 +179,8 @@ test("generate page system variable and use in resources loader", () => {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/" + system?.params?.slug,
+        searchParams: [
+        ],
         method: "post",
         headers: [
           { name: "Content-Type", value: "application/json" },
@@ -215,6 +223,8 @@ test("generate global system variable and use in resources loader", () => {
         id: "resource:0",
         name: "My Resource",
         url: "https://my-json.com/" + system?.params?.slug,
+        searchParams: [
+        ],
         method: "post",
         headers: [
           { name: "Content-Type", value: "application/json" },
@@ -245,6 +255,70 @@ test("generate empty resources loader", () => {
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
       const _data = new Map<string, ResourceRequest>([
+      ])
+      const _action = new Map<string, ResourceRequest>([
+      ])
+      return { data: _data, action: _action }
+    }
+    "
+  `);
+});
+
+test("generate resource loader with search params", () => {
+  expect(
+    generateResources({
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      dataSources: toMap<DataSource>([
+        {
+          id: "variableTermId",
+          scopeInstanceId: "body",
+          type: "variable",
+          name: "term",
+          value: { type: "string", value: "my-term" },
+        },
+        {
+          id: "variableResourceId",
+          scopeInstanceId: "body",
+          type: "resource",
+          name: "variableName",
+          resourceId: "resourceId",
+        },
+      ]),
+      resources: toMap([
+        {
+          id: "resourceId",
+          name: "resourceName",
+          method: "get",
+          url: `"https://my-json.com"`,
+          searchParams: [
+            {
+              name: "search",
+              value: `$ws$dataSource$variableTermId`,
+            },
+          ],
+          headers: [],
+        },
+      ]),
+      props: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+    "import type { System, ResourceRequest } from "@webstudio-is/sdk";
+    export const getResources = (_props: { system: System }) => {
+      let term = "my-term"
+      const resourceName: ResourceRequest = {
+        id: "resourceId",
+        name: "resourceName",
+        url: "https://my-json.com",
+        searchParams: [
+          { name: "search", value: term },
+        ],
+        method: "get",
+        headers: [
+        ],
+      }
+      const _data = new Map<string, ResourceRequest>([
+        ["resourceName", resourceName],
       ])
       const _action = new Map<string, ResourceRequest>([
       ])
@@ -351,6 +425,8 @@ test("generate action resource", () => {
         id: "resourceId",
         name: "resourceName",
         url: "https://my-url.com",
+        searchParams: [
+        ],
         method: "post",
         headers: [
         ],
