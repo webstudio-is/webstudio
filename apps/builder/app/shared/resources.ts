@@ -42,10 +42,8 @@ export const $hasPendingResources = computed(
 );
 
 const loadResources = async () => {
-  for (const resource of Array.from(queue.values()).slice(
-    0,
-    MAX_PENDING_RESOURCES
-  )) {
+  const list = Array.from(queue.values()).slice(0, MAX_PENDING_RESOURCES);
+  for (const resource of list) {
     const key = getResourceKey(resource);
     queue.delete(key);
     pending.set(key, resource);
