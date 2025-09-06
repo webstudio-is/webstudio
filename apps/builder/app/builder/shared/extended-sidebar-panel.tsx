@@ -1,7 +1,6 @@
 import { styled, Collapsible, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import { useEffect, useRef } from "react";
-import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { $canvasToolsVisible } from "~/shared/nano-states";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
@@ -46,11 +45,7 @@ export const ExtendedPanel = ({ children }: { children: React.ReactNode }) => {
             borderRight: `1px solid ${theme.colors.borderMain}`,
           }}
         >
-          <BindingPopoverProvider
-            value={{ containerRef: settingsRef, side: "right" }}
-          >
-            {children}
-          </BindingPopoverProvider>
+          {children}
         </Flex>
       </CollapsibleContent>
     </CollapsibleRoot>

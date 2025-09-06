@@ -40,7 +40,6 @@ export type Resource = z.infer<typeof Resource>;
 
 // evaluated variant of resource
 export const ResourceRequest = z.object({
-  id: ResourceId,
   name: z.string(),
   method: Method,
   url: z.string(),

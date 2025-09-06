@@ -5,7 +5,6 @@ import type { PageMeta } from "@webstudio-is/sdk";
 import type { System, ResourceRequest } from "@webstudio-is/sdk";
 export const getResources = (_props: { system: System }) => {
   const list_1: ResourceRequest = {
-    id: "1vX6SQdaCjJN6MvJlG_cQ",
     name: "list",
     url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",
     searchParams: [],

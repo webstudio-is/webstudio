@@ -20,7 +20,6 @@ describe("loadResource", () => {
     mockFetch.mockResolvedValue(mockResponse);
 
     const resourceRequest: ResourceRequest = {
-      id: "1",
       name: "resource",
       url: "https://example.com/resource",
       searchParams: [],
@@ -53,7 +52,6 @@ describe("loadResource", () => {
     mockFetch.mockResolvedValue(mockResponse);
 
     const resourceRequest: ResourceRequest = {
-      id: "1",
       name: "resource",
       url: "https://example.com/resource",
       searchParams: [],
@@ -84,7 +82,6 @@ describe("loadResource", () => {
     mockFetch.mockResolvedValue(mockResponse);
 
     const resourceRequest: ResourceRequest = {
-      id: "1",
       name: "resource",
       url: "https://example.com/resource",
       searchParams: [
@@ -114,7 +111,6 @@ describe("loadResource", () => {
     mockFetch.mockResolvedValue(mockResponse);
 
     const resourceRequest: ResourceRequest = {
-      id: "1",
       name: "resource",
       url: "https://example.com/resource",
       searchParams: [
@@ -142,7 +138,6 @@ describe("loadResource", () => {
     mockFetch.mockResolvedValue(mockResponse);
 
     const resourceRequest: ResourceRequest = {
-      id: "1",
       name: "resource",
       url: "https://example.com/resource",
       searchParams: [],

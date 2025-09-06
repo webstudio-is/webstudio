@@ -27,7 +27,6 @@ export const generateResources = ({
     // call resource by bound variable name
     const resourceName = scope.getName(resource.id, resource.name);
     generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
-    generatedRequest += `    id: "${resource.id}",\n`;
     generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
     const url = generateExpression({
       expression: resource.url,

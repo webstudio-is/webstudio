@@ -46,7 +46,6 @@ test("generate resources loader", () => {
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
       const resourceName: ResourceRequest = {
-        id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com",
         searchParams: [
@@ -113,7 +112,6 @@ test("generate variable and use in resources loader", () => {
     export const getResources = (_props: { system: System }) => {
       let AccessToken = "my-token"
       const resourceName: ResourceRequest = {
-        id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/",
         searchParams: [
@@ -176,7 +174,6 @@ test("generate page system variable and use in resources loader", () => {
     export const getResources = (_props: { system: System }) => {
       const system = _props.system
       const resourceName: ResourceRequest = {
-        id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com/" + system?.params?.slug,
         searchParams: [
@@ -220,7 +217,6 @@ test("generate global system variable and use in resources loader", () => {
     export const getResources = (_props: { system: System }) => {
       const system = _props.system
       const MyResource: ResourceRequest = {
-        id: "resource:0",
         name: "My Resource",
         url: "https://my-json.com/" + system?.params?.slug,
         searchParams: [
@@ -307,7 +303,6 @@ test("generate resource loader with search params", () => {
     export const getResources = (_props: { system: System }) => {
       let term = "my-term"
       const resourceName: ResourceRequest = {
-        id: "resourceId",
         name: "resourceName",
         url: "https://my-json.com",
         searchParams: [
@@ -422,7 +417,6 @@ test("generate action resource", () => {
     "import type { System, ResourceRequest } from "@webstudio-is/sdk";
     export const getResources = (_props: { system: System }) => {
       const resourceName: ResourceRequest = {
-        id: "resourceId",
         name: "resourceName",
         url: "https://my-url.com",
         searchParams: [

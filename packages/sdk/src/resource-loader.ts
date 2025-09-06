@@ -23,29 +23,29 @@ export const loadResource = async (
   customFetch: typeof fetch,
   resourceRequest: ResourceRequest
 ) => {
-  const { method, searchParams, headers, body } = resourceRequest;
-  // cloudflare workers fail when fetching url contains spaces
-  // even though new URL suppose to trim them on parsing by spec
-  const url = new URL(resourceRequest.url.trim());
-  if (searchParams) {
-    for (const { name, value } of searchParams) {
-      url.searchParams.append(name, serializeValue(value));
-    }
-  }
-  const requestHeaders = new Headers(
-    headers.map(({ name, value }): [string, string] => [
-      name,
-      serializeValue(value),
-    ])
-  );
-  const requestInit: RequestInit = {
-    method,
-    headers: requestHeaders,
-  };
-  if (method !== "get" && body !== undefined) {
-    requestInit.body = serializeValue(body);
-  }
   try {
+    const { method, searchParams, headers, body } = resourceRequest;
+    // cloudflare workers fail when fetching url contains spaces
+    // even though new URL suppose to trim them on parsing by spec
+    const url = new URL(resourceRequest.url.trim());
+    if (searchParams) {
+      for (const { name, value } of searchParams) {
+        url.searchParams.append(name, serializeValue(value));
+      }
+    }
+    const requestHeaders = new Headers(
+      headers.map(({ name, value }): [string, string] => [
+        name,
+        serializeValue(value),
+      ])
+    );
+    const requestInit: RequestInit = {
+      method,
+      headers: requestHeaders,
+    };
+    if (method !== "get" && body !== undefined) {
+      requestInit.body = serializeValue(body);
+    }
     const response = await customFetch(url.href, requestInit);
 
     let data = await response.text();

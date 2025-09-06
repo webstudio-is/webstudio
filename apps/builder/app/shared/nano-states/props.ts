@@ -1,6 +1,5 @@
-import { atom, computed } from "nanostores";
+import { computed } from "nanostores";
 import type {
-  Resource,
   DataSource,
   Instance,
   Prop,
@@ -31,13 +30,17 @@ import {
 } from "./misc";
 import { $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
-import { restResourcesLoader } from "../router-utils";
-import { $dataSourceVariables, $resourceValues } from "./variables";
+import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
-import { fetch } from "~/shared/fetch.client";
 import { $selectedPage, getInstanceKey } from "../awareness";
 import { computeExpression } from "../data-variables";
 import { $currentSystem } from "../system";
+import {
+  $resourcesCache,
+  computeResourceRequest,
+  getResourceKey,
+  preloadResource,
+} from "../resources";
 
 export const assetBaseUrl = "/cgi/asset/";
 
@@ -124,6 +127,32 @@ const getAction = (
 };
 
 /**
+ * similar to below but should not depend on resource values
+ * because these values are used to load resources
+ * which result in updated resource values and may trigger
+ * circular updates
+ */
+const $resourceVariableValues = computed(
+  [$dataSources, $selectedPage, $currentSystem],
+  (dataSources, selectedPage, system) => {
+    const values = new Map<string, unknown>();
+    values.set(SYSTEM_VARIABLE_ID, system);
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.type === "variable") {
+        values.set(dataSourceId, dataSource.value.value);
+      }
+      if (
+        dataSource.type === "parameter" ||
+        dataSource.id === selectedPage?.systemDataSourceId
+      ) {
+        values.set(dataSourceId, system);
+      }
+    }
+    return values;
+  }
+);
+
+/**
  * values of all variables without computing scope specifics like collections
  * simplified version of variable values by instance selector
  */
@@ -131,11 +160,21 @@ const $unscopedVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
-    $resourceValues,
+    $resources,
+    $resourceVariableValues,
+    $resourcesCache,
     $selectedPage,
     $currentSystem,
   ],
-  (dataSources, dataSourceVariables, resourceValues, page, system) => {
+  (
+    dataSources,
+    dataSourceVariables,
+    resources,
+    resourceVariableValues,
+    resourcesCache,
+    page,
+    system
+  ) => {
     const values = new Map<string, unknown>();
     // support global system
     values.set(SYSTEM_VARIABLE_ID, system);
@@ -155,33 +194,17 @@ const $unscopedVariableValues = computed(
         values.set(dataSourceId, value);
       }
       if (dataSource.type === "resource") {
-        values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
-      }
-    }
-    return values;
-  }
-);
-
-/**
- * similar to above but should not depend on resource values
- * because these values are used to load resources
- * which result in updated resource values and may trigger
- * circular updates
- */
-const $loaderVariableValues = computed(
-  [$dataSources, $selectedPage, $currentSystem],
-  (dataSources, selectedPage, system) => {
-    const values = new Map<string, unknown>();
-    values.set(SYSTEM_VARIABLE_ID, system);
-    for (const [dataSourceId, dataSource] of dataSources) {
-      if (dataSource.type === "variable") {
-        values.set(dataSourceId, dataSource.value.value);
-      }
-      if (
-        dataSource.type === "parameter" ||
-        dataSource.id === selectedPage?.systemDataSourceId
-      ) {
-        values.set(dataSourceId, system);
+        const resource = resources.get(dataSource.resourceId);
+        if (resource) {
+          const resourceRequest = computeResourceRequest(
+            resource,
+            resourceVariableValues
+          );
+          values.set(
+            dataSourceId,
+            resourcesCache.get(getResourceKey(resourceRequest))
+          );
+        }
       }
     }
     return values;
@@ -358,7 +381,9 @@ export const $variableValuesByInstanceSelector = computed(
     $selectedPage,
     $dataSources,
     $dataSourceVariables,
-    $resourceValues,
+    $resources,
+    $resourceVariableValues,
+    $resourcesCache,
     $currentSystem,
   ],
   (
@@ -367,7 +392,9 @@ export const $variableValuesByInstanceSelector = computed(
     page,
     dataSources,
     dataSourceVariables,
-    resourceValues,
+    resources,
+    resourceVariableValues,
+    resourcesCache,
     system
   ) => {
     const propsByInstanceId = mapGroupBy(
@@ -426,8 +453,17 @@ export const $variableValuesByInstanceSelector = computed(
             }
           }
           if (variable.type === "resource") {
-            const value = resourceValues.get(variable.resourceId);
-            variableValues.set(variable.id, value);
+            const resource = resources.get(variable.resourceId);
+            if (resource) {
+              const resourceRequest = computeResourceRequest(
+                resource,
+                resourceVariableValues
+              );
+              variableValues.set(
+                variable.id,
+                resourcesCache.get(getResourceKey(resourceRequest))
+              );
+            }
           }
         }
       }
@@ -532,32 +568,14 @@ export const $variableValuesByInstanceSelector = computed(
   }
 );
 
-const computeResourceRequest = (
-  resource: Resource,
-  values: Map<DataSource["id"], unknown>
-): ResourceRequest => {
-  const request: ResourceRequest = {
-    id: resource.id,
-    name: resource.name,
-    method: resource.method,
-    url: computeExpression(resource.url, values),
-    searchParams: (resource.searchParams ?? []).map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-    headers: resource.headers.map(({ name, value }) => ({
-      name,
-      value: computeExpression(value, values),
-    })),
-  };
-  if (resource.body !== undefined) {
-    request.body = computeExpression(resource.body, values);
-  }
-  return request;
-};
-
 const $computedResourceRequests = computed(
-  [$selectedPage, $instances, $dataSources, $resources, $loaderVariableValues],
+  [
+    $selectedPage,
+    $instances,
+    $dataSources,
+    $resources,
+    $resourceVariableValues,
+  ],
   (page, instances, dataSources, resources, values) => {
     const computedResourceRequests: ResourceRequest[] = [];
     if (page === undefined) {
@@ -584,101 +602,15 @@ const $computedResourceRequests = computed(
   }
 );
 
-const $resourcesLoadingCount = atom(0);
-export const $areResourcesLoading = computed(
-  $resourcesLoadingCount,
-  (resourcesLoadingCount) => resourcesLoadingCount > 0
-);
-
-const loadResources = async (resourceRequests: ResourceRequest[]) => {
-  $resourcesLoadingCount.set($resourcesLoadingCount.get() + 1);
-  const response = await fetch(restResourcesLoader(), {
-    method: "POST",
-    body: JSON.stringify(resourceRequests),
-  });
-  $resourcesLoadingCount.set($resourcesLoadingCount.get() - 1);
-  if (response.ok === false) {
-    return new Map<Resource["id"], unknown>();
-  }
-  return new Map<Resource["id"], unknown>(await response.json());
-};
-
-const cacheByKeys = new Map<string, unknown>();
-
-const $invalidator = atom(0);
-
-export const getComputedResourceRequest = (resourceId: Resource["id"]) => {
-  const resources = $resources.get();
-  const resource = resources.get(resourceId);
-  if (resource === undefined) {
-    return;
-  }
-  const values = $loaderVariableValues.get();
-  return computeResourceRequest(resource, values);
-};
-
-// bump index of resource to invaldate cache entry
-export const invalidateResource = (resourceId: Resource["id"]) => {
-  const request = getComputedResourceRequest(resourceId);
-  if (request === undefined) {
-    return;
-  }
-  const cacheKey = JSON.stringify(request);
-  cacheByKeys.delete(cacheKey);
-  // trigger invalidation
-  $invalidator.set($invalidator.get() + 1);
-};
-
 /**
  * subscribe to all resources changes
  * load them with currently available variable values
  * and store in cache
  */
 export const subscribeResources = () => {
-  let frameId: undefined | number;
-  // subscribe changing resources or global invalidation
-  return computed(
-    [$computedResourceRequests, $invalidator],
-    (computedResourceRequests, invalidator) =>
-      [computedResourceRequests, invalidator] as const
-  ).subscribe(([computedResourceRequests]) => {
-    if (frameId) {
-      cancelAnimationFrame(frameId);
+  return $computedResourceRequests.subscribe((computedResourceRequests) => {
+    for (const resourceRequest of computedResourceRequests) {
+      preloadResource(resourceRequest);
     }
-    // batch updates into next frame
-    // to avoid issues with untransactioned updates in nanostores
-    frameId = requestAnimationFrame(async () => {
-      const matched = new Map<Resource["id"], ResourceRequest>();
-      const missing = new Map<Resource["id"], ResourceRequest>();
-      for (const request of computedResourceRequests) {
-        const cacheKey = JSON.stringify(request);
-        if (cacheByKeys.has(cacheKey)) {
-          matched.set(request.id, request);
-        } else {
-          missing.set(request.id, request);
-        }
-      }
-
-      // preset undefined to prevent loading already requested data
-      for (const request of missing.values()) {
-        const cacheKey = JSON.stringify(request);
-        cacheByKeys.set(cacheKey, undefined);
-      }
-
-      let result = new Map<string, unknown>();
-      if (missing.size > 0) {
-        result = await loadResources(Array.from(missing.values()));
-      }
-      const newResourceValues = new Map();
-      for (const request of computedResourceRequests) {
-        const cacheKey = JSON.stringify(request);
-        // read from cache or store in cache
-        const response = result.get(request.id) ?? cacheByKeys.get(cacheKey);
-        cacheByKeys.set(cacheKey, response);
-        newResourceValues.set(request.id, response);
-      }
-      // update resource values only when new resources are loaded
-      $resourceValues.set(newResourceValues);
-    });
   });
 };
