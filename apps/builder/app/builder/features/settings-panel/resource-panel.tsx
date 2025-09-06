@@ -75,7 +75,7 @@ export const parseResource = ({
   formData,
 }: {
   id: string;
-  name: string;
+  name?: string;
   formData: FormData;
 }) => {
   const searchParamNames = formData.getAll("search-param-name") as string[];
@@ -84,7 +84,7 @@ export const parseResource = ({
   const headerValues = formData.getAll("header-value") as string[];
   return Resource.parse({
     id,
-    name,
+    name: name ?? formData.get("name"),
     url: formData.get("url"),
     searchParams: searchParamNames
       .map((name, index) => ({ name, value: searchParamValues[index] }))
@@ -175,17 +175,19 @@ export const UrlField = ({
               }
               try {
                 const url = new URL(value);
-                const searchParams: Resource["searchParams"] = [];
-                for (const [name, value] of url.searchParams) {
-                  searchParams.push({ name, value: JSON.stringify(value) });
+                if (url.searchParams.size > 0) {
+                  const searchParams: Resource["searchParams"] = [];
+                  for (const [name, value] of url.searchParams) {
+                    searchParams.push({ name, value: JSON.stringify(value) });
+                  }
+                  // remove all search params from url
+                  url.search = "";
+                  // update text value as string literal
+                  onChange(JSON.stringify(url.href), searchParams);
+                  return;
                 }
-                // remove all search params from url
-                url.search = "";
-                // update text value as string literal
-                onChange(JSON.stringify(url.href), searchParams);
-              } catch {
-                onChange(JSON.stringify(value));
-              }
+              } catch {}
+              onChange(JSON.stringify(value));
             }}
             onBlur={(event) => event.currentTarget.checkValidity()}
             onInvalid={(event) =>
@@ -515,9 +517,9 @@ export const getResourceScopeForInstance = ({
       }
       if (dataSource) {
         const name = encodeDataVariableId(dataSourceId);
-        variableValues.set(dataSourceId, value);
         scope[name] = value;
         aliases.set(name, dataSource.name);
+        variableValues.set(dataSource.name, value);
       }
     }
   }
@@ -544,7 +546,7 @@ const getVariableInstanceKey = ({
   return getInstanceKey(instancePath[0].instanceSelector);
 };
 
-const useScope = ({ variable }: { variable?: DataSource }) => {
+export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
   return useStore(
     useMemo(
       () =>
@@ -561,22 +563,32 @@ const useScope = ({ variable }: { variable?: DataSource }) => {
             variableValuesByInstanceSelector,
             dataSources
           ) => {
-            const { scope, aliases } = getResourceScopeForInstance({
-              page,
-              instanceKey: getVariableInstanceKey({
-                variable,
-                instancePath,
-              }),
-              dataSources,
-              variableValuesByInstanceSelector,
-            });
+            const { scope, aliases, variableValues } =
+              getResourceScopeForInstance({
+                page,
+                instanceKey: getVariableInstanceKey({
+                  variable,
+                  instancePath,
+                }),
+                dataSources,
+                variableValuesByInstanceSelector,
+              });
             // prevent showing currently edited variable in suggestions
             // to avoid cirular dependeny
             const newScope = { ...scope };
+            const newAliases = new Map(aliases);
+            const newVariableValues = new Map(variableValues);
             if (variable) {
-              delete newScope[encodeDataVariableId(variable.id)];
+              const key = encodeDataVariableId(variable.id);
+              delete newScope[key];
+              newAliases.delete(key);
+              newVariableValues.delete(variable.name);
             }
-            return { scope: newScope, aliases };
+            return {
+              scope: newScope,
+              aliases: newAliases,
+              variableValues: newVariableValues,
+            };
           }
         ),
       [variable]
@@ -706,7 +718,7 @@ export const ResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
-  const { scope, aliases } = useScope({ variable });
+  const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
   const resource =
@@ -739,16 +751,14 @@ export const ResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
       const newResource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         formData,
       });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         scopeInstanceId,
-        name,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
@@ -942,7 +952,7 @@ export const GraphqlResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
-  const { scope, aliases } = useScope({ variable });
+  const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
   const resource =

@@ -12,7 +12,6 @@ import {
   useState,
   useImperativeHandle,
   useRef,
-  createContext,
   useEffect,
   useCallback,
   useMemo,
@@ -48,6 +47,7 @@ import {
   transpileExpression,
   lintExpression,
   SYSTEM_VARIABLE_ID,
+  ResourceRequest,
 } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -56,9 +56,6 @@ import {
 import {
   $dataSources,
   $resources,
-  $areResourcesLoading,
-  invalidateResource,
-  getComputedResourceRequest,
   $userPlanFeatures,
   $instances,
   $props,
@@ -68,7 +65,6 @@ import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
 } from "~/shared/awareness";
-import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import {
   EditorContent,
   EditorDialog,
@@ -83,10 +79,19 @@ import {
 } from "~/shared/data-variables";
 import {
   GraphqlResourceForm,
+  parseResource,
   ResourceForm,
   SystemResourceForm,
+  useResourceScope,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+import {
+  $hasPendingResources,
+  $resourcesCache,
+  computeResourceRequest,
+  getResourceKey,
+  invalidateResource,
+} from "~/shared/resources";
 
 const NameField = ({
   variable,
@@ -103,7 +108,7 @@ const NameField = ({
       // validate same name on variable instance
       // and fallback to selected instance for new variables
       const scopeInstanceId =
-        variable?.scopeInstanceId ?? $selectedInstance.get();
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
       for (const dataSource of $dataSources.get().values()) {
         if (
           dataSource.scopeInstanceId === scopeInstanceId &&
@@ -308,42 +313,59 @@ const ParameterForm = forwardRef<
 });
 ParameterForm.displayName = "ParameterForm";
 
+const saveVariable = (variable: undefined | DataSource, formData: FormData) => {
+  const dataSourceId = variable?.id ?? nanoid();
+  // preserve existing instance scope when edit
+  const scopeInstanceId =
+    variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+  if (scopeInstanceId === undefined) {
+    return;
+  }
+  const type = z.string().parse(formData.get("type"));
+  const name = z.string().parse(formData.get("name"));
+  const value = z.string().nullable().parse(formData.get("value"));
+  let variableValue: Extract<DataSource, { type: "variable" }>["value"];
+  if (type === "string") {
+    variableValue = { type: "string", value: value ?? "" };
+  } else if (type === "number") {
+    variableValue = { type: "number", value: Number(value || 0) };
+  } else if (type === "boolean") {
+    variableValue = { type: "boolean", value: value != null };
+  } else {
+    variableValue = {
+      type: "json",
+      value: value ? parseJsonValue(value) : undefined,
+    };
+  }
+  updateWebstudioData((data) => {
+    // cleanup resource when value variable is set
+    if (variable?.type === "resource") {
+      data.resources.delete(variable.resourceId);
+    }
+    data.dataSources.set(dataSourceId, {
+      id: dataSourceId,
+      scopeInstanceId,
+      name,
+      type: "variable",
+      value: variableValue,
+    });
+    rebindTreeVariablesMutable({
+      startingInstanceId: scopeInstanceId,
+      ...data,
+    });
+  });
+};
+
 const useValuePanelRef = ({
   ref,
   variable,
-  variableValue,
 }: {
   ref: Ref<undefined | PanelApi>;
   variable?: DataSource;
-  variableValue: Extract<DataSource, { type: "variable" }>["value"];
 }) => {
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const dataSourceId = variable?.id ?? nanoid();
-      // preserve existing instance scope when edit
-      const scopeInstanceId =
-        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
-      if (scopeInstanceId === undefined) {
-        return;
-      }
-      const name = z.string().parse(formData.get("name"));
-      updateWebstudioData((data) => {
-        // cleanup resource when value variable is set
-        if (variable?.type === "resource") {
-          data.resources.delete(variable.resourceId);
-        }
-        data.dataSources.set(dataSourceId, {
-          id: dataSourceId,
-          scopeInstanceId,
-          name,
-          type: "variable",
-          value: variableValue,
-        });
-        rebindTreeVariablesMutable({
-          startingInstanceId: scopeInstanceId,
-          ...data,
-        });
-      });
+      saveVariable(variable, formData);
     },
   }));
 };
@@ -352,49 +374,41 @@ const StringForm = forwardRef<
   undefined | PanelApi,
   {
     variable?: DataSource;
+    value: unknown;
+    onChange: (value: unknown) => void;
   }
->(({ variable }, ref) => {
-  const [value, setValue] = useState(
-    variable?.type === "variable" && variable.value.type === "string"
-      ? variable.value.value
-      : ""
-  );
-  useValuePanelRef({
-    ref,
-    variable,
-    variableValue: { type: "string", value },
-  });
+>(({ variable, value: unknownValue, onChange }, ref) => {
+  const value = typeof unknownValue === "string" ? unknownValue : "";
+  useValuePanelRef({ ref, variable });
   const valueId = useId();
   return (
-    <>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={valueId}>Value</Label>
-        <EditorDialogControl>
-          <TextArea
-            name="value"
-            rows={1}
-            maxRows={10}
-            autoGrow={true}
-            id={valueId}
-            value={value}
-            onChange={setValue}
-          />
-          <EditorDialog
-            title="Variable value"
-            content={
-              <TextArea
-                grow={true}
-                id={valueId}
-                value={value}
-                onChange={setValue}
-              />
-            }
-          >
-            <EditorDialogButton />
-          </EditorDialog>
-        </EditorDialogControl>
-      </Flex>
-    </>
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label htmlFor={valueId}>Value</Label>
+      <EditorDialogControl>
+        <TextArea
+          name="value"
+          rows={1}
+          maxRows={10}
+          autoGrow={true}
+          id={valueId}
+          value={value}
+          onChange={onChange}
+        />
+        <EditorDialog
+          title="Variable value"
+          content={
+            <TextArea
+              grow={true}
+              id={valueId}
+              value={value}
+              onChange={onChange}
+            />
+          }
+        >
+          <EditorDialogButton />
+        </EditorDialog>
+      </EditorDialogControl>
+    </Flex>
   );
 });
 StringForm.displayName = "StringForm";
@@ -411,24 +425,21 @@ const NumberForm = forwardRef<
   undefined | PanelApi,
   {
     variable?: DataSource;
+    value: unknown;
+    onChange: (value: unknown) => void;
   }
->(({ variable }, ref) => {
-  const [value, setValue] = useState(
-    variable?.type === "variable" && variable.value.type === "number"
-      ? variable.value.value
-      : ""
-  );
+>(({ variable, value: unknownValue, onChange }, ref) => {
+  const value =
+    typeof unknownValue === "number" || typeof unknownValue === "string"
+      ? unknownValue
+      : "";
   const [valueError, setValueError] = useState("");
   const valueRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     valueRef.current?.setCustomValidity(validateNumberValue(value));
     setValueError("");
   }, [value]);
-  useValuePanelRef({
-    ref,
-    variable,
-    variableValue: { type: "number", value: Number(value) },
-  });
+  useValuePanelRef({ ref, variable });
   const valueId = useId();
   return (
     <>
@@ -442,7 +453,7 @@ const NumberForm = forwardRef<
             inputMode="numeric"
             color={valueError ? "error" : undefined}
             value={value}
-            onChange={(event) => setValue(event.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             onBlur={() => valueRef.current?.checkValidity()}
             onInvalid={(event) =>
               setValueError(event.currentTarget.validationMessage)
@@ -459,18 +470,12 @@ const BooleanForm = forwardRef<
   undefined | PanelApi,
   {
     variable?: DataSource;
+    value: unknown;
+    onChange: (value: unknown) => void;
   }
->(({ variable }, ref) => {
-  const [value, setValue] = useState(
-    variable?.type === "variable" && variable.value.type === "boolean"
-      ? variable.value.value
-      : false
-  );
-  useValuePanelRef({
-    ref,
-    variable,
-    variableValue: { type: "boolean", value },
-  });
+>(({ variable, value: unknownValue, onChange }, ref) => {
+  const value = typeof unknownValue === "boolean" ? unknownValue : false;
+  useValuePanelRef({ ref, variable });
   const valueId = useId();
   return (
     <>
@@ -478,9 +483,10 @@ const BooleanForm = forwardRef<
         <Label htmlFor={valueId}>Value</Label>
         <Switch
           name="value"
+          value="on"
           id={valueId}
           checked={value}
-          onCheckedChange={setValue}
+          onCheckedChange={onChange}
         />
       </Flex>
     </>
@@ -508,28 +514,18 @@ const JsonForm = forwardRef<
   undefined | PanelApi,
   {
     variable?: DataSource;
+    value: unknown;
+    onChange: (value: unknown) => void;
   }
->(({ variable }, ref) => {
-  const [value, setValue] = useState<string>(
-    variable?.type === "variable" &&
-      (variable.value.type === "json" || variable.value.type === "string[]")
-      ? formatValue(variable.value.value)
-      : ``
-  );
+>(({ variable, value: unknownValue, onChange }, ref) => {
+  const value = typeof unknownValue === "string" ? unknownValue : "";
   const [valueError, setValueError] = useState("");
   const valueRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     valueRef.current?.setCustomValidity(validateJsonValue(value));
     setValueError("");
   }, [value]);
-  useValuePanelRef({
-    ref,
-    variable,
-    variableValue: {
-      type: "json",
-      value: parseJsonValue(value),
-    },
-  });
+  useValuePanelRef({ ref, variable });
   return (
     <>
       <input
@@ -548,7 +544,7 @@ const JsonForm = forwardRef<
         <ExpressionEditor
           color={valueError ? "error" : undefined}
           value={value}
-          onChange={setValue}
+          onChange={onChange}
           onChangeComplete={() => valueRef.current?.checkValidity()}
         />
       </Flex>
@@ -557,13 +553,225 @@ const JsonForm = forwardRef<
 });
 JsonForm.displayName = "JsonForm";
 
-const VariablePanel = forwardRef<
+const VariablePanelForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource }
->(({ variable }, ref) => {
-  const resources = useStore($resources);
-  const { allowDynamicData } = useStore($userPlanFeatures);
+  {
+    variable?: DataSource;
+    variableType: VariableType;
+    onVariableTypeChange: (variableType: VariableType) => void;
+    value: unknown;
+    onValueChange: (value: unknown) => void;
+  }
+>(
+  (
+    { variable, variableType, onVariableTypeChange, value, onValueChange },
+    ref
+  ) => {
+    const { allowDynamicData } = useStore($userPlanFeatures);
 
+    const isResource =
+      variableType === "resource" ||
+      variableType === "graphql-resource" ||
+      variableType === "system-resource";
+    const requiresUpgrade = allowDynamicData === false && isResource;
+    return (
+      <>
+        {requiresUpgrade && (
+          <PanelBanner>
+            <Text>Resource fetching is part of the CMS functionality.</Text>
+            <Flex align="center" gap={1}>
+              <UpgradeIcon />
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://webstudio.is/pricing"
+              >
+                Upgrade to Pro
+              </Link>
+            </Flex>
+          </PanelBanner>
+        )}
+        <Flex
+          direction="column"
+          css={{
+            overflow: "hidden",
+            padding: theme.panel.padding,
+            gap: theme.spacing[7],
+          }}
+        >
+          <NameField variable={variable} defaultValue={variable?.name ?? ""} />
+          {variableType !== "parameter" && (
+            <TypeField value={variableType} onChange={onVariableTypeChange} />
+          )}
+          {variableType === "parameter" && (
+            <ParameterForm ref={ref} variable={variable} />
+          )}
+          {variableType === "string" && (
+            <StringForm
+              ref={ref}
+              variable={variable}
+              value={value}
+              onChange={onValueChange}
+            />
+          )}
+          {variableType === "number" && (
+            <NumberForm
+              ref={ref}
+              variable={variable}
+              value={value}
+              onChange={onValueChange}
+            />
+          )}
+          {variableType === "boolean" && (
+            <BooleanForm
+              ref={ref}
+              variable={variable}
+              value={value}
+              onChange={onValueChange}
+            />
+          )}
+          {variableType === "json" && (
+            <JsonForm
+              ref={ref}
+              variable={variable}
+              value={value}
+              onChange={onValueChange}
+            />
+          )}
+          {variableType === "resource" && (
+            <ResourceForm ref={ref} variable={variable} />
+          )}
+          {variableType === "graphql-resource" && (
+            <GraphqlResourceForm ref={ref} variable={variable} />
+          )}
+          {variableType === "system-resource" && (
+            <SystemResourceForm ref={ref} variable={variable} />
+          )}
+        </Flex>
+      </>
+    );
+  }
+);
+VariablePanelForm.displayName = "VariableForm";
+
+const $instanceVariableValues = computed(
+  [$selectedInstanceKeyWithRoot, $variableValuesByInstanceSelector],
+  (instanceKey, variableValuesByInstanceSelector) =>
+    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
+    new Map<string, unknown>()
+);
+
+const VariablePreview = ({
+  variable,
+  variableType,
+  variableValue,
+  onLoadData,
+}: {
+  variable?: DataSource;
+  variableType: VariableType;
+  variableValue: unknown;
+  onLoadData: () => void;
+}) => {
+  const isResource =
+    variableType === "resource" ||
+    variableType === "graphql-resource" ||
+    variableType === "system-resource";
+  const hasPendingResources = useStore($hasPendingResources);
+  const resources = useStore($resources);
+  const variableValues = useStore($instanceVariableValues);
+  const resourcesCache = useStore($resourcesCache);
+  const resourceScope = useResourceScope({ variable });
+  let computedValue: unknown;
+  if (variableType === "string" || variableType === "boolean") {
+    computedValue = variableValue;
+  } else if (variableType === "json") {
+    computedValue = parseJsonValue(String(variableValue));
+  } else if (variableType === "number") {
+    computedValue = Number(variableValue);
+    if (Number.isNaN(computedValue)) {
+      computedValue = variableValue;
+    }
+  } else if (variableType === "parameter") {
+    computedValue = variable ? variableValues.get(variable.id) : undefined;
+  } else {
+    // try to load current resource or saved one
+    let resourceRequest = ResourceRequest.safeParse(variableValue).data;
+    if (!resourceRequest && variable?.type === "resource") {
+      const resource = resources.get(variable.resourceId);
+      if (resource) {
+        resourceRequest = computeResourceRequest(
+          resource,
+          resourceScope.variableValues
+        );
+      }
+    }
+    if (resourceRequest) {
+      computedValue = resourcesCache.get(getResourceKey(resourceRequest));
+    }
+  }
+  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
+  const editorProps = {
+    readOnly: true,
+    extensions,
+    // compute value as json lazily only when dialog is open
+    // by spliting into separate component which is invoked
+    // only when dialog content is rendered
+    value: formatValue(computedValue),
+    onChange: () => {},
+    onChangeComplete: () => {},
+  };
+  return (
+    <Grid
+      align="stretch"
+      css={{
+        height: "100%",
+        overflow: "hidden",
+        boxSizing: "content-box",
+        position: "relative",
+      }}
+    >
+      <EditorContent {...editorProps} />
+      {isResource && !computedValue && (
+        <Flex
+          justify="center"
+          align="center"
+          css={{ position: "absolute", inset: 0 }}
+        >
+          <Button
+            color="neutral"
+            disabled={hasPendingResources}
+            onClick={onLoadData}
+          >
+            {hasPendingResources ? "Loading..." : "Load data"}
+          </Button>
+        </Flex>
+      )}
+    </Grid>
+  );
+};
+
+const VariablePopoverContent = ({
+  formRef,
+  variable,
+  onClose,
+}: {
+  formRef: RefObject<HTMLFormElement>;
+  variable?: DataSource;
+  onClose: () => void;
+}) => {
+  const hasPendingResources = useStore($hasPendingResources);
+  const panelRef = useRef<undefined | PanelApi>(undefined);
+  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
+  const [value, setValue] = useState<unknown>(() => {
+    if (variable?.type === "variable") {
+      if (variable.value.type === "json") {
+        return formatValue(variable.value.value);
+      }
+      return variable.value.value;
+    }
+  });
+
+  const resources = useStore($resources);
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (variable?.type === "resource") {
       const resource = resources.get(variable.resourceId);
@@ -588,111 +796,158 @@ const VariablePanel = forwardRef<
     return "string";
   });
 
-  let fields: ReactNode;
-  if (variableType === "parameter") {
-    fields = <ParameterForm ref={ref} variable={variable} />;
-  }
-  if (variableType === "string") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <StringForm ref={ref} variable={variable} />
-      </>
-    );
-  }
-  if (variableType === "number") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <NumberForm ref={ref} variable={variable} />
-      </>
-    );
-  }
-  if (variableType === "boolean") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <BooleanForm ref={ref} variable={variable} />
-      </>
-    );
-  }
-  if (variableType === "json") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <JsonForm ref={ref} variable={variable} />
-      </>
-    );
-  }
+  const updateVariableType = (variableType: VariableType) => {
+    setVariableType(variableType);
+    setValue((prev: unknown) => {
+      if (variableType === "string" && typeof prev !== "string") {
+        return "";
+      }
+      if (variableType === "number" && typeof prev !== "number") {
+        return "";
+      }
+      if (variableType === "boolean" && typeof prev !== "boolean") {
+        return false;
+      }
+      if (variableType === "json") {
+        // empty string gives an error
+        return prev || "{}";
+      }
+      return prev;
+    });
+  };
 
-  if (variableType === "resource") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <ResourceForm ref={ref} variable={variable} />
-      </>
-    );
-  }
-  if (variableType === "graphql-resource") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <GraphqlResourceForm ref={ref} variable={variable} />
-      </>
-    );
-  }
-  if (variableType === "system-resource") {
-    fields = (
-      <>
-        <TypeField value={variableType} onChange={setVariableType} />
-        <SystemResourceForm ref={ref} variable={variable} />
-      </>
-    );
-  }
+  const resourceScope = useResourceScope({ variable });
 
-  const isResource =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "system-resource";
-  const requiresUpgrade = allowDynamicData === false && isResource;
+  const reloadData = () => {
+    const formData = new FormData(formRef.current ?? undefined);
+    const resource = parseResource({
+      id: variable?.id ?? "new",
+      formData,
+    });
+    const resourceRequest = computeResourceRequest(
+      resource,
+      resourceScope.variableValues
+    );
+    invalidateResource(resourceRequest);
+    setValue(resourceRequest);
+  };
+
+  const copyAsCurl = () => {
+    const formData = new FormData(formRef.current ?? undefined);
+    const resource = parseResource({
+      id: variable?.id ?? "new",
+      formData,
+    });
+    const resourceRequest = computeResourceRequest(
+      resource,
+      resourceScope.variableValues
+    );
+    navigator.clipboard.writeText(generateCurl(resourceRequest));
+  };
+
   return (
     <>
-      {requiresUpgrade && (
-        <PanelBanner>
-          <Text>Resource fetching is part of the CMS functionality.</Text>
-          <Flex align="center" gap={1}>
-            <UpgradeIcon />
-            <Link
-              color="inherit"
-              target="_blank"
-              href="https://webstudio.is/pricing"
-            >
-              Upgrade to Pro
-            </Link>
-          </Flex>
-        </PanelBanner>
-      )}
-      <Flex
-        direction="column"
+      <Grid
         css={{
-          overflow: "hidden",
-          padding: theme.panel.padding,
-          gap: theme.spacing[7],
+          height: "100%",
+          gridTemplateColumns: "320px 1fr",
         }}
       >
-        <NameField variable={variable} defaultValue={variable?.name ?? ""} />
-        {fields}
-      </Flex>
+        <ScrollArea
+          // flex fixes content overflowing artificial scroll area
+          css={{ display: "flex", flexDirection: "column" }}
+        >
+          <form
+            ref={formRef}
+            noValidate={true}
+            // exclude from the flow
+            style={{ display: "contents" }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (isSystemVariable) {
+                return;
+              }
+              const nameElement =
+                event.currentTarget.elements.namedItem("name");
+              // make sure only name is valid and allow to save everything else
+              // to avoid loosing complex configuration when closed accidentally
+              if (
+                nameElement instanceof HTMLInputElement &&
+                nameElement.checkValidity()
+              ) {
+                const formData = new FormData(event.currentTarget);
+                panelRef.current?.save(formData);
+                // close popover whenever new variable is created
+                // to prevent creating duplicated variable
+                if (variable === undefined) {
+                  onClose();
+                }
+              }
+            }}
+          >
+            {/* submit is not triggered when press enter on input without submit button */}
+            <button hidden></button>
+            <fieldset
+              style={{ display: "contents" }}
+              // forbid editing system variable
+              disabled={isSystemVariable}
+            >
+              <VariablePanelForm
+                ref={panelRef}
+                variable={variable}
+                variableType={variableType}
+                onVariableTypeChange={updateVariableType}
+                value={value}
+                onValueChange={setValue}
+              />
+            </fieldset>
+          </form>
+        </ScrollArea>
+        <VariablePreview
+          variable={variable}
+          variableType={variableType}
+          variableValue={value}
+          onLoadData={reloadData}
+        />
+      </Grid>
+
+      <DialogTitle
+        suffix={
+          <DialogTitleActions>
+            {(variableType === "resource" ||
+              variableType === "graphql-resource") && (
+              <Tooltip content="Copy resource as cURL command" side="bottom">
+                <Button
+                  aria-label="Copy resource as cURL command"
+                  prefix={<CopyIcon />}
+                  color="ghost"
+                  onClick={copyAsCurl}
+                />
+              </Tooltip>
+            )}
+            {(variableType === "resource" ||
+              variableType === "graphql-resource" ||
+              variableType === "system-resource") && (
+              <Tooltip content="Refresh resource data" side="bottom">
+                <Button
+                  aria-label="Refresh resource data"
+                  prefix={<RefreshIcon />}
+                  color="ghost"
+                  disabled={hasPendingResources}
+                  onClick={reloadData}
+                />
+              </Tooltip>
+            )}
+            <DialogMaximize />
+            <DialogClose />
+          </DialogTitleActions>
+        }
+      >
+        {variable ? "Edit Variable" : "New Variable"}
+      </DialogTitle>
     </>
   );
-});
-VariablePanel.displayName = "VariableForm";
-
-const VariablePopoverContext = createContext<{
-  containerRef?: RefObject<null | HTMLElement>;
-}>({});
-
-export const VariablePopoverProvider = VariablePopoverContext.Provider;
+};
 
 const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
   if (form === null) {
@@ -717,40 +972,6 @@ const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
   return true;
 };
 
-const $instanceVariableValues = computed(
-  [$selectedInstanceKeyWithRoot, $variableValuesByInstanceSelector],
-  (instanceKey, variableValuesByInstanceSelector) =>
-    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
-    new Map<string, unknown>()
-);
-
-const VariablePreview = ({ variable }: { variable: DataSource }) => {
-  const variableValues = useStore($instanceVariableValues);
-  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
-  const editorProps = {
-    readOnly: true,
-    extensions,
-    // compute value as json lazily only when dialog is open
-    // by spliting into separate component which is invoked
-    // only when dialog content is rendered
-    value: JSON.stringify(variableValues.get(variable.id), null, 2),
-    onChange: () => {},
-    onChangeComplete: () => {},
-  };
-  return (
-    <Grid
-      align="stretch"
-      css={{
-        height: "100%",
-        overflow: "hidden",
-        boxSizing: "content-box",
-      }}
-    >
-      <EditorContent {...editorProps} />
-    </Grid>
-  );
-};
-
 export const VariablePopoverTrigger = ({
   variable,
   children,
@@ -758,18 +979,13 @@ export const VariablePopoverTrigger = ({
   variable?: DataSource;
   children: ReactNode;
 }) => {
-  const areResourcesLoading = useStore($areResourcesLoading);
   const [isOpen, setOpen] = useState(false);
-  const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<undefined | PanelApi>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  const resources = useStore($resources);
-  const isSystemVariable = variable?.id === SYSTEM_VARIABLE_ID;
 
   return (
     <FloatingPanel
       placement="center"
-      width={variable ? 740 : 320}
+      width={740}
       height={480}
       open={isOpen}
       onOpenChange={(newOpen) => {
@@ -786,120 +1002,13 @@ export const VariablePopoverTrigger = ({
           // prevent closing when not all errors are shown to user
         }
       }}
-      title={
-        variable === undefined ? (
-          <DialogTitle>New Variable</DialogTitle>
-        ) : (
-          <DialogTitle
-            suffix={
-              <DialogTitleActions>
-                {variable?.type === "resource" && (
-                  <>
-                    {/* allow to copy curl only for default and graphql resource controls */}
-                    {resources.get(variable.resourceId)?.control !==
-                      "system" && (
-                      <Tooltip
-                        content="Copy resource as cURL command"
-                        side="bottom"
-                      >
-                        <Button
-                          aria-label="Copy resource as cURL command"
-                          prefix={<CopyIcon />}
-                          color="ghost"
-                          onClick={() => {
-                            const resourceRequest = getComputedResourceRequest(
-                              variable.resourceId
-                            );
-                            if (resourceRequest) {
-                              navigator.clipboard.writeText(
-                                generateCurl(resourceRequest)
-                              );
-                            }
-                          }}
-                        />
-                      </Tooltip>
-                    )}
-                    <Tooltip content="Refresh resource data" side="bottom">
-                      <Button
-                        aria-label="Refresh resource data"
-                        prefix={<RefreshIcon />}
-                        color="ghost"
-                        disabled={areResourcesLoading}
-                        onClick={() => {
-                          formRef.current?.requestSubmit();
-                          if (formRef.current?.checkValidity()) {
-                            invalidateResource(variable.resourceId);
-                          }
-                        }}
-                      />
-                    </Tooltip>
-                  </>
-                )}
-                <DialogMaximize />
-                <DialogClose />
-              </DialogTitleActions>
-            }
-          >
-            Edit Variable
-          </DialogTitle>
-        )
-      }
+      title={undefined}
       content={
-        <Grid
-          css={{
-            height: "100%",
-            gridTemplateColumns: "320px 1fr",
-          }}
-        >
-          <ScrollArea
-            // flex fixes content overflowing artificial scroll area
-            css={{ display: "flex", flexDirection: "column" }}
-          >
-            <form
-              ref={formRef}
-              noValidate={true}
-              // exclude from the flow
-              style={{ display: "contents" }}
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (isSystemVariable) {
-                  return;
-                }
-                const nameElement =
-                  event.currentTarget.elements.namedItem("name");
-                // make sure only name is valid and allow to save everything else
-                // to avoid loosing complex configuration when closed accidentally
-                if (
-                  nameElement instanceof HTMLInputElement &&
-                  nameElement.checkValidity()
-                ) {
-                  const formData = new FormData(event.currentTarget);
-                  panelRef.current?.save(formData);
-                  // close popover whenever new variable is created
-                  // to prevent creating duplicated variable
-                  if (variable === undefined) {
-                    setOpen(false);
-                  }
-                }
-              }}
-            >
-              {/* submit is not triggered when press enter on input without submit button */}
-              <button hidden></button>
-              <fieldset
-                style={{ display: "contents" }}
-                // forbid editing system variable
-                disabled={isSystemVariable}
-              >
-                <BindingPopoverProvider
-                  value={{ containerRef: bindingPopoverContainerRef }}
-                >
-                  <VariablePanel ref={panelRef} variable={variable} />
-                </BindingPopoverProvider>
-              </fieldset>
-            </form>
-          </ScrollArea>
-          {variable && <VariablePreview variable={variable} />}
-        </Grid>
+        <VariablePopoverContent
+          formRef={formRef}
+          variable={variable}
+          onClose={() => setOpen(false)}
+        />
       }
     >
       {children}

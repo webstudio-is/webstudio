@@ -30,6 +30,7 @@
     "@codemirror/lint": "^6.8.5",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.4",
+    "@emotion/hash": "^0.9.2",
     "@floating-ui/dom": "^1.6.13",
     "@fontsource-variable/inter": "^5.0.20",
     "@fontsource-variable/manrope": "^5.0.20",

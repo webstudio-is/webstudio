@@ -24,7 +24,6 @@ import {
   $dragAndDropState,
   $selectedInstanceStates,
   $resources,
-  $resourceValues,
   $marketplaceProduct,
   $canvasIframeState,
   $uploadingFilesDataStore,
@@ -57,6 +56,7 @@ import {
 import { $canvasScrollbarSize } from "~/builder/shared/nano-states";
 import { $awareness, $temporaryInstances } from "../awareness";
 import { $systemDataByPage } from "../system";
+import { $resourcesCache } from "../resources";
 
 enableMapSet();
 // safari structuredClone fix
@@ -89,7 +89,7 @@ export const createObjectPool = () => {
 
     new NanostoresSyncObject("project", $project),
     new NanostoresSyncObject("dataSourceVariables", $dataSourceVariables),
-    new NanostoresSyncObject("resourceValues", $resourceValues),
+    new NanostoresSyncObject("resourcesCache", $resourcesCache),
     new NanostoresSyncObject("selectedPageHash", $selectedPageHash),
     new NanostoresSyncObject("selectedInstanceSizes", $selectedInstanceSizes),
     new NanostoresSyncObject(

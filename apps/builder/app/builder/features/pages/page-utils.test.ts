@@ -7,6 +7,7 @@ import {
   ROOT_FOLDER_ID,
   type Page,
   SYSTEM_VARIABLE_ID,
+  Resource,
 } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
@@ -23,11 +24,12 @@ import {
   $dataSourceVariables,
   $dataSources,
   $pages,
-  $resourceValues,
+  $resources,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { $awareness } from "~/shared/awareness";
 import { updateCurrentSystem } from "~/shared/system";
+import { $resourcesCache, getResourceKey } from "~/shared/resources";
 
 setEnv("*");
 registerContainers();
@@ -521,7 +523,25 @@ test("page root scope should use variable and resource values", () => {
   $dataSourceVariables.set(
     new Map([["valueVariableId", "value variable value"]])
   );
-  $resourceValues.set(new Map([["resourceId", "resource variable value"]]));
+  const resourceKey = getResourceKey({
+    name: "my-resource",
+    url: "",
+    searchParams: [],
+    method: "get",
+    headers: [],
+  });
+  $resources.set(
+    toMap<Resource>([
+      {
+        id: "resourceId",
+        name: "my-resource",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+    ])
+  );
+  $resourcesCache.set(new Map([[resourceKey, "resource variable value"]]));
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([
       ["$ws$system", "system"],

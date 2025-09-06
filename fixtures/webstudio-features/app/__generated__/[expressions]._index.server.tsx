@@ -5,7 +5,6 @@ import type { PageMeta } from "@webstudio-is/sdk";
 import type { System, ResourceRequest } from "@webstudio-is/sdk";
 export const getResources = (_props: { system: System }) => {
   const jsonResourceVariable_1: ResourceRequest = {
-    id: "fjMzCru8O2U31xY2P1Ovr",
     name: "jsonResourceVariable",
     url: "https://httpbin.org/get?hello=world",
     searchParams: [],

@@ -45,16 +45,21 @@ import {
 export type { EditorApi };
 
 export const formatValue = (value: unknown) => {
-  if (Array.isArray(value)) {
-    // format arrays as multiline
-    return JSON.stringify(value, null, 2);
+  try {
+    if (Array.isArray(value)) {
+      // format arrays as multiline
+      return JSON.stringify(value, null, 2);
+    }
+    if (typeof value === "object" && value !== null) {
+      // format objects with parentheses to enforce correct
+      // syntax highlighting as expression instead of block
+      return `(${JSON.stringify(value, null, 2)})`;
+    }
+    return JSON.stringify(value);
+  } catch {
+    // show nothing when value is invalid
+    return "";
   }
-  if (typeof value === "object" && value !== null) {
-    // format objects with parentheses to enforce correct
-    // syntax highlighting as expression instead of block
-    return `(${JSON.stringify(value, null, 2)})`;
-  }
-  return JSON.stringify(value);
 };
 
 export const formatValuePreview = (value: unknown) => {

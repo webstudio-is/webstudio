@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { type ActionFunctionArgs, data } from "@remix-run/server-runtime";
 import { ResourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import { getResourceKey } from "~/shared/resources";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -36,7 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
     console.error("data:", requestJson);
 
-    throw json(computedResourcesParsed.error, {
+    throw data(computedResourcesParsed.error, {
       status: 400,
     });
   }
@@ -46,10 +47,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const responses = await Promise.all(
     computedResources.map((resource) => loadResource(customFetch, resource))
   );
-  const output: [ResourceRequest["id"], unknown][] = [];
+  const output: [string, unknown][] = [];
   responses.forEach((response, index) => {
     const request = computedResources[index];
-    output.push([request.id, response]);
+    output.push([getResourceKey(request), response]);
   });
   return output;
 };
