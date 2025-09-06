@@ -186,7 +186,9 @@ export const UrlField = ({
                   onChange(JSON.stringify(url.href), searchParams);
                   return;
                 }
-              } catch {}
+              } catch {
+                // serialize without changes when url is invalid
+              }
               onChange(JSON.stringify(value));
             }}
             onBlur={(event) => event.currentTarget.checkValidity()}
