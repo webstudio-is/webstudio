@@ -66,7 +66,10 @@ import {
   type InstancePath,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { rebindTreeVariablesMutable } from "~/shared/data-variables";
+import {
+  computeExpression,
+  rebindTreeVariablesMutable,
+} from "~/shared/data-variables";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
@@ -478,6 +481,40 @@ export const Headers = ({
   );
 };
 
+const CacheMaxAge = ({
+  value,
+  onChange,
+}: {
+  value: undefined | string;
+  onChange: (newValue: string) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Label htmlFor="resource-panel-max-age">Cache Max Age</Label>
+      <InputField
+        id="resource-panel-max-age"
+        suffix={
+          <Text variant="small" color="subtle" css={{ paddingInline: "2px" }}>
+            S
+          </Text>
+        }
+        value={value ?? ""}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {value && (
+        <>
+          <input type="hidden" name="header-name" value="Cache-Control" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"max-age=${value}"`}
+          />
+        </>
+      )}
+    </Grid>
+  );
+};
+
 export const getResourceScopeForInstance = ({
   page,
   instanceKey,
@@ -602,9 +639,11 @@ type PanelApi = {
   save: (formData: FormData) => void;
 };
 
+type BodyType = undefined | "text" | "json";
+
 const validateBody = (
   value: string,
-  contentType: unknown,
+  bodyType: BodyType,
   scope: Record<string, unknown>
 ) => {
   // skip empty expressions
@@ -612,7 +651,7 @@ const validateBody = (
     return "";
   }
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (contentType === "application/json") {
+  if (bodyType === "json") {
     return typeof evaluatedValue === "object" && evaluatedValue !== null
       ? ""
       : "Expected valid JSON object in body";
@@ -621,18 +660,27 @@ const validateBody = (
   }
 };
 
+const toMime = (bodyType: BodyType) => {
+  if (bodyType === "json") {
+    return "application/json";
+  }
+  if (bodyType === "text") {
+    return "text/plain";
+  }
+};
+
 const BodyField = ({
   scope,
   aliases,
-  contentType,
+  bodyType,
   value,
   onChange,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
-  contentType: unknown;
+  bodyType: BodyType;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, bodyType: BodyType) => void;
 }) => {
   const [isBodyLiteral, setIsBodyLiteral] = useState(
     () => value === "" || isLiteralExpression(value)
@@ -640,13 +688,41 @@ const BodyField = ({
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    bodyRef.current?.setCustomValidity(validateBody(value, contentType, scope));
+    bodyRef.current?.setCustomValidity(validateBody(value, bodyType, scope));
     setBodyError("");
-  }, [value, contentType, scope]);
+  }, [value, bodyType, scope]);
+  const updateBody = (newBody: string) => {
+    const evaluatedValue = evaluateExpressionWithinScope(newBody, scope);
+    // automatically add Content-Type: application/json header
+    // when value is object
+    const isBodyObject =
+      typeof evaluatedValue === "object" && evaluatedValue !== null;
+    onChange(newBody, isBodyObject ? "json" : bodyType);
+  };
 
   return (
     <Grid gap={1}>
       <Label>Body</Label>
+      <Select<BodyType | "">
+        placeholder="Type"
+        value={bodyType ?? ""}
+        options={["text", "json"]}
+        onChange={(newBodyType) => {
+          if (newBodyType) {
+            onChange(value, newBodyType);
+          }
+        }}
+      />
+      {bodyType && (
+        <>
+          <input type="hidden" name="header-name" value="Content-Type" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"${toMime(bodyType)}"`}
+          />
+        </>
+      )}
       <textarea
         ref={bodyRef}
         style={{ display: "none" }}
@@ -660,7 +736,7 @@ const BodyField = ({
       />
       <BindingControl>
         <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-          {contentType === "application/json" ? (
+          {bodyType === "json" ? (
             // wrap with div to position error tooltip
             <div>
               <ExpressionEditor
@@ -676,7 +752,7 @@ const BodyField = ({
                         2
                       ) ?? "")
                 }
-                onChange={onChange}
+                onChange={updateBody}
                 onChangeComplete={() => bodyRef.current?.checkValidity()}
               />
             </div>
@@ -689,7 +765,7 @@ const BodyField = ({
               color={bodyError ? "error" : undefined}
               value={String(evaluateExpressionWithinScope(value, scope) ?? "")}
               // update text value as string literal
-              onChange={(newValue) => onChange(JSON.stringify(newValue))}
+              onChange={(newValue) => updateBody(JSON.stringify(newValue))}
               onBlur={() => bodyRef.current?.checkValidity()}
             />
           )}
@@ -700,11 +776,11 @@ const BodyField = ({
           variant={isBodyLiteral ? "default" : "bound"}
           value={value}
           onChange={(value) => {
-            onChange(value);
+            updateBody(value);
             setIsBodyLiteral(isLiteralExpression(value));
           }}
           onRemove={(evaluatedValue) => {
-            onChange(JSON.stringify(evaluatedValue));
+            updateBody(JSON.stringify(evaluatedValue));
             setIsBodyLiteral(true);
           }}
         />
@@ -713,8 +789,39 @@ const BodyField = ({
   );
 };
 
-const isContentTypeHeader = (header: Resource["headers"][number]) =>
-  header.name.toLowerCase() === "content-type";
+const isCacheControl = (name: string) => name.toLowerCase() === "cache-control";
+const isContentType = (name: string) => name.toLowerCase() === "content-type";
+
+const parseHeaders = (headers: Resource["headers"]) => {
+  let maxAge: undefined | string;
+  let bodyType: BodyType;
+  const newHeaders = headers.filter((header) => {
+    const value = computeExpression(header.value, new Map()).toLowerCase();
+    if (isCacheControl(header.name)) {
+      // move simple header like Cache-Control: max-age=10 to dedicated input
+      // preserve more complex cache-control
+      const matched = value.match(/^max-age=(\d+)$/);
+      if (matched) {
+        [, maxAge] = matched;
+        return false;
+      }
+    }
+    // store json and text in dedicated input
+    // and preserve other types
+    if (isContentType(header.name)) {
+      if (value === "application/json") {
+        bodyType = "json";
+        return false;
+      }
+      if (value === "text/plain") {
+        bodyType = "text";
+        return false;
+      }
+    }
+    return false;
+  });
+  return { headers: newHeaders, maxAge, bodyType };
+};
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
@@ -727,6 +834,7 @@ export const ResourceForm = forwardRef<
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const parsedHeaders = parseHeaders(resource?.headers ?? []);
 
   const [url, setUrl] = useState(resource?.url ?? `""`);
   const [method, setMethod] = useState<Resource["method"]>(
@@ -736,14 +844,11 @@ export const ResourceForm = forwardRef<
     resource?.searchParams ?? []
   );
   const [headers, setHeaders] = useState<Resource["headers"]>(
-    resource?.headers ?? []
+    parsedHeaders.headers
   );
-  const [body, setBody] = useState(() => resource?.body);
-
-  const contentType = headers.find(isContentTypeHeader)?.value;
-  const evaluatedContentType = contentType
-    ? evaluateExpressionWithinScope(contentType, scope)
-    : undefined;
+  const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
+  const [bodyType, setBodyType] = useState(parsedHeaders.bodyType);
+  const [body, setBody] = useState(resource?.body);
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
@@ -798,12 +903,15 @@ export const ResourceForm = forwardRef<
               value: JSON.stringify(header.value),
             }))
           );
-          setHeaders(
+          const parsedHeaders = parseHeaders(
             curl.headers.map((header) => ({
               name: header.name,
               value: JSON.stringify(header.value),
             }))
           );
+          setMaxAge(parsedHeaders.maxAge);
+          setHeaders(parsedHeaders.headers);
+          setBodyType(parsedHeaders.bodyType);
           setBody(JSON.stringify(curl.body));
         }}
       />
@@ -813,38 +921,44 @@ export const ResourceForm = forwardRef<
         searchParams={searchParams}
         onChange={setSearchParams}
       />
+      <CacheMaxAge
+        value={maxAge}
+        onChange={(newMaxAge) => {
+          setMaxAge(newMaxAge);
+          // reset header
+          setHeaders((headers) =>
+            headers.filter(({ name }) => !isCacheControl(name))
+          );
+        }}
+      />
       <Headers
         scope={scope}
         aliases={aliases}
         headers={headers}
-        onChange={setHeaders}
+        onChange={(newHeaders) => {
+          // reset dedicated fields
+          if (newHeaders.some(({ name }) => isCacheControl(name))) {
+            setMaxAge(undefined);
+          }
+          if (newHeaders.some(({ name }) => isContentType(name))) {
+            setBodyType(undefined);
+          }
+          setHeaders(newHeaders);
+        }}
       />
       {method !== "get" && (
         <BodyField
           scope={scope}
           aliases={aliases}
-          contentType={evaluatedContentType}
           value={body ?? ""}
-          onChange={(newBody) => {
-            const evaluatedValue = evaluateExpressionWithinScope(
-              newBody,
-              scope
-            );
-            // automatically add Content-Type: application/json header
-            // when value is object
-            if (
-              typeof evaluatedValue === "object" &&
-              evaluatedValue !== null &&
-              evaluatedContentType !== "application/json"
-            ) {
-              setHeaders((prevHeaders) => {
-                const newHeaders = prevHeaders.filter(isContentTypeHeader);
-                newHeaders.push({
-                  name: "Content-Type",
-                  value: JSON.stringify("application/json"),
-                });
-                return newHeaders;
-              });
+          bodyType={bodyType}
+          onChange={(newBody, newBodyType) => {
+            setBodyType(newBodyType);
+            // reset header
+            if (newBodyType) {
+              setHeaders((headers) =>
+                headers.filter(({ name }) => !isContentType(name))
+              );
             }
             setBody(newBody);
           }}
@@ -963,11 +1077,9 @@ export const GraphqlResourceForm = forwardRef<
       : undefined;
 
   const [url, setUrl] = useState(resource?.url ?? `""`);
-  const [headers, setHeaders] = useState(
-    resource?.headers ?? [
-      { name: "Content-Type", value: JSON.stringify("application/json") },
-    ]
-  );
+  const parsedHeaders = parseHeaders(resource?.headers ?? []);
+  const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
+  const [headers, setHeaders] = useState(parsedHeaders.headers);
 
   const [bodyExpressions] = useState(() =>
     parseObjectExpression(resource?.body ?? "")
@@ -1017,7 +1129,10 @@ export const GraphqlResourceForm = forwardRef<
         control: "graphql",
         url,
         method: "post",
-        headers,
+        headers: [
+          ...headers,
+          { name: "Content-Type", value: "application/json" },
+        ],
         body,
       };
       const newVariable: DataSource = {
@@ -1048,12 +1163,14 @@ export const GraphqlResourceForm = forwardRef<
         onCurlPaste={(curl) => {
           // update all feilds when curl is paste into url field
           setUrl(JSON.stringify(curl.url));
-          setHeaders(
+          const parsedHeaders = parseHeaders(
             curl.headers.map((header) => ({
               name: header.name,
               value: JSON.stringify(header.value),
             }))
           );
+          setMaxAge(parsedHeaders.maxAge);
+          setHeaders(parsedHeaders.headers);
           const body = zGraphqlBody.safeParse(curl.body);
           if (body.success) {
             setQuery(body.data.query);
@@ -1139,11 +1256,27 @@ export const GraphqlResourceForm = forwardRef<
         </BindingControl>
       </Grid>
 
+      <CacheMaxAge
+        value={maxAge}
+        onChange={(newMaxAge) => {
+          setMaxAge(newMaxAge);
+          setHeaders((headers) =>
+            headers.filter(({ name }) => !isCacheControl(name))
+          );
+        }}
+      />
+
       <Headers
         scope={scope}
         aliases={aliases}
         headers={headers}
-        onChange={setHeaders}
+        onChange={(newHeaders) => {
+          // reset dedicated fields
+          if (newHeaders.some(({ name }) => isCacheControl(name))) {
+            setMaxAge(undefined);
+          }
+          setHeaders(newHeaders);
+        }}
       />
     </>
   );

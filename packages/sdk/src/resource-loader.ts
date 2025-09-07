@@ -65,9 +65,9 @@ export const loadResource = async (
 
     return {
       ok: response.ok,
-      data,
       status: response.status,
       statusText: response.statusText,
+      data,
     };
   } catch (error) {
     console.error(error);
