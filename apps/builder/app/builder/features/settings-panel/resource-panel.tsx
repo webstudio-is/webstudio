@@ -802,8 +802,8 @@ const parseHeaders = (headers: Resource["headers"]) => {
       // preserve more complex cache-control
       const matched = value.match(/^max-age=(\d+)$/);
       if (matched) {
-        let input;
-        [input, maxAge] = matched;
+        let _input;
+        [_input, maxAge] = matched;
         return false;
       }
     }
