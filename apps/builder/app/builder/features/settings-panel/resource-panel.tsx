@@ -796,7 +796,10 @@ const parseHeaders = (headers: Resource["headers"]) => {
   let maxAge: undefined | string;
   let bodyType: BodyType;
   const newHeaders = headers.filter((header) => {
-    const value = computeExpression(header.value, new Map()).toLowerCase();
+    // cast raw expression result to string
+    const value = String(
+      computeExpression(header.value, new Map())
+    ).toLowerCase();
     if (isCacheControl(header.name)) {
       // move simple header like Cache-Control: max-age=10 to dedicated input
       // preserve more complex cache-control
@@ -818,7 +821,7 @@ const parseHeaders = (headers: Resource["headers"]) => {
         return false;
       }
     }
-    return false;
+    return true;
   });
   return { headers: newHeaders, maxAge, bodyType };
 };
@@ -1129,10 +1132,9 @@ export const GraphqlResourceForm = forwardRef<
         control: "graphql",
         url,
         method: "post",
-        headers: [
-          ...headers,
-          { name: "Content-Type", value: "application/json" },
-        ],
+        headers: headers.some(({ name }) => isContentType(name))
+          ? headers
+          : [...headers, { name: "Content-Type", value: `"application/json"` }],
         body,
       };
       const newVariable: DataSource = {
