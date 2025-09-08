@@ -66,10 +66,7 @@ import {
   type InstancePath,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import {
-  computeExpression,
-  rebindTreeVariablesMutable,
-} from "~/shared/data-variables";
+import { rebindTreeVariablesMutable } from "~/shared/data-variables";
 import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
@@ -558,7 +555,7 @@ export const getResourceScopeForInstance = ({
         const name = encodeDataVariableId(dataSourceId);
         scope[name] = value;
         aliases.set(name, dataSource.name);
-        variableValues.set(dataSource.name, value);
+        variableValues.set(dataSourceId, value);
       }
     }
   }
@@ -621,7 +618,7 @@ export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
               const key = encodeDataVariableId(variable.id);
               delete newScope[key];
               newAliases.delete(key);
-              newVariableValues.delete(variable.name);
+              newVariableValues.delete(variable.id);
             }
             return {
               scope: newScope,
@@ -798,7 +795,7 @@ const parseHeaders = (headers: Resource["headers"]) => {
   const newHeaders = headers.filter((header) => {
     // cast raw expression result to string
     const value = String(
-      computeExpression(header.value, new Map())
+      evaluateExpressionWithinScope(header.value, {})
     ).toLowerCase();
     if (isCacheControl(header.name)) {
       // move simple header like Cache-Control: max-age=10 to dedicated input
@@ -1180,6 +1177,7 @@ export const GraphqlResourceForm = forwardRef<
           }
         }}
       />
+      <input type="hidden" name="method" value="post" />
 
       <Grid gap={1}>
         <Label htmlFor={queryId}>Query</Label>
