@@ -25,13 +25,19 @@ export const loadResource = async (
 ) => {
   try {
     const { method, searchParams, headers, body } = resourceRequest;
-    // cloudflare workers fail when fetching url contains spaces
-    // even though new URL suppose to trim them on parsing by spec
-    const url = new URL(resourceRequest.url.trim());
-    if (searchParams) {
-      for (const { name, value } of searchParams) {
-        url.searchParams.append(name, serializeValue(value));
+    let href = resourceRequest.url;
+    try {
+      // cloudflare workers fail when fetching url contains spaces
+      // even though new URL suppose to trim them on parsing by spec
+      const url = new URL(resourceRequest.url.trim());
+      if (searchParams) {
+        for (const { name, value } of searchParams) {
+          url.searchParams.append(name, serializeValue(value));
+        }
       }
+      href = url.href;
+    } catch {
+      // empty block
     }
     const requestHeaders = new Headers(
       headers.map(({ name, value }): [string, string] => [
@@ -46,7 +52,7 @@ export const loadResource = async (
     if (method !== "get" && body !== undefined) {
       requestInit.body = serializeValue(body);
     }
-    const response = await customFetch(url.href, requestInit);
+    const response = await customFetch(href, requestInit);
 
     let data = await response.text();
 
@@ -59,7 +65,7 @@ export const loadResource = async (
 
     if (!response.ok) {
       console.error(
-        `Failed to load resource: ${url} - ${response.status}: ${JSON.stringify(data).slice(0, 300)}`
+        `Failed to load resource: ${href} - ${response.status}: ${JSON.stringify(data).slice(0, 300)}`
       );
     }
 

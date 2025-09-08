@@ -71,10 +71,12 @@ import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
   id,
+  control,
   name,
   formData,
 }: {
   id: string;
+  control?: string;
   name?: string;
   formData: FormData;
 }) => {
@@ -84,6 +86,7 @@ export const parseResource = ({
   const headerValues = formData.getAll("header-value") as string[];
   return Resource.parse({
     id,
+    control,
     name: name ?? formData.get("name"),
     url: formData.get("url"),
     searchParams: searchParamNames
@@ -250,7 +253,7 @@ const SearchParamPair = ({
 }) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
   // expressions with variables or objects cannot be edited from input
-  const isValueUnbound =
+  const isValueUnboundString =
     isLiteralExpression(value) && typeof evaluatedValue === "string";
   return (
     <Grid
@@ -271,7 +274,7 @@ const SearchParamPair = ({
         <InputField
           placeholder="Value"
           name="search-param-value-literal"
-          disabled={!isValueUnbound}
+          disabled={!isValueUnboundString}
           value={serializeValue(evaluatedValue)}
           // update text value as string literal
           onChange={(event) =>
@@ -281,7 +284,7 @@ const SearchParamPair = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          variant={isValueUnbound ? "default" : "bound"}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
           value={value}
           onChange={(newValue) => onChange(name, newValue)}
           onRemove={(evaluatedValue) =>
@@ -374,7 +377,7 @@ const HeaderPair = ({
 }) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
   // expressions with variables or objects cannot be edited from input
-  const isValueUnbound =
+  const isValueUnboundString =
     isLiteralExpression(value) && typeof evaluatedValue === "string";
   return (
     <Grid
@@ -395,7 +398,7 @@ const HeaderPair = ({
         <InputField
           placeholder="Value"
           name="header-value-validator"
-          disabled={!isValueUnbound}
+          disabled={!isValueUnboundString}
           value={serializeValue(evaluatedValue)}
           // update text value as string literal
           onChange={(event) =>
@@ -405,7 +408,7 @@ const HeaderPair = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          variant={isValueUnbound ? "default" : "bound"}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
           value={value}
           onChange={(newValue) => onChange(name, newValue)}
           onRemove={(evaluatedValue) =>
@@ -980,8 +983,6 @@ export const SystemResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
 
-  const method = "get";
-
   const localResources = [
     {
       label: "Sitemap",
@@ -1006,19 +1007,15 @@ export const SystemResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
-      const newResource: Resource = {
+      const newResource: Resource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         control: "system",
-        url: localResource.value,
-        method,
-        headers: [],
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         scopeInstanceId,
-        name,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
@@ -1037,6 +1034,8 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
+      <input type="hidden" name="method" value="get" />
+      <input type="hidden" name="url" value={localResource.value} />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -1116,28 +1115,15 @@ export const GraphqlResourceForm = forwardRef<
       if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
-      const body = generateObjectExpression(
-        new Map([
-          ["query", JSON.stringify(query)],
-          ["variables", variables],
-        ])
-      );
-      const newResource: Resource = {
+      const newResource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         control: "graphql",
-        url,
-        method: "post",
-        headers: headers.some(({ name }) => isContentType(name))
-          ? headers
-          : [...headers, { name: "Content-Type", value: `"application/json"` }],
-        body,
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         scopeInstanceId,
-        name,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
@@ -1154,6 +1140,28 @@ export const GraphqlResourceForm = forwardRef<
 
   return (
     <>
+      <input type="hidden" name="method" value="post" />
+      {!headers.some(({ name }) => isContentType(name)) && (
+        <>
+          <input type="hidden" name="header-name" value="Content-Type" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"application/json"`}
+          />
+        </>
+      )}
+      <input
+        type="hidden"
+        name="body"
+        value={generateObjectExpression(
+          new Map([
+            ["query", JSON.stringify(query)],
+            ["variables", variables],
+          ])
+        )}
+      />
+
       <UrlField
         scope={scope}
         aliases={aliases}
@@ -1177,7 +1185,6 @@ export const GraphqlResourceForm = forwardRef<
           }
         }}
       />
-      <input type="hidden" name="method" value="post" />
 
       <Grid gap={1}>
         <Label htmlFor={queryId}>Query</Label>
