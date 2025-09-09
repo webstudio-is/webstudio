@@ -16,13 +16,14 @@ import {
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { isRichText } from "~/shared/content-model";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
 import {
   $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
 } from "../shared";
+import { $instanceTags } from "../../style-panel/shared/model";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -157,6 +158,21 @@ const $canHaveTextContent = computed(
   }
 );
 
+const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
+  img: ["src", "width", "height", "alt"],
+  a: ["href"],
+};
+
+const $selectedInstanceTag = computed(
+  [$selectedInstance, $instanceTags],
+  (selectedInstance, instanceTags) => {
+    if (selectedInstance === undefined) {
+      return;
+    }
+    return instanceTags.get(selectedInstance.id);
+  }
+);
+
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -164,25 +180,19 @@ export const usePropsLogic = ({
   updateProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
+  const selectedInstanceTag = useStore($selectedInstanceTag);
 
   /**
    * In content edit mode we show only Image and Link props
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
-    const contentModeWhiteList: Partial<Record<string, string[]>> = {
-      Image: ["src", "width", "height", "alt"],
-      Link: ["href"],
-      RichTextLink: ["href"],
-    };
-
     if (!isContentMode) {
       return true;
     }
-
-    const propsWhiteList = contentModeWhiteList[instance.component] ?? [];
-
-    return propsWhiteList.includes(propName);
+    const allowedProperties =
+      contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
+    return allowedProperties.includes(propName);
   };
 
   const savedProps = props;
@@ -231,11 +241,7 @@ export const usePropsLogic = ({
   const initialProps: PropAndMeta[] = [];
   for (const name of initialPropNames) {
     const propMeta = propsMetas.get(name);
-
     if (propMeta === undefined) {
-      console.error(
-        `The prop "${name}" is defined in meta.initialProps but not in meta.props`
-      );
       continue;
     }
 

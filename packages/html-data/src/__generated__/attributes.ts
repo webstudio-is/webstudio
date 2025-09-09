@@ -873,12 +873,6 @@ const attribute_preserveAspectRatio_19as3ta: Attribute = {
   type: "string",
 };
 
-const attribute_alt_1j06s5r: Attribute = {
-  name: "alt",
-  description: "Replacement text for use when images are not available",
-  type: "string",
-};
-
 const attribute_crossorigin_jl1m2v: Attribute = {
   name: "crossorigin",
   description: "How the element handles crossorigin requests",
@@ -891,6 +885,12 @@ const attribute_loading_yzzdw4: Attribute = {
   description: "Used when determining loading deferral",
   type: "select",
   options: ["lazy", "eager"],
+};
+
+const attribute_alt_1j06s5r: Attribute = {
+  name: "alt",
+  description: "Replacement text for use when images are not available",
+  type: "string",
 };
 
 const attribute_disabled_1ceu012: Attribute = {
@@ -3824,7 +3824,12 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     attribute_y_14t62ez,
   ],
   img: [
-    attribute_alt_1j06s5r,
+    {
+      name: "alt",
+      description: "Replacement text for use when images are not available",
+      type: "string",
+      required: true,
+    },
     attribute_crossorigin_jl1m2v,
     {
       name: "decoding",
@@ -3839,18 +3844,33 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       type: "select",
       options: ["auto", "high", "low"],
     },
-    attribute_height_10887hn,
+    {
+      name: "height",
+      description: "Vertical dimension",
+      type: "number",
+      required: true,
+    },
     attribute_loading_yzzdw4,
     attribute_referrerpolicy_tpprqt,
     attribute_sizes_o9chmv,
-    attribute_src_hol6ri,
+    {
+      name: "src",
+      description: "Address of the resource",
+      type: "string",
+      required: true,
+    },
     attribute_srcset_1xpiw3a,
     {
       name: "usemap",
       description: "Name of image map to use",
       type: "string",
     },
-    attribute_width_d9q964,
+    {
+      name: "width",
+      description: "Horizontal dimension",
+      type: "number",
+      required: true,
+    },
   ],
   input: [
     {

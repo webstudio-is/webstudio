@@ -77,6 +77,10 @@ const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
     closedby: false,
   },
   img: {
+    src: { required: true },
+    alt: { required: true },
+    width: { required: true },
+    height: { required: true },
     ismap: false,
   },
   input: {
