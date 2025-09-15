@@ -43,7 +43,7 @@ import {
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
-import { db } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postrest/index.server";
 import { publicStaticEnv } from "~/env/env.static";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -421,7 +421,7 @@ export const action = async ({
     }
 
     if (previewImageAssetId !== undefined) {
-      await db.project.updatePreviewImage(
+      await projectApi.updatePreviewImage(
         { assetId: previewImageAssetId, projectId },
         context
       );

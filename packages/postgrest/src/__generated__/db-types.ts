@@ -516,6 +516,7 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
         };
@@ -526,6 +527,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title: string;
           userId?: string | null;
         };
@@ -536,6 +538,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string;
           userId?: string | null;
         };
@@ -748,6 +751,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string | null;
           userId: string | null;
         };
@@ -761,6 +765,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -774,6 +779,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -814,6 +820,21 @@ export type Database = {
             columns: ["projectId"];
             isOneToOne: false;
             referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_tag: {
+        Row: {
+          tag: string | null;
+          user_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "Project_userId_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "User";
             referencedColumns: ["id"];
           },
         ];
@@ -895,6 +916,7 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
         };
