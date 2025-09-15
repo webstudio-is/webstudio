@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { Templates } from "@webstudio-is/sdk";
@@ -41,7 +41,7 @@ export const domainRouter = router({
     .input(z.object({ projectId: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
-        const project = await projectDb.project.loadById(input.projectId, ctx);
+        const project = await projectApi.loadById(input.projectId, ctx);
 
         return {
           success: true,
@@ -71,7 +71,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const project = await projectDb.project.loadById(input.projectId, ctx);
+        const project = await projectApi.loadById(input.projectId, ctx);
 
         const name = `${project.id}-${nanoid()}.zip`;
 
@@ -169,7 +169,7 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        await projectDb.project.updateDomain(
+        await projectApi.updateDomain(
           {
             id: input.projectId,
             domain: input.domain,

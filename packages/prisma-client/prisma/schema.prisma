@@ -144,6 +144,7 @@ model Project {
   id                        String                       @id @default(uuid())
   createdAt                 DateTime                     @default(now()) @db.Timestamptz(3)
   title                     String
+  tags                      String[]
   domain                    String                       @unique
   user                      User?                        @relation(fields: [userId], references: [id])
   userId                    String?
