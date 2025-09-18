@@ -22,6 +22,7 @@ export const getResourceKey = (resource: ResourceRequest) => {
     );
   } catch {
     // guard from invalid resources
+    return "";
   }
 };
 
