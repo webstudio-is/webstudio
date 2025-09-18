@@ -168,10 +168,18 @@ const syncServer = async function () {
         if (details.authToken) {
           headers.append("x-auth-token", details.authToken);
         }
+        // revise patches are not used on the server and reduce possible patch size
+        const optimizedTransactions = transactions.map((transaction) => ({
+          ...transaction,
+          payload: transaction.payload.map((change) => ({
+            namespace: change.namespace,
+            patches: change.patches,
+          })),
+        }));
         const response = await fetch(restPatchPath(), {
           method: "post",
           body: JSON.stringify({
-            transactions,
+            transactions: optimizedTransactions,
             buildId: details.buildId,
             projectId,
             // provide latest stored version to server
