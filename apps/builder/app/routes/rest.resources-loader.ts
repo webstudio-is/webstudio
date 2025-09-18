@@ -25,32 +25,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   };
 
   const requestJson = await request.json();
+  const requestList = z.array(z.unknown()).safeParse(requestJson);
 
-  const computedResourcesParsed = z
-    .array(ResourceRequest)
-    .safeParse(requestJson);
-
-  if (computedResourcesParsed.success === false) {
-    console.error(
-      "computedResources.parse",
-      computedResourcesParsed.error.toString()
-    );
+  if (requestList.success === false) {
     console.error("data:", requestJson);
-
-    throw data(computedResourcesParsed.error, {
+    throw data(requestList.error, {
       status: 400,
     });
   }
 
-  const computedResources = computedResourcesParsed.data;
-
-  const responses = await Promise.all(
-    computedResources.map((resource) => loadResource(customFetch, resource))
+  const output = await Promise.all(
+    requestList.data.map(async (item) => {
+      const resource = ResourceRequest.safeParse(item);
+      if (resource.success === false) {
+        return [
+          getResourceKey(item as ResourceRequest),
+          {
+            ok: false,
+            data: resource.error.format(),
+            status: 403,
+            statusText: "Resource validation error",
+          },
+        ];
+      }
+      return [
+        getResourceKey(resource.data),
+        await loadResource(customFetch, resource.data),
+      ];
+    })
   );
-  const output: [string, unknown][] = [];
-  responses.forEach((response, index) => {
-    const request = computedResources[index];
-    output.push([getResourceKey(request), response]);
-  });
+
   return output;
 };
