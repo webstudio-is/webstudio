@@ -7,18 +7,24 @@ import { fetch } from "./fetch.client";
 
 const MAX_PENDING_RESOURCES = 5;
 
-export const getResourceKey = (resource: ResourceRequest) =>
-  hash(
-    JSON.stringify([
-      // explicitly list all fields to keep hash stable
-      resource.name,
-      resource.method,
-      resource.url,
-      resource.searchParams,
-      resource.headers,
-      resource.body,
-    ])
-  );
+export const getResourceKey = (resource: ResourceRequest) => {
+  try {
+    return hash(
+      JSON.stringify([
+        // explicitly list all fields to keep hash stable
+        resource.name,
+        resource.method,
+        resource.url,
+        resource.searchParams,
+        resource.headers,
+        resource.body,
+      ])
+    );
+  } catch {
+    // guard from invalid resources
+    return "";
+  }
+};
 
 const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, ResourceRequest>();
