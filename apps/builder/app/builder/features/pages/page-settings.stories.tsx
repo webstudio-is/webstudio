@@ -63,6 +63,7 @@ $project.set({
   isDeleted: false,
   userId: "userId",
   domain: "new-2x9tcd",
+  tags: [],
 
   marketplaceApprovalStatus: "UNLISTED",
 

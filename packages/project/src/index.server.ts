@@ -1,3 +1,2 @@
-import * as dbFunctions from "./db";
-export const db = dbFunctions;
-export * from "./trpc";
+export * from "./db/project";
+export * from "./trpc/project-router";

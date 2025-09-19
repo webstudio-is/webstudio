@@ -105,6 +105,7 @@ beforeEach(() => {
     domainsVirtual: [],
     latestBuildVirtual: null,
     previewImageAssetId: null,
+    tags: [],
   });
 
   $breakpoints.set(
