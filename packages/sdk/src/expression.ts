@@ -112,7 +112,20 @@ export const lintExpression = ({
       ThisExpression: addMessage(`"this" keyword is not supported`),
       FunctionExpression: addMessage("Functions are not supported"),
       UpdateExpression: addMessage("Increment and decrement are not supported"),
-      CallExpression: addMessage("Functions are not supported"),
+      CallExpression(node) {
+        // Check if this is a method call (MemberExpression) or standalone function call
+        if (node.callee.type === "MemberExpression") {
+          // Allow specific safe string methods
+          const allowedMethods = new Set(["toLowerCase", "replace", "split"]);
+          if (
+            node.callee.property.type === "Identifier" &&
+            allowedMethods.has(node.callee.property.name)
+          ) {
+            return;
+          }
+        }
+        addMessage("Functions are not supported")(node);
+      },
       NewExpression: addMessage("Classes are not supported"),
       SequenceExpression: addMessage(`Only single expression is supported`),
       ArrowFunctionExpression: addMessage("Functions are not supported"),

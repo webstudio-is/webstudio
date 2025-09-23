@@ -220,6 +220,60 @@ describe("lint expression", () => {
       error(1, 8, `"await" keyword is not supported`),
     ]);
   });
+
+  test("allow safe string methods", () => {
+    expect(
+      lintExpression({
+        expression: `title.toLowerCase()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `title.replace(" ", "-")`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: `title.split("-")`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("allow chained string methods", () => {
+    expect(
+      lintExpression({
+        expression: `title.toLowerCase().replace(" ", "-").split("-")`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid unsafe method calls", () => {
+    expect(
+      lintExpression({
+        expression: `arr.pop()`,
+        availableVariables: new Set(["arr"]),
+      })
+    ).toEqual([error(0, 9, "Functions are not supported")]);
+    expect(
+      lintExpression({
+        expression: `obj.push(1)`,
+        availableVariables: new Set(["obj"]),
+      })
+    ).toEqual([error(0, 11, "Functions are not supported")]);
+  });
+
+  test("forbid standalone function calls", () => {
+    expect(
+      lintExpression({
+        expression: `func()`,
+        availableVariables: new Set(["func"]),
+      })
+    ).toEqual([error(0, 6, "Functions are not supported")]);
+  });
 });
 
 test("check simple literals", () => {
@@ -345,6 +399,42 @@ describe("transpile expression", () => {
       errorString = (error as Error).message;
     }
     expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
+  });
+
+  test("transpile string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase()",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase()");
+    expect(
+      transpileExpression({
+        expression: "user.name.replace(' ', '-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.replace(' ', '-')");
+    expect(
+      transpileExpression({
+        expression: "data.title.split('-')",
+        executable: true,
+      })
+    ).toEqual("data?.title?.split('-')");
+  });
+
+  test("transpile chained string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase().replace(/\\s+/g, '-')",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase()?.replace(/\\s+/g, '-')");
+    expect(
+      transpileExpression({
+        expression: "user.name.toLowerCase().replace(' ', '-').split('-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.toLowerCase()?.replace(' ', '-')?.split('-')");
   });
 });
 
