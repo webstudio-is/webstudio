@@ -221,32 +221,29 @@ describe("lint expression", () => {
     ]);
   });
 
-  test("allow safe string methods", () => {
-    const stringMethods = [
-      "toLowerCase",
-      "replace",
-      "split",
-      "at",
-      "endsWith",
-      "includes",
-      "startsWith",
-      "toUpperCase",
-      "toLocaleLowerCase",
-      "toLocaleUpperCase",
-    ];
-    for (const method of stringMethods) {
-      expect(
-        lintExpression({
-          expression: `title.${method}()`,
-          availableVariables: new Set(["title"]),
-        })
-      ).toEqual([]);
-    }
+  test.each([
+    "toLowerCase",
+    "replace",
+    "split",
+    "at",
+    "endsWith",
+    "includes",
+    "startsWith",
+    "toUpperCase",
+    "toLocaleLowerCase",
+    "toLocaleUpperCase",
+  ])("allow safe string method: %s", (method) => {
+    expect(
+      lintExpression({
+        expression: `title.${method}()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
   });
 
-  test("allow safe array methods", () => {
-    const arrayMethods = ["at", "includes", "join", "slice"];
-    for (const method of arrayMethods) {
+  test.each(["at", "includes", "join", "slice"])(
+    "allow safe array method: %s",
+    (method) => {
       expect(
         lintExpression({
           expression: `arr.${method}()`,
@@ -254,7 +251,7 @@ describe("lint expression", () => {
         })
       ).toEqual([]);
     }
-  });
+  );
 
   test("allow chained string methods", () => {
     expect(
