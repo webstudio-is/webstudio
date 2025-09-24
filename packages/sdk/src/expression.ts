@@ -29,6 +29,21 @@ type ExpressionVisitor = {
   [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
 };
 
+const allowedStringMethods = new Set([
+  "toLowerCase",
+  "replace",
+  "split",
+  "at",
+  "endsWith",
+  "includes",
+  "startsWith",
+  "toUpperCase",
+  "toLocaleLowerCase",
+  "toLocaleUpperCase",
+]);
+
+const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+
 export const lintExpression = ({
   expression,
   availableVariables = new Set(),
@@ -113,15 +128,15 @@ export const lintExpression = ({
       FunctionExpression: addMessage("Functions are not supported"),
       UpdateExpression: addMessage("Increment and decrement are not supported"),
       CallExpression(node) {
-        // Check if this is a method call (MemberExpression) or standalone function call
         if (node.callee.type === "MemberExpression") {
-          // Allow specific safe string methods
-          const allowedMethods = new Set(["toLowerCase", "replace", "split"]);
-          if (
-            node.callee.property.type === "Identifier" &&
-            allowedMethods.has(node.callee.property.name)
-          ) {
-            return;
+          if (node.callee.property.type === "Identifier") {
+            const methodName = node.callee.property.name;
+            if (
+              allowedStringMethods.has(methodName) ||
+              allowedArrayMethods.has(methodName)
+            ) {
+              return;
+            }
           }
         }
         addMessage("Functions are not supported")(node);
