@@ -128,6 +128,7 @@ export const lintExpression = ({
       FunctionExpression: addMessage("Functions are not supported"),
       UpdateExpression: addMessage("Increment and decrement are not supported"),
       CallExpression(node) {
+        let calleeName;
         if (node.callee.type === "MemberExpression") {
           if (node.callee.property.type === "Identifier") {
             const methodName = node.callee.property.name;
@@ -137,9 +138,16 @@ export const lintExpression = ({
             ) {
               return;
             }
+            calleeName = methodName;
           }
+        } else if (node.callee.type === "Identifier") {
+          calleeName = node.callee.name;
         }
-        addMessage("Functions are not supported")(node);
+        if (calleeName) {
+          addMessage(`"${calleeName}" function is not supported`)(node);
+        } else {
+          addMessage("Functions are not supported")(node);
+        }
       },
       NewExpression: addMessage("Classes are not supported"),
       SequenceExpression: addMessage(`Only single expression is supported`),

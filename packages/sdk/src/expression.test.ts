@@ -157,7 +157,7 @@ describe("lint expression", () => {
     ).toEqual([
       error(1, 13, "Functions are not supported"),
       error(17, 25, "Functions are not supported"),
-      error(29, 33, "Functions are not supported"),
+      error(29, 33, `"fn" function is not supported`),
     ]);
   });
 
@@ -268,13 +268,13 @@ describe("lint expression", () => {
         expression: `arr.pop()`,
         availableVariables: new Set(["arr"]),
       })
-    ).toEqual([error(0, 9, "Functions are not supported")]);
+    ).toEqual([error(0, 9, `"pop" function is not supported`)]);
     expect(
       lintExpression({
         expression: `obj.push(1)`,
         availableVariables: new Set(["obj"]),
       })
-    ).toEqual([error(0, 11, "Functions are not supported")]);
+    ).toEqual([error(0, 11, `"push" function is not supported`)]);
   });
 
   test("forbid standalone function calls", () => {
@@ -283,7 +283,7 @@ describe("lint expression", () => {
         expression: `func()`,
         availableVariables: new Set(["func"]),
       })
-    ).toEqual([error(0, 6, "Functions are not supported")]);
+    ).toEqual([error(0, 6, `"func" function is not supported`)]);
   });
 });
 
