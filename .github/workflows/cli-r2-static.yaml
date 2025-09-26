@@ -30,7 +30,10 @@ jobs:
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
-      # Do not checkout submodules, they are not needed for this workflow
+      # We need submodules here as this is used for the cloudflare build
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
       - uses: pnpm/action-setup@v4
 
