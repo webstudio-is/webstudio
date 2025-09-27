@@ -293,6 +293,19 @@ export const transpileExpression = ({
         replacements.push([dotIndex, dotIndex, "?."]);
       }
     },
+    CallExpression(node) {
+      if (executable === false || node.optional) {
+        return;
+      }
+      // Add optional chaining to method calls: obj.method() -> obj?.method?.()
+      if (node.callee.type === "MemberExpression") {
+        // Find the opening parenthesis after the method name
+        const openParenIndex = expression.indexOf("(", node.callee.end);
+        if (openParenIndex !== -1) {
+          replacements.push([openParenIndex, openParenIndex, "?."]);
+        }
+      }
+    },
   });
   // order from the latest to the first insertion to not break other positions
   replacements.sort(([leftStart], [rightStart]) => rightStart - leftStart);

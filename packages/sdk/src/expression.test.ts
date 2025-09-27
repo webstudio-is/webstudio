@@ -418,19 +418,19 @@ describe("transpile expression", () => {
         expression: "title.toLowerCase()",
         executable: true,
       })
-    ).toEqual("title?.toLowerCase()");
+    ).toEqual("title?.toLowerCase?.()");
     expect(
       transpileExpression({
         expression: "user.name.replace(' ', '-')",
         executable: true,
       })
-    ).toEqual("user?.name?.replace(' ', '-')");
+    ).toEqual("user?.name?.replace?.(' ', '-')");
     expect(
       transpileExpression({
         expression: "data.title.split('-')",
         executable: true,
       })
-    ).toEqual("data?.title?.split('-')");
+    ).toEqual("data?.title?.split?.('-')");
   });
 
   test("transpile chained string methods with optional chaining", () => {
@@ -439,13 +439,52 @@ describe("transpile expression", () => {
         expression: "title.toLowerCase().replace(/\\s+/g, '-')",
         executable: true,
       })
-    ).toEqual("title?.toLowerCase()?.replace(/\\s+/g, '-')");
+    ).toEqual("title?.toLowerCase?.()?.replace?.(/\\s+/g, '-')");
     expect(
       transpileExpression({
         expression: "user.name.toLowerCase().replace(' ', '-').split('-')",
         executable: true,
       })
-    ).toEqual("user?.name?.toLowerCase()?.replace(' ', '-')?.split('-')");
+    ).toEqual("user?.name?.toLowerCase?.()?.replace?.(' ', '-')?.split?.('-')");
+  });
+
+  test("transpile array methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "items.map(item => item.id)",
+        executable: true,
+      })
+    ).toEqual("items?.map?.(item => item?.id)");
+    expect(
+      transpileExpression({
+        expression: "data.list.filter(x => x > 0)",
+        executable: true,
+      })
+    ).toEqual("data?.list?.filter?.(x => x > 0)");
+  });
+
+  test("transpile nested method calls with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj.method().prop.anotherMethod()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()?.prop?.anotherMethod?.()");
+  });
+
+  test("preserve existing optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()");
+    expect(
+      transpileExpression({
+        expression: "obj?.prop?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.prop?.method?.()");
   });
 });
 
