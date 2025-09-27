@@ -35,6 +35,7 @@ export class Parameter {
 type ResourceConfig = {
   url: Expression;
   method: Resource["method"];
+  searchParams: Array<{ name: string; value: Expression }>;
   headers: Array<{ name: string; value: Expression }>;
   body?: Expression;
 };
@@ -218,6 +219,12 @@ export const renderTemplate = (
       name: resourceValue.name,
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
+      searchParams: resourceValue.config.searchParams.map(
+        ({ name, value }) => ({
+          name,
+          value: compileExpression(instanceId, value),
+        })
+      ),
       headers: resourceValue.config.headers.map(({ name, value }) => ({
         name,
         value: compileExpression(instanceId, value),

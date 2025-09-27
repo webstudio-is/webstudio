@@ -199,6 +199,7 @@ test("generate global system variable and use in resources loader", () => {
   const myResource = new ResourceValue("My Resource", {
     url: expression`"https://my-json.com/" + $ws$system.params.slug`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`{search:'term'}` }],
     headers: [{ name: "Content-Type", value: expression`"application/json"` }],
     body: expression`{ body: true }`,
   });
@@ -220,6 +221,7 @@ test("generate global system variable and use in resources loader", () => {
         name: "My Resource",
         url: "https://my-json.com/" + system?.params?.slug,
         searchParams: [
+          { name: "filter", value: {search:'term'} },
         ],
         method: "post",
         headers: [

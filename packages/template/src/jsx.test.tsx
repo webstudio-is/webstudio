@@ -517,6 +517,7 @@ test("render resource variable", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com/" + ${value}`,
     method: "get",
+    searchParams: [{ name: "filter", value: expression`${value}` }],
     headers: [{ name: "auth", value: expression`${value}` }],
     body: expression`${value}`,
   });
@@ -545,6 +546,7 @@ test("render resource variable", () => {
       name: "myResource",
       url: `"https://my-url.com/" + $ws$dataSource$1`,
       method: "get",
+      searchParams: [{ name: "filter", value: `$ws$dataSource$1` }],
       headers: [{ name: "auth", value: `$ws$dataSource$1` }],
       body: `$ws$dataSource$1`,
     },
@@ -556,6 +558,7 @@ test("render resource prop", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com/" + ${value}`,
     method: "get",
+    searchParams: [{ name: "filter", value: expression`${value}` }],
     headers: [{ name: "auth", value: expression`${value}` }],
     body: expression`${value}`,
   });
@@ -586,6 +589,7 @@ test("render resource prop", () => {
       name: "myResource",
       url: `"https://my-url.com/" + $ws$dataSource$1`,
       method: "get",
+      searchParams: [{ name: "filter", value: `$ws$dataSource$1` }],
       headers: [{ name: "auth", value: `$ws$dataSource$1` }],
       body: `$ws$dataSource$1`,
     },
