@@ -826,6 +826,14 @@ export const extractWebstudioFragment = (
         unsetNameById,
       });
     }
+    if (newResource.searchParams) {
+      for (const searchParam of newResource.searchParams) {
+        searchParam.value = unsetExpressionVariables({
+          expression: searchParam.value,
+          unsetNameById,
+        });
+      }
+    }
     if (newResource.body) {
       newResource.body = unsetExpressionVariables({
         expression: newResource.body,
@@ -1173,6 +1181,18 @@ export const insertWebstudioFragmentCopy = ({
         maskedIdByName,
       });
       header.value = replaceDataSources(header.value, newDataSourceIds);
+    }
+    if (resource.searchParams) {
+      for (const searchParam of resource.searchParams) {
+        searchParam.value = restoreExpressionVariables({
+          expression: searchParam.value,
+          maskedIdByName,
+        });
+        searchParam.value = replaceDataSources(
+          searchParam.value,
+          newDataSourceIds
+        );
+      }
     }
     if (resource.body) {
       resource.body = restoreExpressionVariables({

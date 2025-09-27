@@ -797,6 +797,7 @@ test("compute resource variable values", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const data = renderData(
@@ -868,6 +869,7 @@ test("compute parameter and resource variables without values to make it availab
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const parameterVariable = new Parameter("parameterVariable");
