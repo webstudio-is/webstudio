@@ -707,6 +707,7 @@ test("generate resources loading", () => {
   const dataResource = new ResourceValue("data", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   expect(
@@ -747,6 +748,7 @@ test("avoid generating unused variables", () => {
   const unusedResource = new ResourceValue("Unused Resource Name", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const data = renderData(
@@ -883,11 +885,13 @@ test("generate resource prop", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com?with-secret"`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const anotherResource = new ResourceValue("anotherResource", {
     url: expression`"https://another-url.com?with-secret"`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   expect(
