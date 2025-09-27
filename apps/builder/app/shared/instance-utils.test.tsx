@@ -932,6 +932,7 @@ describe("delete instance", () => {
     const myResource = new ResourceValue("My Resource", {
       url: expression`""`,
       method: "get",
+      searchParams: [],
       headers: [],
     });
     const data = renderData(
@@ -953,6 +954,7 @@ describe("delete instance", () => {
     const myResource = new ResourceValue("My Resource", {
       url: expression`""`,
       method: "get",
+      searchParams: [],
       headers: [],
     });
     const data = renderData(
