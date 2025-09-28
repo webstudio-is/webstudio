@@ -1,4 +1,4 @@
-import * as db from "../db";
+import * as projectApi from "../db/project";
 import { z } from "zod";
 import {
   router,
@@ -18,14 +18,16 @@ export const projectRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.rename(input, ctx);
+      return await projectApi.rename(input, ctx);
     }),
+
   delete: procedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.markAsDeleted(input.projectId, ctx);
+      return await projectApi.markAsDeleted(input.projectId, ctx);
     }),
+
   clone: procedure
     .input(
       z.object({
@@ -38,14 +40,15 @@ export const projectRouter = router({
       const sourceContext = input.authToken
         ? await ctx.createTokenContext(input.authToken)
         : ctx;
-
-      return await db.project.clone(input, ctx, sourceContext);
+      return await projectApi.clone(input, ctx, sourceContext);
     }),
+
   create: procedure
     .input(z.object({ title: Title }))
     .mutation(async ({ input, ctx }) => {
-      return await db.project.create(input, ctx);
+      return await projectApi.create(input, ctx);
     }),
+
   setMarketplaceApprovalStatus: procedure
     .input(
       z.object({
@@ -54,18 +57,28 @@ export const projectRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.project.setMarketplaceApprovalStatus(input, ctx);
+      return await projectApi.setMarketplaceApprovalStatus(input, ctx);
     }),
+
+  updateTags: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        tags: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      await projectApi.updateProjectTags(input, ctx);
+    }),
+
   findCurrentUserProjectIds: procedure.query(async ({ ctx }) => {
     if (ctx.authorization.type !== "user") {
       return [];
     }
-
-    const projectIds = await db.project.findProjectIdsByUserId(
+    const projectIds = await projectApi.findProjectIdsByUserId(
       ctx.authorization.userId,
       ctx
     );
-
     return projectIds.map((project) => project.id);
   }),
 

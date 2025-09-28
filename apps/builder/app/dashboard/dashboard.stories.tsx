@@ -49,6 +49,7 @@ const projects = [
     previewImageAssetId: "",
     latestBuildVirtual: null,
     marketplaceApprovalStatus: "UNLISTED" as const,
+    tags: [],
   } as DashboardProject,
 ];
 
@@ -58,6 +59,7 @@ const data = {
   userPlanFeatures,
   publisherHost: "https://wstd.work",
   projects,
+  tags: [],
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {
