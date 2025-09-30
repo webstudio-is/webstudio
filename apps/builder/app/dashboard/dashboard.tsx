@@ -10,7 +10,7 @@ import {
   globalCss,
   theme,
 } from "@webstudio-is/design-system";
-import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
+import { AiIcon, BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -202,6 +202,12 @@ export const Dashboard = () => {
                           prefix: <ExtensionIcon />,
                           children: "Welcome",
                         },
+                        {
+                          to: "https://webstudio.is/inception",
+                          target: "_blank",
+                          prefix: <AiIcon />,
+                          children: "Inception (Beta)",
+                        },
                       ]
                     : [
                         {
@@ -213,6 +219,12 @@ export const Dashboard = () => {
                           to: dashboardPath("templates"),
                           prefix: <ExtensionIcon />,
                           children: "Starter templates",
+                        },
+                        {
+                          to: "https://webstudio.is/inception",
+                          target: "_blank",
+                          prefix: <AiIcon />,
+                          children: "Inception (Beta)",
                         },
                       ]
                 }
