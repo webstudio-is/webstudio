@@ -203,7 +203,7 @@ export const Dashboard = () => {
                           children: "Welcome",
                         },
                         {
-                          to: "https://webstudio.is/inception",
+                          to: "https://wstd.us/inception",
                           target: "_blank",
                           prefix: <AiIcon />,
                           children: "Inception (Beta)",
@@ -221,7 +221,7 @@ export const Dashboard = () => {
                           children: "Starter templates",
                         },
                         {
-                          to: "https://webstudio.is/inception",
+                          to: "https://wstd.us/inception",
                           target: "_blank",
                           prefix: <AiIcon />,
                           children: "Inception (Beta)",
