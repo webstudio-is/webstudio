@@ -9,8 +9,10 @@ import {
   css,
   globalCss,
   theme,
+  PanelBanner,
+  Link,
 } from "@webstudio-is/design-system";
-import { AiIcon, BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
+import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -202,12 +204,6 @@ export const Dashboard = () => {
                           prefix: <ExtensionIcon />,
                           children: "Welcome",
                         },
-                        {
-                          to: "https://wstd.us/inception",
-                          target: "_blank",
-                          prefix: <AiIcon />,
-                          children: "Inception (Beta)",
-                        },
                       ]
                     : [
                         {
@@ -219,12 +215,6 @@ export const Dashboard = () => {
                           to: dashboardPath("templates"),
                           prefix: <ExtensionIcon />,
                           children: "Starter templates",
-                        },
-                        {
-                          to: "https://wstd.us/inception",
-                          target: "_blank",
-                          prefix: <AiIcon />,
-                          children: "Inception (Beta)",
                         },
                       ]
                 }
@@ -241,6 +231,16 @@ export const Dashboard = () => {
               />
             </CollapsibleSection>
           </nav>
+          <PanelBanner>
+            <Text variant="titles">Inception is live</Text>
+            <Text color="subtle">
+              An AI-powered design tool to explore ideas and instantly generate
+              HTML/CSS for Webstudio Builder or any other platform.
+            </Text>
+            <Link href="https://wstd.us/inception">
+              Get started with Inception
+            </Link>
+          </PanelBanner>
         </Flex>
         {view === "projects" && (
           <Projects
