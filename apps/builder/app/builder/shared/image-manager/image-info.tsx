@@ -14,6 +14,7 @@ import {
   DialogTrigger,
   Flex,
   Grid,
+  IconButton,
   InputErrorsTooltip,
   InputField,
   Label,
@@ -32,6 +33,7 @@ import {
   AspectRatioIcon,
   CloudIcon,
   DimensionsIcon,
+  DownloadIcon,
   GearIcon,
   InfoCircleIcon,
   PageIcon,
@@ -48,6 +50,7 @@ import {
   $props,
   $styles,
   $styleSourceSelections,
+  $userPlanFeatures,
 } from "~/shared/nano-states";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
@@ -58,7 +61,7 @@ import {
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { deleteAssets, $usagesByAssetId, type AssetUsage } from "../assets";
 import { $activeInspectorPanel, setActiveSidebarPanel } from "../nano-states";
-import { parseAssetName } from "../assets/asset-utils";
+import { formatAssetName, parseAssetName } from "../assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 
 const buttonLinkClass = css({
@@ -257,6 +260,7 @@ const ImageInfoContent = ({
   asset: Asset;
   usages: AssetUsage[];
 }) => {
+  const { hasProPlan } = useStore($userPlanFeatures);
   const { size, meta, id, name } = asset;
   const { basename, ext } = parseAssetName(name);
   const [filenameError, setFilenameError] = useState<string>();
@@ -302,6 +306,14 @@ const ImageInfoContent = ({
   );
 
   const authPermit = useStore($authPermit);
+
+  let downloadError: undefined | string;
+  if (authPermit === "view") {
+    downloadError =
+      "Unavailable in View mode. Switch to Edit to download assets.";
+  } else if (!hasProPlan) {
+    downloadError = "Upgrade to Pro to download assets.";
+  }
 
   return (
     <>
@@ -392,7 +404,7 @@ const ImageInfoContent = ({
         />
       </Grid>
 
-      <Box css={{ padding: theme.panel.padding }}>
+      <Flex justify="between" css={{ padding: theme.panel.padding }}>
         {authPermit === "view" ? (
           <Tooltip side="bottom" content="View mode. You can't delete assets.">
             <Button disabled color="destructive" prefix={<TrashIcon />}>
@@ -436,7 +448,25 @@ const ImageInfoContent = ({
             </DialogContent>
           </Dialog>
         )}
-      </Box>
+
+        {downloadError ? (
+          <Tooltip side="bottom" content={downloadError}>
+            <IconButton disabled>
+              <DownloadIcon />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Tooltip side="bottom" content="Download asset">
+            <IconButton
+              as="a"
+              download={formatAssetName(asset)}
+              href={`/cgi/image/${asset.name}?format=raw`}
+            >
+              <DownloadIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Flex>
     </>
   );
 };
