@@ -24,7 +24,13 @@ const extractSrcProps = (
       imageComponentsSet.has(prop.instanceId)
     ) {
       try {
-        srcProps.push([prop.id, new URL(prop.value).href]);
+        const url = new URL(prop.value);
+        // upload raw images from inception
+        if (url.hostname === "preview.webstudio.ai") {
+          url.search = "";
+          url.searchParams.set("format", "raw");
+        }
+        srcProps.push([prop.id, url.href]);
       } catch {
         // ignore when invalid url
       }
