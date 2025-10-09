@@ -157,7 +157,7 @@ describe("lint expression", () => {
     ).toEqual([
       error(1, 13, "Functions are not supported"),
       error(17, 25, "Functions are not supported"),
-      error(29, 33, "Functions are not supported"),
+      error(29, 33, `"fn" function is not supported`),
     ]);
   });
 
@@ -219,6 +219,71 @@ describe("lint expression", () => {
     expect(lintExpression({ expression: ` await 1` })).toEqual([
       error(1, 8, `"await" keyword is not supported`),
     ]);
+  });
+
+  test.each([
+    "toLowerCase",
+    "replace",
+    "split",
+    "at",
+    "endsWith",
+    "includes",
+    "startsWith",
+    "toUpperCase",
+    "toLocaleLowerCase",
+    "toLocaleUpperCase",
+  ])("allow safe string method: %s", (method) => {
+    expect(
+      lintExpression({
+        expression: `title.${method}()`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test.each(["at", "includes", "join", "slice"])(
+    "allow safe array method: %s",
+    (method) => {
+      expect(
+        lintExpression({
+          expression: `arr.${method}()`,
+          availableVariables: new Set(["arr"]),
+        })
+      ).toEqual([]);
+    }
+  );
+
+  test("allow chained string methods", () => {
+    expect(
+      lintExpression({
+        expression: `title.toLowerCase().replace(" ", "-").split("-")`,
+        availableVariables: new Set(["title"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid unsafe method calls", () => {
+    expect(
+      lintExpression({
+        expression: `arr.pop()`,
+        availableVariables: new Set(["arr"]),
+      })
+    ).toEqual([error(0, 9, `"pop" function is not supported`)]);
+    expect(
+      lintExpression({
+        expression: `obj.push(1)`,
+        availableVariables: new Set(["obj"]),
+      })
+    ).toEqual([error(0, 11, `"push" function is not supported`)]);
+  });
+
+  test("forbid standalone function calls", () => {
+    expect(
+      lintExpression({
+        expression: `func()`,
+        availableVariables: new Set(["func"]),
+      })
+    ).toEqual([error(0, 6, `"func" function is not supported`)]);
   });
 });
 
@@ -345,6 +410,81 @@ describe("transpile expression", () => {
       errorString = (error as Error).message;
     }
     expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
+  });
+
+  test("transpile string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase()",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase?.()");
+    expect(
+      transpileExpression({
+        expression: "user.name.replace(' ', '-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.replace?.(' ', '-')");
+    expect(
+      transpileExpression({
+        expression: "data.title.split('-')",
+        executable: true,
+      })
+    ).toEqual("data?.title?.split?.('-')");
+  });
+
+  test("transpile chained string methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "title.toLowerCase().replace(/\\s+/g, '-')",
+        executable: true,
+      })
+    ).toEqual("title?.toLowerCase?.()?.replace?.(/\\s+/g, '-')");
+    expect(
+      transpileExpression({
+        expression: "user.name.toLowerCase().replace(' ', '-').split('-')",
+        executable: true,
+      })
+    ).toEqual("user?.name?.toLowerCase?.()?.replace?.(' ', '-')?.split?.('-')");
+  });
+
+  test("transpile array methods with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "items.map(item => item.id)",
+        executable: true,
+      })
+    ).toEqual("items?.map?.(item => item?.id)");
+    expect(
+      transpileExpression({
+        expression: "data.list.filter(x => x > 0)",
+        executable: true,
+      })
+    ).toEqual("data?.list?.filter?.(x => x > 0)");
+  });
+
+  test("transpile nested method calls with optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj.method().prop.anotherMethod()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()?.prop?.anotherMethod?.()");
+  });
+
+  test("preserve existing optional chaining", () => {
+    expect(
+      transpileExpression({
+        expression: "obj?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.method?.()");
+    expect(
+      transpileExpression({
+        expression: "obj?.prop?.method?.()",
+        executable: true,
+      })
+    ).toEqual("obj?.prop?.method?.()");
   });
 });
 
