@@ -4,7 +4,7 @@ import {
   type TypedResponse,
 } from "@remix-run/server-runtime";
 import type { Data } from "@webstudio-is/http-client";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
 import { getUserById, type User } from "~/shared/db/user.server";
@@ -46,7 +46,7 @@ export const loader = async ({
 
     const pagesCanvasData = await loadProductionCanvasData(buildId, context);
 
-    const project = await projectDb.project.loadById(
+    const project = await projectApi.loadById(
       pagesCanvasData.build.projectId,
       context
     );

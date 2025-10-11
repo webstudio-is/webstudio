@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useRevalidator } from "react-router-dom";
+import { useEffect, useId, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,10 +15,23 @@ import {
   rawTheme,
   Link,
   Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Button,
+  DialogActions,
+  DialogClose,
+  Checkbox,
+  CheckboxAndLabel,
+  Label,
+  InputField,
+  DialogTitleActions,
+  Grid,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
+import { nativeClient } from "~/shared/trpc/trpc-client";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
@@ -30,6 +44,128 @@ import {
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
+
+const TagsDialogContent = ({
+  projectId,
+  availableTags,
+  projectTags,
+  onOpenChange,
+}: {
+  projectId: string;
+  availableTags: string[];
+  projectTags: string[];
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
+  const revalidator = useRevalidator();
+  const tagId = useId();
+  const [tags, setTags] = useState(availableTags);
+  return (
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const newTags = formData
+          .getAll("tag")
+          .map((item) => String(item).trim())
+          .filter((item) => item);
+        await nativeClient.project.updateTags.mutate({
+          projectId,
+          tags: newTags,
+        });
+        revalidator.revalidate();
+        onOpenChange(false);
+      }}
+    >
+      <DialogTitle
+        suffix={
+          <DialogTitleActions>
+            <Button
+              type="button"
+              aria-label="Add tag"
+              prefix={<PlusIcon />}
+              color="ghost"
+              onClick={(event) => {
+                event.preventDefault();
+                setTags((tags) => {
+                  let newTag = "New tag";
+                  let number = 1;
+                  while (tags.includes(newTag)) {
+                    number += 1;
+                    newTag = `New tag ${number}`;
+                  }
+                  return [...tags, newTag];
+                });
+              }}
+            />
+            <DialogClose />
+          </DialogTitleActions>
+        }
+      >
+        Project tags
+      </DialogTitle>
+      <Grid gap={1} css={{ padding: theme.panel.padding }}>
+        {tags.map((tag, index) =>
+          availableTags.includes(tag) ? (
+            <CheckboxAndLabel key={tag}>
+              <Checkbox
+                id={tagId + index}
+                name="tag"
+                value={tag}
+                defaultChecked={projectTags.includes(tag)}
+              />
+              <Label htmlFor={tagId + index}>{tag}</Label>
+            </CheckboxAndLabel>
+          ) : (
+            <InputField
+              key={tag}
+              name="tag"
+              autoFocus
+              placeholder="New tag"
+              defaultValue={tag}
+              autoComplete="off"
+            />
+          )
+        )}
+        {tags.length === 0 && <Text align="center">No tags found</Text>}
+      </Grid>
+      <DialogActions>
+        <Button type="submit">Update</Button>
+        <DialogClose>
+          <Button color="ghost" type="button">
+            Cancel
+          </Button>
+        </DialogClose>
+      </DialogActions>
+    </form>
+  );
+};
+
+const TagsDialog = ({
+  projectId,
+  availableTags,
+  projectTags,
+  isOpen,
+  onOpenChange,
+}: {
+  projectId: string;
+  availableTags: string[];
+  projectTags: string[];
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent aria-describedby={undefined}>
+        <TagsDialogContent
+          projectId={projectId}
+          availableTags={availableTags}
+          projectTags={projectTags}
+          onOpenChange={onOpenChange}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -64,12 +200,14 @@ const Menu = ({
   onRename,
   onDuplicate,
   onShare,
+  onUpdateTags,
 }: {
   tabIndex: number;
   onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
   onShare: () => void;
+  onUpdateTags: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -87,6 +225,7 @@ const Menu = ({
         <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
         <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onUpdateTags}>Tags</DropdownMenuItem>
         <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -105,6 +244,7 @@ type ProjectCardProps = {
   project: DashboardProject;
   hasProPlan: boolean;
   publisherHost: string;
+  tags: string[];
 };
 
 export const ProjectCard = ({
@@ -116,6 +256,7 @@ export const ProjectCard = ({
     createdAt,
     latestBuildVirtual,
     previewImageAsset,
+    tags,
   },
   hasProPlan,
   publisherHost,
@@ -124,6 +265,7 @@ export const ProjectCard = ({
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -180,6 +322,20 @@ export const ProjectCard = ({
           <ThumbnailLinkWithAbbr title={title} to={linkPath} />
         )}
         {isTransitioning && <Spinner delay={0} />}
+        <Flex
+          wrap="wrap"
+          gap={1}
+          css={{
+            position: "absolute",
+            inset: 0,
+            padding: theme.panel.padding,
+            alignContent: "start",
+          }}
+        >
+          {tags?.map((tag) => (
+            <div key={tag}>{tag}</div>
+          ))}
+        </Flex>
       </CardContent>
       <CardFooter>
         <Flex direction="column" justify="around" grow>
@@ -225,16 +381,11 @@ export const ProjectCard = ({
         </Flex>
         <Menu
           tabIndex={-1}
-          onDelete={() => {
-            setIsDeleteDialogOpen(true);
-          }}
-          onRename={() => {
-            setIsRenameDialogOpen(true);
-          }}
-          onShare={() => {
-            setIsShareDialogOpen(true);
-          }}
+          onDelete={() => setIsDeleteDialogOpen(true)}
+          onRename={() => setIsRenameDialogOpen(true)}
+          onShare={() => setIsShareDialogOpen(true)}
           onDuplicate={handleCloneProject}
+          onUpdateTags={() => setIsTagsDialogOpen(true)}
         />
       </CardFooter>
       <RenameProjectDialog
@@ -255,6 +406,13 @@ export const ProjectCard = ({
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
         hasProPlan={hasProPlan}
+      />
+      <TagsDialog
+        projectId={id}
+        availableTags={props.tags}
+        projectTags={tags ?? []}
+        isOpen={isTagsDialogOpen}
+        onOpenChange={setIsTagsDialogOpen}
       />
     </Card>
   );
