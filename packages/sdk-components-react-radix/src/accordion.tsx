@@ -7,7 +7,6 @@ import {
   useState,
   useEffect,
   createElement,
-  type ElementRef,
 } from "react";
 import {
   Root,
@@ -58,7 +57,19 @@ type Props = ComponentPropsWithoutRef<typeof Header> & { tag?: Tag };
 export const AccordionHeader = forwardRef<HTMLHeadingElement, Props>(
   ({ tag: legacyTag, ...props }, ref) => {
     const tag = getTagFromProps(props) ?? legacyTag ?? defaultTag;
-    return <Header asChild>{createElement(tag, { ...props, ref })}</Header>;
+    return (
+      <Header asChild>
+        {createElement(tag, {
+          ...props,
+          ref,
+          style: {
+            ...(props.style || {}),
+            marginTop: 0,
+            marginBottom: 0,
+          },
+        })}
+      </Header>
+    );
   }
 );
 
