@@ -9,7 +9,13 @@ import {
   createElement,
   type ElementRef,
 } from "react";
-import { Root, Item, Trigger, Content } from "@radix-ui/react-accordion";
+import {
+  Root,
+  Item,
+  Header,
+  Trigger,
+  Content,
+} from "@radix-ui/react-accordion";
 import {
   getIndexWithinAncestorFromProps,
   getTagFromProps,
@@ -47,11 +53,12 @@ export const AccordionItem = forwardRef<
 });
 
 const defaultTag = "h3";
-type Props = ComponentProps<typeof defaultTag> & { tag?: string };
-export const AccordionHeader = forwardRef<ElementRef<typeof defaultTag>, Props>(
+type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+type Props = ComponentPropsWithoutRef<typeof Header> & { tag?: Tag };
+export const AccordionHeader = forwardRef<HTMLHeadingElement, Props>(
   ({ tag: legacyTag, ...props }, ref) => {
     const tag = getTagFromProps(props) ?? legacyTag ?? defaultTag;
-    return createElement(tag, { ...props, ref });
+    return <Header asChild>{createElement(tag, { ...props, ref })}</Header>;
   }
 );
 
