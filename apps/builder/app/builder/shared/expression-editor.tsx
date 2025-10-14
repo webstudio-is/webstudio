@@ -258,11 +258,8 @@ const scopeCompletionSource: CompletionSource = (context) => {
     const isString = typeof target === "string";
     const isArray = Array.isArray(target);
 
-    // Add string methods if target is a string or we can't determine the type
-    if (
-      isString ||
-      (!isArray && typeof target !== "number" && typeof target !== "boolean")
-    ) {
+    // Add string methods only if target is a string
+    if (isString) {
       for (const method of allowedStringMethods) {
         if (method.toLowerCase().includes(path.name.toLowerCase())) {
           methodOptions.push({
