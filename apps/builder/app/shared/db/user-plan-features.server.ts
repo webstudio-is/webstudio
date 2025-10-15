@@ -85,7 +85,7 @@ export const getUserPlanFeatures = async (
     allowShareAdminLinks: false,
     allowDynamicData: false,
     maxContactEmails: 0,
-    maxDomainsAllowedPerUser: 1,
+    maxDomainsAllowedPerUser: 0,
     maxPublishesAllowedPerUser: 10,
     hasSubscription: false,
     hasProPlan: false,

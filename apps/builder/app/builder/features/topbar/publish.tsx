@@ -55,7 +55,6 @@ import {
   $instances,
   $pages,
   $project,
-  $propsIndex,
   $publishedOrigin,
   $userPlanFeatures,
 } from "~/shared/nano-states";
@@ -78,7 +77,6 @@ import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
 import { trpcClient, nativeClient } from "~/shared/trpc/trpc-client";
 import {
-  findTreeInstanceIds,
   isPathnamePattern,
   parseComponentName,
   type Templates,
@@ -87,10 +85,6 @@ import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
-import { showAttribute } from "@webstudio-is/react-sdk";
-import { type CssProperty } from "@webstudio-is/css-engine";
-import { getComputedStyleDecl } from "~/shared/style-object-model";
-import { $styleObjectModel } from "../style-panel/shared/model";
 import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
@@ -243,8 +237,8 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances, $propsIndex, $styleObjectModel],
-  (pages, dataSources, instances, propsIndex, styleObjectModel) => {
+  [$pages, $dataSources, $instances],
+  (pages, dataSources, instances) => {
     const features = new Map<
       string,
       | undefined
@@ -291,90 +285,9 @@ const $usedProFeatures = computed(
       }
     }
 
-    const badgeFeature = 'No "Built with Webstudio" badge';
-    // Badge should be rendered on free sites on every page.
-    features.set(badgeFeature, {
-      info: (
-        <Text>
-          Adding the badge to your "home" page helps us offer a free version of
-          the service. Please open the Components panel by clicking the “+” icon
-          on the left, and add the “Built with Webstudio” component to your
-          page.
-          <br />
-          - Feel free to adjust the badge's style to match your design - after
-          all, it's just a link, and you can place it wherever you like.
-          <br />
-          - Please don’t add that badge to every page, because search engines
-          will view it negatively.
-          <br />- Hiding the link in any way is considered a violation of the
-          terms.
-        </Text>
-      ),
-    });
-    // We want to check the badge only on the home page
-    const homePageInstanceIds = findTreeInstanceIds(
-      instances,
-      pages.homePage.rootInstanceId
-    );
-    for (const instanceId of homePageInstanceIds) {
-      const instance = instances.get(instanceId);
-      // Find a potential link that looks like a badge.
-      if (instance?.tag === "a") {
-        const props = propsIndex.propsByInstanceId.get(instance.id);
-        let hasWsHref = false;
-        let highTrust = true;
-        let show = true;
-
-        for (const prop of props ?? []) {
-          if (
-            prop.name === "href" &&
-            prop.type === "string" &&
-            prop.value.includes("https://webstudio.is")
-          ) {
-            hasWsHref = true;
-          }
-          if (prop.name === "rel" && prop.type === "string") {
-            if (
-              prop.value.includes("nofollow") ||
-              prop.value.includes("ugc") ||
-              prop.value.includes("sponsored")
-            ) {
-              highTrust = false;
-            }
-          }
-          if (prop.name === showAttribute) {
-            show = prop.type === "boolean" && prop.value;
-          }
-        }
-
-        const getValue = (property: CssProperty) => {
-          const value = getComputedStyleDecl({
-            model: styleObjectModel,
-            instanceSelector: [instance.id],
-            property,
-          }).usedValue;
-          return "value" in value ? value.value : undefined;
-        };
-
-        // Check styles.
-        if (
-          getValue("display") === "none" ||
-          getValue("visibility") === "hidden" ||
-          getValue("opacity") === 0 ||
-          getValue("width") === 0 ||
-          getValue("height") === 0
-        ) {
-          show = false;
-        }
-
-        // @todo check all parents
-        if (hasWsHref && highTrust && show) {
-          features.delete(badgeFeature);
-          break;
-        }
-      }
-    }
-    return features;
+    // temporary ignore features checks
+    // return features;
+    return new Map() as typeof features;
   }
 );
 
@@ -792,7 +705,7 @@ const buttonLinkClass = css({
 
 const UpgradeBanner = () => {
   const usedProFeatures = useStore($usedProFeatures);
-  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { canAddDomain } = useCanAddDomain();
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
 
@@ -875,24 +788,22 @@ const UpgradeBanner = () => {
   if (canAddDomain === false) {
     return (
       <PanelBanner>
-        <Text variant="regularBold">Free domains limit reached</Text>
         <Text variant="regular">
-          You have reached the limit of {maxDomainsAllowedPerUser} custom
-          domains on your account.{" "}
           <Text variant="regularBold" inline>
             Upgrade to a Pro account
           </Text>{" "}
           to add unlimited domains and publish to each domain individually.
         </Text>
-        <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
-          underline="none"
-          href="https://webstudio.is/pricing"
-          target="_blank"
-        >
-          Upgrade
-        </Link>
+        <Flex align="center" gap={1}>
+          <UpgradeIcon />
+          <Link
+            color="inherit"
+            target="_blank"
+            href="https://webstudio.is/pricing"
+          >
+            Upgrade to Pro
+          </Link>
+        </Flex>
       </PanelBanner>
     );
   }
