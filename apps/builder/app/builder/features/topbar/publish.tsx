@@ -374,7 +374,9 @@ const $usedProFeatures = computed(
         }
       }
     }
-    return features;
+    // temporary ignore features checks
+    // return features;
+    return new Map() as typeof features;
   }
 );
 
@@ -792,7 +794,7 @@ const buttonLinkClass = css({
 
 const UpgradeBanner = () => {
   const usedProFeatures = useStore($usedProFeatures);
-  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+  const { canAddDomain } = useCanAddDomain();
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
 
@@ -875,24 +877,22 @@ const UpgradeBanner = () => {
   if (canAddDomain === false) {
     return (
       <PanelBanner>
-        <Text variant="regularBold">Free domains limit reached</Text>
         <Text variant="regular">
-          You have reached the limit of {maxDomainsAllowedPerUser} custom
-          domains on your account.{" "}
           <Text variant="regularBold" inline>
             Upgrade to a Pro account
           </Text>{" "}
           to add unlimited domains and publish to each domain individually.
         </Text>
-        <Link
-          className={buttonStyle({ color: "gradient" })}
-          color="contrast"
-          underline="none"
-          href="https://webstudio.is/pricing"
-          target="_blank"
-        >
-          Upgrade
-        </Link>
+        <Flex align="center" gap={1}>
+          <UpgradeIcon />
+          <Link
+            color="inherit"
+            target="_blank"
+            href="https://webstudio.is/pricing"
+          >
+            Upgrade to Pro
+          </Link>
+        </Flex>
       </PanelBanner>
     );
   }
