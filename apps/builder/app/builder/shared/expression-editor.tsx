@@ -27,7 +27,12 @@ import {
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
 import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
-import { decodeDataVariableId, lintExpression } from "@webstudio-is/sdk";
+import {
+  decodeDataVariableId,
+  lintExpression,
+  allowedStringMethods,
+  allowedArrayMethods,
+} from "@webstudio-is/sdk";
 import {
   EditorContent,
   EditorDialog,
@@ -244,6 +249,56 @@ const scopeCompletionSource: CompletionSource = (context) => {
       },
     });
   }
+
+  // Add safe string and array method completions
+  if (path.path.length > 0) {
+    const methodOptions: Completion[] = [];
+
+    // Determine if target is likely a string or array based on its value
+    const isString = typeof target === "string";
+    const isArray = Array.isArray(target);
+
+    // Add string methods only if target is a string
+    if (isString) {
+      for (const method of allowedStringMethods) {
+        if (method.toLowerCase().includes(path.name.toLowerCase())) {
+          methodOptions.push({
+            label: `${method}()`,
+            detail: "string method",
+            type: "method",
+            apply: (view, completion, from, to) => {
+              view.dispatch({
+                ...insertCompletionText(view.state, `${method}()`, from, to),
+                annotations: pickedCompletion.of(completion),
+              });
+            },
+          });
+        }
+      }
+    }
+
+    // Add array methods if target is an array
+    if (isArray) {
+      for (const method of allowedArrayMethods) {
+        if (method.toLowerCase().includes(path.name.toLowerCase())) {
+          methodOptions.push({
+            label: `${method}()`,
+            detail: "array method",
+            type: "method",
+            apply: (view, completion, from, to) => {
+              view.dispatch({
+                ...insertCompletionText(view.state, `${method}()`, from, to),
+                annotations: pickedCompletion.of(completion),
+              });
+            },
+          });
+        }
+      }
+    }
+
+    options = [...options, ...methodOptions];
+  }
+
   return {
     from: context.pos - path.name.length,
     filter: false,

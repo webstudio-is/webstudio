@@ -29,7 +29,7 @@ type ExpressionVisitor = {
   [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
 };
 
-const allowedStringMethods = new Set([
+export const allowedStringMethods = new Set([
   "toLowerCase",
   "replace",
   "split",
@@ -42,7 +42,7 @@ const allowedStringMethods = new Set([
   "toLocaleUpperCase",
 ]);
 
-const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
 
 export const lintExpression = ({
   expression,
