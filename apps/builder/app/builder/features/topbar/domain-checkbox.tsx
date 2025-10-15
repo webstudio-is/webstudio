@@ -55,9 +55,6 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     </Flex>
   );
 
-  const defaultChecked = hasProPlan ? props.defaultChecked : true;
-  const disabled = hasProPlan ? props.disabled : true;
-
   const hideDomainCheckbox =
     project.domainsVirtual.filter(
       (domain) => domain.status === "ACTIVE" && domain.verified
@@ -67,9 +64,9 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     <div style={{ display: hideDomainCheckbox ? "none" : "contents" }}>
       <Tooltip content={tooltipContentForFreeUsers} variant="wrapped">
         <Checkbox
-          disabled={disabled}
+          disabled={props.disabled}
           key={props.buildId ?? "-"}
-          defaultChecked={hideDomainCheckbox || defaultChecked}
+          defaultChecked={hideDomainCheckbox || props.defaultChecked}
           css={{ pointerEvents: "all" }}
           name={domainToPublishName}
           value={props.domain}

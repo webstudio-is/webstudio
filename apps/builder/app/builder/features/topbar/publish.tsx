@@ -100,6 +100,7 @@ const ChangeProjectDomain = ({
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
   const selectedPagePath = useStore($selectedPagePath);
+  const { hasProPlan } = useStore($userPlanFeatures);
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -150,6 +151,7 @@ const ChangeProjectDomain = ({
       prefix={
         <DomainCheckbox
           defaultChecked={project.latestBuildVirtual?.domain === domain}
+          disabled={!hasProPlan}
           buildId={project.latestBuildVirtual?.buildId}
           domain={domain}
         />
@@ -354,12 +356,7 @@ const Publish = ({
       ? formData
           .getAll(domainToPublishName)
           .map((domainEntry) => domainEntry.toString())
-      : [
-          project.domain,
-          ...project.domainsVirtual
-            .filter((domain) => domain.verified && domain.status === "ACTIVE")
-            .map((domain) => domain.domain),
-        ];
+      : [project.domain];
 
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");

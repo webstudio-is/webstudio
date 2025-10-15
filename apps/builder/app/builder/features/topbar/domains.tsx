@@ -32,7 +32,7 @@ import {
 import { Entri } from "./entri";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
-import { $publisherHost } from "~/shared/nano-states";
+import { $publisherHost, $userPlanFeatures } from "~/shared/nano-states";
 import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
@@ -177,6 +177,7 @@ const DomainItem = ({
   project: Project;
   refresh: () => Promise<void>;
 }) => {
+  const { hasProPlan } = useStore($userPlanFeatures);
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
 
@@ -311,10 +312,11 @@ const DomainItem = ({
           defaultChecked={
             projectDomain.latestBuildVirtual?.buildId != null &&
             projectDomain.latestBuildVirtual?.buildId ===
-              project.latestBuildVirtual?.buildId
+              project.latestBuildVirtual?.buildId &&
+            hasProPlan
           }
           domain={projectDomain.domain}
-          disabled={domainStatus !== "VERIFIED_ACTIVE"}
+          disabled={domainStatus !== "VERIFIED_ACTIVE" || !hasProPlan}
         />
       }
       initiallyOpen={initiallyOpen}
