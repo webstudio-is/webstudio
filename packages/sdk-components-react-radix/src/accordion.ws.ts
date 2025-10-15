@@ -61,12 +61,72 @@ export const metaAccordionHeader: WsComponentMeta = {
     descendants: [radix.AccordionTrigger],
   },
   presetStyle: {
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
+    h1: [
+      ...h1,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h2: [
+      ...h2,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h3: [
+      ...h3,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h4: [
+      ...h4,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h5: [
+      ...h5,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h6: [
+      ...h6,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
   },
   initialProps: ["tag"],
   props: {

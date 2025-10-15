@@ -6,7 +6,6 @@ import {
   type RefAttributes,
   useState,
   useEffect,
-  createElement,
 } from "react";
 import {
   Root,
@@ -53,21 +52,13 @@ export const AccordionItem = forwardRef<
 
 const defaultTag = "h3";
 type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-type Props = ComponentPropsWithoutRef<typeof Header> & { tag?: Tag };
+type Props = ComponentProps<typeof Header> & { tag?: Tag };
 export const AccordionHeader = forwardRef<HTMLHeadingElement, Props>(
   ({ tag: legacyTag, ...props }, ref) => {
-    const tag = getTagFromProps(props) ?? legacyTag ?? defaultTag;
+    const Heading = getTagFromProps(props) ?? legacyTag ?? defaultTag;
     return (
       <Header asChild>
-        {createElement(tag, {
-          ...props,
-          ref,
-          style: {
-            ...(props.style || {}),
-            marginTop: 0,
-            marginBottom: 0,
-          },
-        })}
+        <Heading ref={ref} {...props} />
       </Header>
     );
   }
