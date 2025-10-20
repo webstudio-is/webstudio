@@ -33,6 +33,7 @@ export const allowedStringMethods = new Set([
   "toLowerCase",
   "replace",
   "split",
+  "slice",
   "at",
   "endsWith",
   "includes",
