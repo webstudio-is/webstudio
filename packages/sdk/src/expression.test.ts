@@ -226,6 +226,7 @@ describe("lint expression", () => {
     "replace",
     "split",
     "at",
+    "slice",
     "endsWith",
     "includes",
     "startsWith",
