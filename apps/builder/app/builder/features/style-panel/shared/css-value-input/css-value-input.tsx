@@ -335,7 +335,9 @@ const itemToString = (item: CssValueInputValue | null) => {
     return "";
   }
   if (item.type === "var") {
-    return `var(--${item.value})`;
+    return item.fallback
+      ? `var(--${item.value}, ${toValue(item.fallback)})`
+      : `var(--${item.value})`;
   }
   if (item.type === "keyword") {
     // E.g. we want currentcolor to be lower case
