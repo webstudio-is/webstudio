@@ -123,7 +123,7 @@ export const Section = () => {
                   setIsOpen(true);
                   addRepeatedStyleItem(
                     styles,
-                    parseCssFragment("opacity 200ms ease 0ms normal", [
+                    parseCssFragment("all 200ms ease 0ms normal", [
                       "transition",
                     ])
                   );
