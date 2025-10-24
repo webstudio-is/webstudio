@@ -50,12 +50,11 @@ export const AccordionItem = forwardRef<
   return <Item ref={ref} value={value ?? index ?? ""} {...props} />;
 });
 
-const defaultTag = "h3";
-type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-type Props = ComponentProps<typeof Header> & { tag?: Tag };
+const defaultTag = "h1";
+type Props = ComponentProps<typeof Header>;
 export const AccordionHeader = forwardRef<HTMLHeadingElement, Props>(
-  ({ tag: legacyTag, ...props }, ref) => {
-    const Heading = getTagFromProps(props) ?? legacyTag ?? defaultTag;
+  ({ ...props }, ref) => {
+    const Heading = getTagFromProps(props) ?? defaultTag;
     return (
       <Header asChild>
         <Heading ref={ref} {...props} />
