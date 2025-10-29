@@ -30,6 +30,7 @@ import {
   sitemapResourceUrl,
   currentDateResourceUrl,
   urlInfoResourceUrl,
+  browserInfoResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -1005,6 +1006,12 @@ export const SystemResourceForm = forwardRef<
       value: JSON.stringify(urlInfoResourceUrl),
       description:
         "Provides URL information including pathname, search params, and hash.",
+    },
+    {
+      label: "Browser Info",
+      value: JSON.stringify(browserInfoResourceUrl),
+      description:
+        "Provides browser information including user agent, preferred language, and referer.",
     },
   ];
 
