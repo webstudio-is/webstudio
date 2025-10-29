@@ -18,6 +18,8 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
 };
 
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
+export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
+export const urlInfoResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/url-info`;
 
 export const loadResource = async (
   customFetch: typeof fetch,
