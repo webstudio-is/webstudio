@@ -25,7 +25,13 @@ import {
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import { serializeValue, sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
+import {
+  serializeValue,
+  sitemapResourceUrl,
+  currentDateResourceUrl,
+  urlInfoResourceUrl,
+  browserInfoResourceUrl,
+} from "@webstudio-is/sdk/runtime";
 import {
   Box,
   Flex,
@@ -988,6 +994,24 @@ export const SystemResourceForm = forwardRef<
       label: "Sitemap",
       value: JSON.stringify(sitemapResourceUrl),
       description: "Resource that loads the sitemap data of the current site.",
+    },
+    {
+      label: "Current Date",
+      value: JSON.stringify(currentDateResourceUrl),
+      description:
+        "Provides current date/time information to prevent React hydration errors.",
+    },
+    {
+      label: "URL Info",
+      value: JSON.stringify(urlInfoResourceUrl),
+      description:
+        "Provides URL information including pathname, search params, and hash.",
+    },
+    {
+      label: "Browser Info",
+      value: JSON.stringify(browserInfoResourceUrl),
+      description:
+        "Provides browser information including user agent, preferred language, and referer.",
     },
   ];
 
