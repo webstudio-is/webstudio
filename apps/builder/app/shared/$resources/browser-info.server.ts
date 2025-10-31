@@ -39,7 +39,7 @@ export const loader = async ({ request }: { request: Request }) => {
     languages,
     acceptLanguage,
     referer: headers.get("Referer") || "",
-    // Note: Screen size, timezone, etc. are not available server-side
-    // These would need to be set client-side if needed
+    // Note: Referer reflects the initial page load and won't update on client-side navigation.
+    // Screen size, timezone, and other client-only data are not available server-side.
   });
 };
