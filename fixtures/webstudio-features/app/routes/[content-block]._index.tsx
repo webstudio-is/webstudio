@@ -70,6 +70,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     params,
     search: Object.fromEntries(url.searchParams),
     origin: url.origin,
+    pathname: url.pathname,
   };
 
   const resources = await loadResources(
@@ -203,6 +204,7 @@ export const action = async ({
       params: {},
       search: {},
       origin: url.origin,
+      pathname: url.pathname,
     };
 
     const resourceName = formData.get(formIdFieldName);

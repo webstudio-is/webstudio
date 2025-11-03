@@ -13,6 +13,13 @@ export const meta: WsComponentMeta = {
   presetStyle: {
     time,
   },
-  initialProps: ["datetime", "language", "country", "dateStyle", "timeStyle"],
+  initialProps: [
+    "datetime",
+    "language",
+    "country",
+    "dateStyle",
+    "timeStyle",
+    "format",
+  ],
   props,
 };

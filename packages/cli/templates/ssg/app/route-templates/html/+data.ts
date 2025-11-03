@@ -15,6 +15,7 @@ export const data = async (pageContext: PageContextServer) => {
     params,
     search: Object.fromEntries(url.searchParams),
     origin: url.origin,
+    pathname: url.pathname,
   };
 
   const resources = await loadResources(fetch, getResources({ system }).data);

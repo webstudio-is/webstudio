@@ -215,6 +215,13 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "medium",
     options: ["full", "long", "medium", "short", "none"],
   },
+  format: {
+    description:
+      'Custom format template string. When provided, overrides Date Style and Time Style.\nSupports tokens: YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s.\nExample: "YYYY-MM-DD HH:mm:ss" displays as "2025-11-03 18:47:25"',
+    required: false,
+    control: "text",
+    type: "string",
+  },
   language: {
     required: false,
     control: "select",
