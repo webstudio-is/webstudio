@@ -5,7 +5,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description: "Document base URL",
+    description: "Address of the hyperlink",
   },
   hreflang: {
     required: false,

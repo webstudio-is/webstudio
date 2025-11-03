@@ -345,11 +345,45 @@ const parseDate = (datetimeString: string) => {
   }
 };
 
+/**
+ * Format a date using a template string.
+ * Supports tokens: YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s
+ * Example: formatDate(new Date(), "YYYY-MM-DD HH:mm:ss") => "2025-11-03 18:47:25"
+ */
+const formatDate = (date: Date, template: string): string => {
+  const pad = (n: number, length = 2) => String(n).padStart(length, "0");
+
+  const tokens: Record<string, string | number> = {
+    YYYY: date.getFullYear(),
+    YY: String(date.getFullYear()).slice(-2),
+    MM: pad(date.getMonth() + 1),
+    M: date.getMonth() + 1,
+    DD: pad(date.getDate()),
+    D: date.getDate(),
+    HH: pad(date.getHours()),
+    H: date.getHours(),
+    mm: pad(date.getMinutes()),
+    m: date.getMinutes(),
+    ss: pad(date.getSeconds()),
+    s: date.getSeconds(),
+  };
+
+  return template.replace(/\b(YYYY|YY|MM|M|DD|D|HH|H|mm|m|ss|s)\b/g, (match) =>
+    String(tokens[match])
+  );
+};
+
 type TimeProps = Pick<ComponentProps<"time">, "dateTime"> & {
   language?: Language;
   country?: Country;
   dateStyle?: DateStyle;
   timeStyle?: TimeStyle;
+  /**
+   * Custom format template string. When provided, overrides Date Style and Time Style.
+   * Supports tokens: YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s.
+   * Example: "YYYY-MM-DD HH:mm:ss" displays as "2025-11-03 18:47:25"
+   */
+  format?: string;
 };
 
 export const Time = forwardRef<ElementRef<"time">, TimeProps>(
@@ -359,6 +393,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       country = DEFAULT_COUNTRY,
       dateStyle = DEFAULT_DATE_STYLE,
       timeStyle = DEFAULT_TIME_STYLE,
+      format,
       // native html attribute in react style
       dateTime = INITIAL_DATE_STRING,
       ...props
@@ -381,10 +416,20 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
     let formattedDate = datetimeString;
 
     if (date) {
-      try {
-        formattedDate = new Intl.DateTimeFormat(locale, options).format(date);
-      } catch {
-        /* Do Nothing */
+      // Use custom format template if provided
+      if (format) {
+        try {
+          formattedDate = formatDate(date, format);
+        } catch {
+          /* Do Nothing */
+        }
+      } else {
+        // Otherwise use Intl.DateTimeFormat
+        try {
+          formattedDate = new Intl.DateTimeFormat(locale, options).format(date);
+        } catch {
+          /* Do Nothing */
+        }
       }
     }
 
@@ -398,4 +443,5 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
 
 export const __testing__ = {
   parseDate,
+  formatDate,
 };

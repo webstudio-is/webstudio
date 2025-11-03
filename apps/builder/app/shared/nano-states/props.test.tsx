@@ -36,6 +36,7 @@ import { $resourcesCache, getResourceKey } from "../resources";
 const initialSystem = {
   origin: "https://undefined.wstd.work",
   params: {},
+  pathname: "/",
   search: {},
 };
 
@@ -917,6 +918,7 @@ test("provide page system variable value", () => {
       ?.get(systemId)
   ).toEqual({
     params: { slug: "my-post" },
+    pathname: "/",
     search: {},
     origin: "https://undefined.wstd.work",
   });
@@ -948,6 +950,7 @@ test("provide global system variable value", () => {
   });
   const updatedSystem = {
     params: { slug: "my-post" },
+    pathname: "/",
     search: {},
     origin: "https://undefined.wstd.work",
   };

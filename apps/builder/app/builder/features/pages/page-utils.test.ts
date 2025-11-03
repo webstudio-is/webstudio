@@ -37,6 +37,7 @@ registerContainers();
 const initialSystem = {
   origin: "https://undefined.wstd.work",
   params: {},
+  pathname: "/",
   search: {},
 };
 
@@ -586,6 +587,7 @@ test("page root scope should provide page system variable value", () => {
       $ws$dataSource$systemId: {
         origin: "https://undefined.wstd.work",
         params: {},
+        pathname: "/",
         search: {},
       },
     },
@@ -594,6 +596,7 @@ test("page root scope should provide page system variable value", () => {
         "systemId",
         {
           params: {},
+          pathname: "/",
           search: {},
           origin: "https://undefined.wstd.work",
         },
@@ -608,6 +611,7 @@ test("page root scope should provide page system variable value", () => {
     scope: {
       $ws$dataSource$systemId: {
         params: { slug: "my-post" },
+        pathname: "/",
         search: {},
         origin: "https://undefined.wstd.work",
       },
@@ -617,6 +621,7 @@ test("page root scope should provide page system variable value", () => {
         "systemId",
         {
           params: { slug: "my-post" },
+          pathname: "/",
           search: {},
           origin: "https://undefined.wstd.work",
         },
