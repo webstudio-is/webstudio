@@ -5,7 +5,7 @@ export const props: Record<string, PropMeta> = {
     required: false,
     control: "text",
     type: "string",
-    description: "Classes to which the element belongs",
+    description: "",
   },
   clientOnly: { required: false, control: "boolean", type: "boolean" },
   code: { required: true, control: "text", type: "string" },

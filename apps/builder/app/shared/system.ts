@@ -43,7 +43,7 @@ export const $currentSystem = computed(
     const systemData = systemByPage.get(page.id);
     const extractedParams = extractParams(page.path, page.history?.[0]);
     const params = { ...extractedParams, ...systemData?.params };
-    const pathname = compilePath(page.path, params);
+    const pathname = compilePath(page.path, params) || "/";
     return {
       search: { ...system.search, ...systemData?.search },
       params,
