@@ -29,8 +29,6 @@ import {
   serializeValue,
   sitemapResourceUrl,
   currentDateResourceUrl,
-  urlInfoResourceUrl,
-  browserInfoResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -999,19 +997,7 @@ export const SystemResourceForm = forwardRef<
       label: "Current Date",
       value: JSON.stringify(currentDateResourceUrl),
       description:
-        "Provides current date/time information to prevent React hydration errors.",
-    },
-    {
-      label: "URL Info",
-      value: JSON.stringify(urlInfoResourceUrl),
-      description:
-        "Provides URL information including pathname, search params, and hash.",
-    },
-    {
-      label: "Browser Info",
-      value: JSON.stringify(browserInfoResourceUrl),
-      description:
-        "Provides browser information including user agent, preferred language, and referer.",
+        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
   ];
 

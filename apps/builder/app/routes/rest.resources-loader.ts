@@ -4,8 +4,6 @@ import { ResourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
-import { loader as urlInfoLoader } from "../shared/$resources/url-info.server";
-import { loader as browserInfoLoader } from "../shared/$resources/browser-info.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { getResourceKey } from "~/shared/resources";
@@ -26,14 +24,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (isLocalResource(input, "current-date")) {
       return currentDateLoader({ request });
-    }
-
-    if (isLocalResource(input, "url-info")) {
-      return urlInfoLoader({ request });
-    }
-
-    if (isLocalResource(input, "browser-info")) {
-      return browserInfoLoader({ request });
     }
 
     return fetch(input, init);
