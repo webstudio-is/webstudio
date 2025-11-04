@@ -22,6 +22,24 @@ const customFetch: typeof fetch = (input, init) => {
     return Promise.resolve(response);
   }
 
+  if (isLocalResource(input, "current-date")) {
+    const now = new Date();
+    // Normalize to midnight UTC to prevent hydration mismatches
+    const startOfDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    const data = {
+      iso: startOfDay.toISOString(),
+      year: startOfDay.getUTCFullYear(),
+      month: startOfDay.getUTCMonth() + 1, // 1-12 instead of 0-11
+      day: startOfDay.getUTCDate(),
+      timestamp: startOfDay.getTime(),
+    };
+    const response = new Response(JSON.stringify(data));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
+  }
+
   return fetch(input, init);
 };
 
