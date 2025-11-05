@@ -312,13 +312,15 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
 
 // keep in sync with user-plan-features.server
 export const $userPlanFeatures = atom<UserPlanFeatures>({
-  allowShareAdminLinks: false,
+  allowAdditionalPermissions: false,
   allowDynamicData: false,
+  allowContentMode: false,
+  allowStagingPublish: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,
   hasSubscription: false,
-  hasProPlan: false,
+  hasPaidPlan: false,
 });
 
 const builderModes = ["design", "preview", "content"] as const;
@@ -358,7 +360,7 @@ export const $isContentModeAllowed = computed(
     }
 
     // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
-    return userPlanFeatures.hasProPlan === true;
+    return userPlanFeatures.allowContentMode === true;
   }
 );
 

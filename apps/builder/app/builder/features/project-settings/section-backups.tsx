@@ -36,7 +36,7 @@ const formatPublishDate = (date: string) => {
 };
 
 export const SectionBackups = () => {
-  const { hasProPlan } = useStore($userPlanFeatures);
+  const { hasPaidPlan } = useStore($userPlanFeatures);
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
   const projectId = $project.get()?.id ?? "";
   useEffect(() => {
@@ -85,7 +85,7 @@ export const SectionBackups = () => {
         <DialogTrigger asChild>
           <Button
             css={{ justifySelf: "start" }}
-            disabled={!hasProPlan || options.length === 0}
+            disabled={!hasPaidPlan || options.length === 0}
           >
             Restore
           </Button>
@@ -120,7 +120,7 @@ export const SectionBackups = () => {
           </Flex>
         </DialogContent>
       </Dialog>
-      {!hasProPlan && (
+      {!hasPaidPlan && (
         <PanelBanner>
           <img
             src={cmsUpgradeBanner}

@@ -407,7 +407,6 @@ export const Builder = ({
           </Main>
           <Topbar
             project={project}
-            hasProPlan={userPlanFeatures.hasProPlan}
             css={{ gridArea: "header" }}
             loading={
               <LoadingBackground

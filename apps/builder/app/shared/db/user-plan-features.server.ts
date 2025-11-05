@@ -40,8 +40,10 @@ export const getUserPlanFeatures = async (
     );
     const productMetas = products.map((product) => {
       return {
-        allowShareAdminLinks: true,
+        allowAdditionalPermissions: true,
         allowDynamicData: true,
+        allowContentMode: true,
+        allowStagingPublish: true,
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
@@ -49,10 +51,14 @@ export const getUserPlanFeatures = async (
       };
     });
     return {
-      allowShareAdminLinks: productMetas.some(
-        (item) => item.allowShareAdminLinks
+      allowAdditionalPermissions: productMetas.some(
+        (item) => item.allowAdditionalPermissions
       ),
       allowDynamicData: productMetas.some((item) => item.allowDynamicData),
+      allowContentMode: productMetas.some((item) => item.allowContentMode),
+      allowStagingPublish: productMetas.some(
+        (item) => item.allowStagingPublish
+      ),
       maxContactEmails: Math.max(
         ...productMetas.map((item) => item.maxContactEmails)
       ),
@@ -63,31 +69,35 @@ export const getUserPlanFeatures = async (
         ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
       ),
       hasSubscription,
-      hasProPlan: true,
+      hasPaidPlan: true,
       planName: products[0].name,
     };
   }
 
   if (env.USER_PLAN === "pro") {
     return {
-      allowShareAdminLinks: true,
+      allowAdditionalPermissions: true,
       allowDynamicData: true,
+      allowContentMode: true,
+      allowStagingPublish: true,
       maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription: true,
-      hasProPlan: true,
+      hasPaidPlan: true,
       planName: "env.USER_PLAN Pro",
     };
   }
 
   return {
-    allowShareAdminLinks: false,
+    allowAdditionalPermissions: false,
     allowDynamicData: false,
+    allowContentMode: false,
+    allowStagingPublish: false,
     maxContactEmails: 0,
     maxDomainsAllowedPerUser: 0,
     maxPublishesAllowedPerUser: 10,
     hasSubscription: false,
-    hasProPlan: false,
+    hasPaidPlan: false,
   };
 };

@@ -12,11 +12,7 @@ import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 
-export const ProjectsGrid = ({
-  projects,
-  hasProPlan,
-  publisherHost,
-}: ProjectsProps) => {
+export const ProjectsGrid = ({ projects, publisherHost }: ProjectsProps) => {
   return (
     <List asChild>
       <Grid
@@ -29,11 +25,7 @@ export const ProjectsGrid = ({
         {projects.map((project) => {
           return (
             <ListItem index={0} key={project.id} asChild>
-              <ProjectCard
-                project={project}
-                hasProPlan={hasProPlan}
-                publisherHost={publisherHost}
-              />
+              <ProjectCard project={project} publisherHost={publisherHost} />
             </ListItem>
           );
         })}
@@ -44,7 +36,6 @@ export const ProjectsGrid = ({
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
-  hasProPlan: boolean;
   publisherHost: string;
 };
 

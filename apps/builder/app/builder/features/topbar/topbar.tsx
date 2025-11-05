@@ -81,12 +81,11 @@ const hideOnMobile: CSS = {
 
 type TopbarProps = {
   project: Project;
-  hasProPlan: boolean;
   loading: ReactNode;
   css: CSS;
 };
 
-export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
+export const Topbar = ({ project, css, loading }: TopbarProps) => {
   const pages = useStore($pages);
   return (
     <nav className={topbarContainerStyle({ css })}>
@@ -125,7 +124,7 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
           <SyncStatus />
 
           <BuilderModeDropDown />
-          <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
+          <ShareButton projectId={project.id} />
           <PublishButton projectId={project.id} />
           <CloneButton />
         </ToolbarToggleGroup>

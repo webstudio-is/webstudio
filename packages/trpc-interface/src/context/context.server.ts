@@ -64,18 +64,20 @@ type DeploymentContext = {
 };
 
 type UserPlanFeatures = {
-  allowShareAdminLinks: boolean;
+  allowAdditionalPermissions: boolean;
   allowDynamicData: boolean;
+  allowContentMode: boolean;
+  allowStagingPublish: boolean;
   maxContactEmails: number;
   maxDomainsAllowedPerUser: number;
   maxPublishesAllowedPerUser: number;
   hasSubscription: boolean;
 } & (
   | {
-      hasProPlan: true;
+      hasPaidPlan: true;
       planName: string;
     }
-  | { hasProPlan: false }
+  | { hasPaidPlan: false }
 );
 
 // No strings except planName - no secrets

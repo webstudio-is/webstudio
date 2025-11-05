@@ -252,11 +252,7 @@ export const Dashboard = () => {
           </PanelBanner>
         </Flex>
         {view === "projects" && (
-          <Projects
-            projects={projects}
-            hasProPlan={userPlanFeatures.hasProPlan}
-            publisherHost={publisherHost}
-          />
+          <Projects projects={projects} publisherHost={publisherHost} />
         )}
         {view === "templates" && <Templates projects={templates} />}
         {view === "welcome" && <Templates projects={templates} welcome />}

@@ -21,7 +21,7 @@ const initialSearchResults: SearchResults = {
 
 export const SearchResults = (props: DashboardData) => {
   const [searchParams] = useSearchParams();
-  const { projects, templates, userPlanFeatures, publisherHost } = props;
+  const { projects, templates, publisherHost } = props;
   const search = searchParams.get("q");
 
   const results = useMemo(() => {
@@ -61,7 +61,6 @@ export const SearchResults = (props: DashboardData) => {
             </Text>
             <ProjectsGrid
               projects={results.projects}
-              hasProPlan={userPlanFeatures.hasProPlan}
               publisherHost={publisherHost}
             />
           </>

@@ -103,7 +103,6 @@ const formatDate = (date: string) => {
 
 type ProjectCardProps = {
   project: DashboardProject;
-  hasProPlan: boolean;
   publisherHost: string;
 };
 
@@ -117,7 +116,6 @@ export const ProjectCard = ({
     latestBuildVirtual,
     previewImageAsset,
   },
-  hasProPlan,
   publisherHost,
   ...props
 }: ProjectCardProps) => {
@@ -254,7 +252,6 @@ export const ProjectCard = ({
         isOpen={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
-        hasProPlan={hasProPlan}
       />
     </Card>
   );
