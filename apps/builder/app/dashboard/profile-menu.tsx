@@ -68,7 +68,7 @@ export const ProfileMenu = ({
           image={user.image || undefined}
           name={nameOrEmail}
           badge={
-            userPlanFeatures.hasProPlan ? userPlanFeatures.planName : undefined
+            userPlanFeatures.hasPaidPlan ? userPlanFeatures.planName : undefined
           }
         />
       </DropdownMenuTrigger>
@@ -84,7 +84,7 @@ export const ProfileMenu = ({
             Manage Subscription
           </DropdownMenuItem>
         )}
-        {userPlanFeatures.hasProPlan === false && (
+        {userPlanFeatures.hasPaidPlan === false && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");

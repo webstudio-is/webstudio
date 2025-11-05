@@ -26,10 +26,12 @@ const createRouter = (element: JSX.Element, path: string, current?: string) =>
   });
 
 const userPlanFeatures: UserPlanFeatures = {
-  hasProPlan: false,
+  hasPaidPlan: false,
   hasSubscription: false,
-  allowShareAdminLinks: false,
+  allowAdditionalPermissions: false,
   allowDynamicData: false,
+  allowContentMode: false,
+  allowStagingPublish: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,

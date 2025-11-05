@@ -92,12 +92,18 @@ const Permission = ({
 type MenuProps = {
   name: string;
   value: LinkOptions;
-  hasProPlan: boolean;
+  allowAdditionalPermissions: boolean;
   onChange: (value: LinkOptions) => void;
   onDelete: () => void;
 };
 
-const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
+const Menu = ({
+  name,
+  allowAdditionalPermissions,
+  value,
+  onChange,
+  onDelete,
+}: MenuProps) => {
   const ids = useIds(["name", "canClone", "canCopy", "canPublish"]);
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
@@ -163,7 +169,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
             info={
               <Flex direction="column">
                 Recipients can view, copy instances and clone the project.
-                {hasProPlan !== true && (
+                {!allowAdditionalPermissions && (
                   <>
                     <br />
                     <br />
@@ -198,7 +204,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "viewers"
+                }
                 checked={value.canClone}
                 onCheckedChange={(canClone) => {
                   onChange({ ...value, canClone: Boolean(canClone) });
@@ -207,7 +215,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               />
               <Label
                 htmlFor={ids.canClone}
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "viewers"
+                }
               >
                 Can clone
               </Label>
@@ -221,7 +231,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "viewers"
+                }
                 checked={value.canCopy}
                 onCheckedChange={(canCopy) => {
                   onChange({ ...value, canCopy: Boolean(canCopy) });
@@ -230,7 +242,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               />
               <Label
                 htmlFor={ids.canCopy}
-                disabled={hasProPlan !== true || value.relation !== "viewers"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "viewers"
+                }
               >
                 Can copy
               </Label>
@@ -238,7 +252,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           </Grid>
 
           <Permission
-            disabled={hasProPlan !== true}
+            disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("editors")}
             checked={value.relation === "editors"}
             title="Content"
@@ -246,7 +260,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               <Flex direction="column">
                 Recipients can edit content only, such as text, images, and
                 predefined components.
-                {hasProPlan !== true && (
+                {!allowAdditionalPermissions && (
                   <>
                     <br />
                     <br />
@@ -281,7 +295,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               }}
             >
               <Checkbox
-                disabled={hasProPlan !== true || value.relation !== "editors"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "editors"
+                }
                 checked={value.canPublish}
                 onCheckedChange={(canPublish) => {
                   onChange({ ...value, canPublish: Boolean(canPublish) });
@@ -290,7 +306,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               />
               <Label
                 htmlFor={ids.canPublish}
-                disabled={hasProPlan !== true || value.relation !== "editors"}
+                disabled={
+                  !allowAdditionalPermissions || value.relation !== "editors"
+                }
               >
                 Can publish
               </Label>
@@ -305,7 +323,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           />
 
           <Permission
-            disabled={hasProPlan !== true}
+            disabled={!allowAdditionalPermissions}
             onCheckedChange={handleCheckedChange("administrators")}
             checked={value.relation === "administrators"}
             title="Admin"
@@ -313,7 +331,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               <Flex direction="column">
                 Recipients can make any changes and can also publish the
                 project.
-                {hasProPlan !== true && (
+                {!allowAdditionalPermissions && (
                   <>
                     <br />
                     <br />
@@ -375,7 +393,7 @@ type SharedLinkItemType = {
   onChange: (value: LinkOptions) => void;
   onDelete: () => void;
   builderUrl: (props: { authToken: string; mode: BuilderMode }) => string;
-  hasProPlan: boolean;
+  allowAdditionalPermissions: boolean;
 };
 
 const relationToMode: Record<Relation, BuilderMode> = {
@@ -390,7 +408,7 @@ const SharedLinkItem = ({
   onChange,
   onDelete,
   builderUrl,
-  hasProPlan,
+  allowAdditionalPermissions,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(value.name);
 
@@ -416,7 +434,7 @@ const SharedLinkItem = ({
           onChange(value);
         }}
         onDelete={onDelete}
-        hasProPlan={hasProPlan}
+        allowAdditionalPermissions={allowAdditionalPermissions}
       />
     </Box>
   );
@@ -429,7 +447,7 @@ type ShareProjectProps = {
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
   isPending: boolean;
-  hasProPlan: boolean;
+  allowAdditionalPermissions: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -456,7 +474,7 @@ export const ShareProject = ({
   onCreate,
   builderUrl,
   isPending,
-  hasProPlan,
+  allowAdditionalPermissions,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
@@ -469,7 +487,7 @@ export const ShareProject = ({
         }}
         builderUrl={builderUrl}
         value={link}
-        hasProPlan={hasProPlan}
+        allowAdditionalPermissions={allowAdditionalPermissions}
       />
       <Separator />
     </Fragment>
