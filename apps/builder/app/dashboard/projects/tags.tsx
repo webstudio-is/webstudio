@@ -15,21 +15,80 @@ import {
   InputField,
   DialogTitleActions,
   Grid,
+  List,
+  ListItem,
+  Flex,
+  IconButton,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  SmallIconButton,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
+import { EllipsesIcon } from "@webstudio-is/icons";
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  question: string;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  question,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+          <Text>{question}</Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete
+              </Button>
+            </DialogClose>
+            <DialogClose>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete confirmation</DialogTitle>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const TagsList = ({
   projectId,
   availableTags,
   projectTagsIds,
+  onEdit,
 }: {
   projectId: string;
   availableTags: User["projectsTags"];
   projectTagsIds: string[];
+  onEdit: (tagId: string) => void;
 }) => {
   const revalidator = useRevalidator();
+  const [deleteConfirmationTagId, setDeleteConfirmationTagId] =
+    useState<string>();
 
   return (
     <form
@@ -44,24 +103,95 @@ const TagsList = ({
         revalidator.revalidate();
       }}
     >
-      <Grid gap={1} css={{ padding: theme.panel.padding }}>
-        {availableTags
-          .sort((a, b) => a.label.localeCompare(b.label))
-          .map((tag) => (
-            <CheckboxAndLabel key={tag.id}>
-              <Checkbox
-                id={tag.id}
-                name="tagId"
-                value={tag.id}
-                defaultChecked={projectTagsIds.includes(tag.id)}
-              />
-              <Label htmlFor={tag.id}>{tag.label}</Label>
-            </CheckboxAndLabel>
-          ))}
-        {availableTags.length === 0 && (
-          <Text align="center">No tags found</Text>
-        )}
-      </Grid>
+      <List asChild>
+        <Grid gap={1} css={{ paddingBlock: theme.panel.paddingBlock }}>
+          {availableTags
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .map((tag, index) => (
+              <ListItem asChild onSelect={() => {}} index={index} key={tag.id}>
+                <Flex
+                  justify="between"
+                  align="center"
+                  gap="2"
+                  css={{
+                    paddingInline: theme.panel.paddingInline,
+                    outlineColor: theme.colors.borderFocus,
+                    outlineOffset: -2,
+                    paddingBlock: theme.spacing[2],
+                  }}
+                >
+                  <CheckboxAndLabel
+                    key={tag.id}
+                    css={{ overflow: "hidden", flexGrow: 1 }}
+                  >
+                    <Checkbox
+                      id={tag.id}
+                      name="tagId"
+                      value={tag.id}
+                      tabIndex={-1}
+                      defaultChecked={projectTagsIds.includes(tag.id)}
+                    />
+                    <Label truncate htmlFor={tag.id}>
+                      {tag.label}
+                    </Label>
+                  </CheckboxAndLabel>
+                  <DropdownMenu modal>
+                    <DropdownMenuTrigger asChild>
+                      {/* a11y is completely broken here
+                          focus is not restored to button invoker
+                          @todo fix it eventually and consider restoring from closed value preview dialog
+                      */}
+                      <SmallIconButton
+                        tabIndex={-1}
+                        aria-label="Open variable menu"
+                        icon={<EllipsesIcon />}
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      css={{ width: theme.spacing[24] }}
+                      onCloseAutoFocus={(event) => event.preventDefault()}
+                      align="end"
+                    >
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          onEdit(tag.id);
+                        }}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setDeleteConfirmationTagId(tag.id);
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </Flex>
+              </ListItem>
+            ))}
+          {availableTags.length === 0 && (
+            <Text align="center">No tags found</Text>
+          )}
+          {deleteConfirmationTagId && (
+            <DeleteConfirmationDialog
+              question="Are you sure you want to delete this tag? It will be removed from all projects."
+              onClose={() => setDeleteConfirmationTagId(undefined)}
+              onConfirm={async () => {
+                setDeleteConfirmationTagId(undefined);
+                const updatedTags = availableTags.filter(
+                  (tag) => tag.id !== deleteConfirmationTagId
+                );
+                await nativeClient.user.updateProjectsTags.mutate({
+                  tags: updatedTags,
+                });
+                revalidator.revalidate();
+              }}
+            />
+          )}
+        </Grid>
+      </List>
     </form>
   );
 };
@@ -76,6 +206,7 @@ const TagEdit = ({
   onComplete: () => void;
 }) => {
   const revalidator = useRevalidator();
+  const isExisting = availableTags.some(({ id }) => id === tag.id);
 
   return (
     <form
@@ -86,7 +217,6 @@ const TagEdit = ({
         if (tag.label === label || !label) {
           return;
         }
-        const isExisting = availableTags.some(({ id }) => id === tag.id);
         let updatedTags = [];
         if (isExisting) {
           updatedTags = availableTags.map((availableTag) => {
@@ -116,7 +246,9 @@ const TagEdit = ({
         />
       </Grid>
       <DialogActions>
-        <Button type="submit">Create tag</Button>
+        <Button type="submit">
+          {isExisting ? "Update tag" : "Create tag"}
+        </Button>
         <Button
           color="ghost"
           type="button"
@@ -165,6 +297,9 @@ export const TagsDialog = ({
               projectId={projectId}
               availableTags={availableTags}
               projectTagsIds={projectTagsIds}
+              onEdit={(tagId) => {
+                setEditingTag(availableTags.find((tag) => tag.id === tagId));
+              }}
             />
             <DialogActions>
               <Button
