@@ -57,7 +57,7 @@ type ProjectsProps = {
 };
 
 export const Projects = (props: ProjectsProps) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
   let projects = props.projects;
   if (selectedTags.length > 0) {
@@ -104,6 +104,14 @@ export const Projects = (props: ProjectsProps) => {
         })}
       </Flex>
       <Box css={{ paddingInline: theme.spacing[13] }}>
+        {projects.length === 0 && (
+          <Text
+            variant="brandRegular"
+            css={{ padding: theme.spacing[13], textAlign: "center" }}
+          >
+            No projects found
+          </Text>
+        )}
         <ProjectsGrid {...props} projects={projects} />
       </Box>
     </Main>
