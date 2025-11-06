@@ -1,5 +1,5 @@
 import { useRevalidator } from "react-router-dom";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import {
   Text,
   theme,
@@ -29,6 +29,7 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import { colors } from "./colors";
 
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
@@ -331,5 +332,27 @@ export const TagsDialog = ({
         )}
       </DialogContent>
     </Dialog>
+  );
+};
+
+export const Tag = ({
+  index,
+  ...props
+}: { index: number } & ComponentProps<typeof Button>) => {
+  const color = colors[index] ?? theme.colors.backgroundNeutralDark;
+  return (
+    <Button
+      color="neutral"
+      css={{
+        "&:hover[data-state='auto'], &[data-state='pressed']": {
+          backgroundColor: color,
+          color: theme.colors.white,
+        },
+        "&[data-state='pressed']:hover": {
+          backgroundColor: `oklch(from ${color} l c h / 0.8)`,
+        },
+      }}
+      {...props}
+    />
   );
 };

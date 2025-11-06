@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Flex,
   Grid,
   List,
@@ -16,7 +15,7 @@ import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
-import { colors } from "./colors";
+import { Tag } from "./tags";
 
 export const ProjectsGrid = ({
   projects,
@@ -91,21 +90,11 @@ export const Projects = (props: ProjectsProps) => {
         }}
       >
         {props.projectsTags.map((tag, index) => {
-          const color = colors[index] ?? theme.colors.backgroundNeutralDark;
           return (
-            <Button
+            <Tag
               key={tag.id}
-              color="neutral"
+              index={index}
               state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
-              css={{
-                "&:hover[data-state='auto'], &[data-state='pressed']": {
-                  backgroundColor: color,
-                  color: theme.colors.white,
-                },
-                "&[data-state='pressed']:hover": {
-                  backgroundColor: `oklch(from ${color} l c h / 0.8)`,
-                },
-              }}
               onClick={() => {
                 const newSearchParams = new URLSearchParams(searchParams);
                 newSearchParams.delete("tag");
@@ -121,7 +110,7 @@ export const Projects = (props: ProjectsProps) => {
               }}
             >
               {tag.label}
-            </Button>
+            </Tag>
           );
         })}
       </Flex>
