@@ -72,17 +72,19 @@ const ProjectTagsContent = ({
       }}
     >
       <Grid gap={1} css={{ padding: theme.panel.padding }}>
-        {availableTags.map((tag) => (
-          <CheckboxAndLabel key={tag.id}>
-            <Checkbox
-              id={tag.id}
-              name="tagId"
-              value={tag.id}
-              defaultChecked={projectTagsIds.includes(tag.id)}
-            />
-            <Label htmlFor={tag.id}>{tag.label}</Label>
-          </CheckboxAndLabel>
-        ))}
+        {availableTags
+          .sort((a, b) => a.label.localeCompare(b.label))
+          .map((tag) => (
+            <CheckboxAndLabel key={tag.id}>
+              <Checkbox
+                id={tag.id}
+                name="tagId"
+                value={tag.id}
+                defaultChecked={projectTagsIds.includes(tag.id)}
+              />
+              <Label htmlFor={tag.id}>{tag.label}</Label>
+            </CheckboxAndLabel>
+          ))}
         {availableTags.length === 0 && (
           <Text align="center">No tags found</Text>
         )}
