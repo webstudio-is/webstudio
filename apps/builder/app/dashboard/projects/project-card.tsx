@@ -33,7 +33,7 @@ import {
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
-import { TagsDialog } from "./tags";
+import { Tag, TagsDialog } from "./tags";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -197,6 +197,27 @@ export const ProjectCard = ({
           <ThumbnailLinkWithAbbr title={title} to={linkPath} />
         )}
         {isTransitioning && <Spinner delay={0} />}
+        <Flex
+          wrap="wrap"
+          gap={1}
+          css={{
+            position: "absolute",
+            inset: 0,
+            padding: theme.panel.padding,
+            alignContent: "start",
+          }}
+        >
+          {projectsTags.map((tag, index) => {
+            const isApplied = projectTagsIds.includes(tag.id);
+            if (isApplied) {
+              return (
+                <Tag tag={tag} key={tag.id} index={index} state="pressed">
+                  {tag.label}
+                </Tag>
+              );
+            }
+          })}
+        </Flex>
       </CardContent>
       <CardFooter>
         <Flex direction="column" justify="around" grow>

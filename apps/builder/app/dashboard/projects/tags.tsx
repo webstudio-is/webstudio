@@ -1,4 +1,4 @@
-import { useRevalidator } from "react-router-dom";
+import { useRevalidator, useSearchParams } from "react-router-dom";
 import { useState, type ComponentProps } from "react";
 import {
   Text,
@@ -23,7 +23,6 @@ import {
   SmallIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
-  Box,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
@@ -337,8 +336,13 @@ export const TagsDialog = ({
 
 export const Tag = ({
   index,
+  tag,
   ...props
-}: { index: number } & ComponentProps<typeof Button>) => {
+}: { index: number; tag: User["projectsTags"][number] } & ComponentProps<
+  typeof Button
+>) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTagsIds = searchParams.getAll("tag");
   const color = colors[index] ?? theme.colors.backgroundNeutralDark;
   return (
     <Button
@@ -351,6 +355,19 @@ export const Tag = ({
         "&[data-state='pressed']:hover": {
           backgroundColor: `oklch(from ${color} l c h / 0.8)`,
         },
+      }}
+      onClick={() => {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("tag");
+        if (!selectedTagsIds.includes(tag.id)) {
+          newSearchParams.append("tag", tag.id);
+        }
+        for (const item of selectedTagsIds) {
+          if (item !== tag.id) {
+            newSearchParams.append("tag", item);
+          }
+        }
+        setSearchParams(newSearchParams);
       }}
       {...props}
     />

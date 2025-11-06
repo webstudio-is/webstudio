@@ -83,6 +83,7 @@ export const Projects = (props: ProjectsProps) => {
           display: "none",
           flexShrink: 0,
           paddingInline: theme.spacing[13],
+          paddingBlockStart: theme.spacing[2],
           paddingBlockEnd: theme.spacing[10],
           "&:has(*:first-child)": {
             display: "flex",
@@ -92,22 +93,10 @@ export const Projects = (props: ProjectsProps) => {
         {props.projectsTags.map((tag, index) => {
           return (
             <Tag
+              tag={tag}
               key={tag.id}
               index={index}
               state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
-              onClick={() => {
-                const newSearchParams = new URLSearchParams(searchParams);
-                newSearchParams.delete("tag");
-                if (!selectedTags.includes(tag.id)) {
-                  newSearchParams.append("tag", tag.id);
-                }
-                for (const item of selectedTags) {
-                  if (item !== tag.id) {
-                    newSearchParams.append("tag", item);
-                  }
-                }
-                setSearchParams(newSearchParams);
-              }}
             >
               {tag.label}
             </Tag>
