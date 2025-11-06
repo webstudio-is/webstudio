@@ -3,6 +3,11 @@ ALTER TABLE
 ADD
   COLUMN "tags" TEXT [];
 
+ALTER TABLE
+  "User"
+ADD
+  COLUMN "projectsTags" JSONB;
+
 DROP VIEW IF EXISTS "DashboardProject";
 
 CREATE VIEW "DashboardProject" AS
@@ -29,9 +34,3 @@ SELECT
   ) AS "isPublished"
 FROM
   "Project";
-
--- AlterTable
-ALTER TABLE
-  "User"
-ADD
-  COLUMN "projectsTags" JSONB;
