@@ -314,11 +314,6 @@ export const TagsDialog = ({
               >
                 Create tag
               </Button>
-              <DialogClose>
-                <Button color="ghost" type="button">
-                  Cancel
-                </Button>
-              </DialogClose>
             </DialogActions>
           </>
         )}
