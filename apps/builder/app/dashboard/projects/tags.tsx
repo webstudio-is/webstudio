@@ -20,7 +20,7 @@ import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
 
-const ProjectTagsContent = ({
+const TagsList = ({
   projectId,
   availableTags,
   projectTagsIds,
@@ -66,7 +66,7 @@ const ProjectTagsContent = ({
   );
 };
 
-const ProjectEditTagContent = ({
+const TagEdit = ({
   availableTags,
   tag,
   onComplete,
@@ -161,7 +161,7 @@ export const TagsDialog = ({
         </DialogTitle>
         {!editingTag && (
           <>
-            <ProjectTagsContent
+            <TagsList
               projectId={projectId}
               availableTags={availableTags}
               projectTagsIds={projectTagsIds}
@@ -181,7 +181,7 @@ export const TagsDialog = ({
           </>
         )}
         {editingTag && (
-          <ProjectEditTagContent
+          <TagEdit
             availableTags={availableTags}
             tag={editingTag}
             onComplete={() => setEditingTag(undefined)}
