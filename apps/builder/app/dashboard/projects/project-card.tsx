@@ -14,8 +14,6 @@ import {
   rawTheme,
   Link,
   Box,
-  Label,
-  Button,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
