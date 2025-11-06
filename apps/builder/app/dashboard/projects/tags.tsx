@@ -18,12 +18,13 @@ import {
   List,
   ListItem,
   Flex,
-  IconButton,
   DropdownMenu,
   DropdownMenuTrigger,
   SmallIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
+  ScrollArea,
+  Box,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
@@ -103,95 +104,104 @@ const TagsList = ({
         revalidator.revalidate();
       }}
     >
-      <List asChild>
-        <Grid gap={1} css={{ paddingBlock: theme.panel.paddingBlock }}>
-          {projectsTags
-            .sort((a, b) => a.label.localeCompare(b.label))
-            .map((tag, index) => (
-              <ListItem asChild onSelect={() => {}} index={index} key={tag.id}>
-                <Flex
-                  justify="between"
-                  align="center"
-                  gap="2"
-                  css={{
-                    paddingInline: theme.panel.paddingInline,
-                    outlineColor: theme.colors.borderFocus,
-                    outlineOffset: -2,
-                    paddingBlock: theme.spacing[2],
-                  }}
-                >
-                  <CheckboxAndLabel
+      <Box css={{ maxHeight: 300 }}>
+        <ScrollArea>
+          <List asChild>
+            <Grid gap={1} css={{ paddingBlock: theme.panel.paddingBlock }}>
+              {projectsTags
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map((tag, index) => (
+                  <ListItem
+                    asChild
+                    onSelect={() => {}}
+                    index={index}
                     key={tag.id}
-                    css={{ overflow: "hidden", flexGrow: 1 }}
                   >
-                    <Checkbox
-                      id={tag.id}
-                      name="tagId"
-                      value={tag.id}
-                      tabIndex={-1}
-                      defaultChecked={projectTagsIds.includes(tag.id)}
-                    />
-                    <Label truncate htmlFor={tag.id}>
-                      {tag.label}
-                    </Label>
-                  </CheckboxAndLabel>
-                  <DropdownMenu modal>
-                    <DropdownMenuTrigger asChild>
-                      {/* a11y is completely broken here
+                    <Flex
+                      justify="between"
+                      align="center"
+                      gap="2"
+                      css={{
+                        paddingInline: theme.panel.paddingInline,
+                        outlineColor: theme.colors.borderFocus,
+                        outlineOffset: -2,
+                        paddingBlock: theme.spacing[2],
+                      }}
+                    >
+                      <CheckboxAndLabel
+                        key={tag.id}
+                        css={{ overflow: "hidden", flexGrow: 1 }}
+                      >
+                        <Checkbox
+                          id={tag.id}
+                          name="tagId"
+                          value={tag.id}
+                          tabIndex={-1}
+                          defaultChecked={projectTagsIds.includes(tag.id)}
+                        />
+                        <Label truncate htmlFor={tag.id}>
+                          {tag.label}
+                        </Label>
+                      </CheckboxAndLabel>
+                      <DropdownMenu modal>
+                        <DropdownMenuTrigger asChild>
+                          {/* a11y is completely broken here
                           focus is not restored to button invoker
                           @todo fix it eventually and consider restoring from closed value preview dialog
                       */}
-                      <SmallIconButton
-                        tabIndex={-1}
-                        aria-label="Open variable menu"
-                        icon={<EllipsesIcon />}
-                      />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      css={{ width: theme.spacing[24] }}
-                      onCloseAutoFocus={(event) => event.preventDefault()}
-                      align="end"
-                    >
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          onEdit(tag.id);
-                        }}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          setDeleteConfirmationTagId(tag.id);
-                        }}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Flex>
-              </ListItem>
-            ))}
-          {projectsTags.length === 0 && (
-            <Text align="center">No tags found</Text>
-          )}
-          {deleteConfirmationTagId && (
-            <DeleteConfirmationDialog
-              question="Are you sure you want to delete this tag? It will be removed from all projects."
-              onClose={() => setDeleteConfirmationTagId(undefined)}
-              onConfirm={async () => {
-                setDeleteConfirmationTagId(undefined);
-                const updatedTags = projectsTags.filter(
-                  (tag) => tag.id !== deleteConfirmationTagId
-                );
-                await nativeClient.user.updateProjectsTags.mutate({
-                  tags: updatedTags,
-                });
-                revalidator.revalidate();
-              }}
-            />
-          )}
-        </Grid>
-      </List>
+                          <SmallIconButton
+                            tabIndex={-1}
+                            aria-label="Open variable menu"
+                            icon={<EllipsesIcon />}
+                          />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          css={{ width: theme.spacing[24] }}
+                          onCloseAutoFocus={(event) => event.preventDefault()}
+                          align="end"
+                        >
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              onEdit(tag.id);
+                            }}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setDeleteConfirmationTagId(tag.id);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Flex>
+                  </ListItem>
+                ))}
+              {projectsTags.length === 0 && (
+                <Text align="center">No tags found</Text>
+              )}
+              {deleteConfirmationTagId && (
+                <DeleteConfirmationDialog
+                  question="Are you sure you want to delete this tag? It will be removed from all projects."
+                  onClose={() => setDeleteConfirmationTagId(undefined)}
+                  onConfirm={async () => {
+                    setDeleteConfirmationTagId(undefined);
+                    const updatedTags = projectsTags.filter(
+                      (tag) => tag.id !== deleteConfirmationTagId
+                    );
+                    await nativeClient.user.updateProjectsTags.mutate({
+                      tags: updatedTags,
+                    });
+                    revalidator.revalidate();
+                  }}
+                />
+              )}
+            </Grid>
+          </List>
+        </ScrollArea>
+      </Box>
     </form>
   );
 };
@@ -303,7 +313,7 @@ export const TagsDialog = ({
             />
             <DialogActions>
               <Button
-                onClick={() => setEditingTag({ id: nanoid(), label: "" })}
+                onClick={() => setEditingTag({ id: nanoid(5), label: "" })}
               >
                 Create tag
               </Button>

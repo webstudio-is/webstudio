@@ -90,30 +90,40 @@ export const Projects = (props: ProjectsProps) => {
           },
         }}
       >
-        {props.projectsTags.map((tag, index) => (
-          <Button
-            key={tag.id}
-            state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
-            css={{
-              backgroundColor: colors[index] ?? "red",
-            }}
-            onClick={() => {
-              const newSearchParams = new URLSearchParams(searchParams);
-              newSearchParams.delete("tag");
-              if (!selectedTags.includes(tag.id)) {
-                newSearchParams.append("tag", tag.id);
-              }
-              for (const item of selectedTags) {
-                if (item !== tag.id) {
-                  newSearchParams.append("tag", item);
+        {props.projectsTags.map((tag, index) => {
+          const color = colors[index] ?? theme.colors.backgroundNeutralDark;
+          return (
+            <Button
+              key={tag.id}
+              color="neutral"
+              state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
+              css={{
+                "&:hover[data-state='auto'], &[data-state='pressed']": {
+                  backgroundColor: color,
+                  color: theme.colors.white,
+                },
+                "&[data-state='pressed']:hover": {
+                  backgroundColor: `oklch(from ${color} l c h / 0.8)`,
+                },
+              }}
+              onClick={() => {
+                const newSearchParams = new URLSearchParams(searchParams);
+                newSearchParams.delete("tag");
+                if (!selectedTags.includes(tag.id)) {
+                  newSearchParams.append("tag", tag.id);
                 }
-              }
-              setSearchParams(newSearchParams);
-            }}
-          >
-            {tag.label}
-          </Button>
-        ))}
+                for (const item of selectedTags) {
+                  if (item !== tag.id) {
+                    newSearchParams.append("tag", item);
+                  }
+                }
+                setSearchParams(newSearchParams);
+              }}
+            >
+              {tag.label}
+            </Button>
+          );
+        })}
       </Flex>
       <Box css={{ paddingInline: theme.spacing[13] }}>
         <ProjectsGrid {...props} projects={projects} />
