@@ -163,7 +163,6 @@ export const Dashboard = () => {
     projectToClone,
     projects,
     templates,
-    tags,
   } = data;
   const hasProjects = projects.length > 0;
   const view = getView(location.pathname, hasProjects);
@@ -257,7 +256,7 @@ export const Dashboard = () => {
             projects={projects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
-            tags={tags}
+            availableTags={user.projectsTags}
           />
         )}
         {view === "templates" && <Templates projects={templates} />}

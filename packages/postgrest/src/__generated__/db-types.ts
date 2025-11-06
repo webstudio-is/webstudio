@@ -683,6 +683,7 @@ export type Database = {
           email: string | null;
           id: string;
           image: string | null;
+          projectsTags: Json | null;
           provider: string | null;
           teamId: string | null;
           username: string | null;
@@ -692,6 +693,7 @@ export type Database = {
           email?: string | null;
           id: string;
           image?: string | null;
+          projectsTags?: Json | null;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -701,6 +703,7 @@ export type Database = {
           email?: string | null;
           id?: string;
           image?: string | null;
+          projectsTags?: Json | null;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -824,21 +827,6 @@ export type Database = {
           },
         ];
       };
-      project_tag: {
-        Row: {
-          tag: string | null;
-          user_id: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "Project_userId_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "User";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       published_builds: {
         Row: {
           buildId: string | null;
@@ -920,6 +908,12 @@ export type Database = {
           title: string;
           userId: string | null;
         };
+        SetofOptions: {
+          from: "*";
+          to: "Project";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       create_production_build: {
         Args: { deployment: string; project_id: string };
@@ -945,20 +939,48 @@ export type Database = {
           updatedAt: string;
           verified: boolean;
         }[];
+        SetofOptions: {
+          from: '"Project"';
+          to: "domainsVirtual";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
-      latestBuildVirtual: {
-        Args:
-          | { "": Database["public"]["Tables"]["Project"]["Row"] }
-          | { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
-        Returns: {
-          buildId: string;
-          createdAt: string;
-          domain: string;
-          domainsVirtualId: string;
-          projectId: string;
-          publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
-      };
+      latestBuildVirtual:
+        | {
+            Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            };
+            SetofOptions: {
+              from: '"Project"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          }
+        | {
+            Args: { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            };
+            SetofOptions: {
+              from: '"domainsVirtual"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          };
       latestProjectDomainBuildVirtual: {
         Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
         Returns: {
@@ -968,7 +990,13 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
+        };
+        SetofOptions: {
+          from: '"Project"';
+          to: "latestBuildVirtual";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
       };
       restore_development_build: {
         Args: { from_build_id: string; project_id: string };

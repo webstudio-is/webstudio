@@ -144,19 +144,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     await loadDashboardData(request);
 
   const projectToClone = await getProjectToClone(request, context);
-  const projectTag = await context.postgrest.client
-    .from("project_tag")
-    .select("tag")
-    .eq("user_id", user.id);
-  if (projectTag.error) {
-    throw projectTag.error;
-  }
-  const tags: string[] = [];
-  for (const item of projectTag.data) {
-    if (item.tag) {
-      tags.push(item.tag);
-    }
-  }
 
   return {
     user,
@@ -166,7 +153,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     publisherHost: env.PUBLISHER_HOST,
     origin,
     projectToClone,
-    tags,
   };
 };
 

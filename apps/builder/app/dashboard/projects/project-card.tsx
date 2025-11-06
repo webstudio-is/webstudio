@@ -1,5 +1,5 @@
 import { useRevalidator } from "react-router-dom";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -28,7 +28,7 @@ import {
   DialogTitleActions,
   Grid,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import { nativeClient } from "~/shared/trpc/trpc-client";
@@ -44,97 +44,113 @@ import {
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
+import type { User } from "~/shared/db/user.server";
+import { nanoid } from "nanoid";
 
-const TagsDialogContent = ({
+const ProjectTagsContent = ({
   projectId,
   availableTags,
-  projectTags,
-  onOpenChange,
+  projectTagsIds,
 }: {
   projectId: string;
-  availableTags: string[];
-  projectTags: string[];
-  onOpenChange: (isOpen: boolean) => void;
+  availableTags: User["projectsTags"];
+  projectTagsIds: string[];
 }) => {
   const revalidator = useRevalidator();
-  const tagId = useId();
-  const [tags, setTags] = useState(availableTags);
+
+  return (
+    <form
+      onChange={async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const tagsIds = formData.getAll("tagId") as string[];
+        await nativeClient.project.updateTags.mutate({
+          projectId,
+          tags: tagsIds,
+        });
+        revalidator.revalidate();
+      }}
+    >
+      <Grid gap={1} css={{ padding: theme.panel.padding }}>
+        {availableTags.map((tag) => (
+          <CheckboxAndLabel key={tag.id}>
+            <Checkbox
+              id={tag.id}
+              name="tagId"
+              value={tag.id}
+              defaultChecked={projectTagsIds.includes(tag.id)}
+            />
+            <Label htmlFor={tag.id}>{tag.label}</Label>
+          </CheckboxAndLabel>
+        ))}
+        {availableTags.length === 0 && (
+          <Text align="center">No tags found</Text>
+        )}
+      </Grid>
+    </form>
+  );
+};
+
+const ProjectEditTagContent = ({
+  availableTags,
+  tag,
+  onComplete,
+}: {
+  availableTags: User["projectsTags"];
+  tag: User["projectsTags"][number];
+  onComplete: () => void;
+}) => {
+  const revalidator = useRevalidator();
+
   return (
     <form
       onSubmit={async (event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const newTags = formData
-          .getAll("tag")
-          .map((item) => String(item).trim())
-          .filter((item) => item);
-        await nativeClient.project.updateTags.mutate({
-          projectId,
-          tags: newTags,
+        const label = ((formData.get("tag") as string) || "").trim();
+        if (tag.label === label || !label) {
+          return;
+        }
+        const isExisting = availableTags.some(({ id }) => id === tag.id);
+        let updatedTags = [];
+        if (isExisting) {
+          updatedTags = availableTags.map((availableTag) => {
+            if (availableTag.id === tag.id) {
+              return { ...availableTag, label };
+            }
+            return availableTag;
+          });
+        } else {
+          updatedTags = [...availableTags, { id: tag.id, label }];
+        }
+
+        await nativeClient.user.updateProjectsTags.mutate({
+          tags: updatedTags,
         });
         revalidator.revalidate();
-        onOpenChange(false);
+        onComplete();
       }}
     >
-      <DialogTitle
-        suffix={
-          <DialogTitleActions>
-            <Button
-              type="button"
-              aria-label="Add tag"
-              prefix={<PlusIcon />}
-              color="ghost"
-              onClick={(event) => {
-                event.preventDefault();
-                setTags((tags) => {
-                  let newTag = "New tag";
-                  let number = 1;
-                  while (tags.includes(newTag)) {
-                    number += 1;
-                    newTag = `New tag ${number}`;
-                  }
-                  return [...tags, newTag];
-                });
-              }}
-            />
-            <DialogClose />
-          </DialogTitleActions>
-        }
-      >
-        Project tags
-      </DialogTitle>
-      <Grid gap={1} css={{ padding: theme.panel.padding }}>
-        {tags.map((tag, index) =>
-          availableTags.includes(tag) ? (
-            <CheckboxAndLabel key={tag}>
-              <Checkbox
-                id={tagId + index}
-                name="tag"
-                value={tag}
-                defaultChecked={projectTags.includes(tag)}
-              />
-              <Label htmlFor={tagId + index}>{tag}</Label>
-            </CheckboxAndLabel>
-          ) : (
-            <InputField
-              key={tag}
-              name="tag"
-              autoFocus
-              placeholder="New tag"
-              defaultValue={tag}
-              autoComplete="off"
-            />
-          )
-        )}
-        {tags.length === 0 && <Text align="center">No tags found</Text>}
+      <Grid css={{ padding: theme.panel.padding }}>
+        <InputField
+          autoFocus
+          defaultValue={tag.label}
+          name="tag"
+          placeholder="My tag"
+          minLength={1}
+        />
       </Grid>
       <DialogActions>
-        <Button type="submit">Update</Button>
-        <DialogClose>
-          <Button color="ghost" type="button">
-            Cancel
-          </Button>
-        </DialogClose>
+        <Button type="submit">Create tag</Button>
+        <Button
+          color="ghost"
+          type="button"
+          onClick={() => {
+            onComplete();
+          }}
+        >
+          Cancel
+        </Button>
       </DialogActions>
     </form>
   );
@@ -143,25 +159,59 @@ const TagsDialogContent = ({
 const TagsDialog = ({
   projectId,
   availableTags,
-  projectTags,
+  projectTagsIds,
   isOpen,
   onOpenChange,
 }: {
   projectId: string;
-  availableTags: string[];
-  projectTags: string[];
+  availableTags: User["projectsTags"];
+  projectTagsIds: string[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
+  const [editingTag, setEditingTag] = useState<
+    User["projectsTags"][number] | undefined
+  >();
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined}>
-        <TagsDialogContent
-          projectId={projectId}
-          availableTags={availableTags}
-          projectTags={projectTags}
-          onOpenChange={onOpenChange}
-        />
+        <DialogTitle
+          suffix={
+            <DialogTitleActions>
+              <DialogClose />
+            </DialogTitleActions>
+          }
+        >
+          Project tags
+        </DialogTitle>
+        {!editingTag && (
+          <>
+            <ProjectTagsContent
+              projectId={projectId}
+              availableTags={availableTags}
+              projectTagsIds={projectTagsIds}
+            />
+            <DialogActions>
+              <Button
+                onClick={() => setEditingTag({ id: nanoid(), label: "" })}
+              >
+                Create tag
+              </Button>
+              <DialogClose>
+                <Button color="ghost" type="button">
+                  Cancel
+                </Button>
+              </DialogClose>
+            </DialogActions>
+          </>
+        )}
+        {editingTag && (
+          <ProjectEditTagContent
+            availableTags={availableTags}
+            tag={editingTag}
+            onComplete={() => setEditingTag(undefined)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -244,7 +294,7 @@ type ProjectCardProps = {
   project: DashboardProject;
   hasProPlan: boolean;
   publisherHost: string;
-  tags: string[];
+  availableTags: User["projectsTags"];
 };
 
 export const ProjectCard = ({
@@ -260,6 +310,7 @@ export const ProjectCard = ({
   },
   hasProPlan,
   publisherHost,
+  availableTags,
   ...props
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -269,6 +320,12 @@ export const ProjectCard = ({
   const [isHidden, setIsHidden] = useState(false);
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const projectTagsIds = (tags || [])
+    .map((tagId) => {
+      const tag = availableTags.find((tag) => tag.id === tagId);
+      return tag ? tag.id : undefined;
+    })
+    .filter(Boolean) as string[];
 
   useEffect(() => {
     const linkPath = builderUrl({ origin: window.origin, projectId: id });
@@ -332,9 +389,10 @@ export const ProjectCard = ({
             alignContent: "start",
           }}
         >
-          {tags?.map((tag) => (
-            <div key={tag}>{tag}</div>
-          ))}
+          {projectTagsIds.map((tagId) => {
+            const tag = availableTags.find((tag) => tag.id === tagId);
+            return tag ? <div key={tag.id}>{tag.label}</div> : undefined;
+          })}
         </Flex>
       </CardContent>
       <CardFooter>
@@ -409,8 +467,8 @@ export const ProjectCard = ({
       />
       <TagsDialog
         projectId={id}
-        availableTags={props.tags}
-        projectTags={tags ?? []}
+        availableTags={availableTags}
+        projectTagsIds={projectTagsIds}
         isOpen={isTagsDialogOpen}
         onOpenChange={setIsTagsDialogOpen}
       />

@@ -15,12 +15,13 @@ import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
+import type { User } from "~/shared/db/user.server";
 
 export const ProjectsGrid = ({
   projects,
   hasProPlan,
   publisherHost,
-  tags,
+  availableTags,
 }: ProjectsProps) => {
   return (
     <List asChild>
@@ -38,7 +39,7 @@ export const ProjectsGrid = ({
                 project={project}
                 hasProPlan={hasProPlan}
                 publisherHost={publisherHost}
-                tags={tags}
+                availableTags={availableTags}
               />
             </ListItem>
           );
@@ -52,7 +53,7 @@ type ProjectsProps = {
   projects: Array<DashboardProject>;
   hasProPlan: boolean;
   publisherHost: string;
-  tags: string[];
+  availableTags: User["projectsTags"];
 };
 
 export const Projects = (props: ProjectsProps) => {
@@ -87,25 +88,25 @@ export const Projects = (props: ProjectsProps) => {
           },
         }}
       >
-        {props.tags.map((tag) => (
+        {props.availableTags.map((tag) => (
           <Button
-            key={tag}
-            state={selectedTags.includes(tag) ? "pressed" : "auto"}
+            key={tag.id}
+            state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
             onClick={() => {
               const newSearchParams = new URLSearchParams(searchParams);
               newSearchParams.delete("tag");
-              if (!selectedTags.includes(tag)) {
-                newSearchParams.append("tag", tag);
+              if (!selectedTags.includes(tag.id)) {
+                newSearchParams.append("tag", tag.id);
               }
               for (const item of selectedTags) {
-                if (item !== tag) {
+                if (item !== tag.id) {
                   newSearchParams.append("tag", item);
                 }
               }
               setSearchParams(newSearchParams);
             }}
           >
-            {tag}
+            {tag.label}
           </Button>
         ))}
       </Flex>

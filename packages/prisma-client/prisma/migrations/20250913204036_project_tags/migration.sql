@@ -1,6 +1,10 @@
-ALTER TABLE "Project" ADD COLUMN "tags" TEXT[];
+ALTER TABLE
+  "Project"
+ADD
+  COLUMN "tags" TEXT [];
 
 DROP VIEW IF EXISTS "DashboardProject";
+
 CREATE VIEW "DashboardProject" AS
 SELECT
   id,
@@ -12,15 +16,22 @@ SELECT
   "createdAt",
   "previewImageAssetId",
   "marketplaceApprovalStatus",
-  (EXISTS (
-    SELECT 1
-    FROM "Build"
-    WHERE "Build"."projectId" = "Project".id
-    AND "Build".deployment IS NOT NULL)
+  (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "Build"
+      WHERE
+        "Build"."projectId" = "Project".id
+        AND "Build".deployment IS NOT NULL
+    )
   ) AS "isPublished"
-FROM "Project";
+FROM
+  "Project";
 
-DROP VIEW IF EXISTS project_tag;
-CREATE VIEW project_tag AS
-SELECT DISTINCT "userId" as user_id, unnest(tags) AS tag
-FROM "Project" AS project;
+-- AlterTable
+ALTER TABLE
+  "User"
+ADD
+  COLUMN "projectsTags" JSONB;

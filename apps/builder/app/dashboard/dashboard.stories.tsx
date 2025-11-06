@@ -18,6 +18,7 @@ const user = {
   username: "Taylor",
   teamId: null,
   provider: "github",
+  projectsTags: [],
 };
 
 const createRouter = (element: JSX.Element, path: string, current?: string) =>
@@ -59,7 +60,6 @@ const data = {
   userPlanFeatures,
   publisherHost: "https://wstd.work",
   projects,
-  tags: [],
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {
