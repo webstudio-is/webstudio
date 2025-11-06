@@ -136,6 +136,9 @@ export const ProjectCard = ({
   const [isHidden, setIsHidden] = useState(false);
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Makes sure there are no project tags that reference deleted User tags.
+  // We are not deleting project tag from project.tags when deleting User tags.
   const projectTagsIds = (tags || [])
     .map((tagId) => {
       const tag = projectsTags.find((tag) => tag.id === tagId);
