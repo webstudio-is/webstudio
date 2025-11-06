@@ -14,6 +14,8 @@ import {
   rawTheme,
   Link,
   Box,
+  Label,
+  Button,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -110,7 +112,7 @@ type ProjectCardProps = {
   project: DashboardProject;
   hasProPlan: boolean;
   publisherHost: string;
-  availableTags: User["projectsTags"];
+  projectsTags: User["projectsTags"];
 };
 
 export const ProjectCard = ({
@@ -126,7 +128,7 @@ export const ProjectCard = ({
   },
   hasProPlan,
   publisherHost,
-  availableTags,
+  projectsTags,
   ...props
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -138,7 +140,7 @@ export const ProjectCard = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const projectTagsIds = (tags || [])
     .map((tagId) => {
-      const tag = availableTags.find((tag) => tag.id === tagId);
+      const tag = projectsTags.find((tag) => tag.id === tagId);
       return tag ? tag.id : undefined;
     })
     .filter(Boolean) as string[];
@@ -195,21 +197,6 @@ export const ProjectCard = ({
           <ThumbnailLinkWithAbbr title={title} to={linkPath} />
         )}
         {isTransitioning && <Spinner delay={0} />}
-        <Flex
-          wrap="wrap"
-          gap={1}
-          css={{
-            position: "absolute",
-            inset: 0,
-            padding: theme.panel.padding,
-            alignContent: "start",
-          }}
-        >
-          {projectTagsIds.map((tagId) => {
-            const tag = availableTags.find((tag) => tag.id === tagId);
-            return tag ? <div key={tag.id}>{tag.label}</div> : undefined;
-          })}
-        </Flex>
       </CardContent>
       <CardFooter>
         <Flex direction="column" justify="around" grow>
@@ -283,7 +270,7 @@ export const ProjectCard = ({
       />
       <TagsDialog
         projectId={id}
-        availableTags={availableTags}
+        projectsTags={projectsTags}
         projectTagsIds={projectTagsIds}
         isOpen={isTagsDialogOpen}
         onOpenChange={setIsTagsDialogOpen}

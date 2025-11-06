@@ -16,12 +16,13 @@ import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
+import { colors } from "./colors";
 
 export const ProjectsGrid = ({
   projects,
   hasProPlan,
   publisherHost,
-  availableTags,
+  projectsTags,
 }: ProjectsProps) => {
   return (
     <List asChild>
@@ -39,7 +40,7 @@ export const ProjectsGrid = ({
                 project={project}
                 hasProPlan={hasProPlan}
                 publisherHost={publisherHost}
-                availableTags={availableTags}
+                projectsTags={projectsTags}
               />
             </ListItem>
           );
@@ -53,7 +54,7 @@ type ProjectsProps = {
   projects: Array<DashboardProject>;
   hasProPlan: boolean;
   publisherHost: string;
-  availableTags: User["projectsTags"];
+  projectsTags: User["projectsTags"];
 };
 
 export const Projects = (props: ProjectsProps) => {
@@ -65,6 +66,7 @@ export const Projects = (props: ProjectsProps) => {
       setIsSubsetOf(new Set(selectedTags), new Set(project.tags))
     );
   }
+
   return (
     <Main>
       <Header variant="main">
@@ -88,10 +90,13 @@ export const Projects = (props: ProjectsProps) => {
           },
         }}
       >
-        {props.availableTags.map((tag) => (
+        {props.projectsTags.map((tag, index) => (
           <Button
             key={tag.id}
             state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
+            css={{
+              backgroundColor: colors[index] ?? "red",
+            }}
             onClick={() => {
               const newSearchParams = new URLSearchParams(searchParams);
               newSearchParams.delete("tag");

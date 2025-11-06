@@ -77,12 +77,12 @@ const DeleteConfirmationDialog = ({
 
 const TagsList = ({
   projectId,
-  availableTags,
+  projectsTags,
   projectTagsIds,
   onEdit,
 }: {
   projectId: string;
-  availableTags: User["projectsTags"];
+  projectsTags: User["projectsTags"];
   projectTagsIds: string[];
   onEdit: (tagId: string) => void;
 }) => {
@@ -105,7 +105,7 @@ const TagsList = ({
     >
       <List asChild>
         <Grid gap={1} css={{ paddingBlock: theme.panel.paddingBlock }}>
-          {availableTags
+          {projectsTags
             .sort((a, b) => a.label.localeCompare(b.label))
             .map((tag, index) => (
               <ListItem asChild onSelect={() => {}} index={index} key={tag.id}>
@@ -171,7 +171,7 @@ const TagsList = ({
                 </Flex>
               </ListItem>
             ))}
-          {availableTags.length === 0 && (
+          {projectsTags.length === 0 && (
             <Text align="center">No tags found</Text>
           )}
           {deleteConfirmationTagId && (
@@ -180,7 +180,7 @@ const TagsList = ({
               onClose={() => setDeleteConfirmationTagId(undefined)}
               onConfirm={async () => {
                 setDeleteConfirmationTagId(undefined);
-                const updatedTags = availableTags.filter(
+                const updatedTags = projectsTags.filter(
                   (tag) => tag.id !== deleteConfirmationTagId
                 );
                 await nativeClient.user.updateProjectsTags.mutate({
@@ -197,16 +197,16 @@ const TagsList = ({
 };
 
 const TagEdit = ({
-  availableTags,
+  projectsTags,
   tag,
   onComplete,
 }: {
-  availableTags: User["projectsTags"];
+  projectsTags: User["projectsTags"];
   tag: User["projectsTags"][number];
   onComplete: () => void;
 }) => {
   const revalidator = useRevalidator();
-  const isExisting = availableTags.some(({ id }) => id === tag.id);
+  const isExisting = projectsTags.some(({ id }) => id === tag.id);
 
   return (
     <form
@@ -219,14 +219,14 @@ const TagEdit = ({
         }
         let updatedTags = [];
         if (isExisting) {
-          updatedTags = availableTags.map((availableTag) => {
+          updatedTags = projectsTags.map((availableTag) => {
             if (availableTag.id === tag.id) {
               return { ...availableTag, label };
             }
             return availableTag;
           });
         } else {
-          updatedTags = [...availableTags, { id: tag.id, label }];
+          updatedTags = [...projectsTags, { id: tag.id, label }];
         }
 
         await nativeClient.user.updateProjectsTags.mutate({
@@ -265,13 +265,13 @@ const TagEdit = ({
 
 export const TagsDialog = ({
   projectId,
-  availableTags,
+  projectsTags,
   projectTagsIds,
   isOpen,
   onOpenChange,
 }: {
   projectId: string;
-  availableTags: User["projectsTags"];
+  projectsTags: User["projectsTags"];
   projectTagsIds: string[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -295,10 +295,10 @@ export const TagsDialog = ({
           <>
             <TagsList
               projectId={projectId}
-              availableTags={availableTags}
+              projectsTags={projectsTags}
               projectTagsIds={projectTagsIds}
               onEdit={(tagId) => {
-                setEditingTag(availableTags.find((tag) => tag.id === tagId));
+                setEditingTag(projectsTags.find((tag) => tag.id === tagId));
               }}
             />
             <DialogActions>
@@ -317,7 +317,7 @@ export const TagsDialog = ({
         )}
         {editingTag && (
           <TagEdit
-            availableTags={availableTags}
+            projectsTags={projectsTags}
             tag={editingTag}
             onComplete={() => setEditingTag(undefined)}
           />
