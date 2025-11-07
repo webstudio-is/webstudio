@@ -30,6 +30,8 @@ import {
 } from "../shared/thumbnail";
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
+import type { User } from "~/shared/db/user.server";
+import { TagsDialog } from "./tags";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -64,12 +66,14 @@ const Menu = ({
   onRename,
   onDuplicate,
   onShare,
+  onUpdateTags,
 }: {
   tabIndex: number;
   onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
   onShare: () => void;
+  onUpdateTags: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -87,6 +91,7 @@ const Menu = ({
         <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
         <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onUpdateTags}>Tags</DropdownMenuItem>
         <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -105,6 +110,7 @@ type ProjectCardProps = {
   project: DashboardProject;
   hasProPlan: boolean;
   publisherHost: string;
+  projectsTags: User["projectsTags"];
 };
 
 export const ProjectCard = ({
@@ -116,17 +122,29 @@ export const ProjectCard = ({
     createdAt,
     latestBuildVirtual,
     previewImageAsset,
+    tags,
   },
   hasProPlan,
   publisherHost,
+  projectsTags,
   ...props
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Makes sure there are no project tags that reference deleted User tags.
+  // We are not deleting project tag from project.tags when deleting User tags.
+  const projectTagsIds = (tags || [])
+    .map((tagId) => {
+      const tag = projectsTags.find((tag) => tag.id === tagId);
+      return tag ? tag.id : undefined;
+    })
+    .filter(Boolean) as string[];
 
   useEffect(() => {
     const linkPath = builderUrl({ origin: window.origin, projectId: id });
@@ -173,7 +191,33 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-
+        <Flex
+          wrap="wrap"
+          gap={1}
+          css={{
+            position: "absolute",
+            padding: theme.panel.padding,
+            bottom: 0,
+            zIndex: 1,
+          }}
+        >
+          {projectsTags.map((tag) => {
+            const isApplied = projectTagsIds.includes(tag.id);
+            if (isApplied) {
+              return (
+                <Text
+                  color="contrast"
+                  key={tag.id}
+                  css={{
+                    background: "oklch(0 0 0 / 0.3)",
+                    borderRadius: theme.borderRadius[3],
+                    paddingInline: theme.spacing[3],
+                  }}
+                >{`#${tag.label}`}</Text>
+              );
+            }
+          })}
+        </Flex>
         {previewImageAsset ? (
           <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
         ) : (
@@ -225,16 +269,11 @@ export const ProjectCard = ({
         </Flex>
         <Menu
           tabIndex={-1}
-          onDelete={() => {
-            setIsDeleteDialogOpen(true);
-          }}
-          onRename={() => {
-            setIsRenameDialogOpen(true);
-          }}
-          onShare={() => {
-            setIsShareDialogOpen(true);
-          }}
+          onDelete={() => setIsDeleteDialogOpen(true)}
+          onRename={() => setIsRenameDialogOpen(true)}
+          onShare={() => setIsShareDialogOpen(true)}
           onDuplicate={handleCloneProject}
+          onUpdateTags={() => setIsTagsDialogOpen(true)}
         />
       </CardFooter>
       <RenameProjectDialog
@@ -255,6 +294,13 @@ export const ProjectCard = ({
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
         hasProPlan={hasProPlan}
+      />
+      <TagsDialog
+        projectId={id}
+        projectsTags={projectsTags}
+        projectTagsIds={projectTagsIds}
+        isOpen={isTagsDialogOpen}
+        onOpenChange={setIsTagsDialogOpen}
       />
     </Card>
   );

@@ -3,7 +3,7 @@ import {
   type LoaderFunctionArgs,
   type TypedResponse,
 } from "@remix-run/server-runtime";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { allowedDestinations } from "~/services/destinations.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { createContext } from "~/shared/context.server";
@@ -40,7 +40,7 @@ export const loader = async ({
     // @todo Create a context without user authentication information.
     const context = await createContext(request);
 
-    const project = await projectDb.project.loadById(projectId, context);
+    const project = await projectApi.loadById(projectId, context);
     const buildId = project.latestBuildVirtual?.buildId ?? null;
 
     return {

@@ -516,6 +516,7 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
         };
@@ -526,6 +527,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title: string;
           userId?: string | null;
         };
@@ -536,6 +538,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string;
           userId?: string | null;
         };
@@ -680,6 +683,7 @@ export type Database = {
           email: string | null;
           id: string;
           image: string | null;
+          projectsTags: Json;
           provider: string | null;
           teamId: string | null;
           username: string | null;
@@ -689,6 +693,7 @@ export type Database = {
           email?: string | null;
           id: string;
           image?: string | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -698,6 +703,7 @@ export type Database = {
           email?: string | null;
           id?: string;
           image?: string | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -748,6 +754,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string | null;
           userId: string | null;
         };
@@ -761,6 +768,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -774,6 +782,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -895,8 +904,15 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "Project";
+          isOneToOne: true;
+          isSetofReturn: false;
         };
       };
       create_production_build: {
@@ -923,20 +939,48 @@ export type Database = {
           updatedAt: string;
           verified: boolean;
         }[];
+        SetofOptions: {
+          from: '"Project"';
+          to: "domainsVirtual";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
-      latestBuildVirtual: {
-        Args:
-          | { "": Database["public"]["Tables"]["Project"]["Row"] }
-          | { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
-        Returns: {
-          buildId: string;
-          createdAt: string;
-          domain: string;
-          domainsVirtualId: string;
-          projectId: string;
-          publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
-      };
+      latestBuildVirtual:
+        | {
+            Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            };
+            SetofOptions: {
+              from: '"Project"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          }
+        | {
+            Args: { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+            };
+            SetofOptions: {
+              from: '"domainsVirtual"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          };
       latestProjectDomainBuildVirtual: {
         Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
         Returns: {
@@ -946,7 +990,13 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
+        };
+        SetofOptions: {
+          from: '"Project"';
+          to: "latestBuildVirtual";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
       };
       restore_development_build: {
         Args: { from_build_id: string; project_id: string };

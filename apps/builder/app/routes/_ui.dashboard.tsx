@@ -13,7 +13,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { db } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
@@ -121,7 +121,7 @@ const getProjectToClone = async (request: Request, context: AppContext) => {
     throw new AuthorizationError("You don't have access to clone this project");
   }
 
-  const project = await db.project.loadById(
+  const project = await projectApi.loadById(
     token.projectId,
     await context.createTokenContext(projectToCloneAuthToken)
   );
