@@ -31,7 +31,7 @@ import {
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
-import { Tag, TagsDialog } from "./tags";
+import { TagsDialog } from "./tags";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
