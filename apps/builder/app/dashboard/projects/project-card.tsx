@@ -191,21 +191,12 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-
-        {previewImageAsset ? (
-          <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
-        ) : (
-          <ThumbnailLinkWithAbbr title={title} to={linkPath} />
-        )}
-        {isTransitioning && <Spinner delay={0} />}
         <Flex
           wrap="wrap"
           gap={1}
           css={{
             position: "absolute",
-            inset: 0,
             padding: theme.panel.padding,
-            alignContent: "start",
           }}
         >
           {projectsTags.map((tag, index) => {
@@ -219,6 +210,12 @@ export const ProjectCard = ({
             }
           })}
         </Flex>
+        {previewImageAsset ? (
+          <ThumbnailLinkWithImage to={linkPath} name={previewImageAsset.name} />
+        ) : (
+          <ThumbnailLinkWithAbbr title={title} to={linkPath} />
+        )}
+        {isTransitioning && <Spinner delay={0} />}
       </CardContent>
       <CardFooter>
         <Flex direction="column" justify="around" grow>
