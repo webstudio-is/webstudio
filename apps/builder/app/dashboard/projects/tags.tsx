@@ -27,7 +27,7 @@ import {
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
-import { EllipsesIcon } from "@webstudio-is/icons";
+import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
 import { colors } from "./colors";
 
 type DeleteConfirmationDialogProps = {
@@ -286,12 +286,14 @@ export const TagsDialog = ({
   const [editingTag, setEditingTag] = useState<
     User["projectsTags"][number] | undefined
   >();
+  const revalidator = useRevalidator();
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined}>
         <DialogTitle
           suffix={
             <DialogTitleActions>
+              {revalidator.state === "loading" && <SpinnerIcon />}
               <DialogClose />
             </DialogTitleActions>
           }
