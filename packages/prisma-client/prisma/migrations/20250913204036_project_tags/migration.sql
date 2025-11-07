@@ -1,12 +1,12 @@
 ALTER TABLE
   "Project"
 ADD
-  COLUMN "tags" TEXT [];
+  COLUMN IF NOT EXISTS "tags" TEXT [];
 
 ALTER TABLE
   "User"
 ADD
-  COLUMN "projectsTags" JSONB;
+  COLUMN IF NOT EXISTS "projectsTags" JSONB NOT NULL DEFAULT '[]';
 
 DROP VIEW IF EXISTS "DashboardProject";
 

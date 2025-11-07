@@ -683,7 +683,7 @@ export type Database = {
           email: string | null;
           id: string;
           image: string | null;
-          projectsTags: Json | null;
+          projectsTags: Json;
           provider: string | null;
           teamId: string | null;
           username: string | null;
@@ -693,7 +693,7 @@ export type Database = {
           email?: string | null;
           id: string;
           image?: string | null;
-          projectsTags?: Json | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -703,7 +703,7 @@ export type Database = {
           email?: string | null;
           id?: string;
           image?: string | null;
-          projectsTags?: Json | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
