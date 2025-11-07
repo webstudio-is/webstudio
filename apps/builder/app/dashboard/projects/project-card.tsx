@@ -197,15 +197,23 @@ export const ProjectCard = ({
           css={{
             position: "absolute",
             padding: theme.panel.padding,
+            bottom: 0,
+            zIndex: 1,
           }}
         >
-          {projectsTags.map((tag, index) => {
+          {projectsTags.map((tag) => {
             const isApplied = projectTagsIds.includes(tag.id);
             if (isApplied) {
               return (
-                <Tag tag={tag} key={tag.id} index={index} state="pressed">
-                  {tag.label}
-                </Tag>
+                <Text
+                  color="contrast"
+                  key={tag.id}
+                  css={{
+                    background: "oklch(0 0 0 / 0.3)",
+                    borderRadius: theme.borderRadius[3],
+                    paddingInline: theme.spacing[3],
+                  }}
+                >{`#${tag.label}`}</Text>
               );
             }
           })}

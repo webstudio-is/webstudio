@@ -14,6 +14,7 @@ const borderColorVar = "--ws-dashboard-card-border-color";
 
 const cardStyle = css({
   position: "relative",
+  isolation: "isolate",
   display: "flex",
   padding: 0,
   height: "100%",
