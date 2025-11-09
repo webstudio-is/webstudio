@@ -27,8 +27,16 @@ import {
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
-import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
-import { colors } from "./colors";
+import { EllipsesIcon, SpinnerIcon, CheckMarkIcon } from "@webstudio-is/icons";
+
+const DEFAULT_TAG_COLOR = "#6b6b6b";
+const normalizeHexColor = (value: FormDataEntryValue | null) => {
+  const candidate = typeof value === "string" ? value : undefined;
+  if (candidate == null) {
+    return undefined;
+  }
+  return /^#[0-9a-f]{6}$/i.test(candidate) ? candidate : undefined;
+};
 
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
@@ -139,7 +147,18 @@ const TagsList = ({
                       defaultChecked={projectTagsIds.includes(tag.id)}
                     />
                     <Label truncate htmlFor={tag.id}>
-                      {tag.label}
+                      <Text
+                        color="contrast"
+                        key={tag.id}
+                        css={{
+                          background: tag.color ?? "oklch(0 0 0 / 0.3)",
+                          borderRadius: theme.borderRadius[3],
+                          paddingInline: theme.spacing[3],
+                          width: "fit-content",
+                        }}
+                      >
+                        {`#${tag.label}`}
+                      </Text>
                     </Label>
                   </CheckboxAndLabel>
                   <DropdownMenu modal>
@@ -221,19 +240,23 @@ const TagEdit = ({
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const label = ((formData.get("tag") as string) || "").trim();
-        if (tag.label === label || !label) {
+        const color =
+          normalizeHexColor(formData.get("tagColor")) ??
+          tag.color ??
+          DEFAULT_TAG_COLOR;
+        if ((tag.label === label && tag.color === color) || !label) {
           return;
         }
         let updatedTags = [];
         if (isExisting) {
           updatedTags = projectsTags.map((availableTag) => {
             if (availableTag.id === tag.id) {
-              return { ...availableTag, label };
+              return { ...availableTag, label, color };
             }
             return availableTag;
           });
         } else {
-          updatedTags = [...projectsTags, { id: tag.id, label }];
+          updatedTags = [...projectsTags, { id: tag.id, label, color }];
         }
 
         await nativeClient.user.updateProjectsTags.mutate({
@@ -243,14 +266,34 @@ const TagEdit = ({
         onComplete();
       }}
     >
-      <Grid css={{ padding: theme.panel.padding }}>
-        <InputField
-          autoFocus
-          defaultValue={tag.label}
-          name="tag"
-          placeholder="My tag"
-          minLength={1}
-        />
+      <Grid
+        css={{
+          padding: theme.panel.padding,
+          gap: theme.spacing[8],
+        }}
+      >
+        <Flex direction="row" gap="2">
+          <Label htmlFor="tagLabel">Label</Label>
+          <InputField
+            autoFocus
+            defaultValue={tag.label}
+            name="tag"
+            placeholder="My tag"
+            minLength={1}
+          />
+        </Flex>
+
+        <Flex direction="row" gap="2">
+          <Label htmlFor="tagColor">Color</Label>
+          <InputField
+            id="tagColor"
+            name="tagColor"
+            type="color"
+            defaultValue={tag.color ?? DEFAULT_TAG_COLOR}
+            css={{ width: theme.spacing[18], paddingBlock: theme.spacing[1] }}
+            aria-label="Tag color"
+          />
+        </Flex>
       </Grid>
       <DialogActions>
         <Button type="submit">
@@ -340,17 +383,25 @@ export const Tag = ({
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
-  const color = colors[index] ?? theme.colors.backgroundNeutralDark;
+  const isSelected = selectedTagsIds.includes(tag.id);
+  const color = tag.color ?? "oklch(0 0 0 / 0.3)";
   return (
     <Button
       color="neutral"
       css={{
-        "&:hover[data-state='auto'], &[data-state='pressed']": {
-          backgroundColor: color,
+        backgroundColor: color,
+        color: theme.colors.white,
+        "&:hover[data-state='auto']": {
+          backgroundColor: `oklch(from ${color} l c h / 0.9)`,
+          color: theme.colors.white,
+        },
+        "&[data-state='pressed']": {
+          backgroundColor: `oklch(from ${color} l c h / 0.65)`,
           color: theme.colors.white,
         },
         "&[data-state='pressed']:hover": {
-          backgroundColor: `oklch(from ${color} l c h / 0.8)`,
+          backgroundColor: `oklch(from ${color} l c h / 0.6)`,
+          color: theme.colors.white,
         },
       }}
       onClick={() => {
@@ -367,6 +418,13 @@ export const Tag = ({
         setSearchParams(newSearchParams);
       }}
       {...props}
-    />
+    >
+      <Flex align="center" gap="2">
+        {isSelected && (
+          <CheckMarkIcon color={theme.colors.white} style={{ flexShrink: 0 }} />
+        )}
+        <span>{`#${tag.label}`}</span>
+      </Flex>
+    </Button>
   );
 };

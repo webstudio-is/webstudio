@@ -204,12 +204,13 @@ export const ProjectCard = ({
           {projectsTags.map((tag) => {
             const isApplied = projectTagsIds.includes(tag.id);
             if (isApplied) {
+              const backgroundColor = tag.color ?? "oklch(0 0 0 / 0.3)";
               return (
                 <Text
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: "oklch(0 0 0 / 0.3)",
+                    background: backgroundColor,
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}
