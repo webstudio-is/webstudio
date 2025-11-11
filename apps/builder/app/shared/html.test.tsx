@@ -238,14 +238,18 @@ test("generate style attribute as local styles", () => {
 test("script as html embed", () => {
   expect(generateFragmentFromHtml(`<script>a;</script>`)).toEqual(
     renderTemplate(
-      <$.HtmlEmbed clientOnly={true} code={`<script>a;</script>`} />
+      <$.HtmlEmbed
+        ws:label="Script"
+        clientOnly={true}
+        code={`<script>a;</script>`}
+      />
     )
   );
 });
 
 test("style as html embed", () => {
   expect(generateFragmentFromHtml(`<style>a;</style>`)).toEqual(
-    renderTemplate(<$.HtmlEmbed code={`<style>a;</style>`} />)
+    renderTemplate(<$.HtmlEmbed code={`<style>a;</style>`} ws:label="Style" />)
   );
 });
 
