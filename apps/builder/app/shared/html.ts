@@ -19,6 +19,7 @@ import { camelCaseProperty, parseCss } from "@webstudio-is/css-data";
 import { richTextContentTags } from "./content-model";
 import { setIsSubsetOf } from "./shim";
 import { isAttributeNameSafe } from "@webstudio-is/react-sdk";
+import { capitalCase } from "change-case";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -72,10 +73,7 @@ const findContentTags = (element: ElementNode, tags = new Set<string>()) => {
   return tags;
 };
 
-export const generateFragmentFromHtml = (
-  html: string,
-  options?: { unknownTags?: boolean }
-): WebstudioFragment => {
+export const generateFragmentFromHtml = (html: string): WebstudioFragment => {
   const attributeTypes = getAttributeTypes();
   const instances = new Map<Instance["id"], Instance>();
   const styleSourceSelections: StyleSourceSelection[] = [];
@@ -98,6 +96,7 @@ export const generateFragmentFromHtml = (
     breakpoints.push(baseBreakpoint);
     return baseBreakpoint.id;
   };
+
   const createLocalStyles = (instanceId: string, css: string) => {
     const localStyleSource: StyleSource = {
       type: "local",
@@ -117,9 +116,8 @@ export const generateFragmentFromHtml = (
 
   const convertElementToInstance = (node: ElementNode) => {
     if (
-      node.tagName === "svg" &&
-      node.sourceCodeLocation &&
-      options?.unknownTags
+      (node.tagName === "script" || node.tagName === "style") &&
+      node.sourceCodeLocation
     ) {
       const { startCol, startOffset, endOffset } = node.sourceCodeLocation;
       const indent = startCol - 1;
@@ -138,18 +136,26 @@ export const generateFragmentFromHtml = (
         type: "instance",
         id: getNewId(),
         component: "HtmlEmbed",
+        label: capitalCase(node.tagName),
         children: [],
       };
       instances.set(instance.id, instance);
-      const name = "code";
-      const codeProp: Prop = {
-        id: `${instance.id}:${name}`,
+      if (node.tagName === "script") {
+        props.push({
+          id: `${instance.id}:clientOnly`,
+          instanceId: instance.id,
+          name: "clientOnly",
+          type: "boolean",
+          value: true,
+        });
+      }
+      props.push({
+        id: `${instance.id}:code`,
         instanceId: instance.id,
-        name,
+        name: "code",
         type: "string",
         value: htmlFragment,
-      };
-      props.push(codeProp);
+      });
       return { type: "id" as const, value: instance.id };
     }
     if (!tags.includes(node.tagName)) {
