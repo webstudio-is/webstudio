@@ -1617,8 +1617,8 @@ const DeleteConfirmationDialog = ({
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Are you sure you want to delete "${page.name}"?`}</Text>
           <Text>
-            This action cannot be undone. The page and all its content will be
-            permanently deleted.
+            You can undo it even if you delete the page as long as you don't
+            reload.
           </Text>
           <Flex direction="rowReverse" gap="2">
             <DialogClose>
