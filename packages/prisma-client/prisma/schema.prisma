@@ -66,6 +66,7 @@ model User {
   team             Team?              @relation(fields: [teamId], references: [id])
   teamId           String?
   projects         Project[]
+  projectsTags     Json               @default("[]")
   clientReferences ClientReferences[]
   checkout         TransactionLog[]
   products         UserProduct[]
@@ -144,6 +145,8 @@ model Project {
   id                        String                       @id @default(uuid())
   createdAt                 DateTime                     @default(now()) @db.Timestamptz(3)
   title                     String
+  // Tag ids used in User.projectTags
+  tags                      String[]
   domain                    String                       @unique
   user                      User?                        @relation(fields: [userId], references: [id])
   userId                    String?

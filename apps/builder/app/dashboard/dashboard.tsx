@@ -256,6 +256,7 @@ export const Dashboard = () => {
             projects={projects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
+            projectsTags={user.projectsTags}
           />
         )}
         {view === "templates" && <Templates projects={templates} />}

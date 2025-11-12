@@ -92,13 +92,8 @@ test("ignore custom elements", () => {
 
 test("ignore not allowed tags", () => {
   expect(
-    generateFragmentFromHtml(`
-      <style>style</style>
-      <script>script</script>
-      <template>template</template>
-      <section></section>
-   `)
-  ).toEqual(renderTemplate(<ws.element ws:tag="section"></ws.element>));
+    generateFragmentFromHtml(`<div><marquee>test</marquee></div>`)
+  ).toEqual(renderTemplate(<ws.element ws:tag="div"></ws.element>));
 });
 
 test("generate props from html attributes", () => {
@@ -240,30 +235,21 @@ test("generate style attribute as local styles", () => {
   );
 });
 
-test("optionally paste svg as html embed", () => {
-  expect(
-    generateFragmentFromHtml(
-      `
-        <div>
-          <svg viewBox="0 0 20 20">
-            <rect x="5" y="5" width="10" height="10" />
-          </svg>
-        </div>
-      `,
-      {
-        unknownTags: true,
-      }
-    )
-  ).toEqual(
+test("script as html embed", () => {
+  expect(generateFragmentFromHtml(`<script>a;</script>`)).toEqual(
     renderTemplate(
-      <ws.element ws:tag="div">
-        <$.HtmlEmbed
-          code={`<svg viewBox="0 0 20 20">
-  <rect x="5" y="5" width="10" height="10" />
-</svg>`}
-        />
-      </ws.element>
+      <$.HtmlEmbed
+        ws:label="Script"
+        clientOnly={true}
+        code={`<script>a;</script>`}
+      />
     )
+  );
+});
+
+test("style as html embed", () => {
+  expect(generateFragmentFromHtml(`<style>a;</style>`)).toEqual(
+    renderTemplate(<$.HtmlEmbed code={`<style>a;</style>`} ws:label="Style" />)
   );
 });
 

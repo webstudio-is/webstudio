@@ -63,6 +63,7 @@ export const SearchResults = (props: DashboardData) => {
               projects={results.projects}
               hasProPlan={userPlanFeatures.hasProPlan}
               publisherHost={publisherHost}
+              projectsTags={props.user.projectsTags}
             />
           </>
         )}

@@ -420,7 +420,11 @@ export const DialogTitle = ({
 };
 
 export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
-  return <Flex gap="1">{children}</Flex>;
+  return (
+    <Flex gap="1" align="center">
+      {children}
+    </Flex>
+  );
 };
 
 export const DialogActions = ({ children }: { children: ReactNode }) => {
