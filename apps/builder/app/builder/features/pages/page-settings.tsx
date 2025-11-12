@@ -57,6 +57,10 @@ import {
   TitleSuffixSpacer,
   FloatingPanelProvider,
   ProBadge,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
 } from "@webstudio-is/design-system";
 import {
   ChevronsLeftIcon,
@@ -1477,6 +1481,9 @@ export const PageSettings = ({
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    useState<boolean>(false);
+
   const values: Values = {
     ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
@@ -1532,6 +1539,10 @@ export const PageSettings = ({
     updatePage(pageId, unsavedValues);
   });
 
+  const handleRequestDelete = () => {
+    setShowDeleteConfirmation(true);
+  };
+
   const hanldeDelete = () => {
     updateWebstudioData((data) => {
       deletePageMutable(pageId, data);
@@ -1544,27 +1555,90 @@ export const PageSettings = ({
   }
 
   return (
-    <PageSettingsView
-      onClose={onClose}
-      onDelete={values.isHomePage === false ? hanldeDelete : undefined}
-      onDuplicate={() => {
-        const newPageId = duplicatePage(pageId);
-        if (newPageId !== undefined) {
-          // In `canvas.tsx`, within `subscribeStyles`, we use `requestAnimationFrame` (RAF) for style recalculation.
-          // After `duplicatePage`, styles are not yet recalculated.
-          // To ensure they are properly updated, we use double RAF.
-          requestAnimationFrame(() => {
-            // At this tick styles are updating
+    <>
+      <PageSettingsView
+        onClose={onClose}
+        onDelete={values.isHomePage === false ? handleRequestDelete : undefined}
+        onDuplicate={() => {
+          const newPageId = duplicatePage(pageId);
+          if (newPageId !== undefined) {
+            // In `canvas.tsx`, within `subscribeStyles`, we use `requestAnimationFrame` (RAF) for style recalculation.
+            // After `duplicatePage`, styles are not yet recalculated.
+            // To ensure they are properly updated, we use double RAF.
             requestAnimationFrame(() => {
-              // At this tick styles are updated
-              onDuplicate(newPageId);
+              // At this tick styles are updating
+              requestAnimationFrame(() => {
+                // At this tick styles are updated
+                onDuplicate(newPageId);
+              });
             });
-          });
+          }
+        }}
+      >
+        <FormFields errors={errors} values={values} onChange={handleChange} />
+      </PageSettingsView>
+      {showDeleteConfirmation && page && (
+        <DeleteConfirmationDialog
+          page={page}
+          onClose={() => {
+            setShowDeleteConfirmation(false);
+          }}
+          onConfirm={() => {
+            setShowDeleteConfirmation(false);
+            hanldeDelete();
+          }}
+        />
+      )}
+    </>
+  );
+};
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  page: Page;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  page,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
         }
       }}
     >
-      <FormFields errors={errors} values={values} onChange={handleChange} />
-    </PageSettingsView>
+      <DialogContent>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+          <Text>{`Are you sure you want to delete "${page.name}"?`}</Text>
+          <Text>
+            You can undo it even if you delete the page as long as you don't
+            reload.
+          </Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete Page
+              </Button>
+            </DialogClose>
+            <DialogClose>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete Page</DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };
 
