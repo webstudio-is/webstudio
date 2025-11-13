@@ -12,17 +12,17 @@ import namesPlugin from "colord/plugins/names";
 
 extend([namesPlugin]);
 
-export interface GradientStop {
+export type GradientStop = {
   color?: RgbValue;
   position?: UnitValue;
   hint?: UnitValue;
-}
+};
 
-export interface ParsedGradient {
+export type ParsedGradient = {
   angle?: UnitValue;
   sideOrCorner?: KeywordValue;
   stops: GradientStop[];
-}
+};
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
 
