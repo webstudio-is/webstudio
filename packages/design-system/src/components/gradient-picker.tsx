@@ -1,3 +1,4 @@
+import { clamp } from "@react-aria/utils";
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
 import {
   useState,
@@ -35,9 +36,6 @@ const defaultAngle: UnitValue = {
 
 const THUMB_INTERACTION_PX = 12;
 
-const clamp = (value: number, min = 0, max = 100) =>
-  Math.min(Math.max(value, min), max);
-
 export const GradientPicker = (props: GradientPickerProps) => {
   const { gradient, onChange, onThumbSelected } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
@@ -74,7 +72,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
 
   const updateStopPosition = useCallback(
     (index: number, value: number) => {
-      const nextValue = clamp(value);
+      const nextValue = clamp(value, 0, 100);
       updateStops((currentStops) => {
         if (index < 0 || index >= currentStops.length) {
           return currentStops;
@@ -114,7 +112,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
       return 0;
     }
     const relativePosition = clientX - rect.left;
-    return clamp(Math.round((relativePosition / rect.width) * 100));
+    return clamp(Math.round((relativePosition / rect.width) * 100), 0, 100);
   }, []);
 
   const checkIfStopExistsAtPosition = useCallback(
