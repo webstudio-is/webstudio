@@ -12,10 +12,12 @@ import {
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
-import { styled, theme, Flex, Box } from "@webstudio-is/design-system";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
+import { styled, theme } from "../stitches.config";
+import { Flex } from "./flex";
+import { Box } from "./box";
 
 extend([mixPlugin]);
 
@@ -31,10 +33,10 @@ const defaultAngle: UnitValue = {
   unit: "deg",
 };
 
+const THUMB_INTERACTION_PX = 12;
+
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(Math.max(value, min), max);
-
-const THUMB_INTERACTION_PX = 12;
 
 export const GradientControl = (props: GradientControlProps) => {
   const { gradient, onChange, onThumbSelected } = props;
@@ -47,7 +49,7 @@ export const GradientControl = (props: GradientControlProps) => {
     .map((stop) => stop.position?.value)
     .filter((item): item is number => item !== undefined);
   const hints = gradient.stops
-    .map((stop) => stop.hint?.value)
+    .map((stop): number | undefined => stop.hint?.value)
     .filter((item): item is number => item !== undefined);
   const background = reconstructLinearGradient({
     stops,
@@ -486,3 +488,5 @@ const SliderThumbTrigger = styled(Box, {
   borderRadius: theme.borderRadius[4],
   backgroundColor: "inherit",
 });
+
+export type { GradientControlProps };

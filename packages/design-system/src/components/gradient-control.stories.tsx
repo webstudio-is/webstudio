@@ -3,9 +3,10 @@ import {
   reconstructLinearGradient,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
-import { GradientControl } from "./gradient-control";
-import { Flex, Text } from "@webstudio-is/design-system";
 import { useState } from "react";
+import { GradientControl } from "./gradient-control";
+import { Flex } from "./flex";
+import { Text } from "./text";
 
 export default {
   title: "Library/GradientControl",
@@ -50,7 +51,6 @@ export const GradientWithAngleAndHints = () => {
 
 export const GradientWithSideOrCorner = () => {
   const gradientString = "linear-gradient(to left top, blue 0%, red 100%)";
-
   const [gradient, setGradient] = useState<string>(gradientString);
 
   return (
