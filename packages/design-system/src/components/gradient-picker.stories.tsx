@@ -4,12 +4,12 @@ import {
   type ParsedGradient,
 } from "@webstudio-is/css-data";
 import { useState } from "react";
-import { GradientControl } from "./gradient-control";
+import { GradientPicker } from "./gradient-picker";
 import { Flex } from "./flex";
 import { Text } from "./text";
 
 export default {
-  title: "Library/GradientControl",
+  title: "Library/GradientPicker",
 };
 
 export const GradientWithoutAngle = () => {
@@ -18,7 +18,7 @@ export const GradientWithoutAngle = () => {
 
   return (
     <Flex direction="column" gap="4">
-      <GradientControl
+      <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
@@ -37,7 +37,7 @@ export const GradientWithAngleAndHints = () => {
 
   return (
     <Flex direction="column" gap="4">
-      <GradientControl
+      <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));
@@ -55,7 +55,7 @@ export const GradientWithSideOrCorner = () => {
 
   return (
     <Flex direction="column" gap="4">
-      <GradientControl
+      <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value) => {
           setGradient(reconstructLinearGradient(value));

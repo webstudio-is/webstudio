@@ -21,7 +21,7 @@ import { Box } from "./box";
 
 extend([mixPlugin]);
 
-type GradientControlProps = {
+type GradientPickerProps = {
   gradient: ParsedGradient;
   onChange: (value: ParsedGradient) => void;
   onThumbSelected: (index: number, stop: GradientStop) => void;
@@ -38,7 +38,7 @@ const THUMB_INTERACTION_PX = 12;
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(Math.max(value, min), max);
 
-export const GradientControl = (props: GradientControlProps) => {
+export const GradientPicker = (props: GradientPickerProps) => {
   const { gradient, onChange, onThumbSelected } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
@@ -489,4 +489,4 @@ const SliderThumbTrigger = styled(Box, {
   backgroundColor: "inherit",
 });
 
-export type { GradientControlProps };
+export type { GradientPickerProps };
