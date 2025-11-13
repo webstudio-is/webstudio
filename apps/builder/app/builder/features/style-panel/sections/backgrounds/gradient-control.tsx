@@ -1,6 +1,12 @@
 import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
-import { Slider, Range, Thumb, Track } from "@radix-ui/react-slider";
-import { useState, useCallback } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   reconstructLinearGradient,
   type GradientStop,
@@ -25,155 +31,327 @@ const defaultAngle: UnitValue = {
   unit: "deg",
 };
 
+const clamp = (value: number, min = 0, max = 100) =>
+  Math.min(Math.max(value, min), max);
+
+const THUMB_INTERACTION_PX = 12;
+
 export const GradientControl = (props: GradientControlProps) => {
-  const [stops, setStops] = useState<Array<GradientStop>>(props.gradient.stops);
+  const { gradient, onChange, onThumbSelected } = props;
+  const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+
   const positions = stops
     .map((stop) => stop.position?.value)
-    .filter((item) => item !== undefined);
-  const hints = props.gradient.stops
+    .filter((item): item is number => item !== undefined);
+  const hints = gradient.stops
     .map((stop) => stop.hint?.value)
-    .filter((item) => item !== undefined);
+    .filter((item): item is number => item !== undefined);
   const background = reconstructLinearGradient({
     stops,
-    sideOrCorner: props.gradient.sideOrCorner,
+    sideOrCorner: gradient.sideOrCorner,
     angle: defaultAngle,
   });
 
-  // Every color stop should have a position asociated for us in-order to display the slider thumb.
-  // But when users manually enter linear-gradient from the advanced-panel. They might add something like this
-  // linear-gradient(to right, red, blue), or linear-gradient(150deg, red, blue 50%, yellow 50px)
-  // Browsers handels all these cases by following the rules of the css spec.
-  // https://www.w3.org/TR/css-images-4/#color-stop-fixup
-  // In order to handle such inputs from the advanced tab too. We need to implement the color-stop-fix-up spec during parsing.
-  // But for now, we are just checking if every stop has a position or not. Since the main use-case is to add gradients from ui.
-  // We will never run into this case of a color-stop missing a position associated with it.
-  const isEveryStopHasAPosition = stops.every(
-    (stop) => stop.position !== undefined && stop.color !== undefined
-  );
-
-  const handleValueChange = useCallback(
-    (newPositions: number[]) => {
-      const newStops: GradientStop[] = stops.map((stop, index) => ({
-        ...stop,
-        position: { type: "unit", value: newPositions[index], unit: "%" },
-      }));
-
-      setStops(newStops);
-      props.onChange({
-        angle: props.gradient.angle,
-        stops: newStops,
-        sideOrCorner: props.gradient.sideOrCorner,
+  const updateStops = useCallback(
+    (updater: (currentStops: GradientStop[]) => GradientStop[]) => {
+      setStops((currentStops) => {
+        const nextStops = updater(currentStops);
+        onChange({
+          angle: gradient.angle,
+          stops: nextStops,
+          sideOrCorner: gradient.sideOrCorner,
+        });
+        return nextStops;
       });
     },
-    [stops, props]
+    [gradient.angle, gradient.sideOrCorner, onChange]
   );
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === "Backspace" && selectedStop !== undefined) {
-        const newStops = stops;
-        newStops.splice(selectedStop, 1);
-        setStops(newStops);
-        setSelectedStop(undefined);
-      }
+  const updateStopPosition = useCallback(
+    (index: number, value: number) => {
+      const nextValue = clamp(value);
+      updateStops((currentStops) => {
+        if (index < 0 || index >= currentStops.length) {
+          return currentStops;
+        }
+
+        return currentStops.map((stop, stopIndex) => {
+          if (stopIndex !== index) {
+            return stop;
+          }
+
+          const nextPosition = {
+            type: "unit",
+            unit: "%",
+            value: nextValue,
+          } as const;
+
+          if (stop.position === undefined) {
+            return {
+              ...stop,
+              position: nextPosition,
+            };
+          }
+
+          return {
+            ...stop,
+            position: nextPosition,
+          };
+        });
+      });
     },
-    [stops, selectedStop]
+    [updateStops]
   );
+
+  const computePositionFromClientX = useCallback((clientX: number) => {
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (rect === undefined || rect.width === 0) {
+      return 0;
+    }
+    const relativePosition = clientX - rect.left;
+    return clamp(Math.round((relativePosition / rect.width) * 100));
+  }, []);
 
   const checkIfStopExistsAtPosition = useCallback(
     (
-      event: React.MouseEvent<HTMLSpanElement>
-    ): { isStopExistingAtPosition: boolean; newPosition: number } => {
-      const sliderWidth = event.currentTarget.offsetWidth;
-      const clickedPosition =
-        event.clientX - event.currentTarget.getBoundingClientRect().left;
-      const newPosition = Math.ceil((clickedPosition / sliderWidth) * 100);
-      // The 8px buffer here is the width of the thumb.
-      // We don't want to add a new stop if the user clicks on the thumb.
-      const isStopExistingAtPosition = positions.some(
-        (position) => Math.abs(newPosition - position) <= 8
-      );
+      clientX: number
+    ): {
+      isStopExistingAtPosition: boolean;
+      newPosition: number;
+    } => {
+      const rect = sliderRef.current?.getBoundingClientRect();
+      const newPosition = computePositionFromClientX(clientX);
+
+      if (rect === undefined || rect.width === 0) {
+        return { isStopExistingAtPosition: false, newPosition };
+      }
+
+      const relativeX = clamp(clientX - rect.left, 0, rect.width);
+      const isStopExistingAtPosition = positions.some((position) => {
+        const positionPx = (position / 100) * rect.width;
+        return Math.abs(positionPx - relativeX) <= THUMB_INTERACTION_PX;
+      });
 
       return { isStopExistingAtPosition, newPosition };
     },
-    [positions]
-  );
-
-  const handlePointerDown = useCallback(
-    (event: React.MouseEvent<HTMLSpanElement>) => {
-      if (event.target === undefined || event.target === null) {
-        return;
-      }
-
-      // radix-slider automatically brings the closest thumb to the clicked position.
-      // But, we want it be prevented. For adding a new color-stop where the user clicked.
-      // And handle the change in values only even for scrubing when the user is dragging the thumb.
-      const { isStopExistingAtPosition, newPosition } =
-        checkIfStopExistsAtPosition(event);
-
-      if (isStopExistingAtPosition === true) {
-        return;
-      }
-
-      // Adding a new stop when user clicks on the slider.
-      event.preventDefault();
-      const newStopIndex = positions.findIndex(
-        (position) => position > newPosition
-      );
-      const index = newStopIndex === -1 ? stops.length : newStopIndex;
-      const prevColor = stops[index === 0 ? 0 : index - 1].color;
-      const nextColor =
-        stops[index === positions.length ? index - 1 : index].color;
-
-      const interpolationColor = colord(toValue(prevColor))
-        .mix(colord(toValue(nextColor)), newPosition / 100)
-        .toRgb();
-
-      const newColorStop: RgbValue = {
-        type: "rgb",
-        alpha: interpolationColor.a,
-        r: interpolationColor.r,
-        g: interpolationColor.g,
-        b: interpolationColor.b,
-      };
-
-      const newStops: GradientStop[] = [
-        ...stops.slice(0, index),
-        {
-          color: newColorStop,
-          position: { type: "unit", value: newPosition, unit: "%" },
-        },
-        ...stops.slice(index),
-      ];
-
-      setStops(newStops);
-      setIsHoveredOnStop(true);
-      props.onChange({
-        angle: props.gradient.angle,
-        stops: newStops,
-        sideOrCorner: props.gradient.sideOrCorner,
-      });
-    },
-    [stops, positions, checkIfStopExistsAtPosition, props]
+    [computePositionFromClientX, positions]
   );
 
   const handleStopSelected = useCallback(
     (index: number, stop: GradientStop) => {
       setSelectedStop(index);
-      props.onThumbSelected(index, stop);
+      onThumbSelected(index, stop);
     },
-    [props]
+    [onThumbSelected]
   );
 
-  const handleMouseEnter = (event: React.MouseEvent<HTMLSpanElement>) => {
-    const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(event);
-    setIsHoveredOnStop(isStopExistingAtPosition);
-  };
+  const handleThumbPointerDown = useCallback(
+    (index: number, stop: GradientStop) =>
+      (event: ReactPointerEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
 
-  if (isEveryStopHasAPosition === false) {
-    return;
+        handleStopSelected(index, stop);
+        setIsHoveredOnStop(true);
+
+        const pointerId = event.pointerId;
+        const target = event.currentTarget;
+        target.setPointerCapture(pointerId);
+
+        const handlePointerMove = (moveEvent: PointerEvent) => {
+          const newPosition = computePositionFromClientX(moveEvent.clientX);
+          updateStopPosition(index, newPosition);
+        };
+
+        const handlePointerUp = () => {
+          target.releasePointerCapture(pointerId);
+          target.removeEventListener("pointermove", handlePointerMove);
+          target.removeEventListener("pointerup", handlePointerUp);
+          target.removeEventListener("pointercancel", handlePointerUp);
+          setIsHoveredOnStop(false);
+        };
+
+        target.addEventListener("pointermove", handlePointerMove);
+        target.addEventListener("pointerup", handlePointerUp);
+        target.addEventListener("pointercancel", handlePointerUp);
+      },
+    [computePositionFromClientX, handleStopSelected, updateStopPosition]
+  );
+
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (selectedStop === undefined) {
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        let nextSelection:
+          | { index: number | undefined; stop?: GradientStop }
+          | undefined;
+
+        updateStops((currentStops) => {
+          if (selectedStop < 0 || selectedStop >= currentStops.length) {
+            return currentStops;
+          }
+
+          const nextStops = currentStops.filter(
+            (_, index) => index !== selectedStop
+          );
+
+          if (nextStops.length > 0) {
+            const candidateIndex = Math.min(selectedStop, nextStops.length - 1);
+            nextSelection = {
+              index: candidateIndex,
+              stop: nextStops[candidateIndex],
+            };
+          } else {
+            nextSelection = { index: undefined };
+          }
+
+          return nextStops;
+        });
+
+        if (nextSelection?.index !== undefined && nextSelection.stop) {
+          setSelectedStop(nextSelection.index);
+          onThumbSelected(nextSelection.index, nextSelection.stop);
+        } else {
+          setSelectedStop(undefined);
+        }
+
+        return;
+      }
+
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        const step = event.shiftKey ? 10 : 1;
+        const delta = event.key === "ArrowLeft" ? -step : step;
+        const currentPosition = stops[selectedStop]?.position?.value ?? 0;
+        updateStopPosition(selectedStop, currentPosition + delta);
+      }
+    },
+    [onThumbSelected, selectedStop, stops, updateStopPosition, updateStops]
+  );
+
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest("[data-thumb='true']")
+      ) {
+        return;
+      }
+
+      const { isStopExistingAtPosition, newPosition } =
+        checkIfStopExistsAtPosition(event.clientX);
+
+      if (isStopExistingAtPosition === true) {
+        return;
+      }
+
+      event.preventDefault();
+
+      let nextSelection: { index: number; stop: GradientStop } | undefined;
+
+      updateStops((currentStops) => {
+        if (currentStops.length === 0) {
+          return currentStops;
+        }
+
+        const currentPositions = currentStops
+          .map((stop) => stop.position?.value)
+          .filter((value): value is number => value !== undefined);
+
+        const newStopIndex = currentPositions.findIndex(
+          (position) => position > newPosition
+        );
+        const insertionIndex =
+          newStopIndex === -1 ? currentStops.length : newStopIndex;
+
+        const prevIndex = insertionIndex === 0 ? 0 : insertionIndex - 1;
+        const nextIndex =
+          insertionIndex === currentStops.length
+            ? currentStops.length - 1
+            : insertionIndex;
+
+        const prevColor = currentStops[prevIndex]?.color;
+        const nextColor = currentStops[nextIndex]?.color ?? prevColor;
+
+        if (prevColor === undefined && nextColor === undefined) {
+          return currentStops;
+        }
+
+        const interpolationColor =
+          prevColor !== undefined && nextColor !== undefined
+            ? colord(toValue(prevColor))
+                .mix(colord(toValue(nextColor)), newPosition / 100)
+                .toRgb()
+            : colord(toValue((prevColor ?? nextColor)!)).toRgb();
+
+        const newColorStop: RgbValue = {
+          type: "rgb",
+          alpha: interpolationColor.a,
+          r: interpolationColor.r,
+          g: interpolationColor.g,
+          b: interpolationColor.b,
+        };
+
+        const newStop: GradientStop = {
+          color: newColorStop,
+          position: { type: "unit", value: newPosition, unit: "%" },
+        };
+
+        const nextStops: GradientStop[] = [
+          ...currentStops.slice(0, insertionIndex),
+          newStop,
+          ...currentStops.slice(insertionIndex),
+        ];
+
+        nextSelection = { index: insertionIndex, stop: newStop };
+
+        return nextStops;
+      });
+
+      if (nextSelection !== undefined) {
+        setSelectedStop(nextSelection.index);
+        onThumbSelected(nextSelection.index, nextSelection.stop);
+      }
+
+      setIsHoveredOnStop(true);
+    },
+    [checkIfStopExistsAtPosition, onThumbSelected, updateStops]
+  );
+
+  const handleMouseIndicator = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(
+        event.clientX
+      );
+      setIsHoveredOnStop(isStopExistingAtPosition);
+    },
+    [checkIfStopExistsAtPosition]
+  );
+
+  const handleSliderFocus = useCallback(() => {
+    if (selectedStop !== undefined || stops.length === 0) {
+      return;
+    }
+
+    const [firstStop] = stops;
+    if (firstStop !== undefined) {
+      handleStopSelected(0, firstStop);
+    }
+  }, [handleStopSelected, selectedStop, stops]);
+
+  if (
+    stops.some(
+      (stop) => stop.position === undefined || stop.color === undefined
+    )
+  ) {
+    return null;
   }
 
   return (
@@ -184,49 +362,48 @@ export const GradientControl = (props: GradientControlProps) => {
       }}
     >
       <SliderRoot
+        ref={sliderRef}
         css={{ background }}
-        max={100}
-        step={1}
-        value={positions}
-        onValueChange={handleValueChange}
-        onKeyDown={handleKeyDown}
-        onPointerDown={handlePointerDown}
         isHoveredOnStop={isHoveredOnStop}
-        onMouseEnter={handleMouseEnter}
-        onMouseMove={handleMouseEnter}
+        tabIndex={0}
+        role="group"
+        aria-label="Gradient stops"
+        onPointerDown={handlePointerDown}
+        onKeyDown={handleKeyDown}
+        onFocus={handleSliderFocus}
+        onMouseEnter={handleMouseIndicator}
+        onMouseMove={handleMouseIndicator}
         onMouseLeave={() => setIsHoveredOnStop(false)}
       >
-        <Track>
-          <SliderRange />
-        </Track>
+        <SliderTrack />
         {stops.map((stop, index) => {
           if (stop.color === undefined || stop.position === undefined) {
-            return;
+            return null;
           }
 
           return (
             <SliderThumb
               key={index}
+              data-thumb="true"
               style={{
+                left: `${stop.position.value}%`,
                 background: toValue(stop.color),
               }}
+              role="slider"
+              aria-orientation="horizontal"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={stop.position.value}
+              aria-label={`Gradient stop ${index + 1}`}
+              tabIndex={-1}
+              onPointerDown={handleThumbPointerDown(index, stop)}
               onClick={() => handleStopSelected(index, stop)}
             >
-              <SliderThumbTrigger />
+              <SliderThumbTrigger data-thumb="true" />
             </SliderThumb>
           );
         })}
 
-        {/*
-            Hints are displayed as a chevron icon below the slider thumb.
-            Usually hints are used to display the behaviour of the color-stop that is preciding.
-            But, if we just move them along the UI. We will be basically altering the gradient itself.
-            Because the position of the hint is the position of the color-stop. And moving it along, might associate the hint
-            with a different color-stop. So, we are not allowing the user to move the hint along the slider.
-
-            None of the tools are even displaying the hints at the moment. We are just displaying them so users can know
-            they are hints associated with stops if they managed to add gradient from the advanced tab.
-        */}
         {hints.map((hint) => {
           return (
             <Flex
@@ -248,7 +425,7 @@ export const GradientControl = (props: GradientControlProps) => {
   );
 };
 
-const SliderRoot = styled(Slider, {
+const SliderRoot = styled("div", {
   position: "relative",
   width: "100%",
   height: theme.spacing[9],
@@ -256,6 +433,7 @@ const SliderRoot = styled(Slider, {
   borderRadius: theme.borderRadius[3],
   touchAction: "none",
   userSelect: "none",
+  outline: "none",
   variants: {
     isHoveredOnStop: {
       true: {
@@ -266,21 +444,30 @@ const SliderRoot = styled(Slider, {
       },
     },
   },
+  "&:focus-visible": {
+    boxShadow: `0 0 0 2px ${theme.colors.borderFocus}`,
+  },
 });
 
-const SliderRange = styled(Range, {
+const SliderTrack = styled("div", {
   position: "absolute",
-  background: "transparent",
+  inset: 0,
   borderRadius: theme.borderRadius[3],
+  pointerEvents: "none",
 });
 
-const SliderThumb = styled(Thumb, {
+const SliderThumb = styled(Box, {
+  position: "absolute",
   display: "block",
-  transform: `translateY(calc(-1 * ${theme.spacing[9]} - 10px))`,
+  transform: `translate(-50%, calc(-1 * ${theme.spacing[9]} - 10px))`,
   outline: `3px solid ${theme.colors.borderFocus}`,
   borderRadius: theme.borderRadius[5],
   outlineOffset: -3,
-
+  zIndex: 1,
+  cursor: "grab",
+  "&:active": {
+    cursor: "grabbing",
+  },
   "&::before": {
     content: "''",
     position: "absolute",
@@ -296,4 +483,6 @@ const SliderThumb = styled(Thumb, {
 const SliderThumbTrigger = styled(Box, {
   width: theme.spacing[10],
   height: theme.spacing[10],
+  borderRadius: theme.borderRadius[4],
+  backgroundColor: "inherit",
 });
