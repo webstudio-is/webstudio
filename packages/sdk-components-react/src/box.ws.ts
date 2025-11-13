@@ -1,9 +1,4 @@
-import { BoxIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
   div,
   address,
@@ -19,11 +14,6 @@ import {
 import { props } from "./__generated__/box.props";
 
 export const meta: WsComponentMeta = {
-  category: "general",
-  description:
-    "A container for content. By default this is a Div, but the tag can be changed in settings.",
-  icon: BoxIcon,
-  states: defaultStates,
   presetStyle: {
     div,
     address,
@@ -36,10 +26,7 @@ export const meta: WsComponentMeta = {
     nav,
     section,
   },
-  order: 0,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["tag", "id", "class"],
   props: {
     ...props,
     tag: {
@@ -61,5 +48,4 @@ export const propsMeta: WsComponentPropsMeta = {
       ],
     },
   },
-  initialProps: ["tag", "id", "className"],
 };

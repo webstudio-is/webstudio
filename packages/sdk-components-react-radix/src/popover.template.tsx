@@ -1,3 +1,4 @@
+import { LargeXIcon } from "@webstudio-is/icons/svg";
 import {
   $,
   css,
@@ -14,6 +15,8 @@ import {
   spacing,
   width,
   zIndex,
+  height,
+  opacity,
 } from "./shared/theme";
 
 /**
@@ -52,6 +55,38 @@ export const meta: TemplateMeta = {
         `}
       >
         <$.Text>{new PlaceholderValue("The text you can edit")}</$.Text>
+        <radix.PopoverClose
+          ws:label="Close Button"
+          /**
+           * absolute right-4 top-4
+           * rounded-sm opacity-70
+           * ring-offset-background
+           * hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+           * flex items-center justify-center h-4 w-4
+           **/
+          ws:style={css`
+            position: absolute;
+            right: ${spacing[4]};
+            top: ${spacing[4]};
+            border-radius: ${borderRadius.sm};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: ${height[4]};
+            width: ${height[4]};
+            border: 0;
+            background-color: transparent;
+            outline: none;
+            &:hover {
+              opacity: ${opacity[100]};
+            }
+            &:focus-visible {
+              box-shadow: ${boxShadow.ring};
+            }
+          `}
+        >
+          <$.HtmlEmbed ws:label="Close Icon" code={LargeXIcon} />
+        </radix.PopoverClose>
       </radix.PopoverContent>
     </radix.Popover>
   ),

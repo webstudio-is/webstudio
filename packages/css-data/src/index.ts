@@ -15,6 +15,4 @@ export * from "./parse-css";
 export * from "./shorthands";
 export { shorthandProperties } from "./__generated__/shorthand-properties";
 
-export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
-
 export { properties as propertiesData } from "./__generated__/properties";

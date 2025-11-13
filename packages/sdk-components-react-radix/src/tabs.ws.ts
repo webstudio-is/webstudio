@@ -4,11 +4,7 @@ import {
   TabsIcon,
   TriggerIcon,
 } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -26,9 +22,8 @@ export const metaTabs: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.TabsList, radix.TabsContent],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsTabs,
 };
 
 export const metaTabsList: WsComponentMeta = {
@@ -38,9 +33,8 @@ export const metaTabsList: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.TabsTrigger],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  props: propsTabsList,
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
@@ -51,17 +45,11 @@ export const metaTabsTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: [
-    ...defaultStates,
-    {
-      category: "component-states",
-      label: "Active",
-      selector: "[data-state=active]",
-    },
-  ],
+  states: [{ label: "Active", selector: "[data-state=active]" }],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  props: propsTabsTrigger,
 };
 
 export const metaTabsContent: WsComponentMeta = {
@@ -72,23 +60,6 @@ export const metaTabsContent: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  presetStyle: {
-    div,
-  },
-};
-
-export const propsMetaTabs: WsComponentPropsMeta = {
-  props: propsTabs,
-};
-
-export const propsMetaTabsList: WsComponentPropsMeta = {
-  props: propsTabsList,
-};
-
-export const propsMetaTabsTrigger: WsComponentPropsMeta = {
-  props: propsTabsTrigger,
-};
-
-export const propsMetaTabsContent: WsComponentPropsMeta = {
+  presetStyle: { div },
   props: propsTabsContent,
 };

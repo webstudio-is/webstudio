@@ -1,12 +1,5 @@
-import { SelectIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { select } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./select";
 import { props } from "./__generated__/select.props";
 
 const presetStyle = {
@@ -17,30 +10,18 @@ const presetStyle = {
       value: { type: "keyword", value: "block" },
     },
   ],
-} satisfies PresetStyle<typeof defaultTag>;
+} satisfies PresetStyle<"select">;
 
 export const meta: WsComponentMeta = {
-  icon: SelectIcon,
   presetStyle,
-  states: [
-    ...defaultStates,
-    { selector: "::placeholder", label: "Placeholder" },
-    { selector: ":valid", label: "Valid" },
-    { selector: ":invalid", label: "Invalid" },
-    { selector: ":required", label: "Required" },
-    { selector: ":optional", label: "Optional" },
-  ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props,
   initialProps: [
     "id",
-    "className",
+    "class",
     "name",
     "value",
     "multiple",
     "required",
-    "autoFocus",
+    "autofocus",
   ],
+  props,
 };

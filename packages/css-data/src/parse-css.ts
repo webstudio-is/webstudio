@@ -75,13 +75,6 @@ const parseCssValue = (property: CssProperty, value: string) => {
   const expanded = new Map(expandShorthands([[property, value]]));
   const final = new Map<CssProperty, StyleValue>();
   for (const [property, value] of expanded) {
-    if (value === "") {
-      // Keep the browser behavior when property is defined with an empty value e.g. `color:;`
-      // It may override some existing value and effectively set it to "unset";
-      final.set(property, { type: "keyword", value: "unset" });
-      continue;
-    }
-
     final.set(property, parseCssValueLonghand(property, value));
   }
   return final;
@@ -110,6 +103,12 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
   }
 
   csstree.walk(ast, function (node) {
+    // forbid nested at rules
+    if (node.type === "Atrule" && this.atrule) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore https://github.com/csstree/csstree/blob/v2.3.1/docs/traversal.md
+      return this.break;
+    }
     if (node.type !== "Declaration" || this.rule?.prelude.type === undefined) {
       return;
     }

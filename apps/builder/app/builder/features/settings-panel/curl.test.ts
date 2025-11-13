@@ -4,6 +4,7 @@ import { generateCurl, parseCurl, type CurlRequest } from "./curl";
 test("support url", () => {
   const result = {
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "get",
     headers: [],
   };
@@ -19,6 +20,7 @@ test("support multiline command with backslashes", () => {
   `)
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "get",
     headers: [],
   });
@@ -27,6 +29,7 @@ test("support multiline command with backslashes", () => {
 test("forgive missing closed quotes", () => {
   expect(parseCurl(`curl "https://my-url/hello-world`)).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "get",
     headers: [],
   });
@@ -43,6 +46,7 @@ test("skip when invalid", () => {
 test("support method with --request and -X flags", () => {
   const result = {
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "post",
     headers: [],
   };
@@ -62,19 +66,41 @@ test("support --get and -G flags", () => {
   expect(
     parseCurl(`curl --get https://my-url --data limit=3 --data first=0`)
   ).toEqual({
-    url: "https://my-url?limit=3&first=0",
+    url: "https://my-url/",
+    searchParams: [
+      { name: "limit", value: "3" },
+      { name: "first", value: "0" },
+    ],
     method: "get",
     headers: [],
   });
   expect(parseCurl(`curl -G https://my-url -d limit=3 -d first=0`)).toEqual({
-    url: "https://my-url?limit=3&first=0",
+    url: "https://my-url/",
+    searchParams: [
+      { name: "limit", value: "3" },
+      { name: "first", value: "0" },
+    ],
     method: "get",
     headers: [],
   });
   expect(
     parseCurl(`curl -G https://my-url?filter=1 -d limit=3 -d first=0`)
   ).toEqual({
-    url: "https://my-url?filter=1&limit=3&first=0",
+    url: "https://my-url/",
+    searchParams: [
+      { name: "filter", value: "1" },
+      { name: "limit", value: "3" },
+      { name: "first", value: "0" },
+    ],
+    method: "get",
+    headers: [],
+  });
+  expect(parseCurl(`curl -G https://my-url?filter -d limit`)).toEqual({
+    url: "https://my-url/",
+    searchParams: [
+      { name: "filter", value: "" },
+      { name: "limit", value: "" },
+    ],
     method: "get",
     headers: [],
   });
@@ -85,12 +111,14 @@ test("support headers with --header and -H flags", () => {
     parseCurl(`curl https://my-url/hello-world --header "name: value"`)
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "get",
     headers: [{ name: "name", value: "value" }],
   });
   expect(parseCurl(`curl https://my-url/hello-world -H "name: value"`)).toEqual(
     {
       url: "https://my-url/hello-world",
+      searchParams: [],
       method: "get",
       headers: [{ name: "name", value: "value" }],
     }
@@ -101,6 +129,7 @@ test("support headers with --header and -H flags", () => {
     )
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "get",
     headers: [
       { name: "name", value: "value1" },
@@ -119,7 +148,8 @@ test("default to post method and urlencoded header when data is specified", () =
         --data-raw param=4
     `)
   ).toEqual({
-    url: "https://my-url",
+    url: "https://my-url/",
+    searchParams: [],
     method: "post",
     headers: [
       { name: "content-type", value: "application/x-www-form-urlencoded" },
@@ -132,7 +162,8 @@ test("encode data for get request", () => {
   expect(
     parseCurl(`curl -G https://my-url --data-urlencode param=привет`)
   ).toEqual({
-    url: "https://my-url?param=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82",
+    url: "https://my-url/",
+    searchParams: [{ name: "param", value: "привет" }],
     method: "get",
     headers: [],
   });
@@ -142,7 +173,8 @@ test("encode data for post request", () => {
   expect(
     parseCurl(`curl https://my-url --data-urlencode param=привет`)
   ).toEqual({
-    url: "https://my-url",
+    url: "https://my-url/",
+    searchParams: [],
     method: "post",
     headers: [
       { name: "content-type", value: "application/x-www-form-urlencoded" },
@@ -160,6 +192,7 @@ test("support text body", () => {
     `)
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "post",
     headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
@@ -170,6 +203,7 @@ test("support text body", () => {
     )
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "post",
     headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
@@ -186,6 +220,7 @@ test("support text body with explicit method", () => {
     `)
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "put",
     headers: [{ name: "content-type", value: "plain/text" }],
     body: `{"param":"value"}`,
@@ -199,6 +234,7 @@ test("support json body", () => {
     )
   ).toEqual({
     url: "https://my-url/hello-world",
+    searchParams: [],
     method: "post",
     headers: [{ name: "content-type", value: "application/json" }],
     body: { param: "value" },
@@ -213,12 +249,13 @@ test("generate curl with json body", () => {
   expect(
     generateCurl({
       url: "https://my-url.com",
+      searchParams: [],
       method: "post",
       headers: [{ name: "content-type", value: "application/json" }],
       body: { param: "value" },
     })
   ).toMatchInlineSnapshot(`
-"curl "https://my-url.com" \\
+"curl "https://my-url.com/" \\
   --request post \\
   --header "content-type: application/json" \\
   --data "{\\"param\\":\\"value\\"}""
@@ -229,12 +266,13 @@ test("generate curl with text body", () => {
   expect(
     generateCurl({
       url: "https://my-url.com",
+      searchParams: [],
       method: "post",
       headers: [],
       body: "my data",
     })
   ).toMatchInlineSnapshot(`
-"curl "https://my-url.com" \\
+"curl "https://my-url.com/" \\
   --request post \\
   --data "my data""
 `);
@@ -244,18 +282,71 @@ test("generate curl without body", () => {
   expect(
     generateCurl({
       url: "https://my-url.com",
+      searchParams: [],
       method: "post",
       headers: [],
     })
   ).toMatchInlineSnapshot(`
-"curl "https://my-url.com" \\
+"curl "https://my-url.com/" \\
   --request post"
+`);
+});
+
+test("generate curl with search params", () => {
+  expect(
+    generateCurl({
+      url: "https://my-url.com",
+      searchParams: [
+        { name: "search", value: "term1" },
+        { name: "search", value: "term2" },
+        { name: "filter", value: "привет" },
+      ],
+      method: "get",
+      headers: [],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com/?search=term1&search=term2&filter=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82" \\
+  --request get"
+`);
+});
+
+test("generate curl with JSON search params", () => {
+  expect(
+    generateCurl({
+      url: "https://my-url.com",
+      searchParams: [
+        { name: "filter", value: { type: "AND", left: true, right: false } },
+      ],
+      method: "get",
+      headers: [],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com/?filter=%7B%22type%22%3A%22AND%22%2C%22left%22%3Atrue%2C%22right%22%3Afalse%7D" \\
+  --request get"
+`);
+});
+
+test("generate curl with JSON headers", () => {
+  expect(
+    generateCurl({
+      url: "https://my-url.com",
+      searchParams: [],
+      method: "get",
+      headers: [
+        { name: "x-filter", value: { type: "AND", left: true, right: false } },
+      ],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com/" \\
+  --request get \\
+  --header "x-filter: {\\"type\\":\\"AND\\",\\"left\\":true,\\"right\\":false}""
 `);
 });
 
 test("multiline graphql is idempotent", () => {
   const request: CurlRequest = {
     url: "https://eu-central-1-shared-euc1-02.cdn.hygraph.com/content/clorhpxi8qx7r01t6hfp1b5f6/master",
+    searchParams: [],
     method: "post",
     headers: [{ name: "Content-Type", value: "application/json" }],
     body: {
@@ -276,7 +367,8 @@ test("multiline graphql is idempotent", () => {
 
 test("support basic http authentication", () => {
   expect(parseCurl(`curl https://my-url.com -u "user:password"`)).toEqual({
-    url: "https://my-url.com",
+    url: "https://my-url.com/",
+    searchParams: [],
     method: "get",
     headers: [
       {

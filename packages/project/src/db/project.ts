@@ -310,3 +310,20 @@ export const setMarketplaceApprovalStatus = async (
   }
   return updatedProject.data;
 };
+
+export const updateProjectTags = async (
+  { projectId, tags }: { projectId: Project["id"]; tags: string[] },
+  context: AppContext
+) => {
+  await assertEditPermission(projectId, context);
+  const updatedProject = await context.postgrest.client
+    .from("Project")
+    .update({ tags })
+    .eq("id", projectId)
+    .select()
+    .single();
+  if (updatedProject.error) {
+    throw updatedProject.error;
+  }
+  return updatedProject.data;
+};

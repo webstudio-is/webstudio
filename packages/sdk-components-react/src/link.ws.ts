@@ -1,10 +1,4 @@
-import { LinkIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { a } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./link";
 import { props } from "./__generated__/link.props";
@@ -20,24 +14,9 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  placeholder: "Link",
-  icon: LinkIcon,
   presetStyle,
-  states: [
-    ...defaultStates,
-    {
-      selector: ":visited",
-      label: "Visited",
-    },
-    {
-      category: "component-states",
-      selector: "[aria-current=page]",
-      label: "Current page",
-    },
-  ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  states: [{ label: "Current page", selector: "[aria-current=page]" }],
+  initialProps: ["id", "class", "href", "target", "prefetch", "download"],
   props: {
     ...props,
     href: {
@@ -46,5 +25,4 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: ["id", "className", "href", "target", "prefetch", "download"],
 };

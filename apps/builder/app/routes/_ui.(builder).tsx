@@ -13,7 +13,7 @@ import {
 } from "@remix-run/server-runtime";
 
 import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
-import { db } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
 import {
@@ -120,7 +120,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     }
 
     const start = Date.now();
-    const project = await db.project.loadById(projectId, context);
+    const project = await projectApi.loadById(projectId, context);
 
     if (project === null) {
       throw new Response(`Project "${projectId}" not found`, {
@@ -293,8 +293,3 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 };
 
 export default BuilderRoute;
-
-// Reduces Vercel function size from 29MB to 9MB for unknown reasons; effective when used in limited files.
-export const config = {
-  maxDuration: 30,
-};

@@ -3,7 +3,7 @@ import {
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
@@ -35,7 +35,7 @@ export const create = async (
     );
   }
 
-  const project = await projectDb.project.loadById(props.projectId, context);
+  const project = await projectApi.loadById(props.projectId, context);
 
   const { userId: ownerId } = project;
 
@@ -49,7 +49,7 @@ export const create = async (
     return {
       success: false,
       error:
-        "You have reached the maximum number of allowed domains. Please upgrade to the Pro plan or higher.",
+        "You have reached the maximum number of allowed domains. Please upgrade to the Pro plan or higher to add unlimited domains.",
     };
   }
 

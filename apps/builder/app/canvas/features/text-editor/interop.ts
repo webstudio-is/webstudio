@@ -12,17 +12,28 @@ import {
   $isLineBreakNode,
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import {
+  elementComponent,
+  type Instance,
+  type Instances,
+} from "@webstudio-is/sdk";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>
 export type Refs = Map<string, string>;
 
-const lexicalFormats = [
+const legacyLexicalFormats = [
   ["bold", "Bold"],
   ["italic", "Italic"],
   ["superscript", "Superscript"],
   ["subscript", "Subscript"],
+] as const;
+
+const elementLexicalFormats = [
+  ["bold", "b"],
+  ["italic", "i"],
+  ["superscript", "sup"],
+  ["subscript", "sub"],
 ] as const;
 
 const $writeUpdates = (
@@ -65,7 +76,8 @@ const $writeUpdates = (
       instancesList.push({
         type: "instance",
         id,
-        component: "RichTextLink",
+        component: elementComponent,
+        tag: "a",
         children: childChildren,
       });
     }
@@ -80,18 +92,19 @@ const $writeUpdates = (
         const key = `${child.getKey()}:span`;
         const id = refs.get(key) ?? nanoid();
         refs.set(key, id);
-        const childInstance: Instance = {
+        const childChildren: Instance["children"] = [];
+        instancesList.push({
           type: "instance",
           id,
-          component: "Span",
-          children: [],
-        };
-        instancesList.push(childInstance);
+          component: elementComponent,
+          tag: "span",
+          children: childChildren,
+        });
         parentUpdates.push({ type: "id", value: id });
-        parentUpdates = childInstance.children;
+        parentUpdates = childChildren;
       }
       // convert all lexical formats
-      for (const [format, component] of lexicalFormats) {
+      for (const [format, tag] of elementLexicalFormats) {
         if (child.hasFormat(format)) {
           const key = `${child.getKey()}:${format}`;
           const id = refs.get(key) ?? nanoid();
@@ -99,7 +112,8 @@ const $writeUpdates = (
           const childInstance: Instance = {
             type: "instance",
             id,
-            component,
+            component: elementComponent,
+            tag,
             children: [],
           };
           instancesList.push(childInstance);
@@ -164,13 +178,19 @@ const $writeLexical = (
     }
 
     // convert instances
-    if (instance.component === "RichTextLink" && $isElementNode(parent)) {
+    const isLinkInstance =
+      instance.component === "RichTextLink" ||
+      (instance.component === elementComponent && instance.tag === "a");
+    if (isLinkInstance && $isElementNode(parent)) {
       const linkNode = $createLinkNode("");
       refs.set(linkNode.getKey(), instance.id);
       parent.append(linkNode);
       $writeLexical(linkNode, instance.children, instances, refs);
     }
-    if (instance.component === "Span") {
+    if (
+      instance.component === "Span" ||
+      (instance.component === elementComponent && instance.tag === "span")
+    ) {
       let textNode;
       if ($isTextNode(parent)) {
         textNode = parent;
@@ -183,8 +203,23 @@ const $writeLexical = (
       $writeLexical(textNode, instance.children, instances, refs);
     }
     // convert all lexical formats
-    for (const [format, component] of lexicalFormats) {
+    for (const [format, component] of legacyLexicalFormats) {
       if (instance.component === component) {
+        let textNode;
+        if ($isTextNode(parent)) {
+          textNode = parent;
+        } else {
+          textNode = $createTextNode("");
+          parent.append(textNode);
+        }
+        textNode.toggleFormat(format);
+        refs.set(`${textNode.getKey()}:${format}`, instance.id);
+        $writeLexical(textNode, instance.children, instances, refs);
+      }
+    }
+    // convert all lexical formats
+    for (const [format, tag] of elementLexicalFormats) {
+      if (instance.component === elementComponent && instance.tag === tag) {
         let textNode;
         if ($isTextNode(parent)) {
           textNode = parent;

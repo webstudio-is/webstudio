@@ -29,7 +29,10 @@ export const patchAssets = async (
   for (const asset of assetsList) {
     assets.set(asset.id, asset);
   }
-  const patchedAssets = Assets.parse(applyPatches(assets, patches));
+  const patchedAssets = applyPatches(assets, patches);
+  // validate assets without recreating objects
+  // we expect referencial equality to find updated assets
+  Assets.parse(patchedAssets);
 
   // delete assets no longer existing in patched version
   const deletedAssetIds: Asset["id"][] = [];
@@ -40,6 +43,19 @@ export const patchAssets = async (
   }
   if (deletedAssetIds.length !== 0) {
     deleteAssets({ projectId, ids: deletedAssetIds }, context);
+  }
+
+  // update assets
+  for (const asset of assets.values()) {
+    const patchedAsset = patchedAssets.get(asset.id);
+    if (asset !== patchedAsset && patchedAsset) {
+      const { filename, description } = patchedAsset;
+      await context.postgrest.client
+        .from("Asset")
+        .update({ filename, description })
+        .eq("id", asset.id)
+        .eq("projectId", asset.projectId);
+    }
   }
 
   // add new assets found in patched version

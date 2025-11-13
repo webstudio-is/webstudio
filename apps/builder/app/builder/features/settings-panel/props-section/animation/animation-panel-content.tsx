@@ -262,6 +262,12 @@ const DurationInput = ({
       onChangeComplete={(event) => {
         const value = durationUnitValueSchema.safeParse(event.value);
         onChange(undefined, true);
+        // allow user to reset with initial value
+        if (toValue(event.value).toLowerCase() === "auto") {
+          onChange(undefined, false);
+          setIntermediateValue(undefined);
+          return;
+        }
         if (value.success) {
           onChange(value.data, false);
           setIntermediateValue(undefined);

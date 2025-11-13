@@ -11,7 +11,12 @@ import {
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
-import { Resource, type DataSource } from "@webstudio-is/sdk";
+import {
+  DataSources,
+  Resource,
+  type DataSource,
+  type Page,
+} from "@webstudio-is/sdk";
 import {
   encodeDataVariableId,
   generateObjectExpression,
@@ -20,10 +25,13 @@ import {
   SYSTEM_VARIABLE_ID,
   systemParameter,
 } from "@webstudio-is/sdk";
-import { sitemapResourceUrl } from "@webstudio-is/sdk/runtime";
+import {
+  serializeValue,
+  sitemapResourceUrl,
+  currentDateResourceUrl,
+} from "@webstudio-is/sdk/runtime";
 import {
   Box,
-  Button,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -31,6 +39,7 @@ import {
   Label,
   Select,
   SmallIconButton,
+  Text,
   TextArea,
   Tooltip,
   theme,
@@ -53,36 +62,46 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
-import { parseCurl, type CurlRequest } from "./curl";
 import {
   $selectedInstance,
-  $selectedInstanceKeyWithRoot,
+  $selectedInstancePathWithRoot,
   $selectedPage,
+  getInstanceKey,
+  type InstancePath,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { rebindTreeVariablesMutable } from "~/shared/data-variables";
+import { parseCurl, type CurlRequest } from "./curl";
 
 export const parseResource = ({
   id,
+  control,
   name,
   formData,
 }: {
   id: string;
-  name: string;
+  control?: string;
+  name?: string;
   formData: FormData;
 }) => {
-  const headerNames = formData.getAll("header-name");
-  const headerValues = formData.getAll("header-value");
+  const searchParamNames = formData.getAll("search-param-name") as string[];
+  const searchParamValues = formData.getAll("search-param-value") as string[];
+  const headerNames = formData.getAll("header-name") as string[];
+  const headerValues = formData.getAll("header-value") as string[];
   return Resource.parse({
     id,
-    name,
+    control,
+    name: name ?? formData.get("name"),
     url: formData.get("url"),
+    searchParams: searchParamNames
+      .map((name, index) => ({ name, value: searchParamValues[index] }))
+      .filter((item) => item.name.trim()),
     method: formData.get("method"),
-    headers: headerNames.map((name, index) => {
-      const value = headerValues[index];
-      return { name, value };
-    }),
-    body: formData.get("body") ?? undefined,
+    headers: headerNames
+      .map((name, index) => ({ name, value: headerValues[index] }))
+      .filter((item) => item.name.trim()),
+    // use undefined instead of empty string
+    body: formData.get("body") || undefined,
   });
 };
 
@@ -112,7 +131,10 @@ export const UrlField = ({
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (
+    urlExpression: string,
+    searchParams?: Resource["searchParams"]
+  ) => void;
   onCurlPaste: (curl: CurlRequest) => void;
 }) => {
   const urlId = useId();
@@ -156,10 +178,25 @@ export const UrlField = ({
               const curl = parseCurl(value);
               if (curl) {
                 onCurlPaste(curl);
-              } else {
-                // update text value as string literal
-                onChange(JSON.stringify(value));
+                return;
               }
+              try {
+                const url = new URL(value);
+                if (url.searchParams.size > 0) {
+                  const searchParams: Resource["searchParams"] = [];
+                  for (const [name, value] of url.searchParams) {
+                    searchParams.push({ name, value: JSON.stringify(value) });
+                  }
+                  // remove all search params from url
+                  url.search = "";
+                  // update text value as string literal
+                  onChange(JSON.stringify(url.href), searchParams);
+                  return;
+                }
+              } catch {
+                // serialize without changes when url is invalid
+              }
+              onChange(JSON.stringify(value));
             }}
             onBlur={(event) => event.currentTarget.checkValidity()}
             onInvalid={(event) =>
@@ -203,18 +240,128 @@ export const MethodField = ({
   );
 };
 
-const validateHeaderName = (value: string) =>
-  value.trim().length === 0 ? "Header name is required" : "";
-
-const validateHeaderValue = (value: string, scope: Record<string, unknown>) => {
+const SearchParamPair = ({
+  aliases,
+  scope,
+  name,
+  value,
+  onChange,
+  onDelete,
+}: {
+  aliases: Map<string, string>;
+  scope: Record<string, unknown>;
+  name: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  onDelete: () => void;
+}) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (typeof evaluatedValue !== "string") {
-    return "Header value expects a string";
-  }
-  if (evaluatedValue.length === 0) {
-    return "Header value is required";
-  }
-  return "";
+  // expressions with variables or objects cannot be edited from input
+  const isValueUnboundString =
+    isLiteralExpression(value) && typeof evaluatedValue === "string";
+  return (
+    <Grid
+      gap={2}
+      align="center"
+      css={{ gridTemplateColumns: `120px 1fr min-content` }}
+    >
+      <InputField
+        // autofocus only new fields
+        autoFocus={name === ""}
+        placeholder="Name"
+        name="search-param-name"
+        value={name}
+        onChange={(event) => onChange(event.target.value, value)}
+      />
+      <input type="hidden" name="search-param-value" value={value} />
+      <BindingControl>
+        <InputField
+          placeholder="Value"
+          name="search-param-value-literal"
+          disabled={!isValueUnboundString}
+          value={serializeValue(evaluatedValue)}
+          // update text value as string literal
+          onChange={(event) =>
+            onChange(name, JSON.stringify(event.target.value))
+          }
+        />
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+          onRemove={(evaluatedValue) =>
+            onChange(name, JSON.stringify(evaluatedValue))
+          }
+        />
+      </BindingControl>
+      <SmallIconButton
+        aria-label="Delete search param"
+        variant="destructive"
+        icon={<TrashIcon />}
+        onClick={onDelete}
+      />
+    </Grid>
+  );
+};
+
+export const SearchParams = ({
+  scope,
+  aliases,
+  searchParams,
+  onChange,
+}: {
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  searchParams: NonNullable<Resource["searchParams"]>;
+  onChange: (searchParams: NonNullable<Resource["searchParams"]>) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Flex justify="between" align="center">
+        <Label>Search Params</Label>
+        <SmallIconButton
+          aria-label="Add another search param"
+          icon={<PlusIcon />}
+          onClick={() => {
+            // use empty string expression as default
+            const newSearchParams = [
+              ...searchParams,
+              { name: "", value: `""` },
+            ];
+            onChange(newSearchParams);
+          }}
+        />
+      </Flex>
+      <Grid gap={2}>
+        {searchParams.map((searchParam, index) => (
+          <SearchParamPair
+            key={index}
+            scope={scope}
+            aliases={aliases}
+            name={searchParam.name}
+            value={searchParam.value}
+            onChange={(name, value) => {
+              const newSearchParams = [...searchParams];
+              newSearchParams[index] = { name, value };
+              onChange(newSearchParams);
+            }}
+            onDelete={() => {
+              const newSearchParams = [...searchParams];
+              newSearchParams.splice(index, 1);
+              onChange(newSearchParams);
+            }}
+          />
+        ))}
+        {searchParams.length === 0 && (
+          <Text color="subtle" align="center">
+            No search params
+          </Text>
+        )}
+      </Grid>
+    </Grid>
+  );
 };
 
 const HeaderPair = ({
@@ -232,126 +379,53 @@ const HeaderPair = ({
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
-  const nameId = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
-  const [nameError, setNameError] = useState("");
-  // revalidate and hide error message
-  // until validity is checks again
-  useEffect(() => {
-    nameRef.current?.setCustomValidity(validateHeaderName(name));
-    setNameError("");
-  }, [name]);
-
-  const valueId = useId();
-  const valueRef = useRef<HTMLInputElement>(null);
-  const [valueError, setValueError] = useState("");
-  useEffect(() => {
-    valueRef.current?.setCustomValidity(validateHeaderValue(value, scope));
-    setValueError("");
-  }, [value, scope]);
-
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  // expressions with variables or objects cannot be edited from input
+  const isValueUnboundString =
+    isLiteralExpression(value) && typeof evaluatedValue === "string";
   return (
     <Grid
       gap={2}
-      align={"center"}
-      css={{
-        gridTemplateColumns: `${theme.spacing[18]} 1fr 19px`,
-        gridTemplateAreas: `
-         "name name-input button"
-         "value  value-input  button"
-        `,
-      }}
+      align="center"
+      css={{ gridTemplateColumns: `120px 1fr min-content` }}
     >
-      <Label htmlFor={nameId} css={{ gridArea: "name" }}>
-        Name
-      </Label>
-      <InputErrorsTooltip errors={nameError ? [nameError] : undefined}>
+      <InputField
+        // autofocus only new fields
+        autoFocus={name === ""}
+        placeholder="Name"
+        name="header-name"
+        value={name}
+        onChange={(event) => onChange(event.target.value, value)}
+      />
+      <input hidden={true} readOnly={true} name="header-value" value={value} />
+      <BindingControl>
         <InputField
-          inputRef={nameRef}
-          name="header-name"
-          css={{ gridArea: "name-input" }}
-          id={nameId}
-          color={nameError ? "error" : undefined}
-          value={name}
-          onChange={(event) => onChange(event.target.value, value)}
-          // can't use event.currentTarget because InputField
-          // binds focus events to container instead of input
-          onBlur={() => nameRef.current?.checkValidity()}
-          onInvalid={(event) =>
-            setNameError(event.currentTarget.validationMessage)
+          placeholder="Value"
+          name="header-value-validator"
+          disabled={!isValueUnboundString}
+          value={serializeValue(evaluatedValue)}
+          // update text value as string literal
+          onChange={(event) =>
+            onChange(name, JSON.stringify(event.target.value))
           }
         />
-      </InputErrorsTooltip>
-      <Label htmlFor={valueId} css={{ gridArea: "value" }}>
-        Value
-      </Label>
-      <input hidden={true} readOnly={true} name="header-value" value={value} />
-      <Box css={{ gridArea: "value-input", position: "relative" }}>
-        <BindingControl>
-          <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
-            <InputField
-              inputRef={valueRef}
-              name="header-value-validator"
-              id={valueId}
-              // expressions with variables cannot be edited
-              disabled={isLiteralExpression(value) === false}
-              color={valueError ? "error" : undefined}
-              value={String(evaluateExpressionWithinScope(value, scope))}
-              // update text value as string literal
-              onChange={(event) =>
-                onChange(name, JSON.stringify(event.target.value))
-              }
-              onBlur={() => valueRef.current?.checkValidity()}
-              onInvalid={(event) =>
-                setValueError(event.currentTarget.validationMessage)
-              }
-            />
-          </InputErrorsTooltip>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={(newValue) => onChange(name, newValue)}
-            onRemove={(evaluatedValue) =>
-              onChange(name, JSON.stringify(evaluatedValue))
-            }
-          />
-        </BindingControl>
-      </Box>
-
-      <Grid
-        css={{
-          gridArea: "button",
-          justifyItems: "center",
-          gap: "2px",
-          color: theme.colors.foregroundIconSecondary,
-        }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="19"
-          height="11"
-          viewBox="0 0 19 11"
-          fill="currentColor"
-        >
-          <path d="M10 10.05V6.05005C10 2.73634 7.31371 0.0500488 4 0.0500488H0V1.05005H4C6.76142 1.05005 9 3.28863 9 6.05005V10.05H10Z" />
-        </svg>
-        <SmallIconButton
-          variant="destructive"
-          icon={<TrashIcon />}
-          onClick={onDelete}
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+          onRemove={(evaluatedValue) =>
+            onChange(name, JSON.stringify(evaluatedValue))
+          }
         />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="19"
-          height="11"
-          viewBox="0 0 19 11"
-          fill="currentColor"
-        >
-          <path d="M-4.37114e-07 10.05L4 10.05C7.31371 10.05 10 7.36376 10 4.05005L10 0.0500488L9 0.0500488L9 4.05005C9 6.81147 6.76142 9.05005 4 9.05005L-3.93402e-07 9.05005L-4.37114e-07 10.05Z" />
-        </svg>
-      </Grid>
+      </BindingControl>
+      <SmallIconButton
+        aria-label="Delete header"
+        variant="destructive"
+        icon={<TrashIcon />}
+        onClick={onDelete}
+      />
     </Grid>
   );
 };
@@ -369,8 +443,19 @@ export const Headers = ({
 }) => {
   return (
     <Grid gap={1}>
-      <Label>Headers</Label>
-      <Grid gap={3}>
+      <Flex justify="between" align="center">
+        <Label>Headers</Label>
+        <SmallIconButton
+          aria-label="Add another search param"
+          icon={<PlusIcon />}
+          onClick={() => {
+            // use empty string expression as default
+            const newHeaders = [...headers, { name: "", value: `""` }];
+            onChange(newHeaders);
+          }}
+        />
+      </Flex>
+      <Grid gap={2}>
         {headers.map((header, index) => (
           <HeaderPair
             key={index}
@@ -390,112 +475,179 @@ export const Headers = ({
             }}
           />
         ))}
-        <Button
-          type="button"
-          color="neutral"
-          css={{ justifySelf: "center" }}
-          prefix={<PlusIcon />}
-          onClick={() => {
-            // use empty string expression as default
-            const newHeaders = [...headers, { name: "", value: `""` }];
-            onChange(newHeaders);
-          }}
-        >
-          Add another header pair
-        </Button>
+        {headers.length === 0 && (
+          <Text color="subtle" align="center">
+            No headers
+          </Text>
+        )}
       </Grid>
     </Grid>
   );
 };
 
-const $hiddenDataSourceIds = computed(
-  [$dataSources, $selectedPage],
-  (dataSources, page) => {
-    const dataSourceIds = new Set<DataSource["id"]>();
-    for (const dataSource of dataSources.values()) {
-      // hide collection item and component parameters from resources
-      // to prevent waterfall and loop requests ans not complicate compiler
-      if (dataSource.type === "parameter") {
-        dataSourceIds.add(dataSource.id);
-      }
-      // prevent resources using data of other resources
-      if (dataSource.type === "resource") {
-        dataSourceIds.add(dataSource.id);
-      }
-    }
-    if (page?.systemDataSourceId) {
-      dataSourceIds.delete(page.systemDataSourceId);
-    }
-    return dataSourceIds;
-  }
-);
-
-export const $selectedInstanceResourceScope = computed(
-  [
-    $selectedInstanceKeyWithRoot,
-    $variableValuesByInstanceSelector,
-    $dataSources,
-    $hiddenDataSourceIds,
-  ],
-  (
-    instanceKey,
-    variableValuesByInstanceSelector,
-    dataSources,
-    hiddenDataSourceIds
-  ) => {
-    const scope: Record<string, unknown> = {};
-    const aliases = new Map<string, string>();
-    const variableValues = new Map<DataSource["id"], unknown>();
-    if (instanceKey === undefined) {
-      return { variableValues, scope, aliases };
-    }
-    const values = variableValuesByInstanceSelector.get(instanceKey);
-    if (values) {
-      for (const [dataSourceId, value] of values) {
-        if (hiddenDataSourceIds.has(dataSourceId)) {
-          continue;
+const CacheMaxAge = ({
+  value,
+  onChange,
+}: {
+  value: undefined | string;
+  onChange: (newValue: string) => void;
+}) => {
+  return (
+    <Grid gap={1}>
+      <Label htmlFor="resource-panel-max-age">Cache Max Age</Label>
+      <InputField
+        id="resource-panel-max-age"
+        suffix={
+          <Text variant="small" color="subtle" css={{ paddingInline: "2px" }}>
+            S
+          </Text>
         }
-        let dataSource = dataSources.get(dataSourceId);
-        if (dataSourceId === SYSTEM_VARIABLE_ID) {
-          dataSource = systemParameter;
-        }
-        if (dataSource) {
-          const name = encodeDataVariableId(dataSourceId);
-          variableValues.set(dataSourceId, value);
-          scope[name] = value;
-          aliases.set(name, dataSource.name);
-        }
-      }
-    }
-    return { variableValues, scope, aliases };
-  }
-);
-
-const useScope = ({ variable }: { variable?: DataSource }) => {
-  const { scope: scopeWithCurrentVariable, aliases } = useStore(
-    $selectedInstanceResourceScope
+        value={value ?? ""}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {value && (
+        <>
+          <input type="hidden" name="header-name" value="Cache-Control" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"max-age=${value}"`}
+          />
+        </>
+      )}
+    </Grid>
   );
-  const currentVariableId = variable?.id;
-  // prevent showing currently edited variable in suggestions
-  // to avoid cirular dependeny
-  const scope = useMemo(() => {
-    if (currentVariableId === undefined) {
-      return scopeWithCurrentVariable;
+};
+
+export const getResourceScopeForInstance = ({
+  page,
+  instanceKey,
+  dataSources,
+  variableValuesByInstanceSelector,
+}: {
+  page: undefined | Page;
+  instanceKey: undefined | string;
+  dataSources: DataSources;
+  variableValuesByInstanceSelector: Map<string, Map<string, unknown>>;
+}) => {
+  const scope: Record<string, unknown> = {};
+  const aliases = new Map<string, string>();
+  const variableValues = new Map<DataSource["id"], unknown>();
+  const hiddenDataSourceIds = new Set<DataSource["id"]>();
+  for (const dataSource of dataSources.values()) {
+    // hide collection item and component parameters from resources
+    // to prevent waterfall and loop requests ans not complicate compiler
+    if (dataSource.type === "parameter") {
+      hiddenDataSourceIds.add(dataSource.id);
     }
-    const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
-    delete newScope[encodeDataVariableId(currentVariableId)];
-    return newScope;
-  }, [scopeWithCurrentVariable, currentVariableId]);
-  return { scope, aliases };
+    // prevent resources using data of other resources
+    if (dataSource.type === "resource") {
+      hiddenDataSourceIds.add(dataSource.id);
+    }
+  }
+  if (page?.systemDataSourceId) {
+    hiddenDataSourceIds.delete(page.systemDataSourceId);
+  }
+  const values = variableValuesByInstanceSelector.get(instanceKey ?? "");
+  if (values) {
+    for (const [dataSourceId, value] of values) {
+      if (hiddenDataSourceIds.has(dataSourceId)) {
+        continue;
+      }
+      let dataSource = dataSources.get(dataSourceId);
+      if (dataSourceId === SYSTEM_VARIABLE_ID) {
+        dataSource = systemParameter;
+      }
+      if (dataSource) {
+        const name = encodeDataVariableId(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+        variableValues.set(dataSourceId, value);
+      }
+    }
+  }
+  return { variableValues, scope, aliases };
+};
+
+const getVariableInstanceKey = ({
+  variable,
+  instancePath,
+}: {
+  variable: undefined | DataSource;
+  instancePath: undefined | InstancePath;
+}) => {
+  if (instancePath === undefined) {
+    return;
+  }
+  // find instance key for variable instance
+  for (const { instance, instanceSelector } of instancePath) {
+    if (instance.id === variable?.scopeInstanceId) {
+      return getInstanceKey(instanceSelector);
+    }
+  }
+  // and fallback to currently selected instance
+  return getInstanceKey(instancePath[0].instanceSelector);
+};
+
+export const useResourceScope = ({ variable }: { variable?: DataSource }) => {
+  return useStore(
+    useMemo(
+      () =>
+        computed(
+          [
+            $selectedPage,
+            $selectedInstancePathWithRoot,
+            $variableValuesByInstanceSelector,
+            $dataSources,
+          ],
+          (
+            page,
+            instancePath,
+            variableValuesByInstanceSelector,
+            dataSources
+          ) => {
+            const { scope, aliases, variableValues } =
+              getResourceScopeForInstance({
+                page,
+                instanceKey: getVariableInstanceKey({
+                  variable,
+                  instancePath,
+                }),
+                dataSources,
+                variableValuesByInstanceSelector,
+              });
+            // prevent showing currently edited variable in suggestions
+            // to avoid cirular dependeny
+            const newScope = { ...scope };
+            const newAliases = new Map(aliases);
+            const newVariableValues = new Map(variableValues);
+            if (variable) {
+              const key = encodeDataVariableId(variable.id);
+              delete newScope[key];
+              newAliases.delete(key);
+              newVariableValues.delete(variable.id);
+            }
+            return {
+              scope: newScope,
+              aliases: newAliases,
+              variableValues: newVariableValues,
+            };
+          }
+        ),
+      [variable]
+    )
+  );
 };
 
 type PanelApi = {
   save: (formData: FormData) => void;
 };
 
+type BodyType = undefined | "text" | "json";
+
 const validateBody = (
   value: string,
-  contentType: unknown,
+  bodyType: BodyType,
   scope: Record<string, unknown>
 ) => {
   // skip empty expressions
@@ -503,7 +655,7 @@ const validateBody = (
     return "";
   }
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-  if (contentType === "application/json") {
+  if (bodyType === "json") {
     return typeof evaluatedValue === "object" && evaluatedValue !== null
       ? ""
       : "Expected valid JSON object in body";
@@ -512,18 +664,27 @@ const validateBody = (
   }
 };
 
+const toMime = (bodyType: BodyType) => {
+  if (bodyType === "json") {
+    return "application/json";
+  }
+  if (bodyType === "text") {
+    return "text/plain";
+  }
+};
+
 const BodyField = ({
   scope,
   aliases,
-  contentType,
+  bodyType,
   value,
   onChange,
 }: {
   aliases: Map<string, string>;
   scope: Record<string, unknown>;
-  contentType: unknown;
+  bodyType: BodyType;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, bodyType: BodyType) => void;
 }) => {
   const [isBodyLiteral, setIsBodyLiteral] = useState(
     () => value === "" || isLiteralExpression(value)
@@ -531,13 +692,41 @@ const BodyField = ({
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    bodyRef.current?.setCustomValidity(validateBody(value, contentType, scope));
+    bodyRef.current?.setCustomValidity(validateBody(value, bodyType, scope));
     setBodyError("");
-  }, [value, contentType, scope]);
+  }, [value, bodyType, scope]);
+  const updateBody = (newBody: string) => {
+    const evaluatedValue = evaluateExpressionWithinScope(newBody, scope);
+    // automatically add Content-Type: application/json header
+    // when value is object
+    const isBodyObject =
+      typeof evaluatedValue === "object" && evaluatedValue !== null;
+    onChange(newBody, isBodyObject ? "json" : bodyType);
+  };
 
   return (
     <Grid gap={1}>
       <Label>Body</Label>
+      <Select<BodyType | "">
+        placeholder="Type"
+        value={bodyType ?? ""}
+        options={["text", "json"]}
+        onChange={(newBodyType) => {
+          if (newBodyType) {
+            onChange(value, newBodyType);
+          }
+        }}
+      />
+      {bodyType && (
+        <>
+          <input type="hidden" name="header-name" value="Content-Type" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"${toMime(bodyType)}"`}
+          />
+        </>
+      )}
       <textarea
         ref={bodyRef}
         style={{ display: "none" }}
@@ -551,7 +740,7 @@ const BodyField = ({
       />
       <BindingControl>
         <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
-          {contentType === "application/json" ? (
+          {bodyType === "json" ? (
             // wrap with div to position error tooltip
             <div>
               <ExpressionEditor
@@ -567,7 +756,7 @@ const BodyField = ({
                         2
                       ) ?? "")
                 }
-                onChange={onChange}
+                onChange={updateBody}
                 onChangeComplete={() => bodyRef.current?.checkValidity()}
               />
             </div>
@@ -580,7 +769,7 @@ const BodyField = ({
               color={bodyError ? "error" : undefined}
               value={String(evaluateExpressionWithinScope(value, scope) ?? "")}
               // update text value as string literal
-              onChange={(newValue) => onChange(JSON.stringify(newValue))}
+              onChange={(newValue) => updateBody(JSON.stringify(newValue))}
               onBlur={() => bodyRef.current?.checkValidity()}
             />
           )}
@@ -591,11 +780,11 @@ const BodyField = ({
           variant={isBodyLiteral ? "default" : "bound"}
           value={value}
           onChange={(value) => {
-            onChange(value);
+            updateBody(value);
             setIsBodyLiteral(isLiteralExpression(value));
           }}
           onRemove={(evaluatedValue) => {
-            onChange(JSON.stringify(evaluatedValue));
+            updateBody(JSON.stringify(evaluatedValue));
             setIsBodyLiteral(true);
           }}
         />
@@ -604,117 +793,179 @@ const BodyField = ({
   );
 };
 
-const isContentTypeHeader = (header: Resource["headers"][number]) =>
-  header.name.toLowerCase() === "content-type";
+const isCacheControl = (name: string) => name.toLowerCase() === "cache-control";
+const isContentType = (name: string) => name.toLowerCase() === "content-type";
+
+const parseHeaders = (headers: Resource["headers"]) => {
+  let maxAge: undefined | string;
+  let bodyType: BodyType;
+  const newHeaders = headers.filter((header) => {
+    // cast raw expression result to string
+    const value = String(
+      evaluateExpressionWithinScope(header.value, {})
+    ).toLowerCase();
+    if (isCacheControl(header.name)) {
+      // move simple header like Cache-Control: max-age=10 to dedicated input
+      // preserve more complex cache-control
+      const matched = value.match(/^max-age=(\d+)$/);
+      if (matched) {
+        [, maxAge] = matched;
+        return false;
+      }
+    }
+    // store json and text in dedicated input
+    // and preserve other types
+    if (isContentType(header.name)) {
+      if (value === "application/json") {
+        bodyType = "json";
+        return false;
+      }
+      if (value === "text/plain") {
+        bodyType = "text";
+        return false;
+      }
+    }
+    return true;
+  });
+  return { headers: newHeaders, maxAge, bodyType };
+};
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
-  const { scope, aliases } = useScope({ variable });
+  const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
   const resource =
     variable?.type === "resource"
       ? resources.get(variable.resourceId)
       : undefined;
+  const parsedHeaders = parseHeaders(resource?.headers ?? []);
 
   const [url, setUrl] = useState(resource?.url ?? `""`);
   const [method, setMethod] = useState<Resource["method"]>(
     resource?.method ?? "get"
   );
-  const [headers, setHeaders] = useState<Resource["headers"]>(
-    resource?.headers ?? []
+  const [searchParams, setSearchParams] = useState(
+    resource?.searchParams ?? []
   );
-  const [body, setBody] = useState(() => resource?.body);
-
-  const contentType = headers.find(isContentTypeHeader)?.value;
-  const evaluatedContentType = contentType
-    ? evaluateExpressionWithinScope(contentType, scope)
-    : undefined;
+  const [headers, setHeaders] = useState<Resource["headers"]>(
+    parsedHeaders.headers
+  );
+  const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
+  const [bodyType, setBodyType] = useState(parsedHeaders.bodyType);
+  const [body, setBody] = useState(resource?.body);
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
       const newResource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         formData,
       });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
-        name,
+        scopeInstanceId,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
 
   return (
     <>
+      <MethodField value={method} onChange={setMethod} />
       <UrlField
         scope={scope}
         aliases={aliases}
         value={url}
-        onChange={setUrl}
+        onChange={(urlExpression, searchParams) => {
+          setUrl(urlExpression);
+          if (searchParams) {
+            setSearchParams((prev) => [...prev, ...searchParams]);
+          }
+        }}
         onCurlPaste={(curl) => {
           // update all feilds when curl is paste into url field
-          setUrl(JSON.stringify(curl.url));
           setMethod(curl.method);
-          setHeaders(
+          setUrl(JSON.stringify(curl.url));
+          setSearchParams(
+            (curl.searchParams ?? []).map((header) => ({
+              name: header.name,
+              value: JSON.stringify(header.value),
+            }))
+          );
+          const parsedHeaders = parseHeaders(
             curl.headers.map((header) => ({
               name: header.name,
               value: JSON.stringify(header.value),
             }))
           );
+          setMaxAge(parsedHeaders.maxAge);
+          setHeaders(parsedHeaders.headers);
+          setBodyType(parsedHeaders.bodyType);
           setBody(JSON.stringify(curl.body));
         }}
       />
-      <MethodField value={method} onChange={setMethod} />
+      <SearchParams
+        scope={scope}
+        aliases={aliases}
+        searchParams={searchParams}
+        onChange={setSearchParams}
+      />
+      <CacheMaxAge
+        value={maxAge}
+        onChange={(newMaxAge) => {
+          setMaxAge(newMaxAge);
+          // reset header
+          setHeaders((headers) =>
+            headers.filter(({ name }) => !isCacheControl(name))
+          );
+        }}
+      />
       <Headers
         scope={scope}
         aliases={aliases}
         headers={headers}
-        onChange={setHeaders}
+        onChange={(newHeaders) => {
+          // reset dedicated fields
+          if (newHeaders.some(({ name }) => isCacheControl(name))) {
+            setMaxAge(undefined);
+          }
+          if (newHeaders.some(({ name }) => isContentType(name))) {
+            setBodyType(undefined);
+          }
+          setHeaders(newHeaders);
+        }}
       />
       {method !== "get" && (
         <BodyField
           scope={scope}
           aliases={aliases}
-          contentType={evaluatedContentType}
           value={body ?? ""}
-          onChange={(newBody) => {
-            const evaluatedValue = evaluateExpressionWithinScope(
-              newBody,
-              scope
-            );
-            // automatically add Content-Type: application/json header
-            // when value is object
-            if (
-              typeof evaluatedValue === "object" &&
-              evaluatedValue !== null &&
-              evaluatedContentType !== "application/json"
-            ) {
-              setHeaders((prevHeaders) => {
-                const newHeaders = prevHeaders.filter(isContentTypeHeader);
-                newHeaders.push({
-                  name: "Content-Type",
-                  value: JSON.stringify("application/json"),
-                });
-                return newHeaders;
-              });
+          bodyType={bodyType}
+          onChange={(newBody, newBodyType) => {
+            setBodyType(newBodyType);
+            // reset header
+            if (newBodyType) {
+              setHeaders((headers) =>
+                headers.filter(({ name }) => !isContentType(name))
+              );
             }
             setBody(newBody);
           }}
@@ -736,13 +987,17 @@ export const SystemResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
 
-  const method = "get";
-
   const localResources = [
     {
       label: "Sitemap",
       value: JSON.stringify(sitemapResourceUrl),
       description: "Resource that loads the sitemap data of the current site.",
+    },
+    {
+      label: "Current Date",
+      value: JSON.stringify(currentDateResourceUrl),
+      description:
+        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
   ];
 
@@ -756,32 +1011,31 @@ export const SystemResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
-      const newResource: Resource = {
+      const newResource: Resource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         control: "system",
-        url: localResource.value,
-        method,
-        headers: [],
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
-        name,
+        scopeInstanceId,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
@@ -790,6 +1044,8 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
+      <input type="hidden" name="method" value="get" />
+      <input type="hidden" name="url" value={localResource.value} />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -821,7 +1077,7 @@ export const GraphqlResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
-  const { scope, aliases } = useScope({ variable });
+  const { scope, aliases } = useResourceScope({ variable });
 
   const resources = useStore($resources);
   const resource =
@@ -830,11 +1086,9 @@ export const GraphqlResourceForm = forwardRef<
       : undefined;
 
   const [url, setUrl] = useState(resource?.url ?? `""`);
-  const [headers, setHeaders] = useState(
-    resource?.headers ?? [
-      { name: "Content-Type", value: JSON.stringify("application/json") },
-    ]
-  );
+  const parsedHeaders = parseHeaders(resource?.headers ?? []);
+  const [maxAge, setMaxAge] = useState(parsedHeaders.maxAge);
+  const [headers, setHeaders] = useState(parsedHeaders.headers);
 
   const [bodyExpressions] = useState(() =>
     parseObjectExpression(resource?.body ?? "")
@@ -865,45 +1119,59 @@ export const GraphqlResourceForm = forwardRef<
 
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      const selectedInstance = $selectedInstance.get();
-      if (selectedInstance === undefined) {
+      // preserve existing instance scope when edit
+      const scopeInstanceId =
+        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
+      if (scopeInstanceId === undefined) {
         return;
       }
-      const name = z.string().parse(formData.get("name"));
-      const body = generateObjectExpression(
-        new Map([
-          ["query", JSON.stringify(query)],
-          ["variables", variables],
-        ])
-      );
-      const newResource: Resource = {
+      const newResource = parseResource({
         id: resource?.id ?? nanoid(),
-        name,
         control: "graphql",
-        url,
-        method: "post",
-        headers,
-        body,
-      };
+        formData,
+      });
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
-        // preserve existing instance scope when edit
-        scopeInstanceId: variable?.scopeInstanceId ?? selectedInstance.id,
-        name,
+        scopeInstanceId,
+        name: newResource.name,
         type: "resource",
         resourceId: newResource.id,
       };
       updateWebstudioData((data) => {
         data.dataSources.set(newVariable.id, newVariable);
         data.resources.set(newResource.id, newResource);
-        const startingInstanceId = selectedInstance.id;
-        rebindTreeVariablesMutable({ startingInstanceId, ...data });
+        rebindTreeVariablesMutable({
+          startingInstanceId: scopeInstanceId,
+          ...data,
+        });
       });
     },
   }));
 
   return (
     <>
+      <input type="hidden" name="method" value="post" />
+      {!headers.some(({ name }) => isContentType(name)) && (
+        <>
+          <input type="hidden" name="header-name" value="Content-Type" />
+          <input
+            type="hidden"
+            name="header-value"
+            value={`"application/json"`}
+          />
+        </>
+      )}
+      <input
+        type="hidden"
+        name="body"
+        value={generateObjectExpression(
+          new Map([
+            ["query", JSON.stringify(query)],
+            ["variables", variables],
+          ])
+        )}
+      />
+
       <UrlField
         scope={scope}
         aliases={aliases}
@@ -912,12 +1180,14 @@ export const GraphqlResourceForm = forwardRef<
         onCurlPaste={(curl) => {
           // update all feilds when curl is paste into url field
           setUrl(JSON.stringify(curl.url));
-          setHeaders(
+          const parsedHeaders = parseHeaders(
             curl.headers.map((header) => ({
               name: header.name,
               value: JSON.stringify(header.value),
             }))
           );
+          setMaxAge(parsedHeaders.maxAge);
+          setHeaders(parsedHeaders.headers);
           const body = zGraphqlBody.safeParse(curl.body);
           if (body.success) {
             setQuery(body.data.query);
@@ -1003,11 +1273,27 @@ export const GraphqlResourceForm = forwardRef<
         </BindingControl>
       </Grid>
 
+      <CacheMaxAge
+        value={maxAge}
+        onChange={(newMaxAge) => {
+          setMaxAge(newMaxAge);
+          setHeaders((headers) =>
+            headers.filter(({ name }) => !isCacheControl(name))
+          );
+        }}
+      />
+
       <Headers
         scope={scope}
         aliases={aliases}
         headers={headers}
-        onChange={setHeaders}
+        onChange={(newHeaders) => {
+          // reset dedicated fields
+          if (newHeaders.some(({ name }) => isCacheControl(name))) {
+            setMaxAge(undefined);
+          }
+          setHeaders(newHeaders);
+        }}
       />
     </>
   );

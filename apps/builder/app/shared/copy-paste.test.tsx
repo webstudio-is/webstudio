@@ -129,12 +129,14 @@ test("insert instances with slots", () => {
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(4);
   insertWebstudioFragmentCopy({
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(5);
   expect(Array.from(data.instances.values())).toEqual([
@@ -164,6 +166,7 @@ test("insert instances with multiple roots", () => {
     data,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(data.instances.size).toEqual(5);
 });
@@ -185,6 +188,7 @@ test("should add :root local styles", () => {
     data: newProject,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -223,6 +227,7 @@ test("should merge :root local styles", () => {
     data: newProject,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   expect(toCss(newProject)).toEqual(
     stripIndent(`
@@ -252,6 +257,7 @@ test("should copy local styles of duplicated instance", () => {
     data: project,
     fragment,
     availableVariables: [],
+    projectId: "",
   });
   const newInstanceId = Array.from(project.instances.keys()).at(-1);
   expect(toCss(project)).toEqual(
@@ -317,6 +323,7 @@ describe("props", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -345,6 +352,7 @@ describe("props", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.props.values())).toEqual([
       expect.objectContaining({
@@ -437,6 +445,7 @@ describe("variables", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     const [newDataSourceId] = data.dataSources.keys();
     expect(Array.from(data.dataSources.values())).toEqual([
@@ -488,6 +497,7 @@ describe("variables", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({
@@ -540,6 +550,7 @@ describe("variables", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1) ?? "";
     expect(newInstanceId).not.toEqual("boxId");
@@ -567,6 +578,7 @@ describe("resources", () => {
     const resourceVariable = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
@@ -583,6 +595,7 @@ describe("resources", () => {
     expect(fragment.resources).toEqual([
       expect.objectContaining({
         url: "$ws$dataSource$1",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$1" }],
         headers: [{ name: "auth", value: "$ws$dataSource$1" }],
         body: "$ws$dataSource$1",
       }),
@@ -594,6 +607,7 @@ describe("resources", () => {
     const resourceVariable = new ResourceValue("Box Resource", {
       url: expression`${bodyVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
       headers: [{ name: "auth", value: expression`${bodyVariable}` }],
       body: expression`${bodyVariable}`,
     });
@@ -609,6 +623,7 @@ describe("resources", () => {
     expect(fragment.resources).toEqual([
       expect.objectContaining({
         url: "Body$32$Variable",
+        searchParams: [{ name: "filter", value: "Body$32$Variable" }],
         headers: [{ name: "auth", value: "Body$32$Variable" }],
         body: "Body$32$Variable",
       }),
@@ -620,6 +635,7 @@ describe("resources", () => {
     const resourceVariable = new ResourceValue("Box Resource", {
       url: expression`${bodyVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
       headers: [{ name: "auth", value: expression`${bodyVariable}` }],
       body: expression`${bodyVariable}`,
     });
@@ -636,17 +652,20 @@ describe("resources", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
     expect(Array.from(data.resources.values())).toEqual([
       expect.objectContaining({
         url: "$ws$dataSource$0",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$0" }],
         headers: [{ name: "auth", value: "$ws$dataSource$0" }],
         body: "$ws$dataSource$0",
       }),
       expect.objectContaining({
         url: "$ws$dataSource$0",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$0" }],
         headers: [{ name: "auth", value: "$ws$dataSource$0" }],
         body: "$ws$dataSource$0",
       }),
@@ -658,6 +677,7 @@ describe("resources", () => {
     const resourceProp = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
@@ -673,6 +693,7 @@ describe("resources", () => {
     expect(fragment.resources).toEqual([
       expect.objectContaining({
         url: "$ws$dataSource$1",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$1" }],
         headers: [{ name: "auth", value: "$ws$dataSource$1" }],
         body: "$ws$dataSource$1",
       }),
@@ -684,6 +705,7 @@ describe("resources", () => {
     const resourceProp = new ResourceValue("Box Resource", {
       url: expression`${bodyVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
       headers: [{ name: "auth", value: expression`${bodyVariable}` }],
       body: expression`${bodyVariable}`,
     });
@@ -697,6 +719,7 @@ describe("resources", () => {
     expect(fragment.resources).toEqual([
       expect.objectContaining({
         url: "Body$32$Variable",
+        searchParams: [{ name: "filter", value: "Body$32$Variable" }],
         headers: [{ name: "auth", value: "Body$32$Variable" }],
         body: "Body$32$Variable",
       }),
@@ -708,6 +731,7 @@ describe("resources", () => {
     const resourceProp = new ResourceValue("Box Resource", {
       url: expression`${bodyVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
       headers: [{ name: "auth", value: expression`${bodyVariable}` }],
       body: expression`${bodyVariable}`,
     });
@@ -724,17 +748,20 @@ describe("resources", () => {
         ...data,
         startingInstanceId: "bodyId",
       }),
+      projectId: "",
     });
     const newInstanceId = Array.from(data.instances.keys()).at(-1);
     expect(newInstanceId).not.toEqual("boxId");
     expect(Array.from(data.resources.values())).toEqual([
       expect.objectContaining({
         url: "$ws$dataSource$0",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$0" }],
         headers: [{ name: "auth", value: "$ws$dataSource$0" }],
         body: "$ws$dataSource$0",
       }),
       expect.objectContaining({
         url: "$ws$dataSource$0",
+        searchParams: [{ name: "filter", value: "$ws$dataSource$0" }],
         headers: [{ name: "auth", value: "$ws$dataSource$0" }],
         body: "$ws$dataSource$0",
       }),
@@ -746,12 +773,14 @@ describe("resources", () => {
     const resourceProp = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
     const resourceVariable = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
@@ -767,6 +796,7 @@ describe("resources", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     const [newPropResourceId, newVariableResourceId] = data.resources.keys();
     const [newBoxVariableId] = data.dataSources.keys();
@@ -784,12 +814,14 @@ describe("resources", () => {
       expect.objectContaining({
         id: expect.toSatisfy((value) => value !== fragment.resources[0].id),
         url: newVariableIdentifier,
+        searchParams: [{ name: "filter", value: newVariableIdentifier }],
         headers: [{ name: "auth", value: newVariableIdentifier }],
         body: newVariableIdentifier,
       }),
       expect.objectContaining({
         id: expect.toSatisfy((value) => value !== fragment.resources[1].id),
         url: newVariableIdentifier,
+        searchParams: [{ name: "filter", value: newVariableIdentifier }],
         headers: [{ name: "auth", value: newVariableIdentifier }],
         body: newVariableIdentifier,
       }),
@@ -808,12 +840,14 @@ describe("resources", () => {
     const resourceProp = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
     const resourceVariable = new ResourceValue("Box Resource", {
       url: expression`${boxVariable}`,
       method: "get",
+      searchParams: [{ name: "filter", value: expression`${boxVariable}` }],
       headers: [{ name: "auth", value: expression`${boxVariable}` }],
       body: expression`${boxVariable}`,
     });
@@ -833,6 +867,7 @@ describe("resources", () => {
       data,
       fragment,
       availableVariables: [],
+      projectId: "",
     });
     expect(Array.from(data.dataSources.values())).toEqual([
       expect.objectContaining({
@@ -850,12 +885,14 @@ describe("resources", () => {
       expect.objectContaining({
         id: fragment.resources[0].id,
         url: oldVariableIdentifier,
+        searchParams: [{ name: "filter", value: oldVariableIdentifier }],
         headers: [{ name: "auth", value: oldVariableIdentifier }],
         body: oldVariableIdentifier,
       }),
       expect.objectContaining({
         id: fragment.resources[1].id,
         url: oldVariableIdentifier,
+        searchParams: [{ name: "filter", value: oldVariableIdentifier }],
         headers: [{ name: "auth", value: oldVariableIdentifier }],
         body: oldVariableIdentifier,
       }),

@@ -1,9 +1,5 @@
 import { ItemIcon, RadioGroupIcon, TriggerIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { button, div, span } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -20,22 +16,11 @@ export const metaRadioGroup: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.RadioGroupItem],
   },
-  states: [
-    ...defaultStates,
-    {
-      label: "Checked",
-      selector: "[data-state=checked]",
-      category: "component-states",
-    },
-    {
-      label: "Unchecked",
-      selector: "[data-state=unchecked]",
-      category: "component-states",
-    },
-  ],
   presetStyle: {
     div,
   },
+  initialProps: ["id", "class", "name", "value", "required"],
+  props: propsRadioGroup,
 };
 
 export const metaRadioGroupItem: WsComponentMeta = {
@@ -45,10 +30,15 @@ export const metaRadioGroupItem: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.RadioGroupIndicator],
   },
-  states: defaultStates,
+  states: [
+    { label: "Checked", selector: "[data-state=checked]" },
+    { label: "Unchecked", selector: "[data-state=unchecked]" },
+  ],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  initialProps: ["value"],
+  props: propsRadioGroupItem,
 };
 
 export const metaRadioGroupIndicator: WsComponentMeta = {
@@ -57,22 +47,12 @@ export const metaRadioGroupIndicator: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  states: defaultStates,
+  states: [
+    { label: "Checked", selector: "[data-state=checked]" },
+    { label: "Unchecked", selector: "[data-state=unchecked]" },
+  ],
   presetStyle: {
     span,
   },
-};
-
-export const propsMetaRadioGroup: WsComponentPropsMeta = {
-  props: propsRadioGroup,
-  initialProps: ["id", "className", "name", "value", "required"],
-};
-
-export const propsMetaRadioGroupItem: WsComponentPropsMeta = {
-  props: propsRadioGroupItem,
-  initialProps: ["value"],
-};
-
-export const propsMetaRadioGroupIndicator: WsComponentPropsMeta = {
   props: propsRadioGroupIndicator,
 };

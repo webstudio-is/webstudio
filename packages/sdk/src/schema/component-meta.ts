@@ -21,16 +21,6 @@ export type PresetStyle<Tag extends HtmlTags = HtmlTags> = Partial<
   Record<Tag, PresetStyleDecl[]>
 >;
 
-// props are separated from the rest of the meta
-// so they can be exported separately and potentially tree-shaken
-const WsComponentPropsMeta = z.object({
-  props: z.record(PropMeta),
-  // Props that will be always visible in properties panel.
-  initialProps: z.array(z.string()).optional(),
-});
-
-export type WsComponentPropsMeta = z.infer<typeof WsComponentPropsMeta>;
-
 export const componentCategories = [
   "general",
   "typography",
@@ -41,27 +31,17 @@ export const componentCategories = [
   "localization",
   "radix",
   "xml",
+  "other",
   "hidden",
   "internal",
 ] as const;
 
-export const stateCategories = ["states", "component-states"] as const;
-
 export const ComponentState = z.object({
-  category: z.enum(stateCategories).optional(),
   selector: z.string(),
   label: z.string(),
 });
 
 export type ComponentState = z.infer<typeof ComponentState>;
-
-export const defaultStates: ComponentState[] = [
-  { selector: ":hover", label: "Hover" },
-  { selector: ":active", label: "Active" },
-  { selector: ":focus", label: "Focus" },
-  { selector: ":focus-visible", label: "Focus Visible" },
-  { selector: ":focus-within", label: "Focus Within" },
-];
 
 /**
  * rich-text - can be edited as rich text
@@ -92,11 +72,6 @@ export type ContentModel = z.infer<typeof ContentModel>;
 
 export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
-  /**
-   * a property used as textual placeholder when no content specified while in builder
-   * also signals to not insert components inside unless dropped explicitly
-   */
-  placeholder: z.string().optional(),
   contentModel: ContentModel.optional(),
   // when this field is specified component receives
   // prop with index of same components withiin specified ancestor
@@ -105,10 +80,13 @@ export const WsComponentMeta = z.object({
   indexWithinAncestor: z.optional(z.string()),
   label: z.optional(z.string()),
   description: z.string().optional(),
-  icon: z.string(),
+  icon: z.string().optional(),
   presetStyle: z.optional(z.record(z.string(), z.array(PresetStyleDecl))),
   states: z.optional(z.array(ComponentState)),
   order: z.number().optional(),
+  // properties and html attributes that will be always visible in properties panel
+  initialProps: z.array(z.string()).optional(),
+  props: z.record(PropMeta).optional(),
 });
 
 export type WsComponentMeta = Omit<

@@ -1,13 +1,16 @@
 import type { KeyboardEvent, FocusEvent } from "react";
-import { Box, styled } from "@webstudio-is/design-system";
+import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
 import { UploadingAnimation } from "./uploading-animation";
-import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
+import { ImageInfo, imageInfoCssVars } from "./image-info";
 import type { AssetContainer } from "~/builder/shared/assets";
-import { Filename } from "./filename";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { theme } from "@webstudio-is/design-system";
-import { isVideoFormat } from "../assets/asset-utils";
+import {
+  formatAssetName,
+  isVideoFormat,
+  parseAssetName,
+} from "../assets/asset-utils";
 
 const StyledWebstudioImage = styled(Image, {
   position: "absolute",
@@ -73,7 +76,7 @@ const ThumbnailContainer = styled(Box, {
   overflow: "hidden",
   padding: 2,
   "&:hover": {
-    ...imageInfoTriggerCssVars({ show: true }),
+    ...imageInfoCssVars({ show: true }),
     backgroundColor: theme.colors.backgroundAssetcardHover,
   },
   variants: {
@@ -87,7 +90,7 @@ const ThumbnailContainer = styled(Box, {
         outline: `1px solid ${theme.colors.borderFocus}`,
         outlineOffset: -1,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...imageInfoTriggerCssVars({ show: true }),
+        ...imageInfoCssVars({ show: true }),
       },
     },
   },
@@ -102,7 +105,6 @@ const Thumbnail = styled(Box, {
 
 type ImageThumbnailProps = {
   assetContainer: AssetContainer;
-  onDelete: (ids: Array<string>) => void;
   onSelect: (assetContainer?: AssetContainer) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   state?: "selected";
@@ -110,22 +112,20 @@ type ImageThumbnailProps = {
 
 export const ImageThumbnail = ({
   assetContainer,
-  onDelete,
   onSelect,
   onChange,
   state,
 }: ImageThumbnailProps) => {
-  const { asset, status } = assetContainer;
-
-  const { name, description } = asset;
-
-  const isUploading = status === "uploading";
+  const { asset } = assetContainer;
+  const { basename, ext } = parseAssetName(asset.name);
+  const alt = asset.description ?? formatAssetName(asset);
+  const isUploading = assetContainer.status === "uploading";
 
   return (
     <ThumbnailContainer
-      title={description ?? name}
+      title={alt}
       tabIndex={0}
-      status={status}
+      status={assetContainer.status}
       state={state}
       onFocus={() => {
         onSelect?.(assetContainer);
@@ -147,40 +147,32 @@ export const ImageThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {isVideoFormat(assetContainer.asset.format) &&
+        {isVideoFormat(asset.format) &&
         assetContainer.status === "uploading" ? (
           <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
         ) : (
           <StyledWebstudioImage
-            assetId={assetContainer.asset.id}
-            name={assetContainer.asset.name}
+            assetId={asset.id}
+            name={asset.name}
             objectURL={
               assetContainer.status === "uploading"
                 ? assetContainer.objectURL
                 : undefined
             }
-            alt={description ?? name}
+            alt={alt}
             // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
             width={64}
           />
         )}
       </Thumbnail>
-      <Box
-        css={{
-          width: "100%",
-          // @todo should be a token from design system
-          height: 12,
-        }}
-      >
-        <Filename variant={"tiny"}>{name}</Filename>
-      </Box>
+      <Flex css={{ width: "100%", paddingBottom: 4 }}>
+        <Text variant="tiny" truncate>
+          {asset.filename ?? basename}
+        </Text>
+        <Text variant="tiny">.{ext}</Text>
+      </Flex>
       {assetContainer.status === "uploaded" && (
-        <ImageInfoTrigger
-          asset={assetContainer.asset}
-          onDelete={(ids) => {
-            onDelete(ids);
-          }}
-        />
+        <ImageInfo asset={assetContainer.asset} />
       )}
       {isUploading && <UploadingAnimation />}
     </ThumbnailContainer>

@@ -1,6 +1,7 @@
 import { aria } from "aria-query";
 import { mkdir, writeFile } from "node:fs/promises";
 import {
+  coreMetas,
   createScope,
   elementComponent,
   Prop,
@@ -10,7 +11,7 @@ import {
 } from "@webstudio-is/sdk";
 import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
 import {
-  findTags,
+  findByTags,
   getAttr,
   getTextContent,
   loadPage,
@@ -33,11 +34,11 @@ const overrides: Record<string, Partial<Attribute>> = {
 
 const html = await loadPage("aria1.3", "https://www.w3.org/TR/wai-aria-1.3");
 const document = parseHtml(html);
-const list = findTags(document, "dl").find(
+const list = findByTags(document, "dl").find(
   (table) => getAttr(table, "id")?.value === "index_state_prop"
 );
-const terms = findTags(list, "dt");
-const details = findTags(list, "dd");
+const terms = findByTags(list, "dt");
+const details = findByTags(list, "dd");
 const descriptions = new Map<string, string>();
 for (let index = 0; index < terms.length; index += 1) {
   const term = getTextContent(terms[index]);
@@ -79,7 +80,8 @@ for (const [name, meta] of aria.entries()) {
 const ariaContent = `type Attribute = {
   name: string,
   description: string,
-  type: 'string' | 'boolean' | 'number' | 'select',
+  required?: boolean,
+  type: 'string' | 'boolean' | 'number' | 'select' | 'url',
   options?: string[]
 }
 
@@ -151,12 +153,12 @@ await writeFile(
   generateWebstudioComponent({
     name: "Page",
     scope: createScope(),
+    metas: new Map(Object.entries(coreMetas)),
     instances,
     props,
     dataSources: new Map(),
     rootInstanceId: instance.id,
     classesMap: new Map(),
     parameters: [],
-    metas: new Map(),
   }) + "export { Page }"
 );

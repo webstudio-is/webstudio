@@ -1,10 +1,5 @@
 import { BracesIcon } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type PresetStyle,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { code } from "@webstudio-is/sdk/normalize.css";
 import type { defaultTag } from "./code-text";
 import { props } from "./__generated__/code-text.props";
@@ -40,20 +35,13 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  category: "general",
-  description:
-    "Use this component when you want to display code as text on the page.",
   icon: BracesIcon,
   contentModel: {
     category: "instance",
     children: [],
   },
-  states: defaultStates,
   presetStyle,
-  order: 5,
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["id", "class", "lang", "code"],
   props: {
     ...props,
     code: {
@@ -62,5 +50,4 @@ export const propsMeta: WsComponentPropsMeta = {
       type: "string",
     },
   },
-  initialProps: ["id", "className", "lang", "code"],
 };

@@ -16,6 +16,7 @@ export {
   metaPopover as Popover,
   metaPopoverTrigger as PopoverTrigger,
   metaPopoverContent as PopoverContent,
+  metaPopoverClose as PopoverClose,
 } from "./popover.ws";
 export {
   metaTooltip as Tooltip,

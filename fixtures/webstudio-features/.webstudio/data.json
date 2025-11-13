@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "f0dfc2e7-240a-4542-ad28-a4cb68b2d9db",
+    "id": "043bda3f-0d77-4656-aa9c-652c1a1f272e",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 583,
-    "createdAt": "2025-04-14T09:45:34.257+00:00",
-    "updatedAt": "2025-04-14T09:45:34.257+00:00",
+    "version": 593,
+    "createdAt": "2025-05-15T22:04:05.511+00:00",
+    "updatedAt": "2025-05-15T22:04:05.511+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -2165,6 +2165,18 @@
             "value": "center"
           }
         }
+      ],
+      [
+        "U6kV-2LTnN9kR4jWfLb1c:UoTkWyaFuTYJihS3MFYK5:display:",
+        {
+          "breakpointId": "UoTkWyaFuTYJihS3MFYK5",
+          "styleSourceId": "U6kV-2LTnN9kR4jWfLb1c",
+          "property": "display",
+          "value": {
+            "type": "keyword",
+            "value": "block"
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -2481,6 +2493,13 @@
         {
           "type": "local",
           "id": "hEVSzkOEBn_3dNyo65PAM"
+        }
+      ],
+      [
+        "U6kV-2LTnN9kR4jWfLb1c",
+        {
+          "type": "local",
+          "id": "U6kV-2LTnN9kR4jWfLb1c"
         }
       ]
     ],
@@ -2799,6 +2818,13 @@
           "instanceId": "g__o13UKOkD0KImnp-sWp",
           "values": ["hEVSzkOEBn_3dNyo65PAM"]
         }
+      ],
+      [
+        "Ol5bklKKxyJaS7Q3jcCfD",
+        {
+          "instanceId": "Ol5bklKKxyJaS7Q3jcCfD",
+          "values": ["U6kV-2LTnN9kR4jWfLb1c"]
+        }
       ]
     ],
     "props": [
@@ -2810,16 +2836,6 @@
           "name": "src",
           "type": "asset",
           "value": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da"
-        }
-      ],
-      [
-        "SYK4hpLQ9tHnESKDtPvI9",
-        {
-          "id": "SYK4hpLQ9tHnESKDtPvI9",
-          "instanceId": "l9AI_pShC-BH4ibxK6kNT",
-          "name": "href",
-          "type": "string",
-          "value": "https://github.com/"
         }
       ],
       [
@@ -4111,6 +4127,16 @@
           "type": "boolean",
           "value": true
         }
+      ],
+      [
+        "qG9NyGQuq0KVR0zvf76Er",
+        {
+          "id": "qG9NyGQuq0KVR0zvf76Er",
+          "instanceId": "Ol5bklKKxyJaS7Q3jcCfD",
+          "name": "href",
+          "type": "string",
+          "value": "https://github.com/"
+        }
       ]
     ],
     "dataSources": [
@@ -4432,7 +4458,7 @@
             },
             {
               "type": "id",
-              "value": "l9AI_pShC-BH4ibxK6kNT"
+              "value": "Ol5bklKKxyJaS7Q3jcCfD"
             },
             {
               "type": "id",
@@ -4506,20 +4532,6 @@
           "id": "pX1ovPI7NdC0HRjkw6Kpw",
           "component": "Image",
           "children": []
-        }
-      ],
-      [
-        "l9AI_pShC-BH4ibxK6kNT",
-        {
-          "type": "instance",
-          "id": "l9AI_pShC-BH4ibxK6kNT",
-          "component": "Link",
-          "children": [
-            {
-              "type": "text",
-              "value": "Click here to adore more kittens"
-            }
-          ]
         }
       ],
       [
@@ -6728,6 +6740,21 @@
             }
           ]
         }
+      ],
+      [
+        "Ol5bklKKxyJaS7Q3jcCfD",
+        {
+          "type": "instance",
+          "id": "Ol5bklKKxyJaS7Q3jcCfD",
+          "component": "ws:element",
+          "tag": "a",
+          "children": [
+            {
+              "type": "text",
+              "value": "Click here to adore more kittens"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
@@ -7039,14 +7066,13 @@
   ],
   "assets": [
     {
-      "id": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-      "name": "DALL_E_2023-10-30_12.39.46_-_Photo_logo_with_a_bold_cat_silhouette_centered_on_a_contrasting_background_designed_for_clarity_at_small_32x32_favicon_resolution_00h6cEA8u2pJRvVJv7hRe.png",
-      "description": null,
+      "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
+      "name": "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 268326,
       "type": "image",
       "format": "png",
-      "createdAt": "2023-10-30T13:51:08.416+00:00",
+      "createdAt": "2025-06-20T17:59:02.94+00:00",
       "meta": {
         "width": 790,
         "height": 786
@@ -7055,7 +7081,6 @@
     {
       "id": "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
       "name": "small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",
-      "description": null,
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 2906,
       "type": "image",
@@ -7069,7 +7094,6 @@
     {
       "id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
       "name": "_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
-      "description": null,
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 210614,
       "type": "image",

@@ -280,6 +280,42 @@ test("avoid generating style data without styles", () => {
   expect(styles).toEqual([]);
 });
 
+test("generate breakpoints", () => {
+  const { breakpoints, styleSources, styleSourceSelections, styles } =
+    renderTemplate(
+      <$.Body
+        ws:style={css`
+          color: red;
+          @media (min-width: 1024px) {
+            color: blue;
+          }
+        `}
+      ></$.Body>
+    );
+  expect(breakpoints).toEqual([
+    { id: "base", label: "" },
+    { id: "0", label: "1024", minWidth: 1024 },
+  ]);
+  expect(styleSources).toEqual([{ id: "0:ws:style", type: "local" }]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: "0", values: ["0:ws:style"] },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      styleSourceId: "0:ws:style",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "0",
+      styleSourceId: "0:ws:style",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+  ]);
+});
+
 test("render variable used in prop expression", () => {
   const count = new Variable("count", 1);
   const { props, dataSources } = renderTemplate(
@@ -481,6 +517,7 @@ test("render resource variable", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com/" + ${value}`,
     method: "get",
+    searchParams: [{ name: "filter", value: expression`${value}` }],
     headers: [{ name: "auth", value: expression`${value}` }],
     body: expression`${value}`,
   });
@@ -509,6 +546,7 @@ test("render resource variable", () => {
       name: "myResource",
       url: `"https://my-url.com/" + $ws$dataSource$1`,
       method: "get",
+      searchParams: [{ name: "filter", value: `$ws$dataSource$1` }],
       headers: [{ name: "auth", value: `$ws$dataSource$1` }],
       body: `$ws$dataSource$1`,
     },
@@ -520,6 +558,7 @@ test("render resource prop", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com/" + ${value}`,
     method: "get",
+    searchParams: [{ name: "filter", value: expression`${value}` }],
     headers: [{ name: "auth", value: expression`${value}` }],
     body: expression`${value}`,
   });
@@ -550,6 +589,7 @@ test("render resource prop", () => {
       name: "myResource",
       url: `"https://my-url.com/" + $ws$dataSource$1`,
       method: "get",
+      searchParams: [{ name: "filter", value: `$ws$dataSource$1` }],
       headers: [{ name: "auth", value: `$ws$dataSource$1` }],
       body: `$ws$dataSource$1`,
     },

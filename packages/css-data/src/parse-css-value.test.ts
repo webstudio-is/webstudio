@@ -628,6 +628,13 @@ test("support custom properties var reference in custom property", () => {
   });
 });
 
+test("parse empty custom property as empty unparsed", () => {
+  expect(parseCssValue("--inset", "")).toEqual({
+    type: "unparsed",
+    value: "",
+  });
+});
+
 test("parse single var in repeated value without layers or tuples", () => {
   expect(parseCssValue("background-image", "var(--gradient)")).toEqual({
     type: "var",

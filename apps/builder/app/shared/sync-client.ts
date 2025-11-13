@@ -67,10 +67,15 @@ export class ImmerhinSyncObject implements SyncObject {
   }
   setState(state: Map<string, unknown>) {
     for (const [namespace, $store] of this.store.containers) {
-      // Immer cannot handle Map instances from another realm.
-      // Use `clone` to recreate the data with the current realm's classes.
-      // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
-      $store.set(structuredClone(state.get(namespace)));
+      // catch errors triggered by CSP configuration when user put iframe onto canvas
+      try {
+        // Immer cannot handle Map instances from another realm.
+        // Use `clone` to recreate the data with the current realm's classes.
+        // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
+        $store.set(structuredClone(state.get(namespace)));
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
   applyTransaction(transaction: Transaction<Change[]>) {
@@ -112,10 +117,15 @@ export class NanostoresSyncObject implements SyncObject {
   }
   applyTransaction(transaction: Transaction) {
     this.operation = "add";
-    // `instanceof` checks do not work with instances like Map, File, etc., from another realm.
-    // Use `clone` to recreate the data with the current realm's classes.
-    // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
-    this.store.set(structuredClone(transaction.payload));
+    // catch errors triggered by CSP configuration when user put iframe onto canvas
+    try {
+      // `instanceof` checks do not work with instances like Map, File, etc., from another realm.
+      // Use `clone` to recreate the data with the current realm's classes.
+      // This works because the structured clone algorithm skips prototype chains; classes must be defined in both realms.
+      this.store.set(structuredClone(transaction.payload));
+    } catch (error) {
+      console.error(error);
+    }
     this.operation = "local";
   }
   revertTransaction(_transaction: RevertedTransaction) {

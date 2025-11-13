@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import {
   createScope,
+  elementComponent,
   ROOT_INSTANCE_ID,
   SYSTEM_VARIABLE_ID,
   WsComponentMeta,
@@ -706,6 +707,7 @@ test("generate resources loading", () => {
   const dataResource = new ResourceValue("data", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   expect(
@@ -746,6 +748,7 @@ test("avoid generating unused variables", () => {
   const unusedResource = new ResourceValue("Unused Resource Name", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const data = renderData(
@@ -882,11 +885,13 @@ test("generate resource prop", () => {
   const myResource = new ResourceValue("myResource", {
     url: expression`"https://my-url.com?with-secret"`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const anotherResource = new ResourceValue("anotherResource", {
     url: expression`"https://another-url.com?with-secret"`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   expect(
@@ -1165,8 +1170,8 @@ test("generate prop with index within ancestor", () => {
       rootInstanceId: "body",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
-        ["TabsContent", { icon: "", indexWithinAncestor: "Tabs" }],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
+        ["TabsContent", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="body">
@@ -1223,7 +1228,7 @@ test("ignore ws:block-template when generate index attribute", () => {
       rootInstanceId: "bodyId",
       parameters: [],
       metas: new Map<string, WsComponentMeta>([
-        ["TabsTrigger", { icon: "", indexWithinAncestor: "Tabs" }],
+        ["TabsTrigger", { indexWithinAncestor: "Tabs" }],
       ]),
       ...renderData(
         <$.Body ws:id="bodyId">
@@ -1386,7 +1391,7 @@ test("convert attributes to react compatible when render ws:element", () => {
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map(),
+      metas: new Map([[elementComponent, { presetStyle: { div: [] } }]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <ws.element
@@ -1421,7 +1426,7 @@ test("convert attributes to react compatible when render components with tags", 
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map([["Box", { icon: "", presetStyle: { div: [] } }]]),
+      metas: new Map([["Box", { presetStyle: { div: [] } }]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.Box class="my-class" for="my-id" autocomplete="off"></$.Box>
@@ -1444,6 +1449,45 @@ test("convert attributes to react compatible when render components with tags", 
   );
 });
 
+test("ignore props similar to standard attributes when react components defines them", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([
+        [
+          "Vimeo",
+          {
+            presetStyle: { div: [] },
+            props: {
+              autoplay: { type: "boolean", control: "boolean", required: true },
+            },
+          },
+        ],
+      ]),
+      ...renderData(
+        <$.Body ws:id="bodyId">
+          <$.Vimeo autoplay={true}></$.Vimeo>
+        </$.Body>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Vimeo
+       autoplay={true} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
 test("ignore props similar to standard attributes on react components without tags", () => {
   expect(
     generateWebstudioComponent({
@@ -1452,7 +1496,7 @@ test("ignore props similar to standard attributes on react components without ta
       name: "Page",
       rootInstanceId: "bodyId",
       parameters: [],
-      metas: new Map([["HeadSlot", { icon: "" }]]),
+      metas: new Map([["HeadSlot", {}]]),
       ...renderData(
         <$.Body ws:id="bodyId">
           <$.HeadSlot
@@ -1472,6 +1516,40 @@ test("ignore props similar to standard attributes on react components without ta
        class={"my-class"}
        for={"my-id"}
        autocomplete={"off"} />
+       </Body>
+       }
+     `)
+    )
+  );
+});
+
+test("overrides some element tags with provided components", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "bodyId",
+      parameters: [],
+      metas: new Map([["HeadSlot", { icon: "" }]]),
+      tagsOverrides: {
+        body: "namespace:Body",
+        a: "namespace:Link",
+      },
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a"></ws.element>
+          <ws.element ws:tag="div"></ws.element>
+        </ws.element>
+      ),
+    })
+  ).toEqual(
+    validateJSX(
+      clear(`
+       const Page = () => {
+       return <Body>
+       <Link />
+       <div />
        </Body>
        }
      `)

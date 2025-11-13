@@ -29,6 +29,22 @@ type ExpressionVisitor = {
   [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
 };
 
+export const allowedStringMethods = new Set([
+  "toLowerCase",
+  "replace",
+  "split",
+  "slice",
+  "at",
+  "endsWith",
+  "includes",
+  "startsWith",
+  "toUpperCase",
+  "toLocaleLowerCase",
+  "toLocaleUpperCase",
+]);
+
+export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+
 export const lintExpression = ({
   expression,
   availableVariables = new Set(),
@@ -112,7 +128,28 @@ export const lintExpression = ({
       ThisExpression: addMessage(`"this" keyword is not supported`),
       FunctionExpression: addMessage("Functions are not supported"),
       UpdateExpression: addMessage("Increment and decrement are not supported"),
-      CallExpression: addMessage("Functions are not supported"),
+      CallExpression(node) {
+        let calleeName;
+        if (node.callee.type === "MemberExpression") {
+          if (node.callee.property.type === "Identifier") {
+            const methodName = node.callee.property.name;
+            if (
+              allowedStringMethods.has(methodName) ||
+              allowedArrayMethods.has(methodName)
+            ) {
+              return;
+            }
+            calleeName = methodName;
+          }
+        } else if (node.callee.type === "Identifier") {
+          calleeName = node.callee.name;
+        }
+        if (calleeName) {
+          addMessage(`"${calleeName}" function is not supported`)(node);
+        } else {
+          addMessage("Functions are not supported")(node);
+        }
+      },
       NewExpression: addMessage("Classes are not supported"),
       SequenceExpression: addMessage(`Only single expression is supported`),
       ArrowFunctionExpression: addMessage("Functions are not supported"),
@@ -255,6 +292,19 @@ export const transpileExpression = ({
       if (node.computed === true) {
         const dotIndex = expression.indexOf("[", node.object.end);
         replacements.push([dotIndex, dotIndex, "?."]);
+      }
+    },
+    CallExpression(node) {
+      if (executable === false || node.optional) {
+        return;
+      }
+      // Add optional chaining to method calls: obj.method() -> obj?.method?.()
+      if (node.callee.type === "MemberExpression") {
+        // Find the opening parenthesis after the method name
+        const openParenIndex = expression.indexOf("(", node.callee.end);
+        if (openParenIndex !== -1) {
+          replacements.push([openParenIndex, openParenIndex, "?."]);
+        }
       }
     },
   });

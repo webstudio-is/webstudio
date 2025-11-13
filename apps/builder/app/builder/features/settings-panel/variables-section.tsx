@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -39,14 +39,8 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import {
-  ValuePreviewDialog,
-  formatValuePreview,
-} from "~/builder/shared/expression-editor";
-import {
-  VariablePopoverProvider,
-  VariablePopoverTrigger,
-} from "./variable-popover";
+import { formatValuePreview } from "~/builder/shared/expression-editor";
+import { VariablePopoverTrigger } from "./variable-popover";
 import {
   $selectedInstance,
   $selectedInstanceKeyWithRoot,
@@ -145,7 +139,6 @@ const VariablesItem = ({
   usageCount: number;
 }) => {
   const selectedPage = useStore($selectedPage);
-  const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   return (
@@ -166,73 +159,64 @@ const VariablesItem = ({
             )}
           </Flex>
         }
-        disabled={source === "remote"}
         data-state={isMenuOpen ? "open" : undefined}
         buttons={
           <>
-            <ValuePreviewDialog
-              open={inspectDialogOpen}
-              onOpenChange={setInspectDialogOpen}
-              title={`Inspect "${variable.name}" value`}
-              value={value}
-            >
-              {undefined}
-            </ValuePreviewDialog>
-
-            <DropdownMenu modal onOpenChange={setIsMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                {/* a11y is completely broken here
-                  focus is not restored to button invoker
-                  @todo fix it eventually and consider restoring from closed value preview dialog
-              */}
-                <SmallIconButton
-                  tabIndex={-1}
-                  aria-label="Open variable menu"
-                  icon={<EllipsesIcon />}
-                  onClick={() => {}}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                css={{ width: theme.spacing[28] }}
-                onCloseAutoFocus={(event) => event.preventDefault()}
-              >
-                <DropdownMenuItem onSelect={() => setInspectDialogOpen(true)}>
-                  Inspect
-                </DropdownMenuItem>
-                {source === "local" && variable.type !== "parameter" && (
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      if (usageCount > 0) {
-                        setIsDeleteDialogOpen(true);
-                      } else {
-                        updateWebstudioData((data) => {
-                          deleteVariableMutable(data, variable.id);
-                        });
-                      }
-                    }}
-                  >
-                    Delete {usageCount > 0 && `(${usageCount} bindings)`}
-                  </DropdownMenuItem>
-                )}
-                {source === "local" &&
-                  variable.id === selectedPage?.systemDataSourceId && (
+            {((source === "local" && variable.type !== "parameter") ||
+              (source === "local" &&
+                variable.id === selectedPage?.systemDataSourceId)) && (
+              <DropdownMenu modal onOpenChange={setIsMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  {/* a11y is completely broken here
+                      focus is not restored to button invoker
+                      @todo fix it eventually and consider restoring from closed value preview dialog
+                  */}
+                  <SmallIconButton
+                    tabIndex={-1}
+                    aria-label="Open variable menu"
+                    icon={<EllipsesIcon />}
+                    onClick={() => {}}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  css={{ width: theme.spacing[28] }}
+                  onCloseAutoFocus={(event) => event.preventDefault()}
+                >
+                  {source === "local" && variable.type !== "parameter" && (
                     <DropdownMenuItem
                       onSelect={() => {
-                        updateWebstudioData((data) => {
-                          const page = findPageByIdOrPath(
-                            selectedPage.id,
-                            data.pages
-                          );
-                          delete page?.systemDataSourceId;
-                          deleteVariableMutable(data, variable.id);
-                        });
+                        if (usageCount > 0) {
+                          setIsDeleteDialogOpen(true);
+                        } else {
+                          updateWebstudioData((data) => {
+                            deleteVariableMutable(data, variable.id);
+                          });
+                        }
                       }}
                     >
-                      Delete
+                      Delete {usageCount > 0 && `(${usageCount} bindings)`}
                     </DropdownMenuItem>
                   )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {source === "local" &&
+                    variable.id === selectedPage?.systemDataSourceId && (
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          updateWebstudioData((data) => {
+                            const page = findPageByIdOrPath(
+                              selectedPage.id,
+                              data.pages
+                            );
+                            delete page?.systemDataSourceId;
+                            deleteVariableMutable(data, variable.id);
+                          });
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <Dialog
               open={isDeleteDialogOpen}
@@ -302,40 +286,37 @@ const VariablesList = () => {
 const label = "Data Variables";
 
 export const VariablesSection = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useOpenState(label);
   return (
-    <VariablePopoverProvider value={{ containerRef }}>
-      <CollapsibleSectionRoot
-        label={label}
-        fullWidth={true}
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        trigger={
-          <SectionTitle
-            suffix={
-              <VariablePopoverTrigger>
-                <SectionTitleButton
-                  prefix={<PlusIcon />}
-                  // open panel when add new varable
-                  onClick={() => {
-                    if (isOpen === false) {
-                      setIsOpen(true);
-                    }
-                  }}
-                />
-              </VariablePopoverTrigger>
-            }
-          >
-            <SectionTitleLabel>Data Variables</SectionTitleLabel>
-          </SectionTitle>
-        }
-      >
-        {/* prevent applyig gap to list items */}
-        <div ref={containerRef}>
-          <VariablesList />
-        </div>
-      </CollapsibleSectionRoot>
-    </VariablePopoverProvider>
+    <CollapsibleSectionRoot
+      label={label}
+      fullWidth={true}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      trigger={
+        <SectionTitle
+          suffix={
+            <VariablePopoverTrigger>
+              <SectionTitleButton
+                prefix={<PlusIcon />}
+                // open panel when add new varable
+                onClick={() => {
+                  if (isOpen === false) {
+                    setIsOpen(true);
+                  }
+                }}
+              />
+            </VariablePopoverTrigger>
+          }
+        >
+          <SectionTitleLabel>Data Variables</SectionTitleLabel>
+        </SectionTitle>
+      }
+    >
+      {/* prevent applyig gap to list items */}
+      <div>
+        <VariablesList />
+      </div>
+    </CollapsibleSectionRoot>
   );
 };

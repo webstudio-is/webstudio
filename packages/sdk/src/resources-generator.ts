@@ -27,7 +27,6 @@ export const generateResources = ({
     // call resource by bound variable name
     const resourceName = scope.getName(resource.id, resource.name);
     generatedRequest += `  const ${resourceName}: ResourceRequest = {\n`;
-    generatedRequest += `    id: "${resource.id}",\n`;
     generatedRequest += `    name: ${JSON.stringify(resource.name)},\n`;
     const url = generateExpression({
       expression: resource.url,
@@ -36,6 +35,17 @@ export const generateResources = ({
       scope,
     });
     generatedRequest += `    url: ${url},\n`;
+    generatedRequest += `    searchParams: [\n`;
+    for (const searchParam of resource.searchParams ?? []) {
+      const value = generateExpression({
+        expression: searchParam.value,
+        dataSources,
+        usedDataSources,
+        scope,
+      });
+      generatedRequest += `      { name: "${searchParam.name}", value: ${value} },\n`;
+    }
+    generatedRequest += `    ],\n`;
     generatedRequest += `    method: "${resource.method}",\n`;
     generatedRequest += `    headers: [\n`;
     for (const header of resource.headers) {

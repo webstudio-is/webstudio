@@ -1,5 +1,5 @@
 import { micromark } from "micromark";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -17,8 +17,12 @@ import type { Prop } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { $selectedInstance } from "~/shared/awareness";
-import { $props, $registeredComponentPropsMetas } from "~/shared/nano-states";
-import { $selectedInstancePropsMetas, humanizeAttribute } from "./shared";
+import { $props } from "~/shared/nano-states";
+import {
+  $selectedInstanceInitialPropNames,
+  $selectedInstancePropsMetas,
+  humanizeAttribute,
+} from "./shared";
 
 const usePropMeta = (name: string) => {
   const store = useMemo(() => {
@@ -78,14 +82,8 @@ const deleteProp = (name: string) => {
 const useIsResettable = (name: string) => {
   const store = useMemo(() => {
     return computed(
-      [$selectedInstance, $registeredComponentPropsMetas],
-      (instance, propsMetas) => {
-        if (name === showAttribute) {
-          return true;
-        }
-        const metas = propsMetas.get(instance?.component ?? "");
-        return metas?.initialProps?.includes(name);
-      }
+      [$selectedInstanceInitialPropNames],
+      (initialPropNames) => name === showAttribute || initialPropNames.has(name)
     );
   }, [name]);
   return useStore(store);
@@ -102,10 +100,8 @@ export const PropertyLabel = ({
   const propMeta = usePropMeta(name);
   const prop = useProp(name);
   const label = propMeta?.label ?? humanizeAttribute(name);
-  // 1. not existing properties cannot be deleted
-  // 2. required properties cannot be deleted
-  // 3. custom attributes like data-* do not have meta and can be deleted
-  const isDeletable = prop && !propMeta?.required;
+  // not existing properties cannot be deleted
+  const isDeletable = prop !== undefined;
   const isResettable = useIsResettable(name);
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
@@ -182,9 +178,9 @@ export const FieldLabel = ({
   children,
 }: {
   /**
-   * Markdown text to show in tooltip
+   * Markdown text to show in tooltip or react element
    */
-  description?: string;
+  description?: string | ReactNode;
   /**
    * when true means field has value and colored true
    */
@@ -193,6 +189,18 @@ export const FieldLabel = ({
   children: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  if (typeof description === "string") {
+    description = (
+      <Text
+        css={{
+          "> *": { marginTop: 0 },
+        }}
+        dangerouslySetInnerHTML={{ __html: micromark(description) }}
+      ></Text>
+    );
+  } else if (description) {
+    description = <Text>{description}</Text>;
+  }
   return (
     <Flex align="center" css={{ gap: theme.spacing[3] }}>
       {/* prevent label growing */}
@@ -221,16 +229,7 @@ export const FieldLabel = ({
               <Text variant="titles" css={{ textTransform: "none" }}>
                 {children}
               </Text>
-              {description && (
-                <Text
-                  css={{
-                    "> *": {
-                      marginTop: 0,
-                    },
-                  }}
-                  dangerouslySetInnerHTML={{ __html: micromark(description) }}
-                ></Text>
-              )}
+              {description}
               {resettable && (
                 <Button
                   color="dark"

@@ -28,8 +28,9 @@ import {
   portalComponent,
   collectionComponent,
   Prop,
-  parseComponentName,
   Props,
+  elementComponent,
+  tags,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -40,11 +41,11 @@ import {
   $registeredComponentMetas,
   $dataSources,
   $assets,
-  $project,
   $breakpoints,
   $pages,
   $resources,
   $registeredTemplates,
+  $project,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -55,12 +56,12 @@ import {
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
-import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import {
   $awareness,
+  $selectedInstancePath,
   $selectedPage,
   getInstancePath,
   selectInstance,
@@ -75,7 +76,10 @@ import {
 import {
   findClosestNonTextualContainer,
   isRichTextTree,
+  isTreeSatisfyingContentModel,
 } from "./content-model";
+import type { Project } from "@webstudio-is/project";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -161,26 +165,6 @@ export const getWebstudioData = (): WebstudioData => {
   };
 };
 
-const getLabelFromComponentName = (component: Instance["component"]) => {
-  if (component.includes(":")) {
-    // strip namespace
-    const [_namespace, baseName] = component.split(":");
-    component = baseName;
-  }
-  return humanizeString(component);
-};
-
-export const getInstanceLabel = (
-  instance: { component: string; label?: string },
-  meta: { label?: string }
-) => {
-  return (
-    instance.label ||
-    meta.label ||
-    getLabelFromComponentName(instance.component)
-  );
-};
-
 export const findAllEditableInstanceSelector = ({
   instanceSelector,
   instances,
@@ -223,7 +207,7 @@ export const findAllEditableInstanceSelector = ({
 };
 
 export const insertInstanceChildrenMutable = (
-  data: WebstudioData,
+  data: Omit<WebstudioData, "pages">,
   children: Instance["children"],
   insertTarget: Insertable
 ) => {
@@ -254,10 +238,93 @@ export const insertInstanceChildrenMutable = (
   }
 };
 
+export const insertWebstudioElementAt = (insertable?: Insertable) => {
+  const instances = $instances.get();
+  const props = $props.get();
+  const metas = $registeredComponentMetas.get();
+  // find closest container and try to match new element with it
+  if (insertable === undefined) {
+    const instancePath = $selectedInstancePath.get();
+    if (instancePath === undefined) {
+      return false;
+    }
+    const [{ instanceSelector }] = instancePath;
+    const containerSelector = findClosestNonTextualContainer({
+      instances,
+      props,
+      metas,
+      instanceSelector,
+    });
+    const insertableIndex = instanceSelector.length - containerSelector.length;
+    if (insertableIndex === 0) {
+      insertable = {
+        parentSelector: containerSelector,
+        position: "end",
+      };
+    } else {
+      const containerInstance = instances.get(containerSelector[0]);
+      if (containerInstance === undefined) {
+        return false;
+      }
+      const lastChildInstanceId = instanceSelector[insertableIndex - 1];
+      const lastChildPosition = containerInstance.children.findIndex(
+        (child) => child.type === "id" && child.value === lastChildInstanceId
+      );
+      insertable = {
+        parentSelector: containerSelector,
+        position: lastChildPosition + 1,
+      };
+    }
+  }
+  // create element and find matching tag
+  const element: Instance = {
+    type: "instance",
+    id: nanoid(),
+    component: elementComponent,
+    children: [],
+  };
+  const newInstances = new Map(instances);
+  newInstances.set(element.id, element);
+  let matchingTag: undefined | string;
+  for (const tag of tags) {
+    element.tag = tag;
+    const isSatisfying = isTreeSatisfyingContentModel({
+      instances: newInstances,
+      props,
+      metas,
+      instanceSelector: [element.id, ...insertable.parentSelector],
+    });
+    if (isSatisfying) {
+      matchingTag = tag;
+      break;
+    }
+  }
+  if (matchingTag === undefined) {
+    return false;
+  }
+  // insert element
+  updateWebstudioData((data) => {
+    data.instances.set(element.id, element);
+    const children: Instance["children"] = [{ type: "id", value: element.id }];
+    insertInstanceChildrenMutable(data, children, insertable);
+  });
+  selectInstance([element.id, ...insertable.parentSelector]);
+  return true;
+};
+
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
-  insertable: Insertable
-) => {
+  insertable?: Insertable
+): boolean => {
+  // cannot insert empty fragment
+  if (fragment.children.length === 0) {
+    return false;
+  }
+  const project = $project.get();
+  insertable = findClosestInsertable(fragment, insertable) ?? insertable;
+  if (project === undefined || insertable === undefined) {
+    return false;
+  }
   let newInstanceSelector: undefined | InstanceSelector;
   updateWebstudioData((data) => {
     const instancePath = getInstancePath(
@@ -274,6 +341,7 @@ export const insertWebstudioFragmentAt = (
         ...data,
         startingInstanceId: instancePath[0].instance.id,
       }),
+      projectId: project.id,
     });
     const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -311,6 +379,7 @@ export const insertWebstudioFragmentAt = (
   if (newInstanceSelector) {
     selectInstance(newInstanceSelector);
   }
+  return true;
 };
 
 export const getComponentTemplateData = (
@@ -346,6 +415,10 @@ export const reparentInstanceMutable = (
   sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
+  const project = $project.get();
+  if (project === undefined) {
+    return;
+  }
   const [rootInstanceId] = sourceInstanceSelector;
   // delect is target is one of own descendants
   // prevent reparenting to avoid infinite loop
@@ -417,6 +490,7 @@ export const reparentInstanceMutable = (
       ...data,
       startingInstanceId: dropTarget.parentSelector[0],
     }),
+    projectId: project.id,
   });
   const [newParentId] = dropTarget.parentSelector;
   const newRootInstanceId =
@@ -752,6 +826,14 @@ export const extractWebstudioFragment = (
         unsetNameById,
       });
     }
+    if (newResource.searchParams) {
+      for (const searchParam of newResource.searchParams) {
+        searchParam.value = unsetExpressionVariables({
+          expression: searchParam.value,
+          unsetNameById,
+        });
+      }
+    }
     if (newResource.body) {
       newResource.body = unsetExpressionVariables({
         expression: newResource.body,
@@ -807,10 +889,12 @@ export const insertWebstudioFragmentCopy = ({
   data,
   fragment,
   availableVariables,
+  projectId,
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
+  projectId: Project["id"];
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -818,10 +902,6 @@ export const insertWebstudioFragmentCopy = ({
     newInstanceIds,
     newDataSourceIds,
   };
-  const projectId = $project.get()?.id;
-  if (projectId === undefined) {
-    return newDataIds;
-  }
 
   const fragmentInstances: Instances = new Map();
   const portalContentRootIds = new Set<Instance["id"]>();
@@ -1102,6 +1182,18 @@ export const insertWebstudioFragmentCopy = ({
       });
       header.value = replaceDataSources(header.value, newDataSourceIds);
     }
+    if (resource.searchParams) {
+      for (const searchParam of resource.searchParams) {
+        searchParam.value = restoreExpressionVariables({
+          expression: searchParam.value,
+          maskedIdByName,
+        });
+        searchParam.value = replaceDataSources(
+          searchParam.value,
+          newDataSourceIds
+        );
+      }
+    }
     if (resource.body) {
       resource.body = restoreExpressionVariables({
         expression: resource.body,
@@ -1254,10 +1346,8 @@ export const findClosestInsertable = (
     instanceSelector: instanceSelector.slice(closestContainerIndex),
     fragment,
     onError: (message) => {
-      const [_namespace, componentName] = parseComponentName(
-        fragment.instances[0].component
-      );
-      const label = humanizeString(componentName);
+      const component = fragment.instances[0].component;
+      const label = getInstanceLabel({ component }, {});
       toast.warn(message || `"${label}" has no place here`);
     },
   });

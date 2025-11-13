@@ -1,9 +1,5 @@
 import { EmbedIcon } from "@webstudio-is/icons/svg";
-import {
-  descendantComponent,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import { descendantComponent, type WsComponentMeta } from "@webstudio-is/sdk";
 import { props } from "./__generated__/html-embed.props";
 
 export const meta: WsComponentMeta = {
@@ -11,7 +7,7 @@ export const meta: WsComponentMeta = {
   label: "HTML Embed",
   description: "Used to add HTML code to the page, such as an SVG or script.",
   icon: EmbedIcon,
-  order: 2,
+  order: 3,
   contentModel: {
     category: "instance",
     children: [descendantComponent],
@@ -28,9 +24,7 @@ export const meta: WsComponentMeta = {
       },
     ],
   },
-};
-
-export const propsMeta: WsComponentPropsMeta = {
+  initialProps: ["class", "clientOnly", "executeScriptOnCanvas"],
   props: {
     ...props,
     clientOnly: {
@@ -51,5 +45,4 @@ export const propsMeta: WsComponentPropsMeta = {
       type: "string",
     },
   },
-  initialProps: ["className", "clientOnly", "executeScriptOnCanvas"],
 };

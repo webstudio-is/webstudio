@@ -2,35 +2,126 @@ import { useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
-import type { Asset } from "@webstudio-is/sdk";
+import invariant from "tiny-invariant";
+import type { Asset, Page } from "@webstudio-is/sdk";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { Box, toast, css, theme } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
+import { Image, wsImageLoader } from "@webstudio-is/image";
+import type { ImageValue, StyleValue } from "@webstudio-is/css-engine";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
+import { fetch } from "~/shared/fetch.client";
+import type { ActionData } from "~/builder/shared/assets";
+import {
+  $assets,
+  $authToken,
+  $pages,
+  $project,
+  $props,
+  $styles,
+  $uploadingFilesDataStore,
+  type UploadingFileData,
+} from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 import type {
   AssetContainer,
   UploadedAssetContainer,
   UploadingAssetContainer,
 } from "./types";
-import type { ActionData } from "~/builder/shared/assets";
 import {
-  $assets,
-  $authToken,
-  $project,
-  $uploadingFilesDataStore,
-  type UploadingFileData,
-} from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
-import {
+  formatAssetName,
   getFileName,
   getMimeType,
   getSha256Hash,
   getSha256HashOfFile,
   uploadingFileDataToAsset,
 } from "./asset-utils";
-import { Image, wsImageLoader } from "@webstudio-is/image";
-import invariant from "tiny-invariant";
-import { fetch } from "~/shared/fetch.client";
+import { mapGetOrInsert } from "~/shared/shim";
+
+export type AssetUsage =
+  | { type: "favicon" }
+  | { type: "socialImage"; pageId: Page["id"] }
+  | { type: "marketplaceThumbnail"; pageId: Page["id"] }
+  | { type: "prop"; propId: string }
+  | { type: "style"; styleDeclKey: string };
+
+const traverseStyleValue = (
+  styleValue: StyleValue,
+  callback: (value: ImageValue) => void
+) => {
+  if (styleValue.type === "image") {
+    callback(styleValue);
+  }
+  if (styleValue.type === "tuple") {
+    for (const item of styleValue.value) {
+      traverseStyleValue(item, callback);
+    }
+  }
+  if (styleValue.type === "layers") {
+    for (const item of styleValue.value) {
+      traverseStyleValue(item, callback);
+    }
+  }
+};
+
+export const $usagesByAssetId = computed(
+  [$pages, $props, $styles],
+  (pages, props, styles) => {
+    const usagesByAsset = new Map<Asset["id"], AssetUsage[]>();
+    if (pages?.meta?.faviconAssetId) {
+      const usages = mapGetOrInsert(
+        usagesByAsset,
+        pages.meta.faviconAssetId,
+        []
+      );
+      usages.push({ type: "favicon" });
+    }
+    if (pages) {
+      for (const page of [pages.homePage, ...pages.pages]) {
+        if (page.meta.socialImageAssetId) {
+          const usages = mapGetOrInsert(
+            usagesByAsset,
+            page.meta.socialImageAssetId,
+            []
+          );
+          usages.push({ type: "socialImage", pageId: page.id });
+        }
+        if (page.marketplace?.thumbnailAssetId) {
+          const usages = mapGetOrInsert(
+            usagesByAsset,
+            page.marketplace.thumbnailAssetId,
+            []
+          );
+          usages.push({ type: "marketplaceThumbnail", pageId: page.id });
+        }
+      }
+    }
+    for (const prop of props.values()) {
+      if (
+        prop.type === "asset" &&
+        // ignore width and height properties which are specific to size
+        prop.name !== "width" &&
+        prop.name !== "height"
+      ) {
+        const usages = mapGetOrInsert(usagesByAsset, prop.value, []);
+        usages.push({ type: "prop", propId: prop.id });
+      }
+    }
+    for (const [styleDeclKey, styleDecl] of styles) {
+      traverseStyleValue(styleDecl.value, (imageValue) => {
+        if (imageValue.value.type === "asset") {
+          const usages = mapGetOrInsert(
+            usagesByAsset,
+            imageValue.value.value,
+            []
+          );
+          usages.push({ type: "style", styleDeclKey });
+        }
+      });
+    }
+    return usagesByAsset;
+  }
+);
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
@@ -163,6 +254,27 @@ const getVideoDimensions = async (file: File) => {
   });
 };
 
+const deduplicateAssetName = (name: string) => {
+  const existingNames = new Set();
+  for (const asset of $assets.get().values()) {
+    existingNames.add(formatAssetName(asset));
+  }
+  // eslint-disable-next-line no-constant-condition
+  for (let index = 0; true; index += 1) {
+    const suffix = index === 0 ? "" : `_${index}`;
+    const lastDotAt = name.lastIndexOf(".");
+    if (lastDotAt === -1) {
+      return name;
+    }
+    const basename = name.slice(0, lastDotAt);
+    const ext = name.slice(lastDotAt);
+    const nameWithSuffix = basename + suffix + ext;
+    if (!existingNames.has(nameWithSuffix)) {
+      return nameWithSuffix;
+    }
+  }
+};
+
 const uploadAsset = async ({
   authToken,
   projectId,
@@ -185,7 +297,10 @@ const uploadAsset = async ({
     metaFormData.append("type", mimeType);
     // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
     // should be removed after fix
-    metaFormData.append("filename", sanitizeS3Key(fileName));
+    metaFormData.append(
+      "filename",
+      deduplicateAssetName(sanitizeS3Key(fileName))
+    );
 
     const authHeaders = new Headers();
     if (authToken !== undefined) {

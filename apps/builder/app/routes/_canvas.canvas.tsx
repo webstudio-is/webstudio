@@ -1,8 +1,8 @@
 import { lazy } from "react";
-import { type LoaderFunctionArgs } from "@remix-run/server-runtime";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 import { isCanvas } from "~/shared/router-utils";
 import { ClientOnly } from "~/shared/client-only";
-import { Body } from "~/canvas/shared/body";
 
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 
@@ -22,15 +22,19 @@ const Canvas = lazy(async () => {
 
 const CanvasRoute = () => {
   return (
-    <ClientOnly fallback={<Body />}>
+    // this setup remix scripts on canvas and after rendering a website
+    // scripts will continue to work even though removed from dom
+    <ClientOnly
+      fallback={
+        <body>
+          <Scripts />
+          <ScrollRestoration />
+        </body>
+      }
+    >
       <Canvas />
     </ClientOnly>
   );
 };
 
 export default CanvasRoute;
-
-// Reduces Vercel function size from 29MB to 9MB for unknown reasons; effective when used in limited files.
-export const config = {
-  maxDuration: 30,
-};

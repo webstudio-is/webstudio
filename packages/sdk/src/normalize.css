@@ -92,20 +92,22 @@ body {
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
   border-width: 1px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /**
  * 1. Add the correct height in Firefox.
  * 2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+ * 3. width: 100% inside flexbox will overflow <hr> out of it
  */
 hr {
   /* 1 */
   height: 0;
   /* 2 */
   color: inherit;
-  /* webstudio custom opinionated presets */
+  /* 3 */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -138,8 +140,8 @@ kbd,
 samp,
 pre {
   /* 1 */
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo,
-    monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   /* 2 */
   font-size: 1em;
   /* webstudio custom opinionated presets */

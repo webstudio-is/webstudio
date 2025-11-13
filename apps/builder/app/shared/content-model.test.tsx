@@ -489,6 +489,72 @@ test("edge case: support a > img", () => {
   ).toBeTruthy();
 });
 
+test("support video > source", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="video">
+            <ws.element ws:tag="source" />
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
+test("support xml node with tags", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.XmlNode tag="url">
+            <$.XmlNode tag="loc"></$.XmlNode>
+          </$.XmlNode>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
+test("support headings inside of summary", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="details">
+            <ws.element ws:tag="summary">
+              <ws.element ws:tag="h3"></ws.element>
+            </ws.element>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
+test("support links inside of details", () => {
+  expect(
+    isTreeSatisfyingContentModel({
+      ...renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="details">
+            <ws.element ws:tag="a"></ws.element>
+          </ws.element>
+        </ws.element>
+      ),
+      metas: defaultMetas,
+      instanceSelector: ["bodyId"],
+    })
+  ).toBeTruthy();
+});
+
 describe("component content model", () => {
   test("restrict children with specific component", () => {
     expect(
@@ -702,6 +768,24 @@ describe("rich text tree", () => {
     ).toEqual(["paragraphId", "bodyId"]);
   });
 
+  test("treat Link component as container when look for closest rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="span" ws:id="spanId">
+              <$.Link ws:id="linkId">
+                <$.Bold ws:id="boldId">link</$.Bold>
+              </$.Link>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["linkId", "spanId", "bodyId"],
+      })
+    ).toEqual(["linkId", "spanId", "bodyId"]);
+  });
+
   test("treat body as rich text when has text inside", () => {
     expect(
       findClosestRichText({
@@ -798,6 +882,22 @@ describe("rich text tree", () => {
         instanceSelector: ["spanId", "divId", "bodyId"],
       })
     ).toEqual(["divId", "bodyId"]);
+  });
+
+  test("does not treat image component as rich text", () => {
+    expect(
+      findClosestRichText({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="div" ws:id="divId">
+              <$.Image ws:id="imgId" />
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["imgId", "divId", "bodyId"],
+      })
+    ).toEqual(undefined);
   });
 });
 
@@ -966,5 +1066,23 @@ describe("closest non textual container", () => {
         instanceSelector: ["divId", "bodyId"],
       })
     ).toEqual(["divId", "bodyId"]);
+  });
+
+  test("treat Link component as rich text container", () => {
+    expect(
+      findClosestNonTextualContainer({
+        ...renderData(
+          <ws.element ws:tag="body" ws:id="bodyId">
+            <ws.element ws:tag="span" ws:id="spanId">
+              <$.Link ws:id="linkId">
+                <$.Bold ws:id="boldId">link</$.Bold>
+              </$.Link>
+            </ws.element>
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceSelector: ["boldId", "linkId", "spanId", "bodyId"],
+      })
+    ).toEqual(["spanId", "bodyId"]);
   });
 });

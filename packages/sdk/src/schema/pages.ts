@@ -3,6 +3,7 @@ import { z } from "zod";
 export type System = {
   params: Record<string, string | undefined>;
   search: Record<string, string | undefined>;
+  pathname: string;
   origin: string;
 };
 
@@ -110,15 +111,32 @@ const DefaultPagePage = z
     "/build prefix is reserved for the system"
   );
 
+export const OldPagePath = z
+  .string()
+  .refine((path) => path !== "", "Can't be empty")
+  .refine((path) => path !== "/", "Can't be just a /")
+  .refine(
+    (path) => path === "" || path.startsWith("/"),
+    "Must start with a / or a full URL e.g. https://website.org"
+  )
+  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
+  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
+  .refine(
+    (path) => /^[-_a-zA-Z0-9*:?\\/.]*$/.test(path), // Allow uppercase letters (A-Z)
+    "Only a-z, A-Z, 0-9, -, _, /, :, ?, . and * are allowed"
+  )
+  .refine(
+    (path) => path !== "/s" && path.startsWith("/s/") === false,
+    "/s prefix is reserved for the system"
+  )
+  .refine(
+    (path) => path !== "/build" && path.startsWith("/build/") === false,
+    "/build prefix is reserved for the system"
+  );
+
 export const PagePath = DefaultPagePage.refine(
   (path) => path === "" || path.startsWith("/"),
   "Must start with a / or a full URL e.g. https://website.org"
-);
-
-// added this for old path input under redirect section of page settings
-export const OldPagePath = DefaultPagePage.refine(
-  (path) => path === "" || path.startsWith("/"),
-  "Must start with a / and it must be full path e.g. /project/id"
 );
 
 const Page = z.object({
@@ -135,24 +153,19 @@ const ProjectMeta = z.object({
 });
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
-export const ProjectNewRedirectPath = PagePath.or(
-  z.string().refine((data) => {
-    // Users should be able to redirect from any old-path to the home page in the new project.
-    if (data === "/") {
-      return true;
-    }
-
-    try {
-      new URL(data);
-      return true;
-    } catch {
-      return false;
-    }
-  }, "Must be a valid URL")
-);
+export const ProjectNewRedirectPath = z.string().refine((data) => {
+  // Users should be able to redirect from any old-path to the home page in the new project.
+  try {
+    // can be relative and absolute paths
+    new URL(data, "http://url.com");
+    return true;
+  } catch {
+    return false;
+  }
+}, "Must be a valid URL");
 
 export const PageRedirect = z.object({
-  old: PagePath,
+  old: OldPagePath,
   new: ProjectNewRedirectPath,
   status: z.enum(["301", "302"]).optional(),
 });

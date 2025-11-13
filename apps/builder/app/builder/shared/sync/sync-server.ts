@@ -168,10 +168,18 @@ const syncServer = async function () {
         if (details.authToken) {
           headers.append("x-auth-token", details.authToken);
         }
+        // revise patches are not used on the server and reduce possible patch size
+        const optimizedTransactions = transactions.map((transaction) => ({
+          ...transaction,
+          payload: transaction.payload.map((change) => ({
+            namespace: change.namespace,
+            patches: change.patches,
+          })),
+        }));
         const response = await fetch(restPatchPath(), {
           method: "post",
           body: JSON.stringify({
-            transactions,
+            transactions: optimizedTransactions,
             buildId: details.buildId,
             projectId,
             // provide latest stored version to server
@@ -323,6 +331,38 @@ export class ServerSyncStorage implements SyncStorage {
       });
   }
 }
+
+/**
+ * Promisify idle state of the queue for a one-off notification when everything is saved.
+ */
+export const isSyncIdle = () => {
+  return new Promise<QueueStatus>((resolve, reject) => {
+    const handle = (status: QueueStatus) => {
+      if (status.status === "idle") {
+        resolve(status);
+        return true;
+      }
+      if (status.status === "fatal") {
+        reject(
+          new Error(
+            "Synchronization is in fatal state. Please reload the page or check your internet connection."
+          )
+        );
+        return true;
+      }
+      return false;
+    };
+    const status = $queueStatus.get();
+
+    if (handle(status) === false) {
+      const unsubscribe = $queueStatus.subscribe((status) => {
+        if (handle(status)) {
+          unsubscribe();
+        }
+      });
+    }
+  });
+};
 
 type SyncServerProps = {
   projectId: Project["id"];

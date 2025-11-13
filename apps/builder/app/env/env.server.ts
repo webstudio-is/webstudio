@@ -51,19 +51,6 @@ const env = {
       projectId.trim()
     ) ?? [],
 
-  /**
-   * OpenAI secrets for AI features
-   *
-   * OPENAI_KEY is a personal API key that you should generate here https://platform.openai.com/account/api-keys
-   * OPENAI_ORG can be found at https://platform.openai.com/account/org-settings
-   *
-   * Both are mandatory as OpenAI will bill OPENAI_ORG
-   */
-  OPENAI_KEY: process.env.OPENAI_KEY,
-  OPENAI_ORG: process.env.OPENAI_ORG,
-
-  PEXELS_API_KEY: process.env.PEXELS_API_KEY,
-
   N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
   N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
 

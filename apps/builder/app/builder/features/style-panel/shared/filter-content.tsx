@@ -109,20 +109,23 @@ export const FilterSectionContent = ({
   >(undefined);
 
   useEffect(() => {
-    if (
-      layer.type !== "function" ||
-      isFilterFunction(layer.name) === false ||
-      layer.args.type !== "tuple"
-    ) {
+    if (layer.type !== "function" || isFilterFunction(layer.name) === false) {
       return;
     }
-
+    if (layer.args.type !== "tuple" && layer.args.type !== "shadow") {
+      return;
+    }
     setFilterFunction(layer.name);
-    setFilterFunctionValue(layer.args.value[0]);
     setIntermediateValue({
       type: "intermediate",
       value: propertyValue,
     });
+    if (layer.args.type === "tuple") {
+      setFilterFunctionValue(layer.args.value[0]);
+    }
+    if (layer.args.type === "shadow") {
+      setFilterFunctionValue(layer.args);
+    }
   }, [layer, propertyValue]);
 
   const handleFilterFunctionChange = (filterName: FilterFunction) => {

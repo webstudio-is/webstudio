@@ -41,6 +41,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
+    "@emotion/hash": "^0.9.2",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/icons": "workspace:*",

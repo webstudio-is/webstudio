@@ -22,6 +22,7 @@ import {
   restoreExpressionVariables,
   unsetExpressionVariables,
 } from "./data-variables";
+import { $project } from "./nano-states";
 
 const deduplicateName = (
   pages: Pages,
@@ -97,8 +98,9 @@ export const insertPageCopyMutable = ({
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
 }) => {
+  const project = $project.get();
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
-  if (page === undefined) {
+  if (project === undefined || page === undefined) {
     return;
   }
   // copy paste project :root
@@ -109,6 +111,7 @@ export const insertPageCopyMutable = ({
       ...target.data,
       startingInstanceId: ROOT_INSTANCE_ID,
     }),
+    projectId: project.id,
   });
   const unsetVariables = new Set<DataSource["id"]>();
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
@@ -132,6 +135,7 @@ export const insertPageCopyMutable = ({
       unsetVariables,
     }),
     availableVariables,
+    projectId: project.id,
   });
   // unwrap page draft
   const newPage = structuredClone(unwrap(page));

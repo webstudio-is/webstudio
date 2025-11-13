@@ -5,11 +5,7 @@ import {
   TriggerIcon,
   ContentIcon,
 } from "@webstudio-is/icons/svg";
-import {
-  defaultStates,
-  type WsComponentMeta,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
@@ -28,9 +24,9 @@ export const metaAccordion: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.AccordionItem],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  initialProps: ["value", "collapsible"],
+  props: propsAccordion,
 };
 
 export const metaAccordionItem: WsComponentMeta = {
@@ -42,9 +38,9 @@ export const metaAccordionItem: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.AccordionHeader, radix.AccordionContent],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  initialProps: ["value"],
+  props: propsAccordionItem,
 };
 
 export const metaAccordionHeader: WsComponentMeta = {
@@ -68,6 +64,7 @@ export const metaAccordionHeader: WsComponentMeta = {
       },
     ],
   },
+  props: propsAccordionHeader,
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
@@ -77,17 +74,11 @@ export const metaAccordionTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance", "rich-text"],
   },
-  states: [
-    ...defaultStates,
-    {
-      category: "component-states",
-      label: "Open",
-      selector: "[data-state=open]",
-    },
-  ],
+  states: [{ label: "Open", selector: "[data-state=open]" }],
   presetStyle: {
     button: [button, buttonReset].flat(),
   },
+  props: propsAccordionTrigger,
 };
 
 export const metaAccordionContent: WsComponentMeta = {
@@ -100,26 +91,5 @@ export const metaAccordionContent: WsComponentMeta = {
   presetStyle: {
     div,
   },
-};
-
-export const propsMetaAccordion: WsComponentPropsMeta = {
-  props: propsAccordion,
-  initialProps: ["value", "collapsible"],
-};
-
-export const propsMetaAccordionItem: WsComponentPropsMeta = {
-  props: propsAccordionItem,
-  initialProps: ["value"],
-};
-
-export const propsMetaAccordionHeader: WsComponentPropsMeta = {
-  props: propsAccordionHeader,
-};
-
-export const propsMetaAccordionTrigger: WsComponentPropsMeta = {
-  props: propsAccordionTrigger,
-};
-
-export const propsMetaAccordionContent: WsComponentPropsMeta = {
   props: propsAccordionContent,
 };

@@ -14,7 +14,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import type { TemplateStyleDecl } from "./css";
-import { camelCaseProperty } from "@webstudio-is/css-data";
+import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
 export class Variable {
   name: string;
@@ -35,6 +35,7 @@ export class Parameter {
 type ResourceConfig = {
   url: Expression;
   method: Resource["method"];
+  searchParams: Array<{ name: string; value: Expression }>;
   headers: Array<{ name: string; value: Expression }>;
   body?: Expression;
 };
@@ -110,59 +111,46 @@ const isChildValue = (child: unknown) =>
   child instanceof PlaceholderValue ||
   child instanceof Expression;
 
-const traverseJsx = (
-  element: JSX.Element,
-  callback: (
-    element: JSX.Element,
-    children: JSX.Element[]
-  ) => Instance["children"][number]
-) => {
-  const children = Array.isArray(element.props?.children)
-    ? element.props?.children
-    : element.props?.children
-      ? [element.props?.children]
-      : [];
-  const result: Instance["children"] = [];
-  if (element.type === Fragment) {
-    for (const child of children) {
-      if (isChildValue(child)) {
-        continue;
-      }
-      result.push(...traverseJsx(child, callback));
-    }
-    return result;
+const getElementChildren = (element: JSX.Element): JSX.Element[] => {
+  if (Array.isArray(element.props?.children)) {
+    return element.props?.children;
   }
-  const child = callback(element, children);
-  result.push(child);
-  for (const child of children) {
-    if (isChildValue(child)) {
-      continue;
-    }
-    traverseJsx(child, callback);
+  if (element.props?.children) {
+    return [element.props?.children];
   }
-  return result;
+  return [];
 };
 
 export const renderTemplate = (
   root: JSX.Element,
-  generateId?: () => string
+  generateId?: () => string,
+  initialBreakpoints: Breakpoint[] = []
 ): WebstudioFragment => {
-  let lastId = -1;
   const instances: Instance[] = [];
   const props: Prop[] = [];
-  const breakpoints: Breakpoint[] = [];
+  const breakpoints = Array.from(initialBreakpoints);
   const styleSources: StyleSource[] = [];
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
   const dataSources = new Map<Variable | Parameter, DataSource>();
   const resources = new Map<ResourceValue, Resource>();
-  const ids = new Map<unknown, string>();
-  const getId = (key: unknown) => {
-    let id = ids.get(key);
+  const idsByKey = new Map<unknown, string>();
+  const lastIdsByList = new Map<unknown, number>();
+  // ensure ids are stable for specific list
+  const getIdForList = (list: unknown) => {
+    if (generateId) {
+      return generateId();
+    }
+    let lastId = lastIdsByList.get(list) ?? -1;
+    lastId += 1;
+    lastIdsByList.set(list, lastId);
+    return lastId.toString();
+  };
+  const getIdByKey = (key: unknown) => {
+    let id = idsByKey.get(key);
     if (id === undefined) {
-      lastId += 1;
-      id = generateId?.() ?? lastId.toString();
-      ids.set(key, id);
+      id = getIdForList(idsByKey);
+      idsByKey.set(key, id);
     }
     return id;
   };
@@ -170,7 +158,7 @@ export const renderTemplate = (
     instanceId: string,
     variable: Variable | Parameter
   ) => {
-    const id = getId(variable);
+    const id = getIdByKey(variable);
     if (dataSources.has(variable)) {
       return id;
     }
@@ -222,7 +210,7 @@ export const renderTemplate = (
     );
   };
   const getResourceId = (instanceId: string, resourceValue: ResourceValue) => {
-    const id = `resource:${getId(resourceValue)}`;
+    const id = `resource:${getIdByKey(resourceValue)}`;
     if (resources.has(resourceValue)) {
       return id;
     }
@@ -231,6 +219,12 @@ export const renderTemplate = (
       name: resourceValue.name,
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
+      searchParams: resourceValue.config.searchParams.map(
+        ({ name, value }) => ({
+          name,
+          value: compileExpression(instanceId, value),
+        })
+      ),
       headers: resourceValue.config.headers.map(({ name, value }) => ({
         name,
         value: compileExpression(instanceId, value),
@@ -242,19 +236,42 @@ export const renderTemplate = (
     return id;
   };
   // lazily create breakpoint
-  const getBreakpointId = () => {
-    if (breakpoints.length > 0) {
-      return breakpoints[0].id;
+  const getBreakpointId = (mediaQuery: undefined | string) => {
+    if (mediaQuery === undefined) {
+      let baseBreakpoint = breakpoints.find(
+        (item) => item.minWidth === undefined && item.maxWidth === undefined
+      );
+      if (baseBreakpoint === undefined) {
+        baseBreakpoint = { id: "base", label: "" };
+        breakpoints.push(baseBreakpoint);
+      }
+      return baseBreakpoint.id;
     }
-    const breakpointId = "base";
-    breakpoints.push({
-      id: breakpointId,
-      label: "",
-    });
-    return breakpointId;
+    const parsedMediaQuery = parseMediaQuery(mediaQuery);
+    if (parsedMediaQuery === undefined) {
+      return;
+    }
+    let breakpoint = breakpoints.find(
+      (item) =>
+        item.minWidth === parsedMediaQuery.minWidth &&
+        item.maxWidth === parsedMediaQuery.maxWidth
+    );
+    if (breakpoint === undefined) {
+      const id = getIdForList(breakpoints);
+      const label = `${parsedMediaQuery.minWidth ?? parsedMediaQuery.maxWidth}`;
+      breakpoint = { id, label, ...parsedMediaQuery };
+      breakpoints.push(breakpoint);
+    }
+    return breakpoint.id;
   };
-  const children = traverseJsx(root, (element, children) => {
-    const instanceId = element.props?.["ws:id"] ?? getId(element);
+  const localStylesByInstanceId = new Map<
+    Instance["id"],
+    TemplateStyleDecl[]
+  >();
+  const convertElementToInstance = (
+    element: JSX.Element
+  ): Instance["children"][number] => {
+    const instanceId = element.props?.["ws:id"] ?? getIdByKey(element);
     let tag: string | undefined;
     for (const entry of Object.entries({ ...element.props })) {
       const [_name, value] = entry;
@@ -267,25 +284,9 @@ export const renderTemplate = (
         continue;
       }
       if (name === "ws:style") {
-        const styleSourceId = `${instanceId}:${name}`;
-        styleSources.push({
-          type: "local",
-          id: styleSourceId,
-        });
-        styleSourceSelections.push({
-          instanceId,
-          values: [styleSourceId],
-        });
         const localStyles = value as TemplateStyleDecl[];
-        for (const { state, property, value } of localStyles) {
-          styles.push({
-            breakpointId: getBreakpointId(),
-            styleSourceId,
-            state,
-            property: camelCaseProperty(property),
-            value,
-          });
-        }
+        // create styles with breakpoints later to ensure more stable ids
+        localStylesByInstanceId.set(instanceId, localStyles);
         continue;
       }
       if (name === "ws:show") {
@@ -347,7 +348,17 @@ export const renderTemplate = (
       type: "instance",
       id: instanceId,
       component,
-      children: children.map((child): Instance["children"][number] => {
+      children: [],
+    };
+    instances.push(instance);
+    if (element.props?.["ws:label"]) {
+      instance.label = element.props?.["ws:label"];
+    }
+    if (tag) {
+      instance.tag = tag;
+    }
+    instance.children = getElementChildren(element).map(
+      (child): Instance["children"][number] => {
         if (typeof child === "string") {
           return { type: "text", value: child };
         }
@@ -358,18 +369,46 @@ export const renderTemplate = (
           const expression = compileExpression(instanceId, child);
           return { type: "expression", value: expression };
         }
-        return { type: "id", value: child.props?.["ws:id"] ?? getId(child) };
-      }),
-    };
-    if (element.props?.["ws:label"]) {
-      instance.label = element.props?.["ws:label"];
-    }
-    if (tag) {
-      instance.tag = tag;
-    }
-    instances.push(instance);
+        return convertElementToInstance(child);
+      }
+    );
     return { type: "id", value: instance.id };
-  });
+  };
+  const children: Instance["children"] = [];
+  if (root.type === Fragment) {
+    for (const child of getElementChildren(root)) {
+      if (isChildValue(child)) {
+        continue;
+      }
+      children.push(convertElementToInstance(child));
+    }
+  } else {
+    children.push(convertElementToInstance(root));
+  }
+  for (const [instanceId, localStyles] of localStylesByInstanceId) {
+    const styleSourceId = `${instanceId}:ws:style`;
+    styleSources.push({
+      type: "local",
+      id: styleSourceId,
+    });
+    styleSourceSelections.push({
+      instanceId,
+      values: [styleSourceId],
+    });
+    for (const { breakpoint, state, property, value } of localStyles) {
+      const breakpointId = getBreakpointId(breakpoint);
+      if (breakpointId === undefined) {
+        continue;
+      }
+      styles.push({
+        breakpointId,
+        styleSourceId,
+        state,
+        property: camelCaseProperty(property),
+        value,
+      });
+    }
+  }
   return {
     children,
     instances,
@@ -386,7 +425,8 @@ export const renderTemplate = (
 
 export const renderData = (
   root: JSX.Element,
-  generateId?: () => string
+  generateId?: () => string,
+  initialBreakpoints: Breakpoint[] = []
 ): Omit<WebstudioData, "pages"> => {
   const {
     instances,
@@ -398,7 +438,7 @@ export const renderData = (
     dataSources,
     resources,
     assets,
-  } = renderTemplate(root, generateId);
+  } = renderTemplate(root, generateId, initialBreakpoints);
   return {
     instances: new Map(instances.map((item) => [item.id, item])),
     props: new Map(props.map((item) => [item.id, item])),

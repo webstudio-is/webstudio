@@ -1,5 +1,6 @@
 import { elementsByTag } from "@webstudio-is/html-data";
 import {
+  elementComponent,
   parseComponentName,
   type ContentModel,
   type Instance,
@@ -37,6 +38,10 @@ const getTag = ({
   metas: Metas;
   props: Props;
 }) => {
+  // ignore tag property on xml nodes
+  if (instance.component === "XmlNode") {
+    return;
+  }
   const meta = metas.get(instance.component);
   const metaTag = Object.keys(meta?.presetStyle ?? {}).at(0);
   return instance.tag ?? getTagByInstanceId(props).get(instance.id) ?? metaTag;
@@ -114,7 +119,10 @@ const getElementChildren = (
   let elementChildren: string[] =
     tag === undefined ? ["transparent"] : elementsByTag[tag].children;
   if (elementChildren.includes("transparent") && allowedCategories) {
-    elementChildren = allowedCategories;
+    // merge categories from parent and current element when transparent occured
+    elementChildren = elementChildren.flatMap((category) =>
+      category === "transparent" ? allowedCategories : category
+    );
   }
   // introduce custom non-interactive category to restrict nesting interactive elements
   // like button > button or a > input
@@ -398,7 +406,7 @@ export const isTreeSatisfyingContentModel = ({
   return isSatisfying;
 };
 
-const richTextContentTags = new Set<undefined | string>([
+export const richTextContentTags = new Set<undefined | string>([
   "sup",
   "sub",
   "b",
@@ -409,7 +417,33 @@ const richTextContentTags = new Set<undefined | string>([
   "span",
 ]);
 
-const richTextContainerTags = new Set<undefined | string>(["a", "span"]);
+export const richTextContentComponents = new Set<undefined | string>([
+  elementComponent,
+  "Subscript",
+  "Bold",
+  "Italic",
+  "RichTextLink",
+  "Span",
+]);
+
+/**
+ * textual placeholder is used when no content specified while in builder
+ * also signals to not insert components inside unless dropped explicitly
+ */
+export const richTextPlaceholders: Map<undefined | string, string> = new Map([
+  ["h1", "Heading 1"],
+  ["h2", "Heading 2"],
+  ["h3", "Heading 3"],
+  ["h4", "Heading 4"],
+  ["h5", "Heading 5"],
+  ["h6", "Heading 6"],
+  ["p", "Paragraph"],
+  ["blockquote", "Blockquote"],
+  ["code", "Code Text"],
+  ["li", "List item"],
+  ["a", "Link"],
+  ["span", ""],
+]);
 
 const findContentTags = ({
   instances,
@@ -446,6 +480,34 @@ const findContentTags = ({
   return tags;
 };
 
+const findContentComponents = ({
+  instances,
+  instance,
+  _components: components = new Set(),
+}: {
+  instances: Instances;
+  instance: Instance;
+  _components?: Set<undefined | string>;
+}) => {
+  for (const child of instance.children) {
+    if (child.type === "id") {
+      const childInstance = instances.get(child.value);
+      // consider collection item as well
+      if (childInstance === undefined) {
+        components.add(undefined);
+        continue;
+      }
+      components.add(childInstance.component);
+      findContentComponents({
+        instances,
+        instance: childInstance,
+        _components: components,
+      });
+    }
+  }
+  return components;
+};
+
 export const isRichTextTree = ({
   instanceId,
   instances,
@@ -462,10 +524,15 @@ export const isRichTextTree = ({
   if (instance === undefined) {
     return false;
   }
+  const tag = getTag({ instance, metas, props });
+  const elementContentModel = tag ? elementsByTag[tag] : undefined;
   const componentContentModel = getComponentContentModel(
     metas.get(instance.component)
   );
-  const isRichText = componentContentModel.children.includes("rich-text");
+  const isRichText =
+    (elementContentModel === undefined ||
+      elementContentModel.children.length > 0) &&
+    componentContentModel.children.includes("rich-text");
   // only empty instance with rich text content can be edited
   if (instance.children.length === 0) {
     return isRichText;
@@ -481,13 +548,18 @@ export const isRichTextTree = ({
     metas,
     instance,
   });
+  const contentComponents = findContentComponents({
+    instances,
+    instance,
+  });
   return (
     isRichText &&
     // rich text must contain only supported elements in editor
     setIsSubsetOf(contentTags, richTextContentTags) &&
+    setIsSubsetOf(contentComponents, richTextContentComponents) &&
     // rich text cannot contain only span and only link
     // those links and spans are containers in such cases
-    !setIsSubsetOf(contentTags, richTextContainerTags)
+    !setIsSubsetOf(contentTags, new Set(richTextPlaceholders.keys()))
   );
 };
 
@@ -628,7 +700,7 @@ export const findClosestNonTextualContainer = ({
     }
     if (
       instance.children.length === 0 &&
-      !meta?.placeholder &&
+      !richTextPlaceholders.has(tag) &&
       !richTextContentTags.has(tag)
     ) {
       return instanceSelector.slice(index);
@@ -646,7 +718,14 @@ export const findClosestNonTextualContainer = ({
       metas,
       instance,
     });
-    if (setIsSubsetOf(contentTags, richTextContentTags)) {
+    const contentComponents = findContentComponents({
+      instances,
+      instance,
+    });
+    if (
+      setIsSubsetOf(contentTags, richTextContentTags) &&
+      setIsSubsetOf(contentComponents, richTextContentComponents)
+    ) {
       hasText = true;
     }
     if (!hasText) {

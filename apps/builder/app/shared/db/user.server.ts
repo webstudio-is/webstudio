@@ -1,9 +1,25 @@
 import type { Database } from "@webstudio-is/postrest/index.server";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import {
+  AuthorizationError,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
 import type { GitHubProfile } from "remix-auth-github";
 import type { GoogleProfile } from "remix-auth-google";
+import { z } from "zod";
 
-export type User = Database["public"]["Tables"]["User"]["Row"];
+export type User = Omit<
+  Database["public"]["Tables"]["User"]["Row"],
+  "projectsTags"
+> & {
+  projectsTags: Array<ProjectTag>;
+};
+
+const formatUser = (user: Database["public"]["Tables"]["User"]["Row"]) => {
+  return {
+    ...user,
+    projectsTags: (user.projectsTags || []) as User["projectsTags"],
+  };
+};
 
 export const getUserById = async (context: AppContext, id: User["id"]) => {
   const dbUser = await context.postgrest.client
@@ -17,7 +33,7 @@ export const getUserById = async (context: AppContext, id: User["id"]) => {
     throw new Error("User not found");
   }
 
-  return dbUser.data;
+  return formatUser(dbUser.data);
 };
 
 const genericCreateAccount = async (
@@ -36,7 +52,7 @@ const genericCreateAccount = async (
     .single();
 
   if (dbUser.error == null) {
-    return dbUser.data;
+    return formatUser(dbUser.data);
   }
 
   // https://github.com/PostgREST/postgrest/blob/bfbd033c6e9f38cfbc8b1cfe19ee009a9379e3dd/docs/references/errors.rst#L234
@@ -59,7 +75,7 @@ const genericCreateAccount = async (
     throw new Error("Failed to create user");
   }
 
-  return newUser.data;
+  return formatUser(newUser.data);
 };
 
 export const createOrLoginWithOAuth = async (
@@ -89,4 +105,33 @@ export const createOrLoginWithDev = async (
 
   const newUser = await genericCreateAccount(context, userData);
   return newUser;
+};
+
+export const userProjectTagSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1).max(100),
+});
+
+export type ProjectTag = z.infer<typeof userProjectTagSchema>;
+
+export const updateUserProjectsTags = async (
+  { tags }: { tags: ProjectTag[] },
+  context: AppContext
+) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can update project tags"
+    );
+  }
+  const result = await context.postgrest.client
+    .from("User")
+    .update({ projectsTags: tags })
+    .eq("id", context.authorization.userId)
+    .select()
+    .single();
+
+  if (result.error) {
+    throw result.error;
+  }
+  return result.data.projectsTags as ProjectTag[];
 };

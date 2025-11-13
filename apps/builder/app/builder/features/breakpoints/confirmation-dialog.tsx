@@ -24,6 +24,7 @@ export const ConfirmationDialog = ({
           onClick={() => {
             onConfirm();
           }}
+          color="destructive"
         >
           Delete
         </Button>

@@ -6,6 +6,7 @@ import {
   DataSource,
   type Instance,
   ROOT_INSTANCE_ID,
+  Resource,
   SYSTEM_VARIABLE_ID,
   collectionComponent,
 } from "@webstudio-is/sdk";
@@ -17,7 +18,7 @@ import {
 } from "./props";
 import { $pages } from "./pages";
 import { $assets, $dataSources, $props, $resources } from "./misc";
-import { $dataSourceVariables, $resourceValues } from "./variables";
+import { $dataSourceVariables } from "./variables";
 import { $awareness, getInstanceKey } from "../awareness";
 import {
   $,
@@ -30,10 +31,12 @@ import {
 } from "@webstudio-is/template";
 import { $systemDataByPage, updateCurrentSystem } from "../system";
 import { registerContainers } from "../sync";
+import { $resourcesCache, getResourceKey } from "../resources";
 
 const initialSystem = {
   origin: "https://undefined.wstd.work",
   params: {},
+  pathname: "/",
   search: {},
 };
 
@@ -71,7 +74,7 @@ beforeEach(() => {
   $resources.set(new Map());
   $dataSources.set(new Map());
   $dataSourceVariables.set(new Map());
-  $resourceValues.set(new Map());
+  $resourcesCache.set(new Map());
 });
 
 test("collect prop values", () => {
@@ -434,7 +437,25 @@ test("compute props bound to resource variables", () => {
       },
     ])
   );
-  $resourceValues.set(new Map([["resourceId", "my-value"]]));
+  $resources.set(
+    toMap<Resource>([
+      {
+        id: "resourceId",
+        name: "my-resource",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+    ])
+  );
+  const key = getResourceKey({
+    name: "my-resource",
+    url: "",
+    method: "get",
+    headers: [],
+    searchParams: [],
+  });
+  $resourcesCache.set(new Map([[key, "my-value"]]));
   $props.set(
     toMap([
       {
@@ -777,6 +798,7 @@ test("compute resource variable values", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const data = renderData(
@@ -784,11 +806,18 @@ test("compute resource variable values", () => {
   );
   $instances.set(data.instances);
   $dataSources.set(data.dataSources);
+  $resources.set(data.resources);
   $props.set(data.props);
   const [resourceVariableId] = data.dataSources.keys();
-  const [resourceId] = data.resources.keys();
   selectPageRoot("bodyId");
-  $resourceValues.set(new Map([[resourceId, "my-value"]]));
+  const key = getResourceKey({
+    name: "resourceVariable",
+    url: "",
+    method: "get",
+    headers: [],
+    searchParams: [],
+  });
+  $resourcesCache.set(new Map([[key, "my-value"]]));
   expect(
     $variableValuesByInstanceSelector
       .get()
@@ -841,6 +870,7 @@ test("compute parameter and resource variables without values to make it availab
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
     method: "get",
+    searchParams: [],
     headers: [],
   });
   const parameterVariable = new Parameter("parameterVariable");
@@ -888,6 +918,7 @@ test("provide page system variable value", () => {
       ?.get(systemId)
   ).toEqual({
     params: { slug: "my-post" },
+    pathname: "/",
     search: {},
     origin: "https://undefined.wstd.work",
   });
@@ -919,6 +950,7 @@ test("provide global system variable value", () => {
   });
   const updatedSystem = {
     params: { slug: "my-post" },
+    pathname: "/",
     search: {},
     origin: "https://undefined.wstd.work",
   };

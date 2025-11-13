@@ -2,12 +2,6 @@
 
 echo "Running postinstall.sh"
 
-# Configure FZF and bash history
-echo 'eval "$(fzf --bash)"' >> /home/node/.bashrc
-sudo mkdir -p /home/node/.local/fzf
-touch /home/node/.local/fzf/.bash_history
-echo 'export HISTFILE=/home/node/.local/fzf/.bash_history' >> "/home/node/.bashrc"
-
 # Aggressively clean npm and corepack caches
 npm cache clean -f
 sudo rm -rf /tmp/corepack-cache

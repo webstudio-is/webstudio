@@ -216,14 +216,16 @@ test("find unset variable names", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`six`,
     method: "post",
-    headers: [{ name: "auth", value: expression`seven` }],
-    body: expression`eight`,
+    searchParams: [{ name: "filter", value: expression`seven` }],
+    headers: [{ name: "auth", value: expression`eight` }],
+    body: expression`nine`,
   });
   const resourceProp = new ResourceValue("resourceProp", {
-    url: expression`nine`,
+    url: expression`ten`,
     method: "post",
-    headers: [{ name: "auth", value: expression`ten` }],
-    body: expression`eleven`,
+    searchParams: [{ name: "filter", value: expression`eleven` }],
+    headers: [{ name: "auth", value: expression`twelve` }],
+    body: expression`thirteen`,
   });
   const data = renderData(
     <$.Body ws:id="body" data-prop={expression`two`}>
@@ -245,11 +247,13 @@ test("find unset variable names", () => {
     "three",
     "four",
     "six",
-    "seven",
     "eight",
+    "seven",
     "nine",
     "ten",
+    "twelve",
     "eleven",
+    "thirteen",
   ]);
 });
 
@@ -403,12 +407,14 @@ test("restore tree variables in resources", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`one + 1`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`one + 1` }],
     headers: [{ name: "auth", value: expression`one + 1` }],
     body: expression`one + 1`,
   });
   const resourceProp = new ResourceValue("resourceProp", {
     url: expression`one + 2`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`one + 2` }],
     headers: [{ name: "auth", value: expression`one + 2` }],
     body: expression`one + 2`,
   });
@@ -439,12 +445,14 @@ test("restore tree variables in resources", () => {
     expect.objectContaining({
       url: `${boxIdentifier} + 1`,
       method: "post",
+      searchParams: [{ name: "filter", value: `${boxIdentifier} + 1` }],
       headers: [{ name: "auth", value: `${boxIdentifier} + 1` }],
       body: `${boxIdentifier} + 1`,
     }),
     expect.objectContaining({
       url: `${boxIdentifier} + 2`,
       method: "post",
+      searchParams: [{ name: "filter", value: `${boxIdentifier} + 2` }],
       headers: [{ name: "auth", value: `${boxIdentifier} + 2` }],
       body: `${boxIdentifier} + 2`,
     }),
@@ -457,12 +465,14 @@ test("rebind tree variables in resources", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`${bodyVariable}`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
     body: expression`${bodyVariable}`,
   });
   const resourceProp = new ResourceValue("resourceProp", {
     url: expression`${bodyVariable}`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
     body: expression`${bodyVariable}`,
   });
@@ -493,12 +503,14 @@ test("rebind tree variables in resources", () => {
     expect.objectContaining({
       url: boxIdentifier,
       method: "post",
+      searchParams: [{ name: "filter", value: boxIdentifier }],
       headers: [{ name: "auth", value: boxIdentifier }],
       body: boxIdentifier,
     }),
     expect.objectContaining({
       url: boxIdentifier,
       method: "post",
+      searchParams: [{ name: "filter", value: boxIdentifier }],
       headers: [{ name: "auth", value: boxIdentifier }],
       body: boxIdentifier,
     }),
@@ -663,12 +675,14 @@ test("delete variable and unset it in resources", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`${bodyVariable}`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
     body: expression`${bodyVariable}`,
   });
   const resourceProp = new ResourceValue("resourceProp", {
     url: expression`${bodyVariable}`,
     method: "post",
+    searchParams: [{ name: "filter", value: expression`${bodyVariable}` }],
     headers: [{ name: "auth", value: expression`${bodyVariable}` }],
     body: expression`${bodyVariable}`,
   });
@@ -691,12 +705,14 @@ test("delete variable and unset it in resources", () => {
     expect.objectContaining({
       url: "bodyVariable",
       method: "post",
+      searchParams: [{ name: "filter", value: "bodyVariable" }],
       headers: [{ name: "auth", value: "bodyVariable" }],
       body: "bodyVariable",
     }),
     expect.objectContaining({
       url: "bodyVariable",
       method: "post",
+      searchParams: [{ name: "filter", value: "bodyVariable" }],
       headers: [{ name: "auth", value: "bodyVariable" }],
       body: "bodyVariable",
     }),

@@ -2,7 +2,7 @@ import type { Asset } from "@webstudio-is/sdk";
 
 type PreviewAsset = Pick<
   Asset,
-  "name" | "id" | "format" | "description" | "type"
+  "name" | "filename" | "id" | "format" | "description" | "type"
 >;
 
 export type UploadedAssetContainer = {

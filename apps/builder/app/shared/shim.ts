@@ -59,3 +59,17 @@ export const objectGroupBy = <Item, Key>(
 ) => {
   return Object.fromEntries(mapGroupBy(array, getKey));
 };
+
+// https://github.com/tc39/proposal-upsert
+export const mapGetOrInsert = <Key, Value>(
+  map: Map<Key, Value>,
+  key: Key,
+  defaultValue: Value
+): Value => {
+  let value = map.get(key);
+  if (value === undefined) {
+    value = defaultValue;
+    map.set(key, value);
+  }
+  return value;
+};

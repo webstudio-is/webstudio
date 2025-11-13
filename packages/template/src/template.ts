@@ -11,6 +11,7 @@ export const templateCategories = [
   "localization",
   "radix",
   "xml",
+  "other",
   "hidden",
   "internal",
 ] as const;

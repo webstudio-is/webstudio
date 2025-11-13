@@ -12,6 +12,8 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
+  elementComponent,
+  Instance,
   ROOT_FOLDER_ID,
   type Asset,
   type Page,
@@ -32,6 +34,10 @@ import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { selectPage } from "~/shared/awareness";
 
+const isBody = (instance: Instance) =>
+  instance.component === "Body" ||
+  (instance.component === elementComponent && instance.tag === "body");
+
 /**
  * Insert page as a template.
  * - Currently only supports inserting everything from the body
@@ -45,13 +51,11 @@ const insertSection = ({
   instanceId: string;
 }) => {
   const fragment = extractWebstudioFragment(data, instanceId);
-  const body = fragment.instances.find(
-    (instance) => instance.component === "Body"
-  );
+  const body = fragment.instances.find(isBody);
   // remove body and use its children as root insrances
   if (body) {
     fragment.instances = fragment.instances.filter(
-      (instance) => instance.component !== "Body"
+      (instance) => !isBody(instance)
     );
     fragment.children = body.children;
   }

@@ -60,3 +60,12 @@ export const wsImageLoader: ImageLoader = (props) => {
   // Cloudflare docs say that we don't need to urlencode the path params
   return resultUrl.href;
 };
+
+export type VideoLoader = (options: { src: string }) => string;
+
+export const wsVideoLoader: VideoLoader = ({ src }) => {
+  if (src.startsWith("/cgi/asset/")) {
+    src = src.slice("/cgi/asset/".length);
+  }
+  return `/cgi/video/${src}`;
+};

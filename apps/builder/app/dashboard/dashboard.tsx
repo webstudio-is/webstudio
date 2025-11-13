@@ -9,6 +9,9 @@ import {
   css,
   globalCss,
   theme,
+  PanelBanner,
+  Link,
+  buttonStyle,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
 import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
@@ -229,12 +232,31 @@ export const Dashboard = () => {
               />
             </CollapsibleSection>
           </nav>
+          <PanelBanner>
+            <Text variant="titles">Inception is live</Text>
+            <Text color="subtle">
+              An AI-powered design tool to explore ideas and instantly generate
+              HTML/CSS for Webstudio Builder or any other platform.
+            </Text>
+            <Link
+              className={buttonStyle({
+                color: "gradient",
+              })}
+              underline="none"
+              href="https://wstd.us/inception"
+              target="_blank"
+              color="contrast"
+            >
+              Get started with Inception
+            </Link>
+          </PanelBanner>
         </Flex>
         {view === "projects" && (
           <Projects
             projects={projects}
             hasProPlan={userPlanFeatures.hasProPlan}
             publisherHost={publisherHost}
+            projectsTags={user.projectsTags}
           />
         )}
         {view === "templates" && <Templates projects={templates} />}

@@ -1244,9 +1244,31 @@ const expandShorthand = function* (property: string, value: CssNode) {
         ],
         value
       );
-      yield ["list-style-position", position ?? createInitialNode()] as const;
-      yield ["list-style-image", image ?? createInitialNode()] as const;
-      yield ["list-style-type", type ?? createInitialNode()] as const;
+      // Using a value of none in the shorthand is potentially ambiguous,
+      // as none is a valid value for both list-style-image and list-style-type.
+      // To resolve this ambiguity, a value of none in the shorthand must be applied
+      // to whichever of the two properties aren’t otherwise set by the shorthand.
+      let imageValue = image ? generate(image) : undefined;
+      let typeValue = type ? generate(type) : undefined;
+      if (
+        (imageValue ?? typeValue) === "none" &&
+        (typeValue ?? imageValue) === "none"
+      ) {
+        imageValue = imageValue ?? typeValue;
+        typeValue = imageValue ?? typeValue;
+      }
+      yield [
+        "list-style-position",
+        position ?? createIdentifier("outside"),
+      ] as const;
+      yield [
+        "list-style-image",
+        image ?? createIdentifier(imageValue ?? "none"),
+      ] as const;
+      yield [
+        "list-style-type",
+        type ?? createIdentifier(typeValue ?? "disc"),
+      ] as const;
       break;
     }
 
@@ -1390,7 +1412,12 @@ const expandShorthand = function* (property: string, value: CssNode) {
 const parseValue = function* (property: string, value: string) {
   try {
     const ast = parse(value, { context: "value" });
-    if (ast.type === "Value" && ast.children.isEmpty) {
+    if (
+      // custom properties can be empty
+      !property.startsWith("--") &&
+      ast.type === "Value" &&
+      ast.children.isEmpty
+    ) {
       ast.children.appendData({ type: "Identifier", name: "unset" });
     }
     yield [property, ast] as const;

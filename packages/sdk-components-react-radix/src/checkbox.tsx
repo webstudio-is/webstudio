@@ -3,6 +3,8 @@ import {
   type ComponentPropsWithRef,
   forwardRef,
   type ComponentProps,
+  useState,
+  useEffect,
 } from "react";
 import { Root, Indicator } from "@radix-ui/react-checkbox";
 
@@ -14,9 +16,18 @@ export const Checkbox = forwardRef<
     checked?: boolean;
     defaultChecked?: boolean;
   }
->(({ checked, defaultChecked, ...props }, ref) => {
+>(({ defaultChecked, ...props }, ref) => {
+  const currentChecked = props.checked ?? defaultChecked ?? false;
+  const [checked, setChecked] = useState(currentChecked);
+  // synchronize external value with local one when changed
+  useEffect(() => setChecked(currentChecked), [currentChecked]);
   return (
-    <Root {...props} ref={ref} defaultChecked={checked ?? defaultChecked} />
+    <Root
+      {...props}
+      ref={ref}
+      checked={checked}
+      onCheckedChange={(open) => setChecked(open === true)}
+    />
   );
 });
 

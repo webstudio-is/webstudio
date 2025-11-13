@@ -20,11 +20,14 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
   let socialImageUrl = pageMeta.socialImageUrl;
   if (pageMeta.socialImageAssetName) {
     socialImageUrl = `${origin}${imageLoader({
-      src: pageMeta.socialImageAssetName,
+      src: `${assetBaseUrl}/${pageMeta.socialImageAssetName}`,
       // Do not transform social image (not enough information do we need to do this)
       format: "raw",
     })}`;
   }
+  const isTwitterCardSizeDefined = pageMeta.custom.some(
+    (meta) => meta.property === "twitter:card"
+  );
   return (
     <>
       {data.url && <meta property="og:url" content={data.url} />}
@@ -55,6 +58,11 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
       {pageMeta.custom.map(({ property, content }) => (
         <meta key={property} property={property} content={content} />
       ))}
+      {(pageMeta.socialImageAssetName !== undefined ||
+        pageMeta.socialImageUrl !== undefined) &&
+        isTwitterCardSizeDefined === false && (
+          <meta property="twitter:card" content="summary_large_image" />
+        )}
 
       {favIconAsset && (
         <link

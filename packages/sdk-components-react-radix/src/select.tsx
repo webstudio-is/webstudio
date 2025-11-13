@@ -6,6 +6,8 @@ import {
   type RefAttributes,
   useContext,
   type ComponentPropsWithRef,
+  useState,
+  useEffect,
 } from "react";
 import {
   Root,
@@ -26,8 +28,26 @@ import {
 
 export const Select: ForwardRefExoticComponent<
   ComponentPropsWithRef<typeof Root>
-> = forwardRef(({ value, defaultValue, ...props }, _ref) => {
-  return <Root {...props} defaultValue={value ?? defaultValue} />;
+> = forwardRef(({ defaultOpen, defaultValue, ...props }, _ref) => {
+  // open state
+  const currentOpen = props.open ?? defaultOpen ?? false;
+  const [open, setOpen] = useState(currentOpen);
+  // synchronize external value with local one when changed
+  useEffect(() => setOpen(currentOpen), [currentOpen]);
+  // value state
+  const currentValue = props.value ?? defaultValue ?? "";
+  const [value, setValue] = useState(currentValue);
+  // synchronize external value with local one when changed
+  useEffect(() => setValue(currentValue), [currentValue]);
+  return (
+    <Root
+      {...props}
+      open={open}
+      onOpenChange={setOpen}
+      value={value}
+      onValueChange={setValue}
+    />
+  );
 });
 
 export const SelectTrigger = forwardRef<

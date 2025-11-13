@@ -60,6 +60,15 @@ export const normalizeProps = ({
         continue;
       }
 
+      if (prop.name === "alt" && asset.type === "image") {
+        newProps.push({
+          ...propBase,
+          type: "string",
+          value: asset.description ?? "",
+        });
+        continue;
+      }
+
       newProps.push({
         ...propBase,
         type: "string",

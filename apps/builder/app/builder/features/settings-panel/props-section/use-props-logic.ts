@@ -14,15 +14,16 @@ import {
   $isContentMode,
   $props,
   $registeredComponentMetas,
-  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 import { isRichText } from "~/shared/content-model";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstance, $selectedInstancePath } from "~/shared/awareness";
 import {
+  $selectedInstanceInitialPropNames,
   $selectedInstancePropsMetas,
   showAttributeMeta,
   type PropValue,
 } from "../shared";
+import { $instanceTags } from "../../style-panel/shared/model";
 
 type PropOrName = { prop?: Prop; propName: string };
 
@@ -43,7 +44,10 @@ export type PropAndMeta = {
 //   - when they open props panel again, the prop is not there
 //
 // We want to avoid this if possible, but for some types like "asset" we can't
-export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
+const getStartingValue = (
+  meta: PropMeta,
+  defaultBooleanValue: boolean
+): PropValue | undefined => {
   if (meta.type === "string" && meta.control !== "file") {
     return {
       type: "string",
@@ -61,7 +65,7 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
   if (meta.type === "boolean") {
     return {
       type: "boolean",
-      value: meta.defaultValue ?? false,
+      value: meta.defaultValue ?? defaultBooleanValue,
     };
   }
 
@@ -78,15 +82,6 @@ export const getStartingValue = (meta: PropMeta): PropValue | undefined => {
       value: [],
     };
   }
-};
-
-const getStartingProp = (
-  instanceId: Instance["id"],
-  meta: PropMeta,
-  name: string
-): Prop | undefined => {
-  const value = getStartingValue(meta);
-  return value && { id: nanoid(), instanceId, name, ...value };
 };
 
 const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
@@ -163,6 +158,21 @@ const $canHaveTextContent = computed(
   }
 );
 
+const contentModePropertiesByTag: Partial<Record<string, string[]>> = {
+  img: ["src", "width", "height", "alt"],
+  a: ["href"],
+};
+
+const $selectedInstanceTag = computed(
+  [$selectedInstance, $instanceTags],
+  (selectedInstance, instanceTags) => {
+    if (selectedInstance === undefined) {
+      return;
+    }
+    return instanceTags.get(selectedInstance.id);
+  }
+);
+
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -170,25 +180,19 @@ export const usePropsLogic = ({
   updateProp,
 }: UsePropsLogicInput) => {
   const isContentMode = useStore($isContentMode);
+  const selectedInstanceTag = useStore($selectedInstanceTag);
 
   /**
    * In content edit mode we show only Image and Link props
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
-    const contentModeWhiteList: Partial<Record<string, string[]>> = {
-      Image: ["src", "width", "height", "alt"],
-      Link: ["href"],
-      RichTextLink: ["href"],
-    };
-
     if (!isContentMode) {
       return true;
     }
-
-    const propsWhiteList = contentModeWhiteList[instance.component] ?? [];
-
-    return propsWhiteList.includes(propName);
+    const allowedProperties =
+      contentModePropertiesByTag[selectedInstanceTag ?? ""] ?? [];
+    return allowedProperties.includes(propName);
   };
 
   const savedProps = props;
@@ -198,10 +202,7 @@ export const usePropsLogic = ({
 
   const propsMetas = useStore($selectedInstancePropsMetas);
 
-  const componentPropsMeta = useStore($registeredComponentPropsMetas).get(
-    instance.component
-  );
-  const initialPropsNames = new Set(componentPropsMeta?.initialProps);
+  const initialPropNames = useStore($selectedInstanceInitialPropNames);
 
   const systemProps: PropAndMeta[] = [];
   // descendant component is not actually rendered
@@ -230,28 +231,17 @@ export const usePropsLogic = ({
     systemProps.push({
       propName: textContentAttribute,
       meta: {
-        label: "Text Content",
         required: false,
         control: "textContent",
         type: "string",
-        defaultValue: "",
       },
     });
   }
 
   const initialProps: PropAndMeta[] = [];
-  for (let name of initialPropsNames) {
-    let propMeta = propsMetas.get(name);
-    // className -> class
-    if (propsMetas.has(reactPropsToStandardAttributes[name])) {
-      name = reactPropsToStandardAttributes[name];
-      propMeta = propsMetas.get(name);
-    }
-
+  for (const name of initialPropNames) {
+    const propMeta = propsMetas.get(name);
     if (propMeta === undefined) {
-      console.error(
-        `The prop "${name}" is defined in meta.initialProps but not in meta.props`
-      );
       continue;
     }
 
@@ -268,7 +258,7 @@ export const usePropsLogic = ({
 
     // For initial props, if prop is not saved, we want to show default value if available.
     //
-    // Important to not use getStartingProp if default is not available
+    // Important to not use infer stating value if default is not available
     // beacuse user may have this experience:
     //   - they open props panel of an Image
     //   - they see 0 in the control for "width"
@@ -276,7 +266,11 @@ export const usePropsLogic = ({
     //   - they think that width is set to 0, but it's actually not set at all
     //
     if (prop === undefined && propMeta.defaultValue !== undefined) {
-      prop = getStartingProp(instance.id, propMeta, name);
+      // initial properties are not defined but suggested to default so default boolean is false
+      const value = getStartingValue(propMeta, false);
+      if (value) {
+        prop = { id: nanoid(), instanceId: instance.id, name, ...value };
+      }
     }
 
     initialProps.push({
@@ -313,9 +307,14 @@ export const usePropsLogic = ({
     // In case of custom property/attribute we get a string.
     const propMeta =
       propsMetas.get(propName) ?? getDefaultMetaForType("string");
-    const prop = getStartingProp(instance.id, propMeta, propName);
-    if (prop) {
-      updateProp(prop);
+    const value = getStartingValue(propMeta, true);
+    if (value) {
+      updateProp({
+        id: nanoid(),
+        instanceId: instance.id,
+        name: propName,
+        ...value,
+      });
     }
   };
 

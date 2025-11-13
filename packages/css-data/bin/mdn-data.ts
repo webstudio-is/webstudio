@@ -235,25 +235,18 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
 };
 
 const supportedExperimentalProperties = [
-  "appearance",
-  "aspect-ratio",
+  "field-sizing",
   "text-size-adjust",
-  "-webkit-line-clamp",
-  "background-position-x",
-  "background-position-y",
   "-webkit-tap-highlight-color",
   "-webkit-overflow-scrolling",
-  "transition-behavior",
-  "offset-position",
-  // https://github.com/mdn/data/pull/759
-  // offset-anchor is standard according to mdn.
-  // But the mdn_url is missing from its config which is skipping othe starndard check.
-  "offset-anchor",
 ];
 
 // Properties we don't support in this form.
 const unsupportedProperties = [
   "--*",
+  "-webkit-text-fill-color",
+  "-webkit-text-stroke-color",
+  "-webkit-text-stroke-width",
   // shorthand properties
   "all",
   "font-synthesis",
@@ -262,6 +255,12 @@ const unsupportedProperties = [
   "white-space",
   "text-wrap",
   "background-position",
+  "border-block-style",
+  "border-block-width",
+  "border-block-color",
+  "border-inline-style",
+  "border-inline-width",
+  "border-inline-color",
 ];
 
 type FilteredProperties = { [property: string]: Value };
@@ -334,7 +333,7 @@ const getPropertiesData = (
     const unitGroups = new Set<string>();
     walkSyntax(config.syntax, (node) => {
       if (node.type === "Type") {
-        if (node.name === "integer" || node.name === "number") {
+        if (node.name === "number-token" || node.name === "number") {
           unitGroups.add("number");
           return;
         }
@@ -374,10 +373,6 @@ const pseudoElements = Object.keys(selectors)
 
 const getKeywordValues = (filteredProperties: FilteredProperties) => {
   const result = { ...customData.keywordValues };
-  // Non-standard properties are just missing in mdn data
-  const nonStandardValues = {
-    "background-clip": ["text"],
-  };
   // https://www.w3.org/TR/css-values/#common-keywords
   const commonKeywords = ["initial", "inherit", "unset"];
 
@@ -393,13 +388,6 @@ const getKeywordValues = (filteredProperties: FilteredProperties) => {
       }
     });
 
-    if (property in nonStandardValues) {
-      for (const nonStandartKeyword of nonStandardValues[
-        property as keyof typeof nonStandardValues
-      ]) {
-        keywords.add(nonStandartKeyword);
-      }
-    }
     for (const commonKeyword of commonKeywords) {
       // Delete to add commonKeyword at the end of the set
       keywords.delete(commonKeyword);

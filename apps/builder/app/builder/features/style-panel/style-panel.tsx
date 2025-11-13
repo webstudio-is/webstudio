@@ -34,7 +34,11 @@ import {
 } from "~/builder/shared/client-settings";
 import { sections } from "./sections";
 import { StyleSourcesSection } from "./style-source-section";
-import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
+import {
+  $instanceTags,
+  useComputedStyleDecl,
+  useParentComputedStyleDecl,
+} from "./shared/model";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -123,8 +127,10 @@ export const StylePanel = ({
   const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
-  const display = useParentComputedStyleDecl("display");
-  const displayValue = toValue(display.computedValue);
+  const display = toValue(useComputedStyleDecl("display").computedValue);
+  const parentDisplay = toValue(
+    useParentComputedStyleDecl("display").computedValue
+  );
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
@@ -147,7 +153,7 @@ export const StylePanel = ({
       continue;
     }
     // show flex child UI only when parent is flex or inline-flex
-    if (category === "flexChild" && displayValue.includes("flex") === false) {
+    if (category === "flexChild" && parentDisplay.includes("flex") === false) {
       continue;
     }
     // allow customizing list item type only for list and list item
@@ -156,6 +162,16 @@ export const StylePanel = ({
       tag !== "ul" &&
       tag !== "ol" &&
       tag !== "li"
+    ) {
+      continue;
+    }
+    // non-replaced inline boxes cannot be transformed
+    // https://drafts.csswg.org/css-transforms-1/#css-values
+    if (
+      category === "transforms" &&
+      (display === "inline" ||
+        display === "table-column" ||
+        display === "table-column-group")
     ) {
       continue;
     }

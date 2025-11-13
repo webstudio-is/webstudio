@@ -4,7 +4,6 @@ import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { generateRemixRoute } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as animationComponentMetas from "@webstudio-is/sdk-components-animation/metas";
-import * as reactRouterComponentMetas from "@webstudio-is/sdk-components-react-router/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import type { Framework } from "./framework";
 
@@ -31,37 +30,39 @@ export const createFramework = async (): Promise<Framework> => {
   // cleanup route templates after reading to not bloat generated code
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
-  const radixComponentNamespacedMetas: Record<string, WsComponentMeta> = {};
-  for (const [name, meta] of Object.entries(radixComponentMetas)) {
-    const namespace = "@webstudio-is/sdk-components-react-radix";
-    radixComponentNamespacedMetas[`${namespace}:${name}`] = meta;
+  const base = "@webstudio-is/sdk-components-react";
+  const reactRouter = "@webstudio-is/sdk-components-react-router";
+  const reactRadix = "@webstudio-is/sdk-components-react-radix";
+  const animation = "@webstudio-is/sdk-components-animation";
+  const components: Record<string, string> = {};
+  const metas: Record<string, WsComponentMeta> = {};
+  for (const [name, meta] of Object.entries(baseComponentMetas)) {
+    components[name] = `${base}:${name}`;
+    metas[name] = meta;
   }
-
-  const animationComponentNamespacedMetas: Record<string, WsComponentMeta> = {};
+  for (const name of ["Body", "Link", "RichTextLink", "Form", "RemixForm"]) {
+    components[name] = `${reactRouter}:${name}`;
+  }
+  for (const [name, meta] of Object.entries(radixComponentMetas)) {
+    components[`${reactRadix}:${name}`] = `${reactRadix}:${name}`;
+    metas[`${reactRadix}:${name}`] = meta;
+  }
   for (const [name, meta] of Object.entries(animationComponentMetas)) {
-    const namespace = "@webstudio-is/sdk-components-animation";
-    animationComponentNamespacedMetas[`${namespace}:${name}`] = meta;
+    components[`${animation}:${name}`] = `${animation}:${name}`;
+    metas[`${animation}:${name}`] = meta;
   }
 
   return {
-    components: [
-      {
-        source: "@webstudio-is/sdk-components-react",
-        metas: baseComponentMetas,
-      },
-      {
-        source: "@webstudio-is/sdk-components-animation",
-        metas: animationComponentNamespacedMetas,
-      },
-      {
-        source: "@webstudio-is/sdk-components-react-radix",
-        metas: radixComponentNamespacedMetas,
-      },
-      {
-        source: "@webstudio-is/sdk-components-react-router",
-        metas: reactRouterComponentMetas,
-      },
-    ],
+    metas,
+    components,
+    tags: {
+      textarea: `${base}:Textarea`,
+      input: `${base}:Input`,
+      select: `${base}:Select`,
+      body: `${reactRouter}:Body`,
+      a: `${reactRouter}:Link`,
+      form: `${reactRouter}:RemixForm`,
+    },
     html: ({ pagePath }: { pagePath: string }) => [
       {
         file: join("app", "routes", `${generateRemixRoute(pagePath)}.tsx`),

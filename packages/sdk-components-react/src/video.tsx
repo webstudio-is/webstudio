@@ -48,11 +48,11 @@ export const Video = forwardRef<
     const videoIdProps = {
       [videoIdAttribute]: id,
     };
-    const { assetBaseUrl } = useContext(ReactSdkContext);
+    const { videoLoader } = useContext(ReactSdkContext);
 
-    const src = srcProp?.startsWith(assetBaseUrl)
-      ? `/cgi/video/${srcProp.slice(assetBaseUrl.length)}`
-      : srcProp;
+    // fallback to provided src
+    const src =
+      srcProp && videoLoader ? videoLoader({ src: srcProp }) : srcProp;
 
     useEffect(() => {
       if ($progress === undefined) {

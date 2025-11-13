@@ -1,17 +1,6 @@
-import {
-  ContentIcon,
-  DiscordIcon,
-  LifeBuoyIcon,
-  YoutubeIcon,
-} from "@webstudio-is/icons";
+import { ContentIcon, DiscordIcon, YoutubeIcon } from "@webstudio-is/icons";
 
 export const help = [
-  {
-    label: "Support hub",
-    url: "https://help.webstudio.is/",
-    icon: <LifeBuoyIcon />,
-    target: "embed",
-  },
   {
     label: "Video tutorials",
     url: "https://wstd.us/101",

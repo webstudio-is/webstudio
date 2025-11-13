@@ -28,7 +28,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   commands: [
     {
       name: "deleteInstanceCanvas",
+      hidden: true,
       defaultHotkeys: ["backspace", "delete"],
+      preventDefault: false,
       disableHotkeyOutsideApp: true,
       // We are not disabling "Backspace" or "Delete" on the canvas. This is the main reason we have separate functions: deleteInstanceCanvas and deleteInstanceBuilder.
       disableOnInputLikeControls: false,

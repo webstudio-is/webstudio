@@ -1,10 +1,12 @@
 import { z } from "zod";
-import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { type ActionFunctionArgs, data } from "@remix-run/server-runtime";
 import { ResourceRequest } from "@webstudio-is/sdk";
 import { isLocalResource, loadResource } from "@webstudio-is/sdk/runtime";
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
+import { loader as currentDateLoader } from "../shared/$resources/current-date.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
+import { getResourceKey } from "~/shared/resources";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -20,36 +22,43 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return siteMapLoader({ request });
     }
 
+    if (isLocalResource(input, "current-date")) {
+      return currentDateLoader({ request });
+    }
+
     return fetch(input, init);
   };
 
   const requestJson = await request.json();
+  const requestList = z.array(z.unknown()).safeParse(requestJson);
 
-  const computedResourcesParsed = z
-    .array(ResourceRequest)
-    .safeParse(requestJson);
-
-  if (computedResourcesParsed.success === false) {
-    console.error(
-      "computedResources.parse",
-      computedResourcesParsed.error.toString()
-    );
+  if (requestList.success === false) {
     console.error("data:", requestJson);
-
-    throw json(computedResourcesParsed.error, {
+    throw data(requestList.error, {
       status: 400,
     });
   }
 
-  const computedResources = computedResourcesParsed.data;
-
-  const responses = await Promise.all(
-    computedResources.map((resource) => loadResource(customFetch, resource))
+  const output = await Promise.all(
+    requestList.data.map(async (item) => {
+      const resource = ResourceRequest.safeParse(item);
+      if (resource.success === false) {
+        return [
+          getResourceKey(item as ResourceRequest),
+          {
+            ok: false,
+            data: resource.error.format(),
+            status: 403,
+            statusText: "Resource validation error",
+          },
+        ];
+      }
+      return [
+        getResourceKey(resource.data),
+        await loadResource(customFetch, resource.data),
+      ];
+    })
   );
-  const output: [ResourceRequest["id"], unknown][] = [];
-  responses.forEach((response, index) => {
-    const request = computedResources[index];
-    output.push([request.id, response]);
-  });
+
   return output;
 };

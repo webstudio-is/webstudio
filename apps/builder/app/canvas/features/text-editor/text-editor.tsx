@@ -97,6 +97,7 @@ import {
   insertListItemAt,
   insertTemplateAt,
 } from "~/builder/features/workspace/canvas-tools/outline/block-utils";
+import { richTextPlaceholders } from "~/shared/content-model";
 
 const BindInstanceToNodePlugin = ({
   refs,
@@ -1024,6 +1025,18 @@ const RichTextContentPlugin = (props: RichTextContentPluginProps) => {
   return <RichTextContentPluginInternal {...props} templates={templates} />;
 };
 
+const getTag = (instanceId: Instance["id"]) => {
+  const instances = $instances.get();
+  const metas = $registeredComponentMetas.get();
+  const instance = instances.get(instanceId);
+  if (instance === undefined) {
+    return;
+  }
+  const meta = metas.get(instance.component);
+  const tags = Object.keys(meta?.presetStyle ?? {});
+  return instance.tag ?? tags[0];
+};
+
 const RichTextContentPluginInternal = ({
   rootInstanceSelector,
   onOpen,
@@ -1136,20 +1149,14 @@ const RichTextContentPluginInternal = ({
 
         if (event.key === "Backspace" || event.key === "Delete") {
           if ($getRoot().getTextContentSize() === 0) {
-            const currentInstance = $instances
-              .get()
-              .get(rootInstanceSelector[0]);
-
-            if (currentInstance?.component === "ListItem") {
+            const tag = getTag(rootInstanceSelector[0]);
+            if (tag === "li") {
               onNext(editor.getEditorState(), { reason: "left" });
-
               const parentInstanceSelector = rootInstanceSelector.slice(1);
               const parentInstance = $instances
                 .get()
                 .get(parentInstanceSelector[0]);
-
               const isLastChild = parentInstance?.children.length === 1;
-
               updateWebstudioData((data) => {
                 deleteInstanceMutable(
                   data,
@@ -1159,7 +1166,6 @@ const RichTextContentPluginInternal = ({
                   )
                 );
               });
-
               event.preventDefault();
               return true;
             }
@@ -1185,16 +1191,10 @@ const RichTextContentPluginInternal = ({
 
         if (menuState === "closed") {
           if (event.key === "Enter" && !event.shiftKey) {
-            // Custom logic if we are editing ListItem
-            const currentInstance = $instances
-              .get()
-              .get(rootInstanceSelector[0]);
-
-            if (
-              currentInstance?.component === "ListItem" &&
-              $getRoot().getTextContentSize() > 0
-            ) {
-              // Instead of creating block component we need to add a new ListItem
+            // Custom logic if we are editing list item
+            const tag = getTag(rootInstanceSelector[0]);
+            if (tag === "li" && $getRoot().getTextContentSize() > 0) {
+              // Instead of creating block component we need to add a new list item
               insertListItemAt(rootInstanceSelector);
               event.preventDefault();
               return true;
@@ -1202,11 +1202,11 @@ const RichTextContentPluginInternal = ({
 
             // Check if it pressed on the last line, last symbol
 
-            const allowedComponents = ["Paragraph", "Text", "Heading"];
+            const allowedTags = ["p", "h1", "h2", "h3", "h4", "h5", "h6"];
 
-            for (const component of allowedComponents) {
+            for (const tag of allowedTags) {
               const templateSelector = templates.find(
-                ([instance]) => instance.component === component
+                ([instance]) => getTag(instance.id) === tag
               )?.[1];
 
               if (templateSelector === undefined) {
@@ -1249,10 +1249,7 @@ const RichTextContentPluginInternal = ({
 
               insertTemplateAt(templateSelector, rootInstanceSelector, false);
 
-              if (
-                currentInstance?.component === "ListItem" &&
-                $getRoot().getTextContentSize() === 0
-              ) {
+              if (tag === "li" && $getRoot().getTextContentSize() === 0) {
                 const parentInstanceSelector = rootInstanceSelector.slice(1);
                 const parentInstance = $instances
                   .get()
@@ -1679,11 +1676,13 @@ export const TextEditor = ({
           continue;
         }
         const meta = metas.get(instance.component);
+        const tags = Object.keys(meta?.presetStyle ?? {});
+        const tag = instance.tag ?? tags[0];
 
         // opinionated: Non-collapsed elements without children can act as spacers (they have size for some reason).
         if (
           // Components with pseudo-elements (e.g., ::marker) that prevent content from collapsing
-          meta?.placeholder === undefined &&
+          richTextPlaceholders.has(tag) === false &&
           instance?.children.length === 0
         ) {
           const elt = getElementByInstanceSelector(nextSelector);

@@ -1,11 +1,9 @@
 import {
   type ButtonHTMLAttributes,
-  type RefObject,
   forwardRef,
   useMemo,
   useRef,
   useState,
-  createContext,
   type ReactNode,
 } from "react";
 import { useStore } from "@nanostores/react";
@@ -333,13 +331,6 @@ const BindingButton = forwardRef<
   );
 });
 BindingButton.displayName = "BindingButton";
-
-const BindingPopoverContext = createContext<{
-  containerRef?: RefObject<null | HTMLElement>;
-  side?: "left" | "right";
-}>({});
-
-export const BindingPopoverProvider = BindingPopoverContext.Provider;
 
 export const BindingPopover = ({
   scope,

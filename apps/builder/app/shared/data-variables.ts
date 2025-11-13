@@ -406,6 +406,12 @@ const traverseExpressions = ({
     for (const header of resource.headers) {
       header.value = update(header.value, instanceId) ?? header.value;
     }
+    if (resource.searchParams) {
+      for (const searchParam of resource.searchParams) {
+        searchParam.value =
+          update(searchParam.value, instanceId) ?? searchParam.value;
+      }
+    }
     if (resource.body) {
       resource.body = update(resource.body, instanceId) ?? resource.body;
     }

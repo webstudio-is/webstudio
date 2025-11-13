@@ -11,6 +11,7 @@ import {
   $selectedPageHash,
 } from "~/shared/nano-states";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
+import { comparePatterns } from "./shared/routing-priority";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -55,7 +56,11 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");
-  for (const page of [pages.homePage, ...pages.pages]) {
+  // sort pages before matching to not depend on order of page creation
+  const sortedPages = [pages.homePage, ...pages.pages].toSorted(
+    (leftPage, rightPage) => comparePatterns(leftPage.path, rightPage.path)
+  );
+  for (const page of sortedPages) {
     const pagePath = getPagePath(page.id, pages);
     const params = matchPathnamePattern(pagePath, pageHref.pathname);
     if (params) {
@@ -76,46 +81,58 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
 
 export const subscribeInterceptedEvents = () => {
   const handleClick = (event: MouseEvent) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+    const isPreviewMode = $isPreviewMode.get();
+
     // Prevent forwarding the click event on an input element when the associated label has a "for" attribute
-    if (
-      event.target instanceof Element &&
-      event.target.closest("label[for]") &&
-      !$isPreviewMode.get()
-    ) {
+    // and prevent checkbox or radio inputs changing when clicked
+    if (event.target.closest("label[for]") || event.target.closest("input")) {
+      if (isPreviewMode) {
+        return;
+      }
       event.preventDefault();
     }
 
-    if (
-      event.target instanceof HTMLElement ||
-      event.target instanceof SVGElement
-    ) {
-      const a = event.target.closest("a");
-      if (a) {
-        event.preventDefault();
-        if ($isPreviewMode.get()) {
-          // use attribute instead of a.href to get raw unresolved value
-          const href = a.getAttribute("href") ?? "";
-          if (isAbsoluteUrl(href)) {
-            window.open(href, "_blank");
-          } else {
-            switchPageAndUpdateSystem(href);
-          }
+    const a = event.target.closest("a");
+    if (a) {
+      if (isPreviewMode) {
+        // use attribute instead of a.href to get raw unresolved value
+        const href = a.getAttribute("href") ?? "";
+        if (isAbsoluteUrl(href)) {
+          window.open(href, "_blank");
+          // relative paths can be safely downloaded
+        } else if (a.hasAttribute("download")) {
+          return;
+        } else {
+          switchPageAndUpdateSystem(href);
         }
-      }
-      // prevent invoking submit with buttons in canvas mode
-      // because form with prevented submit still invokes validation
-      if (event.target.closest("button") && $isPreviewMode.get() === false) {
         event.preventDefault();
+        return;
       }
+      event.preventDefault();
+    }
+    // prevent invoking submit with buttons in canvas mode
+    // because form with prevented submit still invokes validation
+    if (event.target.closest("button")) {
+      if (isPreviewMode) {
+        return;
+      }
+      event.preventDefault();
     }
   };
 
   const handlePointerDown = (event: PointerEvent) => {
-    if (false === event.target instanceof HTMLElement) {
+    if (!(event.target instanceof Element)) {
       return;
     }
+    const isPreviewMode = $isPreviewMode.get();
 
-    if (event.target.closest("select") && $isPreviewMode.get() === false) {
+    if (event.target.closest("select")) {
+      if (isPreviewMode) {
+        return;
+      }
       event.preventDefault();
     }
   };
@@ -141,14 +158,17 @@ export const subscribeInterceptedEvents = () => {
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
     if ($isPreviewMode.get()) {
       return;
     }
-    // prevent typing in inputs only in canvas mode
     if (
       event.target instanceof HTMLInputElement ||
       event.target instanceof HTMLTextAreaElement
     ) {
+      // prevent typing in inputs only in canvas mode
       event.preventDefault();
     }
   };

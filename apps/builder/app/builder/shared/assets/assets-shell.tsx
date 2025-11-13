@@ -13,7 +13,7 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { AssetUpload, acceptUploadType } from "./asset-upload";
+import { AssetUpload, acceptUploadType, validateFiles } from "./asset-upload";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -129,7 +129,7 @@ export const AssetsShell = ({
               )
           );
 
-          const droppedFiles = await getFiles({ source });
+          const droppedFiles = validateFiles(getFiles({ source }));
 
           const files = droppedFiles
             .filter((file) => file != null)

@@ -718,9 +718,19 @@ test("expand list-style", () => {
     ["list-style-type", "lower-roman"],
   ]);
   expect(expandShorthands([["list-style", `square`]])).toEqual([
-    ["list-style-position", "initial"],
-    ["list-style-image", "initial"],
+    ["list-style-position", "outside"],
+    ["list-style-image", "none"],
     ["list-style-type", "square"],
+  ]);
+  expect(expandShorthands([["list-style", `inside`]])).toEqual([
+    ["list-style-position", "inside"],
+    ["list-style-image", "none"],
+    ["list-style-type", "disc"],
+  ]);
+  expect(expandShorthands([["list-style", `none`]])).toEqual([
+    ["list-style-position", "outside"],
+    ["list-style-image", "none"],
+    ["list-style-type", "none"],
   ]);
 });
 

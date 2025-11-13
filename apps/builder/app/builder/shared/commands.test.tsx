@@ -1,19 +1,27 @@
 import { describe, expect, test } from "vitest";
+import { coreMetas } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $, renderData } from "@webstudio-is/template";
+import { $, renderData, ws } from "@webstudio-is/template";
 import {
   $instances,
   $pages,
+  $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { $awareness, selectInstance } from "~/shared/awareness";
-import { deleteSelectedInstance, unwrap, wrapIn } from "./commands";
+import {
+  deleteSelectedInstance,
+  replaceWith,
+  unwrap,
+  wrapIn,
+} from "./commands";
+import { elementComponent } from "@webstudio-is/sdk";
 
 registerContainers();
 
-const metas = new Map(Object.entries(baseMetas));
+const metas = new Map(Object.entries({ ...coreMetas, ...baseMetas }));
 $registeredComponentMetas.set(metas);
 $pages.set(createDefaultPages({ rootInstanceId: "" }));
 $awareness.set({ pageId: "" });
@@ -81,73 +89,199 @@ describe("wrap in", () => {
   test("wrap instance in link", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box"></$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
       ).instances
     );
-    selectInstance(["box", "body"]);
-    wrapIn("Link");
+    selectInstance(["divId", "bodyId"]);
+    wrapIn(elementComponent, "a");
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Link ws:id={expect.any(String)}>
-            <$.Box ws:id="box"></$.Box>
-          </$.Link>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a" ws:id={expect.any(String)}>
+            <ws.element ws:tag="div" ws:id="divId"></ws.element>
+          </ws.element>
+        </ws.element>
       ).instances
     );
   });
 
-  test("wrap image in box", () => {
+  test("wrap image in element", () => {
     $instances.set(
       renderData(
-        <$.Body ws:id="body">
-          <$.Image ws:id="image" />
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="img" ws:id="imageId"></ws.element>
+        </ws.element>
       ).instances
     );
-    selectInstance(["image", "body"]);
-    wrapIn("Box");
+    selectInstance(["imageId", "bodyId"]);
+    wrapIn(elementComponent);
     expect($instances.get()).toEqual(
       renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id={expect.any(String)}>
-            <$.Image ws:id="image" />
-          </$.Box>
-        </$.Body>
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id={expect.any(String)}>
+            <ws.element ws:tag="img" ws:id="imageId"></ws.element>
+          </ws.element>
+        </ws.element>
       ).instances
     );
   });
 
   test("avoid wrapping text with link in link", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Text ws:id="text">
-          <$.RichTextLink ws:id="richtextlink"></$.RichTextLink>
-        </$.Text>
-      </$.Body>
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="p" ws:id="textId">
+          <ws.element ws:tag="a" ws:id="linkId"></ws.element>
+        </ws.element>
+      </ws.element>
     );
     $instances.set(instances);
-    selectInstance(["text", "body"]);
-    wrapIn("Link");
+    selectInstance(["textId", "bodyId"]);
+    wrapIn(elementComponent, "a");
     // nothing is changed
     expect($instances.get()).toEqual(instances);
   });
 
   test("avoid wrapping textual content", () => {
     const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Text ws:id="text">
-          <$.Bold ws:id="bold"></$.Bold>
-        </$.Text>
-      </$.Body>
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="div" ws:id="textId">
+          <ws.element ws:tag="bold" ws:id="boldId"></ws.element>
+        </ws.element>
+      </ws.element>
     );
     $instances.set(instances);
-    selectInstance(["bold", "text", "body"]);
-    wrapIn("Box");
+    selectInstance(["boldId", "textId", "bodyId"]);
+    wrapIn(elementComponent);
     // nothing is changed
     expect($instances.get()).toEqual(instances);
+  });
+
+  test("avoid wrapping list item", () => {
+    const { instances } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="ul" ws:id="listId">
+          <ws.element ws:tag="li" ws:id="listItemId"></ws.element>
+        </ws.element>
+      </ws.element>
+    );
+    $instances.set(instances);
+    selectInstance(["listItemId", "listId", "bodyId"]);
+    wrapIn(elementComponent);
+    // nothing is changed
+    expect($instances.get()).toEqual(instances);
+  });
+});
+
+describe("replace with", () => {
+  test("replace legacy tag with element", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box tag="article" ws:id="articleId"></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["articleId", "bodyId"]);
+    replaceWith(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
+  test("migrate legacy properties as well", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box
+          ws:tag="div"
+          ws:id="divId"
+          className="my-class"
+          htmlFor="my-id"
+        ></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["divId", "bodyId"]);
+    replaceWith(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element
+          ws:tag="div"
+          ws:id="divId"
+          class="my-class"
+          for="my-id"
+        ></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
+  test("preserve currently specified tag", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:tag="article" ws:id="articleId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["articleId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("replace with first tag from presets", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Heading ws:id="headingId"></$.Heading>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["headingId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="h1" ws:id="headingId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("fallback to div", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="divId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["divId", "bodyId"]);
+    replaceWith(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      ).instances
+    );
   });
 });
 

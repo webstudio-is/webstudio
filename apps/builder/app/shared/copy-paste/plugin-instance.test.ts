@@ -25,7 +25,7 @@ import {
   $props,
   $registeredComponentMetas,
 } from "../nano-states";
-import { onCopy, onPaste } from "./plugin-instance";
+import { instanceText } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $awareness, selectInstance } from "../awareness";
 
@@ -96,9 +96,9 @@ describe("paste target", () => {
   test("is inside selected instance", () => {
     $instances.set(instances);
     selectInstance(["box1", "body0"]);
-    const clipboardData = onCopy() ?? "";
+    const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["box2", "body0"]);
-    onPaste(clipboardData);
+    instanceText.onPaste?.(clipboardData);
 
     const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1] = instancesDifference.keys();
@@ -113,7 +113,7 @@ describe("paste target", () => {
   test("is after selected instance when same as copied", () => {
     $instances.set(instances);
     selectInstance(["box1", "body0"]);
-    onPaste(onCopy() ?? "");
+    instanceText.onPaste?.(instanceText.onCopy?.() ?? "");
 
     const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1] = instancesDifference.keys();
@@ -190,9 +190,9 @@ describe("data sources", () => {
     $dataSources.set(dataSources);
     $props.set(props);
     selectInstance(["box1", "body0"]);
-    const clipboardData = onCopy() ?? "";
+    const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body0"]);
-    onPaste(clipboardData);
+    instanceText.onPaste?.(clipboardData);
 
     const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1, newBox2] = instancesDifference.keys();
@@ -259,9 +259,9 @@ describe("data sources", () => {
     $props.set(props);
     $dataSources.set(dataSources);
     selectInstance(["box2", "box1", "body0"]);
-    const clipboardData = onCopy() ?? "";
+    const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["box1", "body0"]);
-    onPaste(clipboardData);
+    instanceText.onPaste?.(clipboardData);
 
     const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox2] = instancesDifference.keys();
@@ -340,9 +340,9 @@ describe("data sources", () => {
     $props.set(props);
     $dataSources.set(dataSources);
     selectInstance(["list", "body"]);
-    const clipboardData = onCopy() ?? "";
+    const clipboardData = instanceText.onCopy?.() ?? "";
     selectInstance(["body"]);
-    onPaste(clipboardData);
+    instanceText.onPaste?.(clipboardData);
 
     const instancesDifference = getMapDifference(instances, $instances.get());
     const [collectionId] = instancesDifference.keys();
@@ -397,8 +397,8 @@ test("when paste into copied instance insert after it", () => {
     ])
   );
   selectInstance(["box", "body"]);
-  const clipboardData = onCopy() ?? "";
-  onPaste(clipboardData);
+  const clipboardData = instanceText.onCopy?.() ?? "";
+  instanceText.onPaste?.(clipboardData);
 
   expect($instances.get()).toEqual(
     toMap([
@@ -423,9 +423,9 @@ test("prevent pasting portal into own descendants", () => {
   ]);
   $instances.set(instances);
   selectInstance(["portal", "body"]);
-  const clipboardData = onCopy() ?? "";
+  const clipboardData = instanceText.onCopy?.() ?? "";
   selectInstance(["box", "fragment", "portal", "body"]);
-  onPaste(clipboardData);
+  instanceText.onPaste?.(clipboardData);
   expect($instances.get()).toEqual(instances);
 });
 
@@ -445,9 +445,9 @@ test("prevent pasting portal into copy of it", () => {
   ]);
   $instances.set(instances);
   selectInstance(["portal1", "body"]);
-  const clipboardData = onCopy() ?? "";
+  const clipboardData = instanceText.onCopy?.() ?? "";
   selectInstance(["portal2", "body"]);
-  onPaste(clipboardData);
+  instanceText.onPaste?.(clipboardData);
   expect($instances.get()).toEqual(instances);
 });
 
@@ -466,9 +466,9 @@ test("insert portal into its sibling", () => {
     ])
   );
   selectInstance(["portal", "body"]);
-  const clipboardData = onCopy() ?? "";
+  const clipboardData = instanceText.onCopy?.() ?? "";
   selectInstance(["sibling", "body"]);
-  onPaste(clipboardData);
+  instanceText.onPaste?.(clipboardData);
 
   expect($instances.get()).toEqual(
     toMap([
@@ -500,12 +500,12 @@ test("insert into portal fragment when portal is a target", () => {
     ])
   );
   selectInstance(["box", "body"]);
-  const clipboardData = onCopy() ?? "";
+  const clipboardData = instanceText.onCopy?.() ?? "";
   selectInstance(["portal", "body"]);
 
   // fragment not exists
   const prevInstances = $instances.get();
-  onPaste(clipboardData);
+  instanceText.onPaste?.(clipboardData);
   const [boxId, fragmentId] = getMapDifference(
     prevInstances,
     $instances.get()
@@ -526,7 +526,7 @@ test("insert into portal fragment when portal is a target", () => {
   );
 
   // fragment already exists
-  onPaste(clipboardData);
+  instanceText.onPaste?.(clipboardData);
   expect($instances.get()).toEqual(
     toMap([
       createInstance("body", "Body", [

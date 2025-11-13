@@ -3109,25 +3109,28 @@ export const declarationsGenerated = {
   "overflowWrap:inherit": "Inherits a property from its parent element.",
   "overflowWrap:unset": "Resets to its default value.",
   "overflowX:visible":
-    "The content is not clipped and may be rendered outside the content box.",
-  "overflowX:hidden": "The content is clipped and not visible.",
+    "Content is fully visible and extends beyond the container if it exceeds its size.",
+  "overflowX:hidden":
+    "Content that exceeds the container’s size is hidden without scrollbars. It can be scrolled with JavaScript or via a scroll-timeline animation.",
   "overflowX:clip":
-    "Creates no scrolling mechanism but clips the content at the borders of the element.",
+    "Content that exceeds the container’s size is clipped without scrollbars. It can not be scrolled with JavaScript or via a scroll-timeline animation.",
   "overflowX:scroll":
     "Creates a scrolling mechanism for the content outside the box.",
   "overflowX:auto":
-    "Adds a horizontal scrollbar when the content exceeds the borders of the element.",
+    "Scrollbars are added to the container only when necessary, based on the content size.",
   "overflowX:initial": "Sets the default value of a property.",
   "overflowX:inherit": "Inherits a property from its parent element.",
   "overflowX:unset": "Resets to its default value.",
   "overflowY:visible":
-    "The content is not clipped and may be rendered outside the content box.",
-  "overflowY:hidden": "Hides any content that overflows the element.",
-  "overflowY:clip": "Clips any content that overflows the element.",
+    "Content is fully visible and extends beyond the container if it exceeds its size.",
+  "overflowY:hidden":
+    "Content that exceeds the container’s size is hidden without scrollbars. It can be scrolled with JavaScript or via a scroll-timeline animation.",
+  "overflowY:clip":
+    "Content that exceeds the container’s size is clipped without scrollbars. It can not be scrolled with JavaScript or via a scroll-timeline animation.",
   "overflowY:scroll":
-    "Adds a vertical scrollbar when content overflows the element.",
+    "Creates a scrolling mechanism for the content outside the box.",
   "overflowY:auto":
-    "Adds a vertical scrollbar when content overflows the element, only when necessary.",
+    "Scrollbars are added to the container only when necessary, based on the content size.",
   "overscrollBehavior:contain":
     "Prevents pull-to-refresh and rubber band scrolling outside of the element.",
   "overscrollBehavior:none":

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, type RefObject } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet, RangeSetBuilder } from "@codemirror/state";
@@ -27,13 +27,17 @@ import {
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
 import { textVariants, css, rawTheme } from "@webstudio-is/design-system";
-import { decodeDataVariableId, lintExpression } from "@webstudio-is/sdk";
+import {
+  decodeDataVariableId,
+  lintExpression,
+  allowedStringMethods,
+  allowedArrayMethods,
+} from "@webstudio-is/sdk";
 import {
   EditorContent,
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-  foldGutterExtension,
   type EditorApi,
 } from "./code-editor-base";
 import {
@@ -46,16 +50,21 @@ import {
 export type { EditorApi };
 
 export const formatValue = (value: unknown) => {
-  if (Array.isArray(value)) {
-    // format arrays as multiline
-    return JSON.stringify(value, null, 2);
+  try {
+    if (Array.isArray(value)) {
+      // format arrays as multiline
+      return JSON.stringify(value, null, 2);
+    }
+    if (typeof value === "object" && value !== null) {
+      // format objects with parentheses to enforce correct
+      // syntax highlighting as expression instead of block
+      return `(${JSON.stringify(value, null, 2)})`;
+    }
+    return JSON.stringify(value);
+  } catch {
+    // show nothing when value is invalid
+    return "";
   }
-  if (typeof value === "object" && value !== null) {
-    // format objects with parentheses to enforce correct
-    // syntax highlighting as expression instead of block
-    return `(${JSON.stringify(value, null, 2)})`;
-  }
-  return JSON.stringify(value);
 };
 
 export const formatValuePreview = (value: unknown) => {
@@ -240,6 +249,56 @@ const scopeCompletionSource: CompletionSource = (context) => {
       },
     });
   }
+
+  // Add safe string and array method completions
+  if (path.path.length > 0) {
+    const methodOptions: Completion[] = [];
+
+    // Determine if target is likely a string or array based on its value
+    const isString = typeof target === "string";
+    const isArray = Array.isArray(target);
+
+    // Add string methods only if target is a string
+    if (isString) {
+      for (const method of allowedStringMethods) {
+        if (method.toLowerCase().includes(path.name.toLowerCase())) {
+          methodOptions.push({
+            label: `${method}()`,
+            detail: "string method",
+            type: "method",
+            apply: (view, completion, from, to) => {
+              view.dispatch({
+                ...insertCompletionText(view.state, `${method}()`, from, to),
+                annotations: pickedCompletion.of(completion),
+              });
+            },
+          });
+        }
+      }
+    }
+
+    // Add array methods if target is an array
+    if (isArray) {
+      for (const method of allowedArrayMethods) {
+        if (method.toLowerCase().includes(path.name.toLowerCase())) {
+          methodOptions.push({
+            label: `${method}()`,
+            detail: "array method",
+            type: "method",
+            apply: (view, completion, from, to) => {
+              view.dispatch({
+                ...insertCompletionText(view.state, `${method}()`, from, to),
+                annotations: pickedCompletion.of(completion),
+              });
+            },
+          });
+        }
+      }
+    }
+
+    options = [...options, ...methodOptions];
+  }
+
   return {
     from: context.pos - path.name.length,
     filter: false,
@@ -492,47 +551,5 @@ export const ExpressionEditor = ({
         </EditorDialog>
       </EditorDialogControl>
     </div>
-  );
-};
-
-// compute value as json lazily only when dialog is open
-// by spliting into separate component which is invoked
-// only when dialog content is rendered
-const ValuePreviewEditor = ({ value }: { value: unknown }) => {
-  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
-  return (
-    <EditorContent
-      readOnly={true}
-      extensions={extensions}
-      value={JSON.stringify(value, null, 2)}
-      onChange={() => {}}
-      onChangeComplete={() => {}}
-    />
-  );
-};
-
-export const ValuePreviewDialog = ({
-  title,
-  value,
-  children,
-  open,
-  onOpenChange,
-}: {
-  title?: ReactNode;
-  value: unknown;
-  open?: boolean;
-  onOpenChange?: (newOpen: boolean) => void;
-  children: ReactNode;
-}) => {
-  return (
-    <EditorDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      content={<ValuePreviewEditor value={value} />}
-      resize="both"
-    >
-      {children}
-    </EditorDialog>
   );
 };

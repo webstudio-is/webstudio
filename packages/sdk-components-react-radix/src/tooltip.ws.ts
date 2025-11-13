@@ -1,5 +1,5 @@
 import { TooltipIcon, TriggerIcon, ContentIcon } from "@webstudio-is/icons/svg";
-import type { WsComponentMeta, WsComponentPropsMeta } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { div } from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import {
@@ -15,6 +15,7 @@ export const metaTooltipTrigger: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
+  props: propsTooltipTrigger,
 };
 
 export const metaTooltipContent: WsComponentMeta = {
@@ -23,9 +24,9 @@ export const metaTooltipContent: WsComponentMeta = {
     category: "none",
     children: ["instance"],
   },
-  presetStyle: {
-    div,
-  },
+  presetStyle: { div },
+  initialProps: ["side", "sideOffset", "align", "alignOffset"],
+  props: propsTooltipContent,
 };
 
 export const metaTooltip: WsComponentMeta = {
@@ -35,18 +36,6 @@ export const metaTooltip: WsComponentMeta = {
     children: ["instance"],
     descendants: [radix.TooltipTrigger, radix.TooltipContent],
   },
-};
-
-export const propsMetaTooltip: WsComponentPropsMeta = {
-  props: propsTooltip,
   initialProps: ["open", "delayDuration", "disableHoverableContent"],
-};
-
-export const propsMetaTooltipTrigger: WsComponentPropsMeta = {
-  props: propsTooltipTrigger,
-};
-
-export const propsMetaTooltipContent: WsComponentPropsMeta = {
-  props: propsTooltipContent,
-  initialProps: ["side", "sideOffset", "align", "alignOffset"],
+  props: propsTooltip,
 };

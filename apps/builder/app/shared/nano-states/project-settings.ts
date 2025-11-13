@@ -1,5 +1,10 @@
 import { atom } from "nanostores";
 
-export const $openProjectSettings = atom<
-  "general" | "redirects" | "publish" | "marketplace" | undefined
->();
+export type SectionName =
+  | "general"
+  | "redirects"
+  | "publish"
+  | "marketplace"
+  | "backups";
+
+export const $openProjectSettings = atom<SectionName | undefined>();

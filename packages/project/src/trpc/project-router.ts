@@ -1,6 +1,11 @@
-import * as db from "../db";
+import * as projectApi from "../db/project";
 import { z } from "zod";
-import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
+import {
+  router,
+  procedure,
+  AuthorizationError,
+  authorizeProject,
+} from "@webstudio-is/trpc-interface/index.server";
 import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 
 export const projectRouter = router({
@@ -13,14 +18,16 @@ export const projectRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.rename(input, ctx);
+      return await projectApi.rename(input, ctx);
     }),
+
   delete: procedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.markAsDeleted(input.projectId, ctx);
+      return await projectApi.markAsDeleted(input.projectId, ctx);
     }),
+
   clone: procedure
     .input(
       z.object({
@@ -33,14 +40,15 @@ export const projectRouter = router({
       const sourceContext = input.authToken
         ? await ctx.createTokenContext(input.authToken)
         : ctx;
-
-      return await db.project.clone(input, ctx, sourceContext);
+      return await projectApi.clone(input, ctx, sourceContext);
     }),
+
   create: procedure
     .input(z.object({ title: Title }))
     .mutation(async ({ input, ctx }) => {
-      return await db.project.create(input, ctx);
+      return await projectApi.create(input, ctx);
     }),
+
   setMarketplaceApprovalStatus: procedure
     .input(
       z.object({
@@ -49,18 +57,28 @@ export const projectRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await db.project.setMarketplaceApprovalStatus(input, ctx);
+      return await projectApi.setMarketplaceApprovalStatus(input, ctx);
     }),
+
+  updateTags: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        tags: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      await projectApi.updateProjectTags(input, ctx);
+    }),
+
   findCurrentUserProjectIds: procedure.query(async ({ ctx }) => {
     if (ctx.authorization.type !== "user") {
       return [];
     }
-
-    const projectIds = await db.project.findProjectIdsByUserId(
+    const projectIds = await projectApi.findProjectIdsByUserId(
       ctx.authorization.userId,
       ctx
     );
-
     return projectIds.map((project) => project.id);
   }),
 
@@ -95,6 +113,84 @@ export const projectRouter = router({
       } as const;
     }
   }),
+
+  publishedBuilds: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      try {
+        if (
+          ctx.authorization.type !== "user" &&
+          ctx.authorization.type !== "token"
+        ) {
+          throw new Error("Not authorized");
+        }
+        const publishedBuilds = await ctx.postgrest.client
+          .from("published_builds")
+          .select("*")
+          .eq("projectId", input.projectId);
+        if (publishedBuilds.error) {
+          throw publishedBuilds.error;
+        }
+        return {
+          success: true,
+          data: publishedBuilds.data,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        } as const;
+      }
+    }),
+
+  restoreDevelopmentBuild: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        fromBuildId: z.string(),
+      })
+    )
+    .mutation(
+      async ({
+        input,
+        ctx,
+      }): Promise<{ success: true } | { success: false; error: string }> => {
+        try {
+          const permit = await authorizeProject.getProjectPermit(
+            {
+              projectId: input.projectId,
+              permits: ["build", "admin"],
+            },
+            ctx
+          );
+          if (!permit) {
+            throw new AuthorizationError("Not authorized");
+          }
+          const build = await ctx.postgrest.client.rpc(
+            "restore_development_build",
+            {
+              project_id: input.projectId,
+              from_build_id: input.fromBuildId,
+            }
+          );
+          if (build.error) {
+            throw build.error;
+          }
+          return {
+            success: true,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          } as const;
+        }
+      }
+    ),
 });
 
 export type ProjectRouter = typeof projectRouter;

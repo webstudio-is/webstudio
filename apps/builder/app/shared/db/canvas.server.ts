@@ -3,7 +3,7 @@ import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { findPageByIdOrPath, getStyleDeclKey } from "@webstudio-is/sdk";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import * as projectApi from "@webstudio-is/project/index.server";
 
 const getPair = <Item extends { id: string }>(item: Item): [string, Item] => [
   item.id,
@@ -26,7 +26,7 @@ export const loadProductionCanvasData = async (
     throw new Error("The project is not published");
   }
 
-  const project = await projectDb.project.loadById(build.projectId, context);
+  const project = await projectApi.loadById(build.projectId, context);
 
   const currentProjectDomains = project.domainsVirtual;
 

@@ -23,11 +23,6 @@
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js"
     },
-    "./props": {
-      "webstudio": "./src/props.ts",
-      "types": "./lib/types/props.d.ts",
-      "import": "./lib/props.js"
-    },
     "./hooks": {
       "webstudio": "./src/hooks.ts",
       "types": "./lib/types/hooks.d.ts",
@@ -63,7 +58,6 @@
     "@radix-ui/react-switch": "^1.2.2",
     "@radix-ui/react-tabs": "^1.1.9",
     "@radix-ui/react-tooltip": "^1.2.4",
-    "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",

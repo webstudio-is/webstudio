@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { $, AssetValue, renderTemplate } from "@webstudio-is/template";
 import type { StyleDecl, WebstudioFragment } from "@webstudio-is/sdk";
 import { denormalizeSrcProps } from "./asset-upload";
@@ -127,4 +127,26 @@ test("it works well with no background-images", async () => {
     .map((value) => value.value);
 
   expect(denormalizedAssetIds).toEqual(inputUrls.map(src2AssetId));
+});
+
+test("upload raw inception images", async () => {
+  const data = renderTemplate(
+    <$.Body ws:id="boxA">
+      <$.Image
+        ws:id="imageA"
+        src="https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png?width=1024&height=1024&format=auto"
+      ></$.Image>
+    </$.Body>
+  );
+  const uploadImages = vi.fn(async (srcs: string[]) => {
+    return new Map(srcs.map((src) => [src, src]));
+  });
+  await denormalizeSrcProps(
+    data,
+    uploadImages,
+    (instanceId, propName) => `${instanceId}:${propName}`
+  );
+  expect(uploadImages).toBeCalledWith([
+    "https://preview.webstudio.ai/cgi/image/dev/5036ed5c3dfce99eaac566a06bc3729620354a364357907a523f1feb2d6fb819.png?format=raw",
+  ]);
 });

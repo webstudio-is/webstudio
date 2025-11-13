@@ -3,11 +3,11 @@ import {
   authorizeProject,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
+import type { Asset } from "@webstudio-is/sdk";
 import type { AssetClient } from "./client";
 import { getUniqueFilename } from "./utils/get-unique-filename";
 import { sanitizeS3Key } from "./utils/sanitize-s3-key";
 import { formatAsset } from "./utils/format-asset";
-import type { Asset } from "@webstudio-is/sdk";
 
 type UploadData = {
   projectId: string;
@@ -141,6 +141,8 @@ export const uploadFile = async (
     return formatAsset({
       assetId: "",
       projectId: file.data.uploaderProjectId as string,
+      filename: null,
+      description: null,
       file: file.data,
     });
   } catch (error) {

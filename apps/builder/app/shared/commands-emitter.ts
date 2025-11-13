@@ -5,6 +5,7 @@ import { clientSyncStore } from "~/shared/sync";
 type CommandMeta<CommandName extends string> = {
   // @todo category, description
   name: CommandName;
+  label?: string;
   /** default because hotkeys can be customized from ui */
   defaultHotkeys?: string[];
   /** set to false when default browser or radix behavior is desired */

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import {
   blockTemplateComponent,
+  elementComponent,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
 import type { Instance } from "@webstudio-is/sdk";
@@ -16,6 +17,7 @@ import {
   $isContentMode,
   $registeredComponentMetas,
   findBlockSelector,
+  $project,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -24,6 +26,7 @@ import {
 import {
   deleteInstanceMutable,
   extractWebstudioFragment,
+  insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -47,6 +50,13 @@ import {
   isRichTextContent,
   isTreeSatisfyingContentModel,
 } from "~/shared/content-model";
+import { generateFragmentFromHtml } from "~/shared/html";
+import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
+import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
+import { getInstanceLabel } from "./instance-label";
+import { $instanceTags } from "../features/style-panel/shared/model";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
+import { isSyncIdle } from "./sync/sync-server";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -137,7 +147,7 @@ export const deleteSelectedInstance = () => {
   });
 };
 
-export const wrapIn = (component: string) => {
+export const wrapIn = (component: string, tag?: string) => {
   const instancePath = $selectedInstancePath.get();
   // global root or body are selected
   if (instancePath === undefined || instancePath.length === 1) {
@@ -166,6 +176,9 @@ export const wrapIn = (component: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
+      if (tag || component === elementComponent) {
+        newInstance.tag = tag ?? "div";
+      }
       const parentInstance = data.instances.get(parentItem.instance.id);
       data.instances.set(newInstanceId, newInstance);
       if (parentInstance) {
@@ -175,18 +188,74 @@ export const wrapIn = (component: string) => {
           }
         }
       }
-      const matches = isTreeSatisfyingContentModel({
+      const isSatisfying = isTreeSatisfyingContentModel({
         instances: data.instances,
         props: data.props,
         metas,
         instanceSelector: newInstanceSelector,
       });
-      if (matches === false) {
-        toast.error(`Cannot wrap in "${component}"`);
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot wrap in ${label}`);
         throw Error("Abort transaction");
       }
     });
     selectInstance(newInstanceSelector);
+  } catch {
+    // do nothing
+  }
+};
+
+export const replaceWith = (component: string, tag?: string) => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
+  const metas = $registeredComponentMetas.get();
+  const instanceTags = $instanceTags.get();
+  try {
+    updateWebstudioData((data) => {
+      const instance = data.instances.get(selectedInstance.id);
+      if (instance === undefined) {
+        return;
+      }
+      instance.component = component;
+      // replace with specified tag or with currently used
+      if (tag || component === elementComponent) {
+        instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
+        // delete legacy tag prop if specified
+        for (const prop of data.props.values()) {
+          if (prop.instanceId !== selectedInstance.id) {
+            continue;
+          }
+          if (prop.name === "tag") {
+            data.props.delete(prop.id);
+            continue;
+          }
+          const newName = reactPropsToStandardAttributes[prop.name];
+          if (newName) {
+            const newId = `${prop.instanceId}:${newName}`;
+            data.props.delete(prop.id);
+            data.props.set(newId, { ...prop, id: newId, name: newName });
+          }
+        }
+      }
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas,
+        instanceSelector: selectedInstanceSelector,
+      });
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag }, {});
+        toast.error(`Cannot replace with ${label}`);
+        throw Error("Abort transaction");
+      }
+    });
   } catch {
     // do nothing
   }
@@ -429,6 +498,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "deleteInstanceBuilder",
+      label: "Delete Instance",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
       disableHotkeyOutsideApp: true,
@@ -439,6 +509,10 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
+        const project = $project.get();
+        if (project === undefined) {
+          return;
+        }
         if ($isDesignMode.get() === false) {
           builderApi.toast.info("Duplicating is only allowed in design mode.");
           return;
@@ -462,6 +536,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
               ...data,
               startingInstanceId: parentItem.instanceSelector[0],
             }),
+            projectId: project.id,
           });
           const newRootInstanceId = newInstanceIds.get(
             selectedItem.instance.id
@@ -501,16 +576,40 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
     {
-      name: "wrapInBox",
-      handler: () => wrapIn("Box"),
+      name: "wrapInElement",
+      label: "Wrap in an Element",
+      handler: () => wrapIn(elementComponent),
     },
     {
       name: "wrapInLink",
-      handler: () => wrapIn("Link"),
+      label: "Wrap in a Link",
+      handler: () => wrapIn(elementComponent, "a"),
     },
     {
       name: "unwrap",
       handler: () => unwrap(),
+    },
+    {
+      name: "replaceWithElement",
+      label: "Replace with an Element",
+      handler: () => replaceWith(elementComponent),
+    },
+    {
+      name: "replaceWithLink",
+      label: "Replace with a Link",
+      handler: () => replaceWith(elementComponent, "a"),
+    },
+
+    {
+      name: "pasteTailwind",
+      label: "Paste HTML with Tailwind classes",
+      handler: async () => {
+        const html = await navigator.clipboard.readText();
+        let fragment = generateFragmentFromHtml(html);
+        fragment = await denormalizeSrcProps(fragment);
+        fragment = await generateFragmentFromTailwind(fragment);
+        return insertWebstudioFragmentAt(fragment);
+      },
     },
 
     // history
@@ -531,6 +630,22 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableOnInputLikeControls: true,
       handler: () => {
         serverSyncStore.redo();
+      },
+    },
+
+    {
+      name: "save",
+      defaultHotkeys: ["meta+s", "ctrl+s"],
+      handler: async () => {
+        toast.dismiss("save-success");
+        try {
+          await isSyncIdle();
+          toast.success("Project saved successfully", { id: "save-success" });
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(error.message);
+          }
+        }
       },
     },
 

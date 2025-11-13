@@ -4,6 +4,7 @@ export type InstanceData = {
   id: Instance["id"];
   instanceKey: string;
   component: Instance["component"];
+  tag?: Instance["tag"];
 };
 
 /**

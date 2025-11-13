@@ -13,7 +13,7 @@ type Element = DefaultTreeAdapterMap["element"];
 
 type Attribute = Element["attrs"][number];
 
-export const findTags = (
+export const findByTags = (
   node: undefined | Node,
   tagName: string,
   result: NodeWithChildren[] = []
@@ -23,7 +23,29 @@ export const findTags = (
       result.push(node);
     }
     for (const child of node.childNodes) {
-      findTags(child, tagName, result);
+      findByTags(child, tagName, result);
+    }
+  }
+  return result;
+};
+
+export const findByClasses = (
+  node: undefined | Node,
+  className: string,
+  result: NodeWithChildren[] = []
+): NodeWithChildren[] => {
+  if (node && "childNodes" in node) {
+    if (
+      "tagName" in node &&
+      node.attrs.some(
+        (item) =>
+          item.name === "class" && item.value.split(/\s+/).includes(className)
+      )
+    ) {
+      result.push(node);
+    }
+    for (const child of node.childNodes) {
+      findByClasses(child, className, result);
     }
   }
   return result;
@@ -72,3 +94,6 @@ export const loadHtmlIndices = () =>
     "html-spec-indices",
     "https://html.spec.whatwg.org/multipage/indices.html"
   );
+
+export const loadSvgSinglePage = () =>
+  loadPage("svg-spec", "https://www.w3.org/TR/SVG11/single-page.html");

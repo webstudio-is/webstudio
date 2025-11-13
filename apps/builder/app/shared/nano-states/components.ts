@@ -12,7 +12,6 @@ import {
   getIndexesWithinAncestors,
   type Instance,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $memoryProps, $props } from "./misc";
@@ -130,6 +129,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });
@@ -148,6 +148,7 @@ export const subscribeComponentHooks = () => {
                 id: instance.id,
                 instanceKey: getInstanceKey(array.slice(index)),
                 component: instance.component,
+                tag: instance.tag,
               };
             }),
           });
@@ -176,15 +177,10 @@ export const $registeredTemplates = atom(
   new Map<string, GeneratedTemplateMeta>()
 );
 
-export const $registeredComponentPropsMetas = atom(
-  new Map<string, WsComponentPropsMeta>()
-);
-
 export const registerComponentLibrary = ({
   namespace,
   components,
   metas,
-  propsMetas,
   hooks,
   templates,
 }: {
@@ -193,7 +189,6 @@ export const registerComponentLibrary = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: Record<Instance["component"], ExoticComponent<any>>;
   metas: Record<Instance["component"], WsComponentMeta>;
-  propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
   hooks?: Hook[];
   templates: Record<Instance["component"], TemplateMeta>;
 }) => {
@@ -229,22 +224,4 @@ export const registerComponentLibrary = ({
     const nextHooks = [...prevHooks, ...hooks];
     $registeredComponentHooks.set(nextHooks);
   }
-
-  const prevPropsMetas = $registeredComponentPropsMetas.get();
-  const nextPropsMetas = new Map(prevPropsMetas);
-  for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
-    const { initialProps = [], props } = propsMeta;
-    const requiredProps: string[] = [];
-    for (const [name, value] of Object.entries(props)) {
-      if (value.required && initialProps.includes(name) === false) {
-        requiredProps.push(name);
-      }
-    }
-    nextPropsMetas.set(`${prefix}${componentName}`, {
-      // order of initialProps must be preserved
-      initialProps: [...initialProps, ...requiredProps],
-      props,
-    });
-  }
-  $registeredComponentPropsMetas.set(nextPropsMetas);
 };

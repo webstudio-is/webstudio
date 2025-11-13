@@ -63,6 +63,7 @@ $project.set({
   isDeleted: false,
   userId: "userId",
   domain: "new-2x9tcd",
+  tags: [],
 
   marketplaceApprovalStatus: "UNLISTED",
 
@@ -72,6 +73,8 @@ $project.set({
     projectId: "projectId",
     id: "imageId",
     name: "very-very-very-long-long-image-name.jpg",
+    filename: null,
+    description: null,
   },
   latestBuildVirtual: null,
   domainsVirtual: [],

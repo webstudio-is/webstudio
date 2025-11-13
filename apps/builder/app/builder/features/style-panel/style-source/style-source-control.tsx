@@ -98,7 +98,7 @@ const Menu = (props: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         onCloseAutoFocus={(event) => event.preventDefault()}
-        css={{ maxWidth: theme.spacing[24] }}
+        css={{ maxWidth: theme.spacing[26] }}
       >
         {props.children}
       </DropdownMenuContent>

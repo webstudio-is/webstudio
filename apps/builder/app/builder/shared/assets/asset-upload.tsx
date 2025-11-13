@@ -14,17 +14,13 @@ import { imageMimeTypes } from "./asset-utils";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
-const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
-  const files = Array.from(input?.files ?? []);
-
+export const validateFiles = (files: File[]) => {
   const exceedSizeFiles = files.filter((file) => file.size > maxSize);
-
   for (const file of exceedSizeFiles) {
     toast.error(
       `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
     );
   }
-
   return files.filter((file) => file.size <= maxSize);
 };
 
@@ -37,7 +33,7 @@ const useUpload = (type: AssetType) => {
     if (input === null) {
       return;
     }
-    const files = getFilesFromInput(type, input);
+    const files = validateFiles(Array.from(input?.files ?? []));
     uploadAssets(type, files);
     form.reset();
   };

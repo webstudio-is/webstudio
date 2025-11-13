@@ -7,6 +7,7 @@ import { $assets } from "~/shared/nano-states";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
+import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 
 // tests whether we can use ImageManager for the given "accept" value
 const isImageAccept = (accept?: string) => {
@@ -52,7 +53,7 @@ export const SelectAsset = ({ prop, onChange, accept }: Props) => {
         }
       >
         <Button color="neutral" css={{ flex: 1 }}>
-          {asset?.name ?? "Choose source"}
+          {asset ? formatAssetName(asset) : "Choose source"}
         </Button>
       </FloatingPanel>
     </Flex>

@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json;
           operationName?: string;
           query?: string;
           variables?: Json;
-          extensions?: Json;
         };
         Returns: Json;
       };
@@ -69,16 +69,22 @@ export type Database = {
       };
       Asset: {
         Row: {
+          description: string | null;
+          filename: string | null;
           id: string;
           name: string;
           projectId: string;
         };
         Insert: {
+          description?: string | null;
+          filename?: string | null;
           id: string;
           name: string;
           projectId: string;
         };
         Update: {
+          description?: string | null;
+          filename?: string | null;
           id?: string;
           name?: string;
           projectId?: string;
@@ -443,6 +449,13 @@ export type Database = {
             referencedColumns: ["buildId"];
           },
           {
+            foreignKeyName: "latestBuildVirtual_buildId_fkey";
+            columns: ["buildId"];
+            isOneToOne: true;
+            referencedRelation: "published_builds";
+            referencedColumns: ["buildId"];
+          },
+          {
             foreignKeyName: "latestBuildVirtual_domainsVirtualId_fkey";
             columns: ["domainsVirtualId"];
             isOneToOne: true;
@@ -503,6 +516,7 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
         };
@@ -513,6 +527,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title: string;
           userId?: string | null;
         };
@@ -523,6 +538,7 @@ export type Database = {
           isDeleted?: boolean;
           marketplaceApprovalStatus?: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string;
           userId?: string | null;
         };
@@ -667,6 +683,7 @@ export type Database = {
           email: string | null;
           id: string;
           image: string | null;
+          projectsTags: Json;
           provider: string | null;
           teamId: string | null;
           username: string | null;
@@ -676,6 +693,7 @@ export type Database = {
           email?: string | null;
           id: string;
           image?: string | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -685,6 +703,7 @@ export type Database = {
           email?: string | null;
           id?: string;
           image?: string | null;
+          projectsTags?: Json;
           provider?: string | null;
           teamId?: string | null;
           username?: string | null;
@@ -735,6 +754,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string | null;
           userId: string | null;
         };
@@ -748,6 +768,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -761,6 +782,7 @@ export type Database = {
             | Database["public"]["Enums"]["MarketplaceApprovalStatus"]
             | null;
           previewImageAssetId?: string | null;
+          tags?: string[] | null;
           title?: string | null;
           userId?: string | null;
         };
@@ -787,6 +809,42 @@ export type Database = {
           projectId: string | null;
           publishStatus: Database["public"]["Enums"]["PublishStatus"] | null;
           updatedAt: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "Build_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "DashboardProject";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "Build_projectId_fkey";
+            columns: ["projectId"];
+            isOneToOne: false;
+            referencedRelation: "Project";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      published_builds: {
+        Row: {
+          buildId: string | null;
+          createdAt: string | null;
+          domains: string | null;
+          projectId: string | null;
+        };
+        Insert: {
+          buildId?: string | null;
+          createdAt?: string | null;
+          domains?: never;
+          projectId?: string | null;
+        };
+        Update: {
+          buildId?: string | null;
+          createdAt?: string | null;
+          domains?: never;
+          projectId?: string | null;
         };
         Relationships: [
           {
@@ -834,10 +892,10 @@ export type Database = {
     Functions: {
       clone_project: {
         Args: {
-          project_id: string;
-          user_id: string;
-          title: string;
           domain: string;
+          project_id: string;
+          title: string;
+          user_id: string;
         };
         Returns: {
           createdAt: string;
@@ -846,28 +904,27 @@ export type Database = {
           isDeleted: boolean;
           marketplaceApprovalStatus: Database["public"]["Enums"]["MarketplaceApprovalStatus"];
           previewImageAssetId: string | null;
+          tags: string[] | null;
           title: string;
           userId: string | null;
         };
+        SetofOptions: {
+          from: "*";
+          to: "Project";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       create_production_build: {
-        Args: {
-          project_id: string;
-          deployment: string;
-        };
+        Args: { deployment: string; project_id: string };
         Returns: string;
       };
       database_cleanup: {
-        Args: {
-          from_date?: string;
-          to_date?: string;
-        };
+        Args: { from_date?: string; to_date?: string };
         Returns: undefined;
       };
       domainsVirtual: {
-        Args: {
-          "": Database["public"]["Tables"]["Project"]["Row"];
-        };
+        Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
         Returns: {
           cname: string;
           createdAt: string;
@@ -882,12 +939,16 @@ export type Database = {
           updatedAt: string;
           verified: boolean;
         }[];
+        SetofOptions: {
+          from: '"Project"';
+          to: "domainsVirtual";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       latestBuildVirtual:
         | {
-            Args: {
-              "": Database["public"]["Tables"]["Project"]["Row"];
-            };
+            Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
             Returns: {
               buildId: string;
               createdAt: string;
@@ -895,12 +956,16 @@ export type Database = {
               domainsVirtualId: string;
               projectId: string;
               publishStatus: Database["public"]["Enums"]["PublishStatus"];
-            }[];
+            };
+            SetofOptions: {
+              from: '"Project"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
           }
         | {
-            Args: {
-              "": Database["public"]["Tables"]["domainsVirtual"]["Row"];
-            };
+            Args: { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
             Returns: {
               buildId: string;
               createdAt: string;
@@ -908,12 +973,16 @@ export type Database = {
               domainsVirtualId: string;
               projectId: string;
               publishStatus: Database["public"]["Enums"]["PublishStatus"];
-            }[];
+            };
+            SetofOptions: {
+              from: '"domainsVirtual"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
           };
       latestProjectDomainBuildVirtual: {
-        Args: {
-          "": Database["public"]["Tables"]["Project"]["Row"];
-        };
+        Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
         Returns: {
           buildId: string;
           createdAt: string;
@@ -921,7 +990,17 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
-        }[];
+        };
+        SetofOptions: {
+          from: '"Project"';
+          to: "latestBuildVirtual";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
+      restore_development_build: {
+        Args: { from_build_id: string; project_id: string };
+        Returns: string;
       };
     };
     Enums: {
@@ -945,27 +1024,36 @@ export type Database = {
   };
 };
 
-type PublicSchema = Database[Extract<keyof Database, "public">];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R;
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R;
       }
       ? R
@@ -973,20 +1061,24 @@ export type Tables<
     : never;
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I;
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I;
       }
       ? I
@@ -994,20 +1086,24 @@ export type TablesInsert<
     : never;
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U;
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U;
       }
       ? U
@@ -1015,29 +1111,60 @@ export type TablesUpdate<
     : never;
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database;
+    schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      AuthorizationRelation: [
+        "viewers",
+        "editors",
+        "builders",
+        "administrators",
+      ],
+      DomainStatus: ["INITIALIZING", "ACTIVE", "ERROR", "PENDING"],
+      MarketplaceApprovalStatus: [
+        "UNLISTED",
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+      ],
+      PublishStatus: ["PENDING", "PUBLISHED", "FAILED"],
+      UploadStatus: ["UPLOADING", "UPLOADED"],
+    },
+  },
+} as const;

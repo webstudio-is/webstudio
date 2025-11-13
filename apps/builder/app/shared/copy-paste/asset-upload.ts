@@ -4,12 +4,6 @@ import { nanoid } from "nanoid";
 import { produce, enablePatches, type Patch, applyPatches } from "immer";
 
 enablePatches();
-
-type StringProp = Extract<
-  WebstudioFragment["props"][number],
-  { type: "string" }
->;
-
 const extractSrcProps = (
   data: WebstudioFragment
 ): [propId: string, href: string][] => {
@@ -22,17 +16,26 @@ const extractSrcProps = (
       .map((instance) => instance.id)
   );
 
-  const srcProps = data.props
-    .filter(
-      (prop): prop is StringProp =>
-        prop.type === "string" &&
-        prop.name === "src" &&
-        imageComponentsSet.has(prop.instanceId)
-    )
-    .map(
-      (prop) =>
-        [prop.id, new URL(prop.value).href] as [propId: string, href: string]
-    );
+  const srcProps: [propId: string, href: string][] = [];
+  for (const prop of data.props) {
+    if (
+      prop.type === "string" &&
+      prop.name === "src" &&
+      imageComponentsSet.has(prop.instanceId)
+    ) {
+      try {
+        const url = new URL(prop.value);
+        // upload raw images from inception
+        if (url.hostname === "preview.webstudio.ai") {
+          url.search = "";
+          url.searchParams.set("format", "raw");
+        }
+        srcProps.push([prop.id, url.href]);
+      } catch {
+        // ignore when invalid url
+      }
+    }
+  }
 
   return srcProps;
 };

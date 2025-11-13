@@ -23,7 +23,6 @@ import {
   $registeredComponentMetas,
   $styleSources,
 } from "~/shared/nano-states";
-import { getInstanceLabel } from "~/shared/instance-utils";
 import type {
   ComputedStyleDecl,
   StyleValueSourceColor,
@@ -32,6 +31,7 @@ import { useComputedStyles } from "./shared/model";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/awareness";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 const $isAltPressed = atom(false);
 if (typeof window !== "undefined") {

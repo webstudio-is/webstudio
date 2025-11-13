@@ -18,6 +18,7 @@ const user = {
   username: "Taylor",
   teamId: null,
   provider: "github",
+  projectsTags: [],
 };
 
 const createRouter = (element: JSX.Element, path: string, current?: string) =>
@@ -31,7 +32,7 @@ const userPlanFeatures: UserPlanFeatures = {
   allowShareAdminLinks: false,
   allowDynamicData: false,
   maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 1,
+  maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,
 };
 
@@ -49,6 +50,7 @@ const projects = [
     previewImageAssetId: "",
     latestBuildVirtual: null,
     marketplaceApprovalStatus: "UNLISTED" as const,
+    tags: [],
   } as DashboardProject,
 ];
 

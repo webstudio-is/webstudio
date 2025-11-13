@@ -208,7 +208,7 @@ const getDefinedStyles = ({
   ];
 };
 
-const $model = computed(
+export const $styleObjectModel = computed(
   [
     $styles,
     $styleSourceSelections,
@@ -241,7 +241,7 @@ const $model = computed(
 
 export const $computedStyleDeclarations = computed(
   [
-    $model,
+    $styleObjectModel,
     $selectedInstancePathWithRoot,
     $selectedOrLastStyleSourceSelector,
     $registeredComponentMetas,
@@ -331,7 +331,11 @@ export const $availableColorVariables = computed(
 
 export const createComputedStyleDeclStore = (property: CssProperty) => {
   return computed(
-    [$model, $selectedInstancePathWithRoot, $selectedOrLastStyleSourceSelector],
+    [
+      $styleObjectModel,
+      $selectedInstancePathWithRoot,
+      $selectedOrLastStyleSourceSelector,
+    ],
     (model, instancePath, styleSourceSelector) => {
       return getComputedStyleDecl({
         model,
@@ -345,7 +349,7 @@ export const createComputedStyleDeclStore = (property: CssProperty) => {
 };
 
 export const useStyleObjectModel = () => {
-  return useStore($model);
+  return useStore($styleObjectModel);
 };
 
 export const useComputedStyleDecl = (property: CssProperty) => {
@@ -378,7 +382,7 @@ export const useParentComputedStyleDecl = (property: CssProperty) => {
   const $store = useMemo(
     () =>
       computed(
-        [$model, $closestStylableInstanceSelector],
+        [$styleObjectModel, $closestStylableInstanceSelector],
         (model, instanceSelector) => {
           return getComputedStyleDecl({
             model,
@@ -397,7 +401,7 @@ export const getInstanceStyleDecl = (
   instanceSelector: InstanceSelector
 ) => {
   return getComputedStyleDecl({
-    model: $model.get(),
+    model: $styleObjectModel.get(),
     instanceSelector,
     property,
   });

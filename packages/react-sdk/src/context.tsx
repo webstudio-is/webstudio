@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo } from "react";
-import type { ImageLoader } from "@webstudio-is/image";
+import type { ImageLoader, VideoLoader } from "@webstudio-is/image";
 import {
   createJsonStringifyProxy,
   isPlainObject,
@@ -29,6 +29,7 @@ export type Params = {
 export const ReactSdkContext = createContext<
   Params & {
     imageLoader: ImageLoader;
+    videoLoader?: VideoLoader;
     // resources need to be any to support accessing unknown fields without extra checks
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resources: Record<string, any>;
@@ -38,6 +39,7 @@ export const ReactSdkContext = createContext<
 >({
   assetBaseUrl: "/",
   imageLoader: ({ src }) => src,
+  videoLoader: ({ src }) => src,
   resources: {},
   breakpoints: [],
   onError: (error) => {

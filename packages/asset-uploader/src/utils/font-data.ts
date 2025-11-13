@@ -8,13 +8,6 @@ import {
   type FontStyle,
 } from "@webstudio-is/fonts";
 
-// @todo sumbit this to definitely typed, they are not up to date
-declare module "fontkit" {
-  export interface Font {
-    variationAxes: VariationAxes;
-  }
-}
-
 // same default fontkit uses internally
 const defaultLanguage = "en";
 

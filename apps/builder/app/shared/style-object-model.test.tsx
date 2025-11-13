@@ -517,6 +517,35 @@ test("support custom properties in unparsed values", () => {
   });
 });
 
+test("support empty custom properties", () => {
+  const model = createModel({
+    css: `
+      bodyLocal {
+        --inset: ;
+        box-shadow: var(--inset) red;
+      }
+    `,
+    jsx: <$.Body ws:id="body" class="bodyLocal"></$.Body>,
+  });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "--inset",
+    }).computedValue
+  ).toEqual({ type: "unparsed", value: "" });
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["body"],
+      property: "box-shadow",
+    }).computedValue
+  ).toEqual({
+    type: "layers",
+    value: [{ type: "unparsed", value: "red" }],
+  });
+});
+
 test("use fallback value when custom property does not exist", () => {
   const model = createModel({
     css: `

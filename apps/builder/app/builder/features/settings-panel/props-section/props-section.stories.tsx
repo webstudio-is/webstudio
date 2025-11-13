@@ -107,7 +107,6 @@ const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   format: format,
   size: 100000,
   createdAt: new Date().toISOString(),
-  description: null,
   meta: { width: 128, height: 180 },
 });
 
@@ -199,9 +198,8 @@ const checkProp = (options = defaultOptions, label?: string): PropMeta => ({
 
 registerComponentLibrary({
   components: {},
-  metas: {},
   templates: {},
-  propsMetas: {
+  metas: {
     Box: {
       props: {
         initialText: textProp("", "multi\nline"),

@@ -63,10 +63,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    environment:
+      name: development
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }} # tag name
+      - uses: ./.github/actions/submodules-checkout
+        with:
+          submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:

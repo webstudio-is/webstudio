@@ -1,3 +1,4 @@
+import type { FunctionComponent } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
@@ -10,23 +11,26 @@ import {
   List,
   ListItem,
   Text,
+  rawTheme,
 } from "@webstudio-is/design-system";
-import { $openProjectSettings } from "~/shared/nano-states/project-settings";
+import {
+  $openProjectSettings,
+  type SectionName,
+} from "~/shared/nano-states/project-settings";
+import { $isDesignMode } from "~/shared/nano-states";
+import { leftPanelWidth, rightPanelWidth } from "./utils";
 import { SectionGeneral } from "./section-general";
 import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
-import { leftPanelWidth, rightPanelWidth } from "./utils";
-import type { FunctionComponent } from "react";
-import { $isDesignMode } from "~/shared/nano-states";
-
-type SectionName = "general" | "redirects" | "publish" | "marketplace";
+import { SectionBackups } from "./section-backups";
 
 const sections = new Map<SectionName, FunctionComponent>([
   ["general", SectionGeneral],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
   ["marketplace", SectionMarketplace],
+  ["backups", SectionBackups],
 ] as const);
 
 export const ProjectSettingsView = ({
@@ -39,6 +43,9 @@ export const ProjectSettingsView = ({
   onOpenChange?: (isOpen: boolean) => void;
 }) => {
   const isDesignMode = useStore($isDesignMode);
+  const SectionComponent = currentSection
+    ? sections.get(currentSection)
+    : undefined;
 
   return (
     <Dialog
@@ -47,11 +54,11 @@ export const ProjectSettingsView = ({
       onOpenChange={onOpenChange}
     >
       <DialogContent
-        css={{
-          width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
-          maxWidth: "none",
-          height: theme.spacing[35],
-        }}
+        width={
+          Number.parseInt(leftPanelWidth, 10) +
+          Number.parseInt(rightPanelWidth, 10)
+        }
+        height={Number.parseInt(rawTheme.spacing[35], 10)}
       >
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
@@ -100,12 +107,9 @@ export const ProjectSettingsView = ({
                 })}
               </Flex>
             </List>
-            <ScrollArea>
+            <ScrollArea css={{ width: "100%" }}>
               <Grid gap={2} css={{ py: theme.spacing[5] }}>
-                {currentSection === "general" && <SectionGeneral />}
-                {currentSection === "redirects" && <SectionRedirects />}
-                {currentSection === "publish" && <SectionPublish />}
-                {currentSection === "marketplace" && <SectionMarketplace />}
+                {SectionComponent && <SectionComponent />}
                 <div />
               </Grid>
             </ScrollArea>
