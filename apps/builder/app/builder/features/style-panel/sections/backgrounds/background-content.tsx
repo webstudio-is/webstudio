@@ -155,7 +155,6 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 export const BackgroundContent = ({ index }: { index: number }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
 
-  const elementRef = useRef<HTMLDivElement>(null);
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
   >(() =>
@@ -164,7 +163,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
   return (
     <>
-      <BackgroundSection ref={elementRef}>
+      <BackgroundSection>
         <Flex justify="center">
           <ToggleGroup
             type="single"
@@ -189,8 +188,16 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           </ToggleGroup>
         </Flex>
       </BackgroundSection>
+      <Separator />
+      {imageGradientToggle === "gradient" && (
+        <BackgroundGradient index={index} />
+      )}
 
-      <Separator css={{ gridColumn: "span 2" }} />
+      <BackgroundSection>
+        {imageGradientToggle === "image" && <BackgroundImage index={index} />}
+      </BackgroundSection>
+
+      <Separator />
 
       <BackgroundSection>
         <Grid
@@ -198,21 +205,6 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           align="center"
           gap={2}
         >
-          {imageGradientToggle === "image" && (
-            <>
-              <Flex css={{ height: "100%" }} align="start">
-                <PropertyInlineLabel
-                  label="Image"
-                  description={propertyDescriptions.backgroundImage}
-                  properties={["background-image"]}
-                />
-              </Flex>
-              <FloatingPanelProvider container={elementRef}>
-                <ImageControl property="background-image" index={index} />
-              </FloatingPanelProvider>
-            </>
-          )}
-
           <PropertyInlineLabel
             label="Clip"
             description={propertyDescriptions.backgroundClip}
@@ -274,13 +266,6 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           <SelectControl property="background-blend-mode" index={index} />
         </Grid>
       </BackgroundSection>
-      <Separator css={{ gridColumn: "span 2" }} />
-
-      {imageGradientToggle === "image" ? (
-        <BackgroundImage index={index} />
-      ) : (
-        <BackgroundGradient index={index} />
-      )}
     </>
   );
 };

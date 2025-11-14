@@ -8,9 +8,10 @@ import {
   Label,
   Tooltip,
   Text,
+  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import { useRef, useState } from "react";
-import type {} from "../../controls";
+import { ImageControl } from "../../controls";
 import { $assets } from "~/shared/nano-states";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
@@ -20,6 +21,8 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import { PropertyInlineLabel } from "../../property-label";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -160,16 +163,27 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       );
     }
   };
+  const elementRef = useRef<HTMLDivElement>(null);
 
   return (
     <Flex
       direction="column"
       css={{
         gridColumn: "span 2",
-        padding: theme.panel.padding,
         gap: theme.spacing[3],
       }}
+      ref={elementRef}
     >
+      <Flex css={{ height: "100%" }} align="start">
+        <PropertyInlineLabel
+          label="Image"
+          description={propertyDescriptions.backgroundImage}
+          properties={["background-image"]}
+        />
+      </Flex>
+      <FloatingPanelProvider container={elementRef}>
+        <ImageControl property="background-image" index={index} />
+      </FloatingPanelProvider>
       <Label>
         <Flex align="center" gap="1">
           Code
