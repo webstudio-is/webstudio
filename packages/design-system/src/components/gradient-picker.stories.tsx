@@ -20,10 +20,13 @@ export const GradientWithoutAngle = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value) => {
+        onChange={(value: ParsedGradient) => {
           setGradient(reconstructLinearGradient(value));
         }}
-        onThumbSelected={() => {}}
+        onChangeComplete={(value: ParsedGradient) => {
+          setGradient(reconstructLinearGradient(value));
+        }}
+        onThumbSelect={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>
@@ -39,10 +42,13 @@ export const GradientWithAngleAndHints = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value) => {
+        onChange={(value: ParsedGradient) => {
           setGradient(reconstructLinearGradient(value));
         }}
-        onThumbSelected={() => {}}
+        onChangeComplete={(value: ParsedGradient) => {
+          setGradient(reconstructLinearGradient(value));
+        }}
+        onThumbSelect={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>
@@ -57,10 +63,13 @@ export const GradientWithSideOrCorner = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value) => {
+        onChange={(value: ParsedGradient) => {
           setGradient(reconstructLinearGradient(value));
         }}
-        onThumbSelected={() => {}}
+        onChangeComplete={(value: ParsedGradient) => {
+          setGradient(reconstructLinearGradient(value));
+        }}
+        onThumbSelect={() => {}}
       />
       <Text>{gradient}</Text>
     </Flex>

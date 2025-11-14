@@ -26,7 +26,8 @@ extend([mixPlugin]);
 type GradientPickerProps = {
   gradient: ParsedGradient;
   onChange: (value: ParsedGradient) => void;
-  onThumbSelected: (index: number, stop: GradientStop) => void;
+  onChangeComplete: (value: ParsedGradient) => void;
+  onThumbSelect: (index: number, stop: GradientStop) => void;
 };
 
 const defaultAngle: UnitValue = {
@@ -38,38 +39,45 @@ const defaultAngle: UnitValue = {
 const THUMB_INTERACTION_PX = 12;
 
 export const GradientPicker = (props: GradientPickerProps) => {
-  const { gradient, onChange, onThumbSelected } = props;
+  const { gradient, onChange, onChangeComplete, onThumbSelect } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const stopsRef = useRef(stops);
+
+  useEffect(() => {
+    stopsRef.current = stops;
+  }, [stops]);
+
+  const buildGradient = useCallback(
+    (stopsValue: GradientStop[]): ParsedGradient => ({
+      angle: gradient.angle,
+      sideOrCorner: gradient.sideOrCorner,
+      stops: stopsValue,
+    }),
+    [gradient.angle, gradient.sideOrCorner]
+  );
 
   useEffect(() => {
     setStops(gradient.stops);
+    stopsRef.current = gradient.stops;
 
     setSelectedStop((currentSelected) => {
-      if (gradient.stops.length === 0) {
-        return undefined;
-      }
-
-      if (currentSelected === undefined) {
-        return currentSelected;
+      if (gradient.stops.length === 0 || currentSelected === undefined) {
+        return;
       }
 
       const nextIndex = Math.min(currentSelected, gradient.stops.length - 1);
       const nextStop = gradient.stops[nextIndex];
 
-      if (nextStop !== undefined) {
-        if (nextIndex !== currentSelected) {
-          onThumbSelected(nextIndex, nextStop);
-        } else {
-          onThumbSelected(currentSelected, nextStop);
-        }
+      if (nextStop !== undefined && nextIndex !== currentSelected) {
+        onThumbSelect(nextIndex, nextStop);
       }
 
       return nextIndex;
     });
-  }, [gradient, onThumbSelected]);
+  }, [gradient.stops, onThumbSelect]);
 
   const positions = stops
     .map((stop) => stop.position?.value)
@@ -84,22 +92,40 @@ export const GradientPicker = (props: GradientPickerProps) => {
   });
 
   const updateStops = useCallback(
-    (updater: (currentStops: GradientStop[]) => GradientStop[]) => {
+    (
+      updater: (currentStops: GradientStop[]) => GradientStop[],
+      type: "change" | "complete"
+    ) => {
+      let nextStops: GradientStop[] | undefined;
+      let hasChanged = false;
       setStops((currentStops) => {
-        const nextStops = updater(currentStops);
-        onChange({
-          angle: gradient.angle,
-          stops: nextStops,
-          sideOrCorner: gradient.sideOrCorner,
-        });
-        return nextStops;
+        nextStops = updater(currentStops);
+        if (nextStops !== currentStops) {
+          hasChanged = true;
+          stopsRef.current = nextStops;
+          return nextStops;
+        }
+        nextStops = currentStops;
+        return currentStops;
       });
+
+      if (hasChanged === false || nextStops === undefined) {
+        return;
+      }
+
+      const nextGradient = buildGradient(nextStops);
+
+      if (type === "change") {
+        onChange(nextGradient);
+      } else {
+        onChangeComplete(nextGradient);
+      }
     },
-    [gradient.angle, gradient.sideOrCorner, onChange]
+    [buildGradient, onChange, onChangeComplete]
   );
 
   const updateStopPosition = useCallback(
-    (index: number, value: number) => {
+    (index: number, value: number, type: "change" | "complete") => {
       const nextValue = clamp(value, 0, 100);
       updateStops((currentStops) => {
         if (index < 0 || index >= currentStops.length) {
@@ -110,26 +136,16 @@ export const GradientPicker = (props: GradientPickerProps) => {
           if (stopIndex !== index) {
             return stop;
           }
-
-          const nextPosition = {
-            type: "unit",
-            unit: "%",
-            value: nextValue,
-          } as const;
-
-          if (stop.position === undefined) {
-            return {
-              ...stop,
-              position: nextPosition,
-            };
-          }
-
           return {
             ...stop,
-            position: nextPosition,
+            position: {
+              type: "unit",
+              unit: "%",
+              value: nextValue,
+            },
           };
         });
-      });
+      }, type);
     },
     [updateStops]
   );
@@ -171,9 +187,9 @@ export const GradientPicker = (props: GradientPickerProps) => {
   const handleStopSelected = useCallback(
     (index: number, stop: GradientStop) => {
       setSelectedStop(index);
-      onThumbSelected(index, stop);
+      onThumbSelect(index, stop);
     },
-    [onThumbSelected]
+    [onThumbSelect]
   );
 
   const handleThumbPointerDown = useCallback(
@@ -191,7 +207,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
 
         const handlePointerMove = (moveEvent: PointerEvent) => {
           const newPosition = computePositionFromClientX(moveEvent.clientX);
-          updateStopPosition(index, newPosition);
+          updateStopPosition(index, newPosition, "change");
         };
 
         const handlePointerUp = () => {
@@ -200,13 +216,20 @@ export const GradientPicker = (props: GradientPickerProps) => {
           target.removeEventListener("pointerup", handlePointerUp);
           target.removeEventListener("pointercancel", handlePointerUp);
           setIsHoveredOnStop(false);
+          onChangeComplete(buildGradient(stopsRef.current));
         };
 
         target.addEventListener("pointermove", handlePointerMove);
         target.addEventListener("pointerup", handlePointerUp);
         target.addEventListener("pointercancel", handlePointerUp);
       },
-    [computePositionFromClientX, handleStopSelected, updateStopPosition]
+    [
+      computePositionFromClientX,
+      onChangeComplete,
+      handleStopSelected,
+      updateStopPosition,
+      buildGradient,
+    ]
   );
 
   const handleKeyDown = useCallback(
@@ -241,11 +264,11 @@ export const GradientPicker = (props: GradientPickerProps) => {
           }
 
           return nextStops;
-        });
+        }, "complete");
 
         if (nextSelection?.index !== undefined && nextSelection.stop) {
           setSelectedStop(nextSelection.index);
-          onThumbSelected(nextSelection.index, nextSelection.stop);
+          onThumbSelect(nextSelection.index, nextSelection.stop);
         } else {
           setSelectedStop(undefined);
         }
@@ -258,10 +281,10 @@ export const GradientPicker = (props: GradientPickerProps) => {
         const step = event.shiftKey ? 10 : 1;
         const delta = event.key === "ArrowLeft" ? -step : step;
         const currentPosition = stops[selectedStop]?.position?.value ?? 0;
-        updateStopPosition(selectedStop, currentPosition + delta);
+        updateStopPosition(selectedStop, currentPosition + delta, "complete");
       }
     },
-    [onThumbSelected, selectedStop, stops, updateStopPosition, updateStops]
+    [onThumbSelect, selectedStop, stops, updateStopPosition, updateStops]
   );
 
   const handlePointerDown = useCallback(
@@ -341,16 +364,16 @@ export const GradientPicker = (props: GradientPickerProps) => {
         nextSelection = { index: insertionIndex, stop: newStop };
 
         return nextStops;
-      });
+      }, "complete");
 
       if (nextSelection !== undefined) {
         setSelectedStop(nextSelection.index);
-        onThumbSelected(nextSelection.index, nextSelection.stop);
+        onThumbSelect(nextSelection.index, nextSelection.stop);
       }
 
       setIsHoveredOnStop(true);
     },
-    [checkIfStopExistsAtPosition, onThumbSelected, updateStops]
+    [checkIfStopExistsAtPosition, onThumbSelect, updateStops]
   );
 
   const handleMouseIndicator = useCallback(

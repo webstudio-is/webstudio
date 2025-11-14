@@ -35,7 +35,7 @@ import {
 } from "../../shared/css-fragment";
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
-import { useDebouncedCallback } from "use-debounce";
+import { useLocalValue } from "../../../settings-panel/shared";
 
 extend([namesPlugin]);
 
@@ -130,16 +130,27 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     () => parsedGradient ?? defaultGradient,
     [parsedGradient]
   );
-  const [gradient, setGradient] = useState<ParsedGradient>(initialGradient);
+  const handleGradientSave = useCallback(
+    (nextGradient: ParsedGradient) => {
+      const gradientValue = reconstructLinearGradient(nextGradient);
+      const style: StyleValue = { type: "unparsed", value: gradientValue };
+      setRepeatedStyleItem(styleDecl, index, style);
+    },
+    [index, setRepeatedStyleItem, styleDecl]
+  );
+
+  const {
+    value: gradient,
+    set: setLocalGradient,
+    save: saveLocalGradient,
+  } = useLocalValue<ParsedGradient>(initialGradient, handleGradientSave, {
+    autoSave: false,
+  });
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);
-
-  useEffect(() => {
-    setGradient(initialGradient);
-  }, [initialGradient]);
 
   useEffect(() => {
     if (gradient.stops.length === 0) {
@@ -160,38 +171,24 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
-  const commitGradient = useDebouncedCallback((style: StyleValue) => {
-    setRepeatedStyleItem(styleDecl, index, style);
-  }, 200);
-
-  useEffect(() => {
-    return () => {
-      commitGradient.cancel();
-    };
-  }, [commitGradient]);
-
-  const applyGradient = useCallback(
-    (nextGradient: ParsedGradient, options?: { commit?: boolean }) => {
-      setGradient(nextGradient);
+  const previewGradient = useCallback(
+    (nextGradient: ParsedGradient) => {
+      setLocalGradient(nextGradient);
       const gradientValue = reconstructLinearGradient(nextGradient);
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style, { isEphemeral: true });
       setIntermediateValue(undefined);
-      if (options?.commit) {
-        commitGradient.cancel();
-        setRepeatedStyleItem(styleDecl, index, style);
-      } else {
-        commitGradient(style);
-      }
     },
-    [commitGradient, index, setRepeatedStyleItem, styleDecl]
+    [index, setLocalGradient, setRepeatedStyleItem, styleDecl]
   );
 
-  const handleGradientChange = useCallback(
+  const commitGradient = useCallback(
     (nextGradient: ParsedGradient) => {
-      applyGradient(nextGradient);
+      setLocalGradient(nextGradient);
+      setIntermediateValue(undefined);
+      saveLocalGradient();
     },
-    [applyGradient]
+    [saveLocalGradient, setLocalGradient]
   );
 
   const handleStopColorChange = useCallback(
@@ -199,9 +196,14 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
       const stops = gradient.stops.map((stop, index) =>
         index === selectedStopIndex ? { ...stop, color } : stop
       );
-      applyGradient({ ...gradient, stops }, options);
+      const nextGradient = { ...gradient, stops };
+      if (options?.commit) {
+        commitGradient(nextGradient);
+      } else {
+        previewGradient(nextGradient);
+      }
     },
-    [applyGradient, gradient, selectedStopIndex]
+    [commitGradient, gradient, previewGradient, selectedStopIndex]
   );
 
   const selectedStop = gradient.stops[selectedStopIndex];
@@ -234,7 +236,6 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
   );
 
   const handleChange = (value: string) => {
-    commitGradient.cancel();
     setIntermediateValue({
       type: "intermediate",
       value,
@@ -317,8 +318,9 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
         <Box css={{ paddingInline: theme.spacing[2] }}>
           <GradientPicker
             gradient={gradient}
-            onChange={handleGradientChange}
-            onThumbSelected={(index) => {
+            onChange={previewGradient}
+            onChangeComplete={commitGradient}
+            onThumbSelect={(index) => {
               setSelectedStopIndex(index);
             }}
           />
@@ -333,10 +335,10 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
               onChange={handleColorPickerChange}
               onChangeComplete={handleColorPickerChangeComplete}
               onAbort={() => {
-                setGradient((current) => current);
+                // no-op: gradient changes are managed via GradientPicker callbacks
               }}
               onReset={() => {
-                setGradient((current) => current);
+                // no-op: gradient changes are managed via GradientPicker callbacks
               }}
             />
           </Flex>
