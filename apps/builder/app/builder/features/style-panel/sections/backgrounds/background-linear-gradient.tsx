@@ -18,10 +18,11 @@ import {
   Tooltip,
   GradientPicker,
   Box,
+  IconButton,
 } from "@webstudio-is/design-system";
 import { ColorPicker } from "../../shared/color-picker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { ArrowRightLeftIcon, InfoCircleIcon } from "@webstudio-is/icons";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
@@ -235,6 +236,26 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     [applyStyleValueToStop]
   );
 
+  const handleReverseStops = useCallback(() => {
+    if (gradient.stops.length <= 1) {
+      return;
+    }
+    const reversedStops = [...gradient.stops].reverse();
+    const nextStops = reversedStops.map((stop) => {
+      let position = stop.position;
+      if (position?.type === "unit" && position.unit === "%") {
+        position = {
+          ...position,
+          value: Math.max(0, Math.min(100, 100 - position.value)),
+        };
+      }
+      return { ...stop, position };
+    });
+    const nextGradient = { ...gradient, stops: nextStops };
+    setSelectedStopIndex(gradient.stops.length - 1 - selectedStopIndex);
+    commitGradient(nextGradient);
+  }, [commitGradient, gradient, selectedStopIndex]);
+
   const handleChange = (value: string) => {
     setIntermediateValue({
       type: "intermediate",
@@ -327,19 +348,30 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       {selectedStop?.color ? (
         <Flex direction="column" gap="2">
           <Label>Color</Label>
-          <ColorPicker
-            property="color"
-            value={selectedStop.color}
-            currentColor={selectedStop.color}
-            onChange={handleColorPickerChange}
-            onChangeComplete={handleColorPickerChangeComplete}
-            onAbort={() => {
-              // no-op: gradient changes are managed via GradientPicker callbacks
-            }}
-            onReset={() => {
-              // no-op: gradient changes are managed via GradientPicker callbacks
-            }}
-          />
+          <Flex align="center" gap="2">
+            <Box css={{ flexGrow: 1 }}>
+              <ColorPicker
+                property="color"
+                value={selectedStop.color}
+                currentColor={selectedStop.color}
+                onChange={handleColorPickerChange}
+                onChangeComplete={handleColorPickerChangeComplete}
+                onAbort={() => {
+                  // no-op: gradient changes are managed via GradientPicker callbacks
+                }}
+                onReset={() => {
+                  // no-op: gradient changes are managed via GradientPicker callbacks
+                }}
+              />
+            </Box>
+            <IconButton
+              aria-label="Reverse gradient stops"
+              onClick={handleReverseStops}
+              disabled={gradient.stops.length <= 1}
+            >
+              <ArrowRightLeftIcon />
+            </IconButton>
+          </Flex>
         </Flex>
       ) : (
         <Text color="subtle">Select a gradient stop to edit its color.</Text>
