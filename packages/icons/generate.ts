@@ -1,8 +1,23 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, extname } from "node:path";
+import { createHash } from "node:crypto";
 import { type Config, optimize } from "svgo";
 import { convertSvgToJsx } from "@svgo/jsx";
 import { pascalCase } from "change-case";
+
+const prefixCache = new Map<string, string>();
+const getHashedPrefix = (path?: string) => {
+  if (path === undefined) {
+    return "svg";
+  }
+  const cached = prefixCache.get(path);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const hash = createHash("sha256").update(path).digest("hex").slice(0, 8);
+  prefixCache.set(path, hash);
+  return hash;
+};
 
 const sharedPlugins: Config["plugins"] = [
   {
@@ -13,11 +28,20 @@ const sharedPlugins: Config["plugins"] = [
         removeViewBox: false,
         convertTransform: false,
         inlineStyles: false,
+        cleanupIds: false,
       },
     },
   },
   // convert width/height to viewBox if missing
   { name: "removeDimensions" },
+  {
+    name: "prefixIds",
+    params: {
+      prefix: (_node: unknown, info: { path?: string }) =>
+        getHashedPrefix(info.path),
+      prefixClassNames: false,
+    },
+  },
 ];
 
 type GenerateOptions = {
@@ -28,6 +52,7 @@ type GenerateOptions = {
 
 export const generateStringExport = (options: GenerateOptions) => {
   const { data: optimized } = optimize(options.content, {
+    path: options.file,
     plugins: [
       ...sharedPlugins,
       {
