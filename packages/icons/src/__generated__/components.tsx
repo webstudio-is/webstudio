@@ -2647,6 +2647,41 @@ export const GoogleIcon: IconComponent = forwardRef(
 );
 GoogleIcon.displayName = "GoogleIcon";
 
+export const GradientLinearIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="url(#linear_svg__a)"
+          d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z"
+        />
+        <defs>
+          <linearGradient
+            id="linear_svg__a"
+            x1="8"
+            x2="8"
+            y1="2"
+            y2="14"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="#11181C" />
+            <stop offset="1" stopColor="#11181C" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientLinearIcon.displayName = "GradientLinearIcon";
+
 export const GrowIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

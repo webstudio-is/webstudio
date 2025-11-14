@@ -10,6 +10,8 @@ import {
   RepeatColumnIcon,
   RepeatRowIcon,
   XSmallIcon,
+  ImageIcon,
+  GradientLinearIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -180,10 +182,14 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           https://github.com/radix-ui/primitives/issues/1910
           */}
             <ToggleGroupButton value={"image"} autoFocus={true}>
-              <Flex css={{ px: theme.spacing[3] }}>Image</Flex>
+              <Flex css={{ px: theme.spacing[3] }}>
+                <ImageIcon />
+              </Flex>
             </ToggleGroupButton>
             <ToggleGroupButton value={"gradient"}>
-              <Flex css={{ px: theme.spacing[3] }}>Gradient</Flex>
+              <Flex css={{ px: theme.spacing[3] }}>
+                <GradientLinearIcon />
+              </Flex>
             </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
