@@ -194,14 +194,18 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           </ToggleGroup>
         </Flex>
       </BackgroundSection>
+
       <Separator />
+
       {imageGradientToggle === "gradient" && (
         <BackgroundGradient index={index} />
       )}
 
-      <BackgroundSection>
-        {imageGradientToggle === "image" && <BackgroundImage index={index} />}
-      </BackgroundSection>
+      {imageGradientToggle === "image" && (
+        <BackgroundSection>
+          <BackgroundImage index={index} />
+        </BackgroundSection>
+      )}
 
       <Separator />
 

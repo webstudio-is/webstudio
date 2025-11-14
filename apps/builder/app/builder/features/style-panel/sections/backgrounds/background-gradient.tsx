@@ -314,38 +314,36 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
         gap: theme.spacing[3],
       }}
     >
-      <Flex direction="column" gap="3">
-        <Box css={{ paddingInline: theme.spacing[2] }}>
-          <GradientPicker
-            gradient={gradient}
-            onChange={previewGradient}
-            onChangeComplete={commitGradient}
-            onThumbSelect={(index) => {
-              setSelectedStopIndex(index);
+      <Box css={{ paddingInline: theme.spacing[2] }}>
+        <GradientPicker
+          gradient={gradient}
+          onChange={previewGradient}
+          onChangeComplete={commitGradient}
+          onThumbSelect={(index) => {
+            setSelectedStopIndex(index);
+          }}
+        />
+      </Box>
+      {selectedStop?.color ? (
+        <Flex direction="column" gap="2">
+          <Label>Color</Label>
+          <ColorPicker
+            property="color"
+            value={selectedStop.color}
+            currentColor={selectedStop.color}
+            onChange={handleColorPickerChange}
+            onChangeComplete={handleColorPickerChangeComplete}
+            onAbort={() => {
+              // no-op: gradient changes are managed via GradientPicker callbacks
+            }}
+            onReset={() => {
+              // no-op: gradient changes are managed via GradientPicker callbacks
             }}
           />
-        </Box>
-        {selectedStop?.color ? (
-          <Flex direction="column" gap="2">
-            <Label>Color</Label>
-            <ColorPicker
-              property="color"
-              value={selectedStop.color}
-              currentColor={selectedStop.color}
-              onChange={handleColorPickerChange}
-              onChangeComplete={handleColorPickerChangeComplete}
-              onAbort={() => {
-                // no-op: gradient changes are managed via GradientPicker callbacks
-              }}
-              onReset={() => {
-                // no-op: gradient changes are managed via GradientPicker callbacks
-              }}
-            />
-          </Flex>
-        ) : (
-          <Text color="subtle">Select a gradient stop to edit its color.</Text>
-        )}
-      </Flex>
+        </Flex>
+      ) : (
+        <Text color="subtle">Select a gradient stop to edit its color.</Text>
+      )}
       {parsedGradient === undefined && (
         <Text color="subtle">
           The current value isn't a linear gradient. Adjusting the controls will
