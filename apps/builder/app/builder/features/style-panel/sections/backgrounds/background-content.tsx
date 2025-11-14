@@ -99,6 +99,7 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
     <ToggleGroup
       type="single"
       value={toValue(value)}
+      aria-label="Background repeat"
       onValueChange={(value) => {
         setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
       }}
@@ -118,6 +119,15 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
         >
           <ToggleGroupButton
             value={item.value}
+            aria-label={
+              item.value === "no-repeat"
+                ? "Do not repeat background"
+                : item.value === "repeat"
+                  ? "Repeat background"
+                  : item.value === "repeat-y"
+                    ? "Repeat background vertically"
+                    : "Repeat background horizontally"
+            }
             onMouseEnter={() =>
               // reset only when highlighted is not active
               setActiveTooltip((prevValue) =>
@@ -140,6 +150,7 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
     <ToggleGroup
       type="single"
       value={toValue(value)}
+      aria-label="Background attachment"
       onValueChange={(value) => {
         setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
       }}
@@ -170,6 +181,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           <ToggleGroup
             type="single"
             value={imageGradientToggle}
+            aria-label="Background type"
             onValueChange={(value) => {
               if (isImageOrGradient(value)) {
                 setImageGradientToggle(value);
@@ -181,12 +193,19 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           https://github.com/radix-ui/primitives/pull/2027
           https://github.com/radix-ui/primitives/issues/1910
           */}
-            <ToggleGroupButton value={"image"} autoFocus={true}>
+            <ToggleGroupButton
+              value={"image"}
+              aria-label="Image background"
+              autoFocus={true}
+            >
               <Flex css={{ px: theme.spacing[3] }}>
                 <ImageIcon />
               </Flex>
             </ToggleGroupButton>
-            <ToggleGroupButton value={"gradient"}>
+            <ToggleGroupButton
+              value={"gradient"}
+              aria-label="Gradient background"
+            >
               <Flex css={{ px: theme.spacing[3] }}>
                 <GradientLinearIcon />
               </Flex>
