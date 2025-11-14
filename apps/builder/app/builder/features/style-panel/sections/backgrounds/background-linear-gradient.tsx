@@ -114,7 +114,7 @@ const styleValueToRgb = (
   }
 };
 
-export const BackgroundGradient = ({ index }: { index: number }) => {
+export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   if (styleValue.type === "layers") {

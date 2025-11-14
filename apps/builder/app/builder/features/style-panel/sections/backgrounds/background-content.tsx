@@ -26,7 +26,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ImageControl, SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
-import { BackgroundGradient } from "./background-gradient";
+import { BackgroundLinearGradient } from "./background-linear-gradient";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
 import { PropertyInlineLabel } from "../../property-label";
@@ -217,7 +217,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
       <Separator />
 
       {imageGradientToggle === "gradient" && (
-        <BackgroundGradient index={index} />
+        <BackgroundLinearGradient index={index} />
       )}
 
       {imageGradientToggle === "image" && (
