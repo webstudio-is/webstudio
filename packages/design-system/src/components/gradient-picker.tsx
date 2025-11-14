@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useRef,
+  useEffect,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -42,6 +43,33 @@ export const GradientPicker = (props: GradientPickerProps) => {
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setStops(gradient.stops);
+
+    setSelectedStop((currentSelected) => {
+      if (gradient.stops.length === 0) {
+        return undefined;
+      }
+
+      if (currentSelected === undefined) {
+        return currentSelected;
+      }
+
+      const nextIndex = Math.min(currentSelected, gradient.stops.length - 1);
+      const nextStop = gradient.stops[nextIndex];
+
+      if (nextStop !== undefined) {
+        if (nextIndex !== currentSelected) {
+          onThumbSelected(nextIndex, nextStop);
+        } else {
+          onThumbSelected(currentSelected, nextStop);
+        }
+      }
+
+      return nextIndex;
+    });
+  }, [gradient, onThumbSelected]);
 
   const positions = stops
     .map((stop) => stop.position?.value)

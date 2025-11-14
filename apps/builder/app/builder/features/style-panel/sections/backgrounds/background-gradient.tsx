@@ -2,10 +2,25 @@ import {
   toValue,
   type InvalidValue,
   type StyleValue,
+  type RgbValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
-import { Flex, Label, Text, theme, Tooltip } from "@webstudio-is/design-system";
-import { useEffect, useRef, useState } from "react";
+import {
+  parseCssValue,
+  parseLinearGradient,
+  reconstructLinearGradient,
+  type ParsedGradient,
+} from "@webstudio-is/css-data";
+import {
+  Flex,
+  Label,
+  Text,
+  theme,
+  Tooltip,
+  GradientPicker,
+  Box,
+} from "@webstudio-is/design-system";
+import { ColorPicker } from "../../shared/color-picker";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
@@ -18,6 +33,35 @@ import {
   CssFragmentEditor,
   CssFragmentEditorContent,
 } from "../../shared/css-fragment";
+import { colord, extend } from "colord";
+import namesPlugin from "colord/plugins/names";
+import { useDebouncedCallback } from "use-debounce";
+
+extend([namesPlugin]);
+
+const defaultGradient: ParsedGradient = {
+  stops: [
+    {
+      color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+      position: { type: "unit", unit: "%", value: 0 },
+    },
+    {
+      color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
+      position: { type: "unit", unit: "%", value: 100 },
+    },
+  ],
+};
+
+const colordToRgbValue = (instance: ReturnType<typeof colord>) => {
+  const rgb = instance.toRgb();
+  return {
+    type: "rgb" as const,
+    r: rgb.r,
+    g: rgb.g,
+    b: rgb.b,
+    alpha: rgb.a,
+  } satisfies RgbValue;
+};
 
 type IntermediateValue = {
   type: "intermediate";
@@ -27,6 +71,49 @@ type IntermediateValue = {
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
+type IntermediateColorValue = {
+  type: "intermediate";
+  value: string;
+};
+
+const styleValueToRgb = (
+  styleValue: StyleValue | IntermediateColorValue | undefined
+): RgbValue | undefined => {
+  if (styleValue === undefined) {
+    return;
+  }
+
+  if (styleValue.type === "intermediate") {
+    const parsed = colord(styleValue.value);
+    if (parsed.isValid()) {
+      return colordToRgbValue(parsed);
+    }
+    return;
+  }
+
+  if (styleValue.type === "rgb") {
+    return styleValue;
+  }
+
+  if (styleValue.type === "keyword" || styleValue.type === "invalid") {
+    const parsed = colord(styleValue.value);
+    if (parsed.isValid()) {
+      return colordToRgbValue(parsed);
+    }
+    return;
+  }
+
+  if (styleValue.type === "var") {
+    // Variables are not supported for gradient stops editing.
+    return;
+  }
+
+  const parsed = colord(toValue(styleValue));
+  if (parsed.isValid()) {
+    return colordToRgbValue(parsed);
+  }
+};
+
 export const BackgroundGradient = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
@@ -34,13 +121,120 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
     styleValue = styleValue.value[index];
   }
 
+  const gradientString = useMemo(() => toValue(styleValue), [styleValue]);
+  const parsedGradient = useMemo(
+    () => parseLinearGradient(gradientString),
+    [gradientString]
+  );
+  const initialGradient = useMemo(
+    () => parsedGradient ?? defaultGradient,
+    [parsedGradient]
+  );
+  const [gradient, setGradient] = useState<ParsedGradient>(initialGradient);
+  const [selectedStopIndex, setSelectedStopIndex] = useState(0);
+
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
   >(undefined);
 
+  useEffect(() => {
+    setGradient(initialGradient);
+  }, [initialGradient]);
+
+  useEffect(() => {
+    if (gradient.stops.length === 0) {
+      setSelectedStopIndex(0);
+      return;
+    }
+
+    setSelectedStopIndex((currentIndex) => {
+      if (currentIndex < 0) {
+        return 0;
+      }
+      if (currentIndex >= gradient.stops.length) {
+        return gradient.stops.length - 1;
+      }
+      return currentIndex;
+    });
+  }, [gradient]);
+
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
+  const commitGradient = useDebouncedCallback((style: StyleValue) => {
+    setRepeatedStyleItem(styleDecl, index, style);
+  }, 200);
+
+  useEffect(() => {
+    return () => {
+      commitGradient.cancel();
+    };
+  }, [commitGradient]);
+
+  const applyGradient = useCallback(
+    (nextGradient: ParsedGradient, options?: { commit?: boolean }) => {
+      setGradient(nextGradient);
+      const gradientValue = reconstructLinearGradient(nextGradient);
+      const style: StyleValue = { type: "unparsed", value: gradientValue };
+      setRepeatedStyleItem(styleDecl, index, style, { isEphemeral: true });
+      setIntermediateValue(undefined);
+      if (options?.commit) {
+        commitGradient.cancel();
+        setRepeatedStyleItem(styleDecl, index, style);
+      } else {
+        commitGradient(style);
+      }
+    },
+    [commitGradient, index, setRepeatedStyleItem, styleDecl]
+  );
+
+  const handleGradientChange = useCallback(
+    (nextGradient: ParsedGradient) => {
+      applyGradient(nextGradient);
+    },
+    [applyGradient]
+  );
+
+  const handleStopColorChange = useCallback(
+    (color: RgbValue, options?: { commit?: boolean }) => {
+      const stops = gradient.stops.map((stop, index) =>
+        index === selectedStopIndex ? { ...stop, color } : stop
+      );
+      applyGradient({ ...gradient, stops }, options);
+    },
+    [applyGradient, gradient, selectedStopIndex]
+  );
+
+  const selectedStop = gradient.stops[selectedStopIndex];
+
+  const applyStyleValueToStop = useCallback(
+    (
+      styleValue: StyleValue | IntermediateColorValue | undefined,
+      options?: { commit?: boolean }
+    ) => {
+      const rgb = styleValueToRgb(styleValue);
+      if (rgb) {
+        handleStopColorChange(rgb, options);
+      }
+    },
+    [handleStopColorChange]
+  );
+
+  const handleColorPickerChange = useCallback(
+    (styleValue: StyleValue | IntermediateColorValue | undefined) => {
+      applyStyleValueToStop(styleValue);
+    },
+    [applyStyleValueToStop]
+  );
+
+  const handleColorPickerChangeComplete = useCallback(
+    (styleValue: StyleValue) => {
+      applyStyleValueToStop(styleValue, { commit: true });
+    },
+    [applyStyleValueToStop]
+  );
+
   const handleChange = (value: string) => {
+    commitGradient.cancel();
     setIntermediateValue({
       type: "intermediate",
       value,
@@ -119,6 +313,43 @@ export const BackgroundGradient = ({ index }: { index: number }) => {
         gap: theme.spacing[3],
       }}
     >
+      <Flex direction="column" gap="3">
+        <Box css={{ paddingInline: theme.spacing[2] }}>
+          <GradientPicker
+            gradient={gradient}
+            onChange={handleGradientChange}
+            onThumbSelected={(index) => {
+              setSelectedStopIndex(index);
+            }}
+          />
+        </Box>
+        {selectedStop?.color ? (
+          <Flex direction="column" gap="2">
+            <Label>Color</Label>
+            <ColorPicker
+              property="color"
+              value={selectedStop.color}
+              currentColor={selectedStop.color}
+              onChange={handleColorPickerChange}
+              onChangeComplete={handleColorPickerChangeComplete}
+              onAbort={() => {
+                setGradient((current) => current);
+              }}
+              onReset={() => {
+                setGradient((current) => current);
+              }}
+            />
+          </Flex>
+        ) : (
+          <Text color="subtle">Select a gradient stop to edit its color.</Text>
+        )}
+      </Flex>
+      {parsedGradient === undefined && (
+        <Text color="subtle">
+          The current value isn't a linear gradient. Adjusting the controls will
+          create a new linear gradient.
+        </Text>
+      )}
       <Label>
         <Flex align="center" gap="1">
           Code
