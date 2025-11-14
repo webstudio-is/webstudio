@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
@@ -22,9 +22,8 @@ import {
   ToggleGroupButton,
   Separator,
   styled,
-  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
-import { ImageControl, SelectControl } from "../../controls";
+import { SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
 import { BackgroundLinearGradient } from "./background-linear-gradient";
 import { BackgroundImage } from "./background-image";
