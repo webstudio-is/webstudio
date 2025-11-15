@@ -56,6 +56,20 @@ const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
 type AngleUnit = (typeof angleUnitTokens)[number];
 const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
 
+const angleUnitOptions = angleUnitTokens.map((unit) => ({
+  id: unit,
+  label: unit,
+  type: "unit" as const,
+}));
+
+const percentUnitOptions = [
+  {
+    id: "%" as const,
+    label: "%",
+    type: "unit" as const,
+  },
+];
+
 const isAngleUnit = (unit: string): unit is AngleUnit =>
   angleUnitSet.has(unit as AngleUnit);
 
@@ -282,7 +296,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     styleValue = styleValue.value[index];
   }
 
-  const gradientString = useMemo(() => toValue(styleValue), [styleValue]);
+  const gradientString = toValue(styleValue);
   const { normalizedGradientString, initialIsRepeating } = useMemo(() => {
     const leadingWhitespaceMatch = gradientString.match(/^\s*/);
     const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
@@ -306,15 +320,12 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const parsedGradient = useMemo(() => {
     const parsed = parseLinearGradient(normalizedGradientString);
     if (parsed === undefined) {
-      return undefined;
+      return;
     }
     return parsed;
   }, [normalizedGradientString]);
 
-  const initialGradient = useMemo(
-    () => parsedGradient ?? defaultGradient,
-    [parsedGradient]
-  );
+  const initialGradient = parsedGradient ?? defaultGradient;
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
   const isRepeatingRef = useRef(isRepeating);
 
@@ -343,6 +354,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
       const gradientValue = formatGradientValue(nextGradient);
+      // TODO maybe used a more structured representation
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
     },
@@ -440,43 +452,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   }, [gradient.angle, gradient.sideOrCorner]);
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
-
-  const percentUnitOptions = useMemo(
-    () => [
-      {
-        id: "%" as const,
-        label: "%",
-        type: "unit" as const,
-      },
-    ],
-    []
-  );
-
-  const angleUnitOptions = useMemo(
-    () => [
-      {
-        id: "deg" as const,
-        label: "deg",
-        type: "unit" as const,
-      },
-      {
-        id: "turn" as const,
-        label: "turn",
-        type: "unit" as const,
-      },
-      {
-        id: "rad" as const,
-        label: "rad",
-        type: "unit" as const,
-      },
-      {
-        id: "grad" as const,
-        label: "grad",
-        type: "unit" as const,
-      },
-    ],
-    []
-  );
 
   const previewGradient = useCallback(
     (nextGradient: ParsedGradient, options?: { repeating?: boolean }) => {
