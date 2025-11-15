@@ -4,6 +4,7 @@ import {
   type StyleValue,
   type RgbValue,
   type UnitValue,
+  type KeywordValue,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
@@ -50,6 +51,60 @@ import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 
 extend([namesPlugin]);
+
+const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
+type AngleUnit = (typeof angleUnitTokens)[number];
+const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
+
+const isAngleUnit = (unit: string): unit is AngleUnit =>
+  angleUnitSet.has(unit as AngleUnit);
+
+const sideOrCornerToAngle = (
+  sideOrCorner: KeywordValue | undefined
+): number | undefined => {
+  if (sideOrCorner === undefined) {
+    return;
+  }
+  const normalized = sideOrCorner.value.trim().toLowerCase();
+  if (normalized.startsWith("to ") === false) {
+    return;
+  }
+  const tokens = normalized.slice(3).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return;
+  }
+  const tokenSet = new Set(tokens);
+  const has = (token: string) => tokenSet.has(token);
+  if (tokenSet.size === 1) {
+    if (has("top")) {
+      return 0;
+    }
+    if (has("right")) {
+      return 90;
+    }
+    if (has("bottom")) {
+      return 180;
+    }
+    if (has("left")) {
+      return 270;
+    }
+    return;
+  }
+  if (tokenSet.size === 2) {
+    if (has("top") && has("right")) {
+      return 45;
+    }
+    if (has("bottom") && has("right")) {
+      return 135;
+    }
+    if (has("bottom") && has("left")) {
+      return 225;
+    }
+    if (has("top") && has("left")) {
+      return 315;
+    }
+  }
+};
 
 const fillMissingStopPositions = (gradient: ParsedGradient): ParsedGradient => {
   const stops = gradient.stops;
@@ -373,6 +428,17 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     };
   }, [gradient, hintOverrides]);
 
+  const anglePlaceholder = useMemo(() => {
+    if (gradient.angle !== undefined) {
+      return;
+    }
+    const derived = sideOrCornerToAngle(gradient.sideOrCorner);
+    if (derived !== undefined) {
+      return `${derived}deg`;
+    }
+    return "180deg";
+  }, [gradient.angle, gradient.sideOrCorner]);
+
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
   const percentUnitOptions = useMemo(
@@ -380,6 +446,32 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       {
         id: "%" as const,
         label: "%",
+        type: "unit" as const,
+      },
+    ],
+    []
+  );
+
+  const angleUnitOptions = useMemo(
+    () => [
+      {
+        id: "deg" as const,
+        label: "deg",
+        type: "unit" as const,
+      },
+      {
+        id: "turn" as const,
+        label: "turn",
+        type: "unit" as const,
+      },
+      {
+        id: "rad" as const,
+        label: "rad",
+        type: "unit" as const,
+      },
+      {
+        id: "grad" as const,
+        label: "grad",
         type: "unit" as const,
       },
     ],
@@ -473,7 +565,41 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     [commitGradient, gradient, previewGradient, selectedStopIndex]
   );
 
+  type AngleUnitValue = UnitValue & { unit: AngleUnit };
   type PercentUnitValue = UnitValue & { unit: "%" };
+
+  const getAngleUnit = useCallback((styleValue: StyleValue | undefined) => {
+    if (styleValue === undefined) {
+      return;
+    }
+
+    if (styleValue.type === "unit" && isAngleUnit(styleValue.unit)) {
+      return {
+        ...styleValue,
+        unit: styleValue.unit,
+      } satisfies AngleUnitValue;
+    }
+
+    if (styleValue.type === "tuple") {
+      const first = styleValue.value[0];
+      if (first?.type === "unit" && isAngleUnit(first.unit)) {
+        return {
+          ...first,
+          unit: first.unit,
+        } satisfies AngleUnitValue;
+      }
+    }
+
+    if (styleValue.type === "layers") {
+      const firstLayer = styleValue.value[0];
+      if (firstLayer?.type === "unit" && isAngleUnit(firstLayer.unit)) {
+        return {
+          ...firstLayer,
+          unit: firstLayer.unit,
+        } satisfies AngleUnitValue;
+      }
+    }
+  }, []);
 
   const getPercentUnit = useCallback((styleValue: StyleValue | undefined) => {
     if (styleValue === undefined) {
@@ -506,6 +632,43 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       value: clamp(value.value, 0, 100),
     } satisfies PercentUnitValue;
   }, []);
+
+  const handleAngleUpdate = useCallback(
+    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      const angleValue = getAngleUnit(styleValue);
+      if (angleValue === undefined) {
+        return;
+      }
+      const nextGradient: ParsedGradient = {
+        ...gradient,
+        angle: angleValue,
+        sideOrCorner: undefined,
+      };
+      const isEphemeral = options?.isEphemeral === true;
+      if (isEphemeral) {
+        previewGradient(nextGradient);
+        return;
+      }
+      commitGradient(nextGradient);
+    },
+    [commitGradient, getAngleUnit, gradient, previewGradient]
+  );
+
+  const handleAngleDelete = useCallback(
+    (options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
+      const nextGradient: ParsedGradient = {
+        ...gradient,
+        angle: undefined,
+      };
+      if (isEphemeral) {
+        previewGradient(nextGradient);
+        return;
+      }
+      commitGradient(nextGradient);
+    },
+    [commitGradient, gradient, previewGradient]
+  );
 
   const handleStopPositionUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
@@ -861,6 +1024,26 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           create a new linear gradient.
         </Text>
       )}
+      <Flex direction="column" gap="1">
+        <Label>Angle</Label>
+        <CssValueInputContainer
+          property="rotate"
+          styleSource="default"
+          value={gradient.angle}
+          unitOptions={angleUnitOptions}
+          placeholder={anglePlaceholder}
+          onUpdate={(value, options) => {
+            handleAngleUpdate(value, {
+              isEphemeral: options?.isEphemeral === true,
+            });
+          }}
+          onDelete={(options) => {
+            handleAngleDelete({
+              isEphemeral: options?.isEphemeral === true,
+            });
+          }}
+        />
+      </Flex>
       <Label>
         <Flex align="center" gap="1">
           Code
