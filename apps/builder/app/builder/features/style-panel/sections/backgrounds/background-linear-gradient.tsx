@@ -20,6 +20,7 @@ import {
   theme,
   Tooltip,
   GradientPicker,
+  Grid,
   Box,
   IconButton,
   ToggleGroup,
@@ -265,6 +266,48 @@ const defaultGradient: ParsedGradient = {
   ],
 };
 
+const fallbackStopColor: RgbValue = {
+  type: "rgb",
+  r: 0,
+  g: 0,
+  b: 0,
+  alpha: 1,
+};
+
+const cloneGradientStop = (stop: GradientStop): GradientStop => ({
+  ...stop,
+  color: stop.color === undefined ? undefined : { ...stop.color },
+  position: stop.position === undefined ? undefined : { ...stop.position },
+  hint: stop.hint === undefined ? undefined : { ...stop.hint },
+});
+
+const createDefaultGradient = (): ParsedGradient => ({
+  ...defaultGradient,
+  stops: defaultGradient.stops.map(cloneGradientStop),
+});
+
+const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
+  const stops =
+    gradient.stops.length === 0
+      ? defaultGradient.stops.map(cloneGradientStop)
+      : gradient.stops.map((stop) =>
+          stop.color === undefined
+            ? {
+                ...stop,
+                color: { ...fallbackStopColor },
+              }
+            : stop
+        );
+
+  return {
+    ...gradient,
+    stops,
+  };
+};
+
+const clampStopIndex = (index: number, gradient: ParsedGradient) =>
+  clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
+
 const colordToRgbValue = (instance: ReturnType<typeof colord>) => {
   const rgb = instance.toRgb();
   return {
@@ -343,10 +386,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     if (parsed === undefined) {
       return;
     }
-    return parsed;
+    return ensureGradientHasStops(parsed);
   }, [normalizedGradientString]);
 
-  const initialGradient = parsedGradient ?? defaultGradient;
+  const initialGradient = parsedGradient ?? createDefaultGradient();
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
 
   useEffect(() => {
@@ -393,13 +436,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   >(undefined);
 
   useEffect(() => {
-    if (gradient.stops.length === 0) {
-      setSelectedStopIndex(0);
-      return;
-    }
-
     setSelectedStopIndex((currentIndex) =>
-      clamp(currentIndex, 0, gradient.stops.length - 1)
+      clampStopIndex(currentIndex, gradient)
     );
   }, [gradient]);
 
@@ -499,8 +537,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleStopColorChange = useCallback(
     (color: RgbValue, options?: { commit?: boolean }) => {
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const stops = gradient.stops.map((stop, index) =>
-        index === selectedStopIndex ? { ...stop, color } : stop
+        index === stopIndex ? { ...stop, color } : stop
       );
       const nextGradient = { ...gradient, stops };
       if (options?.commit) {
@@ -512,23 +551,27 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     [commitGradient, gradient, previewGradient, selectedStopIndex]
   );
 
-  const selectedStop = gradient.stops[selectedStopIndex];
-  const selectedStopForDisplay = gradientForPicker.stops[selectedStopIndex];
-  const selectedStopHintOverride = hintOverrides.get(selectedStopIndex);
+  const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
+  const selectedStop = gradient.stops[safeSelectedStopIndex];
+  const selectedStopForDisplay = gradientForPicker.stops[safeSelectedStopIndex];
+  const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
   const selectedStopHintPlaceholder =
     selectedStopHintValue === undefined &&
     selectedStopForDisplay?.position !== undefined
       ? `${selectedStopForDisplay.position.value}%`
       : undefined;
+  const selectedStopColor = selectedStop?.color ?? fallbackStopColor;
 
   const updateSelectedStop = useCallback(
     (updater: (stop: GradientStop) => GradientStop, isEphemeral: boolean) => {
-      if (gradient.stops[selectedStopIndex] === undefined) {
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+      const currentStop = gradient.stops[stopIndex];
+      if (currentStop === undefined) {
         return;
       }
       const stops = gradient.stops.map((stop, index) =>
-        index === selectedStopIndex ? updater(stop) : stop
+        index === stopIndex ? updater(stop) : stop
       );
       const nextGradient = { ...gradient, stops };
       if (isEphemeral) {
@@ -653,6 +696,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
       const nextPosition = clampPercentUnit(percentUnit);
       const isEphemeral = options?.isEphemeral === true;
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       updateSelectedStop(
         (stop) => ({
           ...stop,
@@ -666,16 +710,22 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           if (previous.size === 0) {
             return previous;
           }
-          if (previous.has(selectedStopIndex) === false) {
+          if (previous.has(stopIndex) === false) {
             return previous;
           }
           const next = new Map(previous);
-          next.delete(selectedStopIndex);
+          next.delete(stopIndex);
           return next;
         });
       }
     },
-    [clampPercentUnit, getPercentUnit, selectedStopIndex, updateSelectedStop]
+    [
+      clampPercentUnit,
+      getPercentUnit,
+      gradient,
+      selectedStopIndex,
+      updateSelectedStop,
+    ]
   );
 
   const handleStopPositionDelete = useCallback(
@@ -697,6 +747,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
       const nextHint = clampPercentUnit(percentUnit);
       const isEphemeral = options?.isEphemeral === true;
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       updateSelectedStop(
         (stop) => ({
           ...stop,
@@ -708,33 +759,40 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       if (isEphemeral === false) {
         setHintOverrides((previous) => {
           const next = new Map(previous);
-          next.set(selectedStopIndex, nextHint);
+          next.set(stopIndex, nextHint);
           return next;
         });
       }
     },
-    [clampPercentUnit, getPercentUnit, selectedStopIndex, updateSelectedStop]
+    [
+      clampPercentUnit,
+      getPercentUnit,
+      gradient,
+      selectedStopIndex,
+      updateSelectedStop,
+    ]
   );
 
   const handleStopHintDelete = useCallback(
     (options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       updateSelectedStop((stop) => {
         const { hint: _omit, ...rest } = stop;
         return { ...rest };
       }, isEphemeral);
       if (isEphemeral === false) {
         setHintOverrides((previous) => {
-          if (previous.has(selectedStopIndex) === false) {
+          if (previous.has(stopIndex) === false) {
             return previous;
           }
           const next = new Map(previous);
-          next.delete(selectedStopIndex);
+          next.delete(stopIndex);
           return next;
         });
       }
     },
-    [selectedStopIndex, updateSelectedStop]
+    [gradient, selectedStopIndex, updateSelectedStop]
   );
 
   const repeatToggleValue = isRepeating ? "repeat" : "no-repeat";
@@ -782,6 +840,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     if (gradient.stops.length <= 1) {
       return;
     }
+    const stopIndex = clampStopIndex(selectedStopIndex, gradient);
     const reversedStops = [...gradient.stops].reverse();
     const nextStops = reversedStops.map((stop) => {
       let position = stop.position;
@@ -794,7 +853,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       return { ...stop, position };
     });
     const nextGradient = { ...gradient, stops: nextStops };
-    setSelectedStopIndex(gradient.stops.length - 1 - selectedStopIndex);
+    setSelectedStopIndex(gradient.stops.length - 1 - stopIndex);
     commitGradient(nextGradient);
   }, [commitGradient, gradient, selectedStopIndex]);
 
@@ -871,10 +930,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     <Flex
       direction="column"
       css={{
-        gridColumn: "span 2",
-        px: theme.spacing[5],
-        py: theme.spacing[5],
-        gap: theme.spacing[3],
+        padding: theme.spacing[5],
+        gap: theme.spacing[5],
       }}
     >
       <Box css={{ paddingInline: theme.spacing[2] }}>
@@ -887,137 +944,122 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           }}
         />
       </Box>
-      {selectedStop?.color ? (
-        <Flex direction="column" gap="3">
-          <Flex direction="column" gap="2">
-            <Label>Color</Label>
-            <Flex align="center" gap="2">
-              <Box css={{ flexGrow: 1 }}>
-                <ColorPicker
-                  property="color"
-                  value={selectedStop.color}
-                  currentColor={selectedStop.color}
-                  onChange={handleColorPickerChange}
-                  onChangeComplete={handleColorPickerChangeComplete}
-                  onAbort={() => {
-                    // no-op: gradient changes are managed via GradientPicker callbacks
-                  }}
-                  onReset={() => {
-                    // no-op: gradient changes are managed via GradientPicker callbacks
-                  }}
-                />
-              </Box>
-              <IconButton
-                aria-label="Reverse gradient stops"
-                onClick={handleReverseStops}
-                disabled={gradient.stops.length <= 1}
-              >
-                <ArrowRightLeftIcon />
-              </IconButton>
-            </Flex>
-          </Flex>
-          <Flex
-            gap="2"
-            css={{
-              flexWrap: "wrap",
-            }}
+      <Flex align="center" gap="2">
+        <Label>Color</Label>
+        <Flex align="center" gap="2">
+          <Box css={{ flexGrow: 1 }}>
+            <ColorPicker
+              property="color"
+              value={selectedStopColor}
+              currentColor={selectedStopColor}
+              onChange={handleColorPickerChange}
+              onChangeComplete={handleColorPickerChangeComplete}
+              onAbort={() => {
+                // no-op: gradient changes are managed via GradientPicker callbacks
+              }}
+              onReset={() => {
+                // no-op: gradient changes are managed via GradientPicker callbacks
+              }}
+            />
+          </Box>
+          <IconButton
+            aria-label="Reverse gradient stops"
+            onClick={handleReverseStops}
+            disabled={gradient.stops.length <= 1}
           >
-            <Flex direction="column" gap="1" css={{ flex: "1 1 0" }}>
-              <Label>Stop</Label>
-              <CssValueInputContainer
-                property="background-position-x"
-                styleSource="default"
-                value={selectedStop.position}
-                unitOptions={percentUnitOptions}
-                placeholder={
-                  selectedStop?.position === undefined &&
-                  selectedStopForDisplay?.position !== undefined
-                    ? `${selectedStopForDisplay.position.value}%`
-                    : undefined
-                }
-                onUpdate={(value, options) => {
-                  handleStopPositionUpdate(value, {
-                    isEphemeral: options?.isEphemeral === true,
-                  });
-                }}
-                onDelete={(options) => {
-                  handleStopPositionDelete({
-                    isEphemeral: options?.isEphemeral === true,
-                  });
-                }}
-              />
-            </Flex>
-            <Flex direction="column" gap="1" css={{ flex: "1 1 0" }}>
-              <Label>Hint</Label>
-              <CssValueInputContainer
-                property="background-position-x"
-                styleSource="default"
-                value={selectedStopHintValue}
-                unitOptions={percentUnitOptions}
-                placeholder={selectedStopHintPlaceholder}
-                onUpdate={(value, options) => {
-                  handleStopHintUpdate(value, {
-                    isEphemeral: options?.isEphemeral === true,
-                  });
-                }}
-                onDelete={(options) => {
-                  handleStopHintDelete({
-                    isEphemeral: options?.isEphemeral === true,
-                  });
-                }}
-              />
-            </Flex>
-            <Flex
-              direction="column"
-              gap="1"
-              css={{ minWidth: theme.spacing[17] }}
-            >
-              <Label>Repeat</Label>
-              <ToggleGroup
-                type="single"
-                value={repeatToggleValue}
-                aria-label="Gradient repeat"
-                onValueChange={handleRepeatChange}
-              >
-                <ToggleGroupButton value="no-repeat" aria-label="No repeat">
-                  <XSmallIcon />
-                </ToggleGroupButton>
-                <ToggleGroupButton value="repeat" aria-label="Repeat">
-                  <RepeatGridIcon />
-                </ToggleGroupButton>
-              </ToggleGroup>
-            </Flex>
-          </Flex>
+            <ArrowRightLeftIcon />
+          </IconButton>
         </Flex>
-      ) : (
-        <Text color="subtle">Select a gradient stop to edit its color.</Text>
-      )}
+      </Flex>
+      <Grid align="end" gap="2" columns={3}>
+        <Flex direction="column" gap="1">
+          <Label>Stop</Label>
+          <CssValueInputContainer
+            property="background-position-x"
+            styleSource="default"
+            value={selectedStop?.position}
+            unitOptions={percentUnitOptions}
+            placeholder={
+              selectedStop?.position === undefined &&
+              selectedStopForDisplay?.position !== undefined
+                ? `${selectedStopForDisplay.position.value}%`
+                : undefined
+            }
+            onUpdate={(value, options) => {
+              handleStopPositionUpdate(value, {
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+            onDelete={(options) => {
+              handleStopPositionDelete({
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+          />
+        </Flex>
+        <Flex direction="column" gap="1">
+          <Label>Hint</Label>
+          <CssValueInputContainer
+            property="background-position-x"
+            styleSource="default"
+            value={selectedStopHintValue}
+            unitOptions={percentUnitOptions}
+            placeholder={selectedStopHintPlaceholder}
+            onUpdate={(value, options) => {
+              handleStopHintUpdate(value, {
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+            onDelete={(options) => {
+              handleStopHintDelete({
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+          />
+        </Flex>
+        <Flex direction="column" gap="1" css={{ minWidth: theme.spacing[17] }}>
+          <Label>Repeat</Label>
+          <ToggleGroup
+            type="single"
+            value={repeatToggleValue}
+            aria-label="Gradient repeat"
+            onValueChange={handleRepeatChange}
+          >
+            <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+              <XSmallIcon />
+            </ToggleGroupButton>
+            <ToggleGroupButton value="repeat" aria-label="Repeat">
+              <RepeatGridIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
+        </Flex>
+        <Label css={{ alignSelf: "center" }}>Angle</Label>
+        <Box css={{ gridColumn: "span 2" }}>
+          <CssValueInputContainer
+            property="rotate"
+            styleSource="default"
+            value={gradient.angle}
+            unitOptions={angleUnitOptions}
+            placeholder={anglePlaceholder}
+            onUpdate={(value, options) => {
+              handleAngleUpdate(value, {
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+            onDelete={(options) => {
+              handleAngleDelete({
+                isEphemeral: options?.isEphemeral === true,
+              });
+            }}
+          />
+        </Box>
+      </Grid>
       {parsedGradient === undefined && (
         <Text color="subtle">
           The current value isn't a linear gradient. Adjusting the controls will
           create a new linear gradient.
         </Text>
       )}
-      <Flex direction="column" gap="1">
-        <Label>Angle</Label>
-        <CssValueInputContainer
-          property="rotate"
-          styleSource="default"
-          value={gradient.angle}
-          unitOptions={angleUnitOptions}
-          placeholder={anglePlaceholder}
-          onUpdate={(value, options) => {
-            handleAngleUpdate(value, {
-              isEphemeral: options?.isEphemeral === true,
-            });
-          }}
-          onDelete={(options) => {
-            handleAngleDelete({
-              isEphemeral: options?.isEphemeral === true,
-            });
-          }}
-        />
-      </Flex>
       <Label>
         <Flex align="center" gap="1">
           Code
