@@ -3,12 +3,14 @@ import {
   type InvalidValue,
   type StyleValue,
   type RgbValue,
+  type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
   parseLinearGradient,
   reconstructLinearGradient,
   type ParsedGradient,
+  type GradientStop,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -19,10 +21,18 @@ import {
   GradientPicker,
   Box,
   IconButton,
+  ToggleGroup,
+  ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import { ColorPicker } from "../../shared/color-picker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRightLeftIcon, InfoCircleIcon } from "@webstudio-is/icons";
+import {
+  ArrowRightLeftIcon,
+  InfoCircleIcon,
+  RepeatGridIcon,
+  XSmallIcon,
+} from "@webstudio-is/icons";
+import { clamp } from "@react-aria/utils";
 import { setProperty } from "../../shared/use-style-data";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
@@ -37,8 +47,103 @@ import {
 import { colord, extend } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { useLocalValue } from "../../../settings-panel/shared";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 
 extend([namesPlugin]);
+
+const fillMissingStopPositions = (gradient: ParsedGradient): ParsedGradient => {
+  const stops = gradient.stops;
+  if (stops.length === 0) {
+    return gradient;
+  }
+
+  const hasMissingPositions = stops.some((stop) => stop.position === undefined);
+  if (hasMissingPositions === false) {
+    return gradient;
+  }
+
+  const hasNonPercentPosition = stops.some(
+    (stop) => stop.position !== undefined && stop.position.unit !== "%"
+  );
+  if (hasNonPercentPosition) {
+    return gradient;
+  }
+
+  const totalStops = stops.length;
+  const values = stops.map((stop) => stop.position?.value);
+  const nextValues = [...values];
+  const definedCount = nextValues.filter(
+    (value): value is number => value !== undefined
+  ).length;
+
+  if (definedCount === 0) {
+    if (totalStops === 1) {
+      nextValues[0] = 0;
+    } else {
+      for (let index = 0; index < totalStops; index += 1) {
+        const value = (index / (totalStops - 1)) * 100;
+        nextValues[index] = clamp(value, 0, 100);
+      }
+    }
+  } else {
+    if (nextValues[0] === undefined) {
+      nextValues[0] = 0;
+    }
+    if (nextValues[totalStops - 1] === undefined) {
+      nextValues[totalStops - 1] = 100;
+    }
+
+    let start = 0;
+    while (start < totalStops) {
+      const startValue = nextValues[start];
+      if (startValue === undefined) {
+        start += 1;
+        continue;
+      }
+      let end = start + 1;
+      while (end < totalStops && nextValues[end] === undefined) {
+        end += 1;
+      }
+      if (end >= totalStops) {
+        break;
+      }
+      const endValue = nextValues[end];
+      if (endValue === undefined) {
+        break;
+      }
+      const span = end - start;
+      for (let offset = 1; offset < span; offset += 1) {
+        const interpolated =
+          startValue + ((endValue - startValue) * offset) / span;
+        nextValues[start + offset] = clamp(interpolated, 0, 100);
+      }
+      start = end;
+    }
+  }
+
+  const nextStops = stops.map((stop, index) => {
+    if (stop.position !== undefined) {
+      return stop;
+    }
+    const value = nextValues[index];
+    if (value === undefined) {
+      return stop;
+    }
+    return {
+      ...stop,
+      position: {
+        type: "unit" as const,
+        unit: "%" as const,
+        value,
+      },
+    };
+  });
+
+  return {
+    ...gradient,
+    stops: nextStops,
+  };
+};
 
 const defaultGradient: ParsedGradient = {
   stops: [
@@ -123,21 +228,70 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   }
 
   const gradientString = useMemo(() => toValue(styleValue), [styleValue]);
-  const parsedGradient = useMemo(
-    () => parseLinearGradient(gradientString),
-    [gradientString]
-  );
+  const { normalizedGradientString, initialIsRepeating } = useMemo(() => {
+    const leadingWhitespaceMatch = gradientString.match(/^\s*/);
+    const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
+    const withoutLeading = gradientString.slice(leadingWhitespace.length);
+    const lowerCase = withoutLeading.toLowerCase();
+
+    if (lowerCase.startsWith("repeating-linear-gradient")) {
+      const suffix = withoutLeading.slice("repeating-linear-gradient".length);
+      return {
+        normalizedGradientString: `${leadingWhitespace}linear-gradient${suffix}`,
+        initialIsRepeating: true,
+      };
+    }
+
+    return {
+      normalizedGradientString: gradientString,
+      initialIsRepeating: false,
+    };
+  }, [gradientString]);
+
+  const parsedGradient = useMemo(() => {
+    const parsed = parseLinearGradient(normalizedGradientString);
+    if (parsed === undefined) {
+      return undefined;
+    }
+    return parsed;
+  }, [normalizedGradientString]);
+
   const initialGradient = useMemo(
     () => parsedGradient ?? defaultGradient,
     [parsedGradient]
   );
+  const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
+  const isRepeatingRef = useRef(isRepeating);
+
+  useEffect(() => {
+    isRepeatingRef.current = isRepeating;
+  }, [isRepeating]);
+
+  useEffect(() => {
+    setIsRepeating(initialIsRepeating);
+    isRepeatingRef.current = initialIsRepeating;
+  }, [initialIsRepeating]);
+
+  const formatGradientValue = useCallback(
+    (nextGradient: ParsedGradient, repeating = isRepeatingRef.current) => {
+      const linearGradient = reconstructLinearGradient(nextGradient);
+      if (repeating) {
+        return linearGradient.replace(
+          /^linear-gradient/i,
+          "repeating-linear-gradient"
+        );
+      }
+      return linearGradient;
+    },
+    []
+  );
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
-      const gradientValue = reconstructLinearGradient(nextGradient);
+      const gradientValue = formatGradientValue(nextGradient);
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
     },
-    [index, setRepeatedStyleItem, styleDecl]
+    [formatGradientValue, index, setRepeatedStyleItem, styleDecl]
   );
 
   const {
@@ -170,26 +324,66 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     });
   }, [gradient]);
 
+  const gradientForPicker = useMemo(
+    () => fillMissingStopPositions(gradient),
+    [gradient]
+  );
+
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
+  const percentUnitOptions = useMemo(
+    () => [
+      {
+        id: "%" as const,
+        label: "%",
+        type: "unit" as const,
+      },
+    ],
+    []
+  );
+
   const previewGradient = useCallback(
-    (nextGradient: ParsedGradient) => {
+    (nextGradient: ParsedGradient, options?: { repeating?: boolean }) => {
       setLocalGradient(nextGradient);
-      const gradientValue = reconstructLinearGradient(nextGradient);
+      const gradientValue = formatGradientValue(
+        nextGradient,
+        options?.repeating
+      );
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style, { isEphemeral: true });
       setIntermediateValue(undefined);
     },
-    [index, setLocalGradient, setRepeatedStyleItem, styleDecl]
+    [
+      formatGradientValue,
+      index,
+      setLocalGradient,
+      setRepeatedStyleItem,
+      styleDecl,
+    ]
   );
 
   const commitGradient = useCallback(
-    (nextGradient: ParsedGradient) => {
+    (nextGradient: ParsedGradient, options?: { repeating?: boolean }) => {
       setLocalGradient(nextGradient);
       setIntermediateValue(undefined);
+      const gradientValue = formatGradientValue(
+        nextGradient,
+        options?.repeating
+      );
+      setRepeatedStyleItem(styleDecl, index, {
+        type: "unparsed",
+        value: gradientValue,
+      });
       saveLocalGradient();
     },
-    [saveLocalGradient, setLocalGradient]
+    [
+      formatGradientValue,
+      index,
+      saveLocalGradient,
+      setLocalGradient,
+      setRepeatedStyleItem,
+      styleDecl,
+    ]
   );
 
   const handleStopColorChange = useCallback(
@@ -208,6 +402,139 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   );
 
   const selectedStop = gradient.stops[selectedStopIndex];
+  const selectedStopForDisplay = gradientForPicker.stops[selectedStopIndex];
+  const selectedStopHintPlaceholder =
+    selectedStop?.hint === undefined &&
+    selectedStopForDisplay?.position !== undefined
+      ? `${selectedStopForDisplay.position.value}%`
+      : undefined;
+
+  const updateSelectedStop = useCallback(
+    (updater: (stop: GradientStop) => GradientStop, isEphemeral: boolean) => {
+      if (gradient.stops[selectedStopIndex] === undefined) {
+        return;
+      }
+      const stops = gradient.stops.map((stop, index) =>
+        index === selectedStopIndex ? updater(stop) : stop
+      );
+      const nextGradient = { ...gradient, stops };
+      if (isEphemeral) {
+        previewGradient(nextGradient);
+        return;
+      }
+      commitGradient(nextGradient);
+    },
+    [commitGradient, gradient, previewGradient, selectedStopIndex]
+  );
+
+  type PercentUnitValue = UnitValue & { unit: "%" };
+
+  const getPercentUnit = useCallback((styleValue: StyleValue | undefined) => {
+    if (styleValue === undefined) {
+      return;
+    }
+
+    if (styleValue.type === "unit" && styleValue.unit === "%") {
+      return {
+        type: "unit" as const,
+        unit: "%" as const,
+        value: styleValue.value,
+      } satisfies PercentUnitValue;
+    }
+
+    if (styleValue.type === "layers") {
+      const firstLayer = styleValue.value[0];
+      if (firstLayer?.type === "unit" && firstLayer.unit === "%") {
+        return {
+          type: "unit" as const,
+          unit: "%" as const,
+          value: firstLayer.value,
+        } satisfies PercentUnitValue;
+      }
+    }
+  }, []);
+
+  const clampPercentUnit = useCallback((value: PercentUnitValue) => {
+    return {
+      ...value,
+      value: clamp(value.value, 0, 100),
+    } satisfies PercentUnitValue;
+  }, []);
+
+  const handleStopPositionUpdate = useCallback(
+    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      const percentUnit = getPercentUnit(styleValue);
+      if (percentUnit === undefined) {
+        return;
+      }
+      const nextPosition = clampPercentUnit(percentUnit);
+      const isEphemeral = options?.isEphemeral === true;
+      updateSelectedStop(
+        (stop) => ({
+          ...stop,
+          position: nextPosition,
+        }),
+        isEphemeral
+      );
+    },
+    [clampPercentUnit, getPercentUnit, updateSelectedStop]
+  );
+
+  const handleStopPositionDelete = useCallback(
+    (options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
+      updateSelectedStop((stop) => {
+        const { position: _omit, ...rest } = stop;
+        return { ...rest };
+      }, isEphemeral);
+    },
+    [updateSelectedStop]
+  );
+
+  const handleStopHintUpdate = useCallback(
+    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      const percentUnit = getPercentUnit(styleValue);
+      if (percentUnit === undefined) {
+        return;
+      }
+      const nextHint = clampPercentUnit(percentUnit);
+      const isEphemeral = options?.isEphemeral === true;
+      updateSelectedStop(
+        (stop) => ({
+          ...stop,
+          hint: nextHint,
+        }),
+        isEphemeral
+      );
+    },
+    [clampPercentUnit, getPercentUnit, updateSelectedStop]
+  );
+
+  const handleStopHintDelete = useCallback(
+    (options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
+      updateSelectedStop((stop) => {
+        const { hint: _omit, ...rest } = stop;
+        return { ...rest };
+      }, isEphemeral);
+    },
+    [updateSelectedStop]
+  );
+
+  const repeatToggleValue = isRepeating ? "repeat" : "no-repeat";
+
+  const handleRepeatChange = useCallback(
+    (value: string) => {
+      if (value !== "repeat" && value !== "no-repeat") {
+        return;
+      }
+      const repeating = value === "repeat";
+      isRepeatingRef.current = repeating;
+      setIsRepeating(repeating);
+      commitGradient(gradient, { repeating });
+    },
+    [commitGradient, gradient]
+  );
 
   const applyStyleValueToStop = useCallback(
     (
@@ -246,7 +573,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       if (position?.type === "unit" && position.unit === "%") {
         position = {
           ...position,
-          value: Math.max(0, Math.min(100, 100 - position.value)),
+          value: clamp(100 - position.value, 0, 100),
         };
       }
       return { ...stop, position };
@@ -337,7 +664,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     >
       <Box css={{ paddingInline: theme.spacing[2] }}>
         <GradientPicker
-          gradient={gradient}
+          gradient={gradientForPicker}
           onChange={previewGradient}
           onChangeComplete={commitGradient}
           onThumbSelect={(index) => {
@@ -346,31 +673,105 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         />
       </Box>
       {selectedStop?.color ? (
-        <Flex direction="column" gap="2">
-          <Label>Color</Label>
-          <Flex align="center" gap="2">
-            <Box css={{ flexGrow: 1 }}>
-              <ColorPicker
-                property="color"
-                value={selectedStop.color}
-                currentColor={selectedStop.color}
-                onChange={handleColorPickerChange}
-                onChangeComplete={handleColorPickerChangeComplete}
-                onAbort={() => {
-                  // no-op: gradient changes are managed via GradientPicker callbacks
+        <Flex direction="column" gap="3">
+          <Flex direction="column" gap="2">
+            <Label>Color</Label>
+            <Flex align="center" gap="2">
+              <Box css={{ flexGrow: 1 }}>
+                <ColorPicker
+                  property="color"
+                  value={selectedStop.color}
+                  currentColor={selectedStop.color}
+                  onChange={handleColorPickerChange}
+                  onChangeComplete={handleColorPickerChangeComplete}
+                  onAbort={() => {
+                    // no-op: gradient changes are managed via GradientPicker callbacks
+                  }}
+                  onReset={() => {
+                    // no-op: gradient changes are managed via GradientPicker callbacks
+                  }}
+                />
+              </Box>
+              <IconButton
+                aria-label="Reverse gradient stops"
+                onClick={handleReverseStops}
+                disabled={gradient.stops.length <= 1}
+              >
+                <ArrowRightLeftIcon />
+              </IconButton>
+            </Flex>
+          </Flex>
+          <Flex
+            gap="2"
+            css={{
+              flexWrap: "wrap",
+            }}
+          >
+            <Flex direction="column" gap="1" css={{ flex: "1 1 0" }}>
+              <Label>Stop</Label>
+              <CssValueInputContainer
+                property="background-position-x"
+                styleSource="default"
+                value={selectedStop.position}
+                unitOptions={percentUnitOptions}
+                placeholder={
+                  selectedStop?.position === undefined &&
+                  selectedStopForDisplay?.position !== undefined
+                    ? `${selectedStopForDisplay.position.value}%`
+                    : undefined
+                }
+                onUpdate={(value, options) => {
+                  handleStopPositionUpdate(value, {
+                    isEphemeral: options?.isEphemeral === true,
+                  });
                 }}
-                onReset={() => {
-                  // no-op: gradient changes are managed via GradientPicker callbacks
+                onDelete={(options) => {
+                  handleStopPositionDelete({
+                    isEphemeral: options?.isEphemeral === true,
+                  });
                 }}
               />
-            </Box>
-            <IconButton
-              aria-label="Reverse gradient stops"
-              onClick={handleReverseStops}
-              disabled={gradient.stops.length <= 1}
+            </Flex>
+            <Flex direction="column" gap="1" css={{ flex: "1 1 0" }}>
+              <Label>Hint</Label>
+              <CssValueInputContainer
+                property="background-position-x"
+                styleSource="default"
+                value={selectedStop.hint}
+                unitOptions={percentUnitOptions}
+                placeholder={selectedStopHintPlaceholder}
+                onUpdate={(value, options) => {
+                  handleStopHintUpdate(value, {
+                    isEphemeral: options?.isEphemeral === true,
+                  });
+                }}
+                onDelete={(options) => {
+                  handleStopHintDelete({
+                    isEphemeral: options?.isEphemeral === true,
+                  });
+                }}
+              />
+            </Flex>
+            <Flex
+              direction="column"
+              gap="1"
+              css={{ minWidth: theme.spacing[17] }}
             >
-              <ArrowRightLeftIcon />
-            </IconButton>
+              <Label>Repeat</Label>
+              <ToggleGroup
+                type="single"
+                value={repeatToggleValue}
+                aria-label="Gradient repeat"
+                onValueChange={handleRepeatChange}
+              >
+                <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+                  <XSmallIcon />
+                </ToggleGroupButton>
+                <ToggleGroupButton value="repeat" aria-label="Repeat">
+                  <RepeatGridIcon />
+                </ToggleGroupButton>
+              </ToggleGroup>
+            </Flex>
           </Flex>
         </Flex>
       ) : (
