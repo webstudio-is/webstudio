@@ -276,6 +276,25 @@ export const GradientPicker = (props: GradientPickerProps) => {
         return;
       }
 
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        const delta = event.key === "ArrowUp" ? -1 : 1;
+        const nextIndex = clamp(
+          selectedStop + delta,
+          0,
+          Math.max(stops.length - 1, 0)
+        );
+
+        if (nextIndex !== selectedStop) {
+          const nextStop = stops[nextIndex];
+          if (nextStop !== undefined) {
+            handleStopSelected(nextIndex, nextStop);
+          }
+        }
+
+        return;
+      }
+
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         const step = event.shiftKey ? 10 : 1;
