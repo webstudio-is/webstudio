@@ -52,6 +52,44 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 
 extend([namesPlugin]);
 
+type NormalizedLinearGradient = {
+  normalizedGradientString: string;
+  initialIsRepeating: boolean;
+};
+
+const normalizeLinearGradientInput = (
+  gradientString: string
+): NormalizedLinearGradient => {
+  const leadingWhitespaceMatch = gradientString.match(/^\s*/);
+  const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
+  const withoutLeading = gradientString.slice(leadingWhitespace.length);
+  const lowerCase = withoutLeading.toLowerCase();
+
+  if (lowerCase.startsWith("repeating-linear-gradient")) {
+    const suffix = withoutLeading.slice("repeating-linear-gradient".length);
+    return {
+      normalizedGradientString: `${leadingWhitespace}linear-gradient${suffix}`,
+      initialIsRepeating: true,
+    } satisfies NormalizedLinearGradient;
+  }
+
+  return {
+    normalizedGradientString: gradientString,
+    initialIsRepeating: false,
+  } satisfies NormalizedLinearGradient;
+};
+
+const getAnglePlaceholder = (gradient: ParsedGradient) => {
+  if (gradient.angle !== undefined) {
+    return;
+  }
+  const derived = sideOrCornerToAngle(gradient.sideOrCorner);
+  if (derived !== undefined) {
+    return `${derived}deg`;
+  }
+  return "180deg";
+};
+
 const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
 type AngleUnit = (typeof angleUnitTokens)[number];
 const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
@@ -297,25 +335,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   }
 
   const gradientString = toValue(styleValue);
-  const { normalizedGradientString, initialIsRepeating } = useMemo(() => {
-    const leadingWhitespaceMatch = gradientString.match(/^\s*/);
-    const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
-    const withoutLeading = gradientString.slice(leadingWhitespace.length);
-    const lowerCase = withoutLeading.toLowerCase();
-
-    if (lowerCase.startsWith("repeating-linear-gradient")) {
-      const suffix = withoutLeading.slice("repeating-linear-gradient".length);
-      return {
-        normalizedGradientString: `${leadingWhitespace}linear-gradient${suffix}`,
-        initialIsRepeating: true,
-      };
-    }
-
-    return {
-      normalizedGradientString: gradientString,
-      initialIsRepeating: false,
-    };
-  }, [gradientString]);
+  const { normalizedGradientString, initialIsRepeating } =
+    normalizeLinearGradientInput(gradientString);
 
   const parsedGradient = useMemo(() => {
     const parsed = parseLinearGradient(normalizedGradientString);
@@ -327,19 +348,13 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const initialGradient = parsedGradient ?? defaultGradient;
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
-  const isRepeatingRef = useRef(isRepeating);
-
-  useEffect(() => {
-    isRepeatingRef.current = isRepeating;
-  }, [isRepeating]);
 
   useEffect(() => {
     setIsRepeating(initialIsRepeating);
-    isRepeatingRef.current = initialIsRepeating;
   }, [initialIsRepeating]);
 
   const formatGradientValue = useCallback(
-    (nextGradient: ParsedGradient, repeating = isRepeatingRef.current) => {
+    (nextGradient: ParsedGradient, repeating = isRepeating) => {
       const linearGradient = reconstructLinearGradient(nextGradient);
       if (repeating) {
         return linearGradient.replace(
@@ -349,7 +364,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
       return linearGradient;
     },
-    []
+    [isRepeating]
   );
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
@@ -383,15 +398,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       return;
     }
 
-    setSelectedStopIndex((currentIndex) => {
-      if (currentIndex < 0) {
-        return 0;
-      }
-      if (currentIndex >= gradient.stops.length) {
-        return gradient.stops.length - 1;
-      }
-      return currentIndex;
-    });
+    setSelectedStopIndex((currentIndex) =>
+      clamp(currentIndex, 0, gradient.stops.length - 1)
+    );
   }, [gradient]);
 
   useEffect(() => {
@@ -440,16 +449,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     };
   }, [gradient, hintOverrides]);
 
-  const anglePlaceholder = useMemo(() => {
-    if (gradient.angle !== undefined) {
-      return;
-    }
-    const derived = sideOrCornerToAngle(gradient.sideOrCorner);
-    if (derived !== undefined) {
-      return `${derived}deg`;
-    }
-    return "180deg";
-  }, [gradient.angle, gradient.sideOrCorner]);
+  const anglePlaceholder = getAnglePlaceholder(gradient);
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
@@ -745,7 +745,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         return;
       }
       const repeating = value === "repeat";
-      isRepeatingRef.current = repeating;
       setIsRepeating(repeating);
       commitGradient(gradient, { repeating });
     },
