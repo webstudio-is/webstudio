@@ -238,7 +238,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
         return;
       }
 
-      if (event.key === "Backspace") {
+      if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
         let nextSelection:
           | { index: number | undefined; stop?: GradientStop }
@@ -408,9 +408,8 @@ export const GradientPicker = (props: GradientPickerProps) => {
   return (
     <Flex
       align="end"
-      css={{
-        height: theme.spacing[18],
-      }}
+      css={{ height: theme.spacing[18] }}
+      onKeyDown={handleKeyDown}
     >
       <SliderRoot
         ref={sliderRef}
@@ -420,7 +419,6 @@ export const GradientPicker = (props: GradientPickerProps) => {
         role="group"
         aria-label="Gradient stops"
         onPointerDown={handlePointerDown}
-        onKeyDown={handleKeyDown}
         onFocus={handleSliderFocus}
         onMouseEnter={handleMouseIndicator}
         onMouseMove={handleMouseIndicator}
@@ -448,7 +446,11 @@ export const GradientPicker = (props: GradientPickerProps) => {
               aria-label={`Gradient stop ${index + 1}`}
               tabIndex={-1}
               onPointerDown={handleThumbPointerDown(index, stop)}
-              onClick={() => handleStopSelected(index, stop)}
+              onClick={() => {
+                // Focus the slider to enable keyboard interactions
+                sliderRef.current?.focus();
+                handleStopSelected(index, stop);
+              }}
             >
               <SliderThumbTrigger data-thumb="true" />
             </SliderThumb>
