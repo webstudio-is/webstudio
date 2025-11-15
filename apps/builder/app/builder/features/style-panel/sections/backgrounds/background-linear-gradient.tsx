@@ -281,11 +281,6 @@ const cloneGradientStop = (stop: GradientStop): GradientStop => ({
   hint: stop.hint === undefined ? undefined : { ...stop.hint },
 });
 
-const createDefaultGradient = (): ParsedGradient => ({
-  ...defaultGradient,
-  stops: defaultGradient.stops.map(cloneGradientStop),
-});
-
 const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
   const stops =
     gradient.stops.length === 0
@@ -389,7 +384,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     return ensureGradientHasStops(parsed);
   }, [normalizedGradientString]);
 
-  const initialGradient = parsedGradient ?? createDefaultGradient();
+  const initialGradient = parsedGradient ?? defaultGradient;
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
 
   useEffect(() => {
