@@ -302,6 +302,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     autoSave: false,
   });
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
+  const [hintOverrides, setHintOverrides] = useState(
+    () => new Map<number, PercentUnitValue>()
+  );
 
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateValue | InvalidValue | undefined
@@ -324,10 +327,51 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     });
   }, [gradient]);
 
-  const gradientForPicker = useMemo(
-    () => fillMissingStopPositions(gradient),
-    [gradient]
-  );
+  useEffect(() => {
+    setHintOverrides((previous) => {
+      if (previous.size === 0) {
+        return previous;
+      }
+      let changed = false;
+      const next = new Map(previous);
+      for (const [index] of previous) {
+        if (index >= gradient.stops.length) {
+          next.delete(index);
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+  }, [gradient]);
+
+  const gradientForPicker = useMemo(() => {
+    const filled = fillMissingStopPositions(gradient);
+    if (hintOverrides.size === 0) {
+      return filled;
+    }
+    let changed = false;
+    const stopsWithHints = filled.stops.map((stop, index) => {
+      if (stop.hint !== undefined) {
+        return stop;
+      }
+      const override = hintOverrides.get(index);
+      if (override === undefined) {
+        return stop;
+      }
+      changed = true;
+      return {
+        ...stop,
+        hint: override,
+      };
+    });
+    if (changed === false) {
+      return filled;
+    }
+    return {
+      ...filled,
+      stops: stopsWithHints,
+    };
+  }, [gradient, hintOverrides]);
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
@@ -403,8 +447,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const selectedStop = gradient.stops[selectedStopIndex];
   const selectedStopForDisplay = gradientForPicker.stops[selectedStopIndex];
+  const selectedStopHintOverride = hintOverrides.get(selectedStopIndex);
+  const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
   const selectedStopHintPlaceholder =
-    selectedStop?.hint === undefined &&
+    selectedStopHintValue === undefined &&
     selectedStopForDisplay?.position !== undefined
       ? `${selectedStopForDisplay.position.value}%`
       : undefined;
@@ -476,8 +522,22 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         }),
         isEphemeral
       );
+
+      if (!isEphemeral) {
+        setHintOverrides((previous) => {
+          if (previous.size === 0) {
+            return previous;
+          }
+          if (previous.has(selectedStopIndex) === false) {
+            return previous;
+          }
+          const next = new Map(previous);
+          next.delete(selectedStopIndex);
+          return next;
+        });
+      }
     },
-    [clampPercentUnit, getPercentUnit, updateSelectedStop]
+    [clampPercentUnit, getPercentUnit, selectedStopIndex, updateSelectedStop]
   );
 
   const handleStopPositionDelete = useCallback(
@@ -506,8 +566,16 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         }),
         isEphemeral
       );
+
+      if (isEphemeral === false) {
+        setHintOverrides((previous) => {
+          const next = new Map(previous);
+          next.set(selectedStopIndex, nextHint);
+          return next;
+        });
+      }
     },
-    [clampPercentUnit, getPercentUnit, updateSelectedStop]
+    [clampPercentUnit, getPercentUnit, selectedStopIndex, updateSelectedStop]
   );
 
   const handleStopHintDelete = useCallback(
@@ -517,8 +585,18 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         const { hint: _omit, ...rest } = stop;
         return { ...rest };
       }, isEphemeral);
+      if (isEphemeral === false) {
+        setHintOverrides((previous) => {
+          if (previous.has(selectedStopIndex) === false) {
+            return previous;
+          }
+          const next = new Map(previous);
+          next.delete(selectedStopIndex);
+          return next;
+        });
+      }
     },
-    [updateSelectedStop]
+    [selectedStopIndex, updateSelectedStop]
   );
 
   const repeatToggleValue = isRepeating ? "repeat" : "no-repeat";
@@ -737,7 +815,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
               <CssValueInputContainer
                 property="background-position-x"
                 styleSource="default"
-                value={selectedStop.hint}
+                value={selectedStopHintValue}
                 unitOptions={percentUnitOptions}
                 placeholder={selectedStopHintPlaceholder}
                 onUpdate={(value, options) => {
