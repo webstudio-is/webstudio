@@ -3,8 +3,11 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { useState } from "react";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import { useEffect, useState } from "react";
+import {
+  propertyDescriptions,
+  parseLinearGradient,
+} from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
   RepeatColumnIcon,
@@ -36,21 +39,57 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 
-const detectImageOrGradientToggle = (styleValue?: StyleValue) => {
-  if (styleValue?.type === "image") {
-    return "image";
+const detectBackgroundType = (styleValue?: StyleValue) => {
+  if (styleValue === undefined) {
+    return "image" as const;
   }
 
-  if (styleValue?.type === "keyword") {
+  if (styleValue.type === "image") {
+    return "image" as const;
+  }
+
+  if (styleValue.type === "keyword") {
     // The only allowed keyword for backgroundImage is none
-    return "image";
+    return "image" as const;
   }
 
-  return "gradient";
+  const cssValue = toValue(styleValue);
+  if (typeof cssValue === "string") {
+    const parsed = parseLinearGradient(cssValue);
+    if (parsed !== undefined) {
+      return "linearGradient" as const;
+    }
+  }
+
+  return "image" as const;
 };
 
-const isImageOrGradient = (value: string): value is "image" | "gradient" => {
-  return value === "image" || value === "gradient";
+const getStyleValueKey = (styleValue?: StyleValue) => {
+  if (styleValue === undefined) {
+    return "undefined";
+  }
+
+  if (styleValue.type === "image") {
+    const image = styleValue.value;
+    if (image.type === "asset") {
+      return `image-asset:${image.value}`;
+    }
+    if (image.type === "url") {
+      return `image-url:${image.url}`;
+    }
+  }
+
+  if (styleValue.type === "keyword") {
+    return `keyword:${styleValue.value}`;
+  }
+
+  return `${styleValue.type}:${toValue(styleValue)}`;
+};
+
+const isImageOrLinearGradient = (
+  value: string
+): value is "image" | "linearGradient" => {
+  return value === "image" || value === "linearGradient";
 };
 
 const BackgroundSection = styled("div", { padding: theme.panel.padding });
@@ -166,12 +205,25 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 
 export const BackgroundContent = ({ index }: { index: number }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
+  const backgroundStyleItem = getRepeatedStyleItem(backgroundImage, index);
 
-  const [imageGradientToggle, setImageGradientToggle] = useState<
-    "image" | "gradient"
-  >(() =>
-    detectImageOrGradientToggle(getRepeatedStyleItem(backgroundImage, index))
+  const [backgroundType, setBackgroundType] = useState<
+    "image" | "linearGradient"
+  >(() => detectBackgroundType(backgroundStyleItem));
+  const [syncedStyleKey, setSyncedStyleKey] = useState(() =>
+    getStyleValueKey(backgroundStyleItem)
   );
+  useEffect(() => {
+    const nextStyleKey = getStyleValueKey(backgroundStyleItem);
+    if (nextStyleKey === syncedStyleKey) {
+      return;
+    }
+    setSyncedStyleKey(nextStyleKey);
+    const nextType = detectBackgroundType(backgroundStyleItem);
+    if (nextType !== backgroundType) {
+      setBackgroundType(nextType);
+    }
+  }, [backgroundStyleItem, backgroundType, syncedStyleKey]);
 
   return (
     <>
@@ -179,11 +231,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
         <Flex justify="center">
           <ToggleGroup
             type="single"
-            value={imageGradientToggle}
+            value={backgroundType}
             aria-label="Background type"
             onValueChange={(value) => {
-              if (isImageOrGradient(value)) {
-                setImageGradientToggle(value);
+              if (isImageOrLinearGradient(value)) {
+                setBackgroundType(value);
               }
             }}
           >
@@ -202,7 +254,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
               </Flex>
             </ToggleGroupButton>
             <ToggleGroupButton
-              value={"gradient"}
+              value={"linearGradient"}
               aria-label="Gradient background"
             >
               <Flex css={{ px: theme.spacing[3] }}>
@@ -215,11 +267,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
       <Separator />
 
-      {imageGradientToggle === "gradient" && (
+      {backgroundType === "linearGradient" && (
         <BackgroundLinearGradient index={index} />
       )}
 
-      {imageGradientToggle === "image" && (
+      {backgroundType === "image" && (
         <BackgroundSection>
           <BackgroundImage index={index} />
         </BackgroundSection>
@@ -264,7 +316,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           align="center"
           gap={2}
         >
-          {imageGradientToggle === "image" && (
+          {backgroundType === "image" && (
             <>
               <PropertyInlineLabel
                 label="Repeat"
@@ -296,4 +348,8 @@ export const BackgroundContent = ({ index }: { index: number }) => {
       </BackgroundSection>
     </>
   );
+};
+
+export const __testing__ = {
+  detectBackgroundType,
 };
