@@ -321,6 +321,38 @@ const cloneGradientStop = (stop: GradientStop): GradientStop => ({
   hint: cloneGradientStopValue(stop.hint),
 });
 
+const resolveGradientForPicker = (
+  gradient: ParsedGradient,
+  hintOverrides: ReadonlyMap<number, PercentUnitValue>
+): ParsedGradient => {
+  const filled = fillMissingStopPositions(gradient);
+  if (hintOverrides.size === 0) {
+    return filled;
+  }
+  let changed = false;
+  const stopsWithHints = filled.stops.map((stop, index) => {
+    if (stop.hint !== undefined) {
+      return stop;
+    }
+    const override = hintOverrides.get(index);
+    if (override === undefined) {
+      return stop;
+    }
+    changed = true;
+    return {
+      ...stop,
+      hint: override,
+    };
+  });
+  if (changed === false) {
+    return filled;
+  }
+  return {
+    ...filled,
+    stops: stopsWithHints,
+  };
+};
+
 type StopHintUpdateResolution =
   | {
       type: "apply";
@@ -525,34 +557,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     });
   }, [gradient]);
 
-  const gradientForPicker = useMemo(() => {
-    const filled = fillMissingStopPositions(gradient);
-    if (hintOverrides.size === 0) {
-      return filled;
-    }
-    let changed = false;
-    const stopsWithHints = filled.stops.map((stop, index) => {
-      if (stop.hint !== undefined) {
-        return stop;
-      }
-      const override = hintOverrides.get(index);
-      if (override === undefined) {
-        return stop;
-      }
-      changed = true;
-      return {
-        ...stop,
-        hint: override,
-      };
-    });
-    if (changed === false) {
-      return filled;
-    }
-    return {
-      ...filled,
-      stops: stopsWithHints,
-    };
-  }, [gradient, hintOverrides]);
+  const gradientForPicker = useMemo(
+    () => resolveGradientForPicker(gradient, hintOverrides),
+    [gradient, hintOverrides]
+  );
 
   const anglePlaceholder = getAnglePlaceholder(gradient);
 
@@ -1206,6 +1214,7 @@ export const __testing__ = {
   getAnglePlaceholder,
   sideOrCornerToAngle,
   fillMissingStopPositions,
+  resolveGradientForPicker,
   ensureGradientHasStops,
   clampStopIndex,
   styleValueToColor,

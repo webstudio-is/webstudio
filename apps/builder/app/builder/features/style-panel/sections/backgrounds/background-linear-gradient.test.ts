@@ -17,6 +17,7 @@ const {
   clampStopIndex,
   styleValueToColor,
   resolveStopHintUpdate,
+  resolveGradientForPicker,
 } = __testing__;
 
 type PercentUnitValue = UnitValue & { unit: "%" };
@@ -494,5 +495,74 @@ describe("resolveStopHintUpdate", () => {
     });
 
     expect(result).toEqual({ type: "none" });
+  });
+});
+
+describe("resolveGradientForPicker", () => {
+  test("fills missing stop positions without overrides", () => {
+    const gradient: ParsedGradient = {
+      stops: [{ color: undefined }, { color: undefined }, { color: undefined }],
+    };
+
+    const result = resolveGradientForPicker(gradient, new Map());
+
+    expect(result.stops.map((stop) => stop.position?.value)).toEqual([
+      0, 50, 100,
+    ]);
+  });
+
+  test("applies overrides when hints missing", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 50 },
+        },
+      ],
+    };
+
+    const overrides = new Map<number, PercentUnitValue>([
+      [1, { type: "unit", unit: "%", value: 25 }],
+    ]);
+
+    const result = resolveGradientForPicker(gradient, overrides);
+
+    expect(result.stops[1]?.hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 25,
+    });
+  });
+
+  test("leaves existing hints untouched", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 100 },
+          hint: { type: "unit", unit: "%", value: 60 },
+        },
+      ],
+    };
+
+    const overrides = new Map<number, PercentUnitValue>([
+      [1, { type: "unit", unit: "%", value: 80 }],
+    ]);
+
+    const result = resolveGradientForPicker(gradient, overrides);
+
+    expect(result.stops[1]?.hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 60,
+    });
   });
 });
