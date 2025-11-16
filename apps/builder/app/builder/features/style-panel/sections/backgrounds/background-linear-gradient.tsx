@@ -5,6 +5,7 @@ import {
   type RgbValue,
   type UnitValue,
   type KeywordValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
@@ -276,6 +277,11 @@ const fallbackStopColor: RgbValue = {
   alpha: 1,
 };
 
+const cloneVarValue = (value: VarValue): VarValue => ({
+  ...value,
+  fallback: value.fallback === undefined ? undefined : { ...value.fallback },
+});
+
 const cloneGradientColor = (
   color: GradientStop["color"] | undefined
 ): GradientStop["color"] | undefined => {
@@ -320,6 +326,60 @@ const cloneGradientStop = (stop: GradientStop): GradientStop => ({
   position: cloneGradientStopValue(stop.position),
   hint: cloneGradientStopValue(stop.hint),
 });
+
+type AngleUnitValue = UnitValue & { unit: AngleUnit };
+type AngleValue = AngleUnitValue | VarValue;
+
+const resolveAnglePrimitive = (
+  value: VarValue | UnitValue | undefined
+): AngleValue | undefined => {
+  if (value === undefined) {
+    return;
+  }
+
+  if (value.type === "var") {
+    return cloneVarValue(value);
+  }
+
+  if (value.type === "unit" && isAngleUnit(value.unit)) {
+    return {
+      ...value,
+      unit: value.unit,
+    } satisfies AngleUnitValue;
+  }
+
+  return;
+};
+
+const resolveAngleValue = (
+  styleValue: StyleValue | undefined
+): AngleValue | undefined => {
+  if (styleValue === undefined) {
+    return;
+  }
+
+  if (styleValue.type === "tuple") {
+    const first = styleValue.value[0];
+    if (first?.type === "var" || first?.type === "unit") {
+      return resolveAnglePrimitive(first);
+    }
+    return;
+  }
+
+  if (styleValue.type === "layers") {
+    const firstLayer = styleValue.value[0];
+    if (firstLayer?.type === "var" || firstLayer?.type === "unit") {
+      return resolveAnglePrimitive(firstLayer);
+    }
+    return;
+  }
+
+  if (styleValue.type === "var" || styleValue.type === "unit") {
+    return resolveAnglePrimitive(styleValue);
+  }
+
+  return;
+};
 
 const resolveGradientForPicker = (
   gradient: ParsedGradient,
@@ -754,41 +814,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     [commitGradient, gradient, previewGradient, selectedStopIndex]
   );
 
-  type AngleUnitValue = UnitValue & { unit: AngleUnit };
-
-  const getAngleUnit = useCallback((styleValue: StyleValue | undefined) => {
-    if (styleValue === undefined) {
-      return;
-    }
-
-    if (styleValue.type === "unit" && isAngleUnit(styleValue.unit)) {
-      return {
-        ...styleValue,
-        unit: styleValue.unit,
-      } satisfies AngleUnitValue;
-    }
-
-    if (styleValue.type === "tuple") {
-      const first = styleValue.value[0];
-      if (first?.type === "unit" && isAngleUnit(first.unit)) {
-        return {
-          ...first,
-          unit: first.unit,
-        } satisfies AngleUnitValue;
-      }
-    }
-
-    if (styleValue.type === "layers") {
-      const firstLayer = styleValue.value[0];
-      if (firstLayer?.type === "unit" && isAngleUnit(firstLayer.unit)) {
-        return {
-          ...firstLayer,
-          unit: firstLayer.unit,
-        } satisfies AngleUnitValue;
-      }
-    }
-  }, []);
-
   const getPercentUnit = useCallback((styleValue: StyleValue | undefined) => {
     if (styleValue === undefined) {
       return;
@@ -823,7 +848,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleAngleUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const angleValue = getAngleUnit(styleValue);
+      const angleValue = resolveAngleValue(styleValue);
       if (angleValue === undefined) {
         return;
       }
@@ -839,7 +864,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
       commitGradient(nextGradient);
     },
-    [commitGradient, getAngleUnit, gradient, previewGradient]
+    [commitGradient, gradient, previewGradient]
   );
 
   const handleAngleDelete = useCallback(
@@ -1256,6 +1281,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 export const __testing__ = {
   normalizeLinearGradientInput,
   getAnglePlaceholder,
+  resolveAngleValue,
   sideOrCornerToAngle,
   fillMissingStopPositions,
   resolveGradientForPicker,

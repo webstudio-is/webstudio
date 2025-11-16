@@ -4,6 +4,7 @@ import type {
   RgbValue,
   StyleValue,
   UnitValue,
+  VarValue,
 } from "@webstudio-is/css-engine";
 import type { GradientStop, ParsedGradient } from "@webstudio-is/css-data";
 import { __testing__ } from "./background-linear-gradient";
@@ -23,6 +24,7 @@ const {
   pruneHintOverrides,
   resolveStopPositionUpdate,
   resolveReverseStops,
+  resolveAngleValue,
 } = __testing__;
 
 type PercentUnitValue = UnitValue & { unit: "%" };
@@ -148,6 +150,42 @@ describe("getAnglePlaceholder", () => {
       } satisfies KeywordValue,
     };
     expect(getAnglePlaceholder(gradient)).toBe("180deg");
+  });
+});
+
+describe("resolveAngleValue", () => {
+  test("returns unit angles", () => {
+    const styleValue: StyleValue = { type: "unit", unit: "deg", value: 120 };
+    const result = resolveAngleValue(styleValue);
+    expect(result).toEqual({ type: "unit", unit: "deg", value: 120 });
+    expect(result).not.toBe(styleValue);
+  });
+
+  test("returns cloned var angles", () => {
+    const fallback: VarValue["fallback"] = {
+      type: "unit",
+      unit: "deg",
+      value: 45,
+    };
+    const styleValue: StyleValue = {
+      type: "var",
+      value: "angle",
+      fallback,
+    };
+    const result = resolveAngleValue(styleValue);
+    expect(result?.type).toBe("var");
+    if (result?.type !== "var") {
+      throw new Error("Expected var angle");
+    }
+    expect(result).not.toBe(styleValue);
+    expect(result.value).toBe("angle");
+    expect(result.fallback).toEqual(fallback);
+    expect(result.fallback).not.toBe(styleValue.fallback);
+  });
+
+  test("returns undefined for non-angle values", () => {
+    const styleValue: StyleValue = { type: "keyword", value: "auto" };
+    expect(resolveAngleValue(styleValue)).toBeUndefined();
   });
 });
 
