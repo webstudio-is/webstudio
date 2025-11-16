@@ -38,6 +38,56 @@ const defaultAngle: UnitValue = {
 
 const THUMB_INTERACTION_PX = 12;
 
+const defaultStopColor: RgbValue = {
+  type: "rgb",
+  r: 0,
+  g: 0,
+  b: 0,
+  alpha: 1,
+};
+
+const toRgbColor = (
+  color: GradientStop["color"] | undefined
+): RgbValue | undefined => {
+  if (color === undefined) {
+    return;
+  }
+
+  if (color.type === "rgb") {
+    return color;
+  }
+
+  const parsed = colord(toValue(color));
+  if (parsed.isValid()) {
+    const { r, g, b, a } = parsed.toRgb();
+    return {
+      type: "rgb",
+      r,
+      g,
+      b,
+      alpha: a,
+    };
+  }
+};
+
+const cloneColor = (
+  color: GradientStop["color"] | undefined
+): GradientStop["color"] | undefined => {
+  if (color === undefined) {
+    return;
+  }
+
+  if (color.type === "var") {
+    const fallback = color.fallback;
+    return {
+      ...color,
+      fallback: fallback === undefined ? undefined : { ...fallback },
+    };
+  }
+
+  return { ...color };
+};
+
 export const GradientPicker = (props: GradientPickerProps) => {
   const { gradient, onChange, onChangeComplete, onThumbSelect } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
@@ -357,27 +407,31 @@ export const GradientPicker = (props: GradientPickerProps) => {
         const prevColor = currentStops[prevIndex]?.color;
         const nextColor = currentStops[nextIndex]?.color ?? prevColor;
 
-        if (prevColor === undefined && nextColor === undefined) {
-          return currentStops;
+        const prevRgb = toRgbColor(prevColor);
+        const nextRgb = toRgbColor(nextColor);
+
+        let newColor: GradientStop["color"] | undefined;
+        if (prevRgb !== undefined && nextRgb !== undefined) {
+          const interpolationColor = colord(prevRgb)
+            .mix(colord(nextRgb), newPosition / 100)
+            .toRgb();
+          newColor = {
+            type: "rgb",
+            alpha: interpolationColor.a,
+            r: interpolationColor.r,
+            g: interpolationColor.g,
+            b: interpolationColor.b,
+          };
+        } else if (prevColor !== undefined) {
+          newColor = cloneColor(prevColor);
+        } else if (nextColor !== undefined) {
+          newColor = cloneColor(nextColor);
+        } else {
+          newColor = { ...defaultStopColor };
         }
 
-        const interpolationColor =
-          prevColor !== undefined && nextColor !== undefined
-            ? colord(toValue(prevColor))
-                .mix(colord(toValue(nextColor)), newPosition / 100)
-                .toRgb()
-            : colord(toValue((prevColor ?? nextColor)!)).toRgb();
-
-        const newColorStop: RgbValue = {
-          type: "rgb",
-          alpha: interpolationColor.a,
-          r: interpolationColor.r,
-          g: interpolationColor.g,
-          b: interpolationColor.b,
-        };
-
         const newStop: GradientStop = {
-          color: newColorStop,
+          color: newColor,
           position: { type: "unit", value: newPosition, unit: "%" },
         };
 

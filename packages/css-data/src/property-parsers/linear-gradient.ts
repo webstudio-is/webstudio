@@ -7,15 +7,19 @@ import {
   toValue,
   KeywordValue,
   type RgbValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
+import { parseCssValue } from "../parse-css-value";
 import namesPlugin from "colord/plugins/names";
 
 extend([namesPlugin]);
 
+export type GradientColorValue = RgbValue | KeywordValue | VarValue;
+
 export type GradientStop = {
-  color?: RgbValue;
-  position?: UnitValue;
-  hint?: UnitValue;
+  color?: GradientColorValue;
+  position?: UnitValue | VarValue;
+  hint?: UnitValue | VarValue;
 };
 
 export type ParsedGradient = {
@@ -48,7 +52,8 @@ export const parseLinearGradient = (
     "linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )",
     ast
   );
-  if (match.matched === null) {
+  const containsVar = gradient.includes("var(");
+  if (match.matched === null && containsVar === false) {
     return;
   }
 
@@ -102,8 +107,8 @@ export const parseLinearGradient = (
 
             const stop: GradientStop = {
               color: getColor(colorStop),
-              position: mapPercenTageOrDimentionToUnit(position),
-              hint: mapPercenTageOrDimentionToUnit(hint),
+              position: mapLengthPercentageOrVar(position),
+              hint: mapLengthPercentageOrVar(hint),
             };
 
             stops.push(stop);
@@ -115,25 +120,49 @@ export const parseLinearGradient = (
     }
   });
 
+  if (stops.length === 0) {
+    return;
+  }
+
   return { angle, sideOrCorner, stops };
 };
 
-const mapPercenTageOrDimentionToUnit = (
+const mapLengthPercentageOrVar = (
   node?: csstree.CssNode
-): UnitValue | undefined => {
+): UnitValue | VarValue | undefined => {
   if (node === undefined) {
     return;
   }
 
-  if (node.type !== "Percentage" && node.type !== "Dimension") {
-    return;
+  if (node.type === "Percentage" || node.type === "Dimension") {
+    return {
+      type: "unit",
+      value: Number.parseFloat(node.value),
+      unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
+    };
   }
 
-  return {
-    type: "unit",
-    value: Number.parseFloat(node.value),
-    unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
-  };
+  if (node.type === "Number") {
+    return {
+      type: "unit",
+      value: Number.parseFloat(node.value),
+      unit: "number",
+    };
+  }
+
+  if (node.type === "Function" && node.name === "var") {
+    const css = csstree.generate(node).trim();
+    if (css.length === 0) {
+      return;
+    }
+    const parsed = parseCssValue("margin-left", css);
+    if (parsed.type === "var") {
+      return parsed;
+    }
+    if (parsed.type === "unit") {
+      return parsed;
+    }
+  }
 };
 
 const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
@@ -143,43 +172,40 @@ const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
 const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
   node.type === "Identifier" && sideOrCorderIdentifiers.includes(node.name);
 
-const isColorStop = (
-  node: csstree.CssNode
-): node is csstree.Identifier | csstree.FunctionNode | csstree.Hash => {
-  return (
-    (node.type === "Function" ||
-      (node.type === "Identifier" &&
-        sideOrCorderIdentifiers.includes(node.name)) === false ||
-      node.type === "Hash") &&
-    colord(csstree.generate(node)).isValid() === true
-  );
-};
-
-const getColor = (
-  node: csstree.FunctionNode | csstree.Identifier | csstree.Hash
-): RgbValue | undefined => {
-  let color: string;
-  if (node.type === "Function") {
-    color = csstree.generate(node);
-  } else if (node.type === "Identifier") {
-    color = node.name;
-  } else {
-    color = csstree.generate(node);
+const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
+  if (
+    node.type !== "Function" &&
+    node.type !== "Identifier" &&
+    node.type !== "Hash"
+  ) {
+    return;
   }
 
-  const result = colord(color);
-  if (result.isValid()) {
-    const value = result.toRgb();
+  const css = csstree.generate(node).trim();
+  if (css.length === 0) {
+    return;
+  }
 
-    return {
-      type: "rgb",
-      r: value.r,
-      g: value.g,
-      b: value.b,
-      alpha: value.a,
-    };
+  const parsed = parseCssValue("color", css);
+  if (parsed.type === "rgb" || parsed.type === "var") {
+    return parsed;
+  }
+  if (parsed.type === "keyword") {
+    const color = colord(parsed.value);
+    if (color.isValid()) {
+      const { r, g, b, a } = color.toRgb();
+      return {
+        type: "rgb",
+        r,
+        g,
+        b,
+        alpha: a,
+      };
+    }
   }
 };
+
+const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
 
 export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
   const direction = parsed?.angle || parsed?.sideOrCorner;

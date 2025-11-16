@@ -15,7 +15,7 @@ const {
   fillMissingStopPositions,
   ensureGradientHasStops,
   clampStopIndex,
-  styleValueToRgb,
+  styleValueToColor,
 } = __testing__;
 
 describe("normalizeLinearGradientInput", () => {
@@ -306,32 +306,26 @@ describe("clampStopIndex", () => {
   });
 });
 
-describe("styleValueToRgb", () => {
+describe("styleValueToColor", () => {
   type IntermediateColorValue = { type: "intermediate"; value: string };
 
   test("returns undefined when style value missing", () => {
-    expect(styleValueToRgb(undefined)).toBeUndefined();
+    expect(styleValueToColor(undefined)).toBeUndefined();
   });
 
   test("returns rgb value when style already rgb", () => {
     const style: RgbValue = { type: "rgb", r: 1, g: 2, b: 3, alpha: 0.5 };
-    expect(styleValueToRgb(style)).toBe(style);
+    expect(styleValueToColor(style)).toBe(style);
   });
 
   test("parses keyword colors", () => {
     const style: StyleValue = { type: "keyword", value: "red" };
-    expect(styleValueToRgb(style)).toEqual({
-      type: "rgb",
-      r: 255,
-      g: 0,
-      b: 0,
-      alpha: 1,
-    });
+    expect(styleValueToColor(style)).toEqual({ type: "keyword", value: "red" });
   });
 
   test("returns undefined when keyword is not recognized", () => {
     const style: StyleValue = { type: "keyword", value: "not-a-color" };
-    expect(styleValueToRgb(style)).toBeUndefined();
+    expect(styleValueToColor(style)).toBeUndefined();
   });
 
   test("parses intermediate string colors", () => {
@@ -339,7 +333,7 @@ describe("styleValueToRgb", () => {
       type: "intermediate",
       value: "#0000ff",
     };
-    expect(styleValueToRgb(style)).toEqual({
+    expect(styleValueToColor(style)).toEqual({
       type: "rgb",
       r: 0,
       g: 0,
@@ -353,12 +347,12 @@ describe("styleValueToRgb", () => {
       type: "intermediate",
       value: "#ggg",
     };
-    expect(styleValueToRgb(style)).toBeUndefined();
+    expect(styleValueToColor(style)).toBeUndefined();
   });
 
   test("parses invalid style when value is valid color string", () => {
     const style: StyleValue = { type: "invalid", value: "rgb(10 20 30)" };
-    expect(styleValueToRgb(style)).toEqual({
+    expect(styleValueToColor(style)).toEqual({
       type: "rgb",
       r: 10,
       g: 20,
@@ -369,7 +363,7 @@ describe("styleValueToRgb", () => {
 
   test("returns undefined for invalid style when value is not a color", () => {
     const style: StyleValue = { type: "invalid", value: "oops" };
-    expect(styleValueToRgb(style)).toBeUndefined();
+    expect(styleValueToColor(style)).toBeUndefined();
   });
 
   test("parses unparsed color strings", () => {
@@ -377,7 +371,7 @@ describe("styleValueToRgb", () => {
       type: "unparsed",
       value: "hsl(180 100% 50%)",
     };
-    expect(styleValueToRgb(style)).toEqual({
+    expect(styleValueToColor(style)).toEqual({
       type: "rgb",
       r: 0,
       g: 255,
@@ -386,13 +380,24 @@ describe("styleValueToRgb", () => {
     });
   });
 
-  test("returns undefined for unsupported values", () => {
+  test("returns var values", () => {
     const variable: StyleValue = { type: "var", value: "--color" };
-    expect(styleValueToRgb(variable)).toBeUndefined();
+    expect(styleValueToColor(variable)).toEqual(variable);
   });
 
-  test("returns undefined when fallback conversion fails", () => {
+  test("parses intermediate string var values", () => {
+    const style: IntermediateColorValue = {
+      type: "intermediate",
+      value: "var(--accent-color)",
+    };
+    expect(styleValueToColor(style)).toEqual({
+      type: "var",
+      value: "accent-color",
+    });
+  });
+
+  test("returns undefined for unsupported values", () => {
     const style: StyleValue = { type: "unit", unit: "%", value: 25 };
-    expect(styleValueToRgb(style)).toBeUndefined();
+    expect(styleValueToColor(style)).toBeUndefined();
   });
 });

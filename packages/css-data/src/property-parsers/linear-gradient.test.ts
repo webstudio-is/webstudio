@@ -134,4 +134,106 @@ describe("parses linear-gradient", () => {
       "linear-gradient(rgba(255, 0, 0, 1), rgba(0, 255, 0, 1), rgba(0, 0, 255, 1))"
     );
   });
+
+  test("parses linear-gradient with css variables", () => {
+    expect(
+      parseLinearGradient("linear-gradient(var(--brand-color), blue)")
+    ).toEqual({
+      angle: undefined,
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: {
+            type: "var",
+            value: "brand-color",
+          },
+          hint: undefined,
+          position: undefined,
+        },
+        {
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+          hint: undefined,
+          position: undefined,
+        },
+      ],
+    });
+  });
+
+  test("parses linear-gradient with css variables and fallbacks", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(var(--heading-color, #ff0000) 25% 50%, yellow)"
+      )
+    ).toEqual({
+      angle: undefined,
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: {
+            type: "var",
+            value: "heading-color",
+            fallback: { type: "unparsed", value: "#ff0000" },
+          },
+          position: { type: "unit", unit: "%", value: 25 },
+          hint: { type: "unit", unit: "%", value: 50 },
+        },
+        {
+          color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+          hint: undefined,
+          position: undefined,
+        },
+      ],
+    });
+  });
+
+  test("parses linear-gradient with keyword and variable mix", () => {
+    const parsed = parseLinearGradient(
+      "linear-gradient(to bottom, green 0%, var(--accent))"
+    );
+    expect(parsed).toEqual({
+      angle: undefined,
+      sideOrCorner: { type: "keyword", value: "to bottom" },
+      stops: [
+        {
+          color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
+          hint: undefined,
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "var", value: "accent" },
+          hint: undefined,
+          position: undefined,
+        },
+      ],
+    });
+    if (parsed) {
+      expect(reconstructLinearGradient(parsed)).toEqual(
+        "linear-gradient(to bottom, rgba(0, 128, 0, 1) 0%, var(--accent))"
+      );
+    }
+  });
+
+  test("returns undefined for invalid gradient input", () => {
+    expect(parseLinearGradient("linear-gradient(var())")).toBeUndefined();
+    expect(parseLinearGradient("linear-gradient(, , ,)")).toBeUndefined();
+  });
+
+  test("parses linear-gradient with radian angle", () => {
+    expect(parseLinearGradient("linear-gradient(0.5rad, red, blue)")).toEqual({
+      angle: { type: "unit", unit: "rad", value: 0.5 },
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+          hint: undefined,
+          position: undefined,
+        },
+        {
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+          hint: undefined,
+          position: undefined,
+        },
+      ],
+    });
+  });
 });

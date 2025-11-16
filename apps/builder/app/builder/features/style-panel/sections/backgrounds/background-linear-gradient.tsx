@@ -46,12 +46,8 @@ import {
   CssFragmentEditor,
   CssFragmentEditorContent,
 } from "../../shared/css-fragment";
-import { colord, extend } from "colord";
-import namesPlugin from "colord/plugins/names";
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-
-extend([namesPlugin]);
 
 type NormalizedLinearGradient = {
   normalizedGradientString: string;
@@ -274,9 +270,27 @@ const fallbackStopColor: RgbValue = {
   alpha: 1,
 };
 
+const cloneGradientColor = (
+  color: GradientStop["color"] | undefined
+): GradientStop["color"] | undefined => {
+  if (color === undefined) {
+    return;
+  }
+
+  if (color.type === "var") {
+    const fallback = color.fallback;
+    return {
+      ...color,
+      fallback: fallback === undefined ? undefined : { ...fallback },
+    };
+  }
+
+  return { ...color };
+};
+
 const cloneGradientStop = (stop: GradientStop): GradientStop => ({
   ...stop,
-  color: stop.color === undefined ? undefined : { ...stop.color },
+  color: cloneGradientColor(stop.color),
   position: stop.position === undefined ? undefined : { ...stop.position },
   hint: stop.hint === undefined ? undefined : { ...stop.hint },
 });
@@ -303,18 +317,6 @@ const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
 const clampStopIndex = (index: number, gradient: ParsedGradient) =>
   clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
 
-type RgbComponents = Omit<RgbValue, "type" | "alpha"> & {
-  a: RgbValue["alpha"];
-};
-
-const colordToRgbValue = (components: RgbComponents): RgbValue => ({
-  type: "rgb",
-  r: components.r,
-  g: components.g,
-  b: components.b,
-  alpha: components.a,
-});
-
 type IntermediateValue = {
   type: "intermediate";
   value: string;
@@ -328,42 +330,45 @@ type IntermediateColorValue = {
   value: string;
 };
 
-const styleValueToRgb = (
+const parseColorString = (value: string): GradientStop["color"] | undefined => {
+  const parsed = parseCssValue("color", value);
+  if (
+    parsed.type === "rgb" ||
+    parsed.type === "keyword" ||
+    parsed.type === "var"
+  ) {
+    return parsed;
+  }
+};
+
+const styleValueToColor = (
   styleValue: StyleValue | IntermediateColorValue | undefined
-): RgbValue | undefined => {
+): GradientStop["color"] | undefined => {
   if (styleValue === undefined) {
     return;
   }
 
   if (styleValue.type === "intermediate") {
-    const parsed = colord(styleValue.value);
-    if (parsed.isValid()) {
-      return colordToRgbValue(parsed.toRgb());
-    }
-    return;
+    return parseColorString(styleValue.value);
   }
 
   if (styleValue.type === "rgb") {
     return styleValue;
   }
 
-  if (styleValue.type === "keyword" || styleValue.type === "invalid") {
-    const parsed = colord(styleValue.value);
-    if (parsed.isValid()) {
-      return colordToRgbValue(parsed.toRgb());
-    }
-    return;
-  }
-
   if (styleValue.type === "var") {
-    // Variables are not supported for gradient stops editing.
-    return;
+    return styleValue;
   }
 
-  const parsed = colord(toValue(styleValue));
-  if (parsed.isValid()) {
-    return colordToRgbValue(parsed.toRgb());
+  if (styleValue.type === "keyword") {
+    return parseColorString(styleValue.value);
   }
+
+  if (styleValue.type === "invalid") {
+    return parseColorString(styleValue.value);
+  }
+
+  return parseColorString(toValue(styleValue));
 };
 
 export const BackgroundLinearGradient = ({ index }: { index: number }) => {
@@ -519,7 +524,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   );
 
   const handleStopColorChange = useCallback(
-    (color: RgbValue, options?: { commit?: boolean }) => {
+    (color: GradientStop["color"], options?: { commit?: boolean }) => {
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const stops = gradient.stops.map((stop, index) =>
         index === stopIndex ? { ...stop, color } : stop
@@ -797,9 +802,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       styleValue: StyleValue | IntermediateColorValue | undefined,
       options?: { commit?: boolean }
     ) => {
-      const rgb = styleValueToRgb(styleValue);
-      if (rgb) {
-        handleStopColorChange(rgb, options);
+      const nextColor = styleValueToColor(styleValue);
+      if (nextColor) {
+        handleStopColorChange(nextColor, options);
       }
     },
     [handleStopColorChange]
@@ -1086,5 +1091,5 @@ export const __testing__ = {
   fillMissingStopPositions,
   ensureGradientHasStops,
   clampStopIndex,
-  styleValueToRgb,
+  styleValueToColor,
 };
