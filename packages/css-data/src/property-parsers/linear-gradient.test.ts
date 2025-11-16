@@ -135,6 +135,18 @@ describe("parses linear-gradient", () => {
     );
   });
 
+  test("parses repeating-linear-gradient", () => {
+    const parsed = parseLinearGradient("repeating-linear-gradient(red, blue)");
+    if (parsed === undefined) {
+      throw new Error("parsed is undefined");
+    }
+
+    expect(parsed.repeating).toBe(true);
+    expect(reconstructLinearGradient(parsed)).toEqual(
+      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+
   test("parses linear-gradient with css variables", () => {
     expect(
       parseLinearGradient("linear-gradient(var(--brand-color), blue)")
@@ -311,6 +323,17 @@ describe("parses linear-gradient", () => {
   test("returns undefined for invalid gradient input", () => {
     expect(parseLinearGradient("linear-gradient(var())")).toBeUndefined();
     expect(parseLinearGradient("linear-gradient(, , ,)")).toBeUndefined();
+  });
+
+  test("reconstructLinearGradient applies repeating override option", () => {
+    const parsed = parseLinearGradient("linear-gradient(red, blue)");
+    if (parsed === undefined) {
+      throw new Error("parsed is undefined");
+    }
+
+    expect(reconstructLinearGradient(parsed, { repeating: true })).toEqual(
+      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
   });
 
   test("parses linear-gradient with radian angle", () => {

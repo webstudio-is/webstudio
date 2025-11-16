@@ -26,6 +26,7 @@ export type ParsedGradient = {
   angle?: UnitValue;
   sideOrCorner?: KeywordValue;
   stops: GradientStop[];
+  repeating?: boolean;
 };
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
@@ -43,7 +44,13 @@ const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
 export const parseLinearGradient = (
   gradient: string
 ): ParsedGradient | undefined => {
-  const ast = cssTryParseValue(gradient);
+  const normalizedGradient = gradient.replace(
+    /^(\s*)repeating-linear-gradient/i,
+    (_match, leadingWhitespace: string) => `${leadingWhitespace}linear-gradient`
+  );
+  const isRepeating = normalizedGradient !== gradient;
+
+  const ast = cssTryParseValue(normalizedGradient);
   if (ast === undefined) {
     return;
   }
@@ -52,7 +59,7 @@ export const parseLinearGradient = (
     "linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )",
     ast
   );
-  const containsVar = gradient.includes("var(");
+  const containsVar = normalizedGradient.includes("var(");
   if (match.matched === null && containsVar === false) {
     return;
   }
@@ -123,7 +130,12 @@ export const parseLinearGradient = (
     return;
   }
 
-  return { angle, sideOrCorner, stops };
+  const parsedGradient: ParsedGradient = { angle, sideOrCorner, stops };
+  if (isRepeating) {
+    parsedGradient.repeating = true;
+  }
+
+  return parsedGradient;
 };
 
 const mapLengthPercentageOrVar = (
@@ -206,7 +218,10 @@ const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
 
 const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
 
-export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
+export const reconstructLinearGradient = (
+  parsed: ParsedGradient,
+  options?: { repeating?: boolean }
+): string => {
   const direction = parsed?.angle || parsed?.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {
@@ -221,5 +236,10 @@ export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
     })
     .join(", ");
 
-  return `linear-gradient(${direction ? toValue(direction) + ", " : ""}${stops})`;
+  const isRepeating = options?.repeating ?? parsed.repeating === true;
+  const functionName = isRepeating
+    ? "repeating-linear-gradient"
+    : "linear-gradient";
+
+  return `${functionName}(${direction ? toValue(direction) + ", " : ""}${stops})`;
 };

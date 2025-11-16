@@ -105,8 +105,9 @@ export const GradientPicker = (props: GradientPickerProps) => {
       angle: gradient.angle,
       sideOrCorner: gradient.sideOrCorner,
       stops: stopsValue,
+      repeating: gradient.repeating,
     }),
-    [gradient.angle, gradient.sideOrCorner]
+    [gradient.angle, gradient.sideOrCorner, gradient.repeating]
   );
 
   useEffect(() => {
@@ -143,11 +144,15 @@ export const GradientPicker = (props: GradientPickerProps) => {
         : undefined
     )
     .filter((item): item is number => item !== undefined);
-  const background = reconstructLinearGradient({
-    stops,
-    sideOrCorner: gradient.sideOrCorner,
-    angle: defaultAngle,
-  });
+  const background = reconstructLinearGradient(
+    {
+      stops,
+      sideOrCorner: gradient.sideOrCorner,
+      angle: defaultAngle,
+      repeating: gradient.repeating,
+    },
+    { repeating: gradient.repeating }
+  );
 
   const updateStops = useCallback(
     (

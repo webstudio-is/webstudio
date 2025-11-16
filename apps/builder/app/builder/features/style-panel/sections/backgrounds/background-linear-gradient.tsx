@@ -353,6 +353,133 @@ const resolveGradientForPicker = (
   };
 };
 
+const removeHintOverride = (
+  overrides: Map<number, PercentUnitValue>,
+  stopIndex: number
+): Map<number, PercentUnitValue> => {
+  if (overrides.has(stopIndex) === false) {
+    return overrides;
+  }
+  const next = new Map(overrides);
+  next.delete(stopIndex);
+  return next;
+};
+
+const setHintOverride = (
+  overrides: Map<number, PercentUnitValue>,
+  stopIndex: number,
+  override: PercentUnitValue
+): Map<number, PercentUnitValue> => {
+  const existing = overrides.get(stopIndex);
+  if (existing !== undefined) {
+    if (existing === override) {
+      return overrides;
+    }
+    if (
+      existing.type === override.type &&
+      existing.unit === override.unit &&
+      existing.value === override.value
+    ) {
+      return overrides;
+    }
+  }
+  const next = new Map(overrides);
+  next.set(stopIndex, override);
+  return next;
+};
+
+const pruneHintOverrides = (
+  overrides: Map<number, PercentUnitValue>,
+  stopCount: number
+): Map<number, PercentUnitValue> => {
+  if (overrides.size === 0) {
+    return overrides;
+  }
+  let changed = false;
+  const next = new Map(overrides);
+  for (const [index] of overrides) {
+    if (index >= stopCount) {
+      next.delete(index);
+      changed = true;
+    }
+  }
+  return changed ? next : overrides;
+};
+
+type ReverseStopsResolution =
+  | {
+      type: "apply";
+      gradient: ParsedGradient;
+      selectedStopIndex: number;
+    }
+  | { type: "none" };
+
+const resolveReverseStops = (
+  gradient: ParsedGradient,
+  selectedStopIndex: number
+): ReverseStopsResolution => {
+  if (gradient.stops.length <= 1) {
+    return { type: "none" } satisfies ReverseStopsResolution;
+  }
+  const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+  const reversedStops = [...gradient.stops].reverse();
+  const nextStops = reversedStops.map((stop) => {
+    let position = stop.position;
+    if (position?.type === "unit" && position.unit === "%") {
+      position = {
+        ...position,
+        value: clamp(100 - position.value, 0, 100),
+      } as PercentUnitValue;
+    }
+    return { ...stop, position } satisfies GradientStop;
+  });
+  const nextGradient: ParsedGradient = { ...gradient, stops: nextStops };
+  const nextSelectedIndex = gradient.stops.length - 1 - stopIndex;
+  return {
+    type: "apply",
+    gradient: nextGradient,
+    selectedStopIndex: nextSelectedIndex,
+  } satisfies ReverseStopsResolution;
+};
+
+type StopPositionUpdateResolution =
+  | {
+      type: "apply";
+      position: GradientStop["position"];
+      clearHintOverrides: boolean;
+    }
+  | { type: "none" };
+
+type StopPositionUpdateHelpers = {
+  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
+  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
+};
+
+const resolveStopPositionUpdate = (
+  styleValue: StyleValue,
+  helpers: StopPositionUpdateHelpers
+): StopPositionUpdateResolution => {
+  if (styleValue.type === "var") {
+    return {
+      type: "apply",
+      position: cloneGradientStopValue(styleValue as GradientStop["position"]),
+      clearHintOverrides: true,
+    } satisfies StopPositionUpdateResolution;
+  }
+
+  const percentUnit = helpers.getPercentUnit(styleValue);
+  if (percentUnit === undefined) {
+    return { type: "none" } satisfies StopPositionUpdateResolution;
+  }
+
+  const normalized = helpers.clampPercentUnit(percentUnit);
+  return {
+    type: "apply",
+    position: normalized,
+    clearHintOverrides: true,
+  } satisfies StopPositionUpdateResolution;
+};
+
 type StopHintUpdateResolution =
   | {
       type: "apply";
@@ -496,16 +623,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   }, [initialIsRepeating]);
 
   const formatGradientValue = useCallback(
-    (nextGradient: ParsedGradient, repeating = isRepeating) => {
-      const linearGradient = reconstructLinearGradient(nextGradient);
-      if (repeating) {
-        return linearGradient.replace(
-          /^linear-gradient/i,
-          "repeating-linear-gradient"
-        );
-      }
-      return linearGradient;
-    },
+    (nextGradient: ParsedGradient, repeating = isRepeating) =>
+      reconstructLinearGradient(nextGradient, { repeating }),
     [isRepeating]
   );
   const handleGradientSave = useCallback(
@@ -542,18 +661,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   useEffect(() => {
     setHintOverrides((previous) => {
-      if (previous.size === 0) {
-        return previous;
-      }
-      let changed = false;
-      const next = new Map(previous);
-      for (const [index] of previous) {
-        if (index >= gradient.stops.length) {
-          next.delete(index);
-          changed = true;
-        }
-      }
-      return changed ? next : previous;
+      return pruneHintOverrides(previous, gradient.stops.length);
     });
   }, [gradient]);
 
@@ -754,61 +862,25 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+      const resolution = resolveStopPositionUpdate(styleValue, {
+        getPercentUnit,
+        clampPercentUnit,
+      });
 
-      if (styleValue.type === "var") {
-        const nextPosition: GradientStop["position"] = {
-          ...styleValue,
-          fallback:
-            styleValue.fallback === undefined
-              ? undefined
-              : { ...styleValue.fallback },
-        };
-        updateSelectedStop(
-          (stop) => ({
-            ...stop,
-            position: nextPosition,
-          }),
-          isEphemeral
-        );
-
-        if (isEphemeral === false) {
-          setHintOverrides((previous) => {
-            if (previous.size === 0 || previous.has(stopIndex) === false) {
-              return previous;
-            }
-            const next = new Map(previous);
-            next.delete(stopIndex);
-            return next;
-          });
-        }
+      if (resolution.type === "none") {
         return;
       }
 
-      const percentUnit = getPercentUnit(styleValue);
-      if (percentUnit === undefined) {
-        return;
-      }
-      const nextPosition = clampPercentUnit(percentUnit);
       updateSelectedStop(
         (stop) => ({
           ...stop,
-          position: nextPosition,
+          position: resolution.position,
         }),
         isEphemeral
       );
 
-      if (!isEphemeral) {
-        setHintOverrides((previous) => {
-          if (previous.size === 0) {
-            return previous;
-          }
-          if (previous.has(stopIndex) === false) {
-            return previous;
-          }
-          const next = new Map(previous);
-          next.delete(stopIndex);
-          return next;
-        });
+      if (!isEphemeral && resolution.clearHintOverrides) {
+        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
     [
@@ -857,24 +929,15 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
 
       if (resolution.clearOverride) {
-        setHintOverrides((previous) => {
-          if (previous.has(stopIndex) === false) {
-            return previous;
-          }
-          const next = new Map(previous);
-          next.delete(stopIndex);
-          return next;
-        });
+        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
         return;
       }
 
       const override = resolution.override;
       if (override !== undefined) {
-        setHintOverrides((previous) => {
-          const next = new Map(previous);
-          next.set(stopIndex, override);
-          return next;
-        });
+        setHintOverrides((previous) =>
+          setHintOverride(previous, stopIndex, override)
+        );
       }
     },
     [
@@ -895,14 +958,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         return { ...rest };
       }, isEphemeral);
       if (isEphemeral === false) {
-        setHintOverrides((previous) => {
-          if (previous.has(stopIndex) === false) {
-            return previous;
-          }
-          const next = new Map(previous);
-          next.delete(stopIndex);
-          return next;
-        });
+        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
     [gradient, selectedStopIndex, updateSelectedStop]
@@ -950,24 +1006,12 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   );
 
   const handleReverseStops = useCallback(() => {
-    if (gradient.stops.length <= 1) {
+    const resolution = resolveReverseStops(gradient, selectedStopIndex);
+    if (resolution.type === "none") {
       return;
     }
-    const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-    const reversedStops = [...gradient.stops].reverse();
-    const nextStops = reversedStops.map((stop) => {
-      let position = stop.position;
-      if (position?.type === "unit" && position.unit === "%") {
-        position = {
-          ...position,
-          value: clamp(100 - position.value, 0, 100),
-        };
-      }
-      return { ...stop, position };
-    });
-    const nextGradient = { ...gradient, stops: nextStops };
-    setSelectedStopIndex(gradient.stops.length - 1 - stopIndex);
-    commitGradient(nextGradient);
+    setSelectedStopIndex(resolution.selectedStopIndex);
+    commitGradient(resolution.gradient);
   }, [commitGradient, gradient, selectedStopIndex]);
 
   const handleChange = (value: string) => {
@@ -1215,6 +1259,11 @@ export const __testing__ = {
   sideOrCornerToAngle,
   fillMissingStopPositions,
   resolveGradientForPicker,
+  removeHintOverride,
+  setHintOverride,
+  pruneHintOverrides,
+  resolveReverseStops,
+  resolveStopPositionUpdate,
   ensureGradientHasStops,
   clampStopIndex,
   styleValueToColor,

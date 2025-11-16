@@ -18,6 +18,11 @@ const {
   styleValueToColor,
   resolveStopHintUpdate,
   resolveGradientForPicker,
+  removeHintOverride,
+  setHintOverride,
+  pruneHintOverrides,
+  resolveStopPositionUpdate,
+  resolveReverseStops,
 } = __testing__;
 
 type PercentUnitValue = UnitValue & { unit: "%" };
@@ -498,6 +503,144 @@ describe("resolveStopHintUpdate", () => {
   });
 });
 
+describe("resolveStopPositionUpdate", () => {
+  test("returns cloned var position and requests override clear", () => {
+    const fallback: StyleValue = { type: "unparsed", value: "30%" };
+    const styleValue: StyleValue = {
+      type: "var",
+      value: "pos",
+      fallback,
+    };
+
+    const result = resolveStopPositionUpdate(styleValue, {
+      getPercentUnit: () => undefined,
+      clampPercentUnit: (value) => value,
+    });
+
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    expect(result.clearHintOverrides).toBe(true);
+    expect(result.position).toEqual({
+      type: "var",
+      value: "pos",
+      fallback: { type: "unparsed", value: "30%" },
+    });
+    if (result.position?.type === "var") {
+      expect(result.position).not.toBe(styleValue);
+      expect(result.position.fallback).not.toBe(styleValue.fallback);
+    }
+  });
+
+  test("normalizes percent unit and requests override clear", () => {
+    const normalized: PercentUnitValue = {
+      type: "unit",
+      unit: "%",
+      value: 55,
+    };
+
+    const result = resolveStopPositionUpdate(
+      { type: "unit", unit: "%", value: 120 },
+      {
+        getPercentUnit: () => ({ type: "unit", unit: "%", value: 120 }),
+        clampPercentUnit: () => normalized,
+      }
+    );
+
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    expect(result.position).toBe(normalized);
+    expect(result.clearHintOverrides).toBe(true);
+  });
+
+  test("returns none when value unsupported", () => {
+    const result = resolveStopPositionUpdate(
+      { type: "keyword", value: "auto" },
+      {
+        getPercentUnit: () => undefined,
+        clampPercentUnit: (value) => value,
+      }
+    );
+
+    expect(result).toEqual({ type: "none" });
+  });
+});
+
+describe("resolveReverseStops", () => {
+  test("returns none when gradient has single stop", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+      ],
+    };
+
+    const result = resolveReverseStops(gradient, 0);
+    expect(result).toEqual({ type: "none" });
+  });
+
+  test("reverses stops and mirrors percent positions", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 40 },
+        },
+        {
+          color: { type: "rgb", r: 100, g: 100, b: 100, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 90 },
+        },
+      ],
+    };
+
+    const result = resolveReverseStops(gradient, 1);
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    expect(result.selectedStopIndex).toBe(1);
+    const positions = result.gradient.stops.map((stop) => stop.position);
+    expect(positions).toEqual([
+      { type: "unit", unit: "%", value: 10 },
+      { type: "unit", unit: "%", value: 60 },
+      { type: "unit", unit: "%", value: 100 },
+    ]);
+  });
+
+  test("preserves non-percent positions when reversing", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: { type: "unit", unit: "px", value: 10 },
+        },
+        {
+          color: undefined,
+          position: { type: "var", value: "progress" },
+        },
+      ],
+    };
+
+    const result = resolveReverseStops(gradient, 0);
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    const [first, second] = result.gradient.stops;
+    expect(first.position).toEqual({ type: "var", value: "progress" });
+    expect(second.position).toEqual({ type: "unit", unit: "px", value: 10 });
+  });
+});
+
 describe("resolveGradientForPicker", () => {
   test("fills missing stop positions without overrides", () => {
     const gradient: ParsedGradient = {
@@ -564,5 +707,63 @@ describe("resolveGradientForPicker", () => {
       unit: "%",
       value: 60,
     });
+  });
+});
+
+describe("hint override helpers", () => {
+  const makeOverride = (value: number): PercentUnitValue => ({
+    type: "unit",
+    unit: "%",
+    value,
+  });
+
+  test("removeHintOverride returns same map when index missing", () => {
+    const overrides = new Map<number, PercentUnitValue>();
+    const result = removeHintOverride(overrides, 1);
+    expect(result).toBe(overrides);
+  });
+
+  test("removeHintOverride removes matching index", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [1, makeOverride(10)],
+    ]);
+    const result = removeHintOverride(overrides, 1);
+    expect(result).not.toBe(overrides);
+    expect(result.size).toBe(0);
+  });
+
+  test("setHintOverride adds new override without mutating original map", () => {
+    const overrides = new Map<number, PercentUnitValue>();
+    const override = makeOverride(40);
+    const result = setHintOverride(overrides, 2, override);
+    expect(result).not.toBe(overrides);
+    expect(result.get(2)).toBe(override);
+    expect(overrides.size).toBe(0);
+  });
+
+  test("setHintOverride returns same map when override unchanged", () => {
+    const override = makeOverride(60);
+    const overrides = new Map<number, PercentUnitValue>([[3, override]]);
+    const result = setHintOverride(overrides, 3, { ...override });
+    expect(result).toBe(overrides);
+  });
+
+  test("pruneHintOverrides removes indexes beyond stop count", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [0, makeOverride(10)],
+      [5, makeOverride(90)],
+    ]);
+    const result = pruneHintOverrides(overrides, 2);
+    expect(result).not.toBe(overrides);
+    expect([...result.keys()]).toEqual([0]);
+  });
+
+  test("pruneHintOverrides returns same map when nothing pruned", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [0, makeOverride(10)],
+      [1, makeOverride(20)],
+    ]);
+    const result = pruneHintOverrides(overrides, 3);
+    expect(result).toBe(overrides);
   });
 });
