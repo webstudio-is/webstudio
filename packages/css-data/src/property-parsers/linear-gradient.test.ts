@@ -213,6 +213,101 @@ describe("parses linear-gradient", () => {
     }
   });
 
+  test("parses linear-gradient with css variable positions", () => {
+    const parsed = parseLinearGradient(
+      "linear-gradient(rgba(255, 0, 0, 1) var(--start, 10%), blue var(--end))"
+    );
+    expect(parsed).toEqual({
+      angle: undefined,
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+          hint: undefined,
+          position: {
+            type: "var",
+            value: "start",
+            fallback: { type: "unparsed", value: "10%" },
+          },
+        },
+        {
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+          hint: undefined,
+          position: { type: "var", value: "end" },
+        },
+      ],
+    });
+    if (parsed) {
+      expect(reconstructLinearGradient(parsed)).toEqual(
+        "linear-gradient(rgba(255, 0, 0, 1) var(--start, 10%), rgba(0, 0, 255, 1) var(--end))"
+      );
+    }
+  });
+
+  test("parses linear-gradient with css variable hints", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(red 0% var(--hint-position, 20%), blue)"
+      )
+    ).toEqual({
+      angle: undefined,
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+          position: { type: "unit", unit: "%", value: 0 },
+          hint: {
+            type: "var",
+            value: "hint-position",
+            fallback: { type: "unparsed", value: "20%" },
+          },
+        },
+        {
+          color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+          position: undefined,
+          hint: undefined,
+        },
+      ],
+    });
+  });
+
+  test("parses linear-gradient with variable colors, positions, and hints", () => {
+    const gradient =
+      "linear-gradient(var(--primary, red) var(--start, 5%) var(--hint-start, 10%), var(--secondary) var(--end) var(--hint-end))";
+    const parsed = parseLinearGradient(gradient);
+    expect(parsed).toEqual({
+      angle: undefined,
+      sideOrCorner: undefined,
+      stops: [
+        {
+          color: {
+            type: "var",
+            value: "primary",
+            fallback: { type: "unparsed", value: "red" },
+          },
+          position: {
+            type: "var",
+            value: "start",
+            fallback: { type: "unparsed", value: "5%" },
+          },
+          hint: {
+            type: "var",
+            value: "hint-start",
+            fallback: { type: "unparsed", value: "10%" },
+          },
+        },
+        {
+          color: { type: "var", value: "secondary" },
+          position: { type: "var", value: "end" },
+          hint: { type: "var", value: "hint-end" },
+        },
+      ],
+    });
+    if (parsed) {
+      expect(reconstructLinearGradient(parsed)).toEqual(gradient);
+    }
+  });
+
   test("returns undefined for invalid gradient input", () => {
     expect(parseLinearGradient("linear-gradient(var())")).toBeUndefined();
     expect(parseLinearGradient("linear-gradient(, , ,)")).toBeUndefined();

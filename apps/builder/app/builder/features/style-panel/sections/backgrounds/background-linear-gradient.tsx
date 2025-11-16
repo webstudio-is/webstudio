@@ -54,6 +54,8 @@ type NormalizedLinearGradient = {
   initialIsRepeating: boolean;
 };
 
+type PercentUnitValue = UnitValue & { unit: "%" };
+
 const normalizeLinearGradientInput = (
   gradientString: string
 ): NormalizedLinearGradient => {
@@ -166,15 +168,19 @@ const fillMissingStopPositions = (gradient: ParsedGradient): ParsedGradient => {
     return gradient;
   }
 
-  const hasNonPercentPosition = stops.some(
-    (stop) => stop.position !== undefined && stop.position.unit !== "%"
+  const hasUnsupportedPosition = stops.some(
+    (stop) =>
+      stop.position !== undefined &&
+      (stop.position.type !== "unit" || stop.position.unit !== "%")
   );
-  if (hasNonPercentPosition) {
+  if (hasUnsupportedPosition) {
     return gradient;
   }
 
   const totalStops = stops.length;
-  const values = stops.map((stop) => stop.position?.value);
+  const values = stops.map((stop) =>
+    stop.position?.type === "unit" ? stop.position.value : undefined
+  );
   const nextValues = [...values];
   const definedCount = nextValues.filter(
     (value): value is number => value !== undefined
@@ -288,12 +294,72 @@ const cloneGradientColor = (
   return { ...color };
 };
 
+const cloneGradientStopValue = <
+  Value extends GradientStop["position"] | GradientStop["hint"],
+>(
+  value: Value
+): Value => {
+  if (value === undefined) {
+    return value;
+  }
+
+  if (value.type === "var") {
+    const fallback = value.fallback;
+    return {
+      ...value,
+      fallback: fallback === undefined ? undefined : { ...fallback },
+    } as Value;
+  }
+
+  return { ...value } as Value;
+};
+
 const cloneGradientStop = (stop: GradientStop): GradientStop => ({
   ...stop,
   color: cloneGradientColor(stop.color),
-  position: stop.position === undefined ? undefined : { ...stop.position },
-  hint: stop.hint === undefined ? undefined : { ...stop.hint },
+  position: cloneGradientStopValue(stop.position),
+  hint: cloneGradientStopValue(stop.hint),
 });
+
+type StopHintUpdateResolution =
+  | {
+      type: "apply";
+      hint: GradientStop["hint"];
+      clearOverride: boolean;
+      override?: PercentUnitValue;
+    }
+  | { type: "none" };
+
+type StopHintUpdateHelpers = {
+  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
+  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
+};
+
+const resolveStopHintUpdate = (
+  styleValue: StyleValue,
+  helpers: StopHintUpdateHelpers
+): StopHintUpdateResolution => {
+  if (styleValue.type === "var") {
+    return {
+      type: "apply",
+      hint: cloneGradientStopValue(styleValue as GradientStop["hint"]),
+      clearOverride: true,
+    };
+  }
+
+  const percentUnit = helpers.getPercentUnit(styleValue);
+  if (percentUnit === undefined) {
+    return { type: "none" };
+  }
+
+  const normalized = helpers.clampPercentUnit(percentUnit);
+  return {
+    type: "apply",
+    hint: normalized,
+    override: normalized,
+    clearOverride: false,
+  };
+};
 
 const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
   const stops =
@@ -546,7 +612,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
   const selectedStopHintPlaceholder =
     selectedStopHintValue === undefined &&
-    selectedStopForDisplay?.position !== undefined
+    selectedStopForDisplay?.position?.type === "unit" &&
+    selectedStopForDisplay.position.unit === "%"
       ? `${selectedStopForDisplay.position.value}%`
       : undefined;
   const selectedStopColor = selectedStop?.color ?? fallbackStopColor;
@@ -572,7 +639,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   );
 
   type AngleUnitValue = UnitValue & { unit: AngleUnit };
-  type PercentUnitValue = UnitValue & { unit: "%" };
 
   const getAngleUnit = useCallback((styleValue: StyleValue | undefined) => {
     if (styleValue === undefined) {
@@ -678,13 +744,43 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleStopPositionUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+
+      if (styleValue.type === "var") {
+        const nextPosition: GradientStop["position"] = {
+          ...styleValue,
+          fallback:
+            styleValue.fallback === undefined
+              ? undefined
+              : { ...styleValue.fallback },
+        };
+        updateSelectedStop(
+          (stop) => ({
+            ...stop,
+            position: nextPosition,
+          }),
+          isEphemeral
+        );
+
+        if (isEphemeral === false) {
+          setHintOverrides((previous) => {
+            if (previous.size === 0 || previous.has(stopIndex) === false) {
+              return previous;
+            }
+            const next = new Map(previous);
+            next.delete(stopIndex);
+            return next;
+          });
+        }
+        return;
+      }
+
       const percentUnit = getPercentUnit(styleValue);
       if (percentUnit === undefined) {
         return;
       }
       const nextPosition = clampPercentUnit(percentUnit);
-      const isEphemeral = options?.isEphemeral === true;
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       updateSelectedStop(
         (stop) => ({
           ...stop,
@@ -729,25 +825,46 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleStopHintUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const percentUnit = getPercentUnit(styleValue);
-      if (percentUnit === undefined) {
-        return;
-      }
-      const nextHint = clampPercentUnit(percentUnit);
       const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+      const resolution = resolveStopHintUpdate(styleValue, {
+        getPercentUnit,
+        clampPercentUnit,
+      });
+
+      if (resolution.type === "none") {
+        return;
+      }
+
       updateSelectedStop(
         (stop) => ({
           ...stop,
-          hint: nextHint,
+          hint: resolution.hint,
         }),
         isEphemeral
       );
 
-      if (isEphemeral === false) {
+      if (isEphemeral) {
+        return;
+      }
+
+      if (resolution.clearOverride) {
+        setHintOverrides((previous) => {
+          if (previous.has(stopIndex) === false) {
+            return previous;
+          }
+          const next = new Map(previous);
+          next.delete(stopIndex);
+          return next;
+        });
+        return;
+      }
+
+      const override = resolution.override;
+      if (override !== undefined) {
         setHintOverrides((previous) => {
           const next = new Map(previous);
-          next.set(stopIndex, nextHint);
+          next.set(stopIndex, override);
           return next;
         });
       }
@@ -1092,4 +1209,5 @@ export const __testing__ = {
   ensureGradientHasStops,
   clampStopIndex,
   styleValueToColor,
+  resolveStopHintUpdate,
 };

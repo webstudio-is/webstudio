@@ -16,7 +16,10 @@ const {
   ensureGradientHasStops,
   clampStopIndex,
   styleValueToColor,
+  resolveStopHintUpdate,
 } = __testing__;
+
+type PercentUnitValue = UnitValue & { unit: "%" };
 
 describe("normalizeLinearGradientInput", () => {
   test("returns string unchanged when not repeating", () => {
@@ -199,6 +202,27 @@ describe("fillMissingStopPositions", () => {
       unit: "%",
       value: 50,
     });
+  });
+
+  test("returns original gradient when positions use css variables", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: {
+            type: "var",
+            value: "start",
+            fallback: { type: "unparsed", value: "10%" },
+          },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    };
+
+    expect(fillMissingStopPositions(gradient)).toBe(gradient);
   });
 
   test("fills missing start and end positions when interior stops defined", () => {
@@ -399,5 +423,76 @@ describe("styleValueToColor", () => {
   test("returns undefined for unsupported values", () => {
     const style: StyleValue = { type: "unit", unit: "%", value: 25 };
     expect(styleValueToColor(style)).toBeUndefined();
+  });
+});
+
+describe("resolveStopHintUpdate", () => {
+  test("returns cloned var hint and requests override clear", () => {
+    const fallback: StyleValue = { type: "unparsed", value: "20%" };
+    const styleValue: StyleValue = {
+      type: "var",
+      value: "hint",
+      fallback,
+    };
+
+    const result = resolveStopHintUpdate(styleValue, {
+      getPercentUnit: () => undefined,
+      clampPercentUnit: (value) => value,
+    });
+
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    expect(result).toEqual({
+      type: "apply",
+      hint: {
+        type: "var",
+        value: "hint",
+        fallback: { type: "unparsed", value: "20%" },
+      },
+      clearOverride: true,
+    });
+    expect(result.override).toBeUndefined();
+    if (result.hint?.type === "var") {
+      expect(result.hint).not.toBe(styleValue);
+      expect(result.hint.fallback).not.toBe(styleValue.fallback);
+    }
+  });
+
+  test("normalizes percent units and returns override", () => {
+    const styleValue: StyleValue = { type: "unit", unit: "%", value: 45 };
+    const normalized: PercentUnitValue = {
+      type: "unit",
+      unit: "%",
+      value: 50,
+    };
+
+    const result = resolveStopHintUpdate(styleValue, {
+      getPercentUnit: () => ({ type: "unit", unit: "%", value: 45 }),
+      clampPercentUnit: () => normalized,
+    });
+
+    expect(result.type).toBe("apply");
+    if (result.type !== "apply") {
+      throw new Error("Expected apply result");
+    }
+    expect(result).toEqual({
+      type: "apply",
+      hint: normalized,
+      override: normalized,
+      clearOverride: false,
+    });
+  });
+
+  test("returns none when value unsupported", () => {
+    const styleValue: StyleValue = { type: "keyword", value: "auto" };
+
+    const result = resolveStopHintUpdate(styleValue, {
+      getPercentUnit: () => undefined,
+      clampPercentUnit: (value) => value,
+    });
+
+    expect(result).toEqual({ type: "none" });
   });
 });

@@ -73,23 +73,22 @@ export const parseLinearGradient = (
           (item.type === "Operator" && item.value === ",") ||
           node.children.last === item
         ) {
-          // If the gradientParts lenght is 1, then we need to check if it is angle or not.
+          // If the gradientParts length is 1, then we need to check if it is angle or not.
           // If it's angle, then the value is related to <angle> or else it is a <color-hint>.
           if (gradientParts.length === 1) {
-            if (isAngle(gradientParts[0]) === true) {
-              angle = mapPercenTageOrDimentionToUnit(gradientParts[0]);
-            }
-
-            if (
-              gradientParts[0].type === "Percentage" ||
-              (gradientParts[0].type === "Dimension" &&
-                ["deg", "grad", "rad", "turn"].includes(
-                  gradientParts[0].unit
-                ) === false)
-            ) {
-              stops.push({
-                hint: mapPercenTageOrDimentionToUnit(gradientParts[0]),
-              });
+            const singlePart = gradientParts[0];
+            if (isAngle(singlePart) === true) {
+              const mappedAngle = mapLengthPercentageOrVar(singlePart);
+              if (mappedAngle?.type === "unit") {
+                angle = mappedAngle;
+              }
+            } else if (isColorStop(singlePart) === false) {
+              const hintValue = mapLengthPercentageOrVar(singlePart);
+              if (hintValue !== undefined) {
+                stops.push({
+                  hint: hintValue,
+                });
+              }
             }
           }
 

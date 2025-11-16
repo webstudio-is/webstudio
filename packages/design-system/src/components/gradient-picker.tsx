@@ -130,10 +130,18 @@ export const GradientPicker = (props: GradientPickerProps) => {
   }, [gradient.stops, onThumbSelect]);
 
   const positions = stops
-    .map((stop) => stop.position?.value)
+    .map((stop) =>
+      stop.position?.type === "unit" && stop.position.unit === "%"
+        ? stop.position.value
+        : undefined
+    )
     .filter((item): item is number => item !== undefined);
   const hints = gradient.stops
-    .map((stop): number | undefined => stop.hint?.value)
+    .map((stop): number | undefined =>
+      stop.hint?.type === "unit" && stop.hint.unit === "%"
+        ? stop.hint.value
+        : undefined
+    )
     .filter((item): item is number => item !== undefined);
   const background = reconstructLinearGradient({
     stops,
@@ -349,7 +357,10 @@ export const GradientPicker = (props: GradientPickerProps) => {
         event.preventDefault();
         const step = event.shiftKey ? 10 : 1;
         const delta = event.key === "ArrowLeft" ? -step : step;
-        const currentPosition = stops[selectedStop]?.position?.value ?? 0;
+        const currentPosition =
+          stops[selectedStop]?.position?.type === "unit"
+            ? stops[selectedStop]?.position.value
+            : 0;
         updateStopPosition(selectedStop, currentPosition + delta, "complete");
       }
     },
@@ -389,7 +400,9 @@ export const GradientPicker = (props: GradientPickerProps) => {
         }
 
         const currentPositions = currentStops
-          .map((stop) => stop.position?.value)
+          .map((stop) =>
+            stop.position?.type === "unit" ? stop.position.value : undefined
+          )
           .filter((value): value is number => value !== undefined);
 
         const newStopIndex = currentPositions.findIndex(
@@ -479,7 +492,10 @@ export const GradientPicker = (props: GradientPickerProps) => {
 
   if (
     stops.some(
-      (stop) => stop.position === undefined || stop.color === undefined
+      (stop) =>
+        stop.color === undefined ||
+        stop.position?.type !== "unit" ||
+        stop.position.unit !== "%"
     )
   ) {
     return null;
@@ -506,7 +522,11 @@ export const GradientPicker = (props: GradientPickerProps) => {
       >
         <SliderTrack />
         {stops.map((stop, index) => {
-          if (stop.color === undefined || stop.position === undefined) {
+          if (
+            stop.color === undefined ||
+            stop.position?.type !== "unit" ||
+            stop.position.unit !== "%"
+          ) {
             return null;
           }
 
