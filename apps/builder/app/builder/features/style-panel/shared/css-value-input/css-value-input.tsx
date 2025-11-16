@@ -51,7 +51,7 @@ import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
-import { ColorThumb } from "../color-thumb";
+import { ColorThumb } from "@webstudio-is/design-system";
 import {
   cssButtonDisplay,
   isComplexValue,

@@ -25,7 +25,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
-import { ColorThumb } from "./color-thumb";
+import { ColorThumb } from "@webstudio-is/design-system";
 
 // To support color names
 extend([namesPlugin]);

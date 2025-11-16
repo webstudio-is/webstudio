@@ -1,5 +1,5 @@
 import { useRevalidator, useSearchParams } from "react-router-dom";
-import { useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import {
   Text,
   theme,
@@ -23,12 +23,34 @@ import {
   SmallIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
+  SimpleColorPicker,
 } from "@webstudio-is/design-system";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import type { User } from "~/shared/db/user.server";
 import { nanoid } from "nanoid";
-import { EllipsesIcon, SpinnerIcon } from "@webstudio-is/icons";
-import { colors } from "./colors";
+import { EllipsesIcon, SpinnerIcon, CheckMarkIcon } from "@webstudio-is/icons";
+import { colors as tagColors, DEFAULT_TAG_COLOR } from "./colors";
+
+const normalizeHexColor = (value: string | null | undefined) => {
+  const candidate =
+    typeof value === "string" ? value.trim().toLowerCase() : undefined;
+  if (candidate == null || candidate.length === 0) {
+    return undefined;
+  }
+  const normalized = candidate.startsWith("#") ? candidate : `#${candidate}`;
+  return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : undefined;
+};
+
+const formatColorForInput = (value?: string) => {
+  if (value == null || value === "") {
+    return "";
+  }
+  const normalized = normalizeHexColor(value);
+  return normalized ? normalized.toUpperCase() : value.toUpperCase();
+};
+
+const getDisplayColor = (color: string | undefined) =>
+  color ?? DEFAULT_TAG_COLOR;
 
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
@@ -139,7 +161,18 @@ const TagsList = ({
                       defaultChecked={projectTagsIds.includes(tag.id)}
                     />
                     <Label truncate htmlFor={tag.id}>
-                      {tag.label}
+                      <Text
+                        color="contrast"
+                        key={tag.id}
+                        css={{
+                          background: getDisplayColor(tag.color),
+                          borderRadius: theme.borderRadius[3],
+                          paddingInline: theme.spacing[3],
+                          width: "fit-content",
+                        }}
+                      >
+                        {`#${tag.label}`}
+                      </Text>
                     </Label>
                   </CheckboxAndLabel>
                   <DropdownMenu modal>
@@ -214,6 +247,13 @@ const TagEdit = ({
 }) => {
   const revalidator = useRevalidator();
   const isExisting = projectsTags.some(({ id }) => id === tag.id);
+  const [color, setColor] = useState(() =>
+    formatColorForInput(tag.color ?? DEFAULT_TAG_COLOR)
+  );
+
+  useEffect(() => {
+    setColor(formatColorForInput(tag.color ?? DEFAULT_TAG_COLOR));
+  }, [tag.color]);
 
   return (
     <form
@@ -221,19 +261,27 @@ const TagEdit = ({
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const label = ((formData.get("tag") as string) || "").trim();
-        if (tag.label === label || !label) {
+        const normalizedColor =
+          normalizeHexColor(color) ??
+          normalizeHexColor(tag.color) ??
+          DEFAULT_TAG_COLOR;
+
+        if ((tag.label === label && tag.color === normalizedColor) || !label) {
           return;
         }
         let updatedTags = [];
         if (isExisting) {
           updatedTags = projectsTags.map((availableTag) => {
             if (availableTag.id === tag.id) {
-              return { ...availableTag, label };
+              return { ...availableTag, label, color: normalizedColor };
             }
             return availableTag;
           });
         } else {
-          updatedTags = [...projectsTags, { id: tag.id, label }];
+          updatedTags = [
+            ...projectsTags,
+            { id: tag.id, label, color: normalizedColor },
+          ];
         }
 
         await nativeClient.user.updateProjectsTags.mutate({
@@ -243,14 +291,47 @@ const TagEdit = ({
         onComplete();
       }}
     >
-      <Grid css={{ padding: theme.panel.padding }}>
-        <InputField
-          autoFocus
-          defaultValue={tag.label}
-          name="tag"
-          placeholder="My tag"
-          minLength={1}
-        />
+      <Grid
+        css={{
+          padding: theme.panel.padding,
+          gap: theme.spacing[8],
+        }}
+      >
+        <Flex direction="column" gap="2">
+          <Label htmlFor="tagLabel">Label</Label>
+          <InputField
+            autoFocus
+            defaultValue={tag.label}
+            name="tag"
+            placeholder="My tag"
+            minLength={1}
+          />
+        </Flex>
+
+        <Flex direction="column" gap="2">
+          <Label htmlFor="tagColor">Color</Label>
+          <InputField
+            id="tagColor"
+            name="tagColor"
+            value={color}
+            onChange={(event) => {
+              setColor(event.target.value.toUpperCase());
+            }}
+            placeholder="#AABBCC"
+            maxLength={7}
+            prefix={
+              <SimpleColorPicker
+                value={color}
+                onChange={(preset) => {
+                  setColor(formatColorForInput(preset));
+                }}
+                colors={tagColors}
+                aria-label="Pick tag color"
+              />
+            }
+            aria-label="Tag color"
+          />
+        </Flex>
       </Grid>
       <DialogActions>
         <Button type="submit">
@@ -340,17 +421,25 @@ export const Tag = ({
 >) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTagsIds = searchParams.getAll("tag");
-  const color = colors[index] ?? theme.colors.backgroundNeutralDark;
+  const isSelected = selectedTagsIds.includes(tag.id);
+  const color = getDisplayColor(tag.color);
   return (
     <Button
       color="neutral"
       css={{
-        "&:hover[data-state='auto'], &[data-state='pressed']": {
-          backgroundColor: color,
+        backgroundColor: color,
+        color: theme.colors.white,
+        "&:hover[data-state='auto']": {
+          backgroundColor: `oklch(from ${color} l c h / 0.9)`,
+          color: theme.colors.white,
+        },
+        "&[data-state='pressed']": {
+          backgroundColor: `oklch(from ${color} l c h / 0.65)`,
           color: theme.colors.white,
         },
         "&[data-state='pressed']:hover": {
-          backgroundColor: `oklch(from ${color} l c h / 0.8)`,
+          backgroundColor: `oklch(from ${color} l c h / 0.6)`,
+          color: theme.colors.white,
         },
       }}
       onClick={() => {
@@ -367,6 +456,13 @@ export const Tag = ({
         setSearchParams(newSearchParams);
       }}
       {...props}
-    />
+    >
+      <Flex align="center" gap="2">
+        {isSelected && (
+          <CheckMarkIcon color={theme.colors.white} style={{ flexShrink: 0 }} />
+        )}
+        <span>{`#${tag.label}`}</span>
+      </Flex>
+    </Button>
   );
 };

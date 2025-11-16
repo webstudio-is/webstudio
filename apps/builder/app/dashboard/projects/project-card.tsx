@@ -32,6 +32,7 @@ import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
+import { DEFAULT_TAG_COLOR } from "./colors";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -204,12 +205,13 @@ export const ProjectCard = ({
           {projectsTags.map((tag) => {
             const isApplied = projectTagsIds.includes(tag.id);
             if (isApplied) {
+              const backgroundColor = tag.color ?? DEFAULT_TAG_COLOR;
               return (
                 <Text
                   color="contrast"
                   key={tag.id}
                   css={{
-                    background: "oklch(0 0 0 / 0.3)",
+                    background: backgroundColor,
                     borderRadius: theme.borderRadius[3],
                     paddingInline: theme.spacing[3],
                   }}

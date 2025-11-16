@@ -110,6 +110,10 @@ export const createOrLoginWithDev = async (
 export const userProjectTagSchema = z.object({
   id: z.string(),
   label: z.string().min(1).max(100),
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i, "Color must be a 6-digit hex value")
+    .optional(),
 });
 
 export type ProjectTag = z.infer<typeof userProjectTagSchema>;

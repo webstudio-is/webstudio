@@ -24,7 +24,7 @@ import {
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
-import { ColorThumb } from "./color-thumb";
+import { ColorThumb } from "@webstudio-is/design-system";
 
 const isRepeatedValue = (
   styleValue: StyleValue
