@@ -38,6 +38,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 const detectBackgroundType = (styleValue?: StyleValue) => {
   if (styleValue === undefined) {
@@ -90,6 +91,27 @@ const isImageOrLinearGradient = (
   value: string
 ): value is "image" | "linearGradient" => {
   return value === "image" || value === "linearGradient";
+};
+
+const getBackgroundStyleItem = (
+  styleDecl: ComputedStyleDecl,
+  index: number
+) => {
+  const repeatedItem = getRepeatedStyleItem(styleDecl, index);
+  if (repeatedItem !== undefined) {
+    return repeatedItem;
+  }
+
+  if (index > 0) {
+    return;
+  }
+
+  const cascaded = styleDecl.cascadedValue;
+  if (cascaded.type === "layers" || cascaded.type === "tuple") {
+    return cascaded.value[0];
+  }
+
+  return cascaded;
 };
 
 const BackgroundSection = styled("div", { padding: theme.panel.padding });
@@ -205,7 +227,7 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 
 export const BackgroundContent = ({ index }: { index: number }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
-  const backgroundStyleItem = getRepeatedStyleItem(backgroundImage, index);
+  const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
 
   const [backgroundType, setBackgroundType] = useState<
     "image" | "linearGradient"

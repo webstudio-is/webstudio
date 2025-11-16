@@ -7,6 +7,7 @@ import {
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $breakpoints,
+  $instances,
   $pages,
   $selectedBreakpointId,
   $styles,
@@ -16,14 +17,22 @@ import { registerContainers } from "~/shared/sync";
 import { BackgroundContent } from "./background-content";
 import { $awareness } from "~/shared/awareness";
 import { useComputedStyleDecl } from "../../shared/model";
-import { setRepeatedStyleItem } from "../../shared/repeated-style";
-import type { StyleValue } from "@webstudio-is/css-engine";
+import {
+  getRepeatedStyleItem,
+  setRepeatedStyleItem,
+} from "../../shared/repeated-style";
+import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 
 registerContainers();
 $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
 $selectedBreakpointId.set("base");
 $styleSourceSelections.set(
   new Map([["box", { instanceId: "box", values: ["local"] }]])
+);
+$instances.set(
+  new Map([
+    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
+  ])
 );
 $pages.set(
   createDefaultPages({
@@ -36,27 +45,11 @@ $awareness.set({
   instanceSelector: ["box"],
 });
 
-const defaultBackgroundImage: StyleDecl = {
-  breakpointId: "base",
-  styleSourceId: "local",
-  property: "backgroundImage",
-  value: {
-    type: "layers",
-    value: [{ type: "keyword", value: "none" }],
-  },
-};
-
-$styles.set(
-  new Map([[getStyleDeclKey(defaultBackgroundImage), defaultBackgroundImage]])
-);
-
 const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const backgroundImage = useComputedStyleDecl("background-image");
 
-  useEffect(() => {
-    setRepeatedStyleItem(backgroundImage, 0, styleValue);
-  }, [backgroundImage, styleValue]);
+  setRepeatedStyleItem(backgroundImage, 0, styleValue);
 
   return (
     <>
