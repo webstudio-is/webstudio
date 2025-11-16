@@ -23,13 +23,54 @@ export type GradientStop = {
 };
 
 export type ParsedGradient = {
-  angle?: UnitValue;
+  angle?: UnitValue | VarValue;
   sideOrCorner?: KeywordValue;
   stops: GradientStop[];
   repeating?: boolean;
 };
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
+
+const angleUnitIdentifiers = ["deg", "grad", "rad", "turn"] as const;
+const angleUnitSet = new Set<string>(angleUnitIdentifiers);
+
+const isAngleUnitValue = (value: UnitValue) => angleUnitSet.has(value.unit);
+
+const isAngleLikeFallback = (fallback: VarValue["fallback"]) => {
+  if (fallback === undefined) {
+    return false;
+  }
+
+  if (fallback.type === "unit") {
+    return isAngleUnitValue(fallback);
+  }
+
+  if (fallback.type === "keyword") {
+    const normalized = fallback.value.trim().toLowerCase();
+    return normalized.startsWith("to ");
+  }
+
+  if (fallback.type === "unparsed") {
+    const normalized = fallback.value.trim().toLowerCase();
+    if (normalized.startsWith("to ")) {
+      return true;
+    }
+    return angleUnitIdentifiers.some((unit) => normalized.endsWith(unit));
+  }
+
+  return false;
+};
+
+const isVarAngle = (value: VarValue) => {
+  if (isAngleLikeFallback(value.fallback)) {
+    return true;
+  }
+
+  const name = value.value.toLowerCase();
+  return (
+    name.includes("angle") || name.includes("direction") || name.includes("deg")
+  );
+};
 
 // We are currently not supporting color-interpolation-method from the linear-gradient syntax.
 // There are multiple reasons to not support it:
@@ -64,7 +105,7 @@ export const parseLinearGradient = (
     return;
   }
 
-  let angle: UnitValue | undefined;
+  let angle: UnitValue | VarValue | undefined;
   let sideOrCorner: KeywordValue | undefined;
   const stops: GradientStop[] = [];
   let gradientParts: csstree.CssNode[] = [];
@@ -80,20 +121,28 @@ export const parseLinearGradient = (
           (item.type === "Operator" && item.value === ",") ||
           node.children.last === item
         ) {
+          let handledAsAngle = false;
           // If the gradientParts length is 1, then we need to check if it is angle or not.
           // If it's angle, then the value is related to <angle> or else it is a <color-hint>.
           if (gradientParts.length === 1) {
             const singlePart = gradientParts[0];
-            if (isAngle(singlePart) === true) {
-              const mappedAngle = mapLengthPercentageOrVar(singlePart);
-              if (mappedAngle?.type === "unit") {
-                angle = mappedAngle;
-              }
+            const mappedValue = mapLengthPercentageOrVar(singlePart);
+            const isAngleValue =
+              (isAngle(singlePart) === true &&
+                mappedValue?.type === "unit" &&
+                isAngleUnitValue(mappedValue)) ||
+              (singlePart.type === "Function" &&
+                singlePart.name === "var" &&
+                mappedValue?.type === "var" &&
+                isVarAngle(mappedValue));
+
+            if (isAngleValue && mappedValue !== undefined) {
+              angle = mappedValue;
+              handledAsAngle = true;
             } else if (isColorStop(singlePart) === false) {
-              const hintValue = mapLengthPercentageOrVar(singlePart);
-              if (hintValue !== undefined) {
+              if (mappedValue !== undefined) {
                 stops.push({
-                  hint: hintValue,
+                  hint: mappedValue,
                 });
               }
             }
@@ -106,18 +155,20 @@ export const parseLinearGradient = (
             sideOrCorner = { type: "keyword", value };
           }
 
-          // if there is a color-stop in the gradientParts, then we need to parse it for position and hint.
-          const colorStop = gradientParts.find(isColorStop);
-          if (colorStop !== undefined) {
-            const [_colorStop, position, hint] = gradientParts;
+          if (handledAsAngle === false) {
+            // if there is a color-stop in the gradientParts, then we need to parse it for position and hint.
+            const colorStop = gradientParts.find(isColorStop);
+            if (colorStop !== undefined) {
+              const [_colorStop, position, hint] = gradientParts;
 
-            const stop: GradientStop = {
-              color: getColor(colorStop),
-              position: mapLengthPercentageOrVar(position),
-              hint: mapLengthPercentageOrVar(hint),
-            };
+              const stop: GradientStop = {
+                color: getColor(colorStop),
+                position: mapLengthPercentageOrVar(position),
+                hint: mapLengthPercentageOrVar(hint),
+              };
 
-            stops.push(stop);
+              stops.push(stop);
+            }
           }
 
           gradientParts = [];

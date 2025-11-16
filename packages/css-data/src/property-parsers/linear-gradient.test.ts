@@ -336,6 +336,23 @@ describe("parses linear-gradient", () => {
     );
   });
 
+  test("parses linear-gradient with variable angle", () => {
+    const parsed = parseLinearGradient(
+      "linear-gradient(var(--angle, 45deg), red, blue)"
+    );
+    if (parsed === undefined) {
+      throw new Error("parsed is undefined");
+    }
+
+    expect(parsed.angle).toMatchObject({
+      type: "var",
+      value: "angle",
+    });
+    expect(reconstructLinearGradient(parsed)).toEqual(
+      "linear-gradient(var(--angle, 45deg), rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+
   test("parses linear-gradient with radian angle", () => {
     expect(parseLinearGradient("linear-gradient(0.5rad, red, blue)")).toEqual({
       angle: { type: "unit", unit: "rad", value: 0.5 },
