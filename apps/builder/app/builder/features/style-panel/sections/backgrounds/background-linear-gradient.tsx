@@ -37,7 +37,10 @@ import {
 } from "@webstudio-is/icons";
 import { clamp } from "@react-aria/utils";
 import { setProperty } from "../../shared/use-style-data";
-import { useComputedStyleDecl } from "../../shared/model";
+import {
+  useComputedStyleDecl,
+  $availableUnitVariables,
+} from "../../shared/model";
 import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
@@ -1159,6 +1162,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="background-position-x"
             styleSource="default"
+            getOptions={() => $availableUnitVariables.get()}
             value={selectedStop?.position}
             unitOptions={percentUnitOptions}
             placeholder={
@@ -1184,6 +1188,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="background-position-x"
             styleSource="default"
+            getOptions={() => $availableUnitVariables.get()}
             value={selectedStopHintValue}
             unitOptions={percentUnitOptions}
             placeholder={selectedStopHintPlaceholder}
@@ -1220,6 +1225,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           <CssValueInputContainer
             property="rotate"
             styleSource="default"
+            getOptions={() => $availableUnitVariables.get()}
             value={gradient.angle}
             unitOptions={angleUnitOptions}
             placeholder={anglePlaceholder}
