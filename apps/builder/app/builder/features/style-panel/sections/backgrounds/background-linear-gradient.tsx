@@ -1090,3 +1090,17 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     </Flex>
   );
 };
+
+export const __testing__ = {
+  normalizeLinearGradientInput,
+  getAnglePlaceholder,
+  isAngleUnit,
+  sideOrCornerToAngle,
+  fillMissingStopPositions,
+  cloneGradientStop,
+  ensureGradientHasStops,
+  clampStopIndex,
+  colordToRgbValue,
+  isTransparent,
+  styleValueToRgb,
+};
