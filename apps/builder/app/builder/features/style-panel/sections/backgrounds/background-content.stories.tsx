@@ -40,6 +40,21 @@ $pages.set(
     rootInstanceId: "box",
   })
 );
+
+const defaultBackgroundImage: StyleDecl = {
+  breakpointId: "base",
+  styleSourceId: "local",
+  property: "backgroundImage",
+  value: {
+    type: "layers",
+    value: [{ type: "keyword", value: "none" }],
+  },
+};
+
+$styles.set(
+  new Map([[getStyleDeclKey(defaultBackgroundImage), defaultBackgroundImage]])
+);
+
 $awareness.set({
   pageId: "homePageId",
   instanceSelector: ["box"],
@@ -49,7 +64,17 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const backgroundImage = useComputedStyleDecl("background-image");
 
-  setRepeatedStyleItem(backgroundImage, 0, styleValue);
+  useEffect(() => {
+    const currentValue = getRepeatedStyleItem(backgroundImage, 0);
+    if (
+      currentValue !== undefined &&
+      currentValue.type === styleValue.type &&
+      toValue(currentValue) === toValue(styleValue)
+    ) {
+      return;
+    }
+    setRepeatedStyleItem(backgroundImage, 0, styleValue);
+  }, [backgroundImage, styleValue]);
 
   return (
     <>

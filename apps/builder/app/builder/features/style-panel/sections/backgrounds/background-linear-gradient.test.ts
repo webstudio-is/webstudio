@@ -746,6 +746,51 @@ describe("resolveGradientForPicker", () => {
       value: 60,
     });
   });
+
+  test("resolves variable stop positions using fallback", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: {
+            type: "var",
+            value: "--progress",
+            fallback: { type: "unit", unit: "%", value: 30 },
+          },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    };
+
+    const result = resolveGradientForPicker(gradient, new Map());
+
+    expect(result.stops[0]?.position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 30,
+    });
+  });
+
+  test("falls back to inferred positions when variable has no fallback", () => {
+    const gradient: ParsedGradient = {
+      stops: [
+        {
+          color: undefined,
+          position: { type: "var", value: "--start" },
+        },
+        {
+          color: undefined,
+        },
+      ],
+    };
+
+    const result = resolveGradientForPicker(gradient, new Map());
+
+    expect(result.stops.map((stop) => stop.position?.value)).toEqual([0, 100]);
+  });
 });
 
 describe("hint override helpers", () => {

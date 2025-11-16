@@ -6,6 +6,7 @@ import {
   type UnitValue,
   type KeywordValue,
   type VarValue,
+  type VarFallback,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
@@ -285,6 +286,20 @@ const cloneVarValue = (value: VarValue): VarValue => ({
   fallback: value.fallback === undefined ? undefined : { ...value.fallback },
 });
 
+const cloneVarFallback = (
+  fallback: VarFallback | undefined
+): VarFallback | undefined => {
+  if (fallback === undefined) {
+    return;
+  }
+
+  if (fallback.type === "rgb") {
+    return { ...fallback } satisfies VarFallback;
+  }
+
+  return { ...fallback } satisfies VarFallback;
+};
+
 const cloneGradientColor = (
   color: GradientStop["color"] | undefined
 ): GradientStop["color"] | undefined => {
@@ -384,11 +399,67 @@ const resolveAngleValue = (
   return;
 };
 
+const resolveVarPercentUnit = (
+  value: GradientStop["position"] | GradientStop["hint"]
+): PercentUnitValue | undefined => {
+  if (value?.type !== "var") {
+    return;
+  }
+  const fallback = value.fallback;
+  if (fallback?.type === "unit" && fallback.unit === "%") {
+    return {
+      type: "unit" as const,
+      unit: "%" as const,
+      value: clamp(fallback.value, 0, 100),
+    } satisfies PercentUnitValue;
+  }
+};
+
+const normalizeStopsForPicker = (gradient: ParsedGradient): ParsedGradient => {
+  let changed = false;
+  const stops = gradient.stops.map((stop) => {
+    let nextPosition = stop.position;
+    let nextHint = stop.hint;
+    let stopChanged = false;
+
+    if (stop.position?.type === "var") {
+      nextPosition = resolveVarPercentUnit(stop.position);
+      stopChanged = true;
+    }
+
+    if (stop.hint?.type === "var") {
+      nextHint = resolveVarPercentUnit(stop.hint);
+      stopChanged = true;
+    }
+
+    if (stopChanged) {
+      changed = true;
+      return {
+        ...stop,
+        position: nextPosition,
+        hint: nextHint,
+      } satisfies GradientStop;
+    }
+
+    return stop;
+  });
+
+  if (changed === false) {
+    return gradient;
+  }
+
+  return {
+    ...gradient,
+    stops,
+  } satisfies ParsedGradient;
+};
+
 const resolveGradientForPicker = (
   gradient: ParsedGradient,
   hintOverrides: ReadonlyMap<number, PercentUnitValue>
 ): ParsedGradient => {
-  const filled = fillMissingStopPositions(gradient);
+  const normalized = normalizeStopsForPicker(gradient);
+  const filled = fillMissingStopPositions(normalized);
   if (hintOverrides.size === 0) {
     return filled;
   }
@@ -772,7 +843,21 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     (color: GradientStop["color"], options?: { commit?: boolean }) => {
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const stops = gradient.stops.map((stop, index) =>
-        index === stopIndex ? { ...stop, color } : stop
+        index === stopIndex
+          ? {
+              ...stop,
+              color:
+                color?.type === "var" && stop.color?.type === "var"
+                  ? {
+                      ...color,
+                      fallback:
+                        color.fallback === undefined
+                          ? cloneVarFallback(stop.color.fallback)
+                          : cloneVarFallback(color.fallback),
+                    }
+                  : color,
+            }
+          : stop
       );
       const nextGradient = { ...gradient, stops };
       if (options?.commit) {
