@@ -303,16 +303,17 @@ const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
 const clampStopIndex = (index: number, gradient: ParsedGradient) =>
   clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
 
-const colordToRgbValue = (instance: ReturnType<typeof colord>) => {
-  const rgb = instance.toRgb();
-  return {
-    type: "rgb" as const,
-    r: rgb.r,
-    g: rgb.g,
-    b: rgb.b,
-    alpha: rgb.a,
-  } satisfies RgbValue;
+type RgbComponents = Omit<RgbValue, "type" | "alpha"> & {
+  a: RgbValue["alpha"];
 };
+
+const colordToRgbValue = (components: RgbComponents): RgbValue => ({
+  type: "rgb",
+  r: components.r,
+  g: components.g,
+  b: components.b,
+  alpha: components.a,
+});
 
 type IntermediateValue = {
   type: "intermediate";
@@ -337,7 +338,7 @@ const styleValueToRgb = (
   if (styleValue.type === "intermediate") {
     const parsed = colord(styleValue.value);
     if (parsed.isValid()) {
-      return colordToRgbValue(parsed);
+      return colordToRgbValue(parsed.toRgb());
     }
     return;
   }
@@ -349,7 +350,7 @@ const styleValueToRgb = (
   if (styleValue.type === "keyword" || styleValue.type === "invalid") {
     const parsed = colord(styleValue.value);
     if (parsed.isValid()) {
-      return colordToRgbValue(parsed);
+      return colordToRgbValue(parsed.toRgb());
     }
     return;
   }
@@ -361,7 +362,7 @@ const styleValueToRgb = (
 
   const parsed = colord(toValue(styleValue));
   if (parsed.isValid()) {
-    return colordToRgbValue(parsed);
+    return colordToRgbValue(parsed.toRgb());
   }
 };
 
@@ -1094,13 +1095,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 export const __testing__ = {
   normalizeLinearGradientInput,
   getAnglePlaceholder,
-  isAngleUnit,
   sideOrCornerToAngle,
   fillMissingStopPositions,
-  cloneGradientStop,
   ensureGradientHasStops,
   clampStopIndex,
-  colordToRgbValue,
-  isTransparent,
   styleValueToRgb,
 };

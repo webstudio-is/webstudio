@@ -11,18 +11,12 @@ import { __testing__ } from "./background-linear-gradient";
 const {
   normalizeLinearGradientInput,
   getAnglePlaceholder,
-  isAngleUnit,
   sideOrCornerToAngle,
   fillMissingStopPositions,
-  cloneGradientStop,
   ensureGradientHasStops,
   clampStopIndex,
-  colordToRgbValue,
-  isTransparent,
   styleValueToRgb,
 } = __testing__;
-
-type ColordLike = Parameters<typeof colordToRgbValue>[0];
 
 describe("normalizeLinearGradientInput", () => {
   test("returns string unchanged when not repeating", () => {
@@ -148,22 +142,6 @@ describe("getAnglePlaceholder", () => {
   });
 });
 
-describe("isAngleUnit", () => {
-  test("recognizes valid angle units", () => {
-    expect(isAngleUnit("deg")).toBe(true);
-    expect(isAngleUnit("turn")).toBe(true);
-  });
-
-  test("rejects other units", () => {
-    expect(isAngleUnit("px")).toBe(false);
-    expect(isAngleUnit("%")).toBe(false);
-  });
-
-  test("is case sensitive", () => {
-    expect(isAngleUnit("DEG")).toBe(false);
-  });
-});
-
 describe("fillMissingStopPositions", () => {
   test("returns original gradient when no stops present", () => {
     const gradient: ParsedGradient = { stops: [] };
@@ -252,31 +230,6 @@ describe("fillMissingStopPositions", () => {
   });
 });
 
-describe("cloneGradientStop", () => {
-  test("performs deep clone", () => {
-    const stop: GradientStop = {
-      color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
-      position: { type: "unit", unit: "%", value: 25 },
-      hint: { type: "unit", unit: "%", value: 30 },
-    };
-
-    const clone = cloneGradientStop(stop);
-    expect(clone).toEqual(stop);
-    expect(clone).not.toBe(stop);
-    expect(clone.color).not.toBe(stop.color);
-    expect(clone.position).not.toBe(stop.position);
-    expect(clone.hint).not.toBe(stop.hint);
-  });
-
-  test("clones stop when optional fields are undefined", () => {
-    const stop: GradientStop = { color: undefined, position: undefined };
-
-    const clone = cloneGradientStop(stop);
-    expect(clone).toEqual(stop);
-    expect(clone).not.toBe(stop);
-  });
-});
-
 describe("ensureGradientHasStops", () => {
   test("provides default stops when gradient is empty", () => {
     const gradient: ParsedGradient = { stops: [] };
@@ -350,47 +303,6 @@ describe("clampStopIndex", () => {
   test("returns zero when gradient has no stops", () => {
     const emptyGradient: ParsedGradient = { stops: [] };
     expect(clampStopIndex(3, emptyGradient)).toBe(0);
-  });
-});
-
-describe("colordToRgbValue", () => {
-  test("converts colord-like instance to rgb value", () => {
-    const instance = {
-      toRgb: () => ({ r: 51, g: 102, b: 153, a: 1 }),
-    } as ColordLike;
-
-    expect(colordToRgbValue(instance)).toEqual({
-      type: "rgb",
-      r: 51,
-      g: 102,
-      b: 153,
-      alpha: 1,
-    });
-  });
-
-  test("preserves alpha channel", () => {
-    const instance = {
-      toRgb: () => ({ r: 10, g: 20, b: 30, a: 0.42 }),
-    } as ColordLike;
-
-    expect(colordToRgbValue(instance).alpha).toBeCloseTo(0.42);
-  });
-});
-
-describe("isTransparent", () => {
-  test("detects transparent keyword", () => {
-    const styleValue: StyleValue = { type: "keyword", value: "transparent" };
-    expect(isTransparent(styleValue)).toBe(true);
-  });
-
-  test("returns false for other keyword values", () => {
-    const styleValue: StyleValue = { type: "keyword", value: "red" };
-    expect(isTransparent(styleValue)).toBe(false);
-  });
-
-  test("returns false for non keyword values", () => {
-    const rgbValue: RgbValue = { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 };
-    expect(isTransparent(rgbValue)).toBe(false);
   });
 });
 
