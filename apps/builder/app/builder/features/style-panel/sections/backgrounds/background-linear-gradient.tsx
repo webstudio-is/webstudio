@@ -412,7 +412,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
     },
-    [formatGradientValue, index, setRepeatedStyleItem, styleDecl]
+    [formatGradientValue, index, styleDecl]
   );
 
   const {
@@ -498,13 +498,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       setRepeatedStyleItem(styleDecl, index, style, { isEphemeral: true });
       setIntermediateValue(undefined);
     },
-    [
-      formatGradientValue,
-      index,
-      setLocalGradient,
-      setRepeatedStyleItem,
-      styleDecl,
-    ]
+    [formatGradientValue, index, setLocalGradient, styleDecl]
   );
 
   const commitGradient = useCallback(
@@ -521,14 +515,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       });
       saveLocalGradient();
     },
-    [
-      formatGradientValue,
-      index,
-      saveLocalGradient,
-      setLocalGradient,
-      setRepeatedStyleItem,
-      styleDecl,
-    ]
+    [formatGradientValue, index, saveLocalGradient, setLocalGradient, styleDecl]
   );
 
   const handleStopColorChange = useCallback(

@@ -303,7 +303,14 @@ export const GradientPicker = (props: GradientPickerProps) => {
         updateStopPosition(selectedStop, currentPosition + delta, "complete");
       }
     },
-    [onThumbSelect, selectedStop, stops, updateStopPosition, updateStops]
+    [
+      handleStopSelected,
+      onThumbSelect,
+      selectedStop,
+      stops,
+      updateStopPosition,
+      updateStops,
+    ]
   );
 
   const handlePointerDown = useCallback(
