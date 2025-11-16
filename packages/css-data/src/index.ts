@@ -8,6 +8,7 @@ export {
 } from "./__generated__/property-value-descriptions";
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";
+export * from "./property-parsers";
 
 // shorthand property parsers
 export * from "./parse-css-value";
