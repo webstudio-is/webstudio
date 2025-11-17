@@ -583,6 +583,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
                 color={toRgbaColor(stop.color)}
                 css={{ margin: 1 }}
               />
+              <SliderThumbPointer aria-hidden />
             </SliderThumb>
           );
         })}
@@ -637,6 +638,7 @@ const SliderTrack = styled("div", {
   inset: 0,
   borderRadius: theme.borderRadius[3],
   pointerEvents: "none",
+  isolation: "isolate",
 });
 
 const SliderThumb = styled(Box, {
@@ -654,21 +656,26 @@ const SliderThumb = styled(Box, {
   "&:active": {
     cursor: "grabbing",
   },
-  "&::before": {
-    content: "''",
-    position: "absolute",
-    borderLeft: "5px solid transparent",
-    borderRight: "5px solid transparent",
-    borderTop: "5px solid var(--thumb-border-color)",
-    bottom: -5,
-  },
-  "&:focus-visible, &[aria-selected='true']": {
+  "&:focus-visible, &[aria-selected=true]": {
     "--thumb-border-color": theme.colors.borderFocus,
     boxShadow: `0 0 0 1px ${theme.colors.borderFocus}`,
   },
-  "&:focus-visible::before, &[aria-selected='true']::before": {
-    borderTopColor: theme.colors.borderFocus,
-  },
+});
+
+const SliderThumbPointer = styled("div", {
+  position: "absolute",
+  width: theme.spacing[3],
+  height: theme.spacing[3],
+  left: "50%",
+  bottom: 0,
+  background: "white",
+  zIndex: -1,
+  border: `1px solid var(--thumb-border-color)`,
+  borderTopColor: "transparent",
+  borderLeftColor: "transparent",
+  borderRadius: theme.borderRadius[1],
+  transform: "translate(-50%, 50%) rotate(45deg)",
+  pointerEvents: "none",
 });
 
 export type { GradientPickerProps };
