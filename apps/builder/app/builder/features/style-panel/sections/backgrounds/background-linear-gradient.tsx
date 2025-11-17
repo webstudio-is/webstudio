@@ -50,6 +50,7 @@ import {
   parseCssFragment,
   CssFragmentEditor,
   CssFragmentEditorContent,
+  getCodeEditorCssVars,
 } from "../../shared/css-fragment";
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -773,7 +774,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const parsedGradient = useMemo(() => {
     const parsed = parseLinearGradient(normalizedGradientString);
     if (parsed === undefined) {
-      return;
+      return ensureGradientHasStops(defaultGradient);
     }
     return ensureGradientHasStops(parsed);
   }, [normalizedGradientString]);
@@ -785,12 +786,11 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const parsedComputedGradient = useMemo(() => {
     const parsed = parseLinearGradient(normalizedComputedGradientString);
     if (parsed === undefined) {
-      return;
+      return ensureGradientHasStops(defaultGradient);
     }
     return ensureGradientHasStops(parsed);
   }, [normalizedComputedGradientString]);
 
-  const initialGradient = parsedGradient ?? defaultGradient;
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
 
   useEffect(() => {
@@ -811,7 +811,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     value: gradient,
     set: setLocalGradient,
     save: saveLocalGradient,
-  } = useLocalValue<ParsedGradient>(initialGradient, handleGradientSave, {
+  } = useLocalValue<ParsedGradient>(parsedGradient, handleGradientSave, {
     autoSave: false,
   });
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
@@ -1298,12 +1298,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           />
         </Box>
       </Grid>
-      {parsedGradient === undefined && (
-        <Text color="subtle">
-          The current value isn't a linear gradient. Adjusting the controls will
-          create a new linear gradient.
-        </Text>
-      )}
       <Label>
         <Flex align="center" gap="1">
           Code
@@ -1326,6 +1320,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         </Flex>
       </Label>
       <CssFragmentEditor
+        css={getCodeEditorCssVars({ minHeight: "40px", maxHeight: "40px" })}
         content={
           <CssFragmentEditorContent
             invalid={intermediateValue?.type === "invalid"}
