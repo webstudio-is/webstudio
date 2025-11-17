@@ -1253,9 +1253,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             getOptions={() => $availableUnitVariables.get()}
             value={selectedStopPositionValue}
             unitOptions={percentUnitOptions}
-            onUpdate={(value, options) => {
-              handleStopPositionUpdate(value, options);
-            }}
+            onUpdate={handleStopPositionUpdate}
             onDelete={handleStopPositionDelete}
           />
         </Flex>
@@ -1267,9 +1265,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             getOptions={() => $availableUnitVariables.get()}
             value={selectedStopHintValue}
             unitOptions={percentUnitOptions}
-            onUpdate={(value, options) => {
-              handleStopHintUpdate(value, options);
-            }}
+            onUpdate={handleStopHintUpdate}
             onDelete={handleStopHintDelete}
           />
         </Flex>
