@@ -629,7 +629,7 @@ const SliderRoot = styled("div", {
     },
   },
   "&:focus-visible": {
-    boxShadow: `0 0 0 2px ${theme.colors.borderFocus}`,
+    boxShadow: `0 0 0 1px ${theme.colors.borderFocus}`,
   },
 });
 
