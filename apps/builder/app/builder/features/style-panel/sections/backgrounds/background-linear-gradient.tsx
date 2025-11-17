@@ -880,6 +880,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const applyGradient = useCallback(
     (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
+      console.log({ isEphemeral });
       setLocalGradient(nextGradient);
       setIntermediateValue(undefined);
       const gradientValue = formatLinearGradient(nextGradient);
@@ -944,7 +945,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const selectedStopColor = selectedStop?.color ?? fallbackStopColor;
 
   const updateSelectedStop = useCallback(
-    (updater: (stop: GradientStop) => GradientStop, isEphemeral: boolean) => {
+    (
+      updater: (stop: GradientStop) => GradientStop,
+      options?: { isEphemeral?: boolean }
+    ) => {
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const currentStop = gradient.stops[stopIndex];
       if (currentStop === undefined) {
@@ -954,7 +958,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         index === stopIndex ? updater(stop) : stop
       );
       const nextGradient = { ...gradient, stops };
-      applyGradient(nextGradient, { isEphemeral });
+      applyGradient(nextGradient, options);
     },
     [applyGradient, gradient, selectedStopIndex]
   );
@@ -970,29 +974,26 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         angle: angleValue,
         sideOrCorner: undefined,
       };
-      applyGradient(nextGradient, { isEphemeral: options?.isEphemeral });
+      applyGradient(nextGradient, options);
     },
     [applyGradient, gradient]
   );
 
   const handleAngleDelete = useCallback(
     (options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
       const nextGradient: ParsedGradient = {
         ...gradient,
         angle: undefined,
       };
-      applyGradient(nextGradient, { isEphemeral });
+      applyGradient(nextGradient, options);
     },
     [applyGradient, gradient]
   );
 
   const handleStopPositionUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const resolution = resolveStopPositionUpdate(styleValue);
-
       if (resolution.type === "none") {
         return;
       }
@@ -1002,10 +1003,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           ...stop,
           position: resolution.position,
         }),
-        isEphemeral
+        options
       );
 
-      if (!isEphemeral && resolution.clearHintOverrides) {
+      if (!options?.isEphemeral && resolution.clearHintOverrides) {
         setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
@@ -1014,18 +1015,16 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleStopPositionDelete = useCallback(
     (options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
       updateSelectedStop((stop) => {
         const { position: _omit, ...rest } = stop;
-        return { ...rest };
-      }, isEphemeral);
+        return rest;
+      }, options);
     },
     [updateSelectedStop]
   );
 
   const handleStopHintUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const resolution = resolveStopHintUpdate(styleValue, {
         getPercentUnit,
@@ -1044,10 +1043,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           ...stop,
           hint: resolution.hint,
         }),
-        isEphemeral
+        options
       );
 
-      if (isEphemeral) {
+      if (options?.isEphemeral) {
         return;
       }
 
@@ -1068,13 +1067,12 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleStopHintDelete = useCallback(
     (options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       updateSelectedStop((stop) => {
         const { hint: _omit, ...rest } = stop;
         return { ...rest };
-      }, isEphemeral);
-      if (isEphemeral === false) {
+      }, options);
+      if (!options?.isEphemeral) {
         setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },

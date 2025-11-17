@@ -742,25 +742,14 @@ export const CssValueInput = ({
         value.type === "unit" ? value.value : Number(value.value.trim());
 
       const meta = { altKey: event.altKey, shiftKey: event.shiftKey };
-      const hasMeta = meta.altKey || meta.shiftKey;
 
-      if (hasMeta) {
-        // @todo switch to using props.onChange instead of props.onChangeComplete
-        // this will require modifying input-popover.tsx
-        const newValue = {
-          type: "unit" as const,
-          value: handleNumericInputArrowKeys(inputValue, event),
-          unit: value.unit,
-        };
+      const newValue = {
+        type: "unit" as const,
+        value: handleNumericInputArrowKeys(inputValue, event),
+        unit: value.unit,
+      };
 
-        onChangeComplete({ value: newValue, ...meta, type: "delta" });
-      } else {
-        props.onChange({
-          type: "unit",
-          value: handleNumericInputArrowKeys(inputValue, event),
-          unit: value.unit,
-        });
-      }
+      onChangeComplete({ value: newValue, ...meta, type: "delta" });
       event.preventDefault();
     }
   };
