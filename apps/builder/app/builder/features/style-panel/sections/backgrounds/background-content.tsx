@@ -250,7 +250,12 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   return (
     <>
       <BackgroundSection>
-        <Flex justify="center">
+        <Flex align="start" gap="2" justify="between">
+          <PropertyInlineLabel
+            label="Type"
+            description={propertyDescriptions.backgroundImage}
+            properties={["background-image"]}
+          />
           <ToggleGroup
             type="single"
             value={backgroundType}
