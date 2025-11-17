@@ -1254,15 +1254,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             value={selectedStopPositionValue}
             unitOptions={percentUnitOptions}
             onUpdate={(value, options) => {
-              handleStopPositionUpdate(value, {
-                isEphemeral: options?.isEphemeral === true,
-              });
+              handleStopPositionUpdate(value, options);
             }}
-            onDelete={(options) => {
-              handleStopPositionDelete({
-                isEphemeral: options?.isEphemeral === true,
-              });
-            }}
+            onDelete={handleStopPositionDelete}
           />
         </Flex>
         <Flex direction="column" gap="1">
@@ -1274,15 +1268,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             value={selectedStopHintValue}
             unitOptions={percentUnitOptions}
             onUpdate={(value, options) => {
-              handleStopHintUpdate(value, {
-                isEphemeral: options?.isEphemeral === true,
-              });
+              handleStopHintUpdate(value, options);
             }}
-            onDelete={(options) => {
-              handleStopHintDelete({
-                isEphemeral: options?.isEphemeral === true,
-              });
-            }}
+            onDelete={handleStopHintDelete}
           />
         </Flex>
         <Flex direction="column" gap="1" css={{ minWidth: theme.spacing[17] }}>
@@ -1311,15 +1299,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             unitOptions={angleUnitOptions}
             placeholder={anglePlaceholder}
             onUpdate={(value, options) => {
-              handleAngleUpdate(value, {
-                isEphemeral: options?.isEphemeral === true,
-              });
+              handleAngleUpdate(value, options);
             }}
-            onDelete={(options) => {
-              handleAngleDelete({
-                isEphemeral: options?.isEphemeral === true,
-              });
-            }}
+            onDelete={handleAngleDelete}
           />
         </Box>
       </Grid>
