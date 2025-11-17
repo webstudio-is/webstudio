@@ -35,10 +35,6 @@ type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   type?: T["type"];
 };
 
-const isLinearGradient = (
-  gradient: ParsedGradient
-): gradient is ParsedLinearGradient => gradient.type === "linear";
-
 const isConicGradient = (
   gradient: ParsedGradient
 ): gradient is ParsedConicGradient => gradient.type === "conic";

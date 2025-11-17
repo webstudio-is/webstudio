@@ -10,6 +10,7 @@ import {
   parseConicGradient,
   formatLinearGradient,
   formatConicGradient,
+  type GradientStop,
   type ParsedLinearGradient,
   type ParsedConicGradient,
 } from "@webstudio-is/css-data";
@@ -48,7 +49,7 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 type BackgroundType = "image" | "linearGradient" | "conicGradient";
 
-const createDefaultStops = () => [
+const createDefaultStops = (): GradientStop[] => [
   {
     color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
     position: { type: "unit", unit: "%", value: 0 },
@@ -284,6 +285,9 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>(() =>
     detectBackgroundType(backgroundStyleItem)
   );
+  const [activeTypeTooltip, setActiveTypeTooltip] = useState<
+    BackgroundType | undefined
+  >();
   const [syncedStyleKey, setSyncedStyleKey] = useState(() =>
     getStyleValueKey(backgroundStyleItem)
   );
@@ -322,6 +326,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
               }
 
               setBackgroundType(value);
+              setActiveTypeTooltip(undefined);
 
               if (value === "linearGradient" || value === "conicGradient") {
                 const gradientValue = formatGradientForType(
@@ -340,31 +345,82 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           https://github.com/radix-ui/primitives/pull/2027
           https://github.com/radix-ui/primitives/issues/1910
           */}
-            <ToggleGroupButton
-              value={"image"}
-              aria-label="Image background"
-              autoFocus={true}
+            <ToggleGroupTooltip
+              isOpen={activeTypeTooltip === "image"}
+              onOpenChange={(isOpen) =>
+                setActiveTypeTooltip(isOpen ? "image" : undefined)
+              }
+              isSelected={backgroundType === "image"}
+              label="Image"
+              code={"background-image: url(...);"}
+              description="Use an image asset, remote URL, or data URI as the layer background."
+              properties={["background-image"]}
             >
-              <Flex css={{ px: theme.spacing[3] }}>
-                <ImageIcon />
-              </Flex>
-            </ToggleGroupButton>
-            <ToggleGroupButton
-              value={"linearGradient"}
-              aria-label="Gradient background"
+              <ToggleGroupButton
+                value={"image"}
+                aria-label="Image background"
+                autoFocus={true}
+                onMouseEnter={() =>
+                  setActiveTypeTooltip((prevValue) =>
+                    prevValue === "image" ? prevValue : undefined
+                  )
+                }
+              >
+                <Flex css={{ px: theme.spacing[3] }}>
+                  <ImageIcon />
+                </Flex>
+              </ToggleGroupButton>
+            </ToggleGroupTooltip>
+            <ToggleGroupTooltip
+              isOpen={activeTypeTooltip === "linearGradient"}
+              onOpenChange={(isOpen) =>
+                setActiveTypeTooltip(isOpen ? "linearGradient" : undefined)
+              }
+              isSelected={backgroundType === "linearGradient"}
+              label="Linear gradient"
+              code={"background-image: linear-gradient(...);"}
+              description="Blend multiple colors along a line to create smooth transitions."
+              properties={["background-image"]}
             >
-              <Flex css={{ px: theme.spacing[3] }}>
-                <GradientLinearIcon />
-              </Flex>
-            </ToggleGroupButton>
-            <ToggleGroupButton
-              value={"conicGradient"}
-              aria-label="Conic gradient background"
+              <ToggleGroupButton
+                value={"linearGradient"}
+                aria-label="Linear gradient"
+                onMouseEnter={() =>
+                  setActiveTypeTooltip((prevValue) =>
+                    prevValue === "linearGradient" ? prevValue : undefined
+                  )
+                }
+              >
+                <Flex css={{ px: theme.spacing[3] }}>
+                  <GradientLinearIcon />
+                </Flex>
+              </ToggleGroupButton>
+            </ToggleGroupTooltip>
+            <ToggleGroupTooltip
+              isOpen={activeTypeTooltip === "conicGradient"}
+              onOpenChange={(isOpen) =>
+                setActiveTypeTooltip(isOpen ? "conicGradient" : undefined)
+              }
+              isSelected={backgroundType === "conicGradient"}
+              label="Conic gradient"
+              code={"background-image: conic-gradient(...);"}
+              description="Spin colors around a center point for charts, dials, and spotlight effects."
+              properties={["background-image"]}
             >
-              <Flex css={{ px: theme.spacing[3] }}>
-                <GradientConicIcon />
-              </Flex>
-            </ToggleGroupButton>
+              <ToggleGroupButton
+                value={"conicGradient"}
+                aria-label="Conic gradient"
+                onMouseEnter={() =>
+                  setActiveTypeTooltip((prevValue) =>
+                    prevValue === "conicGradient" ? prevValue : undefined
+                  )
+                }
+              >
+                <Flex css={{ px: theme.spacing[3] }}>
+                  <GradientConicIcon />
+                </Flex>
+              </ToggleGroupButton>
+            </ToggleGroupTooltip>
           </ToggleGroup>
         </Flex>
       </BackgroundSection>

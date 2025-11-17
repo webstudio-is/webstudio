@@ -87,13 +87,9 @@ const createDefaultStops = (): GradientStop[] => [
   },
 ];
 
-type CreateDefaultGradient = {
-  (type: "linear"): ParsedLinearGradient;
-  (type: "conic"): ParsedConicGradient;
-  (type: GradientType): ParsedGradient;
-};
-
-const createDefaultGradient: CreateDefaultGradient = (type: GradientType) => {
+function createDefaultGradient(type: "linear"): ParsedLinearGradient;
+function createDefaultGradient(type: "conic"): ParsedConicGradient;
+function createDefaultGradient(type: GradientType): ParsedGradient {
   const stops = createDefaultStops();
   if (type === "linear") {
     return {
@@ -105,7 +101,7 @@ const createDefaultGradient: CreateDefaultGradient = (type: GradientType) => {
     type: "conic",
     stops,
   } satisfies ParsedConicGradient;
-};
+}
 
 const getPercentUnit = (
   styleValue: StyleValue | undefined
@@ -376,24 +372,6 @@ const cloneVarFallback = (
   return { ...fallback } satisfies VarFallback;
 };
 
-const cloneGradientColor = (
-  color: GradientStop["color"] | undefined
-): GradientStop["color"] | undefined => {
-  if (color === undefined) {
-    return;
-  }
-
-  if (color.type === "var") {
-    const fallback = color.fallback;
-    return {
-      ...color,
-      fallback: fallback === undefined ? undefined : { ...fallback },
-    };
-  }
-
-  return { ...color };
-};
-
 const cloneGradientStopValue = <
   Value extends GradientStop["position"] | GradientStop["hint"],
 >(
@@ -627,7 +605,7 @@ const resolveReverseStops = <T extends ParsedGradient>(
   selectedStopIndex: number
 ): ReverseStopsResolution<T> => {
   if (gradient.stops.length <= 1) {
-    return { type: "none" } satisfies ReverseStopsResolution;
+    return { type: "none" } satisfies ReverseStopsResolution<T>;
   }
   const stopIndex = clampStopIndex(selectedStopIndex, gradient);
   const reversedStops = [...gradient.stops].reverse();
