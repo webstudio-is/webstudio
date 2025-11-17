@@ -7,6 +7,11 @@ import { useEffect, useState } from "react";
 import {
   propertyDescriptions,
   parseLinearGradient,
+  parseConicGradient,
+  formatLinearGradient,
+  formatConicGradient,
+  type ParsedLinearGradient,
+  type ParsedConicGradient,
 } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
@@ -15,6 +20,7 @@ import {
   XSmallIcon,
   ImageIcon,
   GradientLinearIcon,
+  GradientConicIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -40,29 +46,75 @@ import {
 } from "../../shared/repeated-style";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
-const detectBackgroundType = (styleValue?: StyleValue) => {
+type BackgroundType = "image" | "linearGradient" | "conicGradient";
+
+const createDefaultStops = () => [
+  {
+    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    position: { type: "unit", unit: "%", value: 0 },
+  },
+  {
+    color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
+    position: { type: "unit", unit: "%", value: 100 },
+  },
+];
+
+const createDefaultLinearGradient = (): ParsedLinearGradient => ({
+  type: "linear",
+  stops: createDefaultStops(),
+});
+
+const createDefaultConicGradient = (): ParsedConicGradient => ({
+  type: "conic",
+  stops: createDefaultStops(),
+});
+
+const formatGradientForType = (
+  styleValue: StyleValue | undefined,
+  target: Exclude<BackgroundType, "image">
+) => {
+  const cssValue = styleValue === undefined ? "" : toValue(styleValue);
+  const gradientString = typeof cssValue === "string" ? cssValue : "";
+  if (target === "linearGradient") {
+    const parsed =
+      (gradientString.length > 0
+        ? parseLinearGradient(gradientString)
+        : undefined) ?? createDefaultLinearGradient();
+    return formatLinearGradient(parsed);
+  }
+
+  const parsed =
+    (gradientString.length > 0
+      ? parseConicGradient(gradientString)
+      : undefined) ?? createDefaultConicGradient();
+  return formatConicGradient(parsed);
+};
+
+const detectBackgroundType = (styleValue?: StyleValue): BackgroundType => {
   if (styleValue === undefined) {
-    return "image" as const;
+    return "image";
   }
 
   if (styleValue.type === "image") {
-    return "image" as const;
+    return "image";
   }
 
   if (styleValue.type === "keyword") {
     // The only allowed keyword for backgroundImage is none
-    return "image" as const;
+    return "image";
   }
 
   const cssValue = toValue(styleValue);
   if (typeof cssValue === "string") {
-    const parsed = parseLinearGradient(cssValue);
-    if (parsed !== undefined) {
-      return "linearGradient" as const;
+    if (parseLinearGradient(cssValue) !== undefined) {
+      return "linearGradient";
+    }
+    if (parseConicGradient(cssValue) !== undefined) {
+      return "conicGradient";
     }
   }
 
-  return "image" as const;
+  return "image";
 };
 
 const getStyleValueKey = (styleValue?: StyleValue) => {
@@ -87,10 +139,10 @@ const getStyleValueKey = (styleValue?: StyleValue) => {
   return `${styleValue.type}:${toValue(styleValue)}`;
 };
 
-const isImageOrLinearGradient = (
-  value: string
-): value is "image" | "linearGradient" => {
-  return value === "image" || value === "linearGradient";
+const isBackgroundType = (value: string): value is BackgroundType => {
+  return (
+    value === "image" || value === "linearGradient" || value === "conicGradient"
+  );
 };
 
 const getBackgroundStyleItem = (
@@ -229,9 +281,9 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
   const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
 
-  const [backgroundType, setBackgroundType] = useState<
-    "image" | "linearGradient"
-  >(() => detectBackgroundType(backgroundStyleItem));
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>(() =>
+    detectBackgroundType(backgroundStyleItem)
+  );
   const [syncedStyleKey, setSyncedStyleKey] = useState(() =>
     getStyleValueKey(backgroundStyleItem)
   );
@@ -261,8 +313,25 @@ export const BackgroundContent = ({ index }: { index: number }) => {
             value={backgroundType}
             aria-label="Background type"
             onValueChange={(value) => {
-              if (isImageOrLinearGradient(value)) {
-                setBackgroundType(value);
+              if (isBackgroundType(value) === false) {
+                return;
+              }
+
+              if (value === backgroundType) {
+                return;
+              }
+
+              setBackgroundType(value);
+
+              if (value === "linearGradient" || value === "conicGradient") {
+                const gradientValue = formatGradientForType(
+                  backgroundStyleItem,
+                  value
+                );
+                setRepeatedStyleItem(backgroundImage, index, {
+                  type: "unparsed",
+                  value: gradientValue,
+                });
               }
             }}
           >
@@ -288,14 +357,26 @@ export const BackgroundContent = ({ index }: { index: number }) => {
                 <GradientLinearIcon />
               </Flex>
             </ToggleGroupButton>
+            <ToggleGroupButton
+              value={"conicGradient"}
+              aria-label="Conic gradient background"
+            >
+              <Flex css={{ px: theme.spacing[3] }}>
+                <GradientConicIcon />
+              </Flex>
+            </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
       </BackgroundSection>
 
       <Separator />
 
-      {backgroundType === "linearGradient" && (
-        <BackgroundLinearGradient index={index} />
+      {(backgroundType === "linearGradient" ||
+        backgroundType === "conicGradient") && (
+        <BackgroundLinearGradient
+          index={index}
+          type={backgroundType === "conicGradient" ? "conic" : "linear"}
+        />
       )}
 
       {backgroundType === "image" && (

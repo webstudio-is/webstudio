@@ -11,8 +11,11 @@ import {
 } from "react";
 import {
   formatLinearGradient,
+  formatConicGradient,
   type GradientStop,
   type ParsedGradient,
+  type ParsedLinearGradient,
+  type ParsedConicGradient,
 } from "@webstudio-is/css-data";
 import { colord, extend, type RgbaColor } from "colord";
 import mixPlugin from "colord/plugins/mix";
@@ -29,7 +32,16 @@ type GradientPickerProps = {
   onChange: (value: ParsedGradient) => void;
   onChangeComplete: (value: ParsedGradient) => void;
   onThumbSelect: (index: number, stop: GradientStop) => void;
+  type?: "linear" | "conic";
 };
+
+const isLinearGradient = (
+  gradient: ParsedGradient
+): gradient is ParsedLinearGradient => gradient.type === "linear";
+
+const isConicGradient = (
+  gradient: ParsedGradient
+): gradient is ParsedConicGradient => gradient.type === "conic";
 
 const defaultAngle: UnitValue = {
   type: "unit",
@@ -111,13 +123,20 @@ export const GradientPicker = (props: GradientPickerProps) => {
   }, [stops]);
 
   const buildGradient = useCallback(
-    (stopsValue: GradientStop[]): ParsedGradient => ({
-      angle: gradient.angle,
-      sideOrCorner: gradient.sideOrCorner,
-      stops: stopsValue,
-      repeating: gradient.repeating,
-    }),
-    [gradient.angle, gradient.sideOrCorner, gradient.repeating]
+    (stopsValue: GradientStop[]): ParsedGradient => {
+      if (isConicGradient(gradient)) {
+        return {
+          ...gradient,
+          stops: stopsValue,
+        } satisfies ParsedConicGradient;
+      }
+
+      return {
+        ...gradient,
+        stops: stopsValue,
+      } satisfies ParsedLinearGradient;
+    },
+    [gradient]
   );
 
   useEffect(() => {
@@ -154,12 +173,18 @@ export const GradientPicker = (props: GradientPickerProps) => {
         : undefined
     )
     .filter((item): item is number => item !== undefined);
-  const background = formatLinearGradient({
-    stops,
-    sideOrCorner: gradient.sideOrCorner,
-    angle: defaultAngle,
-    repeating: gradient.repeating,
-  });
+  const background = isConicGradient(gradient)
+    ? formatConicGradient({
+        ...gradient,
+        stops,
+      })
+    : formatLinearGradient({
+        ...gradient,
+        stops,
+        angle:
+          gradient.angle ??
+          (gradient.sideOrCorner === undefined ? defaultAngle : undefined),
+      });
 
   const updateStops = useCallback(
     (

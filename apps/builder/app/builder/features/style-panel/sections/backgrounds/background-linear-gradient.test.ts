@@ -6,11 +6,14 @@ import type {
   UnitValue,
   VarValue,
 } from "@webstudio-is/css-engine";
-import type { GradientStop, ParsedGradient } from "@webstudio-is/css-data";
+import type {
+  GradientStop,
+  ParsedLinearGradient,
+} from "@webstudio-is/css-data";
 import { __testing__ } from "./background-linear-gradient";
 
 const {
-  normalizeLinearGradientInput,
+  normalizeGradientInput,
   getAnglePlaceholder,
   sideOrCornerToAngle,
   fillMissingStopPositions,
@@ -29,10 +32,18 @@ const {
 
 type PercentUnitValue = UnitValue & { unit: "%" };
 
-describe("normalizeLinearGradientInput", () => {
+const createLinearGradient = (
+  overrides: Partial<ParsedLinearGradient> = {}
+): ParsedLinearGradient => ({
+  type: "linear",
+  stops: [],
+  ...overrides,
+});
+
+describe("normalizeGradientInput", () => {
   test("returns string unchanged when not repeating", () => {
     const input = "linear-gradient(red, blue)";
-    expect(normalizeLinearGradientInput(input)).toEqual({
+    expect(normalizeGradientInput(input, "linear")).toEqual({
       normalizedGradientString: input,
       initialIsRepeating: false,
     });
@@ -40,7 +51,7 @@ describe("normalizeLinearGradientInput", () => {
 
   test("normalizes repeating gradients", () => {
     const input = "  repeating-linear-gradient(red, blue)";
-    expect(normalizeLinearGradientInput(input)).toEqual({
+    expect(normalizeGradientInput(input, "linear")).toEqual({
       normalizedGradientString: "  linear-gradient(red, blue)",
       initialIsRepeating: true,
     });
@@ -48,8 +59,16 @@ describe("normalizeLinearGradientInput", () => {
 
   test("handles uppercase repeating gradients while preserving leading whitespace", () => {
     const input = "\tRePeAtInG-Linear-GrAdIeNt(red, blue)";
-    expect(normalizeLinearGradientInput(input)).toEqual({
+    expect(normalizeGradientInput(input, "linear")).toEqual({
       normalizedGradientString: "\tlinear-gradient(red, blue)",
+      initialIsRepeating: true,
+    });
+  });
+
+  test("normalizes repeating conic gradients", () => {
+    const input = "repeating-conic-gradient(red, blue)";
+    expect(normalizeGradientInput(input, "conic")).toEqual({
+      normalizedGradientString: "conic-gradient(red, blue)",
       initialIsRepeating: true,
     });
   });
@@ -118,37 +137,34 @@ describe("sideOrCornerToAngle", () => {
 
 describe("getAnglePlaceholder", () => {
   test("returns undefined when angle is provided", () => {
-    const gradient: ParsedGradient = {
-      stops: [],
+    const gradient = createLinearGradient({
       angle: { type: "unit", unit: "deg", value: 45 } satisfies UnitValue,
-    };
+    });
     expect(getAnglePlaceholder(gradient)).toBeUndefined();
   });
 
   test("derives angle from side or corner", () => {
-    const gradient: ParsedGradient = {
-      stops: [],
+    const gradient = createLinearGradient({
       sideOrCorner: {
         type: "keyword",
         value: "to left",
       } satisfies KeywordValue,
-    };
+    });
     expect(getAnglePlaceholder(gradient)).toBe("270deg");
   });
 
   test("falls back to 180deg", () => {
-    const gradient: ParsedGradient = { stops: [] };
+    const gradient = createLinearGradient();
     expect(getAnglePlaceholder(gradient)).toBe("180deg");
   });
 
   test("falls back to 180deg when side or corner is not directional", () => {
-    const gradient: ParsedGradient = {
-      stops: [],
+    const gradient = createLinearGradient({
       sideOrCorner: {
         type: "keyword",
         value: "center",
       } satisfies KeywordValue,
-    };
+    });
     expect(getAnglePlaceholder(gradient)).toBe("180deg");
   });
 });
@@ -191,25 +207,25 @@ describe("resolveAngleValue", () => {
 
 describe("fillMissingStopPositions", () => {
   test("returns original gradient when no stops present", () => {
-    const gradient: ParsedGradient = { stops: [] };
+    const gradient = createLinearGradient();
     expect(fillMissingStopPositions(gradient)).toBe(gradient);
   });
 
   test("returns original gradient when positions use non-percent units", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         { color: undefined, position: { type: "unit", unit: "px", value: 10 } },
         { color: undefined },
       ],
-    };
+    });
 
     expect(fillMissingStopPositions(gradient)).toBe(gradient);
   });
 
   test("assigns zero to a single stop without position", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [{ color: undefined }],
-    };
+    });
 
     const result = fillMissingStopPositions(gradient);
     expect(result).not.toBe(gradient);
@@ -221,9 +237,9 @@ describe("fillMissingStopPositions", () => {
   });
 
   test("distributes positions evenly when all positions missing", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [{ color: undefined }, { color: undefined }, { color: undefined }],
-    };
+    });
 
     const result = fillMissingStopPositions(gradient);
     expect(result.stops.map((stop) => stop.position?.value)).toEqual([
@@ -232,13 +248,13 @@ describe("fillMissingStopPositions", () => {
   });
 
   test("fills missing positions proportionally", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         { color: undefined, position: { type: "unit", unit: "%", value: 0 } },
         { color: undefined },
         { color: undefined, position: { type: "unit", unit: "%", value: 100 } },
       ],
-    };
+    });
 
     const result = fillMissingStopPositions(gradient);
     expect(result.stops[1]?.position).toEqual({
@@ -249,7 +265,7 @@ describe("fillMissingStopPositions", () => {
   });
 
   test("returns original gradient when positions use css variables", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -264,13 +280,13 @@ describe("fillMissingStopPositions", () => {
           position: { type: "unit", unit: "%", value: 100 },
         },
       ],
-    };
+    });
 
     expect(fillMissingStopPositions(gradient)).toBe(gradient);
   });
 
   test("fills missing start and end positions when interior stops defined", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         { color: undefined },
         { color: undefined, position: { type: "unit", unit: "%", value: 20 } },
@@ -278,7 +294,7 @@ describe("fillMissingStopPositions", () => {
         { color: undefined, position: { type: "unit", unit: "%", value: 80 } },
         { color: undefined },
       ],
-    };
+    });
 
     const result = fillMissingStopPositions(gradient);
     expect(result.stops.map((stop) => stop.position?.value)).toEqual([
@@ -287,12 +303,12 @@ describe("fillMissingStopPositions", () => {
   });
 
   test("leaves gradients unchanged when positions are defined", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         { color: undefined, position: { type: "unit", unit: "%", value: 0 } },
         { color: undefined, position: { type: "unit", unit: "%", value: 100 } },
       ],
-    };
+    });
 
     expect(fillMissingStopPositions(gradient)).toBe(gradient);
   });
@@ -300,7 +316,7 @@ describe("fillMissingStopPositions", () => {
 
 describe("ensureGradientHasStops", () => {
   test("provides default stops when gradient is empty", () => {
-    const gradient: ParsedGradient = { stops: [] };
+    const gradient = createLinearGradient();
     const result = ensureGradientHasStops(gradient);
     expect(result.stops).toHaveLength(2);
     expect(result.stops[0]?.color).toEqual({
@@ -320,14 +336,14 @@ describe("ensureGradientHasStops", () => {
   });
 
   test("fills missing colors with fallback", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
           position: { type: "unit", unit: "%", value: 0 },
         },
       ],
-    };
+    });
 
     const result = ensureGradientHasStops(gradient);
     expect(result.stops[0]?.color).toEqual({
@@ -344,9 +360,9 @@ describe("ensureGradientHasStops", () => {
       color: { type: "rgb", r: 10, g: 20, b: 30, alpha: 0.5 },
       position: { type: "unit", unit: "%", value: 10 },
     };
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [stop],
-    };
+    });
 
     const result = ensureGradientHasStops(gradient);
     expect(result).not.toBe(gradient);
@@ -355,12 +371,12 @@ describe("ensureGradientHasStops", () => {
 });
 
 describe("clampStopIndex", () => {
-  const gradient: ParsedGradient = {
+  const gradient = createLinearGradient({
     stops: [
       { color: undefined, position: undefined },
       { color: undefined, position: undefined },
     ],
-  };
+  });
 
   test("clamps to valid range", () => {
     expect(clampStopIndex(-1, gradient)).toBe(0);
@@ -369,7 +385,7 @@ describe("clampStopIndex", () => {
   });
 
   test("returns zero when gradient has no stops", () => {
-    const emptyGradient: ParsedGradient = { stops: [] };
+    const emptyGradient = createLinearGradient();
     expect(clampStopIndex(3, emptyGradient)).toBe(0);
   });
 });
@@ -601,21 +617,21 @@ describe("resolveStopPositionUpdate", () => {
 
 describe("resolveReverseStops", () => {
   test("returns none when gradient has single stop", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
           position: { type: "unit", unit: "%", value: 0 },
         },
       ],
-    };
+    });
 
     const result = resolveReverseStops(gradient, 0);
     expect(result).toEqual({ type: "none" });
   });
 
   test("reverses stops and mirrors percent positions", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
@@ -630,7 +646,7 @@ describe("resolveReverseStops", () => {
           position: { type: "unit", unit: "%", value: 90 },
         },
       ],
-    };
+    });
 
     const result = resolveReverseStops(gradient, 1);
     expect(result.type).toBe("apply");
@@ -647,7 +663,7 @@ describe("resolveReverseStops", () => {
   });
 
   test("preserves non-percent positions when reversing", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -658,7 +674,7 @@ describe("resolveReverseStops", () => {
           position: { type: "var", value: "progress" },
         },
       ],
-    };
+    });
 
     const result = resolveReverseStops(gradient, 0);
     expect(result.type).toBe("apply");
@@ -673,9 +689,9 @@ describe("resolveReverseStops", () => {
 
 describe("resolveGradientForPicker", () => {
   test("fills missing stop positions without overrides", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [{ color: undefined }, { color: undefined }, { color: undefined }],
-    };
+    });
 
     const result = resolveGradientForPicker(gradient, new Map());
 
@@ -685,7 +701,7 @@ describe("resolveGradientForPicker", () => {
   });
 
   test("applies overrides when hints missing", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -696,7 +712,7 @@ describe("resolveGradientForPicker", () => {
           position: { type: "unit", unit: "%", value: 50 },
         },
       ],
-    };
+    });
 
     const overrides = new Map<number, PercentUnitValue>([
       [1, { type: "unit", unit: "%", value: 25 }],
@@ -712,7 +728,7 @@ describe("resolveGradientForPicker", () => {
   });
 
   test("leaves existing hints untouched", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -724,7 +740,7 @@ describe("resolveGradientForPicker", () => {
           hint: { type: "unit", unit: "%", value: 60 },
         },
       ],
-    };
+    });
 
     const overrides = new Map<number, PercentUnitValue>([
       [1, { type: "unit", unit: "%", value: 80 }],
@@ -740,7 +756,7 @@ describe("resolveGradientForPicker", () => {
   });
 
   test("resolves variable stop positions using fallback", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -755,7 +771,7 @@ describe("resolveGradientForPicker", () => {
           position: { type: "unit", unit: "%", value: 100 },
         },
       ],
-    };
+    });
 
     const result = resolveGradientForPicker(gradient, new Map());
 
@@ -767,7 +783,7 @@ describe("resolveGradientForPicker", () => {
   });
 
   test("falls back to inferred positions when variable has no fallback", () => {
-    const gradient: ParsedGradient = {
+    const gradient = createLinearGradient({
       stops: [
         {
           color: undefined,
@@ -777,7 +793,7 @@ describe("resolveGradientForPicker", () => {
           color: undefined,
         },
       ],
-    };
+    });
 
     const result = resolveGradientForPicker(gradient, new Map());
 

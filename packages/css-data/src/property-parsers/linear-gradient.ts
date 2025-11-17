@@ -6,7 +6,6 @@ import {
   type Unit,
   toValue,
   KeywordValue,
-  type RgbValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import { parseCssValue } from "../parse-css-value";
@@ -14,20 +13,19 @@ import namesPlugin from "colord/plugins/names";
 
 extend([namesPlugin]);
 
-export type GradientColorValue = RgbValue | KeywordValue | VarValue;
+export type {
+  GradientColorValue,
+  GradientStop,
+  ParsedGradient,
+  ParsedLinearGradient,
+  ParsedConicGradient,
+} from "./types";
 
-export type GradientStop = {
-  color?: GradientColorValue;
-  position?: UnitValue | VarValue;
-  hint?: UnitValue | VarValue;
-};
-
-export type ParsedGradient = {
-  angle?: UnitValue | VarValue;
-  sideOrCorner?: KeywordValue;
-  stops: GradientStop[];
-  repeating?: boolean;
-};
+import type {
+  GradientColorValue,
+  GradientStop,
+  ParsedLinearGradient,
+} from "./types";
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
 
@@ -84,7 +82,7 @@ const isVarAngle = (value: VarValue) => {
 
 export const parseLinearGradient = (
   gradient: string
-): ParsedGradient | undefined => {
+): ParsedLinearGradient | undefined => {
   const normalizedGradient = gradient.replace(
     /^(\s*)repeating-linear-gradient/i,
     (_match, leadingWhitespace: string) => `${leadingWhitespace}linear-gradient`
@@ -181,7 +179,12 @@ export const parseLinearGradient = (
     return;
   }
 
-  const parsedGradient: ParsedGradient = { angle, sideOrCorner, stops };
+  const parsedGradient: ParsedLinearGradient = {
+    type: "linear",
+    angle,
+    sideOrCorner,
+    stops,
+  };
   if (isRepeating) {
     parsedGradient.repeating = true;
   }
@@ -269,8 +272,8 @@ const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
 
 const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
 
-export const formatLinearGradient = (parsed: ParsedGradient): string => {
-  const direction = parsed?.angle || parsed?.sideOrCorner;
+export const formatLinearGradient = (parsed: ParsedLinearGradient): string => {
+  const direction = parsed.angle || parsed.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {
       let result = toValue(stop.color);

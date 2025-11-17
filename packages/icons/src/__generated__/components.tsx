@@ -2675,6 +2675,46 @@ export const GoogleIcon: IconComponent = forwardRef(
 );
 GoogleIcon.displayName = "GoogleIcon";
 
+export const GradientConicIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g
+          fill="#11181C"
+          clipPath="url(#15388f97__paint0_angular_9413_9319_clip_path)"
+        >
+          <path d="M8 8V0a8 8 0 0 1 4 1.072Z" />
+          <path fillOpacity=".909" d="m8 8 4-6.928A8 8 0 0 1 14.928 4Z" />
+          <path fillOpacity=".818" d="m8 8 6.928-4A8 8 0 0 1 16 8Z" />
+          <path fillOpacity=".727" d="M8 8h8a8 8 0 0 1-1.072 4Z" />
+          <path fillOpacity=".636" d="m8 8 6.928 4A8 8 0 0 1 12 14.928Z" />
+          <path fillOpacity=".545" d="m8 8 4 6.928A8 8 0 0 1 8 16Z" />
+          <path fillOpacity=".455" d="M8 8v8a8 8 0 0 1-4-1.072Z" />
+          <path fillOpacity=".364" d="m8 8-4 6.928A8 8 0 0 1 1.072 12Z" />
+          <path fillOpacity=".273" d="m8 8-6.928 4A8 8 0 0 1 0 8Z" />
+          <path fillOpacity=".182" d="M8 8H0a8 8 0 0 1 1.072-4Z" />
+          <path fillOpacity=".091" d="M8 8 1.072 4A8 8 0 0 1 4 1.072Z" />
+          <path fill="none" d="M8 8 4 1.072A8 8 0 0 1 8 0Z" />
+        </g>
+        <defs>
+          <clipPath id="15388f97__paint0_angular_9413_9319_clip_path">
+            <path d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientConicIcon.displayName = "GradientConicIcon";
+
 export const GradientLinearIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

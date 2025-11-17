@@ -12,7 +12,11 @@ import {
   parseCssValue,
   parseLinearGradient,
   formatLinearGradient,
+  parseConicGradient,
+  formatConicGradient,
   type ParsedGradient,
+  type ParsedLinearGradient,
+  type ParsedConicGradient,
   type GradientStop,
 } from "@webstudio-is/css-data";
 import {
@@ -55,12 +59,49 @@ import {
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 
-type NormalizedLinearGradient = {
+type GradientType = "linear" | "conic";
+
+const isLinearGradient = (
+  gradient: ParsedGradient
+): gradient is ParsedLinearGradient => gradient.type === "linear";
+
+const isConicGradient = (
+  gradient: ParsedGradient
+): gradient is ParsedConicGradient => gradient.type === "conic";
+
+type NormalizedGradient = {
   normalizedGradientString: string;
   initialIsRepeating: boolean;
 };
 
 type PercentUnitValue = UnitValue & { unit: "%" };
+
+const createDefaultStops = (): GradientStop[] => [
+  {
+    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    position: { type: "unit", unit: "%", value: 0 },
+  },
+  {
+    color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
+    position: { type: "unit", unit: "%", value: 100 },
+  },
+];
+
+function createDefaultGradient(type: "linear"): ParsedLinearGradient;
+function createDefaultGradient(type: "conic"): ParsedConicGradient;
+function createDefaultGradient(type: GradientType): ParsedGradient {
+  const stops = createDefaultStops();
+  if (type === "linear") {
+    return {
+      type: "linear",
+      stops,
+    } satisfies ParsedLinearGradient;
+  }
+  return {
+    type: "conic",
+    stops,
+  } satisfies ParsedConicGradient;
+}
 
 const getPercentUnit = (
   styleValue: StyleValue | undefined
@@ -89,29 +130,45 @@ const getPercentUnit = (
   }
 };
 
-const normalizeLinearGradientInput = (
-  gradientString: string
-): NormalizedLinearGradient => {
+const gradientFunctionNames: Record<
+  GradientType,
+  { base: string; repeating: string }
+> = {
+  linear: {
+    base: "linear-gradient",
+    repeating: "repeating-linear-gradient",
+  },
+  conic: {
+    base: "conic-gradient",
+    repeating: "repeating-conic-gradient",
+  },
+};
+
+const normalizeGradientInput = (
+  gradientString: string,
+  gradientType: GradientType
+): NormalizedGradient => {
   const leadingWhitespaceMatch = gradientString.match(/^\s*/);
   const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
   const withoutLeading = gradientString.slice(leadingWhitespace.length);
   const lowerCase = withoutLeading.toLowerCase();
+  const { base, repeating } = gradientFunctionNames[gradientType];
 
-  if (lowerCase.startsWith("repeating-linear-gradient")) {
-    const suffix = withoutLeading.slice("repeating-linear-gradient".length);
+  if (lowerCase.startsWith(repeating)) {
+    const suffix = withoutLeading.slice(repeating.length);
     return {
-      normalizedGradientString: `${leadingWhitespace}linear-gradient${suffix}`,
+      normalizedGradientString: `${leadingWhitespace}${base}${suffix}`,
       initialIsRepeating: true,
-    } satisfies NormalizedLinearGradient;
+    } satisfies NormalizedGradient;
   }
 
   return {
     normalizedGradientString: gradientString,
     initialIsRepeating: false,
-  } satisfies NormalizedLinearGradient;
+  } satisfies NormalizedGradient;
 };
 
-const getAnglePlaceholder = (gradient: ParsedGradient) => {
+const getAnglePlaceholder = (gradient: ParsedLinearGradient) => {
   if (gradient.angle !== undefined) {
     return;
   }
@@ -190,7 +247,7 @@ const sideOrCornerToAngle = (
   }
 };
 
-const fillMissingStopPositions = (gradient: ParsedGradient): ParsedGradient => {
+const fillMissingStopPositions = <T extends ParsedGradient>(gradient: T): T => {
   const stops = gradient.stops;
   if (stops.length === 0) {
     return gradient;
@@ -285,20 +342,7 @@ const fillMissingStopPositions = (gradient: ParsedGradient): ParsedGradient => {
   return {
     ...gradient,
     stops: nextStops,
-  };
-};
-
-const defaultGradient: ParsedGradient = {
-  stops: [
-    {
-      color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
-      position: { type: "unit", unit: "%", value: 0 },
-    },
-    {
-      color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
-      position: { type: "unit", unit: "%", value: 100 },
-    },
-  ],
+  } as T;
 };
 
 const fallbackStopColor: RgbValue = {
@@ -427,6 +471,11 @@ const resolveAngleValue = (
   return;
 };
 
+const formatGradientValue = (gradient: ParsedGradient) =>
+  gradient.type === "linear"
+    ? formatLinearGradient(gradient)
+    : formatConicGradient(gradient);
+
 const resolveVarPercentUnit = (
   value: GradientStop["position"] | GradientStop["hint"]
 ): PercentUnitValue | undefined => {
@@ -443,7 +492,7 @@ const resolveVarPercentUnit = (
   }
 };
 
-const normalizeStopsForPicker = (gradient: ParsedGradient): ParsedGradient => {
+const normalizeStopsForPicker = <T extends ParsedGradient>(gradient: T): T => {
   let changed = false;
   const stops = gradient.stops.map((stop) => {
     let nextPosition = stop.position;
@@ -479,13 +528,13 @@ const normalizeStopsForPicker = (gradient: ParsedGradient): ParsedGradient => {
   return {
     ...gradient,
     stops,
-  } satisfies ParsedGradient;
+  } as T;
 };
 
-const resolveGradientForPicker = (
-  gradient: ParsedGradient,
+const resolveGradientForPicker = <T extends ParsedGradient>(
+  gradient: T,
   hintOverrides: ReadonlyMap<number, PercentUnitValue>
-): ParsedGradient => {
+): T => {
   const normalized = normalizeStopsForPicker(gradient);
   const filled = fillMissingStopPositions(normalized);
   if (hintOverrides.size === 0) {
@@ -512,7 +561,7 @@ const resolveGradientForPicker = (
   return {
     ...filled,
     stops: stopsWithHints,
-  };
+  } as T;
 };
 
 const removeHintOverride = (
@@ -568,18 +617,18 @@ const pruneHintOverrides = (
   return changed ? next : overrides;
 };
 
-type ReverseStopsResolution =
+type ReverseStopsResolution<T extends ParsedGradient> =
   | {
       type: "apply";
-      gradient: ParsedGradient;
+      gradient: T;
       selectedStopIndex: number;
     }
   | { type: "none" };
 
-const resolveReverseStops = (
-  gradient: ParsedGradient,
+const resolveReverseStops = <T extends ParsedGradient>(
+  gradient: T,
   selectedStopIndex: number
-): ReverseStopsResolution => {
+): ReverseStopsResolution<T> => {
   if (gradient.stops.length <= 1) {
     return { type: "none" } satisfies ReverseStopsResolution;
   }
@@ -595,13 +644,13 @@ const resolveReverseStops = (
     }
     return { ...stop, position } satisfies GradientStop;
   });
-  const nextGradient: ParsedGradient = { ...gradient, stops: nextStops };
+  const nextGradient = { ...gradient, stops: nextStops } as T;
   const nextSelectedIndex = gradient.stops.length - 1 - stopIndex;
   return {
     type: "apply",
     gradient: nextGradient,
     selectedStopIndex: nextSelectedIndex,
-  } satisfies ReverseStopsResolution;
+  } satisfies ReverseStopsResolution<T>;
 };
 
 type StopPositionUpdateResolution =
@@ -679,10 +728,10 @@ const resolveStopHintUpdate = (
   };
 };
 
-const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
+const ensureGradientHasStops = <T extends ParsedGradient>(gradient: T): T => {
   const stops =
     gradient.stops.length === 0
-      ? defaultGradient.stops.map(cloneGradientStop)
+      ? createDefaultStops()
       : gradient.stops.map((stop) =>
           stop.color === undefined
             ? {
@@ -695,10 +744,10 @@ const ensureGradientHasStops = (gradient: ParsedGradient): ParsedGradient => {
   return {
     ...gradient,
     stops,
-  };
+  } as T;
 };
 
-const clampStopIndex = (index: number, gradient: ParsedGradient) =>
+const clampStopIndex = <T extends ParsedGradient>(index: number, gradient: T) =>
   clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
 
 type IntermediateValue = {
@@ -755,7 +804,13 @@ const styleValueToColor = (
   return parseColorString(toValue(styleValue));
 };
 
-export const BackgroundLinearGradient = ({ index }: { index: number }) => {
+export const BackgroundLinearGradient = ({
+  index,
+  type: gradientType = "linear",
+}: {
+  index: number;
+  type?: GradientType;
+}) => {
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
   if (styleValue.type === "layers") {
@@ -769,27 +824,37 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const gradientString = toValue(styleValue);
   const { normalizedGradientString, initialIsRepeating } =
-    normalizeLinearGradientInput(gradientString);
+    normalizeGradientInput(gradientString, gradientType);
 
   const parsedGradient = useMemo(() => {
-    const parsed = parseLinearGradient(normalizedGradientString);
-    if (parsed === undefined) {
-      return ensureGradientHasStops(defaultGradient);
+    if (gradientType === "linear") {
+      const parsed =
+        parseLinearGradient(normalizedGradientString) ??
+        createDefaultGradient("linear");
+      return ensureGradientHasStops(parsed);
     }
+    const parsed =
+      parseConicGradient(normalizedGradientString) ??
+      createDefaultGradient("conic");
     return ensureGradientHasStops(parsed);
-  }, [normalizedGradientString]);
+  }, [gradientType, normalizedGradientString]);
 
   const computedGradientString = toValue(computedStyleValue);
   const { normalizedGradientString: normalizedComputedGradientString } =
-    normalizeLinearGradientInput(computedGradientString);
+    normalizeGradientInput(computedGradientString, gradientType);
 
   const parsedComputedGradient = useMemo(() => {
-    const parsed = parseLinearGradient(normalizedComputedGradientString);
-    if (parsed === undefined) {
-      return ensureGradientHasStops(defaultGradient);
+    if (gradientType === "linear") {
+      const parsed =
+        parseLinearGradient(normalizedComputedGradientString) ??
+        createDefaultGradient("linear");
+      return ensureGradientHasStops(parsed);
     }
+    const parsed =
+      parseConicGradient(normalizedComputedGradientString) ??
+      createDefaultGradient("conic");
     return ensureGradientHasStops(parsed);
-  }, [normalizedComputedGradientString]);
+  }, [gradientType, normalizedComputedGradientString]);
 
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
 
@@ -799,7 +864,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
-      const gradientValue = formatLinearGradient(nextGradient);
+      const gradientValue = formatGradientValue(nextGradient);
       // TODO maybe used a more structured representation
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
@@ -865,15 +930,37 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       } satisfies GradientStop;
     });
 
+    if (isLinearGradient(base) && isLinearGradient(computedGradientForPicker)) {
+      return {
+        ...base,
+        angle: computedGradientForPicker.angle ?? base.angle,
+        sideOrCorner:
+          computedGradientForPicker.sideOrCorner ?? base.sideOrCorner,
+        stops,
+      } satisfies ParsedLinearGradient;
+    }
+
+    if (isConicGradient(base) && isConicGradient(computedGradientForPicker)) {
+      return {
+        ...base,
+        angle: computedGradientForPicker.angle ?? base.angle,
+        position: computedGradientForPicker.position ?? base.position,
+        stops,
+      } satisfies ParsedConicGradient;
+    }
+
     return {
       ...base,
-      angle: computedGradientForPicker.angle ?? base.angle,
-      sideOrCorner: computedGradientForPicker.sideOrCorner ?? base.sideOrCorner,
       stops,
-    } satisfies ParsedGradient;
+    } as ParsedGradient;
   }, [computedGradientForPicker, gradient, hintOverrides]);
 
-  const anglePlaceholder = getAnglePlaceholder(gradient);
+  const anglePlaceholder =
+    gradient.type === "conic"
+      ? gradient.angle === undefined
+        ? "0deg"
+        : undefined
+      : getAnglePlaceholder(gradient);
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
@@ -882,7 +969,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       const isEphemeral = options?.isEphemeral === true;
       setLocalGradient(nextGradient);
       setIntermediateValue(undefined);
-      const gradientValue = formatLinearGradient(nextGradient);
+      const gradientValue = formatGradientValue(nextGradient);
       setRepeatedStyleItem(
         styleDecl,
         index,
@@ -968,12 +1055,25 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       if (angleValue === undefined) {
         return;
       }
-      const nextGradient: ParsedGradient = {
-        ...gradient,
-        angle: angleValue,
-        sideOrCorner: undefined,
-      };
-      applyGradient(nextGradient, options);
+      if (isLinearGradient(gradient)) {
+        applyGradient(
+          {
+            ...gradient,
+            angle: angleValue,
+            sideOrCorner: undefined,
+          },
+          options
+        );
+        return;
+      }
+
+      applyGradient(
+        {
+          ...gradient,
+          angle: angleValue,
+        },
+        options
+      );
     },
     [applyGradient, gradient]
   );
@@ -1207,6 +1307,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       <Box css={{ paddingInline: theme.spacing[2] }}>
         <GradientPicker
           gradient={gradientForPicker}
+          type={gradientType}
           onChange={handlePickerChange}
           onChangeComplete={handlePickerChangeComplete}
           onThumbSelect={(index) => {
@@ -1334,7 +1435,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 };
 
 export const __testing__ = {
-  normalizeLinearGradientInput,
+  normalizeGradientInput,
   getAnglePlaceholder,
   resolveAngleValue,
   sideOrCornerToAngle,

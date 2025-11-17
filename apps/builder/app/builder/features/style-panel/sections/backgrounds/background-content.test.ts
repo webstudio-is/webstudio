@@ -30,6 +30,14 @@ describe("detectBackgroundType", () => {
     expect(detectBackgroundType(value)).toBe("linearGradient");
   });
 
+  test("returns conicGradient for conic gradient", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "conic-gradient(red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("conicGradient");
+  });
+
   test("returns image for unsupported gradient types", () => {
     const value: StyleValue = {
       type: "unparsed",
