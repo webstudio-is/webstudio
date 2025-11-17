@@ -87,9 +87,13 @@ const createDefaultStops = (): GradientStop[] => [
   },
 ];
 
-function createDefaultGradient(type: "linear"): ParsedLinearGradient;
-function createDefaultGradient(type: "conic"): ParsedConicGradient;
-function createDefaultGradient(type: GradientType): ParsedGradient {
+type CreateDefaultGradient = {
+  (type: "linear"): ParsedLinearGradient;
+  (type: "conic"): ParsedConicGradient;
+  (type: GradientType): ParsedGradient;
+};
+
+const createDefaultGradient = ((type: GradientType) => {
   const stops = createDefaultStops();
   if (type === "linear") {
     return {
@@ -101,7 +105,7 @@ function createDefaultGradient(type: GradientType): ParsedGradient {
     type: "conic",
     stops,
   } satisfies ParsedConicGradient;
-}
+}) as CreateDefaultGradient;
 
 const getPercentUnit = (
   styleValue: StyleValue | undefined
