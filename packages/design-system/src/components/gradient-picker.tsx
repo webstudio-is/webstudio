@@ -604,7 +604,11 @@ export const GradientPicker = <T extends ParsedGradient>(
               <ColorThumb
                 data-thumb="true"
                 color={toRgbaColor(stop.color)}
-                css={{ margin: 1 }}
+                css={{
+                  margin: 1,
+                  width: theme.spacing[8],
+                  height: theme.spacing[8],
+                }}
               />
               <SliderThumbPointer aria-hidden />
             </SliderThumb>
