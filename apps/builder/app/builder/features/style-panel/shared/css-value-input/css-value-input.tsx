@@ -17,6 +17,7 @@ import {
   Flex,
   styled,
   Text,
+  ColorThumb,
 } from "@webstudio-is/design-system";
 import type {
   CssProperty,
@@ -51,7 +52,6 @@ import { convertUnits } from "./convert-units";
 import { mergeRefs } from "@react-aria/utils";
 import { composeEventHandlers } from "~/shared/event-utils";
 import type { StyleValueSourceColor } from "~/shared/style-object-model";
-import { ColorThumb } from "../color-thumb";
 import {
   cssButtonDisplay,
   isComplexValue,

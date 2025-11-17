@@ -14,12 +14,13 @@ import {
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
-import { colord, extend } from "colord";
+import { colord, extend, type RgbaColor } from "colord";
 import mixPlugin from "colord/plugins/mix";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
+import { ColorThumb } from "./color-thumb";
 
 extend([mixPlugin]);
 
@@ -77,15 +78,23 @@ const cloneColor = (
     return;
   }
 
-  if (color.type === "var") {
-    const fallback = color.fallback;
-    return {
-      ...color,
-      fallback: fallback === undefined ? undefined : { ...fallback },
-    };
+  return { ...color };
+};
+
+const toRgbaColor = (
+  color: GradientStop["color"] | undefined
+): RgbaColor | undefined => {
+  const rgb = toRgbColor(color);
+  if (rgb === undefined) {
+    return;
   }
 
-  return { ...color };
+  return {
+    r: rgb.r,
+    g: rgb.g,
+    b: rgb.b,
+    a: rgb.alpha ?? 1,
+  };
 };
 
 export const GradientPicker = (props: GradientPickerProps) => {
@@ -569,9 +578,10 @@ export const GradientPicker = (props: GradientPickerProps) => {
                 handleStopSelected(index, stop);
               }}
             >
-              <SliderThumbTrigger
+              <ColorThumb
                 data-thumb="true"
-                style={{ background: toValue(stop.color) }}
+                color={toRgbaColor(stop.color)}
+                css={{ margin: 1 }}
               />
             </SliderThumb>
           );
@@ -632,11 +642,11 @@ const SliderTrack = styled("div", {
 const SliderThumb = styled(Box, {
   "--thumb-border-color": theme.colors.borderMain,
   position: "absolute",
-  display: "block",
-  transform: `translate(-50%, calc(-1 * ${theme.spacing[9]} - 10px))`,
-  width: theme.spacing[10],
-  height: theme.spacing[10],
-  borderRadius: theme.borderRadius[4],
+  display: "grid",
+  placeItems: "center",
+  bottom: `calc(100% + ${theme.spacing[6]})`,
+  transform: "translateX(-50%)",
+  borderRadius: theme.borderRadius[2],
   boxShadow: `0 0 0 1px var(--thumb-border-color)`,
   outline: "none",
   zIndex: 1,
@@ -651,8 +661,7 @@ const SliderThumb = styled(Box, {
     borderRight: "5px solid transparent",
     borderTop: "5px solid var(--thumb-border-color)",
     bottom: -5,
-    marginLeft: "50%",
-    transform: "translateX(-50%)",
+    marginLeft: -1,
   },
   "&:focus-visible": {
     "--thumb-border-color": theme.colors.borderFocus,
@@ -661,14 +670,6 @@ const SliderThumb = styled(Box, {
   "&:focus-visible::before": {
     borderTopColor: theme.colors.borderFocus,
   },
-});
-
-const SliderThumbTrigger = styled(Box, {
-  width: "100%",
-  height: "100%",
-  borderRadius: theme.borderRadius[3],
-  backgroundColor: "inherit",
-  boxShadow: `inset 0 0 0 1px ${theme.colors.borderNeutral}`,
 });
 
 export type { GradientPickerProps };

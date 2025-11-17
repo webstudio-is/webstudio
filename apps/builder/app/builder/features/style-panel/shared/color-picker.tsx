@@ -20,12 +20,12 @@ import {
   InputField,
   IconButton,
   Grid,
+  ColorThumb,
+  theme,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { theme } from "@webstudio-is/design-system";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
-import { ColorThumb } from "./color-thumb";
 
 // To support color names
 extend([namesPlugin]);
