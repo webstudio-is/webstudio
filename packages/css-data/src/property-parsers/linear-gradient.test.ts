@@ -1,8 +1,5 @@
 import { test, describe, expect } from "vitest";
-import {
-  parseLinearGradient,
-  reconstructLinearGradient,
-} from "./linear-gradient";
+import { parseLinearGradient, formatLinearGradient } from "./linear-gradient";
 
 describe("parses linear-gradient", () => {
   test("parses gradient without angle, sides and color-stops", () => {
@@ -130,7 +127,7 @@ describe("parses linear-gradient", () => {
       throw new Error("parsed is undefined");
     }
 
-    expect(reconstructLinearGradient(parsed)).toEqual(
+    expect(formatLinearGradient(parsed)).toEqual(
       "linear-gradient(rgba(255, 0, 0, 1), rgba(0, 255, 0, 1), rgba(0, 0, 255, 1))"
     );
   });
@@ -142,7 +139,7 @@ describe("parses linear-gradient", () => {
     }
 
     expect(parsed.repeating).toBe(true);
-    expect(reconstructLinearGradient(parsed)).toEqual(
+    expect(formatLinearGradient(parsed)).toEqual(
       "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
     );
   });
@@ -219,7 +216,7 @@ describe("parses linear-gradient", () => {
       ],
     });
     if (parsed) {
-      expect(reconstructLinearGradient(parsed)).toEqual(
+      expect(formatLinearGradient(parsed)).toEqual(
         "linear-gradient(to bottom, rgba(0, 128, 0, 1) 0%, var(--accent))"
       );
     }
@@ -250,7 +247,7 @@ describe("parses linear-gradient", () => {
       ],
     });
     if (parsed) {
-      expect(reconstructLinearGradient(parsed)).toEqual(
+      expect(formatLinearGradient(parsed)).toEqual(
         "linear-gradient(rgba(255, 0, 0, 1) var(--start, 10%), rgba(0, 0, 255, 1) var(--end))"
       );
     }
@@ -316,7 +313,7 @@ describe("parses linear-gradient", () => {
       ],
     });
     if (parsed) {
-      expect(reconstructLinearGradient(parsed)).toEqual(gradient);
+      expect(formatLinearGradient(parsed)).toEqual(gradient);
     }
   });
 
@@ -337,7 +334,7 @@ describe("parses linear-gradient", () => {
       type: "var",
       value: "angle",
     });
-    expect(reconstructLinearGradient(parsed)).toEqual(
+    expect(formatLinearGradient(parsed)).toEqual(
       "linear-gradient(var(--angle, 45deg), rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
     );
   });

@@ -1,6 +1,6 @@
 import {
   parseLinearGradient,
-  reconstructLinearGradient,
+  formatLinearGradient,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
 import { useState } from "react";
@@ -21,10 +21,10 @@ export const GradientWithoutAngle = () => {
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onChangeComplete={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onThumbSelect={() => {}}
       />
@@ -43,10 +43,10 @@ export const GradientWithAngleAndHints = () => {
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onChangeComplete={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onThumbSelect={() => {}}
       />
@@ -64,10 +64,10 @@ export const GradientWithSideOrCorner = () => {
       <GradientPicker
         gradient={parseLinearGradient(gradientString) as ParsedGradient}
         onChange={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onChangeComplete={(value: ParsedGradient) => {
-          setGradient(reconstructLinearGradient(value));
+          setGradient(formatLinearGradient(value));
         }}
         onThumbSelect={() => {}}
       />

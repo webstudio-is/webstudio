@@ -11,7 +11,7 @@ import {
 import {
   parseCssValue,
   parseLinearGradient,
-  reconstructLinearGradient,
+  formatLinearGradient,
   type ParsedGradient,
   type GradientStop,
 } from "@webstudio-is/css-data";
@@ -799,7 +799,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
-      const gradientValue = reconstructLinearGradient(nextGradient);
+      const gradientValue = formatLinearGradient(nextGradient);
       // TODO maybe used a more structured representation
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
@@ -882,7 +882,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       const isEphemeral = options?.isEphemeral === true;
       setLocalGradient(nextGradient);
       setIntermediateValue(undefined);
-      const gradientValue = reconstructLinearGradient(nextGradient);
+      const gradientValue = formatLinearGradient(nextGradient);
       setRepeatedStyleItem(
         styleDecl,
         index,

@@ -269,7 +269,7 @@ const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
 
 const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
 
-export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
+export const formatLinearGradient = (parsed: ParsedGradient): string => {
   const direction = parsed?.angle || parsed?.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {

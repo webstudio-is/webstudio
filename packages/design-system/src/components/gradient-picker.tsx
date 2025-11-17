@@ -10,7 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import {
-  reconstructLinearGradient,
+  formatLinearGradient,
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
@@ -144,7 +144,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
         : undefined
     )
     .filter((item): item is number => item !== undefined);
-  const background = reconstructLinearGradient({
+  const background = formatLinearGradient({
     stops,
     sideOrCorner: gradient.sideOrCorner,
     angle: defaultAngle,
