@@ -27,12 +27,12 @@ import { ColorThumb } from "./color-thumb";
 
 extend([mixPlugin]);
 
-type GradientPickerProps = {
-  gradient: ParsedGradient;
-  onChange: (value: ParsedGradient) => void;
-  onChangeComplete: (value: ParsedGradient) => void;
+type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
+  gradient: T;
+  onChange: (value: T) => void;
+  onChangeComplete: (value: T) => void;
   onThumbSelect: (index: number, stop: GradientStop) => void;
-  type?: "linear" | "conic";
+  type?: T["type"];
 };
 
 const isLinearGradient = (
@@ -109,7 +109,9 @@ const toRgbaColor = (
   };
 };
 
-export const GradientPicker = (props: GradientPickerProps) => {
+export const GradientPicker = <T extends ParsedGradient>(
+  props: GradientPickerProps<T>
+) => {
   const { gradient, onChange, onChangeComplete, onThumbSelect } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
@@ -123,18 +125,18 @@ export const GradientPicker = (props: GradientPickerProps) => {
   }, [stops]);
 
   const buildGradient = useCallback(
-    (stopsValue: GradientStop[]): ParsedGradient => {
+    (stopsValue: GradientStop[]): T => {
       if (isConicGradient(gradient)) {
         return {
           ...gradient,
           stops: stopsValue,
-        } satisfies ParsedConicGradient;
+        } satisfies ParsedConicGradient as T;
       }
 
       return {
         ...gradient,
         stops: stopsValue,
-      } satisfies ParsedLinearGradient;
+      } satisfies ParsedLinearGradient as T;
     },
     [gradient]
   );

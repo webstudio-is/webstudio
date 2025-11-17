@@ -1,7 +1,7 @@
 import {
   parseLinearGradient,
   formatLinearGradient,
-  type ParsedGradient,
+  type ParsedLinearGradient,
 } from "@webstudio-is/css-data";
 import { useState } from "react";
 import { GradientPicker } from "./gradient-picker";
@@ -12,23 +12,35 @@ export default {
   title: "Library/GradientPicker",
 };
 
+const parseLinearGradientOrThrow = (
+  gradientString: string
+): ParsedLinearGradient => {
+  const parsed = parseLinearGradient(gradientString);
+  if (parsed === undefined) {
+    throw new Error(`Invalid gradient: ${gradientString}`);
+  }
+  return parsed;
+};
+
 export const GradientWithoutAngle = () => {
   const gradientString = "linear-gradient(black 0%, white 100%)";
-  const [gradient, setGradient] = useState<string>(gradientString);
+  const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
+    parseLinearGradientOrThrow(gradientString)
+  );
 
   return (
     <Flex direction="column" gap="4">
       <GradientPicker
-        gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        gradient={gradient}
+        onChange={(value) => {
+          setGradient(value);
         }}
-        onChangeComplete={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        onChangeComplete={(value) => {
+          setGradient(value);
         }}
         onThumbSelect={() => {}}
       />
-      <Text>{gradient}</Text>
+      <Text>{formatLinearGradient(gradient)}</Text>
     </Flex>
   );
 };
@@ -36,42 +48,46 @@ export const GradientWithoutAngle = () => {
 export const GradientWithAngleAndHints = () => {
   const gradientString =
     "linear-gradient(145deg, #ff00fa 0%, #00f497 34% 34%, #ffa800 56% 56%, #00eaff 100%)";
-  const [gradient, setGradient] = useState<string>(gradientString);
+  const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
+    parseLinearGradientOrThrow(gradientString)
+  );
 
   return (
     <Flex direction="column" gap="4">
       <GradientPicker
-        gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        gradient={gradient}
+        onChange={(value) => {
+          setGradient(value);
         }}
-        onChangeComplete={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        onChangeComplete={(value) => {
+          setGradient(value);
         }}
         onThumbSelect={() => {}}
       />
-      <Text>{gradient}</Text>
+      <Text>{formatLinearGradient(gradient)}</Text>
     </Flex>
   );
 };
 
 export const GradientWithSideOrCorner = () => {
   const gradientString = "linear-gradient(to left top, blue 0%, red 100%)";
-  const [gradient, setGradient] = useState<string>(gradientString);
+  const [gradient, setGradient] = useState<ParsedLinearGradient>(() =>
+    parseLinearGradientOrThrow(gradientString)
+  );
 
   return (
     <Flex direction="column" gap="4">
       <GradientPicker
-        gradient={parseLinearGradient(gradientString) as ParsedGradient}
-        onChange={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        gradient={gradient}
+        onChange={(value) => {
+          setGradient(value);
         }}
-        onChangeComplete={(value: ParsedGradient) => {
-          setGradient(formatLinearGradient(value));
+        onChangeComplete={(value) => {
+          setGradient(value);
         }}
         onThumbSelect={() => {}}
       />
-      <Text>{gradient}</Text>
+      <Text>{formatLinearGradient(gradient)}</Text>
     </Flex>
   );
 };

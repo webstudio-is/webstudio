@@ -9,7 +9,6 @@ import {
   getColor,
   isAngleUnit,
   isColorStop,
-  isVarAngle,
   mapLengthPercentageOrVar,
   formatGradientStops,
   normalizeRepeatingGradient,
