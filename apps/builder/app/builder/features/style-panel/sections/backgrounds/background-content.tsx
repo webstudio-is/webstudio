@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   propertyDescriptions,
   parseLinearGradient,
@@ -288,20 +288,18 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [activeTypeTooltip, setActiveTypeTooltip] = useState<
     BackgroundType | undefined
   >();
-  const [syncedStyleKey, setSyncedStyleKey] = useState(() =>
-    getStyleValueKey(backgroundStyleItem)
-  );
+  const syncedStyleKeyRef = useRef(getStyleValueKey(backgroundStyleItem));
   useEffect(() => {
     const nextStyleKey = getStyleValueKey(backgroundStyleItem);
-    if (nextStyleKey === syncedStyleKey) {
+    if (nextStyleKey === syncedStyleKeyRef.current) {
       return;
     }
-    setSyncedStyleKey(nextStyleKey);
+    syncedStyleKeyRef.current = nextStyleKey;
     const nextType = detectBackgroundType(backgroundStyleItem);
-    if (nextType !== backgroundType) {
-      setBackgroundType(nextType);
-    }
-  }, [backgroundStyleItem, backgroundType, syncedStyleKey]);
+    setBackgroundType((currentType) =>
+      nextType === currentType ? currentType : nextType
+    );
+  }, [backgroundStyleItem]);
 
   return (
     <>
