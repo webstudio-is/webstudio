@@ -33,7 +33,15 @@ import {
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import { ColorPicker } from "../../shared/color-picker";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   ArrowRightLeftIcon,
   InfoCircleIcon,
@@ -742,6 +750,11 @@ type IntermediateColorValue = {
   value: string;
 };
 
+type GradientEditorApplyFn = (
+  nextGradient: ParsedGradient,
+  options?: { isEphemeral?: boolean }
+) => void;
+
 const parseColorString = (value: string): GradientStop["color"] | undefined => {
   const parsed = parseCssValue("color", value);
   if (
@@ -796,11 +809,6 @@ export const BackgroundLinearGradient = ({
     styleValue = styleValue.value[index];
   }
 
-  let computedStyleValue = styleDecl.computedValue;
-  if (computedStyleValue?.type === "layers") {
-    computedStyleValue = computedStyleValue.value[index];
-  }
-
   const gradientString = toValue(styleValue);
   const { normalizedGradientString, initialIsRepeating } =
     normalizeGradientInput(gradientString, gradientType);
@@ -817,30 +825,6 @@ export const BackgroundLinearGradient = ({
       createDefaultGradient("conic");
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
-
-  const computedGradientString = toValue(computedStyleValue);
-  const { normalizedGradientString: normalizedComputedGradientString } =
-    normalizeGradientInput(computedGradientString, gradientType);
-
-  const parsedComputedGradient = useMemo(() => {
-    if (gradientType === "linear") {
-      const parsed =
-        parseLinearGradient(normalizedComputedGradientString) ??
-        createDefaultGradient("linear");
-      return ensureGradientHasStops(parsed);
-    }
-    const parsed =
-      parseConicGradient(normalizedComputedGradientString) ??
-      createDefaultGradient("conic");
-    return ensureGradientHasStops(parsed);
-  }, [gradientType, normalizedComputedGradientString]);
-
-  const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
-
-  useEffect(() => {
-    setIsRepeating(initialIsRepeating);
-  }, [initialIsRepeating]);
-
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
       const gradientValue = formatGradientValue(nextGradient);
@@ -862,10 +846,7 @@ export const BackgroundLinearGradient = ({
   const [hintOverrides, setHintOverrides] = useState(
     () => new Map<number, PercentUnitValue>()
   );
-
-  const [intermediateValue, setIntermediateValue] = useState<
-    IntermediateValue | InvalidValue | undefined
-  >(undefined);
+  const [codeEditorResetSignal, setCodeEditorResetSignal] = useState(0);
 
   useEffect(() => {
     setSelectedStopIndex((currentIndex) =>
@@ -878,6 +859,104 @@ export const BackgroundLinearGradient = ({
       return pruneHintOverrides(previous, gradient.stops.length);
     });
   }, [gradient]);
+
+  const applyGradient = useCallback(
+    (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
+      setLocalGradient(nextGradient);
+      setCodeEditorResetSignal((value) => value + 1);
+      const gradientValue = formatGradientValue(nextGradient);
+      setRepeatedStyleItem(
+        styleDecl,
+        index,
+        { type: "unparsed", value: gradientValue },
+        { isEphemeral }
+      );
+      if (isEphemeral === false) {
+        saveLocalGradient();
+      }
+    },
+    [index, saveLocalGradient, setLocalGradient, styleDecl]
+  );
+
+  return (
+    <Flex
+      direction="column"
+      css={{
+        padding: theme.spacing[5],
+        gap: theme.spacing[5],
+      }}
+    >
+      <GradientPickerPanel
+        gradient={gradient}
+        gradientType={gradientType}
+        hintOverrides={hintOverrides}
+        setSelectedStopIndex={setSelectedStopIndex}
+        applyGradient={applyGradient}
+        styleDecl={styleDecl}
+        index={index}
+      />
+      <GradientStopControls
+        initialIsRepeating={initialIsRepeating}
+        gradient={gradient}
+        selectedStopIndex={selectedStopIndex}
+        hintOverrides={hintOverrides}
+        setHintOverrides={setHintOverrides}
+        applyGradient={applyGradient}
+        setSelectedStopIndex={setSelectedStopIndex}
+      />
+      <GradientControl gradient={gradient} applyGradient={applyGradient} />
+      <GradientCodeEditor
+        styleDecl={styleDecl}
+        styleValue={styleValue}
+        index={index}
+        resetSignal={codeEditorResetSignal}
+      />
+    </Flex>
+  );
+};
+
+type GradientPickerPanelProps = {
+  gradient: ParsedGradient;
+  gradientType: GradientType;
+  hintOverrides: Map<number, PercentUnitValue>;
+  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
+  applyGradient: GradientEditorApplyFn;
+  styleDecl: ReturnType<typeof useComputedStyleDecl>;
+  index: number;
+};
+
+const GradientPickerPanel = ({
+  gradient,
+  gradientType,
+  hintOverrides,
+  setSelectedStopIndex,
+  applyGradient,
+  styleDecl,
+  index,
+}: GradientPickerPanelProps) => {
+  const parsedComputedGradient = useMemo(() => {
+    let computedStyleValue = styleDecl.computedValue;
+    if (computedStyleValue?.type === "layers") {
+      computedStyleValue = computedStyleValue.value[index];
+    }
+    const computedGradientString = toValue(computedStyleValue);
+    const { normalizedGradientString } = normalizeGradientInput(
+      computedGradientString,
+      gradientType
+    );
+
+    if (gradientType === "linear") {
+      const parsed =
+        parseLinearGradient(normalizedGradientString) ??
+        createDefaultGradient("linear");
+      return ensureGradientHasStops(parsed);
+    }
+    const parsed =
+      parseConicGradient(normalizedGradientString) ??
+      createDefaultGradient("conic");
+    return ensureGradientHasStops(parsed);
+  }, [gradientType, index, styleDecl]);
 
   const computedGradientForPicker = useMemo(() => {
     if (parsedComputedGradient === undefined) {
@@ -934,34 +1013,6 @@ export const BackgroundLinearGradient = ({
     } as ParsedGradient;
   }, [computedGradientForPicker, gradient, hintOverrides]);
 
-  const anglePlaceholder =
-    gradient.type === "conic"
-      ? gradient.angle === undefined
-        ? "0deg"
-        : undefined
-      : getAnglePlaceholder(gradient);
-
-  const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
-
-  const applyGradient = useCallback(
-    (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral === true;
-      setLocalGradient(nextGradient);
-      setIntermediateValue(undefined);
-      const gradientValue = formatGradientValue(nextGradient);
-      setRepeatedStyleItem(
-        styleDecl,
-        index,
-        { type: "unparsed", value: gradientValue },
-        { isEphemeral }
-      );
-      if (isEphemeral === false) {
-        saveLocalGradient();
-      }
-    },
-    [index, saveLocalGradient, setLocalGradient, styleDecl]
-  );
-
   const handlePickerChange = useCallback(
     (nextGradient: ParsedGradient) => {
       applyGradient(nextGradient, { isEphemeral: true });
@@ -974,6 +1025,77 @@ export const BackgroundLinearGradient = ({
       applyGradient(nextGradient);
     },
     [applyGradient]
+  );
+
+  const handleThumbSelect = useCallback(
+    (index: number) => {
+      setSelectedStopIndex(index);
+    },
+    [setSelectedStopIndex]
+  );
+
+  return (
+    <Box css={{ paddingInline: theme.spacing[2] }}>
+      <GradientPicker
+        gradient={gradientForPicker}
+        type={gradientType}
+        onChange={handlePickerChange}
+        onChangeComplete={handlePickerChangeComplete}
+        onThumbSelect={handleThumbSelect}
+      />
+    </Box>
+  );
+};
+
+type GradientStopControlsProps = {
+  initialIsRepeating: boolean;
+  gradient: ParsedGradient;
+  selectedStopIndex: number;
+  hintOverrides: Map<number, PercentUnitValue>;
+  setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
+  applyGradient: GradientEditorApplyFn;
+  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
+};
+
+const GradientStopControls = ({
+  initialIsRepeating,
+  gradient,
+  selectedStopIndex,
+  hintOverrides,
+  setHintOverrides,
+  applyGradient,
+  setSelectedStopIndex,
+}: GradientStopControlsProps) => {
+  const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
+  useEffect(() => {
+    setIsRepeating(initialIsRepeating);
+  }, [initialIsRepeating]);
+  const reverseDisabled = gradient.stops.length <= 1;
+  const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
+  const selectedStop = gradient.stops[safeSelectedStopIndex];
+  const selectedStopPositionValue = selectedStop?.position;
+  const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
+  const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
+  const selectedStopColor: StyleValue = (selectedStop?.color ??
+    fallbackStopColor) as StyleValue;
+
+  const updateSelectedStop = useCallback(
+    (
+      updater: (stop: GradientStop) => GradientStop,
+      options?: { isEphemeral?: boolean }
+    ) => {
+      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
+      const currentStop = gradient.stops[stopIndex];
+      if (currentStop === undefined) {
+        return;
+      }
+      const stops = gradient.stops.map((stop, index) =>
+        index === stopIndex ? updater(stop) : stop
+      );
+      const nextGradient = { ...gradient, stops };
+      applyGradient(nextGradient, options);
+    },
+    [applyGradient, gradient, selectedStopIndex]
   );
 
   const handleStopColorChange = useCallback(
@@ -1002,72 +1124,6 @@ export const BackgroundLinearGradient = ({
     [applyGradient, gradient, selectedStopIndex]
   );
 
-  const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
-  const selectedStop = gradient.stops[safeSelectedStopIndex];
-  const selectedStopPositionValue = selectedStop?.position;
-  const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
-  const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
-  const selectedStopColor = selectedStop?.color ?? fallbackStopColor;
-
-  const updateSelectedStop = useCallback(
-    (
-      updater: (stop: GradientStop) => GradientStop,
-      options?: { isEphemeral?: boolean }
-    ) => {
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const currentStop = gradient.stops[stopIndex];
-      if (currentStop === undefined) {
-        return;
-      }
-      const stops = gradient.stops.map((stop, index) =>
-        index === stopIndex ? updater(stop) : stop
-      );
-      const nextGradient = { ...gradient, stops };
-      applyGradient(nextGradient, options);
-    },
-    [applyGradient, gradient, selectedStopIndex]
-  );
-
-  const handleAngleUpdate = useCallback(
-    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const angleValue = resolveAngleValue(styleValue);
-      if (angleValue === undefined) {
-        return;
-      }
-      if (isLinearGradient(gradient)) {
-        applyGradient(
-          {
-            ...gradient,
-            angle: angleValue,
-            sideOrCorner: undefined,
-          },
-          options
-        );
-        return;
-      }
-
-      applyGradient(
-        {
-          ...gradient,
-          angle: angleValue,
-        },
-        options
-      );
-    },
-    [applyGradient, gradient]
-  );
-
-  const handleAngleDelete = useCallback(
-    (options?: { isEphemeral?: boolean }) => {
-      const nextGradient: ParsedGradient = {
-        ...gradient,
-        angle: undefined,
-      };
-      applyGradient(nextGradient, options);
-    },
-    [applyGradient, gradient]
-  );
-
   const handleStopPositionUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
@@ -1088,7 +1144,7 @@ export const BackgroundLinearGradient = ({
         setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
-    [gradient, selectedStopIndex, updateSelectedStop]
+    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
   );
 
   const handleStopPositionDelete = useCallback(
@@ -1140,7 +1196,7 @@ export const BackgroundLinearGradient = ({
         );
       }
     },
-    [gradient, selectedStopIndex, updateSelectedStop]
+    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
   );
 
   const handleStopHintDelete = useCallback(
@@ -1154,7 +1210,7 @@ export const BackgroundLinearGradient = ({
         setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
-    [gradient, selectedStopIndex, updateSelectedStop]
+    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
   );
 
   const handleRepeatChange = useCallback(
@@ -1166,8 +1222,17 @@ export const BackgroundLinearGradient = ({
       setIsRepeating(repeating);
       applyGradient({ ...gradient, repeating });
     },
-    [applyGradient, gradient]
+    [applyGradient, gradient, setIsRepeating]
   );
+
+  const handleReverseStops = useCallback(() => {
+    const resolution = resolveReverseStops(gradient, selectedStopIndex);
+    if (resolution.type === "none") {
+      return;
+    }
+    setSelectedStopIndex(resolution.selectedStopIndex);
+    applyGradient(resolution.gradient);
+  }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
 
   const applyStyleValueToStop = useCallback(
     (
@@ -1197,103 +1262,13 @@ export const BackgroundLinearGradient = ({
     [applyStyleValueToStop]
   );
 
-  const handleReverseStops = useCallback(() => {
-    const resolution = resolveReverseStops(gradient, selectedStopIndex);
-    if (resolution.type === "none") {
-      return;
-    }
-    setSelectedStopIndex(resolution.selectedStopIndex);
-    applyGradient(resolution.gradient);
-  }, [applyGradient, gradient, selectedStopIndex]);
-
-  const handleChange = (value: string) => {
-    setIntermediateValue({
-      type: "intermediate",
-      value,
-    });
-
-    // This doesn't have the same behavior as CssValueInput.
-    // However, it's great to see the immediate results when making gradient changes,
-    // especially until we have a better gradient tool.
-    const newValue = parseCssValue("background-image", value);
-
-    if (newValue.type === "unparsed" || newValue.type === "var") {
-      setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });
-      return;
-    }
-
-    // Set backgroundImage at layer to none if it's invalid
-    setRepeatedStyleItem(
-      styleDecl,
-      index,
-      { type: "keyword", value: "none" },
-      { isEphemeral: true }
-    );
-  };
-
-  const handleOnComplete = () => {
-    if (intermediateValue === undefined) {
-      return;
-    }
-
-    const parsed = parseCssFragment(intermediateValue.value, [
-      "background-image",
-      "background",
-    ]);
-    const backgroundImage = parsed.get("background-image");
-    const backgroundColor = parsed.get("background-color");
-
-    // set invalid state
-    if (backgroundColor?.type === "invalid" || backgroundImage === undefined) {
-      setIntermediateValue({ type: "invalid", value: intermediateValue.value });
-      if (styleValue) {
-        setRepeatedStyleItem(styleDecl, index, styleValue, {
-          isEphemeral: true,
-        });
-      }
-      return;
-    }
-    setIntermediateValue(undefined);
-    if (backgroundColor && isTransparent(backgroundColor) === false) {
-      setProperty("background-color")(backgroundColor);
-    }
-    // insert all new layers at current position
-    editRepeatedStyleItem(
-      [styleDecl],
-      index,
-      new Map([["background-image", backgroundImage]])
-    );
-  };
-
-  const handleOnCompleteRef = useRef(handleOnComplete);
-  handleOnCompleteRef.current = handleOnComplete;
-
-  // Blur wouldn't fire if user clicks outside of the FloatingPanel
-  useEffect(() => {
-    return () => {
-      handleOnCompleteRef.current();
-    };
-  }, []);
+  const getAvailableUnitVariables = useCallback(
+    () => $availableUnitVariables.get(),
+    []
+  );
 
   return (
-    <Flex
-      direction="column"
-      css={{
-        padding: theme.spacing[5],
-        gap: theme.spacing[5],
-      }}
-    >
-      <Box css={{ paddingInline: theme.spacing[2] }}>
-        <GradientPicker
-          gradient={gradientForPicker}
-          type={gradientType}
-          onChange={handlePickerChange}
-          onChangeComplete={handlePickerChangeComplete}
-          onThumbSelect={(index) => {
-            setSelectedStopIndex(index);
-          }}
-        />
-      </Box>
+    <>
       <Grid gap="2" columns="3" align="end">
         <Label>Color</Label>
         <Flex gap="2" css={{ gridColumn: "span 2" }}>
@@ -1303,17 +1278,13 @@ export const BackgroundLinearGradient = ({
             currentColor={selectedStopColor}
             onChange={handleColorPickerChange}
             onChangeComplete={handleColorPickerChangeComplete}
-            onAbort={() => {
-              // no-op: gradient changes are managed via GradientPicker callbacks
-            }}
-            onReset={() => {
-              // no-op: gradient changes are managed via GradientPicker callbacks
-            }}
+            onAbort={() => {}}
+            onReset={() => {}}
           />
           <IconButton
             aria-label="Reverse gradient stops"
             onClick={handleReverseStops}
-            disabled={gradient.stops.length <= 1}
+            disabled={reverseDisabled}
           >
             <ArrowRightLeftIcon />
           </IconButton>
@@ -1325,7 +1296,7 @@ export const BackgroundLinearGradient = ({
           <CssValueInputContainer
             property="background-position-x"
             styleSource="default"
-            getOptions={() => $availableUnitVariables.get()}
+            getOptions={getAvailableUnitVariables}
             value={selectedStopPositionValue}
             unitOptions={percentUnitOptions}
             onUpdate={handleStopPositionUpdate}
@@ -1337,7 +1308,7 @@ export const BackgroundLinearGradient = ({
           <CssValueInputContainer
             property="background-position-x"
             styleSource="default"
-            getOptions={() => $availableUnitVariables.get()}
+            getOptions={getAvailableUnitVariables}
             value={selectedStopHintValue}
             unitOptions={percentUnitOptions}
             onUpdate={handleStopHintUpdate}
@@ -1360,22 +1331,178 @@ export const BackgroundLinearGradient = ({
             </ToggleGroupButton>
           </ToggleGroup>
         </Flex>
-        <Label css={{ alignSelf: "center" }}>Angle</Label>
-        <Box css={{ gridColumn: "span 2" }}>
-          <CssValueInputContainer
-            property="rotate"
-            styleSource="default"
-            getOptions={() => $availableUnitVariables.get()}
-            value={gradient.angle}
-            unitOptions={angleUnitOptions}
-            placeholder={anglePlaceholder}
-            onUpdate={(value, options) => {
-              handleAngleUpdate(value, options);
-            }}
-            onDelete={handleAngleDelete}
-          />
-        </Box>
       </Grid>
+    </>
+  );
+};
+
+type GradientControlProps = {
+  gradient: ParsedGradient;
+  applyGradient: GradientEditorApplyFn;
+};
+
+const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
+  const angleValue = gradient.angle;
+  const anglePlaceholder = isLinearGradient(gradient)
+    ? getAnglePlaceholder(gradient)
+    : gradient.angle === undefined
+      ? "0deg"
+      : undefined;
+
+  const handleAngleUpdate = useCallback(
+    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      const angleValue = resolveAngleValue(styleValue);
+      if (angleValue === undefined) {
+        return;
+      }
+      if (isLinearGradient(gradient)) {
+        applyGradient(
+          {
+            ...gradient,
+            angle: angleValue,
+            sideOrCorner: undefined,
+          },
+          options
+        );
+        return;
+      }
+
+      applyGradient(
+        {
+          ...gradient,
+          angle: angleValue,
+        },
+        options
+      );
+    },
+    [applyGradient, gradient]
+  );
+
+  const handleAngleDelete = useCallback(
+    (options?: { isEphemeral?: boolean }) => {
+      const nextGradient: ParsedGradient = {
+        ...gradient,
+        angle: undefined,
+      };
+      applyGradient(nextGradient, options);
+    },
+    [applyGradient, gradient]
+  );
+
+  const getAvailableUnitVariables = useCallback(
+    () => $availableUnitVariables.get(),
+    []
+  );
+
+  return (
+    <Grid align="center" gap="2" columns={3}>
+      <Label>Angle</Label>
+      <Box css={{ gridColumn: "span 2" }}>
+        <CssValueInputContainer
+          property="rotate"
+          styleSource="default"
+          getOptions={getAvailableUnitVariables}
+          value={angleValue}
+          unitOptions={angleUnitOptions}
+          placeholder={anglePlaceholder}
+          onUpdate={handleAngleUpdate}
+          onDelete={handleAngleDelete}
+        />
+      </Box>
+    </Grid>
+  );
+};
+
+type GradientCodeEditorProps = {
+  styleDecl: ReturnType<typeof useComputedStyleDecl>;
+  styleValue: StyleValue;
+  index: number;
+  resetSignal: number;
+};
+
+const GradientCodeEditor = ({
+  styleDecl,
+  styleValue,
+  index,
+  resetSignal,
+}: GradientCodeEditorProps) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    IntermediateValue | InvalidValue | undefined
+  >(undefined);
+  useEffect(() => {
+    setIntermediateValue(undefined);
+  }, [resetSignal]);
+  const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setIntermediateValue({
+        type: "intermediate",
+        value,
+      });
+
+      const newValue = parseCssValue("background-image", value);
+
+      if (newValue.type === "unparsed" || newValue.type === "var") {
+        setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });
+        return;
+      }
+
+      setRepeatedStyleItem(
+        styleDecl,
+        index,
+        { type: "keyword", value: "none" },
+        { isEphemeral: true }
+      );
+    },
+    [index, setIntermediateValue, styleDecl]
+  );
+
+  const handleOnComplete = useCallback(() => {
+    if (intermediateValue === undefined) {
+      return;
+    }
+
+    const parsed = parseCssFragment(intermediateValue.value, [
+      "background-image",
+      "background",
+    ]);
+    const backgroundImage = parsed.get("background-image");
+    const backgroundColor = parsed.get("background-color");
+
+    if (backgroundColor?.type === "invalid" || backgroundImage === undefined) {
+      setIntermediateValue({ type: "invalid", value: intermediateValue.value });
+      if (styleValue) {
+        setRepeatedStyleItem(styleDecl, index, styleValue, {
+          isEphemeral: true,
+        });
+      }
+      return;
+    }
+    setIntermediateValue(undefined);
+    if (backgroundColor && isTransparent(backgroundColor) === false) {
+      setProperty("background-color")(backgroundColor);
+    }
+    editRepeatedStyleItem(
+      [styleDecl],
+      index,
+      new Map([["background-image", backgroundImage]])
+    );
+  }, [index, intermediateValue, setIntermediateValue, styleDecl, styleValue]);
+
+  const handleOnCompleteRef = useRef(handleOnComplete);
+  useEffect(() => {
+    handleOnCompleteRef.current = handleOnComplete;
+  }, [handleOnComplete]);
+
+  useEffect(() => {
+    return () => {
+      handleOnCompleteRef.current();
+    };
+  }, []);
+
+  return (
+    <>
       <Label>
         <Flex align="center" gap="1">
           Code
@@ -1409,7 +1536,7 @@ export const BackgroundLinearGradient = ({
           />
         }
       />
-    </Flex>
+    </>
   );
 };
 
