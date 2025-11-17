@@ -651,7 +651,9 @@ export const CssValueInput = ({
     // Probably no changes have been made at this point
     // In that case we will call onAbort instead of onChangeComplete
     if (props.intermediateValue === undefined) {
-      onAbort();
+      if (props.value === undefined) {
+        onAbort();
+      }
       return;
     }
 

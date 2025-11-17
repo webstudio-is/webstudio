@@ -737,6 +737,11 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     styleValue = styleValue.value[index];
   }
 
+  let computedStyleValue = styleDecl.computedValue;
+  if (computedStyleValue?.type === "layers") {
+    computedStyleValue = computedStyleValue.value[index];
+  }
+
   const gradientString = toValue(styleValue);
   const { normalizedGradientString, initialIsRepeating } =
     normalizeLinearGradientInput(gradientString);
@@ -748,6 +753,18 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     }
     return ensureGradientHasStops(parsed);
   }, [normalizedGradientString]);
+
+  const computedGradientString = toValue(computedStyleValue);
+  const { normalizedGradientString: normalizedComputedGradientString } =
+    normalizeLinearGradientInput(computedGradientString);
+
+  const parsedComputedGradient = useMemo(() => {
+    const parsed = parseLinearGradient(normalizedComputedGradientString);
+    if (parsed === undefined) {
+      return;
+    }
+    return ensureGradientHasStops(parsed);
+  }, [normalizedComputedGradientString]);
 
   const initialGradient = parsedGradient ?? defaultGradient;
   const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
@@ -799,10 +816,43 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     });
   }, [gradient]);
 
-  const gradientForPicker = useMemo(
-    () => resolveGradientForPicker(gradient, hintOverrides),
-    [gradient, hintOverrides]
-  );
+  const computedGradientForPicker = useMemo(() => {
+    if (parsedComputedGradient === undefined) {
+      return;
+    }
+    return resolveGradientForPicker(
+      parsedComputedGradient,
+      new Map<number, PercentUnitValue>()
+    );
+  }, [parsedComputedGradient]);
+
+  const gradientForPicker = useMemo(() => {
+    const base = resolveGradientForPicker(gradient, hintOverrides);
+    if (computedGradientForPicker === undefined) {
+      return base;
+    }
+
+    const computedStops = computedGradientForPicker.stops;
+    const stops = base.stops.map((stop, index) => {
+      const computedStop = computedStops[index];
+      if (computedStop === undefined) {
+        return stop;
+      }
+      return {
+        ...stop,
+        color: computedStop.color ?? stop.color,
+        position: computedStop.position ?? stop.position,
+        hint: computedStop.hint ?? stop.hint,
+      } satisfies GradientStop;
+    });
+
+    return {
+      ...base,
+      angle: computedGradientForPicker.angle ?? base.angle,
+      sideOrCorner: computedGradientForPicker.sideOrCorner ?? base.sideOrCorner,
+      stops,
+    } satisfies ParsedGradient;
+  }, [computedGradientForPicker, gradient, hintOverrides]);
 
   const anglePlaceholder = getAnglePlaceholder(gradient);
 
@@ -871,15 +921,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
   const selectedStop = gradient.stops[safeSelectedStopIndex];
-  const selectedStopForDisplay = gradientForPicker.stops[safeSelectedStopIndex];
+  const selectedStopPositionValue = selectedStop?.position;
   const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
-  const selectedStopHintPlaceholder =
-    selectedStopHintValue === undefined &&
-    selectedStopForDisplay?.position?.type === "unit" &&
-    selectedStopForDisplay.position.unit === "%"
-      ? `${selectedStopForDisplay.position.value}%`
-      : undefined;
   const selectedStopColor = selectedStop?.color ?? fallbackStopColor;
 
   const updateSelectedStop = useCallback(
@@ -1195,7 +1239,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       handleOnCompleteRef.current();
     };
   }, []);
-
   return (
     <Flex
       direction="column"
@@ -1248,14 +1291,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             property="background-position-x"
             styleSource="default"
             getOptions={() => $availableUnitVariables.get()}
-            value={selectedStop?.position}
+            value={selectedStopPositionValue}
             unitOptions={percentUnitOptions}
-            placeholder={
-              selectedStop?.position === undefined &&
-              selectedStopForDisplay?.position !== undefined
-                ? `${selectedStopForDisplay.position.value}%`
-                : undefined
-            }
             onUpdate={(value, options) => {
               handleStopPositionUpdate(value, {
                 isEphemeral: options?.isEphemeral === true,
@@ -1276,7 +1313,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             getOptions={() => $availableUnitVariables.get()}
             value={selectedStopHintValue}
             unitOptions={percentUnitOptions}
-            placeholder={selectedStopHintPlaceholder}
             onUpdate={(value, options) => {
               handleStopHintUpdate(value, {
                 isEphemeral: options?.isEphemeral === true,
