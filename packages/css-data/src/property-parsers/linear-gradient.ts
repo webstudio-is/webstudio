@@ -269,10 +269,7 @@ const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
 
 const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
 
-export const reconstructLinearGradient = (
-  parsed: ParsedGradient,
-  options?: { repeating?: boolean }
-): string => {
+export const reconstructLinearGradient = (parsed: ParsedGradient): string => {
   const direction = parsed?.angle || parsed?.sideOrCorner;
   const stops = parsed.stops
     .map((stop: GradientStop) => {
@@ -287,10 +284,8 @@ export const reconstructLinearGradient = (
     })
     .join(", ");
 
-  const isRepeating = options?.repeating ?? parsed.repeating === true;
-  const functionName = isRepeating
-    ? "repeating-linear-gradient"
-    : "linear-gradient";
+  const functionName =
+    parsed.repeating === true ? "repeating-linear-gradient" : "linear-gradient";
 
   return `${functionName}(${direction ? toValue(direction) + ", " : ""}${stops})`;
 };

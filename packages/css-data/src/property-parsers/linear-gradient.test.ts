@@ -325,17 +325,6 @@ describe("parses linear-gradient", () => {
     expect(parseLinearGradient("linear-gradient(, , ,)")).toBeUndefined();
   });
 
-  test("reconstructLinearGradient applies repeating override option", () => {
-    const parsed = parseLinearGradient("linear-gradient(red, blue)");
-    if (parsed === undefined) {
-      throw new Error("parsed is undefined");
-    }
-
-    expect(reconstructLinearGradient(parsed, { repeating: true })).toEqual(
-      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
-    );
-  });
-
   test("parses linear-gradient with variable angle", () => {
     const parsed = parseLinearGradient(
       "linear-gradient(var(--angle, 45deg), red, blue)"

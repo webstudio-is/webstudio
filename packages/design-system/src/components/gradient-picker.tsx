@@ -144,15 +144,12 @@ export const GradientPicker = (props: GradientPickerProps) => {
         : undefined
     )
     .filter((item): item is number => item !== undefined);
-  const background = reconstructLinearGradient(
-    {
-      stops,
-      sideOrCorner: gradient.sideOrCorner,
-      angle: defaultAngle,
-      repeating: gradient.repeating,
-    },
-    { repeating: gradient.repeating }
-  );
+  const background = reconstructLinearGradient({
+    stops,
+    sideOrCorner: gradient.sideOrCorner,
+    angle: defaultAngle,
+    repeating: gradient.repeating,
+  });
 
   const updateStops = useCallback(
     (

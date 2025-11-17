@@ -550,10 +550,7 @@ describe("resolveStopPositionUpdate", () => {
       fallback,
     };
 
-    const result = resolveStopPositionUpdate(styleValue, {
-      getPercentUnit: () => undefined,
-      clampPercentUnit: (value) => value,
-    });
+    const result = resolveStopPositionUpdate(styleValue);
 
     expect(result.type).toBe("apply");
     if (result.type !== "apply") {
@@ -575,33 +572,28 @@ describe("resolveStopPositionUpdate", () => {
     const normalized: PercentUnitValue = {
       type: "unit",
       unit: "%",
-      value: 55,
+      value: 100,
     };
 
-    const result = resolveStopPositionUpdate(
-      { type: "unit", unit: "%", value: 120 },
-      {
-        getPercentUnit: () => ({ type: "unit", unit: "%", value: 120 }),
-        clampPercentUnit: () => normalized,
-      }
-    );
+    const result = resolveStopPositionUpdate({
+      type: "unit",
+      unit: "%",
+      value: 120,
+    });
 
     expect(result.type).toBe("apply");
     if (result.type !== "apply") {
       throw new Error("Expected apply result");
     }
-    expect(result.position).toBe(normalized);
+    expect(result.position).toEqual(normalized);
     expect(result.clearHintOverrides).toBe(true);
   });
 
   test("returns none when value unsupported", () => {
-    const result = resolveStopPositionUpdate(
-      { type: "keyword", value: "auto" },
-      {
-        getPercentUnit: () => undefined,
-        clampPercentUnit: (value) => value,
-      }
-    );
+    const result = resolveStopPositionUpdate({
+      type: "keyword",
+      value: "auto",
+    });
 
     expect(result).toEqual({ type: "none" });
   });

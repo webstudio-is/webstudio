@@ -61,6 +61,33 @@ type NormalizedLinearGradient = {
 
 type PercentUnitValue = UnitValue & { unit: "%" };
 
+const getPercentUnit = (
+  styleValue: StyleValue | undefined
+): PercentUnitValue | undefined => {
+  if (styleValue === undefined) {
+    return;
+  }
+
+  if (styleValue.type === "unit" && styleValue.unit === "%") {
+    return {
+      type: "unit" as const,
+      unit: "%" as const,
+      value: styleValue.value,
+    } satisfies PercentUnitValue;
+  }
+
+  if (styleValue.type === "layers") {
+    const firstLayer = styleValue.value[0];
+    if (firstLayer?.type === "unit" && firstLayer.unit === "%") {
+      return {
+        type: "unit" as const,
+        unit: "%" as const,
+        value: firstLayer.value,
+      } satisfies PercentUnitValue;
+    }
+  }
+};
+
 const normalizeLinearGradientInput = (
   gradientString: string
 ): NormalizedLinearGradient => {
@@ -584,14 +611,8 @@ type StopPositionUpdateResolution =
     }
   | { type: "none" };
 
-type StopPositionUpdateHelpers = {
-  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
-  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
-};
-
 const resolveStopPositionUpdate = (
-  styleValue: StyleValue,
-  helpers: StopPositionUpdateHelpers
+  styleValue: StyleValue
 ): StopPositionUpdateResolution => {
   if (styleValue.type === "var") {
     return {
@@ -601,12 +622,15 @@ const resolveStopPositionUpdate = (
     } satisfies StopPositionUpdateResolution;
   }
 
-  const percentUnit = helpers.getPercentUnit(styleValue);
+  const percentUnit = getPercentUnit(styleValue);
   if (percentUnit === undefined) {
     return { type: "none" } satisfies StopPositionUpdateResolution;
   }
 
-  const normalized = helpers.clampPercentUnit(percentUnit);
+  const normalized: PercentUnitValue = {
+    ...percentUnit,
+    value: clamp(percentUnit.value, 0, 100),
+  } satisfies PercentUnitValue;
   return {
     type: "apply",
     position: normalized,
@@ -773,19 +797,14 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     setIsRepeating(initialIsRepeating);
   }, [initialIsRepeating]);
 
-  const formatGradientValue = useCallback(
-    (nextGradient: ParsedGradient, repeating = isRepeating) =>
-      reconstructLinearGradient(nextGradient, { repeating }),
-    [isRepeating]
-  );
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
-      const gradientValue = formatGradientValue(nextGradient);
+      const gradientValue = reconstructLinearGradient(nextGradient);
       // TODO maybe used a more structured representation
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
     },
-    [formatGradientValue, index, styleDecl]
+    [index, styleDecl]
   );
 
   const {
@@ -858,39 +877,42 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
 
-  const previewGradient = useCallback(
-    (nextGradient: ParsedGradient, options?: { repeating?: boolean }) => {
+  const applyGradient = useCallback(
+    (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral === true;
       setLocalGradient(nextGradient);
-      const gradientValue = formatGradientValue(
-        nextGradient,
-        options?.repeating
-      );
-      const style: StyleValue = { type: "unparsed", value: gradientValue };
-      setRepeatedStyleItem(styleDecl, index, style, { isEphemeral: true });
       setIntermediateValue(undefined);
+      const gradientValue = reconstructLinearGradient(nextGradient);
+      setRepeatedStyleItem(
+        styleDecl,
+        index,
+        { type: "unparsed", value: gradientValue },
+        { isEphemeral }
+      );
+      if (isEphemeral === false) {
+        saveLocalGradient();
+      }
     },
-    [formatGradientValue, index, setLocalGradient, styleDecl]
+    [index, saveLocalGradient, setLocalGradient, styleDecl]
   );
 
-  const commitGradient = useCallback(
-    (nextGradient: ParsedGradient, options?: { repeating?: boolean }) => {
-      setLocalGradient(nextGradient);
-      setIntermediateValue(undefined);
-      const gradientValue = formatGradientValue(
-        nextGradient,
-        options?.repeating
-      );
-      setRepeatedStyleItem(styleDecl, index, {
-        type: "unparsed",
-        value: gradientValue,
-      });
-      saveLocalGradient();
+  const handlePickerChange = useCallback(
+    (nextGradient: ParsedGradient) => {
+      applyGradient(nextGradient, { isEphemeral: true });
     },
-    [formatGradientValue, index, saveLocalGradient, setLocalGradient, styleDecl]
+    [applyGradient]
+  );
+
+  const handlePickerChangeComplete = useCallback(
+    (nextGradient: ParsedGradient) => {
+      applyGradient(nextGradient);
+    },
+    [applyGradient]
   );
 
   const handleStopColorChange = useCallback(
-    (color: GradientStop["color"], options?: { commit?: boolean }) => {
+    (color: GradientStop["color"], options?: { isEphemeral?: boolean }) => {
+      const isEphemeral = options?.isEphemeral ?? true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const stops = gradient.stops.map((stop, index) =>
         index === stopIndex
@@ -909,14 +931,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             }
           : stop
       );
-      const nextGradient = { ...gradient, stops };
-      if (options?.commit) {
-        commitGradient(nextGradient);
-      } else {
-        previewGradient(nextGradient);
-      }
+      applyGradient({ ...gradient, stops }, { isEphemeral });
     },
-    [commitGradient, gradient, previewGradient, selectedStopIndex]
+    [applyGradient, gradient, selectedStopIndex]
   );
 
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
@@ -937,46 +954,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         index === stopIndex ? updater(stop) : stop
       );
       const nextGradient = { ...gradient, stops };
-      if (isEphemeral) {
-        previewGradient(nextGradient);
-        return;
-      }
-      commitGradient(nextGradient);
+      applyGradient(nextGradient, { isEphemeral });
     },
-    [commitGradient, gradient, previewGradient, selectedStopIndex]
+    [applyGradient, gradient, selectedStopIndex]
   );
-
-  const getPercentUnit = useCallback((styleValue: StyleValue | undefined) => {
-    if (styleValue === undefined) {
-      return;
-    }
-
-    if (styleValue.type === "unit" && styleValue.unit === "%") {
-      return {
-        type: "unit" as const,
-        unit: "%" as const,
-        value: styleValue.value,
-      } satisfies PercentUnitValue;
-    }
-
-    if (styleValue.type === "layers") {
-      const firstLayer = styleValue.value[0];
-      if (firstLayer?.type === "unit" && firstLayer.unit === "%") {
-        return {
-          type: "unit" as const,
-          unit: "%" as const,
-          value: firstLayer.value,
-        } satisfies PercentUnitValue;
-      }
-    }
-  }, []);
-
-  const clampPercentUnit = useCallback((value: PercentUnitValue) => {
-    return {
-      ...value,
-      value: clamp(value.value, 0, 100),
-    } satisfies PercentUnitValue;
-  }, []);
 
   const handleAngleUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
@@ -989,14 +970,9 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         angle: angleValue,
         sideOrCorner: undefined,
       };
-      const isEphemeral = options?.isEphemeral === true;
-      if (isEphemeral) {
-        previewGradient(nextGradient);
-        return;
-      }
-      commitGradient(nextGradient);
+      applyGradient(nextGradient, { isEphemeral: options?.isEphemeral });
     },
-    [commitGradient, gradient, previewGradient]
+    [applyGradient, gradient]
   );
 
   const handleAngleDelete = useCallback(
@@ -1006,23 +982,16 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         ...gradient,
         angle: undefined,
       };
-      if (isEphemeral) {
-        previewGradient(nextGradient);
-        return;
-      }
-      commitGradient(nextGradient);
+      applyGradient(nextGradient, { isEphemeral });
     },
-    [commitGradient, gradient, previewGradient]
+    [applyGradient, gradient]
   );
 
   const handleStopPositionUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const resolution = resolveStopPositionUpdate(styleValue, {
-        getPercentUnit,
-        clampPercentUnit,
-      });
+      const resolution = resolveStopPositionUpdate(styleValue);
 
       if (resolution.type === "none") {
         return;
@@ -1040,13 +1009,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
       }
     },
-    [
-      clampPercentUnit,
-      getPercentUnit,
-      gradient,
-      selectedStopIndex,
-      updateSelectedStop,
-    ]
+    [gradient, selectedStopIndex, updateSelectedStop]
   );
 
   const handleStopPositionDelete = useCallback(
@@ -1066,7 +1029,10 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const resolution = resolveStopHintUpdate(styleValue, {
         getPercentUnit,
-        clampPercentUnit,
+        clampPercentUnit: (value) => ({
+          ...value,
+          value: clamp(value.value, 0, 100),
+        }),
       });
 
       if (resolution.type === "none") {
@@ -1097,13 +1063,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
         );
       }
     },
-    [
-      clampPercentUnit,
-      getPercentUnit,
-      gradient,
-      selectedStopIndex,
-      updateSelectedStop,
-    ]
+    [gradient, selectedStopIndex, updateSelectedStop]
   );
 
   const handleStopHintDelete = useCallback(
@@ -1121,8 +1081,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
     [gradient, selectedStopIndex, updateSelectedStop]
   );
 
-  const repeatToggleValue = isRepeating ? "repeat" : "no-repeat";
-
   const handleRepeatChange = useCallback(
     (value: string) => {
       if (value !== "repeat" && value !== "no-repeat") {
@@ -1130,19 +1088,20 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       }
       const repeating = value === "repeat";
       setIsRepeating(repeating);
-      commitGradient(gradient, { repeating });
+      applyGradient({ ...gradient, repeating });
     },
-    [commitGradient, gradient]
+    [applyGradient, gradient]
   );
 
   const applyStyleValueToStop = useCallback(
     (
       styleValue: StyleValue | IntermediateColorValue | undefined,
-      options?: { commit?: boolean }
+      options?: { isEphemeral?: boolean }
     ) => {
+      const isEphemeral = options?.isEphemeral ?? true;
       const nextColor = styleValueToColor(styleValue);
       if (nextColor) {
-        handleStopColorChange(nextColor, options);
+        handleStopColorChange(nextColor, { isEphemeral });
       }
     },
     [handleStopColorChange]
@@ -1157,7 +1116,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
 
   const handleColorPickerChangeComplete = useCallback(
     (styleValue: StyleValue) => {
-      applyStyleValueToStop(styleValue, { commit: true });
+      applyStyleValueToStop(styleValue, { isEphemeral: false });
     },
     [applyStyleValueToStop]
   );
@@ -1168,8 +1127,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       return;
     }
     setSelectedStopIndex(resolution.selectedStopIndex);
-    commitGradient(resolution.gradient);
-  }, [commitGradient, gradient, selectedStopIndex]);
+    applyGradient(resolution.gradient);
+  }, [applyGradient, gradient, selectedStopIndex]);
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -1239,6 +1198,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       handleOnCompleteRef.current();
     };
   }, []);
+
   return (
     <Flex
       direction="column"
@@ -1250,8 +1210,8 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
       <Box css={{ paddingInline: theme.spacing[2] }}>
         <GradientPicker
           gradient={gradientForPicker}
-          onChange={previewGradient}
-          onChangeComplete={commitGradient}
+          onChange={handlePickerChange}
+          onChangeComplete={handlePickerChangeComplete}
           onThumbSelect={(index) => {
             setSelectedStopIndex(index);
           }}
@@ -1329,7 +1289,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           <Label>Repeat</Label>
           <ToggleGroup
             type="single"
-            value={repeatToggleValue}
+            value={isRepeating ? "repeat" : "no-repeat"}
             aria-label="Gradient repeat"
             onValueChange={handleRepeatChange}
           >
