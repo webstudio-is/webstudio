@@ -1214,24 +1214,22 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
           }}
         />
       </Box>
-      <Flex align="center" gap="2">
+      <Grid gap="2" columns="3" align="end">
         <Label>Color</Label>
-        <Flex align="center" gap="2">
-          <Box css={{ flexGrow: 1 }}>
-            <ColorPicker
-              property="color"
-              value={selectedStopColor}
-              currentColor={selectedStopColor}
-              onChange={handleColorPickerChange}
-              onChangeComplete={handleColorPickerChangeComplete}
-              onAbort={() => {
-                // no-op: gradient changes are managed via GradientPicker callbacks
-              }}
-              onReset={() => {
-                // no-op: gradient changes are managed via GradientPicker callbacks
-              }}
-            />
-          </Box>
+        <Flex gap="2" css={{ gridColumn: "span 2" }}>
+          <ColorPicker
+            property="color"
+            value={selectedStopColor}
+            currentColor={selectedStopColor}
+            onChange={handleColorPickerChange}
+            onChangeComplete={handleColorPickerChangeComplete}
+            onAbort={() => {
+              // no-op: gradient changes are managed via GradientPicker callbacks
+            }}
+            onReset={() => {
+              // no-op: gradient changes are managed via GradientPicker callbacks
+            }}
+          />
           <IconButton
             aria-label="Reverse gradient stops"
             onClick={handleReverseStops}
@@ -1240,7 +1238,7 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
             <ArrowRightLeftIcon />
           </IconButton>
         </Flex>
-      </Flex>
+      </Grid>
       <Grid align="end" gap="2" columns={3}>
         <Flex direction="column" gap="1">
           <Label>Stop</Label>
