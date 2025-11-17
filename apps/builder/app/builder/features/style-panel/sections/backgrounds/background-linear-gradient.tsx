@@ -880,7 +880,6 @@ export const BackgroundLinearGradient = ({ index }: { index: number }) => {
   const applyGradient = useCallback(
     (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
-      console.log({ isEphemeral });
       setLocalGradient(nextGradient);
       setIntermediateValue(undefined);
       const gradientValue = formatLinearGradient(nextGradient);
