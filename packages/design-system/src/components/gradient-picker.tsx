@@ -94,6 +94,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const thumbRefs = useRef<Array<HTMLDivElement | null>>([]);
   const stopsRef = useRef(stops);
 
   useEffect(() => {
@@ -252,6 +253,15 @@ export const GradientPicker = (props: GradientPickerProps) => {
     [onThumbSelect]
   );
 
+  useEffect(() => {
+    if (selectedStop === undefined) {
+      return;
+    }
+
+    const thumb = thumbRefs.current[selectedStop];
+    thumb?.focus({ preventScroll: true });
+  }, [selectedStop]);
+
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
       (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -338,14 +348,17 @@ export const GradientPicker = (props: GradientPickerProps) => {
 
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault();
-        const delta = event.key === "ArrowUp" ? -1 : 1;
-        const nextIndex = clamp(
-          selectedStop + delta,
-          0,
-          Math.max(stops.length - 1, 0)
-        );
+        const stopCount = stops.length;
+        if (stopCount === 0) {
+          return;
+        }
 
-        if (nextIndex !== selectedStop) {
+        const normalizedCurrent =
+          ((selectedStop % stopCount) + stopCount) % stopCount;
+        const delta = event.key === "ArrowUp" ? -1 : 1;
+        const nextIndex = (normalizedCurrent + delta + stopCount) % stopCount;
+
+        if (nextIndex !== normalizedCurrent) {
           const nextStop = stops[nextIndex];
           if (nextStop !== undefined) {
             handleStopSelected(nextIndex, nextStop);
@@ -524,6 +537,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
       >
         <SliderTrack />
         {stops.map((stop, index) => {
+          const isSelected = selectedStop === index;
           if (
             stop.color === undefined ||
             stop.position?.type !== "unit" ||
@@ -538,7 +552,6 @@ export const GradientPicker = (props: GradientPickerProps) => {
               data-thumb="true"
               style={{
                 left: `${stop.position.value}%`,
-                background: toValue(stop.color),
               }}
               role="slider"
               aria-orientation="horizontal"
@@ -546,15 +559,20 @@ export const GradientPicker = (props: GradientPickerProps) => {
               aria-valuemax={100}
               aria-valuenow={stop.position.value}
               aria-label={`Gradient stop ${index + 1}`}
+              aria-selected={isSelected}
               tabIndex={-1}
+              ref={(element) => {
+                thumbRefs.current[index] = element;
+              }}
               onPointerDown={handleThumbPointerDown(index, stop)}
               onClick={() => {
-                // Focus the slider to enable keyboard interactions
-                sliderRef.current?.focus();
                 handleStopSelected(index, stop);
               }}
             >
-              <SliderThumbTrigger data-thumb="true" />
+              <SliderThumbTrigger
+                data-thumb="true"
+                style={{ background: toValue(stop.color) }}
+              />
             </SliderThumb>
           );
         })}
@@ -612,12 +630,15 @@ const SliderTrack = styled("div", {
 });
 
 const SliderThumb = styled(Box, {
+  "--thumb-border-color": theme.colors.borderMain,
   position: "absolute",
   display: "block",
   transform: `translate(-50%, calc(-1 * ${theme.spacing[9]} - 10px))`,
-  outline: `3px solid ${theme.colors.borderFocus}`,
-  borderRadius: theme.borderRadius[5],
-  outlineOffset: -3,
+  width: theme.spacing[10],
+  height: theme.spacing[10],
+  borderRadius: theme.borderRadius[4],
+  boxShadow: `0 0 0 1px var(--thumb-border-color)`,
+  outline: "none",
   zIndex: 1,
   cursor: "grab",
   "&:active": {
@@ -628,18 +649,26 @@ const SliderThumb = styled(Box, {
     position: "absolute",
     borderLeft: "5px solid transparent",
     borderRight: "5px solid transparent",
-    borderTop: `5px solid ${theme.colors.borderFocus}`,
+    borderTop: "5px solid var(--thumb-border-color)",
     bottom: -5,
     marginLeft: "50%",
     transform: "translateX(-50%)",
   },
+  "&:focus-visible": {
+    "--thumb-border-color": theme.colors.borderFocus,
+    boxShadow: `0 0 0 2px ${theme.colors.borderFocus}`,
+  },
+  "&:focus-visible::before": {
+    borderTopColor: theme.colors.borderFocus,
+  },
 });
 
 const SliderThumbTrigger = styled(Box, {
-  width: theme.spacing[10],
-  height: theme.spacing[10],
-  borderRadius: theme.borderRadius[4],
+  width: "100%",
+  height: "100%",
+  borderRadius: theme.borderRadius[3],
   backgroundColor: "inherit",
+  boxShadow: `inset 0 0 0 1px ${theme.colors.borderNeutral}`,
 });
 
 export type { GradientPickerProps };
