@@ -661,13 +661,12 @@ const SliderThumb = styled(Box, {
     borderRight: "5px solid transparent",
     borderTop: "5px solid var(--thumb-border-color)",
     bottom: -5,
-    marginLeft: -1,
   },
-  "&:focus-visible": {
+  "&:focus-visible, &[aria-selected='true']": {
     "--thumb-border-color": theme.colors.borderFocus,
-    boxShadow: `0 0 0 2px ${theme.colors.borderFocus}`,
+    boxShadow: `0 0 0 1px ${theme.colors.borderFocus}`,
   },
-  "&:focus-visible::before": {
+  "&:focus-visible::before, &[aria-selected='true']::before": {
     borderTopColor: theme.colors.borderFocus,
   },
 });
