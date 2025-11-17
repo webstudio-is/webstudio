@@ -528,7 +528,7 @@ export const GradientPicker = (props: GradientPickerProps) => {
   return (
     <Flex
       align="end"
-      css={{ height: theme.spacing[18] }}
+      css={{ height: theme.spacing[16] }}
       onKeyDown={handleKeyDown}
     >
       <SliderRoot
@@ -588,22 +588,11 @@ export const GradientPicker = (props: GradientPickerProps) => {
           );
         })}
 
-        {hints.map((hint) => {
-          return (
-            <Flex
-              key={hint}
-              align="center"
-              justify="center"
-              css={{
-                position: "absolute",
-                left: `${hint}%`,
-                top: theme.spacing[9],
-              }}
-            >
-              <ChevronFilledUpIcon />
-            </Flex>
-          );
-        })}
+        {hints.map((hint) => (
+          <SliderHint key={hint} css={{ left: `${hint}%` }}>
+            <ChevronFilledUpIcon size="100%" />
+          </SliderHint>
+        ))}
       </SliderRoot>
     </Flex>
   );
@@ -676,6 +665,17 @@ const SliderThumbPointer = styled("div", {
   borderRadius: theme.borderRadius[1],
   transform: "translate(-50%, 50%) rotate(45deg)",
   pointerEvents: "none",
+});
+
+const SliderHint = styled(Flex, {
+  position: "absolute",
+  top: `calc(-1 * ${theme.spacing[6]})`,
+  width: theme.spacing[7],
+  height: theme.spacing[7],
+  pointerEvents: "none",
+  transform: "translateX(-50%)",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 export type { GradientPickerProps };
