@@ -2,134 +2,20 @@ import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
 import {
   type UnitValue,
-  type Unit,
   toValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "../parse-css-value";
-import { colord, extend } from "colord";
-import namesPlugin from "colord/plugins/names";
-import type {
-  GradientStop,
-  GradientColorValue,
-  ParsedConicGradient,
-} from "./types";
-
-extend([namesPlugin]);
-
-const angleUnitIdentifiers = ["deg", "grad", "rad", "turn"] as const;
-const angleUnitSet = new Set<string>(angleUnitIdentifiers);
-
-const isAngleUnitValue = (value: UnitValue) => angleUnitSet.has(value.unit);
-
-const isAngleLikeFallback = (fallback: VarValue["fallback"]) => {
-  if (fallback === undefined) {
-    return false;
-  }
-
-  if (fallback.type === "unit") {
-    return isAngleUnitValue(fallback);
-  }
-
-  if (fallback.type === "keyword") {
-    const normalized = fallback.value.trim().toLowerCase();
-    return normalized.startsWith("to ");
-  }
-
-  if (fallback.type === "unparsed") {
-    const normalized = fallback.value.trim().toLowerCase();
-    if (normalized.startsWith("to ")) {
-      return true;
-    }
-    return angleUnitIdentifiers.some((unit) => normalized.endsWith(unit));
-  }
-
-  return false;
-};
-
-const isVarAngle = (value: VarValue) => {
-  if (isAngleLikeFallback(value.fallback)) {
-    return true;
-  }
-
-  const name = value.value.toLowerCase();
-  return (
-    name.includes("angle") || name.includes("direction") || name.includes("deg")
-  );
-};
-
-const mapLengthPercentageOrVar = (
-  node?: csstree.CssNode
-): UnitValue | VarValue | undefined => {
-  if (node === undefined) {
-    return;
-  }
-
-  if (node.type === "Percentage" || node.type === "Dimension") {
-    return {
-      type: "unit",
-      value: Number.parseFloat(node.value),
-      unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
-    } satisfies UnitValue;
-  }
-
-  if (node.type === "Number") {
-    return {
-      type: "unit",
-      value: Number.parseFloat(node.value),
-      unit: "number",
-    } satisfies UnitValue;
-  }
-
-  if (node.type === "Function" && node.name === "var") {
-    const css = csstree.generate(node).trim();
-    if (css.length === 0) {
-      return;
-    }
-    const parsed = parseCssValue("margin-left", css);
-    if (parsed.type === "var") {
-      return parsed;
-    }
-    if (parsed.type === "unit") {
-      return parsed;
-    }
-  }
-};
-
-const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
-  if (
-    node.type !== "Function" &&
-    node.type !== "Identifier" &&
-    node.type !== "Hash"
-  ) {
-    return;
-  }
-
-  const css = csstree.generate(node).trim();
-  if (css.length === 0) {
-    return;
-  }
-
-  const parsed = parseCssValue("color", css);
-  if (parsed.type === "rgb" || parsed.type === "var") {
-    return parsed;
-  }
-  if (parsed.type === "keyword") {
-    const color = colord(parsed.value);
-    if (color.isValid()) {
-      const { r, g, b, a } = color.toRgb();
-      return {
-        type: "rgb",
-        r,
-        g,
-        b,
-        alpha: a,
-      };
-    }
-  }
-};
-
-const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
+import {
+  getColor,
+  isAngleUnit,
+  isColorStop,
+  isVarAngle,
+  mapLengthPercentageOrVar,
+  formatGradientStops,
+  normalizeRepeatingGradient,
+  forEachGradientParts,
+} from "./gradient-utils";
+import type { GradientStop, ParsedConicGradient } from "./types";
 
 type GradientPartResult =
   | { type: "angle"; value: UnitValue | VarValue }
@@ -153,8 +39,8 @@ const parseGradientPart = (
     const mapped = mapLengthPercentageOrVar(angleNode);
     if (
       mapped !== undefined &&
-      ((mapped.type === "unit" && isAngleUnitValue(mapped)) ||
-        (mapped.type === "var" && isVarAngle(mapped)))
+      ((mapped.type === "unit" && isAngleUnit(mapped.unit)) ||
+        mapped.type === "var")
     ) {
       return { type: "angle", value: mapped };
     }
@@ -198,11 +84,12 @@ const parseGradientPart = (
 export const parseConicGradient = (
   gradient: string
 ): ParsedConicGradient | undefined => {
-  const normalizedGradient = gradient.replace(
-    /^(\s*)repeating-conic-gradient/i,
-    (_match, leadingWhitespace: string) => `${leadingWhitespace}conic-gradient`
-  );
-  const isRepeating = normalizedGradient !== gradient;
+  const { normalized: normalizedGradient, isRepeating } =
+    normalizeRepeatingGradient(
+      gradient,
+      "repeating-conic-gradient",
+      "conic-gradient"
+    );
 
   const ast = cssTryParseValue(normalizedGradient);
   if (ast === undefined) {
@@ -222,39 +109,19 @@ export const parseConicGradient = (
   let position: string | undefined;
   const stops: GradientStop[] = [];
 
-  csstree.walk(ast, (node) => {
-    if (node.type !== "Function" || node.name !== "conic-gradient") {
+  forEachGradientParts(ast, "conic-gradient", (gradientParts) => {
+    const parsedPart = parseGradientPart(gradientParts);
+    if (parsedPart === undefined) {
       return;
     }
-
-    let gradientParts: csstree.CssNode[] = [];
-    for (const item of node.children) {
-      if (item.type !== "Operator") {
-        gradientParts.push(item);
-      }
-
-      const isSeparator =
-        (item.type === "Operator" && item.value === ",") ||
-        node.children.last === item;
-
-      if (isSeparator === false) {
-        continue;
-      }
-
-      const parsedPart = parseGradientPart(gradientParts);
-      if (parsedPart !== undefined) {
-        if (parsedPart.type === "angle") {
-          angle = parsedPart.value;
-        } else if (parsedPart.type === "position") {
-          position = parsedPart.value;
-        } else if (parsedPart.type === "stop") {
-          stops.push(parsedPart.value);
-        } else if (parsedPart.type === "hint") {
-          stops.push({ hint: parsedPart.value });
-        }
-      }
-
-      gradientParts = [];
+    if (parsedPart.type === "angle") {
+      angle = parsedPart.value;
+    } else if (parsedPart.type === "position") {
+      position = parsedPart.value;
+    } else if (parsedPart.type === "stop") {
+      stops.push(parsedPart.value);
+    } else if (parsedPart.type === "hint") {
+      stops.push({ hint: parsedPart.value });
     }
   });
 
@@ -284,18 +151,7 @@ export const formatConicGradient = (parsed: ParsedConicGradient): string => {
     segments.push(`at ${parsed.position}`);
   }
 
-  const stops = parsed.stops
-    .map((stop: GradientStop) => {
-      let result = toValue(stop.color);
-      if (stop.position) {
-        result += ` ${toValue(stop.position)}`;
-      }
-      if (stop.hint) {
-        result += ` ${toValue(stop.hint)}`;
-      }
-      return result;
-    })
-    .join(", ");
+  const stops = formatGradientStops(parsed.stops);
 
   const functionName =
     parsed.repeating === true ? "repeating-conic-gradient" : "conic-gradient";

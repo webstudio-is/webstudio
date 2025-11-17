@@ -1,17 +1,22 @@
 import * as csstree from "css-tree";
 import { cssTryParseValue } from "../parse-css-value";
-import { colord, extend } from "colord";
 import {
   type UnitValue,
-  type Unit,
   toValue,
   KeywordValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "../parse-css-value";
-import namesPlugin from "colord/plugins/names";
-
-extend([namesPlugin]);
+import {
+  getColor,
+  isAngleDimension,
+  isAngleUnit,
+  isColorStop,
+  isVarAngle,
+  mapLengthPercentageOrVar,
+  formatGradientStops,
+  normalizeRepeatingGradient,
+  forEachGradientParts,
+} from "./gradient-utils";
 
 export type {
   GradientColorValue,
@@ -21,54 +26,9 @@ export type {
   ParsedConicGradient,
 } from "./types";
 
-import type {
-  GradientColorValue,
-  GradientStop,
-  ParsedLinearGradient,
-} from "./types";
+import type { GradientStop, ParsedLinearGradient } from "./types";
 
 const sideOrCorderIdentifiers = ["to", "top", "bottom", "left", "right"];
-
-const angleUnitIdentifiers = ["deg", "grad", "rad", "turn"] as const;
-const angleUnitSet = new Set<string>(angleUnitIdentifiers);
-
-const isAngleUnitValue = (value: UnitValue) => angleUnitSet.has(value.unit);
-
-const isAngleLikeFallback = (fallback: VarValue["fallback"]) => {
-  if (fallback === undefined) {
-    return false;
-  }
-
-  if (fallback.type === "unit") {
-    return isAngleUnitValue(fallback);
-  }
-
-  if (fallback.type === "keyword") {
-    const normalized = fallback.value.trim().toLowerCase();
-    return normalized.startsWith("to ");
-  }
-
-  if (fallback.type === "unparsed") {
-    const normalized = fallback.value.trim().toLowerCase();
-    if (normalized.startsWith("to ")) {
-      return true;
-    }
-    return angleUnitIdentifiers.some((unit) => normalized.endsWith(unit));
-  }
-
-  return false;
-};
-
-const isVarAngle = (value: VarValue) => {
-  if (isAngleLikeFallback(value.fallback)) {
-    return true;
-  }
-
-  const name = value.value.toLowerCase();
-  return (
-    name.includes("angle") || name.includes("direction") || name.includes("deg")
-  );
-};
 
 // We are currently not supporting color-interpolation-method from the linear-gradient syntax.
 // There are multiple reasons to not support it:
@@ -83,11 +43,12 @@ const isVarAngle = (value: VarValue) => {
 export const parseLinearGradient = (
   gradient: string
 ): ParsedLinearGradient | undefined => {
-  const normalizedGradient = gradient.replace(
-    /^(\s*)repeating-linear-gradient/i,
-    (_match, leadingWhitespace: string) => `${leadingWhitespace}linear-gradient`
-  );
-  const isRepeating = normalizedGradient !== gradient;
+  const { normalized: normalizedGradient, isRepeating } =
+    normalizeRepeatingGradient(
+      gradient,
+      "repeating-linear-gradient",
+      "linear-gradient"
+    );
 
   const ast = cssTryParseValue(normalizedGradient);
   if (ast === undefined) {
@@ -106,71 +67,54 @@ export const parseLinearGradient = (
   let angle: UnitValue | VarValue | undefined;
   let sideOrCorner: KeywordValue | undefined;
   const stops: GradientStop[] = [];
-  let gradientParts: csstree.CssNode[] = [];
+  forEachGradientParts(ast, "linear-gradient", (gradientParts) => {
+    let handledAsAngle = false;
 
-  csstree.walk(ast, (node) => {
-    if (node.type === "Function" && node.name === "linear-gradient") {
-      for (const item of node.children) {
-        if (item.type !== "Operator") {
-          gradientParts.push(item);
+    if (gradientParts.length === 1) {
+      const singlePart = gradientParts[0];
+      const mappedValue = mapLengthPercentageOrVar(singlePart);
+      const isAngleValue =
+        (isAngleDimension(singlePart) &&
+          mappedValue?.type === "unit" &&
+          isAngleUnit(mappedValue.unit)) ||
+        (singlePart.type === "Function" &&
+          singlePart.name === "var" &&
+          mappedValue?.type === "var" &&
+          isVarAngle(mappedValue));
+
+      if (isAngleValue && mappedValue !== undefined) {
+        angle = mappedValue;
+        handledAsAngle = true;
+      } else if (isColorStop(singlePart) === false) {
+        if (mappedValue !== undefined) {
+          stops.push({
+            hint: mappedValue,
+          });
         }
+      }
+    }
 
-        if (
-          (item.type === "Operator" && item.value === ",") ||
-          node.children.last === item
-        ) {
-          let handledAsAngle = false;
-          // If the gradientParts length is 1, then we need to check if it is angle or not.
-          // If it's angle, then the value is related to <angle> or else it is a <color-hint>.
-          if (gradientParts.length === 1) {
-            const singlePart = gradientParts[0];
-            const mappedValue = mapLengthPercentageOrVar(singlePart);
-            const isAngleValue =
-              (isAngle(singlePart) === true &&
-                mappedValue?.type === "unit" &&
-                isAngleUnitValue(mappedValue)) ||
-              (singlePart.type === "Function" &&
-                singlePart.name === "var" &&
-                mappedValue?.type === "var" &&
-                isVarAngle(mappedValue));
+    if (gradientParts.length && isSideOrCorner(gradientParts[0])) {
+      const value = gradientParts
+        .map((item) => csstree.generate(item))
+        .join(" ");
+      sideOrCorner = { type: "keyword", value };
+    }
 
-            if (isAngleValue && mappedValue !== undefined) {
-              angle = mappedValue;
-              handledAsAngle = true;
-            } else if (isColorStop(singlePart) === false) {
-              if (mappedValue !== undefined) {
-                stops.push({
-                  hint: mappedValue,
-                });
-              }
-            }
-          }
+    if (handledAsAngle === false) {
+      const colorStop = gradientParts.find(isColorStop);
+      if (colorStop !== undefined) {
+        const colorIndex = gradientParts.indexOf(colorStop);
+        const position = gradientParts[colorIndex + 1];
+        const hint = gradientParts[colorIndex + 2];
 
-          if (gradientParts.length && isSideOrCorner(gradientParts[0])) {
-            const value = gradientParts
-              .map((item) => csstree.generate(item))
-              .join(" ");
-            sideOrCorner = { type: "keyword", value };
-          }
+        const stop: GradientStop = {
+          color: getColor(colorStop),
+          position: mapLengthPercentageOrVar(position),
+          hint: mapLengthPercentageOrVar(hint),
+        };
 
-          if (handledAsAngle === false) {
-            // if there is a color-stop in the gradientParts, then we need to parse it for position and hint.
-            const colorStop = gradientParts.find(isColorStop);
-            if (colorStop !== undefined) {
-              const [_colorStop, position, hint] = gradientParts;
-
-              const stop: GradientStop = {
-                color: getColor(colorStop),
-                position: mapLengthPercentageOrVar(position),
-                hint: mapLengthPercentageOrVar(hint),
-              };
-
-              stops.push(stop);
-            }
-          }
-
-          gradientParts = [];
-        }
+        stops.push(stop);
       }
     }
   });
@@ -192,100 +136,12 @@ export const parseLinearGradient = (
   return parsedGradient;
 };
 
-const mapLengthPercentageOrVar = (
-  node?: csstree.CssNode
-): UnitValue | VarValue | undefined => {
-  if (node === undefined) {
-    return;
-  }
-
-  if (node.type === "Percentage" || node.type === "Dimension") {
-    return {
-      type: "unit",
-      value: Number.parseFloat(node.value),
-      unit: node.type === "Percentage" ? "%" : (node.unit as Unit),
-    };
-  }
-
-  if (node.type === "Number") {
-    return {
-      type: "unit",
-      value: Number.parseFloat(node.value),
-      unit: "number",
-    };
-  }
-
-  if (node.type === "Function" && node.name === "var") {
-    const css = csstree.generate(node).trim();
-    if (css.length === 0) {
-      return;
-    }
-    const parsed = parseCssValue("margin-left", css);
-    if (parsed.type === "var") {
-      return parsed;
-    }
-    if (parsed.type === "unit") {
-      return parsed;
-    }
-  }
-};
-
-const isAngle = (node: csstree.CssNode): node is csstree.Dimension =>
-  node.type === "Dimension" &&
-  ["deg", "grad", "rad", "turn"].includes(node.unit);
-
 const isSideOrCorner = (node: csstree.CssNode): node is csstree.Identifier =>
   node.type === "Identifier" && sideOrCorderIdentifiers.includes(node.name);
 
-const getColor = (node: csstree.CssNode): GradientColorValue | undefined => {
-  if (
-    node.type !== "Function" &&
-    node.type !== "Identifier" &&
-    node.type !== "Hash"
-  ) {
-    return;
-  }
-
-  const css = csstree.generate(node).trim();
-  if (css.length === 0) {
-    return;
-  }
-
-  const parsed = parseCssValue("color", css);
-  if (parsed.type === "rgb" || parsed.type === "var") {
-    return parsed;
-  }
-  if (parsed.type === "keyword") {
-    const color = colord(parsed.value);
-    if (color.isValid()) {
-      const { r, g, b, a } = color.toRgb();
-      return {
-        type: "rgb",
-        r,
-        g,
-        b,
-        alpha: a,
-      };
-    }
-  }
-};
-
-const isColorStop = (node: csstree.CssNode) => getColor(node) !== undefined;
-
 export const formatLinearGradient = (parsed: ParsedLinearGradient): string => {
   const direction = parsed.angle || parsed.sideOrCorner;
-  const stops = parsed.stops
-    .map((stop: GradientStop) => {
-      let result = toValue(stop.color);
-      if (stop.position) {
-        result += ` ${toValue(stop.position)}`;
-      }
-      if (stop.hint) {
-        result += ` ${toValue(stop.hint)}`;
-      }
-      return result;
-    })
-    .join(", ");
+  const stops = formatGradientStops(parsed.stops);
 
   const functionName =
     parsed.repeating === true ? "repeating-linear-gradient" : "linear-gradient";

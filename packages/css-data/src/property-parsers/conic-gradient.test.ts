@@ -151,6 +151,32 @@ describe("parse conic-gradient", () => {
     );
   });
 
+  test("parses gradient with variable angle without fallback", () => {
+    expect(
+      parseConicGradient("conic-gradient(from var(--angle), red 0%, blue 100%)")
+    ).toEqual(
+      conic({
+        angle: {
+          type: "var",
+          value: "angle",
+        },
+        position: undefined,
+        stops: [
+          {
+            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            position: { type: "unit", unit: "%", value: 0 },
+            hint: undefined,
+          },
+          {
+            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            position: { type: "unit", unit: "%", value: 100 },
+            hint: undefined,
+          },
+        ],
+      })
+    );
+  });
+
   test("parses gradient with variable positions and hints", () => {
     const parsed = parseConicGradient(
       "conic-gradient(red var(--start, 10%) var(--hint, 20%), blue var(--end))"
