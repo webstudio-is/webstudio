@@ -58,6 +58,7 @@ const startsWithGradientFunction = (value: string, type: GradientType) => {
 const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
 type AngleUnit = (typeof angleUnitTokens)[number];
 const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
+const fullCircleDegrees = 360;
 
 export const angleUnitOptions = angleUnitTokens.map((unit) => ({
   id: unit,
@@ -75,6 +76,54 @@ export const percentUnitOptions = [
 
 const isAngleUnit = (unit: string): unit is AngleUnit =>
   angleUnitSet.has(unit as AngleUnit);
+
+const clampPercentValue = (value: number) => clamp(value, 0, 100);
+
+const angleUnitToDegrees = (value: UnitValue): number | undefined => {
+  switch (value.unit) {
+    case "deg":
+      return value.value;
+    case "grad":
+      return (value.value * 360) / 400;
+    case "rad":
+      return (value.value * 180) / Math.PI;
+    case "turn":
+      return value.value * 360;
+    default:
+      return;
+  }
+};
+
+const toPercentUnitValue = (value: UnitValue): PercentUnitValue | undefined => {
+  if (value.unit === "%") {
+    return {
+      type: "unit" as const,
+      unit: "%" as const,
+      value: clampPercentValue(value.value),
+    } satisfies PercentUnitValue;
+  }
+
+  if (isAngleUnit(value.unit) === false) {
+    return;
+  }
+
+  const degrees = angleUnitToDegrees(value);
+  if (degrees === undefined || Number.isFinite(degrees) === false) {
+    return;
+  }
+
+  const normalizedDegrees =
+    ((degrees % fullCircleDegrees) + fullCircleDegrees) % fullCircleDegrees;
+  const percentValue = clampPercentValue(
+    (normalizedDegrees / fullCircleDegrees) * 100
+  );
+
+  return {
+    type: "unit" as const,
+    unit: "%" as const,
+    value: percentValue,
+  } satisfies PercentUnitValue;
+};
 
 export const fallbackStopColor: RgbValue = {
   type: "rgb",
@@ -486,12 +535,11 @@ const resolveVarPercentUnit = (
     return;
   }
   const fallback = value.fallback;
-  if (fallback?.type === "unit" && fallback.unit === "%") {
-    return {
-      type: "unit" as const,
-      unit: "%" as const,
-      value: clamp(fallback.value, 0, 100),
-    } satisfies PercentUnitValue;
+  if (fallback?.type === "unit") {
+    const percentFallback = toPercentUnitValue(fallback);
+    if (percentFallback !== undefined) {
+      return percentFallback;
+    }
   }
 };
 
@@ -534,11 +582,71 @@ const normalizeStopsForPicker = <T extends ParsedGradient>(gradient: T): T => {
   } as T;
 };
 
+const convertConicStopsToPercent = <T extends ParsedGradient>(
+  gradient: T
+): T => {
+  if (isConicGradient(gradient) === false) {
+    return gradient;
+  }
+
+  let changed = false;
+  const stops = gradient.stops.map((stop) => {
+    let nextPosition = stop.position;
+    let nextHint = stop.hint;
+    let stopChanged = false;
+
+    if (stop.position?.type === "unit") {
+      const percentPosition = toPercentUnitValue(stop.position);
+      if (
+        percentPosition !== undefined &&
+        (stop.position.unit !== percentPosition.unit ||
+          stop.position.value !== percentPosition.value)
+      ) {
+        nextPosition = percentPosition;
+        stopChanged = true;
+      }
+    }
+
+    if (stop.hint?.type === "unit") {
+      const percentHint = toPercentUnitValue(stop.hint);
+      if (
+        percentHint !== undefined &&
+        (stop.hint.unit !== percentHint.unit ||
+          stop.hint.value !== percentHint.value)
+      ) {
+        nextHint = percentHint;
+        stopChanged = true;
+      }
+    }
+
+    if (stopChanged) {
+      changed = true;
+      return {
+        ...stop,
+        position: nextPosition,
+        hint: nextHint,
+      } satisfies GradientStop;
+    }
+
+    return stop;
+  });
+
+  if (changed === false) {
+    return gradient;
+  }
+
+  return {
+    ...gradient,
+    stops,
+  } as T;
+};
+
 export const resolveGradientForPicker = <T extends ParsedGradient>(
   gradient: T,
   hintOverrides: ReadonlyMap<number, PercentUnitValue>
 ): T => {
-  const normalized = normalizeStopsForPicker(gradient);
+  const withPercentualStops = convertConicStopsToPercent(gradient);
+  const normalized = normalizeStopsForPicker(withPercentualStops);
   const filled = fillMissingStopPositions(normalized);
   if (hintOverrides.size === 0) {
     return filled;

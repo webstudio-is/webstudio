@@ -9,6 +9,7 @@ import type {
 import type {
   GradientStop,
   ParsedLinearGradient,
+  ParsedConicGradient,
 } from "@webstudio-is/css-data";
 import {
   clampStopIndex,
@@ -35,6 +36,14 @@ const createLinearGradient = (
   overrides: Partial<ParsedLinearGradient> = {}
 ): ParsedLinearGradient => ({
   type: "linear",
+  stops: [],
+  ...overrides,
+});
+
+const createConicGradient = (
+  overrides: Partial<ParsedConicGradient> = {}
+): ParsedConicGradient => ({
+  type: "conic",
   stops: [],
   ...overrides,
 });
@@ -797,6 +806,68 @@ describe("resolveGradientForPicker", () => {
     const result = resolveGradientForPicker(gradient, new Map());
 
     expect(result.stops.map((stop) => stop.position?.value)).toEqual([0, 100]);
+  });
+
+  test("converts conic stop angles to percents", () => {
+    const gradient = createConicGradient({
+      stops: [
+        {
+          color: undefined,
+          position: { type: "unit", unit: "deg", value: 0 },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "deg", value: 120 },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "deg", value: 240 },
+        },
+      ],
+    });
+
+    const result = resolveGradientForPicker(gradient, new Map());
+
+    const stopPositions = result.stops.map((stop) => stop.position);
+    expect(stopPositions[0]).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 0,
+    });
+    expect(stopPositions[1]).toEqual({
+      type: "unit",
+      unit: "%",
+      value: (120 / 360) * 100,
+    });
+    expect(stopPositions[2]).toEqual({
+      type: "unit",
+      unit: "%",
+      value: (240 / 360) * 100,
+    });
+  });
+
+  test("converts conic hints expressed in angles", () => {
+    const gradient = createConicGradient({
+      stops: [
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 0 },
+          hint: { type: "unit", unit: "turn", value: 0.25 },
+        },
+        {
+          color: undefined,
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    const result = resolveGradientForPicker(gradient, new Map());
+    const firstHint = result.stops[0]?.hint;
+    expect(firstHint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 25,
+    });
   });
 });
 
