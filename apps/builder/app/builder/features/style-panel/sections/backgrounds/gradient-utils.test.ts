@@ -31,6 +31,8 @@ import {
   setHintOverride,
   sideOrCornerToAngle,
   styleValueToColor,
+  formatGradientForType,
+  formatGradientValue,
 } from "./gradient-utils";
 
 const createLinearGradient = (
@@ -57,6 +59,152 @@ const createRadialGradient = (
   ...overrides,
 });
 
+describe("formatGradientValue", () => {
+  test("formats linear gradient", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "linear-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+
+  test("formats repeating linear gradient", () => {
+    const gradient = createLinearGradient({
+      repeating: true,
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "repeating-linear-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+
+  test("formats conic gradient", () => {
+    const gradient = createConicGradient({
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "conic-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+
+  test("formats repeating conic gradient", () => {
+    const gradient = createConicGradient({
+      repeating: true,
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "repeating-conic-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+
+  test("formats radial gradient", () => {
+    const gradient = createRadialGradient({
+      shape: { type: "keyword", value: "circle" },
+      size: "closest-side",
+      position: "center",
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "radial-gradient(circle closest-side at center, rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+
+  test("formats repeating radial gradient", () => {
+    const gradient = createRadialGradient({
+      repeating: true,
+      shape: { type: "keyword", value: "circle" },
+      position: "center",
+      stops: [
+        { color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 } },
+        { color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 } },
+      ],
+    });
+    expect(formatGradientValue(gradient)).toBe(
+      "repeating-radial-gradient(circle at center, rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+    );
+  });
+});
+
+describe("formatGradientForType", () => {
+  const solidStyle: StyleValue = {
+    type: "unparsed",
+    value: "linear-gradient(red, red)",
+  };
+
+  test("formats solid color target", () => {
+    expect(formatGradientForType(solidStyle, "solidColor")).toBe(
+      "linear-gradient(rgba(255, 0, 0, 1) 0%, rgba(255, 0, 0, 1) 100%)"
+    );
+  });
+
+  test("formats linear target", () => {
+    expect(formatGradientForType(solidStyle, "linearGradient")).toBe(
+      "linear-gradient(rgba(255, 0, 0, 1), rgba(255, 0, 0, 1))"
+    );
+  });
+
+  test("formats conic target", () => {
+    expect(formatGradientForType(undefined, "conicGradient")).toBe(
+      "conic-gradient(rgba(0, 0, 0, 1) 0%, rgba(255, 255, 255, 1) 100%)"
+    );
+  });
+
+  test("formats radial target", () => {
+    const radialStyle: StyleValue = {
+      type: "unparsed",
+      value: "radial-gradient(circle at center, red, blue)",
+    };
+    expect(formatGradientForType(radialStyle, "radialGradient")).toBe(
+      "radial-gradient(circle at center, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+
+  test("preserves repeating linear gradients", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "repeating-linear-gradient(red, blue)",
+    };
+    expect(formatGradientForType(value, "linearGradient")).toBe(
+      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+
+  test("preserves repeating conic gradients", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "repeating-conic-gradient(red, blue)",
+    };
+    expect(formatGradientForType(value, "conicGradient")).toBe(
+      "repeating-conic-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+
+  test("preserves repeating radial gradients", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "repeating-radial-gradient(circle, red, blue)",
+    };
+    expect(formatGradientForType(value, "radialGradient")).toBe(
+      "repeating-radial-gradient(circle, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+});
 describe("normalizeGradientInput", () => {
   test("returns string unchanged when not repeating", () => {
     const input = "linear-gradient(red, blue)";
@@ -86,6 +234,14 @@ describe("normalizeGradientInput", () => {
     const input = "repeating-conic-gradient(red, blue)";
     expect(normalizeGradientInput(input, "conic")).toEqual({
       normalizedGradientString: "conic-gradient(red, blue)",
+      initialIsRepeating: true,
+    });
+  });
+
+  test("normalizes repeating radial gradients", () => {
+    const input = " repeating-radial-gradient(red, blue)";
+    expect(normalizeGradientInput(input, "radial")).toEqual({
+      normalizedGradientString: " radial-gradient(red, blue)",
       initialIsRepeating: true,
     });
   });
@@ -1067,6 +1223,22 @@ describe("detectBackgroundType", () => {
         "conic-gradient(from 0deg at 50% 50%, rgba(255,126,95,1) 0deg, rgba(254,180,123,1) 120deg, rgba(134,168,231,1) 240deg, rgba(255,126,95,1) 360deg)",
     };
     expect(detectBackgroundType(value)).toBe("conicGradient");
+  });
+
+  test("returns radialGradient for radial gradients", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "radial-gradient(circle, red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("radialGradient");
+  });
+
+  test("returns radialGradient for repeating radial gradients", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "repeating-radial-gradient(circle, red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("radialGradient");
   });
 
   test("returns image for unsupported gradient types", () => {
