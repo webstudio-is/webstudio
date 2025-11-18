@@ -1,4 +1,4 @@
-import type { StyleValue } from "@webstudio-is/css-engine";
+import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -8,6 +8,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import type { SetValue, StyleUpdateOptions } from "../../shared/use-style-data";
 
 const keyworkToValue: Record<string, number> = {
   left: 0,
@@ -17,7 +18,7 @@ const keyworkToValue: Record<string, number> = {
   bottom: 100,
 };
 
-const calculateBackgroundPosition = (value: undefined | StyleValue) => {
+export const calculateBackgroundPosition = (value: undefined | StyleValue) => {
   if (value?.type === "unit") {
     return value.value;
   }
@@ -27,38 +28,60 @@ const calculateBackgroundPosition = (value: undefined | StyleValue) => {
   return 0;
 };
 
-export const BackgroundPosition = ({ index }: { index: number }) => {
-  const [backgroundPositionX, backgroundPositionY] = useComputedStyles([
-    "background-position-x",
-    "background-position-y",
-  ]);
-  const xValue = getRepeatedStyleItem(backgroundPositionX, index);
-  const yValue = getRepeatedStyleItem(backgroundPositionY, index);
-  const x = calculateBackgroundPosition(xValue);
-  const y = calculateBackgroundPosition(yValue);
+type AxisControlProps = {
+  label: string;
+  description: string;
+  property: CssProperty;
+  properties?: [CssProperty, ...CssProperty[]];
+  value: StyleValue | undefined;
+  getOptions: () => Array<StyleValue>;
+  onUpdate: SetValue;
+  onDelete: (options?: StyleUpdateOptions) => void;
+};
+
+export const BackgroundPositionControl = ({
+  label = "Position",
+  description = propertyDescriptions.backgroundPosition,
+  xAxis,
+  yAxis,
+  onSelect,
+}: {
+  label?: string;
+  description?: string;
+  xAxis: AxisControlProps;
+  yAxis: AxisControlProps;
+  onSelect: (position: { x: number; y: number }) => void;
+}) => {
+  const combinedProperties = (() => {
+    if (xAxis.properties && yAxis.properties) {
+      return [...xAxis.properties, ...yAxis.properties] as [
+        CssProperty,
+        ...CssProperty[],
+      ];
+    }
+    if (xAxis.properties) {
+      return xAxis.properties;
+    }
+    if (yAxis.properties) {
+      return yAxis.properties;
+    }
+    return undefined;
+  })();
 
   return (
     <Flex direction="column" gap="1">
       <PropertyInlineLabel
-        label="Position"
-        description={propertyDescriptions.backgroundPosition}
-        properties={["background-position-x", "background-position-y"]}
+        label={label}
+        description={description}
+        properties={combinedProperties}
       />
       <Flex gap="6">
         <PositionGrid
-          selectedPosition={{ x, y }}
-          onSelect={({ x, y }) => {
-            setRepeatedStyleItem(backgroundPositionX, index, {
-              type: "unit",
-              value: x,
-              unit: "%",
-            });
-            setRepeatedStyleItem(backgroundPositionY, index, {
-              type: "unit",
-              value: y,
-              unit: "%",
-            });
+          selectedPosition={{
+            x: calculateBackgroundPosition(xAxis.value),
+            y: calculateBackgroundPosition(yAxis.value),
           }}
+          onSelect={onSelect}
         />
         <Grid
           css={{ gridTemplateColumns: "max-content 1fr" }}
@@ -66,53 +89,102 @@ export const BackgroundPosition = ({ index }: { index: number }) => {
           gapX="2"
         >
           <PropertyInlineLabel
-            label="Left"
-            description="Left position offset"
-            properties={["background-position-x"]}
+            label={xAxis.label}
+            description={xAxis.description}
+            properties={xAxis.properties}
           />
           <CssValueInputContainer
-            property="background-position-x"
+            property={xAxis.property}
             styleSource="default"
-            getOptions={() => [
-              { type: "keyword", value: "center" },
-              { type: "keyword", value: "left" },
-              { type: "keyword", value: "right" },
-            ]}
-            value={xValue}
-            onUpdate={(value, options) => {
-              setRepeatedStyleItem(backgroundPositionX, index, value, options);
-            }}
-            onDelete={() => {
-              if (xValue) {
-                setRepeatedStyleItem(backgroundPositionX, index, xValue);
-              }
-            }}
+            getOptions={xAxis.getOptions}
+            value={xAxis.value}
+            onUpdate={xAxis.onUpdate}
+            onDelete={xAxis.onDelete}
           />
           <PropertyInlineLabel
-            label="Top"
-            description="Top position offset"
-            properties={["background-position-y"]}
+            label={yAxis.label}
+            description={yAxis.description}
+            properties={yAxis.properties}
           />
           <CssValueInputContainer
-            property="background-position-y"
+            property={yAxis.property}
             styleSource="default"
-            getOptions={() => [
-              { type: "keyword", value: "center" },
-              { type: "keyword", value: "top" },
-              { type: "keyword", value: "bottom" },
-            ]}
-            value={yValue}
-            onUpdate={(value, options) => {
-              setRepeatedStyleItem(backgroundPositionY, index, value, options);
-            }}
-            onDelete={() => {
-              if (yValue) {
-                setRepeatedStyleItem(backgroundPositionY, index, yValue);
-              }
-            }}
+            getOptions={yAxis.getOptions}
+            value={yAxis.value}
+            onUpdate={yAxis.onUpdate}
+            onDelete={yAxis.onDelete}
           />
         </Grid>
       </Flex>
     </Flex>
+  );
+};
+
+export const BackgroundPosition = ({ index }: { index: number }) => {
+  const [backgroundPositionX, backgroundPositionY] = useComputedStyles([
+    "background-position-x",
+    "background-position-y",
+  ]);
+  const xValue = getRepeatedStyleItem(backgroundPositionX, index);
+  const yValue = getRepeatedStyleItem(backgroundPositionY, index);
+  const setValueX: SetValue = (value, options) => {
+    setRepeatedStyleItem(backgroundPositionX, index, value, options);
+  };
+  const setValueY: SetValue = (value, options) => {
+    setRepeatedStyleItem(backgroundPositionY, index, value, options);
+  };
+  const resetValue = (
+    axisValue: StyleValue | undefined,
+    setValue: SetValue,
+    options?: StyleUpdateOptions
+  ) => {
+    if (axisValue) {
+      setValue(axisValue, options);
+    }
+  };
+
+  return (
+    <BackgroundPositionControl
+      xAxis={{
+        label: "Left",
+        description: "Left position offset",
+        property: "background-position-x",
+        properties: ["background-position-x"],
+        value: xValue,
+        getOptions: () => [
+          { type: "keyword", value: "center" },
+          { type: "keyword", value: "left" },
+          { type: "keyword", value: "right" },
+        ],
+        onUpdate: setValueX,
+        onDelete: (options) => resetValue(xValue, setValueX, options),
+      }}
+      yAxis={{
+        label: "Top",
+        description: "Top position offset",
+        property: "background-position-y",
+        properties: ["background-position-y"],
+        value: yValue,
+        getOptions: () => [
+          { type: "keyword", value: "center" },
+          { type: "keyword", value: "top" },
+          { type: "keyword", value: "bottom" },
+        ],
+        onUpdate: setValueY,
+        onDelete: (options) => resetValue(yValue, setValueY, options),
+      }}
+      onSelect={({ x, y }) => {
+        setRepeatedStyleItem(backgroundPositionX, index, {
+          type: "unit",
+          value: x,
+          unit: "%",
+        });
+        setRepeatedStyleItem(backgroundPositionY, index, {
+          type: "unit",
+          value: y,
+          unit: "%",
+        });
+      }}
+    />
   );
 };

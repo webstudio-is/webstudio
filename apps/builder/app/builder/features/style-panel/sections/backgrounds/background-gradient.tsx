@@ -1,6 +1,7 @@
 import {
   toValue,
   type InvalidValue,
+  type KeywordValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -8,6 +9,7 @@ import {
   parseLinearGradient,
   parseConicGradient,
   parseRadialGradient,
+  expandShorthands,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
@@ -89,6 +91,7 @@ import {
   setHintOverride,
   styleValueToColor,
 } from "./gradient-utils";
+import { BackgroundPositionControl } from "./background-position";
 import type {
   GradientType,
   IntermediateColorValue,
@@ -116,6 +119,92 @@ const defaultRadialShape = "ellipse" as const;
 
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
+
+const createCenterKeyword = (): KeywordValue => ({
+  type: "keyword",
+  value: "center",
+});
+
+const backgroundPositionXOptions: StyleValue[] = [
+  { type: "keyword", value: "center" },
+  { type: "keyword", value: "left" },
+  { type: "keyword", value: "right" },
+];
+
+const backgroundPositionYOptions: StyleValue[] = [
+  { type: "keyword", value: "center" },
+  { type: "keyword", value: "top" },
+  { type: "keyword", value: "bottom" },
+];
+
+const clampPercentValue = (value: number) => clamp(value, 0, 100);
+
+const createPercentUnitValue = (value: number): PercentUnitValue => ({
+  type: "unit",
+  unit: "%",
+  value: clampPercentValue(value),
+});
+
+const getAxisPositionValue = (
+  property: "background-position-x" | "background-position-y",
+  value: string | undefined
+): StyleValue | undefined => {
+  if (value === undefined) {
+    return;
+  }
+  const parsed = parseCssValue(property, value);
+  if (parsed.type === "invalid") {
+    return;
+  }
+  return parsed;
+};
+
+const parseGradientPositionValues = (position?: string) => {
+  if (position === undefined) {
+    return {
+      xValue: createCenterKeyword(),
+      yValue: createCenterKeyword(),
+    } as const;
+  }
+  try {
+    const longhands = expandShorthands([["background-position", position]]);
+    const getValue = (
+      property: "background-position-x" | "background-position-y"
+    ) => longhands.find(([name]) => name === property)?.[1];
+    return {
+      xValue:
+        getAxisPositionValue(
+          "background-position-x",
+          getValue("background-position-x")
+        ) ?? createCenterKeyword(),
+      yValue:
+        getAxisPositionValue(
+          "background-position-y",
+          getValue("background-position-y")
+        ) ?? createCenterKeyword(),
+    } as const;
+  } catch {
+    return {
+      xValue: createCenterKeyword(),
+      yValue: createCenterKeyword(),
+    } as const;
+  }
+};
+
+const formatGradientPositionValues = (
+  xValue?: StyleValue,
+  yValue?: StyleValue
+) => {
+  const x = toValue(xValue ?? createCenterKeyword());
+  const y = toValue(yValue ?? createCenterKeyword());
+  if (x === "center" && y === "center") {
+    return;
+  }
+  if (y === "center") {
+    return x;
+  }
+  return `${x} ${y}`;
+};
 
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
@@ -244,6 +333,10 @@ export const BackgroundGradient = ({
             setSelectedStopIndex={setSelectedStopIndex}
           />
           <GradientControl gradient={gradient} applyGradient={applyGradient} />
+          <GradientPositionControls
+            gradient={gradient}
+            applyGradient={applyGradient}
+          />
         </>
       )}
       <GradientCodeEditor
@@ -948,6 +1041,105 @@ const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
         />
       </Box>
     </Grid>
+  );
+};
+
+type GradientPositionControlsProps = {
+  gradient: ParsedGradient;
+  applyGradient: GradientEditorApplyFn;
+};
+
+const GradientPositionControls = ({
+  gradient,
+  applyGradient,
+}: GradientPositionControlsProps) => {
+  if (
+    isRadialGradient(gradient) === false &&
+    isConicGradient(gradient) === false
+  ) {
+    return null;
+  }
+
+  const gradientWithPosition = gradient as
+    | ParsedRadialGradient
+    | ParsedConicGradient;
+
+  const { xValue, yValue } = useMemo(
+    () => parseGradientPositionValues(gradientWithPosition.position),
+    [gradientWithPosition.position]
+  );
+
+  const updatePosition = useCallback(
+    (
+      nextX: StyleValue | undefined,
+      nextY: StyleValue | undefined,
+      options?: { isEphemeral?: boolean }
+    ) => {
+      const position = formatGradientPositionValues(nextX, nextY);
+      applyGradient(
+        {
+          ...gradientWithPosition,
+          position,
+        },
+        options
+      );
+    },
+    [applyGradient, gradientWithPosition]
+  );
+
+  const handleAxisUpdate = useCallback(
+    (axis: "x" | "y") =>
+      (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+        updatePosition(
+          axis === "x" ? styleValue : xValue,
+          axis === "y" ? styleValue : yValue,
+          options
+        );
+      },
+    [updatePosition, xValue, yValue]
+  );
+
+  const handleAxisDelete = useCallback(
+    (axis: "x" | "y") => (options?: { isEphemeral?: boolean }) => {
+      updatePosition(
+        axis === "x" ? undefined : xValue,
+        axis === "y" ? undefined : yValue,
+        options
+      );
+    },
+    [updatePosition, xValue, yValue]
+  );
+
+  const handleGridSelect = useCallback(
+    ({ x, y }: { x: number; y: number }) => {
+      updatePosition(createPercentUnitValue(x), createPercentUnitValue(y));
+    },
+    [updatePosition]
+  );
+
+  return (
+    <BackgroundPositionControl
+      label="Position"
+      xAxis={{
+        label: "Left",
+        description: "Left position offset",
+        property: "background-position-x",
+        value: xValue,
+        getOptions: () => backgroundPositionXOptions,
+        onUpdate: handleAxisUpdate("x"),
+        onDelete: handleAxisDelete("x"),
+      }}
+      yAxis={{
+        label: "Top",
+        description: "Top position offset",
+        property: "background-position-y",
+        value: yValue,
+        getOptions: () => backgroundPositionYOptions,
+        onUpdate: handleAxisUpdate("y"),
+        onDelete: handleAxisDelete("y"),
+      }}
+      onSelect={handleGridSelect}
+    />
   );
 };
 
