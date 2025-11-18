@@ -36,7 +36,7 @@ import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
-import { PropertyInlineLabel } from "../../property-label";
+import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
@@ -334,7 +334,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
     <>
       <BackgroundSection>
         <Flex align="start" gap="2" justify="between">
-          <PropertyInlineLabel
+          <PropertyLabel
             label="Type"
             description={propertyDescriptions.backgroundImage}
             properties={["background-image"]}
