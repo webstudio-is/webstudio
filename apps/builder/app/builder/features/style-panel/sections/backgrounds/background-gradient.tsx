@@ -103,7 +103,7 @@ type GradientEditorApplyFn = (
   options?: { isEphemeral?: boolean }
 ) => void;
 
-export const BackgroundLinearGradient = ({
+export const BackgroundGradient = ({
   index,
   type: gradientType = "linear",
   variant = "default",

@@ -32,7 +32,7 @@ import {
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
-import { BackgroundLinearGradient } from "./background-linear-gradient";
+import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
 import { PropertyInlineLabel } from "../../property-label";
@@ -362,7 +362,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
       {(backgroundType === "linearGradient" ||
         backgroundType === "conicGradient" ||
         backgroundType === "solidColor") && (
-        <BackgroundLinearGradient
+        <BackgroundGradient
           index={index}
           type={backgroundType === "conicGradient" ? "conic" : "linear"}
           variant={backgroundType === "solidColor" ? "solid" : "default"}
