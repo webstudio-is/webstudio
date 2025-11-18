@@ -47,6 +47,14 @@ const gradientFunctionNames: Record<
   },
 };
 
+const startsWithGradientFunction = (value: string, type: GradientType) => {
+  const normalized = value.trim().toLowerCase();
+  const { base, repeating } = gradientFunctionNames[type];
+  return (
+    normalized.startsWith(`${base}(`) || normalized.startsWith(`${repeating}(`)
+  );
+};
+
 const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
 type AngleUnit = (typeof angleUnitTokens)[number];
 const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
@@ -888,6 +896,14 @@ export const detectBackgroundType = (
     }
     if (parseConicGradient(cssValue) !== undefined) {
       return "conicGradient";
+    }
+
+    if (startsWithGradientFunction(cssValue, "conic")) {
+      return "conicGradient";
+    }
+
+    if (startsWithGradientFunction(cssValue, "linear")) {
+      return "linearGradient";
     }
   }
 

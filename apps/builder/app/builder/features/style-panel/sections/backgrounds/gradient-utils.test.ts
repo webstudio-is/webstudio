@@ -980,6 +980,15 @@ describe("detectBackgroundType", () => {
     expect(detectBackgroundType(value)).toBe("conicGradient");
   });
 
+  test("returns conicGradient for conic gradients with from/at syntax", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value:
+        "conic-gradient(from 0deg at 50% 50%, rgba(255,126,95,1) 0deg, rgba(254,180,123,1) 120deg, rgba(134,168,231,1) 240deg, rgba(255,126,95,1) 360deg)",
+    };
+    expect(detectBackgroundType(value)).toBe("conicGradient");
+  });
+
   test("returns image for unsupported gradient types", () => {
     const value: StyleValue = {
       type: "unparsed",

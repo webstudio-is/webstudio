@@ -82,6 +82,41 @@ describe("parse conic-gradient", () => {
     );
   });
 
+  test("parses gradient with angle positions", () => {
+    expect(
+      parseConicGradient(
+        "conic-gradient(from 0deg at 50% 50%, rgba(255,126,95,1) 0deg, rgba(254,180,123,1) 120deg, rgba(134,168,231,1) 240deg, rgba(255,126,95,1) 360deg)"
+      )
+    ).toEqual(
+      conic({
+        angle: { type: "unit", unit: "deg", value: 0 },
+        position: "50% 50%",
+        stops: [
+          {
+            color: { type: "rgb", r: 255, g: 126, b: 95, alpha: 1 },
+            position: { type: "unit", unit: "deg", value: 0 },
+            hint: undefined,
+          },
+          {
+            color: { type: "rgb", r: 254, g: 180, b: 123, alpha: 1 },
+            position: { type: "unit", unit: "deg", value: 120 },
+            hint: undefined,
+          },
+          {
+            color: { type: "rgb", r: 134, g: 168, b: 231, alpha: 1 },
+            position: { type: "unit", unit: "deg", value: 240 },
+            hint: undefined,
+          },
+          {
+            color: { type: "rgb", r: 255, g: 126, b: 95, alpha: 1 },
+            position: { type: "unit", unit: "deg", value: 360 },
+            hint: undefined,
+          },
+        ],
+      })
+    );
+  });
+
   test("parses repeating conic gradient", () => {
     const parsed = parseConicGradient(
       "repeating-conic-gradient(red 0% 25%, blue 50% 75%)"

@@ -95,21 +95,58 @@ export const parseConicGradient = (
     return;
   }
 
-  const match = csstree.lexer.match(
+  // css-tree grammar doesn't allow angles in color stops, so we fall back to
+  // manual parsing even when the built-in matcher rejects the value.
+  csstree.lexer.match(
     "conic-gradient( [ from <angle> ]? [ at <position> ]? , <color-stop-list> )",
     ast
   );
-  const containsVar = normalizedGradient.includes("var(");
-  if (match.matched === null && containsVar === false) {
-    return;
-  }
 
   let angle: UnitValue | VarValue | undefined;
   let position: string | undefined;
   const stops: GradientStop[] = [];
 
   forEachGradientParts(ast, "conic-gradient", (gradientParts) => {
-    const parsedPart = parseGradientPart(gradientParts);
+    const filteredParts = gradientParts.filter(
+      (node) => node.type !== "WhiteSpace"
+    );
+    const containsStop = filteredParts.some(isColorStop);
+
+    let handledDirective = false;
+    const fromIndex = filteredParts.findIndex((node) =>
+      isIdentifier(node, "from")
+    );
+    if (fromIndex !== -1) {
+      const angleNode = filteredParts[fromIndex + 1];
+      const mapped = mapLengthPercentageOrVar(angleNode);
+      if (
+        mapped !== undefined &&
+        ((mapped.type === "unit" && isAngleUnit(mapped.unit)) ||
+          mapped.type === "var")
+      ) {
+        angle = mapped;
+        handledDirective = true;
+      }
+    }
+
+    const atIndex = filteredParts.findIndex((node) => isIdentifier(node, "at"));
+    if (atIndex !== -1) {
+      const css = filteredParts
+        .slice(atIndex + 1)
+        .map((item) => csstree.generate(item))
+        .join(" ")
+        .trim();
+      if (css.length > 0) {
+        position = css;
+        handledDirective = true;
+      }
+    }
+
+    if (handledDirective && containsStop === false) {
+      return;
+    }
+
+    const parsedPart = parseGradientPart(filteredParts);
     if (parsedPart === undefined) {
       return;
     }
