@@ -24,6 +24,7 @@ import {
   Grid,
   Box,
   IconButton,
+  Select,
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
@@ -39,6 +40,8 @@ import {
 } from "react";
 import {
   ArrowRightLeftIcon,
+  CircleIcon,
+  EllipseIcon,
   InfoCircleIcon,
   RepeatGridIcon,
   XSmallIcon,
@@ -97,6 +100,17 @@ type IntermediateValue = {
   type: "intermediate";
   value: string;
 };
+
+const radialSizeOptions = [
+  "closest-side",
+  "closest-corner",
+  "farthest-side",
+  "farthest-corner",
+] as const;
+
+type RadialSizeOption = (typeof radialSizeOptions)[number];
+
+const radialSizeOptionsSet = new Set<RadialSizeOption>(radialSizeOptions);
 
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
@@ -472,6 +486,7 @@ const GradientStopControls = ({
   useEffect(() => {
     setIsRepeating(initialIsRepeating);
   }, [initialIsRepeating]);
+  const isRadial = isRadialGradient(gradient);
   const reverseDisabled = gradient.stops.length <= 1;
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
   const selectedStop = gradient.stops[safeSelectedStopIndex];
@@ -480,6 +495,27 @@ const GradientStopControls = ({
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
   const selectedStopColor: StyleValue = (selectedStop?.color ??
     fallbackStopColor) as StyleValue;
+  const currentRadialSize = isRadial ? gradient.size : undefined;
+  const isPresetRadialSize =
+    typeof currentRadialSize === "string" &&
+    radialSizeOptionsSet.has(currentRadialSize as RadialSizeOption);
+  const radialSizeValue = isPresetRadialSize
+    ? (currentRadialSize as RadialSizeOption)
+    : undefined;
+  const radialSizePlaceholder = isRadial
+    ? isPresetRadialSize
+      ? "Choose size"
+      : (currentRadialSize ?? "Choose size")
+    : "Choose size";
+  const radialShapeValue = (() => {
+    if (isRadial && gradient.shape) {
+      const normalized = gradient.shape.value.toLowerCase();
+      if (normalized === "circle" || normalized === "ellipse") {
+        return normalized;
+      }
+    }
+    return undefined;
+  })();
 
   const updateSelectedStop = useCallback(
     (
@@ -636,6 +672,40 @@ const GradientStopControls = ({
     applyGradient(resolution.gradient);
   }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
 
+  const handleRadialSizeChange = useCallback(
+    (nextSize?: RadialSizeOption) => {
+      if (isRadialGradient(gradient) === false) {
+        return;
+      }
+      if (nextSize === undefined) {
+        applyGradient({ ...gradient, size: undefined });
+        return;
+      }
+      applyGradient({ ...gradient, size: nextSize });
+    },
+    [applyGradient, gradient]
+  );
+
+  const handleEndingShapeChange = useCallback(
+    (nextShape?: string) => {
+      if (isRadialGradient(gradient) === false) {
+        return;
+      }
+      if (nextShape === undefined) {
+        applyGradient({ ...gradient, shape: undefined });
+        return;
+      }
+      if (nextShape !== "circle" && nextShape !== "ellipse") {
+        return;
+      }
+      applyGradient({
+        ...gradient,
+        shape: { type: "keyword", value: nextShape },
+      });
+    },
+    [applyGradient, gradient]
+  );
+
   const applyStyleValueToStop = useCallback(
     (
       styleValue: StyleValue | IntermediateColorValue | undefined,
@@ -725,15 +795,72 @@ const GradientStopControls = ({
             aria-label="Gradient repeat"
             onValueChange={handleRepeatChange}
           >
-            <ToggleGroupButton value="no-repeat" aria-label="No repeat">
-              <XSmallIcon />
-            </ToggleGroupButton>
-            <ToggleGroupButton value="repeat" aria-label="Repeat">
-              <RepeatGridIcon />
-            </ToggleGroupButton>
+            <Tooltip
+              variant="wrapped"
+              content="Render the gradient once (background-repeat: no-repeat)."
+            >
+              <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+                <XSmallIcon />
+              </ToggleGroupButton>
+            </Tooltip>
+            <Tooltip
+              variant="wrapped"
+              content="Tile the gradient across the layer (background-repeat: repeat)."
+            >
+              <ToggleGroupButton value="repeat" aria-label="Repeat">
+                <RepeatGridIcon />
+              </ToggleGroupButton>
+            </Tooltip>
           </ToggleGroup>
         </Flex>
       </Grid>
+      {isRadial && (
+        <Grid align="end" gap="2" columns={3}>
+          <Flex
+            align="center"
+            gap="2"
+            css={{ gridColumn: "span 2", width: "100%" }}
+          >
+            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
+            <Select
+              options={radialSizeOptions}
+              value={radialSizeValue}
+              placeholder={radialSizePlaceholder}
+              fullWidth
+              onChange={(size) => handleRadialSizeChange(size)}
+            />
+          </Flex>
+          <Flex
+            direction="column"
+            gap="1"
+            css={{ minWidth: theme.spacing[17] }}
+          >
+            <ToggleGroup
+              type="single"
+              value={radialShapeValue}
+              aria-label="Radial ending shape"
+              onValueChange={handleEndingShapeChange}
+            >
+              <Tooltip
+                variant="wrapped"
+                content="Use an ellipse ending shape (radial-gradient ellipse)."
+              >
+                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
+                  <EllipseIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip
+                variant="wrapped"
+                content="Use a circle ending shape (radial-gradient circle)."
+              >
+                <ToggleGroupButton value="circle" aria-label="Circle">
+                  <CircleIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+            </ToggleGroup>
+          </Flex>
+        </Grid>
+      )}
     </>
   );
 };

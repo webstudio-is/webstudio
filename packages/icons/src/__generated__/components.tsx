@@ -1714,6 +1714,30 @@ export const ChevronsLeftIcon: IconComponent = forwardRef(
 );
 ChevronsLeftIcon.displayName = "ChevronsLeftIcon";
 
+export const CircleIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M8 3.65a4.35 4.35 0 1 0 0 8.7 4.35 4.35 0 0 0 0-8.7ZM2.35 8a5.65 5.65 0 1 1 11.3 0 5.65 5.65 0 0 1-11.3 0Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+CircleIcon.displayName = "CircleIcon";
+
 export const CloudIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
@@ -2192,6 +2216,30 @@ export const DynamicPageIcon: IconComponent = forwardRef(
   }
 );
 DynamicPageIcon.displayName = "DynamicPageIcon";
+
+export const EllipseIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M3.373 5.736C2.203 6.405 1.65 7.229 1.65 8c0 .77.553 1.595 1.723 2.264C4.525 10.922 6.159 11.35 8 11.35c1.84 0 3.475-.428 4.627-1.086C13.797 9.595 14.35 8.771 14.35 8c0-.77-.553-1.595-1.723-2.264C11.475 5.078 9.841 4.65 8 4.65c-1.84 0-3.475.428-4.627 1.086Zm-.645-1.129C4.109 3.817 5.975 3.35 8 3.35c2.025 0 3.89.468 5.272 1.257 1.364.78 2.378 1.955 2.378 3.393 0 1.438-1.014 2.614-2.378 3.393-1.382.79-3.247 1.257-5.272 1.257-2.025 0-3.89-.468-5.272-1.257C1.364 10.613.35 9.438.35 8c0-1.438 1.014-2.614 2.378-3.393Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+EllipseIcon.displayName = "EllipseIcon";
 
 export const EllipsesIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
