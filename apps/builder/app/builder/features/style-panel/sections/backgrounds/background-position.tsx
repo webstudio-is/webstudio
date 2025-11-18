@@ -1,13 +1,23 @@
-import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
+import type {
+  CssProperty,
+  KeywordValue,
+  StyleValue,
+  VarValue,
+} from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import { PropertyInlineLabel } from "../../property-label";
+import {
+  PropertyInlineLabel,
+  PropertyLabel,
+  PropertySectionLabel,
+} from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
 import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
+import type { UnitOption } from "../../shared/css-value-input/unit-select";
 import type { SetValue, StyleUpdateOptions } from "../../shared/use-style-data";
 
 const keyworkToValue: Record<string, number> = {
@@ -28,13 +38,19 @@ export const calculateBackgroundPosition = (value: undefined | StyleValue) => {
   return 0;
 };
 
+type AxisOption =
+  | KeywordValue
+  | VarValue
+  | (KeywordValue & { description?: string });
+
 type AxisControlProps = {
   label: string;
   description: string;
   property: CssProperty;
   properties?: [CssProperty, ...CssProperty[]];
   value: StyleValue | undefined;
-  getOptions: () => Array<StyleValue>;
+  getOptions: () => Array<AxisOption>;
+  unitOptions?: UnitOption[];
   onUpdate: SetValue;
   onDelete: (options?: StyleUpdateOptions) => void;
 };
@@ -70,11 +86,15 @@ export const BackgroundPositionControl = ({
 
   return (
     <Flex direction="column" gap="1">
-      <PropertyInlineLabel
-        label={label}
-        description={description}
-        properties={combinedProperties}
-      />
+      {combinedProperties ? (
+        <PropertySectionLabel
+          label={label}
+          description={description}
+          properties={combinedProperties}
+        />
+      ) : (
+        <PropertyInlineLabel label={label} description={description} />
+      )}
       <Flex gap="6">
         <PositionGrid
           selectedPosition={{
@@ -88,28 +108,44 @@ export const BackgroundPositionControl = ({
           align="center"
           gapX="2"
         >
-          <PropertyInlineLabel
-            label={xAxis.label}
-            description={xAxis.description}
-            properties={xAxis.properties}
-          />
+          {xAxis.properties ? (
+            <PropertyLabel
+              label={xAxis.label}
+              description={xAxis.description}
+              properties={xAxis.properties}
+            />
+          ) : (
+            <PropertyInlineLabel
+              label={xAxis.label}
+              description={xAxis.description}
+            />
+          )}
           <CssValueInputContainer
             property={xAxis.property}
             styleSource="default"
             getOptions={xAxis.getOptions}
+            unitOptions={xAxis.unitOptions}
             value={xAxis.value}
             onUpdate={xAxis.onUpdate}
             onDelete={xAxis.onDelete}
           />
-          <PropertyInlineLabel
-            label={yAxis.label}
-            description={yAxis.description}
-            properties={yAxis.properties}
-          />
+          {yAxis.properties ? (
+            <PropertyLabel
+              label={yAxis.label}
+              description={yAxis.description}
+              properties={yAxis.properties}
+            />
+          ) : (
+            <PropertyInlineLabel
+              label={yAxis.label}
+              description={yAxis.description}
+            />
+          )}
           <CssValueInputContainer
             property={yAxis.property}
             styleSource="default"
             getOptions={yAxis.getOptions}
+            unitOptions={yAxis.unitOptions}
             value={yAxis.value}
             onUpdate={yAxis.onUpdate}
             onDelete={yAxis.onDelete}

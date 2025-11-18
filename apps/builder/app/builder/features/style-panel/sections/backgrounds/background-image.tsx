@@ -21,7 +21,7 @@ import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
-import { PropertyInlineLabel } from "../../property-label";
+import { PropertyLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 
 type IntermediateValue = {
@@ -175,7 +175,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       ref={elementRef}
     >
       <Flex css={{ height: "100%" }} align="start">
-        <PropertyInlineLabel
+        <PropertyLabel
           label="Image"
           description={propertyDescriptions.backgroundImage}
           properties={["background-image"]}

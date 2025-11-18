@@ -230,10 +230,12 @@ export const PropertyLabel = ({
   label,
   description,
   properties,
+  disabled,
 }: {
   label: string;
   description?: string;
   properties: [CssProperty, ...CssProperty[]];
+  disabled?: boolean;
 }) => {
   const styles = useComputedStyles(properties);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
@@ -279,7 +281,7 @@ export const PropertyLabel = ({
         }
       >
         <Flex shrink gap={1} align="center">
-          <Label color={styleValueSourceColor} truncate>
+          <Label color={styleValueSourceColor} truncate disabled={disabled}>
             {label}
           </Label>
         </Flex>

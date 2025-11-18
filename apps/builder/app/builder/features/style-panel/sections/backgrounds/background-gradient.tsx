@@ -1,7 +1,7 @@
 import {
   toValue,
+  type CssProperty,
   type InvalidValue,
-  type KeywordValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -9,7 +9,6 @@ import {
   parseLinearGradient,
   parseConicGradient,
   parseRadialGradient,
-  expandShorthands,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
@@ -72,14 +71,19 @@ import {
   cloneVarFallback,
   createDefaultGradient,
   createSolidLinearGradient,
+  createPercentUnitValue,
   ensureGradientHasStops,
   fallbackStopColor,
+  formatGradientPositionValues,
   formatGradientValue,
   getPercentUnit,
+  gradientPositionXOptions,
+  gradientPositionYOptions,
   isConicGradient,
   isLinearGradient,
   isRadialGradient,
   normalizeGradientInput,
+  parseGradientPositionValues,
   percentUnitOptions,
   pruneHintOverrides,
   removeHintOverride,
@@ -120,91 +124,8 @@ const defaultRadialShape = "ellipse" as const;
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
-const createCenterKeyword = (): KeywordValue => ({
-  type: "keyword",
-  value: "center",
-});
-
-const backgroundPositionXOptions: StyleValue[] = [
-  { type: "keyword", value: "center" },
-  { type: "keyword", value: "left" },
-  { type: "keyword", value: "right" },
-];
-
-const backgroundPositionYOptions: StyleValue[] = [
-  { type: "keyword", value: "center" },
-  { type: "keyword", value: "top" },
-  { type: "keyword", value: "bottom" },
-];
-
-const clampPercentValue = (value: number) => clamp(value, 0, 100);
-
-const createPercentUnitValue = (value: number): PercentUnitValue => ({
-  type: "unit",
-  unit: "%",
-  value: clampPercentValue(value),
-});
-
-const getAxisPositionValue = (
-  property: "background-position-x" | "background-position-y",
-  value: string | undefined
-): StyleValue | undefined => {
-  if (value === undefined) {
-    return;
-  }
-  const parsed = parseCssValue(property, value);
-  if (parsed.type === "invalid") {
-    return;
-  }
-  return parsed;
-};
-
-const parseGradientPositionValues = (position?: string) => {
-  if (position === undefined) {
-    return {
-      xValue: createCenterKeyword(),
-      yValue: createCenterKeyword(),
-    } as const;
-  }
-  try {
-    const longhands = expandShorthands([["background-position", position]]);
-    const getValue = (
-      property: "background-position-x" | "background-position-y"
-    ) => longhands.find(([name]) => name === property)?.[1];
-    return {
-      xValue:
-        getAxisPositionValue(
-          "background-position-x",
-          getValue("background-position-x")
-        ) ?? createCenterKeyword(),
-      yValue:
-        getAxisPositionValue(
-          "background-position-y",
-          getValue("background-position-y")
-        ) ?? createCenterKeyword(),
-    } as const;
-  } catch {
-    return {
-      xValue: createCenterKeyword(),
-      yValue: createCenterKeyword(),
-    } as const;
-  }
-};
-
-const formatGradientPositionValues = (
-  xValue?: StyleValue,
-  yValue?: StyleValue
-) => {
-  const x = toValue(xValue ?? createCenterKeyword());
-  const y = toValue(yValue ?? createCenterKeyword());
-  if (x === "center" && y === "center") {
-    return;
-  }
-  if (y === "center") {
-    return x;
-  }
-  return `${x} ${y}`;
-};
+const gradientStopPositionProperty: CssProperty = "--gradient-stop-position";
+const gradientStopHintProperty: CssProperty = "--gradient-stop-hint";
 
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
@@ -248,6 +169,7 @@ export const BackgroundGradient = ({
       createDefaultGradient("radial");
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
+
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
       const gradientValue = formatGradientValue(nextGradient);
@@ -868,7 +790,7 @@ const GradientStopControls = ({
         <Flex direction="column" gap="1">
           <Label>Stop</Label>
           <CssValueInputContainer
-            property="background-position-x"
+            property={gradientStopPositionProperty}
             styleSource="default"
             getOptions={getAvailableUnitVariables}
             value={selectedStopPositionValue}
@@ -880,7 +802,7 @@ const GradientStopControls = ({
         <Flex direction="column" gap="1">
           <Label>Hint</Label>
           <CssValueInputContainer
-            property="background-position-x"
+            property={gradientStopHintProperty}
             styleSource="default"
             getOptions={getAvailableUnitVariables}
             value={selectedStopHintValue}
@@ -972,25 +894,25 @@ type GradientControlProps = {
 };
 
 const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
-  if (
-    isLinearGradient(gradient) === false &&
-    isConicGradient(gradient) === false
-  ) {
-    return null;
-  }
+  const isLinear = isLinearGradient(gradient);
+  const isConic = isConicGradient(gradient);
+  const supportsAngle = isLinear || isConic;
 
-  const angleValue = gradient.angle;
+  const angleValue = supportsAngle ? gradient.angle : undefined;
 
   const handleAngleUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      if (supportsAngle === false) {
+        return;
+      }
       const angleValue = resolveAngleValue(styleValue);
       if (angleValue === undefined) {
         return;
       }
-      if (isLinearGradient(gradient)) {
+      if (isLinear) {
         applyGradient(
           {
-            ...gradient,
+            ...(gradient as ParsedLinearGradient),
             angle: angleValue,
             sideOrCorner: undefined,
           },
@@ -1001,30 +923,37 @@ const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
 
       applyGradient(
         {
-          ...gradient,
+          ...(gradient as ParsedConicGradient),
           angle: angleValue,
         },
         options
       );
     },
-    [applyGradient, gradient]
+    [applyGradient, gradient, isLinear, supportsAngle]
   );
 
   const handleAngleDelete = useCallback(
     (options?: { isEphemeral?: boolean }) => {
+      if (supportsAngle === false) {
+        return;
+      }
       const nextGradient: ParsedGradient = {
         ...gradient,
         angle: undefined,
       };
       applyGradient(nextGradient, options);
     },
-    [applyGradient, gradient]
+    [applyGradient, gradient, supportsAngle]
   );
 
   const getAvailableUnitVariables = useCallback(
     () => $availableUnitVariables.get(),
     []
   );
+
+  if (supportsAngle === false) {
+    return;
+  }
 
   return (
     <Grid align="center" gap="2" columns={3}>
@@ -1053,20 +982,21 @@ const GradientPositionControls = ({
   gradient,
   applyGradient,
 }: GradientPositionControlsProps) => {
-  if (
-    isRadialGradient(gradient) === false &&
-    isConicGradient(gradient) === false
-  ) {
-    return null;
-  }
+  const supportsPosition =
+    isRadialGradient(gradient) || isConicGradient(gradient);
 
-  const gradientWithPosition = gradient as
-    | ParsedRadialGradient
-    | ParsedConicGradient;
+  const gradientWithPosition = supportsPosition
+    ? (gradient as ParsedRadialGradient | ParsedConicGradient)
+    : undefined;
+
+  const positionValue = gradientWithPosition?.position;
 
   const { xValue, yValue } = useMemo(
-    () => parseGradientPositionValues(gradientWithPosition.position),
-    [gradientWithPosition.position]
+    () =>
+      positionValue
+        ? parseGradientPositionValues(positionValue)
+        : { xValue: undefined, yValue: undefined },
+    [positionValue]
   );
 
   const updatePosition = useCallback(
@@ -1075,6 +1005,9 @@ const GradientPositionControls = ({
       nextY: StyleValue | undefined,
       options?: { isEphemeral?: boolean }
     ) => {
+      if (gradientWithPosition === undefined) {
+        return;
+      }
       const position = formatGradientPositionValues(nextX, nextY);
       applyGradient(
         {
@@ -1117,24 +1050,30 @@ const GradientPositionControls = ({
     [updatePosition]
   );
 
+  if (supportsPosition === false || gradientWithPosition === undefined) {
+    return;
+  }
+
   return (
     <BackgroundPositionControl
       label="Position"
       xAxis={{
         label: "Left",
         description: "Left position offset",
-        property: "background-position-x",
+        property: "--gradient-position-x",
         value: xValue,
-        getOptions: () => backgroundPositionXOptions,
+        getOptions: () => gradientPositionXOptions,
+        unitOptions: percentUnitOptions,
         onUpdate: handleAxisUpdate("x"),
         onDelete: handleAxisDelete("x"),
       }}
       yAxis={{
         label: "Top",
         description: "Top position offset",
-        property: "background-position-y",
+        property: "--gradient-position-y",
         value: yValue,
-        getOptions: () => backgroundPositionYOptions,
+        getOptions: () => gradientPositionYOptions,
+        unitOptions: percentUnitOptions,
         onUpdate: handleAxisUpdate("y"),
         onDelete: handleAxisDelete("y"),
       }}

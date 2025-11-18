@@ -126,7 +126,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   ) {
     const asset = assets.get(backgroundImageValue.value.value);
     if (asset === undefined) {
-      return null;
+      return;
     }
     return (
       <StyledWebstudioImage

@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
-import { PropertyInlineLabel } from "../../property-label";
+import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -71,7 +71,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         align="center"
         gap={2}
       >
-        <PropertyInlineLabel
+        <PropertyLabel
           label="Size"
           description={propertyDescriptions.backgroundSize}
           properties={[property]}
@@ -122,14 +122,14 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         gapX={2}
         gapY={1}
       >
-        <PropertyInlineLabel
+        <PropertyLabel
           properties={["background-size"]}
           label="Width"
           description="The width of the background image."
           disabled={customSizeDisabled}
         />
 
-        <PropertyInlineLabel
+        <PropertyLabel
           properties={["background-size"]}
           label="Height"
           description="The height of the background image."

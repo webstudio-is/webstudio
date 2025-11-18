@@ -1,9 +1,11 @@
 import { clamp } from "@react-aria/utils";
 import {
   toValue,
+  type CssProperty,
   type KeywordValue,
   type RgbValue,
   type StyleValue,
+  type Unit,
   type UnitValue,
   type VarFallback,
   type VarValue,
@@ -16,6 +18,7 @@ import {
   formatLinearGradient,
   formatConicGradient,
   formatRadialGradient,
+  expandShorthands,
   type GradientStop,
   type ParsedGradient,
   type ParsedLinearGradient,
@@ -24,6 +27,10 @@ import {
 } from "@webstudio-is/css-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { getRepeatedStyleItem } from "../../shared/repeated-style";
+import type { UnitOption } from "../../shared/css-value-input/unit-select";
+
+const backgroundPositionXLonghand: CssProperty = "background-position-x";
+const backgroundPositionYLonghand: CssProperty = "background-position-y";
 
 export type GradientType = "linear" | "conic" | "radial";
 export type PercentUnitValue = UnitValue & { unit: "%" };
@@ -73,13 +80,96 @@ export const angleUnitOptions = angleUnitTokens.map((unit) => ({
   type: "unit" as const,
 }));
 
-export const percentUnitOptions = [
+export const percentUnitOptions: UnitOption[] = [
   {
-    id: "%" as const,
+    id: "%" as Unit,
     label: "%",
-    type: "unit" as const,
+    type: "unit",
   },
 ];
+
+const createKeywordValue = (value: string): KeywordValue => ({
+  type: "keyword",
+  value,
+});
+
+const createCenterKeyword = () => createKeywordValue("center");
+
+export const gradientPositionXOptions: KeywordValue[] = [
+  createCenterKeyword(),
+  createKeywordValue("left"),
+  createKeywordValue("right"),
+];
+
+export const gradientPositionYOptions: KeywordValue[] = [
+  createCenterKeyword(),
+  createKeywordValue("top"),
+  createKeywordValue("bottom"),
+];
+
+const getAxisPositionValue = (
+  property: CssProperty,
+  value: string | undefined
+): StyleValue | undefined => {
+  if (value === undefined) {
+    return;
+  }
+  const parsed = parseCssValue(property, value);
+  if (parsed.type === "invalid") {
+    return;
+  }
+  return parsed;
+};
+
+export const parseGradientPositionValues = (position?: string) => {
+  if (position === undefined) {
+    return {
+      xValue: createCenterKeyword(),
+      yValue: createCenterKeyword(),
+    } as const;
+  }
+  try {
+    const longhands = expandShorthands([["background-position", position]]);
+    const [xLonghand, yLonghand] = longhands;
+    return {
+      // Use the real background-position longhand when parsing so we can reuse
+      // its CSS syntax rules, but assign the result to the gradient-specific
+      // custom property downstream.
+      xValue:
+        getAxisPositionValue(backgroundPositionXLonghand, xLonghand?.[1]) ??
+        createCenterKeyword(),
+      yValue:
+        getAxisPositionValue(backgroundPositionYLonghand, yLonghand?.[1]) ??
+        createCenterKeyword(),
+    } as const;
+  } catch {
+    return {
+      xValue: createCenterKeyword(),
+      yValue: createCenterKeyword(),
+    } as const;
+  }
+};
+
+export const formatGradientPositionValues = (
+  xValue?: StyleValue,
+  yValue?: StyleValue
+) => {
+  const x = toValue(xValue ?? createCenterKeyword());
+  const y = toValue(yValue ?? createCenterKeyword());
+  if (x === "center" && y === "center") {
+    return;
+  }
+  if (y === "center") {
+    return x;
+  }
+  return `${x} ${y}`;
+};
+
+export const createPercentUnitValue = (value: number): PercentUnitValue => ({
+  type: "unit",
+  unit: "%" as const,
+  value: clampPercentValue(value),
+});
 
 const isAngleUnit = (unit: string): unit is AngleUnit =>
   angleUnitSet.has(unit as AngleUnit);

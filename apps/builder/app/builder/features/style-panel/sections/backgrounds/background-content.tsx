@@ -36,7 +36,7 @@ import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";
 import { BackgroundPosition } from "./background-position";
-import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
+import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
@@ -241,50 +241,56 @@ const BackgroundRepeat = ({ index }: { index: number }) => {
   // onMouseEnter used to preserve default hovering behavior on tooltip.
   const [activeTooltip, setActiveTooltip] = useState<undefined | string>();
   return (
-    <ToggleGroup
-      type="single"
-      value={toValue(value)}
-      aria-label="Background repeat"
-      onValueChange={(value) => {
-        setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
-      }}
+    <PropertyValueTooltip
+      label="Repeat"
+      description={propertyDescriptions.backgroundRepeat}
+      properties={["background-repeat"]}
     >
-      {items.map((item) => (
-        <ToggleGroupTooltip
-          key={item.value}
-          isOpen={item.value === activeTooltip}
-          onOpenChange={(isOpen) =>
-            setActiveTooltip(isOpen ? item.value : undefined)
-          }
-          isSelected={false}
-          label="Background Repeat"
-          code={`background-repeat: ${item.value};`}
-          description={item.description}
-          properties={["background-repeat"]}
-        >
-          <ToggleGroupButton
-            value={item.value}
-            aria-label={
-              item.value === "no-repeat"
-                ? "Do not repeat background"
-                : item.value === "repeat"
-                  ? "Repeat background"
-                  : item.value === "repeat-y"
-                    ? "Repeat background vertically"
-                    : "Repeat background horizontally"
+      <ToggleGroup
+        type="single"
+        value={toValue(value)}
+        aria-label="Background repeat"
+        onValueChange={(value) => {
+          setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
+        }}
+      >
+        {items.map((item) => (
+          <ToggleGroupTooltip
+            key={item.value}
+            isOpen={item.value === activeTooltip}
+            onOpenChange={(isOpen) =>
+              setActiveTooltip(isOpen ? item.value : undefined)
             }
-            onMouseEnter={() =>
-              // reset only when highlighted is not active
-              setActiveTooltip((prevValue) =>
-                prevValue === item.value ? prevValue : undefined
-              )
-            }
+            isSelected={false}
+            label="Background Repeat"
+            code={`background-repeat: ${item.value};`}
+            description={item.description}
+            properties={["background-repeat"]}
           >
-            {item.child}
-          </ToggleGroupButton>
-        </ToggleGroupTooltip>
-      ))}
-    </ToggleGroup>
+            <ToggleGroupButton
+              value={item.value}
+              aria-label={
+                item.value === "no-repeat"
+                  ? "Do not repeat background"
+                  : item.value === "repeat"
+                    ? "Repeat background"
+                    : item.value === "repeat-y"
+                      ? "Repeat background vertically"
+                      : "Repeat background horizontally"
+              }
+              onMouseEnter={() =>
+                // reset only when highlighted is not active
+                setActiveTooltip((prevValue) =>
+                  prevValue === item.value ? prevValue : undefined
+                )
+              }
+            >
+              {item.child}
+            </ToggleGroupButton>
+          </ToggleGroupTooltip>
+        ))}
+      </ToggleGroup>
+    </PropertyValueTooltip>
   );
 };
 
@@ -292,21 +298,27 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("background-attachment");
   const value = getRepeatedStyleItem(styleDecl, index);
   return (
-    <ToggleGroup
-      type="single"
-      value={toValue(value)}
-      aria-label="Background attachment"
-      onValueChange={(value) => {
-        setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
-      }}
+    <PropertyValueTooltip
+      label="Attachment"
+      description={propertyDescriptions.backgroundAttachment}
+      properties={["background-attachment"]}
     >
-      <ToggleGroupButton value={"scroll"}>
-        <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
-      </ToggleGroupButton>
-      <ToggleGroupButton value={"fixed"}>
-        <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
-      </ToggleGroupButton>
-    </ToggleGroup>
+      <ToggleGroup
+        type="single"
+        value={toValue(value)}
+        aria-label="Background attachment"
+        onValueChange={(value) => {
+          setRepeatedStyleItem(styleDecl, index, { type: "keyword", value });
+        }}
+      >
+        <ToggleGroupButton value={"scroll"}>
+          <Flex css={{ px: theme.spacing[3] }}>Scroll</Flex>
+        </ToggleGroupButton>
+        <ToggleGroupButton value={"fixed"}>
+          <Flex css={{ px: theme.spacing[3] }}>Fixed</Flex>
+        </ToggleGroupButton>
+      </ToggleGroup>
+    </PropertyValueTooltip>
   );
 };
 
@@ -382,14 +394,14 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           align="center"
           gap={2}
         >
-          <PropertyInlineLabel
+          <PropertyLabel
             label="Clip"
             description={propertyDescriptions.backgroundClip}
             properties={["background-clip"]}
           />
           <SelectControl property="background-clip" index={index} />
 
-          <PropertyInlineLabel
+          <PropertyLabel
             label="Origin"
             description={propertyDescriptions.backgroundOrigin}
             properties={["background-origin"]}
@@ -415,7 +427,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
         >
           {backgroundType === "image" && (
             <>
-              <PropertyInlineLabel
+              <PropertyLabel
                 label="Repeat"
                 description={propertyDescriptions.backgroundRepeat}
                 properties={["background-repeat"]}
@@ -426,7 +438,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
             </>
           )}
 
-          <PropertyInlineLabel
+          <PropertyLabel
             label="Attachment"
             description={propertyDescriptions.backgroundAttachment}
             properties={["background-attachment"]}
@@ -435,7 +447,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
             <BackgroundAttachment index={index} />
           </Flex>
 
-          <PropertyInlineLabel
+          <PropertyLabel
             label="Blend mode"
             description={propertyDescriptions.backgroundBlendMode}
             properties={["background-blend-mode"]}

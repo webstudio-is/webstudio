@@ -7,7 +7,7 @@ import {
   useEffect,
   type KeyboardEvent,
   type MouseEvent,
-  type PointerEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { type GradientStop, type ParsedGradient } from "@webstudio-is/css-data";
 import { colord, extend, type RgbaColor } from "colord";
@@ -267,7 +267,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
-      (event: PointerEvent<HTMLDivElement>) => {
+      (event: ReactPointerEvent<HTMLDivElement>) => {
         event.preventDefault();
         event.stopPropagation();
 
@@ -275,7 +275,7 @@ export const GradientPicker = <T extends ParsedGradient>(
         setIsHoveredOnStop(true);
 
         const pointerId = event.pointerId;
-        const target = event.currentTarget;
+        const target = event.currentTarget as HTMLDivElement;
         target.setPointerCapture(pointerId);
 
         const handlePointerMove = (moveEvent: PointerEvent) => {
@@ -393,7 +393,7 @@ export const GradientPicker = <T extends ParsedGradient>(
   );
 
   const handlePointerDown = useCallback(
-    (event: PointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLDivElement>) => {
       if (
         event.target instanceof HTMLElement &&
         event.target.closest("[data-thumb='true']")
@@ -516,7 +516,7 @@ export const GradientPicker = <T extends ParsedGradient>(
         stop.position.unit !== "%"
     )
   ) {
-    return null;
+    return;
   }
 
   return (
@@ -546,7 +546,7 @@ export const GradientPicker = <T extends ParsedGradient>(
             stop.position?.type !== "unit" ||
             stop.position.unit !== "%"
           ) {
-            return null;
+            return;
           }
 
           return (
