@@ -10,6 +10,7 @@ import type {
   GradientStop,
   ParsedLinearGradient,
   ParsedConicGradient,
+  ParsedRadialGradient,
 } from "@webstudio-is/css-data";
 import {
   clampStopIndex,
@@ -44,6 +45,14 @@ const createConicGradient = (
   overrides: Partial<ParsedConicGradient> = {}
 ): ParsedConicGradient => ({
   type: "conic",
+  stops: [],
+  ...overrides,
+});
+
+const createRadialGradient = (
+  overrides: Partial<ParsedRadialGradient> = {}
+): ParsedRadialGradient => ({
+  type: "radial",
   stops: [],
   ...overrides,
 });

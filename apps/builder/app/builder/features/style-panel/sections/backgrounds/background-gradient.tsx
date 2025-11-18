@@ -7,9 +7,11 @@ import {
   parseCssValue,
   parseLinearGradient,
   parseConicGradient,
+  parseRadialGradient,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
+  type ParsedRadialGradient,
   type GradientStop,
 } from "@webstudio-is/css-data";
 import {
@@ -72,6 +74,7 @@ import {
   getPercentUnit,
   isConicGradient,
   isLinearGradient,
+  isRadialGradient,
   normalizeGradientInput,
   percentUnitOptions,
   pruneHintOverrides,
@@ -129,9 +132,15 @@ export const BackgroundGradient = ({
         createDefaultGradient("linear");
       return ensureGradientHasStops(parsed);
     }
+    if (gradientType === "conic") {
+      const parsed =
+        parseConicGradient(normalizedGradientString) ??
+        createDefaultGradient("conic");
+      return ensureGradientHasStops(parsed);
+    }
     const parsed =
-      parseConicGradient(normalizedGradientString) ??
-      createDefaultGradient("conic");
+      parseRadialGradient(normalizedGradientString) ??
+      createDefaultGradient("radial");
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
   const handleGradientSave = useCallback(
@@ -268,9 +277,15 @@ const GradientPickerPanel = ({
         createDefaultGradient("linear");
       return ensureGradientHasStops(parsed);
     }
+    if (gradientType === "conic") {
+      const parsed =
+        parseConicGradient(normalizedGradientString) ??
+        createDefaultGradient("conic");
+      return ensureGradientHasStops(parsed);
+    }
     const parsed =
-      parseConicGradient(normalizedGradientString) ??
-      createDefaultGradient("conic");
+      parseRadialGradient(normalizedGradientString) ??
+      createDefaultGradient("radial");
     return ensureGradientHasStops(parsed);
   }, [gradientType, index, styleDecl]);
 
@@ -321,6 +336,16 @@ const GradientPickerPanel = ({
         position: computedGradientForPicker.position ?? base.position,
         stops,
       } satisfies ParsedConicGradient;
+    }
+
+    if (isRadialGradient(base) && isRadialGradient(computedGradientForPicker)) {
+      return {
+        ...base,
+        shape: computedGradientForPicker.shape ?? base.shape,
+        size: computedGradientForPicker.size ?? base.size,
+        position: computedGradientForPicker.position ?? base.position,
+        stops,
+      } satisfies ParsedRadialGradient;
     }
 
     return {
@@ -719,6 +744,13 @@ type GradientControlProps = {
 };
 
 const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
+  if (
+    isLinearGradient(gradient) === false &&
+    isConicGradient(gradient) === false
+  ) {
+    return null;
+  }
+
   const angleValue = gradient.angle;
   const anglePlaceholder = isLinearGradient(gradient)
     ? getAnglePlaceholder(gradient)

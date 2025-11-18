@@ -30,4 +30,14 @@ export type ParsedConicGradient = ParsedGradientBase & {
   position?: string;
 };
 
-export type ParsedGradient = ParsedLinearGradient | ParsedConicGradient;
+export type ParsedRadialGradient = ParsedGradientBase & {
+  type: "radial";
+  shape?: KeywordValue;
+  size?: string;
+  position?: string;
+};
+
+export type ParsedGradient =
+  | ParsedLinearGradient
+  | ParsedConicGradient
+  | ParsedRadialGradient;

@@ -156,11 +156,7 @@ const BackgroundTypeToggle = ({
       onChange(nextValue);
       setActiveTooltip(undefined);
 
-      if (
-        nextValue === "linearGradient" ||
-        nextValue === "conicGradient" ||
-        nextValue === "solidColor"
-      ) {
+      if (nextValue !== "image") {
         const gradientValue = formatGradientForType(
           backgroundStyleItem,
           nextValue
@@ -357,10 +353,17 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
       {(backgroundType === "linearGradient" ||
         backgroundType === "conicGradient" ||
+        backgroundType === "radialGradient" ||
         backgroundType === "solidColor") && (
         <BackgroundGradient
           index={index}
-          type={backgroundType === "conicGradient" ? "conic" : "linear"}
+          type={
+            backgroundType === "conicGradient"
+              ? "conic"
+              : backgroundType === "radialGradient"
+                ? "radial"
+                : "linear"
+          }
           variant={backgroundType === "solidColor" ? "solid" : "default"}
         />
       )}

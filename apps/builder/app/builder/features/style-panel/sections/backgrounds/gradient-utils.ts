@@ -12,17 +12,20 @@ import {
   parseCssValue,
   parseLinearGradient,
   parseConicGradient,
+  parseRadialGradient,
   formatLinearGradient,
   formatConicGradient,
+  formatRadialGradient,
   type GradientStop,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
+  type ParsedRadialGradient,
 } from "@webstudio-is/css-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { getRepeatedStyleItem } from "../../shared/repeated-style";
 
-export type GradientType = "linear" | "conic";
+export type GradientType = "linear" | "conic" | "radial";
 export type PercentUnitValue = UnitValue & { unit: "%" };
 export type NormalizedGradient = {
   normalizedGradientString: string;
@@ -44,6 +47,10 @@ const gradientFunctionNames: Record<
   conic: {
     base: "conic-gradient",
     repeating: "repeating-conic-gradient",
+  },
+  radial: {
+    base: "radial-gradient",
+    repeating: "repeating-radial-gradient",
   },
 };
 
@@ -154,17 +161,27 @@ const createDefaultConicGradient = (): ParsedConicGradient => ({
   stops: createDefaultStops(),
 });
 
+const createDefaultRadialGradient = (): ParsedRadialGradient => ({
+  type: "radial",
+  stops: createDefaultStops(),
+});
+
 type CreateDefaultGradient = {
   (type: "linear"): ParsedLinearGradient;
   (type: "conic"): ParsedConicGradient;
+  (type: "radial"): ParsedRadialGradient;
   (type: GradientType): ParsedGradient;
 };
 
 export const createDefaultGradient = ((type: GradientType) => {
-  if (type === "linear") {
-    return createDefaultLinearGradient();
+  switch (type) {
+    case "linear":
+      return createDefaultLinearGradient();
+    case "conic":
+      return createDefaultConicGradient();
+    case "radial":
+      return createDefaultRadialGradient();
   }
-  return createDefaultConicGradient();
 }) as CreateDefaultGradient;
 
 export const isLinearGradient = (
@@ -174,6 +191,10 @@ export const isLinearGradient = (
 export const isConicGradient = (
   gradient: ParsedGradient
 ): gradient is ParsedConicGradient => gradient.type === "conic";
+
+export const isRadialGradient = (
+  gradient: ParsedGradient
+): gradient is ParsedRadialGradient => gradient.type === "radial";
 
 export const getPercentUnit = (
   styleValue: StyleValue | undefined
@@ -523,10 +544,15 @@ export const resolveAngleValue = (
   return;
 };
 
-export const formatGradientValue = (gradient: ParsedGradient) =>
-  gradient.type === "linear"
-    ? formatLinearGradient(gradient)
-    : formatConicGradient(gradient);
+export const formatGradientValue = (gradient: ParsedGradient) => {
+  if (isLinearGradient(gradient)) {
+    return formatLinearGradient(gradient);
+  }
+  if (isConicGradient(gradient)) {
+    return formatConicGradient(gradient);
+  }
+  return formatRadialGradient(gradient);
+};
 
 const resolveVarPercentUnit = (
   value: GradientStop["position"] | GradientStop["hint"]
@@ -972,11 +998,19 @@ export const formatGradientForType = (
     return formatLinearGradient(parsed);
   }
 
+  if (target === "conicGradient") {
+    const parsed =
+      (gradientString.length > 0
+        ? parseConicGradient(gradientString)
+        : undefined) ?? createDefaultConicGradient();
+    return formatConicGradient(parsed);
+  }
+
   const parsed =
     (gradientString.length > 0
-      ? parseConicGradient(gradientString)
-      : undefined) ?? createDefaultConicGradient();
-  return formatConicGradient(parsed);
+      ? parseRadialGradient(gradientString)
+      : undefined) ?? createDefaultRadialGradient();
+  return formatRadialGradient(parsed);
 };
 
 export const detectBackgroundType = (
@@ -1007,8 +1041,16 @@ export const detectBackgroundType = (
       return "conicGradient";
     }
 
+    if (parseRadialGradient(cssValue) !== undefined) {
+      return "radialGradient";
+    }
+
     if (startsWithGradientFunction(cssValue, "conic")) {
       return "conicGradient";
+    }
+
+    if (startsWithGradientFunction(cssValue, "radial")) {
+      return "radialGradient";
     }
 
     if (startsWithGradientFunction(cssValue, "linear")) {
@@ -1045,6 +1087,7 @@ export const isBackgroundType = (value: string): value is BackgroundType => {
   return (
     value === "image" ||
     value === "linearGradient" ||
+    value === "radialGradient" ||
     value === "conicGradient" ||
     value === "solidColor"
   );
