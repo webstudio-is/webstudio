@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type {
-  KeywordValue,
-  RgbValue,
-  StyleValue,
-  UnitValue,
-  VarValue,
+import {
+  toValue,
+  type KeywordValue,
+  type RgbValue,
+  type StyleValue,
+  type UnitValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import type {
   GradientStop,
@@ -32,6 +33,8 @@ import {
   styleValueToColor,
   formatGradientForType,
   formatGradientValue,
+  convertGradientToTarget,
+  type GradientType,
 } from "./gradient-utils";
 
 const createLinearGradient = (
@@ -203,6 +206,82 @@ describe("formatGradientForType", () => {
       "repeating-radial-gradient(circle, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
     );
   });
+
+  test("converts conic gradient to radial target", () => {
+    const conicStyle: StyleValue = {
+      type: "unparsed",
+      value: "conic-gradient(red, blue)",
+    };
+    expect(formatGradientForType(conicStyle, "radialGradient")).toBe(
+      "radial-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+    );
+  });
+});
+
+describe("convertGradientToTarget", () => {
+  const gradientStrings: Record<GradientType, string> = {
+    linear: "linear-gradient(red 0%, blue 100%)",
+    conic: "conic-gradient(red 0%, blue 100%)",
+    radial: "radial-gradient(circle, red 0%, blue 100%)",
+  };
+  const expectedColors = ["rgba(255, 0, 0, 1)", "rgba(0, 0, 255, 1)"];
+  const gradientTypes: GradientType[] = ["linear", "conic", "radial"];
+
+  const getStopColors = (stops: GradientStop[]) =>
+    stops
+      .map((stop) => stop.color)
+      .filter(
+        (color): color is NonNullable<typeof color> => color !== undefined
+      )
+      .map((color) => toValue(color));
+
+  gradientTypes.forEach((sourceType) => {
+    gradientTypes.forEach((targetType) => {
+      test(`converts ${sourceType} gradient to ${targetType}`, () => {
+        const styleValue: StyleValue = {
+          type: "unparsed",
+          value: gradientStrings[sourceType],
+        };
+        const converted = convertGradientToTarget(styleValue, targetType);
+        expect(converted.type).toBe(targetType);
+        expect(converted.stops).toHaveLength(expectedColors.length);
+        expect(getStopColors(converted.stops)).toEqual(expectedColors);
+      });
+    });
+  });
+
+  test.each(gradientTypes)(
+    "creates default gradient when value missing for %s target",
+    (target) => {
+      const converted = convertGradientToTarget(undefined, target);
+      expect(converted.type).toBe(target);
+      expect(converted.stops.length).toBeGreaterThan(0);
+    }
+  );
+
+  test.each(gradientTypes)(
+    "preserves repeating flag when converting to %s",
+    (target) => {
+      const styleValue: StyleValue = {
+        type: "unparsed",
+        value: "repeating-linear-gradient(red 0%, blue 100%)",
+      };
+      const converted = convertGradientToTarget(styleValue, target);
+      expect(converted.repeating).toBe(true);
+    }
+  );
+
+  test.each(gradientTypes)(
+    "omits repeating flag when source is not repeating for %s target",
+    (target) => {
+      const styleValue: StyleValue = {
+        type: "unparsed",
+        value: "linear-gradient(red 0%, blue 100%)",
+      };
+      const converted = convertGradientToTarget(styleValue, target);
+      expect(converted.repeating).toBeUndefined();
+    }
+  );
 });
 describe("normalizeGradientInput", () => {
   test("returns string unchanged when not repeating", () => {

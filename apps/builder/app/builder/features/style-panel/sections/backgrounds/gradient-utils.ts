@@ -970,35 +970,60 @@ const formatSolidColorGradient = (styleValue: StyleValue | undefined) => {
   });
 };
 
+type GradientByType<T extends GradientType> = Extract<
+  ParsedGradient,
+  { type: T }
+>;
+
+const parseAnyGradient = (value: string): ParsedGradient | undefined => {
+  return (
+    parseLinearGradient(value) ??
+    parseConicGradient(value) ??
+    parseRadialGradient(value)
+  );
+};
+
+export const convertGradientToTarget = <Target extends GradientType>(
+  styleValue: StyleValue | undefined,
+  target: Target
+): GradientByType<Target> => {
+  const cssValue = styleValue === undefined ? "" : toValue(styleValue);
+  const gradientString = typeof cssValue === "string" ? cssValue : "";
+  const parsed =
+    gradientString.length > 0 ? parseAnyGradient(gradientString) : undefined;
+  const source = ensureGradientHasStops(
+    parsed ?? createDefaultGradient(target)
+  );
+  if (source.type === target) {
+    return source as GradientByType<Target>;
+  }
+  const template = createDefaultGradient(target);
+  const converted = {
+    ...template,
+    repeating: source.repeating,
+    stops: source.stops,
+  } satisfies ParsedGradient;
+  return converted as GradientByType<Target>;
+};
+
 export const formatGradientForType = (
   styleValue: StyleValue | undefined,
   target: Exclude<BackgroundType, "image">
 ) => {
-  const cssValue = styleValue === undefined ? "" : toValue(styleValue);
-  const gradientString = typeof cssValue === "string" ? cssValue : "";
   if (target === "solidColor") {
     return formatSolidColorGradient(styleValue);
   }
   if (target === "linearGradient") {
-    const parsed =
-      (gradientString.length > 0
-        ? parseLinearGradient(gradientString)
-        : undefined) ?? createDefaultLinearGradient();
+    const parsed = convertGradientToTarget(styleValue, "linear");
     return formatLinearGradient(parsed);
   }
 
   if (target === "conicGradient") {
-    const parsed =
-      (gradientString.length > 0
-        ? parseConicGradient(gradientString)
-        : undefined) ?? createDefaultConicGradient();
+    const parsed = convertGradientToTarget(styleValue, "conic");
     return formatConicGradient(parsed);
   }
 
-  const parsed =
-    (gradientString.length > 0
-      ? parseRadialGradient(gradientString)
-      : undefined) ?? createDefaultRadialGradient();
+  const parsed = convertGradientToTarget(styleValue, "radial");
   return formatRadialGradient(parsed);
 };
 
