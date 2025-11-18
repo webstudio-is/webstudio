@@ -112,6 +112,9 @@ type RadialSizeOption = (typeof radialSizeOptions)[number];
 
 const radialSizeOptionsSet = new Set<RadialSizeOption>(radialSizeOptions);
 
+const defaultRadialSize: RadialSizeOption = "farthest-corner";
+const defaultRadialShape = "ellipse" as const;
+
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
@@ -160,7 +163,6 @@ export const BackgroundGradient = ({
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
       const gradientValue = formatGradientValue(nextGradient);
-      // TODO maybe used a more structured representation
       const style: StyleValue = { type: "unparsed", value: gradientValue };
       setRepeatedStyleItem(styleDecl, index, style);
     },
@@ -499,14 +501,11 @@ const GradientStopControls = ({
   const isPresetRadialSize =
     typeof currentRadialSize === "string" &&
     radialSizeOptionsSet.has(currentRadialSize as RadialSizeOption);
-  const radialSizeValue = isPresetRadialSize
-    ? (currentRadialSize as RadialSizeOption)
-    : undefined;
-  const radialSizePlaceholder = isRadial
+  const radialSizeValue = isRadial
     ? isPresetRadialSize
-      ? "Choose size"
-      : (currentRadialSize ?? "Choose size")
-    : "Choose size";
+      ? (currentRadialSize as RadialSizeOption)
+      : defaultRadialSize
+    : undefined;
   const radialShapeValue = (() => {
     if (isRadial && gradient.shape) {
       const normalized = gradient.shape.value.toLowerCase();
@@ -514,7 +513,7 @@ const GradientStopControls = ({
         return normalized;
       }
     }
-    return undefined;
+    return isRadial ? defaultRadialShape : undefined;
   })();
 
   const updateSelectedStop = useCallback(
@@ -677,11 +676,8 @@ const GradientStopControls = ({
       if (isRadialGradient(gradient) === false) {
         return;
       }
-      if (nextSize === undefined) {
-        applyGradient({ ...gradient, size: undefined });
-        return;
-      }
-      applyGradient({ ...gradient, size: nextSize });
+      const size = nextSize ?? defaultRadialSize;
+      applyGradient({ ...gradient, size });
     },
     [applyGradient, gradient]
   );
@@ -691,16 +687,13 @@ const GradientStopControls = ({
       if (isRadialGradient(gradient) === false) {
         return;
       }
-      if (nextShape === undefined) {
-        applyGradient({ ...gradient, shape: undefined });
-        return;
-      }
-      if (nextShape !== "circle" && nextShape !== "ellipse") {
-        return;
-      }
+      const shapeValue =
+        nextShape === "circle" || nextShape === "ellipse"
+          ? nextShape
+          : defaultRadialShape;
       applyGradient({
         ...gradient,
-        shape: { type: "keyword", value: nextShape },
+        shape: { type: "keyword", value: shapeValue },
       });
     },
     [applyGradient, gradient]
@@ -738,6 +731,23 @@ const GradientStopControls = ({
     () => $availableUnitVariables.get(),
     []
   );
+
+  useEffect(() => {
+    if (isRadialGradient(gradient) === false) {
+      return;
+    }
+    const updates: Partial<ParsedRadialGradient> = {};
+    if (gradient.size === undefined) {
+      updates.size = defaultRadialSize;
+    }
+    const normalizedShape = gradient.shape?.value.toLowerCase();
+    if (normalizedShape !== "circle" && normalizedShape !== "ellipse") {
+      updates.shape = { type: "keyword", value: defaultRadialShape };
+    }
+    if (Object.keys(updates).length > 0) {
+      applyGradient({ ...gradient, ...updates });
+    }
+  }, [applyGradient, gradient]);
 
   return (
     <>
@@ -825,7 +835,6 @@ const GradientStopControls = ({
             <Select
               options={radialSizeOptions}
               value={radialSizeValue}
-              placeholder={radialSizePlaceholder}
               fullWidth
               onChange={(size) => handleRadialSizeChange(size)}
             />
