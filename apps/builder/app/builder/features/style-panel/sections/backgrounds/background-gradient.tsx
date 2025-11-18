@@ -354,6 +354,7 @@ const GradientPickerPanel = ({
     <Box css={{ paddingInline: theme.spacing[2] }}>
       <GradientPicker
         gradient={gradientForPicker}
+        backgroundImage={formatGradientValue(gradientForPicker)}
         type={gradientType}
         onChange={handlePickerChange}
         onChangeComplete={handlePickerChangeComplete}

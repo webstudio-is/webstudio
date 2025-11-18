@@ -1,22 +1,15 @@
 import { clamp } from "@react-aria/utils";
-import { toValue, UnitValue, type RgbValue } from "@webstudio-is/css-engine";
+import { toValue, type RgbValue } from "@webstudio-is/css-engine";
 import {
   useState,
   useCallback,
   useRef,
   useEffect,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
 } from "react";
-import {
-  formatLinearGradient,
-  formatConicGradient,
-  type GradientStop,
-  type ParsedGradient,
-  type ParsedLinearGradient,
-  type ParsedConicGradient,
-} from "@webstudio-is/css-data";
+import { type GradientStop, type ParsedGradient } from "@webstudio-is/css-data";
 import { colord, extend, type RgbaColor } from "colord";
 import mixPlugin from "colord/plugins/mix";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
@@ -29,20 +22,11 @@ extend([mixPlugin]);
 
 type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   gradient: T;
+  backgroundImage: string;
   onChange: (value: T) => void;
   onChangeComplete: (value: T) => void;
   onThumbSelect: (index: number, stop: GradientStop) => void;
   type?: T["type"];
-};
-
-const isConicGradient = (
-  gradient: ParsedGradient
-): gradient is ParsedConicGradient => gradient.type === "conic";
-
-const defaultAngle: UnitValue = {
-  type: "unit",
-  value: 90,
-  unit: "deg",
 };
 
 const THUMB_INTERACTION_PX = 12;
@@ -108,7 +92,13 @@ const toRgbaColor = (
 export const GradientPicker = <T extends ParsedGradient>(
   props: GradientPickerProps<T>
 ) => {
-  const { gradient, onChange, onChangeComplete, onThumbSelect } = props;
+  const {
+    gradient,
+    backgroundImage,
+    onChange,
+    onChangeComplete,
+    onThumbSelect,
+  } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
@@ -122,17 +112,10 @@ export const GradientPicker = <T extends ParsedGradient>(
 
   const buildGradient = useCallback(
     (stopsValue: GradientStop[]): T => {
-      if (isConicGradient(gradient)) {
-        return {
-          ...gradient,
-          stops: stopsValue,
-        } satisfies ParsedConicGradient as T;
-      }
-
       return {
         ...gradient,
         stops: stopsValue,
-      } satisfies ParsedLinearGradient as T;
+      } as T;
     },
     [gradient]
   );
@@ -171,18 +154,6 @@ export const GradientPicker = <T extends ParsedGradient>(
         : undefined
     )
     .filter((item): item is number => item !== undefined);
-  const background = isConicGradient(gradient)
-    ? formatConicGradient({
-        ...gradient,
-        stops,
-      })
-    : formatLinearGradient({
-        ...gradient,
-        stops,
-        angle:
-          gradient.angle ??
-          (gradient.sideOrCorner === undefined ? defaultAngle : undefined),
-      });
 
   const updateStops = useCallback(
     (
@@ -296,7 +267,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
-      (event: ReactPointerEvent<HTMLDivElement>) => {
+      (event: PointerEvent<HTMLDivElement>) => {
         event.preventDefault();
         event.stopPropagation();
 
@@ -335,7 +306,7 @@ export const GradientPicker = <T extends ParsedGradient>(
   );
 
   const handleKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    (event: KeyboardEvent<HTMLDivElement>) => {
       if (selectedStop === undefined) {
         return;
       }
@@ -422,7 +393,7 @@ export const GradientPicker = <T extends ParsedGradient>(
   );
 
   const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: PointerEvent<HTMLDivElement>) => {
       if (
         event.target instanceof HTMLElement &&
         event.target.closest("[data-thumb='true']")
@@ -517,7 +488,7 @@ export const GradientPicker = <T extends ParsedGradient>(
   );
 
   const handleMouseIndicator = useCallback(
-    (event: ReactMouseEvent<HTMLDivElement>) => {
+    (event: MouseEvent<HTMLDivElement>) => {
       const { isStopExistingAtPosition } = checkIfStopExistsAtPosition(
         event.clientX
       );
@@ -556,7 +527,7 @@ export const GradientPicker = <T extends ParsedGradient>(
     >
       <SliderRoot
         ref={sliderRef}
-        css={{ background }}
+        css={{ backgroundImage }}
         isHoveredOnStop={isHoveredOnStop}
         tabIndex={0}
         role="group"

@@ -910,6 +910,7 @@ export type BackgroundType =
   | "image"
   | "linearGradient"
   | "conicGradient"
+  | "radialGradient"
   | "solidColor";
 
 const getGradientColorSignature = (color?: GradientStop["color"]) => {

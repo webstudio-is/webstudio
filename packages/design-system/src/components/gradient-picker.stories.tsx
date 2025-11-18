@@ -32,6 +32,7 @@ export const GradientWithoutAngle = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={gradient}
+        backgroundImage={formatLinearGradient(gradient)}
         onChange={(value) => {
           setGradient(value);
         }}
@@ -56,6 +57,7 @@ export const GradientWithAngleAndHints = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={gradient}
+        backgroundImage={formatLinearGradient(gradient)}
         onChange={(value) => {
           setGradient(value);
         }}
@@ -79,6 +81,7 @@ export const GradientWithSideOrCorner = () => {
     <Flex direction="column" gap="4">
       <GradientPicker
         gradient={gradient}
+        backgroundImage={formatLinearGradient(gradient)}
         onChange={(value) => {
           setGradient(value);
         }}

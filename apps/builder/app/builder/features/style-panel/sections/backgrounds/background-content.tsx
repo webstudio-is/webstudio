@@ -19,6 +19,7 @@ import {
   ImageIcon,
   GradientLinearIcon,
   GradientConicIcon,
+  GradientRadialIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -69,7 +70,6 @@ const ColorSwatchIcon = styled("div", {
 type BackgroundTypeOption = {
   value: BackgroundType;
   label: string;
-  ariaLabel: string;
   description: string;
   code: string;
   icon: ReactNode;
@@ -84,7 +84,6 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
   {
     value: "image",
     label: "Image",
-    ariaLabel: "Image background",
     description:
       "Use an image asset, remote URL, or data URI as the layer background.",
     code: "background-image: url(...);",
@@ -94,7 +93,6 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
   {
     value: "linearGradient",
     label: "Linear gradient",
-    ariaLabel: "Linear gradient",
     description:
       "Blend multiple colors along a line to create smooth transitions.",
     code: "background-image: linear-gradient(...);",
@@ -103,16 +101,22 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
   {
     value: "conicGradient",
     label: "Conic gradient",
-    ariaLabel: "Conic gradient",
     description:
       "Spin colors around a center point for charts, dials, and spotlight effects.",
     code: "background-image: conic-gradient(...);",
     icon: <GradientConicIcon />,
   },
   {
+    value: "radialGradient",
+    label: "Radial gradient",
+    description:
+      "Blend multiple colors in a circular pattern to create smooth transitions.",
+    code: "background-image: radial-gradient(...);",
+    icon: <GradientRadialIcon />,
+  },
+  {
     value: "solidColor",
     label: "Color",
-    ariaLabel: "Solid color",
     description:
       "Use a single color layer while keeping control over stacking order.",
     code: "background-image: linear-gradient(color, color);",
@@ -178,15 +182,7 @@ const BackgroundTypeToggle = ({
       onValueChange={handleValueChange}
     >
       {backgroundTypeOptions.map(
-        ({
-          value: optionValue,
-          label,
-          ariaLabel,
-          description,
-          code,
-          icon,
-          autoFocus,
-        }) => (
+        ({ value: optionValue, label, description, code, icon, autoFocus }) => (
           <ToggleGroupTooltip
             key={optionValue}
             isOpen={activeTooltip === optionValue}
@@ -201,7 +197,7 @@ const BackgroundTypeToggle = ({
           >
             <ToggleGroupButton
               value={optionValue}
-              aria-label={ariaLabel}
+              aria-label={label}
               autoFocus={autoFocus}
             >
               <Flex css={{ px: theme.spacing[3] }}>{icon}</Flex>
