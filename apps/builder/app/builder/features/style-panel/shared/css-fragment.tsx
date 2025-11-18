@@ -73,7 +73,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
 
 const wrapperStyle = style({
   position: "relative",
-  ...getCodeEditorCssVars({ minHeight: "40px", maxHeight: "80px" }),
+  ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "6lh" }),
 });
 
 export const CssFragmentEditorContent = ({

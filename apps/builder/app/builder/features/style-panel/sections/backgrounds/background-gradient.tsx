@@ -1070,7 +1070,7 @@ const GradientCodeEditor = ({
         </Flex>
       </Label>
       <CssFragmentEditor
-        css={getCodeEditorCssVars({ minHeight: "40px", maxHeight: "40px" })}
+        css={getCodeEditorCssVars({ minHeight: "4lh", maxHeight: "4lh" })}
         content={
           <CssFragmentEditorContent
             invalid={intermediateValue?.type === "invalid"}
