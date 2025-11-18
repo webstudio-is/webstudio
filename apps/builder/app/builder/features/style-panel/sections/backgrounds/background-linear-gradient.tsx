@@ -2,18 +2,11 @@ import {
   toValue,
   type InvalidValue,
   type StyleValue,
-  type RgbValue,
-  type UnitValue,
-  type KeywordValue,
-  type VarValue,
-  type VarFallback,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
   parseLinearGradient,
-  formatLinearGradient,
   parseConicGradient,
-  formatConicGradient,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
@@ -66,676 +59,36 @@ import {
 } from "../../shared/css-fragment";
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-
-type GradientType = "linear" | "conic";
-
-const isLinearGradient = (
-  gradient: ParsedGradient
-): gradient is ParsedLinearGradient => gradient.type === "linear";
-
-const isConicGradient = (
-  gradient: ParsedGradient
-): gradient is ParsedConicGradient => gradient.type === "conic";
-
-type NormalizedGradient = {
-  normalizedGradientString: string;
-  initialIsRepeating: boolean;
-};
-
-type PercentUnitValue = UnitValue & { unit: "%" };
-
-const createDefaultStops = (): GradientStop[] => [
-  {
-    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
-    position: { type: "unit", unit: "%", value: 0 },
-  },
-  {
-    color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
-    position: { type: "unit", unit: "%", value: 100 },
-  },
-];
-
-type CreateDefaultGradient = {
-  (type: "linear"): ParsedLinearGradient;
-  (type: "conic"): ParsedConicGradient;
-  (type: GradientType): ParsedGradient;
-};
-
-const createDefaultGradient = ((type: GradientType) => {
-  const stops = createDefaultStops();
-  if (type === "linear") {
-    return {
-      type: "linear",
-      stops,
-    } satisfies ParsedLinearGradient;
-  }
-  return {
-    type: "conic",
-    stops,
-  } satisfies ParsedConicGradient;
-}) as CreateDefaultGradient;
-
-const getPercentUnit = (
-  styleValue: StyleValue | undefined
-): PercentUnitValue | undefined => {
-  if (styleValue === undefined) {
-    return;
-  }
-
-  if (styleValue.type === "unit" && styleValue.unit === "%") {
-    return {
-      type: "unit" as const,
-      unit: "%" as const,
-      value: styleValue.value,
-    } satisfies PercentUnitValue;
-  }
-
-  if (styleValue.type === "layers") {
-    const firstLayer = styleValue.value[0];
-    if (firstLayer?.type === "unit" && firstLayer.unit === "%") {
-      return {
-        type: "unit" as const,
-        unit: "%" as const,
-        value: firstLayer.value,
-      } satisfies PercentUnitValue;
-    }
-  }
-};
-
-const gradientFunctionNames: Record<
+import {
+  angleUnitOptions,
+  clampStopIndex,
+  cloneVarFallback,
+  createDefaultGradient,
+  createSolidLinearGradient,
+  ensureGradientHasStops,
+  fallbackStopColor,
+  formatGradientValue,
+  getAnglePlaceholder,
+  getPercentUnit,
+  isConicGradient,
+  isLinearGradient,
+  normalizeGradientInput,
+  percentUnitOptions,
+  pruneHintOverrides,
+  removeHintOverride,
+  resolveAngleValue,
+  resolveGradientForPicker,
+  resolveReverseStops,
+  resolveStopHintUpdate,
+  resolveStopPositionUpdate,
+  setHintOverride,
+  styleValueToColor,
+} from "./gradient-utils";
+import type {
   GradientType,
-  { base: string; repeating: string }
-> = {
-  linear: {
-    base: "linear-gradient",
-    repeating: "repeating-linear-gradient",
-  },
-  conic: {
-    base: "conic-gradient",
-    repeating: "repeating-conic-gradient",
-  },
-};
-
-const normalizeGradientInput = (
-  gradientString: string,
-  gradientType: GradientType
-): NormalizedGradient => {
-  const leadingWhitespaceMatch = gradientString.match(/^\s*/);
-  const leadingWhitespace = leadingWhitespaceMatch?.[0] ?? "";
-  const withoutLeading = gradientString.slice(leadingWhitespace.length);
-  const lowerCase = withoutLeading.toLowerCase();
-  const { base, repeating } = gradientFunctionNames[gradientType];
-
-  if (lowerCase.startsWith(repeating)) {
-    const suffix = withoutLeading.slice(repeating.length);
-    return {
-      normalizedGradientString: `${leadingWhitespace}${base}${suffix}`,
-      initialIsRepeating: true,
-    } satisfies NormalizedGradient;
-  }
-
-  return {
-    normalizedGradientString: gradientString,
-    initialIsRepeating: false,
-  } satisfies NormalizedGradient;
-};
-
-const getAnglePlaceholder = (gradient: ParsedLinearGradient) => {
-  if (gradient.angle !== undefined) {
-    return;
-  }
-  const derived = sideOrCornerToAngle(gradient.sideOrCorner);
-  if (derived !== undefined) {
-    return `${derived}deg`;
-  }
-  return "180deg";
-};
-
-const angleUnitTokens = ["deg", "grad", "rad", "turn"] as const;
-type AngleUnit = (typeof angleUnitTokens)[number];
-const angleUnitSet = new Set<AngleUnit>(angleUnitTokens);
-
-const angleUnitOptions = angleUnitTokens.map((unit) => ({
-  id: unit,
-  label: unit,
-  type: "unit" as const,
-}));
-
-const percentUnitOptions = [
-  {
-    id: "%" as const,
-    label: "%",
-    type: "unit" as const,
-  },
-];
-
-const isAngleUnit = (unit: string): unit is AngleUnit =>
-  angleUnitSet.has(unit as AngleUnit);
-
-const sideOrCornerToAngle = (
-  sideOrCorner: KeywordValue | undefined
-): number | undefined => {
-  if (sideOrCorner === undefined) {
-    return;
-  }
-  const normalized = sideOrCorner.value.trim().toLowerCase();
-  if (normalized.startsWith("to ") === false) {
-    return;
-  }
-  const tokens = normalized.slice(3).split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) {
-    return;
-  }
-  const tokenSet = new Set(tokens);
-  const has = (token: string) => tokenSet.has(token);
-  if (tokenSet.size === 1) {
-    if (has("top")) {
-      return 0;
-    }
-    if (has("right")) {
-      return 90;
-    }
-    if (has("bottom")) {
-      return 180;
-    }
-    if (has("left")) {
-      return 270;
-    }
-    return;
-  }
-  if (tokenSet.size === 2) {
-    if (has("top") && has("right")) {
-      return 45;
-    }
-    if (has("bottom") && has("right")) {
-      return 135;
-    }
-    if (has("bottom") && has("left")) {
-      return 225;
-    }
-    if (has("top") && has("left")) {
-      return 315;
-    }
-  }
-};
-
-const fillMissingStopPositions = <T extends ParsedGradient>(gradient: T): T => {
-  const stops = gradient.stops;
-  if (stops.length === 0) {
-    return gradient;
-  }
-
-  const hasMissingPositions = stops.some((stop) => stop.position === undefined);
-  if (hasMissingPositions === false) {
-    return gradient;
-  }
-
-  const hasUnsupportedPosition = stops.some(
-    (stop) =>
-      stop.position !== undefined &&
-      (stop.position.type !== "unit" || stop.position.unit !== "%")
-  );
-  if (hasUnsupportedPosition) {
-    return gradient;
-  }
-
-  const totalStops = stops.length;
-  const values = stops.map((stop) =>
-    stop.position?.type === "unit" ? stop.position.value : undefined
-  );
-  const nextValues = [...values];
-  const definedCount = nextValues.filter(
-    (value): value is number => value !== undefined
-  ).length;
-
-  if (definedCount === 0) {
-    if (totalStops === 1) {
-      nextValues[0] = 0;
-    } else {
-      for (let index = 0; index < totalStops; index += 1) {
-        const value = (index / (totalStops - 1)) * 100;
-        nextValues[index] = clamp(value, 0, 100);
-      }
-    }
-  } else {
-    if (nextValues[0] === undefined) {
-      nextValues[0] = 0;
-    }
-    if (nextValues[totalStops - 1] === undefined) {
-      nextValues[totalStops - 1] = 100;
-    }
-
-    let start = 0;
-    while (start < totalStops) {
-      const startValue = nextValues[start];
-      if (startValue === undefined) {
-        start += 1;
-        continue;
-      }
-      let end = start + 1;
-      while (end < totalStops && nextValues[end] === undefined) {
-        end += 1;
-      }
-      if (end >= totalStops) {
-        break;
-      }
-      const endValue = nextValues[end];
-      if (endValue === undefined) {
-        break;
-      }
-      const span = end - start;
-      for (let offset = 1; offset < span; offset += 1) {
-        const interpolated =
-          startValue + ((endValue - startValue) * offset) / span;
-        nextValues[start + offset] = clamp(interpolated, 0, 100);
-      }
-      start = end;
-    }
-  }
-
-  const nextStops = stops.map((stop, index) => {
-    if (stop.position !== undefined) {
-      return stop;
-    }
-    const value = nextValues[index];
-    if (value === undefined) {
-      return stop;
-    }
-    return {
-      ...stop,
-      position: {
-        type: "unit" as const,
-        unit: "%" as const,
-        value,
-      },
-    };
-  });
-
-  return {
-    ...gradient,
-    stops: nextStops,
-  } as T;
-};
-
-const fallbackStopColor: RgbValue = {
-  type: "rgb",
-  r: 0,
-  g: 0,
-  b: 0,
-  alpha: 1,
-};
-
-const cloneVarValue = (value: VarValue): VarValue => ({
-  ...value,
-  fallback: value.fallback === undefined ? undefined : { ...value.fallback },
-});
-
-const cloneVarFallback = (
-  fallback: VarFallback | undefined
-): VarFallback | undefined => {
-  if (fallback === undefined) {
-    return;
-  }
-
-  if (fallback.type === "rgb") {
-    return { ...fallback } satisfies VarFallback;
-  }
-
-  return { ...fallback } satisfies VarFallback;
-};
-
-const cloneGradientStopValue = <
-  Value extends GradientStop["position"] | GradientStop["hint"],
->(
-  value: Value
-): Value => {
-  if (value === undefined) {
-    return value;
-  }
-
-  if (value.type === "var") {
-    const fallback = value.fallback;
-    return {
-      ...value,
-      fallback: fallback === undefined ? undefined : { ...fallback },
-    } as Value;
-  }
-
-  return { ...value } as Value;
-};
-
-type AngleUnitValue = UnitValue & { unit: AngleUnit };
-type AngleValue = AngleUnitValue | VarValue;
-
-const resolveAnglePrimitive = (
-  value: VarValue | UnitValue | undefined
-): AngleValue | undefined => {
-  if (value === undefined) {
-    return;
-  }
-
-  if (value.type === "var") {
-    return cloneVarValue(value);
-  }
-
-  if (value.type === "unit" && isAngleUnit(value.unit)) {
-    return {
-      ...value,
-      unit: value.unit,
-    } satisfies AngleUnitValue;
-  }
-
-  return;
-};
-
-const resolveAngleValue = (
-  styleValue: StyleValue | undefined
-): AngleValue | undefined => {
-  if (styleValue === undefined) {
-    return;
-  }
-
-  if (styleValue.type === "tuple") {
-    const first = styleValue.value[0];
-    if (first?.type === "var" || first?.type === "unit") {
-      return resolveAnglePrimitive(first);
-    }
-    return;
-  }
-
-  if (styleValue.type === "layers") {
-    const firstLayer = styleValue.value[0];
-    if (firstLayer?.type === "var" || firstLayer?.type === "unit") {
-      return resolveAnglePrimitive(firstLayer);
-    }
-    return;
-  }
-
-  if (styleValue.type === "var" || styleValue.type === "unit") {
-    return resolveAnglePrimitive(styleValue);
-  }
-
-  return;
-};
-
-const formatGradientValue = (gradient: ParsedGradient) =>
-  gradient.type === "linear"
-    ? formatLinearGradient(gradient)
-    : formatConicGradient(gradient);
-
-const resolveVarPercentUnit = (
-  value: GradientStop["position"] | GradientStop["hint"]
-): PercentUnitValue | undefined => {
-  if (value?.type !== "var") {
-    return;
-  }
-  const fallback = value.fallback;
-  if (fallback?.type === "unit" && fallback.unit === "%") {
-    return {
-      type: "unit" as const,
-      unit: "%" as const,
-      value: clamp(fallback.value, 0, 100),
-    } satisfies PercentUnitValue;
-  }
-};
-
-const normalizeStopsForPicker = <T extends ParsedGradient>(gradient: T): T => {
-  let changed = false;
-  const stops = gradient.stops.map((stop) => {
-    let nextPosition = stop.position;
-    let nextHint = stop.hint;
-    let stopChanged = false;
-
-    if (stop.position?.type === "var") {
-      nextPosition = resolveVarPercentUnit(stop.position);
-      stopChanged = true;
-    }
-
-    if (stop.hint?.type === "var") {
-      nextHint = resolveVarPercentUnit(stop.hint);
-      stopChanged = true;
-    }
-
-    if (stopChanged) {
-      changed = true;
-      return {
-        ...stop,
-        position: nextPosition,
-        hint: nextHint,
-      } satisfies GradientStop;
-    }
-
-    return stop;
-  });
-
-  if (changed === false) {
-    return gradient;
-  }
-
-  return {
-    ...gradient,
-    stops,
-  } as T;
-};
-
-const resolveGradientForPicker = <T extends ParsedGradient>(
-  gradient: T,
-  hintOverrides: ReadonlyMap<number, PercentUnitValue>
-): T => {
-  const normalized = normalizeStopsForPicker(gradient);
-  const filled = fillMissingStopPositions(normalized);
-  if (hintOverrides.size === 0) {
-    return filled;
-  }
-  let changed = false;
-  const stopsWithHints = filled.stops.map((stop, index) => {
-    if (stop.hint !== undefined) {
-      return stop;
-    }
-    const override = hintOverrides.get(index);
-    if (override === undefined) {
-      return stop;
-    }
-    changed = true;
-    return {
-      ...stop,
-      hint: override,
-    };
-  });
-  if (changed === false) {
-    return filled;
-  }
-  return {
-    ...filled,
-    stops: stopsWithHints,
-  } as T;
-};
-
-const removeHintOverride = (
-  overrides: Map<number, PercentUnitValue>,
-  stopIndex: number
-): Map<number, PercentUnitValue> => {
-  if (overrides.has(stopIndex) === false) {
-    return overrides;
-  }
-  const next = new Map(overrides);
-  next.delete(stopIndex);
-  return next;
-};
-
-const setHintOverride = (
-  overrides: Map<number, PercentUnitValue>,
-  stopIndex: number,
-  override: PercentUnitValue
-): Map<number, PercentUnitValue> => {
-  const existing = overrides.get(stopIndex);
-  if (existing !== undefined) {
-    if (existing === override) {
-      return overrides;
-    }
-    if (
-      existing.type === override.type &&
-      existing.unit === override.unit &&
-      existing.value === override.value
-    ) {
-      return overrides;
-    }
-  }
-  const next = new Map(overrides);
-  next.set(stopIndex, override);
-  return next;
-};
-
-const pruneHintOverrides = (
-  overrides: Map<number, PercentUnitValue>,
-  stopCount: number
-): Map<number, PercentUnitValue> => {
-  if (overrides.size === 0) {
-    return overrides;
-  }
-  let changed = false;
-  const next = new Map(overrides);
-  for (const [index] of overrides) {
-    if (index >= stopCount) {
-      next.delete(index);
-      changed = true;
-    }
-  }
-  return changed ? next : overrides;
-};
-
-type ReverseStopsResolution<T extends ParsedGradient> =
-  | {
-      type: "apply";
-      gradient: T;
-      selectedStopIndex: number;
-    }
-  | { type: "none" };
-
-const resolveReverseStops = <T extends ParsedGradient>(
-  gradient: T,
-  selectedStopIndex: number
-): ReverseStopsResolution<T> => {
-  if (gradient.stops.length <= 1) {
-    return { type: "none" } satisfies ReverseStopsResolution<T>;
-  }
-  const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-  const reversedStops = [...gradient.stops].reverse();
-  const nextStops = reversedStops.map((stop) => {
-    let position = stop.position;
-    if (position?.type === "unit" && position.unit === "%") {
-      position = {
-        ...position,
-        value: clamp(100 - position.value, 0, 100),
-      } as PercentUnitValue;
-    }
-    return { ...stop, position } satisfies GradientStop;
-  });
-  const nextGradient = { ...gradient, stops: nextStops } as T;
-  const nextSelectedIndex = gradient.stops.length - 1 - stopIndex;
-  return {
-    type: "apply",
-    gradient: nextGradient,
-    selectedStopIndex: nextSelectedIndex,
-  } satisfies ReverseStopsResolution<T>;
-};
-
-type StopPositionUpdateResolution =
-  | {
-      type: "apply";
-      position: GradientStop["position"];
-      clearHintOverrides: boolean;
-    }
-  | { type: "none" };
-
-const resolveStopPositionUpdate = (
-  styleValue: StyleValue
-): StopPositionUpdateResolution => {
-  if (styleValue.type === "var") {
-    return {
-      type: "apply",
-      position: cloneGradientStopValue(styleValue as GradientStop["position"]),
-      clearHintOverrides: true,
-    } satisfies StopPositionUpdateResolution;
-  }
-
-  const percentUnit = getPercentUnit(styleValue);
-  if (percentUnit === undefined) {
-    return { type: "none" } satisfies StopPositionUpdateResolution;
-  }
-
-  const normalized: PercentUnitValue = {
-    ...percentUnit,
-    value: clamp(percentUnit.value, 0, 100),
-  } satisfies PercentUnitValue;
-  return {
-    type: "apply",
-    position: normalized,
-    clearHintOverrides: true,
-  } satisfies StopPositionUpdateResolution;
-};
-
-type StopHintUpdateResolution =
-  | {
-      type: "apply";
-      hint: GradientStop["hint"];
-      clearOverride: boolean;
-      override?: PercentUnitValue;
-    }
-  | { type: "none" };
-
-type StopHintUpdateHelpers = {
-  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
-  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
-};
-
-const resolveStopHintUpdate = (
-  styleValue: StyleValue,
-  helpers: StopHintUpdateHelpers
-): StopHintUpdateResolution => {
-  if (styleValue.type === "var") {
-    return {
-      type: "apply",
-      hint: cloneGradientStopValue(styleValue as GradientStop["hint"]),
-      clearOverride: true,
-    };
-  }
-
-  const percentUnit = helpers.getPercentUnit(styleValue);
-  if (percentUnit === undefined) {
-    return { type: "none" };
-  }
-
-  const normalized = helpers.clampPercentUnit(percentUnit);
-  return {
-    type: "apply",
-    hint: normalized,
-    override: normalized,
-    clearOverride: false,
-  };
-};
-
-const ensureGradientHasStops = <T extends ParsedGradient>(gradient: T): T => {
-  const stops =
-    gradient.stops.length === 0
-      ? createDefaultStops()
-      : gradient.stops.map((stop) =>
-          stop.color === undefined
-            ? {
-                ...stop,
-                color: { ...fallbackStopColor },
-              }
-            : stop
-        );
-
-  return {
-    ...gradient,
-    stops,
-  } as T;
-};
-
-const clampStopIndex = <T extends ParsedGradient>(index: number, gradient: T) =>
-  clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
+  IntermediateColorValue,
+  PercentUnitValue,
+} from "./gradient-utils";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -745,63 +98,19 @@ type IntermediateValue = {
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
 
-type IntermediateColorValue = {
-  type: "intermediate";
-  value: string;
-};
-
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
   options?: { isEphemeral?: boolean }
 ) => void;
 
-const parseColorString = (value: string): GradientStop["color"] | undefined => {
-  const parsed = parseCssValue("color", value);
-  if (
-    parsed.type === "rgb" ||
-    parsed.type === "keyword" ||
-    parsed.type === "var"
-  ) {
-    return parsed;
-  }
-};
-
-const styleValueToColor = (
-  styleValue: StyleValue | IntermediateColorValue | undefined
-): GradientStop["color"] | undefined => {
-  if (styleValue === undefined) {
-    return;
-  }
-
-  if (styleValue.type === "intermediate") {
-    return parseColorString(styleValue.value);
-  }
-
-  if (styleValue.type === "rgb") {
-    return styleValue;
-  }
-
-  if (styleValue.type === "var") {
-    return styleValue;
-  }
-
-  if (styleValue.type === "keyword") {
-    return parseColorString(styleValue.value);
-  }
-
-  if (styleValue.type === "invalid") {
-    return parseColorString(styleValue.value);
-  }
-
-  return parseColorString(toValue(styleValue));
-};
-
 export const BackgroundLinearGradient = ({
   index,
   type: gradientType = "linear",
+  variant = "default",
 }: {
   index: number;
   type?: GradientType;
+  variant?: "default" | "solid";
 }) => {
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
@@ -847,6 +156,7 @@ export const BackgroundLinearGradient = ({
     () => new Map<number, PercentUnitValue>()
   );
   const [codeEditorResetSignal, setCodeEditorResetSignal] = useState(0);
+  const isSolidVariant = variant === "solid";
 
   useEffect(() => {
     setSelectedStopIndex((currentIndex) =>
@@ -887,25 +197,31 @@ export const BackgroundLinearGradient = ({
         gap: theme.spacing[5],
       }}
     >
-      <GradientPickerPanel
-        gradient={gradient}
-        gradientType={gradientType}
-        hintOverrides={hintOverrides}
-        setSelectedStopIndex={setSelectedStopIndex}
-        applyGradient={applyGradient}
-        styleDecl={styleDecl}
-        index={index}
-      />
-      <GradientStopControls
-        initialIsRepeating={initialIsRepeating}
-        gradient={gradient}
-        selectedStopIndex={selectedStopIndex}
-        hintOverrides={hintOverrides}
-        setHintOverrides={setHintOverrides}
-        applyGradient={applyGradient}
-        setSelectedStopIndex={setSelectedStopIndex}
-      />
-      <GradientControl gradient={gradient} applyGradient={applyGradient} />
+      {isSolidVariant ? (
+        <SolidColorControls gradient={gradient} applyGradient={applyGradient} />
+      ) : (
+        <>
+          <GradientPickerPanel
+            gradient={gradient}
+            gradientType={gradientType}
+            hintOverrides={hintOverrides}
+            setSelectedStopIndex={setSelectedStopIndex}
+            applyGradient={applyGradient}
+            styleDecl={styleDecl}
+            index={index}
+          />
+          <GradientStopControls
+            initialIsRepeating={initialIsRepeating}
+            gradient={gradient}
+            selectedStopIndex={selectedStopIndex}
+            hintOverrides={hintOverrides}
+            setHintOverrides={setHintOverrides}
+            applyGradient={applyGradient}
+            setSelectedStopIndex={setSelectedStopIndex}
+          />
+          <GradientControl gradient={gradient} applyGradient={applyGradient} />
+        </>
+      )}
       <GradientCodeEditor
         styleDecl={styleDecl}
         styleValue={styleValue}
@@ -1044,6 +360,66 @@ const GradientPickerPanel = ({
         onThumbSelect={handleThumbSelect}
       />
     </Box>
+  );
+};
+
+type SolidColorControlsProps = {
+  gradient: ParsedGradient;
+  applyGradient: GradientEditorApplyFn;
+};
+
+const SolidColorControls = ({
+  gradient,
+  applyGradient,
+}: SolidColorControlsProps) => {
+  const solidColor: StyleValue = (gradient.stops[0]?.color ??
+    fallbackStopColor) as StyleValue;
+
+  const applySolidColorValue = useCallback(
+    (
+      styleValue: StyleValue | IntermediateColorValue | undefined,
+      options?: { isEphemeral?: boolean }
+    ) => {
+      const nextColor = styleValueToColor(styleValue);
+      if (nextColor === undefined) {
+        return;
+      }
+      const baseGradient = isLinearGradient(gradient) ? gradient : undefined;
+      const nextGradient = createSolidLinearGradient(nextColor, baseGradient);
+      applyGradient(nextGradient, options);
+    },
+    [applyGradient, gradient]
+  );
+
+  const handleColorChange = useCallback(
+    (styleValue: StyleValue | IntermediateColorValue | undefined) => {
+      applySolidColorValue(styleValue);
+    },
+    [applySolidColorValue]
+  );
+
+  const handleColorChangeComplete = useCallback(
+    (styleValue: StyleValue) => {
+      applySolidColorValue(styleValue, { isEphemeral: false });
+    },
+    [applySolidColorValue]
+  );
+
+  return (
+    <Grid gap="2" columns="3" align="end">
+      <Label>Color</Label>
+      <Flex css={{ gridColumn: "span 2" }}>
+        <ColorPicker
+          property="color"
+          value={solidColor}
+          currentColor={solidColor}
+          onChange={handleColorChange}
+          onChangeComplete={handleColorChangeComplete}
+          onAbort={() => {}}
+          onReset={() => {}}
+        />
+      </Flex>
+    </Grid>
   );
 };
 
@@ -1538,22 +914,4 @@ const GradientCodeEditor = ({
       />
     </>
   );
-};
-
-export const __testing__ = {
-  normalizeGradientInput,
-  getAnglePlaceholder,
-  resolveAngleValue,
-  sideOrCornerToAngle,
-  fillMissingStopPositions,
-  resolveGradientForPicker,
-  removeHintOverride,
-  setHintOverride,
-  pruneHintOverrides,
-  resolveReverseStops,
-  resolveStopPositionUpdate,
-  ensureGradientHasStops,
-  clampStopIndex,
-  styleValueToColor,
-  resolveStopHintUpdate,
 };

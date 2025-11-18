@@ -10,27 +10,26 @@ import type {
   GradientStop,
   ParsedLinearGradient,
 } from "@webstudio-is/css-data";
-import { __testing__ } from "./background-linear-gradient";
-
-const {
-  normalizeGradientInput,
-  getAnglePlaceholder,
-  sideOrCornerToAngle,
-  fillMissingStopPositions,
-  ensureGradientHasStops,
+import {
   clampStopIndex,
-  styleValueToColor,
-  resolveStopHintUpdate,
-  resolveGradientForPicker,
-  removeHintOverride,
-  setHintOverride,
+  createSolidLinearGradient,
+  detectBackgroundType,
+  ensureGradientHasStops,
+  fillMissingStopPositions,
+  getAnglePlaceholder,
+  normalizeGradientInput,
+  type PercentUnitValue,
   pruneHintOverrides,
-  resolveStopPositionUpdate,
-  resolveReverseStops,
+  removeHintOverride,
   resolveAngleValue,
-} = __testing__;
-
-type PercentUnitValue = UnitValue & { unit: "%" };
+  resolveGradientForPicker,
+  resolveReverseStops,
+  resolveStopHintUpdate,
+  resolveStopPositionUpdate,
+  setHintOverride,
+  sideOrCornerToAngle,
+  styleValueToColor,
+} from "./gradient-utils";
 
 const createLinearGradient = (
   overrides: Partial<ParsedLinearGradient> = {}
@@ -856,5 +855,136 @@ describe("hint override helpers", () => {
     ]);
     const result = pruneHintOverrides(overrides, 3);
     expect(result).toBe(overrides);
+  });
+});
+
+describe("createSolidLinearGradient", () => {
+  test("duplicates color stops at 0% and 100% while preserving base geometry", () => {
+    const color: GradientStop["color"] = {
+      type: "rgb",
+      r: 120,
+      g: 80,
+      b: 200,
+      alpha: 0.7,
+    } satisfies RgbValue;
+    const baseAngle = {
+      type: "unit",
+      unit: "deg",
+      value: 45,
+    } satisfies UnitValue;
+    const baseSide: KeywordValue = { type: "keyword", value: "to bottom" };
+    const baseGradient = createLinearGradient({
+      angle: baseAngle,
+      sideOrCorner: baseSide,
+    });
+
+    const result = createSolidLinearGradient(color, baseGradient);
+
+    expect(result.type).toBe("linear");
+    expect(result.angle).toBe(baseAngle);
+    expect(result.sideOrCorner).toBe(baseSide);
+    expect(result.stops).toHaveLength(2);
+
+    const [firstStop, secondStop] = result.stops;
+    expect(firstStop?.position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 0,
+    });
+    expect(secondStop?.position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 100,
+    });
+    expect(firstStop?.color).toEqual(color);
+    expect(secondStop?.color).toEqual(color);
+    expect(firstStop?.color).not.toBe(color);
+    expect(secondStop?.color).not.toBe(color);
+  });
+
+  test("clones var color fallbacks for each stop", () => {
+    const fallback: RgbValue = {
+      type: "rgb",
+      r: 10,
+      g: 40,
+      b: 90,
+      alpha: 1,
+    };
+    const color: VarValue = {
+      type: "var",
+      value: "--accent",
+      fallback,
+    };
+
+    const result = createSolidLinearGradient(color as GradientStop["color"]);
+    const [firstStop, secondStop] = result.stops;
+    const firstColor = firstStop?.color;
+    const secondColor = secondStop?.color;
+
+    expect(firstColor).toEqual(color);
+    expect(secondColor).toEqual(color);
+    expect(firstColor).not.toBe(color);
+    expect(secondColor).not.toBe(color);
+
+    if (firstColor?.type !== "var" || secondColor?.type !== "var") {
+      throw new Error("Expected var colors to be cloned");
+    }
+
+    expect(firstColor.fallback).toEqual(fallback);
+    expect(secondColor.fallback).toEqual(fallback);
+    expect(firstColor.fallback).not.toBe(fallback);
+    expect(secondColor.fallback).not.toBe(fallback);
+    expect(firstColor.fallback).not.toBe(secondColor.fallback);
+  });
+});
+
+describe("detectBackgroundType", () => {
+  test("returns image when style value undefined", () => {
+    expect(detectBackgroundType(undefined)).toBe("image");
+  });
+
+  test("returns image for keyword none", () => {
+    const value: StyleValue = { type: "keyword", value: "none" };
+    expect(detectBackgroundType(value)).toBe("image");
+  });
+
+  test("returns image for url image value", () => {
+    const value: StyleValue = {
+      type: "image",
+      value: { type: "url", url: "https://example.com/image.png" },
+    };
+    expect(detectBackgroundType(value)).toBe("image");
+  });
+
+  test("returns linearGradient for linear gradient", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "linear-gradient(red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("linearGradient");
+  });
+
+  test("returns solidColor for uniform linear gradient", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "linear-gradient(red, red)",
+    };
+    expect(detectBackgroundType(value)).toBe("solidColor");
+  });
+
+  test("returns conicGradient for conic gradient", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "conic-gradient(red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("conicGradient");
+  });
+
+  test("returns image for unsupported gradient types", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "unsupported-gradient(circle, red, blue)",
+    };
+    expect(detectBackgroundType(value)).toBe("image");
   });
 });

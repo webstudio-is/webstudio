@@ -3,17 +3,14 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { useEffect, useRef, useState } from "react";
 import {
-  propertyDescriptions,
-  parseLinearGradient,
-  parseConicGradient,
-  formatLinearGradient,
-  formatConicGradient,
-  type GradientStop,
-  type ParsedLinearGradient,
-  type ParsedConicGradient,
-} from "@webstudio-is/css-data";
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
   RepeatColumnIcon,
@@ -46,132 +43,175 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-
-type BackgroundType = "image" | "linearGradient" | "conicGradient";
-
-const createDefaultStops = (): GradientStop[] => [
-  {
-    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
-    position: { type: "unit", unit: "%", value: 0 },
-  },
-  {
-    color: { type: "rgb", r: 255, g: 255, b: 255, alpha: 1 },
-    position: { type: "unit", unit: "%", value: 100 },
-  },
-];
-
-const createDefaultLinearGradient = (): ParsedLinearGradient => ({
-  type: "linear",
-  stops: createDefaultStops(),
-});
-
-const createDefaultConicGradient = (): ParsedConicGradient => ({
-  type: "conic",
-  stops: createDefaultStops(),
-});
-
-const formatGradientForType = (
-  styleValue: StyleValue | undefined,
-  target: Exclude<BackgroundType, "image">
-) => {
-  const cssValue = styleValue === undefined ? "" : toValue(styleValue);
-  const gradientString = typeof cssValue === "string" ? cssValue : "";
-  if (target === "linearGradient") {
-    const parsed =
-      (gradientString.length > 0
-        ? parseLinearGradient(gradientString)
-        : undefined) ?? createDefaultLinearGradient();
-    return formatLinearGradient(parsed);
-  }
-
-  const parsed =
-    (gradientString.length > 0
-      ? parseConicGradient(gradientString)
-      : undefined) ?? createDefaultConicGradient();
-  return formatConicGradient(parsed);
-};
-
-const detectBackgroundType = (styleValue?: StyleValue): BackgroundType => {
-  if (styleValue === undefined) {
-    return "image";
-  }
-
-  if (styleValue.type === "image") {
-    return "image";
-  }
-
-  if (styleValue.type === "keyword") {
-    // The only allowed keyword for backgroundImage is none
-    return "image";
-  }
-
-  const cssValue = toValue(styleValue);
-  if (typeof cssValue === "string") {
-    if (parseLinearGradient(cssValue) !== undefined) {
-      return "linearGradient";
-    }
-    if (parseConicGradient(cssValue) !== undefined) {
-      return "conicGradient";
-    }
-  }
-
-  return "image";
-};
-
-const getStyleValueKey = (styleValue?: StyleValue) => {
-  if (styleValue === undefined) {
-    return "undefined";
-  }
-
-  if (styleValue.type === "image") {
-    const image = styleValue.value;
-    if (image.type === "asset") {
-      return `image-asset:${image.value}`;
-    }
-    if (image.type === "url") {
-      return `image-url:${image.url}`;
-    }
-  }
-
-  if (styleValue.type === "keyword") {
-    return `keyword:${styleValue.value}`;
-  }
-
-  return `${styleValue.type}:${toValue(styleValue)}`;
-};
-
-const isBackgroundType = (value: string): value is BackgroundType => {
-  return (
-    value === "image" || value === "linearGradient" || value === "conicGradient"
-  );
-};
-
-const getBackgroundStyleItem = (
-  styleDecl: ComputedStyleDecl,
-  index: number
-) => {
-  const repeatedItem = getRepeatedStyleItem(styleDecl, index);
-  if (repeatedItem !== undefined) {
-    return repeatedItem;
-  }
-
-  if (index > 0) {
-    return;
-  }
-
-  const cascaded = styleDecl.cascadedValue;
-  if (cascaded.type === "layers" || cascaded.type === "tuple") {
-    return cascaded.value[0];
-  }
-
-  return cascaded;
-};
+import {
+  detectBackgroundType,
+  formatGradientForType,
+  getBackgroundStyleItem,
+  getStyleValueKey,
+  isBackgroundType,
+  type BackgroundType,
+} from "./gradient-utils";
 
 const BackgroundSection = styled("div", { padding: theme.panel.padding });
 
 const Spacer = styled("div", {
   height: theme.spacing[5],
 });
+
+const ColorSwatchIcon = styled("div", {
+  width: theme.spacing[7],
+  height: theme.spacing[7],
+  borderRadius: theme.borderRadius[3],
+  backgroundColor: theme.colors.foregroundMain,
+  boxShadow: `inset 0 0 0 1px ${theme.colors.borderMain}`,
+});
+
+type BackgroundTypeOption = {
+  value: BackgroundType;
+  label: string;
+  ariaLabel: string;
+  description: string;
+  code: string;
+  icon: ReactNode;
+  autoFocus?: boolean;
+};
+
+// looks like now when dialog is open first toggle group buttons need to have autoFocus
+// otherwise the following "Choose image" button is focused
+// https://github.com/radix-ui/primitives/pull/2027
+// https://github.com/radix-ui/primitives/issues/1910
+const backgroundTypeOptions: BackgroundTypeOption[] = [
+  {
+    value: "image",
+    label: "Image",
+    ariaLabel: "Image background",
+    description:
+      "Use an image asset, remote URL, or data URI as the layer background.",
+    code: "background-image: url(...);",
+    icon: <ImageIcon />,
+    autoFocus: true,
+  },
+  {
+    value: "linearGradient",
+    label: "Linear gradient",
+    ariaLabel: "Linear gradient",
+    description:
+      "Blend multiple colors along a line to create smooth transitions.",
+    code: "background-image: linear-gradient(...);",
+    icon: <GradientLinearIcon />,
+  },
+  {
+    value: "conicGradient",
+    label: "Conic gradient",
+    ariaLabel: "Conic gradient",
+    description:
+      "Spin colors around a center point for charts, dials, and spotlight effects.",
+    code: "background-image: conic-gradient(...);",
+    icon: <GradientConicIcon />,
+  },
+  {
+    value: "solidColor",
+    label: "Color",
+    ariaLabel: "Solid color",
+    description:
+      "Use a single color layer while keeping control over stacking order.",
+    code: "background-image: linear-gradient(color, color);",
+    icon: <ColorSwatchIcon />,
+  },
+];
+
+type BackgroundTypeToggleProps = {
+  value: BackgroundType;
+  onChange: (value: BackgroundType) => void;
+  backgroundStyleItem: StyleValue | undefined;
+  styleDecl: ComputedStyleDecl;
+  index: number;
+};
+
+const BackgroundTypeToggle = ({
+  value,
+  onChange,
+  backgroundStyleItem,
+  styleDecl,
+  index,
+}: BackgroundTypeToggleProps) => {
+  const [activeTooltip, setActiveTooltip] = useState<
+    BackgroundType | undefined
+  >();
+
+  const handleValueChange = useCallback(
+    (nextValue: string) => {
+      if (isBackgroundType(nextValue) === false) {
+        return;
+      }
+
+      if (nextValue === value) {
+        return;
+      }
+
+      onChange(nextValue);
+      setActiveTooltip(undefined);
+
+      if (
+        nextValue === "linearGradient" ||
+        nextValue === "conicGradient" ||
+        nextValue === "solidColor"
+      ) {
+        const gradientValue = formatGradientForType(
+          backgroundStyleItem,
+          nextValue
+        );
+        setRepeatedStyleItem(styleDecl, index, {
+          type: "unparsed",
+          value: gradientValue,
+        });
+      }
+    },
+    [backgroundStyleItem, index, onChange, styleDecl, value]
+  );
+
+  return (
+    <ToggleGroup
+      type="single"
+      value={value}
+      aria-label="Background type"
+      onValueChange={handleValueChange}
+    >
+      {backgroundTypeOptions.map(
+        ({
+          value: optionValue,
+          label,
+          ariaLabel,
+          description,
+          code,
+          icon,
+          autoFocus,
+        }) => (
+          <ToggleGroupTooltip
+            key={optionValue}
+            isOpen={activeTooltip === optionValue}
+            onOpenChange={(isOpen) =>
+              setActiveTooltip(isOpen ? optionValue : undefined)
+            }
+            isSelected={value === optionValue}
+            label={label}
+            code={code}
+            description={description}
+            properties={["background-image"]}
+          >
+            <ToggleGroupButton
+              value={optionValue}
+              aria-label={ariaLabel}
+              autoFocus={autoFocus}
+            >
+              <Flex css={{ px: theme.spacing[3] }}>{icon}</Flex>
+            </ToggleGroupButton>
+          </ToggleGroupTooltip>
+        )
+      )}
+    </ToggleGroup>
+  );
+};
 
 const BackgroundRepeat = ({ index }: { index: number }) => {
   const styleDecl = useComputedStyleDecl("background-repeat");
@@ -285,9 +325,6 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>(() =>
     detectBackgroundType(backgroundStyleItem)
   );
-  const [activeTypeTooltip, setActiveTypeTooltip] = useState<
-    BackgroundType | undefined
-  >();
   const syncedStyleKeyRef = useRef(getStyleValueKey(backgroundStyleItem));
   useEffect(() => {
     const nextStyleKey = getStyleValueKey(backgroundStyleItem);
@@ -310,126 +347,25 @@ export const BackgroundContent = ({ index }: { index: number }) => {
             description={propertyDescriptions.backgroundImage}
             properties={["background-image"]}
           />
-          <ToggleGroup
-            type="single"
+          <BackgroundTypeToggle
             value={backgroundType}
-            aria-label="Background type"
-            onValueChange={(value) => {
-              if (isBackgroundType(value) === false) {
-                return;
-              }
-
-              if (value === backgroundType) {
-                return;
-              }
-
-              setBackgroundType(value);
-              setActiveTypeTooltip(undefined);
-
-              if (value === "linearGradient" || value === "conicGradient") {
-                const gradientValue = formatGradientForType(
-                  backgroundStyleItem,
-                  value
-                );
-                setRepeatedStyleItem(backgroundImage, index, {
-                  type: "unparsed",
-                  value: gradientValue,
-                });
-              }
-            }}
-          >
-            {/* looks like now when dialog is open first toggle group buttons need to have autoFocus
-          otherwise the following "Choose image" button is focused
-          https://github.com/radix-ui/primitives/pull/2027
-          https://github.com/radix-ui/primitives/issues/1910
-          */}
-            <ToggleGroupTooltip
-              isOpen={activeTypeTooltip === "image"}
-              onOpenChange={(isOpen) =>
-                setActiveTypeTooltip(isOpen ? "image" : undefined)
-              }
-              isSelected={backgroundType === "image"}
-              label="Image"
-              code={"background-image: url(...);"}
-              description="Use an image asset, remote URL, or data URI as the layer background."
-              properties={["background-image"]}
-            >
-              <ToggleGroupButton
-                value={"image"}
-                aria-label="Image background"
-                autoFocus={true}
-                onMouseEnter={() =>
-                  setActiveTypeTooltip((prevValue) =>
-                    prevValue === "image" ? prevValue : undefined
-                  )
-                }
-              >
-                <Flex css={{ px: theme.spacing[3] }}>
-                  <ImageIcon />
-                </Flex>
-              </ToggleGroupButton>
-            </ToggleGroupTooltip>
-            <ToggleGroupTooltip
-              isOpen={activeTypeTooltip === "linearGradient"}
-              onOpenChange={(isOpen) =>
-                setActiveTypeTooltip(isOpen ? "linearGradient" : undefined)
-              }
-              isSelected={backgroundType === "linearGradient"}
-              label="Linear gradient"
-              code={"background-image: linear-gradient(...);"}
-              description="Blend multiple colors along a line to create smooth transitions."
-              properties={["background-image"]}
-            >
-              <ToggleGroupButton
-                value={"linearGradient"}
-                aria-label="Linear gradient"
-                onMouseEnter={() =>
-                  setActiveTypeTooltip((prevValue) =>
-                    prevValue === "linearGradient" ? prevValue : undefined
-                  )
-                }
-              >
-                <Flex css={{ px: theme.spacing[3] }}>
-                  <GradientLinearIcon />
-                </Flex>
-              </ToggleGroupButton>
-            </ToggleGroupTooltip>
-            <ToggleGroupTooltip
-              isOpen={activeTypeTooltip === "conicGradient"}
-              onOpenChange={(isOpen) =>
-                setActiveTypeTooltip(isOpen ? "conicGradient" : undefined)
-              }
-              isSelected={backgroundType === "conicGradient"}
-              label="Conic gradient"
-              code={"background-image: conic-gradient(...);"}
-              description="Spin colors around a center point for charts, dials, and spotlight effects."
-              properties={["background-image"]}
-            >
-              <ToggleGroupButton
-                value={"conicGradient"}
-                aria-label="Conic gradient"
-                onMouseEnter={() =>
-                  setActiveTypeTooltip((prevValue) =>
-                    prevValue === "conicGradient" ? prevValue : undefined
-                  )
-                }
-              >
-                <Flex css={{ px: theme.spacing[3] }}>
-                  <GradientConicIcon />
-                </Flex>
-              </ToggleGroupButton>
-            </ToggleGroupTooltip>
-          </ToggleGroup>
+            onChange={setBackgroundType}
+            backgroundStyleItem={backgroundStyleItem}
+            styleDecl={backgroundImage}
+            index={index}
+          />
         </Flex>
       </BackgroundSection>
 
       <Separator />
 
       {(backgroundType === "linearGradient" ||
-        backgroundType === "conicGradient") && (
+        backgroundType === "conicGradient" ||
+        backgroundType === "solidColor") && (
         <BackgroundLinearGradient
           index={index}
           type={backgroundType === "conicGradient" ? "conic" : "linear"}
+          variant={backgroundType === "solidColor" ? "solid" : "default"}
         />
       )}
 
@@ -510,8 +446,4 @@ export const BackgroundContent = ({ index }: { index: number }) => {
       </BackgroundSection>
     </>
   );
-};
-
-export const __testing__ = {
-  detectBackgroundType,
 };
