@@ -73,7 +73,6 @@ import {
   ensureGradientHasStops,
   fallbackStopColor,
   formatGradientValue,
-  getAnglePlaceholder,
   getPercentUnit,
   isConicGradient,
   isLinearGradient,
@@ -888,11 +887,6 @@ const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
   }
 
   const angleValue = gradient.angle;
-  const anglePlaceholder = isLinearGradient(gradient)
-    ? getAnglePlaceholder(gradient)
-    : gradient.angle === undefined
-      ? "0deg"
-      : undefined;
 
   const handleAngleUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
@@ -949,7 +943,6 @@ const GradientControl = ({ gradient, applyGradient }: GradientControlProps) => {
           getOptions={getAvailableUnitVariables}
           value={angleValue}
           unitOptions={angleUnitOptions}
-          placeholder={anglePlaceholder}
           onUpdate={handleAngleUpdate}
           onDelete={handleAngleDelete}
         />

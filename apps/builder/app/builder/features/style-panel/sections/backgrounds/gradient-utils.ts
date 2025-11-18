@@ -294,17 +294,6 @@ export const sideOrCornerToAngle = (
   }
 };
 
-export const getAnglePlaceholder = (gradient: ParsedLinearGradient) => {
-  if (gradient.angle !== undefined) {
-    return;
-  }
-  const derived = sideOrCornerToAngle(gradient.sideOrCorner);
-  if (derived !== undefined) {
-    return `${derived}deg`;
-  }
-  return "180deg";
-};
-
 export const fillMissingStopPositions = <T extends ParsedGradient>(
   gradient: T
 ): T => {

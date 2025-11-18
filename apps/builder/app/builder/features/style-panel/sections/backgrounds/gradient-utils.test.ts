@@ -18,7 +18,6 @@ import {
   detectBackgroundType,
   ensureGradientHasStops,
   fillMissingStopPositions,
-  getAnglePlaceholder,
   normalizeGradientInput,
   type PercentUnitValue,
   pruneHintOverrides,
@@ -305,40 +304,6 @@ describe("sideOrCornerToAngle", () => {
   test("returns undefined for unrecognized corner combination", () => {
     const keyword: KeywordValue = { type: "keyword", value: "to top bottom" };
     expect(sideOrCornerToAngle(keyword)).toBeUndefined();
-  });
-});
-
-describe("getAnglePlaceholder", () => {
-  test("returns undefined when angle is provided", () => {
-    const gradient = createLinearGradient({
-      angle: { type: "unit", unit: "deg", value: 45 } satisfies UnitValue,
-    });
-    expect(getAnglePlaceholder(gradient)).toBeUndefined();
-  });
-
-  test("derives angle from side or corner", () => {
-    const gradient = createLinearGradient({
-      sideOrCorner: {
-        type: "keyword",
-        value: "to left",
-      } satisfies KeywordValue,
-    });
-    expect(getAnglePlaceholder(gradient)).toBe("270deg");
-  });
-
-  test("falls back to 180deg", () => {
-    const gradient = createLinearGradient();
-    expect(getAnglePlaceholder(gradient)).toBe("180deg");
-  });
-
-  test("falls back to 180deg when side or corner is not directional", () => {
-    const gradient = createLinearGradient({
-      sideOrCorner: {
-        type: "keyword",
-        value: "center",
-      } satisfies KeywordValue,
-    });
-    expect(getAnglePlaceholder(gradient)).toBe("180deg");
   });
 });
 
