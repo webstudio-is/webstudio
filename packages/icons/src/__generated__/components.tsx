@@ -2750,6 +2750,41 @@ export const GradientLinearIcon: IconComponent = forwardRef(
 );
 GradientLinearIcon.displayName = "GradientLinearIcon";
 
+export const GradientRadialIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="url(#539a7588__paint0_radial_9420_9425)"
+          d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z"
+        />
+        <defs>
+          <radialGradient
+            id="539a7588__paint0_radial_9420_9425"
+            cx="0"
+            cy="0"
+            r="1"
+            gradientTransform="translate(8 8) rotate(135) scale(8.48528)"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#11181C" />
+            <stop offset="1" stopColor="#11181C" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientRadialIcon.displayName = "GradientRadialIcon";
+
 export const GrowIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
