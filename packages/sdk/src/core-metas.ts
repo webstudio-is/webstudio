@@ -60,6 +60,21 @@ const collectionMeta: WsComponentMeta = {
   },
 };
 
+export const pseudoComponent = "ws:pseudo";
+
+const pseudoMeta: WsComponentMeta = {
+  label: "Pseudo-Element",
+  initialProps: [tagProperty],
+  props: {
+    [tagProperty]: {
+      type: "string",
+      control: "pseudo",
+      required: true,
+      options: ["::before", "::after"],
+    },
+  },
+};
+
 export const descendantComponent = "ws:descendant";
 
 const descendantMeta: WsComponentMeta = {
@@ -123,8 +138,9 @@ const blockMeta: WsComponentMeta = {
 export const coreMetas = {
   [rootComponent]: rootMeta,
   [elementComponent]: elementMeta,
-  [collectionComponent]: collectionMeta,
+  [pseudoComponent]: pseudoMeta,
   [descendantComponent]: descendantMeta,
+  [collectionComponent]: collectionMeta,
   [blockComponent]: blockMeta,
   [blockTemplateComponent]: blockTemplateMeta,
 };
@@ -134,8 +150,9 @@ export const coreMetas = {
 export const isCoreComponent = (component: Instance["component"]) =>
   component === rootComponent ||
   component === elementComponent ||
-  component === collectionComponent ||
+  component === pseudoComponent ||
   component === descendantComponent ||
+  component === collectionComponent ||
   component === blockComponent ||
   component === blockTemplateComponent;
 
