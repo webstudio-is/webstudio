@@ -121,8 +121,17 @@ export const GradientPicker = <T extends ParsedGradient>(
     stopsRef.current = gradient.stops;
 
     setSelectedStop((currentSelected) => {
-      if (gradient.stops.length === 0 || currentSelected === undefined) {
-        return;
+      if (gradient.stops.length === 0) {
+        return undefined;
+      }
+
+      // If no stop is selected, select the first one
+      if (currentSelected === undefined) {
+        const firstStop = gradient.stops[0];
+        if (firstStop !== undefined) {
+          onThumbSelect(0, firstStop);
+        }
+        return 0;
       }
 
       const nextIndex = Math.min(currentSelected, gradient.stops.length - 1);
@@ -583,13 +592,16 @@ export const GradientPicker = <T extends ParsedGradient>(
   );
 
   const handleSliderFocus = useCallback(() => {
-    if (selectedStop !== undefined || stops.length === 0) {
+    if (stops.length === 0) {
       return;
     }
 
-    const [firstStop] = stops;
-    if (firstStop !== undefined) {
-      handleStopSelected(0, firstStop);
+    // Always ensure a stop is selected when focusing
+    if (selectedStop === undefined) {
+      const [firstStop] = stops;
+      if (firstStop !== undefined) {
+        handleStopSelected(0, firstStop);
+      }
     }
   }, [handleStopSelected, selectedStop, stops]);
 
