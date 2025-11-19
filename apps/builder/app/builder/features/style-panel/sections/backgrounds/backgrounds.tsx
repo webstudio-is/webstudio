@@ -14,7 +14,7 @@ import { useComputedStyles } from "../../shared/model";
 import { parseCssFragment } from "../../shared/css-fragment";
 import {
   BackgroundContent,
-  BackgroundLayerControlsPanel,
+  OtherBackgroundProperties,
 } from "./background-content";
 import {
   getBackgroundLabel,
@@ -52,7 +52,7 @@ export const Section = () => {
           renderThumbnail={(index) => <BackgroundThumbnail index={index} />}
           renderItemContent={(index) => <BackgroundContent index={index} />}
           renderPanelTitleSuffix={(index, _primaryItem, { canBeChanged }) => (
-            <BackgroundLayerControlsPanel
+            <OtherBackgroundProperties
               index={index}
               disabled={canBeChanged === false}
             />

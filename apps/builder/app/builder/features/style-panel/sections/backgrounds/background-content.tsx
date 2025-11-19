@@ -401,7 +401,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
   );
 };
 
-export const BackgroundLayerControlsPanel = ({
+export const OtherBackgroundProperties = ({
   index,
   disabled,
 }: {
@@ -419,7 +419,8 @@ export const BackgroundLayerControlsPanel = ({
   return (
     <FloatingPanel
       title="Other properties"
-      placement="bottom"
+      placement="left-start"
+      offset={{ mainAxis: 0 }}
       content={<BackgroundLayerControls index={index} />}
       open={isOpen}
       onOpenChange={setIsOpen}
