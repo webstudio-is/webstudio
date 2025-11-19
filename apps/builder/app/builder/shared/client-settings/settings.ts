@@ -43,7 +43,9 @@ const write = (settings: Settings) => {
   localStorage.setItem(namespace, JSON.stringify(settings));
 };
 
-export const $settings = atom<Settings>(defaultSettings);
+const initialSettings = read();
+
+export const $settings = atom<Settings>(initialSettings);
 
 export const setSetting = <Name extends keyof Settings>(
   name: Name,
@@ -59,10 +61,5 @@ export const setSetting = <Name extends keyof Settings>(
 };
 
 export const getSetting = <Name extends keyof Settings>(name: Name) => {
-  let settings = $settings.get();
-  if (settings === defaultSettings) {
-    settings = read();
-    $settings.set(settings);
-  }
-  return settings[name];
+  return $settings.get()[name];
 };
