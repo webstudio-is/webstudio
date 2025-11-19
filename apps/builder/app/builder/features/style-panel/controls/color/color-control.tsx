@@ -1,6 +1,6 @@
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { keywordValues } from "@webstudio-is/css-data";
-import { ColorPicker } from "../../shared/color-picker";
+import { ColorPickerControl } from "../../shared/color-picker";
 import {
   $availableColorVariables,
   useComputedStyleDecl,
@@ -13,7 +13,7 @@ export const ColorControl = ({ property }: { property: CssProperty }) => {
   const currentColor = computedStyleDecl.usedValue;
   const setValue = setProperty(property);
   return (
-    <ColorPicker
+    <ColorPickerControl
       property={property}
       value={value}
       currentColor={currentColor}

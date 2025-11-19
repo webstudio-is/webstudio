@@ -2,7 +2,7 @@ import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { Box, Grid } from "@webstudio-is/design-system";
 import { rowCss } from "./utils";
 import { PropertyLabel, PropertyValueTooltip } from "../../property-label";
-import { ColorPicker } from "../../shared/color-picker";
+import { ColorPickerControl } from "../../shared/color-picker";
 import {
   $availableColorVariables,
   useComputedStyles,
@@ -49,7 +49,7 @@ export const BorderColor = () => {
           isAdvanced={isAdvanced}
         >
           <div>
-            <ColorPicker
+            <ColorPickerControl
               disabled={isAdvanced}
               currentColor={currentColor}
               property={local.property}

@@ -40,7 +40,7 @@ import {
   CssFragmentEditorContent,
   parseCssFragment,
 } from "./css-fragment";
-import { ColorPicker } from "./color-picker";
+import { ColorPickerControl } from "./color-picker";
 import { $availableColorVariables, $availableUnitVariables } from "./model";
 
 /*
@@ -328,7 +328,7 @@ export const ShadowContent = ({
             label="Color"
             description={shadowPropertySyntaxes[property].color}
           />
-          <ColorPicker
+          <ColorPickerControl
             property="color"
             aria-disabled={disabledControls}
             value={shadowValue.color ?? defaultColor}

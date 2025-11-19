@@ -22,7 +22,7 @@ type ColorPickerProps = {
   disabled?: boolean;
 };
 
-export const ColorPicker = ({
+export const ColorPickerControl = ({
   value,
   currentColor,
   getOptions,

@@ -30,7 +30,7 @@ import {
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
-import { ColorPicker } from "../../shared/color-picker";
+import { ColorPickerControl } from "../../shared/color-picker";
 import {
   useCallback,
   useEffect,
@@ -480,7 +480,7 @@ const SolidColorControls = ({
     <Grid gap="2" columns="3" align="end">
       <Label>Color</Label>
       <Flex css={{ gridColumn: "span 2" }}>
-        <ColorPicker
+        <ColorPickerControl
           property="color"
           value={solidColor}
           currentColor={solidColor}
@@ -783,7 +783,7 @@ const GradientStopControls = ({
       <Grid gap="2" columns="3" align="end">
         <Label>Color</Label>
         <Flex gap="2" css={{ gridColumn: "span 2" }}>
-          <ColorPicker
+          <ColorPickerControl
             property="color"
             value={selectedStopColor}
             currentColor={selectedStopColor}

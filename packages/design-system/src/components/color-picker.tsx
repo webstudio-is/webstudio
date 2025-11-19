@@ -2,6 +2,7 @@ import {
   forwardRef,
   type ComponentProps,
   type ElementRef,
+  useEffect,
   useState,
 } from "react";
 import { colord, extend, type RgbaColor } from "colord";
@@ -173,10 +174,17 @@ type ColorPickerProps = {
   onChangeComplete: (value: StyleValue) => void;
 };
 
+type ThumbTriggerProps = Omit<ColorThumbProps, "color" | "ref"> & {
+  [dataAttribute: `data-${string}`]: string | number | boolean | undefined;
+};
+
 type ColorPickerPopoverProps = {
   value: StyleValue;
   onChange: (value: StyleValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  thumbProps?: ThumbTriggerProps;
 };
 
 const fixColor = (value: ColorPickerValue, color: RgbaColor) => {
@@ -256,35 +264,51 @@ export const ColorPickerPopover = ({
   value,
   onChange,
   onChangeComplete,
+  open,
+  onOpenChange,
+  thumbProps,
 }: ColorPickerPopoverProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const handleOpenChange = (open: boolean) => {
-    setDisplayColorPicker(open);
-    if (open) {
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : displayColorPicker;
+
+  useEffect(() => {
+    if (isOpen) {
       disableCanvasPointerEvents();
       document.body.style.userSelect = "none";
-      return;
+    } else {
+      document.body.style.removeProperty("user-select");
+      enableCanvasPointerEvents();
     }
 
-    document.body.style.removeProperty("user-select");
-    enableCanvasPointerEvents();
+    return () => {
+      document.body.style.removeProperty("user-select");
+      enableCanvasPointerEvents();
+    };
+  }, [isOpen, disableCanvasPointerEvents, enableCanvasPointerEvents]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!isControlled) {
+      setDisplayColorPicker(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
   };
 
   return (
-    <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
+    <Popover modal open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         asChild
         aria-label="Open color picker"
-        onClick={() => setDisplayColorPicker((shown) => !shown)}
+        onClick={() => handleOpenChange(!isOpen)}
       >
         <ColorThumb
           color={styleValueToRgbaColor(value)}
-          css={{ margin: theme.spacing[2] }}
           interactive={true}
           tabIndex={-1}
+          {...thumbProps}
         />
       </PopoverTrigger>
       <PopoverContent

@@ -26,7 +26,11 @@ import {
   propertiesData,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { toValue, type CssStyleMap } from "@webstudio-is/css-engine";
+import {
+  toValue,
+  type CssProperty,
+  type CssStyleMap,
+} from "@webstudio-is/css-engine";
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
 import { $availableVariables } from "../../features/style-panel/shared/model";
