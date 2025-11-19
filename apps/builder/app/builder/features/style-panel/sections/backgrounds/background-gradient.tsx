@@ -248,6 +248,7 @@ export const BackgroundGradient = ({
             applyGradient={applyGradient}
             styleDecl={styleDecl}
             index={index}
+            selectedStopIndex={selectedStopIndex}
           />
           <GradientStopControls
             initialIsRepeating={initialIsRepeating}
@@ -282,6 +283,7 @@ type GradientPickerPanelProps = {
   applyGradient: GradientEditorApplyFn;
   styleDecl: ReturnType<typeof useComputedStyleDecl>;
   index: number;
+  selectedStopIndex: number;
 };
 
 const GradientPickerPanel = ({
@@ -292,6 +294,7 @@ const GradientPickerPanel = ({
   applyGradient,
   styleDecl,
   index,
+  selectedStopIndex,
 }: GradientPickerPanelProps) => {
   const parsedComputedGradient = useMemo(() => {
     let computedStyleValue = styleDecl.computedValue;
@@ -429,17 +432,113 @@ const GradientPickerPanel = ({
     return previewGradient;
   }, [gradientForPicker]);
 
+  const isLinear = isLinearGradient(gradient);
+  const isConic = isConicGradient(gradient);
+  const supportsAngle = isLinear || isConic;
+  const angleValue = supportsAngle ? gradient.angle : undefined;
+  const reverseDisabled = gradient.stops.length <= 1;
+
+  const handleAngleUpdate = useCallback(
+    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      if (supportsAngle === false) {
+        return;
+      }
+      const angleValue = resolveAngleValue(styleValue);
+      if (angleValue === undefined) {
+        return;
+      }
+      if (isLinear) {
+        applyGradient(
+          {
+            ...(gradient as ParsedLinearGradient),
+            angle: angleValue,
+            sideOrCorner: undefined,
+          },
+          options
+        );
+        return;
+      }
+
+      applyGradient(
+        {
+          ...(gradient as ParsedConicGradient),
+          angle: angleValue,
+        },
+        options
+      );
+    },
+    [applyGradient, gradient, isLinear, supportsAngle]
+  );
+
+  const handleAngleDelete = useCallback(
+    (options?: { isEphemeral?: boolean }) => {
+      if (supportsAngle === false) {
+        return;
+      }
+      const nextGradient: ParsedGradient = {
+        ...gradient,
+        angle: undefined,
+      };
+      applyGradient(nextGradient, options);
+    },
+    [applyGradient, gradient, supportsAngle]
+  );
+
+  const handleReverseStops = useCallback(() => {
+    const resolution = resolveReverseStops(gradient, selectedStopIndex);
+    if (resolution.type === "none") {
+      return;
+    }
+    setSelectedStopIndex(resolution.selectedStopIndex);
+    applyGradient(resolution.gradient);
+  }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
+
+  const getAvailableUnitVariables = useCallback(
+    () => $availableUnitVariables.get(),
+    []
+  );
+
   return (
-    <Box css={{ paddingInline: theme.spacing[2] }}>
-      <GradientPicker
-        gradient={gradientForPicker}
-        backgroundImage={formatLinearGradient(previewGradientForTrack)}
-        type={gradientType}
-        onChange={handlePickerChange}
-        onChangeComplete={handlePickerChangeComplete}
-        onThumbSelect={handleThumbSelect}
-      />
-    </Box>
+    <>
+      {supportsAngle && (
+        <Grid gap="2" columns="3" align="end">
+          <Label>Angle</Label>
+          <Flex gap="2" css={{ gridColumn: "span 2" }}>
+            <CssValueInputContainer
+              property="rotate"
+              styleSource="default"
+              getOptions={getAvailableUnitVariables}
+              value={angleValue}
+              unitOptions={angleUnitOptions}
+              onUpdate={handleAngleUpdate}
+              onDelete={handleAngleDelete}
+            />
+            <Tooltip
+              variant="wrapped"
+              content="Reverse the order of all gradient stops."
+            >
+              <IconButton
+                aria-label="Reverse gradient stops"
+                onClick={handleReverseStops}
+                disabled={reverseDisabled}
+              >
+                <ArrowRightLeftIcon />
+              </IconButton>
+            </Tooltip>
+          </Flex>
+        </Grid>
+      )}
+      <Box css={{ paddingInline: theme.spacing[2] }}>
+        <GradientPicker
+          gradient={gradientForPicker}
+          backgroundImage={formatLinearGradient(previewGradientForTrack)}
+          type={gradientType}
+          onChange={handlePickerChange}
+          onChangeComplete={handlePickerChangeComplete}
+          onThumbSelect={handleThumbSelect}
+        />
+      </Box>
+    </>
   );
 };
 
@@ -700,15 +799,6 @@ const GradientStopControls = ({
     [applyGradient, gradient, setIsRepeating]
   );
 
-  const handleReverseStops = useCallback(() => {
-    const resolution = resolveReverseStops(gradient, selectedStopIndex);
-    if (resolution.type === "none") {
-      return;
-    }
-    setSelectedStopIndex(resolution.selectedStopIndex);
-    applyGradient(resolution.gradient);
-  }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
-
   const handleRadialSizeChange = useCallback(
     (nextSize?: RadialSizeOption) => {
       if (isRadialGradient(gradient) === false) {
@@ -787,87 +877,8 @@ const GradientStopControls = ({
     }
   }, [applyGradient, gradient]);
 
-  const isLinear = isLinearGradient(gradient);
-  const isConic = isConicGradient(gradient);
-  const supportsAngle = isLinear || isConic;
-  const angleValue = supportsAngle ? gradient.angle : undefined;
-
-  const handleAngleUpdate = useCallback(
-    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      if (supportsAngle === false) {
-        return;
-      }
-      const angleValue = resolveAngleValue(styleValue);
-      if (angleValue === undefined) {
-        return;
-      }
-      if (isLinear) {
-        applyGradient(
-          {
-            ...(gradient as ParsedLinearGradient),
-            angle: angleValue,
-            sideOrCorner: undefined,
-          },
-          options
-        );
-        return;
-      }
-
-      applyGradient(
-        {
-          ...(gradient as ParsedConicGradient),
-          angle: angleValue,
-        },
-        options
-      );
-    },
-    [applyGradient, gradient, supportsAngle]
-  );
-
-  const handleAngleDelete = useCallback(
-    (options?: { isEphemeral?: boolean }) => {
-      if (supportsAngle === false) {
-        return;
-      }
-      const nextGradient: ParsedGradient = {
-        ...gradient,
-        angle: undefined,
-      };
-      applyGradient(nextGradient, options);
-    },
-    [applyGradient, gradient, supportsAngle]
-  );
-
   return (
     <>
-      {supportsAngle && (
-        <Grid gap="2" columns="3" align="end">
-          <Label>Angle</Label>
-          <Flex gap="2" css={{ gridColumn: "span 2" }}>
-            <CssValueInputContainer
-              property="rotate"
-              styleSource="default"
-              getOptions={getAvailableUnitVariables}
-              value={angleValue}
-              unitOptions={angleUnitOptions}
-              onUpdate={handleAngleUpdate}
-              onDelete={handleAngleDelete}
-            />
-            <Tooltip
-              variant="wrapped"
-              content="Reverse the order of all gradient stops."
-            >
-              <IconButton
-                aria-label="Reverse gradient stops"
-                onClick={handleReverseStops}
-                disabled={reverseDisabled}
-              >
-                <ArrowRightLeftIcon />
-              </IconButton>
-            </Tooltip>
-          </Flex>
-        </Grid>
-      )}
       <Grid align="end" gap="2" columns={3}>
         <Flex direction="column" gap="1">
           <Label>Stop</Label>
