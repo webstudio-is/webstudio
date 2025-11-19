@@ -802,13 +802,18 @@ const GradientStopControls = ({
             onAbort={() => {}}
             onReset={() => {}}
           />
-          <IconButton
-            aria-label="Reverse gradient stops"
-            onClick={handleReverseStops}
-            disabled={reverseDisabled}
+          <Tooltip
+            variant="wrapped"
+            content="Reverse the order of all gradient stops."
           >
-            <ArrowRightLeftIcon />
-          </IconButton>
+            <IconButton
+              aria-label="Reverse gradient stops"
+              onClick={handleReverseStops}
+              disabled={reverseDisabled}
+            >
+              <ArrowRightLeftIcon />
+            </IconButton>
+          </Tooltip>
         </Flex>
       </Grid>
       <Grid align="end" gap="2" columns={3}>
