@@ -286,6 +286,24 @@ export const isRadialGradient = (
   gradient: ParsedGradient
 ): gradient is ParsedRadialGradient => gradient.type === "radial";
 
+/**
+ * Get the default angle for a gradient according to CSS spec.
+ * - linear-gradient: 180deg (to bottom)
+ * - conic-gradient: 0deg (from top)
+ * - radial-gradient: undefined (no angle)
+ */
+export const getDefaultAngle = (
+  gradient: ParsedGradient
+): UnitValue | undefined => {
+  if (isLinearGradient(gradient)) {
+    return { type: "unit", unit: "deg", value: 180 };
+  }
+  if (isConicGradient(gradient)) {
+    return { type: "unit", unit: "deg", value: 0 };
+  }
+  return;
+};
+
 export const getPercentUnit = (
   styleValue: StyleValue | undefined
 ): PercentUnitValue | undefined => {

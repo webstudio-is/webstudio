@@ -77,6 +77,7 @@ import {
   fallbackStopColor,
   formatGradientPositionValues,
   formatGradientValue,
+  getDefaultAngle,
   getPercentUnit,
   gradientPositionXOptions,
   gradientPositionYOptions,
@@ -444,6 +445,7 @@ const GradientPickerPanel = ({
   const isConic = isConicGradient(gradient);
   const supportsAngle = isLinear || isConic;
   const angleValue = supportsAngle ? gradient.angle : undefined;
+  const defaultAngle = getDefaultAngle(gradient);
   const reverseDisabled = gradient.stops.length <= 1;
 
   const handleRepeatChange = useCallback(
@@ -528,7 +530,7 @@ const GradientPickerPanel = ({
               property="rotate"
               styleSource="default"
               getOptions={getAvailableUnitVariables}
-              value={angleValue}
+              value={angleValue ?? defaultAngle}
               unitOptions={angleUnitOptions}
               onUpdate={handleAngleUpdate}
               onDelete={handleAngleDelete}
