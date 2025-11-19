@@ -2,6 +2,7 @@ import {
   toValue,
   type InvalidValue,
   type StyleValue,
+  type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
   parseCssValue,
@@ -13,6 +14,7 @@ import {
   type ParsedConicGradient,
   type ParsedRadialGradient,
   type GradientStop,
+  formatLinearGradient,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -122,6 +124,12 @@ const defaultRadialShape = "ellipse" as const;
 
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
+
+const leftToRightAngle = {
+  type: "unit",
+  unit: "deg",
+  value: 90,
+} satisfies UnitValue;
 
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
@@ -400,12 +408,23 @@ const GradientPickerPanel = ({
     },
     [setSelectedStopIndex]
   );
+  const previewGradientForTrack = useMemo<ParsedLinearGradient>(() => {
+    const previewGradient: ParsedLinearGradient = {
+      type: "linear",
+      angle: leftToRightAngle,
+      stops: gradientForPicker.stops,
+    };
+    if (gradientForPicker.repeating) {
+      previewGradient.repeating = true;
+    }
+    return previewGradient;
+  }, [gradientForPicker]);
 
   return (
     <Box css={{ paddingInline: theme.spacing[2] }}>
       <GradientPicker
         gradient={gradientForPicker}
-        backgroundImage={formatGradientValue(gradientForPicker)}
+        backgroundImage={formatLinearGradient(previewGradientForTrack)}
         type={gradientType}
         onChange={handlePickerChange}
         onChangeComplete={handlePickerChangeComplete}
