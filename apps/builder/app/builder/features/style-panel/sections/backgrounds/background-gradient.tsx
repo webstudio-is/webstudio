@@ -1,6 +1,5 @@
 import {
   toValue,
-  type CssProperty,
   type InvalidValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
@@ -123,9 +122,6 @@ const defaultRadialShape = "ellipse" as const;
 
 const isTransparent = (color: StyleValue) =>
   color.type === "keyword" && color.value === "transparent";
-
-const gradientStopPositionProperty: CssProperty = "--gradient-stop-position";
-const gradientStopHintProperty: CssProperty = "--gradient-stop-hint";
 
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
@@ -610,13 +606,8 @@ const GradientStopControls = ({
 
   const handleStopHintUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      // If the user enters a number (unitless), treat it as percent
-      const normalizedStyleValue: StyleValue =
-        styleValue.type === "unit" && styleValue.unit === "number"
-          ? { ...styleValue, unit: "%" as const }
-          : styleValue;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const resolution = resolveStopHintUpdate(normalizedStyleValue, {
+      const resolution = resolveStopHintUpdate(styleValue, {
         getPercentUnit,
         clampPercentUnit: (value) => ({
           ...value,
@@ -795,7 +786,7 @@ const GradientStopControls = ({
         <Flex direction="column" gap="1">
           <Label>Stop</Label>
           <CssValueInputContainer
-            property={gradientStopPositionProperty}
+            property={"background-position-x"}
             styleSource="default"
             getOptions={getAvailableUnitVariables}
             value={selectedStopPositionValue}
@@ -807,7 +798,7 @@ const GradientStopControls = ({
         <Flex direction="column" gap="1">
           <Label>Hint</Label>
           <CssValueInputContainer
-            property={gradientStopHintProperty}
+            property={"background-position-x"}
             styleSource="default"
             getOptions={getAvailableUnitVariables}
             value={selectedStopHintValue}
