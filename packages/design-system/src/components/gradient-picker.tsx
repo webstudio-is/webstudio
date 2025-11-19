@@ -122,7 +122,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 
     setSelectedStop((currentSelected) => {
       if (gradient.stops.length === 0) {
-        return undefined;
+        return;
       }
 
       // If no stop is selected, select the first one

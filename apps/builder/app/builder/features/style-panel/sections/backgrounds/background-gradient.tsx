@@ -241,6 +241,15 @@ export const BackgroundGradient = ({
         <SolidColorControls gradient={gradient} applyGradient={applyGradient} />
       ) : (
         <>
+          <GradientStopControls
+            initialIsRepeating={initialIsRepeating}
+            gradient={gradient}
+            selectedStopIndex={selectedStopIndex}
+            hintOverrides={hintOverrides}
+            setHintOverrides={setHintOverrides}
+            applyGradient={applyGradient}
+            setSelectedStopIndex={setSelectedStopIndex}
+          />
           <GradientPickerPanel
             gradient={gradient}
             gradientType={gradientType}
@@ -251,15 +260,6 @@ export const BackgroundGradient = ({
             index={index}
             selectedStopIndex={selectedStopIndex}
             initialIsRepeating={initialIsRepeating}
-          />
-          <GradientStopControls
-            initialIsRepeating={initialIsRepeating}
-            gradient={gradient}
-            selectedStopIndex={selectedStopIndex}
-            hintOverrides={hintOverrides}
-            setHintOverrides={setHintOverrides}
-            applyGradient={applyGradient}
-            setSelectedStopIndex={setSelectedStopIndex}
           />
           <GradientPositionControls
             gradient={gradient}
@@ -444,10 +444,47 @@ const GradientPickerPanel = ({
   const isLinear = isLinearGradient(gradient);
   const isConic = isConicGradient(gradient);
   const isRadial = isRadialGradient(gradient);
+
+  useEffect(() => {
+    if (isRadial === false) {
+      return;
+    }
+    const updates: Partial<ParsedRadialGradient> = {};
+    if (gradient.size === undefined) {
+      updates.size = defaultRadialSize;
+    }
+    const normalizedShape = gradient.shape?.value.toLowerCase();
+    if (normalizedShape !== "circle" && normalizedShape !== "ellipse") {
+      updates.shape = { type: "keyword", value: defaultRadialShape };
+    }
+    if (Object.keys(updates).length > 0) {
+      applyGradient({ ...gradient, ...updates });
+    }
+  }, [applyGradient, gradient, isRadial]);
   const supportsAngle = isLinear || isConic;
   const angleValue = supportsAngle ? gradient.angle : undefined;
   const defaultAngle = getDefaultAngle(gradient);
   const reverseDisabled = gradient.stops.length <= 1;
+
+  // Radial gradient size and shape
+  const currentRadialSize = isRadial ? gradient.size : undefined;
+  const isPresetRadialSize =
+    typeof currentRadialSize === "string" &&
+    radialSizeOptionsSet.has(currentRadialSize as RadialSizeOption);
+  const radialSizeValue = isRadial
+    ? isPresetRadialSize
+      ? (currentRadialSize as RadialSizeOption)
+      : defaultRadialSize
+    : undefined;
+  const radialShapeValue = (() => {
+    if (isRadial && gradient.shape) {
+      const normalized = gradient.shape.value.toLowerCase();
+      if (normalized === "circle" || normalized === "ellipse") {
+        return normalized;
+      }
+    }
+    return isRadial ? defaultRadialShape : undefined;
+  })();
 
   const handleRepeatChange = useCallback(
     (value: string) => {
@@ -516,6 +553,34 @@ const GradientPickerPanel = ({
     applyGradient(resolution.gradient);
   }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
 
+  const handleRadialSizeChange = useCallback(
+    (nextSize?: RadialSizeOption) => {
+      if (isRadial === false) {
+        return;
+      }
+      const size = nextSize ?? defaultRadialSize;
+      applyGradient({ ...gradient, size });
+    },
+    [applyGradient, gradient, isRadial]
+  );
+
+  const handleEndingShapeChange = useCallback(
+    (nextShape?: string) => {
+      if (isRadial === false) {
+        return;
+      }
+      const shapeValue =
+        nextShape === "circle" || nextShape === "ellipse"
+          ? nextShape
+          : defaultRadialShape;
+      applyGradient({
+        ...gradient,
+        shape: { type: "keyword", value: shapeValue },
+      });
+    },
+    [applyGradient, gradient, isRadial]
+  );
+
   const getAvailableUnitVariables = useCallback(
     () => $availableUnitVariables.get(),
     []
@@ -523,6 +588,16 @@ const GradientPickerPanel = ({
 
   return (
     <>
+      <Box css={{ paddingInline: theme.spacing[2] }}>
+        <GradientPicker
+          gradient={gradientForPicker}
+          backgroundImage={formatLinearGradient(previewGradientForTrack)}
+          type={gradientType}
+          onChange={handlePickerChange}
+          onChangeComplete={handlePickerChangeComplete}
+          onThumbSelect={handleThumbSelect}
+        />
+      </Box>
       <Grid gap="2" columns={2}>
         {supportsAngle ? (
           <Flex gap="2" align="center">
@@ -578,16 +653,52 @@ const GradientPickerPanel = ({
           </Tooltip>
         </Flex>
       </Grid>
-      <Box css={{ paddingInline: theme.spacing[2] }}>
-        <GradientPicker
-          gradient={gradientForPicker}
-          backgroundImage={formatLinearGradient(previewGradientForTrack)}
-          type={gradientType}
-          onChange={handlePickerChange}
-          onChangeComplete={handlePickerChangeComplete}
-          onThumbSelect={handleThumbSelect}
-        />
-      </Box>
+      {isRadial && (
+        <Grid align="end" gap="2" columns={3}>
+          <Flex
+            align="center"
+            gap="2"
+            css={{ gridColumn: "span 2", width: "100%" }}
+          >
+            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
+            <Select
+              options={radialSizeOptions}
+              value={radialSizeValue}
+              fullWidth
+              onChange={(size) => handleRadialSizeChange(size)}
+            />
+          </Flex>
+          <Flex
+            direction="column"
+            gap="1"
+            css={{ minWidth: theme.spacing[17] }}
+          >
+            <ToggleGroup
+              type="single"
+              value={radialShapeValue}
+              aria-label="Radial ending shape"
+              onValueChange={handleEndingShapeChange}
+            >
+              <Tooltip
+                variant="wrapped"
+                content="Use an ellipse ending shape (radial-gradient ellipse)."
+              >
+                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
+                  <EllipseIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip
+                variant="wrapped"
+                content="Use a circle ending shape (radial-gradient circle)."
+              >
+                <ToggleGroupButton value="circle" aria-label="Circle">
+                  <CircleIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+            </ToggleGroup>
+          </Flex>
+        </Grid>
+      )}
     </>
   );
 };
@@ -671,7 +782,6 @@ const GradientStopControls = ({
   applyGradient,
   setSelectedStopIndex,
 }: GradientStopControlsProps) => {
-  const isRadial = isRadialGradient(gradient);
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
   const selectedStop = gradient.stops[safeSelectedStopIndex];
   const selectedStopPositionValue = selectedStop?.position;
@@ -679,24 +789,6 @@ const GradientStopControls = ({
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
   const selectedStopColor: StyleValue = (selectedStop?.color ??
     fallbackStopColor) as StyleValue;
-  const currentRadialSize = isRadial ? gradient.size : undefined;
-  const isPresetRadialSize =
-    typeof currentRadialSize === "string" &&
-    radialSizeOptionsSet.has(currentRadialSize as RadialSizeOption);
-  const radialSizeValue = isRadial
-    ? isPresetRadialSize
-      ? (currentRadialSize as RadialSizeOption)
-      : defaultRadialSize
-    : undefined;
-  const radialShapeValue = (() => {
-    if (isRadial && gradient.shape) {
-      const normalized = gradient.shape.value.toLowerCase();
-      if (normalized === "circle" || normalized === "ellipse") {
-        return normalized;
-      }
-    }
-    return isRadial ? defaultRadialShape : undefined;
-  })();
 
   const updateSelectedStop = useCallback(
     (
@@ -832,34 +924,6 @@ const GradientStopControls = ({
     [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
   );
 
-  const handleRadialSizeChange = useCallback(
-    (nextSize?: RadialSizeOption) => {
-      if (isRadialGradient(gradient) === false) {
-        return;
-      }
-      const size = nextSize ?? defaultRadialSize;
-      applyGradient({ ...gradient, size });
-    },
-    [applyGradient, gradient]
-  );
-
-  const handleEndingShapeChange = useCallback(
-    (nextShape?: string) => {
-      if (isRadialGradient(gradient) === false) {
-        return;
-      }
-      const shapeValue =
-        nextShape === "circle" || nextShape === "ellipse"
-          ? nextShape
-          : defaultRadialShape;
-      applyGradient({
-        ...gradient,
-        shape: { type: "keyword", value: shapeValue },
-      });
-    },
-    [applyGradient, gradient]
-  );
-
   const applyStyleValueToStop = useCallback(
     (
       styleValue: StyleValue | IntermediateColorValue | undefined,
@@ -893,23 +957,6 @@ const GradientStopControls = ({
     []
   );
 
-  useEffect(() => {
-    if (isRadialGradient(gradient) === false) {
-      return;
-    }
-    const updates: Partial<ParsedRadialGradient> = {};
-    if (gradient.size === undefined) {
-      updates.size = defaultRadialSize;
-    }
-    const normalizedShape = gradient.shape?.value.toLowerCase();
-    if (normalizedShape !== "circle" && normalizedShape !== "ellipse") {
-      updates.shape = { type: "keyword", value: defaultRadialShape };
-    }
-    if (Object.keys(updates).length > 0) {
-      applyGradient({ ...gradient, ...updates });
-    }
-  }, [applyGradient, gradient]);
-
   return (
     <>
       <Grid align="end" gap="2" columns={2}>
@@ -938,52 +985,6 @@ const GradientStopControls = ({
           />
         </Flex>
       </Grid>
-      {isRadial && (
-        <Grid align="end" gap="2" columns={3}>
-          <Flex
-            align="center"
-            gap="2"
-            css={{ gridColumn: "span 2", width: "100%" }}
-          >
-            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
-            <Select
-              options={radialSizeOptions}
-              value={radialSizeValue}
-              fullWidth
-              onChange={(size) => handleRadialSizeChange(size)}
-            />
-          </Flex>
-          <Flex
-            direction="column"
-            gap="1"
-            css={{ minWidth: theme.spacing[17] }}
-          >
-            <ToggleGroup
-              type="single"
-              value={radialShapeValue}
-              aria-label="Radial ending shape"
-              onValueChange={handleEndingShapeChange}
-            >
-              <Tooltip
-                variant="wrapped"
-                content="Use an ellipse ending shape (radial-gradient ellipse)."
-              >
-                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
-                  <EllipseIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-              <Tooltip
-                variant="wrapped"
-                content="Use a circle ending shape (radial-gradient circle)."
-              >
-                <ToggleGroupButton value="circle" aria-label="Circle">
-                  <CircleIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-            </ToggleGroup>
-          </Flex>
-        </Grid>
-      )}
     </>
   );
 };
