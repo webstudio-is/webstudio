@@ -610,8 +610,13 @@ const GradientStopControls = ({
 
   const handleStopHintUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
+      // If the user enters a number (unitless), treat it as percent
+      const normalizedStyleValue: StyleValue =
+        styleValue.type === "unit" && styleValue.unit === "number"
+          ? { ...styleValue, unit: "%" as const }
+          : styleValue;
       const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const resolution = resolveStopHintUpdate(styleValue, {
+      const resolution = resolveStopHintUpdate(normalizedStyleValue, {
         getPercentUnit,
         clampPercentUnit: (value) => ({
           ...value,
