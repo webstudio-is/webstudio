@@ -314,7 +314,6 @@ export const GradientPicker = <T extends ParsedGradient>(
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
       (event: ReactPointerEvent<HTMLDivElement>) => {
-        event.preventDefault();
         event.stopPropagation();
 
         handleStopSelected(index, stop);
@@ -343,8 +342,8 @@ export const GradientPicker = <T extends ParsedGradient>(
           target.removeEventListener("pointerup", handlePointerUp);
           target.removeEventListener("pointercancel", handlePointerUp);
           setIsHoveredOnStop(false);
+          target.releasePointerCapture(pointerId);
           if (hasDragged) {
-            target.releasePointerCapture(pointerId);
             onChangeComplete(buildGradient(stopsRef.current));
           }
           hasDragged = false;
