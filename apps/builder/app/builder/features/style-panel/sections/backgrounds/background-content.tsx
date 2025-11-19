@@ -401,7 +401,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
   );
 };
 
-export const BackgroundLayerControlsPanelTrigger = ({
+export const BackgroundLayerControlsPanel = ({
   index,
   disabled,
 }: {
