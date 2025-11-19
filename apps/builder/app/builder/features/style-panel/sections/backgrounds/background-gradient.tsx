@@ -249,6 +249,7 @@ export const BackgroundGradient = ({
             styleDecl={styleDecl}
             index={index}
             selectedStopIndex={selectedStopIndex}
+            initialIsRepeating={initialIsRepeating}
           />
           <GradientStopControls
             initialIsRepeating={initialIsRepeating}
@@ -284,6 +285,7 @@ type GradientPickerPanelProps = {
   styleDecl: ReturnType<typeof useComputedStyleDecl>;
   index: number;
   selectedStopIndex: number;
+  initialIsRepeating: boolean;
 };
 
 const GradientPickerPanel = ({
@@ -295,6 +297,7 @@ const GradientPickerPanel = ({
   styleDecl,
   index,
   selectedStopIndex,
+  initialIsRepeating,
 }: GradientPickerPanelProps) => {
   const parsedComputedGradient = useMemo(() => {
     let computedStyleValue = styleDecl.computedValue;
@@ -432,11 +435,28 @@ const GradientPickerPanel = ({
     return previewGradient;
   }, [gradientForPicker]);
 
+  const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
+  useEffect(() => {
+    setIsRepeating(initialIsRepeating);
+  }, [initialIsRepeating]);
+
   const isLinear = isLinearGradient(gradient);
   const isConic = isConicGradient(gradient);
   const supportsAngle = isLinear || isConic;
   const angleValue = supportsAngle ? gradient.angle : undefined;
   const reverseDisabled = gradient.stops.length <= 1;
+
+  const handleRepeatChange = useCallback(
+    (value: string) => {
+      if (value !== "repeat" && value !== "no-repeat") {
+        return;
+      }
+      const repeating = value === "repeat";
+      setIsRepeating(repeating);
+      applyGradient({ ...gradient, repeating });
+    },
+    [applyGradient, gradient, setIsRepeating]
+  );
 
   const handleAngleUpdate = useCallback(
     (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
@@ -501,9 +521,9 @@ const GradientPickerPanel = ({
   return (
     <>
       {supportsAngle && (
-        <Grid gap="2" columns="3" align="end">
-          <Label>Angle</Label>
-          <Flex gap="2" css={{ gridColumn: "span 2" }}>
+        <Grid gap="2" columns={2}>
+          <Flex gap="2" align="center">
+            <Label>Angle</Label>
             <CssValueInputContainer
               property="rotate"
               styleSource="default"
@@ -513,6 +533,31 @@ const GradientPickerPanel = ({
               onUpdate={handleAngleUpdate}
               onDelete={handleAngleDelete}
             />
+          </Flex>
+          <Flex gap="2" justify="end">
+            <ToggleGroup
+              type="single"
+              value={isRepeating ? "repeat" : "no-repeat"}
+              aria-label="Gradient repeat"
+              onValueChange={handleRepeatChange}
+            >
+              <Tooltip
+                variant="wrapped"
+                content="Render the gradient once (background-repeat: no-repeat)."
+              >
+                <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+                  <XSmallIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip
+                variant="wrapped"
+                content="Tile the gradient across the layer (background-repeat: repeat)."
+              >
+                <ToggleGroupButton value="repeat" aria-label="Repeat">
+                  <RepeatGridIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+            </ToggleGroup>
             <Tooltip
               variant="wrapped"
               content="Reverse the order of all gradient stops."
@@ -621,12 +666,7 @@ const GradientStopControls = ({
   applyGradient,
   setSelectedStopIndex,
 }: GradientStopControlsProps) => {
-  const [isRepeating, setIsRepeating] = useState(initialIsRepeating);
-  useEffect(() => {
-    setIsRepeating(initialIsRepeating);
-  }, [initialIsRepeating]);
   const isRadial = isRadialGradient(gradient);
-  const reverseDisabled = gradient.stops.length <= 1;
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
   const selectedStop = gradient.stops[safeSelectedStopIndex];
   const selectedStopPositionValue = selectedStop?.position;
@@ -787,18 +827,6 @@ const GradientStopControls = ({
     [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
   );
 
-  const handleRepeatChange = useCallback(
-    (value: string) => {
-      if (value !== "repeat" && value !== "no-repeat") {
-        return;
-      }
-      const repeating = value === "repeat";
-      setIsRepeating(repeating);
-      applyGradient({ ...gradient, repeating });
-    },
-    [applyGradient, gradient, setIsRepeating]
-  );
-
   const handleRadialSizeChange = useCallback(
     (nextSize?: RadialSizeOption) => {
       if (isRadialGradient(gradient) === false) {
@@ -879,7 +907,7 @@ const GradientStopControls = ({
 
   return (
     <>
-      <Grid align="end" gap="2" columns={3}>
+      <Grid align="end" gap="2" columns={2}>
         <Flex direction="column" gap="1">
           <Label>Stop</Label>
           <CssValueInputContainer
@@ -903,32 +931,6 @@ const GradientStopControls = ({
             onUpdate={handleStopHintUpdate}
             onDelete={handleStopHintDelete}
           />
-        </Flex>
-        <Flex direction="column" gap="1" css={{ minWidth: theme.spacing[17] }}>
-          <Label>Repeat</Label>
-          <ToggleGroup
-            type="single"
-            value={isRepeating ? "repeat" : "no-repeat"}
-            aria-label="Gradient repeat"
-            onValueChange={handleRepeatChange}
-          >
-            <Tooltip
-              variant="wrapped"
-              content="Render the gradient once (background-repeat: no-repeat)."
-            >
-              <ToggleGroupButton value="no-repeat" aria-label="No repeat">
-                <XSmallIcon />
-              </ToggleGroupButton>
-            </Tooltip>
-            <Tooltip
-              variant="wrapped"
-              content="Tile the gradient across the layer (background-repeat: repeat)."
-            >
-              <ToggleGroupButton value="repeat" aria-label="Repeat">
-                <RepeatGridIcon />
-              </ToggleGroupButton>
-            </Tooltip>
-          </ToggleGroup>
         </Flex>
       </Grid>
       {isRadial && (
