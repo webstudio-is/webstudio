@@ -228,6 +228,7 @@ const useDraggable = ({
   }, [props.x, props.y]);
 
   const handleDragStart: DragEventHandler = (event) => {
+    event.stopPropagation();
     const target = ref.current;
     if (target === null) {
       return;
@@ -246,6 +247,7 @@ const useDraggable = ({
   };
 
   const handleDrag: DragEventHandler = (event) => {
+    event.stopPropagation();
     const target = ref.current;
 
     if (
@@ -268,7 +270,8 @@ const useDraggable = ({
     target.style.top = `${top}px`;
   };
 
-  const handleDragEnd: DragEventHandler = () => {
+  const handleDragEnd: DragEventHandler = (event) => {
+    event.stopPropagation();
     const target = ref.current;
     if (target === null) {
       return;
