@@ -31,7 +31,6 @@ import {
   ToggleGroupButton,
   Separator,
   styled,
-  SmallIconButton,
   FloatingPanel,
   Button,
 } from "@webstudio-is/design-system";
