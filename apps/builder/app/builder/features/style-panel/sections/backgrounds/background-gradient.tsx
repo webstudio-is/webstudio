@@ -443,6 +443,7 @@ const GradientPickerPanel = ({
 
   const isLinear = isLinearGradient(gradient);
   const isConic = isConicGradient(gradient);
+  const isRadial = isRadialGradient(gradient);
   const supportsAngle = isLinear || isConic;
   const angleValue = supportsAngle ? gradient.angle : undefined;
   const defaultAngle = getDefaultAngle(gradient);
@@ -522,8 +523,8 @@ const GradientPickerPanel = ({
 
   return (
     <>
-      {supportsAngle && (
-        <Grid gap="2" columns={2}>
+      <Grid gap="2" columns={2}>
+        {supportsAngle ? (
           <Flex gap="2" align="center">
             <Label>Angle</Label>
             <CssValueInputContainer
@@ -536,45 +537,47 @@ const GradientPickerPanel = ({
               onDelete={handleAngleDelete}
             />
           </Flex>
-          <Flex gap="2" justify="end">
-            <ToggleGroup
-              type="single"
-              value={isRepeating ? "repeat" : "no-repeat"}
-              aria-label="Gradient repeat"
-              onValueChange={handleRepeatChange}
-            >
-              <Tooltip
-                variant="wrapped"
-                content="Render the gradient once (background-repeat: no-repeat)."
-              >
-                <ToggleGroupButton value="no-repeat" aria-label="No repeat">
-                  <XSmallIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-              <Tooltip
-                variant="wrapped"
-                content="Tile the gradient across the layer (background-repeat: repeat)."
-              >
-                <ToggleGroupButton value="repeat" aria-label="Repeat">
-                  <RepeatGridIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-            </ToggleGroup>
+        ) : (
+          <Box />
+        )}
+        <Flex gap="2" justify="end">
+          <ToggleGroup
+            type="single"
+            value={isRepeating ? "repeat" : "no-repeat"}
+            aria-label="Gradient repeat"
+            onValueChange={handleRepeatChange}
+          >
             <Tooltip
               variant="wrapped"
-              content="Reverse the order of all gradient stops."
+              content="Render the gradient once (background-repeat: no-repeat)."
             >
-              <IconButton
-                aria-label="Reverse gradient stops"
-                onClick={handleReverseStops}
-                disabled={reverseDisabled}
-              >
-                <ArrowRightLeftIcon />
-              </IconButton>
+              <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+                <XSmallIcon />
+              </ToggleGroupButton>
             </Tooltip>
-          </Flex>
-        </Grid>
-      )}
+            <Tooltip
+              variant="wrapped"
+              content="Tile the gradient across the layer (background-repeat: repeat)."
+            >
+              <ToggleGroupButton value="repeat" aria-label="Repeat">
+                <RepeatGridIcon />
+              </ToggleGroupButton>
+            </Tooltip>
+          </ToggleGroup>
+          <Tooltip
+            variant="wrapped"
+            content="Reverse the order of all gradient stops."
+          >
+            <IconButton
+              aria-label="Reverse gradient stops"
+              onClick={handleReverseStops}
+              disabled={reverseDisabled}
+            >
+              <ArrowRightLeftIcon />
+            </IconButton>
+          </Tooltip>
+        </Flex>
+      </Grid>
       <Box css={{ paddingInline: theme.spacing[2] }}>
         <GradientPicker
           gradient={gradientForPicker}
