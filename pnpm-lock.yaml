@@ -382,9 +382,6 @@ importers:
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
-      react-colorful:
-        specifier: ^5.6.1
-        version: 5.6.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
@@ -1450,6 +1447,9 @@ importers:
       match-sorter:
         specifier: ^8.0.0
         version: 8.0.0
+      react-colorful:
+        specifier: ^5.6.1
+        version: 5.6.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       react-hot-toast:
         specifier: ^2.5.1
         version: 2.5.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
