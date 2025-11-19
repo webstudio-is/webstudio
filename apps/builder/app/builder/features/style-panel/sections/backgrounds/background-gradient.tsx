@@ -333,9 +333,11 @@ const GradientPickerPanel = ({
     );
   }, [parsedComputedGradient]);
 
+  const [isInteracting, setIsInteracting] = useState(false);
+
   const gradientForPicker = useMemo(() => {
     const base = resolveGradientForPicker(gradient, hintOverrides);
-    if (computedGradientForPicker === undefined) {
+    if (isInteracting || computedGradientForPicker === undefined) {
       return base;
     }
 
@@ -386,10 +388,11 @@ const GradientPickerPanel = ({
       ...base,
       stops,
     } as ParsedGradient;
-  }, [computedGradientForPicker, gradient, hintOverrides]);
+  }, [computedGradientForPicker, gradient, hintOverrides, isInteracting]);
 
   const handlePickerChange = useCallback(
     (nextGradient: ParsedGradient) => {
+      setIsInteracting(true);
       applyGradient(nextGradient, { isEphemeral: true });
     },
     [applyGradient]
@@ -397,10 +400,17 @@ const GradientPickerPanel = ({
 
   const handlePickerChangeComplete = useCallback(
     (nextGradient: ParsedGradient) => {
+      setIsInteracting(false);
       applyGradient(nextGradient);
     },
     [applyGradient]
   );
+
+  useEffect(() => {
+    return () => {
+      setIsInteracting(false);
+    };
+  }, []);
 
   const handleThumbSelect = useCallback(
     (index: number) => {
