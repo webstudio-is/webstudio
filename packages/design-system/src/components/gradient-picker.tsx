@@ -315,6 +315,10 @@ export const GradientPicker = <T extends ParsedGradient>(
     (index: number, stop: GradientStop) =>
       (event: ReactPointerEvent<HTMLDivElement>) => {
         event.stopPropagation();
+        // Don't start drag if the color picker is open for this thumb
+        if (colorPickerOpenStop === index) {
+          return;
+        }
 
         handleStopSelected(index, stop);
         setIsHoveredOnStop(true);
@@ -323,6 +327,20 @@ export const GradientPicker = <T extends ParsedGradient>(
         const target = event.currentTarget as HTMLDivElement;
         const startX = event.clientX;
         let hasDragged = false;
+        let isCleanedUp = false;
+
+        const cleanup = () => {
+          if (isCleanedUp) return;
+          isCleanedUp = true;
+
+          target.removeEventListener("pointermove", handlePointerMove);
+          target.removeEventListener("pointerup", handlePointerUp);
+          target.removeEventListener("pointercancel", handlePointerUp);
+          setIsHoveredOnStop(false);
+          if (target.hasPointerCapture(pointerId)) {
+            target.releasePointerCapture(pointerId);
+          }
+        };
 
         const handlePointerMove = (moveEvent: PointerEvent) => {
           if (!hasDragged) {
@@ -338,11 +356,7 @@ export const GradientPicker = <T extends ParsedGradient>(
         };
 
         const handlePointerUp = () => {
-          target.removeEventListener("pointermove", handlePointerMove);
-          target.removeEventListener("pointerup", handlePointerUp);
-          target.removeEventListener("pointercancel", handlePointerUp);
-          setIsHoveredOnStop(false);
-          target.releasePointerCapture(pointerId);
+          cleanup();
           if (hasDragged) {
             onChangeComplete(buildGradient(stopsRef.current));
           }
@@ -354,6 +368,7 @@ export const GradientPicker = <T extends ParsedGradient>(
         target.addEventListener("pointercancel", handlePointerUp);
       },
     [
+      colorPickerOpenStop,
       computePositionFromClientX,
       onChangeComplete,
       handleStopSelected,
