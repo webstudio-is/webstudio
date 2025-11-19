@@ -20,6 +20,7 @@ import {
   GradientLinearIcon,
   GradientConicIcon,
   GradientRadialIcon,
+  EllipsesIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -30,6 +31,9 @@ import {
   ToggleGroupButton,
   Separator,
   styled,
+  SmallIconButton,
+  FloatingPanel,
+  Button,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
@@ -322,6 +326,116 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
   );
 };
 
+const BackgroundLayerControls = ({ index }: { index: number }) => {
+  const backgroundImage = useComputedStyleDecl("background-image");
+  const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
+  const backgroundType = detectBackgroundType(backgroundStyleItem);
+  return (
+    <BackgroundSection>
+      <Grid
+        css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
+        align="center"
+        gap={2}
+      >
+        <PropertyLabel
+          label="Clip"
+          description={propertyDescriptions.backgroundClip}
+          properties={["background-clip"]}
+        />
+        <SelectControl property="background-clip" index={index} />
+
+        <PropertyLabel
+          label="Origin"
+          description={propertyDescriptions.backgroundOrigin}
+          properties={["background-origin"]}
+        />
+        <SelectControl property="background-origin" index={index} />
+      </Grid>
+
+      <Spacer />
+
+      <BackgroundSize index={index} />
+
+      <Spacer />
+
+      <BackgroundPosition index={index} />
+
+      <Grid
+        css={{
+          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
+          mt: theme.spacing[5],
+        }}
+        align="center"
+        gap={2}
+      >
+        {backgroundType === "image" && (
+          <>
+            <PropertyLabel
+              label="Repeat"
+              description={propertyDescriptions.backgroundRepeat}
+              properties={["background-repeat"]}
+            />
+            <Flex css={{ justifySelf: "end" }}>
+              <BackgroundRepeat index={index} />
+            </Flex>
+          </>
+        )}
+
+        <PropertyLabel
+          label="Attachment"
+          description={propertyDescriptions.backgroundAttachment}
+          properties={["background-attachment"]}
+        />
+        <Flex css={{ justifySelf: "end" }}>
+          <BackgroundAttachment index={index} />
+        </Flex>
+
+        <PropertyLabel
+          label="Blend mode"
+          description={propertyDescriptions.backgroundBlendMode}
+          properties={["background-blend-mode"]}
+        />
+        <SelectControl property="background-blend-mode" index={index} />
+      </Grid>
+    </BackgroundSection>
+  );
+};
+
+export const BackgroundLayerControlsPanelTrigger = ({
+  index,
+  disabled,
+}: {
+  index: number;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (disabled && isOpen) {
+      setIsOpen(false);
+    }
+  }, [disabled, isOpen]);
+
+  return (
+    <FloatingPanel
+      title="Other properties"
+      placement="bottom"
+      content={<BackgroundLayerControls index={index} />}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      <Button
+        color="ghost"
+        prefix={<EllipsesIcon />}
+        aria-label="Other properties"
+        data-state={isOpen ? "open" : undefined}
+        disabled={disabled}
+        tabIndex={-1}
+      />
+    </FloatingPanel>
+  );
+};
+
 export const BackgroundContent = ({ index }: { index: number }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
   const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
@@ -385,76 +499,6 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           <BackgroundImage index={index} />
         </BackgroundSection>
       )}
-
-      <Separator />
-
-      <BackgroundSection>
-        <Grid
-          css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
-          align="center"
-          gap={2}
-        >
-          <PropertyLabel
-            label="Clip"
-            description={propertyDescriptions.backgroundClip}
-            properties={["background-clip"]}
-          />
-          <SelectControl property="background-clip" index={index} />
-
-          <PropertyLabel
-            label="Origin"
-            description={propertyDescriptions.backgroundOrigin}
-            properties={["background-origin"]}
-          />
-          <SelectControl property="background-origin" index={index} />
-        </Grid>
-
-        <Spacer />
-
-        <BackgroundSize index={index} />
-
-        <Spacer />
-
-        <BackgroundPosition index={index} />
-
-        <Grid
-          css={{
-            gridTemplateColumns: `1fr ${theme.spacing[22]}`,
-            mt: theme.spacing[5],
-          }}
-          align="center"
-          gap={2}
-        >
-          {backgroundType === "image" && (
-            <>
-              <PropertyLabel
-                label="Repeat"
-                description={propertyDescriptions.backgroundRepeat}
-                properties={["background-repeat"]}
-              />
-              <Flex css={{ justifySelf: "end" }}>
-                <BackgroundRepeat index={index} />
-              </Flex>
-            </>
-          )}
-
-          <PropertyLabel
-            label="Attachment"
-            description={propertyDescriptions.backgroundAttachment}
-            properties={["background-attachment"]}
-          />
-          <Flex css={{ justifySelf: "end" }}>
-            <BackgroundAttachment index={index} />
-          </Flex>
-
-          <PropertyLabel
-            label="Blend mode"
-            description={propertyDescriptions.backgroundBlendMode}
-            properties={["background-blend-mode"]}
-          />
-          <SelectControl property="background-blend-mode" index={index} />
-        </Grid>
-      </BackgroundSection>
     </>
   );
 };

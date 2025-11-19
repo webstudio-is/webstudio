@@ -50,6 +50,7 @@ type FloatingPanelProps = {
   title: ReactNode;
   content: ReactNode;
   children: ReactNode;
+  titleSuffix?: ReactNode;
   maximizable?: boolean;
   resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
@@ -73,6 +74,7 @@ export const FloatingPanel = ({
   title,
   content,
   children,
+  titleSuffix,
   resize,
   maximizable,
   width,
@@ -147,6 +149,7 @@ export const FloatingPanel = ({
           <DialogTitle
             suffix={
               <DialogTitleActions>
+                {titleSuffix}
                 {maximizable && <DialogMaximize />}
                 <DialogClose />
               </DialogTitleActions>
