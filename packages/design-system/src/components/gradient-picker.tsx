@@ -42,8 +42,10 @@ type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   type?: T["type"];
 };
 
-const THUMB_INTERACTION_PX = 12;
-const DRAG_THRESHOLD_PX = 3;
+const THUMB_INTERACTION_DISTANCE = 12;
+const DRAG_THRESHOLD = 3;
+const SLIDER_HEIGHT = 16;
+const THUMB_HEIGHT = 14;
 
 const defaultStopColor: RgbValue = {
   type: "rgb",
@@ -307,7 +309,7 @@ export const GradientPicker = <T extends ParsedGradient>(
       const relativeX = clamp(clientX - rect.left, 0, rect.width);
       const isStopExistingAtPosition = positions.some((position) => {
         const positionPx = (position / 100) * rect.width;
-        return Math.abs(positionPx - relativeX) <= THUMB_INTERACTION_PX;
+        return Math.abs(positionPx - relativeX) <= THUMB_INTERACTION_DISTANCE;
       });
 
       return { isStopExistingAtPosition, newPosition };
@@ -367,7 +369,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 
         const handlePointerMove = (moveEvent: PointerEvent) => {
           if (!hasDragged) {
-            if (Math.abs(moveEvent.clientX - startX) <= DRAG_THRESHOLD_PX) {
+            if (Math.abs(moveEvent.clientX - startX) <= DRAG_THRESHOLD) {
               return;
             }
             hasDragged = true;
@@ -697,6 +699,7 @@ export const GradientPicker = <T extends ParsedGradient>(
                 onOpenChange={(open) =>
                   handleColorPickerOpenChange(index, open)
                 }
+                sideOffset={SLIDER_HEIGHT + THUMB_HEIGHT}
                 thumb={
                   <ColorThumb
                     color={
@@ -705,8 +708,8 @@ export const GradientPicker = <T extends ParsedGradient>(
                     interactive={true}
                     css={{
                       margin: 1,
-                      width: theme.spacing[8],
-                      height: theme.spacing[8],
+                      width: THUMB_HEIGHT,
+                      height: THUMB_HEIGHT,
                     }}
                     data-thumb="true"
                   />
@@ -730,7 +733,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 const SliderRoot = styled("div", {
   position: "relative",
   width: "100%",
-  height: theme.spacing[9],
+  height: SLIDER_HEIGHT,
   border: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[3],
   touchAction: "none",

@@ -182,6 +182,9 @@ type ColorPickerPopoverProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   thumb?: React.ReactElement;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
 };
 
 const fixColor = (value: ColorPickerValue, color: RgbaColor) => {
@@ -264,6 +267,9 @@ export const ColorPickerPopover = ({
   open,
   onOpenChange,
   thumb,
+  side = "bottom",
+  align = "center",
+  sideOffset,
 }: ColorPickerPopoverProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
@@ -306,6 +312,9 @@ export const ColorPickerPopover = ({
         )}
       </PopoverTrigger>
       <PopoverContent
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
         css={{
           display: "grid",
           padding: theme.spacing[5],
