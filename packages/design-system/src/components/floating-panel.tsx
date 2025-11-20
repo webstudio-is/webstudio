@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogMaximize,
 } from "./dialog";
+
 type OffsetOptions =
   | number
   | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number | null };
@@ -72,6 +73,20 @@ const computeFloatingPosition = (
   }
 
   return { x, y };
+};
+
+const contentFitsAtPosition = (
+  contentElement: HTMLElement,
+  position: { x: number; y: number }
+): boolean => {
+  const rect = contentElement.getBoundingClientRect();
+  const { x, y } = position;
+  return (
+    y >= 0 &&
+    y + rect.height <= window.innerHeight &&
+    x >= 0 &&
+    x + rect.width <= window.innerWidth
+  );
 };
 
 const FloatingPanelContext = createContext<{
@@ -138,15 +153,11 @@ export const FloatingPanel = ({
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
-  const initialPositionRef = useRef<{ x: number; y: number }>();
-  const hasSetInitialPositionRef = useRef(false);
   const currentPositionRef = useRef<{ x: number; y: number }>();
 
   // Wrap onOpenChange to reset position when panel closes
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
-      hasSetInitialPositionRef.current = false;
-      initialPositionRef.current = undefined;
       currentPositionRef.current = undefined;
       setPosition(undefined);
     }
@@ -156,8 +167,6 @@ export const FloatingPanel = ({
   // Reset position tracking when panel closes via open prop
   useLayoutEffect(() => {
     if (open === false) {
-      hasSetInitialPositionRef.current = false;
-      initialPositionRef.current = undefined;
       currentPositionRef.current = undefined;
       setPosition(undefined);
     }
@@ -185,53 +194,40 @@ export const FloatingPanel = ({
         return;
       }
 
-      // Only calculate position if:
-      // 1. Initial position hasn't been set yet, OR
-      // 2. Content doesn't fit at current position
-
-      const rect = contentElement.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
-
-      if (!hasSetInitialPositionRef.current) {
-        // Calculate and store initial position only once when panel opens
+      // Set initial position once when panel opens
+      if (!currentPositionRef.current) {
         const { x, y } = computeFloatingPosition(
           triggerRef.current,
           contentElement,
           placement,
           offsetProp
         );
-        initialPositionRef.current = { x, y };
         currentPositionRef.current = { x, y };
-        hasSetInitialPositionRef.current = true;
         setPosition({ x, y });
-      } else if (currentPositionRef.current) {
-        // Check if content still fits at the CURRENT position
-        const { x: currentX, y: currentY } = currentPositionRef.current;
-        const wouldFitAtCurrentPosition =
-          currentY >= 0 &&
-          currentY + rect.height <= viewportHeight &&
-          currentX >= 0 &&
-          currentX + rect.width <= viewportWidth;
-
-        if (!wouldFitAtCurrentPosition) {
-          // Only recalculate if content doesn't fit at current position
-          const { x, y } = computeFloatingPosition(
-            triggerRef.current,
-            contentElement,
-            placement,
-            offsetProp
-          );
-          currentPositionRef.current = { x, y };
-          // Only update if position actually changed
-          setPosition((current) => {
-            if (current && current.x === x && current.y === y) {
-              return current;
-            }
-            return { x, y };
-          });
-        }
+        return;
       }
+
+      // Only recalculate if content doesn't fit at current position
+
+      if (contentFitsAtPosition(contentElement, currentPositionRef.current)) {
+        return;
+      }
+
+      const { x, y } = computeFloatingPosition(
+        triggerRef.current,
+        contentElement,
+        placement,
+        offsetProp
+      );
+      currentPositionRef.current = { x, y };
+
+      // Only update state if position actually changed
+      setPosition((current) => {
+        if (current && current.x === x && current.y === y) {
+          return current;
+        }
+        return { x, y };
+      });
     };
 
     // Calculate initial position or check if it still fits
