@@ -113,6 +113,18 @@ const leftToRightAngle = {
   value: 90,
 } satisfies UnitValue;
 
+const radialSizeDescriptions: Record<RadialSizeOption, string> = {
+  "closest-side": "Extends to the nearest edge of the container",
+  "closest-corner": "Extends to the nearest corner of the container",
+  "farthest-side": "Extends to the farthest edge of the container",
+  "farthest-corner": "Extends to the farthest corner of the container",
+};
+
+const radialShapeDescriptions = {
+  ellipse: "Use an ellipse ending shape (radial-gradient ellipse).",
+  circle: "Use a circle ending shape (radial-gradient circle).",
+} as const;
+
 type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
   options?: { isEphemeral?: boolean }
@@ -620,29 +632,79 @@ const OtherGradientPropertiesSection = ({
 
   return (
     <Flex direction="column" gap="2">
-      <Grid gap="2" columns={2}>
-        {supportsAngle ? (
-          <Flex gap="2" align="center">
-            <Box css={{ flexShrink: 0 }}>
-              <PropertyInlineLabel
-                label="Angle"
-                description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
-              />
-            </Box>
-            <CssValueInputContainer
-              property="rotate"
-              styleSource="default"
-              getOptions={getAvailableUnitVariables}
-              value={angleValue ?? defaultAngle}
-              unitOptions={angleUnitOptions}
-              onUpdate={handleAngleUpdate}
-              onDelete={handleAngleDelete}
+      {supportsAngle ? (
+        <Flex gap="2" align="center">
+          <Box css={{ flexShrink: 0 }}>
+            <PropertyInlineLabel
+              label="Angle"
+              description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
+            />
+          </Box>
+          <CssValueInputContainer
+            property="rotate"
+            styleSource="default"
+            getOptions={getAvailableUnitVariables}
+            value={angleValue ?? defaultAngle}
+            unitOptions={angleUnitOptions}
+            onUpdate={handleAngleUpdate}
+            onDelete={handleAngleDelete}
+          />
+        </Flex>
+      ) : null}
+      <Grid gap="2" columns={isRadial ? 3 : 1}>
+        {isRadial && (
+          <Flex direction="column" gap="1">
+            <PropertyInlineLabel
+              label="Size"
+              description="Radial gradient size determining how far the gradient extends from its center."
+            />
+            <Select
+              options={radialSizeOptions}
+              value={radialSizeValue}
+              fullWidth
+              onChange={(size) => handleRadialSizeChange(size)}
+              getDescription={(option) => radialSizeDescriptions[option]}
             />
           </Flex>
-        ) : (
-          <Box />
         )}
-        <Flex gap="2" justify="end">
+        {isRadial && (
+          <Flex direction="column" gap="1">
+            <PropertyInlineLabel
+              label="Shape"
+              description={`Radial gradient ending shape:
+- ellipse: ${radialShapeDescriptions.ellipse}
+- circle: ${radialShapeDescriptions.circle}`}
+            />
+            <ToggleGroup
+              type="single"
+              value={radialShapeValue}
+              aria-label="Radial ending shape"
+              onValueChange={handleEndingShapeChange}
+            >
+              <Tooltip
+                variant="wrapped"
+                content={radialShapeDescriptions.ellipse}
+              >
+                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
+                  <EllipseIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip
+                variant="wrapped"
+                content={radialShapeDescriptions.circle}
+              >
+                <ToggleGroupButton value="circle" aria-label="Circle">
+                  <CircleIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+            </ToggleGroup>
+          </Flex>
+        )}
+        <Flex direction="column" gap="1">
+          <PropertyInlineLabel
+            label="Repeat"
+            description={`Render the gradient once (${gradientTypeName}) or repeat the gradient pattern (${repeatingGradientTypeName}).`}
+          />
           <ToggleGroup
             type="single"
             value={isRepeating ? "repeat" : "no-repeat"}
@@ -668,52 +730,6 @@ const OtherGradientPropertiesSection = ({
           </ToggleGroup>
         </Flex>
       </Grid>
-      {isRadial && (
-        <Grid align="end" gap="2" columns={3}>
-          <Flex
-            align="center"
-            gap="2"
-            css={{ gridColumn: "span 2", width: "100%" }}
-          >
-            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
-            <Select
-              options={radialSizeOptions}
-              value={radialSizeValue}
-              fullWidth
-              onChange={(size) => handleRadialSizeChange(size)}
-            />
-          </Flex>
-          <Flex
-            direction="column"
-            gap="1"
-            css={{ minWidth: theme.spacing[17] }}
-          >
-            <ToggleGroup
-              type="single"
-              value={radialShapeValue}
-              aria-label="Radial ending shape"
-              onValueChange={handleEndingShapeChange}
-            >
-              <Tooltip
-                variant="wrapped"
-                content="Use an ellipse ending shape (radial-gradient ellipse)."
-              >
-                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
-                  <EllipseIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-              <Tooltip
-                variant="wrapped"
-                content="Use a circle ending shape (radial-gradient circle)."
-              >
-                <ToggleGroupButton value="circle" aria-label="Circle">
-                  <CircleIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-            </ToggleGroup>
-          </Flex>
-        </Grid>
-      )}
     </Flex>
   );
 };
