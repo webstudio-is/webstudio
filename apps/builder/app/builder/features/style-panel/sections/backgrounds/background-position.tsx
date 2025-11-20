@@ -81,13 +81,12 @@ export const BackgroundPositionControl = ({
     if (yAxis.properties) {
       return yAxis.properties;
     }
-    return undefined;
   })();
 
   return (
     <Flex direction="column" gap="1">
       {combinedProperties ? (
-        <PropertySectionLabel
+        <PropertyLabel
           label={label}
           description={description}
           properties={combinedProperties}
