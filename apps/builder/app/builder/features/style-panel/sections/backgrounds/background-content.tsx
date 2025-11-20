@@ -97,20 +97,20 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
     autoFocus: true,
   },
   {
+    value: "solidColor",
+    label: "Color",
+    description:
+      "Use a single color layer while keeping control over stacking order.",
+    code: "background-image: linear-gradient(color, color);",
+    icon: <ColorSwatchIcon />,
+  },
+  {
     value: "linearGradient",
     label: "Linear gradient",
     description:
       "Blend multiple colors along a line to create smooth transitions.",
     code: "background-image: linear-gradient(...);",
     icon: <GradientLinearIcon />,
-  },
-  {
-    value: "conicGradient",
-    label: "Conic gradient",
-    description:
-      "Spin colors around a center point for charts, dials, and spotlight effects.",
-    code: "background-image: conic-gradient(...);",
-    icon: <GradientConicIcon />,
   },
   {
     value: "radialGradient",
@@ -121,12 +121,12 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
     icon: <GradientRadialIcon />,
   },
   {
-    value: "solidColor",
-    label: "Color",
+    value: "conicGradient",
+    label: "Conic gradient",
     description:
-      "Use a single color layer while keeping control over stacking order.",
-    code: "background-image: linear-gradient(color, color);",
-    icon: <ColorSwatchIcon />,
+      "Spin colors around a center point for charts, dials, and spotlight effects.",
+    code: "background-image: conic-gradient(...);",
+    icon: <GradientConicIcon />,
   },
 ];
 
