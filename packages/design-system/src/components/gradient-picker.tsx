@@ -743,6 +743,7 @@ const SliderRoot = styled("div", {
     background: `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%`,
     pointerEvents: "none",
     backgroundSize: "10px 10px",
+    zIndex: -1,
   },
   variants: {
     isHoveredOnStop: {
