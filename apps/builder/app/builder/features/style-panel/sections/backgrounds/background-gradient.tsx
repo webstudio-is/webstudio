@@ -66,6 +66,7 @@ import {
 } from "../../shared/css-fragment";
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
+import { PropertyInlineLabel } from "../../property-label";
 import {
   angleUnitOptions,
   clampStopIndex,
@@ -608,7 +609,12 @@ const GradientPickerPanel = ({
       <Grid gap="2" columns={2}>
         {supportsAngle ? (
           <Flex gap="2" align="center">
-            <Label>Angle</Label>
+            <Box css={{ flexShrink: 0 }}>
+              <PropertyInlineLabel
+                label="Angle"
+                description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
+              />
+            </Box>
             <CssValueInputContainer
               property="rotate"
               styleSource="default"
@@ -968,7 +974,10 @@ const GradientStopControls = ({
     <>
       <Grid align="end" gap="2" columns={2}>
         <Flex direction="column" gap="1">
-          <Label>Stop</Label>
+          <PropertyInlineLabel
+            label="Stop"
+            description="Position of the selected gradient stop along the gradient line."
+          />
           <CssValueInputContainer
             property={"background-position-x"}
             styleSource="default"
@@ -980,7 +989,10 @@ const GradientStopControls = ({
           />
         </Flex>
         <Flex direction="column" gap="1">
-          <Label>Hint</Label>
+          <PropertyInlineLabel
+            label="Hint"
+            description="Midpoint position for color transition between this stop and the next. Controls where the colors are evenly mixed."
+          />
           <CssValueInputContainer
             property={"background-position-x"}
             styleSource="default"
