@@ -6,7 +6,7 @@ import {
   type VarValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
-import { ColorPickerPopover } from "@webstudio-is/design-system";
+import { Box, ColorPickerPopover } from "@webstudio-is/design-system";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
 
@@ -42,21 +42,23 @@ export const ColorPickerControl = ({
       aria-disabled={disabled}
       styleSource="default"
       prefix={
-        <ColorPickerPopover
-          value={currentColor}
-          onChange={(styleValue) => {
-            setIntermediateValue(styleValue);
-            if (styleValue) {
-              onChange(styleValue);
-            } else {
-              onAbort();
-            }
-          }}
-          onChangeComplete={(value) => {
-            setIntermediateValue(undefined);
-            onChangeComplete(value);
-          }}
-        />
+        <Box css={{ paddingLeft: 2 }}>
+          <ColorPickerPopover
+            value={currentColor}
+            onChange={(styleValue) => {
+              setIntermediateValue(styleValue);
+              if (styleValue) {
+                onChange(styleValue);
+              } else {
+                onAbort();
+              }
+            }}
+            onChangeComplete={(value) => {
+              setIntermediateValue(undefined);
+              onChangeComplete(value);
+            }}
+          />
+        </Box>
       }
       showSuffix={false}
       property={property}

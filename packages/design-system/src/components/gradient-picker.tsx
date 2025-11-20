@@ -24,7 +24,11 @@ import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
-import { ColorPickerPopover } from "./color-picker";
+import {
+  ColorPickerPopover,
+  ColorThumb,
+  styleValueToRgbaColor,
+} from "./color-picker";
 
 extend([mixPlugin]);
 
@@ -693,15 +697,20 @@ export const GradientPicker = <T extends ParsedGradient>(
                 onOpenChange={(open) =>
                   handleColorPickerOpenChange(index, open)
                 }
-                thumbProps={{
-                  css: {
-                    margin: 1,
-                    width: theme.spacing[8],
-                    height: theme.spacing[8],
-                  },
-                  "data-thumb": "true",
-                  tabIndex: -1,
-                }}
+                thumb={
+                  <ColorThumb
+                    color={
+                      stop.color ? styleValueToRgbaColor(stop.color) : undefined
+                    }
+                    interactive={true}
+                    css={{
+                      margin: 1,
+                      width: theme.spacing[8],
+                      height: theme.spacing[8],
+                    }}
+                    data-thumb="true"
+                  />
+                }
               />
               <SliderThumbPointer aria-hidden />
             </SliderThumb>

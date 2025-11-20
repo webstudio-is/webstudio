@@ -102,14 +102,15 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
     return (
       <Component
-        {...rest}
-        ref={ref}
         style={{
           background,
           borderColor: borderColor.toRgbString(),
           borderWidth: borderColor.alpha() === 0 ? 0 : 1,
         }}
         className={thumbStyle({ css })}
+        tabIndex={-1}
+        {...rest}
+        ref={ref}
       />
     );
   }
@@ -131,7 +132,7 @@ const normalizeHex = (value: string) => {
   return hex;
 };
 
-const styleValueToRgbaColor = (
+export const styleValueToRgbaColor = (
   value: StyleValue | IntermediateColorValue
 ): RgbaColor => {
   const color = colord(
@@ -174,17 +175,13 @@ type ColorPickerProps = {
   onChangeComplete: (value: StyleValue) => void;
 };
 
-type ThumbTriggerProps = Omit<ColorThumbProps, "color" | "ref"> & {
-  [dataAttribute: `data-${string}`]: string | number | boolean | undefined;
-};
-
 type ColorPickerPopoverProps = {
   value: StyleValue;
   onChange: (value: StyleValue | undefined) => void;
   onChangeComplete: (value: StyleValue) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  thumbProps?: ThumbTriggerProps;
+  thumb?: React.ReactElement;
 };
 
 const fixColor = (value: ColorPickerValue, color: RgbaColor) => {
@@ -266,7 +263,7 @@ export const ColorPickerPopover = ({
   onChangeComplete,
   open,
   onOpenChange,
-  thumbProps,
+  thumb,
 }: ColorPickerPopoverProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
@@ -304,12 +301,9 @@ export const ColorPickerPopover = ({
         aria-label="Open color picker"
         onClick={() => handleOpenChange(!isOpen)}
       >
-        <ColorThumb
-          color={styleValueToRgbaColor(value)}
-          interactive={true}
-          tabIndex={-1}
-          {...thumbProps}
-        />
+        {thumb ?? (
+          <ColorThumb color={styleValueToRgbaColor(value)} interactive={true} />
+        )}
       </PopoverTrigger>
       <PopoverContent
         css={{
