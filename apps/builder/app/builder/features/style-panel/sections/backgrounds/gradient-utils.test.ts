@@ -164,7 +164,7 @@ describe("formatGradientForType", () => {
 
   test("formats conic target", () => {
     expect(formatGradientForType(undefined, "conicGradient")).toBe(
-      "conic-gradient(rgba(0, 0, 0, 1) 0%, rgba(255, 255, 255, 1) 100%)"
+      "conic-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%)"
     );
   });
 
@@ -546,10 +546,10 @@ describe("ensureGradientHasStops", () => {
     });
     expect(result.stops[1]?.color).toEqual({
       type: "rgb",
-      r: 255,
-      g: 255,
-      b: 255,
-      alpha: 1,
+      r: 0,
+      g: 0,
+      b: 0,
+      alpha: 0,
     });
   });
 
