@@ -586,6 +586,13 @@ const GradientPickerPanel = ({
     []
   );
 
+  const gradientTypeName = isLinear
+    ? "linear-gradient"
+    : isConic
+      ? "conic-gradient"
+      : "radial-gradient";
+  const repeatingGradientTypeName = `repeating-${gradientTypeName}`;
+
   return (
     <>
       <Box css={{ paddingInline: theme.spacing[2] }}>
@@ -624,7 +631,7 @@ const GradientPickerPanel = ({
           >
             <Tooltip
               variant="wrapped"
-              content="Render the gradient once (background-repeat: no-repeat)."
+              content={`Render the gradient once (${gradientTypeName}).`}
             >
               <ToggleGroupButton value="no-repeat" aria-label="No repeat">
                 <XSmallIcon />
@@ -632,7 +639,7 @@ const GradientPickerPanel = ({
             </Tooltip>
             <Tooltip
               variant="wrapped"
-              content="Tile the gradient across the layer (background-repeat: repeat)."
+              content={`Repeat the gradient pattern (${repeatingGradientTypeName}).`}
             >
               <ToggleGroupButton value="repeat" aria-label="Repeat">
                 <RepeatGridIcon />
