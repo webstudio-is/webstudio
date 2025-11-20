@@ -33,6 +33,7 @@ import {
   styled,
   FloatingPanel,
   Button,
+  Box,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
@@ -59,8 +60,6 @@ import {
   isBackgroundType,
   type BackgroundType,
 } from "./gradient-utils";
-
-const BackgroundSection = styled("div", { padding: theme.panel.padding });
 
 const Spacer = styled("div", {
   height: theme.spacing[5],
@@ -334,7 +333,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
   const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
   const backgroundType = detectBackgroundType(backgroundStyleItem);
   return (
-    <BackgroundSection>
+    <Box css={{ padding: theme.panel.padding }}>
       <Grid
         css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
         align="center"
@@ -400,7 +399,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
         />
         <SelectControl property="background-blend-mode" index={index} />
       </Grid>
-    </BackgroundSection>
+    </Box>
   );
 };
 
@@ -462,21 +461,24 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
   return (
     <>
-      <BackgroundSection>
-        <Flex align="center" gap="2" justify="between">
-          <PropertyInlineLabel
-            label="Type"
-            description={propertyDescriptions.backgroundImage}
-          />
-          <BackgroundTypeToggle
-            value={backgroundType}
-            onChange={setBackgroundType}
-            backgroundStyleItem={backgroundStyleItem}
-            styleDecl={backgroundImage}
-            index={index}
-          />
-        </Flex>
-      </BackgroundSection>
+      <Flex
+        align="center"
+        gap="2"
+        justify="between"
+        css={{ padding: theme.panel.padding }}
+      >
+        <PropertyInlineLabel
+          label="Type"
+          description={propertyDescriptions.backgroundImage}
+        />
+        <BackgroundTypeToggle
+          value={backgroundType}
+          onChange={setBackgroundType}
+          backgroundStyleItem={backgroundStyleItem}
+          styleDecl={backgroundImage}
+          index={index}
+        />
+      </Flex>
 
       <Separator />
 
@@ -497,11 +499,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
         />
       )}
 
-      {backgroundType === "image" && (
-        <BackgroundSection>
-          <BackgroundImage index={index} />
-        </BackgroundSection>
-      )}
+      {backgroundType === "image" && <BackgroundImage index={index} />}
     </>
   );
 };

@@ -64,6 +64,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       css={{
         gridColumn: "span 2",
         gap: theme.spacing[3],
+        padding: theme.panel.padding,
       }}
       ref={elementRef}
     >
