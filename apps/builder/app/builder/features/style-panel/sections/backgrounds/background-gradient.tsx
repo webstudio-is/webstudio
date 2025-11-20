@@ -24,6 +24,7 @@ import {
   Box,
   IconButton,
   Select,
+  Separator,
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
@@ -217,17 +218,11 @@ export const BackgroundGradient = ({
         <SolidColorControls gradient={gradient} applyGradient={applyGradient} />
       ) : (
         <>
-          <GradientStopControls
-            gradient={gradient}
-            selectedStopIndex={selectedStopIndex}
-            hintOverrides={hintOverrides}
-            setHintOverrides={setHintOverrides}
-            applyGradient={applyGradient}
-          />
           <GradientPickerPanel
             gradient={gradient}
             gradientType={gradientType}
             hintOverrides={hintOverrides}
+            setHintOverrides={setHintOverrides}
             setSelectedStopIndex={setSelectedStopIndex}
             applyGradient={applyGradient}
             styleDecl={styleDecl}
@@ -250,6 +245,7 @@ type GradientPickerPanelProps = {
   gradient: ParsedGradient;
   gradientType: GradientType;
   hintOverrides: Map<number, PercentUnitValue>;
+  setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
   setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   applyGradient: GradientEditorApplyFn;
   styleDecl: ReturnType<typeof useComputedStyleDecl>;
@@ -262,6 +258,7 @@ const GradientPickerPanel = ({
   gradient,
   gradientType,
   hintOverrides,
+  setHintOverrides,
   setSelectedStopIndex,
   applyGradient,
   styleDecl,
@@ -574,6 +571,14 @@ const GradientPickerPanel = ({
           onThumbSelect={handleThumbSelect}
         />
       </Box>
+      <GradientStopControls
+        gradient={gradient}
+        selectedStopIndex={selectedStopIndex}
+        hintOverrides={hintOverrides}
+        setHintOverrides={setHintOverrides}
+        applyGradient={applyGradient}
+      />
+      <Separator />
       <Grid gap="2" columns={2}>
         {supportsAngle ? (
           <Flex gap="2" align="center">
