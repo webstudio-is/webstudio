@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useRef, useCallback } from "react";
 import { ImageControl } from "../../controls";
-import { PropertyLabel } from "../../property-label";
+import { PropertyInlineLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { BackgroundCodeEditor } from "./background-code-editor";
 import { $assets } from "~/shared/nano-states";
@@ -67,13 +67,10 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       }}
       ref={elementRef}
     >
-      <Flex css={{ height: "100%" }} align="start">
-        <PropertyLabel
-          label="Image"
-          description={propertyDescriptions.backgroundImage}
-          properties={["background-image"]}
-        />
-      </Flex>
+      <PropertyInlineLabel
+        label="Image"
+        description={propertyDescriptions.backgroundImage}
+      />
       <FloatingPanelProvider container={elementRef}>
         <ImageControl property="background-image" index={index} />
       </FloatingPanelProvider>
