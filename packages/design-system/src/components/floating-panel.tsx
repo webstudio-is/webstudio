@@ -18,13 +18,61 @@ import {
   DialogTrigger,
   DialogMaximize,
 } from "./dialog";
-import {
-  computePosition,
-  flip,
-  offset,
-  shift,
-  type OffsetOptions,
-} from "@floating-ui/dom";
+type OffsetOptions =
+  | number
+  | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number | null };
+
+const computeFloatingPosition = (
+  trigger: HTMLElement,
+  floating: HTMLElement,
+  placement: "left-start" | "right-start" | "bottom",
+  offsetOptions: OffsetOptions
+): { x: number; y: number } => {
+  const triggerRect = trigger.getBoundingClientRect();
+  const floatingRect = floating.getBoundingClientRect();
+
+  const mainAxis =
+    typeof offsetOptions === "number"
+      ? offsetOptions
+      : (offsetOptions.mainAxis ?? 0);
+
+  let x = 0;
+  let y = 0;
+
+  if (placement === "left-start") {
+    // Position to the left of the trigger, aligned with the top
+    x = triggerRect.left - floatingRect.width - mainAxis;
+    y = triggerRect.top;
+  } else if (placement === "right-start") {
+    // Position to the right of the trigger, aligned with the top
+    x = triggerRect.right + mainAxis;
+    y = triggerRect.top;
+  } else if (placement === "bottom") {
+    // Position below the trigger
+    x = triggerRect.left;
+    y = triggerRect.bottom + mainAxis;
+  }
+
+  // Keep within viewport bounds (simple shift)
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Adjust horizontal position if needed
+  if (x < 0) {
+    x = 0;
+  } else if (x + floatingRect.width > viewportWidth) {
+    x = viewportWidth - floatingRect.width;
+  }
+
+  // Adjust vertical position if needed
+  if (y < 0) {
+    y = 0;
+  } else if (y + floatingRect.height > viewportHeight) {
+    y = viewportHeight - floatingRect.height;
+  }
+
+  return { x, y };
+};
 
 const FloatingPanelContext = createContext<{
   container: RefObject<null | HTMLElement>;
@@ -90,6 +138,30 @@ export const FloatingPanel = ({
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
+  const initialPositionRef = useRef<{ x: number; y: number }>();
+  const hasSetInitialPositionRef = useRef(false);
+  const currentPositionRef = useRef<{ x: number; y: number }>();
+
+  // Wrap onOpenChange to reset position when panel closes
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      hasSetInitialPositionRef.current = false;
+      initialPositionRef.current = undefined;
+      currentPositionRef.current = undefined;
+      setPosition(undefined);
+    }
+    onOpenChange?.(isOpen);
+  };
+
+  // Reset position tracking when panel closes via open prop
+  useLayoutEffect(() => {
+    if (open === false) {
+      hasSetInitialPositionRef.current = false;
+      initialPositionRef.current = undefined;
+      currentPositionRef.current = undefined;
+      setPosition(undefined);
+    }
+  }, [open]);
 
   useLayoutEffect(() => {
     if (
@@ -97,18 +169,85 @@ export const FloatingPanel = ({
       containerRef.current === null ||
       contentElement === null ||
       // When centering the dialog, we don't need to calculate the position
-      placement === "center"
+      placement === "center" ||
+      // Don't recalculate position when panel is closed
+      open === false
     ) {
       return;
     }
 
-    computePosition(triggerRef.current, contentElement, {
-      placement,
-      middleware: [shift(), flip(), offset(offsetProp)],
-    }).then(({ x, y }) => {
-      setPosition({ x, y });
+    const updatePosition = () => {
+      if (
+        triggerRef.current === null ||
+        containerRef.current === null ||
+        contentElement === null
+      ) {
+        return;
+      }
+
+      // Only calculate position if:
+      // 1. Initial position hasn't been set yet, OR
+      // 2. Content doesn't fit at current position
+
+      const rect = contentElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      if (!hasSetInitialPositionRef.current) {
+        // Calculate and store initial position only once when panel opens
+        const { x, y } = computeFloatingPosition(
+          triggerRef.current,
+          contentElement,
+          placement,
+          offsetProp
+        );
+        initialPositionRef.current = { x, y };
+        currentPositionRef.current = { x, y };
+        hasSetInitialPositionRef.current = true;
+        setPosition({ x, y });
+      } else if (currentPositionRef.current) {
+        // Check if content still fits at the CURRENT position
+        const { x: currentX, y: currentY } = currentPositionRef.current;
+        const wouldFitAtCurrentPosition =
+          currentY >= 0 &&
+          currentY + rect.height <= viewportHeight &&
+          currentX >= 0 &&
+          currentX + rect.width <= viewportWidth;
+
+        if (!wouldFitAtCurrentPosition) {
+          // Only recalculate if content doesn't fit at current position
+          const { x, y } = computeFloatingPosition(
+            triggerRef.current,
+            contentElement,
+            placement,
+            offsetProp
+          );
+          currentPositionRef.current = { x, y };
+          // Only update if position actually changed
+          setPosition((current) => {
+            if (current && current.x === x && current.y === y) {
+              return current;
+            }
+            return { x, y };
+          });
+        }
+      }
+    };
+
+    // Calculate initial position or check if it still fits
+    updatePosition();
+
+    // Observe content size changes and update position
+    const resizeObserver = new ResizeObserver(() => {
+      updatePosition();
     });
-  }, [contentElement, triggerRef, containerRef, placement, offsetProp]);
+
+    resizeObserver.observe(contentElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [contentElement, containerRef, placement, offsetProp, open]);
 
   return (
     <Dialog
@@ -116,7 +255,7 @@ export const FloatingPanel = ({
       resize={resize}
       open={open}
       modal={false}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
     >
       <DialogTrigger asChild ref={triggerRef}>
         {children}
