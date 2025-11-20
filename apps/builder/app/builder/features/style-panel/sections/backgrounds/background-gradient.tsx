@@ -273,10 +273,12 @@ export const BackgroundGradient = ({
               setIsRepeating={setIsRepeating}
             />
           </Box>
-          <GradientPositionControls
-            gradient={gradient}
-            applyGradient={applyGradient}
-          />
+          <Box css={{ padding: theme.panel.padding }}>
+            <GradientPositionControls
+              gradient={gradient}
+              applyGradient={applyGradient}
+            />
+          </Box>
         </>
       )}
       <Box css={{ padding: theme.panel.padding }}>
@@ -1196,31 +1198,29 @@ const GradientPositionControls = ({
   }
 
   return (
-    <Box css={{ padding: theme.spacing[5] }}>
-      <BackgroundPositionControl
-        label="Position"
-        xAxis={{
-          label: "Left",
-          description: "Left position offset",
-          property: "--gradient-position-x",
-          value: xValue,
-          getOptions: () => gradientPositionXOptions,
-          unitOptions: percentUnitOptions,
-          onUpdate: handleAxisUpdate("x"),
-          onDelete: handleAxisDelete("x"),
-        }}
-        yAxis={{
-          label: "Top",
-          description: "Top position offset",
-          property: "--gradient-position-y",
-          value: yValue,
-          getOptions: () => gradientPositionYOptions,
-          unitOptions: percentUnitOptions,
-          onUpdate: handleAxisUpdate("y"),
-          onDelete: handleAxisDelete("y"),
-        }}
-        onSelect={handleGridSelect}
-      />
-    </Box>
+    <BackgroundPositionControl
+      label="Position"
+      xAxis={{
+        label: "Left",
+        description: "Left position offset",
+        property: "--gradient-position-x",
+        value: xValue,
+        getOptions: () => gradientPositionXOptions,
+        unitOptions: percentUnitOptions,
+        onUpdate: handleAxisUpdate("x"),
+        onDelete: handleAxisDelete("x"),
+      }}
+      yAxis={{
+        label: "Top",
+        description: "Top position offset",
+        property: "--gradient-position-y",
+        value: yValue,
+        getOptions: () => gradientPositionYOptions,
+        unitOptions: percentUnitOptions,
+        onUpdate: handleAxisUpdate("y"),
+        onDelete: handleAxisDelete("y"),
+      }}
+      onSelect={handleGridSelect}
+    />
   );
 };
