@@ -446,7 +446,7 @@ const GradientPickerSection = ({
   }, [gradientForPicker]);
 
   return (
-    <Flex direction="column" gap="5" css={{ padding: theme.panel.padding }}>
+    <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
       <GradientPicker
         gradient={gradientForPicker}
         backgroundImage={formatLinearGradient(previewGradientForTrack)}
