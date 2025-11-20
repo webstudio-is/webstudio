@@ -11,7 +11,10 @@ import { $assets } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
-import { getComputedRepeatedItem } from "../../shared/repeated-style";
+import {
+  getComputedRepeatedItem,
+  getRepeatedStyleItem,
+} from "../../shared/repeated-style";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
 
 export const repeatedProperties = [
@@ -118,7 +121,13 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   const assets = useStore($assets);
   const styles = useComputedStyles(repeatedProperties);
   const [backgroundImage] = styles;
-  const backgroundImageValue = getComputedRepeatedItem(backgroundImage, index);
+  // Use cascaded value to check for assets (before they're resolved to URLs)
+  const backgroundImageValue = getRepeatedStyleItem(backgroundImage, index);
+  // Use computed value for rendering gradients and other styles
+  const computedBackgroundImageValue = getComputedRepeatedItem(
+    backgroundImage,
+    index
+  );
 
   if (
     backgroundImageValue?.type === "image" &&
@@ -154,7 +163,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     );
   }
 
-  if (backgroundImageValue?.type === "unparsed") {
+  if (computedBackgroundImageValue?.type === "unparsed") {
     const cssStyle: { [property in RepeatedProperty]?: string } = {};
     for (const styleDecl of styles) {
       const itemValue = getComputedRepeatedItem(styleDecl, index);
