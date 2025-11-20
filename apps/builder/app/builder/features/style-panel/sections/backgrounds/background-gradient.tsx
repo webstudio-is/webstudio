@@ -989,6 +989,40 @@ const GradientStopControls = ({
             }
           };
 
+          const handleStopColorChange = (
+            styleValue: StyleValue | IntermediateColorValue | undefined
+          ) => {
+            const nextColor = styleValueToColor(styleValue);
+            if (nextColor === undefined) {
+              return;
+            }
+            updateStop(
+              stopIndex,
+              (stop) => ({
+                ...stop,
+                color: nextColor,
+              }),
+              { isEphemeral: true }
+            );
+          };
+
+          const handleStopColorChangeComplete = (styleValue: StyleValue) => {
+            const nextColor = styleValueToColor(styleValue);
+            if (nextColor === undefined) {
+              return;
+            }
+            updateStop(
+              stopIndex,
+              (stop) => ({
+                ...stop,
+                color: nextColor,
+              }),
+              { isEphemeral: false }
+            );
+          };
+
+          const stopColor = (stop.color ?? fallbackStopColor) as StyleValue;
+
           return (
             <Flex
               key={stopIndex}
@@ -1002,7 +1036,11 @@ const GradientStopControls = ({
                 }
               }}
             >
-              <Grid align="end" gap="2" columns={2} css={{ flex: 1 }}>
+              <Grid
+                align="end"
+                gap="2"
+                css={{ gridTemplateColumns: "1fr 1fr 2fr" }}
+              >
                 <Tooltip
                   content="Position of this gradient stop along the gradient line."
                   variant="wrapped"
@@ -1032,6 +1070,22 @@ const GradientStopControls = ({
                       unitOptions={percentUnitOptions}
                       onUpdate={handleStopHintUpdate}
                       onDelete={handleStopHintDelete}
+                    />
+                  </Box>
+                </Tooltip>
+                <Tooltip
+                  content="Color of this gradient stop."
+                  variant="wrapped"
+                >
+                  <Box>
+                    <ColorPickerControl
+                      property="color"
+                      value={stopColor}
+                      currentColor={stopColor}
+                      onChange={handleStopColorChange}
+                      onChangeComplete={handleStopColorChangeComplete}
+                      onAbort={() => {}}
+                      onReset={() => {}}
                     />
                   </Box>
                 </Tooltip>
