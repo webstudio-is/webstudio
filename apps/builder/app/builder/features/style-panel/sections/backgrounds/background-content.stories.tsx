@@ -116,6 +116,15 @@ export const ConicGradient = () => {
   return <BackgroundStory styleValue={styleValue} />;
 };
 
+export const RadialGradient = () => {
+  const styleValue: StyleValue = {
+    type: "unparsed",
+    value:
+      "radial-gradient(circle at 50% 50%, rgba(255,126,95,1) 0%, rgba(254,180,123,1) 50%, rgba(134,168,231,1) 100%)",
+  };
+  return <BackgroundStory styleValue={styleValue} />;
+};
+
 export const SolidColorGradient = () => {
   const styleValue: StyleValue = {
     type: "unparsed",

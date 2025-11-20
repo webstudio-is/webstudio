@@ -1044,13 +1044,43 @@ const getGradientColorSignature = (color?: GradientStop["color"]) => {
 };
 
 export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
-  const reference = getGradientColorSignature(gradient.stops[0]?.color);
-  if (reference === undefined) {
+  // Only consider it a solid gradient if there are exactly 2 stops
+  if (gradient.stops.length !== 2) {
     return false;
   }
-  return gradient.stops.every(
-    (stop) => getGradientColorSignature(stop.color) === reference
-  );
+
+  // Fill in default positions (0% and 100%) for any missing positions
+  const normalized = fillMissingStopPositions(gradient);
+  const firstStop = normalized.stops[0];
+  const secondStop = normalized.stops[1];
+
+  // Check if both stops have the same color
+  const firstColor = getGradientColorSignature(firstStop?.color);
+  const secondColor = getGradientColorSignature(secondStop?.color);
+
+  if (
+    firstColor === undefined ||
+    secondColor === undefined ||
+    firstColor !== secondColor
+  ) {
+    return false;
+  }
+
+  // Check if first position is 0% and second position is 100%
+  const firstPosition = firstStop?.position;
+  const secondPosition = secondStop?.position;
+
+  const isFirstAt0 =
+    firstPosition?.type === "unit" &&
+    firstPosition.unit === "%" &&
+    firstPosition.value === 0;
+
+  const isSecondAt100 =
+    secondPosition?.type === "unit" &&
+    secondPosition.unit === "%" &&
+    secondPosition.value === 100;
+
+  return isFirstAt0 && isSecondAt100;
 };
 
 const formatSolidColorGradient = (styleValue: StyleValue | undefined) => {

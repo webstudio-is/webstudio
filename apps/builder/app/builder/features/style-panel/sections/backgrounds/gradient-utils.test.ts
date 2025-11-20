@@ -19,6 +19,7 @@ import {
   detectBackgroundType,
   ensureGradientHasStops,
   fillMissingStopPositions,
+  isSolidLinearGradient,
   normalizeGradientInput,
   type PercentUnitValue,
   pruneHintOverrides,
@@ -1218,6 +1219,310 @@ describe("createSolidLinearGradient", () => {
   });
 });
 
+describe("isSolidLinearGradient", () => {
+  test("returns true for valid solid gradient (2 stops, same color, 0% and 100%)", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns false when gradient has only 1 stop", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when gradient has 3 stops", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 50 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when stops have different colors", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when first stop position is not 0%", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 10 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when second stop position is not 100%", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 90 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns true when first stop has no position (defaults to 0%)", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns true when second stop has no position (defaults to 100%)", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns false when positions use px unit instead of %", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "px", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "px", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when first stop color is undefined", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns false when second stop color is undefined", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns true when colors match with different alpha values", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 100, g: 150, b: 200, alpha: 0.5 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 100, g: 150, b: 200, alpha: 0.5 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns false when colors have same RGB but different alpha", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 100, g: 150, b: 200, alpha: 0.5 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 100, g: 150, b: 200, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns true for keyword colors that match", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "keyword", value: "red" },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "keyword", value: "red" },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns false when positions use var values", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: {
+            type: "var",
+            value: "--start",
+            fallback: { type: "unit", unit: "%", value: 0 },
+          },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(false);
+  });
+
+  test("returns true when both positions are undefined (auto-assigned 0% and 100%)", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns true when first position is undefined and second is 100%", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 100 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+
+  test("returns true when first position is 0% and second is undefined", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+          position: { type: "unit", unit: "%", value: 0 },
+        },
+        {
+          color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        },
+      ],
+    });
+
+    expect(isSolidLinearGradient(gradient)).toBe(true);
+  });
+});
+
 describe("detectBackgroundType", () => {
   test("returns image when style value undefined", () => {
     expect(detectBackgroundType(undefined)).toBe("image");
@@ -1244,7 +1549,15 @@ describe("detectBackgroundType", () => {
     expect(detectBackgroundType(value)).toBe("linearGradient");
   });
 
-  test("returns solidColor for uniform linear gradient", () => {
+  test("returns solidColor for uniform linear gradient with explicit positions", () => {
+    const value: StyleValue = {
+      type: "unparsed",
+      value: "linear-gradient(red 0%, red 100%)",
+    };
+    expect(detectBackgroundType(value)).toBe("solidColor");
+  });
+
+  test("returns solidColor for uniform gradient without explicit positions", () => {
     const value: StyleValue = {
       type: "unparsed",
       value: "linear-gradient(red, red)",
