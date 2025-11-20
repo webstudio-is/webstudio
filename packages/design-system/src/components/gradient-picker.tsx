@@ -347,7 +347,9 @@ export const GradientPicker = <T extends ParsedGradient>(
         let isCleanedUp = false;
 
         const cleanup = () => {
-          if (isCleanedUp) return;
+          if (isCleanedUp) {
+            return;
+          }
           isCleanedUp = true;
 
           target.removeEventListener("pointermove", handlePointerMove);
