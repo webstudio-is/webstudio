@@ -934,13 +934,21 @@ const GradientPositionControls = ({
 
   const positionValue = gradientWithPosition?.position;
 
-  const { xValue, yValue } = useMemo(
-    () =>
-      positionValue
-        ? parseGradientPositionValues(positionValue)
-        : { xValue: undefined, yValue: undefined },
-    [positionValue]
-  );
+  // Parse position values directly without memoization to ensure the grid
+  // indicator updates immediately after position changes
+  const parsedValues = positionValue
+    ? parseGradientPositionValues(positionValue)
+    : { xValue: undefined, yValue: undefined };
+
+  // Extract single values from layers type if needed
+  const xValue =
+    parsedValues.xValue?.type === "layers"
+      ? parsedValues.xValue.value[0]
+      : parsedValues.xValue;
+  const yValue =
+    parsedValues.yValue?.type === "layers"
+      ? parsedValues.yValue.value[0]
+      : parsedValues.yValue;
 
   const updatePosition = useCallback(
     (
