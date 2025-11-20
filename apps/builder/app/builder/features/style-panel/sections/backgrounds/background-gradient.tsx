@@ -1,11 +1,9 @@
 import {
   toValue,
-  type InvalidValue,
   type StyleValue,
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  parseCssValue,
   parseLinearGradient,
   parseConicGradient,
   parseRadialGradient,
@@ -19,7 +17,6 @@ import {
 import {
   Flex,
   Label,
-  Text,
   theme,
   Tooltip,
   GradientPicker,
@@ -35,7 +32,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -44,33 +40,21 @@ import {
   ArrowRightLeftIcon,
   CircleIcon,
   EllipseIcon,
-  InfoCircleIcon,
   RepeatGridIcon,
   XSmallIcon,
 } from "@webstudio-is/icons";
 import { clamp } from "@react-aria/utils";
-import { setProperty } from "../../shared/use-style-data";
 import {
   useComputedStyleDecl,
   $availableUnitVariables,
 } from "../../shared/model";
-import {
-  editRepeatedStyleItem,
-  setRepeatedStyleItem,
-} from "../../shared/repeated-style";
-import {
-  parseCssFragment,
-  CssFragmentEditor,
-  CssFragmentEditorContent,
-  getCodeEditorCssVars,
-} from "../../shared/css-fragment";
+import { setRepeatedStyleItem } from "../../shared/repeated-style";
 import { useLocalValue } from "../../../settings-panel/shared";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
 import {
   angleUnitOptions,
   clampStopIndex,
-  cloneVarFallback,
   createDefaultGradient,
   createSolidLinearGradient,
   createPercentUnitValue,
@@ -99,16 +83,12 @@ import {
   styleValueToColor,
 } from "./gradient-utils";
 import { BackgroundPositionControl } from "./background-position";
+import { BackgroundCodeEditor } from "./background-code-editor";
 import type {
   GradientType,
   IntermediateColorValue,
   PercentUnitValue,
 } from "./gradient-utils";
-
-type IntermediateValue = {
-  type: "intermediate";
-  value: string;
-};
 
 const radialSizeOptions = [
   "closest-side",
@@ -123,9 +103,6 @@ const radialSizeOptionsSet = new Set<RadialSizeOption>(radialSizeOptions);
 
 const defaultRadialSize: RadialSizeOption = "farthest-corner";
 const defaultRadialShape = "ellipse" as const;
-
-const isTransparent = (color: StyleValue) =>
-  color.type === "keyword" && color.value === "transparent";
 
 const leftToRightAngle = {
   type: "unit",
@@ -196,7 +173,6 @@ export const BackgroundGradient = ({
   const [hintOverrides, setHintOverrides] = useState(
     () => new Map<number, PercentUnitValue>()
   );
-  const [codeEditorResetSignal, setCodeEditorResetSignal] = useState(0);
   const isSolidVariant = variant === "solid";
 
   useEffect(() => {
@@ -215,7 +191,6 @@ export const BackgroundGradient = ({
     (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
       setLocalGradient(nextGradient);
-      setCodeEditorResetSignal((value) => value + 1);
       const gradientValue = formatGradientValue(nextGradient);
       setRepeatedStyleItem(
         styleDecl,
@@ -243,13 +218,11 @@ export const BackgroundGradient = ({
       ) : (
         <>
           <GradientStopControls
-            initialIsRepeating={initialIsRepeating}
             gradient={gradient}
             selectedStopIndex={selectedStopIndex}
             hintOverrides={hintOverrides}
             setHintOverrides={setHintOverrides}
             applyGradient={applyGradient}
-            setSelectedStopIndex={setSelectedStopIndex}
           />
           <GradientPickerPanel
             gradient={gradient}
@@ -268,12 +241,7 @@ export const BackgroundGradient = ({
           />
         </>
       )}
-      <GradientCodeEditor
-        styleDecl={styleDecl}
-        styleValue={styleValue}
-        index={index}
-        resetSignal={codeEditorResetSignal}
-      />
+      <BackgroundCodeEditor index={index} />
     </Flex>
   );
 };
@@ -777,31 +745,25 @@ const SolidColorControls = ({
 };
 
 type GradientStopControlsProps = {
-  initialIsRepeating: boolean;
   gradient: ParsedGradient;
   selectedStopIndex: number;
   hintOverrides: Map<number, PercentUnitValue>;
   setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
   applyGradient: GradientEditorApplyFn;
-  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
 };
 
 const GradientStopControls = ({
-  initialIsRepeating,
   gradient,
   selectedStopIndex,
   hintOverrides,
   setHintOverrides,
   applyGradient,
-  setSelectedStopIndex,
 }: GradientStopControlsProps) => {
   const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
   const selectedStop = gradient.stops[safeSelectedStopIndex];
   const selectedStopPositionValue = selectedStop?.position;
   const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
   const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
-  const selectedStopColor: StyleValue = (selectedStop?.color ??
-    fallbackStopColor) as StyleValue;
 
   const updateSelectedStop = useCallback(
     (
@@ -818,32 +780,6 @@ const GradientStopControls = ({
       );
       const nextGradient = { ...gradient, stops };
       applyGradient(nextGradient, options);
-    },
-    [applyGradient, gradient, selectedStopIndex]
-  );
-
-  const handleStopColorChange = useCallback(
-    (color: GradientStop["color"], options?: { isEphemeral?: boolean }) => {
-      const isEphemeral = options?.isEphemeral ?? true;
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const stops = gradient.stops.map((stop, index) =>
-        index === stopIndex
-          ? {
-              ...stop,
-              color:
-                color?.type === "var" && stop.color?.type === "var"
-                  ? {
-                      ...color,
-                      fallback:
-                        color.fallback === undefined
-                          ? cloneVarFallback(stop.color.fallback)
-                          : cloneVarFallback(color.fallback),
-                    }
-                  : color,
-            }
-          : stop
-      );
-      applyGradient({ ...gradient, stops }, { isEphemeral });
     },
     [applyGradient, gradient, selectedStopIndex]
   );
@@ -935,34 +871,6 @@ const GradientStopControls = ({
       }
     },
     [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
-  );
-
-  const applyStyleValueToStop = useCallback(
-    (
-      styleValue: StyleValue | IntermediateColorValue | undefined,
-      options?: { isEphemeral?: boolean }
-    ) => {
-      const isEphemeral = options?.isEphemeral ?? true;
-      const nextColor = styleValueToColor(styleValue);
-      if (nextColor) {
-        handleStopColorChange(nextColor, { isEphemeral });
-      }
-    },
-    [handleStopColorChange]
-  );
-
-  const handleColorPickerChange = useCallback(
-    (styleValue: StyleValue | IntermediateColorValue | undefined) => {
-      applyStyleValueToStop(styleValue);
-    },
-    [applyStyleValueToStop]
-  );
-
-  const handleColorPickerChangeComplete = useCallback(
-    (styleValue: StyleValue) => {
-      applyStyleValueToStop(styleValue, { isEphemeral: false });
-    },
-    [applyStyleValueToStop]
   );
 
   const getAvailableUnitVariables = useCallback(
@@ -1114,132 +1022,5 @@ const GradientPositionControls = ({
       }}
       onSelect={handleGridSelect}
     />
-  );
-};
-
-type GradientCodeEditorProps = {
-  styleDecl: ReturnType<typeof useComputedStyleDecl>;
-  styleValue: StyleValue;
-  index: number;
-  resetSignal: number;
-};
-
-const GradientCodeEditor = ({
-  styleDecl,
-  styleValue,
-  index,
-  resetSignal,
-}: GradientCodeEditorProps) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    IntermediateValue | InvalidValue | undefined
-  >(undefined);
-  useEffect(() => {
-    setIntermediateValue(undefined);
-  }, [resetSignal]);
-  const textAreaValue = intermediateValue?.value ?? toValue(styleValue);
-
-  const handleChange = useCallback(
-    (value: string) => {
-      setIntermediateValue({
-        type: "intermediate",
-        value,
-      });
-
-      const newValue = parseCssValue("background-image", value);
-
-      if (newValue.type === "unparsed" || newValue.type === "var") {
-        setRepeatedStyleItem(styleDecl, index, newValue, { isEphemeral: true });
-        return;
-      }
-
-      setRepeatedStyleItem(
-        styleDecl,
-        index,
-        { type: "keyword", value: "none" },
-        { isEphemeral: true }
-      );
-    },
-    [index, setIntermediateValue, styleDecl]
-  );
-
-  const handleOnComplete = useCallback(() => {
-    if (intermediateValue === undefined) {
-      return;
-    }
-
-    const parsed = parseCssFragment(intermediateValue.value, [
-      "background-image",
-      "background",
-    ]);
-    const backgroundImage = parsed.get("background-image");
-    const backgroundColor = parsed.get("background-color");
-
-    if (backgroundColor?.type === "invalid" || backgroundImage === undefined) {
-      setIntermediateValue({ type: "invalid", value: intermediateValue.value });
-      if (styleValue) {
-        setRepeatedStyleItem(styleDecl, index, styleValue, {
-          isEphemeral: true,
-        });
-      }
-      return;
-    }
-    setIntermediateValue(undefined);
-    if (backgroundColor && isTransparent(backgroundColor) === false) {
-      setProperty("background-color")(backgroundColor);
-    }
-    editRepeatedStyleItem(
-      [styleDecl],
-      index,
-      new Map([["background-image", backgroundImage]])
-    );
-  }, [index, intermediateValue, setIntermediateValue, styleDecl, styleValue]);
-
-  const handleOnCompleteRef = useRef(handleOnComplete);
-  useEffect(() => {
-    handleOnCompleteRef.current = handleOnComplete;
-  }, [handleOnComplete]);
-
-  useEffect(() => {
-    return () => {
-      handleOnCompleteRef.current();
-    };
-  }, []);
-
-  return (
-    <>
-      <Label>
-        <Flex align="center" gap="1">
-          Code
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Text>
-                Paste a CSS gradient, for example:
-                <br />
-                <br />
-                linear-gradient(...)
-                <br />
-                <br />
-                If pasting from Figma, remove the "background" property name.
-              </Text>
-            }
-          >
-            <InfoCircleIcon />
-          </Tooltip>
-        </Flex>
-      </Label>
-      <CssFragmentEditor
-        css={getCodeEditorCssVars({ minHeight: "4lh", maxHeight: "4lh" })}
-        content={
-          <CssFragmentEditorContent
-            invalid={intermediateValue?.type === "invalid"}
-            autoFocus={styleValue.type === "var"}
-            value={textAreaValue ?? ""}
-            onChange={handleChange}
-            onChangeComplete={handleOnComplete}
-          />
-        }
-      />
-    </>
   );
 };
