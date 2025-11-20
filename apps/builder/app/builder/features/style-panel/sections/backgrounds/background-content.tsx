@@ -37,6 +37,7 @@ import {
   EnhancedTooltip,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
+import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 import { BackgroundSize } from "./background-size";
 import { BackgroundGradient } from "./background-gradient";
 import { BackgroundImage } from "./background-image";

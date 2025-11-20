@@ -7,11 +7,7 @@ import type {
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../shared/css-value-input";
-import {
-  PropertyInlineLabel,
-  PropertyLabel,
-  PropertySectionLabel,
-} from "../../property-label";
+import { PropertyInlineLabel, PropertyLabel } from "../../property-label";
 import { useComputedStyles } from "../../shared/model";
 import {
   getRepeatedStyleItem,
