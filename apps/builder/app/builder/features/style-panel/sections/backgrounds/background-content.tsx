@@ -454,9 +454,17 @@ export const BackgroundContent = ({ index }: { index: number }) => {
     }
     syncedStyleKeyRef.current = nextStyleKey;
     const nextType = detectBackgroundType(backgroundStyleItem);
-    setBackgroundType((currentType) =>
-      nextType === currentType ? currentType : nextType
-    );
+    setBackgroundType((currentType) => {
+      // Don't switch between linearGradient and solidColor automatically
+      // when the user is editing - let them stay in their chosen view
+      if (
+        (currentType === "linearGradient" && nextType === "solidColor") ||
+        (currentType === "solidColor" && nextType === "linearGradient")
+      ) {
+        return currentType;
+      }
+      return nextType === currentType ? currentType : nextType;
+    });
   }, [backgroundStyleItem]);
 
   return (
