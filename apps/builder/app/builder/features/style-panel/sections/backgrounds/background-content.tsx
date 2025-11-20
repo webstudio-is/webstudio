@@ -329,9 +329,6 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 };
 
 const BackgroundLayerControls = ({ index }: { index: number }) => {
-  const backgroundImage = useComputedStyleDecl("background-image");
-  const backgroundStyleItem = getBackgroundStyleItem(backgroundImage, index);
-  const backgroundType = detectBackgroundType(backgroundStyleItem);
   return (
     <Box css={{ padding: theme.panel.padding }}>
       <Grid
@@ -370,18 +367,14 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
         align="center"
         gap={2}
       >
-        {backgroundType === "image" && (
-          <>
-            <PropertyLabel
-              label="Repeat"
-              description={propertyDescriptions.backgroundRepeat}
-              properties={["background-repeat"]}
-            />
-            <Flex css={{ justifySelf: "end" }}>
-              <BackgroundRepeat index={index} />
-            </Flex>
-          </>
-        )}
+        <PropertyLabel
+          label="Repeat"
+          description={propertyDescriptions.backgroundRepeat}
+          properties={["background-repeat"]}
+        />
+        <Flex css={{ justifySelf: "end" }}>
+          <BackgroundRepeat index={index} />
+        </Flex>
 
         <PropertyLabel
           label="Attachment"
