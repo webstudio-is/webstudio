@@ -253,7 +253,7 @@ export const BackgroundGradient = ({
   );
 
   return (
-    <Flex direction="column" justify="center">
+    <Flex direction="column" justify="center" gap="2">
       {isSolidVariant ? (
         <Box css={{ padding: theme.panel.padding }}>
           <SolidColorControls
@@ -275,7 +275,7 @@ export const BackgroundGradient = ({
             selectedStopIndex={selectedStopIndex}
           />
           <Separator />
-          <Box css={{ padding: theme.panel.padding }}>
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
             <OtherGradientPropertiesSection
               gradient={gradient}
               applyGradient={applyGradient}
@@ -283,7 +283,7 @@ export const BackgroundGradient = ({
               setIsRepeating={setIsRepeating}
             />
           </Box>
-          <Box css={{ padding: theme.panel.padding }}>
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
             <GradientPositionControls
               gradient={gradient}
               applyGradient={applyGradient}
@@ -291,7 +291,12 @@ export const BackgroundGradient = ({
           </Box>
         </>
       )}
-      <Box css={{ padding: theme.panel.padding }}>
+      <Box
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          paddingBottom: theme.panel.paddingBlock,
+        }}
+      >
         <BackgroundCodeEditor index={index} />
       </Box>
     </Flex>
@@ -632,26 +637,24 @@ const OtherGradientPropertiesSection = ({
 
   return (
     <Flex direction="column" gap="2">
-      {supportsAngle ? (
-        <Flex gap="2" align="center">
-          <Box css={{ flexShrink: 0 }}>
+      <Grid gap="2" columns={isRadial ? 3 : supportsAngle ? 2 : 1}>
+        {supportsAngle && (
+          <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Angle"
               description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
             />
-          </Box>
-          <CssValueInputContainer
-            property="rotate"
-            styleSource="default"
-            getOptions={getAvailableUnitVariables}
-            value={angleValue ?? defaultAngle}
-            unitOptions={angleUnitOptions}
-            onUpdate={handleAngleUpdate}
-            onDelete={handleAngleDelete}
-          />
-        </Flex>
-      ) : null}
-      <Grid gap="2" columns={isRadial ? 3 : 1}>
+            <CssValueInputContainer
+              property="rotate"
+              styleSource="default"
+              getOptions={getAvailableUnitVariables}
+              value={angleValue ?? defaultAngle}
+              unitOptions={angleUnitOptions}
+              onUpdate={handleAngleUpdate}
+              onDelete={handleAngleDelete}
+            />
+          </Flex>
+        )}
         {isRadial && (
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
