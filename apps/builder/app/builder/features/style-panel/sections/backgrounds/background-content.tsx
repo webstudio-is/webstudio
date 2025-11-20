@@ -34,6 +34,7 @@ import {
   FloatingPanel,
   Button,
   Box,
+  EnhancedTooltip,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { BackgroundSize } from "./background-size";
@@ -45,7 +46,6 @@ import {
   PropertyValueTooltip,
   PropertyInlineLabel,
 } from "../../property-label";
-import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -145,10 +145,6 @@ const BackgroundTypeToggle = ({
   styleDecl,
   index,
 }: BackgroundTypeToggleProps) => {
-  const [activeTooltip, setActiveTooltip] = useState<
-    BackgroundType | undefined
-  >();
-
   const handleValueChange = useCallback(
     (nextValue: string) => {
       if (isBackgroundType(nextValue) === false) {
@@ -160,7 +156,6 @@ const BackgroundTypeToggle = ({
       }
 
       onChange(nextValue);
-      setActiveTooltip(undefined);
 
       if (nextValue !== "image") {
         const gradientValue = formatGradientForType(
@@ -184,19 +179,8 @@ const BackgroundTypeToggle = ({
       onValueChange={handleValueChange}
     >
       {backgroundTypeOptions.map(
-        ({ value: optionValue, label, description, code, icon, autoFocus }) => (
-          <ToggleGroupTooltip
-            key={optionValue}
-            isOpen={activeTooltip === optionValue}
-            onOpenChange={(isOpen) =>
-              setActiveTooltip(isOpen ? optionValue : undefined)
-            }
-            isSelected={value === optionValue}
-            label={label}
-            code={code}
-            description={description}
-            properties={["background-image"]}
-          >
+        ({ value: optionValue, label, icon, autoFocus }) => (
+          <EnhancedTooltip key={optionValue} content={label}>
             <ToggleGroupButton
               value={optionValue}
               aria-label={label}
@@ -204,7 +188,7 @@ const BackgroundTypeToggle = ({
             >
               <Flex css={{ px: theme.spacing[3] }}>{icon}</Flex>
             </ToggleGroupButton>
-          </ToggleGroupTooltip>
+          </EnhancedTooltip>
         )
       )}
     </ToggleGroup>
