@@ -266,8 +266,6 @@ export const BackgroundGradient = ({
           <Box css={{ padding: theme.panel.padding }}>
             <OtherGradientPropertiesSection
               gradient={gradient}
-              selectedStopIndex={selectedStopIndex}
-              setSelectedStopIndex={setSelectedStopIndex}
               applyGradient={applyGradient}
               isRepeating={isRepeating}
               setIsRepeating={setIsRepeating}
@@ -472,8 +470,6 @@ const GradientPickerSection = ({
 
 type OtherGradientPropertiesSectionProps = {
   gradient: ParsedGradient;
-  selectedStopIndex: number;
-  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   applyGradient: GradientEditorApplyFn;
   isRepeating: boolean;
   setIsRepeating: Dispatch<SetStateAction<boolean>>;
@@ -481,8 +477,6 @@ type OtherGradientPropertiesSectionProps = {
 
 const OtherGradientPropertiesSection = ({
   gradient,
-  selectedStopIndex,
-  setSelectedStopIndex,
   applyGradient,
   isRepeating,
   setIsRepeating,
@@ -493,7 +487,6 @@ const OtherGradientPropertiesSection = ({
   const supportsAngle = isLinear || isConic;
   const angleValue = supportsAngle ? gradient.angle : undefined;
   const defaultAngle = getDefaultAngle(gradient);
-  const reverseDisabled = gradient.stops.length <= 1;
 
   const gradientTypeName = isLinear
     ? "linear-gradient"
@@ -597,15 +590,6 @@ const OtherGradientPropertiesSection = ({
     [applyGradient, gradient, supportsAngle]
   );
 
-  const handleReverseStops = useCallback(() => {
-    const resolution = resolveReverseStops(gradient, selectedStopIndex);
-    if (resolution.type === "none") {
-      return;
-    }
-    setSelectedStopIndex(resolution.selectedStopIndex);
-    applyGradient(resolution.gradient);
-  }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
-
   const handleRadialSizeChange = useCallback(
     (nextSize?: RadialSizeOption) => {
       if (isRadial === false) {
@@ -682,18 +666,6 @@ const OtherGradientPropertiesSection = ({
               </ToggleGroupButton>
             </Tooltip>
           </ToggleGroup>
-          <Tooltip
-            variant="wrapped"
-            content="Reverse the order of all gradient stops."
-          >
-            <IconButton
-              aria-label="Reverse gradient stops"
-              onClick={handleReverseStops}
-              disabled={reverseDisabled}
-            >
-              <ArrowRightLeftIcon />
-            </IconButton>
-          </Tooltip>
         </Flex>
       </Grid>
       {isRadial && (
@@ -823,6 +795,17 @@ const GradientStopControls = ({
   setHintOverrides,
   applyGradient,
 }: GradientStopControlsProps) => {
+  const reverseDisabled = gradient.stops.length <= 1;
+
+  const handleReverseStops = useCallback(() => {
+    const resolution = resolveReverseStops(gradient, selectedStopIndex);
+    if (resolution.type === "none") {
+      return;
+    }
+    setSelectedStopIndex(resolution.selectedStopIndex);
+    applyGradient(resolution.gradient);
+  }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
+
   const updateStop = useCallback(
     (
       stopIndex: number,
@@ -877,6 +860,18 @@ const GradientStopControls = ({
           description="Gradient color stops and their positions along the gradient line."
         />
         <Flex gap="1">
+          <Tooltip
+            variant="wrapped"
+            content="Reverse the order of all gradient stops."
+          >
+            <IconButton
+              aria-label="Reverse gradient stops"
+              onClick={handleReverseStops}
+              disabled={reverseDisabled}
+            >
+              <ArrowRightLeftIcon />
+            </IconButton>
+          </Tooltip>
           <Tooltip content="Add gradient stop" variant="wrapped">
             <IconButton aria-label="Add stop" onClick={handleAddStop}>
               <PlusIcon />
