@@ -65,16 +65,9 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
   const backgroundImage = useComputedStyleDecl("background-image");
 
   useEffect(() => {
-    const currentValue = getRepeatedStyleItem(backgroundImage, 0);
-    if (
-      currentValue !== undefined &&
-      currentValue.type === styleValue.type &&
-      toValue(currentValue) === toValue(styleValue)
-    ) {
-      return;
-    }
     setRepeatedStyleItem(backgroundImage, 0, styleValue);
-  }, [backgroundImage, styleValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
