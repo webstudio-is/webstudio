@@ -671,9 +671,7 @@ const OtherGradientPropertiesSection = ({
           <Flex direction="column" gap="1">
             <PropertyInlineLabel
               label="Shape"
-              description={`Radial gradient ending shape:
-- ellipse: ${radialShapeDescriptions.ellipse}
-- circle: ${radialShapeDescriptions.circle}`}
+              description="Radial gradient ending shape."
             />
             <ToggleGroup
               type="single"
@@ -703,7 +701,7 @@ const OtherGradientPropertiesSection = ({
         <Flex direction="column" gap="1">
           <PropertyInlineLabel
             label="Repeat"
-            description={`Render the gradient once (${gradientTypeName}) or repeat the gradient pattern (${repeatingGradientTypeName}).`}
+            description="Whether to repeat the gradient pattern."
           />
           <ToggleGroup
             type="single"
