@@ -1040,7 +1040,7 @@ const GradientStopControls = ({
           return (
             <Flex
               key={stopIndex}
-              gap="2"
+              gap="1"
               css={{
                 opacity: isSelected ? 1 : 0.6,
               }}
@@ -1052,7 +1052,7 @@ const GradientStopControls = ({
             >
               <Grid
                 align="end"
-                gap="2"
+                gap="1"
                 css={{ gridTemplateColumns: "1fr 1fr 2fr" }}
               >
                 <Tooltip
