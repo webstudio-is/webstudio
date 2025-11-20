@@ -34,6 +34,7 @@ type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   onChange: (value: T) => void;
   onChangeComplete: (value: T) => void;
   onThumbSelect: (index: number, stop: GradientStop) => void;
+  selectedStopIndex?: number;
   type?: T["type"];
 };
 
@@ -91,6 +92,7 @@ export const GradientPicker = <T extends ParsedGradient>(
     onChange,
     onChangeComplete,
     onThumbSelect,
+    selectedStopIndex,
   } = props;
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
@@ -105,6 +107,12 @@ export const GradientPicker = <T extends ParsedGradient>(
   useEffect(() => {
     stopsRef.current = stops;
   }, [stops]);
+
+  useEffect(() => {
+    if (selectedStopIndex !== undefined) {
+      setSelectedStop(selectedStopIndex);
+    }
+  }, [selectedStopIndex]);
 
   const buildGradient = useCallback(
     (stopsValue: GradientStop[]): T => {

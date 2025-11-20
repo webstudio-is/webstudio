@@ -41,6 +41,8 @@ import {
   ArrowRightLeftIcon,
   CircleIcon,
   EllipseIcon,
+  MinusIcon,
+  PlusIcon,
   RepeatGridIcon,
   XSmallIcon,
 } from "@webstudio-is/icons";
@@ -115,6 +117,33 @@ type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
   options?: { isEphemeral?: boolean }
 ) => void;
+
+const getStopPosition = (stop: GradientStop): number =>
+  stop.position?.type === "unit" && stop.position.unit === "%"
+    ? stop.position.value
+    : 0;
+
+const reindexHintOverrides = (
+  overrides: Map<number, PercentUnitValue>,
+  deletedIndex: number
+): Map<number, PercentUnitValue> => {
+  const reindexed = new Map<number, PercentUnitValue>();
+  overrides.forEach((value, key) => {
+    if (key < deletedIndex) {
+      reindexed.set(key, value);
+    } else if (key > deletedIndex) {
+      reindexed.set(key - 1, value);
+    }
+  });
+  return reindexed;
+};
+
+const getAvailableUnitVariables = () => $availableUnitVariables.get();
+
+const clampPercentUnit = (value: PercentUnitValue): PercentUnitValue => ({
+  ...value,
+  value: clamp(value.value, 0, 100),
+});
 
 export const BackgroundGradient = ({
   index,
@@ -218,7 +247,7 @@ export const BackgroundGradient = ({
         <SolidColorControls gradient={gradient} applyGradient={applyGradient} />
       ) : (
         <>
-          <GradientPickerPanel
+          <GradientPickerSection
             gradient={gradient}
             gradientType={gradientType}
             hintOverrides={hintOverrides}
@@ -241,7 +270,7 @@ export const BackgroundGradient = ({
   );
 };
 
-type GradientPickerPanelProps = {
+type GradientPickerSectionProps = {
   gradient: ParsedGradient;
   gradientType: GradientType;
   hintOverrides: Map<number, PercentUnitValue>;
@@ -254,7 +283,7 @@ type GradientPickerPanelProps = {
   initialIsRepeating: boolean;
 };
 
-const GradientPickerPanel = ({
+const GradientPickerSection = ({
   gradient,
   gradientType,
   hintOverrides,
@@ -265,7 +294,7 @@ const GradientPickerPanel = ({
   index,
   selectedStopIndex,
   initialIsRepeating,
-}: GradientPickerPanelProps) => {
+}: GradientPickerSectionProps) => {
   const parsedComputedGradient = useMemo(() => {
     let computedStyleValue = styleDecl.computedValue;
     if (computedStyleValue?.type === "layers") {
@@ -385,7 +414,7 @@ const GradientPickerPanel = ({
   }, []);
 
   const handleThumbSelect = useCallback(
-    (index: number) => {
+    (index: number, _stop: GradientStop) => {
       setSelectedStopIndex(index);
     },
     [setSelectedStopIndex]
@@ -407,8 +436,6 @@ const GradientPickerPanel = ({
     setIsRepeating(initialIsRepeating);
   }, [initialIsRepeating]);
 
-  const isLinear = isLinearGradient(gradient);
-  const isConic = isConicGradient(gradient);
   const isRadial = isRadialGradient(gradient);
 
   useEffect(() => {
@@ -427,10 +454,6 @@ const GradientPickerPanel = ({
       applyGradient({ ...gradient, ...updates });
     }
   }, [applyGradient, gradient, isRadial]);
-  const supportsAngle = isLinear || isConic;
-  const angleValue = supportsAngle ? gradient.angle : undefined;
-  const defaultAngle = getDefaultAngle(gradient);
-  const reverseDisabled = gradient.stops.length <= 1;
 
   // Radial gradient size and shape
   const currentRadialSize = isRadial ? gradient.size : undefined;
@@ -451,6 +474,145 @@ const GradientPickerPanel = ({
     }
     return isRadial ? defaultRadialShape : undefined;
   })();
+
+  const handleRadialSizeChange = useCallback(
+    (nextSize?: RadialSizeOption) => {
+      if (isRadial === false) {
+        return;
+      }
+      const size = nextSize ?? defaultRadialSize;
+      applyGradient({ ...gradient, size });
+    },
+    [applyGradient, gradient, isRadial]
+  );
+
+  const handleEndingShapeChange = useCallback(
+    (nextShape?: string) => {
+      if (isRadial === false) {
+        return;
+      }
+      const shapeValue =
+        nextShape === "circle" || nextShape === "ellipse"
+          ? nextShape
+          : defaultRadialShape;
+      applyGradient({
+        ...gradient,
+        shape: { type: "keyword", value: shapeValue },
+      });
+    },
+    [applyGradient, gradient, isRadial]
+  );
+
+  return (
+    <>
+      <Box css={{ paddingInline: theme.spacing[2] }}>
+        <GradientPicker
+          gradient={gradientForPicker}
+          backgroundImage={formatLinearGradient(previewGradientForTrack)}
+          type={gradientType}
+          onChange={handlePickerChange}
+          onChangeComplete={handlePickerChangeComplete}
+          onThumbSelect={handleThumbSelect}
+          selectedStopIndex={selectedStopIndex}
+        />
+      </Box>
+      <GradientStopControls
+        gradient={gradient}
+        selectedStopIndex={selectedStopIndex}
+        setSelectedStopIndex={setSelectedStopIndex}
+        hintOverrides={hintOverrides}
+        setHintOverrides={setHintOverrides}
+        applyGradient={applyGradient}
+      />
+      <Separator />
+      <OtherGradientPropertiesSection
+        gradient={gradient}
+        selectedStopIndex={selectedStopIndex}
+        setSelectedStopIndex={setSelectedStopIndex}
+        applyGradient={applyGradient}
+        isRepeating={isRepeating}
+        setIsRepeating={setIsRepeating}
+      />
+      {isRadial && (
+        <Grid align="end" gap="2" columns={3}>
+          <Flex
+            align="center"
+            gap="2"
+            css={{ gridColumn: "span 2", width: "100%" }}
+          >
+            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
+            <Select
+              options={radialSizeOptions}
+              value={radialSizeValue}
+              fullWidth
+              onChange={(size) => handleRadialSizeChange(size)}
+            />
+          </Flex>
+          <Flex
+            direction="column"
+            gap="1"
+            css={{ minWidth: theme.spacing[17] }}
+          >
+            <ToggleGroup
+              type="single"
+              value={radialShapeValue}
+              aria-label="Radial ending shape"
+              onValueChange={handleEndingShapeChange}
+            >
+              <Tooltip
+                variant="wrapped"
+                content="Use an ellipse ending shape (radial-gradient ellipse)."
+              >
+                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
+                  <EllipseIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+              <Tooltip
+                variant="wrapped"
+                content="Use a circle ending shape (radial-gradient circle)."
+              >
+                <ToggleGroupButton value="circle" aria-label="Circle">
+                  <CircleIcon />
+                </ToggleGroupButton>
+              </Tooltip>
+            </ToggleGroup>
+          </Flex>
+        </Grid>
+      )}
+    </>
+  );
+};
+
+type OtherGradientPropertiesSectionProps = {
+  gradient: ParsedGradient;
+  selectedStopIndex: number;
+  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
+  applyGradient: GradientEditorApplyFn;
+  isRepeating: boolean;
+  setIsRepeating: Dispatch<SetStateAction<boolean>>;
+};
+
+const OtherGradientPropertiesSection = ({
+  gradient,
+  selectedStopIndex,
+  setSelectedStopIndex,
+  applyGradient,
+  isRepeating,
+  setIsRepeating,
+}: OtherGradientPropertiesSectionProps) => {
+  const isLinear = isLinearGradient(gradient);
+  const isConic = isConicGradient(gradient);
+  const supportsAngle = isLinear || isConic;
+  const angleValue = supportsAngle ? gradient.angle : undefined;
+  const defaultAngle = getDefaultAngle(gradient);
+  const reverseDisabled = gradient.stops.length <= 1;
+
+  const gradientTypeName = isLinear
+    ? "linear-gradient"
+    : isConic
+      ? "conic-gradient"
+      : "radial-gradient";
+  const repeatingGradientTypeName = `repeating-${gradientTypeName}`;
 
   const handleRepeatChange = useCallback(
     (value: string) => {
@@ -519,173 +681,67 @@ const GradientPickerPanel = ({
     applyGradient(resolution.gradient);
   }, [applyGradient, gradient, selectedStopIndex, setSelectedStopIndex]);
 
-  const handleRadialSizeChange = useCallback(
-    (nextSize?: RadialSizeOption) => {
-      if (isRadial === false) {
-        return;
-      }
-      const size = nextSize ?? defaultRadialSize;
-      applyGradient({ ...gradient, size });
-    },
-    [applyGradient, gradient, isRadial]
-  );
-
-  const handleEndingShapeChange = useCallback(
-    (nextShape?: string) => {
-      if (isRadial === false) {
-        return;
-      }
-      const shapeValue =
-        nextShape === "circle" || nextShape === "ellipse"
-          ? nextShape
-          : defaultRadialShape;
-      applyGradient({
-        ...gradient,
-        shape: { type: "keyword", value: shapeValue },
-      });
-    },
-    [applyGradient, gradient, isRadial]
-  );
-
-  const getAvailableUnitVariables = useCallback(
-    () => $availableUnitVariables.get(),
-    []
-  );
-
-  const gradientTypeName = isLinear
-    ? "linear-gradient"
-    : isConic
-      ? "conic-gradient"
-      : "radial-gradient";
-  const repeatingGradientTypeName = `repeating-${gradientTypeName}`;
-
   return (
-    <>
-      <Box css={{ paddingInline: theme.spacing[2] }}>
-        <GradientPicker
-          gradient={gradientForPicker}
-          backgroundImage={formatLinearGradient(previewGradientForTrack)}
-          type={gradientType}
-          onChange={handlePickerChange}
-          onChangeComplete={handlePickerChangeComplete}
-          onThumbSelect={handleThumbSelect}
-        />
-      </Box>
-      <GradientStopControls
-        gradient={gradient}
-        selectedStopIndex={selectedStopIndex}
-        hintOverrides={hintOverrides}
-        setHintOverrides={setHintOverrides}
-        applyGradient={applyGradient}
-      />
-      <Separator />
-      <Grid gap="2" columns={2}>
-        {supportsAngle ? (
-          <Flex gap="2" align="center">
-            <Box css={{ flexShrink: 0 }}>
-              <PropertyInlineLabel
-                label="Angle"
-                description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
-              />
-            </Box>
-            <CssValueInputContainer
-              property="rotate"
-              styleSource="default"
-              getOptions={getAvailableUnitVariables}
-              value={angleValue ?? defaultAngle}
-              unitOptions={angleUnitOptions}
-              onUpdate={handleAngleUpdate}
-              onDelete={handleAngleDelete}
+    <Grid gap="2" columns={2}>
+      {supportsAngle ? (
+        <Flex gap="2" align="center">
+          <Box css={{ flexShrink: 0 }}>
+            <PropertyInlineLabel
+              label="Angle"
+              description="Direction of the gradient line. 0deg is up, 90deg is right, 180deg is down, 270deg is left."
             />
-          </Flex>
-        ) : (
-          <Box />
-        )}
-        <Flex gap="2" justify="end">
-          <ToggleGroup
-            type="single"
-            value={isRepeating ? "repeat" : "no-repeat"}
-            aria-label="Gradient repeat"
-            onValueChange={handleRepeatChange}
-          >
-            <Tooltip
-              variant="wrapped"
-              content={`Render the gradient once (${gradientTypeName}).`}
-            >
-              <ToggleGroupButton value="no-repeat" aria-label="No repeat">
-                <XSmallIcon />
-              </ToggleGroupButton>
-            </Tooltip>
-            <Tooltip
-              variant="wrapped"
-              content={`Repeat the gradient pattern (${repeatingGradientTypeName}).`}
-            >
-              <ToggleGroupButton value="repeat" aria-label="Repeat">
-                <RepeatGridIcon />
-              </ToggleGroupButton>
-            </Tooltip>
-          </ToggleGroup>
+          </Box>
+          <CssValueInputContainer
+            property="rotate"
+            styleSource="default"
+            getOptions={getAvailableUnitVariables}
+            value={angleValue ?? defaultAngle}
+            unitOptions={angleUnitOptions}
+            onUpdate={handleAngleUpdate}
+            onDelete={handleAngleDelete}
+          />
+        </Flex>
+      ) : (
+        <Box />
+      )}
+      <Flex gap="2" justify="end">
+        <ToggleGroup
+          type="single"
+          value={isRepeating ? "repeat" : "no-repeat"}
+          aria-label="Gradient repeat"
+          onValueChange={handleRepeatChange}
+        >
           <Tooltip
             variant="wrapped"
-            content="Reverse the order of all gradient stops."
+            content={`Render the gradient once (${gradientTypeName}).`}
           >
-            <IconButton
-              aria-label="Reverse gradient stops"
-              onClick={handleReverseStops}
-              disabled={reverseDisabled}
-            >
-              <ArrowRightLeftIcon />
-            </IconButton>
+            <ToggleGroupButton value="no-repeat" aria-label="No repeat">
+              <XSmallIcon />
+            </ToggleGroupButton>
           </Tooltip>
-        </Flex>
-      </Grid>
-      {isRadial && (
-        <Grid align="end" gap="2" columns={3}>
-          <Flex
-            align="center"
-            gap="2"
-            css={{ gridColumn: "span 2", width: "100%" }}
+          <Tooltip
+            variant="wrapped"
+            content={`Repeat the gradient pattern (${repeatingGradientTypeName}).`}
           >
-            <Label css={{ whiteSpace: "nowrap" }}>Size</Label>
-            <Select
-              options={radialSizeOptions}
-              value={radialSizeValue}
-              fullWidth
-              onChange={(size) => handleRadialSizeChange(size)}
-            />
-          </Flex>
-          <Flex
-            direction="column"
-            gap="1"
-            css={{ minWidth: theme.spacing[17] }}
+            <ToggleGroupButton value="repeat" aria-label="Repeat">
+              <RepeatGridIcon />
+            </ToggleGroupButton>
+          </Tooltip>
+        </ToggleGroup>
+        <Tooltip
+          variant="wrapped"
+          content="Reverse the order of all gradient stops."
+        >
+          <IconButton
+            aria-label="Reverse gradient stops"
+            onClick={handleReverseStops}
+            disabled={reverseDisabled}
           >
-            <ToggleGroup
-              type="single"
-              value={radialShapeValue}
-              aria-label="Radial ending shape"
-              onValueChange={handleEndingShapeChange}
-            >
-              <Tooltip
-                variant="wrapped"
-                content="Use an ellipse ending shape (radial-gradient ellipse)."
-              >
-                <ToggleGroupButton value="ellipse" aria-label="Ellipse">
-                  <EllipseIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-              <Tooltip
-                variant="wrapped"
-                content="Use a circle ending shape (radial-gradient circle)."
-              >
-                <ToggleGroupButton value="circle" aria-label="Circle">
-                  <CircleIcon />
-                </ToggleGroupButton>
-              </Tooltip>
-            </ToggleGroup>
-          </Flex>
-        </Grid>
-      )}
-    </>
+            <ArrowRightLeftIcon />
+          </IconButton>
+        </Tooltip>
+      </Flex>
+    </Grid>
   );
 };
 
@@ -752,6 +808,7 @@ const SolidColorControls = ({
 type GradientStopControlsProps = {
   gradient: ParsedGradient;
   selectedStopIndex: number;
+  setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   hintOverrides: Map<number, PercentUnitValue>;
   setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
   applyGradient: GradientEditorApplyFn;
@@ -760,22 +817,17 @@ type GradientStopControlsProps = {
 const GradientStopControls = ({
   gradient,
   selectedStopIndex,
+  setSelectedStopIndex,
   hintOverrides,
   setHintOverrides,
   applyGradient,
 }: GradientStopControlsProps) => {
-  const safeSelectedStopIndex = clampStopIndex(selectedStopIndex, gradient);
-  const selectedStop = gradient.stops[safeSelectedStopIndex];
-  const selectedStopPositionValue = selectedStop?.position;
-  const selectedStopHintOverride = hintOverrides.get(safeSelectedStopIndex);
-  const selectedStopHintValue = selectedStop?.hint ?? selectedStopHintOverride;
-
-  const updateSelectedStop = useCallback(
+  const updateStop = useCallback(
     (
+      stopIndex: number,
       updater: (stop: GradientStop) => GradientStop,
       options?: { isEphemeral?: boolean }
     ) => {
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
       const currentStop = gradient.stops[stopIndex];
       if (currentStop === undefined) {
         return;
@@ -786,138 +838,218 @@ const GradientStopControls = ({
       const nextGradient = { ...gradient, stops };
       applyGradient(nextGradient, options);
     },
-    [applyGradient, gradient, selectedStopIndex]
+    [applyGradient, gradient]
   );
 
-  const handleStopPositionUpdate = useCallback(
-    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const resolution = resolveStopPositionUpdate(styleValue);
-      if (resolution.type === "none") {
+  const handleAddStop = useCallback(() => {
+    applyGradient({
+      ...gradient,
+      stops: [
+        ...gradient.stops,
+        {
+          color: fallbackStopColor,
+          position: createPercentUnitValue(50),
+        },
+      ],
+    });
+  }, [applyGradient, gradient]);
+
+  const handleDeleteStop = useCallback(
+    (stopIndex: number) => {
+      if (gradient.stops.length <= 2) {
         return;
       }
-
-      updateSelectedStop(
-        (stop) => ({
-          ...stop,
-          position: resolution.position,
-        }),
-        options
-      );
-
-      if (!options?.isEphemeral && resolution.clearHintOverrides) {
-        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
-      }
-    },
-    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
-  );
-
-  const handleStopPositionDelete = useCallback(
-    (options?: { isEphemeral?: boolean }) => {
-      updateSelectedStop((stop) => {
-        const { position: _omit, ...rest } = stop;
-        return rest;
-      }, options);
-    },
-    [updateSelectedStop]
-  );
-
-  const handleStopHintUpdate = useCallback(
-    (styleValue: StyleValue, options?: { isEphemeral?: boolean }) => {
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      const resolution = resolveStopHintUpdate(styleValue, {
-        getPercentUnit,
-        clampPercentUnit: (value) => ({
-          ...value,
-          value: clamp(value.value, 0, 100),
-        }),
+      applyGradient({
+        ...gradient,
+        stops: gradient.stops.filter((_, index) => index !== stopIndex),
       });
-
-      if (resolution.type === "none") {
-        return;
-      }
-
-      updateSelectedStop(
-        (stop) => ({
-          ...stop,
-          hint: resolution.hint,
-        }),
-        options
-      );
-
-      if (options?.isEphemeral) {
-        return;
-      }
-
-      if (resolution.clearOverride) {
-        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
-        return;
-      }
-
-      const override = resolution.override;
-      if (override !== undefined) {
-        setHintOverrides((previous) =>
-          setHintOverride(previous, stopIndex, override)
-        );
-      }
+      setHintOverrides((previous) => reindexHintOverrides(previous, stopIndex));
     },
-    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
-  );
-
-  const handleStopHintDelete = useCallback(
-    (options?: { isEphemeral?: boolean }) => {
-      const stopIndex = clampStopIndex(selectedStopIndex, gradient);
-      updateSelectedStop((stop) => {
-        const { hint: _omit, ...rest } = stop;
-        return { ...rest };
-      }, options);
-      if (!options?.isEphemeral) {
-        setHintOverrides((previous) => removeHintOverride(previous, stopIndex));
-      }
-    },
-    [gradient, selectedStopIndex, setHintOverrides, updateSelectedStop]
-  );
-
-  const getAvailableUnitVariables = useCallback(
-    () => $availableUnitVariables.get(),
-    []
+    [applyGradient, gradient, setHintOverrides]
   );
 
   return (
-    <>
-      <Grid align="end" gap="2" columns={2}>
-        <Flex direction="column" gap="1">
-          <PropertyInlineLabel
-            label="Stop"
-            description="Position of the selected gradient stop along the gradient line."
-          />
-          <CssValueInputContainer
-            property={"background-position-x"}
-            styleSource="default"
-            getOptions={getAvailableUnitVariables}
-            value={selectedStopPositionValue}
-            unitOptions={percentUnitOptions}
-            onUpdate={handleStopPositionUpdate}
-            onDelete={handleStopPositionDelete}
-          />
+    <Flex direction="column" gap="2">
+      <Flex align="center" justify="between">
+        <PropertyInlineLabel
+          label="Stops"
+          description="Gradient color stops and their positions along the gradient line."
+        />
+        <Flex gap="1">
+          <Tooltip content="Add gradient stop" variant="wrapped">
+            <IconButton aria-label="Add stop" onClick={handleAddStop}>
+              <PlusIcon />
+            </IconButton>
+          </Tooltip>
         </Flex>
-        <Flex direction="column" gap="1">
-          <PropertyInlineLabel
-            label="Hint"
-            description="Midpoint position for color transition between this stop and the next. Controls where the colors are evenly mixed."
-          />
-          <CssValueInputContainer
-            property={"background-position-x"}
-            styleSource="default"
-            getOptions={getAvailableUnitVariables}
-            value={selectedStopHintValue}
-            unitOptions={percentUnitOptions}
-            onUpdate={handleStopHintUpdate}
-            onDelete={handleStopHintDelete}
-          />
-        </Flex>
-      </Grid>
-    </>
+      </Flex>
+      {gradient.stops
+        .map((stop, originalIndex) => ({ stop, originalIndex }))
+        .sort((a, b) => getStopPosition(a.stop) - getStopPosition(b.stop))
+        .map(({ stop, originalIndex: stopIndex }) => {
+          const isSelected =
+            stopIndex === clampStopIndex(selectedStopIndex, gradient);
+          const stopPositionValue = stop.position;
+          const stopHintOverride = hintOverrides.get(stopIndex);
+          const stopHintValue = stop.hint ?? stopHintOverride;
+
+          const handleStopPositionUpdate = (
+            styleValue: StyleValue,
+            options?: { isEphemeral?: boolean }
+          ) => {
+            const resolution = resolveStopPositionUpdate(styleValue);
+            if (resolution.type === "none") {
+              return;
+            }
+
+            updateStop(
+              stopIndex,
+              (stop) => ({
+                ...stop,
+                position: resolution.position,
+              }),
+              options
+            );
+
+            if (!options?.isEphemeral && resolution.clearHintOverrides) {
+              setHintOverrides((previous) =>
+                removeHintOverride(previous, stopIndex)
+              );
+            }
+          };
+
+          const handleStopPositionDelete = (options?: {
+            isEphemeral?: boolean;
+          }) => {
+            updateStop(
+              stopIndex,
+              (stop) => {
+                const { position: _omit, ...rest } = stop;
+                return rest;
+              },
+              options
+            );
+          };
+
+          const handleStopHintUpdate = (
+            styleValue: StyleValue,
+            options?: { isEphemeral?: boolean }
+          ) => {
+            const resolution = resolveStopHintUpdate(styleValue, {
+              getPercentUnit,
+              clampPercentUnit,
+            });
+
+            if (resolution.type === "none") {
+              return;
+            }
+
+            updateStop(
+              stopIndex,
+              (stop) => ({
+                ...stop,
+                hint: resolution.hint,
+              }),
+              options
+            );
+
+            if (options?.isEphemeral) {
+              return;
+            }
+
+            if (resolution.clearOverride) {
+              setHintOverrides((previous) =>
+                removeHintOverride(previous, stopIndex)
+              );
+              return;
+            }
+
+            const override = resolution.override;
+            if (override !== undefined) {
+              setHintOverrides((previous) =>
+                setHintOverride(previous, stopIndex, override)
+              );
+            }
+          };
+
+          const handleStopHintDelete = (options?: {
+            isEphemeral?: boolean;
+          }) => {
+            updateStop(
+              stopIndex,
+              (stop) => {
+                const { hint: _omit, ...rest } = stop;
+                return { ...rest };
+              },
+              options
+            );
+            if (!options?.isEphemeral) {
+              setHintOverrides((previous) =>
+                removeHintOverride(previous, stopIndex)
+              );
+            }
+          };
+
+          return (
+            <Flex
+              key={stopIndex}
+              gap="2"
+              css={{
+                opacity: isSelected ? 1 : 0.6,
+              }}
+              onFocus={() => {
+                if (!isSelected) {
+                  setSelectedStopIndex(stopIndex);
+                }
+              }}
+            >
+              <Grid align="end" gap="2" columns={2} css={{ flex: 1 }}>
+                <Tooltip
+                  content="Position of this gradient stop along the gradient line."
+                  variant="wrapped"
+                >
+                  <Box>
+                    <CssValueInputContainer
+                      property={"background-position-x"}
+                      styleSource="default"
+                      getOptions={getAvailableUnitVariables}
+                      value={stopPositionValue}
+                      unitOptions={percentUnitOptions}
+                      onUpdate={handleStopPositionUpdate}
+                      onDelete={handleStopPositionDelete}
+                    />
+                  </Box>
+                </Tooltip>
+                <Tooltip
+                  content="Midpoint position for color transition between this stop and the next."
+                  variant="wrapped"
+                >
+                  <Box>
+                    <CssValueInputContainer
+                      property={"background-position-x"}
+                      styleSource="default"
+                      getOptions={getAvailableUnitVariables}
+                      value={stopHintValue}
+                      unitOptions={percentUnitOptions}
+                      onUpdate={handleStopHintUpdate}
+                      onDelete={handleStopHintDelete}
+                    />
+                  </Box>
+                </Tooltip>
+              </Grid>
+              <Tooltip content="Delete stop" variant="wrapped">
+                <IconButton
+                  aria-label="Delete stop"
+                  onClick={() => handleDeleteStop(stopIndex)}
+                  disabled={gradient.stops.length <= 2}
+                >
+                  <MinusIcon />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+          );
+        })}
+    </Flex>
   );
 };
 
