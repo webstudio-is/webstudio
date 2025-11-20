@@ -361,7 +361,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
 
       <Grid
         css={{
-          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
+          gridTemplateColumns: `1fr 1fr`,
           mt: theme.spacing[5],
         }}
         align="center"
@@ -372,18 +372,14 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
           description={propertyDescriptions.backgroundRepeat}
           properties={["background-repeat"]}
         />
-        <Flex css={{ justifySelf: "end" }}>
-          <BackgroundRepeat index={index} />
-        </Flex>
+        <BackgroundRepeat index={index} />
 
         <PropertyLabel
           label="Attachment"
           description={propertyDescriptions.backgroundAttachment}
           properties={["background-attachment"]}
         />
-        <Flex css={{ justifySelf: "end" }}>
-          <BackgroundAttachment index={index} />
-        </Flex>
+        <BackgroundAttachment index={index} />
 
         <PropertyLabel
           label="Blend mode"
