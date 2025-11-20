@@ -17,11 +17,8 @@ import { registerContainers } from "~/shared/sync";
 import { BackgroundContent } from "./background-content";
 import { $awareness } from "~/shared/awareness";
 import { useComputedStyleDecl } from "../../shared/model";
-import {
-  getRepeatedStyleItem,
-  setRepeatedStyleItem,
-} from "../../shared/repeated-style";
-import { toValue, type StyleValue } from "@webstudio-is/css-engine";
+import { setRepeatedStyleItem } from "../../shared/repeated-style";
+import { type StyleValue } from "@webstudio-is/css-engine";
 
 registerContainers();
 $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
