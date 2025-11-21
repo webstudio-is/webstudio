@@ -1213,38 +1213,6 @@ export const detectBackgroundType = (
   return "image";
 };
 
-export const getStyleValueKey = (styleValue?: StyleValue) => {
-  if (styleValue === undefined) {
-    return "undefined";
-  }
-
-  if (styleValue.type === "image") {
-    const image = styleValue.value;
-    if (image.type === "asset") {
-      return `image-asset:${image.value}`;
-    }
-    if (image.type === "url") {
-      return `image-url:${image.url}`;
-    }
-  }
-
-  if (styleValue.type === "keyword") {
-    return `keyword:${styleValue.value}`;
-  }
-
-  return `${styleValue.type}:${toValue(styleValue)}`;
-};
-
-export const isBackgroundType = (value: string): value is BackgroundType => {
-  return (
-    value === "image" ||
-    value === "linearGradient" ||
-    value === "radialGradient" ||
-    value === "conicGradient" ||
-    value === "solidColor"
-  );
-};
-
 export const getBackgroundStyleItem = (
   styleDecl: ComputedStyleDecl,
   index: number

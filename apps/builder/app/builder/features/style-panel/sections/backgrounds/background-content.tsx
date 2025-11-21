@@ -3,13 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
@@ -57,8 +51,6 @@ import {
   detectBackgroundType,
   formatGradientForType,
   getBackgroundStyleItem,
-  getStyleValueKey,
-  isBackgroundType,
   type BackgroundType,
 } from "./gradient-utils";
 
@@ -147,11 +139,7 @@ const BackgroundTypeToggle = ({
   index,
 }: BackgroundTypeToggleProps) => {
   const handleValueChange = useCallback(
-    (nextValue: string) => {
-      if (isBackgroundType(nextValue) === false) {
-        return;
-      }
-
+    (nextValue: BackgroundType) => {
       if (nextValue === value) {
         return;
       }
@@ -420,26 +408,6 @@ export const BackgroundContent = ({ index }: { index: number }) => {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>(() =>
     detectBackgroundType(backgroundStyleItem)
   );
-  const syncedStyleKeyRef = useRef(getStyleValueKey(backgroundStyleItem));
-  useEffect(() => {
-    const nextStyleKey = getStyleValueKey(backgroundStyleItem);
-    if (nextStyleKey === syncedStyleKeyRef.current) {
-      return;
-    }
-    syncedStyleKeyRef.current = nextStyleKey;
-    const nextType = detectBackgroundType(backgroundStyleItem);
-    setBackgroundType((currentType) => {
-      // Don't switch between linearGradient and solidColor automatically
-      // when the user is editing - let them stay in their chosen view
-      if (
-        (currentType === "linearGradient" && nextType === "solidColor") ||
-        (currentType === "solidColor" && nextType === "linearGradient")
-      ) {
-        return currentType;
-      }
-      return nextType === currentType ? currentType : nextType;
-    });
-  }, [backgroundStyleItem]);
 
   return (
     <>
