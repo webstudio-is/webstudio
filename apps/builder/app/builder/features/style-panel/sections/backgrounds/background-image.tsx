@@ -4,6 +4,7 @@ import {
   theme,
   FloatingPanelProvider,
   Grid,
+  Box,
 } from "@webstudio-is/design-system";
 import { useRef, useCallback } from "react";
 import { ImageControl } from "../../controls";
@@ -71,11 +72,11 @@ export const BackgroundImage = ({ index }: { index: number }) => {
           label="Image"
           description={propertyDescriptions.backgroundImage}
         />
-        <Flex css={{ gridColumn: "span 2" }}>
+        <Box css={{ gridColumn: "span 2" }}>
           <FloatingPanelProvider container={elementRef}>
             <ImageControl property="background-image" index={index} />
           </FloatingPanelProvider>
-        </Flex>
+        </Box>
       </Grid>
       <BackgroundCodeEditor index={index} onValidate={handleValidate} />
     </Flex>
