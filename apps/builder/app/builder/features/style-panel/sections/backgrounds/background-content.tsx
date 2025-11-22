@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
@@ -124,6 +124,9 @@ type BackgroundTypeToggleProps = {
   backgroundStyleItem: StyleValue | undefined;
   styleDecl: ComputedStyleDecl;
   index: number;
+  cachedValues: React.MutableRefObject<
+    Partial<Record<BackgroundType, StyleValue>>
+  >;
 };
 
 const BackgroundTypeToggle = ({
@@ -132,6 +135,7 @@ const BackgroundTypeToggle = ({
   backgroundStyleItem,
   styleDecl,
   index,
+  cachedValues,
 }: BackgroundTypeToggleProps) => {
   const handleValueChange = useCallback(
     (nextValue: BackgroundType) => {
@@ -139,20 +143,41 @@ const BackgroundTypeToggle = ({
         return;
       }
 
+      // Cache current value before switching
+      if (backgroundStyleItem !== undefined) {
+        cachedValues.current[value] = backgroundStyleItem;
+      }
+
       onChange(nextValue);
 
-      if (nextValue !== "image") {
-        const gradientValue = formatGradientForType(
-          backgroundStyleItem,
-          nextValue
-        );
+      // Check if we have a cached value for the new type
+      const cachedValue = cachedValues.current[nextValue];
+
+      if (nextValue === "image") {
+        // For image, restore cached value or set to none
+        if (cachedValue !== undefined) {
+          setRepeatedStyleItem(styleDecl, index, cachedValue);
+        } else {
+          setRepeatedStyleItem(styleDecl, index, {
+            type: "keyword",
+            value: "none",
+          });
+        }
+      } else {
+        // For gradients and solid color, restore cached or generate new
+        const gradientValue = cachedValue
+          ? cachedValue.type === "unparsed"
+            ? cachedValue.value
+            : formatGradientForType(cachedValue, nextValue)
+          : formatGradientForType(backgroundStyleItem, nextValue);
+
         setRepeatedStyleItem(styleDecl, index, {
           type: "unparsed",
           value: gradientValue,
         });
       }
     },
-    [backgroundStyleItem, index, onChange, styleDecl, value]
+    [backgroundStyleItem, index, onChange, styleDecl, value, cachedValues]
   );
 
   return (
@@ -357,6 +382,11 @@ export const BackgroundContent = ({ index }: { index: number }) => {
     detectBackgroundType(backgroundStyleItem)
   );
 
+  // Cache background values for each type to preserve user's intermediate changes
+  const cachedValuesRef = useRef<Partial<Record<BackgroundType, StyleValue>>>(
+    {}
+  );
+
   return (
     <>
       <Flex
@@ -376,6 +406,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           backgroundStyleItem={backgroundStyleItem}
           styleDecl={backgroundImage}
           index={index}
+          cachedValues={cachedValuesRef}
         />
       </Flex>
 
