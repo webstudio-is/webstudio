@@ -290,7 +290,12 @@ export const BackgroundGradient = ({
           </Box>
         </>
       )}
-      <Box css={{ padding: theme.panel.padding }}>
+      <Box
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          paddingBottom: theme.panel.paddingBlock,
+        }}
+      >
         <BackgroundCodeEditor index={index} />
       </Box>
     </Flex>
