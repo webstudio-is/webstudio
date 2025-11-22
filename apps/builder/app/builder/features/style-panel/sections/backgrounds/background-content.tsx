@@ -27,6 +27,7 @@ import {
   Box,
   EnhancedTooltip,
   ScrollArea,
+  SectionTitle,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
@@ -51,6 +52,7 @@ import {
   getBackgroundStyleItem,
   type BackgroundType,
 } from "./gradient-utils";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 const ColorSwatchIcon = styled("div", {
   width: theme.spacing[7],
@@ -297,48 +299,54 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
 
 const OtherLayerProperties = ({ index }: { index: number }) => {
   return (
-    <Flex gap="2" direction="column" css={{ padding: theme.panel.padding }}>
-      <Grid columns={2} gap={2}>
-        <PropertyLabel
-          label="Blend mode"
-          description={propertyDescriptions.backgroundBlendMode}
-          properties={["background-blend-mode"]}
-        />
-        <SelectControl property="background-blend-mode" index={index} />
-      </Grid>
-      <BackgroundSize index={index} />
-      <BackgroundPosition index={index} />
-      <Grid columns={2} align="center" gap={2}>
-        <PropertyLabel
-          label="Repeat"
-          description={propertyDescriptions.backgroundRepeat}
-          properties={["background-repeat"]}
-        />
-        <BackgroundRepeat index={index} />
+    <CollapsibleSectionRoot label={"More properties"} fullWidth={true}>
+      <Flex
+        gap="2"
+        direction="column"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
+        <Grid columns={2} gap={2}>
+          <PropertyLabel
+            label="Blend mode"
+            description={propertyDescriptions.backgroundBlendMode}
+            properties={["background-blend-mode"]}
+          />
+          <SelectControl property="background-blend-mode" index={index} />
+        </Grid>
+        <BackgroundSize index={index} />
+        <BackgroundPosition index={index} />
+        <Grid columns={2} align="center" gap={2}>
+          <PropertyLabel
+            label="Repeat"
+            description={propertyDescriptions.backgroundRepeat}
+            properties={["background-repeat"]}
+          />
+          <BackgroundRepeat index={index} />
 
-        <PropertyLabel
-          label="Attachment"
-          description={propertyDescriptions.backgroundAttachment}
-          properties={["background-attachment"]}
-        />
-        <BackgroundAttachment index={index} />
-      </Grid>
-      <Grid columns={2} align="center" gap={2}>
-        <PropertyLabel
-          label="Clip"
-          description={propertyDescriptions.backgroundClip}
-          properties={["background-clip"]}
-        />
-        <SelectControl property="background-clip" index={index} />
+          <PropertyLabel
+            label="Attachment"
+            description={propertyDescriptions.backgroundAttachment}
+            properties={["background-attachment"]}
+          />
+          <BackgroundAttachment index={index} />
+        </Grid>
+        <Grid columns={2} align="center" gap={2}>
+          <PropertyLabel
+            label="Clip"
+            description={propertyDescriptions.backgroundClip}
+            properties={["background-clip"]}
+          />
+          <SelectControl property="background-clip" index={index} />
 
-        <PropertyLabel
-          label="Origin"
-          description={propertyDescriptions.backgroundOrigin}
-          properties={["background-origin"]}
-        />
-        <SelectControl property="background-origin" index={index} />
-      </Grid>
-    </Flex>
+          <PropertyLabel
+            label="Origin"
+            description={propertyDescriptions.backgroundOrigin}
+            properties={["background-origin"]}
+          />
+          <SelectControl property="background-origin" index={index} />
+        </Grid>
+      </Flex>
+    </CollapsibleSectionRoot>
   );
 };
 

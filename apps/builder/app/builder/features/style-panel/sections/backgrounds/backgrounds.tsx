@@ -40,7 +40,7 @@ export const Section = () => {
     >
       <Flex gap={1} direction="column">
         <RepeatedStyle
-          label="Backgrounds"
+          label="Background layer"
           styles={styles}
           floatingPanelOffset={{ alignmentAxis: -100 }}
           getItemProps={(_index, primaryValue) => ({
