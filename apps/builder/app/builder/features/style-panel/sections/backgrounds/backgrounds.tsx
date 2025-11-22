@@ -34,7 +34,10 @@ export const Section = () => {
       description="Add one or more backgrounds to the instance such as a color, image, or gradient."
       properties={properties}
       onAdd={() => {
-        addRepeatedStyleItem(styles, parseCssFragment("none", ["background"]));
+        addRepeatedStyleItem(
+          styles,
+          parseCssFragment("none", ["background-image"])
+        );
       }}
       collapsible
     >
