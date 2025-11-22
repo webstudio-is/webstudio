@@ -27,7 +27,6 @@ import {
   Box,
   EnhancedTooltip,
   ScrollArea,
-  SectionTitle,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
