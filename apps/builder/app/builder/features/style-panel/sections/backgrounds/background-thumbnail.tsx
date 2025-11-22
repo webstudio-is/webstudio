@@ -111,7 +111,7 @@ export const getBackgroundLabel = (
     // Check if it's a solid color gradient using cached parsing
     const parsed = parseAnyGradient(value);
     if (parsed?.type === "linear" && isSolidLinearGradient(parsed)) {
-      return "Color";
+      return "Solid";
     }
 
     const gradientName = gradientNames.find((name) => value.includes(name));

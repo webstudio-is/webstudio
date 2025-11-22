@@ -151,7 +151,7 @@ describe("formatGradientForType", () => {
   };
 
   test("formats solid color target", () => {
-    expect(formatGradientForType(solidStyle, "solidColor")).toBe(
+    expect(formatGradientForType(solidStyle, "solid")).toBe(
       "linear-gradient(rgba(255, 0, 0, 1) 0%, rgba(255, 0, 0, 1) 100%)"
     );
   });
@@ -1549,20 +1549,20 @@ describe("detectBackgroundType", () => {
     expect(detectBackgroundType(value)).toBe("linearGradient");
   });
 
-  test("returns solidColor for uniform linear gradient with explicit positions", () => {
+  test("returns solid for uniform linear gradient with explicit positions", () => {
     const value: StyleValue = {
       type: "unparsed",
       value: "linear-gradient(red 0%, red 100%)",
     };
-    expect(detectBackgroundType(value)).toBe("solidColor");
+    expect(detectBackgroundType(value)).toBe("solid");
   });
 
-  test("returns solidColor for uniform gradient without explicit positions", () => {
+  test("returns solid for uniform gradient without explicit positions", () => {
     const value: StyleValue = {
       type: "unparsed",
       value: "linear-gradient(red, red)",
     };
-    expect(detectBackgroundType(value)).toBe("solidColor");
+    expect(detectBackgroundType(value)).toBe("solid");
   });
 
   test("returns conicGradient for conic gradient", () => {

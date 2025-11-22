@@ -85,8 +85,8 @@ const backgroundTypeOptions: BackgroundTypeOption[] = [
     autoFocus: true,
   },
   {
-    value: "solidColor",
-    label: "Color",
+    value: "solid",
+    label: "Solid",
     description:
       "Use a single color layer while keeping control over stacking order.",
     code: "background-image: linear-gradient(color, color);",
@@ -417,7 +417,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
           {(backgroundType === "linearGradient" ||
             backgroundType === "conicGradient" ||
             backgroundType === "radialGradient" ||
-            backgroundType === "solidColor") && (
+            backgroundType === "solid") && (
             <BackgroundGradient
               index={index}
               type={
@@ -427,7 +427,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
                     ? "radial"
                     : "linear"
               }
-              variant={backgroundType === "solidColor" ? "solid" : "default"}
+              variant={backgroundType === "solid" ? "solid" : "default"}
             />
           )}
 

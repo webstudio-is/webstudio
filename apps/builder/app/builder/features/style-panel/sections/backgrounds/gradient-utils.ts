@@ -1034,7 +1034,7 @@ export type BackgroundType =
   | "linearGradient"
   | "conicGradient"
   | "radialGradient"
-  | "solidColor";
+  | "solid";
 
 const getGradientColorSignature = (color?: GradientStop["color"]) => {
   if (color === undefined) {
@@ -1163,7 +1163,7 @@ export const formatGradientForType = (
   styleValue: StyleValue | undefined,
   target: Exclude<BackgroundType, "image">
 ) => {
-  if (target === "solidColor") {
+  if (target === "solid") {
     return formatSolidColorGradient(styleValue);
   }
   if (target === "linearGradient") {
@@ -1203,7 +1203,7 @@ export const detectBackgroundType = (
 
     if (parsed !== undefined) {
       if (parsed.type === "linear") {
-        return isSolidLinearGradient(parsed) ? "solidColor" : "linearGradient";
+        return isSolidLinearGradient(parsed) ? "solid" : "linearGradient";
       }
       if (parsed.type === "conic") {
         return "conicGradient";
