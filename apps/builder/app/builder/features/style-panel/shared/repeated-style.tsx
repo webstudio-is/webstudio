@@ -1,4 +1,4 @@
-import { useMemo, type ComponentProps, type JSX } from "react";
+import { useMemo, type ComponentProps, type JSX, type ReactNode } from "react";
 import type { RgbaColor } from "colord";
 import {
   toValue,
@@ -20,11 +20,11 @@ import {
   toast,
   useSortable,
   FloatingPanel,
+  ColorThumb,
 } from "@webstudio-is/design-system";
 import { repeatUntil } from "~/shared/array-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { createBatchUpdate, type StyleUpdateOptions } from "./use-style-data";
-import { ColorThumb } from "./color-thumb";
 
 const isRepeatedValue = (
   styleValue: StyleValue
@@ -332,6 +332,16 @@ export const RepeatedStyle = (props: {
   floatingPanelOffset?: ComponentProps<typeof FloatingPanel>["offset"];
   renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
+  renderItemButtons?: (
+    index: number,
+    primaryItem: StyleValue,
+    options: { isHidden: boolean; canBeChanged: boolean }
+  ) => ReactNode;
+  renderPanelTitleSuffix?: (
+    index: number,
+    primaryItem: StyleValue,
+    options: { isHidden: boolean; canBeChanged: boolean }
+  ) => ReactNode;
 }) => {
   const {
     label,
@@ -340,6 +350,8 @@ export const RepeatedStyle = (props: {
     renderThumbnail,
     renderItemContent,
     floatingPanelOffset,
+    renderItemButtons,
+    renderPanelTitleSuffix,
   } = props;
   // first property should describe the amount of layers or tuple items
   const primaryValue = styles[0].cascadedValue;
@@ -385,11 +397,24 @@ export const RepeatedStyle = (props: {
           const isHidden = isItemHidden(styles[0].cascadedValue, index);
           const canBeChanged =
             styles[0].cascadedValue.type === "var" ? index === 0 : true;
+          const customButtons = renderItemButtons?.(index, primaryItem, {
+            isHidden,
+            canBeChanged,
+          });
+          const panelTitleSuffix = renderPanelTitleSuffix?.(
+            index,
+            primaryItem,
+            {
+              isHidden,
+              canBeChanged,
+            }
+          );
           return (
             <FloatingPanel
               key={index}
               title={label}
               content={renderItemContent(index, primaryItem)}
+              titleSuffix={panelTitleSuffix}
               offset={floatingPanelOffset}
             >
               <CssValueListItem
@@ -405,6 +430,7 @@ export const RepeatedStyle = (props: {
                 }
                 buttons={
                   <>
+                    {customButtons}
                     <SmallToggleButton
                       variant="normal"
                       pressed={isHidden}

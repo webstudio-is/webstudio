@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
-import { PropertyInlineLabel } from "../../property-label";
+import { PropertyLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -42,9 +42,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
 
   const selectOptions = [...keywordValues[property], "custom"];
   const selectValue =
-    styleValue?.type === "keyword" ? toValue(styleValue) : "custom";
+    styleValue?.type === "keyword" ? toValue(styleValue) : "auto";
 
-  const customSizeDisabled = styleValue?.type === "keyword";
   const customSizeOptions = [autoKeyword];
   const customSizeValue = toTuple(styleValue);
 
@@ -66,12 +65,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
 
   return (
     <>
-      <Grid
-        css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
-        align="center"
-        gap={2}
-      >
-        <PropertyInlineLabel
+      <Grid columns={2} align="center" gap={2}>
+        <PropertyLabel
           label="Size"
           description={propertyDescriptions.backgroundSize}
           properties={[property]}
@@ -115,47 +110,45 @@ export const BackgroundSize = ({ index }: { index: number }) => {
         />
       </Grid>
 
-      <Grid
-        css={{ mt: theme.spacing[4] }}
-        align="center"
-        columns={2}
-        gapX={2}
-        gapY={1}
-      >
-        <PropertyInlineLabel
-          properties={["background-size"]}
-          label="Width"
-          description="The width of the background image."
-          disabled={customSizeDisabled}
-        />
+      {selectValue === "custom" && (
+        <Grid
+          css={{ mt: theme.spacing[4] }}
+          align="center"
+          columns={2}
+          gapX={2}
+          gapY={1}
+        >
+          <PropertyLabel
+            properties={["background-size"]}
+            label="Width"
+            description="The width of the background image."
+          />
 
-        <PropertyInlineLabel
-          properties={["background-size"]}
-          label="Height"
-          description="The height of the background image."
-          disabled={customSizeDisabled}
-        />
+          <PropertyLabel
+            properties={["background-size"]}
+            label="Height"
+            description="The height of the background image."
+          />
 
-        <CssValueInputContainer
-          disabled={customSizeDisabled}
-          property={property}
-          styleSource="default"
-          getOptions={() => customSizeOptions}
-          value={customSizeValue.value[0]}
-          onUpdate={setValueX}
-          onDelete={() => {}}
-        />
+          <CssValueInputContainer
+            property={property}
+            styleSource="default"
+            getOptions={() => customSizeOptions}
+            value={customSizeValue.value[0]}
+            onUpdate={setValueX}
+            onDelete={() => {}}
+          />
 
-        <CssValueInputContainer
-          disabled={customSizeDisabled}
-          property={property}
-          styleSource="default"
-          getOptions={() => customSizeOptions}
-          value={customSizeValue.value[1]}
-          onUpdate={setValueY}
-          onDelete={() => {}}
-        />
-      </Grid>
+          <CssValueInputContainer
+            property={property}
+            styleSource="default"
+            getOptions={() => customSizeOptions}
+            value={customSizeValue.value[1]}
+            onUpdate={setValueY}
+            onDelete={() => {}}
+          />
+        </Grid>
+      )}
     </>
   );
 };

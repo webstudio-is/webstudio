@@ -56,7 +56,7 @@ export const CssValueInputContainer = ({
         }
       }}
       onChangeComplete={(event) => {
-        onUpdate(event.value);
+        onUpdate(event.value, { isEphemeral: false });
         setIntermediateValue(undefined);
         onChangeComplete?.(event);
       }}

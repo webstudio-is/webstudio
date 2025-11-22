@@ -55,7 +55,7 @@ const minHeightVar = "--ws-code-editor-min-height";
 const maxHeightVar = "--ws-code-editor-max-height";
 const maximizeIconVisibilityVar = "--ws-code-editor-maximize-icon-visibility";
 
-export const getMinMaxHeightVars = ({
+export const getCodeEditorCssVars = ({
   minHeight,
   maxHeight,
 }: {

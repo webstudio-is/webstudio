@@ -11,8 +11,12 @@ import { $assets } from "~/shared/nano-states";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";
-import { getComputedRepeatedItem } from "../../shared/repeated-style";
+import {
+  getComputedRepeatedItem,
+  getRepeatedStyleItem,
+} from "../../shared/repeated-style";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { parseAnyGradient, isSolidLinearGradient } from "./gradient-utils";
 
 export const repeatedProperties = [
   "background-image",
@@ -102,10 +106,15 @@ export const getBackgroundLabel = (
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    const gradientName = gradientNames.find((name) =>
-      backgroundImageStyle.value.includes(name)
-    );
+    const value = backgroundImageStyle.value;
 
+    // Check if it's a solid color gradient using cached parsing
+    const parsed = parseAnyGradient(value);
+    if (parsed?.type === "linear" && isSolidLinearGradient(parsed)) {
+      return "Solid";
+    }
+
+    const gradientName = gradientNames.find((name) => value.includes(name));
     return gradientName ? humanizeString(gradientName) : "Gradient";
   }
 
@@ -118,7 +127,13 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   const assets = useStore($assets);
   const styles = useComputedStyles(repeatedProperties);
   const [backgroundImage] = styles;
-  const backgroundImageValue = getComputedRepeatedItem(backgroundImage, index);
+  // Use cascaded value to check for assets (before they're resolved to URLs)
+  const backgroundImageValue = getRepeatedStyleItem(backgroundImage, index);
+  // Use computed value for rendering gradients and other styles
+  const computedBackgroundImageValue = getComputedRepeatedItem(
+    backgroundImage,
+    index
+  );
 
   if (
     backgroundImageValue?.type === "image" &&
@@ -126,7 +141,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
   ) {
     const asset = assets.get(backgroundImageValue.value.value);
     if (asset === undefined) {
-      return null;
+      return;
     }
     return (
       <StyledWebstudioImage
@@ -154,7 +169,7 @@ export const BackgroundThumbnail = ({ index }: { index: number }) => {
     );
   }
 
-  if (backgroundImageValue?.type === "unparsed") {
+  if (computedBackgroundImageValue?.type === "unparsed") {
     const cssStyle: { [property in RepeatedProperty]?: string } = {};
     for (const styleDecl of styles) {
       const itemValue = getComputedRepeatedItem(styleDecl, index);

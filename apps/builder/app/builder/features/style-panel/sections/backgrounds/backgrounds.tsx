@@ -34,13 +34,16 @@ export const Section = () => {
       description="Add one or more backgrounds to the instance such as a color, image, or gradient."
       properties={properties}
       onAdd={() => {
-        addRepeatedStyleItem(styles, parseCssFragment("none", ["background"]));
+        addRepeatedStyleItem(
+          styles,
+          parseCssFragment("none", ["background-image"])
+        );
       }}
       collapsible
     >
       <Flex gap={1} direction="column">
         <RepeatedStyle
-          label="Backgrounds"
+          label="Background layer"
           styles={styles}
           floatingPanelOffset={{ alignmentAxis: -100 }}
           getItemProps={(_index, primaryValue) => ({

@@ -8,18 +8,20 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { parseCss, shorthandProperties } from "@webstudio-is/css-data";
-import { css as style } from "@webstudio-is/design-system";
+import { css as style, type CSS } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   EditorContent,
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-  getMinMaxHeightVars,
+  getCodeEditorCssVars,
 } from "~/builder/shared/code-editor-base";
 import { $availableVariables } from "./model";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
+
+export { getCodeEditorCssVars };
 
 export const parseCssFragment = (
   css: string,
@@ -71,7 +73,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
 
 const wrapperStyle = style({
   position: "relative",
-  ...getMinMaxHeightVars({ minHeight: "40px", maxHeight: "80px" }),
+  ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "6lh" }),
 });
 
 export const CssFragmentEditorContent = ({
@@ -106,12 +108,14 @@ export const CssFragmentEditorContent = ({
 export const CssFragmentEditor = ({
   content,
   onOpenChange,
+  css,
 }: {
   content: ReactNode;
   onOpenChange?: (newOpen: boolean) => void;
+  css?: CSS;
 }) => {
   return (
-    <div className={wrapperStyle()}>
+    <div className={wrapperStyle({ css })}>
       <EditorDialogControl>
         {content}
         <EditorDialog

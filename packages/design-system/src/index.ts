@@ -49,6 +49,7 @@ export * from "./components/focus-ring";
 export * from "./components/tree";
 export * from "./components/command";
 export * from "./components/gradient-picker";
+export * from "./components/color-picker";
 
 // Not aligned
 

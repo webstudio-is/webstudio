@@ -60,7 +60,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        id="evA4hI5dD261"
+        id="86546c68__evA4hI5dD261"
         shapeRendering="geometricPrecision"
         textRendering="geometricPrecision"
         viewBox="0 0 17 17"
@@ -72,7 +72,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
       >
         <style>
           {
-            "@keyframes evA4hI5dD263_s_do{0%,to{stroke-dashoffset:6.2}17.5%,82.5%{stroke-dashoffset:-6.24}}@keyframes evA4hI5dD264_s_do{0%,10%,90%,to{stroke-dashoffset:6.8}22.5%,77.5%{stroke-dashoffset:-6.8}}@keyframes evA4hI5dD265_s_do{0%,17.5%,82.5%,to{stroke-dashoffset:2.32}27.5%,72.5%{stroke-dashoffset:-2.32}}@keyframes evA4hI5dD266_s_do{0%,22.5%,77.5%,to{stroke-dashoffset:2.47}32.5%,67.5%{stroke-dashoffset:-2.47}}@keyframes evA4hI5dD267_s_do{0%,27.5%,72.5%,to{stroke-dashoffset:5.42}40%,60%{stroke-dashoffset:-5.42}}@keyframes evA4hI5dD268_s_do{0%,32.5%,67.5%,to{stroke-dashoffset:6.13}50%{stroke-dashoffset:-6.1}}#evA4hI5dD263{animation:evA4hI5dD263_s_do 4000ms linear infinite normal forwards}#evA4hI5dD264{animation:evA4hI5dD264_s_do 4000ms linear infinite normal forwards}#evA4hI5dD265{animation:evA4hI5dD265_s_do 4000ms linear infinite normal forwards}#evA4hI5dD266{animation:evA4hI5dD266_s_do 4000ms linear infinite normal forwards}#evA4hI5dD267{animation:evA4hI5dD267_s_do 4000ms linear infinite normal forwards}#evA4hI5dD268{animation:evA4hI5dD268_s_do 4000ms linear infinite normal forwards}"
+            "@keyframes evA4hI5dD263_s_do{0%,to{stroke-dashoffset:6.2}17.5%,82.5%{stroke-dashoffset:-6.24}}@keyframes evA4hI5dD264_s_do{0%,10%,90%,to{stroke-dashoffset:6.8}22.5%,77.5%{stroke-dashoffset:-6.8}}@keyframes evA4hI5dD265_s_do{0%,17.5%,82.5%,to{stroke-dashoffset:2.32}27.5%,72.5%{stroke-dashoffset:-2.32}}@keyframes evA4hI5dD266_s_do{0%,22.5%,77.5%,to{stroke-dashoffset:2.47}32.5%,67.5%{stroke-dashoffset:-2.47}}@keyframes evA4hI5dD267_s_do{0%,27.5%,72.5%,to{stroke-dashoffset:5.42}40%,60%{stroke-dashoffset:-5.42}}@keyframes evA4hI5dD268_s_do{0%,32.5%,67.5%,to{stroke-dashoffset:6.13}50%{stroke-dashoffset:-6.1}}#86546c68__evA4hI5dD263{animation:evA4hI5dD263_s_do 4000ms linear infinite normal forwards}#86546c68__evA4hI5dD264{animation:evA4hI5dD264_s_do 4000ms linear infinite normal forwards}#86546c68__evA4hI5dD265{animation:evA4hI5dD265_s_do 4000ms linear infinite normal forwards}#86546c68__evA4hI5dD266{animation:evA4hI5dD266_s_do 4000ms linear infinite normal forwards}#86546c68__evA4hI5dD267{animation:evA4hI5dD267_s_do 4000ms linear infinite normal forwards}#86546c68__evA4hI5dD268{animation:evA4hI5dD268_s_do 4000ms linear infinite normal forwards}"
           }
         </style>
         <path
@@ -84,7 +84,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="m2.816 12.956 1.513-6.051a2.563 2.563 0 0 1 4.974 0l1.159 4.634a1.888 1.888 0 0 0 1.816 1.417 1.892 1.892 0 0 0 1.872-1.872V4.956"
         />
         <path
-          id="evA4hI5dD263"
+          id="86546c68__evA4hI5dD263"
           fill="none"
           stroke="#fff"
           strokeDasharray="6.24"
@@ -94,7 +94,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="m2.816 12.956 1.513-6.051"
         />
         <path
-          id="evA4hI5dD264"
+          id="86546c68__evA4hI5dD264"
           fill="none"
           stroke="#fff"
           strokeDasharray="6.8"
@@ -104,7 +104,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="M4.329 6.905a2.563 2.563 0 0 1 4.974 0"
         />
         <path
-          id="evA4hI5dD265"
+          id="86546c68__evA4hI5dD265"
           fill="none"
           stroke="#fff"
           strokeDasharray="2.32"
@@ -114,7 +114,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="m9.303 6.905.561 2.243"
         />
         <path
-          id="evA4hI5dD266"
+          id="86546c68__evA4hI5dD266"
           fill="none"
           stroke="#fff"
           strokeDasharray="2.47"
@@ -124,7 +124,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="m9.864 9.148.598 2.391"
         />
         <path
-          id="evA4hI5dD267"
+          id="86546c68__evA4hI5dD267"
           fill="none"
           stroke="#fff"
           strokeDasharray="5.42"
@@ -134,7 +134,7 @@ export const AiLoadingIcon: IconComponent = forwardRef(
           d="M10.462 11.54a1.888 1.888 0 0 0 1.816 1.416 1.892 1.892 0 0 0 1.872-1.872"
         />
         <path
-          id="evA4hI5dD268"
+          id="86546c68__evA4hI5dD268"
           fill="none"
           stroke="#fff"
           strokeDasharray="6.13"
@@ -817,6 +817,31 @@ export const ArrowLeftIcon: IconComponent = forwardRef(
   }
 );
 ArrowLeftIcon.displayName = "ArrowLeftIcon";
+
+export const ArrowRightLeftIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth=".667"
+          d="m11 2 2.667 2.667m0 0L11 7.333m2.667-2.666H3M5.667 14 3 11.333m0 0 2.667-2.666M3 11.333h10.667"
+        />
+      </svg>
+    );
+  }
+);
+ArrowRightLeftIcon.displayName = "ArrowRightLeftIcon";
 
 export const ArrowRightIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -1600,14 +1625,17 @@ export const ChevronLeftIcon: IconComponent = forwardRef(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.3"
-          d="m9.256 4.499-3.512 3.5 3.512 3.502"
-        />
+        <g id="1893fb9d__icon/chevron left">
+          <path
+            id="1893fb9d__vector"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.3"
+            d="m9.256 4.499-3.512 3.5 3.512 3.502"
+          />
+        </g>
       </svg>
     );
   }
@@ -1685,6 +1713,30 @@ export const ChevronsLeftIcon: IconComponent = forwardRef(
   }
 );
 ChevronsLeftIcon.displayName = "ChevronsLeftIcon";
+
+export const CircleIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M8 3.65a4.35 4.35 0 1 0 0 8.7 4.35 4.35 0 0 0 0-8.7ZM2.35 8a5.65 5.65 0 1 1 11.3 0 5.65 5.65 0 0 1-11.3 0Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+CircleIcon.displayName = "CircleIcon";
 
 export const CloudIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -2164,6 +2216,30 @@ export const DynamicPageIcon: IconComponent = forwardRef(
   }
 );
 DynamicPageIcon.displayName = "DynamicPageIcon";
+
+export const EllipseIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M3.373 5.736C2.203 6.405 1.65 7.229 1.65 8c0 .77.553 1.595 1.723 2.264C4.525 10.922 6.159 11.35 8 11.35c1.84 0 3.475-.428 4.627-1.086C13.797 9.595 14.35 8.771 14.35 8c0-.77-.553-1.595-1.723-2.264C11.475 5.078 9.841 4.65 8 4.65c-1.84 0-3.475.428-4.627 1.086Zm-.645-1.129C4.109 3.817 5.975 3.35 8 3.35c2.025 0 3.89.468 5.272 1.257 1.364.78 2.378 1.955 2.378 3.393 0 1.438-1.014 2.614-2.378 3.393-1.382.79-3.247 1.257-5.272 1.257-2.025 0-3.89-.468-5.272-1.257C1.364 10.613.35 9.438.35 8c0-1.438 1.014-2.614 2.378-3.393Z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+);
+EllipseIcon.displayName = "EllipseIcon";
 
 export const EllipsesIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -2646,6 +2722,116 @@ export const GoogleIcon: IconComponent = forwardRef(
   }
 );
 GoogleIcon.displayName = "GoogleIcon";
+
+export const GradientConicIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <g
+          fill="#11181C"
+          clipPath="url(#15388f97__paint0_angular_9413_9319_clip_path)"
+        >
+          <path d="M8 8V0a8 8 0 0 1 4 1.072Z" />
+          <path fillOpacity=".909" d="m8 8 4-6.928A8 8 0 0 1 14.928 4Z" />
+          <path fillOpacity=".818" d="m8 8 6.928-4A8 8 0 0 1 16 8Z" />
+          <path fillOpacity=".727" d="M8 8h8a8 8 0 0 1-1.072 4Z" />
+          <path fillOpacity=".636" d="m8 8 6.928 4A8 8 0 0 1 12 14.928Z" />
+          <path fillOpacity=".545" d="m8 8 4 6.928A8 8 0 0 1 8 16Z" />
+          <path fillOpacity=".455" d="M8 8v8a8 8 0 0 1-4-1.072Z" />
+          <path fillOpacity=".364" d="m8 8-4 6.928A8 8 0 0 1 1.072 12Z" />
+          <path fillOpacity=".273" d="m8 8-6.928 4A8 8 0 0 1 0 8Z" />
+          <path fillOpacity=".182" d="M8 8H0a8 8 0 0 1 1.072-4Z" />
+          <path fillOpacity=".091" d="M8 8 1.072 4A8 8 0 0 1 4 1.072Z" />
+          <path fill="none" d="M8 8 4 1.072A8 8 0 0 1 8 0Z" />
+        </g>
+        <defs>
+          <clipPath id="15388f97__paint0_angular_9413_9319_clip_path">
+            <path d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientConicIcon.displayName = "GradientConicIcon";
+
+export const GradientLinearIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="url(#1fa533d5__gradient-linear_svg__a)"
+          d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z"
+        />
+        <defs>
+          <linearGradient
+            id="1fa533d5__gradient-linear_svg__a"
+            x1="8"
+            x2="8"
+            y1="2"
+            y2="14"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="#11181C" />
+            <stop offset="1" stopColor="#11181C" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientLinearIcon.displayName = "GradientLinearIcon";
+
+export const GradientRadialIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          fill="url(#539a7588__paint0_radial_9420_9425)"
+          d="M2 5.2c0-1.12 0-1.68.218-2.108a2 2 0 0 1 .874-.874C3.52 2 4.08 2 5.2 2h5.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C14 3.52 14 4.08 14 5.2v5.6c0 1.12 0 1.68-.218 2.108a2 2 0 0 1-.874.874C12.48 14 11.92 14 10.8 14H5.2c-1.12 0-1.68 0-2.108-.218a2 2 0 0 1-.874-.874C2 12.48 2 11.92 2 10.8V5.2Z"
+        />
+        <defs>
+          <radialGradient
+            id="539a7588__paint0_radial_9420_9425"
+            cx="0"
+            cy="0"
+            r="1"
+            gradientTransform="translate(8 8) rotate(135) scale(8.48528)"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#11181C" />
+            <stop offset="1" stopColor="#11181C" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
+    );
+  }
+);
+GradientRadialIcon.displayName = "GradientRadialIcon";
 
 export const GrowIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
@@ -3170,7 +3356,7 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        id="eEMFTOz1Zbw1"
+        id="fdbcf7a5__eEMFTOz1Zbw1"
         shapeRendering="geometricPrecision"
         textRendering="geometricPrecision"
         viewBox="0 0 300 300"
@@ -3182,23 +3368,23 @@ export const LoadingDotsIcon: IconComponent = forwardRef(
       >
         <style>
           {
-            "@keyframes eEMFTOz1Zbw12_to__to{0%,26.666667%,56.666667%,6.333333%,77%,to{transform:translate(150px,180px)}16.666667%,67%{transform:translate(150px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}@keyframes eEMFTOz1Zbw13_to__to{0%,20%,50%,70%,to{transform:translate(80px,180px)}10%,60%{transform:translate(80px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}@keyframes eEMFTOz1Zbw14_to__to{0%,13.333333%,33.333333%,63.333333%,83.333333%,to{transform:translate(220px,180px)}23.333333%,73.333333%{transform:translate(220px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}#eEMFTOz1Zbw12_to{animation:eEMFTOz1Zbw12_to__to 2000ms linear infinite normal forwards}#eEMFTOz1Zbw13_to{animation:eEMFTOz1Zbw13_to__to 2000ms linear infinite normal forwards}#eEMFTOz1Zbw14_to{animation:eEMFTOz1Zbw14_to__to 2000ms linear infinite normal forwards}"
+            "@keyframes eEMFTOz1Zbw12_to__to{0%,26.666667%,56.666667%,6.333333%,77%,to{transform:translate(150px,180px)}16.666667%,67%{transform:translate(150px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}@keyframes eEMFTOz1Zbw13_to__to{0%,20%,50%,70%,to{transform:translate(80px,180px)}10%,60%{transform:translate(80px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}@keyframes eEMFTOz1Zbw14_to__to{0%,13.333333%,33.333333%,63.333333%,83.333333%,to{transform:translate(220px,180px)}23.333333%,73.333333%{transform:translate(220px,120px);animation-timing-function:cubic-bezier(.42,0,.58,1)}}#fdbcf7a5__eEMFTOz1Zbw12_to{animation:eEMFTOz1Zbw12_to__to 2000ms linear infinite normal forwards}#fdbcf7a5__eEMFTOz1Zbw13_to{animation:eEMFTOz1Zbw13_to__to 2000ms linear infinite normal forwards}#fdbcf7a5__eEMFTOz1Zbw14_to{animation:eEMFTOz1Zbw14_to__to 2000ms linear infinite normal forwards}"
           }
         </style>
         <circle
-          id="eEMFTOz1Zbw12_to"
+          id="fdbcf7a5__eEMFTOz1Zbw12_to"
           r="20"
           strokeWidth="0"
           transform="translate(150,180) translate(0,0)"
         />
         <circle
-          id="eEMFTOz1Zbw13_to"
+          id="fdbcf7a5__eEMFTOz1Zbw13_to"
           r="20"
           strokeWidth="0"
           transform="translate(80,180) translate(0,0)"
         />
         <circle
-          id="eEMFTOz1Zbw14_to"
+          id="fdbcf7a5__eEMFTOz1Zbw14_to"
           r="20"
           strokeWidth="0"
           transform="translate(220,180) translate(0,0)"
@@ -4436,7 +4622,7 @@ export const SpinnerIcon: IconComponent = forwardRef(
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        id="e2CRglijn891"
+        id="765c5cf3__e2CRglijn891"
         shapeRendering="geometricPrecision"
         textRendering="geometricPrecision"
         viewBox="0 0 128 128"
@@ -4448,12 +4634,15 @@ export const SpinnerIcon: IconComponent = forwardRef(
       >
         <style>
           {
-            "@keyframes e2CRglijn892_tr__tr{0%{transform:translate(64px,64px) rotate(90deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}50%{transform:translate(64px,64px) rotate(810deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}to{transform:translate(64px,64px) rotate(1530deg)}}@keyframes e2CRglijn892_s_p{0%,to{stroke:#39fbbb}25%{stroke:#4a4efa}50%{stroke:#e63cfe}75%{stroke:#ffae3c}}@keyframes e2CRglijn892_s_do{0%{stroke-dashoffset:251.89}2.5%,52.5%{stroke-dashoffset:263.88;animation-timing-function:cubic-bezier(.42,0,.58,1)}25%,75%{stroke-dashoffset:131.945}to{stroke-dashoffset:251.885909}}#e2CRglijn892_tr{animation:e2CRglijn892_tr__tr 3000ms linear infinite normal forwards}#e2CRglijn892{animation-name:e2CRglijn892_s_p,e2CRglijn892_s_do;animation-duration:3000ms;animation-fill-mode:forwards;animation-timing-function:linear;animation-direction:normal;animation-iteration-count:infinite}"
+            "@keyframes e2CRglijn892_tr__tr{0%{transform:translate(64px,64px) rotate(90deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}50%{transform:translate(64px,64px) rotate(810deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}to{transform:translate(64px,64px) rotate(1530deg)}}@keyframes e2CRglijn892_s_p{0%,to{stroke:#39fbbb}25%{stroke:#4a4efa}50%{stroke:#e63cfe}75%{stroke:#ffae3c}}@keyframes e2CRglijn892_s_do{0%{stroke-dashoffset:251.89}2.5%,52.5%{stroke-dashoffset:263.88;animation-timing-function:cubic-bezier(.42,0,.58,1)}25%,75%{stroke-dashoffset:131.945}to{stroke-dashoffset:251.885909}}#765c5cf3__e2CRglijn892_tr{animation:e2CRglijn892_tr__tr 3000ms linear infinite normal forwards}#765c5cf3__e2CRglijn892{animation-name:e2CRglijn892_s_p,e2CRglijn892_s_do;animation-duration:3000ms;animation-fill-mode:forwards;animation-timing-function:linear;animation-direction:normal;animation-iteration-count:infinite}"
           }
         </style>
-        <g id="e2CRglijn892_tr" transform="translate(64,64) rotate(90)">
+        <g
+          id="765c5cf3__e2CRglijn892_tr"
+          transform="translate(64,64) rotate(90)"
+        >
           <circle
-            id="e2CRglijn892"
+            id="765c5cf3__e2CRglijn892"
             r="42"
             fill="none"
             stroke="#39fbbb"
@@ -5292,38 +5481,38 @@ export const WebstudioIcon: IconComponent = forwardRef(
         ref={forwardedRef}
       >
         <path
-          fill="url(#a)"
+          fill="url(#69f97277__paint0_linear_5232_4740)"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#b)"
+          fill="url(#69f97277__paint1_linear_5232_4740)"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#c)"
+          fill="url(#69f97277__paint2_linear_5232_4740)"
           fillOpacity=".8"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#d)"
+          fill="url(#69f97277__paint3_radial_5232_4740)"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#e)"
+          fill="url(#69f97277__paint4_radial_5232_4740)"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#f)"
+          fill="url(#69f97277__paint5_radial_5232_4740)"
           fillRule="evenodd"
           d="m12.32 12.416 2.62-8.085a1.205 1.205 0 1 0-2.292-.746l-2.62 8.084a1.205 1.205 0 1 0 2.292.747Z"
           clipRule="evenodd"
@@ -5335,86 +5524,86 @@ export const WebstudioIcon: IconComponent = forwardRef(
           clipRule="evenodd"
         />
         <path
-          fill="url(#g)"
+          fill="url(#69f97277__paint6_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#h)"
+          fill="url(#69f97277__paint7_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#i)"
+          fill="url(#69f97277__paint8_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#j)"
+          fill="url(#69f97277__paint9_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#k)"
+          fill="url(#69f97277__paint10_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#l)"
+          fill="url(#69f97277__paint11_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#m)"
+          fill="url(#69f97277__paint12_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#n)"
+          fill="url(#69f97277__paint13_radial_5232_4740)"
           fillRule="evenodd"
           d="M8 7.624c.297 0 .517.175.704.394.207.243.373.545.514.866.634 1.44.753 3.241.753 3.241a1.207 1.207 0 0 0 1.285 1.122 1.207 1.207 0 0 0 1.12-1.287s-.16-2.25-.952-4.05C10.744 6.364 9.594 5.208 8 5.208c-1.594 0-2.744 1.156-3.424 2.7-.792 1.801-.951 4.05-.951 4.05a1.207 1.207 0 0 0 1.12 1.288 1.207 1.207 0 0 0 1.284-1.122s.119-1.8.753-3.24a3.52 3.52 0 0 1 .514-.867c.187-.22.406-.394.704-.394Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#o)"
+          fill="url(#69f97277__paint14_linear_5232_4740)"
           fillRule="evenodd"
           d="M5.973 11.669 3.352 3.585a1.205 1.205 0 1 0-2.293.746l2.622 8.084a1.205 1.205 0 1 0 2.292-.746Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#p)"
+          fill="url(#69f97277__paint15_radial_5232_4740)"
           fillRule="evenodd"
           d="M5.973 11.669 3.352 3.585a1.205 1.205 0 1 0-2.293.746l2.622 8.084a1.205 1.205 0 1 0 2.292-.746Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#q)"
+          fill="url(#69f97277__paint16_linear_5232_4740)"
           fillRule="evenodd"
           d="M5.973 11.669 3.352 3.585a1.205 1.205 0 1 0-2.293.746l2.622 8.084a1.205 1.205 0 1 0 2.292-.746Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#r)"
+          fill="url(#69f97277__paint17_radial_5232_4740)"
           fillRule="evenodd"
           d="M5.973 11.669 3.352 3.585a1.205 1.205 0 1 0-2.293.746l2.622 8.084a1.205 1.205 0 1 0 2.292-.746Z"
           clipRule="evenodd"
         />
         <path
-          fill="url(#s)"
+          fill="url(#69f97277__paint18_radial_5232_4740)"
           fillRule="evenodd"
           d="M5.973 11.669 3.352 3.585a1.205 1.205 0 1 0-2.293.746l2.622 8.084a1.205 1.205 0 1 0 2.292-.746Z"
           clipRule="evenodd"
         />
         <defs>
           <radialGradient
-            id="d"
+            id="69f97277__paint3_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5425,7 +5614,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#4A4EFA" stopOpacity=".75" />
           </radialGradient>
           <radialGradient
-            id="e"
+            id="69f97277__paint4_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5436,7 +5625,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".926" stopColor="#4069D4" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="f"
+            id="69f97277__paint5_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5447,7 +5636,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#E63CFE" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="g"
+            id="69f97277__paint6_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5459,7 +5648,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#39FBBB" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="h"
+            id="69f97277__paint7_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5470,7 +5659,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#E63CFE" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="i"
+            id="69f97277__paint8_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5481,7 +5670,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".935" stopColor="#4A4EFA" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="j"
+            id="69f97277__paint9_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5492,7 +5681,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#E63CFE" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="k"
+            id="69f97277__paint10_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5503,7 +5692,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".973" stopColor="#11417A" />
           </radialGradient>
           <radialGradient
-            id="l"
+            id="69f97277__paint11_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5514,7 +5703,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#FFAE3C" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="m"
+            id="69f97277__paint12_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5525,7 +5714,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#E63CFE" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="n"
+            id="69f97277__paint13_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5536,7 +5725,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#FFAE3C" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="p"
+            id="69f97277__paint15_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5547,7 +5736,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#4A4EFA" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="r"
+            id="69f97277__paint17_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5558,7 +5747,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".926" stopColor="#FFAE3C" stopOpacity="0" />
           </radialGradient>
           <radialGradient
-            id="s"
+            id="69f97277__paint18_radial_5232_4740"
             cx="0"
             cy="0"
             r="1"
@@ -5569,7 +5758,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#E63CFE" />
           </radialGradient>
           <linearGradient
-            id="a"
+            id="69f97277__paint0_linear_5232_4740"
             x1="16.343"
             x2="12.418"
             y1=".102"
@@ -5580,7 +5769,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".549" stopColor="#E63CFE" />
           </linearGradient>
           <linearGradient
-            id="b"
+            id="69f97277__paint1_linear_5232_4740"
             x1="11.413"
             x2="13.636"
             y1="7.419"
@@ -5591,7 +5780,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".946" stopColor="#4A4EFA" stopOpacity="0" />
           </linearGradient>
           <linearGradient
-            id="c"
+            id="69f97277__paint2_linear_5232_4740"
             x1="11.75"
             x2="13.147"
             y1="6.351"
@@ -5602,7 +5791,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset="1" stopColor="#39FBBB" stopOpacity="0" />
           </linearGradient>
           <linearGradient
-            id="o"
+            id="69f97277__paint14_linear_5232_4740"
             x1=".588"
             x2="3.972"
             y1="3.255"
@@ -5613,7 +5802,7 @@ export const WebstudioIcon: IconComponent = forwardRef(
             <stop offset=".709" stopColor="#FFAE3C" />
           </linearGradient>
           <linearGradient
-            id="q"
+            id="69f97277__paint16_linear_5232_4740"
             x1="4.844"
             x2="4.37"
             y1="8.176"

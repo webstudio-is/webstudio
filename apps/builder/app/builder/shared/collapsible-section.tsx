@@ -131,7 +131,7 @@ export const CollapsibleSectionRoot = ({
   onOpenChange,
 }: CollapsibleSectionBaseProps) => {
   return (
-    <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
+    <Collapsible.Root defaultOpen open={isOpen} onOpenChange={onOpenChange}>
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>

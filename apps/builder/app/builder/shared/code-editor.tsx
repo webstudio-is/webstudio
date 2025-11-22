@@ -33,7 +33,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   foldGutterExtension,
-  getMinMaxHeightVars,
+  getCodeEditorCssVars,
 } from "./code-editor-base";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 
@@ -42,8 +42,8 @@ const wrapperStyle = css({
 
   variants: {
     size: {
-      default: getMinMaxHeightVars({ minHeight: "160px", maxHeight: "320px" }),
-      small: getMinMaxHeightVars({ minHeight: "16px", maxHeight: "120px" }),
+      default: getCodeEditorCssVars({ minHeight: "160px", maxHeight: "320px" }),
+      small: getCodeEditorCssVars({ minHeight: "16px", maxHeight: "120px" }),
     },
   },
   defaultVariants: {
