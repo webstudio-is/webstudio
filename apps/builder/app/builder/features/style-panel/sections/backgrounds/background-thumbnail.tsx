@@ -16,6 +16,7 @@ import {
   getRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { parseAnyGradient, isSolidLinearGradient } from "./gradient-utils";
 
 export const repeatedProperties = [
   "background-image",
@@ -105,10 +106,15 @@ export const getBackgroundLabel = (
   }
 
   if (backgroundImageStyle?.type === "unparsed") {
-    const gradientName = gradientNames.find((name) =>
-      backgroundImageStyle.value.includes(name)
-    );
+    const value = backgroundImageStyle.value;
 
+    // Check if it's a solid color gradient using cached parsing
+    const parsed = parseAnyGradient(value);
+    if (parsed?.type === "linear" && isSolidLinearGradient(parsed)) {
+      return "Color";
+    }
+
+    const gradientName = gradientNames.find((name) => value.includes(name));
     return gradientName ? humanizeString(gradientName) : "Gradient";
   }
 

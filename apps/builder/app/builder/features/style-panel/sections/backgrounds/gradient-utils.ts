@@ -1086,9 +1086,11 @@ export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
 const formatSolidColorGradient = (styleValue: StyleValue | undefined) => {
   const cssValue = styleValue === undefined ? "" : toValue(styleValue);
   const gradientString = typeof cssValue === "string" ? cssValue : "";
+  const parsed =
+    gradientString.length > 0 ? parseAnyGradient(gradientString) : undefined;
   const parsedLinear =
-    gradientString.length > 0 ? parseLinearGradient(gradientString) : undefined;
-  const source = parsedLinear ?? createDefaultLinearGradient();
+    parsed?.type === "linear" ? parsed : createDefaultLinearGradient();
+  const source = parsedLinear;
   const baseColor = source.stops[0]?.color ?? createDefaultStops()[0].color;
   const solidStops: GradientStop[] = [
     {
@@ -1113,12 +1115,25 @@ type GradientByType<T extends GradientType> = Extract<
   { type: T }
 >;
 
-const parseAnyGradient = (value: string): ParsedGradient | undefined => {
-  return (
+// Cache for parsed gradients - avoids re-parsing the same gradient string
+const parsedGradientCache = new Map<string, ParsedGradient | undefined>();
+
+export const parseAnyGradient = (value: string): ParsedGradient | undefined => {
+  // Check cache first
+  if (parsedGradientCache.has(value)) {
+    return parsedGradientCache.get(value);
+  }
+
+  // Parse gradient
+  const parsed =
     parseLinearGradient(value) ??
     parseConicGradient(value) ??
-    parseRadialGradient(value)
-  );
+    parseRadialGradient(value);
+
+  // Cache the result
+  parsedGradientCache.set(value, parsed);
+
+  return parsed;
 };
 
 export const convertGradientToTarget = <Target extends GradientType>(
@@ -1183,20 +1198,22 @@ export const detectBackgroundType = (
 
   const cssValue = toValue(styleValue);
   if (typeof cssValue === "string") {
-    const parsedLinear = parseLinearGradient(cssValue);
-    if (parsedLinear !== undefined) {
-      return isSolidLinearGradient(parsedLinear)
-        ? "solidColor"
-        : "linearGradient";
-    }
-    if (parseConicGradient(cssValue) !== undefined) {
-      return "conicGradient";
+    // Use parseAnyGradient (which is cached) for all gradient detection
+    const parsed = parseAnyGradient(cssValue);
+
+    if (parsed !== undefined) {
+      if (parsed.type === "linear") {
+        return isSolidLinearGradient(parsed) ? "solidColor" : "linearGradient";
+      }
+      if (parsed.type === "conic") {
+        return "conicGradient";
+      }
+      if (parsed.type === "radial") {
+        return "radialGradient";
+      }
     }
 
-    if (parseRadialGradient(cssValue) !== undefined) {
-      return "radialGradient";
-    }
-
+    // Fallback checks for unparseable gradients
     if (startsWithGradientFunction(cssValue, "conic")) {
       return "conicGradient";
     }
