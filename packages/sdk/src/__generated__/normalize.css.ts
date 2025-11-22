@@ -8,23 +8,6 @@ type StyleDecl = {
 
 export const div: StyleDecl[] = [
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  { property: "outline-width", value: { type: "unit", unit: "px", value: 1 } },
 ];
 
 export const address = div;
@@ -113,22 +96,6 @@ export const body: StyleDecl[] = [
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
   {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
     property: "-webkit-font-smoothing",
     value: { type: "keyword", value: "antialiased" },
   },
@@ -150,22 +117,6 @@ export const b: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 700 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const strong = b;
@@ -187,22 +138,6 @@ export const code: StyleDecl[] = [
   },
   { property: "font-size", value: { type: "unit", unit: "em", value: 1 } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const kbd = code;
@@ -214,22 +149,6 @@ export const pre = code;
 export const small: StyleDecl[] = [
   { property: "font-size", value: { type: "unit", unit: "%", value: 80 } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const sub: StyleDecl[] = [
@@ -241,22 +160,6 @@ export const sub: StyleDecl[] = [
   { property: "position", value: { type: "keyword", value: "relative" } },
   { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
   { property: "bottom", value: { type: "unit", unit: "em", value: -0.25 } },
 ];
 
@@ -269,22 +172,6 @@ export const sup: StyleDecl[] = [
   { property: "position", value: { type: "keyword", value: "relative" } },
   { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
   { property: "top", value: { type: "unit", unit: "em", value: -0.5 } },
 ];
 
@@ -292,22 +179,6 @@ export const table: StyleDecl[] = [
   {
     property: "text-indent",
     value: { type: "unit", unit: "number", value: 0 },
-  },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
   },
   {
     property: "border-top-color",
@@ -349,22 +220,6 @@ export const input: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
   { property: "border-top-style", value: { type: "keyword", value: "solid" } },
   {
     property: "border-right-style",
@@ -400,22 +255,6 @@ export const optgroup: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const radio: StyleDecl[] = [
@@ -439,22 +278,6 @@ export const radio: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
   { property: "border-top-style", value: { type: "keyword", value: "none" } },
   { property: "border-right-style", value: { type: "keyword", value: "none" } },
   {
@@ -487,22 +310,6 @@ export const button: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
   { property: "border-top-style", value: { type: "keyword", value: "solid" } },
   {
     property: "border-right-style",
@@ -536,62 +343,14 @@ export const legend: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const progress: StyleDecl[] = [
   { property: "vertical-align", value: { type: "keyword", value: "baseline" } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
 
 export const summary: StyleDecl[] = [
   { property: "display", value: { type: "keyword", value: "list-item" } },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
-  {
-    property: "border-top-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-right-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-bottom-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
-  {
-    property: "border-left-width",
-    value: { type: "unit", unit: "px", value: 1 },
-  },
 ];
