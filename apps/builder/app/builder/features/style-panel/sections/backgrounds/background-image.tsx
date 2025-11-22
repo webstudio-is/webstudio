@@ -3,6 +3,7 @@ import {
   Flex,
   theme,
   FloatingPanelProvider,
+  Grid,
 } from "@webstudio-is/design-system";
 import { useRef, useCallback } from "react";
 import { ImageControl } from "../../controls";
@@ -61,20 +62,21 @@ export const BackgroundImage = ({ index }: { index: number }) => {
   return (
     <Flex
       direction="column"
-      css={{
-        gridColumn: "span 2",
-        gap: theme.spacing[3],
-        padding: theme.panel.padding,
-      }}
+      gap={1}
+      css={{ padding: theme.panel.padding }}
       ref={elementRef}
     >
-      <PropertyInlineLabel
-        label="Image"
-        description={propertyDescriptions.backgroundImage}
-      />
-      <FloatingPanelProvider container={elementRef}>
-        <ImageControl property="background-image" index={index} />
-      </FloatingPanelProvider>
+      <Grid gap="2" columns="3" align="start">
+        <PropertyInlineLabel
+          label="Image"
+          description={propertyDescriptions.backgroundImage}
+        />
+        <Flex css={{ gridColumn: "span 2" }}>
+          <FloatingPanelProvider container={elementRef}>
+            <ImageControl property="background-image" index={index} />
+          </FloatingPanelProvider>
+        </Flex>
+      </Grid>
       <BackgroundCodeEditor index={index} onValidate={handleValidate} />
     </Flex>
   );

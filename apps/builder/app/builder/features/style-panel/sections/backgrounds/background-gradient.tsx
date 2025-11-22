@@ -16,7 +16,6 @@ import {
 } from "@webstudio-is/css-data";
 import {
   Flex,
-  Label,
   theme,
   Tooltip,
   GradientPicker,
@@ -291,12 +290,7 @@ export const BackgroundGradient = ({
           </Box>
         </>
       )}
-      <Box
-        css={{
-          paddingInline: theme.panel.paddingInline,
-          paddingBottom: theme.panel.paddingBlock,
-        }}
-      >
+      <Box css={{ padding: theme.panel.padding }}>
         <BackgroundCodeEditor index={index} />
       </Box>
     </Flex>
@@ -784,7 +778,10 @@ const SolidColorControls = ({
 
   return (
     <Grid gap="2" columns="3" align="end">
-      <Label>Color</Label>
+      <PropertyInlineLabel
+        label="Color"
+        description="The solid color for this background layer. Renders as a linear gradient with the same color at 0% and 100%."
+      />
       <Flex css={{ gridColumn: "span 2" }}>
         <ColorPickerControl
           property="color"
