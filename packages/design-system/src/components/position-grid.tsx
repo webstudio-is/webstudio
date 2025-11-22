@@ -33,7 +33,7 @@ const toNumericPosition = (position?: MixedPosition) => {
 
 const containerStyle = css({
   background: theme.colors.backgroundControls,
-  padding: theme.spacing[4],
+  padding: theme.spacing[3],
   width: "fit-content",
   borderRadius: theme.borderRadius[4],
   border: `1px solid transparent`,
@@ -50,7 +50,8 @@ const containerStyle = css({
 });
 
 const dotStyle = css({
-  padding: theme.spacing[5],
+  padding: theme.spacing[4],
+  margin: 1,
   background: theme.colors.backgroundControls,
   border: `1px solid transparent`,
   borderRadius: theme.borderRadius[4],

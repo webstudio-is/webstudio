@@ -90,7 +90,7 @@ export const BackgroundPositionControl = ({
       ) : (
         <PropertyInlineLabel label={label} description={description} />
       )}
-      <Flex gap="6">
+      <Grid gap="2" columns={2}>
         <PositionGrid
           selectedPosition={{
             x: calculateBackgroundPosition(xAxis.value),
@@ -146,7 +146,7 @@ export const BackgroundPositionControl = ({
             onDelete={yAxis.onDelete}
           />
         </Grid>
-      </Flex>
+      </Grid>
     </Flex>
   );
 };

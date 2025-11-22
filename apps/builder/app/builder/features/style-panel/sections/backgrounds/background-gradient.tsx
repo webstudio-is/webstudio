@@ -253,7 +253,7 @@ export const BackgroundGradient = ({
   );
 
   return (
-    <Flex direction="column" justify="center" gap="2">
+    <Flex direction="column" justify="center" gap="2" shrink={false}>
       {isSolidVariant ? (
         <Box css={{ padding: theme.panel.padding }}>
           <SolidColorControls
@@ -463,7 +463,12 @@ const GradientPickerSection = ({
   }, [gradientForPicker]);
 
   return (
-    <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+    <Flex
+      direction="column"
+      shrink={false}
+      gap="2"
+      css={{ padding: theme.panel.padding }}
+    >
       <GradientPicker
         gradient={gradientForPicker}
         backgroundImage={formatLinearGradient(previewGradientForTrack)}

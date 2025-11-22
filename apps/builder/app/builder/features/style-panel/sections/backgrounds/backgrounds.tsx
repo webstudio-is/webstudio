@@ -12,10 +12,7 @@ import {
 } from "../../shared/repeated-style";
 import { useComputedStyles } from "../../shared/model";
 import { parseCssFragment } from "../../shared/css-fragment";
-import {
-  BackgroundContent,
-  OtherBackgroundProperties,
-} from "./background-content";
+import { BackgroundContent } from "./background-content";
 import {
   getBackgroundLabel,
   BackgroundThumbnail,
@@ -51,12 +48,6 @@ export const Section = () => {
           })}
           renderThumbnail={(index) => <BackgroundThumbnail index={index} />}
           renderItemContent={(index) => <BackgroundContent index={index} />}
-          renderPanelTitleSuffix={(index, _primaryItem, { canBeChanged }) => (
-            <OtherBackgroundProperties
-              index={index}
-              disabled={canBeChanged === false}
-            />
-          )}
         />
         <Grid
           css={{

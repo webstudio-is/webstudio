@@ -3,7 +3,7 @@
  * as of now just implement feature parity with old backgrounds section
  **/
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   RepeatGridIcon,
@@ -14,7 +14,6 @@ import {
   GradientLinearIcon,
   GradientConicIcon,
   GradientRadialIcon,
-  EllipsesIcon,
 } from "@webstudio-is/icons";
 import { type StyleValue, toValue } from "@webstudio-is/css-engine";
 import {
@@ -25,10 +24,9 @@ import {
   ToggleGroupButton,
   Separator,
   styled,
-  FloatingPanel,
-  Button,
   Box,
   EnhancedTooltip,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { SelectControl } from "../../controls";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
@@ -53,10 +51,6 @@ import {
   getBackgroundStyleItem,
   type BackgroundType,
 } from "./gradient-utils";
-
-const Spacer = styled("div", {
-  height: theme.spacing[5],
-});
 
 const ColorSwatchIcon = styled("div", {
   width: theme.spacing[7],
@@ -301,14 +295,35 @@ const BackgroundAttachment = ({ index }: { index: number }) => {
   );
 };
 
-const BackgroundLayerControls = ({ index }: { index: number }) => {
+const OtherLayerProperties = ({ index }: { index: number }) => {
   return (
-    <Box css={{ padding: theme.panel.padding }}>
-      <Grid
-        css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}
-        align="center"
-        gap={2}
-      >
+    <Flex gap="2" direction="column" css={{ padding: theme.panel.padding }}>
+      <Grid columns={2} gap={2}>
+        <PropertyLabel
+          label="Blend mode"
+          description={propertyDescriptions.backgroundBlendMode}
+          properties={["background-blend-mode"]}
+        />
+        <SelectControl property="background-blend-mode" index={index} />
+      </Grid>
+      <BackgroundSize index={index} />
+      <BackgroundPosition index={index} />
+      <Grid columns={2} align="center" gap={2}>
+        <PropertyLabel
+          label="Repeat"
+          description={propertyDescriptions.backgroundRepeat}
+          properties={["background-repeat"]}
+        />
+        <BackgroundRepeat index={index} />
+
+        <PropertyLabel
+          label="Attachment"
+          description={propertyDescriptions.backgroundAttachment}
+          properties={["background-attachment"]}
+        />
+        <BackgroundAttachment index={index} />
+      </Grid>
+      <Grid columns={2} align="center" gap={2}>
         <PropertyLabel
           label="Clip"
           description={propertyDescriptions.backgroundClip}
@@ -323,81 +338,7 @@ const BackgroundLayerControls = ({ index }: { index: number }) => {
         />
         <SelectControl property="background-origin" index={index} />
       </Grid>
-
-      <Spacer />
-
-      <BackgroundSize index={index} />
-
-      <Spacer />
-
-      <BackgroundPosition index={index} />
-
-      <Grid
-        css={{
-          gridTemplateColumns: `1fr 1fr`,
-          mt: theme.spacing[5],
-        }}
-        align="center"
-        gap={2}
-      >
-        <PropertyLabel
-          label="Repeat"
-          description={propertyDescriptions.backgroundRepeat}
-          properties={["background-repeat"]}
-        />
-        <BackgroundRepeat index={index} />
-
-        <PropertyLabel
-          label="Attachment"
-          description={propertyDescriptions.backgroundAttachment}
-          properties={["background-attachment"]}
-        />
-        <BackgroundAttachment index={index} />
-
-        <PropertyLabel
-          label="Blend mode"
-          description={propertyDescriptions.backgroundBlendMode}
-          properties={["background-blend-mode"]}
-        />
-        <SelectControl property="background-blend-mode" index={index} />
-      </Grid>
-    </Box>
-  );
-};
-
-export const OtherBackgroundProperties = ({
-  index,
-  disabled,
-}: {
-  index: number;
-  disabled?: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (disabled && isOpen) {
-      setIsOpen(false);
-    }
-  }, [disabled, isOpen]);
-
-  return (
-    <FloatingPanel
-      title="Other properties"
-      placement="left-start"
-      offset={{ mainAxis: 0 }}
-      content={<BackgroundLayerControls index={index} />}
-      open={isOpen}
-      onOpenChange={setIsOpen}
-    >
-      <Button
-        color="ghost"
-        prefix={<EllipsesIcon />}
-        aria-label="Other properties"
-        data-state={isOpen ? "open" : undefined}
-        disabled={disabled}
-        tabIndex={-1}
-      />
-    </FloatingPanel>
+    </Flex>
   );
 };
 
@@ -416,6 +357,7 @@ export const BackgroundContent = ({ index }: { index: number }) => {
         gap="2"
         justify="between"
         css={{ padding: theme.panel.padding }}
+        shrink={false}
       >
         <PropertyInlineLabel
           label="Type"
@@ -432,24 +374,32 @@ export const BackgroundContent = ({ index }: { index: number }) => {
 
       <Separator />
 
-      {(backgroundType === "linearGradient" ||
-        backgroundType === "conicGradient" ||
-        backgroundType === "radialGradient" ||
-        backgroundType === "solidColor") && (
-        <BackgroundGradient
-          index={index}
-          type={
-            backgroundType === "conicGradient"
-              ? "conic"
-              : backgroundType === "radialGradient"
-                ? "radial"
-                : "linear"
-          }
-          variant={backgroundType === "solidColor" ? "solid" : "default"}
-        />
-      )}
+      <ScrollArea>
+        <Box css={{ maxHeight: 500 }}>
+          {(backgroundType === "linearGradient" ||
+            backgroundType === "conicGradient" ||
+            backgroundType === "radialGradient" ||
+            backgroundType === "solidColor") && (
+            <BackgroundGradient
+              index={index}
+              type={
+                backgroundType === "conicGradient"
+                  ? "conic"
+                  : backgroundType === "radialGradient"
+                    ? "radial"
+                    : "linear"
+              }
+              variant={backgroundType === "solidColor" ? "solid" : "default"}
+            />
+          )}
 
-      {backgroundType === "image" && <BackgroundImage index={index} />}
+          {backgroundType === "image" && <BackgroundImage index={index} />}
+
+          <Separator />
+
+          <OtherLayerProperties index={index} />
+        </Box>
+      </ScrollArea>
     </>
   );
 };
