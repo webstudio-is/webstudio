@@ -64,6 +64,30 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
+export const ColorValue = z.object({
+  type: z.literal("color"),
+  colorSpace: z.union([
+    z.literal("srgb"),
+    z.literal("p3"),
+    z.literal("srgb-linear"),
+    z.literal("hsl"),
+    z.literal("hwb"),
+    z.literal("lab"),
+    z.literal("lch"),
+    z.literal("oklab"),
+    z.literal("oklch"),
+    z.literal("a98rgb"),
+    z.literal("prophoto"),
+    z.literal("rec2020"),
+    z.literal("xyz-d65"),
+    z.literal("xyz-d50"),
+  ]),
+  components: z.tuple([z.number(), z.number(), z.number()]),
+  alpha: z.number(),
+  hidden: z.boolean().optional(),
+});
+export type ColorValue = z.infer<typeof ColorValue>;
+
 export type FunctionValue = z.infer<typeof FunctionValue>;
 
 export const FunctionValue: z.ZodType<{
@@ -124,6 +148,7 @@ export const VarFallback = z.union([
   UnparsedValue,
   KeywordValue,
   UnitValue,
+  ColorValue,
   RgbValue,
 ]);
 export type VarFallback = z.infer<typeof VarFallback>;
@@ -136,6 +161,7 @@ export const toVarFallback = (
     styleValue.type === "unparsed" ||
     styleValue.type === "keyword" ||
     styleValue.type === "unit" ||
+    styleValue.type === "color" ||
     styleValue.type === "rgb"
   ) {
     return styleValue;
@@ -157,6 +183,7 @@ export const TupleValueItem = z.union([
   KeywordValue,
   UnparsedValue,
   ImageValue,
+  ColorValue,
   RgbValue,
   FunctionValue,
   VarValue,
@@ -179,7 +206,7 @@ export const ShadowValue = z.object({
   offsetY: z.union([UnitValue, VarValue]),
   blur: z.union([UnitValue, VarValue]).optional(),
   spread: z.union([UnitValue, VarValue]).optional(),
-  color: z.union([RgbValue, KeywordValue, VarValue]).optional(),
+  color: z.union([ColorValue, RgbValue, KeywordValue, VarValue]).optional(),
 });
 
 export type ShadowValue = z.infer<typeof ShadowValue>;
@@ -191,6 +218,7 @@ const LayerValueItem = z.union([
   ImageValue,
   TupleValue,
   ShadowValue,
+  ColorValue,
   RgbValue,
   InvalidValue,
   FunctionValue,
@@ -215,6 +243,7 @@ export const StyleValue = z.union([
   UnitValue,
   KeywordValue,
   FontFamilyValue,
+  ColorValue,
   RgbValue,
   UnparsedValue,
   TupleValue,

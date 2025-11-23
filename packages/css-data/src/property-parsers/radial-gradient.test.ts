@@ -267,7 +267,7 @@ describe("parse radial-gradient", () => {
 
     expect(parsed.repeating).toBe(true);
     expect(formatRadialGradient(parsed)).toEqual(
-      "repeating-radial-gradient(rgba(255, 0, 0, 1) 0%, rgba(0, 0, 255, 1) 100%)"
+      "repeating-radial-gradient(rgb(255 0 0 / 1) 0%, rgb(0 0 255 / 1) 100%)"
     );
   });
 
@@ -280,7 +280,7 @@ describe("parse radial-gradient", () => {
     }
 
     expect(formatRadialGradient(parsed)).toEqual(
-      "radial-gradient(circle 40px at top, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "radial-gradient(circle 40px at top, rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 });

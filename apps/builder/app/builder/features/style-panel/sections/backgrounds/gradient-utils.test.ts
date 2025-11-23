@@ -71,7 +71,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "linear-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "linear-gradient(rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 
@@ -84,7 +84,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "repeating-linear-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "repeating-linear-gradient(rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 
@@ -96,7 +96,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "conic-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "conic-gradient(rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 
@@ -109,7 +109,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "repeating-conic-gradient(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "repeating-conic-gradient(rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 
@@ -124,7 +124,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "radial-gradient(circle closest-side at center, rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "radial-gradient(circle closest-side at center, rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 
@@ -139,7 +139,7 @@ describe("formatGradientValue", () => {
       ],
     });
     expect(formatGradientValue(gradient)).toBe(
-      "repeating-radial-gradient(circle at center, rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))"
+      "repeating-radial-gradient(circle at center, rgb(0 0 0 / 1), rgb(255 255 255 / 1))"
     );
   });
 });
@@ -152,19 +152,19 @@ describe("formatGradientForType", () => {
 
   test("formats solid color target", () => {
     expect(formatGradientForType(solidStyle, "solid")).toBe(
-      "linear-gradient(rgba(255, 0, 0, 1) 0%, rgba(255, 0, 0, 1) 100%)"
+      "linear-gradient(rgb(255 0 0 / 1) 0%, rgb(255 0 0 / 1) 100%)"
     );
   });
 
   test("formats linear target", () => {
     expect(formatGradientForType(solidStyle, "linearGradient")).toBe(
-      "linear-gradient(rgba(255, 0, 0, 1), rgba(255, 0, 0, 1))"
+      "linear-gradient(rgb(255 0 0 / 1), rgb(255 0 0 / 1))"
     );
   });
 
   test("formats conic target", () => {
     expect(formatGradientForType(undefined, "conicGradient")).toBe(
-      "conic-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%)"
+      "conic-gradient(rgb(0 0 0 / 1) 0%, rgb(0 0 0 / 0) 100%)"
     );
   });
 
@@ -174,7 +174,7 @@ describe("formatGradientForType", () => {
       value: "radial-gradient(circle at center, red, blue)",
     };
     expect(formatGradientForType(radialStyle, "radialGradient")).toBe(
-      "radial-gradient(circle at center, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "radial-gradient(circle at center, rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -184,7 +184,7 @@ describe("formatGradientForType", () => {
       value: "repeating-linear-gradient(red, blue)",
     };
     expect(formatGradientForType(value, "linearGradient")).toBe(
-      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "repeating-linear-gradient(rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -194,7 +194,7 @@ describe("formatGradientForType", () => {
       value: "repeating-conic-gradient(red, blue)",
     };
     expect(formatGradientForType(value, "conicGradient")).toBe(
-      "repeating-conic-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "repeating-conic-gradient(rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -204,7 +204,7 @@ describe("formatGradientForType", () => {
       value: "repeating-radial-gradient(circle, red, blue)",
     };
     expect(formatGradientForType(value, "radialGradient")).toBe(
-      "repeating-radial-gradient(circle, rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "repeating-radial-gradient(circle, rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -214,7 +214,7 @@ describe("formatGradientForType", () => {
       value: "conic-gradient(red, blue)",
     };
     expect(formatGradientForType(conicStyle, "radialGradient")).toBe(
-      "radial-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "radial-gradient(rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 });
@@ -225,7 +225,7 @@ describe("convertGradientToTarget", () => {
     conic: "conic-gradient(red 0%, blue 100%)",
     radial: "radial-gradient(circle, red 0%, blue 100%)",
   };
-  const expectedColors = ["rgba(255, 0, 0, 1)", "rgba(0, 0, 255, 1)"];
+  const expectedColors = ["rgb(255 0 0 / 1)", "rgb(0 0 255 / 1)"];
   const gradientTypes: GradientType[] = ["linear", "conic", "radial"];
 
   const getStopColors = (stops: GradientStop[]) =>
