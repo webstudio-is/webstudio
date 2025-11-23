@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Login } from "./login";
 
 export default {
+  title: "Auth/Login",
   component: Login,
 };
 
