@@ -18,16 +18,6 @@ const hasPrivateFolders = !isFolderEmpty(
 
 const visualTestingStories: StorybookConfig["stories"] = [
   {
-    directory: "../apps/builder/app/auth",
-    titlePrefix: "Auth",
-    files: "**/*.stories.tsx",
-  },
-  {
-    directory: "../apps/builder/app/builder/features/workspace/canvas-tools",
-    titlePrefix: "Canvas Tools",
-    files: "**/*.stories.tsx",
-  },
-  {
     directory: "../apps/builder",
     titlePrefix: "Builder",
     files: "**/*.stories.tsx",
