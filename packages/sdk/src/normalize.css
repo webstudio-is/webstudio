@@ -55,9 +55,6 @@ span {
    * Use a better box model (opinionated).
    */
   box-sizing: border-box;
-  /* webstudio custom opinionated presets */
-  border-width: 1px;
-  outline-width: 1px;
 }
 
 /**
@@ -91,7 +88,6 @@ body {
   margin: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -128,7 +124,6 @@ strong {
   font-weight: 700;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -146,7 +141,6 @@ pre {
   font-size: 1em;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -156,7 +150,6 @@ small {
   font-size: 80%;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -170,7 +163,6 @@ sup {
   vertical-align: baseline;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 sub {
@@ -193,7 +185,6 @@ Tabular data
 table {
   /* 1 */
   text-indent: 0;
-  border-width: 1px;
   /* 2 */
   border-color: inherit;
   box-sizing: border-box;
@@ -220,7 +211,6 @@ select {
   margin: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /* Input and Textarea uses border style inset by default, wich we don't support in style panel. */
@@ -300,7 +290,6 @@ legend {
   padding: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -310,7 +299,6 @@ progress {
   vertical-align: baseline;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
 
 /**
@@ -370,5 +358,4 @@ summary {
   display: list-item;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
-  border-width: 1px;
 }
