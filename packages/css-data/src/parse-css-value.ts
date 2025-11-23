@@ -1,5 +1,3 @@
-import { colord, extend } from "colord";
-import namesPlugin from "colord/plugins/names";
 import {
   type CssNode,
   type FunctionNode,
@@ -29,9 +27,12 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+import { parseCssColor } from "./color";
 
-// To support color names
-extend([namesPlugin]);
+const isColorProperty = (property: CssProperty): boolean => {
+  const name = property as string;
+  return name.endsWith("color") || name === "fill" || name === "stroke";
+};
 
 export const cssTryParseValue = (input: string): undefined | CssNode => {
   try {
@@ -61,6 +62,10 @@ export const isValidDeclaration = (
   value: string
 ): boolean => {
   if (property.startsWith("--") || value.includes("var(")) {
+    return true;
+  }
+
+  if (isColorProperty(property) && parseCssColor(value)) {
     return true;
   }
 
@@ -159,16 +164,9 @@ const tupleProps = new Set<CssProperty>([
 const availableUnits = new Set<string>(Object.values(units).flat());
 
 const parseColor = (colorString: string): undefined | RgbValue => {
-  const color = colord(colorString);
-  if (color.isValid()) {
-    const rgb = color.toRgb();
-    return {
-      type: "rgb",
-      alpha: rgb.a,
-      r: rgb.r,
-      g: rgb.g,
-      b: rgb.b,
-    };
+  const parsed = parseCssColor(colorString);
+  if (parsed) {
+    return parsed;
   }
 };
 
@@ -294,18 +292,11 @@ const parseLiteral = (
     }
   }
   if (node?.type === "Function") {
-    // <color-function>
-    if (
-      node.name === "hsl" ||
-      node.name === "hsla" ||
-      node.name === "rgb" ||
-      node.name === "rgba"
-    ) {
-      const color = parseColor(generate(node));
-      if (color) {
-        return color;
-      }
+    const color = parseColor(generate(node));
+    if (color) {
+      return color;
     }
+
     if (node.name === "var") {
       return parseCssVar(node);
     }

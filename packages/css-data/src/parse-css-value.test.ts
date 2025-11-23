@@ -132,6 +132,15 @@ describe("Parse CSS value", () => {
         value: "red",
       });
     });
+
+    test("Supports OKLCH values", () => {
+      expect(parseCssValue("color", "oklch(0.7 0.12 45 / 0.8)")).toMatchObject({
+        type: "rgb",
+        alpha: 0.8,
+        colorSpace: "oklch",
+        original: "oklch(0.7 0.12 45 / 0.8)",
+      });
+    });
   });
 });
 

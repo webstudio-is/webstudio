@@ -60,6 +60,10 @@ const RgbValue = z.object({
   g: z.number(),
   b: z.number(),
   alpha: z.number(),
+  // Optional color space metadata used to preserve user intent when parsing CSS Color 4/5 formats.
+  colorSpace: z.string().optional(),
+  // Original CSS color string, used to round-trip non-rgb formats without losing fidelity.
+  original: z.string().optional(),
   hidden: z.boolean().optional(),
 });
 export type RgbValue = z.infer<typeof RgbValue>;

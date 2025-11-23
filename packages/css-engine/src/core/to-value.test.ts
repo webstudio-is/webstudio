@@ -22,6 +22,18 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("");
   });
 
+  test("rgb preserves original string when provided", () => {
+    const value = toValue({
+      type: "rgb",
+      r: 10,
+      g: 20,
+      b: 30,
+      alpha: 0.5,
+      original: "oklch(0.5 0.05 90 / 0.5)",
+    });
+    expect(value).toBe("oklch(0.5 0.05 90 / 0.5)");
+  });
+
   test("var", () => {
     const value = toValue({ type: "var", value: "namespace" });
     expect(value).toBe("var(--namespace)");

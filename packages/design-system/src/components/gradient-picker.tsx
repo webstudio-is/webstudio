@@ -18,6 +18,7 @@ import {
   type GradientStop,
   type ParsedGradient,
 } from "@webstudio-is/css-data";
+import { parseCssColor } from "@webstudio-is/css-data";
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
@@ -66,16 +67,9 @@ const toRgbColor = (
     return color;
   }
 
-  const parsed = colord(toValue(color));
-  if (parsed.isValid()) {
-    const { r, g, b, a } = parsed.toRgb();
-    return {
-      type: "rgb",
-      r,
-      g,
-      b,
-      alpha: a,
-    };
+  const parsed = parseCssColor(toValue(color));
+  if (parsed) {
+    return parsed;
   }
 };
 
