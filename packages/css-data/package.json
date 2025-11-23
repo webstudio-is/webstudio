@@ -16,7 +16,6 @@
     "css-to-ws": "./bin/css-to-ws.ts"
   },
   "devDependencies": {
-    "@types/css-tree": "^2.3.1",
     "@webstudio-is/tsconfig": "workspace:*",
     "html-tags": "^4.0.0",
     "mdn-data": "2.23.0",
@@ -36,7 +35,7 @@
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "colord": "^2.9.3",
-    "css-tree": "^2.3.1",
+    "css-tree": "^3.1.0",
     "openai": "^3.2.1",
     "p-retry": "^6.2.1",
     "warn-once": "^0.1.1"

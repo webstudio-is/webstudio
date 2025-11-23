@@ -2,10 +2,9 @@
   "extends": "@webstudio-is/tsconfig/base.json",
   "include": [
     "src",
-    "../../@types/**/scroll-timeline.d.ts",
     "private-src",
     "../sdk/src/schema/animation-schema.ts",
-    "../../@types/navigator.d.ts"
+    "../../@types/**/*.d.ts"
   ],
   "exclude": ["private-src/perf/**/*"],
   "compilerOptions": {

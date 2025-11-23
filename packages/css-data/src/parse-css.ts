@@ -102,163 +102,193 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
     return [];
   }
 
-  csstree.walk(ast, function (node) {
-    // forbid nested at rules
-    if (node.type === "Atrule" && this.atrule) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore https://github.com/csstree/csstree/blob/v2.3.1/docs/traversal.md
-      return this.break;
-    }
-    if (node.type !== "Declaration" || this.rule?.prelude.type === undefined) {
-      return;
-    }
+  // Track context as we traverse
+  let currentAtrule: csstree.Atrule | undefined;
+  let currentRule: csstree.Rule | undefined;
+  let nestedAtruleDepth = 0;
 
-    if (this.atrule && this.atrule.name !== "media") {
-      return;
-    }
+  const supportedMediaFeatures = ["min-width", "max-width"];
+  const supportedUnits = ["px"];
 
-    const supportedMediaFeatures = ["min-width", "max-width"];
-    const supportedUnits = ["px"];
-    let breakpoint: undefined | string;
-    let invalidBreakpoint = false;
-    if (this.atrule?.prelude?.type === "AtrulePrelude") {
-      csstree.walk(this.atrule.prelude, {
-        enter: (node, item, list) => {
-          if (node.type === "Identifier") {
-            if (
-              node.name === "screen" ||
-              node.name === "all" ||
-              node.name === "and"
-            ) {
-              list.remove(item);
+  csstree.walk(ast, {
+    enter(node) {
+      if (node.type === "Atrule") {
+        if (currentAtrule) {
+          nestedAtruleDepth++;
+        }
+        currentAtrule = node;
+      } else if (node.type === "Rule") {
+        currentRule = node;
+      }
+    },
+    leave(node) {
+      if (node.type === "Atrule") {
+        if (nestedAtruleDepth > 0) {
+          nestedAtruleDepth--;
+        } else {
+          currentAtrule = undefined;
+        }
+      } else if (node.type === "Rule") {
+        currentRule = undefined;
+      }
+
+      // Process declarations
+      if (
+        node.type !== "Declaration" ||
+        !currentRule ||
+        currentRule.prelude.type === undefined
+      ) {
+        return;
+      }
+
+      // forbid nested at rules
+      if (nestedAtruleDepth > 0) {
+        return;
+      }
+
+      if (currentAtrule && currentAtrule.name !== "media") {
+        return;
+      }
+
+      let breakpoint: undefined | string;
+      let invalidBreakpoint = false;
+
+      if (currentAtrule?.prelude?.type === "AtrulePrelude") {
+        csstree.walk(currentAtrule.prelude, {
+          enter: (node) => {
+            if (node.type === "MediaQuery") {
+              if (node.mediaType === "screen" || node.mediaType === "all") {
+                node.mediaType = null;
+              }
+              // prevent saving print styles
+              if (node.mediaType === "print") {
+                invalidBreakpoint = true;
+              }
             }
-            // prevent saving print styles
-            if (node.name === "print") {
+            if (
+              node.type === "Feature" &&
+              supportedMediaFeatures.includes(node.name) === false
+            ) {
               invalidBreakpoint = true;
             }
-          }
-          if (
-            node.type === "MediaFeature" &&
-            supportedMediaFeatures.includes(node.name) === false
-          ) {
-            invalidBreakpoint = true;
-          }
-          if (
-            node.type === "Dimension" &&
-            supportedUnits.includes(node.unit) === false
-          ) {
-            invalidBreakpoint = true;
-          }
-        },
-        leave: (node) => {
-          // complex media queries are not supported yet
-          if (node.type === "MediaQuery" && node.children.size > 1) {
-            invalidBreakpoint = true;
-          }
-          ``;
-        },
-      });
-      const generated = csstree.generate(this.atrule.prelude);
-      if (generated) {
-        breakpoint = generated;
-      }
-    }
-    if (invalidBreakpoint || this.rule.prelude.type !== "SelectorList") {
-      return;
-    }
-
-    const selectors: Selector[] = [];
-
-    for (const node of this.rule.prelude.children) {
-      if (node.type !== "Selector") {
-        continue;
-      }
-      let selector: Selector | undefined = undefined;
-      const children = node.children.toArray();
-      // @ts-expect-error NestingSelector is not defined in type definitions
-      const startsWithNesting = children[0]?.type === "NestingSelector";
-      for (let index = 0; index < children.length; index += 1) {
-        const childNode = children[index];
-        let name: string = "";
-        let state: string | undefined;
-        switch (childNode.type) {
-          case "TypeSelector":
-            name = childNode.name;
-            break;
-          case "ClassSelector":
-            name = `.${childNode.name}`;
-            break;
-          case "AttributeSelector":
-            // for example &[data-state=active]
-            if (startsWithNesting && index === 1 && children.length === 2) {
-              state = csstree.generate(childNode);
-            } else {
-              name = csstree.generate(childNode);
+            if (
+              node.type === "Dimension" &&
+              supportedUnits.includes(node.unit) === false
+            ) {
+              invalidBreakpoint = true;
             }
-            break;
-          case "PseudoClassSelector": {
-            // First pseudo selector is not a state but an element selector, e.g. :root
-            if (selector) {
-              state = `:${childNode.name}`;
-            } else {
-              name = `:${childNode.name}`;
+          },
+          leave: (node) => {
+            // complex media queries are not supported yet
+            if (node.type === "MediaQuery") {
+              const children = node.condition?.children;
+              if (children && children.size > 1) {
+                invalidBreakpoint = true;
+              }
             }
-            break;
-          }
-          case "PseudoElementSelector":
-            state = `::${childNode.name}`;
-            break;
-          case "Combinator":
-            // " " vs " > "
-            name =
-              childNode.name === " " ? childNode.name : ` ${childNode.name} `;
-            break;
+          },
+        });
+        const generated = csstree.generate(currentAtrule.prelude);
+        if (generated) {
+          breakpoint = generated;
         }
+      }
+      if (invalidBreakpoint || currentRule.prelude.type !== "SelectorList") {
+        return;
+      }
 
+      const selectors: Selector[] = [];
+
+      for (const node of currentRule.prelude.children) {
+        if (node.type !== "Selector") {
+          continue;
+        }
+        let selector: Selector | undefined = undefined;
+        const children = node.children.toArray();
+        const startsWithNesting = children[0]?.type === "NestingSelector";
+        for (let index = 0; index < children.length; index += 1) {
+          const childNode = children[index];
+          let name: string = "";
+          let state: string | undefined;
+          switch (childNode.type) {
+            case "TypeSelector":
+              name = childNode.name;
+              break;
+            case "ClassSelector":
+              name = `.${childNode.name}`;
+              break;
+            case "AttributeSelector":
+              // for example &[data-state=active]
+              if (startsWithNesting && index === 1 && children.length === 2) {
+                state = csstree.generate(childNode);
+              } else {
+                name = csstree.generate(childNode);
+              }
+              break;
+            case "PseudoClassSelector": {
+              // First pseudo selector is not a state but an element selector, e.g. :root
+              if (selector) {
+                state = `:${childNode.name}`;
+              } else {
+                name = `:${childNode.name}`;
+              }
+              break;
+            }
+            case "PseudoElementSelector":
+              state = `::${childNode.name}`;
+              break;
+            case "Combinator":
+              // " " vs " > "
+              name =
+                childNode.name === " " ? childNode.name : ` ${childNode.name} `;
+              break;
+          }
+
+          if (selector) {
+            selector.name += name;
+            if (state) {
+              selector.state = state;
+            }
+          } else {
+            selector = { name, state };
+          }
+        }
         if (selector) {
-          selector.name += name;
-          if (state) {
-            selector.state = state;
+          selectors.push(selector);
+          selector = undefined;
+        }
+      }
+
+      const stringValue = csstree.generate(node.value);
+
+      const parsedCss = parseCssValue(
+        normalizeProperty(node.property),
+        stringValue
+      );
+
+      for (const { name: selector, state } of selectors) {
+        for (const [property, value] of parsedCss) {
+          const normalizedProperty = normalizeProperty(property);
+          const styleDecl: ParsedStyleDecl = {
+            selector,
+            property: normalizedProperty,
+            value,
+          };
+          if (breakpoint) {
+            styleDecl.breakpoint = breakpoint;
           }
-        } else {
-          selector = { name, state };
+          if (state) {
+            styleDecl.state = state;
+          }
+
+          // deduplicate styles within selector and state by using map
+          styles.set(
+            `${breakpoint}:${selector}:${state}:${normalizedProperty}`,
+            styleDecl
+          );
         }
       }
-      if (selector) {
-        selectors.push(selector);
-        selector = undefined;
-      }
-    }
-
-    const stringValue = csstree.generate(node.value);
-
-    const parsedCss = parseCssValue(
-      normalizeProperty(node.property),
-      stringValue
-    );
-
-    for (const { name: selector, state } of selectors) {
-      for (const [property, value] of parsedCss) {
-        const normalizedProperty = normalizeProperty(property);
-        const styleDecl: ParsedStyleDecl = {
-          selector,
-          property: normalizedProperty,
-          value,
-        };
-        if (breakpoint) {
-          styleDecl.breakpoint = breakpoint;
-        }
-        if (state) {
-          styleDecl.state = state;
-        }
-
-        // deduplicate styles within selector and state by using map
-        styles.set(
-          `${breakpoint}:${selector}:${state}:${normalizedProperty}`,
-          styleDecl
-        );
-      }
-    }
+    },
   });
 
   return Array.from(styles.values());
@@ -276,7 +306,7 @@ export const parseMediaQuery = (
   let property: undefined | "minWidth" | "maxWidth";
   let value: undefined | number;
   csstree.walk(ast, (node) => {
-    if (node.type === "MediaFeature") {
+    if (node.type === "Feature") {
       if (node.name === "min-width") {
         property = "minWidth";
       }

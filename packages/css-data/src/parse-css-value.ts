@@ -219,6 +219,7 @@ export const parseCssVar = (node: FunctionNode): undefined | VarValue => {
   const [name, _comma, ...fallback] = node.children;
   const fallbackString = generate({
     type: "Value",
+    loc: null,
     children: new List<CssNode>().fromArray(fallback),
   }).trim();
   if (name.type === "Identifier") {
@@ -380,7 +381,7 @@ const parseLiteral = (
         type: "function",
         args: parseShadow(
           node.children.toArray(),
-          generate({ type: "Value", children: node.children })
+          generate({ type: "Value", loc: null, children: node.children })
         ),
         name: node.name,
       };
@@ -469,6 +470,7 @@ export const parseCssValue = (
       value: splitRepeated(nodes).map((nodes) => {
         const value = generate({
           type: "Value",
+          loc: null,
           children: new List<CssNode>().fromArray(nodes),
         });
         const parsed = parseCssValue(property, value, false) as LayerValueItem;
@@ -506,6 +508,7 @@ export const parseCssValue = (
         }
         return generate({
           type: "Value",
+          loc: null,
           children: new List<CssNode>().fromArray(nodes),
         });
       }),

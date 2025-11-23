@@ -36,7 +36,6 @@
     "@storybook/addon-controls": "^8.6.4",
     "@storybook/react": "^8.6.4",
     "@storybook/react-vite": "^8.6.4",
-    "@types/css-tree": "^2.3.1",
     "@types/node": "^22.13.10",
     "@types/react": "^18.2.70",
     "esbuild": "^0.25.3",
@@ -85,8 +84,6 @@
     },
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch",
-      "css-tree@2.3.1": "patches/css-tree@2.3.1.patch",
-      "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch",
       "@radix-ui/react-scroll-area@1.0.5": "patches/@radix-ui__react-scroll-area@1.0.5.patch",
       "@remix-run/dev": "patches/@remix-run__dev.patch"
     }
