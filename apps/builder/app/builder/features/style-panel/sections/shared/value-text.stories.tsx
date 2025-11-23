@@ -35,7 +35,7 @@ const valueOptions = [
 ];
 
 export default {
-  title: "Space/ValueText",
+  title: "Style Panel/Space/Value Text",
   component: ValueText,
   argTypes: {
     source: {

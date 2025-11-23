@@ -64,6 +64,6 @@ export const Backgrounds = () => {
 };
 
 export default {
-  title: "Style Panel/Background",
+  title: "Style Panel/Backgrounds/Section",
   component: Section,
 };

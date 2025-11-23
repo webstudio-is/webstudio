@@ -11,5 +11,5 @@ export const Demo = () => (
 Demo.storyName = "Two Rows Small Icon Button Container";
 
 export default {
-  title: "Library/Two Rows Small Icon Button Container",
+  title: "Two Rows Small Icon Button Container",
 };

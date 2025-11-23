@@ -11,7 +11,7 @@ import {
 } from "./tree";
 
 export default {
-  title: "Library/Tree",
+  title: "Tree",
 };
 
 type Node = {

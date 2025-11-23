@@ -291,5 +291,5 @@ export const Demo = () => (
 Demo.storyName = "Menu, Menu Item";
 
 export default {
-  title: "Library/Menu, Menu Item",
+  title: "Menu, Menu Item",
 };

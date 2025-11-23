@@ -19,7 +19,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/RadioButton",
+  title: "RadioButton",
 };
 
 const Story = {

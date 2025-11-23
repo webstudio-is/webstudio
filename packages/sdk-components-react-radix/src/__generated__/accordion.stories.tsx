@@ -83,7 +83,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Accordion",
+  title: "Accordion",
 };
 
 const Story = {

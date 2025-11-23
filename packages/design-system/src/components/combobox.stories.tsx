@@ -107,5 +107,6 @@ export const Complex = () => {
 };
 
 export default {
+  title: "Combobox",
   component: Complex,
 };

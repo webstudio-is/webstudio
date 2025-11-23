@@ -7,6 +7,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
 
 export default {
+  title: "Style Panel/CSS Value Input",
   component: CssValueInput,
 };
 

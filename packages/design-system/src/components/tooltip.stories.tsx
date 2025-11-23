@@ -9,7 +9,7 @@ import { InputField } from "./input-field";
 import { useState } from "react";
 
 export default {
-  title: "Library/Tooltip",
+  title: "Tooltip",
 };
 
 export const TooltipDelay = () => {

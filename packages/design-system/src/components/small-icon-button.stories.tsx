@@ -82,7 +82,7 @@ Demo.args = {
 Demo.storyName = "Small Icon Button";
 
 export default {
-  title: "Library/Small Icon Button",
+  title: "Small Icon Button",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Maintenance Medium" },

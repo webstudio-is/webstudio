@@ -42,7 +42,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Tabs",
+  title: "Tabs",
 };
 
 const Story = {

@@ -1,7 +1,7 @@
 import { Separator } from "./separator";
 
 export default {
-  title: "Library/Separator",
+  title: "Separator",
 };
 
 const SeparatorStory = () => <Separator />;

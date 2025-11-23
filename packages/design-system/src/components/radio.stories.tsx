@@ -3,7 +3,7 @@ import { RadioGroup, Radio, RadioAndLabel } from "./radio";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Radio",
+  title: "Radio",
   parameters: {
     // to make the white background in the control visible
     backgrounds: { default: "Panel" },

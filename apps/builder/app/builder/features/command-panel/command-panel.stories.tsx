@@ -16,7 +16,7 @@ import {
 } from "./command-panel";
 
 const meta: Meta = {
-  title: "CommandPanel",
+  title: "Command Panel",
 };
 export default meta;
 

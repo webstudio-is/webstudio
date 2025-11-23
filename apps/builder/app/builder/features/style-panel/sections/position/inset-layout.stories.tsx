@@ -19,6 +19,6 @@ export const InsetLayoutComponent = () => (
 );
 
 export default {
-  title: "Style Panel/Inset",
+  title: "Style Panel/Inset Layout",
   component: InsetLayoutComponent,
 } as Meta<typeof InsetLayoutComponent>;

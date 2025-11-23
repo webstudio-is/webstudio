@@ -4,7 +4,7 @@ import { StorySection, StoryGrid } from "./storybook";
 import { Tooltip } from "./tooltip";
 
 export default {
-  title: "Library/Checkbox",
+  title: "Checkbox",
   parameters: {
     // to make the white background in the control visible
     backgrounds: { default: "Panel" },

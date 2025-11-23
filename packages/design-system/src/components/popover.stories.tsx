@@ -12,7 +12,7 @@ import { theme } from "../stitches.config";
 import { Flex } from "./flex";
 
 export default {
-  title: "Library/Popover",
+  title: "Popover",
 };
 
 const PopoverDemo = () => (

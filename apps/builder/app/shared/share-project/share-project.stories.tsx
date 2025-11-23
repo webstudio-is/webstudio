@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { type LinkOptions, ShareProject } from "./share-project";
 
 export default {
+  title: "Share Project",
   component: ShareProject,
 };
 

@@ -10,7 +10,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Label",
+  title: "Label",
 };
 
 const Story = {

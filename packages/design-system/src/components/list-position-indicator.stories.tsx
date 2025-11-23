@@ -5,7 +5,7 @@ import {
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/List Position Indicator",
+  title: "List Position Indicator",
   parameters: {
     // to make white outline visible
     backgrounds: { default: "Maintenance Medium" },

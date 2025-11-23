@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DeprecatedList, DeprecatedListItem, useDeprecatedList } from "./list";
 
 export default {
+  title: "Deprecated/List",
   component: DeprecatedList,
 };
 

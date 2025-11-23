@@ -17,5 +17,5 @@ const Story = () => (
 export { Story as Text };
 
 export default {
-  title: "Components/Text",
+  title: "Text",
 };

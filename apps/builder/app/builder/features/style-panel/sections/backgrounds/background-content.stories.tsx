@@ -115,7 +115,7 @@ export const RadialGradient = () => {
   return <BackgroundStory styleValue={styleValue} />;
 };
 
-export const SolidColorGradient = () => {
+export const Solid = () => {
   const styleValue: StyleValue = {
     type: "unparsed",
     value:
@@ -125,6 +125,6 @@ export const SolidColorGradient = () => {
 };
 
 export default {
-  title: "Style Panel/Background",
+  title: "Style Panel/Backgrounds",
   component: Image,
 };

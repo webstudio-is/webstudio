@@ -2,6 +2,7 @@ import { Box, Flex } from "@webstudio-is/design-system";
 import { FlexGrid as FlexGridComponent } from "./flex-grid";
 
 export default {
+  title: "Style Panel/Layout/Flex Grid",
   component: FlexGridComponent,
 };
 

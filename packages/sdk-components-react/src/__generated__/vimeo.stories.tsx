@@ -44,7 +44,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Vimeo",
+  title: "Vimeo",
 };
 
 const Story = {

@@ -25,7 +25,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Tooltip",
+  title: "Tooltip",
 };
 
 const Story = {

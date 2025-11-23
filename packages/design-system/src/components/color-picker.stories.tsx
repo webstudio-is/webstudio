@@ -6,7 +6,7 @@ import { Flex } from "./flex";
 import { Text } from "./text";
 
 export default {
-  title: "Library/ColorPicker",
+  title: "ColorPicker",
 };
 
 const initialColor: RgbValue = {

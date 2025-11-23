@@ -3,7 +3,7 @@ import { Link } from "./link";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Link",
+  title: "Link",
 };
 
 const LinkStory = () => (

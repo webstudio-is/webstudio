@@ -23,7 +23,7 @@ export default {
       type: "inline-radio",
     },
   },
-  title: "Library/CSS Value List Item",
+  title: "CSS Value List Item",
 };
 
 const Thumbnail = styled("div", {

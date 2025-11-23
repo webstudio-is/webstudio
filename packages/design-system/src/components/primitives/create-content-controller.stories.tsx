@@ -67,5 +67,6 @@ const ExampleContentController = () => {
 export const DetectInput = Object.assign(ExampleContentController.bind({}));
 
 export default {
+  title: "Primitives/Create Content Controller",
   component: ExampleContentController,
 };

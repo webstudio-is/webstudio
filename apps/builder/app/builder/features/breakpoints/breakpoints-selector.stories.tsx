@@ -80,5 +80,6 @@ export const Story = () => {
 Story.storyName = "breakpoints-selector";
 
 export default {
+  title: "Breakpoints Selector",
   component: Story,
 };

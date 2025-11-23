@@ -208,7 +208,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/NavigationMenu",
+  title: "NavigationMenu",
 };
 
 const Story = {

@@ -4,7 +4,7 @@ import { XIcon, CopyIcon } from "@webstudio-is/icons";
 import { StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Panel Title",
+  title: "Panel Title",
 };
 
 export const Demo = () => (

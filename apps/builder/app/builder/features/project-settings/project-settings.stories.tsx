@@ -5,6 +5,7 @@ import { $pages, $project } from "~/shared/nano-states";
 import type { Project } from "@webstudio-is/project";
 
 export default {
+  title: "Project Settings",
   component: ProjectSettingsView,
 };
 

@@ -40,7 +40,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Form",
+  title: "Form",
 };
 
 const Story = {

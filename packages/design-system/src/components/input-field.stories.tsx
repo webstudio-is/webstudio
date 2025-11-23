@@ -6,7 +6,7 @@ import { NestedInputButton } from "./nested-input-button";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Input Field",
+  title: "Input Field",
 };
 
 const prefix = (

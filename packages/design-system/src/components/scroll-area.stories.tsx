@@ -3,7 +3,7 @@ import { ScrollArea } from "./scroll-area";
 import { theme } from "..";
 
 export default {
-  title: "Library/Scroll Area",
+  title: "Scroll Area",
 };
 
 export const Story = () => {

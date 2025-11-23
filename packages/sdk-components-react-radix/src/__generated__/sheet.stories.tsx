@@ -59,7 +59,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Sheet",
+  title: "Sheet",
 };
 
 const Story = {

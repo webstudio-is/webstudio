@@ -6,7 +6,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { theme } from "../stitches.config";
 
 export default {
-  title: "Library/Label",
+  title: "Label",
 };
 
 const colors = ["default", "preset", "local", "overwritten", "remote"] as const;

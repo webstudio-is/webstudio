@@ -2,6 +2,7 @@ import type { StoryFn } from "@storybook/react";
 import { SearchField } from "./search-field";
 
 export default {
+  title: "Search Field",
   component: SearchField,
 };
 

@@ -10,7 +10,7 @@ import { Image as ImagePrimitive, wsImageLoader } from "./";
 import localLogoImage from "../storybook-assets/logo.webp";
 
 const meta: Meta<typeof ImagePrimitive> = {
-  title: "Components/ImageDev",
+  title: "Image Dev",
 };
 export default meta;
 

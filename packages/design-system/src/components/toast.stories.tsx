@@ -7,7 +7,7 @@ import { css, theme } from "../stitches.config";
 import { AlertCircleIcon } from "@webstudio-is/icons";
 
 export default {
-  title: "Library/Toast",
+  title: "Toast",
 };
 
 const svgString = `

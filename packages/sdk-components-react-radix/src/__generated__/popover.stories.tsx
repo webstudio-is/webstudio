@@ -35,7 +35,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Popover",
+  title: "Popover",
 };
 
 const Story = {

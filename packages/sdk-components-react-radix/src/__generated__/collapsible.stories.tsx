@@ -27,7 +27,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Collapsible",
+  title: "Collapsible",
 };
 
 const Story = {
