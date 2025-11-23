@@ -205,7 +205,6 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
         }
         let selector: Selector | undefined = undefined;
         const children = node.children.toArray();
-        // NestingSelector is now in the types
         const startsWithNesting = children[0]?.type === "NestingSelector";
         for (let index = 0; index < children.length; index += 1) {
           const childNode = children[index];
