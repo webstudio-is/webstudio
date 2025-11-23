@@ -188,7 +188,7 @@ test("Link Block, Button, Text Link", async () => {
   expect(toCss(fragment)).toMatchInlineSnapshot(`
     "@media all {
       a {
-        background-color: rgba(0, 0, 0, 0)
+        background-color: rgb(0 0 0 / 0)
       }
       a:active {
         outline: 0 none currentcolor
@@ -369,7 +369,7 @@ test("Blockquote", async () => {
         padding-left: 20px;
         font-size: 18px;
         line-height: 22px;
-        border-left: 5px solid rgba(226, 226, 226, 1)
+        border-left: 5px solid rgb(226 226 226 / 1)
       }
     }"
   `);
@@ -1510,7 +1510,7 @@ test("RichText", async () => {
         padding-left: 20px;
         font-size: 18px;
         line-height: 22px;
-        border-left: 5px solid rgba(226, 226, 226, 1)
+        border-left: 5px solid rgb(226 226 226 / 1)
       }
       ol {
         margin-top: 0;
@@ -1523,7 +1523,7 @@ test("RichText", async () => {
         padding-left: 40px
       }
       a {
-        background-color: rgba(0, 0, 0, 0)
+        background-color: rgb(0 0 0 / 0)
       }
       a:active {
         outline: 0 none currentcolor
@@ -1684,9 +1684,9 @@ test("Form", async () => {
         padding: 0
       }
       w-input {
-        color: rgba(51, 51, 51, 1);
+        color: rgb(51 51 51 / 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgb(238 238 238 / 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -1698,23 +1698,23 @@ test("Form", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        border: 1px solid rgba(204, 204, 204, 1)
+        border: 1px solid rgb(204 204 204 / 1)
       }
       w-input:-moz-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input::-moz-placeholder {
-        color: rgba(153, 153, 153, 1);
+        color: rgb(153 153 153 / 1);
         opacity: 1
       }
       w-input::-webkit-input-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input:focus {
-        border-top-color: rgba(56, 152, 236, 1);
-        border-right-color: rgba(56, 152, 236, 1);
-        border-bottom-color: rgba(56, 152, 236, 1);
-        border-left-color: rgba(56, 152, 236, 1);
+        border-top-color: rgb(56 152 236 / 1);
+        border-right-color: rgb(56 152 236 / 1);
+        border-bottom-color: rgb(56 152 236 / 1);
+        border-left-color: rgb(56 152 236 / 1);
         outline: 0 none currentcolor
       }
     }"
@@ -1768,10 +1768,10 @@ test("FormButton", async () => {
         padding: 0
       }
       w-button {
-        color: rgba(255, 255, 255, 1);
+        color: rgb(255 255 255 / 1);
         line-height: inherit;
         cursor: pointer;
-        background-color: rgba(56, 152, 236, 1);
+        background-color: rgb(56 152 236 / 1);
         border-top-left-radius: 0;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -1856,9 +1856,9 @@ test("FormTextInput", async () => {
         padding: 0
       }
       w-input {
-        color: rgba(51, 51, 51, 1);
+        color: rgb(51 51 51 / 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgb(238 238 238 / 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -1870,23 +1870,23 @@ test("FormTextInput", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        border: 1px solid rgba(204, 204, 204, 1)
+        border: 1px solid rgb(204 204 204 / 1)
       }
       w-input:-moz-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input::-moz-placeholder {
-        color: rgba(153, 153, 153, 1);
+        color: rgb(153 153 153 / 1);
         opacity: 1
       }
       w-input::-webkit-input-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input:focus {
-        border-top-color: rgba(56, 152, 236, 1);
-        border-right-color: rgba(56, 152, 236, 1);
-        border-bottom-color: rgba(56, 152, 236, 1);
-        border-left-color: rgba(56, 152, 236, 1);
+        border-top-color: rgb(56 152 236 / 1);
+        border-right-color: rgb(56 152 236 / 1);
+        border-bottom-color: rgb(56 152 236 / 1);
+        border-left-color: rgb(56 152 236 / 1);
         outline: 0 none currentcolor
       }
     }"
@@ -1990,9 +1990,9 @@ test("FormTextarea", async () => {
         margin: 0
       }
       w-input {
-        color: rgba(51, 51, 51, 1);
+        color: rgb(51 51 51 / 1);
         vertical-align: middle;
-        background-color: rgba(238, 238, 238, 1);
+        background-color: rgb(238 238 238 / 1);
         width: 100%;
         height: auto;
         margin-bottom: 10px;
@@ -2004,23 +2004,23 @@ test("FormTextarea", async () => {
         line-height: 1.42857;
         display: block;
         cursor: not-allowed;
-        border: 1px solid rgba(204, 204, 204, 1)
+        border: 1px solid rgb(204 204 204 / 1)
       }
       w-input:-moz-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input::-moz-placeholder {
-        color: rgba(153, 153, 153, 1);
+        color: rgb(153 153 153 / 1);
         opacity: 1
       }
       w-input::-webkit-input-placeholder {
-        color: rgba(153, 153, 153, 1)
+        color: rgb(153 153 153 / 1)
       }
       w-input:focus {
-        border-top-color: rgba(56, 152, 236, 1);
-        border-right-color: rgba(56, 152, 236, 1);
-        border-bottom-color: rgba(56, 152, 236, 1);
-        border-left-color: rgba(56, 152, 236, 1);
+        border-top-color: rgb(56 152 236 / 1);
+        border-right-color: rgb(56 152 236 / 1);
+        border-bottom-color: rgb(56 152 236 / 1);
+        border-left-color: rgb(56 152 236 / 1);
         outline: 0 none currentcolor
       }
     }"
@@ -2567,7 +2567,7 @@ describe("Styles", () => {
           line-height: 44px
         }
         Heading {
-          color: rgba(219, 24, 24, 1)
+          color: rgb(219 24 24 / 1)
         }
       }"
     `);
@@ -2695,7 +2695,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         a {
-          background-color: rgba(0, 0, 0, 0)
+          background-color: rgb(0 0 0 / 0)
         }
         a:active {
           outline: 0 none currentcolor
@@ -2787,7 +2787,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         d1 {
-          color: rgba(209, 36, 36, 1)
+          color: rgb(209 36 36 / 1)
         }
         d2 {
           font-size: 200px
@@ -2906,7 +2906,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         a {
-          background-color: rgba(0, 0, 0, 0)
+          background-color: rgb(0 0 0 / 0)
         }
         a:active {
           outline: 0 none currentcolor
@@ -2918,24 +2918,24 @@ describe("Styles", () => {
           transform: translate3d(7px, 74px, 16px)
         }
         x:hover {
-          background-color: rgba(199, 16, 16, 1)
+          background-color: rgb(199 16 16 / 1)
         }
       }
       @media all and (max-width: 479px) {
         x:active {
-          background-color: rgba(189, 75, 75, 1)
+          background-color: rgb(189 75 75 / 1)
         }
         x:focus {
-          background-color: rgba(83, 26, 170, 1)
+          background-color: rgb(83 26 170 / 1)
         }
         x:focus-visible {
-          background-color: rgba(98, 67, 145, 1)
+          background-color: rgb(98 67 145 / 1)
         }
         x:hover {
-          background-color: rgba(214, 87, 87, 1)
+          background-color: rgb(214 87 87 / 1)
         }
         x:visited {
-          background-color: rgba(197, 18, 18, 1)
+          background-color: rgb(197 18 18 / 1)
         }
       }"
     `);
@@ -3001,27 +3001,27 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         Div Block 2 {
-          background-color: rgba(0, 208, 255, 1)
+          background-color: rgb(0 208 255 / 1)
         }
       }
       @media all and (max-width: 991px) {
         Div Block 2 {
-          background-color: rgba(68, 0, 255, 1)
+          background-color: rgb(68 0 255 / 1)
         }
       }
       @media all and (max-width: 767px) {
         Div Block 2 {
-          background-color: rgba(255, 0, 221, 1)
+          background-color: rgb(255 0 221 / 1)
         }
       }
       @media all and (max-width: 479px) {
         Div Block 2 {
-          background-color: rgba(255, 0, 4, 1)
+          background-color: rgb(255 0 4 / 1)
         }
       }
       @media all and (min-width: 1280px) {
         Div Block 2 {
-          background-color: rgba(0, 255, 128, 1)
+          background-color: rgb(0 255 128 / 1)
         }
       }"
     `);
@@ -3264,7 +3264,7 @@ describe("Styles", () => {
             namespace: "",
             comb: "",
             styleLess:
-              "background-image: linear-gradient(350deg, hsla(256.3636363636363, 72.13%, 23.92%, 0.00), hsla(256.2162162162162, 72.55%, 80.00%, 1.00) 49%, #bba7f1); color: hsla(0, 0.00%, 100.00%, 1.00); background-clip: text;",
+              "background-image: linear-gradient(350deg, hsl(256.3636363636363 72.13% 23.92% / 0.00), hsl(256.2162162162162 72.55% 80.00% / 1.00) 49%, #bba7f1); color: hsl(0 0.00% 100.00% / 1.00); background-clip: text;",
             variants: {},
             children: [],
             createdBy: "58b4b8186ceb395341fcf640",
@@ -3288,7 +3288,7 @@ describe("Styles", () => {
           line-height: 36px
         }
         H2 Heading 2 {
-          background-image: linear-gradient(350deg,hsla(256.3636363636363,72.13%,23.92%,0.00),hsla(256.2162162162162,72.55%,80.00%,1.00) 49%,#bba7f1);
+          background-image: linear-gradient(350deg,hsl(256.3636363636363 72.13% 23.92%/0.00),hsl(256.2162162162162 72.55% 80.00%/1.00) 49%,#bba7f1);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent

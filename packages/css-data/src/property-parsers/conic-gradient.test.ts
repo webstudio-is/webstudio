@@ -141,7 +141,7 @@ describe("parse conic-gradient", () => {
       })
     );
     expect(formatConicGradient(parsed!)).toBe(
-      "repeating-conic-gradient(rgba(255, 0, 0, 1) 0% 25%, rgba(0, 0, 255, 1) 50% 75%)"
+      "repeating-conic-gradient(rgb(255 0 0 / 1) 0% 25%, rgb(0 0 255 / 1) 50% 75%)"
     );
   });
 
@@ -243,7 +243,7 @@ describe("parse conic-gradient", () => {
       })
     );
     expect(formatConicGradient(parsed!)).toBe(
-      "conic-gradient(rgba(255, 0, 0, 1) var(--start, 10%) var(--hint, 20%), rgba(0, 0, 255, 1) var(--end))"
+      "conic-gradient(rgb(255 0 0 / 1) var(--start, 10%) var(--hint, 20%), rgb(0 0 255 / 1) var(--end))"
     );
   });
 
@@ -275,7 +275,7 @@ describe("parse conic-gradient", () => {
       })
     );
     expect(formatConicGradient(parsed!)).toBe(
-      "conic-gradient(rgba(0, 128, 0, 1) 0%, rgba(0, 0, 255, 1) 50%, rgba(255, 255, 0, 1) 100%)"
+      "conic-gradient(rgb(0 128 0 / 1) 0%, rgb(0 0 255 / 1) 50%, rgb(255 255 0 / 1) 100%)"
     );
   });
 
@@ -307,7 +307,7 @@ describe("parse conic-gradient", () => {
       })
     );
     expect(formatConicGradient(parsed!)).toBe(
-      "conic-gradient(rgba(255, 0, 0, 1), rgba(0, 255, 0, 1), rgba(0, 0, 255, 1))"
+      "conic-gradient(rgb(255 0 0 / 1), rgb(0 255 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 

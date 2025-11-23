@@ -142,7 +142,7 @@ describe("parses linear-gradient", () => {
     }
 
     expect(formatLinearGradient(parsed)).toEqual(
-      "linear-gradient(rgba(255, 0, 0, 1), rgba(0, 255, 0, 1), rgba(0, 0, 255, 1))"
+      "linear-gradient(rgb(255 0 0 / 1), rgb(0 255 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -154,7 +154,7 @@ describe("parses linear-gradient", () => {
 
     expect(parsed.repeating).toBe(true);
     expect(formatLinearGradient(parsed)).toEqual(
-      "repeating-linear-gradient(rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "repeating-linear-gradient(rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 
@@ -237,7 +237,7 @@ describe("parses linear-gradient", () => {
     );
     if (parsed) {
       expect(formatLinearGradient(parsed)).toEqual(
-        "linear-gradient(to bottom, rgba(0, 128, 0, 1) 0%, var(--accent))"
+        "linear-gradient(to bottom, rgb(0 128 0 / 1) 0%, var(--accent))"
       );
     }
   });
@@ -270,7 +270,7 @@ describe("parses linear-gradient", () => {
     );
     if (parsed) {
       expect(formatLinearGradient(parsed)).toEqual(
-        "linear-gradient(rgba(255, 0, 0, 1) var(--start, 10%), rgba(0, 0, 255, 1) var(--end))"
+        "linear-gradient(rgb(255 0 0 / 1) var(--start, 10%), rgb(0 0 255 / 1) var(--end))"
       );
     }
   });
@@ -361,7 +361,7 @@ describe("parses linear-gradient", () => {
       value: "angle",
     });
     expect(formatLinearGradient(parsed)).toEqual(
-      "linear-gradient(var(--angle, 45deg), rgba(255, 0, 0, 1), rgba(0, 0, 255, 1))"
+      "linear-gradient(var(--angle, 45deg), rgb(255 0 0 / 1), rgb(0 0 255 / 1))"
     );
   });
 

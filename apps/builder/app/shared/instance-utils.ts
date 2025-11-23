@@ -619,6 +619,7 @@ const traverseStyleValue = (
     value.type === "unparsed" ||
     value.type === "invalid" ||
     value.type === "unset" ||
+    value.type === "color" ||
     value.type === "rgb" ||
     value.type === "function" ||
     value.type === "guaranteedInvalid"

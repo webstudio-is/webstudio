@@ -84,7 +84,40 @@ export const toValue = (
   }
 
   if (value.type === "rgb") {
-    return `rgba(${value.r}, ${value.g}, ${value.b}, ${value.alpha})`;
+    return `rgb(${value.r} ${value.g} ${value.b} / ${value.alpha})`;
+  }
+
+  if (value.type === "color") {
+    const [c1, c2, c3] = value.components;
+    const alpha = value.alpha;
+
+    // Use specific CSS functions when available
+    switch (value.colorSpace) {
+      case "srgb":
+        return `rgb(${c1 * 255} ${c2 * 255} ${c3 * 255} / ${alpha})`;
+      case "hsl":
+        return `hsl(${c1} ${c2}% ${c3}% / ${alpha})`;
+      case "hwb":
+        return `hwb(${c1} ${c2}% ${c3}% / ${alpha})`;
+      case "lab":
+        return `lab(${c1}% ${c2} ${c3} / ${alpha})`;
+      case "lch":
+        return `lch(${c1}% ${c2} ${c3} / ${alpha})`;
+      case "oklab":
+        return `oklab(${c1} ${c2} ${c3} / ${alpha})`;
+      case "oklch":
+        return `oklch(${c1} ${c2} ${c3} / ${alpha})`;
+      // Fall back to color() function for less common color spaces
+      case "p3":
+      case "srgb-linear":
+      case "a98rgb":
+      case "prophoto":
+      case "rec2020":
+      case "xyz-d65":
+      case "xyz-d50":
+      default:
+        return `color(${value.colorSpace} ${c1} ${c2} ${c3} / ${alpha})`;
+    }
   }
 
   if (value.type === "image") {

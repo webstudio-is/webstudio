@@ -32,24 +32,24 @@ export const pageBackgroundImageAssets: string[] = [];
 const Page = (_props: { system: any }) => {
   return (
     <Body className={`w-body`}>
-      <Box className={`w-box coklr1z`}>
+      <Box className={`w-box c620822`}>
         <Heading className={`w-heading cc5h0no`}>
           {"Content Block With Templates And Content"}
         </Heading>
         <Heading className={`w-heading`}>{"H1"}</Heading>
         <Paragraph className={`w-paragraph`}>{"Paragraph"}</Paragraph>
       </Box>
-      <Box className={`w-box c1cqkpk9`}>
+      <Box className={`w-box ch21dzk`}>
         <Heading className={`w-heading cc5h0no`}>
           {"Content Block With Templates Only"}
         </Heading>
       </Box>
-      <Box className={`w-box ccxj65f`}>
+      <Box className={`w-box c44hi06`}>
         <Heading className={`w-heading cc5h0no`}>{"With Content Only"}</Heading>
         <Heading className={`w-heading`}>{"H1"}</Heading>
         <Paragraph className={`w-paragraph`}>{"Paragraph"}</Paragraph>
       </Box>
-      <Box className={`w-box c1a2hnxl`}>
+      <Box className={`w-box cno1tjk`}>
         <Heading className={`w-heading cc5h0no`}>{"Empty"}</Heading>
       </Box>
     </Body>

@@ -49,7 +49,7 @@ const Page = (_props: { system: any }) => {
         }}
         className={`w-accordion`}
       >
-        <AccordionItem data-ws-index="0" className={`w-item c2onvcp`}>
+        <AccordionItem data-ws-index="0" className={`w-item c6gjj8k`}>
           <AccordionHeader className={`w-item-header c13v7j50`}>
             <AccordionTrigger
               className={`w-item-trigger c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc`}
@@ -73,7 +73,7 @@ const Page = (_props: { system: any }) => {
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem data-ws-index="1" className={`w-item c2onvcp`}>
+        <AccordionItem data-ws-index="1" className={`w-item c6gjj8k`}>
           <AccordionHeader className={`w-item-header c13v7j50`}>
             <AccordionTrigger
               className={`w-item-trigger c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc`}
@@ -99,7 +99,7 @@ const Page = (_props: { system: any }) => {
             }
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem data-ws-index="2" className={`w-item c2onvcp`}>
+        <AccordionItem data-ws-index="2" className={`w-item c6gjj8k`}>
           <AccordionHeader className={`w-item-header c13v7j50`}>
             <AccordionTrigger
               className={`w-item-trigger c13v7j50 c1qxdkbn chhejm9 c13bviim cpjvam0 c1tw5o2 cqw88jp c44srea c14kxsax cg783j6 c1ad236a c1s4llbc`}
