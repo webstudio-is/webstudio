@@ -11,7 +11,7 @@ import { ScrollArea, Box, Grid, Text, theme } from "../..";
 import { AiIcon, MicIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
 export default {
-  title: "Library/AI Command Bar",
+  title: "AI Command Bar",
 };
 
 const CommandBarContent = () => {

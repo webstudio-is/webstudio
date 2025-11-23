@@ -143,7 +143,7 @@ Demo.argTypes = {
 Demo.storyName = "Toggle Group";
 
 export default {
-  title: "Library/Toggle Group",
+  title: "Toggle Group",
   parameters: {
     // to make the variant=contrast visible
     backgrounds: { default: "Panel" },

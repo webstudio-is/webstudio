@@ -5,6 +5,7 @@ import { Button } from "./button";
 import { Text } from "./text";
 
 export default {
+  title: "Floating Panel",
   component: FloatingPanel,
 };
 

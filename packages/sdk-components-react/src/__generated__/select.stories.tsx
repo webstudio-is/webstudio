@@ -18,7 +18,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Select",
+  title: "Select",
 };
 
 const Story = {

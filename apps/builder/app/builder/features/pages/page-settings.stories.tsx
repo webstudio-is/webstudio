@@ -6,6 +6,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import { isRootFolder } from "@webstudio-is/sdk";
 
 export default {
+  title: "Pages/Page Settings",
   component: PageSettings,
   parameters: {
     lostpixel: {

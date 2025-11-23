@@ -1,7 +1,10 @@
 import { Box } from "@webstudio-is/design-system";
 import { SearchPreview } from "./search-preview";
 
-export default { component: SearchPreview };
+export default {
+  title: "Pages/Search Preview",
+  component: SearchPreview,
+};
 
 export const Basic = () => (
   <Box css={{ width: 600, margin: 20 }}>

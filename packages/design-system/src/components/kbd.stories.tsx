@@ -1,7 +1,7 @@
 import { Kbd } from "./kbd";
 
 export default {
-  title: "Library/Kbd",
+  title: "Kbd",
 };
 
 const KbdStory = () => <Kbd value={["meta", "z"]} />;

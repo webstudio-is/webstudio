@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ScrollAnimation, ViewAnimation } from "@webstudio-is/sdk";
 
 const meta = {
-  title: "Builder/Settings Panel/Animation Panel Content",
+  title: "Settings Panel/Animation Panel Content",
   component: AnimationPanelContent,
   parameters: {
     layout: "centered",

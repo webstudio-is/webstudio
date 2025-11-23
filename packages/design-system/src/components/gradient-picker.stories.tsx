@@ -9,7 +9,7 @@ import { Flex } from "./flex";
 import { Text } from "./text";
 
 export default {
-  title: "Library/GradientPicker",
+  title: "Gradient Picker",
 };
 
 const parseLinearGradientOrThrow = (

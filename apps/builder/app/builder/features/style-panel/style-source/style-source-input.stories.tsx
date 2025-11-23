@@ -5,6 +5,7 @@ import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
 import { atom } from "nanostores";
 
 export default {
+  title: "Style Panel/Style Source Input",
   component: StyleSourceInput,
 };
 

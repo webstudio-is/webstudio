@@ -58,6 +58,7 @@ export const NumericInput = Object.assign(Input.bind({}), {
 });
 
 export default {
+  title: "Primitives/Numeric Gesture Control",
   component: Input,
   argTypes: {
     value: {

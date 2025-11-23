@@ -1,6 +1,7 @@
 import { createRegularStyleSheet } from "./create-style-sheet";
 
 export default {
+  title: "CSS Engine",
   component: "CssEngine",
 };
 

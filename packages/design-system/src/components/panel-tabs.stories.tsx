@@ -10,7 +10,7 @@ import { Text } from "./text";
 import { theme } from "../stitches.config";
 
 export default {
-  title: "Library/Panel Tabs",
+  title: "Panel Tabs",
 };
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (

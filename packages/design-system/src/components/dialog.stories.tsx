@@ -11,7 +11,7 @@ import {
 } from "./dialog";
 
 export default {
-  title: "Library/Floating Panel/Dialog",
+  title: "Floating Panel/Dialog",
 };
 
 const bodyStyle = css({

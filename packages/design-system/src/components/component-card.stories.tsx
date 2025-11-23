@@ -5,7 +5,7 @@ import { TooltipProvider } from "./tooltip";
 import { Grid } from "./grid";
 
 export default {
-  title: "Library/Component Card",
+  title: "Component Card",
 };
 
 export const Demo = () => {

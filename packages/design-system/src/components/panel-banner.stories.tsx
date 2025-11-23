@@ -5,7 +5,7 @@ import { Link } from "./link";
 import { buttonStyle } from "./button";
 
 export default {
-  title: "Library/Panel Banner",
+  title: "Panel Banner",
 };
 
 export const Demo = () => {

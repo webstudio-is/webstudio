@@ -12,6 +12,6 @@ export const Layout = (
 );
 
 export default {
-  title: "Space/Layout",
+  title: "Style Panel/Space/Layout",
   component: Layout,
 } as Meta<typeof Layout>;

@@ -7,7 +7,7 @@ import { StorySection, StoryGrid } from "./storybook";
 import { theme } from "../stitches.config";
 
 export default {
-  title: "Library/Button",
+  title: "Button",
 };
 
 const iconsMap = {

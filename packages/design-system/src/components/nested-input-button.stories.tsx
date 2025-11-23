@@ -3,7 +3,7 @@ import { NestedInputButton } from "./nested-input-button";
 import { StoryGrid, StorySection } from "./storybook";
 
 export default {
-  title: "Library/Nested Select Button",
+  title: "Nested Select Button",
 };
 
 export const Demo = () => {

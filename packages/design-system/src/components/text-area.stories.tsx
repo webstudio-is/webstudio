@@ -3,7 +3,7 @@ import { StorySection, StoryGrid } from "./storybook";
 import { useState } from "react";
 
 export default {
-  title: "Library/Text Area",
+  title: "Text Area",
 };
 
 const exampleValue =

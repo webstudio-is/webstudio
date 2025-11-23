@@ -4,7 +4,7 @@ import { GapVerticalIcon } from "@webstudio-is/icons";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Select Button",
+  title: "Select Button",
 };
 
 const iconLabel = (

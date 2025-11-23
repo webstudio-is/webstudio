@@ -12,7 +12,7 @@ $userPlanFeatures.set({
 });
 
 export default {
-  title: "Builder/Variables Section",
+  title: "Variables Section",
   component: VariablesSectionComponent,
 } satisfies Meta;
 

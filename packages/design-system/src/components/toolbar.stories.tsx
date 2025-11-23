@@ -8,7 +8,7 @@ import {
 } from "./toolbar";
 
 export default {
-  title: "Library/Toolbar",
+  title: "Toolbar",
 };
 
 const ToolbarStory = () => {

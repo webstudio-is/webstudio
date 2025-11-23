@@ -408,6 +408,7 @@ export const Story = () => {
 
 Story.storyName = "props-panel";
 export default {
+  title: "Settings Panel/Props Section",
   component: Story,
   parameters: {
     lostpixel: {

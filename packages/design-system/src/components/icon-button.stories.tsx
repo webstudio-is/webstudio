@@ -4,6 +4,7 @@ import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
 
 export default {
+  title: "Icon Button",
   component: IconButton,
 };
 

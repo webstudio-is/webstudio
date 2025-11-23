@@ -3,7 +3,7 @@ import type { Meta } from "@storybook/react";
 import { CodeEditor as CodeEditorComponent } from "./code-editor";
 
 export default {
-  title: "Builder/Code Editor",
+  title: "Code Editor",
   component: CodeEditorComponent,
 } satisfies Meta;
 

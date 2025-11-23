@@ -360,5 +360,6 @@ export const Canvas = () => {
 };
 
 export default {
+  title: "Primitives/DND/Canvas",
   component: Canvas,
 } satisfies Meta<typeof Canvas>;

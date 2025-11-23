@@ -20,7 +20,7 @@ import { $awareness } from "~/shared/awareness";
 
 export default {
   component: TextEditor,
-  title: "Text Editor 2",
+  title: "Canvas/Text Editor",
 } satisfies Meta<typeof TextEditor>;
 
 const createInstancePair = (

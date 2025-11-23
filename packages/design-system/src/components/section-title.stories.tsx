@@ -8,7 +8,7 @@ import type { ComponentProps } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 
 export default {
-  title: "Library/Section Title",
+  title: "Section Title",
 };
 
 const Wrap = ({ children }: { children: React.ReactNode }) => (

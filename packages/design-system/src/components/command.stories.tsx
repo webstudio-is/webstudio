@@ -16,7 +16,7 @@ import { Flex } from "./flex";
 import { Separator } from "./separator";
 
 const meta: Meta = {
-  title: "Library/Command",
+  title: "Command",
 };
 export default meta;
 

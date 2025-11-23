@@ -5,6 +5,7 @@ import { NestedIconLabel } from "./nested-icon-label";
 import { Select, type SelectOption } from "./select";
 
 export default {
+  title: "Select",
   component: Select,
 };
 

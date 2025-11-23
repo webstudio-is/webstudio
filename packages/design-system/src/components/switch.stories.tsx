@@ -2,7 +2,7 @@ import { Switch } from "./switch";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
-  title: "Library/Switch",
+  title: "Switch",
 };
 
 const Story = () => {

@@ -24,7 +24,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/XmlNode",
+  title: "XML Node",
 };
 
 const Story = {

@@ -4,7 +4,7 @@ import { Flex } from "./flex";
 import { useState } from "react";
 
 export default {
-  title: "Library/Position Grid",
+  title: "Position Grid",
 };
 
 export const PositionGrid = () => {

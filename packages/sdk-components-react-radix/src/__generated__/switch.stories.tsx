@@ -12,7 +12,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Switch",
+  title: "Switch",
 };
 
 const Story = {

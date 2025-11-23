@@ -209,6 +209,7 @@ export const SortableList = ({
 };
 
 export default {
+  title: "Primitives/DND/Sortable List",
   component: SortableList,
   args: {
     direction: "vertical",

@@ -1,7 +1,10 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import { Outline } from "./outline";
 
-export default { component: Outline };
+export default {
+  title: "Canvas Tools/Outline",
+  component: Outline,
+};
 
 export const Basic = () => (
   <Grid gap={3} columns={2} css={{ margin: 16 }}>

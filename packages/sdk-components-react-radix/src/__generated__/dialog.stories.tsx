@@ -50,7 +50,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Dialog",
+  title: "Dialog",
 };
 
 const Story = {

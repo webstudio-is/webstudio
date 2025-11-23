@@ -34,7 +34,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/Checkbox",
+  title: "Checkbox",
 };
 
 const Story = {

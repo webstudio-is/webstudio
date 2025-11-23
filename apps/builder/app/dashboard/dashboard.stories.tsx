@@ -6,7 +6,6 @@ import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export default {
-  title: "Dashboard",
   component: Dashboard,
 };
 

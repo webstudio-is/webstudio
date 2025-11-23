@@ -5,7 +5,7 @@ import { ScrollArea } from "../scroll-area";
 import { StorySection, StoryGrid } from "../storybook";
 
 export default {
-  title: "Library/Autogrow Text Area",
+  title: "Autogrow Text Area",
 };
 
 export const Demo = () => {

@@ -19,7 +19,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Components/List",
+  title: "List",
 };
 
 const Story = {

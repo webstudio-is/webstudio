@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/icons";
 
 export default {
-  title: "Library/AI Command Button",
+  title: "AI Command Button",
 };
 
 export const Demo = () => {
