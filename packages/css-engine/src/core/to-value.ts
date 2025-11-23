@@ -84,6 +84,9 @@ export const toValue = (
   }
 
   if (value.type === "rgb") {
+    if (value.original) {
+      return value.original;
+    }
     return `rgba(${value.r}, ${value.g}, ${value.b}, ${value.alpha})`;
   }
 

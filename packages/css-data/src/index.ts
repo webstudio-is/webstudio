@@ -17,3 +17,4 @@ export * from "./shorthands";
 export { shorthandProperties } from "./__generated__/shorthand-properties";
 
 export { properties as propertiesData } from "./__generated__/properties";
+export * from "./color";

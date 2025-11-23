@@ -5,26 +5,26 @@ import {
   useEffect,
   useState,
 } from "react";
-import { colord, extend, type RgbaColor } from "colord";
-import namesPlugin from "colord/plugins/names";
+import { colord, type RgbaColor } from "colord";
 import { clamp } from "@react-aria/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { RgbaColorPicker } from "react-colorful";
-import { EyedropperIcon } from "@webstudio-is/icons";
+import { EyedropperIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
   toValue,
   type StyleValue,
   type Unit,
   type RgbValue,
 } from "@webstudio-is/css-engine";
+import { formatRgbColor, parseCssColor } from "@webstudio-is/css-data";
 import { css, rawTheme, theme, type CSS } from "../stitches.config";
 import { useDisableCanvasPointerEvents } from "../utilities";
+import { Flex } from "./flex";
 import { Grid } from "./grid";
 import { IconButton } from "./icon-button";
 import { InputField } from "./input-field";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-
-extend([namesPlugin]);
+import { Text } from "./text";
 
 const colorfulStyles = css({
   ".react-colorful__pointer": {
@@ -118,34 +118,80 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
 
 ColorThumb.displayName = "ColorThumb";
 
-const colorResultToRgbValue = (rgb: RgbaColor): RgbValue => ({
+const colorResultToRgbValue = (
+  rgb: RgbaColor,
+  colorSpace?: string
+): RgbValue => ({
   type: "rgb",
   r: rgb.r,
   g: rgb.g,
   b: rgb.b,
   alpha: rgb.a ?? 1,
+  colorSpace,
 });
 
-const normalizeHex = (value: string) => {
-  const trimmed = value.trim();
-  const hex = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
-  return hex;
+const convertToFormat = (color: RgbValue, target: string): RgbValue => {
+  if (target === "hex") {
+    const formatted = colord(rgbaFromRgbValue(color)).toHex();
+    return { ...color, colorSpace: undefined, original: formatted };
+  }
+
+  const formatted = formatRgbColor(color, target);
+  return {
+    ...color,
+    colorSpace: target,
+    original: formatted,
+  };
+};
+
+type IntermediateColorValue = {
+  type: "intermediate";
+  value: string;
+  unit?: Unit;
+};
+
+type ColorPickerValue = StyleValue | IntermediateColorValue;
+
+const rgbaFromRgbValue = (rgb?: RgbValue): RgbaColor =>
+  rgb
+    ? {
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        a: rgb.alpha ?? 1,
+      }
+    : transparentColor;
+
+const parseStyleValueToRgb = (
+  value: ColorPickerValue
+): RgbValue | undefined => {
+  if (value.type === "rgb") {
+    return value;
+  }
+  const cssValue = value.type === "intermediate" ? value.value : toValue(value);
+  return parseCssColor(cssValue);
+};
+
+const toInputString = (parsed: RgbValue): string => {
+  if (parsed.original) {
+    return parsed.original;
+  }
+  if (parsed.colorSpace && parsed.colorSpace !== "rgb") {
+    return formatRgbColor(parsed);
+  }
+  return colord(rgbaFromRgbValue(parsed)).toHex();
+};
+
+const colorToDisplayString = (value: ColorPickerValue, parsed?: RgbValue) => {
+  if (parsed) {
+    return toInputString(parsed);
+  }
+  return value.type === "intermediate" ? value.value : toValue(value);
 };
 
 export const styleValueToRgbaColor = (
   value: StyleValue | IntermediateColorValue
-): RgbaColor => {
-  const color = colord(
-    value.type === "intermediate" ? value.value : toValue(value)
-  ).toRgb();
-
-  return {
-    r: color.r,
-    g: color.g,
-    b: color.b,
-    a: color.a,
-  };
-};
+): RgbaColor => rgbaFromRgbValue(parseStyleValueToRgb(value));
 
 const getEyeDropper = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,14 +206,6 @@ const getEyeDropper = () => {
     });
   };
 };
-
-type IntermediateColorValue = {
-  type: "intermediate";
-  value: string;
-  unit?: Unit;
-};
-
-type ColorPickerValue = StyleValue | IntermediateColorValue;
 
 type ColorPickerProps = {
   value: ColorPickerValue;
@@ -213,49 +251,160 @@ export const ColorPicker = ({
   onChange,
   onChangeComplete,
 }: ColorPickerProps) => {
-  const [hex, setHex] = useState(() =>
-    colord(styleValueToRgbaColor(value)).toHex()
+  const initialParsed = parseStyleValueToRgb(value);
+  const [parsedColor, setParsedColor] = useState<RgbValue | undefined>(
+    initialParsed
   );
-  const normalizedHex = normalizeHex(hex);
+  const [inputValue, setInputValue] = useState(() =>
+    colorToDisplayString(value, initialParsed)
+  );
+  const [hasInvalidInput, setHasInvalidInput] = useState(false);
   const handleCompleteDebounced = useDebouncedCallback(
     (newValue: RgbValue) => onChangeComplete(newValue),
     500
   );
 
+  useEffect(() => {
+    const nextParsed = parseStyleValueToRgb(value);
+    setParsedColor(nextParsed);
+    setInputValue(colorToDisplayString(value, nextParsed));
+    setHasInvalidInput(false);
+  }, [value]);
+
+  const commitColor = (nextValue: RgbValue) => {
+    const formatted = toInputString(nextValue);
+    setParsedColor({ ...nextValue, original: formatted });
+    setInputValue(formatted);
+    setHasInvalidInput(false);
+    onChange(nextValue);
+    handleCompleteDebounced(nextValue);
+  };
+
   return (
     <>
       <RgbaColorPicker
         className={colorfulStyles.toString()}
-        color={colord(normalizedHex).toRgb()}
+        color={rgbaFromRgbValue(parsedColor)}
         onChange={(newRgb) => {
           const fixedRgb = fixColor(value, newRgb);
-          setHex(colord(fixedRgb).toHex());
-          const newValue = colorResultToRgbValue(fixedRgb);
-          onChange(newValue);
-          handleCompleteDebounced(newValue);
+          commitColor(colorResultToRgbValue(fixedRgb, parsedColor?.colorSpace));
         }}
       />
       <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
         <EyeDropper
           onChange={(newHex) => {
-            setHex(newHex);
-            const newValue = colorResultToRgbValue(colord(newHex).toRgb());
-            onChangeComplete(newValue);
-          }}
-        />
-        <InputField
-          value={hex}
-          onChange={(event) => {
-            setHex(event.target.value);
-            const color = colord(normalizeHex(event.target.value));
-            if (color.isValid()) {
-              const newValue = colorResultToRgbValue(color.toRgb());
-              onChange(newValue);
-              handleCompleteDebounced(newValue);
+            const parsed = parseCssColor(newHex);
+            if (parsed) {
+              const formatted = toInputString(parsed);
+              const nextValue = { ...parsed, original: formatted };
+              setParsedColor(nextValue);
+              setInputValue(formatted);
+              setHasInvalidInput(false);
+              onChangeComplete(nextValue);
             }
           }}
         />
+        <InputField
+          value={inputValue}
+          onChange={(event) => {
+            const nextInput = event.target.value;
+            setInputValue(nextInput);
+            const parsed = parseCssColor(nextInput);
+            if (parsed) {
+              commitColor(parsed);
+            } else if (nextInput.trim() !== "") {
+              setHasInvalidInput(true);
+            } else {
+              setHasInvalidInput(false);
+            }
+          }}
+          placeholder="hex, rgb, hsl, lab, oklch..."
+          aria-label="Color value input"
+          aria-invalid={hasInvalidInput}
+          css={{
+            ...(hasInvalidInput && {
+              borderColor: theme.colors.borderDestructiveMain,
+              "&:focus": {
+                borderColor: theme.colors.borderDestructiveMain,
+              },
+            }),
+          }}
+        />
       </Grid>
+      {hasInvalidInput && (
+        <Text
+          variant="regular"
+          color="destructive"
+          css={{
+            fontSize: "11px",
+            marginTop: theme.spacing[1],
+          }}
+        >
+          Invalid color format
+        </Text>
+      )}
+      <Flex
+        align="center"
+        justify="between"
+        css={{
+          paddingTop: theme.spacing[2],
+          borderTop: `1px solid ${theme.colors.borderMain}`,
+          marginTop: theme.spacing[3],
+        }}
+      >
+        <Text
+          variant="tiny"
+          color="subtle"
+          css={{
+            textTransform: "uppercase",
+            letterSpacing: "0.02em",
+          }}
+        >
+          Format
+        </Text>
+        <Flex align="center" gap="1">
+          <Text
+            variant="mono"
+            color="subtle"
+            css={{
+              fontSize: "11px",
+              userSelect: "text",
+              cursor: "default",
+            }}
+          >
+            {parsedColor?.colorSpace?.toUpperCase() || "HEX"}
+          </Text>
+          <IconButton
+            onClick={() => {
+              if (parsedColor) {
+                const formats = ["hex", "rgb", "hsl", "oklch"];
+                const currentFormat = parsedColor.colorSpace || "hex";
+                const currentIndex = formats.indexOf(
+                  currentFormat.toLowerCase()
+                );
+                const nextIndex = (currentIndex + 1) % formats.length;
+                const nextFormat = formats[nextIndex];
+                const converted = convertToFormat(parsedColor, nextFormat);
+                commitColor(converted);
+              }
+            }}
+            aria-label="Switch color format"
+            css={{
+              width: theme.sizes.controlHeight,
+              height: theme.sizes.controlHeight,
+              minWidth: theme.sizes.controlHeight,
+              padding: 0,
+              color: theme.colors.foregroundSubtle,
+              "&:hover": {
+                color: theme.colors.foregroundMain,
+                backgroundColor: theme.colors.backgroundHover,
+              },
+            }}
+          >
+            <RefreshIcon size={16} />
+          </IconButton>
+        </Flex>
+      </Flex>
     </>
   );
 };
