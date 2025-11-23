@@ -1,4 +1,4 @@
-import { generate, walk } from "css-tree";
+import { generate, walk, List, type CssNode } from "css-tree";
 import type { HtmlTags } from "html-tags";
 import {
   camelCaseProperty,
@@ -294,13 +294,14 @@ const substituteVars = (
         enter(node, item, list) {
           if (node.type === "Function" && node.name === "var") {
             const varValue = parseCssVar(node);
-            if (varValue) {
+            if (varValue && item) {
               const newValue = mapper(varValue);
-              list.replace(
+              list?.replace(
                 item,
-                node.children.createItem({
+                List.createItem<CssNode>({
                   type: "Raw",
                   value: toValue(newValue),
+                  loc: null,
                 })
               );
             }

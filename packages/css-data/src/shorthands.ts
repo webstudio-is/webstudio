@@ -13,33 +13,52 @@ const cssWideKeywordsSyntax = Array.from(cssWideKeywords).join(" | ");
 
 const createValueNode = (data?: CssNode[]): Value => ({
   type: "Value",
+  loc: null,
   children: new List<CssNode>().fromArray(data ?? []),
 });
 
-const createNumber = (value: string): Value => ({
-  type: "Value",
-  children: new List<CssNode>().appendData({
+const createNumber = (value: string): Value => {
+  const list = new List<CssNode>();
+  list.appendData({
     type: "Number",
     value,
-  }),
-});
+    loc: null,
+  });
+  return {
+    type: "Value",
+    loc: null,
+    children: list,
+  };
+};
 
-const createDimension = (value: string, unit: string): Value => ({
-  type: "Value",
-  children: new List<CssNode>().appendData({
+const createDimension = (value: string, unit: string): Value => {
+  const list = new List<CssNode>();
+  list.appendData({
     type: "Dimension",
     value,
     unit,
-  }),
-});
+    loc: null,
+  });
+  return {
+    type: "Value",
+    loc: null,
+    children: list,
+  };
+};
 
-const createIdentifier = (name: string): Value => ({
-  type: "Value",
-  children: new List<CssNode>().appendData({
+const createIdentifier = (name: string): Value => {
+  const list = new List<CssNode>();
+  list.appendData({
     type: "Identifier",
     name,
-  }),
-});
+    loc: null,
+  });
+  return {
+    type: "Value",
+    loc: null,
+    children: list,
+  };
+};
 
 const createInitialNode = () => createIdentifier("initial");
 
@@ -67,7 +86,7 @@ const joinByOperator = (list: List<CssNode> | CssNode[], operator: string) => {
   const joined: CssNode[] = [];
   for (const node of list) {
     if (joined.length > 0) {
-      joined.push({ type: "Operator", value: operator });
+      joined.push({ type: "Operator", value: operator, loc: null });
     }
     joined.push(...getValueList(node));
   }
@@ -298,7 +317,7 @@ const expandFont = function* (value: CssNode) {
   let fontFamily: CssNode = createInitialNode();
   if (config) {
     if (
-      lexer.match("<'font-size'> / <'line-height'> <'font-family'>", config)
+      lexer.match("<'font-size'> / <'line-height'> <'font-family'>#", config)
         .matched
     ) {
       const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
@@ -595,8 +614,8 @@ const expandMask = function* (value: CssNode) {
         reference ?? createIdentifier("none"),
         position ??
           createValueNode([
-            { type: "Dimension", value: "0", unit: "%" },
-            { type: "Dimension", value: "0", unit: "%" },
+            { type: "Dimension", value: "0", unit: "%", loc: null },
+            { type: "Dimension", value: "0", unit: "%", loc: null },
           ]),
         bgSize ?? createIdentifier("auto"),
         repeatStyle ?? createIdentifier("repeat"),
@@ -802,7 +821,9 @@ const expandGrid = function* (value: CssNode) {
     if (autoFlowKeyword) {
       autoFlow = createIdentifier("row");
       if (denseKeyword) {
-        autoFlow.children.appendList(denseKeyword.children);
+        denseKeyword.children.forEach((item) => {
+          autoFlow.children.appendData(item);
+        });
       }
     }
     autoRows = config ?? createIdentifier("auto");
@@ -819,7 +840,9 @@ const expandGrid = function* (value: CssNode) {
     if (autoFlowKeyword) {
       autoFlow = createIdentifier("column");
       if (denseKeyword) {
-        autoFlow.children.appendList(denseKeyword.children);
+        denseKeyword.children.forEach((item) => {
+          autoFlow.children.appendData(item);
+        });
       }
     }
     autoColumns = config ?? createIdentifier("auto");
@@ -973,13 +996,13 @@ const expandBackground = function* (value: CssNode) {
         image ?? createIdentifier("none"),
         position ??
           createValueNode([
-            { type: "Dimension", value: "0", unit: "%" },
-            { type: "Dimension", value: "0", unit: "%" },
+            { type: "Dimension", value: "0", unit: "%", loc: null },
+            { type: "Dimension", value: "0", unit: "%", loc: null },
           ]),
         size ??
           createValueNode([
-            { type: "Identifier", name: "auto" },
-            { type: "Identifier", name: "auto" },
+            { type: "Identifier", name: "auto", loc: null },
+            { type: "Identifier", name: "auto", loc: null },
           ]),
         repeatStyle ?? createIdentifier("repeat"),
         attachment ?? createIdentifier("scroll"),
@@ -1418,7 +1441,7 @@ const parseValue = function* (property: string, value: string) {
       ast.type === "Value" &&
       ast.children.isEmpty
     ) {
-      ast.children.appendData({ type: "Identifier", name: "unset" });
+      ast.children.appendData({ type: "Identifier", name: "unset", loc: null });
     }
     yield [property, ast] as const;
   } catch {
