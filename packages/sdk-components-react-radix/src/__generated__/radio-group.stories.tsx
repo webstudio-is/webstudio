@@ -68,7 +68,7 @@ const Component = () => {
 };
 
 export default {
-  title: "RadioGroup",
+  title: "Radio Group",
 };
 
 const Story = {
