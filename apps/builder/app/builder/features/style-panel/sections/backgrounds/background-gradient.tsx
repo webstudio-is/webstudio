@@ -4,9 +4,6 @@ import {
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  parseLinearGradient,
-  parseConicGradient,
-  parseRadialGradient,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
@@ -71,6 +68,7 @@ import {
   isLinearGradient,
   isRadialGradient,
   normalizeGradientInput,
+  parseAnyGradient,
   parseGradientPositionValues,
   percentUnitOptions,
   pruneHintOverrides,
@@ -152,21 +150,9 @@ export const BackgroundGradient = ({
     normalizeGradientInput(gradientString, gradientType);
 
   const parsedGradient = useMemo(() => {
-    if (gradientType === "linear") {
-      const parsed =
-        parseLinearGradient(normalizedGradientString) ??
-        createDefaultGradient("linear");
-      return ensureGradientHasStops(parsed);
-    }
-    if (gradientType === "conic") {
-      const parsed =
-        parseConicGradient(normalizedGradientString) ??
-        createDefaultGradient("conic");
-      return ensureGradientHasStops(parsed);
-    }
     const parsed =
-      parseRadialGradient(normalizedGradientString) ??
-      createDefaultGradient("radial");
+      parseAnyGradient(normalizedGradientString) ??
+      createDefaultGradient(gradientType);
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
 
@@ -321,21 +307,9 @@ const GradientPickerSection = ({
       gradientType
     );
 
-    if (gradientType === "linear") {
-      const parsed =
-        parseLinearGradient(normalizedGradientString) ??
-        createDefaultGradient("linear");
-      return ensureGradientHasStops(parsed);
-    }
-    if (gradientType === "conic") {
-      const parsed =
-        parseConicGradient(normalizedGradientString) ??
-        createDefaultGradient("conic");
-      return ensureGradientHasStops(parsed);
-    }
     const parsed =
-      parseRadialGradient(normalizedGradientString) ??
-      createDefaultGradient("radial");
+      parseAnyGradient(normalizedGradientString) ??
+      createDefaultGradient(gradientType);
     return ensureGradientHasStops(parsed);
   }, [gradientType, index, styleDecl]);
 
