@@ -851,6 +851,68 @@ export const pruneHintOverrides = (
   return changed ? next : overrides;
 };
 
+// Helper to get stop position as a number (0-100) for sorting and calculations
+export const getStopPosition = (stop: GradientStop): number =>
+  stop.position?.type === "unit" && stop.position.unit === "%"
+    ? stop.position.value
+    : 0;
+
+// Reindex hint overrides after a stop is deleted
+export const reindexHintOverrides = (
+  overrides: Map<number, PercentUnitValue>,
+  deletedIndex: number
+): Map<number, PercentUnitValue> => {
+  const reindexed = new Map<number, PercentUnitValue>();
+  overrides.forEach((value, key) => {
+    if (key < deletedIndex) {
+      reindexed.set(key, value);
+    } else if (key > deletedIndex) {
+      reindexed.set(key - 1, value);
+    }
+  });
+  return reindexed;
+};
+
+// Sort gradient stops by position and reindex hint overrides to match
+export const sortGradientStops = (
+  gradient: ParsedGradient,
+  hintOverrides: Map<number, PercentUnitValue>
+): {
+  sortedGradient: ParsedGradient;
+  reindexedHints: Map<number, PercentUnitValue>;
+} => {
+  // Create array of stops with their original indices and hint overrides
+  const stopsWithData = gradient.stops.map((stop, originalIndex) => ({
+    stop,
+    originalIndex,
+    hint: hintOverrides.get(originalIndex),
+  }));
+
+  // Sort by position
+  stopsWithData.sort((a, b) => {
+    const posA = getStopPosition(a.stop);
+    const posB = getStopPosition(b.stop);
+    return posA - posB;
+  });
+
+  // Extract sorted stops and rebuild hint overrides with new indices
+  const sortedStops = stopsWithData.map(({ stop }) => stop);
+  const reindexedHints = new Map<number, PercentUnitValue>();
+  stopsWithData.forEach(({ hint }, newIndex) => {
+    if (hint !== undefined) {
+      reindexedHints.set(newIndex, hint);
+    }
+  });
+
+  return {
+    sortedGradient: {
+      ...gradient,
+      stops: sortedStops,
+    },
+    reindexedHints,
+  };
+};
+
 export type ReverseStopsResolution<T extends ParsedGradient> =
   | {
       type: "apply";

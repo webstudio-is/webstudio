@@ -64,6 +64,7 @@ import {
   formatGradientPositionValues,
   formatGradientValue,
   getDefaultAngle,
+  getStopPosition,
   gradientPositionXOptions,
   gradientPositionYOptions,
   isConicGradient,
@@ -73,6 +74,7 @@ import {
   parseGradientPositionValues,
   percentUnitOptions,
   pruneHintOverrides,
+  reindexHintOverrides,
   removeHintOverride,
   resolveAngleValue,
   resolveGradientForPicker,
@@ -80,6 +82,7 @@ import {
   resolveStopHintUpdate,
   resolveStopPositionUpdate,
   setHintOverride,
+  sortGradientStops,
   styleValueToColor,
 } from "./gradient-utils";
 import { BackgroundPositionControl } from "./background-position";
@@ -126,66 +129,6 @@ type GradientEditorApplyFn = (
   nextGradient: ParsedGradient,
   options?: { isEphemeral?: boolean }
 ) => void;
-
-const getStopPosition = (stop: GradientStop): number =>
-  stop.position?.type === "unit" && stop.position.unit === "%"
-    ? stop.position.value
-    : 0;
-
-const reindexHintOverrides = (
-  overrides: Map<number, PercentUnitValue>,
-  deletedIndex: number
-): Map<number, PercentUnitValue> => {
-  const reindexed = new Map<number, PercentUnitValue>();
-  overrides.forEach((value, key) => {
-    if (key < deletedIndex) {
-      reindexed.set(key, value);
-    } else if (key > deletedIndex) {
-      reindexed.set(key - 1, value);
-    }
-  });
-  return reindexed;
-};
-
-// Sort gradient stops and reindex hint overrides to match new positions
-const sortGradientStops = (
-  gradient: ParsedGradient,
-  hintOverrides: Map<number, PercentUnitValue>
-): {
-  sortedGradient: ParsedGradient;
-  reindexedHints: Map<number, PercentUnitValue>;
-} => {
-  // Create array of stops with their original indices and hint overrides
-  const stopsWithData = gradient.stops.map((stop, originalIndex) => ({
-    stop,
-    originalIndex,
-    hint: hintOverrides.get(originalIndex),
-  }));
-
-  // Sort by position
-  stopsWithData.sort((a, b) => {
-    const posA = getStopPosition(a.stop);
-    const posB = getStopPosition(b.stop);
-    return posA - posB;
-  });
-
-  // Extract sorted stops and rebuild hint overrides with new indices
-  const sortedStops = stopsWithData.map(({ stop }) => stop);
-  const reindexedHints = new Map<number, PercentUnitValue>();
-  stopsWithData.forEach(({ hint }, newIndex) => {
-    if (hint !== undefined) {
-      reindexedHints.set(newIndex, hint);
-    }
-  });
-
-  return {
-    sortedGradient: {
-      ...gradient,
-      stops: sortedStops,
-    },
-    reindexedHints,
-  };
-};
 
 const getAvailableUnitVariables = () => $availableUnitVariables.get();
 
