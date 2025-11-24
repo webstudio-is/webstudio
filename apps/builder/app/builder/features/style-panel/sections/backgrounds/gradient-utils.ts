@@ -7,7 +7,6 @@ import {
   type StyleValue,
   type Unit,
   type UnitValue,
-  type VarFallback,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -504,22 +503,8 @@ export const fillMissingStopPositions = <T extends ParsedGradient>(
 
 const cloneVarValue = (value: VarValue): VarValue => ({
   ...value,
-  fallback: value.fallback === undefined ? undefined : { ...value.fallback },
+  fallback: value.fallback && { ...value.fallback },
 });
-
-export const cloneVarFallback = (
-  fallback: VarFallback | undefined
-): VarFallback | undefined => {
-  if (fallback === undefined) {
-    return;
-  }
-
-  if (fallback.type === "rgb") {
-    return { ...fallback } satisfies VarFallback;
-  }
-
-  return { ...fallback } satisfies VarFallback;
-};
 
 const cloneGradientStopValue = <
   Value extends GradientStop["position"] | GradientStop["hint"],
@@ -531,10 +516,9 @@ const cloneGradientStopValue = <
   }
 
   if (value.type === "var") {
-    const fallback = value.fallback;
     return {
       ...value,
-      fallback: fallback === undefined ? undefined : { ...fallback },
+      fallback: value.fallback && { ...value.fallback },
     };
   }
 
@@ -550,7 +534,7 @@ const cloneGradientStopColor = (
   if (color.type === "var") {
     return {
       ...color,
-      fallback: cloneVarFallback(color.fallback),
+      fallback: color.fallback && { ...color.fallback },
     } satisfies GradientStop["color"];
   }
   if (color.type === "rgb") {
@@ -1152,13 +1136,6 @@ export type BackgroundType =
   | "radialGradient"
   | "solid";
 
-const getGradientColorSignature = (color?: GradientStop["color"]) => {
-  if (color === undefined) {
-    return;
-  }
-  return toValue(color);
-};
-
 export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
   // Only consider it a solid gradient if there are exactly 2 stops
   if (gradient.stops.length !== 2) {
@@ -1171,8 +1148,8 @@ export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
   const secondStop = normalized.stops[1];
 
   // Check if both stops have the same color
-  const firstColor = getGradientColorSignature(firstStop?.color);
-  const secondColor = getGradientColorSignature(secondStop?.color);
+  const firstColor = firstStop?.color ? toValue(firstStop.color) : undefined;
+  const secondColor = secondStop?.color ? toValue(secondStop.color) : undefined;
 
   if (
     firstColor === undefined ||
