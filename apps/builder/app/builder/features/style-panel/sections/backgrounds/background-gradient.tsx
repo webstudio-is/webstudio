@@ -240,8 +240,6 @@ export const BackgroundGradient = ({
             setHintOverrides={setHintOverrides}
             setSelectedStopIndex={setSelectedStopIndex}
             applyGradient={applyGradient}
-            styleDecl={styleDecl}
-            index={index}
             selectedStopIndex={selectedStopIndex}
           />
           <Separator />
@@ -280,8 +278,6 @@ type GradientPickerSectionProps = {
   setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
   setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   applyGradient: GradientEditorApplyFn;
-  styleDecl: ReturnType<typeof useComputedStyleDecl>;
-  index: number;
   selectedStopIndex: number;
 };
 
@@ -292,97 +288,14 @@ const GradientPickerSection = ({
   setHintOverrides,
   setSelectedStopIndex,
   applyGradient,
-  styleDecl,
-  index,
   selectedStopIndex,
 }: GradientPickerSectionProps) => {
-  const parsedComputedGradient = useMemo(() => {
-    let computedStyleValue = styleDecl.computedValue;
-    if (computedStyleValue?.type === "layers") {
-      computedStyleValue = computedStyleValue.value[index];
-    }
-    const computedGradientString = toValue(computedStyleValue);
-    const { normalizedGradientString } = normalizeGradientInput(
-      computedGradientString,
-      gradientType
-    );
-
-    const parsed =
-      parseAnyGradient(normalizedGradientString) ??
-      createDefaultGradient(gradientType);
-    return ensureGradientHasStops(parsed);
-  }, [gradientType, index, styleDecl]);
-
-  const computedGradientForPicker = useMemo(() => {
-    if (parsedComputedGradient === undefined) {
-      return;
-    }
-    return resolveGradientForPicker(
-      parsedComputedGradient,
-      new Map<number, PercentUnitValue>()
-    );
-  }, [parsedComputedGradient]);
-
-  const [isInteracting, setIsInteracting] = useState(false);
-
   const gradientForPickerBase = useMemo(() => {
-    const base = resolveGradientForPicker(gradient, hintOverrides);
-    if (isInteracting || computedGradientForPicker === undefined) {
-      return base;
-    }
-
-    const computedStops = computedGradientForPicker.stops;
-    const stops = base.stops.map((stop, index) => {
-      const computedStop = computedStops[index];
-      if (computedStop === undefined) {
-        return stop;
-      }
-      return {
-        ...stop,
-        color: computedStop.color ?? stop.color,
-        position: computedStop.position ?? stop.position,
-        hint: computedStop.hint ?? stop.hint,
-      } satisfies GradientStop;
-    });
-
-    if (isLinearGradient(base) && isLinearGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        angle: computedGradientForPicker.angle ?? base.angle,
-        sideOrCorner:
-          computedGradientForPicker.sideOrCorner ?? base.sideOrCorner,
-        stops,
-      } satisfies ParsedLinearGradient;
-    }
-
-    if (isConicGradient(base) && isConicGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        angle: computedGradientForPicker.angle ?? base.angle,
-        position: computedGradientForPicker.position ?? base.position,
-        stops,
-      } satisfies ParsedConicGradient;
-    }
-
-    if (isRadialGradient(base) && isRadialGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        shape: computedGradientForPicker.shape ?? base.shape,
-        size: computedGradientForPicker.size ?? base.size,
-        position: computedGradientForPicker.position ?? base.position,
-        stops,
-      } satisfies ParsedRadialGradient;
-    }
-
-    return {
-      ...base,
-      stops,
-    } as ParsedGradient;
-  }, [computedGradientForPicker, gradient, hintOverrides, isInteracting]);
+    return resolveGradientForPicker(gradient, hintOverrides);
+  }, [gradient, hintOverrides]);
 
   const handlePickerChange = useCallback(
     (nextGradient: ParsedGradient) => {
-      setIsInteracting(true);
       applyGradient(nextGradient, { isEphemeral: true });
     },
     [applyGradient]
@@ -390,17 +303,10 @@ const GradientPickerSection = ({
 
   const handlePickerChangeComplete = useCallback(
     (nextGradient: ParsedGradient) => {
-      setIsInteracting(false);
       applyGradient(nextGradient);
     },
     [applyGradient]
   );
-
-  useEffect(() => {
-    return () => {
-      setIsInteracting(false);
-    };
-  }, []);
 
   const handleThumbSelect = useCallback(
     (index: number, _stop: GradientStop) => {
