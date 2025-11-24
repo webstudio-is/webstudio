@@ -535,10 +535,10 @@ const cloneGradientStopValue = <
     return {
       ...value,
       fallback: fallback === undefined ? undefined : { ...fallback },
-    } as Value;
+    };
   }
 
-  return { ...value } as Value;
+  return { ...value };
 };
 
 const cloneGradientStopColor = (
@@ -963,7 +963,7 @@ export const resolveStopPositionUpdate = (
   if (styleValue.type === "var") {
     return {
       type: "apply",
-      position: cloneGradientStopValue(styleValue as GradientStop["position"]),
+      position: cloneGradientStopValue(styleValue),
       clearHintOverrides: true,
     } satisfies StopPositionUpdateResolution;
   }
@@ -999,7 +999,7 @@ export const resolveStopHintUpdate = (
   if (styleValue.type === "var") {
     return {
       type: "apply",
-      hint: cloneGradientStopValue(styleValue as GradientStop["hint"]),
+      hint: cloneGradientStopValue(styleValue),
       clearOverride: true,
     };
   }
@@ -1048,6 +1048,61 @@ export const clampStopIndex = <T extends ParsedGradient>(
   index: number,
   gradient: T
 ) => clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
+
+/**
+ * Updates a gradient stop with automatic hint offset maintenance.
+ * When a stop's position changes and it has a hint, the hint is adjusted
+ * to maintain the same offset relative to the stop's new position.
+ * This matches the behavior of the gradient picker during drag operations.
+ */
+export const updateGradientStop = <T extends ParsedGradient>(
+  gradient: T,
+  stopIndex: number,
+  updater: (stop: GradientStop) => GradientStop
+): T => {
+  const currentStop = gradient.stops[stopIndex];
+  if (currentStop === undefined) {
+    return gradient;
+  }
+
+  // Calculate hint offset before updating (like gradient picker does)
+  const currentPosition = getStopPosition(currentStop);
+  const currentHint =
+    currentStop.hint?.type === "unit" && currentStop.hint.unit === "%"
+      ? currentStop.hint.value
+      : undefined;
+  const hintOffset =
+    currentHint !== undefined ? currentHint - currentPosition : 0;
+
+  const stops = gradient.stops.map((stop, index) => {
+    if (index !== stopIndex) {
+      return stop;
+    }
+
+    const updatedStop = updater(stop);
+
+    // If position changed and stop has a hint, maintain the hint offset
+    if (
+      hintOffset !== 0 &&
+      stop.hint?.type === "unit" &&
+      stop.hint.unit === "%" &&
+      updatedStop.position !== stop.position
+    ) {
+      const newPosition = getStopPosition(updatedStop);
+      return {
+        ...updatedStop,
+        hint: createPercentUnitValue(newPosition + hintOffset),
+      };
+    }
+
+    return updatedStop;
+  });
+
+  return {
+    ...gradient,
+    stops,
+  };
+};
 
 const parseColorString = (value: string): GradientStop["color"] | undefined => {
   const parsed = parseCssValue("color", value);
@@ -1101,7 +1156,7 @@ const getGradientColorSignature = (color?: GradientStop["color"]) => {
   if (color === undefined) {
     return;
   }
-  return toValue(color as StyleValue);
+  return toValue(color);
 };
 
 export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {

@@ -82,6 +82,7 @@ import {
   setHintOverride,
   sortGradientStops,
   styleValueToColor,
+  updateGradientStop,
 } from "./gradient-utils";
 import { BackgroundPositionControl } from "./background-position";
 import { BackgroundCodeEditor } from "./background-code-editor";
@@ -718,14 +719,7 @@ const GradientStopControls = ({
       updater: (stop: GradientStop) => GradientStop,
       options?: { isEphemeral?: boolean }
     ) => {
-      const currentStop = gradient.stops[stopIndex];
-      if (currentStop === undefined) {
-        return;
-      }
-      const stops = gradient.stops.map((stop, index) =>
-        index === stopIndex ? updater(stop) : stop
-      );
-      const nextGradient = { ...gradient, stops };
+      const nextGradient = updateGradientStop(gradient, stopIndex, updater);
       applyGradient(nextGradient, options);
     },
     [applyGradient, gradient]
