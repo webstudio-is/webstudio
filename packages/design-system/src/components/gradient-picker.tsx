@@ -92,6 +92,16 @@ const computePositionFromClientX = (
   return clamp(Math.round((relativePosition / rect.width) * 100), 0, 100);
 };
 
+const getStopPositionValue = (stop: GradientStop): number => {
+  return stop.position?.type === "unit" ? stop.position.value : 0;
+};
+
+const createPercentUnit = (value: number) => ({
+  type: "unit" as const,
+  unit: "%" as const,
+  value,
+});
+
 const createDragHandler = (threshold: number = DRAG_THRESHOLD) => {
   let pointerAbortController: AbortController | undefined;
   let clickAbortController: AbortController | undefined;
@@ -353,11 +363,7 @@ export const GradientPicker = <T extends ParsedGradient>({
           }
           return {
             ...stop,
-            position: {
-              type: "unit",
-              unit: "%",
-              value: nextValue,
-            },
+            position: createPercentUnit(nextValue),
           };
         });
       }, type);
@@ -379,11 +385,7 @@ export const GradientPicker = <T extends ParsedGradient>({
           }
           return {
             ...stop,
-            hint: {
-              type: "unit",
-              unit: "%",
-              value: nextValue,
-            },
+            hint: createPercentUnit(nextValue),
           };
         });
       }, type);
@@ -503,8 +505,7 @@ export const GradientPicker = <T extends ParsedGradient>({
         let currentIndex = index;
 
         // Calculate hint offset relative to stop position
-        const originalPosition =
-          stop.position?.type === "unit" ? stop.position.value : 0;
+        const originalPosition = getStopPositionValue(stop);
         const originalHint =
           stop.hint?.type === "unit" ? stop.hint.value : undefined;
         const hintOffset =
@@ -528,11 +529,7 @@ export const GradientPicker = <T extends ParsedGradient>({
 
                 const updatedStop: GradientStop = {
                   ...stop,
-                  position: {
-                    type: "unit" as const,
-                    unit: "%" as const,
-                    value: clampedPosition,
-                  },
+                  position: createPercentUnit(clampedPosition),
                 };
 
                 // Update hint to maintain the same offset relative to the stop
@@ -542,11 +539,7 @@ export const GradientPicker = <T extends ParsedGradient>({
                     0,
                     100
                   );
-                  updatedStop.hint = {
-                    type: "unit" as const,
-                    unit: "%" as const,
-                    value: newHintPosition,
-                  };
+                  updatedStop.hint = createPercentUnit(newHintPosition);
                 }
 
                 return updatedStop;
@@ -555,11 +548,9 @@ export const GradientPicker = <T extends ParsedGradient>({
               // Sort stops by position and track where our dragged stop ends up
               const draggedStop = updatedStops[currentIndex];
               const sortedStops = [...updatedStops].sort((stopA, stopB) => {
-                const posA =
-                  stopA.position?.type === "unit" ? stopA.position.value : 0;
-                const posB =
-                  stopB.position?.type === "unit" ? stopB.position.value : 0;
-                return posA - posB;
+                return (
+                  getStopPositionValue(stopA) - getStopPositionValue(stopB)
+                );
               });
 
               // Find the new index of the dragged stop
