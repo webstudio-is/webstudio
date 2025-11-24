@@ -156,10 +156,10 @@ const createDragHandler = (threshold: number = DRAG_THRESHOLD) => {
 
     // Prevent click event from firing if drag occurred
     // Use document-level listener to catch clicks even if they happen outside the target
-    const handleClick = (e: Event) => {
+    const handleClick = (event: Event) => {
       if (hasDragged) {
-        e.preventDefault();
-        e.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
       }
       // Cleanup after click fires
       clickAbortController?.abort();
@@ -217,6 +217,7 @@ export const GradientPicker = <T extends ParsedGradient>({
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
+  const [draggingStop, setDraggingStop] = useState<number | undefined>();
   const [colorPickerOpenStop, setColorPickerOpenStop] = useState<
     number | undefined
   >();
@@ -498,16 +499,62 @@ export const GradientPicker = <T extends ParsedGradient>({
         handleStopSelected(index, stop);
         setIsHoveredOnStop(true);
 
+        // Track the currently dragged stop index
+        let currentIndex = index;
+
         thumbDragHandler.handlePointerDown({
           event,
           onDragMove: (newPosition) => {
-            updateStopPosition(index, newPosition, "change");
+            updateStops((currentStops) => {
+              if (currentIndex < 0 || currentIndex >= currentStops.length) {
+                return currentStops;
+              }
+
+              // Update the position of the dragged stop
+              const updatedStops = currentStops.map((stop, stopIndex) => {
+                if (stopIndex !== currentIndex) {
+                  return stop;
+                }
+                return {
+                  ...stop,
+                  position: {
+                    type: "unit" as const,
+                    unit: "%" as const,
+                    value: clamp(newPosition, 0, 100),
+                  },
+                };
+              });
+
+              // Sort stops by position and track where our dragged stop ends up
+              const draggedStop = updatedStops[currentIndex];
+              const sortedStops = [...updatedStops].sort((stopA, stopB) => {
+                const posA =
+                  stopA.position?.type === "unit" ? stopA.position.value : 0;
+                const posB =
+                  stopB.position?.type === "unit" ? stopB.position.value : 0;
+                return posA - posB;
+              });
+
+              // Find the new index of the dragged stop
+              const newIndex = sortedStops.findIndex(
+                (stop) => stop === draggedStop
+              );
+              if (newIndex !== -1 && newIndex !== currentIndex) {
+                currentIndex = newIndex;
+                setSelectedStop(newIndex);
+                setDraggingStop(newIndex);
+              }
+
+              return sortedStops;
+            }, "change");
           },
           onDragStart: () => {
             setColorPickerOpenStop(undefined);
+            setDraggingStop(currentIndex);
           },
           onDragEnd: () => {
             setIsHoveredOnStop(false);
+            setDraggingStop(undefined);
             onChangeComplete(buildGradient(stopsRef.current));
           },
         });
@@ -516,7 +563,7 @@ export const GradientPicker = <T extends ParsedGradient>({
       colorPickerOpenStop,
       handleStopSelected,
       thumbDragHandler,
-      updateStopPosition,
+      updateStops,
       onChangeComplete,
       buildGradient,
     ]
@@ -791,6 +838,7 @@ export const GradientPicker = <T extends ParsedGradient>({
         <SliderTrack />
         {stops.map((stop, index) => {
           const isSelected = selectedStop === index;
+          const isDragging = draggingStop === index;
           if (
             stop.color === undefined ||
             stop.position?.type !== "unit" ||
@@ -805,7 +853,10 @@ export const GradientPicker = <T extends ParsedGradient>({
             <SliderThumb
               key={index}
               data-gradient-thumb="true"
-              style={{ left: `${stop.position.value}%` }}
+              style={{
+                left: `${stop.position.value}%`,
+                zIndex: isDragging ? 2 : 1,
+              }}
               role="slider"
               aria-orientation="horizontal"
               aria-valuemin={0}
