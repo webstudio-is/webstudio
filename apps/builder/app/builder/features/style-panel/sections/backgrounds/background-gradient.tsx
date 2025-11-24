@@ -4,9 +4,6 @@ import {
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  parseLinearGradient,
-  parseConicGradient,
-  parseRadialGradient,
   type ParsedGradient,
   type ParsedLinearGradient,
   type ParsedConicGradient,
@@ -45,7 +42,6 @@ import {
   RepeatGridIcon,
   XSmallIcon,
 } from "@webstudio-is/icons";
-import { clamp } from "@react-aria/utils";
 import {
   useComputedStyleDecl,
   $availableUnitVariables,
@@ -65,16 +61,18 @@ import {
   formatGradientPositionValues,
   formatGradientValue,
   getDefaultAngle,
-  getPercentUnit,
+  getStopPosition,
   gradientPositionXOptions,
   gradientPositionYOptions,
   isConicGradient,
   isLinearGradient,
   isRadialGradient,
   normalizeGradientInput,
+  parseAnyGradient,
   parseGradientPositionValues,
   percentUnitOptions,
   pruneHintOverrides,
+  reindexHintOverrides,
   removeHintOverride,
   resolveAngleValue,
   resolveGradientForPicker,
@@ -82,7 +80,9 @@ import {
   resolveStopHintUpdate,
   resolveStopPositionUpdate,
   setHintOverride,
+  sortGradientStops,
   styleValueToColor,
+  updateGradientStop,
 } from "./gradient-utils";
 import { BackgroundPositionControl } from "./background-position";
 import { BackgroundCodeEditor } from "./background-code-editor";
@@ -129,32 +129,7 @@ type GradientEditorApplyFn = (
   options?: { isEphemeral?: boolean }
 ) => void;
 
-const getStopPosition = (stop: GradientStop): number =>
-  stop.position?.type === "unit" && stop.position.unit === "%"
-    ? stop.position.value
-    : 0;
-
-const reindexHintOverrides = (
-  overrides: Map<number, PercentUnitValue>,
-  deletedIndex: number
-): Map<number, PercentUnitValue> => {
-  const reindexed = new Map<number, PercentUnitValue>();
-  overrides.forEach((value, key) => {
-    if (key < deletedIndex) {
-      reindexed.set(key, value);
-    } else if (key > deletedIndex) {
-      reindexed.set(key - 1, value);
-    }
-  });
-  return reindexed;
-};
-
 const getAvailableUnitVariables = () => $availableUnitVariables.get();
-
-const clampPercentUnit = (value: PercentUnitValue): PercentUnitValue => ({
-  ...value,
-  value: clamp(value.value, 0, 100),
-});
 
 export const BackgroundGradient = ({
   index,
@@ -176,21 +151,9 @@ export const BackgroundGradient = ({
     normalizeGradientInput(gradientString, gradientType);
 
   const parsedGradient = useMemo(() => {
-    if (gradientType === "linear") {
-      const parsed =
-        parseLinearGradient(normalizedGradientString) ??
-        createDefaultGradient("linear");
-      return ensureGradientHasStops(parsed);
-    }
-    if (gradientType === "conic") {
-      const parsed =
-        parseConicGradient(normalizedGradientString) ??
-        createDefaultGradient("conic");
-      return ensureGradientHasStops(parsed);
-    }
     const parsed =
-      parseRadialGradient(normalizedGradientString) ??
-      createDefaultGradient("radial");
+      parseAnyGradient(normalizedGradientString) ??
+      createDefaultGradient(gradientType);
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
 
@@ -236,8 +199,30 @@ export const BackgroundGradient = ({
   const applyGradient = useCallback(
     (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
-      setLocalGradient(nextGradient);
-      const gradientValue = formatGradientValue(nextGradient);
+
+      // Only sort gradient stops on final (non-ephemeral) changes
+      // This allows stops to visually cross during ephemeral updates (e.g., typing in inputs)
+      let finalGradient: ParsedGradient;
+      let finalHints: Map<number, PercentUnitValue>;
+
+      if (isEphemeral) {
+        // During ephemeral changes, apply the gradient as-is without sorting
+        finalGradient = nextGradient;
+        finalHints = hintOverrides;
+      } else {
+        // On complete, sort stops and reindex hint overrides to keep them in sync
+        const { sortedGradient, reindexedHints } = sortGradientStops(
+          nextGradient,
+          hintOverrides
+        );
+        finalGradient = sortedGradient;
+        finalHints = reindexedHints;
+      }
+
+      setLocalGradient(finalGradient);
+      setHintOverrides(finalHints);
+
+      const gradientValue = formatGradientValue(finalGradient);
       setRepeatedStyleItem(
         styleDecl,
         index,
@@ -248,7 +233,7 @@ export const BackgroundGradient = ({
         saveLocalGradient();
       }
     },
-    [index, saveLocalGradient, setLocalGradient, styleDecl]
+    [index, saveLocalGradient, setLocalGradient, styleDecl, hintOverrides]
   );
 
   return (
@@ -269,8 +254,6 @@ export const BackgroundGradient = ({
             setHintOverrides={setHintOverrides}
             setSelectedStopIndex={setSelectedStopIndex}
             applyGradient={applyGradient}
-            styleDecl={styleDecl}
-            index={index}
             selectedStopIndex={selectedStopIndex}
           />
           <Separator />
@@ -309,8 +292,6 @@ type GradientPickerSectionProps = {
   setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
   setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   applyGradient: GradientEditorApplyFn;
-  styleDecl: ReturnType<typeof useComputedStyleDecl>;
-  index: number;
   selectedStopIndex: number;
 };
 
@@ -321,109 +302,14 @@ const GradientPickerSection = ({
   setHintOverrides,
   setSelectedStopIndex,
   applyGradient,
-  styleDecl,
-  index,
   selectedStopIndex,
 }: GradientPickerSectionProps) => {
-  const parsedComputedGradient = useMemo(() => {
-    let computedStyleValue = styleDecl.computedValue;
-    if (computedStyleValue?.type === "layers") {
-      computedStyleValue = computedStyleValue.value[index];
-    }
-    const computedGradientString = toValue(computedStyleValue);
-    const { normalizedGradientString } = normalizeGradientInput(
-      computedGradientString,
-      gradientType
-    );
-
-    if (gradientType === "linear") {
-      const parsed =
-        parseLinearGradient(normalizedGradientString) ??
-        createDefaultGradient("linear");
-      return ensureGradientHasStops(parsed);
-    }
-    if (gradientType === "conic") {
-      const parsed =
-        parseConicGradient(normalizedGradientString) ??
-        createDefaultGradient("conic");
-      return ensureGradientHasStops(parsed);
-    }
-    const parsed =
-      parseRadialGradient(normalizedGradientString) ??
-      createDefaultGradient("radial");
-    return ensureGradientHasStops(parsed);
-  }, [gradientType, index, styleDecl]);
-
-  const computedGradientForPicker = useMemo(() => {
-    if (parsedComputedGradient === undefined) {
-      return;
-    }
-    return resolveGradientForPicker(
-      parsedComputedGradient,
-      new Map<number, PercentUnitValue>()
-    );
-  }, [parsedComputedGradient]);
-
-  const [isInteracting, setIsInteracting] = useState(false);
-
-  const gradientForPicker = useMemo(() => {
-    const base = resolveGradientForPicker(gradient, hintOverrides);
-    if (isInteracting || computedGradientForPicker === undefined) {
-      return base;
-    }
-
-    const computedStops = computedGradientForPicker.stops;
-    const stops = base.stops.map((stop, index) => {
-      const computedStop = computedStops[index];
-      if (computedStop === undefined) {
-        return stop;
-      }
-      return {
-        ...stop,
-        color: computedStop.color ?? stop.color,
-        position: computedStop.position ?? stop.position,
-        hint: computedStop.hint ?? stop.hint,
-      } satisfies GradientStop;
-    });
-
-    if (isLinearGradient(base) && isLinearGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        angle: computedGradientForPicker.angle ?? base.angle,
-        sideOrCorner:
-          computedGradientForPicker.sideOrCorner ?? base.sideOrCorner,
-        stops,
-      } satisfies ParsedLinearGradient;
-    }
-
-    if (isConicGradient(base) && isConicGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        angle: computedGradientForPicker.angle ?? base.angle,
-        position: computedGradientForPicker.position ?? base.position,
-        stops,
-      } satisfies ParsedConicGradient;
-    }
-
-    if (isRadialGradient(base) && isRadialGradient(computedGradientForPicker)) {
-      return {
-        ...base,
-        shape: computedGradientForPicker.shape ?? base.shape,
-        size: computedGradientForPicker.size ?? base.size,
-        position: computedGradientForPicker.position ?? base.position,
-        stops,
-      } satisfies ParsedRadialGradient;
-    }
-
-    return {
-      ...base,
-      stops,
-    } as ParsedGradient;
-  }, [computedGradientForPicker, gradient, hintOverrides, isInteracting]);
+  const gradientForPickerBase = useMemo(() => {
+    return resolveGradientForPicker(gradient, hintOverrides);
+  }, [gradient, hintOverrides]);
 
   const handlePickerChange = useCallback(
     (nextGradient: ParsedGradient) => {
-      setIsInteracting(true);
       applyGradient(nextGradient, { isEphemeral: true });
     },
     [applyGradient]
@@ -431,17 +317,10 @@ const GradientPickerSection = ({
 
   const handlePickerChangeComplete = useCallback(
     (nextGradient: ParsedGradient) => {
-      setIsInteracting(false);
       applyGradient(nextGradient);
     },
     [applyGradient]
   );
-
-  useEffect(() => {
-    return () => {
-      setIsInteracting(false);
-    };
-  }, []);
 
   const handleThumbSelect = useCallback(
     (index: number, _stop: GradientStop) => {
@@ -449,6 +328,10 @@ const GradientPickerSection = ({
     },
     [setSelectedStopIndex]
   );
+
+  // Gradient stops are already sorted in applyGradient, no need to sort here
+  const gradientForPicker = gradientForPickerBase;
+
   const previewGradientForTrack = useMemo<ParsedLinearGradient>(() => {
     const previewGradient: ParsedLinearGradient = {
       type: "linear",
@@ -836,31 +719,44 @@ const GradientStopControls = ({
       updater: (stop: GradientStop) => GradientStop,
       options?: { isEphemeral?: boolean }
     ) => {
-      const currentStop = gradient.stops[stopIndex];
-      if (currentStop === undefined) {
-        return;
-      }
-      const stops = gradient.stops.map((stop, index) =>
-        index === stopIndex ? updater(stop) : stop
-      );
-      const nextGradient = { ...gradient, stops };
+      const nextGradient = updateGradientStop(gradient, stopIndex, updater);
       applyGradient(nextGradient, options);
     },
     [applyGradient, gradient]
   );
 
   const handleAddStop = useCallback(() => {
+    // Calculate position for new stop between selected stop and adjacent stop
+    const clampedSelectedIndex = clampStopIndex(selectedStopIndex, gradient);
+    const currentStop = gradient.stops[clampedSelectedIndex];
+    const currentPosition = getStopPosition(currentStop);
+
+    // If last stop is selected, insert between it and the previous stop
+    const isLastStop = clampedSelectedIndex === gradient.stops.length - 1;
+
+    let newPosition: number;
+    if (isLastStop && gradient.stops.length > 1) {
+      const prevStop = gradient.stops[clampedSelectedIndex - 1];
+      const prevPosition = getStopPosition(prevStop);
+      newPosition = (prevPosition + currentPosition) / 2;
+    } else {
+      // Otherwise, insert between current and next stop
+      const nextStop = gradient.stops[clampedSelectedIndex + 1];
+      const nextPosition = nextStop ? getStopPosition(nextStop) : 100;
+      newPosition = (currentPosition + nextPosition) / 2;
+    }
+
     applyGradient({
       ...gradient,
       stops: [
         ...gradient.stops,
         {
           color: fallbackStopColor,
-          position: createPercentUnitValue(50),
+          position: createPercentUnitValue(newPosition),
         },
       ],
     });
-  }, [applyGradient, gradient]);
+  }, [applyGradient, gradient, selectedStopIndex]);
 
   const handleDeleteStop = useCallback(
     (stopIndex: number) => {
@@ -903,226 +799,215 @@ const GradientStopControls = ({
           </Tooltip>
         </Flex>
       </Flex>
-      {gradient.stops
-        .map((stop, originalIndex) => ({ stop, originalIndex }))
-        .sort((a, b) => getStopPosition(a.stop) - getStopPosition(b.stop))
-        .map(({ stop, originalIndex: stopIndex }) => {
-          const isSelected =
-            stopIndex === clampStopIndex(selectedStopIndex, gradient);
-          const stopPositionValue = stop.position;
-          const stopHintOverride = hintOverrides.get(stopIndex);
-          const stopHintValue = stop.hint ?? stopHintOverride;
+      {gradient.stops.map((stop, stopIndex) => {
+        const isSelected =
+          stopIndex === clampStopIndex(selectedStopIndex, gradient);
+        const stopPositionValue = stop.position;
+        const stopHintOverride = hintOverrides.get(stopIndex);
+        const stopHintValue = stop.hint ?? stopHintOverride;
 
-          const handleStopPositionUpdate = (
-            styleValue: StyleValue,
-            options?: { isEphemeral?: boolean }
-          ) => {
-            const resolution = resolveStopPositionUpdate(styleValue);
-            if (resolution.type === "none") {
-              return;
-            }
+        const handleStopPositionUpdate = (
+          styleValue: StyleValue,
+          options?: { isEphemeral?: boolean }
+        ) => {
+          const resolution = resolveStopPositionUpdate(styleValue);
+          if (resolution.type === "none") {
+            return;
+          }
 
-            updateStop(
-              stopIndex,
-              (stop) => ({
-                ...stop,
-                position: resolution.position,
-              }),
-              options
-            );
-
-            if (!options?.isEphemeral && resolution.clearHintOverrides) {
-              setHintOverrides((previous) =>
-                removeHintOverride(previous, stopIndex)
-              );
-            }
-          };
-
-          const handleStopPositionDelete = (options?: {
-            isEphemeral?: boolean;
-          }) => {
-            updateStop(
-              stopIndex,
-              (stop) => {
-                const { position: _omit, ...rest } = stop;
-                return rest;
-              },
-              options
-            );
-          };
-
-          const handleStopHintUpdate = (
-            styleValue: StyleValue,
-            options?: { isEphemeral?: boolean }
-          ) => {
-            const resolution = resolveStopHintUpdate(styleValue, {
-              getPercentUnit,
-              clampPercentUnit,
-            });
-
-            if (resolution.type === "none") {
-              return;
-            }
-
-            updateStop(
-              stopIndex,
-              (stop) => ({
-                ...stop,
-                hint: resolution.hint,
-              }),
-              options
-            );
-
-            if (options?.isEphemeral) {
-              return;
-            }
-
-            if (resolution.clearOverride) {
-              setHintOverrides((previous) =>
-                removeHintOverride(previous, stopIndex)
-              );
-              return;
-            }
-
-            const override = resolution.override;
-            if (override !== undefined) {
-              setHintOverrides((previous) =>
-                setHintOverride(previous, stopIndex, override)
-              );
-            }
-          };
-
-          const handleStopHintDelete = (options?: {
-            isEphemeral?: boolean;
-          }) => {
-            updateStop(
-              stopIndex,
-              (stop) => {
-                const { hint: _omit, ...rest } = stop;
-                return { ...rest };
-              },
-              options
-            );
-            if (!options?.isEphemeral) {
-              setHintOverrides((previous) =>
-                removeHintOverride(previous, stopIndex)
-              );
-            }
-          };
-
-          const handleStopColorChange = (
-            styleValue: StyleValue | IntermediateColorValue | undefined
-          ) => {
-            const nextColor = styleValueToColor(styleValue);
-            if (nextColor === undefined) {
-              return;
-            }
-            updateStop(
-              stopIndex,
-              (stop) => ({
-                ...stop,
-                color: nextColor,
-              }),
-              { isEphemeral: true }
-            );
-          };
-
-          const handleStopColorChangeComplete = (styleValue: StyleValue) => {
-            const nextColor = styleValueToColor(styleValue);
-            if (nextColor === undefined) {
-              return;
-            }
-            updateStop(
-              stopIndex,
-              (stop) => ({
-                ...stop,
-                color: nextColor,
-              }),
-              { isEphemeral: false }
-            );
-          };
-
-          const stopColor = (stop.color ?? fallbackStopColor) as StyleValue;
-
-          return (
-            <Flex
-              key={stopIndex}
-              gap="1"
-              css={{
-                opacity: isSelected ? 1 : 0.6,
-              }}
-              onFocus={() => {
-                if (!isSelected) {
-                  setSelectedStopIndex(stopIndex);
-                }
-              }}
-            >
-              <Grid
-                align="end"
-                gap="1"
-                css={{ gridTemplateColumns: "1fr 1fr 2fr" }}
-              >
-                <Tooltip
-                  content="Position of this gradient stop along the gradient line."
-                  variant="wrapped"
-                >
-                  <Box>
-                    <CssValueInputContainer
-                      property={"background-position-x"}
-                      styleSource="default"
-                      getOptions={getAvailableUnitVariables}
-                      value={stopPositionValue}
-                      unitOptions={percentUnitOptions}
-                      onUpdate={handleStopPositionUpdate}
-                      onDelete={handleStopPositionDelete}
-                    />
-                  </Box>
-                </Tooltip>
-                <Tooltip
-                  content="Midpoint position for color transition between this stop and the next."
-                  variant="wrapped"
-                >
-                  <Box>
-                    <CssValueInputContainer
-                      property={"background-position-x"}
-                      styleSource="default"
-                      getOptions={getAvailableUnitVariables}
-                      value={stopHintValue}
-                      unitOptions={percentUnitOptions}
-                      onUpdate={handleStopHintUpdate}
-                      onDelete={handleStopHintDelete}
-                    />
-                  </Box>
-                </Tooltip>
-                <Tooltip
-                  content="Color of this gradient stop."
-                  variant="wrapped"
-                >
-                  <Box>
-                    <ColorPickerControl
-                      property="color"
-                      value={stopColor}
-                      currentColor={stopColor}
-                      onChange={handleStopColorChange}
-                      onChangeComplete={handleStopColorChangeComplete}
-                      onAbort={() => {}}
-                      onReset={() => {}}
-                    />
-                  </Box>
-                </Tooltip>
-              </Grid>
-              <Tooltip content="Delete stop" variant="wrapped">
-                <IconButton
-                  aria-label="Delete stop"
-                  onClick={() => handleDeleteStop(stopIndex)}
-                  disabled={gradient.stops.length <= 2}
-                >
-                  <MinusIcon />
-                </IconButton>
-              </Tooltip>
-            </Flex>
+          updateStop(
+            stopIndex,
+            (stop) => ({
+              ...stop,
+              position: resolution.position,
+            }),
+            options
           );
-        })}
+
+          if (!options?.isEphemeral && resolution.clearHintOverrides) {
+            setHintOverrides((previous) =>
+              removeHintOverride(previous, stopIndex)
+            );
+          }
+        };
+
+        const handleStopPositionDelete = (options?: {
+          isEphemeral?: boolean;
+        }) => {
+          updateStop(
+            stopIndex,
+            (stop) => {
+              const { position: _omit, ...rest } = stop;
+              return rest;
+            },
+            options
+          );
+        };
+
+        const handleStopHintUpdate = (
+          styleValue: StyleValue,
+          options?: { isEphemeral?: boolean }
+        ) => {
+          const resolution = resolveStopHintUpdate(styleValue);
+
+          if (resolution.type === "none") {
+            return;
+          }
+
+          updateStop(
+            stopIndex,
+            (stop) => ({
+              ...stop,
+              hint: resolution.hint,
+            }),
+            options
+          );
+
+          if (options?.isEphemeral) {
+            return;
+          }
+
+          if (resolution.clearOverride) {
+            setHintOverrides((previous) =>
+              removeHintOverride(previous, stopIndex)
+            );
+            return;
+          }
+
+          const override = resolution.override;
+          if (override !== undefined) {
+            setHintOverrides((previous) =>
+              setHintOverride(previous, stopIndex, override)
+            );
+          }
+        };
+
+        const handleStopHintDelete = (options?: { isEphemeral?: boolean }) => {
+          updateStop(
+            stopIndex,
+            (stop) => {
+              const { hint: _omit, ...rest } = stop;
+              return { ...rest };
+            },
+            options
+          );
+          if (!options?.isEphemeral) {
+            setHintOverrides((previous) =>
+              removeHintOverride(previous, stopIndex)
+            );
+          }
+        };
+
+        const handleStopColorChange = (
+          styleValue: StyleValue | IntermediateColorValue | undefined
+        ) => {
+          const nextColor = styleValueToColor(styleValue);
+          if (nextColor === undefined) {
+            return;
+          }
+          updateStop(
+            stopIndex,
+            (stop) => ({
+              ...stop,
+              color: nextColor,
+            }),
+            { isEphemeral: true }
+          );
+        };
+
+        const handleStopColorChangeComplete = (styleValue: StyleValue) => {
+          const nextColor = styleValueToColor(styleValue);
+          if (nextColor === undefined) {
+            return;
+          }
+          updateStop(
+            stopIndex,
+            (stop) => ({
+              ...stop,
+              color: nextColor,
+            }),
+            { isEphemeral: false }
+          );
+        };
+
+        const stopColor = (stop.color ?? fallbackStopColor) as StyleValue;
+
+        return (
+          <Flex
+            key={stopIndex}
+            gap="1"
+            css={{
+              opacity: isSelected ? 1 : 0.6,
+            }}
+            onFocus={() => {
+              if (!isSelected) {
+                setSelectedStopIndex(stopIndex);
+              }
+            }}
+          >
+            <Grid
+              align="end"
+              gap="1"
+              css={{ gridTemplateColumns: "1fr 1fr 2fr" }}
+            >
+              <Tooltip
+                content="Position of this gradient stop along the gradient line."
+                variant="wrapped"
+              >
+                <Box>
+                  <CssValueInputContainer
+                    property={"background-position-x"}
+                    styleSource="default"
+                    getOptions={getAvailableUnitVariables}
+                    value={stopPositionValue}
+                    unitOptions={percentUnitOptions}
+                    onUpdate={handleStopPositionUpdate}
+                    onDelete={handleStopPositionDelete}
+                  />
+                </Box>
+              </Tooltip>
+              <Tooltip
+                content="Midpoint position for color transition between this stop and the next."
+                variant="wrapped"
+              >
+                <Box>
+                  <CssValueInputContainer
+                    property={"background-position-x"}
+                    styleSource="default"
+                    getOptions={getAvailableUnitVariables}
+                    value={stopHintValue}
+                    unitOptions={percentUnitOptions}
+                    onUpdate={handleStopHintUpdate}
+                    onDelete={handleStopHintDelete}
+                  />
+                </Box>
+              </Tooltip>
+              <Tooltip content="Color of this gradient stop." variant="wrapped">
+                <Box>
+                  <ColorPickerControl
+                    property="color"
+                    value={stopColor}
+                    currentColor={stopColor}
+                    onChange={handleStopColorChange}
+                    onChangeComplete={handleStopColorChangeComplete}
+                    onAbort={() => {}}
+                    onReset={() => {}}
+                  />
+                </Box>
+              </Tooltip>
+            </Grid>
+            <Tooltip content="Delete stop" variant="wrapped">
+              <IconButton
+                aria-label="Delete stop"
+                onClick={() => handleDeleteStop(stopIndex)}
+                disabled={gradient.stops.length <= 2}
+              >
+                <MinusIcon />
+              </IconButton>
+            </Tooltip>
+          </Flex>
+        );
+      })}
     </Flex>
   );
 };

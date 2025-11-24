@@ -23,6 +23,7 @@ import {
   normalizeGradientInput,
   type PercentUnitValue,
   pruneHintOverrides,
+  reindexHintOverrides,
   removeHintOverride,
   resolveAngleValue,
   resolveGradientForPicker,
@@ -31,10 +32,12 @@ import {
   resolveStopPositionUpdate,
   setHintOverride,
   sideOrCornerToAngle,
+  sortGradientStops,
   styleValueToColor,
   formatGradientForType,
   formatGradientValue,
   convertGradientToTarget,
+  updateGradientStop,
   type GradientType,
 } from "./gradient-utils";
 
@@ -713,10 +716,7 @@ describe("resolveStopHintUpdate", () => {
       fallback,
     };
 
-    const result = resolveStopHintUpdate(styleValue, {
-      getPercentUnit: () => undefined,
-      clampPercentUnit: (value) => value,
-    });
+    const result = resolveStopHintUpdate(styleValue);
 
     expect(result.type).toBe("apply");
     if (result.type !== "apply") {
@@ -740,25 +740,18 @@ describe("resolveStopHintUpdate", () => {
 
   test("normalizes percent units and returns override", () => {
     const styleValue: StyleValue = { type: "unit", unit: "%", value: 45 };
-    const normalized: PercentUnitValue = {
-      type: "unit",
-      unit: "%",
-      value: 50,
-    };
 
-    const result = resolveStopHintUpdate(styleValue, {
-      getPercentUnit: () => ({ type: "unit", unit: "%", value: 45 }),
-      clampPercentUnit: () => normalized,
-    });
+    const result = resolveStopHintUpdate(styleValue);
 
     expect(result.type).toBe("apply");
     if (result.type !== "apply") {
       throw new Error("Expected apply result");
     }
+    // Value is clamped between 0-100
     expect(result).toEqual({
       type: "apply",
-      hint: normalized,
-      override: normalized,
+      hint: { type: "unit", unit: "%", value: 45 },
+      override: { type: "unit", unit: "%", value: 45 },
       clearOverride: false,
     });
   });
@@ -766,10 +759,7 @@ describe("resolveStopHintUpdate", () => {
   test("returns none when value unsupported", () => {
     const styleValue: StyleValue = { type: "keyword", value: "auto" };
 
-    const result = resolveStopHintUpdate(styleValue, {
-      getPercentUnit: () => undefined,
-      clampPercentUnit: (value) => value,
-    });
+    const result = resolveStopHintUpdate(styleValue);
 
     expect(result).toEqual({ type: "none" });
   });
@@ -1604,5 +1594,425 @@ describe("detectBackgroundType", () => {
       value: "unsupported-gradient(circle, red, blue)",
     };
     expect(detectBackgroundType(value)).toBe("image");
+  });
+});
+
+describe("reindexHintOverrides", () => {
+  test("reindexes hints after deleting a stop before them", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [1, { type: "unit", unit: "%", value: 25 }],
+      [3, { type: "unit", unit: "%", value: 75 }],
+    ]);
+    const result = reindexHintOverrides(overrides, 0);
+    expect(result.get(0)).toEqual({ type: "unit", unit: "%", value: 25 });
+    expect(result.get(2)).toEqual({ type: "unit", unit: "%", value: 75 });
+    expect(result.size).toBe(2);
+  });
+
+  test("removes hint for deleted stop", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [1, { type: "unit", unit: "%", value: 25 }],
+      [2, { type: "unit", unit: "%", value: 50 }],
+      [3, { type: "unit", unit: "%", value: 75 }],
+    ]);
+    const result = reindexHintOverrides(overrides, 2);
+    expect(result.get(1)).toEqual({ type: "unit", unit: "%", value: 25 });
+    expect(result.get(2)).toEqual({ type: "unit", unit: "%", value: 75 });
+    expect(result.has(3)).toBe(false);
+    expect(result.size).toBe(2);
+  });
+
+  test("keeps hints before deleted index unchanged", () => {
+    const overrides = new Map<number, PercentUnitValue>([
+      [0, { type: "unit", unit: "%", value: 10 }],
+      [1, { type: "unit", unit: "%", value: 25 }],
+    ]);
+    const result = reindexHintOverrides(overrides, 3);
+    expect(result.get(0)).toEqual({ type: "unit", unit: "%", value: 10 });
+    expect(result.get(1)).toEqual({ type: "unit", unit: "%", value: 25 });
+    expect(result.size).toBe(2);
+  });
+
+  test("handles empty overrides map", () => {
+    const overrides = new Map<number, PercentUnitValue>();
+    const result = reindexHintOverrides(overrides, 1);
+    expect(result.size).toBe(0);
+  });
+});
+
+describe("sortGradientStops", () => {
+  const red: RgbValue = { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 };
+  const blue: RgbValue = { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 };
+  const green: RgbValue = { type: "rgb", r: 0, g: 255, b: 0, alpha: 1 };
+
+  test("sorts stops by position ascending", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 100 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 0 } },
+        { color: green, position: { type: "unit", unit: "%", value: 50 } },
+      ],
+    });
+    const { sortedGradient } = sortGradientStops(gradient, new Map());
+
+    expect(sortedGradient.stops[0].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 0,
+    });
+    expect(sortedGradient.stops[1].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 50,
+    });
+    expect(sortedGradient.stops[2].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 100,
+    });
+  });
+
+  test("reindexes hint overrides to match sorted positions", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 100 } }, // originalIndex: 0
+        { color: blue, position: { type: "unit", unit: "%", value: 0 } }, // originalIndex: 1
+        { color: green, position: { type: "unit", unit: "%", value: 50 } }, // originalIndex: 2
+      ],
+    });
+    const hintOverrides = new Map<number, PercentUnitValue>([
+      [0, { type: "unit", unit: "%", value: 90 }], // hint for stop at 100%
+      [2, { type: "unit", unit: "%", value: 40 }], // hint for stop at 50%
+    ]);
+    const { reindexedHints } = sortGradientStops(gradient, hintOverrides);
+
+    // After sorting: [0%, 50%, 100%]
+    // Hints should be at new indices: 1 (for 50%) and 2 (for 100%)
+    expect(reindexedHints.get(1)).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 40,
+    });
+    expect(reindexedHints.get(2)).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 90,
+    });
+    expect(reindexedHints.size).toBe(2);
+  });
+
+  test("handles stops without positions (defaults to 0)", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 50 } },
+        { color: blue }, // No position, should default to 0
+        { color: green, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+    const { sortedGradient } = sortGradientStops(gradient, new Map());
+
+    expect(sortedGradient.stops[0].color).toEqual(blue); // No position = 0
+    expect(sortedGradient.stops[1].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 50,
+    });
+    expect(sortedGradient.stops[2].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 100,
+    });
+  });
+
+  test("preserves gradient properties other than stops", () => {
+    const gradient = createLinearGradient({
+      angle: { type: "unit", unit: "deg", value: 45 },
+      repeating: true,
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 100 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 0 } },
+      ],
+    });
+    const { sortedGradient } = sortGradientStops(gradient, new Map());
+
+    expect(sortedGradient.type).toBe("linear");
+    if (sortedGradient.type === "linear") {
+      expect(sortedGradient.angle).toEqual({
+        type: "unit",
+        unit: "deg",
+        value: 45,
+      });
+    }
+    expect(sortedGradient.repeating).toBe(true);
+  });
+
+  test("handles empty hint overrides", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 50 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 0 } },
+      ],
+    });
+    const { reindexedHints } = sortGradientStops(gradient, new Map());
+
+    expect(reindexedHints.size).toBe(0);
+  });
+
+  test("maintains stable sort for stops at same position", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 50 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 50 } },
+        { color: green, position: { type: "unit", unit: "%", value: 50 } },
+      ],
+    });
+    const { sortedGradient } = sortGradientStops(gradient, new Map());
+
+    // Original order should be preserved for stops at the same position
+    expect(sortedGradient.stops[0].color).toEqual(red);
+    expect(sortedGradient.stops[1].color).toEqual(blue);
+    expect(sortedGradient.stops[2].color).toEqual(green);
+  });
+});
+
+describe("updateGradientStop", () => {
+  const red: RgbValue = { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 };
+  const blue: RgbValue = { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 };
+
+  test("returns same gradient when stop index is invalid", () => {
+    const gradient = createLinearGradient({
+      stops: [{ color: red, position: { type: "unit", unit: "%", value: 0 } }],
+    });
+
+    const result = updateGradientStop(gradient, -1, (stop) => stop);
+    expect(result).toBe(gradient);
+
+    const result2 = updateGradientStop(gradient, 5, (stop) => stop);
+    expect(result2).toBe(gradient);
+  });
+
+  test("updates stop without hint", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 0 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 25 },
+    }));
+
+    expect(result.stops[0].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 25,
+    });
+    expect(result.stops[0].hint).toBeUndefined();
+  });
+
+  test("maintains hint offset when position changes", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 20 },
+          hint: { type: "unit", unit: "%", value: 30 }, // offset = 10
+        },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 50 },
+    }));
+
+    expect(result.stops[0].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 50,
+    });
+    // Hint should maintain offset of 10: 50 + 10 = 60
+    expect(result.stops[0].hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 60,
+    });
+  });
+
+  test("clamps hint to 0-100 range when maintaining offset", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 80 },
+          hint: { type: "unit", unit: "%", value: 95 }, // offset = 15
+        },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 90 },
+    }));
+
+    // Hint should be clamped: 90 + 15 = 105 -> 100
+    expect(result.stops[0].hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 100,
+    });
+  });
+
+  test("clamps hint to minimum 0 when offset is negative", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 50 },
+          hint: { type: "unit", unit: "%", value: 30 }, // offset = -20
+        },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 10 },
+    }));
+
+    // Hint should be clamped: 10 + (-20) = -10 -> 0
+    expect(result.stops[0].hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 0,
+    });
+  });
+
+  test("does not modify hint when position does not change", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 20 },
+          hint: { type: "unit", unit: "%", value: 30 },
+        },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      color: blue, // Only change color, not position
+    }));
+
+    expect(result.stops[0].color).toEqual(blue);
+    expect(result.stops[0].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 20,
+    });
+    // Hint should remain unchanged
+    expect(result.stops[0].hint).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 30,
+    });
+  });
+
+  test("does not modify other stops", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 0 },
+          hint: { type: "unit", unit: "%", value: 10 },
+        },
+        {
+          color: blue,
+          position: { type: "unit", unit: "%", value: 100 },
+          hint: { type: "unit", unit: "%", value: 90 },
+        },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 20 },
+    }));
+
+    // Second stop should be unchanged
+    expect(result.stops[1]).toEqual(gradient.stops[1]);
+  });
+
+  test("handles stop without hint gracefully", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 0 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 50 },
+    }));
+
+    expect(result.stops[0].position).toEqual({
+      type: "unit",
+      unit: "%",
+      value: 50,
+    });
+    expect(result.stops[0].hint).toBeUndefined();
+  });
+
+  test("handles non-percent hint units gracefully", () => {
+    const gradient = createLinearGradient({
+      stops: [
+        {
+          color: red,
+          position: { type: "unit", unit: "%", value: 20 },
+          hint: { type: "unit", unit: "px", value: 50 } as UnitValue,
+        },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 50 },
+    }));
+
+    // Hint should not be modified for non-percent units
+    expect(result.stops[0].hint).toEqual({
+      type: "unit",
+      unit: "px",
+      value: 50,
+    });
+  });
+
+  test("preserves gradient properties other than stops", () => {
+    const gradient = createLinearGradient({
+      angle: { type: "unit", unit: "deg", value: 45 },
+      repeating: true,
+      stops: [
+        { color: red, position: { type: "unit", unit: "%", value: 0 } },
+        { color: blue, position: { type: "unit", unit: "%", value: 100 } },
+      ],
+    });
+
+    const result = updateGradientStop(gradient, 0, (stop) => ({
+      ...stop,
+      position: { type: "unit", unit: "%", value: 25 },
+    }));
+
+    expect(result.type).toBe("linear");
+    if (result.type === "linear") {
+      expect(result.angle).toEqual({ type: "unit", unit: "deg", value: 45 });
+    }
+    expect(result.repeating).toBe(true);
   });
 });

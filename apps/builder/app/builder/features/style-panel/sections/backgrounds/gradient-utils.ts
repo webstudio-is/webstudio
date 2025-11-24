@@ -7,7 +7,6 @@ import {
   type StyleValue,
   type Unit,
   type UnitValue,
-  type VarFallback,
   type VarValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -61,6 +60,10 @@ const gradientFunctionNames: Record<
   },
 };
 
+/**
+ * Checks if a CSS value string starts with a gradient function of the specified type.
+ * Handles both base and repeating gradient functions (e.g., "linear-gradient" and "repeating-linear-gradient").
+ */
 const startsWithGradientFunction = (value: string, type: GradientType) => {
   const normalized = value.trim().toLowerCase();
   const { base, repeating } = gradientFunctionNames[type];
@@ -88,23 +91,16 @@ export const percentUnitOptions: UnitOption[] = [
   },
 ];
 
-const createKeywordValue = (value: string): KeywordValue => ({
-  type: "keyword",
-  value,
-});
-
-const createCenterKeyword = () => createKeywordValue("center");
-
 export const gradientPositionXOptions: KeywordValue[] = [
-  createCenterKeyword(),
-  createKeywordValue("left"),
-  createKeywordValue("right"),
+  { type: "keyword", value: "center" },
+  { type: "keyword", value: "left" },
+  { type: "keyword", value: "right" },
 ];
 
 export const gradientPositionYOptions: KeywordValue[] = [
-  createCenterKeyword(),
-  createKeywordValue("top"),
-  createKeywordValue("bottom"),
+  { type: "keyword", value: "center" },
+  { type: "keyword", value: "top" },
+  { type: "keyword", value: "bottom" },
 ];
 
 const getAxisPositionValue = (
@@ -121,11 +117,15 @@ const getAxisPositionValue = (
   return parsed;
 };
 
+/**
+ * Parses a gradient position string into separate x and y StyleValues.
+ * Defaults to "center center" if position is undefined or parsing fails.
+ */
 export const parseGradientPositionValues = (position?: string) => {
   if (position === undefined) {
     return {
-      xValue: createCenterKeyword(),
-      yValue: createCenterKeyword(),
+      xValue: { type: "keyword" as const, value: "center" },
+      yValue: { type: "keyword" as const, value: "center" },
     } as const;
   }
   try {
@@ -135,27 +135,33 @@ export const parseGradientPositionValues = (position?: string) => {
       // Use the real background-position longhand when parsing so we can reuse
       // its CSS syntax rules, but assign the result to the gradient-specific
       // custom property downstream.
-      xValue:
-        getAxisPositionValue(backgroundPositionXLonghand, xLonghand?.[1]) ??
-        createCenterKeyword(),
-      yValue:
-        getAxisPositionValue(backgroundPositionYLonghand, yLonghand?.[1]) ??
-        createCenterKeyword(),
+      xValue: getAxisPositionValue(
+        backgroundPositionXLonghand,
+        xLonghand?.[1]
+      ) ?? { type: "keyword" as const, value: "center" },
+      yValue: getAxisPositionValue(
+        backgroundPositionYLonghand,
+        yLonghand?.[1]
+      ) ?? { type: "keyword" as const, value: "center" },
     } as const;
   } catch {
     return {
-      xValue: createCenterKeyword(),
-      yValue: createCenterKeyword(),
+      xValue: { type: "keyword" as const, value: "center" },
+      yValue: { type: "keyword" as const, value: "center" },
     } as const;
   }
 };
 
+/**
+ * Formats x and y position values into a CSS position string.
+ * Omits "center center" as it's the default. Returns just x if y is center.
+ */
 export const formatGradientPositionValues = (
   xValue?: StyleValue,
   yValue?: StyleValue
 ) => {
-  const x = toValue(xValue ?? createCenterKeyword());
-  const y = toValue(yValue ?? createCenterKeyword());
+  const x = toValue(xValue ?? { type: "keyword" as const, value: "center" });
+  const y = toValue(yValue ?? { type: "keyword" as const, value: "center" });
   if (x === "center" && y === "center") {
     return;
   }
@@ -191,6 +197,11 @@ const angleUnitToDegrees = (value: UnitValue): number | undefined => {
   }
 };
 
+/**
+ * Converts a UnitValue to a PercentUnitValue.
+ * For percent units, clamps to 0-100. For angle units, converts to percent (0-100 representing 0-360deg).
+ * Returns undefined for unsupported unit types.
+ */
 const toPercentUnitValue = (value: UnitValue): PercentUnitValue | undefined => {
   if (value.unit === "%") {
     return {
@@ -287,7 +298,7 @@ export const isRadialGradient = (
 ): gradient is ParsedRadialGradient => gradient.type === "radial";
 
 /**
- * Get the default angle for a gradient according to CSS spec.
+ * Returns the CSS spec default angle for each gradient type:
  * - linear-gradient: 180deg (to bottom)
  * - conic-gradient: 0deg (from top)
  * - radial-gradient: undefined (no angle)
@@ -331,6 +342,10 @@ export const getPercentUnit = (
   }
 };
 
+/**
+ * Converts repeating-*-gradient to *-gradient while preserving leading whitespace.
+ * Returns both the normalized string and whether it was originally repeating.
+ */
 export const normalizeGradientInput = (
   gradientString: string,
   gradientType: GradientType
@@ -402,6 +417,10 @@ export const sideOrCornerToAngle = (
   }
 };
 
+/**
+ * Interpolates missing stop positions proportionally between defined positions.
+ * Only works with percent units - returns original gradient for non-percent units.
+ */
 export const fillMissingStopPositions = <T extends ParsedGradient>(
   gradient: T
 ): T => {
@@ -502,25 +521,9 @@ export const fillMissingStopPositions = <T extends ParsedGradient>(
   } as T;
 };
 
-const cloneVarValue = (value: VarValue): VarValue => ({
-  ...value,
-  fallback: value.fallback === undefined ? undefined : { ...value.fallback },
-});
-
-export const cloneVarFallback = (
-  fallback: VarFallback | undefined
-): VarFallback | undefined => {
-  if (fallback === undefined) {
-    return;
-  }
-
-  if (fallback.type === "rgb") {
-    return { ...fallback } satisfies VarFallback;
-  }
-
-  return { ...fallback } satisfies VarFallback;
-};
-
+/**
+ * Clones stop values, deep cloning var fallbacks to avoid shared references.
+ */
 const cloneGradientStopValue = <
   Value extends GradientStop["position"] | GradientStop["hint"],
 >(
@@ -531,60 +534,57 @@ const cloneGradientStopValue = <
   }
 
   if (value.type === "var") {
-    const fallback = value.fallback;
     return {
       ...value,
-      fallback: fallback === undefined ? undefined : { ...fallback },
-    } as Value;
+      fallback: value.fallback && { ...value.fallback },
+    };
   }
 
-  return { ...value } as Value;
+  return { ...value };
 };
 
+/**
+ * Clones colors, deep cloning var fallbacks to avoid shared references.
+ */
 const cloneGradientStopColor = (
   color: GradientStop["color"] | undefined
 ): GradientStop["color"] => {
   if (color === undefined) {
-    return { ...fallbackStopColor } satisfies GradientStop["color"];
+    return { ...fallbackStopColor };
   }
   if (color.type === "var") {
     return {
       ...color,
-      fallback: cloneVarFallback(color.fallback),
-    } satisfies GradientStop["color"];
+      fallback: color.fallback && { ...color.fallback },
+    };
   }
-  if (color.type === "rgb") {
-    return { ...color } satisfies GradientStop["color"];
-  }
-  return { ...color } satisfies GradientStop["color"];
+  return { ...color };
 };
 
-const createSolidGradientStops = (color: GradientStop["color"]) => {
-  const firstColor = cloneGradientStopColor(color);
-  const secondColor = cloneGradientStopColor(color);
-  return [
-    {
-      color: firstColor,
-      position: { type: "unit", unit: "%", value: 0 },
-    },
-    {
-      color: secondColor,
-      position: { type: "unit", unit: "%", value: 100 },
-    },
-  ] satisfies GradientStop[];
-};
-
+/**
+ * Creates a solid color gradient (two identical stops at 0% and 100%).
+ */
 export const createSolidLinearGradient = (
   color: GradientStop["color"],
   base?: ParsedLinearGradient
 ): ParsedLinearGradient => {
-  const stops = createSolidGradientStops(color);
+  const firstColor = cloneGradientStopColor(color);
+  const secondColor = cloneGradientStopColor(color);
   return {
     type: "linear",
     angle: base?.angle,
     sideOrCorner: base?.sideOrCorner,
-    stops,
-  } satisfies ParsedLinearGradient;
+    stops: [
+      {
+        color: firstColor,
+        position: { type: "unit", unit: "%", value: 0 },
+      },
+      {
+        color: secondColor,
+        position: { type: "unit", unit: "%", value: 100 },
+      },
+    ],
+  };
 };
 
 type AngleUnitValue = UnitValue & { unit: AngleUnit };
@@ -598,14 +598,17 @@ const resolveAnglePrimitive = (
   }
 
   if (value.type === "var") {
-    return cloneVarValue(value);
+    return {
+      ...value,
+      fallback: value.fallback && { ...value.fallback },
+    };
   }
 
   if (value.type === "unit" && isAngleUnit(value.unit)) {
     return {
       ...value,
       unit: value.unit,
-    } satisfies AngleUnitValue;
+    };
   }
 
   return;
@@ -705,6 +708,9 @@ const normalizeStopsForPicker = <T extends ParsedGradient>(gradient: T): T => {
   } as T;
 };
 
+/**
+ * Converts conic angle units (deg, turn, etc.) to percent units for picker UI.
+ */
 const convertConicStopsToPercent = <T extends ParsedGradient>(
   gradient: T
 ): T => {
@@ -764,6 +770,9 @@ const convertConicStopsToPercent = <T extends ParsedGradient>(
   } as T;
 };
 
+/**
+ * Prepares gradient for picker UI: converts angles to percent, resolves vars, fills positions, applies hint overrides.
+ */
 export const resolveGradientForPicker = <T extends ParsedGradient>(
   gradient: T,
   hintOverrides: ReadonlyMap<number, PercentUnitValue>
@@ -798,6 +807,9 @@ export const resolveGradientForPicker = <T extends ParsedGradient>(
   } as T;
 };
 
+/**
+ * Returns same map reference if unchanged for referential equality.
+ */
 export const removeHintOverride = (
   overrides: Map<number, PercentUnitValue>,
   stopIndex: number
@@ -810,6 +822,9 @@ export const removeHintOverride = (
   return next;
 };
 
+/**
+ * Returns same map reference if unchanged for referential equality.
+ */
 export const setHintOverride = (
   overrides: Map<number, PercentUnitValue>,
   stopIndex: number,
@@ -833,6 +848,9 @@ export const setHintOverride = (
   return next;
 };
 
+/**
+ * Returns same map reference if unchanged for referential equality.
+ */
 export const pruneHintOverrides = (
   overrides: Map<number, PercentUnitValue>,
   stopCount: number
@@ -851,6 +869,65 @@ export const pruneHintOverrides = (
   return changed ? next : overrides;
 };
 
+export const getStopPosition = (stop: GradientStop): number =>
+  stop.position?.type === "unit" && stop.position.unit === "%"
+    ? stop.position.value
+    : 0;
+
+export const reindexHintOverrides = (
+  overrides: Map<number, PercentUnitValue>,
+  deletedIndex: number
+): Map<number, PercentUnitValue> => {
+  const reindexed = new Map<number, PercentUnitValue>();
+  overrides.forEach((value, key) => {
+    if (key < deletedIndex) {
+      reindexed.set(key, value);
+    } else if (key > deletedIndex) {
+      reindexed.set(key - 1, value);
+    }
+  });
+  return reindexed;
+};
+
+export const sortGradientStops = (
+  gradient: ParsedGradient,
+  hintOverrides: Map<number, PercentUnitValue>
+): {
+  sortedGradient: ParsedGradient;
+  reindexedHints: Map<number, PercentUnitValue>;
+} => {
+  // Create array of stops with their original indices and hint overrides
+  const stopsWithData = gradient.stops.map((stop, originalIndex) => ({
+    stop,
+    originalIndex,
+    hint: hintOverrides.get(originalIndex),
+  }));
+
+  // Sort by position
+  stopsWithData.sort((a, b) => {
+    const posA = getStopPosition(a.stop);
+    const posB = getStopPosition(b.stop);
+    return posA - posB;
+  });
+
+  // Extract sorted stops and rebuild hint overrides with new indices
+  const sortedStops = stopsWithData.map(({ stop }) => stop);
+  const reindexedHints = new Map<number, PercentUnitValue>();
+  stopsWithData.forEach(({ hint }, newIndex) => {
+    if (hint !== undefined) {
+      reindexedHints.set(newIndex, hint);
+    }
+  });
+
+  return {
+    sortedGradient: {
+      ...gradient,
+      stops: sortedStops,
+    },
+    reindexedHints,
+  };
+};
+
 export type ReverseStopsResolution<T extends ParsedGradient> =
   | {
       type: "apply";
@@ -859,6 +936,9 @@ export type ReverseStopsResolution<T extends ParsedGradient> =
     }
   | { type: "none" };
 
+/**
+ * Reverses stops and mirrors percent positions (0% becomes 100%, etc.).
+ */
 export const resolveReverseStops = <T extends ParsedGradient>(
   gradient: T,
   selectedStopIndex: number
@@ -901,7 +981,7 @@ export const resolveStopPositionUpdate = (
   if (styleValue.type === "var") {
     return {
       type: "apply",
-      position: cloneGradientStopValue(styleValue as GradientStop["position"]),
+      position: cloneGradientStopValue(styleValue),
       clearHintOverrides: true,
     } satisfies StopPositionUpdateResolution;
   }
@@ -922,11 +1002,6 @@ export const resolveStopPositionUpdate = (
   } satisfies StopPositionUpdateResolution;
 };
 
-type StopHintUpdateHelpers = {
-  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
-  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
-};
-
 export type StopHintUpdateResolution =
   | {
       type: "apply";
@@ -937,23 +1012,27 @@ export type StopHintUpdateResolution =
   | { type: "none" };
 
 export const resolveStopHintUpdate = (
-  styleValue: StyleValue,
-  helpers: StopHintUpdateHelpers
+  styleValue: StyleValue
 ): StopHintUpdateResolution => {
   if (styleValue.type === "var") {
     return {
       type: "apply",
-      hint: cloneGradientStopValue(styleValue as GradientStop["hint"]),
+      hint: cloneGradientStopValue(styleValue),
       clearOverride: true,
     };
   }
 
-  const percentUnit = helpers.getPercentUnit(styleValue);
+  const percentUnit = getPercentUnit(styleValue);
   if (percentUnit === undefined) {
     return { type: "none" };
   }
 
-  const normalized = helpers.clampPercentUnit(percentUnit);
+  // Clamp the value inline
+  const normalized: PercentUnitValue = {
+    ...percentUnit,
+    value: clamp(percentUnit.value, 0, 100),
+  };
+
   return {
     type: "apply",
     hint: normalized,
@@ -987,6 +1066,61 @@ export const clampStopIndex = <T extends ParsedGradient>(
   index: number,
   gradient: T
 ) => clamp(index, 0, Math.max(gradient.stops.length - 1, 0));
+
+/**
+ * Updates a gradient stop with automatic hint offset maintenance.
+ * When a stop's position changes and it has a hint, the hint is adjusted
+ * to maintain the same offset relative to the stop's new position.
+ * This matches the behavior of the gradient picker during drag operations.
+ */
+export const updateGradientStop = <T extends ParsedGradient>(
+  gradient: T,
+  stopIndex: number,
+  updater: (stop: GradientStop) => GradientStop
+): T => {
+  const currentStop = gradient.stops[stopIndex];
+  if (currentStop === undefined) {
+    return gradient;
+  }
+
+  // Calculate hint offset before updating (like gradient picker does)
+  const currentPosition = getStopPosition(currentStop);
+  const currentHint =
+    currentStop.hint?.type === "unit" && currentStop.hint.unit === "%"
+      ? currentStop.hint.value
+      : undefined;
+  const hintOffset =
+    currentHint !== undefined ? currentHint - currentPosition : 0;
+
+  const stops = gradient.stops.map((stop, index) => {
+    if (index !== stopIndex) {
+      return stop;
+    }
+
+    const updatedStop = updater(stop);
+
+    // If position changed and stop has a hint, maintain the hint offset
+    if (
+      hintOffset !== 0 &&
+      stop.hint?.type === "unit" &&
+      stop.hint.unit === "%" &&
+      updatedStop.position !== stop.position
+    ) {
+      const newPosition = getStopPosition(updatedStop);
+      return {
+        ...updatedStop,
+        hint: createPercentUnitValue(newPosition + hintOffset),
+      };
+    }
+
+    return updatedStop;
+  });
+
+  return {
+    ...gradient,
+    stops,
+  };
+};
 
 const parseColorString = (value: string): GradientStop["color"] | undefined => {
   const parsed = parseCssValue("color", value);
@@ -1036,13 +1170,6 @@ export type BackgroundType =
   | "radialGradient"
   | "solid";
 
-const getGradientColorSignature = (color?: GradientStop["color"]) => {
-  if (color === undefined) {
-    return;
-  }
-  return toValue(color as StyleValue);
-};
-
 export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
   // Only consider it a solid gradient if there are exactly 2 stops
   if (gradient.stops.length !== 2) {
@@ -1055,8 +1182,8 @@ export const isSolidLinearGradient = (gradient: ParsedLinearGradient) => {
   const secondStop = normalized.stops[1];
 
   // Check if both stops have the same color
-  const firstColor = getGradientColorSignature(firstStop?.color);
-  const secondColor = getGradientColorSignature(secondStop?.color);
+  const firstColor = firstStop?.color ? toValue(firstStop.color) : undefined;
+  const secondColor = secondStop?.color ? toValue(secondStop.color) : undefined;
 
   if (
     firstColor === undefined ||
@@ -1115,7 +1242,9 @@ type GradientByType<T extends GradientType> = Extract<
   { type: T }
 >;
 
-// Cache for parsed gradients - avoids re-parsing the same gradient string
+/**
+ * Cached to avoid re-parsing the same string.
+ */
 const parsedGradientCache = new Map<string, ParsedGradient | undefined>();
 
 export const parseAnyGradient = (value: string): ParsedGradient | undefined => {
@@ -1159,6 +1288,11 @@ export const convertGradientToTarget = <Target extends GradientType>(
   return converted as GradientByType<Target>;
 };
 
+/**
+ * Formats a gradient for a specific background type.
+ * Handles solid color conversion and gradient type conversions.
+ * Returns the formatted CSS gradient string.
+ */
 export const formatGradientForType = (
   styleValue: StyleValue | undefined,
   target: Exclude<BackgroundType, "image">
@@ -1180,6 +1314,11 @@ export const formatGradientForType = (
   return formatRadialGradient(parsed);
 };
 
+/**
+ * Detects the background type from a StyleValue.
+ * Returns "solid" for uniform linear gradients, specific gradient types for gradients,
+ * and "image" for non-gradient values or unparseable gradients.
+ */
 export const detectBackgroundType = (
   styleValue?: StyleValue
 ): BackgroundType => {
@@ -1230,6 +1369,11 @@ export const detectBackgroundType = (
   return "image";
 };
 
+/**
+ * Gets a specific background layer item from a ComputedStyleDecl.
+ * For index 0, returns the first layer or the cascaded value itself.
+ * For index > 0, delegates to getRepeatedStyleItem.
+ */
 export const getBackgroundStyleItem = (
   styleDecl: ComputedStyleDecl,
   index: number
