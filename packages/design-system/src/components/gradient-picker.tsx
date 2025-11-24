@@ -9,6 +9,7 @@ import {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
   type KeyboardEvent,
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
@@ -32,7 +33,7 @@ import {
 
 extend([mixPlugin]);
 
-type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
+export type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   gradient: T;
   backgroundImage: string;
   onChange: (value: T) => void;
@@ -79,40 +80,168 @@ const toRgbColor = (
   }
 };
 
-const cloneColor = (
-  color: GradientStop["color"] | undefined
-): GradientStop["color"] | undefined => {
-  if (color === undefined) {
-    return;
+const computePositionFromClientX = (
+  sliderElement: HTMLElement,
+  clientX: number
+) => {
+  const rect = sliderElement.getBoundingClientRect();
+  if (rect.width === 0) {
+    return 0;
   }
-
-  return { ...color };
+  const relativePosition = clientX - rect.left;
+  return clamp(Math.round((relativePosition / rect.width) * 100), 0, 100);
 };
 
-export const GradientPicker = <T extends ParsedGradient>(
-  props: GradientPickerProps<T>
-) => {
-  const {
-    gradient,
-    backgroundImage,
-    onChange,
-    onChangeComplete,
-    onThumbSelect,
-    selectedStopIndex,
-  } = props;
+const createDragHandler = (threshold: number = DRAG_THRESHOLD) => {
+  let pointerAbortController: AbortController | undefined;
+  let clickAbortController: AbortController | undefined;
+
+  const handlePointerDown = (options: {
+    event: ReactPointerEvent<HTMLDivElement>;
+    onDragMove: (position: number) => void;
+    onDragStart?: () => void;
+    onDragEnd?: () => void;
+  }) => {
+    const { event } = options;
+    const pointerId = event.pointerId;
+    const target = event.currentTarget as HTMLDivElement;
+    const startX = event.clientX;
+    let hasDragged = false;
+
+    // Find the slider element using closest with data attribute
+    const sliderElement = target.closest("[data-gradient-slider]") as
+      | HTMLElement
+      | undefined;
+    if (sliderElement === undefined) {
+      return;
+    }
+
+    // Abort any previous drag session that might still be active
+    cleanup();
+
+    // Create a new abort controller for this drag session
+    pointerAbortController = new AbortController();
+    const pointerSignal = pointerAbortController.signal;
+
+    // Create a separate abort controller for the click handler
+    clickAbortController = new AbortController();
+    const clickSignal = clickAbortController.signal;
+
+    // Capture pointer immediately if threshold is 0 (e.g., for hints)
+    if (threshold === 0) {
+      event.preventDefault();
+      target.setPointerCapture(pointerId);
+    }
+
+    const handlePointerMove = (moveEvent: Event) => {
+      if (!(moveEvent instanceof PointerEvent)) {
+        return;
+      }
+      if (!hasDragged) {
+        if (Math.abs(moveEvent.clientX - startX) <= threshold) {
+          return;
+        }
+        hasDragged = true;
+        if (threshold !== 0) {
+          target.setPointerCapture(pointerId);
+        }
+        options.onDragStart?.();
+      }
+      const newPosition = computePositionFromClientX(
+        sliderElement,
+        moveEvent.clientX
+      );
+      options.onDragMove(newPosition);
+    };
+
+    // Prevent click event from firing if drag occurred
+    // Use document-level listener to catch clicks even if they happen outside the target
+    const handleClick = (e: Event) => {
+      if (hasDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Cleanup after click fires
+      clickAbortController?.abort();
+      clickAbortController = undefined;
+    };
+    document.addEventListener("click", handleClick, {
+      capture: true,
+      signal: clickSignal,
+    });
+
+    const handlePointerUp = () => {
+      if (target.hasPointerCapture(pointerId)) {
+        target.releasePointerCapture(pointerId);
+      }
+      if (hasDragged) {
+        options.onDragEnd?.();
+      }
+      // Don't abort immediately - click event needs to fire first
+      // Defer cleanup to allow click event to be processed
+      setTimeout(() => {
+        pointerAbortController?.abort();
+        pointerAbortController = undefined;
+      }, 0);
+    };
+
+    document.addEventListener("pointermove", handlePointerMove, {
+      signal: pointerSignal,
+    });
+    document.addEventListener("pointerup", handlePointerUp, {
+      signal: pointerSignal,
+    });
+    document.addEventListener("pointercancel", handlePointerUp, {
+      signal: pointerSignal,
+    });
+  };
+
+  const cleanup = () => {
+    pointerAbortController?.abort();
+    pointerAbortController = undefined;
+    clickAbortController?.abort();
+    clickAbortController = undefined;
+  };
+
+  return { handlePointerDown, cleanup };
+};
+
+export const GradientPicker = <T extends ParsedGradient>({
+  gradient,
+  backgroundImage,
+  onChange,
+  onChangeComplete,
+  onThumbSelect,
+  selectedStopIndex,
+}: GradientPickerProps<T>) => {
   const [stops, setStops] = useState<Array<GradientStop>>(gradient.stops);
   const [selectedStop, setSelectedStop] = useState<number | undefined>();
   const [isHoveredOnStop, setIsHoveredOnStop] = useState<boolean>(false);
   const [colorPickerOpenStop, setColorPickerOpenStop] = useState<
     number | undefined
   >();
-  const sliderRef = useRef<HTMLDivElement | null>(null);
-  const thumbRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const sliderRef = useRef<HTMLDivElement | undefined>(undefined);
+  const thumbRefs = useRef<Array<HTMLDivElement | undefined>>([]);
   const stopsRef = useRef(stops);
+
+  const handleSliderRef = useCallback((element: HTMLDivElement | null) => {
+    sliderRef.current = element ?? undefined;
+  }, []);
 
   useEffect(() => {
     stopsRef.current = stops;
   }, [stops]);
+
+  const thumbDragHandler = useMemo(() => createDragHandler(), []);
+
+  const hintDragHandler = useMemo(() => createDragHandler(0), []);
+
+  useEffect(() => {
+    return () => {
+      thumbDragHandler.cleanup();
+      hintDragHandler.cleanup();
+    };
+  }, [thumbDragHandler, hintDragHandler]);
 
   useEffect(() => {
     if (selectedStopIndex !== undefined) {
@@ -167,12 +296,14 @@ export const GradientPicker = <T extends ParsedGradient>(
     )
     .filter((item): item is number => item !== undefined);
   const hints = gradient.stops
-    .map((stop): number | undefined =>
+    .map((stop, index): { value: number; stopIndex: number } | undefined =>
       stop.hint?.type === "unit" && stop.hint.unit === "%"
-        ? stop.hint.value
+        ? { value: stop.hint.value, stopIndex: index }
         : undefined
     )
-    .filter((item): item is number => item !== undefined);
+    .filter(
+      (item): item is { value: number; stopIndex: number } => item !== undefined
+    );
 
   const updateStops = useCallback(
     (
@@ -222,6 +353,32 @@ export const GradientPicker = <T extends ParsedGradient>(
           return {
             ...stop,
             position: {
+              type: "unit",
+              unit: "%",
+              value: nextValue,
+            },
+          };
+        });
+      }, type);
+    },
+    [updateStops]
+  );
+
+  const updateStopHint = useCallback(
+    (index: number, value: number, type: "change" | "complete") => {
+      const nextValue = clamp(value, 0, 100);
+      updateStops((currentStops) => {
+        if (index < 0 || index >= currentStops.length) {
+          return currentStops;
+        }
+
+        return currentStops.map((stop, stopIndex) => {
+          if (stopIndex !== index) {
+            return stop;
+          }
+          return {
+            ...stop,
+            hint: {
               type: "unit",
               unit: "%",
               value: nextValue,
@@ -283,15 +440,6 @@ export const GradientPicker = <T extends ParsedGradient>(
     }
   }, [colorPickerOpenStop, stops.length]);
 
-  const computePositionFromClientX = useCallback((clientX: number) => {
-    const rect = sliderRef.current?.getBoundingClientRect();
-    if (rect === undefined || rect.width === 0) {
-      return 0;
-    }
-    const relativePosition = clientX - rect.left;
-    return clamp(Math.round((relativePosition / rect.width) * 100), 0, 100);
-  }, []);
-
   const checkIfStopExistsAtPosition = useCallback(
     (
       clientX: number
@@ -299,10 +447,14 @@ export const GradientPicker = <T extends ParsedGradient>(
       isStopExistingAtPosition: boolean;
       newPosition: number;
     } => {
-      const rect = sliderRef.current?.getBoundingClientRect();
-      const newPosition = computePositionFromClientX(clientX);
+      const sliderElement = sliderRef.current;
+      if (sliderElement === undefined) {
+        return { isStopExistingAtPosition: false, newPosition: 0 };
+      }
+      const rect = sliderElement.getBoundingClientRect();
+      const newPosition = computePositionFromClientX(sliderElement, clientX);
 
-      if (rect === undefined || rect.width === 0) {
+      if (rect.width === 0) {
         return { isStopExistingAtPosition: false, newPosition };
       }
 
@@ -314,7 +466,7 @@ export const GradientPicker = <T extends ParsedGradient>(
 
       return { isStopExistingAtPosition, newPosition };
     },
-    [computePositionFromClientX, positions]
+    [positions]
   );
 
   const handleStopSelected = useCallback(
@@ -337,69 +489,53 @@ export const GradientPicker = <T extends ParsedGradient>(
   const handleThumbPointerDown = useCallback(
     (index: number, stop: GradientStop) =>
       (event: ReactPointerEvent<HTMLDivElement>) => {
-        event.stopPropagation();
         // Don't start drag if the color picker is open for this thumb
         if (colorPickerOpenStop === index) {
+          event.stopPropagation();
           return;
         }
 
         handleStopSelected(index, stop);
         setIsHoveredOnStop(true);
 
-        const pointerId = event.pointerId;
-        const target = event.currentTarget as HTMLDivElement;
-        const startX = event.clientX;
-        let hasDragged = false;
-        let isCleanedUp = false;
-
-        const cleanup = () => {
-          if (isCleanedUp) {
-            return;
-          }
-          isCleanedUp = true;
-
-          target.removeEventListener("pointermove", handlePointerMove);
-          target.removeEventListener("pointerup", handlePointerUp);
-          target.removeEventListener("pointercancel", handlePointerUp);
-          setIsHoveredOnStop(false);
-          if (target.hasPointerCapture(pointerId)) {
-            target.releasePointerCapture(pointerId);
-          }
-        };
-
-        const handlePointerMove = (moveEvent: PointerEvent) => {
-          if (!hasDragged) {
-            if (Math.abs(moveEvent.clientX - startX) <= DRAG_THRESHOLD) {
-              return;
-            }
-            hasDragged = true;
-            target.setPointerCapture(pointerId);
+        thumbDragHandler.handlePointerDown({
+          event,
+          onDragMove: (newPosition) => {
+            updateStopPosition(index, newPosition, "change");
+          },
+          onDragStart: () => {
             setColorPickerOpenStop(undefined);
-          }
-          const newPosition = computePositionFromClientX(moveEvent.clientX);
-          updateStopPosition(index, newPosition, "change");
-        };
-
-        const handlePointerUp = () => {
-          cleanup();
-          if (hasDragged) {
+          },
+          onDragEnd: () => {
+            setIsHoveredOnStop(false);
             onChangeComplete(buildGradient(stopsRef.current));
-          }
-          hasDragged = false;
-        };
-
-        target.addEventListener("pointermove", handlePointerMove);
-        target.addEventListener("pointerup", handlePointerUp);
-        target.addEventListener("pointercancel", handlePointerUp);
+          },
+        });
       },
     [
       colorPickerOpenStop,
-      computePositionFromClientX,
-      onChangeComplete,
       handleStopSelected,
+      thumbDragHandler,
       updateStopPosition,
+      onChangeComplete,
       buildGradient,
     ]
+  );
+
+  const handleHintPointerDown = useCallback(
+    (index: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
+      event.stopPropagation();
+      hintDragHandler.handlePointerDown({
+        event,
+        onDragMove: (newPosition) => {
+          updateStopHint(index, newPosition, "change");
+        },
+        onDragEnd: () => {
+          onChangeComplete(buildGradient(stopsRef.current));
+        },
+      });
+    },
+    [hintDragHandler, updateStopHint, onChangeComplete, buildGradient]
   );
 
   const handleKeyDown = useCallback(
@@ -504,7 +640,7 @@ export const GradientPicker = <T extends ParsedGradient>(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (
         event.target instanceof HTMLElement &&
-        event.target.closest("[data-thumb='true']")
+        event.target.closest("[data-gradient-thumb='true']")
       ) {
         return;
       }
@@ -564,9 +700,9 @@ export const GradientPicker = <T extends ParsedGradient>(
             b: interpolationColor.b,
           };
         } else if (prevColor !== undefined) {
-          newColor = cloneColor(prevColor);
+          newColor = { ...prevColor };
         } else if (nextColor !== undefined) {
-          newColor = cloneColor(nextColor);
+          newColor = { ...nextColor };
         } else {
           newColor = { ...defaultStopColor };
         }
@@ -639,7 +775,8 @@ export const GradientPicker = <T extends ParsedGradient>(
       onKeyDown={handleKeyDown}
     >
       <SliderRoot
-        ref={sliderRef}
+        ref={handleSliderRef}
+        data-gradient-slider
         css={{ backgroundImage }}
         isHoveredOnStop={isHoveredOnStop}
         tabIndex={0}
@@ -667,10 +804,8 @@ export const GradientPicker = <T extends ParsedGradient>(
           return (
             <SliderThumb
               key={index}
-              data-thumb="true"
-              style={{
-                left: `${stop.position.value}%`,
-              }}
+              data-gradient-thumb="true"
+              style={{ left: `${stop.position.value}%` }}
               role="slider"
               aria-orientation="horizontal"
               aria-valuemin={0}
@@ -680,7 +815,7 @@ export const GradientPicker = <T extends ParsedGradient>(
               aria-selected={isSelected}
               tabIndex={-1}
               ref={(element) => {
-                thumbRefs.current[index] = element;
+                thumbRefs.current[index] = element ?? undefined;
               }}
               onPointerDown={handleThumbPointerDown(index, stop)}
               onClick={() => {
@@ -711,7 +846,7 @@ export const GradientPicker = <T extends ParsedGradient>(
                       width: THUMB_HEIGHT,
                       height: THUMB_HEIGHT,
                     }}
-                    data-thumb="true"
+                    data-gradient-thumb="true"
                   />
                 }
               />
@@ -720,11 +855,21 @@ export const GradientPicker = <T extends ParsedGradient>(
           );
         })}
 
-        {hints.map((hint) => (
-          <SliderHint key={hint} css={{ left: `${hint}%` }}>
-            <ChevronFilledUpIcon size="100%" />
-          </SliderHint>
-        ))}
+        {hints.map((hint) => {
+          const stop = stops[hint.stopIndex];
+          const hintColor = stop?.color
+            ? colord(styleValueToRgbaColor(stop.color)).toHex()
+            : undefined;
+          return (
+            <SliderHint
+              key={`${hint.stopIndex}-${hint.value}`}
+              style={{ left: `${hint.value}%`, color: hintColor }}
+              onPointerDown={handleHintPointerDown(hint.stopIndex)}
+            >
+              <ChevronFilledUpIcon size="100%" />
+            </SliderHint>
+          );
+        })}
       </SliderRoot>
     </Flex>
   );
@@ -810,13 +955,17 @@ const SliderThumbPointer = styled("div", {
 
 const SliderHint = styled(Flex, {
   position: "absolute",
-  top: `calc(-1 * ${theme.spacing[6]})`,
+  top: `100%`,
   width: theme.spacing[7],
   height: theme.spacing[7],
-  pointerEvents: "none",
+  pointerEvents: "auto",
   transform: "translateX(-50%)",
   alignItems: "center",
   justifyContent: "center",
+  cursor: "grab",
+  touchAction: "none",
+  userSelect: "none",
+  "&:active": {
+    cursor: "grabbing",
+  },
 });
-
-export type { GradientPickerProps };
