@@ -502,6 +502,14 @@ export const GradientPicker = <T extends ParsedGradient>({
         // Track the currently dragged stop index
         let currentIndex = index;
 
+        // Calculate hint offset relative to stop position
+        const originalPosition =
+          stop.position?.type === "unit" ? stop.position.value : 0;
+        const originalHint =
+          stop.hint?.type === "unit" ? stop.hint.value : undefined;
+        const hintOffset =
+          originalHint !== undefined ? originalHint - originalPosition : 0;
+
         thumbDragHandler.handlePointerDown({
           event,
           onDragMove: (newPosition) => {
@@ -510,19 +518,38 @@ export const GradientPicker = <T extends ParsedGradient>({
                 return currentStops;
               }
 
-              // Update the position of the dragged stop
+              const clampedPosition = clamp(newPosition, 0, 100);
+
+              // Update the position of the dragged stop and maintain hint offset
               const updatedStops = currentStops.map((stop, stopIndex) => {
                 if (stopIndex !== currentIndex) {
                   return stop;
                 }
-                return {
+
+                const updatedStop: GradientStop = {
                   ...stop,
                   position: {
                     type: "unit" as const,
                     unit: "%" as const,
-                    value: clamp(newPosition, 0, 100),
+                    value: clampedPosition,
                   },
                 };
+
+                // Update hint to maintain the same offset relative to the stop
+                if (stop.hint?.type === "unit") {
+                  const newHintPosition = clamp(
+                    clampedPosition + hintOffset,
+                    0,
+                    100
+                  );
+                  updatedStop.hint = {
+                    type: "unit" as const,
+                    unit: "%" as const,
+                    value: newHintPosition,
+                  };
+                }
+
+                return updatedStop;
               });
 
               // Sort stops by position and track where our dragged stop ends up
