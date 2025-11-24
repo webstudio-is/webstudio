@@ -45,7 +45,6 @@ import {
   RepeatGridIcon,
   XSmallIcon,
 } from "@webstudio-is/icons";
-import { clamp } from "@react-aria/utils";
 import {
   useComputedStyleDecl,
   $availableUnitVariables,
@@ -65,7 +64,6 @@ import {
   formatGradientPositionValues,
   formatGradientValue,
   getDefaultAngle,
-  getPercentUnit,
   gradientPositionXOptions,
   gradientPositionYOptions,
   isConicGradient,
@@ -190,11 +188,6 @@ const sortGradientStops = (
 };
 
 const getAvailableUnitVariables = () => $availableUnitVariables.get();
-
-const clampPercentUnit = (value: PercentUnitValue): PercentUnitValue => ({
-  ...value,
-  value: clamp(value.value, 0, 100),
-});
 
 export const BackgroundGradient = ({
   index,
@@ -1025,10 +1018,7 @@ const GradientStopControls = ({
           styleValue: StyleValue,
           options?: { isEphemeral?: boolean }
         ) => {
-          const resolution = resolveStopHintUpdate(styleValue, {
-            getPercentUnit,
-            clampPercentUnit,
-          });
+          const resolution = resolveStopHintUpdate(styleValue);
 
           if (resolution.type === "none") {
             return;

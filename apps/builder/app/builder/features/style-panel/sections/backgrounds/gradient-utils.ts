@@ -922,11 +922,6 @@ export const resolveStopPositionUpdate = (
   } satisfies StopPositionUpdateResolution;
 };
 
-type StopHintUpdateHelpers = {
-  getPercentUnit: (value: StyleValue) => PercentUnitValue | undefined;
-  clampPercentUnit: (value: PercentUnitValue) => PercentUnitValue;
-};
-
 export type StopHintUpdateResolution =
   | {
       type: "apply";
@@ -937,8 +932,7 @@ export type StopHintUpdateResolution =
   | { type: "none" };
 
 export const resolveStopHintUpdate = (
-  styleValue: StyleValue,
-  helpers: StopHintUpdateHelpers
+  styleValue: StyleValue
 ): StopHintUpdateResolution => {
   if (styleValue.type === "var") {
     return {
@@ -948,12 +942,17 @@ export const resolveStopHintUpdate = (
     };
   }
 
-  const percentUnit = helpers.getPercentUnit(styleValue);
+  const percentUnit = getPercentUnit(styleValue);
   if (percentUnit === undefined) {
     return { type: "none" };
   }
 
-  const normalized = helpers.clampPercentUnit(percentUnit);
+  // Clamp the value inline
+  const normalized: PercentUnitValue = {
+    ...percentUnit,
+    value: clamp(percentUnit.value, 0, 100),
+  };
+
   return {
     type: "apply",
     hint: normalized,
