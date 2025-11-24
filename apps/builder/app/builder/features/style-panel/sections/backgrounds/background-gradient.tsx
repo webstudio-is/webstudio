@@ -199,16 +199,29 @@ export const BackgroundGradient = ({
     (nextGradient: ParsedGradient, options?: { isEphemeral?: boolean }) => {
       const isEphemeral = options?.isEphemeral === true;
 
-      // Sort gradient stops and reindex hint overrides to keep them in sync
-      const { sortedGradient, reindexedHints } = sortGradientStops(
-        nextGradient,
-        hintOverrides
-      );
+      // Only sort gradient stops on final (non-ephemeral) changes
+      // This allows stops to visually cross during ephemeral updates (e.g., typing in inputs)
+      let finalGradient: ParsedGradient;
+      let finalHints: Map<number, PercentUnitValue>;
 
-      setLocalGradient(sortedGradient);
-      setHintOverrides(reindexedHints);
+      if (isEphemeral) {
+        // During ephemeral changes, apply the gradient as-is without sorting
+        finalGradient = nextGradient;
+        finalHints = hintOverrides;
+      } else {
+        // On complete, sort stops and reindex hint overrides to keep them in sync
+        const { sortedGradient, reindexedHints } = sortGradientStops(
+          nextGradient,
+          hintOverrides
+        );
+        finalGradient = sortedGradient;
+        finalHints = reindexedHints;
+      }
 
-      const gradientValue = formatGradientValue(sortedGradient);
+      setLocalGradient(finalGradient);
+      setHintOverrides(finalHints);
+
+      const gradientValue = formatGradientValue(finalGradient);
       setRepeatedStyleItem(
         styleDecl,
         index,
