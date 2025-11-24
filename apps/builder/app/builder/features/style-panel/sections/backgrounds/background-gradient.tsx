@@ -903,17 +903,37 @@ const GradientStopControls = ({
   );
 
   const handleAddStop = useCallback(() => {
+    // Calculate position for new stop between selected stop and adjacent stop
+    const clampedSelectedIndex = clampStopIndex(selectedStopIndex, gradient);
+    const currentStop = gradient.stops[clampedSelectedIndex];
+    const currentPosition = getStopPosition(currentStop);
+
+    // If last stop is selected, insert between it and the previous stop
+    const isLastStop = clampedSelectedIndex === gradient.stops.length - 1;
+
+    let newPosition: number;
+    if (isLastStop && gradient.stops.length > 1) {
+      const prevStop = gradient.stops[clampedSelectedIndex - 1];
+      const prevPosition = getStopPosition(prevStop);
+      newPosition = (prevPosition + currentPosition) / 2;
+    } else {
+      // Otherwise, insert between current and next stop
+      const nextStop = gradient.stops[clampedSelectedIndex + 1];
+      const nextPosition = nextStop ? getStopPosition(nextStop) : 100;
+      newPosition = (currentPosition + nextPosition) / 2;
+    }
+
     applyGradient({
       ...gradient,
       stops: [
         ...gradient.stops,
         {
           color: fallbackStopColor,
-          position: createPercentUnitValue(50),
+          position: createPercentUnitValue(newPosition),
         },
       ],
     });
-  }, [applyGradient, gradient]);
+  }, [applyGradient, gradient, selectedStopIndex]);
 
   const handleDeleteStop = useCallback(
     (stopIndex: number) => {
