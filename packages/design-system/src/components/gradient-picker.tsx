@@ -14,24 +14,44 @@ import {
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import {
-  type GradientColorValue,
-  type GradientStop,
-  type ParsedGradient,
+import type {
+  GradientColorValue,
+  GradientStop,
+  ParsedGradient,
 } from "@webstudio-is/css-data";
-import { colord, extend } from "colord";
-import mixPlugin from "colord/plugins/mix";
+import Color from "colorjs.io";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
 import { Box } from "./box";
-import {
-  ColorPickerPopover,
-  ColorThumb,
-  styleValueToRgbaColor,
-} from "./color-picker";
+import { ColorPickerPopover, ColorThumb } from "./color-picker";
 
-extend([mixPlugin]);
+// Helper to mix two RGB colors
+const mixColors = (
+  color1: RgbValue,
+  color2: RgbValue,
+  ratio: number
+): RgbValue => {
+  const c1 = new Color("srgb", [
+    color1.r / 255,
+    color1.g / 255,
+    color1.b / 255,
+  ]);
+  const c2 = new Color("srgb", [
+    color2.r / 255,
+    color2.g / 255,
+    color2.b / 255,
+  ]);
+  const mixed = c1.mix(c2, ratio);
+  const [r, g, b] = mixed.coords;
+  return {
+    type: "rgb",
+    r: r * 255,
+    g: g * 255,
+    b: b * 255,
+    alpha: color1.alpha ?? 1,
+  };
+};
 
 export type GradientPickerProps<T extends ParsedGradient = ParsedGradient> = {
   gradient: T;
@@ -67,16 +87,19 @@ const toRgbColor = (
     return color;
   }
 
-  const parsed = colord(toValue(color));
-  if (parsed.isValid()) {
-    const { r, g, b, a } = parsed.toRgb();
+  try {
+    const parsed = new Color(toValue(color));
+    const [r, g, b] = parsed.coords;
+    const alpha = parsed.alpha;
     return {
       type: "rgb",
-      r,
-      g,
-      b,
-      alpha: a,
+      r: r * 255,
+      g: g * 255,
+      b: b * 255,
+      alpha: alpha ?? 1,
     };
+  } catch {
+    return;
   }
 };
 
@@ -754,12 +777,14 @@ export const GradientPicker = <T extends ParsedGradient>({
 
         let newColor: GradientStop["color"] | undefined;
         if (prevRgb !== undefined && nextRgb !== undefined) {
-          const interpolationColor = colord(prevRgb)
-            .mix(colord(nextRgb), newPosition / 100)
-            .toRgb();
+          const interpolationColor = mixColors(
+            prevRgb,
+            nextRgb,
+            newPosition / 100
+          );
           newColor = {
             type: "rgb",
-            alpha: interpolationColor.a,
+            alpha: interpolationColor.alpha,
             r: interpolationColor.r,
             g: interpolationColor.g,
             b: interpolationColor.b,
@@ -906,9 +931,7 @@ export const GradientPicker = <T extends ParsedGradient>({
                 sideOffset={SLIDER_HEIGHT + THUMB_HEIGHT}
                 thumb={
                   <ColorThumb
-                    color={
-                      stop.color ? styleValueToRgbaColor(stop.color) : undefined
-                    }
+                    color={stop.color ? toValue(stop.color) : "transparent"}
                     interactive={true}
                     css={{
                       margin: 1,
@@ -926,9 +949,7 @@ export const GradientPicker = <T extends ParsedGradient>({
 
         {hints.map((hint) => {
           const stop = stops[hint.stopIndex];
-          const hintColor = stop?.color
-            ? colord(styleValueToRgbaColor(stop.color)).toHex()
-            : undefined;
+          const hintColor = stop?.color ? toValue(stop.color) : undefined;
           return (
             <SliderHint
               key={`${hint.stopIndex}-${hint.value}`}

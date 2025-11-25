@@ -34,7 +34,7 @@
   "dependencies": {
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
-    "colord": "^2.9.3",
+    "colorjs.io": "^0.5.0",
     "css-tree": "^3.1.0",
     "openai": "^3.2.1",
     "p-retry": "^6.2.1",

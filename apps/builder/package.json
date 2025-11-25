@@ -86,7 +86,7 @@
     "args-tokenizer": "^0.3.0",
     "bcp-47": "^2.1.0",
     "change-case": "^5.4.4",
-    "colord": "^2.9.3",
+    "colorjs.io": "^0.5.0",
     "cookie": "^1.0.1",
     "css-tree": "^3.1.0",
     "debug": "^4.3.7",

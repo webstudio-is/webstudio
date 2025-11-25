@@ -1,5 +1,4 @@
 import { useMemo, type ComponentProps, type JSX, type ReactNode } from "react";
-import type { RgbaColor } from "colord";
 import {
   toValue,
   type CssProperty,
@@ -328,7 +327,7 @@ export const RepeatedStyle = (props: {
   getItemProps: (
     index: number,
     primaryValue: StyleValue
-  ) => { label: string; color?: RgbaColor };
+  ) => { label: string; color?: string };
   floatingPanelOffset?: ComponentProps<typeof FloatingPanel>["offset"];
   renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
@@ -426,7 +425,7 @@ export const RepeatedStyle = (props: {
                 hidden={isHidden}
                 thumbnail={
                   renderThumbnail?.(index, primaryItem) ??
-                  (itemColor && <ColorThumb color={itemColor} />)
+                  (itemColor ? <ColorThumb color={itemColor} /> : undefined)
                 }
                 buttons={
                   <>
