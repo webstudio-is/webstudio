@@ -949,9 +949,7 @@ export const GradientPicker = <T extends ParsedGradient>({
 
         {hints.map((hint) => {
           const stop = stops[hint.stopIndex];
-          const hintColor = stop?.color
-            ? colord(styleValueToRgbaColor(stop.color)).toHex()
-            : undefined;
+          const hintColor = stop?.color ? toValue(stop.color) : undefined;
           return (
             <SliderHint
               key={`${hint.stopIndex}-${hint.value}`}
