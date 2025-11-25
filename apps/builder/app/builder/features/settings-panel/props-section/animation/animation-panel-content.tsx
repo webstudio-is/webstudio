@@ -5,6 +5,7 @@ import {
   InputField,
   ScrollArea,
   Select,
+  Text,
   theme,
   toast,
   ToggleGroup,
@@ -18,6 +19,7 @@ import type {
   RangeUnitValue,
   ScrollAnimation,
   ViewAnimation,
+  EventAnimation,
 } from "@webstudio-is/sdk";
 import {
   durationUnitValueSchema,
@@ -25,6 +27,7 @@ import {
   rangeUnitValueSchema,
   scrollAnimationSchema,
   viewAnimationSchema,
+  eventAnimationSchema,
 } from "@webstudio-is/sdk";
 import {
   CssValueInput,
@@ -291,16 +294,25 @@ const DurationInput = ({
   );
 };
 
-type AnimationPanelContentProps = {
-  type: "scroll" | "view";
-  value: ScrollAnimation | ViewAnimation;
-
-  onChange: ((
-    value: ScrollAnimation | ViewAnimation,
-    isEphemeral: boolean
-  ) => void) &
-    ((value: undefined, isEphemeral: true) => void);
-};
+type AnimationPanelContentProps =
+  | {
+      type: "scroll";
+      value: ScrollAnimation;
+      onChange: ((value: ScrollAnimation, isEphemeral: boolean) => void) &
+        ((value: undefined, isEphemeral: true) => void);
+    }
+  | {
+      type: "view";
+      value: ViewAnimation;
+      onChange: ((value: ViewAnimation, isEphemeral: boolean) => void) &
+        ((value: undefined, isEphemeral: true) => void);
+    }
+  | {
+      type: "event";
+      value: EventAnimation;
+      onChange: ((value: EventAnimation, isEphemeral: boolean) => void) &
+        ((value: undefined, isEphemeral: true) => void);
+    };
 
 const defaultRangeStart = {
   type: "unit",
@@ -321,6 +333,294 @@ const PanelContainer = ({ children }: { children: ReactNode }) => {
         {children}
       </Grid>
     </ScrollArea>
+  );
+};
+
+const animationDirections = [
+  "normal",
+  "reverse",
+  "alternate",
+  "alternate-reverse",
+] as const;
+
+type EventAnimationPanelProps = {
+  value: EventAnimation;
+  onChange: ((value: EventAnimation, isEphemeral: boolean) => void) &
+    ((value: undefined, isEphemeral: true) => void);
+};
+
+const EventAnimationPanel = ({ value, onChange }: EventAnimationPanelProps) => {
+  const handleChange = (rawValue: unknown, isEphemeral: boolean) => {
+    if (rawValue === undefined) {
+      onChange(undefined, true);
+      return;
+    }
+
+    const parsedValue = eventAnimationSchema.safeParse(rawValue);
+
+    if (parsedValue.success) {
+      onChange(parsedValue.data, isEphemeral);
+      return;
+    }
+
+    console.error(parsedValue.error.format());
+    toast.error("Animation schema is incompatible, try fix");
+  };
+
+  const iterationsValue =
+    value.timing.iterations === "infinite"
+      ? "infinite"
+      : (value.timing.iterations?.toString() ?? "");
+
+  const playbackRateValue = value.timing.playbackRate?.toString() ?? "";
+
+  return (
+    <PanelContainer>
+      <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
+        {/* Animation Identity */}
+        <Grid gap={1} columns={2} align="center">
+          <FieldLabel description="A meaningful label to identify this animation in the timeline">
+            Name
+          </FieldLabel>
+          <InputField
+            css={{
+              width: "100%",
+              fontWeight: `inherit`,
+            }}
+            value={value.name ?? ""}
+            placeholder="e.g., Fade In, Slide Up"
+            onChange={(event) => {
+              const name = event.currentTarget.value;
+
+              const newValue = {
+                ...value,
+                name,
+              };
+
+              handleChange(newValue, false);
+            }}
+          />
+        </Grid>
+
+        {/* Timing Configuration */}
+        <Box css={{ paddingTop: theme.spacing[3] }}>
+          <Text variant="titles">Timing Configuration</Text>
+        </Box>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Controls how styles apply before and after the animation">
+            Fill Mode
+          </FieldLabel>
+          <Select
+            options={fillModeNames}
+            getLabel={humanizeString}
+            value={value.timing.fill ?? fillModeNames[0]}
+            onItemHighlight={(fillModeName) => {
+              if (fillModeName === undefined) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    fill: fillModeName,
+                  },
+                },
+                true
+              );
+            }}
+            getDescription={(fillModeName: string) => (
+              <Box
+                css={{
+                  width: theme.spacing[28],
+                }}
+              >
+                {
+                  fillModeDescriptions[
+                    fillModeName as keyof typeof fillModeDescriptions
+                  ]
+                }
+              </Box>
+            )}
+            onChange={(fillModeName) => {
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    fill: fillModeName,
+                  },
+                },
+                false
+              );
+            }}
+          />
+        </Grid>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Controls how fast the animation moves at different times">
+            Easing
+          </FieldLabel>
+          <EasingInput
+            value={value.timing.easing}
+            onChange={(easing, isEphemeral) => {
+              if (easing === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    easing,
+                  },
+                },
+                isEphemeral
+              );
+            }}
+          />
+        </Grid>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Playback direction for the animation">
+            Direction
+          </FieldLabel>
+          <Select
+            options={animationDirections}
+            getLabel={humanizeString}
+            value={value.timing.direction ?? animationDirections[0]}
+            onChange={(direction) => {
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    direction,
+                  },
+                },
+                false
+              );
+            }}
+          />
+        </Grid>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Number of times the animation repeats">
+            Iterations
+          </FieldLabel>
+          <InputField
+            css={{
+              width: "100%",
+              fontWeight: `inherit`,
+            }}
+            type="text"
+            inputMode="numeric"
+            placeholder="1"
+            value={iterationsValue}
+            onChange={(event) => {
+              const raw = event.currentTarget.value.trim();
+              const iterations =
+                raw === ""
+                  ? undefined
+                  : raw === "infinite"
+                    ? "infinite"
+                    : Number(raw);
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    iterations:
+                      iterations === undefined || Number.isNaN(iterations)
+                        ? undefined
+                        : iterations,
+                  },
+                },
+                false
+              );
+            }}
+          />
+        </Grid>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Speed multiplier (e.g., 2 = twice as fast)">
+            Playback Rate
+          </FieldLabel>
+          <InputField
+            css={{
+              width: "100%",
+              fontWeight: `inherit`,
+            }}
+            type="text"
+            inputMode="decimal"
+            placeholder="1"
+            value={playbackRateValue}
+            onChange={(event) => {
+              const raw = event.currentTarget.value.trim();
+              const playbackRate =
+                raw === "" ? undefined : Number.parseFloat(raw);
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    playbackRate: Number.isNaN(playbackRate)
+                      ? undefined
+                      : playbackRate,
+                  },
+                },
+                false
+              );
+            }}
+          />
+        </Grid>
+
+        <Grid gap={2} columns={2} align="center">
+          <FieldLabel description="Sets a fixed duration for the animation">
+            Duration
+          </FieldLabel>
+          <DurationInput
+            value={value.timing.duration}
+            onChange={(duration, isEphemeral) => {
+              if (duration === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    duration,
+                  },
+                },
+                isEphemeral
+              );
+            }}
+          />
+        </Grid>
+      </Grid>
+
+      <Keyframes
+        value={value.keyframes}
+        onChange={(keyframes, isEphemeral) => {
+          if (keyframes === undefined && isEphemeral) {
+            handleChange(undefined, true);
+            return;
+          }
+
+          handleChange({ ...value, keyframes }, isEphemeral);
+        }}
+      />
+    </PanelContainer>
   );
 };
 
@@ -404,28 +704,53 @@ export const AnimationPanelContent = ({
   value,
   type,
 }: AnimationPanelContentProps) => {
-  const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
-    isRangeEqual(range, value.timing.rangeStart)
-  );
+  // Compute range values for scroll/view animations (safe to call even for event type)
+  const scrollViewValue = value as ScrollAnimation | ViewAnimation;
 
-  const [startRangeValue] = simplifiedStartRanges.find(([, , range]) =>
-    isRangeEqual(range, value.timing.rangeStart)
-  ) ?? [undefined, undefined, undefined];
+  const [startRangeValue] =
+    type !== "event"
+      ? (simplifiedStartRanges.find(([, , range]) =>
+          isRangeEqual(range, scrollViewValue.timing.rangeStart)
+        ) ?? [undefined, undefined, undefined])
+      : [undefined, undefined, undefined];
 
-  const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
-    isRangeEqual(range, value.timing.rangeEnd)
-  );
+  const [endRangeValue] =
+    type !== "event"
+      ? (simplifiedEndRanges.find(([, , range]) =>
+          isRangeEqual(range, scrollViewValue.timing.rangeEnd)
+        ) ?? [undefined, undefined, undefined])
+      : [undefined, undefined, undefined];
 
-  const [endRangeValue] = simplifiedEndRanges.find(([, , range]) =>
-    isRangeEqual(range, value.timing.rangeEnd)
-  ) ?? [undefined, undefined, undefined];
-
+  // Hooks must be called unconditionally before any early returns
   const [isAdvancedRangeStart, setIsAdvancedRangeStart] = useState(
     () => startRangeValue === undefined
   );
 
   const [isAdvancedRangeEnd, setIsAdvancedRangeEnd] = useState(
     () => endRangeValue === undefined
+  );
+
+  // Early return for event animations after hooks
+  if (type === "event") {
+    return (
+      <EventAnimationPanel
+        value={value as EventAnimation}
+        onChange={
+          onChange as (
+            value: EventAnimation | undefined,
+            isEphemeral: boolean
+          ) => void
+        }
+      />
+    );
+  }
+
+  const startRangeIndex = simplifiedStartRanges.findIndex(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeStart)
+  );
+
+  const endRangeIndex = simplifiedEndRanges.findIndex(([, , range]) =>
+    isRangeEqual(range, value.timing.rangeEnd)
   );
 
   const isScrollAnimation = type === "scroll";
@@ -451,7 +776,14 @@ export const AnimationPanelContent = ({
     const parsedValue = animationSchema.safeParse(rawValue);
 
     if (parsedValue.success) {
-      onChange(parsedValue.data, isEphemeral);
+      // Type assertion needed because onChange is a discriminated union
+      // but parsedValue.data is typed as ScrollAnimation | ViewAnimation
+      (
+        onChange as (
+          value: ScrollAnimation | ViewAnimation,
+          isEphemeral: boolean
+        ) => void
+      )(parsedValue.data, isEphemeral);
       return;
     }
 

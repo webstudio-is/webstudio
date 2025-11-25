@@ -219,10 +219,83 @@ export const viewActionSchema = z.object({
   debug: z.boolean().optional(),
 });
 
+// Event Animation Timing
+export const eventAnimationTimingSchema = z.object({
+  duration: durationUnitValueSchema.optional(),
+  delay: durationUnitValueSchema.optional(),
+  fill: z
+    .union([
+      z.literal("none"),
+      z.literal("forwards"),
+      z.literal("backwards"),
+      z.literal("both"),
+    ])
+    .optional(),
+  easing: z.string().optional(),
+  direction: z
+    .union([
+      z.literal("normal"),
+      z.literal("reverse"),
+      z.literal("alternate"),
+      z.literal("alternate-reverse"),
+    ])
+    .optional(),
+  iterations: z.union([z.number(), z.literal("infinite")]).optional(),
+  playbackRate: z.number().optional(),
+});
+
+// Event Animation (for user-triggered animations like click, hover, etc.)
+export const eventAnimationSchema = baseAnimation.merge(
+  z.object({
+    timing: eventAnimationTimingSchema,
+  })
+);
+
+// Event Trigger Schema
+export const eventTriggerSchema = z.object({
+  kind: z.union([
+    z.literal("click"),
+    z.literal("dblclick"),
+    z.literal("pointerenter"),
+    z.literal("pointerleave"),
+    z.literal("focus"),
+    z.literal("blur"),
+    z.literal("keydown"),
+    z.literal("keyup"),
+    z.literal("custom"),
+  ]),
+  key: z.string().optional(), // For keydown/keyup events
+  customName: z.string().optional(), // For custom events
+});
+
+// Event Command Schema
+export const eventCommandSchema = z.union([
+  z.literal("play"),
+  z.literal("pause"),
+  z.literal("toggle"),
+  z.literal("restart"),
+  z.literal("reverse"),
+  z.literal("seek"),
+]);
+
+// Event Action (for command-driven animations)
+export const eventActionSchema = z.object({
+  type: z.literal("event"),
+  target: z.string().optional(), // "self" or instance ID
+  triggers: z.array(eventTriggerSchema),
+  command: eventCommandSchema,
+  seekTo: z.number().optional(), // For seek command (0-1)
+  animations: z.array(eventAnimationSchema),
+  respectReducedMotion: z.boolean().optional(),
+  isPinned: z.boolean().optional(),
+  debug: z.boolean().optional(),
+});
+
 // Animation Action
 export const animationActionSchema = z.discriminatedUnion("type", [
   scrollActionSchema,
   viewActionSchema,
+  eventActionSchema,
 ]);
 
 // Helper function to check if a value is a valid range unit
@@ -244,7 +317,11 @@ export type ViewNamedRange = z.infer<typeof viewNamedRangeSchema>;
 export type ViewRangeValue = z.infer<typeof viewRangeValueSchema>;
 export type AnimationActionScroll = z.infer<typeof scrollActionSchema>;
 export type AnimationActionView = z.infer<typeof viewActionSchema>;
+export type AnimationActionEvent = z.infer<typeof eventActionSchema>;
 export type AnimationAction = z.infer<typeof animationActionSchema>;
 export type ScrollAnimation = z.infer<typeof scrollAnimationSchema>;
 export type ViewAnimation = z.infer<typeof viewAnimationSchema>;
+export type EventAnimation = z.infer<typeof eventAnimationSchema>;
+export type EventTrigger = z.infer<typeof eventTriggerSchema>;
+export type EventCommand = z.infer<typeof eventCommandSchema>;
 export type InsetUnitValue = z.infer<typeof insetUnitValueSchema>;

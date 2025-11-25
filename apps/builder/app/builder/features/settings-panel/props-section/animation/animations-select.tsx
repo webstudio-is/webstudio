@@ -1,4 +1,10 @@
-import { useState, useMemo, type ReactNode, useRef } from "react";
+import {
+  useState,
+  useMemo,
+  type ReactNode,
+  useRef,
+  type ComponentProps,
+} from "react";
 import {
   theme,
   DropdownMenu,
@@ -37,12 +43,15 @@ import {
 import {
   scrollAnimationSchema,
   viewAnimationSchema,
+  eventAnimationSchema,
   type AnimationAction,
   type ScrollAnimation,
   type ViewAnimation,
+  type EventAnimation,
 } from "@webstudio-is/sdk";
 import { newScrollAnimations } from "./new-scroll-animations";
 import { newViewAnimations } from "./new-view-animations";
+import { newEventAnimations } from "./new-event-animations";
 import { AnimationPanelContent } from "./animation-panel-content";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { z } from "zod";
@@ -50,9 +59,11 @@ import { z } from "zod";
 const newAnimationsPerType: {
   scroll: ScrollAnimation[];
   view: ViewAnimation[];
+  event: EventAnimation[];
 } = {
   scroll: newScrollAnimations,
   view: newViewAnimations,
+  event: newEventAnimations,
 };
 
 type AnimationsSelectProps = {
@@ -72,7 +83,9 @@ const copyAttribute = "data-animation-index";
 
 const clipboardNamespace = "@webstudio/animation/v0.1";
 
-const serialize = (animations: (ScrollAnimation | ViewAnimation)[]) => {
+const serialize = (
+  animations: (ScrollAnimation | ViewAnimation | EventAnimation)[]
+) => {
   return JSON.stringify({ [clipboardNamespace]: animations });
 };
 
@@ -88,6 +101,14 @@ const parseScrollAnimations = (text: string): ScrollAnimation[] => {
   const data = JSON.parse(text);
   const parsed = z
     .object({ [clipboardNamespace]: z.array(scrollAnimationSchema) })
+    .parse(data);
+  return parsed[clipboardNamespace];
+};
+
+const parseEventAnimations = (text: string): EventAnimation[] => {
+  const data = JSON.parse(text);
+  const parsed = z
+    .object({ [clipboardNamespace]: z.array(eventAnimationSchema) })
     .parse(data);
   return parsed[clipboardNamespace];
 };
@@ -127,6 +148,12 @@ const AnimationContextMenu = ({
         }
         if (action.type === "view") {
           const animations = parseViewAnimations(text);
+          const newAction = structuredClone(action);
+          newAction.animations.splice(index + 1, 0, ...animations);
+          onChange(newAction);
+        }
+        if (action.type === "event") {
+          const animations = parseEventAnimations(text);
           const newAction = structuredClone(action);
           newAction.animations.splice(index + 1, 0, ...animations);
           onChange(newAction);
@@ -239,10 +266,15 @@ export const AnimationsSelect = ({
                       <DropdownMenuItem
                         key={index}
                         onSelect={() => {
+                          // For event animations, replace instead of concat (only 1 animation allowed)
+                          const newAnimations =
+                            value.type === "event"
+                              ? [animation]
+                              : value.animations.concat(animation);
                           handleChange(
                             {
                               ...value,
-                              animations: value.animations.concat(animation),
+                              animations: newAnimations,
                             },
                             false
                           );
@@ -278,7 +310,9 @@ export const AnimationsSelect = ({
                         }}
                       >
                         {newAnimationHint ??
-                          "Add new or select existing animation"}
+                          (value.type === "event"
+                            ? "Select animation (replaces current)"
+                            : "Add new or select existing animation")}
                       </Box>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -305,23 +339,33 @@ export const AnimationsSelect = ({
                   }
                   content={
                     <AnimationPanelContent
-                      type={value.type}
-                      value={animation}
-                      onChange={(animation, isEphemeral) => {
-                        if (animation === undefined) {
-                          // Reset ephemeral state
-                          handleChange(undefined, true);
-                          return;
-                        }
+                      {...({
+                        type: value.type,
+                        value: animation,
+                        onChange: (
+                          animation:
+                            | ScrollAnimation
+                            | ViewAnimation
+                            | EventAnimation
+                            | undefined,
+                          isEphemeral: boolean
+                        ) => {
+                          if (animation === undefined) {
+                            // Reset ephemeral state
+                            handleChange(undefined, true);
+                            return;
+                          }
 
-                        const newAnimations = [...value.animations];
-                        newAnimations[index] = animation;
-                        const newValue = {
-                          ...value,
-                          animations: newAnimations,
-                        };
-                        handleChange(newValue, isEphemeral);
-                      }}
+                          const newAnimations = [...value.animations];
+                          newAnimations[index] =
+                            animation as (typeof newAnimations)[number];
+                          const newValue = {
+                            ...value,
+                            animations: newAnimations,
+                          };
+                          handleChange(newValue, isEphemeral);
+                        },
+                      } as ComponentProps<typeof AnimationPanelContent>)}
                     />
                   }
                   offset={floatingPanelOffset}
