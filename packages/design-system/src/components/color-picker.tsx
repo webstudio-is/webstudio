@@ -5,8 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { colord, extend, type RgbaColor } from "colord";
-import namesPlugin from "colord/plugins/names";
+import Color from "colorjs.io";
 import { clamp } from "@react-aria/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { RgbaColorPicker } from "react-colorful";
@@ -24,7 +23,54 @@ import { IconButton } from "./icon-button";
 import { InputField } from "./input-field";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
-extend([namesPlugin]);
+type RgbaColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
+// Helper to create RgbaColor from colorjs.io Color
+const colorToRgba = (color: Color): RgbaColor => {
+  const [r, g, b] = color.coords;
+  return {
+    r: r * 255,
+    g: g * 255,
+    b: b * 255,
+    a: color.alpha ?? 1,
+  };
+};
+
+const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
+
+// Helper to parse color string to RgbaColor
+export const parseColorString = (colorString: string): RgbaColor => {
+  try {
+    const color = new Color(colorString);
+    return colorToRgba(color.to("srgb"));
+  } catch {
+    return transparentColor;
+  }
+};
+
+// Helper to convert RgbaColor to RGB string
+const rgbaToRgbString = (color: RgbaColor): string => {
+  const { r, g, b, a } = color;
+  if (a < 1) {
+    return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${a})`;
+  }
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+};
+
+// Helper to convert RgbaColor to hex
+const rgbaToHex = (color: RgbaColor): string => {
+  const { r, g, b, a } = color;
+  const toHex = (n: number) => {
+    const hex = Math.round(n).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(a * 255)}`.toUpperCase();
+};
 
 const colorfulStyles = css({
   ".react-colorful__pointer": {
@@ -34,8 +80,9 @@ const colorfulStyles = css({
 });
 
 const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
-const borderColorSwatch = colord(rawTheme.colors.borderColorSwatch).toRgb();
-const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
+const borderColorSwatch = colorToRgba(
+  new Color(rawTheme.colors.borderColorSwatch)
+);
 
 const distance = (a: RgbaColor, b: RgbaColor) =>
   Math.sqrt(
@@ -53,7 +100,7 @@ const calcBorderColor = (color: RgbaColor) => {
     0,
     1
   );
-  return colord(lerpColor(transparentColor, borderColorSwatch, alpha));
+  return lerpColor(transparentColor, borderColorSwatch, alpha);
 };
 
 const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;
@@ -84,19 +131,18 @@ export type ColorThumbProps = Omit<
   "color"
 > & {
   interactive?: boolean;
-  color?: RgbaColor;
+  color?: string;
   css?: CSS;
 };
 
 export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
-  ({ interactive, color = transparentColor, css, ...rest }, ref) => {
+  ({ interactive, color = "transparent", css, ...rest }, ref) => {
+    const rgba = parseColorString(color);
     const background =
-      color === undefined || color.a < 1
-        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${colord(
-            color
-          ).toRgbString()}`
-        : colord(color).toRgbString();
-    const borderColor = calcBorderColor(color);
+      rgba.a < 1
+        ? `repeating-conic-gradient(rgba(0,0,0,0.22) 0% 25%, transparent 0% 50%) 0% 33.33% / 40% 40%, ${color}`
+        : color;
+    const borderColor = calcBorderColor(rgba);
 
     const Component = interactive ? "button" : "span";
 
@@ -104,8 +150,8 @@ export const ColorThumb = forwardRef<ElementRef<"button">, ColorThumbProps>(
       <Component
         style={{
           background,
-          borderColor: borderColor.toRgbString(),
-          borderWidth: borderColor.alpha() === 0 ? 0 : 1,
+          borderColor: rgbaToRgbString(borderColor),
+          borderWidth: borderColor.a === 0 ? 0 : 1,
         }}
         className={thumbStyle({ css })}
         tabIndex={-1}
@@ -130,21 +176,6 @@ const normalizeHex = (value: string) => {
   const trimmed = value.trim();
   const hex = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
   return hex;
-};
-
-export const styleValueToRgbaColor = (
-  value: StyleValue | IntermediateColorValue
-): RgbaColor => {
-  const color = colord(
-    value.type === "intermediate" ? value.value : toValue(value)
-  ).toRgb();
-
-  return {
-    r: color.r,
-    g: color.g,
-    b: color.b,
-    a: color.a,
-  };
 };
 
 const getEyeDropper = () => {
@@ -213,9 +244,11 @@ export const ColorPicker = ({
   onChange,
   onChangeComplete,
 }: ColorPickerProps) => {
-  const [hex, setHex] = useState(() =>
-    colord(styleValueToRgbaColor(value)).toHex()
-  );
+  const [hex, setHex] = useState(() => {
+    const colorString =
+      value.type === "intermediate" ? value.value : toValue(value);
+    return rgbaToHex(parseColorString(colorString));
+  });
   const normalizedHex = normalizeHex(hex);
   const handleCompleteDebounced = useDebouncedCallback(
     (newValue: RgbValue) => onChangeComplete(newValue),
@@ -226,10 +259,10 @@ export const ColorPicker = ({
     <>
       <RgbaColorPicker
         className={colorfulStyles.toString()}
-        color={colord(normalizedHex).toRgb()}
+        color={parseColorString(normalizedHex)}
         onChange={(newRgb) => {
           const fixedRgb = fixColor(value, newRgb);
-          setHex(colord(fixedRgb).toHex());
+          setHex(rgbaToHex(fixedRgb));
           const newValue = colorResultToRgbValue(fixedRgb);
           onChange(newValue);
           handleCompleteDebounced(newValue);
@@ -239,7 +272,7 @@ export const ColorPicker = ({
         <EyeDropper
           onChange={(newHex) => {
             setHex(newHex);
-            const newValue = colorResultToRgbValue(colord(newHex).toRgb());
+            const newValue = colorResultToRgbValue(parseColorString(newHex));
             onChangeComplete(newValue);
           }}
         />
@@ -247,11 +280,14 @@ export const ColorPicker = ({
           value={hex}
           onChange={(event) => {
             setHex(event.target.value);
-            const color = colord(normalizeHex(event.target.value));
-            if (color.isValid()) {
-              const newValue = colorResultToRgbValue(color.toRgb());
+            try {
+              const color = new Color(normalizeHex(event.target.value));
+              const rgba = colorToRgba(color);
+              const newValue = colorResultToRgbValue(rgba);
               onChange(newValue);
               handleCompleteDebounced(newValue);
+            } catch {
+              // Invalid color, don't update
             }
           }}
         />
@@ -307,9 +343,7 @@ export const ColorPickerPopover = ({
         aria-label="Open color picker"
         onClick={() => handleOpenChange(!isOpen)}
       >
-        {thumb ?? (
-          <ColorThumb color={styleValueToRgbaColor(value)} interactive={true} />
-        )}
+        {thumb ?? <ColorThumb color={toValue(value)} interactive={true} />}
       </PopoverTrigger>
       <PopoverContent
         side={side}

@@ -6,11 +6,8 @@ import {
   type VarValue,
   toValue,
 } from "@webstudio-is/css-engine";
-import { colord, extend } from "colord";
-import namesPlugin from "colord/plugins/names";
+import Color from "colorjs.io";
 import type { GradientColorValue, GradientStop } from "./types";
-
-extend([namesPlugin]);
 
 export const angleUnitIdentifiers = ["deg", "grad", "rad", "turn"] as const;
 const angleUnitSet = new Set<string>(angleUnitIdentifiers);
@@ -119,16 +116,19 @@ export const getColor = (
     return parsed;
   }
   if (parsed.type === "keyword") {
-    const color = colord(parsed.value);
-    if (color.isValid()) {
-      const { r, g, b, a } = color.toRgb();
+    try {
+      const color = new Color(parsed.value);
+      const [r, g, b] = color.coords;
+      const alpha = color.alpha;
       return {
         type: "rgb",
-        r,
-        g,
-        b,
-        alpha: a,
+        r: r * 255,
+        g: g * 255,
+        b: b * 255,
+        alpha: alpha ?? 1,
       } satisfies GradientColorValue;
+    } catch {
+      // Invalid color
     }
   }
 };

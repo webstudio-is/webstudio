@@ -60,7 +60,7 @@ import {
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
-import { colord } from "colord";
+import Color from "colorjs.io";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {
   deleteInstanceMutable,
@@ -144,8 +144,16 @@ const CaretColorPlugin = () => {
 
     const elementColor = window.getComputedStyle(rootElement).color;
 
-    const color = colord(elementColor).toRgb();
-    if (color.a < 0.1) {
+    let isLightBackground = false;
+    try {
+      const color = new Color(elementColor);
+      const alpha = color.alpha ?? 1;
+      isLightBackground = alpha < 0.1;
+    } catch {
+      // If we can't parse the color, assume it's not light
+    }
+
+    if (isLightBackground) {
       // Apply caret color with animated color
       const sheet = createRegularStyleSheet({ name: "text-editor-caret" });
 

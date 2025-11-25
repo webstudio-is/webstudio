@@ -310,9 +310,9 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      colord:
-        specifier: ^2.9.3
-        version: 2.9.3
+      colorjs.io:
+        specifier: ^0.5.0
+        version: 0.5.2
       cookie:
         specifier: ^1.0.1
         version: 1.0.1
@@ -1228,9 +1228,9 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      colord:
-        specifier: ^2.9.3
-        version: 2.9.3
+      colorjs.io:
+        specifier: ^0.5.0
+        version: 0.5.2
       css-tree:
         specifier: ^3.1.0
         version: 3.1.0
@@ -1426,9 +1426,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      colord:
-        specifier: ^2.9.3
-        version: 2.9.3
+      colorjs.io:
+        specifier: ^0.5.0
+        version: 0.5.2
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
@@ -5982,6 +5982,9 @@ packages:
 
   colord@2.9.3:
     resolution: {integrity: sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw==}
+
+  colorjs.io@0.5.2:
+    resolution: {integrity: sha512-twmVoizEW7ylZSN32OgKdXRmo1qg+wT5/6C3xu5b9QsWzSFAhHLn2xd8ro0diCsKfCj1RdaTP/nrcW+vAoQPIw==}
 
   colors@1.2.5:
     resolution: {integrity: sha512-erNRLao/Y3Fv54qUa0LBB+//Uf3YwMUmdJinN20yMXm9zdKKqH9wt7R9IIVZ+K7ShzfpLV/Zg8+VyrBJYB4lpg==}
@@ -13429,6 +13432,8 @@ snapshots:
       color-string: 1.9.1
 
   colord@2.9.3: {}
+
+  colorjs.io@0.5.2: {}
 
   colors@1.2.5: {}
 

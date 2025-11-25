@@ -933,14 +933,7 @@ export const CssValueInput = ({
                           </Text>
                         )}
                         {item.fallback?.type === "rgb" && (
-                          <ColorThumb
-                            color={{
-                              r: item.fallback.r,
-                              g: item.fallback.g,
-                              b: item.fallback.b,
-                              a: item.fallback.alpha,
-                            }}
-                          />
+                          <ColorThumb color={toValue(item.fallback)} />
                         )}
                       </Flex>
                     ) : (
