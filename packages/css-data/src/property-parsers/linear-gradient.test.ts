@@ -500,4 +500,189 @@ describe("parses linear-gradient", () => {
       })
     );
   });
+
+  test("parses linear-gradient with oklch colors", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(oklch(0.6 0.1 180), oklch(0.8 0.15 240))"
+      )
+    ).toEqual(
+      linear({
+        angle: undefined,
+        sideOrCorner: undefined,
+        stops: [
+          {
+            color: {
+              type: "color",
+              colorSpace: "oklch",
+              components: [0.6, 0.1, 180],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "oklch",
+              components: [0.8, 0.15, 240],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+        ],
+      })
+    );
+  });
+
+  test("parses linear-gradient with hsl colors", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(hsl(180 100% 50%), hsl(240 100% 50%))"
+      )
+    ).toEqual(
+      linear({
+        angle: undefined,
+        sideOrCorner: undefined,
+        stops: [
+          {
+            color: {
+              type: "color",
+              colorSpace: "hsl",
+              components: [180, 100, 50],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "hsl",
+              components: [240, 100, 50],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+        ],
+      })
+    );
+  });
+
+  test("parses linear-gradient with color() function", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(color(srgb 1 0 0), color(srgb 0 0 1))"
+      )
+    ).toEqual(
+      linear({
+        angle: undefined,
+        sideOrCorner: undefined,
+        stops: [
+          {
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+        ],
+      })
+    );
+  });
+
+  test("parses linear-gradient with mixed modern color spaces", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(90deg, oklch(0.7 0.2 30) 0%, hsl(120 50% 60%) 50%, color(p3 0 1 0) 100%)"
+      )
+    ).toEqual(
+      linear({
+        angle: { type: "unit", unit: "deg", value: 90 },
+        sideOrCorner: undefined,
+        stops: [
+          {
+            color: {
+              type: "color",
+              colorSpace: "oklch",
+              components: [0.7, 0.2, 30],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: { type: "unit", unit: "%", value: 0 },
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "hsl",
+              components: [120, 50, 60],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: { type: "unit", unit: "%", value: 50 },
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "p3",
+              components: [0, 1, 0],
+              alpha: 1,
+            },
+            hint: undefined,
+            position: { type: "unit", unit: "%", value: 100 },
+          },
+        ],
+      })
+    );
+  });
+
+  test("parses linear-gradient with oklch colors with alpha", () => {
+    expect(
+      parseLinearGradient(
+        "linear-gradient(oklch(0.6 0.1 180 / 0.5), oklch(0.8 0.15 240 / 0.8))"
+      )
+    ).toEqual(
+      linear({
+        angle: undefined,
+        sideOrCorner: undefined,
+        stops: [
+          {
+            color: {
+              type: "color",
+              colorSpace: "oklch",
+              components: [0.6, 0.1, 180],
+              alpha: 0.5,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+          {
+            color: {
+              type: "color",
+              colorSpace: "oklch",
+              components: [0.8, 0.15, 240],
+              alpha: 0.8,
+            },
+            hint: undefined,
+            position: undefined,
+          },
+        ],
+      })
+    );
+  });
 });
