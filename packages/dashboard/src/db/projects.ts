@@ -34,10 +34,40 @@ export const findMany = async (userId: string, context: AppContext) => {
   const projectIds = data.data
     .map((project) => project.id)
     .filter((id): id is string => id !== null);
+
+  type ProjectWithDomains = SetNonNullable<
+    (typeof data.data)[number],
+    | "id"
+    | "title"
+    | "domain"
+    | "isDeleted"
+    | "createdAt"
+    | "marketplaceApprovalStatus"
+  > & {
+    domainsVirtual: Array<{
+      domain: string;
+      status: string;
+      verified: boolean;
+    }>;
+  };
+
+  if (projectIds.length === 0) {
+    return data.data.map((project) => ({
+      ...project,
+      domainsVirtual: [],
+    })) as ProjectWithDomains[];
+  }
+
+  // Query ProjectDomain and Domain tables
   const domainsData = await context.postgrest.client
-    .from("domainsVirtual")
-    .select("projectId, domain, status, verified")
+    .from("ProjectDomain")
+    .select("projectId, Domain!inner(domain, status, txtRecord), txtRecord")
     .in("projectId", projectIds);
+
+  if (domainsData.error) {
+    console.error("Error fetching domains:", domainsData.error);
+    // Continue without domains rather than failing
+  }
 
   // Map domains to projects
   const domainsByProject = new Map<
@@ -45,33 +75,46 @@ export const findMany = async (userId: string, context: AppContext) => {
     Array<{ domain: string; status: string; verified: boolean }>
   >();
   if (domainsData.data) {
-    for (const domain of domainsData.data) {
-      if (!domainsByProject.has(domain.projectId)) {
-        domainsByProject.set(domain.projectId, []);
+    for (const projectDomain of domainsData.data) {
+      if (!domainsByProject.has(projectDomain.projectId)) {
+        domainsByProject.set(projectDomain.projectId, []);
       }
-      domainsByProject.get(domain.projectId)?.push({
-        domain: domain.domain,
-        status: domain.status,
-        verified: domain.verified,
+      // Type assertion needed for joined data
+      const domainData = projectDomain.Domain as unknown as {
+        domain: string;
+        status: string;
+        txtRecord: string;
+      };
+      const verified = domainData.txtRecord === projectDomain.txtRecord;
+      domainsByProject.get(projectDomain.projectId)?.push({
+        domain: domainData.domain,
+        status: domainData.status,
+        verified,
       });
     }
   }
 
   // Add domains to projects
-  const projectsWithDomains = data.data.map((project) => ({
+  return data.data.map((project) => ({
     ...project,
     domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
-  }));
-
-  return projectsWithDomains as SetNonNullable<
-    (typeof projectsWithDomains)[number],
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
-  >[];
+  })) as Array<
+    SetNonNullable<
+      (typeof data.data)[number],
+      | "id"
+      | "title"
+      | "domain"
+      | "isDeleted"
+      | "createdAt"
+      | "marketplaceApprovalStatus"
+    > & {
+      domainsVirtual: Array<{
+        domain: string;
+        status: string;
+        verified: boolean;
+      }>;
+    }
+  >;
 };
 
 export const findManyByIds = async (
@@ -97,9 +140,14 @@ export const findManyByIds = async (
     .map((project) => project.id)
     .filter((id): id is string => id !== null);
   const domainsData = await context.postgrest.client
-    .from("domainsVirtual")
-    .select("projectId, domain, status, verified")
+    .from("ProjectDomain")
+    .select("projectId, Domain!inner(domain, status, txtRecord), txtRecord")
     .in("projectId", validProjectIds);
+
+  if (domainsData.error) {
+    console.error("Error fetching domains:", domainsData.error);
+    // Continue without domains rather than failing
+  }
 
   // Map domains to projects
   const domainsByProject = new Map<
@@ -107,31 +155,44 @@ export const findManyByIds = async (
     Array<{ domain: string; status: string; verified: boolean }>
   >();
   if (domainsData.data) {
-    for (const domain of domainsData.data) {
-      if (!domainsByProject.has(domain.projectId)) {
-        domainsByProject.set(domain.projectId, []);
+    for (const projectDomain of domainsData.data) {
+      if (!domainsByProject.has(projectDomain.projectId)) {
+        domainsByProject.set(projectDomain.projectId, []);
       }
-      domainsByProject.get(domain.projectId)?.push({
-        domain: domain.domain,
-        status: domain.status,
-        verified: domain.verified,
+      // Type assertion needed for joined data
+      const domainData = projectDomain.Domain as unknown as {
+        domain: string;
+        status: string;
+        txtRecord: string;
+      };
+      const verified = domainData.txtRecord === projectDomain.txtRecord;
+      domainsByProject.get(projectDomain.projectId)?.push({
+        domain: domainData.domain,
+        status: domainData.status,
+        verified,
       });
     }
   }
 
   // Add domains to projects
-  const projectsWithDomains = data.data.map((project) => ({
+  return data.data.map((project) => ({
     ...project,
     domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
-  }));
-
-  return projectsWithDomains as SetNonNullable<
-    (typeof projectsWithDomains)[number],
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
-  >[];
+  })) as Array<
+    SetNonNullable<
+      (typeof data.data)[number],
+      | "id"
+      | "title"
+      | "domain"
+      | "isDeleted"
+      | "createdAt"
+      | "marketplaceApprovalStatus"
+    > & {
+      domainsVirtual: Array<{
+        domain: string;
+        status: string;
+        verified: boolean;
+      }>;
+    }
+  >;
 };

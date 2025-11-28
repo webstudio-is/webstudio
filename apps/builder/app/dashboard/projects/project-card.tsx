@@ -130,7 +130,8 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   // Determine which domain to display: custom domain if available, otherwise wstd subdomain
   const customDomain = domainsVirtual?.find(
-    (d) => d.status === "ACTIVE" && d.verified
+    (d: { domain: string; status: string; verified: boolean }) =>
+      d.status === "ACTIVE" && d.verified
   )?.domain;
   const displayDomain = customDomain ?? `${domain}.${publisherHost}`;
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
