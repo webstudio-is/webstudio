@@ -226,7 +226,19 @@ export const setRepeatedStyleItem = (
   const value = styleDecl.cascadedValue;
   const valueType: ItemType = value.type === "tuple" ? "tuple" : "layers";
   const oldItems = value.type === valueType ? value.value : [];
+
+  // Fill missing items with initial value instead of undefined
   const newItems: StyleValue[] = repeatUntil(oldItems, index);
+  if (oldItems.length === 0 && index > 0) {
+    const meta = propertiesData[styleDecl.property];
+    if (meta) {
+      const initialValue = meta.initial as UnparsedValue;
+      for (let i = 0; i < index; i++) {
+        newItems[i] = initialValue;
+      }
+    }
+  }
+
   // unpack item when layers or tuple is provided
   newItems[index] = newItem.type === valueType ? newItem.value[0] : newItem;
   batch.setProperty(styleDecl.property)({

@@ -142,8 +142,12 @@ export const BackgroundGradient = ({
 }) => {
   const styleDecl = useComputedStyleDecl("background-image");
   let styleValue = styleDecl.cascadedValue;
+  let computedStyleValue = styleDecl.computedValue;
   if (styleValue.type === "layers") {
     styleValue = styleValue.value[index];
+  }
+  if (computedStyleValue.type === "layers") {
+    computedStyleValue = computedStyleValue.value[index];
   }
 
   const gradientString = toValue(styleValue);
@@ -156,6 +160,17 @@ export const BackgroundGradient = ({
       createDefaultGradient(gradientType);
     return ensureGradientHasStops(parsed);
   }, [gradientType, normalizedGradientString]);
+
+  const computedGradientString = toValue(computedStyleValue);
+  const { normalizedGradientString: normalizedComputedGradientString } =
+    normalizeGradientInput(computedGradientString, gradientType);
+
+  const computedParsedGradient = useMemo(() => {
+    const parsed =
+      parseAnyGradient(normalizedComputedGradientString) ??
+      createDefaultGradient(gradientType);
+    return ensureGradientHasStops(parsed);
+  }, [gradientType, normalizedComputedGradientString]);
 
   const handleGradientSave = useCallback(
     (nextGradient: ParsedGradient) => {
@@ -249,6 +264,7 @@ export const BackgroundGradient = ({
         <>
           <GradientPickerSection
             gradient={gradient}
+            computedGradient={computedParsedGradient}
             gradientType={gradientType}
             hintOverrides={hintOverrides}
             setHintOverrides={setHintOverrides}
@@ -287,6 +303,7 @@ export const BackgroundGradient = ({
 
 type GradientPickerSectionProps = {
   gradient: ParsedGradient;
+  computedGradient: ParsedGradient;
   gradientType: GradientType;
   hintOverrides: Map<number, PercentUnitValue>;
   setHintOverrides: Dispatch<SetStateAction<Map<number, PercentUnitValue>>>;
@@ -297,6 +314,7 @@ type GradientPickerSectionProps = {
 
 const GradientPickerSection = ({
   gradient,
+  computedGradient,
   gradientType,
   hintOverrides,
   setHintOverrides,
@@ -304,9 +322,10 @@ const GradientPickerSection = ({
   applyGradient,
   selectedStopIndex,
 }: GradientPickerSectionProps) => {
-  const gradientForPickerBase = useMemo(() => {
-    return resolveGradientForPicker(gradient, hintOverrides);
-  }, [gradient, hintOverrides]);
+  // Use computed gradient for picker (resolves all CSS variables)
+  const computedGradientForPicker = useMemo(() => {
+    return resolveGradientForPicker(computedGradient, hintOverrides);
+  }, [computedGradient, hintOverrides]);
 
   const handlePickerChange = useCallback(
     (nextGradient: ParsedGradient) => {
@@ -329,20 +348,17 @@ const GradientPickerSection = ({
     [setSelectedStopIndex]
   );
 
-  // Gradient stops are already sorted in applyGradient, no need to sort here
-  const gradientForPicker = gradientForPickerBase;
-
   const previewGradientForTrack = useMemo<ParsedLinearGradient>(() => {
     const previewGradient: ParsedLinearGradient = {
       type: "linear",
       angle: leftToRightAngle,
-      stops: gradientForPicker.stops,
+      stops: computedGradientForPicker.stops,
     };
-    if (gradientForPicker.repeating) {
+    if (computedGradientForPicker.repeating) {
       previewGradient.repeating = true;
     }
     return previewGradient;
-  }, [gradientForPicker]);
+  }, [computedGradientForPicker]);
 
   return (
     <Flex
@@ -352,7 +368,7 @@ const GradientPickerSection = ({
       css={{ padding: theme.panel.padding }}
     >
       <GradientPicker
-        gradient={gradientForPicker}
+        gradient={computedGradientForPicker}
         backgroundImage={formatLinearGradient(previewGradientForTrack)}
         type={gradientType}
         onChange={handlePickerChange}
@@ -362,6 +378,7 @@ const GradientPickerSection = ({
       />
       <GradientStopControls
         gradient={gradient}
+        computedGradient={computedGradient}
         selectedStopIndex={selectedStopIndex}
         setSelectedStopIndex={setSelectedStopIndex}
         hintOverrides={hintOverrides}
@@ -687,6 +704,7 @@ const SolidColorControls = ({
 
 type GradientStopControlsProps = {
   gradient: ParsedGradient;
+  computedGradient: ParsedGradient;
   selectedStopIndex: number;
   setSelectedStopIndex: Dispatch<SetStateAction<number>>;
   hintOverrides: Map<number, PercentUnitValue>;
@@ -696,6 +714,7 @@ type GradientStopControlsProps = {
 
 const GradientStopControls = ({
   gradient,
+  computedGradient,
   selectedStopIndex,
   setSelectedStopIndex,
   hintOverrides,
@@ -931,6 +950,9 @@ const GradientStopControls = ({
         };
 
         const stopColor = (stop.color ?? fallbackStopColor) as StyleValue;
+        // Use computed color for display (resolves CSS variables)
+        const computedStop = computedGradient.stops[stopIndex];
+        const currentColor = (computedStop?.color ?? stopColor) as StyleValue;
 
         return (
           <Flex
@@ -987,7 +1009,7 @@ const GradientStopControls = ({
                   <ColorPickerControl
                     property="color"
                     value={stopColor}
-                    currentColor={stopColor}
+                    currentColor={currentColor}
                     onChange={handleStopColorChange}
                     onChangeComplete={handleStopColorChangeComplete}
                     onAbort={() => {}}

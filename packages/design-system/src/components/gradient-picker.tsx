@@ -948,12 +948,10 @@ export const GradientPicker = <T extends ParsedGradient>({
         })}
 
         {hints.map((hint) => {
-          const stop = stops[hint.stopIndex];
-          const hintColor = stop?.color ? toValue(stop.color) : undefined;
           return (
             <SliderHint
               key={`${hint.stopIndex}-${hint.value}`}
-              style={{ left: `${hint.value}%`, color: hintColor }}
+              style={{ left: `${hint.value}%` }}
               onPointerDown={handleHintPointerDown(hint.stopIndex)}
             >
               <ChevronFilledUpIcon size="100%" />
@@ -1055,6 +1053,7 @@ const SliderHint = styled(Flex, {
   cursor: "grab",
   touchAction: "none",
   userSelect: "none",
+  color: "black",
   "&:active": {
     cursor: "grabbing",
   },
