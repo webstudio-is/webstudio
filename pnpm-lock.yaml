@@ -1293,6 +1293,9 @@ importers:
 
   packages/dashboard:
     dependencies:
+      '@webstudio-is/postrest':
+        specifier: workspace:^
+        version: link:../postgrest
       '@webstudio-is/project':
         specifier: workspace:*
         version: link:../project

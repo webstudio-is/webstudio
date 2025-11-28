@@ -4,6 +4,12 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 
+type DomainVirtual = {
+  domain: string;
+  status: string;
+  verified: boolean;
+};
+
 export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
 
 export const findMany = async (userId: string, context: AppContext) => {
@@ -44,11 +50,7 @@ export const findMany = async (userId: string, context: AppContext) => {
     | "createdAt"
     | "marketplaceApprovalStatus"
   > & {
-    domainsVirtual: Array<{
-      domain: string;
-      status: string;
-      verified: boolean;
-    }>;
+    domainsVirtual: DomainVirtual[];
   };
 
   if (projectIds.length === 0) {
@@ -70,10 +72,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   }
 
   // Map domains to projects
-  const domainsByProject = new Map<
-    string,
-    Array<{ domain: string; status: string; verified: boolean }>
-  >();
+  const domainsByProject = new Map<string, DomainVirtual[]>();
   if (domainsData.data) {
     for (const projectDomain of domainsData.data) {
       if (!domainsByProject.has(projectDomain.projectId)) {
@@ -98,23 +97,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   return data.data.map((project) => ({
     ...project,
     domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
-  })) as Array<
-    SetNonNullable<
-      (typeof data.data)[number],
-      | "id"
-      | "title"
-      | "domain"
-      | "isDeleted"
-      | "createdAt"
-      | "marketplaceApprovalStatus"
-    > & {
-      domainsVirtual: Array<{
-        domain: string;
-        status: string;
-        verified: boolean;
-      }>;
-    }
-  >;
+  })) as ProjectWithDomains[];
 };
 
 export const findManyByIds = async (
@@ -135,6 +118,18 @@ export const findManyByIds = async (
     throw data.error;
   }
 
+  type ProjectWithDomains = SetNonNullable<
+    (typeof data.data)[number],
+    | "id"
+    | "title"
+    | "domain"
+    | "isDeleted"
+    | "createdAt"
+    | "marketplaceApprovalStatus"
+  > & {
+    domainsVirtual: DomainVirtual[];
+  };
+
   // Fetch custom domains for all projects
   const validProjectIds = data.data
     .map((project) => project.id)
@@ -150,10 +145,7 @@ export const findManyByIds = async (
   }
 
   // Map domains to projects
-  const domainsByProject = new Map<
-    string,
-    Array<{ domain: string; status: string; verified: boolean }>
-  >();
+  const domainsByProject = new Map<string, DomainVirtual[]>();
   if (domainsData.data) {
     for (const projectDomain of domainsData.data) {
       if (!domainsByProject.has(projectDomain.projectId)) {
@@ -178,21 +170,5 @@ export const findManyByIds = async (
   return data.data.map((project) => ({
     ...project,
     domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
-  })) as Array<
-    SetNonNullable<
-      (typeof data.data)[number],
-      | "id"
-      | "title"
-      | "domain"
-      | "isDeleted"
-      | "createdAt"
-      | "marketplaceApprovalStatus"
-    > & {
-      domainsVirtual: Array<{
-        domain: string;
-        status: string;
-        verified: boolean;
-      }>;
-    }
-  >;
+  })) as ProjectWithDomains[];
 };

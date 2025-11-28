@@ -9,6 +9,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@webstudio-is/postrest": "workspace:^",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "type-fest": "^4.37.0",
