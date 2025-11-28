@@ -1,5 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import { colord } from "colord";
+import Color from "colorjs.io";
 import {
   memo,
   useEffect,
@@ -132,7 +132,13 @@ const AdvancedPropertyValue = ({
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isColor = colord(toValue(styleDecl.usedValue)).isValid();
+  let isColor = false;
+  try {
+    new Color(toValue(styleDecl.usedValue));
+    isColor = true;
+  } catch {
+    isColor = false;
+  }
 
   return (
     <CssValueInputContainer

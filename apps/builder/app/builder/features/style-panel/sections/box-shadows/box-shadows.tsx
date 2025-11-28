@@ -1,5 +1,3 @@
-import { colord, extend, type RgbaColor } from "colord";
-import namesPlugin from "colord/plugins/names";
 import {
   toValue,
   type CssProperty,
@@ -15,9 +13,6 @@ import {
   RepeatedStyle,
 } from "../../shared/repeated-style";
 import { parseCssFragment } from "../../shared/css-fragment";
-
-// To support color names
-extend([namesPlugin]);
 
 export const properties = ["box-shadow"] satisfies [
   CssProperty,
@@ -46,11 +41,7 @@ const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
   } else {
     labels.push(toValue(shadowValue));
   }
-  let color: undefined | RgbaColor;
-  const colordValue = colord(toValue(shadowValue?.color));
-  if (colordValue.isValid()) {
-    color = colordValue.toRgb();
-  }
+  const color = shadowValue?.color ? toValue(shadowValue.color) : undefined;
   return { label: labels.join(" "), color };
 };
 

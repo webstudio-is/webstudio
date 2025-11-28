@@ -61,7 +61,7 @@
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
-    "colord": "^2.9.3",
+    "colorjs.io": "^0.5.0",
     "change-case": "^5.4.4",
     "cmdk": "^1.1.1",
     "downshift": "^6.1.7",

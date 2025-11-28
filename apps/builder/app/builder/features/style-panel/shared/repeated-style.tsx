@@ -1,5 +1,4 @@
 import { useMemo, type ComponentProps, type JSX, type ReactNode } from "react";
-import type { RgbaColor } from "colord";
 import {
   toValue,
   type CssProperty,
@@ -227,7 +226,19 @@ export const setRepeatedStyleItem = (
   const value = styleDecl.cascadedValue;
   const valueType: ItemType = value.type === "tuple" ? "tuple" : "layers";
   const oldItems = value.type === valueType ? value.value : [];
+
+  // Fill missing items with initial value instead of undefined
   const newItems: StyleValue[] = repeatUntil(oldItems, index);
+  if (oldItems.length === 0 && index > 0) {
+    const meta = propertiesData[styleDecl.property];
+    if (meta) {
+      const initialValue = meta.initial as UnparsedValue;
+      for (let i = 0; i < index; i++) {
+        newItems[i] = initialValue;
+      }
+    }
+  }
+
   // unpack item when layers or tuple is provided
   newItems[index] = newItem.type === valueType ? newItem.value[0] : newItem;
   batch.setProperty(styleDecl.property)({
@@ -328,7 +339,7 @@ export const RepeatedStyle = (props: {
   getItemProps: (
     index: number,
     primaryValue: StyleValue
-  ) => { label: string; color?: RgbaColor };
+  ) => { label: string; color?: string };
   floatingPanelOffset?: ComponentProps<typeof FloatingPanel>["offset"];
   renderThumbnail?: (index: number, primaryItem: StyleValue) => JSX.Element;
   renderItemContent: (index: number, primaryItem: StyleValue) => JSX.Element;
@@ -426,7 +437,7 @@ export const RepeatedStyle = (props: {
                 hidden={isHidden}
                 thumbnail={
                   renderThumbnail?.(index, primaryItem) ??
-                  (itemColor && <ColorThumb color={itemColor} />)
+                  (itemColor ? <ColorThumb color={itemColor} /> : undefined)
                 }
                 buttons={
                   <>

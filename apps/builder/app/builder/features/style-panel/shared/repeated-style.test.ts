@@ -300,6 +300,47 @@ test("unpack item from layers value in repeated style", () => {
   );
 });
 
+test("set item on second layer when property is not defined on first layer", () => {
+  // This tests the fix for the bug where setting a property like background-clip
+  // on layer 1 when layer 0 doesn't have that property would create undefined values
+  const $backgroundClip = createComputedStyleDeclStore("background-clip");
+
+  // Set two background images
+  setRawProperty("background-image", "url(image1.jpg), url(image2.jpg)");
+
+  // background-clip is not yet defined, so cascadedValue should be default
+  expect($backgroundClip.get().source.name).toEqual("default");
+
+  // Now set background-clip on the second layer (index 1)
+  // This should fill index 0 with the initial value (border-box) instead of undefined
+  setRepeatedStyleItem($backgroundClip.get(), 1, {
+    type: "keyword",
+    value: "padding-box",
+  });
+
+  // Should have created layers with initial value at index 0
+  expect(toValue($backgroundClip.get().cascadedValue)).toEqual(
+    "border-box, padding-box"
+  );
+  expect($backgroundClip.get().cascadedValue.type).toEqual("layers");
+
+  // Verify the values are properly set and not undefined
+  const cascadedValue = $backgroundClip.get().cascadedValue;
+  if (cascadedValue.type === "layers") {
+    expect(cascadedValue.value[0]).toEqual({
+      type: "keyword",
+      value: "border-box",
+    });
+    expect(cascadedValue.value[1]).toEqual({
+      type: "keyword",
+      value: "padding-box",
+    });
+    // Ensure no undefined values
+    expect(cascadedValue.value[0]).toBeDefined();
+    expect(cascadedValue.value[1]).toBeDefined();
+  }
+});
+
 describe("delete repeated item", () => {
   test("delete var or other not releated value in repeated style", () => {
     const $backgroundImage = createComputedStyleDeclStore("background-image");
