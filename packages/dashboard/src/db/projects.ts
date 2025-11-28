@@ -10,39 +10,25 @@ type DomainVirtual = {
   verified: boolean;
 };
 
-export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
-
-export const findMany = async (userId: string, context: AppContext) => {
-  if (context.authorization.type !== "user") {
-    throw new AuthorizationError(
-      "Only logged in users can view the project list"
-    );
-  }
-
-  if (userId !== context.authorization.userId) {
-    throw new AuthorizationError(
-      "Only the project owner can view the project list"
-    );
-  }
-
-  const data = await context.postgrest.client
-    .from("DashboardProject")
-    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
-    .eq("userId", userId)
-    .eq("isDeleted", false)
-    .order("createdAt", { ascending: false })
-    .order("id", { ascending: false });
-  if (data.error) {
-    throw data.error;
-  }
-
-  // Fetch custom domains for all projects
-  const projectIds = data.data
+const fetchAndMapDomains = async <
+  T extends {
+    id: string | null;
+    title: string | null;
+    domain: string | null;
+    isDeleted: boolean | null;
+    createdAt: string | null;
+    marketplaceApprovalStatus: string | null;
+  },
+>(
+  projects: T[],
+  context: AppContext
+) => {
+  const projectIds = projects
     .map((project) => project.id)
     .filter((id): id is string => id !== null);
 
   type ProjectWithDomains = SetNonNullable<
-    (typeof data.data)[number],
+    T,
     | "id"
     | "title"
     | "domain"
@@ -54,7 +40,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   };
 
   if (projectIds.length === 0) {
-    return data.data.map((project) => ({
+    return projects.map((project) => ({
       ...project,
       domainsVirtual: [],
     })) as ProjectWithDomains[];
@@ -94,10 +80,39 @@ export const findMany = async (userId: string, context: AppContext) => {
   }
 
   // Add domains to projects
-  return data.data.map((project) => ({
+  return projects.map((project) => ({
     ...project,
     domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
   })) as ProjectWithDomains[];
+};
+
+export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
+
+export const findMany = async (userId: string, context: AppContext) => {
+  if (context.authorization.type !== "user") {
+    throw new AuthorizationError(
+      "Only logged in users can view the project list"
+    );
+  }
+
+  if (userId !== context.authorization.userId) {
+    throw new AuthorizationError(
+      "Only the project owner can view the project list"
+    );
+  }
+
+  const data = await context.postgrest.client
+    .from("DashboardProject")
+    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
+    .eq("userId", userId)
+    .eq("isDeleted", false)
+    .order("createdAt", { ascending: false })
+    .order("id", { ascending: false });
+  if (data.error) {
+    throw data.error;
+  }
+
+  return await fetchAndMapDomains(data.data, context);
 };
 
 export const findManyByIds = async (
@@ -118,57 +133,5 @@ export const findManyByIds = async (
     throw data.error;
   }
 
-  type ProjectWithDomains = SetNonNullable<
-    (typeof data.data)[number],
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
-  > & {
-    domainsVirtual: DomainVirtual[];
-  };
-
-  // Fetch custom domains for all projects
-  const validProjectIds = data.data
-    .map((project) => project.id)
-    .filter((id): id is string => id !== null);
-  const domainsData = await context.postgrest.client
-    .from("ProjectDomain")
-    .select("projectId, Domain!inner(domain, status, txtRecord), txtRecord")
-    .in("projectId", validProjectIds);
-
-  if (domainsData.error) {
-    console.error("Error fetching domains:", domainsData.error);
-    // Continue without domains rather than failing
-  }
-
-  // Map domains to projects
-  const domainsByProject = new Map<string, DomainVirtual[]>();
-  if (domainsData.data) {
-    for (const projectDomain of domainsData.data) {
-      if (!domainsByProject.has(projectDomain.projectId)) {
-        domainsByProject.set(projectDomain.projectId, []);
-      }
-      // Type assertion needed for joined data
-      const domainData = projectDomain.Domain as unknown as {
-        domain: string;
-        status: string;
-        txtRecord: string;
-      };
-      const verified = domainData.txtRecord === projectDomain.txtRecord;
-      domainsByProject.get(projectDomain.projectId)?.push({
-        domain: domainData.domain,
-        status: domainData.status,
-        verified,
-      });
-    }
-  }
-
-  // Add domains to projects
-  return data.data.map((project) => ({
-    ...project,
-    domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
-  })) as ProjectWithDomains[];
+  return await fetchAndMapDomains(data.data, context);
 };
