@@ -50,6 +50,7 @@ const projects = [
     latestBuildVirtual: null,
     marketplaceApprovalStatus: "UNLISTED" as const,
     tags: [],
+    domainsVirtual: [],
   } as DashboardProject,
 ];
 

@@ -37,14 +37,12 @@ const infoIconStyle = css({ flexShrink: 0 });
 
 const PublishedLink = ({
   domain,
-  publisherHost,
   tabIndex,
 }: {
   domain: string;
-  publisherHost: string;
   tabIndex: number;
 }) => {
-  const publishedOrigin = `https://${domain}.${publisherHost}`;
+  const publishedOrigin = `https://${domain}`;
   return (
     <Link
       href={publishedOrigin}
@@ -123,12 +121,19 @@ export const ProjectCard = ({
     latestBuildVirtual,
     previewImageAsset,
     tags,
+    domainsVirtual,
   },
   hasProPlan,
   publisherHost,
   projectsTags,
   ...props
 }: ProjectCardProps) => {
+  // Determine which domain to display: custom domain if available, otherwise wstd subdomain
+  const customDomain = domainsVirtual?.find(
+    (d: { domain: string; status: string; verified: boolean }) =>
+      d.status === "ACTIVE" && d.verified
+  )?.domain;
+  const displayDomain = customDomain ?? `${domain}.${publisherHost}`;
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -258,11 +263,7 @@ export const ProjectCard = ({
             </Tooltip>
           </Flex>
           {isPublished ? (
-            <PublishedLink
-              publisherHost={publisherHost}
-              domain={domain}
-              tabIndex={-1}
-            />
+            <PublishedLink domain={displayDomain} tabIndex={-1} />
           ) : (
             <Text color="subtle">Not Published</Text>
           )}
