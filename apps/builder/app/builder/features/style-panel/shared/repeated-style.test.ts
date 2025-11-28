@@ -303,7 +303,6 @@ test("unpack item from layers value in repeated style", () => {
 test("set item on second layer when property is not defined on first layer", () => {
   // This tests the fix for the bug where setting a property like background-clip
   // on layer 1 when layer 0 doesn't have that property would create undefined values
-  const $backgroundImage = createComputedStyleDeclStore("background-image");
   const $backgroundClip = createComputedStyleDeclStore("background-clip");
 
   // Set two background images
