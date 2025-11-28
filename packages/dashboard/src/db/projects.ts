@@ -30,8 +30,41 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw data.error;
   }
 
-  return data.data as SetNonNullable<
-    (typeof data.data)[number],
+  // Fetch custom domains for all projects
+  const projectIds = data.data
+    .map((project) => project.id)
+    .filter((id): id is string => id !== null);
+  const domainsData = await context.postgrest.client
+    .from("domainsVirtual")
+    .select("projectId, domain, status, verified")
+    .in("projectId", projectIds);
+
+  // Map domains to projects
+  const domainsByProject = new Map<
+    string,
+    Array<{ domain: string; status: string; verified: boolean }>
+  >();
+  if (domainsData.data) {
+    for (const domain of domainsData.data) {
+      if (!domainsByProject.has(domain.projectId)) {
+        domainsByProject.set(domain.projectId, []);
+      }
+      domainsByProject.get(domain.projectId)?.push({
+        domain: domain.domain,
+        status: domain.status,
+        verified: domain.verified,
+      });
+    }
+  }
+
+  // Add domains to projects
+  const projectsWithDomains = data.data.map((project) => ({
+    ...project,
+    domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
+  }));
+
+  return projectsWithDomains as SetNonNullable<
+    (typeof projectsWithDomains)[number],
     | "id"
     | "title"
     | "domain"
@@ -58,8 +91,42 @@ export const findManyByIds = async (
   if (data.error) {
     throw data.error;
   }
-  return data.data as SetNonNullable<
-    (typeof data.data)[number],
+
+  // Fetch custom domains for all projects
+  const validProjectIds = data.data
+    .map((project) => project.id)
+    .filter((id): id is string => id !== null);
+  const domainsData = await context.postgrest.client
+    .from("domainsVirtual")
+    .select("projectId, domain, status, verified")
+    .in("projectId", validProjectIds);
+
+  // Map domains to projects
+  const domainsByProject = new Map<
+    string,
+    Array<{ domain: string; status: string; verified: boolean }>
+  >();
+  if (domainsData.data) {
+    for (const domain of domainsData.data) {
+      if (!domainsByProject.has(domain.projectId)) {
+        domainsByProject.set(domain.projectId, []);
+      }
+      domainsByProject.get(domain.projectId)?.push({
+        domain: domain.domain,
+        status: domain.status,
+        verified: domain.verified,
+      });
+    }
+  }
+
+  // Add domains to projects
+  const projectsWithDomains = data.data.map((project) => ({
+    ...project,
+    domainsVirtual: project.id ? domainsByProject.get(project.id) || [] : [],
+  }));
+
+  return projectsWithDomains as SetNonNullable<
+    (typeof projectsWithDomains)[number],
     | "id"
     | "title"
     | "domain"
