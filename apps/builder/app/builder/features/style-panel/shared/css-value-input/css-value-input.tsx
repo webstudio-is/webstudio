@@ -932,8 +932,8 @@ export const CssValueInput = ({
                             {toValue(item.fallback)}
                           </Text>
                         )}
-                        {/* @todo */}
-                        {item.fallback?.type === "rgb" && (
+                        {(item.fallback?.type === "rgb" ||
+                          item.fallback?.type === "color") && (
                           <ColorThumb color={toValue(item.fallback)} />
                         )}
                       </Flex>
