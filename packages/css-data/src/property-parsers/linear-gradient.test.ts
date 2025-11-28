@@ -15,17 +15,32 @@ describe("parses linear-gradient", () => {
         sideOrCorner: undefined,
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
@@ -43,13 +58,23 @@ describe("parses linear-gradient", () => {
         sideOrCorner: undefined,
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.6471, 0],
+              alpha: 1,
+            },
             hint: { type: "unit", unit: "%", value: 20 },
             position: { type: "unit", unit: "%", value: 60 },
           },
           { hint: { type: "unit", unit: "%", value: 40 } },
           {
-            color: { alpha: 1, b: 255, g: 255, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 1, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
@@ -69,22 +94,42 @@ describe("parses linear-gradient", () => {
         sideOrCorner: { type: "keyword", value: "to top right" },
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.6471, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0.502, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
@@ -104,27 +149,52 @@ describe("parses linear-gradient", () => {
         sideOrCorner: { type: "keyword", value: "to right" },
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: { type: "unit", unit: "%", value: 20 },
           },
           {
-            color: { alpha: 1, b: 0, g: 165, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.6471, 0],
+              alpha: 1,
+            },
             hint: { type: "unit", unit: "%", value: 40 },
             position: { type: "unit", unit: "%", value: 20 },
           },
           {
-            color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             hint: { type: "unit", unit: "%", value: 60 },
             position: { type: "unit", unit: "%", value: 40 },
           },
           {
-            color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0.502, 0],
+              alpha: 1,
+            },
             hint: { type: "unit", unit: "%", value: 80 },
             position: { type: "unit", unit: "%", value: 60 },
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: { type: "unit", unit: "%", value: 80 },
           },
@@ -175,7 +245,12 @@ describe("parses linear-gradient", () => {
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
@@ -204,7 +279,12 @@ describe("parses linear-gradient", () => {
             hint: { type: "unit", unit: "%", value: 50 },
           },
           {
-            color: { alpha: 1, b: 0, g: 255, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
@@ -223,7 +303,12 @@ describe("parses linear-gradient", () => {
         sideOrCorner: { type: "keyword", value: "to bottom" },
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 128, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0.502, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: { type: "unit", unit: "%", value: 0 },
           },
@@ -237,7 +322,7 @@ describe("parses linear-gradient", () => {
     );
     if (parsed) {
       expect(formatLinearGradient(parsed)).toEqual(
-        "linear-gradient(to bottom, rgb(0 128 0 / 1) 0%, var(--accent))"
+        "linear-gradient(to bottom, rgb(0 128.01 0 / 1) 0%, var(--accent))"
       );
     }
   });
@@ -252,7 +337,12 @@ describe("parses linear-gradient", () => {
         sideOrCorner: undefined,
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: {
               type: "var",
@@ -261,7 +351,12 @@ describe("parses linear-gradient", () => {
             },
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: { type: "var", value: "end" },
           },
@@ -286,7 +381,12 @@ describe("parses linear-gradient", () => {
         sideOrCorner: undefined,
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: {
               type: "var",
@@ -295,7 +395,12 @@ describe("parses linear-gradient", () => {
             },
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -372,12 +477,22 @@ describe("parses linear-gradient", () => {
         sideOrCorner: undefined,
         stops: [
           {
-            color: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },
           {
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             hint: undefined,
             position: undefined,
           },

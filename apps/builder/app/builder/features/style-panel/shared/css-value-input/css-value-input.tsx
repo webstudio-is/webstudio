@@ -344,6 +344,7 @@ const itemToString = (item: CssValueInputValue | null) => {
   if (item.type === "intermediate" || item.type === "unit") {
     return String(item.value);
   }
+  console.log(item, toValue(item));
   return toValue(item);
 };
 
@@ -932,6 +933,7 @@ export const CssValueInput = ({
                             {toValue(item.fallback)}
                           </Text>
                         )}
+                        {/* @todo */}
                         {item.fallback?.type === "rgb" && (
                           <ColorThumb color={toValue(item.fallback)} />
                         )}
