@@ -344,7 +344,6 @@ const itemToString = (item: CssValueInputValue | null) => {
   if (item.type === "intermediate" || item.type === "unit") {
     return String(item.value);
   }
-  console.log(item, toValue(item));
   return toValue(item);
 };
 
