@@ -98,31 +98,28 @@ describe("Parse CSS value", () => {
   describe("Colors", () => {
     test("Color rgba values", () => {
       expect(parseCssValue("background-color", "rgba(0,0,0,0)")).toEqual({
-        type: "rgb",
+        type: "color",
+        colorSpace: "srgb",
         alpha: 0,
-        b: 0,
-        g: 0,
-        r: 0,
+        components: [0, 0, 0],
       });
     });
 
     test("modern format", () => {
       expect(parseCssValue("background-color", "rgb(99 102 241/0.5)")).toEqual({
-        type: "rgb",
-        r: 99,
-        g: 102,
-        b: 241,
+        type: "color",
+        colorSpace: "srgb",
         alpha: 0.5,
+        components: [0.3882, 0.4, 0.9451],
       });
     });
 
     test("Color rgba values", () => {
       expect(parseCssValue("background-color", "#00220011")).toEqual({
-        type: "rgb",
-        alpha: 0.07,
-        b: 0,
-        g: 34,
-        r: 0,
+        type: "color",
+        colorSpace: "srgb",
+        alpha: 0.0667,
+        components: [0, 0.1333, 0],
       });
     });
 
@@ -130,6 +127,37 @@ describe("Parse CSS value", () => {
       expect(parseCssValue("color", "red")).toEqual({
         type: "keyword",
         value: "red",
+      });
+    });
+
+    test("oklch color", () => {
+      expect(
+        parseCssValue("background-color", "oklch(59.686% 0.1009 29.234)")
+      ).toEqual({
+        type: "color",
+        colorSpace: "oklch",
+        alpha: 1,
+        components: [0.5969, 0.1009, 29.234],
+      });
+    });
+
+    test("oklch color with alpha", () => {
+      expect(
+        parseCssValue("background-color", "oklch(59.686% 0.1009 29.234 / 0.5)")
+      ).toEqual({
+        type: "color",
+        colorSpace: "oklch",
+        alpha: 0.5,
+        components: [0.5969, 0.1009, 29.234],
+      });
+    });
+
+    test("oklch color with modern format", () => {
+      expect(parseCssValue("color", "oklch(80% 0.15 240)")).toEqual({
+        type: "color",
+        colorSpace: "oklch",
+        alpha: 1,
+        components: [0.8, 0.15, 240],
       });
     });
   });
@@ -590,25 +618,22 @@ test("support unit in custom property", () => {
 
 test("support color in custom property", () => {
   expect(parseCssValue("--color", "rgb(61 77 4)")).toEqual({
-    type: "rgb",
-    r: 61,
-    g: 77,
-    b: 4,
+    type: "color",
+    colorSpace: "srgb",
     alpha: 1,
+    components: [0.2392, 0.302, 0.0157],
   });
   expect(parseCssValue("--color", "rgba(61, 77, 4, 0.5)")).toEqual({
-    type: "rgb",
-    r: 61,
-    g: 77,
-    b: 4,
+    type: "color",
+    colorSpace: "srgb",
     alpha: 0.5,
+    components: [0.2392, 0.302, 0.0157],
   });
   expect(parseCssValue("--color", "#3d4d04")).toEqual({
-    type: "rgb",
-    r: 61,
-    g: 77,
-    b: 4,
+    type: "color",
+    colorSpace: "srgb",
     alpha: 1,
+    components: [0.2392, 0.302, 0.0157],
   });
   expect(parseCssValue("--color", "red")).toEqual({
     type: "unparsed",
@@ -764,7 +789,12 @@ describe("parse shadows", () => {
           offsetX: { type: "unit", unit: "number", value: 0 },
           offsetY: { type: "unit", unit: "px", value: 60 },
           blur: { type: "unit", unit: "px", value: 80 },
-          color: { alpha: 0.6, b: 0, g: 0, r: 0, type: "rgb" },
+          color: {
+            type: "color",
+            colorSpace: "srgb",
+            alpha: 0.6,
+            components: [0, 0, 0],
+          },
         },
         {
           type: "shadow",
@@ -772,7 +802,12 @@ describe("parse shadows", () => {
           offsetX: { type: "unit", unit: "number", value: 0 },
           offsetY: { type: "unit", unit: "px", value: 45 },
           blur: { type: "unit", unit: "px", value: 26 },
-          color: { alpha: 0.14, b: 0, g: 0, r: 0, type: "rgb" },
+          color: {
+            type: "color",
+            colorSpace: "srgb",
+            alpha: 0.14,
+            components: [0, 0, 0],
+          },
         },
       ],
     });
@@ -797,7 +832,12 @@ describe("parse shadows", () => {
           offsetX: { type: "unit", unit: "number", value: 0 },
           offsetY: { type: "unit", unit: "number", value: 0 },
           blur: { type: "unit", unit: "px", value: 5 },
-          color: { alpha: 0.2, b: 0, g: 0, r: 0, type: "rgb" },
+          color: {
+            type: "color",
+            colorSpace: "srgb",
+            alpha: 0.2,
+            components: [0, 0, 0],
+          },
         },
         {
           type: "shadow",
@@ -805,7 +845,12 @@ describe("parse shadows", () => {
           offsetX: { type: "unit", unit: "number", value: 0 },
           offsetY: { type: "unit", unit: "number", value: 0 },
           blur: { type: "unit", unit: "px", value: 10 },
-          color: { alpha: 0.3, b: 0, g: 0, r: 0, type: "rgb" },
+          color: {
+            type: "color",
+            colorSpace: "srgb",
+            alpha: 0.3,
+            components: [0, 0, 0],
+          },
         },
         {
           type: "shadow",
@@ -813,7 +858,12 @@ describe("parse shadows", () => {
           offsetX: { type: "unit", unit: "number", value: 0 },
           offsetY: { type: "unit", unit: "number", value: 0 },
           blur: { type: "unit", unit: "px", value: 15 },
-          color: { alpha: 0.4, b: 0, g: 0, r: 0, type: "rgb" },
+          color: {
+            type: "color",
+            colorSpace: "srgb",
+            alpha: 0.4,
+            components: [0, 0, 0],
+          },
         },
       ],
     });
@@ -865,11 +915,17 @@ describe("parse filters", () => {
             offsetX: { type: "unit", unit: "px", value: 10 },
             offsetY: { type: "unit", unit: "px", value: 10 },
             blur: { type: "unit", unit: "px", value: 25 },
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              alpha: 1,
+              components: [0, 0, 1],
+            },
           },
         },
       ],
     });
+
     expect(
       parseCssValue("filter", "drop-shadow(10px 10px 25px  #0000FF)")
     ).toEqual({
@@ -884,7 +940,12 @@ describe("parse filters", () => {
             offsetX: { type: "unit", unit: "px", value: 10 },
             offsetY: { type: "unit", unit: "px", value: 10 },
             blur: { type: "unit", unit: "px", value: 25 },
-            color: { alpha: 1, b: 255, g: 0, r: 0, type: "rgb" },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              alpha: 1,
+              components: [0, 0, 1],
+            },
           },
         },
       ],

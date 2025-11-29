@@ -17,7 +17,12 @@ describe("parse radial-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -36,17 +41,32 @@ describe("parse radial-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 255, g: 255, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -67,12 +87,22 @@ describe("parse radial-gradient", () => {
         position: "center",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 165, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.6471, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 255, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 1, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -93,12 +123,22 @@ describe("parse radial-gradient", () => {
         position: "left top",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -117,12 +157,22 @@ describe("parse radial-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -141,12 +191,22 @@ describe("parse radial-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -165,12 +225,22 @@ describe("parse radial-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -191,12 +261,22 @@ describe("parse radial-gradient", () => {
         position: "40px 40px",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
@@ -217,12 +297,22 @@ describe("parse radial-gradient", () => {
         position: "10px 20px",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 10 },
             hint: { type: "unit", unit: "%", value: 40 },
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 80 },
             hint: undefined,
           },

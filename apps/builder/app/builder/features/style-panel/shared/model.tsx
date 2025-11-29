@@ -320,13 +320,24 @@ export const $availableVariables = computed(
 export const $availableUnitVariables = computed(
   $availableVariables,
   (availableVariables) =>
-    availableVariables.filter((value) => value.fallback?.type !== "rgb")
+    availableVariables.filter(
+      (value) =>
+        value.fallback?.type === "unit" ||
+        value.fallback?.type === "keyword" ||
+        value.fallback?.type === "unparsed"
+    )
 );
 
 export const $availableColorVariables = computed(
   $availableVariables,
   (availableVariables) =>
-    availableVariables.filter((value) => value.fallback?.type !== "unit")
+    availableVariables.filter(
+      (value) =>
+        value.fallback?.type === "rgb" ||
+        value.fallback?.type === "color" ||
+        value.fallback?.type === "keyword" ||
+        value.fallback?.type === "unparsed"
+    )
 );
 
 export const createComputedStyleDeclStore = (property: CssProperty) => {

@@ -438,7 +438,12 @@ test("compute custom properties in shadows", () => {
         offsetX: { type: "unit", unit: "px", value: 10 },
         offsetY: { type: "unit", unit: "px", value: 20 },
         blur: { type: "unit", value: 30, unit: "px" },
-        color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+        color: {
+          type: "color",
+          colorSpace: "srgb",
+          components: [1, 0, 0],
+          alpha: 1,
+        },
       },
     ],
   });

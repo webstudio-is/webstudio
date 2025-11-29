@@ -1,12 +1,11 @@
 import * as csstree from "css-tree";
-import { parseCssValue } from "../parse-css-value";
+import { parseColor, parseCssValue } from "../parse-css-value";
 import {
   type UnitValue,
   type Unit,
   type VarValue,
   toValue,
 } from "@webstudio-is/css-engine";
-import Color from "colorjs.io";
 import type { GradientColorValue, GradientStop } from "./types";
 
 export const angleUnitIdentifiers = ["deg", "grad", "rad", "turn"] as const;
@@ -105,32 +104,19 @@ export const getColor = (
   ) {
     return;
   }
-
   const css = csstree.generate(node).trim();
   if (css.length === 0) {
     return;
   }
-
   const parsed = parseCssValue("color", css);
-  if (parsed.type === "rgb" || parsed.type === "var") {
+  if (
+    parsed.type === "color" ||
+    parsed.type === "rgb" ||
+    parsed.type === "var"
+  ) {
     return parsed;
   }
-  if (parsed.type === "keyword") {
-    try {
-      const color = new Color(parsed.value);
-      const [r, g, b] = color.coords;
-      const alpha = color.alpha;
-      return {
-        type: "rgb",
-        r: r * 255,
-        g: g * 255,
-        b: b * 255,
-        alpha: alpha ?? 1,
-      } satisfies GradientColorValue;
-    } catch {
-      // Invalid color
-    }
-  }
+  return parseColor(css);
 };
 
 export const isColorStop = (node: csstree.CssNode): boolean =>

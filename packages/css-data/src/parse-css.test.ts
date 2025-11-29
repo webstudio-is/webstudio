@@ -17,7 +17,12 @@ describe("Parse CSS", () => {
       {
         selector: ".test",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -147,7 +152,12 @@ describe("Parse CSS", () => {
       {
         selector: ".test",
         property: "background-color",
-        value: { alpha: 1, b: 252, g: 255, r: 235, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [0.9216, 1, 0.9882],
+        },
       },
     ]);
   });
@@ -200,7 +210,12 @@ describe("Parse CSS", () => {
         selector: "a",
         state: ":hover",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -210,7 +225,12 @@ describe("Parse CSS", () => {
       {
         selector: '[class^="a"]',
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -222,7 +242,12 @@ describe("Parse CSS", () => {
         selector: ":first-pseudo",
         state: ":my-state",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -233,7 +258,12 @@ describe("Parse CSS", () => {
         selector: "input",
         state: "::placeholder",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -243,13 +273,23 @@ describe("Parse CSS", () => {
       {
         selector: "a",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
       {
         selector: "a",
         state: ":hover",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -260,13 +300,23 @@ describe("Parse CSS", () => {
         selector: "a",
         state: ":active",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
       {
         selector: "a",
         state: ":hover",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -286,11 +336,10 @@ describe("Parse CSS", () => {
         state: ":hover",
         property: "color",
         value: {
+          type: "color",
+          colorSpace: "srgb",
           alpha: 1,
-          b: 0,
-          g: 0,
-          r: 255,
-          type: "rgb",
+          components: [1, 0, 0],
         },
       },
     ]);
@@ -495,7 +544,12 @@ describe("Parse CSS", () => {
       {
         selector: "a > b",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -505,7 +559,12 @@ describe("Parse CSS", () => {
       {
         selector: ".a b",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -515,7 +574,12 @@ describe("Parse CSS", () => {
       {
         selector: "a b c.d",
         property: "color",
-        value: { alpha: 1, b: 0, g: 0, r: 255, type: "rgb" },
+        value: {
+          type: "color",
+          colorSpace: "srgb",
+          alpha: 1,
+          components: [1, 0, 0],
+        },
       },
     ]);
   });
@@ -567,7 +631,12 @@ test("parse incorrectly unprefixed tap-highlight-color", () => {
     {
       selector: "a",
       property: "-webkit-tap-highlight-color",
-      value: { alpha: 0, b: 0, g: 0, r: 0, type: "rgb" },
+      value: {
+        type: "color",
+        colorSpace: "srgb",
+        alpha: 0,
+        components: [0, 0, 0],
+      },
     },
     {
       selector: "b",

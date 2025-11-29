@@ -2567,7 +2567,7 @@ describe("Styles", () => {
           line-height: 44px
         }
         Heading {
-          color: rgb(219 24 24 / 1)
+          color: hsl(0 80% 47.78% / 1)
         }
       }"
     `);
@@ -2787,7 +2787,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         d1 {
-          color: rgb(209 36 36 / 1)
+          color: hsl(0 70.45% 48.11% / 1)
         }
         d2 {
           font-size: 200px
@@ -2918,24 +2918,24 @@ describe("Styles", () => {
           transform: translate3d(7px, 74px, 16px)
         }
         x:hover {
-          background-color: rgb(199 16 16 / 1)
+          background-color: hsl(0 85.19% 42.12% / 1)
         }
       }
       @media all and (max-width: 479px) {
         x:active {
-          background-color: rgb(189 75 75 / 1)
+          background-color: hsl(0 46.06% 51.8% / 1)
         }
         x:focus {
-          background-color: rgb(83 26 170 / 1)
+          background-color: hsl(264 73.75% 38.37% / 1)
         }
         x:focus-visible {
-          background-color: rgb(98 67 145 / 1)
+          background-color: hsl(264 36.36% 41.56% / 1)
         }
         x:hover {
-          background-color: rgb(214 87 87 / 1)
+          background-color: hsl(0 60.99% 58.99% / 1)
         }
         x:visited {
-          background-color: rgb(197 18 18 / 1)
+          background-color: hsl(0 83.67% 42.1% / 1)
         }
       }"
     `);
@@ -3001,27 +3001,27 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         Div Block 2 {
-          background-color: rgb(0 208 255 / 1)
+          background-color: hsl(191 100% 50% / 1)
         }
       }
       @media all and (max-width: 991px) {
         Div Block 2 {
-          background-color: rgb(68 0 255 / 1)
+          background-color: hsl(256 100% 50% / 1)
         }
       }
       @media all and (max-width: 767px) {
         Div Block 2 {
-          background-color: rgb(255 0 221 / 1)
+          background-color: hsl(308 100% 50% / 1)
         }
       }
       @media all and (max-width: 479px) {
         Div Block 2 {
-          background-color: rgb(255 0 4 / 1)
+          background-color: hsl(359 100% 50% / 1)
         }
       }
       @media all and (min-width: 1280px) {
         Div Block 2 {
-          background-color: rgb(0 255 128 / 1)
+          background-color: hsl(150 100% 50% / 1)
         }
       }"
     `);

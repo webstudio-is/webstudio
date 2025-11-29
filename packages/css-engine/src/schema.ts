@@ -66,6 +66,7 @@ export type RgbValue = z.infer<typeof RgbValue>;
 
 export const ColorValue = z.object({
   type: z.literal("color"),
+  // all these color spaces are defined by design tokens specification
   colorSpace: z.union([
     z.literal("srgb"),
     z.literal("p3"),

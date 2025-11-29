@@ -77,6 +77,7 @@ export const ColorPickerControl = ({
         }
         if (
           styleValue.type === "rgb" ||
+          styleValue.type === "color" ||
           styleValue.type === "keyword" ||
           styleValue.type === "var" ||
           styleValue.type === "invalid"
@@ -101,6 +102,7 @@ export const ColorPickerControl = ({
       onChangeComplete={({ value }) => {
         if (
           value.type === "rgb" ||
+          value.type === "color" ||
           value.type === "keyword" ||
           value.type === "var"
         ) {
