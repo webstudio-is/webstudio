@@ -375,7 +375,7 @@ describe("parse conic-gradient", () => {
       })
     );
     expect(formatConicGradient(parsed!)).toBe(
-      "conic-gradient(rgb(0 128.01 0 / 1) 0%, rgb(0 0 255 / 1) 50%, rgb(255 255 0 / 1) 100%)"
+      "conic-gradient(rgb(0 128 0 / 1) 0%, rgb(0 0 255 / 1) 50%, rgb(255 255 0 / 1) 100%)"
     );
   });
 

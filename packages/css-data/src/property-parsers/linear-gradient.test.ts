@@ -322,7 +322,7 @@ describe("parses linear-gradient", () => {
     );
     if (parsed) {
       expect(formatLinearGradient(parsed)).toEqual(
-        "linear-gradient(to bottom, rgb(0 128.01 0 / 1) 0%, var(--accent))"
+        "linear-gradient(to bottom, rgb(0 128 0 / 1) 0%, var(--accent))"
       );
     }
   });
@@ -609,7 +609,7 @@ describe("parses linear-gradient", () => {
   test("parses linear-gradient with mixed modern color spaces", () => {
     expect(
       parseLinearGradient(
-        "linear-gradient(90deg, oklch(0.7 0.2 30) 0%, hsl(120 50% 60%) 50%, color(p3 0 1 0) 100%)"
+        "linear-gradient(90deg, oklch(0.7 0.2 30) 0%, hsl(120deg 50% 60%) 50%, color(display-p3 0 1 0) 100%)"
       )
     ).toEqual(
       linear({

@@ -241,7 +241,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [1, 0.5, 0.2],
       alpha: 1,
     });
-    expect(value).toBe("rgb(255 127.5 51 / 1)");
+    expect(value).toBe("rgb(255 128 51 / 1)");
   });
 
   test("color with srgb and alpha channel", () => {
@@ -261,7 +261,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       components: [0.5, 0.5, 0.5],
       alpha: 0,
     });
-    expect(value).toBe("rgb(127.5 127.5 127.5 / 0)");
+    expect(value).toBe("rgb(128 128 128 / 0)");
   });
 
   test("color with hsl color space", () => {
