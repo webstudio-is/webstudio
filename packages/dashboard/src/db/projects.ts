@@ -1,4 +1,3 @@
-import type { SetNonNullable } from "type-fest";
 import {
   AuthorizationError,
   type AppContext,
@@ -13,11 +12,7 @@ type DomainVirtual = {
 const fetchAndMapDomains = async <
   T extends {
     id: string | null;
-    title: string | null;
-    domain: string | null;
-    isDeleted: boolean | null;
-    createdAt: string | null;
-    marketplaceApprovalStatus: string | null;
+    [key: string]: unknown;
   },
 >(
   projects: T[],
@@ -27,15 +22,7 @@ const fetchAndMapDomains = async <
     .map((project) => project.id)
     .filter((id): id is string => id !== null);
 
-  type ProjectWithDomains = SetNonNullable<
-    T,
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
-  > & {
+  type ProjectWithDomains = T & {
     domainsVirtual: DomainVirtual[];
   };
 

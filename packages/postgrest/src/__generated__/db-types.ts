@@ -416,6 +416,7 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
+          updatedAt: string;
         };
         Insert: {
           buildId: string;
@@ -424,6 +425,7 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
+          updatedAt: string;
         };
         Update: {
           buildId?: string;
@@ -432,6 +434,7 @@ export type Database = {
           domainsVirtualId?: string;
           projectId?: string;
           publishStatus?: Database["public"]["Enums"]["PublishStatus"];
+          updatedAt?: string;
         };
         Relationships: [
           {
@@ -948,23 +951,6 @@ export type Database = {
       };
       latestBuildVirtual:
         | {
-            Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
-            Returns: {
-              buildId: string;
-              createdAt: string;
-              domain: string;
-              domainsVirtualId: string;
-              projectId: string;
-              publishStatus: Database["public"]["Enums"]["PublishStatus"];
-            };
-            SetofOptions: {
-              from: '"Project"';
-              to: "latestBuildVirtual";
-              isOneToOne: true;
-              isSetofReturn: true;
-            };
-          }
-        | {
             Args: { "": Database["public"]["Tables"]["domainsVirtual"]["Row"] };
             Returns: {
               buildId: string;
@@ -973,9 +959,28 @@ export type Database = {
               domainsVirtualId: string;
               projectId: string;
               publishStatus: Database["public"]["Enums"]["PublishStatus"];
+              updatedAt: string;
             };
             SetofOptions: {
               from: '"domainsVirtual"';
+              to: "latestBuildVirtual";
+              isOneToOne: true;
+              isSetofReturn: true;
+            };
+          }
+        | {
+            Args: { "": Database["public"]["Tables"]["Project"]["Row"] };
+            Returns: {
+              buildId: string;
+              createdAt: string;
+              domain: string;
+              domainsVirtualId: string;
+              projectId: string;
+              publishStatus: Database["public"]["Enums"]["PublishStatus"];
+              updatedAt: string;
+            };
+            SetofOptions: {
+              from: '"Project"';
               to: "latestBuildVirtual";
               isOneToOne: true;
               isSetofReturn: true;
@@ -990,6 +995,7 @@ export type Database = {
           domainsVirtualId: string;
           projectId: string;
           publishStatus: Database["public"]["Enums"]["PublishStatus"];
+          updatedAt: string;
         };
         SetofOptions: {
           from: '"Project"';

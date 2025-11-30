@@ -16,12 +16,7 @@ import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
 import { Tag } from "./tags";
-import {
-  SortSelect,
-  sortProjects,
-  type SortField,
-  type SortOrder,
-} from "./sort";
+import { SortSelect, sortProjects, type SortState } from "./sort";
 
 export const ProjectsGrid = ({
   projects,
@@ -65,21 +60,16 @@ type ProjectsProps = {
 export const Projects = (props: ProjectsProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
-  const sortBy = (searchParams.get("sortBy") as SortField) || "updatedAt";
-  const order = (searchParams.get("order") as SortOrder) || "desc";
 
-  const handleSortChange = (newSortBy: SortField, newOrder: SortOrder) => {
+  const sortState: SortState = {
+    sortBy: searchParams.get("sortBy") as SortState["sortBy"],
+    order: searchParams.get("order") as SortState["order"],
+  };
+
+  const handleSortChange = (newSortState: Required<SortState>) => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set("sortBy", newSortBy);
-
-    // When switching to alphabetical sorting, default to A→Z (asc)
-    // When switching to date sorting, default to newest first (desc)
-    if (newSortBy !== sortBy) {
-      newParams.set("order", newSortBy === "title" ? "asc" : "desc");
-    } else {
-      newParams.set("order", newOrder);
-    }
-
+    newParams.set("sortBy", newSortState.sortBy);
+    newParams.set("order", newSortState.order);
     setSearchParams(newParams);
   };
 
@@ -90,7 +80,7 @@ export const Projects = (props: ProjectsProps) => {
       setIsSubsetOf(new Set(selectedTags), new Set(project.tags))
     );
   }
-  projects = sortProjects(projects, sortBy, order);
+  projects = sortProjects(projects, sortState);
 
   return (
     <Main>
@@ -99,11 +89,7 @@ export const Projects = (props: ProjectsProps) => {
           Projects
         </Text>
         <Flex gap="2">
-          <SortSelect
-            sortBy={sortBy}
-            order={order}
-            onSortChange={handleSortChange}
-          />
+          <SortSelect value={sortState} onValueChange={handleSortChange} />
           <CreateProject />
         </Flex>
       </Header>
