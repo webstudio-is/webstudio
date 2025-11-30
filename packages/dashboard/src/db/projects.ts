@@ -11,16 +11,17 @@ type DomainVirtual = {
 
 const fetchAndMapDomains = async <
   T extends {
-    id: string | null;
+    id: string;
+    title: string;
+    domain: string;
+    createdAt: string;
     [key: string]: unknown;
   },
 >(
   projects: T[],
   context: AppContext
 ) => {
-  const projectIds = projects
-    .map((project) => project.id)
-    .filter((id): id is string => id !== null);
+  const projectIds = projects.map((project) => project.id);
 
   type ProjectWithDomains = T & {
     domainsVirtual: DomainVirtual[];
@@ -99,7 +100,18 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw data.error;
   }
 
-  return await fetchAndMapDomains(data.data, context);
+  // Type assertion: These fields are never null in practice (come from Project table which has them as required)
+  return await fetchAndMapDomains(
+    data.data as Array<
+      (typeof data.data)[number] & {
+        id: string;
+        title: string;
+        domain: string;
+        createdAt: string;
+      }
+    >,
+    context
+  );
 };
 
 export const findManyByIds = async (
@@ -120,5 +132,16 @@ export const findManyByIds = async (
     throw data.error;
   }
 
-  return await fetchAndMapDomains(data.data, context);
+  // Type assertion: These fields are never null in practice (come from Project table which has them as required)
+  return await fetchAndMapDomains(
+    data.data as Array<
+      (typeof data.data)[number] & {
+        id: string;
+        title: string;
+        domain: string;
+        createdAt: string;
+      }
+    >,
+    context
+  );
 };
