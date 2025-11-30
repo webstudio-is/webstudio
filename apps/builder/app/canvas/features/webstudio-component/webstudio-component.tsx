@@ -17,6 +17,7 @@ import { mergeRefs } from "@react-aria/utils";
 import type {
   Instance,
   Instances,
+  Invoker,
   Prop,
   WsComponentMeta,
 } from "@webstudio-is/sdk";
@@ -348,6 +349,29 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
 };
 
 /**
+ * HTML Invoker Commands - dispatch command events to target elements
+ * This is a polyfill for browsers that don't support native HTML Invoker Commands
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API
+ */
+const createInvokerClickHandler = (invoker: Invoker) => {
+  return () => {
+    const target = document.querySelector(
+      `[data-ws-id="${CSS.escape(invoker.targetInstanceId)}"]`
+    );
+    if (target) {
+      // Dispatch "command" event with command name in detail
+      // Compatible with native CommandEvent when it becomes available
+      target.dispatchEvent(
+        new CustomEvent("command", {
+          detail: { command: invoker.command },
+          bubbles: false,
+        })
+      );
+    }
+  };
+};
+
+/**
  * We combine Radix's implicit event handlers with user-defined ones,
  * such as onClick or onSubmit. For instance, a Button within
  * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
@@ -365,6 +389,27 @@ const mergeProps = (
 ) => {
   // merge props into single object
   const props = { ...restProps, ...instanceProps };
+
+  // Handle HTML Invoker Commands prop
+  const invoker = instanceProps.invoker as Invoker | undefined;
+  if (invoker && invoker.targetInstanceId && invoker.command) {
+    // Add HTML Invoker attributes for native support
+    props.commandfor = invoker.targetInstanceId;
+    props.command = invoker.command;
+    // Remove the invoker prop (not a valid HTML attribute)
+    delete props.invoker;
+
+    // Add polyfill click handler for browsers without native support
+    if (callbackStrategy === "merge") {
+      const invokerHandler = createInvokerClickHandler(invoker);
+      const existingOnClick = props.onClick;
+      props.onClick = (...args: unknown[]) => {
+        existingOnClick?.(...args);
+        invokerHandler();
+      };
+    }
+  }
+
   for (const propName of Object.keys(props)) {
     const restPropValue = restProps[propName];
     const instancePropValue = instanceProps[propName];

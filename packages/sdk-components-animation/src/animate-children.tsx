@@ -9,6 +9,33 @@ import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { toValue } from "@webstudio-is/css-engine";
 
+/**
+ * CommandEvent interface - native HTML Invoker Commands API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API
+ */
+interface CommandEvent extends Event {
+  command: string;
+  source: Element | null;
+}
+
+/**
+ * Extract command from event - supports both native CommandEvent and polyfill CustomEvent
+ */
+const getCommandFromEvent = (event: Event): string | undefined => {
+  // Native CommandEvent
+  if (
+    "command" in event &&
+    typeof (event as CommandEvent).command === "string"
+  ) {
+    return (event as CommandEvent).command;
+  }
+  // Polyfill CustomEvent with command in detail
+  if (event instanceof CustomEvent && event.detail?.command) {
+    return event.detail.command as string;
+  }
+  return undefined;
+};
+
 const isEventAction = (
   action: AnimationAction | undefined
 ): action is AnimationActionEvent => {
@@ -168,10 +195,15 @@ type ScrollProps = {
   debug?: boolean;
   children?: React.ReactNode;
   action: AnimationAction;
+  /**
+   * Instance ID used for HTML Invoker Commands targeting
+   * The component sets this as its HTML id attribute so buttons can use commandfor
+   */
+  "data-ws-id"?: string;
 };
 
 export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
-  ({ debug = false, action, ...props }, ref) => {
+  ({ debug = false, action, "data-ws-id": instanceId, ...props }, ref) => {
     const localRef = useRef<ElementRef<"div"> | null>(null);
     const resolvedRef = (node: ElementRef<"div"> | null) => {
       localRef.current = node;
@@ -261,10 +293,14 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
             if (trigger.kind !== event.type) {
               return true;
             }
-            if (trigger.key === undefined) {
-              return true;
+            // Only keydown/keyup triggers have a key property
+            if (trigger.kind === "keydown" || trigger.kind === "keyup") {
+              if (trigger.key === undefined) {
+                return true;
+              }
+              return trigger.key === (event as KeyboardEvent).key;
             }
-            return trigger.key === (event as KeyboardEvent).key;
+            return true;
           }) === false
         ) {
           return;
@@ -282,19 +318,33 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
       const listeners: Array<[EventTarget, string, EventListener]> = [];
 
       for (const trigger of eventAction.triggers) {
-        const eventName =
-          trigger.kind === "custom" ? trigger.customName : trigger.kind;
-        if (eventName === undefined) {
+        // Handle HTML Invoker Command triggers
+        if (trigger.kind === "command") {
+          const commandListener: EventListener = (event) => {
+            const receivedCommand = getCommandFromEvent(event);
+            // Only trigger if command matches
+            if (receivedCommand === trigger.command) {
+              handler(event);
+            }
+          };
+          // Listen for native "command" event (HTML Invoker Commands API)
+          host.addEventListener("command", commandListener);
+          listeners.push([host, "command", commandListener]);
           continue;
         }
+
+        // Handle standard DOM event triggers
+        const eventName = trigger.kind;
         const listener: EventListener = (event) => {
-          if (
-            (trigger.kind === "keydown" || trigger.kind === "keyup") &&
-            trigger.key !== undefined &&
-            "key" in event &&
-            trigger.key !== (event as KeyboardEvent).key
-          ) {
-            return;
+          // Filter by key for keydown/keyup triggers
+          if (trigger.kind === "keydown" || trigger.kind === "keyup") {
+            if (
+              trigger.key !== undefined &&
+              "key" in event &&
+              trigger.key !== (event as KeyboardEvent).key
+            ) {
+              return;
+            }
           }
           handler(event);
         };
@@ -376,7 +426,16 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
       };
     }, [action, compiledAnimations]);
 
-    return <div ref={resolvedRef} style={{ display: "contents" }} {...props} />;
+    return (
+      <div
+        ref={resolvedRef}
+        style={{ display: "contents" }}
+        // Set HTML id from instance ID for HTML Invoker Commands targeting
+        id={instanceId}
+        data-ws-id={instanceId}
+        {...props}
+      />
+    );
   }
 );
 

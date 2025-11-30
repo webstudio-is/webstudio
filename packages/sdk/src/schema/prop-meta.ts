@@ -189,6 +189,17 @@ const AnimationAction = z.object({
   defaultValue: z.undefined().optional(),
 });
 
+/**
+ * HTML Invoker Commands - enables declarative button-to-animation connections
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API
+ */
+const Invoker = z.object({
+  ...common,
+  control: z.literal("invoker"),
+  type: z.literal("invoker"),
+  defaultValue: z.undefined().optional(),
+});
+
 export const PropMeta = z.union([
   Tag,
   Number,
@@ -212,6 +223,7 @@ export const PropMeta = z.union([
   Action,
   TextContent,
   AnimationAction,
+  Invoker,
 ]);
 
 export type PropMeta = z.infer<typeof PropMeta>;

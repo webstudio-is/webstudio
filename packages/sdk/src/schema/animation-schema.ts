@@ -251,22 +251,61 @@ export const eventAnimationSchema = baseAnimation.merge(
   })
 );
 
-// Event Trigger Schema
-export const eventTriggerSchema = z.object({
-  kind: z.union([
-    z.literal("click"),
-    z.literal("dblclick"),
-    z.literal("pointerenter"),
-    z.literal("pointerleave"),
-    z.literal("focus"),
-    z.literal("blur"),
-    z.literal("keydown"),
-    z.literal("keyup"),
-    z.literal("custom"),
-  ]),
-  key: z.string().optional(), // For keydown/keyup events
-  customName: z.string().optional(), // For custom events
-});
+/**
+ * Event Trigger Kinds - DOM events that can trigger animations
+ */
+export const EVENT_TRIGGER_KINDS = [
+  "click",
+  "dblclick",
+  "pointerenter",
+  "pointerleave",
+  "focus",
+  "blur",
+  "keydown",
+  "keyup",
+] as const;
+
+export type EventTriggerKind = (typeof EVENT_TRIGGER_KINDS)[number];
+
+/**
+ * Command string validation - must start with "--" (HTML Invoker Commands standard)
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API
+ *
+ * Note: The schema allows incomplete values (like "--") during editing.
+ * Use isCompleteCommandString() to check if a command is valid for rendering.
+ */
+export const commandStringSchema = z.string();
+
+/**
+ * Check if a command string is complete and valid for rendering
+ * Must be at least 3 characters and start with "--"
+ */
+export const isCompleteCommandString = (command: string): boolean => {
+  return command.length >= 3 && command.startsWith("--");
+};
+
+/**
+ * Event Trigger Schema - supports both DOM events and HTML Invoker Commands
+ *
+ * DOM triggers: click, pointerenter, keydown, etc.
+ * Command triggers: HTML Invoker Commands (commandfor/command attributes)
+ */
+export const eventTriggerSchema = z.discriminatedUnion("kind", [
+  // Standard DOM event triggers
+  z.object({ kind: z.literal("click") }),
+  z.object({ kind: z.literal("dblclick") }),
+  z.object({ kind: z.literal("pointerenter") }),
+  z.object({ kind: z.literal("pointerleave") }),
+  z.object({ kind: z.literal("focus") }),
+  z.object({ kind: z.literal("blur") }),
+  z.object({ kind: z.literal("keydown"), key: z.string().optional() }),
+  z.object({ kind: z.literal("keyup"), key: z.string().optional() }),
+  // HTML Invoker Command trigger - receives commands from buttons with commandfor/command
+  z.object({
+    kind: z.literal("command"),
+    command: commandStringSchema,
+  }),
+]);
 
 // Event Command Schema
 export const eventCommandSchema = z.union([
@@ -325,3 +364,4 @@ export type EventAnimation = z.infer<typeof eventAnimationSchema>;
 export type EventTrigger = z.infer<typeof eventTriggerSchema>;
 export type EventCommand = z.infer<typeof eventCommandSchema>;
 export type InsetUnitValue = z.infer<typeof insetUnitValueSchema>;
+export type CommandString = z.infer<typeof commandStringSchema>;

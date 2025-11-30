@@ -1,5 +1,6 @@
 import isEqual from "fast-deep-equal";
-import { forwardRef, useState, type ComponentProps } from "react";
+import { forwardRef, useMemo, useState, type ComponentProps } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Grid,
   theme,
@@ -45,6 +46,38 @@ import { FieldLabel } from "../../property-label";
 import type { PropAndMeta } from "../use-props-logic";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
+import { $instances } from "~/shared/nano-states";
+
+/**
+ * Hook to find all elements that can be animated (for Custom Target dropdown)
+ * Returns all instances except AnimateChildren (which is the animation group itself)
+ */
+const useAnimatableElements = () => {
+  const instances = useStore($instances);
+  return useMemo(() => {
+    const elements: Array<{ id: string; label: string; component: string }> =
+      [];
+    for (const [id, instance] of instances) {
+      // Skip animation groups - they contain animations, not animate themselves
+      if (
+        instance.component ===
+        "@webstudio-is/sdk-components-animation:AnimateChildren"
+      ) {
+        continue;
+      }
+      // Get a readable component name
+      const componentName = instance.component.includes(":")
+        ? instance.component.split(":")[1]
+        : instance.component;
+      elements.push({
+        id,
+        label: instance.label || componentName || "Element",
+        component: componentName || "Element",
+      });
+    }
+    return elements;
+  }, [instances]);
+};
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -93,7 +126,7 @@ const eventTriggerKinds = [
   "blur",
   "keydown",
   "keyup",
-  "custom",
+  "command",
 ] as const;
 
 const animationAxisDescription: Record<
@@ -248,6 +281,8 @@ const AnimationConfig = ({
   onChange: ((value: AnimationAction, isEphemeral: boolean) => void) &
     ((value: undefined, isEphemeral: true) => void);
 }) => {
+  const animatableElements = useAnimatableElements();
+
   if (value.type === "event") {
     const triggers =
       value.triggers?.length === 0 || value.triggers === undefined
@@ -328,7 +363,7 @@ const AnimationConfig = ({
         <Grid gap={2}>
           <Text variant="titles">Target Configuration</Text>
           <Grid gap={2} columns={2} align="center">
-            <FieldLabel description="Choose which element this command animates. Use 'Self' to animate the current element, or 'Custom' to target another element by its instance ID or timeline name.">
+            <FieldLabel description="Choose which element this animation affects. 'Self' animates the Animation Group's children. 'Custom' lets you select any other element on the page to animate.">
               Element
             </FieldLabel>
             <Grid gap={2}>
@@ -357,17 +392,31 @@ const AnimationConfig = ({
                 </Tooltip>
               </ToggleGroup>
               {targetMode === "custom" && (
-                <InputField
-                  aria-label="Custom target selector"
-                  value={targetValue === "self" ? "" : targetValue}
-                  placeholder="e.g., hero-animation"
-                  onChange={(event) => {
-                    onChange(
-                      { ...value, target: event.currentTarget.value },
-                      false
-                    );
-                  }}
-                />
+                <Box css={{ minWidth: 0 }}>
+                  <Select
+                    options={animatableElements.map((el) => el.id)}
+                    getLabel={(id) => {
+                      const element = animatableElements.find(
+                        (el) => el.id === id
+                      );
+                      if (element) {
+                        return element.label !== element.component
+                          ? `${element.label} (${element.component})`
+                          : element.component;
+                      }
+                      return "Select element";
+                    }}
+                    value={
+                      targetValue === "self" || targetValue === ""
+                        ? undefined
+                        : targetValue
+                    }
+                    onChange={(target) => {
+                      onChange({ ...value, target }, false);
+                    }}
+                    placeholder="Select element to animate"
+                  />
+                </Box>
               )}
             </Grid>
           </Grid>
@@ -460,8 +509,8 @@ const AnimationConfig = ({
           </Grid>
 
           <Grid gap={2} columns={2} align="center">
-            <FieldLabel description="When enabled, animations won't play for users who prefer reduced motion.">
-              Reduced Motion
+            <FieldLabel description="Respects the user's system preference for reduced motion (prefers-reduced-motion). When enabled, animations are disabled for users with vestibular motion disorders, epilepsy, or motion sensitivity. Keep this ON for accessibility compliance (WCAG 2.1).">
+              Respect Reduced Motion
             </FieldLabel>
             <Flex align="center" gap={2} justify="end">
               <Switch
@@ -513,12 +562,18 @@ const AnimationConfig = ({
                           blur: "Blur",
                           keydown: "Key Down",
                           keyup: "Key Up",
-                          custom: "Custom Event",
+                          command: "Command",
                         };
                         return labels[kind];
                       }}
                       onChange={(kind) => {
-                        updateTrigger(index, { kind });
+                        if (kind === "command") {
+                          updateTrigger(index, { kind, command: "--" });
+                        } else if (kind === "keydown" || kind === "keyup") {
+                          updateTrigger(index, { kind, key: undefined });
+                        } else {
+                          updateTrigger(index, { kind });
+                        }
                       }}
                     />
 
@@ -553,15 +608,20 @@ const AnimationConfig = ({
                     />
                   )}
 
-                  {trigger.kind === "custom" && (
+                  {trigger.kind === "command" && (
                     <InputField
-                      aria-label="Custom event name"
-                      placeholder="e.g., slideChange, modalOpen"
-                      value={trigger.customName ?? ""}
+                      aria-label="Command name"
+                      placeholder="e.g., --play-intro, --toggle-menu"
+                      value={"command" in trigger ? trigger.command : "--"}
                       onChange={(event) => {
+                        let command = event.currentTarget.value;
+                        // Ensure command starts with --
+                        if (!command.startsWith("--")) {
+                          command = `--${command.replace(/^-+/, "")}`;
+                        }
                         updateTrigger(index, {
-                          ...trigger,
-                          customName: event.currentTarget.value,
+                          kind: "command",
+                          command,
                         });
                       }}
                     />

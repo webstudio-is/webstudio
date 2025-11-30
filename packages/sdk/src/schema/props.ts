@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { animationActionSchema } from "./animation-schema";
+import { invokerSchema } from "./invoker-schema";
 
 const PropId = z.string();
 
@@ -85,6 +86,12 @@ export const Prop = z.union([
     ...baseProp,
     type: z.literal("animationAction"),
     value: animationActionSchema,
+  }),
+  // HTML Invoker Commands - enables buttons to trigger animations on other elements
+  z.object({
+    ...baseProp,
+    type: z.literal("invoker"),
+    value: invokerSchema,
   }),
 ]);
 

@@ -42,6 +42,8 @@ export type {
   EventAnimation,
   EventTrigger,
   EventCommand,
+  EventTriggerKind,
+  CommandString,
   InsetUnitValue,
   DurationUnitValue,
   TimeUnit,
@@ -55,9 +57,20 @@ export {
   eventActionSchema,
   eventTriggerSchema,
   eventCommandSchema,
+  commandStringSchema,
+  isCompleteCommandString,
   rangeUnitValueSchema,
   animationKeyframeSchema,
   insetUnitValueSchema,
   durationUnitValueSchema,
   RANGE_UNITS,
+  EVENT_TRIGGER_KINDS,
 } from "./schema/animation-schema";
+
+// HTML Invoker Commands
+export type { Invoker } from "./schema/invoker-schema";
+export {
+  invokerSchema,
+  isValidCommand,
+  isCompleteInvoker,
+} from "./schema/invoker-schema";

@@ -82,6 +82,18 @@ const getStartingValue = (
       value: [],
     };
   }
+
+  // Invoker: provide empty initial values (schema now allows empty strings)
+  // The component generator will skip rendering if values are incomplete
+  if (meta.type === "invoker") {
+    return {
+      type: "invoker",
+      value: {
+        targetInstanceId: "",
+        command: "--",
+      },
+    };
+  }
 };
 
 const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
@@ -107,6 +119,12 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       return {
         type: "animationAction",
         control: "animationAction",
+        required: false,
+      };
+    case "invoker":
+      return {
+        type: "invoker",
+        control: "invoker",
         required: false,
       };
     case "json":

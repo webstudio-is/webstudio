@@ -78,6 +78,10 @@ export type PropValue =
   | {
       type: "animationAction";
       value: Extract<Prop, { type: "animationAction" }>["value"];
+    }
+  | {
+      type: "invoker";
+      value: Extract<Prop, { type: "invoker" }>["value"];
     };
 
 // Weird code is to make type distributive
@@ -458,6 +462,25 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
   throw Error("impossible case");
 };
 
+/**
+ * Invoker prop meta - enables any HTML element to trigger animations
+ * on target Animation Group elements using HTML Invoker Commands.
+ *
+ * This implements the HTML Invoker Commands API which allows declarative
+ * button-to-element command passing without JavaScript. The `invoker` prop
+ * generates `commandfor` and `command` HTML attributes.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Invoker_Commands_API
+ * @see https://open-ui.org/components/invokers.explainer/
+ */
+const invokerPropMeta: PropMeta = {
+  required: false,
+  control: "invoker",
+  type: "invoker",
+  description:
+    "Trigger animations on an Animation Group when this element is clicked.",
+};
+
 export const $selectedInstancePropsMetas = computed(
   [$selectedInstance, $registeredComponentMetas, $instanceTags],
   (instance, metas, instanceTags): Map<string, PropMeta> => {
@@ -479,6 +502,9 @@ export const $selectedInstancePropsMetas = computed(
             propsMetas.set(attribute.name, attributeToMeta(attribute));
           }
         }
+        // Add invoker prop as a global attribute for HTML Invoker Commands API
+        // This enables any element to trigger animations via commandfor/command
+        propsMetas.set("invoker", invokerPropMeta);
       }
       if (attributesByTag[tag]) {
         for (const attribute of [...attributesByTag[tag]].reverse()) {

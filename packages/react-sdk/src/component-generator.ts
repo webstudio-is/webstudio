@@ -20,6 +20,7 @@ import {
   descendantComponent,
   getIndexesWithinAncestors,
   elementComponent,
+  isCompleteInvoker,
 } from "@webstudio-is/sdk";
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import { isAttributeNameSafe, showAttribute } from "./props";
@@ -114,6 +115,13 @@ const generatePropValue = ({
   ) {
     return JSON.stringify(prop.value);
   }
+  // Only render invoker if it has valid values
+  if (prop.type === "invoker") {
+    if (isCompleteInvoker(prop.value)) {
+      return JSON.stringify(prop.value);
+    }
+    return undefined;
+  }
   // generate variable name for parameter
   if (prop.type === "parameter") {
     const dataSource = dataSources.get(prop.value);
@@ -195,6 +203,17 @@ export const generateJsxElement = ({
 
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
+      continue;
+    }
+
+    // Handle invoker prop specially - render as commandfor and command attributes
+    if (prop.type === "invoker" && prop.name === "invoker") {
+      if (isCompleteInvoker(prop.value)) {
+        // commandfor references the target element's ID
+        generatedProps += `\ncommandfor={${JSON.stringify(prop.value.targetInstanceId)}}`;
+        // command is the custom command name (e.g., "--play-intro")
+        generatedProps += `\ncommand={${JSON.stringify(prop.value.command)}}`;
+      }
       continue;
     }
 
