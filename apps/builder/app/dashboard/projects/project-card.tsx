@@ -245,12 +245,18 @@ export const ProjectCard = ({
               variant="wrapped"
               content={
                 <Text variant="small">
-                  Created on {formatDate(createdAt)}
-                  {latestBuildVirtual?.publishStatus === "PUBLISHED" && (
+                  Created: {formatDate(createdAt)}
+                  {latestBuildVirtual?.updatedAt && (
                     <>
                       <br />
-                      Published on {formatDate(latestBuildVirtual.createdAt)}
+                      Last modified: {formatDate(latestBuildVirtual.updatedAt)}
                     </>
+                  )}
+                  <br />
+                  {latestBuildVirtual?.publishStatus === "PUBLISHED" ? (
+                    <>Published: {formatDate(latestBuildVirtual.createdAt)}</>
+                  ) : (
+                    <>Not published</>
                   )}
                 </Text>
               }
