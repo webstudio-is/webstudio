@@ -12,7 +12,6 @@ import {
 import {
   ChevronDownIcon,
   CalendarIcon,
-  TextAlignLeftIcon,
   UploadIcon,
   ArrowDownAZIcon,
 } from "@webstudio-is/icons";
