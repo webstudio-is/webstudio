@@ -1,9 +1,9 @@
 import { clamp } from "@react-aria/utils";
 import {
+  ColorValue,
   toValue,
   type CssProperty,
   type KeywordValue,
-  type RgbValue,
   type StyleValue,
   type Unit,
   type UnitValue,
@@ -233,21 +233,27 @@ const toPercentUnitValue = (value: UnitValue): PercentUnitValue | undefined => {
   } satisfies PercentUnitValue;
 };
 
-export const fallbackStopColor: RgbValue = {
-  type: "rgb",
-  r: 0,
-  g: 0,
-  b: 0,
+export const fallbackStopColor: ColorValue = {
+  type: "color",
+  colorSpace: "srgb",
+  components: [0, 0, 0],
   alpha: 1,
+};
+
+const transparentColor: ColorValue = {
+  type: "color",
+  colorSpace: "srgb",
+  components: [0, 0, 0],
+  alpha: 0,
 };
 
 export const createDefaultStops = (): GradientStop[] => [
   {
-    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 1 },
+    color: fallbackStopColor,
     position: { type: "unit", unit: "%", value: 0 },
   },
   {
-    color: { type: "rgb", r: 0, g: 0, b: 0, alpha: 0 },
+    color: transparentColor,
     position: { type: "unit", unit: "%", value: 100 },
   },
 ];
@@ -1125,6 +1131,7 @@ export const updateGradientStop = <T extends ParsedGradient>(
 const parseColorString = (value: string): GradientStop["color"] | undefined => {
   const parsed = parseCssValue("color", value);
   if (
+    parsed.type === "color" ||
     parsed.type === "rgb" ||
     parsed.type === "keyword" ||
     parsed.type === "var"
@@ -1144,7 +1151,7 @@ export const styleValueToColor = (
     return parseColorString(styleValue.value);
   }
 
-  if (styleValue.type === "rgb") {
+  if (styleValue.type === "rgb" || styleValue.type === "color") {
     return styleValue;
   }
 

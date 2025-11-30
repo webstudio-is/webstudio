@@ -341,12 +341,20 @@ export const ShadowContent = ({
               ...$availableColorVariables.get(),
             ]}
             onChange={(value) => {
-              if (value.type === "rgb" || value.type === "var") {
+              if (
+                value.type === "rgb" ||
+                value.type === "color" ||
+                value.type === "var"
+              ) {
                 updateShadow({ color: value }, { isEphemeral: true });
               }
             }}
             onChangeComplete={(value) => {
-              if (value.type === "rgb" || value.type === "var") {
+              if (
+                value.type === "rgb" ||
+                value.type === "color" ||
+                value.type === "var"
+              ) {
                 updateShadow({ color: value });
               }
             }}

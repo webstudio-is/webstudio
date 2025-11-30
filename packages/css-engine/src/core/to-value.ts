@@ -88,13 +88,17 @@ export const toValue = (
   }
 
   if (value.type === "color") {
-    const [c1, c2, c3] = value.components;
+    let [c1, c2, c3] = value.components;
     const alpha = value.alpha;
 
     // Use specific CSS functions when available
     switch (value.colorSpace) {
-      case "srgb":
-        return `rgb(${c1 * 255} ${c2 * 255} ${c3 * 255} / ${alpha})`;
+      case "srgb": {
+        c1 = Math.round(c1 * 255);
+        c2 = Math.round(c2 * 255);
+        c3 = Math.round(c3 * 255);
+        return `rgb(${c1} ${c2} ${c3} / ${alpha})`;
+      }
       case "hsl":
         return `hsl(${c1} ${c2}% ${c3}% / ${alpha})`;
       case "hwb":

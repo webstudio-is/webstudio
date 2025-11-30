@@ -17,17 +17,32 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 50 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 255, g: 255, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -45,12 +60,22 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 165, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.6471, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 255, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 1, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -68,12 +93,22 @@ describe("parse conic-gradient", () => {
         position: "center",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -93,22 +128,42 @@ describe("parse conic-gradient", () => {
         position: "50% 50%",
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 126, b: 95, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.4941, 0.3725],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "deg", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 254, g: 180, b: 123, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0.9961, 0.7059, 0.4824],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "deg", value: 120 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 134, g: 168, b: 231, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0.5255, 0.6588, 0.9059],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "deg", value: 240 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 255, g: 126, b: 95, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0.4941, 0.3725],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "deg", value: 360 },
             hint: undefined,
           },
@@ -128,12 +183,22 @@ describe("parse conic-gradient", () => {
         repeating: true,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: { type: "unit", unit: "%", value: 25 },
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 50 },
             hint: { type: "unit", unit: "%", value: 75 },
           },
@@ -198,12 +263,22 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -222,7 +297,12 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: {
               type: "var",
               value: "start",
@@ -235,7 +315,12 @@ describe("parse conic-gradient", () => {
             },
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "var", value: "end" },
             hint: undefined,
           },
@@ -257,17 +342,32 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 0, g: 128, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0.502, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 0 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 50 },
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 255, g: 255, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 1, 0],
+              alpha: 1,
+            },
             position: { type: "unit", unit: "%", value: 100 },
             hint: undefined,
           },
@@ -289,17 +389,32 @@ describe("parse conic-gradient", () => {
         position: undefined,
         stops: [
           {
-            color: { type: "rgb", r: 255, g: 0, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 255, b: 0, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 1, 0],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },
           {
-            color: { type: "rgb", r: 0, g: 0, b: 255, alpha: 1 },
+            color: {
+              type: "color",
+              colorSpace: "srgb",
+              components: [0, 0, 1],
+              alpha: 1,
+            },
             position: undefined,
             hint: undefined,
           },

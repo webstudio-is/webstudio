@@ -544,8 +544,7 @@ const expandTransition = function* (value: CssNode) {
           "<time>",
           "<easing-function>",
           "<time>",
-          // <transition-behavior-value> is not supported by csstree
-          "normal | allow-discrete",
+          "<transition-behavior-value>",
         ],
         single
       );
@@ -864,12 +863,7 @@ const expandWhiteSpace = function* (value: CssNode) {
   let collapse = collapseKeyword;
   let wrapMode = wrapKeyword;
   [collapse = collapseKeyword, wrapMode = wrapKeyword] = parseUnordered(
-    [
-      // <'white-space-collapse'> is not supported by csstree
-      "collapse | preserve | preserve-breaks | preserve-spaces | break-spaces",
-      // <'text-wrap-mode'> is not supported by csstree
-      "wrap | nowrap",
-    ],
+    ["<'white-space-collapse'>", "<'text-wrap-mode'>"],
     value
   );
   if (lexer.match("normal", value).matched) {
@@ -1369,15 +1363,7 @@ const expandShorthand = function* (property: string, value: CssNode) {
       const [
         mode = createIdentifier("wrap"),
         style = createIdentifier("auto"),
-      ] = parseUnordered(
-        [
-          // <'text-wrap-mode'> is not supported by csstree
-          "wrap | nowrap",
-          // <'text-wrap-style'> is not supported by csstree
-          "auto | balance | stable | pretty",
-        ],
-        value
-      );
+      ] = parseUnordered(["<'text-wrap-mode'>", "<'text-wrap-style'>"], value);
       yield ["text-wrap-mode", mode] as const;
       yield ["text-wrap-style", style] as const;
       break;

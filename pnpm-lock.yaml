@@ -1427,7 +1427,7 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       colorjs.io:
-        specifier: ^0.5.0
+        specifier: ^0.5.2
         version: 0.5.2
       downshift:
         specifier: ^6.1.7

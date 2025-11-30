@@ -1,11 +1,16 @@
 import {
+  type ColorValue,
   type KeywordValue,
   type RgbValue,
   type UnitValue,
   type VarValue,
 } from "@webstudio-is/css-engine";
 
-export type GradientColorValue = RgbValue | KeywordValue | VarValue;
+export type GradientColorValue =
+  | ColorValue
+  | RgbValue
+  | KeywordValue
+  | VarValue;
 
 export type GradientStop = {
   color?: GradientColorValue;
