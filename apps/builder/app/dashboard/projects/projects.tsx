@@ -7,7 +7,10 @@ import {
   Text,
   rawTheme,
   theme,
+  ToggleGroup,
+  ToggleGroupButton,
 } from "@webstudio-is/design-system";
+import { RepeatGridIcon, ListViewIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
@@ -17,6 +20,7 @@ import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
 import { Tag } from "./tags";
 import { SortSelect, sortProjects, type SortState } from "./sort";
+import { ProjectsListHeader, ProjectsListItem } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
@@ -50,6 +54,34 @@ export const ProjectsGrid = ({
   );
 };
 
+export const ProjectsList = ({
+  projects,
+  hasProPlan,
+  publisherHost,
+  projectsTags,
+}: ProjectsProps) => {
+  return (
+    <Flex direction="column" css={{ paddingBottom: theme.spacing[13] }}>
+      <ProjectsListHeader />
+      <List asChild>
+        <Flex direction="column" gap="1">
+          {projects.map((project) => {
+            return (
+              <ProjectsListItem
+                key={project.id}
+                project={project}
+                hasProPlan={hasProPlan}
+                publisherHost={publisherHost}
+                projectsTags={projectsTags}
+              />
+            );
+          })}
+        </Flex>
+      </List>
+    </Flex>
+  );
+};
+
 type ProjectsProps = {
   projects: Array<DashboardProject>;
   hasProPlan: boolean;
@@ -60,6 +92,7 @@ type ProjectsProps = {
 export const Projects = (props: ProjectsProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
+  const viewMode = (searchParams.get("view") as "grid" | "list") ?? "grid";
 
   const sortState: SortState = {
     sortBy: searchParams.get("sortBy") as SortState["sortBy"],
@@ -70,6 +103,16 @@ export const Projects = (props: ProjectsProps) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("sortBy", newSortState.sortBy);
     newParams.set("order", newSortState.order);
+    setSearchParams(newParams);
+  };
+
+  const handleViewChange = (value: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value === "grid") {
+      newParams.delete("view");
+    } else {
+      newParams.set("view", value);
+    }
     setSearchParams(newParams);
   };
 
@@ -114,7 +157,19 @@ export const Projects = (props: ProjectsProps) => {
             );
           })}
         </Flex>
-        <Flex shrink={false}>
+        <Flex shrink={false} gap="2" align="center">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={handleViewChange}
+          >
+            <ToggleGroupButton value="grid" aria-label="Grid view">
+              <RepeatGridIcon />
+            </ToggleGroupButton>
+            <ToggleGroupButton value="list" aria-label="List view">
+              <ListViewIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
         </Flex>
       </Flex>
@@ -127,7 +182,11 @@ export const Projects = (props: ProjectsProps) => {
             No projects found
           </Text>
         )}
-        <ProjectsGrid {...props} projects={projects} />
+        {viewMode === "grid" ? (
+          <ProjectsGrid {...props} projects={projects} />
+        ) : (
+          <ProjectsList {...props} projects={projects} />
+        )}
       </Box>
     </Main>
   );
