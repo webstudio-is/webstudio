@@ -88,37 +88,35 @@ export const Projects = (props: ProjectsProps) => {
         <Text variant="brandSectionTitle" as="h2">
           Projects
         </Text>
-        <Flex gap="2">
-          <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <CreateProject />
-        </Flex>
+        <CreateProject />
       </Header>
       <Flex
         gap="2"
-        wrap="wrap"
+        shrink={false}
+        justify="between"
         css={{
-          display: "none",
-          flexShrink: 0,
           paddingInline: theme.spacing[13],
           paddingBlockStart: theme.spacing[2],
           paddingBlockEnd: theme.spacing[10],
-          "&:has(*:first-child)": {
-            display: "flex",
-          },
         }}
       >
-        {props.projectsTags.map((tag, index) => {
-          return (
-            <Tag
-              tag={tag}
-              key={tag.id}
-              index={index}
-              state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
-            >
-              {tag.label}
-            </Tag>
-          );
-        })}
+        <Flex gap="2" wrap="wrap" align="center">
+          {props.projectsTags.map((tag, index) => {
+            return (
+              <Tag
+                tag={tag}
+                key={tag.id}
+                index={index}
+                state={selectedTags.includes(tag.id) ? "pressed" : "auto"}
+              >
+                {tag.label}
+              </Tag>
+            );
+          })}
+        </Flex>
+        <Flex shrink={false}>
+          <SortSelect value={sortState} onValueChange={handleSortChange} />
+        </Flex>
       </Flex>
       <Box css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 && (
