@@ -10,13 +10,14 @@ mkdir -p /tmp/certbot/
 mkdir -p /tmp/letsencrypt/
 
 infisical login
+# When running infisical init, select: Webstudio > webstudio
 infisical init
 
 CLOUDFLARE_API_KEY=$(infisical secrets get WSTD_DEV-CLOUDFLARE_ZONE_TOKEN --path='/CLI' --env=staging --plain)
 
-cat > /tmp/certbot/cloudflare.ini <<-DOCKERFILE
-  dns_cloudflare_api_token = ${CLOUDFLARE_API_KEY}
-DOCKERFILE
+# Create cloudflare.ini with proper formatting and permissions
+echo "dns_cloudflare_api_token = ${CLOUDFLARE_API_KEY}" > /tmp/certbot/cloudflare.ini
+chmod 600 /tmp/certbot/cloudflare.ini
 
 docker run -it --rm --name certbot  \
 -v "/tmp/letsencrypt/data:/etc/letsencrypt" \
