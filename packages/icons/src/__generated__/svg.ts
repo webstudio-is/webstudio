@@ -52,6 +52,8 @@ export const AlignStartHorizontalIcon = `<svg xmlns="http://www.w3.org/2000/svg"
 
 export const AnimationGroupIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 8.3C6.3 7.7 7.8 8 9.3 11c.3-1.8 1.2-4.5 2.1-6M4.208 1.5H2.944A1.444 1.444 0 0 0 1.5 2.944v1.264m13 0V2.944A1.444 1.444 0 0 0 13.056 1.5h-1.264M14.5 13.056c0 .023 0 .046-.002.069M11.792 14.5h1.264a1.444 1.444 0 0 0 1.442-1.375m0 0v-1.333m-12.998 0v1.264A1.444 1.444 0 0 0 2.944 14.5h1.264m2.709-13h2.166m-2.166 13h2.166M1.5 6.917v2.166m13-2.166v2.166"/></svg>`;
 
+export const ArrowDownAZIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".667" d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M13.333 5.333H10M10 6.667V4.333a1.667 1.667 0 1 1 3.333 0v2.334M10 9.333h3.333l-3.333 4h3.333"/></svg>`;
+
 export const ArrowDownIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 3.333v9.334M12.667 8 8 12.667 3.333 8"/></svg>`;
 
 export const ArrowLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.667 8H3.333M8 3.333 3.333 8 8 12.667"/></svg>`;

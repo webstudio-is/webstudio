@@ -9,7 +9,13 @@ import {
   Button,
   MenuCheckedIcon,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  CalendarIcon,
+  TextAlignLeftIcon,
+  UploadIcon,
+  ArrowDownAZIcon,
+} from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export type SortField = "createdAt" | "title" | "updatedAt" | "publishedAt";
@@ -93,6 +99,17 @@ export const SortSelect = ({ value, onValueChange }: SortSelectProps) => {
           ? "Date published"
           : "Last modified";
 
+  const sortIcon =
+    sortBy === "createdAt" ? (
+      <CalendarIcon />
+    ) : sortBy === "title" ? (
+      <ArrowDownAZIcon />
+    ) : sortBy === "publishedAt" ? (
+      <UploadIcon />
+    ) : (
+      <CalendarIcon />
+    );
+
   const handleSortChange = (newSortBy: SortField, newOrder: SortOrder) => {
     // When switching to alphabetical sorting, default to A→Z (asc)
     // When switching to date sorting, default to newest first (desc)
@@ -109,7 +126,7 @@ export const SortSelect = ({ value, onValueChange }: SortSelectProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button color="ghost" suffix={<ChevronDownIcon />}>
+        <Button color="ghost" prefix={sortIcon} suffix={<ChevronDownIcon />}>
           {sortLabel}
         </Button>
       </DropdownMenuTrigger>
