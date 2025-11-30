@@ -240,13 +240,20 @@ export const fallbackStopColor: ColorValue = {
   alpha: 1,
 };
 
+const transparentColor: ColorValue = {
+  type: "color",
+  colorSpace: "srgb",
+  components: [0, 0, 0],
+  alpha: 0,
+};
+
 export const createDefaultStops = (): GradientStop[] => [
   {
     color: fallbackStopColor,
     position: { type: "unit", unit: "%", value: 0 },
   },
   {
-    color: fallbackStopColor,
+    color: transparentColor,
     position: { type: "unit", unit: "%", value: 100 },
   },
 ];

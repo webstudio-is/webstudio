@@ -542,17 +542,15 @@ describe("ensureGradientHasStops", () => {
     const result = ensureGradientHasStops(gradient);
     expect(result.stops).toHaveLength(2);
     expect(result.stops[0]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 1,
     });
     expect(result.stops[1]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 0,
     });
   });
@@ -569,10 +567,9 @@ describe("ensureGradientHasStops", () => {
 
     const result = ensureGradientHasStops(gradient);
     expect(result.stops[0]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 1,
     });
   });
