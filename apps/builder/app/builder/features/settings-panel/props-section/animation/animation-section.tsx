@@ -1,6 +1,5 @@
 import isEqual from "fast-deep-equal";
-import { forwardRef, useMemo, useState, type ComponentProps } from "react";
-import { useStore } from "@nanostores/react";
+import { forwardRef, useState, type ComponentProps } from "react";
 import {
   Grid,
   theme,
@@ -46,38 +45,7 @@ import { FieldLabel } from "../../property-label";
 import type { PropAndMeta } from "../use-props-logic";
 import { AnimationsSelect } from "./animations-select";
 import { SubjectSelect } from "./subject-select";
-import { $instances } from "~/shared/nano-states";
-
-/**
- * Hook to find all elements that can be animated (for Custom Target dropdown)
- * Returns all instances except AnimateChildren (which is the animation group itself)
- */
-const useAnimatableElements = () => {
-  const instances = useStore($instances);
-  return useMemo(() => {
-    const elements: Array<{ id: string; label: string; component: string }> =
-      [];
-    for (const [id, instance] of instances) {
-      // Skip animation groups - they contain animations, not animate themselves
-      if (
-        instance.component ===
-        "@webstudio-is/sdk-components-animation:AnimateChildren"
-      ) {
-        continue;
-      }
-      // Get a readable component name
-      const componentName = instance.component.includes(":")
-        ? instance.component.split(":")[1]
-        : instance.component;
-      elements.push({
-        id,
-        label: instance.label || componentName || "Element",
-        component: componentName || "Element",
-      });
-    }
-    return elements;
-  }, [instances]);
-};
+import { TargetSelect } from "./target-select";
 
 const animationTypeDescription: Record<AnimationAction["type"], string> = {
   scroll:
@@ -281,8 +249,6 @@ const AnimationConfig = ({
   onChange: ((value: AnimationAction, isEphemeral: boolean) => void) &
     ((value: undefined, isEphemeral: true) => void);
 }) => {
-  const animatableElements = useAnimatableElements();
-
   if (value.type === "event") {
     const triggers =
       value.triggers?.length === 0 || value.triggers === undefined
@@ -392,31 +358,16 @@ const AnimationConfig = ({
                 </Tooltip>
               </ToggleGroup>
               {targetMode === "custom" && (
-                <Box css={{ minWidth: 0 }}>
-                  <Select
-                    options={animatableElements.map((el) => el.id)}
-                    getLabel={(id) => {
-                      const element = animatableElements.find(
-                        (el) => el.id === id
-                      );
-                      if (element) {
-                        return element.label !== element.component
-                          ? `${element.label} (${element.component})`
-                          : element.component;
-                      }
-                      return "Select element";
-                    }}
-                    value={
-                      targetValue === "self" || targetValue === ""
-                        ? undefined
-                        : targetValue
-                    }
-                    onChange={(target) => {
-                      onChange({ ...value, target }, false);
-                    }}
-                    placeholder="Select element to animate"
-                  />
-                </Box>
+                <TargetSelect
+                  value={
+                    targetValue === "self" || targetValue === ""
+                      ? undefined
+                      : targetValue
+                  }
+                  onChange={(target) => {
+                    onChange({ ...value, target }, false);
+                  }}
+                />
               )}
             </Grid>
           </Grid>
@@ -598,11 +549,18 @@ const AnimationConfig = ({
                     <InputField
                       aria-label="Key to listen for"
                       placeholder="e.g., Enter, Space, Escape, a, 1"
-                      value={trigger.key ?? ""}
+                      value={
+                        trigger.key === " " ? "Space" : (trigger.key ?? "")
+                      }
                       onChange={(event) => {
+                        let key = event.currentTarget.value;
+                        // Convert friendly names to actual KeyboardEvent.key values
+                        if (key.toLowerCase() === "space") {
+                          key = " ";
+                        }
                         updateTrigger(index, {
                           ...trigger,
-                          key: event.currentTarget.value,
+                          key,
                         });
                       }}
                     />

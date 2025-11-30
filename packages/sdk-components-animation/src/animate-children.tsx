@@ -36,6 +36,61 @@ const getCommandFromEvent = (event: Event): string | undefined => {
   return undefined;
 };
 
+/**
+ * Polyfill for HTML Invoker Commands API
+ * Handles click events on elements with commandfor/command attributes
+ * and dispatches the command event to the target element
+ */
+let polyfillInstalled = false;
+const installInvokerPolyfill = () => {
+  if (polyfillInstalled) {
+    return;
+  }
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  polyfillInstalled = true;
+
+  document.addEventListener("click", (event) => {
+    const target = event.target as Element;
+    if (!target || !("closest" in target)) {
+      return;
+    }
+
+    // Find the closest element with commandfor attribute (could be the target or an ancestor)
+    const invoker = target.closest("[commandfor]");
+    if (!invoker) {
+      return;
+    }
+
+    const commandforId = invoker.getAttribute("commandfor");
+    const command = invoker.getAttribute("command");
+
+    if (!commandforId || !command) {
+      return;
+    }
+
+    // Find the target element by ID
+    const commandTarget = document.getElementById(commandforId);
+    if (!commandTarget) {
+      return;
+    }
+
+    // Dispatch the command event to the target
+    const commandEvent = new CustomEvent("command", {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        command,
+        source: invoker,
+      },
+    });
+
+    commandTarget.dispatchEvent(commandEvent);
+  });
+};
+
 const isEventAction = (
   action: AnimationAction | undefined
 ): action is AnimationActionEvent => {
@@ -223,6 +278,11 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
       return action.animations.map(compileAnimation);
     }, [action]);
 
+    // Install polyfill for HTML Invoker Commands on mount
+    useEffect(() => {
+      installInvokerPolyfill();
+    }, []);
+
     useEffect(() => {
       if (isEventAction(action) === false) {
         return;
@@ -361,6 +421,7 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
     }, [action, compiledAnimations, debug]);
 
     // Live preview: auto-play animation when isPinned is true and animations change
+    // Note: This does NOT auto-play for Command triggers - those should only fire on user interaction
     useEffect(() => {
       if (isEventAction(action) === false) {
         return;
@@ -375,6 +436,16 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
       if (eventAction.isPinned !== true) {
         return;
       }
+
+      // Don't auto-play for Command triggers - they should only fire on user interaction (click)
+      // Command triggers are meant to be invoked by buttons with commandfor/command attributes
+      const hasOnlyCommandTriggers = eventAction.triggers.every(
+        (trigger) => trigger.kind === "command"
+      );
+      if (hasOnlyCommandTriggers) {
+        return;
+      }
+
       if (compiledAnimations.length === 0) {
         return;
       }
