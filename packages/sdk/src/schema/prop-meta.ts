@@ -24,6 +24,14 @@ const Tag = z.object({
   options: z.array(z.string()),
 });
 
+const Pseudo = z.object({
+  ...common,
+  control: z.literal("pseudo"),
+  type: z.literal("string"),
+  defaultValue: z.undefined().optional(),
+  options: z.array(z.string()),
+});
+
 const Number = z.object({
   ...common,
   control: z.literal("number"),
@@ -191,6 +199,7 @@ const AnimationAction = z.object({
 
 export const PropMeta = z.union([
   Tag,
+  Pseudo,
   Number,
   Range,
   Text,
