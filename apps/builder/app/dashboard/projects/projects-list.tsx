@@ -1,12 +1,11 @@
 import { useState } from "react";
 import {
-  Box,
   Flex,
   Text,
   theme,
   Link,
   css,
-  Grid,
+  List,
   ListItem,
 } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -22,21 +21,36 @@ import { TagsDialog } from "./tags";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
-// Shared grid template for both header and items
-const gridTemplate = "2fr 1fr 1fr 1fr auto";
-
-// Shared padding for header and items
-const sharedPadding = theme.spacing[5];
-
-const listHeaderStyles = css({
-  padding: sharedPadding,
-  borderBottom: `1px solid ${theme.colors.borderMain}`,
-  gridTemplateColumns: gridTemplate,
+const tableStyles = css({
+  tableLayout: "fixed",
+  borderCollapse: "collapse",
+  marginBottom: theme.spacing[13],
+  minWidth: 550,
+  flexGrow: 1,
 });
 
-const listItemStyles = css({
-  padding: sharedPadding,
-  gridTemplateColumns: gridTemplate,
+const thStyles = css({
+  padding: theme.spacing[5],
+  paddingBottom: theme.spacing[3],
+  textAlign: "left",
+  borderBottom: `1px solid ${theme.colors.borderMain}`,
+  "&:first-child": {
+    width: "35%",
+  },
+  "&:nth-child(2), &:nth-child(3), &:nth-child(4)": {
+    width: "20%",
+  },
+  "&:last-child": {
+    width: "5%",
+  },
+});
+
+const tdStyles = css({
+  padding: theme.spacing[5],
+  verticalAlign: "middle",
+});
+
+const trStyles = css({
   "&:hover": {
     background: theme.colors.backgroundHover,
   },
@@ -92,39 +106,43 @@ export const ProjectsListItem = ({
   return (
     <>
       <ListItem index={0} asChild>
-        <Grid align="center" gap="5" className={listItemStyles()}>
+        <tr className={trStyles()}>
           {/* Name & View site */}
-          <Flex direction="column" gap="1">
-            <Link
-              href={linkPath}
-              color="inherit"
-              underline="none"
-              css={{ fontWeight: 500 }}
-            >
-              {title}
-            </Link>
-            {isPublished && (
+          <td className={tdStyles()}>
+            <Flex direction="column" gap="1">
               <Link
-                href={`https://${displayDomain}`}
-                target="_blank"
-                rel="noreferrer"
-                color="subtle"
-                underline="hover"
+                href={linkPath}
+                color="inherit"
+                underline="none"
+                css={{ fontWeight: 500 }}
               >
-                View site
+                {title}
               </Link>
-            )}
-          </Flex>
+              {isPublished && (
+                <Link
+                  href={`https://${displayDomain}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  color="subtle"
+                  underline="hover"
+                >
+                  View site
+                </Link>
+              )}
+            </Flex>
+          </td>
 
           {/* Last modified */}
-          <Text color="subtle">
-            {latestBuildVirtual?.updatedAt
-              ? formatDate(latestBuildVirtual.updatedAt)
-              : "—"}
-          </Text>
+          <td className={tdStyles()}>
+            <Text color="subtle">
+              {latestBuildVirtual?.updatedAt
+                ? formatDate(latestBuildVirtual.updatedAt)
+                : formatDate(createdAt)}
+            </Text>
+          </td>
 
           {/* Last published */}
-          <Flex align="center" gap="1">
+          <td className={tdStyles()}>
             {latestBuildVirtual?.publishStatus === "PUBLISHED" ? (
               <Text color="subtle">
                 {formatDate(latestBuildVirtual.createdAt)}
@@ -132,20 +150,24 @@ export const ProjectsListItem = ({
             ) : (
               <Text color="subtle">Not published</Text>
             )}
-          </Flex>
+          </td>
 
           {/* Date created */}
-          <Text color="subtle">{formatDate(createdAt)}</Text>
+          <td className={tdStyles()}>
+            <Text color="subtle">{formatDate(createdAt)}</Text>
+          </td>
 
           {/* Menu */}
-          <ProjectMenu
-            onDelete={() => setIsDeleteDialogOpen(true)}
-            onRename={() => setIsRenameDialogOpen(true)}
-            onShare={() => setIsShareDialogOpen(true)}
-            onDuplicate={handleCloneProject}
-            onUpdateTags={() => setIsTagsDialogOpen(true)}
-          />
-        </Grid>
+          <td className={tdStyles()}>
+            <ProjectMenu
+              onDelete={() => setIsDeleteDialogOpen(true)}
+              onRename={() => setIsRenameDialogOpen(true)}
+              onShare={() => setIsShareDialogOpen(true)}
+              onDuplicate={handleCloneProject}
+              onUpdateTags={() => setIsTagsDialogOpen(true)}
+            />
+          </td>
+        </tr>
       </ListItem>
 
       <RenameProjectDialog
@@ -178,15 +200,51 @@ export const ProjectsListItem = ({
   );
 };
 
-export const ProjectsListHeader = () => {
+type ProjectsListProps = {
+  projects: Array<DashboardProject>;
+  hasProPlan: boolean;
+  publisherHost: string;
+  projectsTags: User["projectsTags"];
+};
+
+export const ProjectsListTable = ({
+  projects,
+  hasProPlan,
+  publisherHost,
+  projectsTags,
+}: ProjectsListProps) => {
   return (
-    <Grid align="center" gap="5" className={listHeaderStyles()}>
-      <Text variant="regularBold">Name</Text>
-      <Text variant="regularBold">Last modified</Text>
-      <Text variant="regularBold">Last published</Text>
-      <Text variant="regularBold">Date created</Text>
-      <Box />
-      {/* Empty space for menu column - matches IconButton width */}
-    </Grid>
+    <table className={tableStyles()}>
+      <thead>
+        <tr>
+          <th className={thStyles()}>
+            <Text variant="regularBold">Name</Text>
+          </th>
+          <th className={thStyles()}>
+            <Text variant="regularBold">Last modified</Text>
+          </th>
+          <th className={thStyles()}>
+            <Text variant="regularBold">Last published</Text>
+          </th>
+          <th className={thStyles()}>
+            <Text variant="regularBold">Date created</Text>
+          </th>
+          <th className={thStyles()}></th>
+        </tr>
+      </thead>
+      <List asChild>
+        <tbody>
+          {projects.map((project) => (
+            <ProjectsListItem
+              key={project.id}
+              project={project}
+              hasProPlan={hasProPlan}
+              publisherHost={publisherHost}
+              projectsTags={projectsTags}
+            />
+          ))}
+        </tbody>
+      </List>
+    </table>
   );
 };

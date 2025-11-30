@@ -1,5 +1,4 @@
 import {
-  Box,
   Flex,
   Grid,
   List,
@@ -20,7 +19,7 @@ import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
 import { Tag } from "./tags";
 import { SortSelect, sortProjects, type SortState } from "./sort";
-import { ProjectsListHeader, ProjectsListItem } from "./projects-list";
+import { ProjectsListTable } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
@@ -51,34 +50,6 @@ export const ProjectsGrid = ({
         })}
       </Grid>
     </List>
-  );
-};
-
-export const ProjectsList = ({
-  projects,
-  hasProPlan,
-  publisherHost,
-  projectsTags,
-}: ProjectsProps) => {
-  return (
-    <Flex direction="column" css={{ paddingBottom: theme.spacing[13] }}>
-      <ProjectsListHeader />
-      <List asChild>
-        <Flex direction="column" gap="1">
-          {projects.map((project) => {
-            return (
-              <ProjectsListItem
-                key={project.id}
-                project={project}
-                hasProPlan={hasProPlan}
-                publisherHost={publisherHost}
-                projectsTags={projectsTags}
-              />
-            );
-          })}
-        </Flex>
-      </List>
-    </Flex>
   );
 };
 
@@ -131,7 +102,22 @@ export const Projects = (props: ProjectsProps) => {
         <Text variant="brandSectionTitle" as="h2">
           Projects
         </Text>
-        <CreateProject />
+        <Flex gap="2">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={handleViewChange}
+          >
+            <ToggleGroupButton value="grid" aria-label="Grid view">
+              <RepeatGridIcon />
+            </ToggleGroupButton>
+            <ToggleGroupButton value="list" aria-label="List view">
+              <ListViewIcon />
+            </ToggleGroupButton>
+          </ToggleGroup>
+          <SortSelect value={sortState} onValueChange={handleSortChange} />
+          <CreateProject />
+        </Flex>
       </Header>
       <Flex
         gap="2"
@@ -157,23 +143,8 @@ export const Projects = (props: ProjectsProps) => {
             );
           })}
         </Flex>
-        <Flex shrink={false} gap="2" align="center">
-          <ToggleGroup
-            type="single"
-            value={viewMode}
-            onValueChange={handleViewChange}
-          >
-            <ToggleGroupButton value="grid" aria-label="Grid view">
-              <RepeatGridIcon />
-            </ToggleGroupButton>
-            <ToggleGroupButton value="list" aria-label="List view">
-              <ListViewIcon />
-            </ToggleGroupButton>
-          </ToggleGroup>
-          <SortSelect value={sortState} onValueChange={handleSortChange} />
-        </Flex>
       </Flex>
-      <Box css={{ paddingInline: theme.spacing[13] }}>
+      <Flex css={{ paddingInline: theme.spacing[13] }}>
         {projects.length === 0 && (
           <Text
             variant="brandRegular"
@@ -185,9 +156,9 @@ export const Projects = (props: ProjectsProps) => {
         {viewMode === "grid" ? (
           <ProjectsGrid {...props} projects={projects} />
         ) : (
-          <ProjectsList {...props} projects={projects} />
+          <ProjectsListTable {...props} projects={projects} />
         )}
-      </Box>
+      </Flex>
     </Main>
   );
 };
