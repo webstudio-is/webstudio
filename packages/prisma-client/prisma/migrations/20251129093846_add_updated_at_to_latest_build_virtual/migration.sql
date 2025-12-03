@@ -10,7 +10,7 @@ COMMENT ON COLUMN "latestBuildVirtual"."updatedAt" IS 'Timestamp indicating when
 
 -- Recreate the function for Project with updatedAt field
 CREATE
-OR REPLACE FUNCTION "latestBuildVirtual"("Project") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $ $
+OR REPLACE FUNCTION "latestBuildVirtual"("Project") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $$
 SELECT
   b.id AS "buildId",
   b."projectId",
@@ -47,14 +47,14 @@ ORDER BY
 LIMIT
   1;
 
-$ $ STABLE LANGUAGE sql;
+$$ STABLE LANGUAGE sql;
 
 -- Comment on the function
 COMMENT ON FUNCTION "latestBuildVirtual"("Project") IS 'This function computes the latest build for a project, ensuring it is a production (non-static) build, where the domain matches either the Project.domain field or exists in the related Domain table. It provides backward compatibility for older records with a missing "destination" field.';
 
 -- Recreate the function for domainsVirtual with updatedAt field
 CREATE
-OR REPLACE FUNCTION "latestBuildVirtual"("domainsVirtual") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $ $
+OR REPLACE FUNCTION "latestBuildVirtual"("domainsVirtual") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $$
 SELECT
   b.id AS "buildId",
   b."projectId",
@@ -75,14 +75,14 @@ ORDER BY
 LIMIT
   1;
 
-$ $ STABLE LANGUAGE sql;
+$$ STABLE LANGUAGE sql;
 
 -- Adding a comment to provide more context
 COMMENT ON FUNCTION "latestBuildVirtual"("domainsVirtual") IS 'Returns the latest build for a given project and domain as a computed field for PostgREST.';
 
 -- Update latestProjectDomainBuildVirtual function to include updatedAt
 CREATE
-OR REPLACE FUNCTION "latestProjectDomainBuildVirtual"("Project") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $ $
+OR REPLACE FUNCTION "latestProjectDomainBuildVirtual"("Project") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $$
 SELECT
   b.id AS "buildId",
   b."projectId",
@@ -111,6 +111,6 @@ ORDER BY
 LIMIT
   1;
 
-$ $ STABLE LANGUAGE sql;
+$$ STABLE LANGUAGE sql;
 
 COMMENT ON FUNCTION "latestProjectDomainBuildVirtual"("Project") IS 'This function computes the latest build for a project domain, ensuring it is a production (non-static) build, where the domain matches either the Project.domain field or exists in the related Domain table. It provides backward compatibility for older records with a missing "destination" field.';
