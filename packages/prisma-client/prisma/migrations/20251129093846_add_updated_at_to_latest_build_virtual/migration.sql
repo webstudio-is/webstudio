@@ -1,22 +1,18 @@
 -- Add updatedAt field to latestBuildVirtual virtual table (type definition)
 -- and update both functions to include Build's updatedAt timestamp
 -- Add updatedAt column to the virtual table type definition (only if it doesn't exist)
-DO $$ BEGIN IF NOT EXISTS (
-  SELECT
-    1
-  FROM
-    information_schema.columns
-  WHERE
-    table_name = 'latestBuildVirtual'
-    AND column_name = 'updatedAt'
-) THEN
-ALTER TABLE
-  "latestBuildVirtual"
-ADD
-  COLUMN "updatedAt" timestamp(3) with time zone NOT NULL;
-
-END IF;
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'latestBuildVirtual'
+      AND column_name = 'updatedAt'
+  ) THEN
+    ALTER TABLE "latestBuildVirtual"
+    ADD COLUMN "updatedAt" timestamp(3) with time zone NOT NULL;
+  END IF;
 END $$;
 
 COMMENT ON COLUMN "latestBuildVirtual"."updatedAt" IS 'Timestamp indicating when the Build was last updated';

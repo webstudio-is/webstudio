@@ -23,40 +23,32 @@ $$ STABLE LANGUAGE sql;
 COMMENT ON FUNCTION "latestBuildVirtual"("DashboardProject") IS 'Wrapper function to make latestBuildVirtual work with DashboardProject view for PostgREST computed fields.';
 
 -- Grant execute permissions to all PostgREST roles (only if they exist)
-DO $$ BEGIN -- Grant to anon if role exists
-IF EXISTS (
-  SELECT
-    1
-  FROM
-    pg_roles
-  WHERE
-    rolname = 'anon'
-) THEN GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO anon;
-
-END IF;
-
--- Grant to authenticated if role exists
-IF EXISTS (
-  SELECT
-    1
-  FROM
-    pg_roles
-  WHERE
-    rolname = 'authenticated'
-) THEN GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO authenticated;
-
-END IF;
-
--- Grant to service_role if role exists
-IF EXISTS (
-  SELECT
-    1
-  FROM
-    pg_roles
-  WHERE
-    rolname = 'service_role'
-) THEN GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO service_role;
-
-END IF;
-
+DO $$
+BEGIN
+  -- Grant to anon if role exists
+  IF EXISTS (
+    SELECT 1
+    FROM pg_roles
+    WHERE rolname = 'anon'
+  ) THEN
+    GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO anon;
+  END IF;
+  
+  -- Grant to authenticated if role exists
+  IF EXISTS (
+    SELECT 1
+    FROM pg_roles
+    WHERE rolname = 'authenticated'
+  ) THEN
+    GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO authenticated;
+  END IF;
+  
+  -- Grant to service_role if role exists
+  IF EXISTS (
+    SELECT 1
+    FROM pg_roles
+    WHERE rolname = 'service_role'
+  ) THEN
+    GRANT EXECUTE ON FUNCTION "latestBuildVirtual"("DashboardProject") TO service_role;
+  END IF;
 END $$;
