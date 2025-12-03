@@ -454,11 +454,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 0.5,
-      r: 10,
-      g: 20,
-      b: 30,
+      colorSpace: "srgb",
+      components: [0.0392, 0.0784, 0.1176],
     });
   });
 
@@ -469,11 +468,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 1,
-      r: 255,
-      g: 0,
-      b: 0,
+      colorSpace: "srgb",
+      components: [1, 0, 0],
     });
   });
 
@@ -484,11 +482,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 1,
-      r: 240,
-      g: 238,
-      b: 15,
+      colorSpace: "srgb",
+      components: [0.9412, 0.9333, 0.0588],
     });
   });
 
@@ -499,11 +496,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 1,
-      r: 255,
-      g: 0,
-      b: 0,
+      colorSpace: "srgb",
+      components: [1, 0, 0],
     });
   });
 
@@ -514,11 +510,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 1,
-      r: 240,
-      g: 238,
-      b: 15,
+      colorSpace: "srgb",
+      components: [0.9412, 0.9333, 0.0588],
     });
   });
 
@@ -530,11 +525,10 @@ describe("Colors", () => {
     });
 
     expect(result).toEqual({
-      type: "rgb",
+      type: "color",
       alpha: 0.5,
-      r: 10,
-      g: 20,
-      b: 30,
+      colorSpace: "srgb",
+      components: [0.0392, 0.0784, 0.1176],
     });
   });
 });
@@ -600,10 +594,9 @@ test("parse color in css variable", () => {
       value: "#0f0f0f",
     })
   ).toEqual({
-    type: "rgb",
-    r: 15,
-    g: 15,
-    b: 15,
+    type: "color",
+    colorSpace: "srgb",
+    components: [0.0588, 0.0588, 0.0588],
     alpha: 1,
   });
 });

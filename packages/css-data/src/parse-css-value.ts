@@ -17,6 +17,7 @@ import {
   type UnitValue,
   type LayerValueItem,
   type RgbValue,
+  type ColorValue,
   type StyleValue,
   type Unit,
   type VarValue,
@@ -60,7 +61,7 @@ export const isValidDeclaration = (
     return true;
   }
 
-  // these properties have poor support natively and in csstree
+  // these properties have poor support in browser
   // though rendered styles are merged as shorthand
   // so validate artifically
   if (
@@ -69,10 +70,6 @@ export const isValidDeclaration = (
     property === "text-wrap-style"
   ) {
     return keywordValues[property].includes(value);
-  }
-
-  if (property === "transition-behavior") {
-    return true;
   }
 
   // @todo remove after csstree fixes
@@ -91,14 +88,6 @@ export const isValidDeclaration = (
 
   if (ast == null) {
     return false;
-  }
-  // scale css-proeprty accepts both number and percentage.
-  // The syntax from MDN is incorrect and should be updated.
-  // Here is a PR that fixes the same, but it is not merged yet.
-  // https://github.com/mdn/data/pull/746
-  if (property === "scale") {
-    const syntax = "none | [ <number> | <percentage> ]{1,3}";
-    return lexer.match(syntax, ast).matched !== null;
   }
 
   if (
@@ -154,21 +143,44 @@ const tupleProps = new Set<CssProperty>([
 
 const availableUnits = new Set<string>(Object.values(units).flat());
 
-const parseColor = (colorString: string): undefined | RgbValue => {
+// Map color space names to supported ColorValue color spaces
+const colorSpace: Record<string, ColorValue["colorSpace"]> = {
+  srgb: "srgb",
+  "srgb-linear": "srgb-linear",
+  "display-p3": "p3",
+  p3: "p3",
+  hsl: "hsl",
+  hwb: "hwb",
+  lab: "lab",
+  lch: "lch",
+  oklab: "oklab",
+  oklch: "oklch",
+  "a98-rgb": "a98rgb",
+  a98rgb: "a98rgb",
+  "prophoto-rgb": "prophoto",
+  prophoto: "prophoto",
+  rec2020: "rec2020",
+  "xyz-d65": "xyz-d65",
+  "xyz-d50": "xyz-d50",
+  xyz: "xyz-d65", // default to d65
+};
+
+const toColorComponent = (value: number) =>
+  Math.round(value.valueOf() * 10000) / 10000;
+
+export const parseColor = (colorString: string): undefined | ColorValue => {
   try {
-    const color = new Color(colorString).to("srgb");
-    // colorjs.io represents RGB values as 0-1 range
-    const [r, g, b] = color.coords.map((coord) => coord.valueOf());
-    const alpha = Number(color.alpha.valueOf().toFixed(2));
+    const color = new Color(colorString);
     return {
-      type: "rgb",
-      alpha: alpha ?? 1,
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
+      type: "color",
+      colorSpace: colorSpace[color.spaceId],
+      components: color.coords.map(
+        toColorComponent
+      ) as ColorValue["components"],
+      alpha: toColorComponent(color.alpha),
     };
   } catch {
-    return;
+    // Invalid colors or relative color syntax are treated as unparsed
   }
 };
 
@@ -178,13 +190,15 @@ const parseShadow = (
 ): ShadowValue | UnparsedValue => {
   // https://drafts.csswg.org/css-borders-4/#box-shadow-position
   let position: "inset" | "outset" = "outset";
-  let color: undefined | RgbValue | KeywordValue;
+  let color: undefined | ColorValue | RgbValue | KeywordValue;
   const units: UnitValue[] = [];
   for (const node of nodes) {
     const item = parseLiteral(node, ["inset"]);
     if (item?.type === "keyword" && item.value === "inset") {
       position = item.value;
     } else if (item?.type === "keyword" && parseColor(item.value)) {
+      color = item;
+    } else if (item?.type === "color") {
       color = item;
     } else if (item?.type === "rgb") {
       color = item;
@@ -243,6 +257,7 @@ const parseLiteral = (
   | KeywordValue
   | ImageValue
   | RgbValue
+  | ColorValue
   | VarValue
   | FunctionValue => {
   if (node?.type === "Number") {
@@ -299,7 +314,13 @@ const parseLiteral = (
       node.name === "hsl" ||
       node.name === "hsla" ||
       node.name === "rgb" ||
-      node.name === "rgba"
+      node.name === "rgba" ||
+      node.name === "oklch" ||
+      node.name === "oklab" ||
+      node.name === "lch" ||
+      node.name === "lab" ||
+      node.name === "hwb" ||
+      node.name === "color"
     ) {
       const color = parseColor(generate(node));
       if (color) {
@@ -444,7 +465,8 @@ export const parseCssValue = (
       if (
         parsedValue?.type === "var" ||
         parsedValue?.type === "unit" ||
-        parsedValue?.type === "rgb"
+        parsedValue?.type === "rgb" ||
+        parsedValue?.type === "color"
       ) {
         return parsedValue;
       }
@@ -485,17 +507,6 @@ export const parseCssValue = (
       return invalidValue;
     }
     return layersValue;
-  }
-
-  // csstree does not support transition-behavior
-  // so check keywords manually
-  if (property === "transition-behavior") {
-    const node = ast.type === "Value" ? ast.children.first : ast;
-    const keyword = parseLiteral(node, keywordValues[property]);
-    if (keyword?.type === "keyword") {
-      return keyword;
-    }
-    return invalidValue;
   }
 
   if (property === "font-family") {

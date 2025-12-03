@@ -228,7 +228,6 @@ describe("convertGradientToTarget", () => {
     conic: "conic-gradient(red 0%, blue 100%)",
     radial: "radial-gradient(circle, red 0%, blue 100%)",
   };
-  const expectedColors = ["rgb(255 0 0 / 1)", "rgb(0 0 255 / 1)"];
   const gradientTypes: GradientType[] = ["linear", "conic", "radial"];
 
   const getStopColors = (stops: GradientStop[]) =>
@@ -239,6 +238,8 @@ describe("convertGradientToTarget", () => {
       )
       .map((color) => toValue(color));
 
+  const expectedColorValues = ["rgb(255 0 0 / 1)", "rgb(0 0 255 / 1)"];
+
   gradientTypes.forEach((sourceType) => {
     gradientTypes.forEach((targetType) => {
       test(`converts ${sourceType} gradient to ${targetType}`, () => {
@@ -248,8 +249,8 @@ describe("convertGradientToTarget", () => {
         };
         const converted = convertGradientToTarget(styleValue, targetType);
         expect(converted.type).toBe(targetType);
-        expect(converted.stops).toHaveLength(expectedColors.length);
-        expect(getStopColors(converted.stops)).toEqual(expectedColors);
+        expect(converted.stops).toHaveLength(expectedColorValues.length);
+        expect(getStopColors(converted.stops)).toEqual(expectedColorValues);
       });
     });
   });
@@ -541,17 +542,15 @@ describe("ensureGradientHasStops", () => {
     const result = ensureGradientHasStops(gradient);
     expect(result.stops).toHaveLength(2);
     expect(result.stops[0]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 1,
     });
     expect(result.stops[1]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 0,
     });
   });
@@ -568,10 +567,9 @@ describe("ensureGradientHasStops", () => {
 
     const result = ensureGradientHasStops(gradient);
     expect(result.stops[0]?.color).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 0,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 0],
       alpha: 1,
     });
   });
@@ -639,10 +637,9 @@ describe("styleValueToColor", () => {
       value: "#0000ff",
     };
     expect(styleValueToColor(style)).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 0,
-      b: 255,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0, 0, 1],
       alpha: 1,
     });
   });
@@ -658,10 +655,9 @@ describe("styleValueToColor", () => {
   test("parses invalid style when value is valid color string", () => {
     const style: StyleValue = { type: "invalid", value: "rgb(10 20 30)" };
     expect(styleValueToColor(style)).toEqual({
-      type: "rgb",
-      r: 10,
-      g: 20,
-      b: 30,
+      type: "color",
+      colorSpace: "srgb",
+      components: [0.0392, 0.0784, 0.1176],
       alpha: 1,
     });
   });
@@ -677,10 +673,9 @@ describe("styleValueToColor", () => {
       value: "hsl(180 100% 50%)",
     };
     expect(styleValueToColor(style)).toEqual({
-      type: "rgb",
-      r: 0,
-      g: 255,
-      b: 255,
+      type: "color",
+      colorSpace: "hsl",
+      components: [180, 100, 50],
       alpha: 1,
     });
   });
