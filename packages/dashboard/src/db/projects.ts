@@ -1,4 +1,3 @@
-import type { SetNonNullable } from "type-fest";
 import {
   AuthorizationError,
   type AppContext,
@@ -12,30 +11,19 @@ type DomainVirtual = {
 
 const fetchAndMapDomains = async <
   T extends {
-    id: string | null;
-    title: string | null;
-    domain: string | null;
-    isDeleted: boolean | null;
-    createdAt: string | null;
-    marketplaceApprovalStatus: string | null;
+    id: string;
+    title: string;
+    domain: string;
+    createdAt: string;
+    [key: string]: unknown;
   },
 >(
   projects: T[],
   context: AppContext
 ) => {
-  const projectIds = projects
-    .map((project) => project.id)
-    .filter((id): id is string => id !== null);
+  const projectIds = projects.map((project) => project.id);
 
-  type ProjectWithDomains = SetNonNullable<
-    T,
-    | "id"
-    | "title"
-    | "domain"
-    | "isDeleted"
-    | "createdAt"
-    | "marketplaceApprovalStatus"
-  > & {
+  type ProjectWithDomains = T & {
     domainsVirtual: DomainVirtual[];
   };
 
@@ -112,7 +100,18 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw data.error;
   }
 
-  return await fetchAndMapDomains(data.data, context);
+  // Type assertion: These fields are never null in practice (come from Project table which has them as required)
+  return await fetchAndMapDomains(
+    data.data as Array<
+      (typeof data.data)[number] & {
+        id: string;
+        title: string;
+        domain: string;
+        createdAt: string;
+      }
+    >,
+    context
+  );
 };
 
 export const findManyByIds = async (
@@ -133,5 +132,16 @@ export const findManyByIds = async (
     throw data.error;
   }
 
-  return await fetchAndMapDomains(data.data, context);
+  // Type assertion: These fields are never null in practice (come from Project table which has them as required)
+  return await fetchAndMapDomains(
+    data.data as Array<
+      (typeof data.data)[number] & {
+        id: string;
+        title: string;
+        domain: string;
+        createdAt: string;
+      }
+    >,
+    context
+  );
 };

@@ -21,6 +21,9 @@ export const Link = styled("a", {
       color: theme.colors.foregroundDisabled,
     },
   },
+  "&:focus-visible": {
+    outline: `1px solid ${theme.colors.borderFocus}`,
+  },
   variants: {
     variant: {
       inherit: {
@@ -72,6 +75,15 @@ export const Link = styled("a", {
       always: {
         textDecoration: "underline",
         "&:hover": { textDecoration: "underline" },
+      },
+    },
+    stretched: {
+      true: {
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+        },
       },
     },
   },

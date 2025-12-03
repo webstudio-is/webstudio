@@ -770,6 +770,31 @@ export const AnimationGroupIcon: IconComponent = forwardRef(
 );
 AnimationGroupIcon.displayName = "AnimationGroupIcon";
 
+export const ArrowDownAZIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth=".667"
+          d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M13.333 5.333H10M10 6.667V4.333a1.667 1.667 0 1 1 3.333 0v2.334M10 9.333h3.333l-3.333 4h3.333"
+        />
+      </svg>
+    );
+  }
+);
+ArrowDownAZIcon.displayName = "ArrowDownAZIcon";
+
 export const ArrowDownIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (

@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  IconButton,
   css,
   Flex,
   Text,
@@ -15,7 +10,7 @@ import {
   Link,
   Box,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, UploadIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -32,6 +27,8 @@ import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
+import { ProjectMenu } from "./project-menu";
+import { formatDate } from "./utils";
 
 const infoIconStyle = css({ flexShrink: 0 });
 
@@ -56,52 +53,6 @@ const PublishedLink = ({
       {new URL(publishedOrigin).host}
     </Link>
   );
-};
-
-const Menu = ({
-  tabIndex,
-  onDelete,
-  onRename,
-  onDuplicate,
-  onShare,
-  onUpdateTags,
-}: {
-  tabIndex: number;
-  onDelete: () => void;
-  onRename: () => void;
-  onDuplicate: () => void;
-  onShare: () => void;
-  onUpdateTags: () => void;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <IconButton
-          aria-label="Menu Button"
-          tabIndex={tabIndex}
-          css={{ alignSelf: "center" }}
-        >
-          <EllipsesIcon width={15} height={15} />
-        </IconButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" css={{ width: theme.spacing[24] }}>
-        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onUpdateTags}>Tags</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 };
 
 type ProjectCardProps = {
@@ -196,6 +147,24 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
+        {isPublished && (
+          <Box
+            css={{
+              position: "absolute",
+              top: theme.spacing[5],
+              left: theme.spacing[5],
+              zIndex: 1,
+              backgroundColor: "oklch(0 0 0 / 0.3)",
+              borderRadius: theme.borderRadius[3],
+              padding: theme.spacing[2],
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <UploadIcon color={rawTheme.colors.foregroundContrastMain} />
+          </Box>
+        )}
         <Flex
           wrap="wrap"
           gap={1}
@@ -245,12 +214,18 @@ export const ProjectCard = ({
               variant="wrapped"
               content={
                 <Text variant="small">
-                  Created on {formatDate(createdAt)}
-                  {latestBuildVirtual?.publishStatus === "PUBLISHED" && (
+                  Created: {formatDate(createdAt)}
+                  {latestBuildVirtual?.updatedAt && (
                     <>
                       <br />
-                      Published on {formatDate(latestBuildVirtual.createdAt)}
+                      Last modified: {formatDate(latestBuildVirtual.updatedAt)}
                     </>
+                  )}
+                  <br />
+                  {latestBuildVirtual?.publishStatus === "PUBLISHED" ? (
+                    <>Published: {formatDate(latestBuildVirtual.createdAt)}</>
+                  ) : (
+                    <>Not published</>
                   )}
                 </Text>
               }
@@ -268,8 +243,7 @@ export const ProjectCard = ({
             <Text color="subtle">Not Published</Text>
           )}
         </Flex>
-        <Menu
-          tabIndex={-1}
+        <ProjectMenu
           onDelete={() => setIsDeleteDialogOpen(true)}
           onRename={() => setIsRenameDialogOpen(true)}
           onShare={() => setIsShareDialogOpen(true)}
