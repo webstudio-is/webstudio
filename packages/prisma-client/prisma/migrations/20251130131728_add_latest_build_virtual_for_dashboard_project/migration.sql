@@ -3,7 +3,7 @@
 -- that matches the source table/view type. DashboardProject is a view
 -- over Project, so we need this wrapper function.
 CREATE
-OR REPLACE FUNCTION "latestBuildVirtual"("DashboardProject") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $ $
+OR REPLACE FUNCTION "latestBuildVirtual"("DashboardProject") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $$
 SELECT
   *
 FROM
@@ -18,12 +18,12 @@ FROM
     )
   );
 
-$ $ STABLE LANGUAGE sql;
+$$ STABLE LANGUAGE sql;
 
 COMMENT ON FUNCTION "latestBuildVirtual"("DashboardProject") IS 'Wrapper function to make latestBuildVirtual work with DashboardProject view for PostgREST computed fields.';
 
 -- Grant execute permissions to all PostgREST roles (only if they exist)
-DO $ $ BEGIN -- Grant to anon if role exists
+DO $$ BEGIN -- Grant to anon if role exists
 IF EXISTS (
   SELECT
     1
@@ -59,4 +59,4 @@ IF EXISTS (
 
 END IF;
 
-END $ $;
+END $$;
