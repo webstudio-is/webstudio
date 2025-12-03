@@ -244,7 +244,6 @@ export const ProjectCard = ({
           )}
         </Flex>
         <ProjectMenu
-          tabIndex={-1}
           onDelete={() => setIsDeleteDialogOpen(true)}
           onRename={() => setIsRenameDialogOpen(true)}
           onShare={() => setIsShareDialogOpen(true)}

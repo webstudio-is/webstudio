@@ -10,7 +10,6 @@ import {
 import { EllipsesIcon } from "@webstudio-is/icons";
 
 type ProjectMenuProps = {
-  tabIndex?: number;
   onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
@@ -19,7 +18,6 @@ type ProjectMenuProps = {
 };
 
 export const ProjectMenu = ({
-  tabIndex,
   onDelete,
   onRename,
   onDuplicate,
@@ -32,7 +30,7 @@ export const ProjectMenu = ({
       <DropdownMenuTrigger asChild>
         <IconButton
           aria-label="Menu Button"
-          tabIndex={tabIndex}
+          tabIndex={-1}
           css={{ alignSelf: "center" }}
         >
           <EllipsesIcon width={15} height={15} />

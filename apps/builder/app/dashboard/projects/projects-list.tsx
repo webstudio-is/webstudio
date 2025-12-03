@@ -157,7 +157,6 @@ export const ProjectsListItem = ({
               onShare={() => setOpenDialog("share")}
               onDuplicate={handleCloneProject}
               onUpdateTags={() => setOpenDialog("tags")}
-              tabIndex={-1}
             />
           </td>
         </tr>
