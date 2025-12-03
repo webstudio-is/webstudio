@@ -97,7 +97,7 @@ export const ProjectsListItem = ({
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
   if (isHidden) {
-    return;
+    return null;
   }
 
   return (
@@ -214,10 +214,14 @@ export const ProjectsList = ({
 }: ProjectsListProps) => {
   const renderSortButton = (field: SortField, label: string) => {
     const isActive = sortBy === field;
+    const ariaLabel = isActive
+      ? `Sort by ${label}, currently ${sortOrder === "asc" ? "ascending" : "descending"}`
+      : `Sort by ${label}`;
     return (
       <Flex gap="1" align="center">
         <Text variant="regularBold">{label}</Text>
         <IconButton
+          aria-label={ariaLabel}
           onClick={() => onSortChange(field)}
           css={{ opacity: isActive ? 1 : 0.5 }}
         >
