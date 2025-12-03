@@ -25,12 +25,31 @@ import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
 
 const tableStyles = css({
+  display: "table",
+  width: "100%",
   tableLayout: "fixed",
   borderCollapse: "collapse",
   marginBottom: theme.spacing[13],
   minWidth: 550,
   flexGrow: 1,
-  "& th": {
+
+  '& [role="rowgroup"]': {
+    display: "table-row-group",
+  },
+
+  '& [role="row"]': {
+    display: "table-row",
+    position: "relative",
+    "&:focus-visible": {
+      outline: `1px solid ${theme.colors.borderFocus}`,
+    },
+    '&:has([role="cell"]):hover': {
+      background: theme.colors.backgroundHover,
+    },
+  },
+
+  '& [role="columnheader"]': {
+    display: "table-cell",
     padding: theme.spacing[5],
     paddingBottom: theme.spacing[3],
     textAlign: "left",
@@ -45,12 +64,11 @@ const tableStyles = css({
       width: "5%",
     },
   },
-  "& td": {
+
+  '& [role="cell"]': {
+    display: "table-cell",
     padding: theme.spacing[5],
     verticalAlign: "middle",
-  },
-  "& tr:hover": {
-    background: theme.colors.backgroundHover,
   },
 });
 
@@ -87,6 +105,10 @@ export const ProjectsListItem = ({
   const [isHidden, setIsHidden] = useState(false);
   const handleCloneProject = useCloneProject(id);
 
+  if (isHidden) {
+    return;
+  }
+
   const projectTagsIds = (tags || [])
     .map((tagId) => {
       const tag = projectsTags.find((tag) => tag.id === tagId);
@@ -96,22 +118,18 @@ export const ProjectsListItem = ({
 
   const linkPath = builderUrl({ origin: window.origin, projectId: id });
 
-  if (isHidden) {
-    return;
-  }
-
   return (
     <>
       <ListItem index={0} asChild>
-        <tr>
-          <td>
+        <div role="row">
+          <div role="cell">
             <Flex direction="column" gap="1">
               <Link
                 href={linkPath}
                 color="inherit"
                 underline="none"
-                css={{ fontWeight: 500 }}
                 tabIndex={-1}
+                stretched
               >
                 {title}
               </Link>
@@ -123,34 +141,36 @@ export const ProjectsListItem = ({
                   color="subtle"
                   underline="hover"
                   tabIndex={-1}
+                  aria-label={`Visit ${title} website at ${displayDomain}`}
+                  css={{ zIndex: 1 }}
                 >
                   {displayDomain}
                 </Link>
               )}
             </Flex>
-          </td>
+          </div>
 
-          <td>
+          <div role="cell">
             <Text color="subtle">
               {latestBuildVirtual?.updatedAt
                 ? formatDate(latestBuildVirtual.updatedAt)
                 : formatDate(createdAt)}
             </Text>
-          </td>
+          </div>
 
-          <td>
+          <div role="cell">
             <Text color="subtle">
               {isPublished && latestBuildVirtual
                 ? formatDate(latestBuildVirtual.createdAt)
                 : "Not published"}
             </Text>
-          </td>
+          </div>
 
-          <td>
+          <div role="cell">
             <Text color="subtle">{formatDate(createdAt)}</Text>
-          </td>
+          </div>
 
-          <td>
+          <div role="cell">
             <ProjectMenu
               onDelete={() => setOpenDialog("delete")}
               onRename={() => setOpenDialog("rename")}
@@ -158,8 +178,8 @@ export const ProjectsListItem = ({
               onDuplicate={handleCloneProject}
               onUpdateTags={() => setOpenDialog("tags")}
             />
-          </td>
-        </tr>
+          </div>
+        </div>
       </ListItem>
 
       <RenameProjectDialog
@@ -202,6 +222,14 @@ type ProjectsListProps = {
   onSortChange: (field: SortField) => void;
 };
 
+const columns: Array<{ field: SortField; label: string } | null> = [
+  { field: "title", label: "Name" },
+  { field: "updatedAt", label: "Last modified" },
+  { field: "publishedAt", label: "Last published" },
+  { field: "createdAt", label: "Date created" },
+  null, // Actions column (no sorting)
+];
+
 export const ProjectsList = ({
   projects,
   hasProPlan,
@@ -211,38 +239,52 @@ export const ProjectsList = ({
   sortOrder,
   onSortChange,
 }: ProjectsListProps) => {
-  const renderSortButton = (field: SortField, label: string) => {
-    const isActive = sortBy === field;
-    return (
-      <Flex gap="1" align="center">
-        <Text variant="regularBold">{label}</Text>
-        <IconButton
-          onClick={() => onSortChange(field)}
-          css={{ opacity: isActive ? 1 : 0.5 }}
-        >
-          {isActive && sortOrder === "asc" ? (
-            <ChevronUpIcon />
-          ) : (
-            <ChevronDownIcon />
-          )}
-        </IconButton>
-      </Flex>
-    );
-  };
-
   return (
-    <table className={tableStyles()}>
-      <thead>
-        <tr>
-          <th>{renderSortButton("title", "Name")}</th>
-          <th>{renderSortButton("updatedAt", "Last modified")}</th>
-          <th>{renderSortButton("publishedAt", "Last published")}</th>
-          <th>{renderSortButton("createdAt", "Date created")}</th>
-          <th></th>
-        </tr>
-      </thead>
+    <div className={tableStyles()} role="table" aria-label="Projects list">
       <List asChild>
-        <tbody>
+        <div role="rowgroup">
+          <ListItem index={0} asChild>
+            <div role="row">
+              {columns.map((column, index) => (
+                <div role="columnheader" key={index}>
+                  {column ? (
+                    <Flex gap="1" align="center">
+                      <Text
+                        variant="regularBold"
+                        id={`sort-${column.field}-label`}
+                      >
+                        {column.label}
+                      </Text>
+                      <IconButton
+                        onClick={() => onSortChange(column.field)}
+                        css={{ opacity: sortBy === column.field ? 1 : 0.5 }}
+                        aria-label={`Sort by ${column.label}${
+                          sortBy === column.field
+                            ? sortOrder === "asc"
+                              ? ", sorted ascending"
+                              : ", sorted descending"
+                            : ", not sorted"
+                        }`}
+                        aria-describedby={`sort-${column.field}-label`}
+                        tabIndex={-1}
+                      >
+                        {sortBy === column.field && sortOrder === "asc" ? (
+                          <ChevronUpIcon />
+                        ) : (
+                          <ChevronDownIcon />
+                        )}
+                      </IconButton>
+                    </Flex>
+                  ) : undefined}
+                </div>
+              ))}
+            </div>
+          </ListItem>
+        </div>
+      </List>
+
+      <List asChild>
+        <div role="rowgroup">
           {projects.map((project) => (
             <ProjectsListItem
               key={project.id}
@@ -252,8 +294,8 @@ export const ProjectsList = ({
               projectsTags={projectsTags}
             />
           ))}
-        </tbody>
+        </div>
       </List>
-    </table>
+    </div>
   );
 };

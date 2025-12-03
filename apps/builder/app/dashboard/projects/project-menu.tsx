@@ -31,7 +31,7 @@ export const ProjectMenu = ({
         <IconButton
           aria-label="Menu Button"
           tabIndex={-1}
-          css={{ alignSelf: "center" }}
+          css={{ alignSelf: "center", position: "relative", zIndex: 1 }}
         >
           <EllipsesIcon width={15} height={15} />
         </IconButton>
