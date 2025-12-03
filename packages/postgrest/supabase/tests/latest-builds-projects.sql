@@ -782,14 +782,14 @@ SELECT
 -- Verify column names match expected structure  
 SELECT
     bag_eq(
-        $ $
+        $$
         SELECT
             column_name :: text
         FROM
             information_schema.columns
         WHERE
-            table_name = 'latestBuildVirtual' $ $,
-            $ $
+            table_name = 'latestBuildVirtual' $$,
+            $$
         VALUES
             ('buildId'),
             ('projectId'),
@@ -797,7 +797,7 @@ SELECT
             ('domain'),
             ('createdAt'),
             ('publishStatus'),
-            ('updatedAt') $ $,
+            ('updatedAt') $$,
             'Test Case 10.1: All expected columns should be present in latestBuildVirtual table.'
     );
 
