@@ -137,7 +137,7 @@ ORDER BY
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -147,7 +147,7 @@ SELECT
                     ('project1', 'project-1-custom-domain-2', NULL)
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'Initial state without builds'
     );
 
@@ -179,7 +179,7 @@ VALUES
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -193,7 +193,7 @@ SELECT
                     ('project1', 'project-1-custom-domain-2', NULL)
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'After inserting build1 associated with custom domain 1'
     );
 
@@ -225,7 +225,7 @@ VALUES
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -239,7 +239,7 @@ SELECT
                     ('project1', 'project-1-custom-domain-2', NULL)
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'After inserting build2 associated with custom domain 1'
     );
 
@@ -271,7 +271,7 @@ VALUES
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -289,7 +289,7 @@ SELECT
                     )
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'After inserting build3 associated with custom domain 2'
     );
 
@@ -321,7 +321,7 @@ VALUES
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -339,7 +339,7 @@ SELECT
                     )
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'After inserting build4 associated with both domains'
     );
 
@@ -399,7 +399,7 @@ VALUES
 SELECT
     results_eq(
         'SELECT * FROM "public"."TestProjectDomains" WHERE "projectId" = ''project1''',
-        $ $
+        $$
         SELECT
             *
         FROM
@@ -417,7 +417,7 @@ SELECT
                     )
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'Verify Project1 results remain unchanged after Project2 updates'
     );
 
@@ -426,14 +426,14 @@ SELECT
 --------------------------------------------------------------------------------
 SELECT
     results_eq(
-        $ $
+        $$
         SELECT
             *
         FROM
             "public"."TestProjectDomains"
         WHERE
-            "projectId" = 'project2' $ $,
-            $ $
+            "projectId" = 'project2' $$,
+            $$
         SELECT
             *
         FROM
@@ -451,7 +451,7 @@ SELECT
                     )
             ) AS expected(projectId, domainId, buildId)
         ORDER BY
-            domainId $ $,
+            domainId $$,
             'Verify Project2 results reflect the latest build'
     );
 
