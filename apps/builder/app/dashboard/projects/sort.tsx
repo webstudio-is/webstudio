@@ -52,23 +52,26 @@ export const sortProjects = (
       comparison = new Date(aUpdated).getTime() - new Date(bUpdated).getTime();
     } else if (sortBy === "publishedAt") {
       // Sort by published date, putting unpublished projects at the end
-      const aPublished =
-        a.latestBuildVirtual?.publishStatus === "PUBLISHED"
-          ? a.latestBuildVirtual?.createdAt
-          : null;
-      const bPublished =
-        b.latestBuildVirtual?.publishStatus === "PUBLISHED"
-          ? b.latestBuildVirtual?.createdAt
-          : null;
+      const aPublished = a.isPublished
+        ? a.latestBuildVirtual?.createdAt
+        : undefined;
+      const bPublished = b.isPublished
+        ? b.latestBuildVirtual?.createdAt
+        : undefined;
 
-      // If both are published or both are unpublished, compare dates
+      // If both are published, compare dates normally (will be reversed by order)
       if (aPublished && bPublished) {
         comparison =
           new Date(aPublished).getTime() - new Date(bPublished).getTime();
       } else if (aPublished && !bPublished) {
-        comparison = -1; // a comes before b
+        // Published should always come before unpublished, regardless of order
+        // In asc: -1 means a before b (correct)
+        // In desc: we return -(-1) = 1, meaning a after b (wrong!)
+        // So we need to account for the order reversal
+        comparison = order === "asc" ? -1 : 1;
       } else if (!aPublished && bPublished) {
-        comparison = 1; // b comes before a
+        // Unpublished should always come after published, regardless of order
+        comparison = order === "asc" ? 1 : -1;
       } else {
         comparison = 0; // both unpublished, maintain order
       }

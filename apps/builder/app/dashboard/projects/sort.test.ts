@@ -241,6 +241,7 @@ describe("sortProjects", () => {
       const projects = [
         createMockProject({
           id: "1",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-03-01T00:00:00.000Z",
@@ -248,6 +249,7 @@ describe("sortProjects", () => {
         }),
         createMockProject({
           id: "2",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-01-01T00:00:00.000Z",
@@ -255,6 +257,7 @@ describe("sortProjects", () => {
         }),
         createMockProject({
           id: "3",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-02-01T00:00:00.000Z",
@@ -274,6 +277,7 @@ describe("sortProjects", () => {
       const projects = [
         createMockProject({
           id: "1",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-02-01T00:00:00.000Z",
@@ -281,10 +285,12 @@ describe("sortProjects", () => {
         }),
         createMockProject({
           id: "2",
+          isPublished: false,
           latestBuildVirtual: null,
         }),
         createMockProject({
           id: "3",
+          isPublished: false,
           latestBuildVirtual: {
             publishStatus: "PENDING",
             createdAt: "2024-03-01T00:00:00.000Z",
@@ -292,6 +298,7 @@ describe("sortProjects", () => {
         }),
         createMockProject({
           id: "4",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-01-01T00:00:00.000Z",
@@ -304,16 +311,16 @@ describe("sortProjects", () => {
         order: "desc",
       });
 
-      // Unpublished projects (null or non-PUBLISHED status) come first in this sort
-      // because of the comparison logic: unpublished gets positive comparison value
-      // Then published projects sorted by date descending
-      expect(sorted.map((p) => p.id)).toEqual(["2", "3", "1", "4"]);
+      // Unpublished projects (isPublished: false) come at the end
+      // Published projects sorted by date descending
+      expect(sorted.map((p) => p.id)).toEqual(["1", "4", "2", "3"]);
     });
 
     test("puts unpublished projects at the end in ascending order", () => {
       const projects = [
         createMockProject({
           id: "1",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-02-01T00:00:00.000Z",
@@ -321,10 +328,12 @@ describe("sortProjects", () => {
         }),
         createMockProject({
           id: "2",
+          isPublished: false,
           latestBuildVirtual: null,
         }),
         createMockProject({
           id: "3",
+          isPublished: true,
           latestBuildVirtual: {
             publishStatus: "PUBLISHED",
             createdAt: "2024-01-01T00:00:00.000Z",
@@ -343,14 +352,23 @@ describe("sortProjects", () => {
 
     test("maintains order for multiple unpublished projects", () => {
       const projects = [
-        createMockProject({ id: "1", latestBuildVirtual: null }),
+        createMockProject({
+          id: "1",
+          isPublished: false,
+          latestBuildVirtual: null,
+        }),
         createMockProject({
           id: "2",
+          isPublished: false,
           latestBuildVirtual: {
             publishStatus: "PENDING",
           } as LatestBuildVirtual,
         }),
-        createMockProject({ id: "3", latestBuildVirtual: null }),
+        createMockProject({
+          id: "3",
+          isPublished: false,
+          latestBuildVirtual: null,
+        }),
       ];
 
       const sorted = sortProjects(projects, {
@@ -630,6 +648,7 @@ describe("sortProjects", () => {
         const projects = [
           createMockProject({
             id: "1",
+            isPublished: true,
             latestBuildVirtual: {
               publishStatus: "PUBLISHED",
               createdAt: "2024-01-01T00:00:00.000Z",
@@ -637,6 +656,7 @@ describe("sortProjects", () => {
           }),
           createMockProject({
             id: "2",
+            isPublished: true,
             latestBuildVirtual: {
               publishStatus: "PUBLISHED",
               createdAt: "2024-03-01T00:00:00.000Z",
