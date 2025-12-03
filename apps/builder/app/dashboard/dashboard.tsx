@@ -174,6 +174,7 @@ export const Dashboard = () => {
           as="aside"
           align="stretch"
           direction="column"
+          shrink={false}
           css={{
             width: theme.sizes.sidebarWidth,
             borderRight: `1px solid ${theme.colors.borderMain}`,

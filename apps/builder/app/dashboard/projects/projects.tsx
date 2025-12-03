@@ -18,8 +18,13 @@ import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
 import { Tag } from "./tags";
-import { SortSelect, sortProjects, type SortState } from "./sort";
-import { ProjectsListTable } from "./projects-list";
+import {
+  SortSelect,
+  sortProjects,
+  type SortState,
+  type SortField,
+} from "./sort";
+import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
@@ -34,6 +39,7 @@ export const ProjectsGrid = ({
         css={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[31]}, 1fr))`,
           paddingBottom: theme.spacing[13],
+          width: "100%",
         }}
       >
         {projects.map((project) => {
@@ -75,6 +81,21 @@ export const Projects = (props: ProjectsProps) => {
     newParams.set("sortBy", newSortState.sortBy);
     newParams.set("order", newSortState.order);
     setSearchParams(newParams);
+  };
+
+  const handleTableSort = (field: SortField) => {
+    const currentSortBy = sortState.sortBy ?? "updatedAt";
+    const currentOrder = sortState.order ?? "desc";
+
+    // If clicking the same field, toggle the order
+    if (field === currentSortBy) {
+      const newOrder = currentOrder === "asc" ? "desc" : "asc";
+      handleSortChange({ sortBy: field, order: newOrder });
+    } else {
+      // When switching to a new field, use smart defaults
+      const newOrder = field === "title" ? "asc" : "desc";
+      handleSortChange({ sortBy: field, order: newOrder });
+    }
   };
 
   const handleViewChange = (value: string) => {
@@ -145,18 +166,27 @@ export const Projects = (props: ProjectsProps) => {
         </Flex>
       </Flex>
       <Flex css={{ paddingInline: theme.spacing[13] }}>
-        {projects.length === 0 && (
+        {projects.length === 0 ? (
           <Text
             variant="brandRegular"
-            css={{ padding: theme.spacing[13], textAlign: "center" }}
+            css={{
+              paddingBlock: theme.spacing[20],
+              textAlign: "center",
+              flexGrow: 1,
+            }}
           >
             No projects found
           </Text>
-        )}
-        {viewMode === "grid" ? (
+        ) : viewMode === "grid" ? (
           <ProjectsGrid {...props} projects={projects} />
         ) : (
-          <ProjectsListTable {...props} projects={projects} />
+          <ProjectsList
+            {...props}
+            projects={projects}
+            sortBy={sortState.sortBy}
+            sortOrder={sortState.order}
+            onSortChange={handleTableSort}
+          />
         )}
       </Flex>
     </Main>
