@@ -117,22 +117,13 @@ COMMENT ON FUNCTION "latestProjectDomainBuildVirtual"("Project") IS 'This functi
 -- Add latestBuildVirtual function overload for DashboardProject view
 -- This is needed because PostgREST computed fields require a function
 -- that matches the source table/view type. DashboardProject is a view
--- over Project, so we need this wrapper function.
+-- over Project, so we need this wrapper function that casts to Project type.
 CREATE
 OR REPLACE FUNCTION "latestBuildVirtual"("DashboardProject") RETURNS SETOF "latestBuildVirtual" ROWS 1 AS $$
 SELECT
   *
 FROM
-  "latestBuildVirtual"(
-    (
-      SELECT
-        p
-      FROM
-        "Project" p
-      WHERE
-        p.id = $1.id
-    )
-  );
+  "latestBuildVirtual"(ROW($1.id, $1."createdAt", $1.title, $1.tags, $1.domain, $1."userId", NULL, $1."isDeleted", NULL, NULL, $1."previewImageAssetId", $1."marketplaceApprovalStatus", NULL)::"Project");
 
 $$ STABLE LANGUAGE sql;
 
