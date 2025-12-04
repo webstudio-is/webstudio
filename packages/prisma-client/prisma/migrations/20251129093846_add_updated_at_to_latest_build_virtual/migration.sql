@@ -2,10 +2,10 @@
 -- and update both functions to include Build's updatedAt timestamp
 -- Add updatedAt column to the virtual table type definition (uses IF NOT EXISTS for idempotency)
 -- Note: This uses PostgreSQL 9.6+ syntax for IF NOT EXISTS
-ALTER TABLE IF EXISTS "latestBuildVirtual"
+ALTER TABLE IF EXISTS "public"."latestBuildVirtual"
   ADD COLUMN IF NOT EXISTS "updatedAt" timestamp(3) with time zone NOT NULL DEFAULT NOW();
 
-COMMENT ON COLUMN "latestBuildVirtual"."updatedAt" IS 'Timestamp indicating when the Build was last updated';
+COMMENT ON COLUMN "public"."latestBuildVirtual"."updatedAt" IS 'Timestamp indicating when the Build was last updated';
 
 -- Recreate the function for Project with updatedAt field
 CREATE
