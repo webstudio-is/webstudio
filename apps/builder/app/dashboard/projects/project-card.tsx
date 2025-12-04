@@ -222,7 +222,7 @@ export const ProjectCard = ({
                     </>
                   )}
                   <br />
-                  {latestBuildVirtual?.publishStatus === "PUBLISHED" ? (
+                  {isPublished && latestBuildVirtual ? (
                     <>Published: {formatDate(latestBuildVirtual.createdAt)}</>
                   ) : (
                     <>Not published</>

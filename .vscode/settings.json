@@ -1,3 +1,16 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  // Disable formatting for SQL files
+  "[sql]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false
+  },
+  // Disable Prettier for SQL files specifically
+  "prettier.enable": true,
+  "prettier.ignorePath": ".prettierignore",
+  // Exclude SQL files from auto-formatting
+  "files.associations": {
+    "*.sql": "sql"
+  }
 }

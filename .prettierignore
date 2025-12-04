@@ -1,5 +1,3 @@
 pnpm-lock.yaml
 packages/prisma-client/prisma/migrations/*/client
 packages/prisma-client/**/*.d.ts
-packages/prisma-client/prisma/migrations/**/*.sql
-packages/postgrest/supabase/tests/*.sql
