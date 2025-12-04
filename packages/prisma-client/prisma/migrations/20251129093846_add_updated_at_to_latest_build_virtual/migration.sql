@@ -1,9 +1,15 @@
 -- Add updatedAt field to latestBuildVirtual virtual table (type definition)
 -- and update both functions to include Build's updatedAt timestamp
--- Add updatedAt column to the virtual table type definition (uses IF NOT EXISTS for idempotency)
--- Note: This uses PostgreSQL 9.6+ syntax for IF NOT EXISTS
-ALTER TABLE IF EXISTS "public"."latestBuildVirtual"
-  ADD COLUMN IF NOT EXISTS "updatedAt" timestamp(3) with time zone NOT NULL DEFAULT NOW();
+
+-- First, drop existing functions that depend on the old table structure
+DROP FUNCTION IF EXISTS "latestBuildVirtual"("Project");
+DROP FUNCTION IF EXISTS "latestBuildVirtual"("domainsVirtual");
+DROP FUNCTION IF EXISTS "latestProjectDomainBuildVirtual"("Project");
+DROP FUNCTION IF EXISTS "latestBuildVirtual"("DashboardProject");
+
+-- Add updatedAt column to the virtual table type definition
+ALTER TABLE "latestBuildVirtual"
+  ADD COLUMN "updatedAt" timestamp(3) with time zone NOT NULL DEFAULT NOW();
 
 COMMENT ON COLUMN "public"."latestBuildVirtual"."updatedAt" IS 'Timestamp indicating when the Build was last updated';
 
@@ -17,7 +23,7 @@ SELECT
   -- Use CASE to determine which domain to select based on conditions
   CASE
     WHEN (b.deployment :: jsonb ->> 'projectDomain') = p.domain
-    OR (b.deployment :: jsonb -> 'domains') @ > to_jsonb(array [p.domain]) THEN p.domain
+    OR (b.deployment :: jsonb -> 'domains') @> to_jsonb(array [p.domain]) THEN p.domain
     ELSE d.domain
   END AS "domain",
   b."createdAt",
@@ -38,8 +44,8 @@ WHERE
   AND (
     -- Check if 'projectDomain' matches p.domain
     (b.deployment :: jsonb ->> 'projectDomain') = p.domain -- Check if 'domains' contains p.domain or d.domain
-    OR (b.deployment :: jsonb -> 'domains') @ > to_jsonb(array [p.domain])
-    OR (b.deployment :: jsonb -> 'domains') @ > to_jsonb(array [d.domain])
+    OR (b.deployment :: jsonb -> 'domains') @> to_jsonb(array [p.domain])
+    OR (b.deployment :: jsonb -> 'domains') @> to_jsonb(array [d.domain])
   )
 ORDER BY
   b."createdAt" DESC
@@ -68,7 +74,7 @@ FROM
 WHERE
   b."projectId" = $1."projectId"
   AND b.deployment IS NOT NULL
-  AND (b.deployment :: jsonb -> 'domains') @ > to_jsonb(array [d.domain])
+  AND (b.deployment :: jsonb -> 'domains') @> to_jsonb(array [d.domain])
 ORDER BY
   b."createdAt" DESC
 LIMIT
@@ -103,7 +109,7 @@ WHERE
   )
   AND (
     (b.deployment :: jsonb ->> 'projectDomain') = p.domain
-    OR (b.deployment :: jsonb -> 'domains') @ > to_jsonb(array [p.domain])
+    OR (b.deployment :: jsonb -> 'domains') @> to_jsonb(array [p.domain])
   )
 ORDER BY
   b."createdAt" DESC
@@ -123,7 +129,7 @@ OR REPLACE FUNCTION "latestBuildVirtual"("DashboardProject") RETURNS SETOF "late
 SELECT
   *
 FROM
-  "latestBuildVirtual"(ROW($1.id, $1."createdAt", $1.title, $1.tags, $1.domain, $1."userId", NULL, $1."isDeleted", NULL, NULL, $1."previewImageAssetId", $1."marketplaceApprovalStatus", NULL)::"Project");
+  "latestBuildVirtual"(ROW($1.id, $1.title, $1.domain, $1."userId", $1."isDeleted", $1."createdAt", $1."previewImageAssetId", $1."marketplaceApprovalStatus", $1.tags)::"Project");
 
 $$ STABLE LANGUAGE sql;
 
