@@ -88,6 +88,18 @@ jobs:
           environment: ${{ matrix.environment }}
           PUBLIC_COLLAB_RELAY_URL: ${{ vars.PUBLIC_COLLAB_RELAY_URL }}
 
+      - uses: ./.github/actions/vercel
+        if: matrix.environment == 'staging'
+        id: vercel-prod
+        name: Deploy to Vercel
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          ref-name: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
+          environment: "production"
+
       - name: Debug Vercel Outputs
         run: |
           echo "domain=${{ steps.vercel.outputs.domain }}"
@@ -99,6 +111,13 @@ jobs:
           title: "⏰ [${{ matrix.environment }}] Vercel Inspection"
           description: "[${{ matrix.environment }}] Vercel logs"
           url: "${{ steps.vercel.outputs.inspect-url }}"
+
+      - uses: ./.github/actions/add-status
+        if: matrix.environment == 'staging'
+        with:
+          title: "⏰ [${{ matrix.environment }}] Vercel Production Inspection"
+          description: "[${{ matrix.environment }}] Vercel production logs"
+          url: "${{ steps.vercel-prod.outputs.inspect-url }}"
 
       - uses: ./.github/actions/add-status
         with:
