@@ -76,7 +76,11 @@ runs:
         export GITHUB_SHA=${{ inputs.sha }}
         export GITHUB_REF_NAME=${{ inputs.ref-name }}
 
-        pnpx vercel build
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          pnpx vercel build --prod
+        else
+          pnpx vercel build
+        fi
       shell: bash
 
     - name: Patch
@@ -103,8 +107,14 @@ runs:
     - name: Deploy
       id: deploy
       run: |
+        PROD_FLAGS=""
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          PROD_FLAGS="--prod --skip-domain"
+        fi
+
         pnpx vercel deploy \
         --prebuilt \
+        $PROD_FLAGS \
         --token ${{ inputs.vercel-token }} \
         2> >(tee info.txt >&2) | tee domain.txt
 
