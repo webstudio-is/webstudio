@@ -169,6 +169,10 @@ const toColorComponent = (value: number) =>
   Math.round(value.valueOf() * 10000) / 10000;
 
 export const parseColor = (colorString: string): undefined | ColorValue => {
+  // does not match css variables which are incorrectly treated by colorjs.io
+  if (!lexer.match("<color>", colorString).matched) {
+    return;
+  }
   try {
     const color = new Color(colorString);
     return {
