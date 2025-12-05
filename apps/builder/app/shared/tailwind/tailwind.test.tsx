@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { css, renderTemplate, ws } from "@webstudio-is/template";
 import { generateFragmentFromTailwind } from "./tailwind";
+import { Styles } from "@webstudio-is/sdk";
+import { generateFragmentFromHtml } from "../html";
 
 test("extract local styles from tailwind classes", async () => {
   expect(
@@ -655,4 +657,17 @@ test("generate space with display property", async () => {
       </>
     )
   );
+});
+
+test("validate color components in pasted HTML with Tailwind classes", async () => {
+  const html = `<span class="text-yellow-400">Text</span>`;
+
+  let fragment = generateFragmentFromHtml(html);
+  fragment = await generateFragmentFromTailwind(fragment);
+
+  const stylesMap = new Map(
+    fragment.styles.map((style, index) => [index.toString(), style])
+  );
+  const result = Styles.safeParse(stylesMap);
+  expect(result.success).toBe(true);
 });
