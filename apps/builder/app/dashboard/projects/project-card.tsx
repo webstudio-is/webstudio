@@ -10,7 +10,7 @@ import {
   Link,
   Box,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, UploadIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -147,24 +147,6 @@ export const ProjectCard = ({
             opacity: 0,
           }}
         />
-        {isPublished && (
-          <Box
-            css={{
-              position: "absolute",
-              top: theme.spacing[5],
-              left: theme.spacing[5],
-              zIndex: 1,
-              backgroundColor: "oklch(0 0 0 / 0.3)",
-              borderRadius: theme.borderRadius[3],
-              padding: theme.spacing[2],
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <UploadIcon color={rawTheme.colors.foregroundContrastMain} />
-          </Box>
-        )}
         <Flex
           wrap="wrap"
           gap={1}
