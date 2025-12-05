@@ -107,16 +107,19 @@ runs:
     - name: Deploy
       id: deploy
       run: |
-        PROD_FLAGS=""
         if [ "${{ inputs.environment }}" = "production" ]; then
-          PROD_FLAGS="--prod --skip-domain"
+          pnpx vercel deploy \
+          --prebuilt \
+          --prod \
+          --skip-domain \
+          --token ${{ inputs.vercel-token }} \
+          2> >(tee info.txt >&2) | tee domain.txt
+        else
+          pnpx vercel deploy \
+          --prebuilt \
+          --token ${{ inputs.vercel-token }} \
+          2> >(tee info.txt >&2) | tee domain.txt
         fi
-
-        pnpx vercel deploy \
-        --prebuilt \
-        $PROD_FLAGS \
-        --token ${{ inputs.vercel-token }} \
-        2> >(tee info.txt >&2) | tee domain.txt
 
         echo "domain=$(cat ./domain.txt)" >> $GITHUB_OUTPUT
         echo "inspect-url=$(cat info.txt | grep 'Inspect:' | awk '{print $2}')" >> $GITHUB_OUTPUT
@@ -124,6 +127,7 @@ runs:
       shell: bash
 
     - name: Set Alias
+      if: ${{ inputs.environment != 'production' }}
       id: alias
       run: |
         ALIAS="${{ steps.branch.outputs.value }}"
