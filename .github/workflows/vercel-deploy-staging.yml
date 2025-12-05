@@ -75,6 +75,13 @@ jobs:
           url: "${{ steps.vercel.outputs.inspect-url }}"
 
       - uses: ./.github/actions/add-status
+        if: ${{ steps.vercel.outputs.inspect-production-url != '' }}
+        with:
+          title: "🚀 [${{ matrix.environment }}] Vercel Production Inspection"
+          description: "[${{ matrix.environment }}] Vercel production logs"
+          url: "${{ steps.vercel.outputs.inspect-production-url }}"
+
+      - uses: ./.github/actions/add-status
         with:
           title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
           description: "[${{ matrix.environment }}] Site url"

@@ -28,6 +28,9 @@ outputs:
   inspect-url:
     description: "Inspect URL"
     value: ${{ steps.deploy.outputs.inspect-url }}
+  inspect-production-url:
+    description: "Inspect Production URL"
+    value: ${{ steps.deploy.outputs.inspect-production-url }}
   alias:
     description: "Alias"
     value: ${{ steps.alias.outputs.value }}
@@ -110,6 +113,18 @@ runs:
 
         echo "domain=$(cat ./domain.txt)" >> $GITHUB_OUTPUT
         echo "inspect-url=$(cat info.txt | grep 'Inspect:' | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+        # Deploy with prod environment variables on staging and fill inspect-production-url
+        if [ "${{ inputs.environment }}" = "staging" ]; then
+          pnpx vercel deploy \
+          --prebuilt \
+          --prod \
+          --skip-domain \
+          --token ${{ inputs.vercel-token }} \
+          2> >(tee prod_info.txt >&2) | tee prod_domain.txt
+
+          echo "inspect-production-url=$(cat prod_info.txt | grep 'Inspect:' | awk '{print $2}')" >> $GITHUB_OUTPUT
+        fi
 
       shell: bash
 
