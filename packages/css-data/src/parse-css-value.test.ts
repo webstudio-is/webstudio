@@ -161,6 +161,15 @@ describe("Parse CSS value", () => {
       });
     });
   });
+
+  test("fallback to unparsed type when color has variable inside", () => {
+    expect(
+      parseCssValue("color", "rgb(24 24 27 / var(--tw-bg-opacity))")
+    ).toEqual({
+      type: "unparsed",
+      value: "rgb(24 24 27 / var(--tw-bg-opacity))",
+    });
+  });
 });
 
 test("parse background-image property as layers", () => {
