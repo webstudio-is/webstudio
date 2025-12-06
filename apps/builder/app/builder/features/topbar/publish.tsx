@@ -237,8 +237,8 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
+  [$pages, $dataSources, $instances, $project],
+  (pages, dataSources, instances, project) => {
     const features = new Map<
       string,
       | undefined
@@ -282,6 +282,16 @@ const $usedProFeatures = computed(
         features.set("Animation component", {
           awareness: findAwarenessByInstanceId(pages, instances, instance.id),
         });
+      }
+    }
+
+    // Custom domains
+    if (project) {
+      const customDomains = project.domainsVirtual.filter(
+        (domain) => domain.status === "ACTIVE" && domain.verified
+      );
+      if (customDomains.length > 0) {
+        features.set("Custom domain", undefined);
       }
     }
 
