@@ -286,13 +286,8 @@ const $usedProFeatures = computed(
     }
 
     // Custom domains
-    if (project) {
-      const customDomains = project.domainsVirtual.filter(
-        (domain) => domain.status === "ACTIVE" && domain.verified
-      );
-      if (customDomains.length > 0) {
-        features.set("Custom domain", undefined);
-      }
+    if (project && project.domainsVirtual.length > 0) {
+      features.set("Custom domain", undefined);
     }
 
     return features;
@@ -827,10 +822,7 @@ const Content = (props: {
 
   const project = useStore($project);
 
-  const hasCustomDomains =
-    project?.domainsVirtual.filter(
-      (domain) => domain.status === "ACTIVE" && domain.verified
-    ).length ?? 0 > 0;
+  const hasCustomDomains = (project?.domainsVirtual.length ?? 0) > 0;
 
   if (project == null) {
     throw new Error("Project not found");
