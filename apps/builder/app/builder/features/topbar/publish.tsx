@@ -295,9 +295,7 @@ const $usedProFeatures = computed(
       }
     }
 
-    // temporary ignore features checks
-    // return features;
-    return new Map() as typeof features;
+    return features;
   }
 );
 
@@ -829,6 +827,11 @@ const Content = (props: {
 
   const project = useStore($project);
 
+  const hasCustomDomains =
+    project?.domainsVirtual.filter(
+      (domain) => domain.status === "ACTIVE" && domain.verified
+    ).length ?? 0 > 0;
+
   if (project == null) {
     throw new Error("Project not found");
   }
@@ -875,7 +878,9 @@ const Content = (props: {
           refresh={refreshProject}
           timesLeft={maxPublishesAllowedPerUser - userPublishCount}
           disabled={
-            (usedProFeatures.size > 0 && hasProPlan === false) ||
+            (usedProFeatures.size > 0 &&
+              hasProPlan === false &&
+              hasCustomDomains) ||
             userPublishCount >= maxPublishesAllowedPerUser
           }
         />
