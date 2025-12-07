@@ -30,14 +30,10 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input/css-value-input";
-import type { UnitOption } from "~/builder/features/style-panel/shared/css-value-input/unit-select";
 import {
   cssWideKeywords,
   toValue,
   type StyleValue,
-  type CssProperty,
-  type KeywordValue,
-  type VarValue,
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
@@ -114,49 +110,51 @@ const scrollTimelineRangeName = {
   end: "Distance from the bottom of the scroll container where animation ends",
 };
 
-/**
- * Generic wrapper component for CssValueInput with validation
- */
-const ValidatedCssValueInput = <T,>({
-  value,
-  placeholder,
-  property,
-  disabled,
-  unitOptions,
-  getOptions,
-  onValidate,
-  onChange,
-  onHighlight,
-}: {
-  value: StyleValue | undefined;
-  placeholder?: string;
-  property: CssProperty;
-  disabled?: boolean;
-  unitOptions?: UnitOption[];
-  getOptions?: () => Array<
-    KeywordValue | VarValue | (KeywordValue & { description?: string })
-  >;
+type ValidatedCssValueInputProps<T> = Omit<
+  React.ComponentProps<typeof CssValueInput>,
+  | "onChange"
+  | "onChangeComplete"
+  | "onHighlight"
+  | "onAbort"
+  | "onReset"
+  | "intermediateValue"
+  | "styleSource"
+  | "getOptions"
+  | "placeholder"
+> & {
   onValidate: (
     styleValue: StyleValue,
     rawValue: string
   ) => { success: true; data: T | undefined } | { success: false };
   onChange: (value: T | undefined, isEphemeral: boolean) => void;
   onHighlight?: (value: T | undefined, isEphemeral: boolean) => void;
-}) => {
+  styleSource?: React.ComponentProps<typeof CssValueInput>["styleSource"];
+  getOptions?: React.ComponentProps<typeof CssValueInput>["getOptions"];
+  placeholder?: React.ComponentProps<typeof CssValueInput>["placeholder"];
+};
+
+/**
+ * Generic wrapper component for CssValueInput with validation
+ */
+const ValidatedCssValueInput = <T,>({
+  onValidate,
+  onChange,
+  onHighlight,
+  styleSource = "default",
+  getOptions = () => $availableUnitVariables.get(),
+  placeholder = "auto",
+  ...cssValueInputProps
+}: ValidatedCssValueInputProps<T>) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
-
   return (
     <CssValueInput
-      styleSource="default"
-      value={value}
+      {...cssValueInputProps}
+      styleSource={styleSource}
+      getOptions={getOptions}
       placeholder={placeholder}
-      property={property}
-      disabled={disabled}
-      unitOptions={unitOptions}
       intermediateValue={intermediateValue}
-      getOptions={getOptions ?? (() => $availableUnitVariables.get())}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
       }}
@@ -253,7 +251,6 @@ const EasingInput = ({
     onHighlight={onChange}
   />
 );
-
 const DurationInput = ({
   value,
   onChange,
@@ -266,7 +263,6 @@ const DurationInput = ({
 }) => (
   <ValidatedCssValueInput
     value={value}
-    placeholder="auto"
     property="animation-duration"
     onValidate={(styleValue, rawValue) => {
       if (rawValue.toLowerCase() === "auto") {
