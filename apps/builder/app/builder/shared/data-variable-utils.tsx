@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
+import { useStore } from "@nanostores/react";
+import { toast } from "@webstudio-is/design-system";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,12 @@ import {
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { findVariableUsagesByInstance } from "~/shared/data-variables";
+
+const $isDeleteUnusedDataVariablesDialogOpen = atom(false);
+
+export const openDeleteUnusedDataVariablesDialog = () => {
+  $isDeleteUnusedDataVariablesDialogOpen.set(true);
+};
 
 export type DataVariableError = {
   type: "required" | "duplicate";
@@ -98,6 +106,41 @@ export const DeleteDataVariableDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+export const deleteUnusedDataVariables = () => {
+  const dataSources = $dataSources.get();
+  const usedVariablesInInstances = $usedVariablesInInstances.get();
+  const unusedVariableIds: DataSource["id"][] = [];
+
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      const usages = usedVariablesInInstances.get(dataSource.id);
+      if (usages === undefined || usages.size === 0) {
+        unusedVariableIds.push(dataSource.id);
+      }
+    }
+  }
+
+  if (unusedVariableIds.length === 0) {
+    return 0;
+  }
+
+  serverSyncStore.createTransaction(
+    [$dataSources, $resources],
+    (dataSources, resources) => {
+      for (const variableId of unusedVariableIds) {
+        const dataSource = dataSources.get(variableId);
+        // Cleanup resource when variable is deleted
+        if (dataSource?.type === "resource") {
+          resources.delete(dataSource.resourceId);
+        }
+        dataSources.delete(variableId);
+      }
+    }
+  );
+
+  return unusedVariableIds.length;
 };
 
 export const validateDataVariableName = (
@@ -225,6 +268,95 @@ export const RenameDataVariableDialog = ({
             </Button>
             <DialogClose>
               <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const DeleteUnusedDataVariablesDialog = () => {
+  const open = useStore($isDeleteUnusedDataVariablesDialogOpen);
+  const usedVariablesInInstances = useStore($usedVariablesInInstances);
+  const dataSources = useStore($dataSources);
+
+  const handleClose = () => {
+    $isDeleteUnusedDataVariablesDialogOpen.set(false);
+  };
+
+  const unusedVariables: Array<{ id: string; name: string }> = [];
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      const usages = usedVariablesInInstances.get(dataSource.id);
+      if (usages === undefined || usages.size === 0) {
+        unusedVariables.push({ id: dataSource.id, name: dataSource.name });
+      }
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          handleClose();
+        }
+      }}
+    >
+      <DialogContent
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <DialogTitle>Delete unused data variables</DialogTitle>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+          {unusedVariables.length === 0 ? (
+            <Text>There are no unused data variables to delete.</Text>
+          ) : (
+            <>
+              <Text>
+                Delete {unusedVariables.length} unused data{" "}
+                {unusedVariables.length === 1 ? "variable" : "variables"} from
+                the project?
+              </Text>
+              <Text
+                variant="mono"
+                css={{
+                  maxHeight: 200,
+                  overflowY: "auto",
+                  backgroundColor: theme.colors.backgroundPanel,
+                  borderRadius: theme.borderRadius[4],
+                  wordBreak: "break-word",
+                }}
+              >
+                {unusedVariables.map((variable) => variable.name).join(", ")}
+              </Text>
+            </>
+          )}
+          <Flex direction="rowReverse" gap="2">
+            {unusedVariables.length > 0 && (
+              <Button
+                color="destructive"
+                onClick={() => {
+                  const deletedCount = deleteUnusedDataVariables();
+                  handleClose();
+                  if (deletedCount === 0) {
+                    toast.info("No unused data variables to delete");
+                  } else {
+                    toast.success(
+                      `Deleted ${deletedCount} unused data ${deletedCount === 1 ? "variable" : "variables"}`
+                    );
+                  }
+                }}
+              >
+                Delete
+              </Button>
+            )}
+            <DialogClose>
+              <Button color="ghost">
+                {unusedVariables.length > 0 ? "Cancel" : "Close"}
+              </Button>
             </DialogClose>
           </Flex>
         </Flex>
