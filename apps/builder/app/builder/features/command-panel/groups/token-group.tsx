@@ -158,6 +158,7 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   return (
     <>
       <CommandInput
+        action="select"
         value={search}
         onValueChange={setSearch}
         onKeyDown={(event) => {
@@ -170,32 +171,36 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>
-            {matches.length === 0 ? (
-              <Flex justify="center" align="center" css={{ minHeight: 100 }}>
-                <Text color="subtle">No instances found</Text>
-              </Flex>
-            ) : (
-              matches.map(({ id, label }) => (
-                <CommandItem
-                  key={id}
-                  // preserve selected state when rerender
-                  value={id}
-                  onSelect={() => {
-                    selectToken(id, tokenId);
-                    closeCommandPanel();
-                  }}
-                >
-                  <Text variant="labelsTitleCase">{label}</Text>
-                </CommandItem>
-              ))
-            )}
+            <CommandGroup name="instance" actions={["select"]}>
+              {matches.length === 0 ? (
+                <Flex justify="center" align="center" css={{ minHeight: 100 }}>
+                  <Text color="subtle">No instances found</Text>
+                </Flex>
+              ) : (
+                matches.map(({ id, label }) => (
+                  <CommandItem
+                    key={id}
+                    // preserve selected state when rerender
+                    value={id}
+                    onSelect={() => {
+                      selectToken(id, tokenId);
+                      closeCommandPanel();
+                    }}
+                  >
+                    <Text variant="labelsTitleCase">{label}</Text>
+                  </CommandItem>
+                ))
+              )}
+            </CommandGroup>
           </CommandList>
         </ScrollArea>
       </Flex>
       <CommandGroupFooter>
-        <Button tabIndex={-1} color="ghost" onClick={goBack}>
-          Back <Kbd value={["backspace"]} />
-        </Button>
+        <Flex grow>
+          <Button tabIndex={-1} color="ghost" onClick={goBack}>
+            Back <Kbd value={["backspace"]} />
+          </Button>
+        </Flex>
       </CommandGroupFooter>
     </>
   );

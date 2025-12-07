@@ -105,7 +105,6 @@ const CommandDialogContent = () => {
           </CommandList>
         </ScrollArea>
       </Flex>
-      <Separator />
       <CommandFooter />
     </>
   );

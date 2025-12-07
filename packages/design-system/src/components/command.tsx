@@ -155,10 +155,13 @@ const CommandInputField = styled(CommandPrimitive.Input, {
 });
 
 export const CommandInput = (
-  props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
+  props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
+    action?: string;
+  }
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const action = useSelectedAction();
+  const contextAction = useSelectedAction();
+  const { action = contextAction, ...inputProps } = props;
   return (
     <CommandInputContainer>
       <CommandInputIcon />
@@ -166,7 +169,7 @@ export const CommandInput = (
         ref={inputRef}
         autoFocus={true}
         placeholder="Type a command or search..."
-        {...props}
+        {...inputProps}
         onValueChange={(value) => {
           // reset scroll whenever search is changed
           requestAnimationFrame(() => {
@@ -175,7 +178,7 @@ export const CommandInput = (
               ?.querySelector("[data-radix-scroll-area-viewport]")
               ?.scrollTo(0, 0);
           });
-          props.onValueChange?.(value);
+          inputProps.onValueChange?.(value);
         }}
       />
       <Text
@@ -347,6 +350,7 @@ export const CommandGroupFooter = styled("div", {
   paddingInline: theme.spacing[5],
   height: itemHeight,
   justifyContent: "end",
+  borderTop: `1px solid ${theme.colors.borderMain}`,
 });
 
 export const CommandItem = styled(CommandPrimitive.Item, {
