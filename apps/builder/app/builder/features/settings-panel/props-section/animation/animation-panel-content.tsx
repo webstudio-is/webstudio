@@ -437,6 +437,7 @@ export const AnimationPanelContent = ({
   const timelineRangeNames = Object.keys(timelineRangeDescriptions);
 
   const isRangeEndEnabled = value.timing.duration === undefined;
+  const isRangeStartEnabled = value.timing.delay === undefined;
 
   const animationSchema = isScrollAnimation
     ? scrollAnimationSchema
@@ -769,6 +770,7 @@ export const AnimationPanelContent = ({
                   >
                     <ToggleGroupButton
                       key={toggleValue}
+                      disabled={!isRangeStartEnabled}
                       value={toggleValue}
                       onClick={() => {
                         setIsAdvancedRangeStart(false);
@@ -796,6 +798,7 @@ export const AnimationPanelContent = ({
 
               <Tooltip content="Set custom range">
                 <ToggleGroupButton
+                  disabled={!isRangeStartEnabled}
                   onClick={() => {
                     setIsAdvancedRangeStart(true);
                   }}
@@ -816,6 +819,7 @@ export const AnimationPanelContent = ({
               gap={2}
             >
               <Select
+                disabled={!isRangeStartEnabled}
                 options={timelineRangeNames}
                 getLabel={humanizeString}
                 value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
@@ -871,6 +875,7 @@ export const AnimationPanelContent = ({
                 }}
               />
               <RangeValueInput
+                disabled={!isRangeStartEnabled}
                 value={
                   value.timing.rangeStart?.[1] ?? {
                     type: "unit",
