@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { atom } from "nanostores";
 import { $dataSources } from "~/shared/nano-states";
 import { validateDataVariableName } from "./data-variable-utils";
-import type { DataSources } from "@webstudio-is/sdk";
+import type { DataSources, DataSource } from "@webstudio-is/sdk";
 
 // Mock the nano-states module
 const mockDataSources = atom<DataSources>(new Map());
@@ -10,6 +10,19 @@ const mockDataSources = atom<DataSources>(new Map());
 // Replace the actual store with our mock
 Object.defineProperty($dataSources, "get", {
   value: () => mockDataSources.get(),
+});
+
+// Helper to create a minimal variable data source for testing
+const createVariable = (
+  id: string,
+  name: string,
+  scopeInstanceId?: string
+): DataSource => ({
+  id,
+  scopeInstanceId,
+  name,
+  type: "variable",
+  value: { type: "string", value: "" },
 });
 
 test("validateDataVariableName returns required error for empty name", () => {
@@ -29,17 +42,7 @@ test("validateDataVariableName returns required error for whitespace-only name",
 
 test("validateDataVariableName returns undefined for valid unique name", () => {
   mockDataSources.set(
-    new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "existingVariable",
-          type: "variable",
-        },
-      ],
-    ])
+    new Map([["var1", createVariable("var1", "existingVariable", "instance1")]])
   );
 
   const error = validateDataVariableName("newVariable");
@@ -49,24 +52,8 @@ test("validateDataVariableName returns undefined for valid unique name", () => {
 test("validateDataVariableName returns duplicate error when name exists on same instance", () => {
   mockDataSources.set(
     new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "myVariable",
-          type: "variable",
-        },
-      ],
-      [
-        "var2",
-        {
-          id: "var2",
-          scopeInstanceId: "instance1",
-          name: "otherVariable",
-          type: "variable",
-        },
-      ],
+      ["var1", createVariable("var1", "myVariable", "instance1")],
+      ["var2", createVariable("var2", "otherVariable", "instance1")],
     ])
   );
 
@@ -78,24 +65,8 @@ test("validateDataVariableName returns duplicate error when name exists on same 
 test("validateDataVariableName allows same name on different instances", () => {
   mockDataSources.set(
     new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "myVariable",
-          type: "variable",
-        },
-      ],
-      [
-        "var2",
-        {
-          id: "var2",
-          scopeInstanceId: "instance2",
-          name: "otherVariable",
-          type: "variable",
-        },
-      ],
+      ["var1", createVariable("var1", "myVariable", "instance1")],
+      ["var2", createVariable("var2", "otherVariable", "instance2")],
     ])
   );
 
@@ -106,17 +77,7 @@ test("validateDataVariableName allows same name on different instances", () => {
 
 test("validateDataVariableName allows renaming variable to same name", () => {
   mockDataSources.set(
-    new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "myVariable",
-          type: "variable",
-        },
-      ],
-    ])
+    new Map([["var1", createVariable("var1", "myVariable", "instance1")]])
   );
 
   // Renaming var1 to its current name
@@ -127,24 +88,8 @@ test("validateDataVariableName allows renaming variable to same name", () => {
 test("validateDataVariableName returns duplicate error when renaming to existing name on same instance", () => {
   mockDataSources.set(
     new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "firstVariable",
-          type: "variable",
-        },
-      ],
-      [
-        "var2",
-        {
-          id: "var2",
-          scopeInstanceId: "instance1",
-          name: "secondVariable",
-          type: "variable",
-        },
-      ],
+      ["var1", createVariable("var1", "firstVariable", "instance1")],
+      ["var2", createVariable("var2", "secondVariable", "instance1")],
     ])
   );
 
@@ -156,15 +101,7 @@ test("validateDataVariableName returns duplicate error when renaming to existing
 test("validateDataVariableName ignores non-variable data sources", () => {
   mockDataSources.set(
     new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "myVariable",
-          type: "variable",
-        },
-      ],
+      ["var1", createVariable("var1", "myVariable", "instance1")],
       [
         "resource1",
         {
@@ -185,17 +122,7 @@ test("validateDataVariableName ignores non-variable data sources", () => {
 
 test("validateDataVariableName validates for new variables without variableId", () => {
   mockDataSources.set(
-    new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: "instance1",
-          name: "existingVariable",
-          type: "variable",
-        },
-      ],
-    ])
+    new Map([["var1", createVariable("var1", "existingVariable", "instance1")]])
   );
 
   // Creating a new variable (no variableId) with existing name on same instance
@@ -209,17 +136,7 @@ test("validateDataVariableName validates for new variables without variableId", 
 
 test("validateDataVariableName handles undefined scopeInstanceId correctly", () => {
   mockDataSources.set(
-    new Map([
-      [
-        "var1",
-        {
-          id: "var1",
-          scopeInstanceId: undefined,
-          name: "globalVariable",
-          type: "variable",
-        },
-      ],
-    ])
+    new Map([["var1", createVariable("var1", "globalVariable", undefined)]])
   );
 
   // Creating a variable with same name but undefined scope
