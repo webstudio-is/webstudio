@@ -16,7 +16,7 @@ import {
   $commandSearch,
   closeCommandPanel,
 } from "./command-state";
-import { $allOptions, groups, type Option, type OptionByType } from "./groups";
+import { $allOptions, groups, type Option } from "./groups";
 
 const renderGroup = (type: Option["type"], matches: Option[]): JSX.Element => {
   const Group = groups[type];
