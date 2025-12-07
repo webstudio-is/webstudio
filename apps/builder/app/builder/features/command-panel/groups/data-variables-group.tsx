@@ -4,25 +4,37 @@ import {
   CommandGroupHeading,
   CommandItem,
   Text,
+  toast,
+  useSelectedAction,
 } from "@webstudio-is/design-system";
 import { $instances, $dataSources } from "~/shared/nano-states";
-import { selectInstance } from "~/shared/awareness";
+import { selectInstance as selectInstanceBySelector } from "~/shared/awareness";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { closeCommandPanel } from "../command-state";
-import { $usedVariablesAcrossProject } from "~/shared/data-variables-utils";
+import { $commandContent, closeCommandPanel } from "../command-state";
+import { InstanceList, selectInstance } from "../shared/instance-list";
+import {
+  $usedVariablesAcrossProject,
+  $usedVariablesInInstances,
+} from "~/shared/data-variables-utils";
+import type { BaseOption } from "../shared/types";
 
-export type DataVariableOption = {
-  terms: string[];
+export type DataVariableOption = BaseOption & {
   type: "dataVariable";
   id: string;
   name: string;
   instanceId: string;
   usages: number;
+  usedIn: Set<string>;
 };
 
 export const $dataVariableOptions = computed(
-  [$dataSources, $instances, $usedVariablesAcrossProject],
-  (dataSources, instances, variableUsages) => {
+  [
+    $dataSources,
+    $instances,
+    $usedVariablesAcrossProject,
+    $usedVariablesInInstances,
+  ],
+  (dataSources, instances, variableUsages, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
 
     for (const dataSource of dataSources.values()) {
@@ -40,6 +52,7 @@ export const $dataVariableOptions = computed(
             name: dataSource.name,
             instanceId: dataSource.scopeInstanceId,
             usages,
+            usedIn: usedInInstances.get(dataSource.id) ?? new Set(),
           });
         }
       }
@@ -49,17 +62,16 @@ export const $dataVariableOptions = computed(
   }
 );
 
-const handleSelect = (option: DataVariableOption) => {
-  closeCommandPanel();
-
-  // Find the instance selector
-  const instanceSelector: string[] = [option.instanceId];
-
-  // Select the instance
-  selectInstance(instanceSelector);
-
-  // Switch to settings tab
-  $activeInspectorPanel.set("settings");
+const DataVariableInstances = ({ option }: { option: DataVariableOption }) => {
+  return (
+    <InstanceList
+      instanceIds={option.usedIn}
+      onSelect={(instanceId) => {
+        selectInstance(instanceId);
+        $activeInspectorPanel.set("settings");
+      }}
+    />
+  );
 };
 
 export const DataVariablesGroup = ({
@@ -67,11 +79,35 @@ export const DataVariablesGroup = ({
 }: {
   options: DataVariableOption[];
 }) => {
+  const action = useSelectedAction();
+
+  const handleSelect = (option: DataVariableOption) => {
+    if (action === "find") {
+      if (option.usages > 0) {
+        $commandContent.set(<DataVariableInstances option={option} />);
+      } else {
+        toast.error("Variable is not used in any instance");
+      }
+      return;
+    }
+
+    closeCommandPanel();
+
+    // Find the instance selector
+    const instanceSelector: string[] = [option.instanceId];
+
+    // Select the instance
+    selectInstanceBySelector(instanceSelector);
+
+    // Switch to settings tab
+    $activeInspectorPanel.set("settings");
+  };
+
   return (
     <CommandGroup
       name="dataVariable"
       heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-      actions={["select"]}
+      actions={["find", "select"]}
     >
       {options.map((option) => (
         <CommandItem

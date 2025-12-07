@@ -11,9 +11,9 @@ import { $pages, $editingPageId } from "~/shared/nano-states";
 import { $selectedPage, selectPage } from "~/shared/awareness";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type PageOption = {
-  terms: string[];
+export type PageOption = BaseOption & {
   type: "page";
   page: Page;
 };

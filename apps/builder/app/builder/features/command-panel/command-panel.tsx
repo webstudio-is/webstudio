@@ -16,7 +16,7 @@ import {
   $commandSearch,
   closeCommandPanel,
 } from "./command-state";
-import { $allOptions, groups, type OptionByType, type Option } from "./groups";
+import { $allOptions, groups, type Option } from "./groups";
 
 const renderGroup = <T extends Option["type"]>(type: T, matches: Option[]) => {
   const Group = groups[type as keyof typeof groups];

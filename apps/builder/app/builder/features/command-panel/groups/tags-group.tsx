@@ -19,9 +19,9 @@ import { $selectedInstancePath } from "~/shared/awareness";
 import { InstanceIcon } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type TagOption = {
-  terms: string[];
+export type TagOption = BaseOption & {
   type: "tag";
   tag: string;
 };

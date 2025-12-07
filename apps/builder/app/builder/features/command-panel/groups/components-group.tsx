@@ -29,9 +29,9 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type ComponentOption = {
-  terms: string[];
+export type ComponentOption = BaseOption & {
   type: "component";
   component: string;
   label: string;

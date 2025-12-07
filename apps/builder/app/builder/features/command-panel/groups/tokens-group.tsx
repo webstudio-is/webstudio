@@ -1,43 +1,30 @@
 import { useState } from "react";
-import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   CommandGroup,
   CommandGroupHeading,
-  CommandGroupFooter,
-  CommandInput,
   CommandItem,
-  CommandList,
-  Flex,
-  ScrollArea,
   Text,
   toast,
   useSelectedAction,
-  Button,
-  Kbd,
 } from "@webstudio-is/design-system";
-import type { Instance, Instances, StyleSource } from "@webstudio-is/sdk";
-import {
-  $instances,
-  $pages,
-  $registeredComponentMetas,
-  $selectedStyleSources,
-  $styleSources,
-} from "~/shared/nano-states";
+import type { Instance, StyleSource } from "@webstudio-is/sdk";
+import { $selectedStyleSources, $styleSources } from "~/shared/nano-states";
 import {
   deleteStyleSource,
   DeleteStyleSourceDialog,
   RenameStyleSourceDialog,
   $styleSourceUsages,
 } from "~/builder/shared/style-source-utils";
-import { getInstanceLabel } from "~/builder/shared/instance-label";
-import type { InstanceSelector } from "~/shared/tree-utils";
+import { findInstanceById } from "../shared/instance-utils";
+import { InstanceList } from "../shared/instance-list";
+import { $instances, $pages } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import { $commandContent } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type TokenOption = {
-  terms: string[];
+export type TokenOption = BaseOption & {
   type: "token";
   token: Extract<StyleSource, { type: "token" }>;
   usages: number;
@@ -61,36 +48,6 @@ export const $tokenOptions = computed(
     return tokenOptions;
   }
 );
-
-/**
- * very loose selector finder
- * will not work properly with collections
- */
-const findInstanceById = (
-  instances: Instances,
-  instanceSelector: InstanceSelector,
-  targetId: Instance["id"]
-): undefined | InstanceSelector => {
-  const [instanceId] = instanceSelector;
-  if (instanceId === targetId) {
-    return instanceSelector;
-  }
-  const instance = instances.get(instanceId);
-  if (instance) {
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        const matched = findInstanceById(
-          instances,
-          [child.value, ...instanceSelector],
-          targetId
-        );
-        if (matched) {
-          return matched;
-        }
-      }
-    }
-  }
-};
 
 const selectToken = (
   instanceId: Instance["id"],
@@ -118,91 +75,15 @@ const selectToken = (
   }
 };
 
-type InstanceOption = {
-  label: string;
-  id: string;
-};
-
 const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   const usages = useStore($styleSourceUsages);
   const usedInInstanceIds = usages.get(tokenId) ?? new Set();
-  const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
-  const usedInInstances: InstanceOption[] = [];
-  for (const instanceId of usedInInstanceIds) {
-    const instance = instances.get(instanceId);
-    const meta = metas.get(instance?.component ?? "");
-    if (instance && meta) {
-      usedInInstances.push({
-        label: getInstanceLabel(instance, meta),
-        id: instance.id,
-      });
-    }
-  }
-  const [search, setSearch] = useState("");
 
-  const goBack = () => {
-    $commandContent.set(undefined);
-  };
-
-  let matches = usedInInstances;
-  // prevent searching when value is empty
-  // to preserve original items order
-  if (search.trim().length > 0) {
-    for (const word of search.trim().split(/\s+/)) {
-      matches = matchSorter(matches, word, {
-        keys: ["label"],
-      });
-    }
-  }
   return (
-    <>
-      <CommandInput
-        action="select"
-        value={search}
-        onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            goBack();
-          }
-        }}
-      />
-      <Flex direction="column" css={{ maxHeight: 300 }}>
-        <ScrollArea>
-          <CommandList>
-            <CommandGroup name="instance" actions={["select"]}>
-              {matches.length === 0 ? (
-                <Flex justify="center" align="center" css={{ minHeight: 100 }}>
-                  <Text color="subtle">No instances found</Text>
-                </Flex>
-              ) : (
-                matches.map(({ id, label }) => (
-                  <CommandItem
-                    key={id}
-                    // preserve selected state when rerender
-                    value={id}
-                    onSelect={() => {
-                      selectToken(id, tokenId);
-                      closeCommandPanel();
-                    }}
-                  >
-                    <Text variant="labelsTitleCase">{label}</Text>
-                  </CommandItem>
-                ))
-              )}
-            </CommandGroup>
-          </CommandList>
-        </ScrollArea>
-      </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <Button tabIndex={-1} color="ghost" onClick={goBack}>
-            Back <Kbd value={["backspace"]} />
-          </Button>
-        </Flex>
-      </CommandGroupFooter>
-    </>
+    <InstanceList
+      instanceIds={usedInInstanceIds}
+      onSelect={(instanceId) => selectToken(instanceId, tokenId)}
+    />
   );
 };
 

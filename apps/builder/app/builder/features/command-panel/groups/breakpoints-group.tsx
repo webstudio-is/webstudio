@@ -15,12 +15,12 @@ import {
 } from "~/shared/nano-states";
 import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type BreakpointOption = {
-  terms: string[];
+export type BreakpointOption = BaseOption & {
   type: "breakpoint";
   breakpoint: Breakpoint;
-  shortcut: string;
+  keys: string[];
 };
 
 export const $breakpointOptions = computed(
@@ -41,7 +41,7 @@ export const $breakpointOptions = computed(
         terms: ["breakpoints", breakpoint.label, width],
         type: "breakpoint",
         breakpoint,
-        shortcut: (index + 1).toString(),
+        keys: [(index + 1).toString()],
       });
     }
     return breakpointOptions;
@@ -70,7 +70,7 @@ export const BreakpointsGroup = ({
       heading={<CommandGroupHeading>Breakpoints</CommandGroupHeading>}
       actions={["select"]}
     >
-      {options.map(({ breakpoint, shortcut }) => (
+      {options.map(({ breakpoint, keys }) => (
         <CommandItem
           key={breakpoint.id}
           // preserve selected state when rerender
@@ -84,7 +84,7 @@ export const BreakpointsGroup = ({
           <Text variant="labelsTitleCase">
             {getBreakpointLabel(breakpoint)}
           </Text>
-          <Kbd value={[shortcut]} />
+          <Kbd value={keys} />
         </CommandItem>
       ))}
     </CommandGroup>
