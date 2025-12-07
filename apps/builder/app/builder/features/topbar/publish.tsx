@@ -237,8 +237,8 @@ const ChangeProjectDomain = ({
 };
 
 const $usedProFeatures = computed(
-  [$pages, $dataSources, $instances],
-  (pages, dataSources, instances) => {
+  [$pages, $dataSources, $instances, $project],
+  (pages, dataSources, instances, project) => {
     const features = new Map<
       string,
       | undefined
@@ -285,9 +285,12 @@ const $usedProFeatures = computed(
       }
     }
 
-    // temporary ignore features checks
-    // return features;
-    return new Map() as typeof features;
+    // Custom domains
+    if (project && project.domainsVirtual.length > 0) {
+      features.set("Custom domain", undefined);
+    }
+
+    return features;
   }
 );
 
@@ -819,6 +822,8 @@ const Content = (props: {
 
   const project = useStore($project);
 
+  const hasCustomDomains = (project?.domainsVirtual.length ?? 0) > 0;
+
   if (project == null) {
     throw new Error("Project not found");
   }
@@ -865,7 +870,9 @@ const Content = (props: {
           refresh={refreshProject}
           timesLeft={maxPublishesAllowedPerUser - userPublishCount}
           disabled={
-            (usedProFeatures.size > 0 && hasProPlan === false) ||
+            (usedProFeatures.size > 0 &&
+              hasProPlan === false &&
+              hasCustomDomains) ||
             userPublishCount >= maxPublishesAllowedPerUser
           }
         />
