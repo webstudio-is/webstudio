@@ -204,7 +204,7 @@ export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
               if (usages > 0) {
                 $commandContent.set(<TokenInstances tokenId={token.id} />);
               } else {
-                toast.error("Token should be added to instance");
+                toast.error("Token is not used in any instance");
               }
             }
           }}
