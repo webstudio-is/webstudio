@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import {
   Box,
+  Flex,
   Grid,
   InputField,
   ScrollArea,
@@ -994,82 +995,86 @@ export const AnimationPanelContent = ({
               />
             </Grid>
           )}
+        </Grid>
+        <Grid gap="2" columns="3">
+          <Box>
+            <FieldLabel description="Sets a fixed duration instead of using range end.">
+              Duration
+            </FieldLabel>
+            <DurationInput
+              value={value.timing.duration}
+              onChange={(duration, isEphemeral) => {
+                if (duration === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
 
-          <FieldLabel description="Sets a fixed duration instead of using range end.">
-            Duration
-          </FieldLabel>
-
-          <DurationInput
-            value={value.timing.duration}
-            onChange={(duration, isEphemeral) => {
-              if (duration === undefined && isEphemeral) {
-                handleChange(undefined, true);
-                return;
-              }
-
-              handleChange(
-                {
-                  ...value,
-                  timing: {
-                    ...value.timing,
-                    duration,
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      duration,
+                    },
                   },
-                },
-                isEphemeral
-              );
-            }}
-          />
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
 
-          <FieldLabel description="Sets a fixed delay before the animation starts instead of using range start.">
-            Delay
-          </FieldLabel>
+          <Box>
+            <FieldLabel description="Sets a fixed delay before the animation starts instead of using range start.">
+              Delay
+            </FieldLabel>
+            <DurationInput
+              value={value.timing.delay}
+              onChange={(delay, isEphemeral) => {
+                if (delay === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
 
-          <DurationInput
-            value={value.timing.delay}
-            onChange={(delay, isEphemeral) => {
-              if (delay === undefined && isEphemeral) {
-                handleChange(undefined, true);
-                return;
-              }
-
-              handleChange(
-                {
-                  ...value,
-                  timing: {
-                    ...value.timing,
-                    delay,
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      delay,
+                    },
                   },
-                },
-                isEphemeral
-              );
-            }}
-          />
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
 
-          <FieldLabel description="Number of times the animation should repeat. Use 'infinite' for continuous loop. Requires duration to be set.">
-            Iterations
-          </FieldLabel>
+          <Box>
+            <FieldLabel description="Number of times the animation should repeat. Use 'infinite' for continuous loop. Requires duration to be set.">
+              Iterations
+            </FieldLabel>
+            <IterationsInput
+              disabled={!isIterationsEnabled}
+              value={value.timing.iterations}
+              onChange={(iterations, isEphemeral) => {
+                if (iterations === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
 
-          <IterationsInput
-            disabled={!isIterationsEnabled}
-            value={value.timing.iterations}
-            onChange={(iterations, isEphemeral) => {
-              if (iterations === undefined && isEphemeral) {
-                handleChange(undefined, true);
-                return;
-              }
-
-              handleChange(
-                {
-                  ...value,
-                  timing: {
-                    ...value.timing,
-                    iterations,
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      iterations,
+                    },
                   },
-                },
-                isEphemeral
-              );
-            }}
-          />
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
         </Grid>
       </Grid>
 
