@@ -16,6 +16,7 @@ import { keywordValues } from "@webstudio-is/css-data";
 import type {
   DurationUnitValue,
   RangeUnitValue,
+  IterationsUnitValue,
   ScrollAnimation,
   ViewAnimation,
 } from "@webstudio-is/sdk";
@@ -30,10 +31,14 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input/css-value-input";
+import type { UnitOption } from "~/builder/features/style-panel/shared/css-value-input/unit-select";
 import {
   cssWideKeywords,
   toValue,
   type StyleValue,
+  type CssProperty,
+  type KeywordValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import { Keyframes } from "./animation-keyframes";
 import { humanizeString } from "~/shared/string-utils";
@@ -47,7 +52,6 @@ import {
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 import isEqual from "fast-deep-equal";
 import { FieldLabel } from "../../property-label";
-import type { IterationsUnitValue } from "node_modules/@webstudio-is/sdk/src/schema/animation-schema";
 
 const RotateIcon180 = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -117,15 +121,34 @@ const unitOptions = RANGE_UNITS.map((unit) => ({
   type: "unit" as const,
 }));
 
-const RangeValueInput = ({
+/**
+ * Generic wrapper component for CssValueInput with validation
+ */
+const ValidatedCssValueInput = <T,>({
   value,
-  onChange,
+  placeholder,
+  property,
   disabled,
+  unitOptions,
+  getOptions,
+  onValidate,
+  onChange,
+  onHighlight,
 }: {
-  value: RangeUnitValue;
+  value: StyleValue | undefined;
+  placeholder?: string;
+  property: CssProperty;
   disabled?: boolean;
-  onChange: ((value: undefined, isEphemeral: true) => void) &
-    ((value: RangeUnitValue, isEphemeral: boolean) => void);
+  unitOptions?: UnitOption[];
+  getOptions?: () => Array<
+    KeywordValue | VarValue | (KeywordValue & { description?: string })
+  >;
+  onValidate: (
+    styleValue: StyleValue,
+    rawValue: string
+  ) => { success: true; data: T | undefined } | { success: false };
+  onChange: (value: T | undefined, isEphemeral: boolean) => void;
+  onHighlight?: (value: T | undefined, isEphemeral: boolean) => void;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -133,230 +156,41 @@ const RangeValueInput = ({
 
   return (
     <CssValueInput
-      disabled={disabled}
       styleSource="default"
       value={value}
-      /* marginLeft to allow negative values  */
-      property={"margin-left"}
+      placeholder={placeholder}
+      property={property}
+      disabled={disabled}
       unitOptions={unitOptions}
       intermediateValue={intermediateValue}
+      getOptions={getOptions ?? (() => $availableUnitVariables.get())}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
-
-        if (styleValue?.type !== "intermediate") {
-          const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
-          if (parsedValue.success) {
-            onChange(parsedValue.data, true);
-            return;
-          }
-        }
-
-        onChange(undefined, true);
       }}
-      getOptions={() => $availableUnitVariables.get()}
-      onHighlight={() => {
-        /* Nothing to Highlight */
-      }}
-      onChangeComplete={(event) => {
-        const parsedValue = rangeUnitValueSchema.safeParse(event.value);
-
-        if (parsedValue.success) {
-          onChange(parsedValue.data, false);
-          setIntermediateValue(undefined);
-          return;
-        }
-
-        setIntermediateValue({
-          type: "invalid",
-          value: toValue(event.value),
-        });
-      }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, true);
-      }}
-    />
-  );
-};
-
-const EasingInput = ({
-  value,
-  onChange,
-}: {
-  value: string | undefined;
-  onChange: (value: string | undefined, isEphemeral: boolean) => void;
-}) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <CssValueInput
-      styleSource="default"
-      value={
-        value === undefined
-          ? { type: "keyword", value: "ease" }
-          : { type: "unparsed", value }
+      onHighlight={
+        onHighlight
+          ? (styleValue) => {
+              if (styleValue === undefined) {
+                onHighlight(undefined, true);
+                return;
+              }
+              const rawValue = toValue(styleValue);
+              const result = onValidate(styleValue, rawValue);
+              if (result.success) {
+                onHighlight(result.data, true);
+              }
+            }
+          : () => {}
       }
-      getOptions={() => [
-        ...keywordValues["animation-timing-function"]
-          .filter((value) => !cssWideKeywords.has(value))
-          .map((value) => ({
-            type: "keyword" as const,
-            value,
-          })),
-        ...$availableUnitVariables.get(),
-      ]}
-      property="animation-timing-function"
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-        /* @todo: allow to change some ephemeral property to see the result in action */
-      }}
-      onHighlight={(value) => {
-        onChange(toValue(value), true);
-      }}
-      onChangeComplete={(event) => {
-        onChange(toValue(event.value), false);
-        setIntermediateValue(undefined);
-      }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, true);
-      }}
-    />
-  );
-};
-
-const DurationInput = ({
-  value,
-  onChange,
-}: {
-  value: DurationUnitValue | undefined;
-  onChange: (
-    value: DurationUnitValue | undefined,
-    isEphemeral: boolean
-  ) => void;
-}) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <CssValueInput
-      styleSource="default"
-      value={value}
-      placeholder="auto"
-      property="animation-duration"
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-      }}
-      getOptions={() => $availableUnitVariables.get()}
-      onHighlight={() => {}}
-      onChangeComplete={(event) => {
-        const value = durationUnitValueSchema.safeParse(event.value);
-        onChange(undefined, true);
-        // allow user to reset with initial value
-        if (toValue(event.value).toLowerCase() === "auto") {
-          onChange(undefined, false);
-          setIntermediateValue(undefined);
-          return;
-        }
-        if (value.success) {
-          onChange(value.data, false);
-          setIntermediateValue(undefined);
-          return;
-        }
-
-        setIntermediateValue({
-          type: "invalid",
-          value: toValue(event.value),
-        });
-      }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, false);
-      }}
-    />
-  );
-};
-
-const IterationsInput = ({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: IterationsUnitValue | undefined;
-  onChange: (
-    value: IterationsUnitValue | undefined,
-    isEphemeral: boolean
-  ) => void;
-  disabled?: boolean;
-}) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  const styleValue: StyleValue | undefined =
-    value === undefined
-      ? { type: "unit", value: 1, unit: "number" }
-      : value === "infinite"
-        ? { type: "keyword", value: "infinite" }
-        : { type: "unit", value, unit: "number" };
-
-  return (
-    <CssValueInput
-      disabled={disabled}
-      styleSource="default"
-      value={styleValue}
-      placeholder="1"
-      property="animation-iteration-count"
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-      }}
-      getOptions={() => [
-        { type: "keyword" as const, value: "infinite" },
-        ...$availableUnitVariables.get(),
-      ]}
-      onHighlight={() => {}}
       onChangeComplete={(event) => {
         onChange(undefined, true);
+        const rawValue = toValue(event.value);
+        const result = onValidate(event.value, rawValue);
 
-        const rawValue = toValue(event.value).toLowerCase();
-
-        // Allow resetting with keywords
-        if (rawValue === "auto") {
-          onChange(undefined, false);
+        if (result.success) {
+          onChange(result.data, false);
           setIntermediateValue(undefined);
           return;
-        }
-
-        // Handle infinite keyword
-        if (rawValue === "infinite") {
-          onChange("infinite", false);
-          setIntermediateValue(undefined);
-          return;
-        }
-
-        // Handle number values
-        if (event.value.type === "unit" && event.value.unit === "number") {
-          const numValue = event.value.value;
-          if (typeof numValue === "number" && numValue > 0) {
-            onChange(numValue, false);
-            setIntermediateValue(undefined);
-            return;
-          }
         }
 
         setIntermediateValue({
@@ -371,6 +205,135 @@ const IterationsInput = ({
         setIntermediateValue(undefined);
         onChange(undefined, false);
       }}
+    />
+  );
+};
+
+const RangeValueInput = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: RangeUnitValue;
+  disabled?: boolean;
+  onChange: (value: RangeUnitValue | undefined, isEphemeral: boolean) => void;
+}) => (
+  <ValidatedCssValueInput
+    value={value}
+    property="margin-left" /* allows negative values */
+    disabled={disabled}
+    unitOptions={unitOptions}
+    onValidate={(styleValue) => {
+      const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
+      return parsedValue.success
+        ? { success: true, data: parsedValue.data }
+        : { success: false };
+    }}
+    onChange={onChange}
+  />
+);
+
+const EasingInput = ({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (value: string | undefined, isEphemeral: boolean) => void;
+}) => (
+  <ValidatedCssValueInput
+    value={
+      value === undefined
+        ? { type: "keyword", value: "ease" }
+        : { type: "unparsed", value }
+    }
+    property="animation-timing-function"
+    getOptions={() => [
+      ...keywordValues["animation-timing-function"]
+        .filter((value) => !cssWideKeywords.has(value))
+        .map((value) => ({
+          type: "keyword" as const,
+          value,
+        })),
+      ...$availableUnitVariables.get(),
+    ]}
+    onValidate={(_, rawValue) => ({ success: true, data: rawValue })}
+    onChange={onChange}
+    onHighlight={onChange}
+  />
+);
+
+const DurationInput = ({
+  value,
+  onChange,
+}: {
+  value: DurationUnitValue | undefined;
+  onChange: (
+    value: DurationUnitValue | undefined,
+    isEphemeral: boolean
+  ) => void;
+}) => (
+  <ValidatedCssValueInput
+    value={value}
+    placeholder="auto"
+    property="animation-duration"
+    onValidate={(styleValue, rawValue) => {
+      if (rawValue.toLowerCase() === "auto") {
+        return { success: true, data: undefined };
+      }
+      const parsedValue = durationUnitValueSchema.safeParse(styleValue);
+      return parsedValue.success
+        ? { success: true, data: parsedValue.data }
+        : { success: false };
+    }}
+    onChange={onChange}
+  />
+);
+
+const IterationsInput = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: IterationsUnitValue | undefined;
+  onChange: (
+    value: IterationsUnitValue | undefined,
+    isEphemeral: boolean
+  ) => void;
+  disabled?: boolean;
+}) => {
+  const styleValue: StyleValue | undefined =
+    value === undefined
+      ? { type: "unit", value: 1, unit: "number" }
+      : value === "infinite"
+        ? { type: "keyword", value: "infinite" }
+        : { type: "unit", value, unit: "number" };
+
+  return (
+    <ValidatedCssValueInput
+      value={styleValue}
+      placeholder="1"
+      property="animation-iteration-count"
+      disabled={disabled}
+      getOptions={() => [
+        { type: "keyword" as const, value: "infinite" },
+        ...$availableUnitVariables.get(),
+      ]}
+      onValidate={(styleValue, rawValue) => {
+        if (rawValue === "auto") {
+          return { success: true, data: undefined };
+        }
+        if (rawValue === "infinite") {
+          return { success: true, data: "infinite" as const };
+        }
+        if (styleValue.type === "unit" && styleValue.unit === "number") {
+          const numValue = styleValue.value;
+          if (typeof numValue === "number" && numValue > 0) {
+            return { success: true, data: numValue };
+          }
+        }
+        return { success: false };
+      }}
+      onChange={onChange}
     />
   );
 };
