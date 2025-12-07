@@ -169,17 +169,12 @@ export const RenameStyleSourceDialog = ({
 }: RenameStyleSourceDialogProps) => {
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
-  const [shouldFocus, setShouldFocus] = useState(false);
 
   // Reset name and clear error when styleSource changes
   useEffect(() => {
     if (styleSource?.name !== undefined) {
       setName(styleSource.name);
       setError(undefined);
-      // Delay focus to ensure dialog is fully rendered
-      setShouldFocus(false);
-      const timer = setTimeout(() => setShouldFocus(true), 0);
-      return () => clearTimeout(timer);
     }
   }, [styleSource?.id, styleSource?.name]);
 
@@ -225,7 +220,6 @@ export const RenameStyleSourceDialog = ({
                 setError(undefined);
               }}
               color={error ? "error" : undefined}
-              autoFocus={shouldFocus}
             />
             {error && (
               <Text color="destructive" variant="monoBold">
