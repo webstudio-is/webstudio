@@ -614,12 +614,7 @@ export const AnimationPanelContent = ({
         />
       </Grid>
 
-      <Grid
-        gap={1}
-        css={{
-          paddingInline: theme.panel.paddingInline,
-        }}
-      >
+      <Grid gap="2" css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid
           css={{
             gridTemplateColumns: "1.1fr 2fr",
