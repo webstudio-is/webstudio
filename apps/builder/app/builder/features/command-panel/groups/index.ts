@@ -12,10 +12,10 @@ import {
 } from "./breakpoint-group";
 import { $pageOptions, PageGroup, type PageOption } from "./page-group";
 import {
-  $shortcutOptions,
-  ShortcutGroup,
-  type ShortcutOption,
-} from "./shortcut-group";
+  $commandOptions,
+  CommandsGroup,
+  type CommandOption,
+} from "./command-group";
 import { $tokenOptions, TokenGroup, type TokenOption } from "./token-group";
 
 export type Option =
@@ -23,7 +23,7 @@ export type Option =
   | TagOption
   | BreakpointOption
   | PageOption
-  | ShortcutOption
+  | CommandOption
   | TokenOption;
 
 export const $allOptions = computed(
@@ -32,7 +32,7 @@ export const $allOptions = computed(
     $tagOptions,
     $breakpointOptions,
     $pageOptions,
-    $shortcutOptions,
+    $commandOptions,
     $tokenOptions,
   ],
   (
@@ -40,14 +40,14 @@ export const $allOptions = computed(
     tagOptions,
     breakpointOptions,
     pageOptions,
-    shortcutOptions,
+    commandOptions,
     tokenOptions
   ) => [
     ...componentOptions,
     ...tagOptions,
     ...breakpointOptions,
     ...pageOptions,
-    ...shortcutOptions,
+    ...commandOptions,
     ...tokenOptions,
   ]
 );
@@ -57,7 +57,7 @@ export const groups = {
   tag: TagGroup,
   breakpoint: BreakpointGroup,
   page: PageGroup,
-  shortcut: ShortcutGroup,
+  command: CommandsGroup,
   token: TokenGroup,
 } as const;
 
@@ -66,7 +66,7 @@ export type {
   TagOption,
   BreakpointOption,
   PageOption,
-  ShortcutOption,
+  CommandOption,
   TokenOption,
 };
 
@@ -75,6 +75,6 @@ export {
   TagGroup,
   BreakpointGroup,
   PageGroup,
-  ShortcutGroup,
+  CommandsGroup,
   TokenGroup,
 };

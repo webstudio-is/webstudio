@@ -23,7 +23,7 @@ import {
   type TagOption,
   type BreakpointOption,
   type PageOption,
-  type ShortcutOption,
+  type CommandOption,
   type TokenOption,
 } from "./groups";
 
@@ -83,11 +83,11 @@ const CommandDialogContent = () => {
                   />
                 );
               }
-              if (groupType === "shortcut") {
+              if (groupType === "command") {
                 return (
-                  <groups.shortcut
+                  <groups.command
                     key={groupType}
-                    options={matches as ShortcutOption[]}
+                    options={matches as CommandOption[]}
                   />
                 );
               }

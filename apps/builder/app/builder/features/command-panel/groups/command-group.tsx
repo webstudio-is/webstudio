@@ -11,40 +11,40 @@ import { emitCommand } from "~/builder/shared/commands";
 import { humanizeString } from "~/shared/string-utils";
 import { closeCommandPanel } from "../command-state";
 
-export type ShortcutOption = {
+export type CommandOption = {
   terms: string[];
-  type: "shortcut";
+  type: "command";
   name: string;
   label: string;
   keys?: string[];
 };
 
-export const $shortcutOptions = computed([$commandMetas], (commandMetas) => {
-  const shortcutOptions: ShortcutOption[] = [];
+export const $commandOptions = computed([$commandMetas], (commandMetas) => {
+  const commandOptions: CommandOption[] = [];
   for (const [name, meta] of commandMetas) {
     if (!meta.hidden) {
       const label = meta.label ?? humanizeString(name);
       const keys = meta.defaultHotkeys?.[0]?.split("+");
-      shortcutOptions.push({
+      commandOptions.push({
         terms: ["shortcuts", "commands", label],
-        type: "shortcut",
+        type: "command",
         name,
         label,
         keys,
       });
     }
   }
-  shortcutOptions.sort(
+  commandOptions.sort(
     (left, right) => (left.keys ? 0 : 1) - (right.keys ? 0 : 1)
   );
-  return shortcutOptions;
+  return commandOptions;
 });
 
-export const ShortcutGroup = ({ options }: { options: ShortcutOption[] }) => {
+export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
   return (
     <CommandGroup
-      name="shortcut"
-      heading={<CommandGroupHeading>Shortcuts</CommandGroupHeading>}
+      name="command"
+      heading={<CommandGroupHeading>Commands</CommandGroupHeading>}
       actions={["execute"]}
     >
       {options.map(({ name, label, keys }) => (
