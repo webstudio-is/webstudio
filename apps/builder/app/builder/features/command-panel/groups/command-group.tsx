@@ -9,10 +9,7 @@ import { computed } from "nanostores";
 import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  closeCommandPanel,
-  $isDeleteUnusedTokensDialogOpen,
-} from "../command-state";
+import { closeCommandPanel } from "../command-state";
 
 export type CommandOption = {
   terms: string[];
@@ -37,14 +34,6 @@ export const $commandOptions = computed([$commandMetas], (commandMetas) => {
       });
     }
   }
-  // Add custom commands without shortcuts
-  commandOptions.push({
-    terms: ["commands", "delete", "unused", "tokens"],
-    type: "command",
-    name: "deleteUnusedTokens",
-    label: "Delete unused tokens",
-  });
-
   commandOptions.sort(
     (left, right) => (left.keys ? 0 : 1) - (right.keys ? 0 : 1)
   );
@@ -65,11 +54,7 @@ export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
           value={name}
           onSelect={() => {
             closeCommandPanel();
-            if (name === "deleteUnusedTokens") {
-              $isDeleteUnusedTokensDialogOpen.set(true);
-            } else {
-              emitCommand(name as never);
-            }
+            emitCommand(name as never);
           }}
         >
           <Text variant="labelsSentenceCase">{label}</Text>

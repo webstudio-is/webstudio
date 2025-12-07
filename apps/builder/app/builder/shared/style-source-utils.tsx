@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   Flex,
   theme,
   InputField,
+  toast,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
 import {
@@ -23,6 +24,12 @@ import {
 import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
+
+const $isDeleteUnusedTokensDialogOpen = atom(false);
+
+export const openDeleteUnusedTokensDialog = () => {
+  $isDeleteUnusedTokensDialogOpen.set(true);
+};
 
 export const $styleSourceUsages = computed(
   $styleSourceSelections,
@@ -285,19 +292,14 @@ export const RenameStyleSourceDialog = ({
   );
 };
 
-type DeleteUnusedTokensDialogProps = {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-};
-
-export const DeleteUnusedTokensDialog = ({
-  open,
-  onClose,
-  onConfirm,
-}: DeleteUnusedTokensDialogProps) => {
+export const DeleteUnusedTokensDialog = () => {
+  const open = useStore($isDeleteUnusedTokensDialogOpen);
   const styleSourceUsages = useStore($styleSourceUsages);
   const styleSources = useStore($styleSources);
+
+  const handleClose = () => {
+    $isDeleteUnusedTokensDialogOpen.set(false);
+  };
 
   const unusedTokens: Array<{ id: string; name: string }> = [];
   for (const styleSource of styleSources.values()) {
@@ -314,7 +316,7 @@ export const DeleteUnusedTokensDialog = ({
       open={open}
       onOpenChange={(isOpen) => {
         if (isOpen === false) {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -339,7 +341,6 @@ export const DeleteUnusedTokensDialog = ({
                 css={{
                   maxHeight: 200,
                   overflowY: "auto",
-                  padding: theme.spacing[5],
                   backgroundColor: theme.colors.backgroundPanel,
                   borderRadius: theme.borderRadius[4],
                   wordBreak: "break-word",
@@ -354,8 +355,15 @@ export const DeleteUnusedTokensDialog = ({
               <Button
                 color="destructive"
                 onClick={() => {
-                  onConfirm();
-                  onClose();
+                  const deletedCount = deleteUnusedTokens();
+                  handleClose();
+                  if (deletedCount === 0) {
+                    toast.info("No unused tokens to delete");
+                  } else {
+                    toast.success(
+                      `Deleted ${deletedCount} unused ${deletedCount === 1 ? "token" : "tokens"}`
+                    );
+                  }
                 }}
               >
                 Delete

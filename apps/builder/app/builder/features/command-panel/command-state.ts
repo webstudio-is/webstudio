@@ -42,5 +42,3 @@ export const closeCommandPanel = ({
 export const $commandContent = atom<ReactNode>();
 
 export const $commandSearch = atom("");
-
-export const $isDeleteUnusedTokensDialogOpen = atom(false);

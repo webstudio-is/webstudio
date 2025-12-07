@@ -8,20 +8,14 @@ import {
   ScrollArea,
   Flex,
   CommandFooter,
-  toast,
 } from "@webstudio-is/design-system";
 import { mapGroupBy } from "~/shared/shim";
 import {
   $commandContent,
   $isCommandPanelOpen,
   $commandSearch,
-  $isDeleteUnusedTokensDialogOpen,
   closeCommandPanel,
 } from "./command-state";
-import {
-  deleteUnusedTokens,
-  DeleteUnusedTokensDialog,
-} from "~/builder/shared/style-source-utils";
 import {
   $allOptions,
   groups,
@@ -118,32 +112,15 @@ const CommandDialogContent = () => {
 export const CommandPanel = () => {
   const isOpen = useStore($isCommandPanelOpen);
   const commandContent = useStore($commandContent);
-  const isDeleteDialogOpen = useStore($isDeleteUnusedTokensDialogOpen);
 
   return (
-    <>
-      <CommandDialog
-        open={isOpen}
-        onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
-      >
-        <Command shouldFilter={false}>
-          {commandContent ?? <CommandDialogContent />}
-        </Command>
-      </CommandDialog>
-      <DeleteUnusedTokensDialog
-        open={isDeleteDialogOpen}
-        onClose={() => $isDeleteUnusedTokensDialogOpen.set(false)}
-        onConfirm={() => {
-          const deletedCount = deleteUnusedTokens();
-          if (deletedCount === 0) {
-            toast.info("No unused tokens to delete");
-          } else {
-            toast.success(
-              `Deleted ${deletedCount} unused ${deletedCount === 1 ? "token" : "tokens"}`
-            );
-          }
-        }}
-      />
-    </>
+    <CommandDialog
+      open={isOpen}
+      onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
+    >
+      <Command shouldFilter={false}>
+        {commandContent ?? <CommandDialogContent />}
+      </Command>
+    </CommandDialog>
   );
 };
