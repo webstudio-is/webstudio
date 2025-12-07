@@ -23,7 +23,7 @@ import {
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { getInstanceLabel } from "~/shared/instance-utils";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 import { $commandContent, closeCommandPanel } from "./command-state";
