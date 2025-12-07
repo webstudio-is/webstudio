@@ -16,16 +16,14 @@ import {
   $commandSearch,
   closeCommandPanel,
 } from "./command-state";
-import {
-  $allOptions,
-  groups,
-  type ComponentOption,
-  type TagOption,
-  type BreakpointOption,
-  type PageOption,
-  type CommandOption,
-  type TokenOption,
-} from "./groups";
+import { $allOptions, groups, type OptionByType, type Option } from "./groups";
+
+const renderGroup = <T extends Option["type"]>(type: T, matches: Option[]) => {
+  const Group = groups[type as keyof typeof groups];
+  if (Group) {
+    return <Group key={type} options={matches as any} />;
+  }
+};
 
 const CommandDialogContent = () => {
   const search = useStore($commandSearch);
@@ -40,7 +38,10 @@ const CommandDialogContent = () => {
       });
     }
   }
-  const matchGroups = mapGroupBy(matches, (match) => match.type);
+  const matchGroups = mapGroupBy<Option, Option["type"]>(
+    matches,
+    (match) => match.type
+  );
   return (
     <>
       <CommandInput
@@ -50,57 +51,9 @@ const CommandDialogContent = () => {
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>
-            {Array.from(matchGroups).map(([groupType, matches]) => {
-              if (groupType === "component") {
-                return (
-                  <groups.component
-                    key={groupType}
-                    options={matches as ComponentOption[]}
-                  />
-                );
-              }
-              if (groupType === "tag") {
-                return (
-                  <groups.tag
-                    key={groupType}
-                    options={matches as TagOption[]}
-                  />
-                );
-              }
-              if (groupType === "breakpoint") {
-                return (
-                  <groups.breakpoint
-                    key={groupType}
-                    options={matches as BreakpointOption[]}
-                  />
-                );
-              }
-              if (groupType === "page") {
-                return (
-                  <groups.page
-                    key={groupType}
-                    options={matches as PageOption[]}
-                  />
-                );
-              }
-              if (groupType === "command") {
-                return (
-                  <groups.command
-                    key={groupType}
-                    options={matches as CommandOption[]}
-                  />
-                );
-              }
-              if (groupType === "token") {
-                return (
-                  <groups.token
-                    key={groupType}
-                    options={matches as TokenOption[]}
-                  />
-                );
-              }
-              groupType satisfies never;
-            })}
+            {Array.from(matchGroups).map(([type, matches]) =>
+              renderGroup(type, matches)
+            )}
           </CommandList>
         </ScrollArea>
       </Flex>

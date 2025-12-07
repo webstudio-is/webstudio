@@ -17,6 +17,11 @@ import {
   type CommandOption,
 } from "./commands-group";
 import { $tokenOptions, TokensGroup, type TokenOption } from "./tokens-group";
+import {
+  $dataVariableOptions,
+  DataVariablesGroup,
+  type DataVariableOption,
+} from "./data-variables-group";
 
 export type Option =
   | ComponentOption
@@ -24,7 +29,13 @@ export type Option =
   | BreakpointOption
   | PageOption
   | CommandOption
-  | TokenOption;
+  | TokenOption
+  | DataVariableOption;
+
+export type OptionByType<T extends Option["type"]> = Extract<
+  Option,
+  { type: T }
+>;
 
 export const $allOptions = computed(
   [
@@ -34,6 +45,7 @@ export const $allOptions = computed(
     $pageOptions,
     $commandOptions,
     $tokenOptions,
+    $dataVariableOptions,
   ],
   (
     componentOptions,
@@ -41,7 +53,8 @@ export const $allOptions = computed(
     breakpointOptions,
     pageOptions,
     commandOptions,
-    tokenOptions
+    tokenOptions,
+    dataVariableOptions
   ) => [
     ...componentOptions,
     ...tagOptions,
@@ -49,6 +62,7 @@ export const $allOptions = computed(
     ...pageOptions,
     ...commandOptions,
     ...tokenOptions,
+    ...dataVariableOptions,
   ]
 );
 
@@ -59,6 +73,7 @@ export const groups = {
   page: PagesGroup,
   command: CommandsGroup,
   token: TokensGroup,
+  dataVariable: DataVariablesGroup,
 } as const;
 
 export type {
@@ -68,6 +83,7 @@ export type {
   PageOption,
   CommandOption,
   TokenOption,
+  DataVariableOption,
 };
 
 export {
@@ -77,4 +93,5 @@ export {
   PagesGroup,
   CommandsGroup,
   TokensGroup,
+  DataVariablesGroup,
 };
