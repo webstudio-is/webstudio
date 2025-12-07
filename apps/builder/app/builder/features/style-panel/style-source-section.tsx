@@ -12,11 +12,13 @@ import {
   type StyleSources,
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
+import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
-  type ItemSource,
-  StyleSourceInput,
-  type StyleSourceError,
-} from "./style-source";
+  renameToken,
+  type RenameTokenError,
+  deleteStyleSource,
+  DeleteConfirmationDialog,
+} from "~/builder/shared/token-utils";
 import {
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
@@ -34,10 +36,6 @@ import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  deleteStyleSource,
-  DeleteConfirmationDialog,
-} from "~/builder/shared/delete-token";
 
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
@@ -262,31 +260,6 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
   );
 };
 
-const renameStyleSource = (
-  id: StyleSource["id"],
-  name: string
-): StyleSourceError | undefined => {
-  const styleSources = $styleSources.get();
-  if (name.trim().length === 0) {
-    return { type: "minlength", id };
-  }
-  for (const styleSource of styleSources.values()) {
-    if (
-      styleSource.type === "token" &&
-      styleSource.name === name &&
-      styleSource.id !== id
-    ) {
-      return { type: "duplicate", id };
-    }
-  }
-  serverSyncStore.createTransaction([$styleSources], (styleSources) => {
-    const styleSource = styleSources.get(id);
-    if (styleSource?.type === "token") {
-      styleSource.name = name;
-    }
-  });
-};
-
 const clearStyles = (styleSourceId: StyleSource["id"]) => {
   serverSyncStore.createTransaction([$styles], (styles) => {
     for (const [styleDeclKey, styleDecl] of styles) {
@@ -380,7 +353,7 @@ export const StyleSourcesSection = ({
   const [editingItemId, setEditingItemId] = useState<StyleSource["id"]>();
 
   const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
-  const [error, setError] = useState<StyleSourceError>();
+  const [error, setError] = useState<RenameTokenError>();
 
   const setEditingItem = (id?: StyleSource["id"]) => {
     // User finished editing or started editing a different token
@@ -443,7 +416,7 @@ export const StyleSourcesSection = ({
           }
         }}
         onChangeItem={(item) => {
-          const error = renameStyleSource(item.id, item.label);
+          const error = renameToken(item.id, item.label);
           if (error) {
             setError(error);
             setEditingItem(item.id);

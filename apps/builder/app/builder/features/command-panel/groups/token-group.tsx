@@ -26,7 +26,7 @@ import {
 import {
   deleteStyleSource,
   DeleteConfirmationDialog,
-} from "~/builder/shared/delete-token";
+} from "~/builder/shared/token-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";

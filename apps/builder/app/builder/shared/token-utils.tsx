@@ -57,6 +57,35 @@ export const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
   deselectMatchingStyleSource(styleSourceId);
 };
 
+export type RenameTokenError =
+  | { type: "minlength"; id: StyleSource["id"] }
+  | { type: "duplicate"; id: StyleSource["id"] };
+
+export const renameToken = (
+  id: StyleSource["id"],
+  name: string
+): RenameTokenError | undefined => {
+  const styleSources = $styleSources.get();
+  if (name.trim().length === 0) {
+    return { type: "minlength", id };
+  }
+  for (const styleSource of styleSources.values()) {
+    if (
+      styleSource.type === "token" &&
+      styleSource.name === name &&
+      styleSource.id !== id
+    ) {
+      return { type: "duplicate", id };
+    }
+  }
+  serverSyncStore.createTransaction([$styleSources], (styleSources) => {
+    const styleSource = styleSources.get(id);
+    if (styleSource?.type === "token") {
+      styleSource.name = name;
+    }
+  });
+};
+
 type DeleteConfirmationDialogProps = {
   onClose: () => void;
   onConfirm: () => void;
