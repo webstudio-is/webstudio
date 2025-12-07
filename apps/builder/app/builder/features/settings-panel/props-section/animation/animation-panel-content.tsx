@@ -22,7 +22,6 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   durationUnitValueSchema,
-  RANGE_UNITS,
   rangeUnitValueSchema,
   scrollAnimationSchema,
   viewAnimationSchema,
@@ -114,12 +113,6 @@ const scrollTimelineRangeName = {
   start: "Distance from the top of the scroll container where animation begins",
   end: "Distance from the bottom of the scroll container where animation ends",
 };
-
-const unitOptions = RANGE_UNITS.map((unit) => ({
-  id: unit,
-  label: unit,
-  type: "unit" as const,
-}));
 
 /**
  * Generic wrapper component for CssValueInput with validation
@@ -222,7 +215,6 @@ const RangeValueInput = ({
     value={value}
     property="margin-left" /* allows negative values */
     disabled={disabled}
-    unitOptions={unitOptions}
     onValidate={(styleValue) => {
       const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
       return parsedValue.success
