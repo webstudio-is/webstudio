@@ -47,6 +47,7 @@ import {
 import { $availableUnitVariables } from "~/builder/features/style-panel/shared/model";
 import isEqual from "fast-deep-equal";
 import { FieldLabel } from "../../property-label";
+import type { IterationsUnitValue } from "node_modules/@webstudio-is/sdk/src/schema/animation-schema";
 
 const RotateIcon180 = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -285,7 +286,90 @@ const DurationInput = ({
       onReset={() => {
         setIntermediateValue(undefined);
         onChange(undefined, false);
+      }}
+    />
+  );
+};
+
+const IterationsInput = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: IterationsUnitValue | undefined;
+  onChange: (
+    value: IterationsUnitValue | undefined,
+    isEphemeral: boolean
+  ) => void;
+  disabled?: boolean;
+}) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  const styleValue: StyleValue | undefined =
+    value === undefined
+      ? { type: "unit", value: 1, unit: "number" }
+      : value === "infinite"
+        ? { type: "keyword", value: "infinite" }
+        : { type: "unit", value, unit: "number" };
+
+  return (
+    <CssValueInput
+      disabled={disabled}
+      styleSource="default"
+      value={styleValue}
+      placeholder="1"
+      property="animation-iteration-count"
+      intermediateValue={intermediateValue}
+      onChange={(styleValue) => {
+        setIntermediateValue(styleValue);
+      }}
+      getOptions={() => [
+        { type: "keyword" as const, value: "infinite" },
+        ...$availableUnitVariables.get(),
+      ]}
+      onHighlight={() => {}}
+      onChangeComplete={(event) => {
         onChange(undefined, true);
+
+        const rawValue = toValue(event.value).toLowerCase();
+
+        // Allow resetting with keywords
+        if (rawValue === "auto") {
+          onChange(undefined, false);
+          setIntermediateValue(undefined);
+          return;
+        }
+
+        // Handle infinite keyword
+        if (rawValue === "infinite") {
+          onChange("infinite", false);
+          setIntermediateValue(undefined);
+          return;
+        }
+
+        // Handle number values
+        if (event.value.type === "unit" && event.value.unit === "number") {
+          const numValue = event.value.value;
+          if (typeof numValue === "number" && numValue > 0) {
+            onChange(numValue, false);
+            setIntermediateValue(undefined);
+            return;
+          }
+        }
+
+        setIntermediateValue({
+          type: "invalid",
+          value: rawValue,
+        });
+      }}
+      onAbort={() => {
+        onChange(undefined, true);
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        onChange(undefined, false);
       }}
     />
   );
@@ -438,6 +522,7 @@ export const AnimationPanelContent = ({
 
   const isRangeEndEnabled = value.timing.duration === undefined;
   const isRangeStartEnabled = value.timing.delay === undefined;
+  const isIterationsEnabled = value.timing.duration !== undefined;
 
   const animationSchema = isScrollAnimation
     ? scrollAnimationSchema
@@ -953,6 +1038,32 @@ export const AnimationPanelContent = ({
                   timing: {
                     ...value.timing,
                     delay,
+                  },
+                },
+                isEphemeral
+              );
+            }}
+          />
+
+          <FieldLabel description="Number of times the animation should repeat. Use 'infinite' for continuous loop. Requires duration to be set.">
+            Iterations
+          </FieldLabel>
+
+          <IterationsInput
+            disabled={!isIterationsEnabled}
+            value={value.timing.iterations}
+            onChange={(iterations, isEphemeral) => {
+              if (iterations === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    iterations,
                   },
                 },
                 isEphemeral
