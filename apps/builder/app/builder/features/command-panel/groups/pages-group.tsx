@@ -38,7 +38,7 @@ export const $pageOptions = computed(
   }
 );
 
-export const PageGroup = ({ options }: { options: PageOption[] }) => {
+export const PagesGroup = ({ options }: { options: PageOption[] }) => {
   const action = useSelectedAction();
   return (
     <CommandGroup

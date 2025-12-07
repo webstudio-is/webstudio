@@ -59,7 +59,7 @@ const getBreakpointLabel = (breakpoint: Breakpoint) => {
   return `${breakpoint.label}: ${label}`;
 };
 
-export const BreakpointGroup = ({
+export const BreakpointsGroup = ({
   options,
 }: {
   options: BreakpointOption[];

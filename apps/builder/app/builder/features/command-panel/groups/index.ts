@@ -1,22 +1,22 @@
 import { computed } from "nanostores";
 import {
   $componentOptions,
-  ComponentGroup,
+  ComponentsGroup,
   type ComponentOption,
-} from "./component-group";
-import { $tagOptions, TagGroup, type TagOption } from "./tag-group";
+} from "./components-group";
+import { $tagOptions, TagsGroup, type TagOption } from "./tags-group";
 import {
   $breakpointOptions,
-  BreakpointGroup,
+  BreakpointsGroup,
   type BreakpointOption,
-} from "./breakpoint-group";
-import { $pageOptions, PageGroup, type PageOption } from "./page-group";
+} from "./breakpoints-group";
+import { $pageOptions, PagesGroup, type PageOption } from "./pages-group";
 import {
   $commandOptions,
   CommandsGroup,
   type CommandOption,
-} from "./command-group";
-import { $tokenOptions, TokenGroup, type TokenOption } from "./token-group";
+} from "./commands-group";
+import { $tokenOptions, TokensGroup, type TokenOption } from "./tokens-group";
 
 export type Option =
   | ComponentOption
@@ -53,12 +53,12 @@ export const $allOptions = computed(
 );
 
 export const groups = {
-  component: ComponentGroup,
-  tag: TagGroup,
-  breakpoint: BreakpointGroup,
-  page: PageGroup,
+  component: ComponentsGroup,
+  tag: TagsGroup,
+  breakpoint: BreakpointsGroup,
+  page: PagesGroup,
   command: CommandsGroup,
-  token: TokenGroup,
+  token: TokensGroup,
 } as const;
 
 export type {
@@ -71,10 +71,10 @@ export type {
 };
 
 export {
-  ComponentGroup,
-  TagGroup,
-  BreakpointGroup,
-  PageGroup,
+  ComponentsGroup,
+  TagsGroup,
+  BreakpointsGroup,
+  PagesGroup,
   CommandsGroup,
-  TokenGroup,
+  TokensGroup,
 };

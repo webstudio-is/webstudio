@@ -206,7 +206,7 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   );
 };
 
-export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
+export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
   const action = useSelectedAction();
   const [tokenToRename, setTokenToRename] =
     useState<Extract<StyleSource, { type: "token" }>>();

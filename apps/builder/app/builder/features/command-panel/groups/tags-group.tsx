@@ -68,7 +68,7 @@ export const $tagOptions = computed(
   }
 );
 
-export const TagGroup = ({ options }: { options: TagOption[] }) => {
+export const TagsGroup = ({ options }: { options: TagOption[] }) => {
   return (
     <CommandGroup
       name="tag"
