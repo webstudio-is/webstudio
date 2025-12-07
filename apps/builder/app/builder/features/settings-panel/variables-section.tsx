@@ -6,11 +6,6 @@ import {
   css,
   CssValueListArrowFocus,
   CssValueListItem,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,6 +47,7 @@ import {
   findAvailableVariables,
   findUsedVariables,
 } from "~/shared/data-variables";
+import { DeleteDataVariableDialog } from "~/builder/shared/data-variable-utils";
 
 /**
  * find variables defined specifically on this selected instance
@@ -140,7 +136,11 @@ const VariablesItem = ({
 }) => {
   const selectedPage = useStore($selectedPage);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [variableToDelete, setVariableToDelete] = useState<{
+    id: string;
+    name: string;
+    usages: number;
+  }>();
   return (
     <VariablePopoverTrigger key={variable.id} variable={variable}>
       <CssValueListItem
@@ -185,13 +185,11 @@ const VariablesItem = ({
                   {source === "local" && variable.type !== "parameter" && (
                     <DropdownMenuItem
                       onSelect={() => {
-                        if (usageCount > 0) {
-                          setIsDeleteDialogOpen(true);
-                        } else {
-                          updateWebstudioData((data) => {
-                            deleteVariableMutable(data, variable.id);
-                          });
-                        }
+                        setVariableToDelete({
+                          id: variable.id,
+                          name: variable.name,
+                          usages: usageCount,
+                        });
                       }}
                     >
                       Delete {usageCount > 0 && `(${usageCount} bindings)`}
@@ -218,35 +216,18 @@ const VariablesItem = ({
               </DropdownMenu>
             )}
 
-            <Dialog
-              open={isDeleteDialogOpen}
-              onOpenChange={setIsDeleteDialogOpen}
-            >
-              <DialogContent>
-                <DialogTitle>Delete Variable?</DialogTitle>
-                <DialogDescription
-                  className={css({
-                    paddingInline: theme.panel.paddingInline,
-                    textWrap: "nowrap",
-                  }).toString()}
-                >
-                  Variable "{variable.name}" is used in {usageCount}&nbsp;
-                  {usageCount === 1 ? "expression" : "expressions"}.
-                </DialogDescription>
-                <DialogActions>
-                  <Button
-                    color="destructive"
-                    onClick={() => {
-                      updateWebstudioData((data) => {
-                        deleteVariableMutable(data, variable.id);
-                      });
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </DialogActions>
-              </DialogContent>
-            </Dialog>
+            <DeleteDataVariableDialog
+              variable={variableToDelete}
+              onClose={() => {
+                setVariableToDelete(undefined);
+              }}
+              onConfirm={(variableId) => {
+                updateWebstudioData((data) => {
+                  deleteVariableMutable(data, variableId);
+                });
+                setVariableToDelete(undefined);
+              }}
+            />
           </>
         }
       />

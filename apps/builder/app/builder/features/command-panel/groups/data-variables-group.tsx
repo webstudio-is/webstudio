@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { computed } from "nanostores";
 import {
   CommandGroup,
@@ -12,7 +13,12 @@ import { selectInstance as selectInstanceBySelector } from "~/shared/awareness";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { $commandContent, closeCommandPanel } from "../command-state";
 import { InstanceList, selectInstance } from "../shared/instance-list";
-import { $usedVariablesInInstances } from "~/shared/data-variables-utils";
+import { deleteVariableMutable } from "~/shared/data-variables";
+import { updateWebstudioData } from "~/shared/instance-utils";
+import {
+  DeleteDataVariableDialog,
+  $usedVariablesInInstances,
+} from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
 
 export type DataVariableOption = BaseOption & {
@@ -73,6 +79,8 @@ export const DataVariablesGroup = ({
   options: DataVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const [variableToDelete, setVariableToDelete] =
+    useState<DataVariableOption>();
 
   const handleSelect = (option: DataVariableOption) => {
     if (action === "find") {
@@ -81,6 +89,11 @@ export const DataVariablesGroup = ({
       } else {
         toast.error("Variable is not used in any instance");
       }
+      return;
+    }
+
+    if (action === "delete") {
+      setVariableToDelete(option);
       return;
     }
 
@@ -97,27 +110,42 @@ export const DataVariablesGroup = ({
   };
 
   return (
-    <CommandGroup
-      name="dataVariable"
-      heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-      actions={["find", "select"]}
-    >
-      {options.map((option) => (
-        <CommandItem
-          key={option.id}
-          value={option.id}
-          onSelect={() => handleSelect(option)}
-        >
-          <Text variant="labelsSentenceCase">
-            {option.name}{" "}
-            <Text as="span" color="moreSubtle">
-              {option.usages === 0
-                ? "unused"
-                : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+    <>
+      <CommandGroup
+        name="dataVariable"
+        heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
+        actions={["find", "select", "delete"]}
+      >
+        {options.map((option) => (
+          <CommandItem
+            key={option.id}
+            value={option.id}
+            onSelect={() => handleSelect(option)}
+          >
+            <Text variant="labelsSentenceCase">
+              {option.name}{" "}
+              <Text as="span" color="moreSubtle">
+                {option.usages === 0
+                  ? "unused"
+                  : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+              </Text>
             </Text>
-          </Text>
-        </CommandItem>
-      ))}
-    </CommandGroup>
+          </CommandItem>
+        ))}
+      </CommandGroup>
+      <DeleteDataVariableDialog
+        variable={variableToDelete}
+        onClose={() => {
+          setVariableToDelete(undefined);
+        }}
+        onConfirm={(variableId) => {
+          updateWebstudioData((data) => {
+            deleteVariableMutable(data, variableId);
+          });
+          toast.success(`Variable "${variableToDelete?.name}" deleted`);
+          setVariableToDelete(undefined);
+        }}
+      />
+    </>
   );
 };
