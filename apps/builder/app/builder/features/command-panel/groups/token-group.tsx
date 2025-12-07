@@ -5,6 +5,7 @@ import { useStore } from "@nanostores/react";
 import {
   CommandGroup,
   CommandGroupHeading,
+  CommandGroupFooter,
   CommandInput,
   CommandItem,
   CommandList,
@@ -13,6 +14,8 @@ import {
   Text,
   toast,
   useSelectedAction,
+  Button,
+  Kbd,
 } from "@webstudio-is/design-system";
 import type { Instance, Instances, StyleSource } from "@webstudio-is/sdk";
 import {
@@ -137,6 +140,11 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
     }
   }
   const [search, setSearch] = useState("");
+
+  const goBack = () => {
+    $commandContent.set(undefined);
+  };
+
   let matches = usedInInstances;
   // prevent searching when value is empty
   // to preserve original items order
@@ -149,7 +157,16 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   }
   return (
     <>
-      <CommandInput value={search} onValueChange={setSearch} />
+      <CommandInput
+        value={search}
+        onValueChange={setSearch}
+        onKeyDown={(event) => {
+          if (event.key === "Backspace" && search === "") {
+            event.preventDefault();
+            goBack();
+          }
+        }}
+      />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>
@@ -169,6 +186,11 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
           </CommandList>
         </ScrollArea>
       </Flex>
+      <CommandGroupFooter>
+        <Button tabIndex={-1} color="ghost" onClick={goBack}>
+          Back <Kbd value={["backspace"]} />
+        </Button>
+      </CommandGroupFooter>
     </>
   );
 };

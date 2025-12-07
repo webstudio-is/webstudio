@@ -25,7 +25,6 @@ import {
 import { SearchIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Text, textVariants } from "./text";
-import { Flex } from "./flex";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
@@ -252,12 +251,7 @@ export const CommandFooter = () => {
   }, [setState]);
 
   return (
-    <Flex
-      justify="end"
-      align="center"
-      css={{ height: itemHeight, paddingInline: theme.spacing[3] }}
-      ref={actionsRef}
-    >
+    <CommandGroupFooter ref={actionsRef}>
       <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
         <PopoverTrigger asChild>
           <Button tabIndex={-1} color="ghost" data-action-trigger>
@@ -306,7 +300,7 @@ export const CommandFooter = () => {
           </ActionsCommand>
         </PopoverContent>
       </Popover>
-    </Flex>
+    </CommandGroupFooter>
   );
 };
 
@@ -342,6 +336,17 @@ export const CommandGroupHeading = styled("div", {
   alignItems: "center",
   paddingInline: theme.spacing[5],
   height: itemHeight,
+});
+
+export const CommandGroupFooter = styled("div", {
+  ...textVariants.titles,
+  color: theme.colors.foregroundMoreSubtle,
+  display: "flex",
+  gap: theme.spacing[5],
+  alignItems: "center",
+  paddingInline: theme.spacing[5],
+  height: itemHeight,
+  justifyContent: "end",
 });
 
 export const CommandItem = styled(CommandPrimitive.Item, {

@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import {
   Command,
@@ -15,6 +14,7 @@ import { mapGroupBy } from "~/shared/shim";
 import {
   $commandContent,
   $isCommandPanelOpen,
+  $commandSearch,
   closeCommandPanel,
 } from "./command-state";
 import {
@@ -29,7 +29,7 @@ import {
 } from "./groups";
 
 const CommandDialogContent = () => {
-  const [search, setSearch] = useState("");
+  const search = useStore($commandSearch);
   const options = useStore($allOptions);
   let matches = options;
   // prevent searching when value is empty
@@ -44,7 +44,10 @@ const CommandDialogContent = () => {
   const matchGroups = mapGroupBy(matches, (match) => match.type);
   return (
     <>
-      <CommandInput value={search} onValueChange={setSearch} />
+      <CommandInput
+        value={search}
+        onValueChange={(value) => $commandSearch.set(value)}
+      />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>

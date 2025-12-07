@@ -30,6 +30,7 @@ export const closeCommandPanel = ({
   const commandPanel = $commandPanel.get();
   $commandPanel.set(undefined);
   $commandContent.set(undefined);
+  $commandSearch.set("");
   // restore focus in the next frame
   if (restoreFocus && commandPanel?.lastFocusedElement) {
     requestAnimationFrame(() => {
@@ -39,3 +40,5 @@ export const closeCommandPanel = ({
 };
 
 export const $commandContent = atom<ReactNode>();
+
+export const $commandSearch = atom("");
