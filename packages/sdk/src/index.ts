@@ -40,6 +40,7 @@ export type {
   ViewAnimation,
   InsetUnitValue,
   DurationUnitValue,
+  IterationsUnitValue,
   TimeUnit,
 } from "./schema/animation-schema";
 

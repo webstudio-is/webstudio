@@ -90,6 +90,8 @@ export const durationUnitValueSchema = z.union([
   }),
 ]);
 
+const iterationsUnitValueSchema = z.union([z.number(), z.literal("infinite")]);
+
 // view-timeline-inset
 export const insetUnitValueSchema = z.union([
   rangeUnitValueSchema,
@@ -121,6 +123,8 @@ export const keyframeEffectOptionsSchema = z.object({
     ])
     .optional(), // FillMode
   duration: durationUnitValueSchema.optional(),
+  delay: durationUnitValueSchema.optional(),
+  iterations: iterationsUnitValueSchema.optional(),
 });
 
 // Scroll Named Range
@@ -235,6 +239,7 @@ export const isRangeUnit = (
 export type RangeUnit = z.infer<typeof rangeUnitSchema>;
 export type RangeUnitValue = z.infer<typeof rangeUnitValueSchema>;
 export type DurationUnitValue = z.infer<typeof durationUnitValueSchema>;
+export type IterationsUnitValue = z.infer<typeof iterationsUnitValueSchema>;
 export type TimeUnit = z.infer<typeof timeUnitSchema>;
 export type KeyframeStyles = z.infer<typeof keyframeStylesSchema>;
 export type AnimationKeyframe = z.infer<typeof animationKeyframeSchema>;
