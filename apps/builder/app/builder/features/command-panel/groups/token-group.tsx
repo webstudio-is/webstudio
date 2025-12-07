@@ -30,7 +30,7 @@ import {
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
-import { $commandContent, closeCommandPanel } from "./command-state";
+import { $commandContent, closeCommandPanel } from "../command-state";
 
 export type TokenOption = {
   terms: string[];
