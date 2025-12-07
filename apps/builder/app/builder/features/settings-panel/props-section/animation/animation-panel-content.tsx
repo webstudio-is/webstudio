@@ -929,6 +929,31 @@ export const AnimationPanelContent = ({
               );
             }}
           />
+
+          <FieldLabel description="Sets a fixed delay before the animation starts instead of using range start.">
+            Delay
+          </FieldLabel>
+
+          <DurationInput
+            value={value.timing.delay}
+            onChange={(delay, isEphemeral) => {
+              if (delay === undefined && isEphemeral) {
+                handleChange(undefined, true);
+                return;
+              }
+
+              handleChange(
+                {
+                  ...value,
+                  timing: {
+                    ...value.timing,
+                    delay,
+                  },
+                },
+                isEphemeral
+              );
+            }}
+          />
         </Grid>
       </Grid>
 

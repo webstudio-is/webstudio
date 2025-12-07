@@ -121,6 +121,7 @@ export const keyframeEffectOptionsSchema = z.object({
     ])
     .optional(), // FillMode
   duration: durationUnitValueSchema.optional(),
+  delay: durationUnitValueSchema.optional(),
 });
 
 // Scroll Named Range
