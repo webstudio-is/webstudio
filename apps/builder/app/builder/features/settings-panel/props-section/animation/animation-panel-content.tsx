@@ -16,12 +16,12 @@ import { keywordValues } from "@webstudio-is/css-data";
 import type {
   DurationUnitValue,
   RangeUnitValue,
+  IterationsUnitValue,
   ScrollAnimation,
   ViewAnimation,
 } from "@webstudio-is/sdk";
 import {
   durationUnitValueSchema,
-  RANGE_UNITS,
   rangeUnitValueSchema,
   scrollAnimationSchema,
   viewAnimationSchema,
@@ -110,11 +110,95 @@ const scrollTimelineRangeName = {
   end: "Distance from the bottom of the scroll container where animation ends",
 };
 
-const unitOptions = RANGE_UNITS.map((unit) => ({
-  id: unit,
-  label: unit,
-  type: "unit" as const,
-}));
+type ValidatedCssValueInputProps<T> = Omit<
+  React.ComponentProps<typeof CssValueInput>,
+  | "onChange"
+  | "onChangeComplete"
+  | "onHighlight"
+  | "onAbort"
+  | "onReset"
+  | "intermediateValue"
+  | "styleSource"
+  | "getOptions"
+  | "placeholder"
+> & {
+  onValidate: (
+    styleValue: StyleValue,
+    rawValue: string
+  ) => { success: true; data: T | undefined } | { success: false };
+  onChange: (value: T | undefined, isEphemeral: boolean) => void;
+  onHighlight?: (value: T | undefined, isEphemeral: boolean) => void;
+  styleSource?: React.ComponentProps<typeof CssValueInput>["styleSource"];
+  getOptions?: React.ComponentProps<typeof CssValueInput>["getOptions"];
+  placeholder?: React.ComponentProps<typeof CssValueInput>["placeholder"];
+};
+
+/**
+ * Generic wrapper component for CssValueInput with validation
+ */
+const ValidatedCssValueInput = <T,>({
+  onValidate,
+  onChange,
+  onHighlight,
+  styleSource = "default",
+  getOptions = () => $availableUnitVariables.get(),
+  placeholder = "auto",
+  ...cssValueInputProps
+}: ValidatedCssValueInputProps<T>) => {
+  const [intermediateValue, setIntermediateValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+  return (
+    <CssValueInput
+      {...cssValueInputProps}
+      styleSource={styleSource}
+      getOptions={getOptions}
+      placeholder={placeholder}
+      intermediateValue={intermediateValue}
+      onChange={(styleValue) => {
+        setIntermediateValue(styleValue);
+      }}
+      onHighlight={
+        onHighlight
+          ? (styleValue) => {
+              if (styleValue === undefined) {
+                onHighlight(undefined, true);
+                return;
+              }
+              const rawValue = toValue(styleValue);
+              const result = onValidate(styleValue, rawValue);
+              if (result.success) {
+                onHighlight(result.data, true);
+              }
+            }
+          : () => {}
+      }
+      onChangeComplete={(event) => {
+        onChange(undefined, true);
+        const rawValue = toValue(event.value);
+        const result = onValidate(event.value, rawValue);
+
+        if (result.success) {
+          onChange(result.data, false);
+          setIntermediateValue(undefined);
+          return;
+        }
+
+        setIntermediateValue({
+          type: "invalid",
+          value: rawValue,
+        });
+      }}
+      onAbort={() => {
+        onChange(undefined, true);
+      }}
+      onReset={() => {
+        setIntermediateValue(undefined);
+        onChange(undefined, false);
+      }}
+    />
+  );
+};
 
 const RangeValueInput = ({
   value,
@@ -123,63 +207,21 @@ const RangeValueInput = ({
 }: {
   value: RangeUnitValue;
   disabled?: boolean;
-  onChange: ((value: undefined, isEphemeral: true) => void) &
-    ((value: RangeUnitValue, isEphemeral: boolean) => void);
-}) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <CssValueInput
-      disabled={disabled}
-      styleSource="default"
-      value={value}
-      /* marginLeft to allow negative values  */
-      property={"margin-left"}
-      unitOptions={unitOptions}
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-
-        if (styleValue?.type !== "intermediate") {
-          const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
-          if (parsedValue.success) {
-            onChange(parsedValue.data, true);
-            return;
-          }
-        }
-
-        onChange(undefined, true);
-      }}
-      getOptions={() => $availableUnitVariables.get()}
-      onHighlight={() => {
-        /* Nothing to Highlight */
-      }}
-      onChangeComplete={(event) => {
-        const parsedValue = rangeUnitValueSchema.safeParse(event.value);
-
-        if (parsedValue.success) {
-          onChange(parsedValue.data, false);
-          setIntermediateValue(undefined);
-          return;
-        }
-
-        setIntermediateValue({
-          type: "invalid",
-          value: toValue(event.value),
-        });
-      }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, true);
-      }}
-    />
-  );
-};
+  onChange: (value: RangeUnitValue | undefined, isEphemeral: boolean) => void;
+}) => (
+  <ValidatedCssValueInput
+    value={value}
+    property="margin-left" /* allows negative values */
+    disabled={disabled}
+    onValidate={(styleValue) => {
+      const parsedValue = rangeUnitValueSchema.safeParse(styleValue);
+      return parsedValue.success
+        ? { success: true, data: parsedValue.data }
+        : { success: false };
+    }}
+    onChange={onChange}
+  />
+);
 
 const EasingInput = ({
   value,
@@ -187,52 +229,28 @@ const EasingInput = ({
 }: {
   value: string | undefined;
   onChange: (value: string | undefined, isEphemeral: boolean) => void;
-}) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
-
-  return (
-    <CssValueInput
-      styleSource="default"
-      value={
-        value === undefined
-          ? { type: "keyword", value: "ease" }
-          : { type: "unparsed", value }
-      }
-      getOptions={() => [
-        ...keywordValues["animation-timing-function"]
-          .filter((value) => !cssWideKeywords.has(value))
-          .map((value) => ({
-            type: "keyword" as const,
-            value,
-          })),
-        ...$availableUnitVariables.get(),
-      ]}
-      property="animation-timing-function"
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-        /* @todo: allow to change some ephemeral property to see the result in action */
-      }}
-      onHighlight={(value) => {
-        onChange(toValue(value), true);
-      }}
-      onChangeComplete={(event) => {
-        onChange(toValue(event.value), false);
-        setIntermediateValue(undefined);
-      }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, true);
-      }}
-    />
-  );
-};
-
+}) => (
+  <ValidatedCssValueInput
+    value={
+      value === undefined
+        ? { type: "keyword", value: "ease" }
+        : { type: "unparsed", value }
+    }
+    property="animation-timing-function"
+    getOptions={() => [
+      ...keywordValues["animation-timing-function"]
+        .filter((value) => !cssWideKeywords.has(value))
+        .map((value) => ({
+          type: "keyword" as const,
+          value,
+        })),
+      ...$availableUnitVariables.get(),
+    ]}
+    onValidate={(_, rawValue) => ({ success: true, data: rawValue })}
+    onChange={onChange}
+    onHighlight={onChange}
+  />
+);
 const DurationInput = ({
   value,
   onChange,
@@ -242,51 +260,68 @@ const DurationInput = ({
     value: DurationUnitValue | undefined,
     isEphemeral: boolean
   ) => void;
+}) => (
+  <ValidatedCssValueInput
+    value={value}
+    property="animation-duration"
+    onValidate={(styleValue, rawValue) => {
+      if (rawValue.toLowerCase() === "auto") {
+        return { success: true, data: undefined };
+      }
+      const parsedValue = durationUnitValueSchema.safeParse(styleValue);
+      return parsedValue.success
+        ? { success: true, data: parsedValue.data }
+        : { success: false };
+    }}
+    onChange={onChange}
+  />
+);
+
+const IterationsInput = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: IterationsUnitValue | undefined;
+  onChange: (
+    value: IterationsUnitValue | undefined,
+    isEphemeral: boolean
+  ) => void;
+  disabled?: boolean;
 }) => {
-  const [intermediateValue, setIntermediateValue] = useState<
-    StyleValue | IntermediateStyleValue
-  >();
+  const styleValue: StyleValue | undefined =
+    value === undefined
+      ? { type: "unit", value: 1, unit: "number" }
+      : value === "infinite"
+        ? { type: "keyword", value: "infinite" }
+        : { type: "unit", value, unit: "number" };
 
   return (
-    <CssValueInput
-      styleSource="default"
-      value={value}
-      placeholder="auto"
-      property="animation-duration"
-      intermediateValue={intermediateValue}
-      onChange={(styleValue) => {
-        setIntermediateValue(styleValue);
-      }}
-      getOptions={() => $availableUnitVariables.get()}
-      onHighlight={() => {}}
-      onChangeComplete={(event) => {
-        const value = durationUnitValueSchema.safeParse(event.value);
-        onChange(undefined, true);
-        // allow user to reset with initial value
-        if (toValue(event.value).toLowerCase() === "auto") {
-          onChange(undefined, false);
-          setIntermediateValue(undefined);
-          return;
+    <ValidatedCssValueInput
+      value={styleValue}
+      placeholder="1"
+      property="animation-iteration-count"
+      disabled={disabled}
+      getOptions={() => [
+        { type: "keyword" as const, value: "infinite" },
+        ...$availableUnitVariables.get(),
+      ]}
+      onValidate={(styleValue, rawValue) => {
+        if (rawValue === "auto") {
+          return { success: true, data: undefined };
         }
-        if (value.success) {
-          onChange(value.data, false);
-          setIntermediateValue(undefined);
-          return;
+        if (rawValue === "infinite") {
+          return { success: true, data: "infinite" as const };
         }
-
-        setIntermediateValue({
-          type: "invalid",
-          value: toValue(event.value),
-        });
+        if (styleValue.type === "unit" && styleValue.unit === "number") {
+          const numValue = styleValue.value;
+          if (typeof numValue === "number" && numValue > 0) {
+            return { success: true, data: numValue };
+          }
+        }
+        return { success: false };
       }}
-      onAbort={() => {
-        onChange(undefined, true);
-      }}
-      onReset={() => {
-        setIntermediateValue(undefined);
-        onChange(undefined, false);
-        onChange(undefined, true);
-      }}
+      onChange={onChange}
     />
   );
 };
@@ -437,6 +472,8 @@ export const AnimationPanelContent = ({
   const timelineRangeNames = Object.keys(timelineRangeDescriptions);
 
   const isRangeEndEnabled = value.timing.duration === undefined;
+  const isRangeStartEnabled = value.timing.delay === undefined;
+  const isIterationsEnabled = value.timing.duration !== undefined;
 
   const animationSchema = isScrollAnimation
     ? scrollAnimationSchema
@@ -577,12 +614,7 @@ export const AnimationPanelContent = ({
         />
       </Grid>
 
-      <Grid
-        gap={1}
-        css={{
-          paddingInline: theme.panel.paddingInline,
-        }}
-      >
+      <Grid gap="2" css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid
           css={{
             gridTemplateColumns: "1.1fr 2fr",
@@ -769,6 +801,7 @@ export const AnimationPanelContent = ({
                   >
                     <ToggleGroupButton
                       key={toggleValue}
+                      disabled={!isRangeStartEnabled}
                       value={toggleValue}
                       onClick={() => {
                         setIsAdvancedRangeStart(false);
@@ -796,6 +829,7 @@ export const AnimationPanelContent = ({
 
               <Tooltip content="Set custom range">
                 <ToggleGroupButton
+                  disabled={!isRangeStartEnabled}
                   onClick={() => {
                     setIsAdvancedRangeStart(true);
                   }}
@@ -816,6 +850,7 @@ export const AnimationPanelContent = ({
               gap={2}
             >
               <Select
+                disabled={!isRangeStartEnabled}
                 options={timelineRangeNames}
                 getLabel={humanizeString}
                 value={value.timing.rangeStart?.[0] ?? timelineRangeNames[0]!}
@@ -871,6 +906,7 @@ export const AnimationPanelContent = ({
                 }}
               />
               <RangeValueInput
+                disabled={!isRangeStartEnabled}
                 value={
                   value.timing.rangeStart?.[1] ?? {
                     type: "unit",
@@ -904,31 +940,86 @@ export const AnimationPanelContent = ({
               />
             </Grid>
           )}
+        </Grid>
+        <Grid gap="2" columns="3">
+          <Box>
+            <FieldLabel description="Sets a fixed duration instead of using range end.">
+              Duration
+            </FieldLabel>
+            <DurationInput
+              value={value.timing.duration}
+              onChange={(duration, isEphemeral) => {
+                if (duration === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
 
-          <FieldLabel description="Sets a fixed duration instead of using range end.">
-            Duration
-          </FieldLabel>
-
-          <DurationInput
-            value={value.timing.duration}
-            onChange={(duration, isEphemeral) => {
-              if (duration === undefined && isEphemeral) {
-                handleChange(undefined, true);
-                return;
-              }
-
-              handleChange(
-                {
-                  ...value,
-                  timing: {
-                    ...value.timing,
-                    duration,
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      duration,
+                    },
                   },
-                },
-                isEphemeral
-              );
-            }}
-          />
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
+
+          <Box>
+            <FieldLabel description="Sets a fixed delay before the animation starts instead of using range start.">
+              Delay
+            </FieldLabel>
+            <DurationInput
+              value={value.timing.delay}
+              onChange={(delay, isEphemeral) => {
+                if (delay === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
+
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      delay,
+                    },
+                  },
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
+
+          <Box>
+            <FieldLabel description="Number of times the animation should repeat. Use 'infinite' for continuous loop. Requires duration to be set.">
+              Iterations
+            </FieldLabel>
+            <IterationsInput
+              disabled={!isIterationsEnabled}
+              value={value.timing.iterations}
+              onChange={(iterations, isEphemeral) => {
+                if (iterations === undefined && isEphemeral) {
+                  handleChange(undefined, true);
+                  return;
+                }
+
+                handleChange(
+                  {
+                    ...value,
+                    timing: {
+                      ...value.timing,
+                      iterations,
+                    },
+                  },
+                  isEphemeral
+                );
+              }}
+            />
+          </Box>
         </Grid>
       </Grid>
 
