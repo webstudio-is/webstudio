@@ -58,6 +58,7 @@ import { $instanceTags } from "../features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 import { isSyncIdle } from "./sync/sync-server";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
+import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -666,6 +667,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Delete unused tokens",
       handler: () => {
         openDeleteUnusedTokensDialog();
+      },
+    },
+
+    {
+      name: "deleteUnusedDataVariables",
+      label: "Delete unused data variables",
+      handler: () => {
+        openDeleteUnusedDataVariablesDialog();
       },
     },
   ],
