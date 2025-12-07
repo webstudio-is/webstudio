@@ -57,6 +57,7 @@ import { getInstanceLabel } from "./instance-label";
 import { $instanceTags } from "../features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 import { isSyncIdle } from "./sync/sync-server";
+import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -657,6 +658,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if ($isDesignMode.get()) {
           openCommandPanel();
         }
+      },
+    },
+
+    {
+      name: "deleteUnusedTokens",
+      label: "Delete unused tokens",
+      handler: () => {
+        openDeleteUnusedTokensDialog();
       },
     },
   ],

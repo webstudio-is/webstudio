@@ -59,6 +59,7 @@ import { migrateWebstudioDataMutable } from "~/shared/webstudio-data-migrator";
 import { Loading, LoadingBackground } from "./shared/loading";
 import { mergeRefs } from "@react-aria/utils";
 import { CommandPanel } from "./features/command-panel";
+import { DeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 
 import {
   initCopyPaste,
@@ -439,6 +440,7 @@ export const Builder = ({
         <Loading state={loadingState} />
         <BlockingAlerts />
         <CommandPanel />
+        <DeleteUnusedTokensDialog />
         <RemoteDialog />
       </div>
     </TooltipProvider>
