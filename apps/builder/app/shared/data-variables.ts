@@ -491,6 +491,45 @@ export const findUsedVariables = ({
   return usedVariables;
 };
 
+export const findVariableUsagesByInstance = ({
+  startingInstanceId,
+  pages,
+  instances,
+  props,
+  dataSources,
+  resources,
+}: {
+  startingInstanceId: Instance["id"];
+  pages: undefined | Pages;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const usedIn = new Map<DataSource["id"], Set<Instance["id"]>>();
+  traverseExpressions({
+    startingInstanceId,
+    pages,
+    instances,
+    props,
+    dataSources,
+    resources,
+    update: (expression, instanceId) => {
+      const identifiers = getExpressionIdentifiers(expression);
+      for (const identifier of identifiers) {
+        const id = decodeDataVariableId(identifier);
+        if (id !== undefined) {
+          if (!usedIn.has(id)) {
+            usedIn.set(id, new Set());
+          }
+          usedIn.get(id)?.add(instanceId);
+        }
+      }
+    },
+  });
+  return usedIn;
+};
+
 export const rebindTreeVariablesMutable = ({
   startingInstanceId,
   pages,

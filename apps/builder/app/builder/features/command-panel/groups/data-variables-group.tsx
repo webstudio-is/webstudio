@@ -12,10 +12,7 @@ import { selectInstance as selectInstanceBySelector } from "~/shared/awareness";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { $commandContent, closeCommandPanel } from "../command-state";
 import { InstanceList, selectInstance } from "../shared/instance-list";
-import {
-  $usedVariablesAcrossProject,
-  $usedVariablesInInstances,
-} from "~/shared/data-variables-utils";
+import { $usedVariablesInInstances } from "~/shared/data-variables-utils";
 import type { BaseOption } from "../shared/types";
 
 export type DataVariableOption = BaseOption & {
@@ -24,17 +21,11 @@ export type DataVariableOption = BaseOption & {
   name: string;
   instanceId: string;
   usages: number;
-  usedIn: Set<string>;
 };
 
 export const $dataVariableOptions = computed(
-  [
-    $dataSources,
-    $instances,
-    $usedVariablesAcrossProject,
-    $usedVariablesInInstances,
-  ],
-  (dataSources, instances, variableUsages, usedInInstances) => {
+  [$dataSources, $instances, $usedVariablesInInstances],
+  (dataSources, instances, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
 
     for (const dataSource of dataSources.values()) {
@@ -44,7 +35,7 @@ export const $dataVariableOptions = computed(
       ) {
         const instance = instances.get(dataSource.scopeInstanceId);
         if (instance) {
-          const usages = variableUsages.get(dataSource.id) ?? 0;
+          const usages = usedInInstances.get(dataSource.id)?.size ?? 0;
           dataVariableOptions.push({
             terms: ["variable", "variables", "data", dataSource.name],
             type: "dataVariable",
@@ -52,7 +43,6 @@ export const $dataVariableOptions = computed(
             name: dataSource.name,
             instanceId: dataSource.scopeInstanceId,
             usages,
-            usedIn: usedInInstances.get(dataSource.id) ?? new Set(),
           });
         }
       }
@@ -62,10 +52,13 @@ export const $dataVariableOptions = computed(
   }
 );
 
-const DataVariableInstances = ({ option }: { option: DataVariableOption }) => {
+const DataVariableInstances = ({ variableId }: { variableId: string }) => {
+  const usedInInstances = $usedVariablesInInstances.get();
+  const instanceIds = usedInInstances.get(variableId) ?? new Set();
+
   return (
     <InstanceList
-      instanceIds={option.usedIn}
+      instanceIds={instanceIds}
       onSelect={(instanceId) => {
         selectInstance(instanceId);
         $activeInspectorPanel.set("settings");
@@ -84,7 +77,7 @@ export const DataVariablesGroup = ({
   const handleSelect = (option: DataVariableOption) => {
     if (action === "find") {
       if (option.usages > 0) {
-        $commandContent.set(<DataVariableInstances option={option} />);
+        $commandContent.set(<DataVariableInstances variableId={option.id} />);
       } else {
         toast.error("Variable is not used in any instance");
       }
