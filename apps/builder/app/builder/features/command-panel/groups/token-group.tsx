@@ -170,19 +170,25 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
           <CommandList>
-            {matches.map(({ id, label }) => (
-              <CommandItem
-                key={id}
-                // preserve selected state when rerender
-                value={id}
-                onSelect={() => {
-                  selectToken(id, tokenId);
-                  closeCommandPanel();
-                }}
-              >
-                <Text variant="labelsTitleCase">{label}</Text>
-              </CommandItem>
-            ))}
+            {matches.length === 0 ? (
+              <Flex justify="center" align="center" css={{ minHeight: 100 }}>
+                <Text color="subtle">No instances found</Text>
+              </Flex>
+            ) : (
+              matches.map(({ id, label }) => (
+                <CommandItem
+                  key={id}
+                  // preserve selected state when rerender
+                  value={id}
+                  onSelect={() => {
+                    selectToken(id, tokenId);
+                    closeCommandPanel();
+                  }}
+                >
+                  <Text variant="labelsTitleCase">{label}</Text>
+                </CommandItem>
+              ))
+            )}
           </CommandList>
         </ScrollArea>
       </Flex>
