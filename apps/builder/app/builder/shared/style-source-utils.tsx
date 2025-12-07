@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,49 @@ export const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
   );
   // reset selected style source if necessary
   deselectMatchingStyleSource(styleSourceId);
+};
+
+export const deleteUnusedTokens = () => {
+  const styleSources = $styleSources.get();
+  const styleSourceUsages = $styleSourceUsages.get();
+  const unusedTokenIds: StyleSource["id"][] = [];
+
+  for (const styleSource of styleSources.values()) {
+    if (styleSource.type === "token") {
+      const usages = styleSourceUsages.get(styleSource.id);
+      if (usages === undefined || usages.size === 0) {
+        unusedTokenIds.push(styleSource.id);
+      }
+    }
+  }
+
+  if (unusedTokenIds.length === 0) {
+    return 0;
+  }
+
+  serverSyncStore.createTransaction(
+    [$styleSources, $styleSourceSelections, $styles],
+    (styleSources, styleSourceSelections, styles) => {
+      for (const styleSourceId of unusedTokenIds) {
+        styleSources.delete(styleSourceId);
+        for (const styleSourceSelection of styleSourceSelections.values()) {
+          if (styleSourceSelection.values.includes(styleSourceId)) {
+            removeByMutable(
+              styleSourceSelection.values,
+              (item) => item === styleSourceId
+            );
+          }
+        }
+        for (const [styleDeclKey, styleDecl] of styles) {
+          if (styleDecl.styleSourceId === styleSourceId) {
+            styles.delete(styleDeclKey);
+          }
+        }
+      }
+    }
+  );
+
+  return unusedTokenIds.length;
 };
 
 export type RenameStyleSourceError =
@@ -233,6 +277,94 @@ export const RenameStyleSourceDialog = ({
             </Button>
             <DialogClose>
               <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+type DeleteUnusedTokensDialogProps = {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+};
+
+export const DeleteUnusedTokensDialog = ({
+  open,
+  onClose,
+  onConfirm,
+}: DeleteUnusedTokensDialogProps) => {
+  const styleSourceUsages = useStore($styleSourceUsages);
+  const styleSources = useStore($styleSources);
+
+  const unusedTokens: Array<{ id: string; name: string }> = [];
+  for (const styleSource of styleSources.values()) {
+    if (styleSource.type === "token") {
+      const usages = styleSourceUsages.get(styleSource.id);
+      if (usages === undefined || usages.size === 0) {
+        unusedTokens.push({ id: styleSource.id, name: styleSource.name });
+      }
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <DialogTitle>Delete unused tokens</DialogTitle>
+        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+          {unusedTokens.length === 0 ? (
+            <Text>There are no unused tokens to delete.</Text>
+          ) : (
+            <>
+              <Text>
+                Delete {unusedTokens.length} unused{" "}
+                {unusedTokens.length === 1 ? "token" : "tokens"} from the
+                project?
+              </Text>
+              <Text
+                variant="mono"
+                css={{
+                  maxHeight: 200,
+                  overflowY: "auto",
+                  padding: theme.spacing[5],
+                  backgroundColor: theme.colors.backgroundPanel,
+                  borderRadius: theme.borderRadius[4],
+                  wordBreak: "break-word",
+                }}
+              >
+                {unusedTokens.map((token) => token.name).join(", ")}
+              </Text>
+            </>
+          )}
+          <Flex direction="rowReverse" gap="2">
+            {unusedTokens.length > 0 && (
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                  onClose();
+                }}
+              >
+                Delete
+              </Button>
+            )}
+            <DialogClose>
+              <Button color="ghost">
+                {unusedTokens.length > 0 ? "Cancel" : "Close"}
+              </Button>
             </DialogClose>
           </Flex>
         </Flex>
