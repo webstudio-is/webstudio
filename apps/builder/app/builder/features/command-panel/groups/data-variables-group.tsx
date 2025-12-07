@@ -17,6 +17,7 @@ import { deleteVariableMutable } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   DeleteDataVariableDialog,
+  RenameDataVariableDialog,
   $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
@@ -79,6 +80,8 @@ export const DataVariablesGroup = ({
   options: DataVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const [variableToRename, setVariableToRename] =
+    useState<DataVariableOption>();
   const [variableToDelete, setVariableToDelete] =
     useState<DataVariableOption>();
 
@@ -89,6 +92,11 @@ export const DataVariablesGroup = ({
       } else {
         toast.error("Variable is not used in any instance");
       }
+      return;
+    }
+
+    if (action === "rename") {
+      setVariableToRename(option);
       return;
     }
 
@@ -114,7 +122,7 @@ export const DataVariablesGroup = ({
       <CommandGroup
         name="dataVariable"
         heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-        actions={["find", "select", "delete"]}
+        actions={["find", "select", "rename", "delete"]}
       >
         {options.map((option) => (
           <CommandItem
@@ -133,6 +141,18 @@ export const DataVariablesGroup = ({
           </CommandItem>
         ))}
       </CommandGroup>
+      <RenameDataVariableDialog
+        variable={variableToRename}
+        onClose={() => {
+          setVariableToRename(undefined);
+        }}
+        onConfirm={(_variableId, newName) => {
+          toast.success(
+            `Variable renamed from "${variableToRename?.name}" to "${newName}"`
+          );
+          setVariableToRename(undefined);
+        }}
+      />
       <DeleteDataVariableDialog
         variable={variableToDelete}
         onClose={() => {
