@@ -8,7 +8,6 @@ import {
   ScrollArea,
   Flex,
   CommandFooter,
-  Separator,
 } from "@webstudio-is/design-system";
 import { mapGroupBy } from "~/shared/shim";
 import {
