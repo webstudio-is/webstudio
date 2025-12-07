@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import {
   Box,
-  Flex,
   Grid,
   InputField,
   ScrollArea,
