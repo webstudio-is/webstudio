@@ -21,7 +21,7 @@ import { $allOptions, groups, type Option } from "./groups";
 const renderGroup = <T extends Option["type"]>(type: T, matches: Option[]) => {
   const Group = groups[type as keyof typeof groups];
   if (Group) {
-    return <Group key={type} options={matches as any} />;
+    return <Group key={type} options={matches as OptionByType<T>[]} />;
   }
 };
 
