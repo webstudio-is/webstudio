@@ -66,7 +66,13 @@ export const $allOptions = computed(
   ]
 );
 
-export const groups = {
+type GroupComponent<T extends Option["type"]> = (props: {
+  options: OptionByType<T>[];
+}) => JSX.Element;
+
+export const groups: {
+  [K in Option["type"]]: GroupComponent<K>;
+} = {
   component: ComponentsGroup,
   tag: TagsGroup,
   breakpoint: BreakpointsGroup,
@@ -74,7 +80,7 @@ export const groups = {
   command: CommandsGroup,
   token: TokensGroup,
   dataVariable: DataVariablesGroup,
-} as const;
+};
 
 export type {
   ComponentOption,

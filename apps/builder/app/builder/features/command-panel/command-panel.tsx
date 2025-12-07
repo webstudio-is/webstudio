@@ -16,13 +16,12 @@ import {
   $commandSearch,
   closeCommandPanel,
 } from "./command-state";
-import { $allOptions, groups, type Option } from "./groups";
+import { $allOptions, groups, type Option, type OptionByType } from "./groups";
 
-const renderGroup = <T extends Option["type"]>(type: T, matches: Option[]) => {
-  const Group = groups[type as keyof typeof groups];
-  if (Group) {
-    return <Group key={type} options={matches as OptionByType<T>[]} />;
-  }
+const renderGroup = (type: Option["type"], matches: Option[]): JSX.Element => {
+  const Group = groups[type];
+  // Type assertion is safe here because matches are filtered by type before calling renderGroup
+  return <Group key={type} options={matches as never} />;
 };
 
 const CommandDialogContent = () => {
