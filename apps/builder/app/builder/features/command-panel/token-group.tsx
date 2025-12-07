@@ -23,6 +23,10 @@ import {
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
+import {
+  deleteStyleSource,
+  DeleteConfirmationDialog,
+} from "~/builder/shared/delete-token";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
@@ -188,37 +192,59 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
 
 export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
   const action = useSelectedAction();
+  const [tokenToDelete, setTokenToDelete] =
+    useState<Extract<StyleSource, { type: "token" }>>();
+
   return (
-    <CommandGroup
-      name="token"
-      heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
-      actions={["find"]}
-    >
-      {options.map(({ token, usages }) => (
-        <CommandItem
-          key={token.id}
-          // preserve selected state when rerender
-          value={token.id}
-          onSelect={() => {
-            if (action === "find") {
-              if (usages > 0) {
-                $commandContent.set(<TokenInstances tokenId={token.id} />);
-              } else {
-                toast.error("Token is not used in any instance");
+    <>
+      <CommandGroup
+        name="token"
+        heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
+        actions={["find", "delete"]}
+      >
+        {options.map(({ token, usages }) => (
+          <CommandItem
+            key={token.id}
+            // preserve selected state when rerender
+            value={token.id}
+            onSelect={() => {
+              if (action === "find") {
+                if (usages > 0) {
+                  $commandContent.set(<TokenInstances tokenId={token.id} />);
+                } else {
+                  toast.error("Token is not used in any instance");
+                }
               }
-            }
-          }}
-        >
-          <Text variant="labelsTitleCase">
-            {token.name}{" "}
-            <Text as="span" color="moreSubtle">
-              {usages === 0
-                ? "unused"
-                : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+              if (action === "delete") {
+                setTokenToDelete(token);
+              }
+            }}
+          >
+            <Text variant="labelsTitleCase">
+              {token.name}{" "}
+              <Text as="span" color="moreSubtle">
+                {usages === 0
+                  ? "unused"
+                  : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+              </Text>
             </Text>
-          </Text>
-        </CommandItem>
-      ))}
-    </CommandGroup>
+          </CommandItem>
+        ))}
+      </CommandGroup>
+      <DeleteConfirmationDialog
+        token={tokenToDelete?.name}
+        onClose={() => {
+          setTokenToDelete(undefined);
+        }}
+        onConfirm={() => {
+          if (tokenToDelete) {
+            deleteStyleSource(tokenToDelete.id);
+            setTokenToDelete(undefined);
+            closeCommandPanel();
+            toast.success(`Token "${tokenToDelete.name}" deleted`);
+          }
+        }}
+      />
+    </>
   );
 };

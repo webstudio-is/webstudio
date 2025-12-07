@@ -13,16 +13,6 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import {
-  Flex,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogClose,
-  Button,
-  Text,
-  theme,
-} from "@webstudio-is/design-system";
-import {
   type ItemSource,
   StyleSourceInput,
   type StyleSourceError,
@@ -44,6 +34,10 @@ import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";
+import {
+  deleteStyleSource,
+  DeleteConfirmationDialog,
+} from "~/builder/shared/delete-token";
 
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
@@ -174,30 +168,6 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
         styleSourceSelection.values,
         (item) => item === styleSourceId
       );
-    }
-  );
-  // reset selected style source if necessary
-  deselectMatchingStyleSource(styleSourceId);
-};
-
-const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
-  serverSyncStore.createTransaction(
-    [$styleSources, $styleSourceSelections, $styles],
-    (styleSources, styleSourceSelections, styles) => {
-      styleSources.delete(styleSourceId);
-      for (const styleSourceSelection of styleSourceSelections.values()) {
-        if (styleSourceSelection.values.includes(styleSourceId)) {
-          removeByMutable(
-            styleSourceSelection.values,
-            (item) => item === styleSourceId
-          );
-        }
-      }
-      for (const [styleDeclKey, styleDecl] of styles) {
-        if (styleDecl.styleSourceId === styleSourceId) {
-          styles.delete(styleDeclKey);
-        }
-      }
     }
   );
   // reset selected style source if necessary
@@ -494,50 +464,5 @@ export const StyleSourcesSection = ({
         }}
       />
     </>
-  );
-};
-
-type DeleteConfirmationDialogProps = {
-  onClose: () => void;
-  onConfirm: () => void;
-  token?: string;
-};
-
-const DeleteConfirmationDialog = ({
-  onClose,
-  onConfirm,
-  token,
-}: DeleteConfirmationDialogProps) => {
-  return (
-    <Dialog
-      open={token !== undefined}
-      onOpenChange={(isOpen) => {
-        if (isOpen === false) {
-          onClose();
-        }
-      }}
-    >
-      <DialogContent>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-          <Text>{`Delete "${token}" token from the project including all of its styles?`}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
-        </Flex>
-        <DialogTitle>Delete confirmation</DialogTitle>
-      </DialogContent>
-    </Dialog>
   );
 };
