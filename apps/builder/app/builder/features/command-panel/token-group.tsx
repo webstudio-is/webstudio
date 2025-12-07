@@ -211,11 +211,9 @@ export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
         >
           <Text variant="labelsTitleCase">
             {token.name}{" "}
-            {usages > 0 && (
-              <Text as="span" color="moreSubtle">
-                {usages} usages
-              </Text>
-            )}
+            <Text as="span" color="moreSubtle">
+              {usages} {usages === 1 ? "usage" : "usages"}
+            </Text>
           </Text>
         </CommandItem>
       ))}
