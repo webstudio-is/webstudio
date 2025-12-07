@@ -21,12 +21,13 @@ import {
   $registeredComponentMetas,
   $selectedStyleSources,
   $styleSources,
-  $styleSourceSelections,
 } from "~/shared/nano-states";
 import {
   deleteStyleSource,
-  DeleteConfirmationDialog,
-} from "~/builder/shared/token-utils";
+  DeleteStyleSourceDialog,
+  RenameStyleSourceDialog,
+  $styleSourceUsages,
+} from "~/builder/shared/style-source-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
@@ -38,24 +39,6 @@ export type TokenOption = {
   token: Extract<StyleSource, { type: "token" }>;
   usages: number;
 };
-
-const $styleSourceUsages = computed(
-  $styleSourceSelections,
-  (styleSourceSelections) => {
-    const styleSourceUsages = new Map<StyleSource["id"], Set<Instance["id"]>>();
-    for (const { instanceId, values } of styleSourceSelections.values()) {
-      for (const styleSourceId of values) {
-        let usages = styleSourceUsages.get(styleSourceId);
-        if (usages === undefined) {
-          usages = new Set();
-          styleSourceUsages.set(styleSourceId, usages);
-        }
-        usages.add(instanceId);
-      }
-    }
-    return styleSourceUsages;
-  }
-);
 
 export const $tokenOptions = computed(
   [$styleSources, $styleSourceUsages],
@@ -192,6 +175,8 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
 
 export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
   const action = useSelectedAction();
+  const [tokenToRename, setTokenToRename] =
+    useState<Extract<StyleSource, { type: "token" }>>();
   const [tokenToDelete, setTokenToDelete] =
     useState<Extract<StyleSource, { type: "token" }>>();
 
@@ -200,7 +185,7 @@ export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
       <CommandGroup
         name="token"
         heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
-        actions={["find", "delete"]}
+        actions={["find", "rename", "delete"]}
       >
         {options.map(({ token, usages }) => (
           <CommandItem
@@ -214,6 +199,9 @@ export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
                 } else {
                   toast.error("Token is not used in any instance");
                 }
+              }
+              if (action === "rename") {
+                setTokenToRename(token);
               }
               if (action === "delete") {
                 setTokenToDelete(token);
@@ -231,18 +219,27 @@ export const TokenGroup = ({ options }: { options: TokenOption[] }) => {
           </CommandItem>
         ))}
       </CommandGroup>
-      <DeleteConfirmationDialog
-        token={tokenToDelete?.name}
+      <RenameStyleSourceDialog
+        styleSource={tokenToRename}
+        onClose={() => {
+          setTokenToRename(undefined);
+        }}
+        onConfirm={(_styleSourceId, newName) => {
+          toast.success(
+            `Token renamed from "${tokenToRename?.name}" to "${newName}"`
+          );
+          setTokenToRename(undefined);
+        }}
+      />
+      <DeleteStyleSourceDialog
+        styleSource={tokenToDelete}
         onClose={() => {
           setTokenToDelete(undefined);
         }}
-        onConfirm={() => {
-          if (tokenToDelete) {
-            deleteStyleSource(tokenToDelete.id);
-            setTokenToDelete(undefined);
-            closeCommandPanel();
-            toast.success(`Token "${tokenToDelete.name}" deleted`);
-          }
+        onConfirm={(styleSourceId) => {
+          deleteStyleSource(styleSourceId);
+          toast.success(`Token "${tokenToDelete?.name}" deleted`);
+          setTokenToDelete(undefined);
         }}
       />
     </>

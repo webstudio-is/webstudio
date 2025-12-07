@@ -14,11 +14,11 @@ import {
 } from "@webstudio-is/sdk";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
-  renameToken,
-  type RenameTokenError,
+  renameStyleSource,
+  type RenameStyleSourceError,
   deleteStyleSource,
-  DeleteConfirmationDialog,
-} from "~/builder/shared/token-utils";
+  DeleteStyleSourceDialog,
+} from "~/builder/shared/style-source-utils";
 import {
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
@@ -353,7 +353,7 @@ export const StyleSourcesSection = ({
   const [editingItemId, setEditingItemId] = useState<StyleSource["id"]>();
 
   const [tokenToDelete, setTokenToDelete] = useState<StyleSourceToken>();
-  const [error, setError] = useState<RenameTokenError>();
+  const [error, setError] = useState<RenameStyleSourceError>();
 
   const setEditingItem = (id?: StyleSource["id"]) => {
     // User finished editing or started editing a different token
@@ -416,7 +416,7 @@ export const StyleSourcesSection = ({
           }
         }}
         onChangeItem={(item) => {
-          const error = renameToken(item.id, item.label);
+          const error = renameStyleSource(item.id, item.label);
           if (error) {
             setError(error);
             setEditingItem(item.id);
@@ -425,15 +425,14 @@ export const StyleSourcesSection = ({
           setError(undefined);
         }}
       />
-      <DeleteConfirmationDialog
-        token={tokenToDelete?.name}
+      <DeleteStyleSourceDialog
+        styleSource={tokenToDelete}
         onClose={() => {
           setTokenToDelete(undefined);
         }}
-        onConfirm={() => {
-          if (tokenToDelete) {
-            deleteStyleSource(tokenToDelete.id);
-          }
+        onConfirm={(styleSourceId) => {
+          deleteStyleSource(styleSourceId);
+          setTokenToDelete(undefined);
         }}
       />
     </>
