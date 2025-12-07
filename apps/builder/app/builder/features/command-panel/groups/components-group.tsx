@@ -29,9 +29,9 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type ComponentOption = {
-  terms: string[];
+export type ComponentOption = BaseOption & {
   type: "component";
   component: string;
   label: string;
@@ -110,7 +110,11 @@ export const $componentOptions = computed(
   }
 );
 
-export const ComponentGroup = ({ options }: { options: ComponentOption[] }) => {
+export const ComponentsGroup = ({
+  options,
+}: {
+  options: ComponentOption[];
+}) => {
   return (
     <CommandGroup
       name="component"

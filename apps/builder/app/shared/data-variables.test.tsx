@@ -25,6 +25,7 @@ import {
   unsetExpressionVariables,
   deleteVariableMutable,
   findAvailableVariables,
+  findVariableUsagesByInstance,
 } from "./data-variables";
 
 test("encode data variable name when necessary", () => {
@@ -907,4 +908,135 @@ test("unset global variables in all pages meta when delete", () => {
     expect(page.meta.redirect).toEqual(`globalVariable`);
     expect(page.meta.custom?.[0].content).toEqual(`globalVariable`);
   }
+});
+
+test("find variable usages by instance", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const boxVariable = new Variable("boxVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body
+        ws:id="bodyId"
+        vars={expression`${bodyVariable}`}
+        data-prop={expression`${bodyVariable} + "test"`}
+      >
+        <$.Box
+          ws:id="boxId"
+          vars={expression`${boxVariable}`}
+          data-prop={expression`${boxVariable} + ${bodyVariable}`}
+        >
+          <$.Text ws:id="textId">{expression`${bodyVariable}`}</$.Text>
+        </$.Box>
+      </$.Body>
+    ),
+  };
+  const bodyVariableId = [...data.dataSources.values()].find(
+    (ds) => ds.name === "bodyVariable"
+  )?.id;
+  const boxVariableId = [...data.dataSources.values()].find(
+    (ds) => ds.name === "boxVariable"
+  )?.id;
+
+  const usagesByInstance = findVariableUsagesByInstance({
+    ...data,
+    startingInstanceId: "bodyId",
+  });
+
+  expect(usagesByInstance.get(bodyVariableId!)).toEqual(
+    new Set(["bodyId", "boxId", "textId"])
+  );
+  expect(usagesByInstance.get(boxVariableId!)).toEqual(new Set(["boxId"]));
+});
+
+test("find variable usages from root includes all pages", () => {
+  const globalVariable = new Variable("globalVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "homeBodyId" }),
+    ...renderData(
+      <ws.root ws:id={ROOT_INSTANCE_ID} vars={expression`${globalVariable}`}>
+        <$.Body ws:id="homeBodyId">
+          <$.Box ws:id="homeBoxId" data-prop={expression`${globalVariable}`} />
+        </$.Body>
+        <$.Body ws:id="aboutBodyId">
+          <$.Box ws:id="aboutBoxId" data-prop={expression`${globalVariable}`} />
+        </$.Body>
+      </ws.root>
+    ),
+  };
+  data.instances.delete(ROOT_INSTANCE_ID);
+  data.pages.pages.push({
+    id: "aboutPage",
+    name: "About",
+    path: "/about",
+    title: "",
+    meta: {},
+    rootInstanceId: "aboutBodyId",
+  });
+
+  const [globalVariableId] = data.dataSources.keys();
+
+  const usagesByInstance = findVariableUsagesByInstance({
+    ...data,
+    startingInstanceId: ROOT_INSTANCE_ID,
+  });
+
+  // Global variable is used in expressions on both boxes and the root (where it's defined)
+  expect(usagesByInstance.get(globalVariableId)).toEqual(
+    new Set([ROOT_INSTANCE_ID, "homeBoxId", "aboutBoxId"])
+  );
+});
+
+test("find variable usages in page meta", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body ws:id="bodyId" vars={expression`${bodyVariable}`}></$.Body>
+    ),
+  };
+  const [bodyVariableId] = data.dataSources.keys();
+  const bodyIdentifier = encodeDataVariableId(bodyVariableId);
+
+  data.pages.homePage.title = bodyIdentifier;
+  data.pages.homePage.meta = {
+    description: bodyIdentifier,
+    excludePageFromSearch: bodyIdentifier,
+    socialImageUrl: bodyIdentifier,
+  };
+
+  const usagesByInstance = findVariableUsagesByInstance({
+    ...data,
+    startingInstanceId: "bodyId",
+  });
+
+  // Page meta expressions are attributed to the page's root instance
+  expect(usagesByInstance.get(bodyVariableId)).toEqual(new Set(["bodyId"]));
+});
+
+test("find variable usages counts unique instances not expressions", () => {
+  const bodyVariable = new Variable("bodyVariable", "");
+  const data = {
+    pages: createDefaultPages({ rootInstanceId: "bodyId" }),
+    ...renderData(
+      <$.Body
+        ws:id="bodyId"
+        vars={expression`${bodyVariable}`}
+        data-prop1={expression`${bodyVariable}`}
+        data-prop2={expression`${bodyVariable}`}
+        data-prop3={expression`${bodyVariable}`}
+      ></$.Body>
+    ),
+  };
+  const [bodyVariableId] = data.dataSources.keys();
+
+  const usagesByInstance = findVariableUsagesByInstance({
+    ...data,
+    startingInstanceId: "bodyId",
+  });
+
+  // Even though bodyVariable is used 4 times (in 4 different expressions),
+  // it should only appear once in the set since it's all on the same instance
+  expect(usagesByInstance.get(bodyVariableId)).toEqual(new Set(["bodyId"]));
+  expect(usagesByInstance.get(bodyVariableId)?.size).toBe(1);
 });

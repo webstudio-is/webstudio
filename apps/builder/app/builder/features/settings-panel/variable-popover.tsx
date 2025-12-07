@@ -77,6 +77,7 @@ import {
   findUnsetVariableNames,
   rebindTreeVariablesMutable,
 } from "~/shared/data-variables";
+import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   GraphqlResourceForm,
   parseResource,
@@ -103,27 +104,18 @@ const NameField = ({
   const ref = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const nameId = useId();
+  const scopeInstanceId =
+    variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
   const validateName = useCallback(
     (value: string) => {
-      // validate same name on variable instance
-      // and fallback to selected instance for new variables
-      const scopeInstanceId =
-        variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
-      for (const dataSource of $dataSources.get().values()) {
-        if (
-          dataSource.scopeInstanceId === scopeInstanceId &&
-          dataSource.name === value &&
-          dataSource.id !== variable?.id
-        ) {
-          return "Name is already used by another variable on this instance";
-        }
-      }
-      if (value.trim().length === 0) {
-        return "Name is required";
-      }
-      return "";
+      const error = validateDataVariableName(
+        value,
+        variable?.id,
+        scopeInstanceId
+      );
+      return error?.message ?? "";
     },
-    [variable]
+    [variable, scopeInstanceId]
   );
   const [value, setValue] = useState(defaultValue);
   useEffect(() => {

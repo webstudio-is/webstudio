@@ -1,22 +1,27 @@
 import { computed } from "nanostores";
 import {
   $componentOptions,
-  ComponentGroup,
+  ComponentsGroup,
   type ComponentOption,
-} from "./component-group";
-import { $tagOptions, TagGroup, type TagOption } from "./tag-group";
+} from "./components-group";
+import { $tagOptions, TagsGroup, type TagOption } from "./tags-group";
 import {
   $breakpointOptions,
-  BreakpointGroup,
+  BreakpointsGroup,
   type BreakpointOption,
-} from "./breakpoint-group";
-import { $pageOptions, PageGroup, type PageOption } from "./page-group";
+} from "./breakpoints-group";
+import { $pageOptions, PagesGroup, type PageOption } from "./pages-group";
 import {
   $commandOptions,
   CommandsGroup,
   type CommandOption,
-} from "./command-group";
-import { $tokenOptions, TokenGroup, type TokenOption } from "./token-group";
+} from "./commands-group";
+import { $tokenOptions, TokensGroup, type TokenOption } from "./tokens-group";
+import {
+  $dataVariableOptions,
+  DataVariablesGroup,
+  type DataVariableOption,
+} from "./data-variables-group";
 
 export type Option =
   | ComponentOption
@@ -24,7 +29,13 @@ export type Option =
   | BreakpointOption
   | PageOption
   | CommandOption
-  | TokenOption;
+  | TokenOption
+  | DataVariableOption;
+
+export type OptionByType<T extends Option["type"]> = Extract<
+  Option,
+  { type: T }
+>;
 
 export const $allOptions = computed(
   [
@@ -34,6 +45,7 @@ export const $allOptions = computed(
     $pageOptions,
     $commandOptions,
     $tokenOptions,
+    $dataVariableOptions,
   ],
   (
     componentOptions,
@@ -41,7 +53,8 @@ export const $allOptions = computed(
     breakpointOptions,
     pageOptions,
     commandOptions,
-    tokenOptions
+    tokenOptions,
+    dataVariableOptions
   ) => [
     ...componentOptions,
     ...tagOptions,
@@ -49,17 +62,25 @@ export const $allOptions = computed(
     ...pageOptions,
     ...commandOptions,
     ...tokenOptions,
+    ...dataVariableOptions,
   ]
 );
 
-export const groups = {
-  component: ComponentGroup,
-  tag: TagGroup,
-  breakpoint: BreakpointGroup,
-  page: PageGroup,
+type GroupComponent<T extends Option["type"]> = (props: {
+  options: OptionByType<T>[];
+}) => JSX.Element;
+
+export const groups: {
+  [K in Option["type"]]: GroupComponent<K>;
+} = {
+  component: ComponentsGroup,
+  tag: TagsGroup,
+  breakpoint: BreakpointsGroup,
+  page: PagesGroup,
   command: CommandsGroup,
-  token: TokenGroup,
-} as const;
+  token: TokensGroup,
+  dataVariable: DataVariablesGroup,
+};
 
 export type {
   ComponentOption,
@@ -68,13 +89,15 @@ export type {
   PageOption,
   CommandOption,
   TokenOption,
+  DataVariableOption,
 };
 
 export {
-  ComponentGroup,
-  TagGroup,
-  BreakpointGroup,
-  PageGroup,
+  ComponentsGroup,
+  TagsGroup,
+  BreakpointsGroup,
+  PagesGroup,
   CommandsGroup,
-  TokenGroup,
+  TokensGroup,
+  DataVariablesGroup,
 };

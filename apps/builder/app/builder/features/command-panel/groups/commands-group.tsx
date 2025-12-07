@@ -10,9 +10,9 @@ import { $commandMetas } from "~/shared/commands-emitter";
 import { emitCommand } from "~/builder/shared/commands";
 import { humanizeString } from "~/shared/string-utils";
 import { closeCommandPanel } from "../command-state";
+import type { BaseOption } from "../shared/types";
 
-export type CommandOption = {
-  terms: string[];
+export type CommandOption = BaseOption & {
   type: "command";
   name: string;
   label: string;
