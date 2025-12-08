@@ -106,7 +106,7 @@ export const DataVariablesGroup = ({
       <CommandGroup
         name="dataVariable"
         heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-        actions={["find", "select", "rename", "delete"]}
+        actions={["select", "find usages", "rename", "delete"]}
       >
         {options.map((option) => {
           const instance = instances.get(option.instanceId);
@@ -124,7 +124,7 @@ export const DataVariablesGroup = ({
                   showInstance(option.instanceId, "settings");
                   closeCommandPanel();
                 }
-                if (action === "find") {
+                if (action === "find usages") {
                   $commandContent.set(
                     <DataVariableInstances variableId={option.id} />
                   );

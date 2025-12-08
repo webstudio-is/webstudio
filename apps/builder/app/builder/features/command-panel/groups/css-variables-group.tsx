@@ -107,7 +107,7 @@ export const CssVariablesGroup = ({
       <CommandGroup
         name="cssVariable"
         heading={<CommandGroupHeading>CSS Variables</CommandGroupHeading>}
-        actions={["find", "select", "rename", "delete"]}
+        actions={["select", "find usages", "rename", "delete"]}
       >
         {options.map(({ property, instanceId, usages }) => {
           const instance = instances.get(instanceId);
@@ -127,7 +127,7 @@ export const CssVariablesGroup = ({
                   showInstance(instanceId, "style");
                   closeCommandPanel();
                 }
-                if (action === "find") {
+                if (action === "find usages") {
                   $commandContent.set(
                     <CssVariableInstances property={property} />
                   );
