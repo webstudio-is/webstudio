@@ -1,6 +1,5 @@
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -28,6 +27,7 @@ import { Text, textVariants } from "./text";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
+import { useDebounceEffect } from "../utilities";
 
 const panelWidth = "400px";
 const itemHeight = "32px";
@@ -193,20 +193,6 @@ export const CommandInput = (
 };
 
 const ActionsCommand = styled(CommandPrimitive, {});
-
-const useDebounceEffect = () => {
-  const [updateCallback, setUpdateCallback] = useState(() => () => {
-    /* empty */
-  });
-  useEffect(() => {
-    // Because of how our styles works we need to update after React render to be sure that
-    // all styles are applied
-    updateCallback();
-  }, [updateCallback]);
-  return useCallback((callback: () => void) => {
-    setUpdateCallback(() => callback);
-  }, []);
-};
 
 export const CommandFooter = () => {
   const [isActionOpen, setIsActionOpen] = useState(false);
