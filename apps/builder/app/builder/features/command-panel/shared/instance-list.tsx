@@ -20,7 +20,8 @@ import {
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import { $commandContent } from "../command-state";
+import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 
 export type InstanceOption = {
   label: string;
@@ -91,7 +92,6 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
                     value={id}
                     onSelect={() => {
                       onSelect(id);
-                      closeCommandPanel();
                     }}
                   >
                     <Text variant="labelsTitleCase">{label}</Text>
@@ -113,7 +113,10 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
   );
 };
 
-export const selectInstance = (instanceId: Instance["id"]) => {
+export const showInstance = (
+  instanceId: Instance["id"],
+  panel?: "style" | "settings"
+) => {
   const instances = $instances.get();
   const pagesData = $pages.get();
   if (pagesData === undefined) {
@@ -121,4 +124,7 @@ export const selectInstance = (instanceId: Instance["id"]) => {
   }
   const awareness = findAwarenessByInstanceId(pagesData, instances, instanceId);
   $awareness.set(awareness);
+  if (panel !== undefined) {
+    $activeInspectorPanel.set(panel);
+  }
 };

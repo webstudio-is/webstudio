@@ -17,9 +17,8 @@ import {
   RenameStyleSourceDialog,
   $styleSourceUsages,
 } from "~/builder/shared/style-source-utils";
-import { InstanceList, selectInstance } from "../shared/instance-list";
-import { $commandContent } from "../command-state";
-import { $activeInspectorPanel } from "~/builder/shared/nano-states";
+import { InstanceList, showInstance } from "../shared/instance-list";
+import { $commandContent, closeCommandPanel } from "../command-state";
 import type { BaseOption } from "../shared/types";
 
 export type TokenOption = BaseOption & {
@@ -51,7 +50,7 @@ const selectToken = (
   instanceId: Instance["id"],
   tokenId: StyleSource["id"]
 ) => {
-  selectInstance(instanceId);
+  showInstance(instanceId, "style");
   const selectedStyleSources = new Map($selectedStyleSources.get());
   selectedStyleSources.set(instanceId, tokenId);
   $selectedStyleSources.set(selectedStyleSources);
@@ -64,7 +63,10 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   return (
     <InstanceList
       instanceIds={usedInInstanceIds}
-      onSelect={(instanceId) => selectToken(instanceId, tokenId)}
+      onSelect={(instanceId) => {
+        selectToken(instanceId, tokenId);
+        closeCommandPanel();
+      }}
     />
   );
 };
@@ -90,7 +92,6 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             value={token.id}
             onSelect={() => {
               if (action === "find") {
-                $activeInspectorPanel.set("style");
                 $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
               if (action === "rename") {

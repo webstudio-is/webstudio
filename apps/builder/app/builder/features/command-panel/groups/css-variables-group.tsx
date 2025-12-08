@@ -9,40 +9,63 @@ import {
   toast,
   useSelectedAction,
 } from "@webstudio-is/design-system";
+import type { Instance } from "@webstudio-is/sdk";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   DeleteCssVariableDialog,
   RenameCssVariableDialog,
   $usedCssVariablesInInstances,
   $cssVariableInstancesByVariable,
-  $definedCssVariables,
   $cssVariableDefinitionsByVariable,
 } from "~/builder/shared/css-variable-utils";
 import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
-import { InstanceList, selectInstance } from "../shared/instance-list";
-import { $activeInspectorPanel } from "~/builder/shared/nano-states";
+import { InstanceList, showInstance } from "../shared/instance-list";
 import { $commandContent, closeCommandPanel } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { $instances } from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 
 export type CssVariableOption = BaseOption & {
   type: "cssVariable";
   property: string;
+  instanceId: Instance["id"];
   usages: number;
 };
 
 export const $cssVariableOptions = computed(
-  [$definedCssVariables, $usedCssVariablesInInstances],
-  (definedVariables, usedVariablesInInstances) => {
+  [
+    $cssVariableDefinitionsByVariable,
+    $usedCssVariablesInInstances,
+    $instances,
+    $registeredComponentMetas,
+  ],
+  (definitionsByVariable, usedVariablesInInstances, instances, metas) => {
     const cssVariableOptions: CssVariableOption[] = [];
 
-    // Create options for each defined CSS variable
-    for (const property of definedVariables) {
-      cssVariableOptions.push({
-        terms: ["css variables", property, property.slice(2)], // Include name without --
-        type: "cssVariable",
-        property,
-        usages: usedVariablesInInstances.get(property) ?? 0,
-      });
+    // Create options for each defined CSS variable on each instance
+    for (const [property, instanceIds] of definitionsByVariable) {
+      for (const instanceId of instanceIds) {
+        const instance = instances.get(instanceId);
+        if (!instance) {
+          continue;
+        }
+        const meta = metas.get(instance.component);
+        const instanceLabel = getInstanceLabel(instance, meta);
+
+        cssVariableOptions.push({
+          terms: [
+            "css variables",
+            property,
+            property.slice(2), // Include name without --
+            instanceLabel,
+          ],
+          type: "cssVariable",
+          property,
+          instanceId,
+          usages: usedVariablesInInstances.get(property) ?? 0,
+        });
+      }
     }
 
     return cssVariableOptions;
@@ -56,7 +79,10 @@ const CssVariableInstances = ({ property }: { property: string }) => {
   return (
     <InstanceList
       instanceIds={usedInInstanceIds}
-      onSelect={(instanceId) => selectInstance(instanceId)}
+      onSelect={(instanceId) => {
+        showInstance(instanceId, "style");
+        closeCommandPanel();
+      }}
     />
   );
 };
@@ -67,7 +93,8 @@ export const CssVariablesGroup = ({
   options: CssVariableOption[];
 }) => {
   const action = useSelectedAction();
-  const definitionsByVariable = useStore($cssVariableDefinitionsByVariable);
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
   const [variableToRename, setVariableToRename] = useState<{
     property: string;
   }>();
@@ -82,48 +109,51 @@ export const CssVariablesGroup = ({
         heading={<CommandGroupHeading>CSS Variables</CommandGroupHeading>}
         actions={["find", "select", "rename", "delete"]}
       >
-        {options.map(({ property, usages }) => (
-          <CommandItem
-            key={property}
-            // preserve selected state when rerender
-            value={property}
-            onSelect={() => {
-              if (action === "select") {
-                const definedInInstances = definitionsByVariable.get(property);
-                if (definedInInstances && definedInInstances.size > 0) {
-                  // Select the first instance where the variable is defined
-                  const [firstInstanceId] = definedInInstances;
-                  $activeInspectorPanel.set("style");
-                  selectInstance(firstInstanceId);
+        {options.map(({ property, instanceId, usages }) => {
+          const instance = instances.get(instanceId);
+          const meta = instance ? metas.get(instance.component) : undefined;
+          const instanceLabel = instance
+            ? getInstanceLabel(instance, meta)
+            : "";
+
+          return (
+            <CommandItem
+              keywords={["test"]}
+              key={`${property}-${instanceId}`}
+              // preserve selected state when rerender
+              value={`${property}-${instanceId}`}
+              onSelect={() => {
+                if (action === "select") {
+                  showInstance(instanceId, "style");
                   closeCommandPanel();
-                } else {
-                  toast.error("CSS variable definition not found");
                 }
-              }
-              if (action === "find") {
-                $activeInspectorPanel.set("style");
-                $commandContent.set(
-                  <CssVariableInstances property={property} />
-                );
-              }
-              if (action === "rename") {
-                setVariableToRename({ property });
-              }
-              if (action === "delete") {
-                setVariableToDelete({ property });
-              }
-            }}
-          >
-            <Text>
-              {property}{" "}
-              <Text as="span" color="moreSubtle">
-                {usages === 0
-                  ? "unused"
-                  : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+                if (action === "find") {
+                  $commandContent.set(
+                    <CssVariableInstances property={property} />
+                  );
+                }
+                if (action === "rename") {
+                  setVariableToRename({ property });
+                }
+                if (action === "delete") {
+                  setVariableToDelete({ property });
+                }
+              }}
+            >
+              <Text>
+                {property}{" "}
+                <Text as="span" color="moreSubtle">
+                  {usages === 0
+                    ? "unused"
+                    : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+                </Text>
               </Text>
-            </Text>
-          </CommandItem>
-        ))}
+              <Text as="span" color="moreSubtle">
+                {instanceLabel}
+              </Text>
+            </CommandItem>
+          );
+        })}
       </CommandGroup>
       <RenameCssVariableDialog
         cssVariable={variableToRename}

@@ -9,9 +9,8 @@ import {
   useSelectedAction,
 } from "@webstudio-is/design-system";
 import { $dataSources, $instances } from "~/shared/nano-states";
-import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { $commandContent, closeCommandPanel } from "../command-state";
-import { InstanceList, selectInstance } from "../shared/instance-list";
+import { InstanceList, showInstance } from "../shared/instance-list";
 import { deleteVariableMutable } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
@@ -66,8 +65,8 @@ const DataVariableInstances = ({ variableId }: { variableId: string }) => {
     <InstanceList
       instanceIds={instanceIds}
       onSelect={(instanceId) => {
-        selectInstance(instanceId);
-        $activeInspectorPanel.set("settings");
+        showInstance(instanceId, "settings");
+        closeCommandPanel();
       }}
     />
   );
@@ -100,13 +99,10 @@ export const DataVariablesGroup = ({
       return;
     }
 
-    closeCommandPanel();
-
     // Select the instance and switch to the correct page
-    selectInstance(option.instanceId);
+    showInstance(option.instanceId, "settings");
 
-    // Switch to settings tab
-    $activeInspectorPanel.set("settings");
+    closeCommandPanel();
   };
 
   return (
