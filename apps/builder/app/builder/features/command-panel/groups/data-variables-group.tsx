@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -19,6 +20,8 @@ import {
   $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";
@@ -29,8 +32,13 @@ export type DataVariableOption = BaseOption & {
 };
 
 export const $dataVariableOptions = computed(
-  [$dataSources, $instances, $usedVariablesInInstances],
-  (dataSources, instances, usedInInstances) => {
+  [
+    $dataSources,
+    $instances,
+    $usedVariablesInInstances,
+    $registeredComponentMetas,
+  ],
+  (dataSources, instances, usedInInstances, metas) => {
     const dataVariableOptions: DataVariableOption[] = [];
 
     for (const dataSource of dataSources.values()) {
@@ -40,9 +48,17 @@ export const $dataVariableOptions = computed(
       ) {
         const instance = instances.get(dataSource.scopeInstanceId);
         if (instance) {
+          const meta = metas.get(instance.component);
+          const instanceLabel = getInstanceLabel(instance, meta);
           const usages = usedInInstances.get(dataSource.id)?.size ?? 0;
           dataVariableOptions.push({
-            terms: ["variable", "variables", "data", dataSource.name],
+            terms: [
+              "variable",
+              "variables",
+              "data",
+              dataSource.name,
+              instanceLabel,
+            ],
             type: "dataVariable",
             id: dataSource.id,
             name: dataSource.name,
@@ -78,32 +94,12 @@ export const DataVariablesGroup = ({
   options: DataVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
   const [variableToRename, setVariableToRename] =
     useState<DataVariableOption>();
   const [variableToDelete, setVariableToDelete] =
     useState<DataVariableOption>();
-
-  const handleSelect = (option: DataVariableOption) => {
-    if (action === "find") {
-      $commandContent.set(<DataVariableInstances variableId={option.id} />);
-      return;
-    }
-
-    if (action === "rename") {
-      setVariableToRename(option);
-      return;
-    }
-
-    if (action === "delete") {
-      setVariableToDelete(option);
-      return;
-    }
-
-    // Select the instance and switch to the correct page
-    showInstance(option.instanceId, "settings");
-
-    closeCommandPanel();
-  };
 
   return (
     <>
@@ -112,22 +108,49 @@ export const DataVariablesGroup = ({
         heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
         actions={["find", "select", "rename", "delete"]}
       >
-        {options.map((option) => (
-          <CommandItem
-            key={option.id}
-            value={option.id}
-            onSelect={() => handleSelect(option)}
-          >
-            <Text variant="labelsSentenceCase">
-              {option.name}{" "}
-              <Text as="span" color="moreSubtle">
-                {option.usages === 0
-                  ? "unused"
-                  : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+        {options.map((option) => {
+          const instance = instances.get(option.instanceId);
+          const meta = instance ? metas.get(instance.component) : undefined;
+          const instanceLabel = instance
+            ? getInstanceLabel(instance, meta)
+            : "";
+
+          return (
+            <CommandItem
+              key={option.id}
+              value={option.id}
+              onSelect={() => {
+                if (action === "select") {
+                  showInstance(option.instanceId, "settings");
+                  closeCommandPanel();
+                }
+                if (action === "find") {
+                  $commandContent.set(
+                    <DataVariableInstances variableId={option.id} />
+                  );
+                }
+                if (action === "rename") {
+                  setVariableToRename(option);
+                }
+                if (action === "delete") {
+                  setVariableToDelete(option);
+                }
+              }}
+            >
+              <Text variant="labelsSentenceCase">
+                {option.name}{" "}
+                <Text as="span" color="moreSubtle">
+                  {option.usages === 0
+                    ? "unused"
+                    : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+                </Text>
               </Text>
-            </Text>
-          </CommandItem>
-        ))}
+              <Text as="span" color="moreSubtle">
+                {instanceLabel}
+              </Text>
+            </CommandItem>
+          );
+        })}
       </CommandGroup>
       <RenameDataVariableDialog
         variable={variableToRename}
