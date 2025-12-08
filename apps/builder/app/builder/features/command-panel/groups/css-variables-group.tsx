@@ -128,7 +128,7 @@ export const CssVariablesGroup = ({
               }
             }}
           >
-            <Text variant="labelsTitleCase">
+            <Text>
               {property}{" "}
               <Text as="span" color="moreSubtle">
                 {usages === 0
