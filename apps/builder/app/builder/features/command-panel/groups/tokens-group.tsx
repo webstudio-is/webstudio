@@ -22,6 +22,7 @@ import { InstanceList } from "../shared/instance-list";
 import { $instances, $pages } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
 import { $commandContent } from "../command-state";
+import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import type { BaseOption } from "../shared/types";
 
 export type TokenOption = BaseOption & {
@@ -109,6 +110,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             onSelect={() => {
               if (action === "find") {
                 if (usages > 0) {
+                  $activeInspectorPanel.set("style");
                   $commandContent.set(<TokenInstances tokenId={token.id} />);
                 } else {
                   toast.error("Token is not used in any instance");
