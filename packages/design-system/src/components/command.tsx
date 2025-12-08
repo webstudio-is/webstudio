@@ -93,7 +93,12 @@ export const Command = (props: CommandProps) => {
   });
   return (
     <CommandContext.Provider value={state}>
-      <StyledCommand loop={true} filter={lowerCasedFilter} {...props} />
+      <StyledCommand
+        disablePointerSelection
+        loop={true}
+        filter={lowerCasedFilter}
+        {...props}
+      />
     </CommandContext.Provider>
   );
 };
@@ -259,7 +264,7 @@ export const CommandFooter = () => {
             }
           }}
         >
-          <ActionsCommand>
+          <ActionsCommand disablePointerSelection loop>
             <CommandInputContainer>
               <CommandInputField placeholder="Choose action..." />
             </CommandInputContainer>
@@ -267,6 +272,7 @@ export const CommandFooter = () => {
               {state.actions.map((action, actionIndex) => (
                 <CommandItem
                   key={action}
+                  allowSingleClick
                   onSelect={() => {
                     setState((prev) => ({ ...prev, actionIndex }));
                     setIsActionOpen(false);
@@ -317,6 +323,76 @@ export const CommandGroup = ({
   );
 };
 
+export const CommandItem = ({
+  onSelect,
+  allowSingleClick,
+  ...props
+}: ComponentPropsWithoutRef<typeof CommandItemStyled> & {
+  onSelect: () => void;
+  allowSingleClick?: boolean;
+}) => {
+  const doubleClickedRef = useRef(false);
+  const selectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const pointerDownRef = useRef(false);
+
+  const handleSelect = () => {
+    // Actions menu mode - execute immediately
+    if (allowSingleClick) {
+      onSelect();
+      return;
+    }
+
+    // Default mode
+    if (selectTimeoutRef.current) {
+      clearTimeout(selectTimeoutRef.current);
+    }
+
+    // If double-click already happened, skip (it already executed)
+    if (doubleClickedRef.current) {
+      doubleClickedRef.current = false;
+      return;
+    }
+
+    // If triggered by Enter key (no pointer down), execute immediately
+    if (!pointerDownRef.current) {
+      onSelect();
+      return;
+    }
+
+    // For mouse clicks, delay to detect double-click
+    selectTimeoutRef.current = setTimeout(() => {
+      // Reset pointer flag after delay
+      pointerDownRef.current = false;
+    }, 300);
+  };
+
+  return (
+    <CommandItemStyled
+      {...props}
+      onPointerDown={
+        allowSingleClick
+          ? undefined
+          : () => {
+              pointerDownRef.current = true;
+            }
+      }
+      onDoubleClick={
+        allowSingleClick
+          ? undefined
+          : () => {
+              // Mark that double-click happened and execute immediately
+              doubleClickedRef.current = true;
+              if (selectTimeoutRef.current) {
+                clearTimeout(selectTimeoutRef.current);
+              }
+              onSelect();
+            }
+      }
+      onSelect={handleSelect}
+    />
+  );
+};
+
 export const CommandGroupHeading = styled("div", {
   ...textVariants.titles,
   color: theme.colors.foregroundMoreSubtle,
@@ -339,14 +415,17 @@ export const CommandGroupFooter = styled("div", {
   borderTop: `1px solid ${theme.colors.borderMain}`,
 });
 
-export const CommandItem = styled(CommandPrimitive.Item, {
+const CommandItemStyled = styled(CommandPrimitive.Item, {
   display: "grid",
   gridTemplateColumns: `1fr max-content`,
   alignItems: "center",
   minHeight: itemHeight,
   paddingInline: theme.spacing[9],
+  "&:hover": {
+    backgroundColor: theme.colors.backgroundItemMenuItemHover,
+  },
   "&[aria-selected=true]": {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: theme.colors.backgroundItemCurrent,
   },
 });
 
