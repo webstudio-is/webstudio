@@ -25,6 +25,7 @@ import {
   focusCommandPanel,
 } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 
 export type TokenOption = BaseOption & {
   type: "token";
@@ -40,11 +41,12 @@ export const $tokenOptions = computed(
       if (styleSource.type !== "token") {
         continue;
       }
+      const usages = styleSourceUsages.get(styleSource.id)?.size ?? 0;
       tokenOptions.push({
-        terms: ["tokens", styleSource.name],
+        terms: ["tokens", styleSource.name, ...getUsageSearchTerms(usages)],
         type: "token",
         token: styleSource,
-        usages: styleSourceUsages.get(styleSource.id)?.size ?? 0,
+        usages,
       });
     }
     return tokenOptions;
@@ -113,9 +115,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             <Text variant="labelsTitleCase">
               {token.name}{" "}
               <Text as="span" color="moreSubtle">
-                {usages === 0
-                  ? "unused"
-                  : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+                {formatUsageCount(usages)}
               </Text>
             </Text>
           </CommandItem>

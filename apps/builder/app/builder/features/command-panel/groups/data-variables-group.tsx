@@ -25,6 +25,7 @@ import {
   $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
+import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 
@@ -63,6 +64,7 @@ export const $dataVariableOptions = computed(
               "data",
               dataSource.name,
               instanceLabel,
+              ...getUsageSearchTerms(usages),
             ],
             type: "dataVariable",
             id: dataSource.id,
@@ -145,9 +147,7 @@ export const DataVariablesGroup = ({
               <Text variant="labelsSentenceCase">
                 {option.name}{" "}
                 <Text as="span" color="moreSubtle">
-                  {option.usages === 0
-                    ? "unused"
-                    : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+                  {formatUsageCount(option.usages)}
                 </Text>
               </Text>
               <Text as="span" color="moreSubtle">
