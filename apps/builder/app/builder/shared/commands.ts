@@ -59,6 +59,7 @@ import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 import { isSyncIdle } from "./sync/sync-server";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
+import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -675,6 +676,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Delete unused data variables",
       handler: () => {
         openDeleteUnusedDataVariablesDialog();
+      },
+    },
+
+    {
+      name: "deleteUnusedCssVariables",
+      label: "Delete unused CSS variables",
+      handler: () => {
+        openDeleteUnusedCssVariablesDialog();
       },
     },
   ],

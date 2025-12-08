@@ -36,6 +36,8 @@ import {
 } from "~/builder/features/style-panel/shared/use-style-data";
 import { $availableVariables } from "~/builder/features/style-panel/shared/model";
 import { parseStyleInput } from "./parse-style-input";
+import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
+import { toast } from "@webstudio-is/design-system";
 
 type SearchItem = {
   property: string;
@@ -227,6 +229,18 @@ export const AddStyleInput = forwardRef<
 
   const handleEnter = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
+      const property = item.property.split(":")[0].trim();
+
+      // Validate CSS variable names before creating them
+      if (property.startsWith("--")) {
+        const error = validateCssVariableName(property);
+        if (error) {
+          // Show error via toast
+          toast.error(error.message);
+          return;
+        }
+      }
+
       clear();
       onSubmit(item.property);
     }

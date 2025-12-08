@@ -22,6 +22,11 @@ import {
   DataVariablesGroup,
   type DataVariableOption,
 } from "./data-variables-group";
+import {
+  $cssVariableOptions,
+  CssVariablesGroup,
+  type CssVariableOption,
+} from "./css-variables-group";
 
 export type Option =
   | ComponentOption
@@ -30,7 +35,8 @@ export type Option =
   | PageOption
   | CommandOption
   | TokenOption
-  | DataVariableOption;
+  | DataVariableOption
+  | CssVariableOption;
 
 export type OptionByType<T extends Option["type"]> = Extract<
   Option,
@@ -46,6 +52,7 @@ export const $allOptions = computed(
     $commandOptions,
     $tokenOptions,
     $dataVariableOptions,
+    $cssVariableOptions,
   ],
   (
     componentOptions,
@@ -54,7 +61,8 @@ export const $allOptions = computed(
     pageOptions,
     commandOptions,
     tokenOptions,
-    dataVariableOptions
+    dataVariableOptions,
+    cssVariableOptions
   ) => [
     ...componentOptions,
     ...tagOptions,
@@ -63,6 +71,7 @@ export const $allOptions = computed(
     ...commandOptions,
     ...tokenOptions,
     ...dataVariableOptions,
+    ...cssVariableOptions,
   ]
 );
 
@@ -80,6 +89,7 @@ export const groups: {
   command: CommandsGroup,
   token: TokensGroup,
   dataVariable: DataVariablesGroup,
+  cssVariable: CssVariablesGroup,
 };
 
 export type {
@@ -90,6 +100,7 @@ export type {
   CommandOption,
   TokenOption,
   DataVariableOption,
+  CssVariableOption,
 };
 
 export {
@@ -100,4 +111,5 @@ export {
   CommandsGroup,
   TokensGroup,
   DataVariablesGroup,
+  CssVariablesGroup,
 };

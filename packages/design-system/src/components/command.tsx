@@ -1,6 +1,5 @@
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -28,6 +27,7 @@ import { Text, textVariants } from "./text";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
+import { useDebounceEffect } from "../utilities";
 
 const panelWidth = "400px";
 const itemHeight = "32px";
@@ -85,6 +85,13 @@ export const useSelectedAction = () => {
   return state.actions[state.actionIndex];
 };
 
+export const useResetActionIndex = () => {
+  const [, setState] = useContext(CommandContext);
+  return () => {
+    setState((prev) => ({ ...prev, actionIndex: 0 }));
+  };
+};
+
 export const Command = (props: CommandProps) => {
   const state = useState<CommandState>({
     highlightedGroup: "",
@@ -93,7 +100,12 @@ export const Command = (props: CommandProps) => {
   });
   return (
     <CommandContext.Provider value={state}>
-      <StyledCommand loop={true} filter={lowerCasedFilter} {...props} />
+      <StyledCommand
+        disablePointerSelection
+        loop={true}
+        filter={lowerCasedFilter}
+        {...props}
+      />
     </CommandContext.Provider>
   );
 };
@@ -194,20 +206,6 @@ export const CommandInput = (
 
 const ActionsCommand = styled(CommandPrimitive, {});
 
-const useDebounceEffect = () => {
-  const [updateCallback, setUpdateCallback] = useState(() => () => {
-    /* empty */
-  });
-  useEffect(() => {
-    // Because of how our styles works we need to update after React render to be sure that
-    // all styles are applied
-    updateCallback();
-  }, [updateCallback]);
-  return useCallback((callback: () => void) => {
-    setUpdateCallback(() => callback);
-  }, []);
-};
-
 export const CommandFooter = () => {
   const [isActionOpen, setIsActionOpen] = useState(false);
   const scheduleEffect = useDebounceEffect();
@@ -273,7 +271,7 @@ export const CommandFooter = () => {
             }
           }}
         >
-          <ActionsCommand>
+          <ActionsCommand disablePointerSelection loop>
             <CommandInputContainer>
               <CommandInputField placeholder="Choose action..." />
             </CommandInputContainer>
@@ -281,6 +279,7 @@ export const CommandFooter = () => {
               {state.actions.map((action, actionIndex) => (
                 <CommandItem
                   key={action}
+                  allowSingleClick
                   onSelect={() => {
                     setState((prev) => ({ ...prev, actionIndex }));
                     setIsActionOpen(false);
@@ -331,6 +330,76 @@ export const CommandGroup = ({
   );
 };
 
+export const CommandItem = ({
+  onSelect,
+  allowSingleClick,
+  ...props
+}: ComponentPropsWithoutRef<typeof CommandItemStyled> & {
+  onSelect?: () => void;
+  allowSingleClick?: boolean;
+}) => {
+  const doubleClickedRef = useRef(false);
+  const selectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const pointerDownRef = useRef(false);
+
+  const handleSelect = () => {
+    // Actions menu mode - execute immediately
+    if (allowSingleClick) {
+      onSelect?.();
+      return;
+    }
+
+    // Default mode
+    if (selectTimeoutRef.current) {
+      clearTimeout(selectTimeoutRef.current);
+    }
+
+    // If double-click already happened, skip (it already executed)
+    if (doubleClickedRef.current) {
+      doubleClickedRef.current = false;
+      return;
+    }
+
+    // If triggered by Enter key (no pointer down), execute immediately
+    if (!pointerDownRef.current) {
+      onSelect?.();
+      return;
+    }
+
+    // For mouse clicks, delay to detect double-click
+    selectTimeoutRef.current = setTimeout(() => {
+      // Reset pointer flag after delay
+      pointerDownRef.current = false;
+    }, 300);
+  };
+
+  return (
+    <CommandItemStyled
+      {...props}
+      onPointerDown={
+        allowSingleClick
+          ? undefined
+          : () => {
+              pointerDownRef.current = true;
+            }
+      }
+      onDoubleClick={
+        allowSingleClick
+          ? undefined
+          : () => {
+              // Mark that double-click happened and execute immediately
+              doubleClickedRef.current = true;
+              if (selectTimeoutRef.current) {
+                clearTimeout(selectTimeoutRef.current);
+              }
+              onSelect?.();
+            }
+      }
+      onSelect={handleSelect}
+    />
+  );
+};
+
 export const CommandGroupHeading = styled("div", {
   ...textVariants.titles,
   color: theme.colors.foregroundMoreSubtle,
@@ -353,14 +422,17 @@ export const CommandGroupFooter = styled("div", {
   borderTop: `1px solid ${theme.colors.borderMain}`,
 });
 
-export const CommandItem = styled(CommandPrimitive.Item, {
+const CommandItemStyled = styled(CommandPrimitive.Item, {
   display: "grid",
   gridTemplateColumns: `1fr max-content`,
   alignItems: "center",
   minHeight: itemHeight,
   paddingInline: theme.spacing[9],
+  "&:hover": {
+    backgroundColor: theme.colors.backgroundItemMenuItemHover,
+  },
   "&[aria-selected=true]": {
-    backgroundColor: theme.colors.backgroundHover,
+    backgroundColor: theme.colors.backgroundItemCurrent,
   },
 });
 

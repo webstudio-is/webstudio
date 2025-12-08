@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -7,12 +8,15 @@ import {
   Text,
   toast,
   useSelectedAction,
+  useResetActionIndex,
 } from "@webstudio-is/design-system";
-import { $instances, $dataSources } from "~/shared/nano-states";
-import { selectInstance as selectInstanceBySelector } from "~/shared/awareness";
-import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { $commandContent, closeCommandPanel } from "../command-state";
-import { InstanceList, selectInstance } from "../shared/instance-list";
+import { $dataSources, $instances } from "~/shared/nano-states";
+import {
+  $commandContent,
+  closeCommandPanel,
+  focusCommandPanel,
+} from "../command-state";
+import { InstanceList, showInstance } from "../shared/instance-list";
 import { deleteVariableMutable } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
@@ -21,6 +25,8 @@ import {
   $usedVariablesInInstances,
 } from "~/builder/shared/data-variable-utils";
 import type { BaseOption } from "../shared/types";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";
@@ -31,8 +37,13 @@ export type DataVariableOption = BaseOption & {
 };
 
 export const $dataVariableOptions = computed(
-  [$dataSources, $instances, $usedVariablesInInstances],
-  (dataSources, instances, usedInInstances) => {
+  [
+    $dataSources,
+    $instances,
+    $usedVariablesInInstances,
+    $registeredComponentMetas,
+  ],
+  (dataSources, instances, usedInInstances, metas) => {
     const dataVariableOptions: DataVariableOption[] = [];
 
     for (const dataSource of dataSources.values()) {
@@ -42,9 +53,17 @@ export const $dataVariableOptions = computed(
       ) {
         const instance = instances.get(dataSource.scopeInstanceId);
         if (instance) {
+          const meta = metas.get(instance.component);
+          const instanceLabel = getInstanceLabel(instance, meta);
           const usages = usedInInstances.get(dataSource.id)?.size ?? 0;
           dataVariableOptions.push({
-            terms: ["variable", "variables", "data", dataSource.name],
+            terms: [
+              "variable",
+              "variables",
+              "data",
+              dataSource.name,
+              instanceLabel,
+            ],
             type: "dataVariable",
             id: dataSource.id,
             name: dataSource.name,
@@ -67,8 +86,8 @@ const DataVariableInstances = ({ variableId }: { variableId: string }) => {
     <InstanceList
       instanceIds={instanceIds}
       onSelect={(instanceId) => {
-        selectInstance(instanceId);
-        $activeInspectorPanel.set("settings");
+        showInstance(instanceId, "settings");
+        closeCommandPanel();
       }}
     />
   );
@@ -80,90 +99,95 @@ export const DataVariablesGroup = ({
   options: DataVariableOption[];
 }) => {
   const action = useSelectedAction();
-  const [variableToRename, setVariableToRename] =
-    useState<DataVariableOption>();
-  const [variableToDelete, setVariableToDelete] =
-    useState<DataVariableOption>();
-
-  const handleSelect = (option: DataVariableOption) => {
-    if (action === "find") {
-      if (option.usages > 0) {
-        $commandContent.set(<DataVariableInstances variableId={option.id} />);
-      } else {
-        toast.error("Variable is not used in any instance");
-      }
-      return;
-    }
-
-    if (action === "rename") {
-      setVariableToRename(option);
-      return;
-    }
-
-    if (action === "delete") {
-      setVariableToDelete(option);
-      return;
-    }
-
-    closeCommandPanel();
-
-    // Find the instance selector
-    const instanceSelector: string[] = [option.instanceId];
-
-    // Select the instance
-    selectInstanceBySelector(instanceSelector);
-
-    // Switch to settings tab
-    $activeInspectorPanel.set("settings");
-  };
+  const resetActionIndex = useResetActionIndex();
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
+  const [variableDialog, setVariableDialog] = useState<
+    (DataVariableOption & { action: "rename" | "delete" }) | undefined
+  >();
 
   return (
     <>
       <CommandGroup
         name="dataVariable"
         heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
-        actions={["find", "select", "rename", "delete"]}
+        actions={["select", "find usages", "rename", "delete"]}
       >
-        {options.map((option) => (
-          <CommandItem
-            key={option.id}
-            value={option.id}
-            onSelect={() => handleSelect(option)}
-          >
-            <Text variant="labelsSentenceCase">
-              {option.name}{" "}
-              <Text as="span" color="moreSubtle">
-                {option.usages === 0
-                  ? "unused"
-                  : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+        {options.map((option) => {
+          const instance = instances.get(option.instanceId);
+          const meta = instance ? metas.get(instance.component) : undefined;
+          const instanceLabel = instance
+            ? getInstanceLabel(instance, meta)
+            : "";
+
+          return (
+            <CommandItem
+              key={option.id}
+              value={option.id}
+              onSelect={() => {
+                if (action === "select") {
+                  showInstance(option.instanceId, "settings");
+                  closeCommandPanel();
+                }
+                if (action === "find usages") {
+                  $commandContent.set(
+                    <DataVariableInstances variableId={option.id} />
+                  );
+                }
+                if (action === "rename") {
+                  setVariableDialog({ ...option, action: "rename" });
+                }
+                if (action === "delete") {
+                  setVariableDialog({ ...option, action: "delete" });
+                }
+              }}
+            >
+              <Text variant="labelsSentenceCase">
+                {option.name}{" "}
+                <Text as="span" color="moreSubtle">
+                  {option.usages === 0
+                    ? "unused"
+                    : `${option.usages} ${option.usages === 1 ? "usage" : "usages"}`}
+                </Text>
               </Text>
-            </Text>
-          </CommandItem>
-        ))}
+              <Text as="span" color="moreSubtle">
+                {instanceLabel}
+              </Text>
+            </CommandItem>
+          );
+        })}
       </CommandGroup>
       <RenameDataVariableDialog
-        variable={variableToRename}
+        variable={
+          variableDialog?.action === "rename" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(_variableId, newName) => {
           toast.success(
-            `Variable renamed from "${variableToRename?.name}" to "${newName}"`
+            `Variable renamed from "${variableDialog?.name}" to "${newName}"`
           );
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
         }}
       />
       <DeleteDataVariableDialog
-        variable={variableToDelete}
+        variable={
+          variableDialog?.action === "delete" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToDelete(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(variableId) => {
           updateWebstudioData((data) => {
             deleteVariableMutable(data, variableId);
           });
-          toast.success(`Variable "${variableToDelete?.name}" deleted`);
-          setVariableToDelete(undefined);
+          toast.success(`Variable "${variableDialog?.name}" deleted`);
+          setVariableDialog(undefined);
         }}
       />
     </>

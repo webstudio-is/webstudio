@@ -42,3 +42,12 @@ export const closeCommandPanel = ({
 export const $commandContent = atom<ReactNode>();
 
 export const $commandSearch = atom("");
+
+export const focusCommandPanel = () => {
+  requestAnimationFrame(() => {
+    const input = document.querySelector<HTMLInputElement>(
+      "[cmdk-root] [cmdk-input]"
+    );
+    input?.focus();
+  });
+};

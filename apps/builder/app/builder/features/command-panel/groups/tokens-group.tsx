@@ -8,6 +8,7 @@ import {
   Text,
   toast,
   useSelectedAction,
+  useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
 import { $selectedStyleSources, $styleSources } from "~/shared/nano-states";
@@ -17,11 +18,12 @@ import {
   RenameStyleSourceDialog,
   $styleSourceUsages,
 } from "~/builder/shared/style-source-utils";
-import { findInstanceById } from "../shared/instance-utils";
-import { InstanceList } from "../shared/instance-list";
-import { $instances, $pages } from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
-import { $commandContent } from "../command-state";
+import { InstanceList, showInstance } from "../shared/instance-list";
+import {
+  $commandContent,
+  closeCommandPanel,
+  focusCommandPanel,
+} from "../command-state";
 import type { BaseOption } from "../shared/types";
 
 export type TokenOption = BaseOption & {
@@ -53,26 +55,10 @@ const selectToken = (
   instanceId: Instance["id"],
   tokenId: StyleSource["id"]
 ) => {
-  const instances = $instances.get();
-  const pagesData = $pages.get();
-  if (pagesData === undefined) {
-    return;
-  }
-  const pages = [pagesData.homePage, ...pagesData.pages];
-  for (const page of pages) {
-    const instanceSelector = findInstanceById(
-      instances,
-      [page.rootInstanceId],
-      instanceId
-    );
-    if (instanceSelector) {
-      $awareness.set({ pageId: page.id, instanceSelector });
-      const selectedStyleSources = new Map($selectedStyleSources.get());
-      selectedStyleSources.set(instanceId, tokenId);
-      $selectedStyleSources.set(selectedStyleSources);
-      break;
-    }
-  }
+  showInstance(instanceId, "style");
+  const selectedStyleSources = new Map($selectedStyleSources.get());
+  selectedStyleSources.set(instanceId, tokenId);
+  $selectedStyleSources.set(selectedStyleSources);
 };
 
 const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
@@ -82,17 +68,23 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   return (
     <InstanceList
       instanceIds={usedInInstanceIds}
-      onSelect={(instanceId) => selectToken(instanceId, tokenId)}
+      onSelect={(instanceId) => {
+        selectToken(instanceId, tokenId);
+        closeCommandPanel();
+      }}
     />
   );
 };
 
 export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
   const action = useSelectedAction();
-  const [tokenToRename, setTokenToRename] =
-    useState<Extract<StyleSource, { type: "token" }>>();
-  const [tokenToDelete, setTokenToDelete] =
-    useState<Extract<StyleSource, { type: "token" }>>();
+  const resetActionIndex = useResetActionIndex();
+  const [tokenDialog, setTokenDialog] = useState<
+    | (Extract<StyleSource, { type: "token" }> & {
+        action: "rename" | "delete";
+      })
+    | undefined
+  >();
 
   return (
     <>
@@ -108,17 +100,13 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             value={token.id}
             onSelect={() => {
               if (action === "find") {
-                if (usages > 0) {
-                  $commandContent.set(<TokenInstances tokenId={token.id} />);
-                } else {
-                  toast.error("Token is not used in any instance");
-                }
+                $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
               if (action === "rename") {
-                setTokenToRename(token);
+                setTokenDialog({ ...token, action: "rename" });
               }
               if (action === "delete") {
-                setTokenToDelete(token);
+                setTokenDialog({ ...token, action: "delete" });
               }
             }}
           >
@@ -134,26 +122,30 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
         ))}
       </CommandGroup>
       <RenameStyleSourceDialog
-        styleSource={tokenToRename}
+        styleSource={tokenDialog?.action === "rename" ? tokenDialog : undefined}
         onClose={() => {
-          setTokenToRename(undefined);
+          setTokenDialog(undefined);
+          resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(_styleSourceId, newName) => {
           toast.success(
-            `Token renamed from "${tokenToRename?.name}" to "${newName}"`
+            `Token renamed from "${tokenDialog?.name}" to "${newName}"`
           );
-          setTokenToRename(undefined);
+          setTokenDialog(undefined);
         }}
       />
       <DeleteStyleSourceDialog
-        styleSource={tokenToDelete}
+        styleSource={tokenDialog?.action === "delete" ? tokenDialog : undefined}
         onClose={() => {
-          setTokenToDelete(undefined);
+          setTokenDialog(undefined);
+          resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(styleSourceId) => {
           deleteStyleSource(styleSourceId);
-          toast.success(`Token "${tokenToDelete?.name}" deleted`);
-          setTokenToDelete(undefined);
+          toast.success(`Token "${tokenDialog?.name}" deleted`);
+          setTokenDialog(undefined);
         }}
       />
     </>
