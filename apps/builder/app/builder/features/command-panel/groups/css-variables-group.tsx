@@ -17,13 +17,14 @@ import {
   $usedCssVariablesInInstances,
   $cssVariableInstancesByVariable,
   $definedCssVariables,
+  $cssVariableDefinitionsByVariable,
 } from "~/builder/shared/css-variable-utils";
 import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
 import { findInstanceById } from "../shared/instance-utils";
 import { InstanceList } from "../shared/instance-list";
 import { $instances, $pages } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
-import { $commandContent } from "../command-state";
+import { $commandContent, closeCommandPanel } from "../command-state";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import type { BaseOption } from "../shared/types";
 
@@ -90,6 +91,7 @@ export const CssVariablesGroup = ({
   options: CssVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const definitionsByVariable = useStore($cssVariableDefinitionsByVariable);
   const [variableToRename, setVariableToRename] = useState<{
     property: string;
   }>();
@@ -102,7 +104,7 @@ export const CssVariablesGroup = ({
       <CommandGroup
         name="cssVariable"
         heading={<CommandGroupHeading>CSS Variables</CommandGroupHeading>}
-        actions={["find", "rename", "delete"]}
+        actions={["find", "select", "rename", "delete"]}
       >
         {options.map(({ property, usages }) => (
           <CommandItem
@@ -110,6 +112,18 @@ export const CssVariablesGroup = ({
             // preserve selected state when rerender
             value={property}
             onSelect={() => {
+              if (action === "select") {
+                const definedInInstances = definitionsByVariable.get(property);
+                if (definedInInstances && definedInInstances.size > 0) {
+                  // Select the first instance where the variable is defined
+                  const [firstInstanceId] = definedInInstances;
+                  $activeInspectorPanel.set("style");
+                  selectCssVariable(firstInstanceId);
+                  closeCommandPanel();
+                } else {
+                  toast.error("CSS variable definition not found");
+                }
+              }
               if (action === "find") {
                 if (usages > 0) {
                   $activeInspectorPanel.set("style");

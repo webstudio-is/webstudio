@@ -188,6 +188,39 @@ export const $definedCssVariables = computed($styles, (styles) => {
   return definedVariables;
 });
 
+// Map CSS variables to the instances where they are defined
+export const $cssVariableDefinitionsByVariable = computed(
+  [$styleSourceSelections, $styles],
+  (styleSourceSelections, styles) => {
+    const definitionsByVariable = new Map<string, Set<Instance["id"]>>();
+
+    // Build map of styleSourceId to instanceId
+    const instancesByStyleSource = new Map<string, Instance["id"]>();
+    for (const { instanceId, values } of styleSourceSelections.values()) {
+      for (const styleSourceId of values) {
+        instancesByStyleSource.set(styleSourceId, instanceId);
+      }
+    }
+
+    // Find all CSS variable definitions
+    for (const styleDecl of styles.values()) {
+      if (styleDecl.property.startsWith("--")) {
+        const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
+        if (instanceId) {
+          let instances = definitionsByVariable.get(styleDecl.property);
+          if (instances === undefined) {
+            instances = new Set();
+            definitionsByVariable.set(styleDecl.property, instances);
+          }
+          instances.add(instanceId);
+        }
+      }
+    }
+
+    return definitionsByVariable;
+  }
+);
+
 // Get all referenced CSS variables (from both styles and HTML Embed code props)
 export const $referencedCssVariables = computed(
   [$styles, $props],
