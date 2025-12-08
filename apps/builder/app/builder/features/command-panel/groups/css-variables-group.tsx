@@ -21,7 +21,11 @@ import {
 } from "~/builder/shared/css-variable-utils";
 import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
 import { InstanceList, showInstance } from "../shared/instance-list";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import {
+  $commandContent,
+  closeCommandPanel,
+  focusCommandPanel,
+} from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instances } from "~/shared/nano-states";
@@ -161,6 +165,7 @@ export const CssVariablesGroup = ({
         onClose={() => {
           setVariableDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(_oldProperty, newProperty) => {
           toast.success(
@@ -176,6 +181,7 @@ export const CssVariablesGroup = ({
         onClose={() => {
           setVariableDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(property) => {
           deleteProperty(property as CssProperty);

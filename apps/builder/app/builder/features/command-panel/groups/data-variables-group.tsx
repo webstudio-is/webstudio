@@ -11,7 +11,11 @@ import {
   useResetActionIndex,
 } from "@webstudio-is/design-system";
 import { $dataSources, $instances } from "~/shared/nano-states";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import {
+  $commandContent,
+  closeCommandPanel,
+  focusCommandPanel,
+} from "../command-state";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import { deleteVariableMutable } from "~/shared/data-variables";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -160,6 +164,7 @@ export const DataVariablesGroup = ({
         onClose={() => {
           setVariableDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(_variableId, newName) => {
           toast.success(
@@ -175,6 +180,7 @@ export const DataVariablesGroup = ({
         onClose={() => {
           setVariableDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(variableId) => {
           updateWebstudioData((data) => {

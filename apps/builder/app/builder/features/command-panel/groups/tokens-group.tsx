@@ -19,7 +19,11 @@ import {
   $styleSourceUsages,
 } from "~/builder/shared/style-source-utils";
 import { InstanceList, showInstance } from "../shared/instance-list";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import {
+  $commandContent,
+  closeCommandPanel,
+  focusCommandPanel,
+} from "../command-state";
 import type { BaseOption } from "../shared/types";
 
 export type TokenOption = BaseOption & {
@@ -122,6 +126,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
         onClose={() => {
           setTokenDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(_styleSourceId, newName) => {
           toast.success(
@@ -135,6 +140,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
         onClose={() => {
           setTokenDialog(undefined);
           resetActionIndex();
+          focusCommandPanel();
         }}
         onConfirm={(styleSourceId) => {
           deleteStyleSource(styleSourceId);
