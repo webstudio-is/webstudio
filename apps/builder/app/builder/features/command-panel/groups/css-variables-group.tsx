@@ -8,6 +8,7 @@ import {
   Text,
   toast,
   useSelectedAction,
+  useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import type { CssProperty } from "@webstudio-is/css-engine";
@@ -93,14 +94,12 @@ export const CssVariablesGroup = ({
   options: CssVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const resetActionIndex = useResetActionIndex();
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
-  const [variableToRename, setVariableToRename] = useState<{
-    property: string;
-  }>();
-  const [variableToDelete, setVariableToDelete] = useState<{
-    property: string;
-  }>();
+  const [variableDialog, setVariableDialog] = useState<
+    { action: "rename" | "delete"; property: string } | undefined
+  >();
 
   return (
     <>
@@ -133,10 +132,10 @@ export const CssVariablesGroup = ({
                   );
                 }
                 if (action === "rename") {
-                  setVariableToRename({ property });
+                  setVariableDialog({ action: "rename", property });
                 }
                 if (action === "delete") {
-                  setVariableToDelete({ property });
+                  setVariableDialog({ action: "delete", property });
                 }
               }}
             >
@@ -156,26 +155,32 @@ export const CssVariablesGroup = ({
         })}
       </CommandGroup>
       <RenameCssVariableDialog
-        cssVariable={variableToRename}
+        cssVariable={
+          variableDialog?.action === "rename" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
         }}
         onConfirm={(_oldProperty, newProperty) => {
           toast.success(
-            `CSS variable renamed from "${variableToRename?.property}" to "${newProperty}"`
+            `CSS variable renamed from "${variableDialog?.property}" to "${newProperty}"`
           );
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
         }}
       />
       <DeleteCssVariableDialog
-        cssVariable={variableToDelete}
+        cssVariable={
+          variableDialog?.action === "delete" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToDelete(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
         }}
         onConfirm={(property) => {
           deleteProperty(property as CssProperty);
-          toast.success(`CSS variable "${variableToDelete?.property}" deleted`);
-          setVariableToDelete(undefined);
+          toast.success(`CSS variable "${variableDialog?.property}" deleted`);
+          setVariableDialog(undefined);
         }}
       />
     </>

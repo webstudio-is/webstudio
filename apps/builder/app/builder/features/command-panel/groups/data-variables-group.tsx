@@ -8,6 +8,7 @@ import {
   Text,
   toast,
   useSelectedAction,
+  useResetActionIndex,
 } from "@webstudio-is/design-system";
 import { $dataSources, $instances } from "~/shared/nano-states";
 import { $commandContent, closeCommandPanel } from "../command-state";
@@ -94,12 +95,12 @@ export const DataVariablesGroup = ({
   options: DataVariableOption[];
 }) => {
   const action = useSelectedAction();
+  const resetActionIndex = useResetActionIndex();
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
-  const [variableToRename, setVariableToRename] =
-    useState<DataVariableOption>();
-  const [variableToDelete, setVariableToDelete] =
-    useState<DataVariableOption>();
+  const [variableDialog, setVariableDialog] = useState<
+    (DataVariableOption & { action: "rename" | "delete" }) | undefined
+  >();
 
   return (
     <>
@@ -130,10 +131,10 @@ export const DataVariablesGroup = ({
                   );
                 }
                 if (action === "rename") {
-                  setVariableToRename(option);
+                  setVariableDialog({ ...option, action: "rename" });
                 }
                 if (action === "delete") {
-                  setVariableToDelete(option);
+                  setVariableDialog({ ...option, action: "delete" });
                 }
               }}
             >
@@ -153,28 +154,34 @@ export const DataVariablesGroup = ({
         })}
       </CommandGroup>
       <RenameDataVariableDialog
-        variable={variableToRename}
+        variable={
+          variableDialog?.action === "rename" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
         }}
         onConfirm={(_variableId, newName) => {
           toast.success(
-            `Variable renamed from "${variableToRename?.name}" to "${newName}"`
+            `Variable renamed from "${variableDialog?.name}" to "${newName}"`
           );
-          setVariableToRename(undefined);
+          setVariableDialog(undefined);
         }}
       />
       <DeleteDataVariableDialog
-        variable={variableToDelete}
+        variable={
+          variableDialog?.action === "delete" ? variableDialog : undefined
+        }
         onClose={() => {
-          setVariableToDelete(undefined);
+          setVariableDialog(undefined);
+          resetActionIndex();
         }}
         onConfirm={(variableId) => {
           updateWebstudioData((data) => {
             deleteVariableMutable(data, variableId);
           });
-          toast.success(`Variable "${variableToDelete?.name}" deleted`);
-          setVariableToDelete(undefined);
+          toast.success(`Variable "${variableDialog?.name}" deleted`);
+          setVariableDialog(undefined);
         }}
       />
     </>

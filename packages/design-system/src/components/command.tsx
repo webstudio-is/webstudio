@@ -85,6 +85,13 @@ export const useSelectedAction = () => {
   return state.actions[state.actionIndex];
 };
 
+export const useResetActionIndex = () => {
+  const [, setState] = useContext(CommandContext);
+  return () => {
+    setState((prev) => ({ ...prev, actionIndex: 0 }));
+  };
+};
+
 export const Command = (props: CommandProps) => {
   const state = useState<CommandState>({
     highlightedGroup: "",
