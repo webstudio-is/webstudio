@@ -10,14 +10,15 @@ import {
   useSelectedAction,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
+import type { CssProperty } from "@webstudio-is/css-engine";
 import {
-  deleteCssVariable,
   DeleteCssVariableDialog,
   RenameCssVariableDialog,
   $usedCssVariablesInInstances,
   $cssVariableInstancesByVariable,
   $definedCssVariables,
 } from "~/builder/shared/css-variable-utils";
+import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
 import { findInstanceById } from "../shared/instance-utils";
 import { InstanceList } from "../shared/instance-list";
 import { $instances, $pages } from "~/shared/nano-states";
@@ -156,7 +157,7 @@ export const CssVariablesGroup = ({
           setVariableToDelete(undefined);
         }}
         onConfirm={(property) => {
-          deleteCssVariable(property);
+          deleteProperty(property as CssProperty);
           toast.success(`CSS variable "${variableToDelete?.property}" deleted`);
           setVariableToDelete(undefined);
         }}
