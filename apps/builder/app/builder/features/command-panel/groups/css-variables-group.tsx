@@ -27,6 +27,7 @@ import {
   focusCommandPanel,
 } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $instances } from "~/shared/nano-states";
 import { $registeredComponentMetas } from "~/shared/nano-states";
@@ -58,17 +59,19 @@ export const $cssVariableOptions = computed(
         const meta = metas.get(instance.component);
         const instanceLabel = getInstanceLabel(instance, meta);
 
+        const usages = usedVariablesInInstances.get(property) ?? 0;
         cssVariableOptions.push({
           terms: [
             "css variables",
             property,
             property.slice(2), // Include name without --
             instanceLabel,
+            ...getUsageSearchTerms(usages),
           ],
           type: "cssVariable",
           property,
           instanceId,
-          usages: usedVariablesInInstances.get(property) ?? 0,
+          usages,
         });
       }
     }
@@ -146,9 +149,7 @@ export const CssVariablesGroup = ({
               <Text>
                 {property}{" "}
                 <Text as="span" color="moreSubtle">
-                  {usages === 0
-                    ? "unused"
-                    : `${usages} ${usages === 1 ? "usage" : "usages"}`}
+                  {formatUsageCount(usages)}
                 </Text>
               </Text>
               <Text as="span" color="moreSubtle">
