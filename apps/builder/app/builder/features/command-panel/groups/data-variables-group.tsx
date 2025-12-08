@@ -8,8 +8,7 @@ import {
   toast,
   useSelectedAction,
 } from "@webstudio-is/design-system";
-import { $instances, $dataSources } from "~/shared/nano-states";
-import { selectInstance as selectInstanceBySelector } from "~/shared/awareness";
+import { $dataSources, $instances } from "~/shared/nano-states";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { $commandContent, closeCommandPanel } from "../command-state";
 import { InstanceList, selectInstance } from "../shared/instance-list";
@@ -103,11 +102,8 @@ export const DataVariablesGroup = ({
 
     closeCommandPanel();
 
-    // Find the instance selector
-    const instanceSelector: string[] = [option.instanceId];
-
-    // Select the instance
-    selectInstanceBySelector(instanceSelector);
+    // Select the instance and switch to the correct page
+    selectInstance(option.instanceId);
 
     // Switch to settings tab
     $activeInspectorPanel.set("settings");

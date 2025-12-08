@@ -19,9 +19,8 @@ import {
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $awareness } from "~/shared/awareness";
+import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
 import { $commandContent, closeCommandPanel } from "../command-state";
-import { findInstanceById } from "../shared/instance-utils";
 
 export type InstanceOption = {
   label: string;
@@ -120,16 +119,6 @@ export const selectInstance = (instanceId: Instance["id"]) => {
   if (pagesData === undefined) {
     return;
   }
-  const pages = [pagesData.homePage, ...pagesData.pages];
-  for (const page of pages) {
-    const instanceSelector = findInstanceById(
-      instances,
-      [page.rootInstanceId],
-      instanceId
-    );
-    if (instanceSelector) {
-      $awareness.set({ pageId: page.id, instanceSelector });
-      break;
-    }
-  }
+  const awareness = findAwarenessByInstanceId(pagesData, instances, instanceId);
+  $awareness.set(awareness);
 };

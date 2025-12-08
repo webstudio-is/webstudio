@@ -20,12 +20,9 @@ import {
   $cssVariableDefinitionsByVariable,
 } from "~/builder/shared/css-variable-utils";
 import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
-import { findInstanceById } from "../shared/instance-utils";
-import { InstanceList } from "../shared/instance-list";
-import { $instances, $pages } from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import { InstanceList, selectInstance } from "../shared/instance-list";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
+import { $commandContent, closeCommandPanel } from "../command-state";
 import type { BaseOption } from "../shared/types";
 
 export type CssVariableOption = BaseOption & {
@@ -53,26 +50,6 @@ export const $cssVariableOptions = computed(
   }
 );
 
-const selectCssVariable = (instanceId: Instance["id"]) => {
-  const instances = $instances.get();
-  const pagesData = $pages.get();
-  if (pagesData === undefined) {
-    return;
-  }
-  const pages = [pagesData.homePage, ...pagesData.pages];
-  for (const page of pages) {
-    const instanceSelector = findInstanceById(
-      instances,
-      [page.rootInstanceId],
-      instanceId
-    );
-    if (instanceSelector) {
-      $awareness.set({ pageId: page.id, instanceSelector });
-      break;
-    }
-  }
-};
-
 const CssVariableInstances = ({ property }: { property: string }) => {
   const instancesByVariable = useStore($cssVariableInstancesByVariable);
   const usedInInstanceIds = instancesByVariable.get(property) ?? new Set();
@@ -80,7 +57,7 @@ const CssVariableInstances = ({ property }: { property: string }) => {
   return (
     <InstanceList
       instanceIds={usedInInstanceIds}
-      onSelect={(instanceId) => selectCssVariable(instanceId)}
+      onSelect={(instanceId) => selectInstance(instanceId)}
     />
   );
 };
@@ -118,7 +95,7 @@ export const CssVariablesGroup = ({
                   // Select the first instance where the variable is defined
                   const [firstInstanceId] = definedInInstances;
                   $activeInspectorPanel.set("style");
-                  selectCssVariable(firstInstanceId);
+                  selectInstance(firstInstanceId);
                   closeCommandPanel();
                 } else {
                   toast.error("CSS variable definition not found");
