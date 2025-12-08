@@ -335,7 +335,7 @@ export const CommandItem = ({
   allowSingleClick,
   ...props
 }: ComponentPropsWithoutRef<typeof CommandItemStyled> & {
-  onSelect: () => void;
+  onSelect?: () => void;
   allowSingleClick?: boolean;
 }) => {
   const doubleClickedRef = useRef(false);
@@ -345,7 +345,7 @@ export const CommandItem = ({
   const handleSelect = () => {
     // Actions menu mode - execute immediately
     if (allowSingleClick) {
-      onSelect();
+      onSelect?.();
       return;
     }
 
@@ -362,7 +362,7 @@ export const CommandItem = ({
 
     // If triggered by Enter key (no pointer down), execute immediately
     if (!pointerDownRef.current) {
-      onSelect();
+      onSelect?.();
       return;
     }
 
@@ -392,7 +392,7 @@ export const CommandItem = ({
               if (selectTimeoutRef.current) {
                 clearTimeout(selectTimeoutRef.current);
               }
-              onSelect();
+              onSelect?.();
             }
       }
       onSelect={handleSelect}
