@@ -66,7 +66,6 @@ import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
-import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
@@ -74,6 +73,7 @@ import { createInstanceElement } from "./elements";
 import { subscribeScrollbarSize } from "./scrollbar-width";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { builderApi } from "~/shared/builder-api";
+import { useDebounceEffect } from "@webstudio-is/design-system";
 
 registerContainers();
 
