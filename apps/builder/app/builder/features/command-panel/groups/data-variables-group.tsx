@@ -87,11 +87,7 @@ export const DataVariablesGroup = ({
 
   const handleSelect = (option: DataVariableOption) => {
     if (action === "find") {
-      if (option.usages > 0) {
-        $commandContent.set(<DataVariableInstances variableId={option.id} />);
-      } else {
-        toast.error("Variable is not used in any instance");
-      }
+      $commandContent.set(<DataVariableInstances variableId={option.id} />);
       return;
     }
 

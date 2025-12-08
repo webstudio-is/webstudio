@@ -109,12 +109,8 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             value={token.id}
             onSelect={() => {
               if (action === "find") {
-                if (usages > 0) {
-                  $activeInspectorPanel.set("style");
-                  $commandContent.set(<TokenInstances tokenId={token.id} />);
-                } else {
-                  toast.error("Token is not used in any instance");
-                }
+                $activeInspectorPanel.set("style");
+                $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
               if (action === "rename") {
                 setTokenToRename(token);

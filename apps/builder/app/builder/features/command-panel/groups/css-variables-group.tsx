@@ -125,14 +125,10 @@ export const CssVariablesGroup = ({
                 }
               }
               if (action === "find") {
-                if (usages > 0) {
-                  $activeInspectorPanel.set("style");
-                  $commandContent.set(
-                    <CssVariableInstances property={property} />
-                  );
-                } else {
-                  toast.error("CSS variable is not used in any instance");
-                }
+                $activeInspectorPanel.set("style");
+                $commandContent.set(
+                  <CssVariableInstances property={property} />
+                );
               }
               if (action === "rename") {
                 setVariableToRename({ property });
