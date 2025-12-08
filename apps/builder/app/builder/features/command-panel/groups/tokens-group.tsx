@@ -17,10 +17,7 @@ import {
   RenameStyleSourceDialog,
   $styleSourceUsages,
 } from "~/builder/shared/style-source-utils";
-import { findInstanceById } from "../shared/instance-utils";
-import { InstanceList } from "../shared/instance-list";
-import { $instances, $pages } from "~/shared/nano-states";
-import { $awareness } from "~/shared/awareness";
+import { InstanceList, selectInstance } from "../shared/instance-list";
 import { $commandContent } from "../command-state";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import type { BaseOption } from "../shared/types";
@@ -54,26 +51,10 @@ const selectToken = (
   instanceId: Instance["id"],
   tokenId: StyleSource["id"]
 ) => {
-  const instances = $instances.get();
-  const pagesData = $pages.get();
-  if (pagesData === undefined) {
-    return;
-  }
-  const pages = [pagesData.homePage, ...pagesData.pages];
-  for (const page of pages) {
-    const instanceSelector = findInstanceById(
-      instances,
-      [page.rootInstanceId],
-      instanceId
-    );
-    if (instanceSelector) {
-      $awareness.set({ pageId: page.id, instanceSelector });
-      const selectedStyleSources = new Map($selectedStyleSources.get());
-      selectedStyleSources.set(instanceId, tokenId);
-      $selectedStyleSources.set(selectedStyleSources);
-      break;
-    }
-  }
+  selectInstance(instanceId);
+  const selectedStyleSources = new Map($selectedStyleSources.get());
+  selectedStyleSources.set(instanceId, tokenId);
+  $selectedStyleSources.set(selectedStyleSources);
 };
 
 const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {

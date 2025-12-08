@@ -9,7 +9,6 @@ import {
   toast,
   useSelectedAction,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   DeleteCssVariableDialog,
