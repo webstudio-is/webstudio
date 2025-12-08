@@ -27,10 +27,7 @@ import type {
 import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
-import {
-  deleteProperty as deleteStyleProperty,
-  createBatchUpdate,
-} from "~/builder/features/style-panel/shared/use-style-data";
+import { createBatchUpdate } from "~/builder/features/style-panel/shared/use-style-data";
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);
 
