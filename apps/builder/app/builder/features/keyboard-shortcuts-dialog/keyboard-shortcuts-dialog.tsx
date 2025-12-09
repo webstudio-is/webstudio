@@ -128,6 +128,9 @@ export const KeyboardShortcutsDialog = () => {
     ],
   };
 
+  // Extract valid category names as a type
+  type ValidCategory = keyof typeof groupedCommands;
+
   // Sort shortcuts within each category by popularity
   Object.keys(groupedCommands).forEach((category) => {
     const order = shortcutOrder[category] || [];
@@ -139,21 +142,24 @@ export const KeyboardShortcutsDialog = () => {
         return aIndex - bIndex;
       }
       // If only one is in the order list, prioritize it
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
+      if (aIndex !== -1) {
+        return -1;
+      }
+      if (bIndex !== -1) {
+        return 1;
+      }
       // If neither is in the order list, maintain original order
       return 0;
     });
   });
 
   // Define category order by popularity
-  const categoryOrder = [
+  const categoryOrder: ValidCategory[] = [
     "General",
     "Top bar",
+    "Panels",
     "Navigator",
-    "Components",
-    "Right-hand tabs",
-    "View",
+    "Style panel",
   ];
 
   // Sort categories by popularity
@@ -165,8 +171,12 @@ export const KeyboardShortcutsDialog = () => {
       return aIndex - bIndex;
     }
     // If only one is in the order list, prioritize it
-    if (aIndex !== -1) return -1;
-    if (bIndex !== -1) return 1;
+    if (aIndex !== -1) {
+      return -1;
+    }
+    if (bIndex !== -1) {
+      return 1;
+    }
     // If neither is in the order list, maintain original order
     return 0;
   });
