@@ -48,14 +48,14 @@ const additionalShortcuts = [
     label: "Expand Navigator item",
     description: "Expand navigator item",
     category: "Navigator",
-    defaultHotkeys: ["arrowright"],
+    defaultHotkeys: ["→"],
   },
   {
     name: "collapseNavigatorItem",
     label: "Collapse Navigator item",
     description: "Collapse navigator item",
     category: "Navigator",
-    defaultHotkeys: ["arrowleft"],
+    defaultHotkeys: ["←"],
   },
   {
     name: "switchBreakpoint",
