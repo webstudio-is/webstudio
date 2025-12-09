@@ -62,6 +62,7 @@ import { CommandPanel } from "./features/command-panel";
 import { DeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { DeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { DeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
+import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 
 import {
   initCopyPaste,
@@ -445,6 +446,7 @@ export const Builder = ({
         <DeleteUnusedTokensDialog />
         <DeleteUnusedDataVariablesDialog />
         <DeleteUnusedCssVariablesDialog />
+        <KeyboardShortcutsDialog />
         <RemoteDialog />
       </div>
     </TooltipProvider>

@@ -253,14 +253,11 @@ export const Menu = () => {
           </DropdownMenuItem>
         )}
 
-        <DropdownMenuItem
-          onSelect={() => {
-            window.open(
-              "https://docs.webstudio.is/university/foundations/shortcuts"
-            );
-          }}
-        >
-          Keyboard shortcuts
+        <DropdownMenuItem onSelect={() => emitCommand("openKeyboardShortcuts")}>
+          Keyboard Shortcuts
+          <DropdownMenuItemRightSlot>
+            <Kbd value={["shift", "?"]} />
+          </DropdownMenuItemRightSlot>
         </DropdownMenuItem>
 
         <DropdownMenuSub>

@@ -25,6 +25,28 @@ const format = (value: ShortcutDefinition) => {
   );
 };
 
+/**
+ * Filter hotkeys array to show only the appropriate one for current OS.
+ * Prioritizes meta (Mac) or ctrl (Windows/Linux) hotkeys.
+ */
+export const filterHotkeyByOs = (hotkeys: readonly string[]): string => {
+  if (hotkeys.length === 1) {
+    return hotkeys[0];
+  }
+
+  const macHotkey = hotkeys.find((key) => key.includes("meta"));
+  const winHotkey = hotkeys.find((key) => key.includes("ctrl"));
+
+  if (isMac && macHotkey) {
+    return macHotkey;
+  }
+  if (!isMac && winHotkey) {
+    return winHotkey;
+  }
+
+  return hotkeys[0];
+};
+
 export const Kbd = ({
   value,
   color = "subtle",
