@@ -157,8 +157,8 @@ export const KeyboardShortcutsDialog = () => {
   const categoryOrder: ValidCategory[] = [
     "General",
     "Top bar",
-    "Panels",
     "Navigator",
+    "Panels",
     "Style panel",
   ];
 
