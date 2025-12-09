@@ -12,7 +12,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { atom } from "nanostores";
-import { Fragment } from "react/jsx-runtime";
+import { Fragment } from "react";
 import { $commandMetas } from "~/shared/commands-emitter";
 
 const $isKeyboardShortcutsOpen = atom(false);
