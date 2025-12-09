@@ -12,7 +12,10 @@ import {
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $canvasRect, $scale } from "~/builder/shared/nano-states";
-import { InstanceIcon, InstanceLabel } from "~/builder/shared/instance-label";
+import {
+  InstanceIcon,
+  getInstanceLabel,
+} from "~/builder/shared/instance-label";
 
 const DragLayer = ({
   component,
@@ -32,7 +35,7 @@ const DragLayer = ({
       }}
     >
       <ComponentCard
-        label={<InstanceLabel instance={{ component }} />}
+        label={getInstanceLabel({ component })}
         icon={<InstanceIcon size="auto" instance={{ component }} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,

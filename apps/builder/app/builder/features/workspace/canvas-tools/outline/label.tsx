@@ -2,7 +2,10 @@ import { useCallback, useState } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
-import { InstanceIcon, InstanceLabel } from "~/builder/shared/instance-label";
+import {
+  InstanceIcon,
+  getInstanceLabel,
+} from "~/builder/shared/instance-label";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -99,7 +102,7 @@ export const Label = ({ instance, instanceRect, variant }: LabelProps) => {
   return (
     <LabelContainer position={position} variant={variant} ref={labelRef}>
       <InstanceIcon size="1em" instance={instance} />
-      <InstanceLabel instance={instance} />
+      {getInstanceLabel(instance)}
     </LabelContainer>
   );
 };

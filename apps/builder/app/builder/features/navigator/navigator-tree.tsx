@@ -29,7 +29,6 @@ import {
   blockTemplateComponent,
   descendantComponent,
   type Instance,
-  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 import {
@@ -402,19 +401,17 @@ const EditableTreeNodeLabel = styled("div", {
 });
 
 const TreeNodeContent = ({
-  meta,
   instance,
   isEditing,
   onIsEditingChange,
 }: {
-  meta: WsComponentMeta;
   instance: Instance;
   isEditing: boolean;
   onIsEditingChange: (isEditing: boolean) => void;
 }) => {
   const editableRef = useRef<HTMLDivElement | null>(null);
 
-  const label = getInstanceLabel(instance, meta);
+  const label = getInstanceLabel(instance);
   const { ref, handlers } = useContentEditable({
     value: label,
     isEditable: true,
@@ -785,7 +782,6 @@ export const NavigatorTree = () => {
                 }
               >
                 <TreeNodeContent
-                  meta={meta}
                   instance={item.instance}
                   isEditing={
                     item.selector.join() === editingItemSelector?.join()

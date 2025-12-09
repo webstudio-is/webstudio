@@ -128,7 +128,7 @@ export const PropertyInfo = ({
       );
     }
     if (instance && meta) {
-      instanceSet.add(getInstanceLabel(instance, meta));
+      instanceSet.add(getInstanceLabel(instance));
     }
   }
 

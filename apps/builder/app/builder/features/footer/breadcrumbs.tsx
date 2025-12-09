@@ -4,7 +4,7 @@ import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, Button, Flex, Text } from "@webstudio-is/design-system";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
-import { InstanceLabel } from "~/builder/shared/instance-label";
+import { getInstanceLabel } from "~/builder/shared/instance-label";
 
 export const Breadcrumbs = () => {
   const instancePath = useStore($selectedInstancePath);
@@ -29,7 +29,7 @@ export const Breadcrumbs = () => {
                     $textEditingInstanceSelector.set(undefined);
                   }}
                 >
-                  <InstanceLabel instance={instance} />
+                  {getInstanceLabel(instance)}
                 </Button>
                 {/* hide the last one */}
                 {index < instancePath.length - 1 && <ChevronRightIcon />}

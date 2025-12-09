@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { computed } from "nanostores";
-import { useStore } from "@nanostores/react";
 import {
   CommandGroup,
   CommandGroupHeading,
@@ -10,7 +9,7 @@ import {
   useSelectedAction,
   useResetActionIndex,
 } from "@webstudio-is/design-system";
-import { $dataSources, $instances } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/nano-states";
 import {
   $commandContent,
   closeCommandPanel,
@@ -27,7 +26,6 @@ import {
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $registeredComponentMetas } from "~/shared/nano-states";
 
 export type DataVariableOption = BaseOption & {
   type: "dataVariable";
@@ -38,13 +36,8 @@ export type DataVariableOption = BaseOption & {
 };
 
 export const $dataVariableOptions = computed(
-  [
-    $dataSources,
-    $instances,
-    $usedVariablesInInstances,
-    $registeredComponentMetas,
-  ],
-  (dataSources, instances, usedInInstances, metas) => {
+  [$dataSources, $usedVariablesInInstances],
+  (dataSources, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
 
     for (const dataSource of dataSources.values()) {
@@ -52,27 +45,22 @@ export const $dataVariableOptions = computed(
         dataSource.type === "variable" &&
         dataSource.scopeInstanceId !== undefined
       ) {
-        const instance = instances.get(dataSource.scopeInstanceId);
-        if (instance) {
-          const meta = metas.get(instance.component);
-          const instanceLabel = getInstanceLabel(instance, meta);
-          const usages = usedInInstances.get(dataSource.id)?.size ?? 0;
-          dataVariableOptions.push({
-            terms: [
-              "variable",
-              "variables",
-              "data",
-              dataSource.name,
-              instanceLabel,
-              ...getUsageSearchTerms(usages),
-            ],
-            type: "dataVariable",
-            id: dataSource.id,
-            name: dataSource.name,
-            instanceId: dataSource.scopeInstanceId,
-            usages,
-          });
-        }
+        const usages = usedInInstances.get(dataSource.id)?.size ?? 0;
+        dataVariableOptions.push({
+          terms: [
+            "variable",
+            "variables",
+            "data",
+            dataSource.name,
+            getInstanceLabel(dataSource.scopeInstanceId) ?? "Unused",
+            ...getUsageSearchTerms(usages),
+          ],
+          type: "dataVariable",
+          id: dataSource.id,
+          name: dataSource.name,
+          instanceId: dataSource.scopeInstanceId,
+          usages,
+        });
       }
     }
 
@@ -102,8 +90,6 @@ export const DataVariablesGroup = ({
 }) => {
   const action = useSelectedAction();
   const resetActionIndex = useResetActionIndex();
-  const instances = useStore($instances);
-  const metas = useStore($registeredComponentMetas);
   const [variableDialog, setVariableDialog] = useState<
     (DataVariableOption & { action: "rename" | "delete" }) | undefined
   >();
@@ -116,14 +102,9 @@ export const DataVariablesGroup = ({
         actions={["select", "find usages", "rename", "delete"]}
       >
         {options.map((option) => {
-          const instance = instances.get(option.instanceId);
-          const meta = instance ? metas.get(instance.component) : undefined;
-          const instanceLabel = instance
-            ? getInstanceLabel(instance, meta)
-            : "";
-
           return (
             <CommandItem
+              keywords={option.terms}
               key={option.id}
               value={option.id}
               onSelect={() => {
@@ -151,7 +132,7 @@ export const DataVariablesGroup = ({
                 </Text>
               </Text>
               <Text as="span" color="moreSubtle">
-                {instanceLabel}
+                {getInstanceLabel(option.instanceId)}
               </Text>
             </CommandItem>
           );

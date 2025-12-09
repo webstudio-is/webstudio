@@ -34,14 +34,14 @@ import {
   $selectedPage,
 } from "~/shared/awareness";
 import { $styleSourceInputElement } from "./shared/commands";
-import { InstanceIcon, InstanceLabel } from "./shared/instance-label";
+import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   return (
     <Flex shrink={false} gap="1" align="center">
       <InstanceIcon instance={instance} />
       <Text truncate variant="labelsSentenceCase">
-        <InstanceLabel instance={instance} />
+        {getInstanceLabel(instance)}
       </Text>
     </Flex>
   );

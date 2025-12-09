@@ -106,7 +106,7 @@ export const TemplatesMenu = ({
   const menuItems = templates?.map(([template, templateSelector]) => ({
     id: template.id,
     icon: <InstanceIcon instance={{ component: template.component }} />,
-    title: getInstanceLabel(template, undefined),
+    title: getInstanceLabel(template),
     value: templateSelector,
   }));
 
