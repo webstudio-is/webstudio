@@ -12,6 +12,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { atom } from "nanostores";
+import { Fragment } from "react/jsx-runtime";
 import { $commandMetas } from "~/shared/commands-emitter";
 
 const $isKeyboardShortcutsOpen = atom(false);
@@ -222,12 +223,8 @@ export const KeyboardShortcutsDialog = () => {
                       }
 
                       return (
-                        <>
-                          <Box
-                            css={{
-                              textAlign: "right",
-                            }}
-                          >
+                        <Fragment key={command.name}>
+                          <Box css={{ textAlign: "right" }}>
                             <Box
                               as="span"
                               css={{
@@ -237,23 +234,18 @@ export const KeyboardShortcutsDialog = () => {
                               }}
                             >
                               <Kbd
-                                key={`${command.name}-kbd`}
                                 value={hotkey.split("+") as string[]}
                                 color="moreSubtle"
                               />
                             </Box>
                           </Box>
-                          <Text
-                            key={`${command.name}-text`}
-                            variant="regular"
-                            color="subtle"
-                          >
+                          <Text variant="regular" color="subtle">
                             {("description" in command &&
                               command.description) ||
                               command.label ||
                               command.name}
                           </Text>
-                        </>
+                        </Fragment>
                       );
                     })}
                   </Grid>
