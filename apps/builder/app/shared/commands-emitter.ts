@@ -6,6 +6,20 @@ type CommandMeta<CommandName extends string> = {
   // @todo category, description
   name: CommandName;
   label?: string;
+  /** category for grouping commands in UI for shortcuts dialog */
+  category?:
+    | "General"
+    | "Components"
+    | "Copy/Paste"
+    | "Main navigation"
+    | "Undo/redo"
+    | "View"
+    | "Move elements"
+    | "Left-hand toolbar"
+    | "Other"
+    | "Right-hand tabs"
+    | "Device views"
+    | "Find";
   /** default because hotkeys can be customized from ui */
   defaultHotkeys?: string[];
   /** set to false when default browser or radix behavior is desired */

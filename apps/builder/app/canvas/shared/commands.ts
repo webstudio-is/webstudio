@@ -39,7 +39,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "editInstanceText",
-      hidden: true,
+      label: "Edit component",
+      category: "Components",
       defaultHotkeys: ["enter"],
       disableOnInputLikeControls: true,
       // builder invokes command with custom hotkey setup

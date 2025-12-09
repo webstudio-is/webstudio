@@ -60,6 +60,7 @@ import { isSyncIdle } from "./sync/sync-server";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
+import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -327,7 +328,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "cancelCurrentDrag",
-      hidden: true,
+      label: "Deselect",
+      category: "General",
       defaultHotkeys: ["escape"],
       // radix check event.defaultPrevented before invoking callbacks
       preventDefault: false,
@@ -349,6 +351,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "togglePreviewMode",
+      category: "Main navigation",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
         setActiveSidebarPanel("auto");
@@ -357,6 +360,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleDesignMode",
+      category: "Main navigation",
       defaultHotkeys: ["meta+shift+d", "ctrl+shift+d"],
       handler: () => {
         setActiveSidebarPanel("auto");
@@ -365,6 +369,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleContentMode",
+      category: "View",
       defaultHotkeys: ["meta+shift+c", "ctrl+shift+c"],
       handler: () => {
         setActiveSidebarPanel("auto");
@@ -379,6 +384,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openPublishDialog",
+      category: "General",
       defaultHotkeys: ["shift+P"],
       handler: () => {
         $publishDialog.set("publish");
@@ -387,6 +393,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openExportDialog",
+      category: "General",
       defaultHotkeys: ["shift+E"],
       handler: () => {
         $publishDialog.set("export");
@@ -395,6 +402,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleComponentsPanel",
+      category: "Components",
       defaultHotkeys: ["a"],
       handler: () => {
         if ($isDesignMode.get() === false) {
@@ -409,6 +417,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleNavigatorPanel",
+      category: "Left-hand toolbar",
       defaultHotkeys: ["z"],
       handler: () => {
         toggleActiveSidebarPanel("navigator");
@@ -417,6 +426,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openStylePanel",
+      category: "Right-hand tabs",
       defaultHotkeys: ["s"],
       handler: () => {
         if ($isDesignMode.get() === false) {
@@ -431,6 +441,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "focusStyleSources",
+      category: "Right-hand tabs",
       defaultHotkeys: ["meta+enter", "ctrl+enter"],
       handler: () => {
         if ($isDesignMode.get() === false) {
@@ -448,6 +459,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleStylePanelFocusMode",
+      category: "Right-hand tabs",
       defaultHotkeys: ["alt+shift+s"],
       handler: () => {
         setSetting(
@@ -459,6 +471,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleStylePanelAdvancedMode",
+      category: "Right-hand tabs",
       defaultHotkeys: ["alt+shift+a"],
       handler: () => {
         setSetting(
@@ -470,6 +483,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openSettingsPanel",
+      category: "Right-hand tabs",
       defaultHotkeys: ["d"],
       handler: () => {
         $activeInspectorPanel.set("settings");
@@ -502,6 +516,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteInstanceBuilder",
       label: "Delete Instance",
+      category: "Components",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
       disableHotkeyOutsideApp: true,
@@ -510,6 +525,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "duplicateInstance",
+      category: "Copy/Paste",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
         const project = $project.get();
@@ -568,6 +584,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "editInstanceLabel",
+      category: "Components",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
         const instancePath = $selectedInstancePath.get();
@@ -619,6 +636,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "undo",
+      category: "Undo/redo",
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
       disableOnInputLikeControls: true,
@@ -628,6 +646,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "redo",
+      category: "Undo/redo",
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
       disableOnInputLikeControls: true,
@@ -638,6 +657,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "save",
+      category: "General",
       defaultHotkeys: ["meta+s", "ctrl+s"],
       handler: async () => {
         toast.dismiss("save-success");
@@ -654,7 +674,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "openCommandPanel",
-      hidden: true,
+      category: "General",
       defaultHotkeys: ["meta+k", "ctrl+k"],
       handler: () => {
         if ($isDesignMode.get()) {
@@ -684,6 +704,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       label: "Delete unused CSS variables",
       handler: () => {
         openDeleteUnusedCssVariablesDialog();
+      },
+    },
+
+    {
+      name: "openKeyboardShortcuts",
+      category: "General",
+      defaultHotkeys: ["shift+?"],
+      handler: () => {
+        openKeyboardShortcutsDialog();
       },
     },
   ],
