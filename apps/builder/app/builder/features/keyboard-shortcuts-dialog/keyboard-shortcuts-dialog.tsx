@@ -26,49 +26,42 @@ const additionalShortcuts = [
     name: "copy",
     label: "Copy",
     description: "Copy selected instance",
-    category: "Copy/Paste",
+    category: "Navigator",
     defaultHotkeys: ["meta+c", "ctrl+c"],
   },
   {
     name: "cut",
     label: "Cut",
     description: "Cut selected instance",
-    category: "Copy/Paste",
+    category: "Navigator",
     defaultHotkeys: ["meta+x", "ctrl+x"],
   },
   {
     name: "paste",
     label: "Paste",
     description: "Paste copied instance",
-    category: "Copy/Paste",
+    category: "Navigator",
     defaultHotkeys: ["meta+v", "ctrl+v"],
-  },
-  {
-    name: "editComponent",
-    label: "Edit Component",
-    description: "Edit component",
-    category: "Left-hand toolbar",
-    defaultHotkeys: ["enter"],
   },
   {
     name: "expandNavigatorItem",
     label: "Expand Navigator item",
     description: "Expand navigator item",
-    category: "Left-hand toolbar",
+    category: "Navigator",
     defaultHotkeys: ["arrowright"],
   },
   {
     name: "collapseNavigatorItem",
     label: "Collapse Navigator item",
     description: "Collapse navigator item",
-    category: "Left-hand toolbar",
+    category: "Navigator",
     defaultHotkeys: ["arrowleft"],
   },
   {
     name: "switchBreakpoint",
     label: "Switch breakpoints",
     description: "Switch to breakpoint by number (1-9)",
-    category: "Device views",
+    category: "Top bar",
     defaultHotkeys: ["1-9"],
   },
 ];
@@ -88,6 +81,9 @@ export const KeyboardShortcutsDialog = () => {
   // Combine with additional shortcuts
   const allShortcuts = [...commandsWithHotkeys, ...additionalShortcuts];
 
+  // Extract valid command names as a type
+  type ValidCommandName = (typeof allShortcuts)[number]["name"];
+
   // Group filtered commands by category
   const groupedCommands = allShortcuts.reduce<
     Record<string, Array<(typeof allShortcuts)[number]>>
@@ -101,43 +97,35 @@ export const KeyboardShortcutsDialog = () => {
   }, {});
 
   // Define popularity order for shortcuts within each category
-  const shortcutOrder: Record<string, string[]> = {
+  const shortcutOrder: Record<string, ValidCommandName[]> = {
     General: [
-      "save",
       "cancelCurrentDrag",
       "openCommandPanel",
       "openPublishDialog",
       "openExportDialog",
       "openKeyboardShortcuts",
     ],
-    "Main navigation": [
-      "toggleDesignMode",
-      "togglePreviewMode",
-      "toggleContentMode",
-    ],
-    Components: [
-      "toggleComponentsPanel",
+    "Top bar": ["toggleDesignMode", "togglePreviewMode", "toggleContentMode"],
+    Navigator: [
+      "copy",
+      "cut",
+      "paste",
       "duplicateInstance",
-      "deleteInstanceBuilder",
-      "editInstanceLabel",
-    ],
-    "Copy/Paste": ["copy", "cut", "paste", "duplicateInstance"],
-    "Undo/redo": ["undo", "redo"],
-    View: ["toggleContentMode"],
-    "Left-hand toolbar": [
-      "toggleNavigatorPanel",
-      "editComponent",
       "expandNavigatorItem",
       "collapseNavigatorItem",
     ],
-    "Right-hand tabs": [
+    Panels: [
+      "toggleComponentsPanel",
+      "toggleNavigatorPanel",
       "openStylePanel",
-      "focusStyleSources",
       "openSettingsPanel",
+    ],
+
+    "Style panel": [
+      "focusStyleSources",
       "toggleStylePanelFocusMode",
       "toggleStylePanelAdvancedMode",
     ],
-    "Device views": ["switchBreakpoint"],
   };
 
   // Sort shortcuts within each category by popularity
@@ -161,15 +149,11 @@ export const KeyboardShortcutsDialog = () => {
   // Define category order by popularity
   const categoryOrder = [
     "General",
-    "Main navigation",
-    "Copy/Paste",
-    "Undo/redo",
+    "Top bar",
+    "Navigator",
     "Components",
-    "Left-hand toolbar",
     "Right-hand tabs",
     "View",
-    "Device views",
-    "Other",
   ];
 
   // Sort categories by popularity
@@ -214,9 +198,9 @@ export const KeyboardShortcutsDialog = () => {
                     {category}
                   </Text>
                   <Grid
-                    gap={2}
+                    gap={3}
                     align="center"
-                    css={{ gridTemplateColumns: "100px 1fr" }}
+                    css={{ gridTemplateColumns: "10ch 1fr" }}
                   >
                     {categoryCommands.map((command) => {
                       const hotkey = command.defaultHotkeys
@@ -229,11 +213,26 @@ export const KeyboardShortcutsDialog = () => {
 
                       return (
                         <>
-                          <Kbd
-                            key={`${command.name}-kbd`}
-                            value={hotkey.split("+") as string[]}
-                            color="moreSubtle"
-                          />
+                          <Box
+                            css={{
+                              textAlign: "right",
+                            }}
+                          >
+                            <Box
+                              as="span"
+                              css={{
+                                paddingInline: 4,
+                                border: `1px solid ${theme.colors.borderNeutral}`,
+                                borderRadius: theme.borderRadius[2],
+                              }}
+                            >
+                              <Kbd
+                                key={`${command.name}-kbd`}
+                                value={hotkey.split("+") as string[]}
+                                color="moreSubtle"
+                              />
+                            </Box>
+                          </Box>
                           <Text
                             key={`${command.name}-text`}
                             variant="regular"
