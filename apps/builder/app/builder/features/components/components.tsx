@@ -69,7 +69,7 @@ const $metas = computed(
         name,
         category: componentMeta.category ?? "hidden",
         order: componentMeta.order,
-        label: getInstanceLabel({ component: name }, componentMeta),
+        label: getInstanceLabel({ component: name }),
         description: componentMeta.description,
         firstInstance: { component: name },
       });
@@ -84,7 +84,7 @@ const $metas = computed(
         label:
           templateMeta.label ??
           componentMeta?.label ??
-          getInstanceLabel({ component: name }, templateMeta),
+          getInstanceLabel({ component: name }),
         description: templateMeta.description,
         icon: templateMeta.icon,
         firstInstance: templateMeta.template.instances[0],

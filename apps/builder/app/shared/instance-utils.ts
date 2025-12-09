@@ -1348,7 +1348,7 @@ export const findClosestInsertable = (
     fragment,
     onError: (message) => {
       const component = fragment.instances[0].component;
-      const label = getInstanceLabel({ component }, {});
+      const label = getInstanceLabel({ component });
       toast.warn(message || `"${label}" has no place here`);
     },
   });

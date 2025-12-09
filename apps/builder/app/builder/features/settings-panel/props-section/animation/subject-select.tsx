@@ -62,7 +62,7 @@ const initSubjects = () => {
 
     subjects.push({
       value,
-      label: getInstanceLabel(instance, meta),
+      label: getInstanceLabel(instance),
       isTimelineExists,
       instanceId,
       selector,

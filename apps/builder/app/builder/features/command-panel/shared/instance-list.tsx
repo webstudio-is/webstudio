@@ -42,7 +42,7 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
     const meta = metas.get(instance?.component ?? "");
     if (instance && meta) {
       usedInInstances.push({
-        label: getInstanceLabel(instance, meta),
+        label: getInstanceLabel(instance),
         id: instance.id,
       });
     }

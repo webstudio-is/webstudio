@@ -198,7 +198,7 @@ export const wrapIn = (component: string, tag?: string) => {
         instanceSelector: newInstanceSelector,
       });
       if (isSatisfying === false) {
-        const label = getInstanceLabel({ component, tag }, {});
+        const label = getInstanceLabel({ component, tag });
         toast.error(`Cannot wrap in ${label}`);
         throw Error("Abort transaction");
       }
@@ -254,7 +254,7 @@ export const replaceWith = (component: string, tag?: string) => {
         instanceSelector: selectedInstanceSelector,
       });
       if (isSatisfying === false) {
-        const label = getInstanceLabel({ component, tag }, {});
+        const label = getInstanceLabel({ component, tag });
         toast.error(`Cannot replace with ${label}`);
         throw Error("Abort transaction");
       }

@@ -69,7 +69,7 @@ export const $componentOptions = computed(
           continue;
         }
       }
-      const label = getInstanceLabel({ component: name }, meta);
+      const label = getInstanceLabel({ component: name });
       componentOptions.push({
         terms: ["components", label, category],
         type: "component",
@@ -90,7 +90,7 @@ export const $componentOptions = computed(
       const label =
         meta.label ??
         componentMeta?.label ??
-        getInstanceLabel({ component: name }, meta);
+        getInstanceLabel({ component: name });
       componentOptions.push({
         terms: ["components", label, meta.category],
         type: "component",

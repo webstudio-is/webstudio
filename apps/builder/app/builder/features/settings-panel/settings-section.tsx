@@ -2,7 +2,7 @@ import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
-import { $instances, $registeredComponentMetas } from "~/shared/nano-states";
+import { $instances } from "~/shared/nano-states";
 import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
 import { serverSyncStore } from "~/shared/sync";
 import { $selectedInstance } from "~/shared/awareness";
@@ -19,7 +19,6 @@ const saveLabel = (label: string, selectedInstance: Instance) => {
 
 export const SettingsSection = () => {
   const selectedInstance = useStore($selectedInstance);
-  const metas = useStore($registeredComponentMetas);
   const id = useId();
   const localValue = useLocalValue(selectedInstance?.label ?? "", (value) => {
     if (selectedInstance) {
@@ -31,8 +30,7 @@ export const SettingsSection = () => {
     return;
   }
 
-  const meta = metas.get(selectedInstance.component);
-  const placeholder = getInstanceLabel(selectedInstance, meta);
+  const placeholder = getInstanceLabel(selectedInstance);
 
   return (
     <Row>

@@ -29,8 +29,6 @@ import {
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $instances } from "~/shared/nano-states";
-import { $registeredComponentMetas } from "~/shared/nano-states";
 
 export type CssVariableOption = BaseOption & {
   type: "cssVariable";
@@ -40,32 +38,20 @@ export type CssVariableOption = BaseOption & {
 };
 
 export const $cssVariableOptions = computed(
-  [
-    $cssVariableDefinitionsByVariable,
-    $usedCssVariablesInInstances,
-    $instances,
-    $registeredComponentMetas,
-  ],
-  (definitionsByVariable, usedVariablesInInstances, instances, metas) => {
+  [$cssVariableDefinitionsByVariable, $usedCssVariablesInInstances],
+  (definitionsByVariable, usedVariablesInInstances) => {
     const cssVariableOptions: CssVariableOption[] = [];
 
     // Create options for each defined CSS variable on each instance
     for (const [property, instanceIds] of definitionsByVariable) {
       for (const instanceId of instanceIds) {
-        const instance = instances.get(instanceId);
-        if (!instance) {
-          continue;
-        }
-        const meta = metas.get(instance.component);
-        const instanceLabel = getInstanceLabel(instance, meta);
-
         const usages = usedVariablesInInstances.get(property) ?? 0;
         cssVariableOptions.push({
           terms: [
             "css variables",
             property,
             property.slice(2), // Include name without --
-            instanceLabel,
+            getInstanceLabel(instanceId),
             ...getUsageSearchTerms(usages),
           ],
           type: "cssVariable",
@@ -102,8 +88,6 @@ export const CssVariablesGroup = ({
 }) => {
   const action = useSelectedAction();
   const resetActionIndex = useResetActionIndex();
-  const instances = useStore($instances);
-  const metas = useStore($registeredComponentMetas);
   const [variableDialog, setVariableDialog] = useState<
     { action: "rename" | "delete"; property: string } | undefined
   >();
@@ -115,16 +99,10 @@ export const CssVariablesGroup = ({
         heading={<CommandGroupHeading>CSS Variables</CommandGroupHeading>}
         actions={["select", "find usages", "rename", "delete"]}
       >
-        {options.map(({ property, instanceId, usages }) => {
-          const instance = instances.get(instanceId);
-          const meta = instance ? metas.get(instance.component) : undefined;
-          const instanceLabel = instance
-            ? getInstanceLabel(instance, meta)
-            : "";
-
+        {options.map(({ property, instanceId, usages, terms }) => {
           return (
             <CommandItem
-              keywords={["test"]}
+              keywords={terms}
               key={`${property}-${instanceId}`}
               // preserve selected state when rerender
               value={`${property}-${instanceId}`}
@@ -153,7 +131,7 @@ export const CssVariablesGroup = ({
                 </Text>
               </Text>
               <Text as="span" color="moreSubtle">
-                {instanceLabel}
+                {getInstanceLabel(instanceId)}
               </Text>
             </CommandItem>
           );
