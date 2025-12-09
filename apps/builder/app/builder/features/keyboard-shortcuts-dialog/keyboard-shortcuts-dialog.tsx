@@ -3,10 +3,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogClose,
   Grid,
   Text,
   Kbd,
+  filterHotkeyByOs,
   ScrollArea,
   theme,
   Box,
@@ -20,50 +20,56 @@ export const openKeyboardShortcutsDialog = () => {
   $isKeyboardShortcutsOpen.set(true);
 };
 
-const isMac =
-  typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
-
-// Filter hotkeys to show only the appropriate one for current OS
-const filterHotkeyForOS = (hotkeys: string[]): string => {
-  // If there's only one hotkey, return it
-  if (hotkeys.length === 1) {
-    return hotkeys[0];
-  }
-
-  // Find Mac hotkey (starts with meta) or Windows hotkey (starts with ctrl)
-  const macHotkey = hotkeys.find((key) => key.includes("meta"));
-  const winHotkey = hotkeys.find((key) => key.includes("ctrl"));
-
-  if (isMac && macHotkey) {
-    return macHotkey;
-  }
-  if (!isMac && winHotkey) {
-    return winHotkey;
-  }
-
-  // Fallback to first hotkey
-  return hotkeys[0];
-};
-
 // Additional shortcuts not in commands system but should be shown
 const additionalShortcuts = [
   {
     name: "copy",
     label: "Copy",
+    description: "Copy selected instance",
     category: "Copy/Paste",
     defaultHotkeys: ["meta+c", "ctrl+c"],
   },
   {
     name: "cut",
     label: "Cut",
+    description: "Cut selected instance",
     category: "Copy/Paste",
     defaultHotkeys: ["meta+x", "ctrl+x"],
   },
   {
     name: "paste",
     label: "Paste",
+    description: "Paste copied instance",
     category: "Copy/Paste",
     defaultHotkeys: ["meta+v", "ctrl+v"],
+  },
+  {
+    name: "editComponent",
+    label: "Edit Component",
+    description: "Edit component",
+    category: "Left-hand toolbar",
+    defaultHotkeys: ["enter"],
+  },
+  {
+    name: "expandNavigatorItem",
+    label: "Expand Navigator item",
+    description: "Expand navigator item",
+    category: "Left-hand toolbar",
+    defaultHotkeys: ["arrowright"],
+  },
+  {
+    name: "collapseNavigatorItem",
+    label: "Collapse Navigator item",
+    description: "Collapse navigator item",
+    category: "Left-hand toolbar",
+    defaultHotkeys: ["arrowleft"],
+  },
+  {
+    name: "switchBreakpoint",
+    label: "Switch breakpoints",
+    description: "Switch to breakpoint by number (1-9)",
+    category: "Device views",
+    defaultHotkeys: ["1-9"],
   },
 ];
 
@@ -94,6 +100,93 @@ export const KeyboardShortcutsDialog = () => {
     return acc;
   }, {});
 
+  // Define popularity order for shortcuts within each category
+  const shortcutOrder: Record<string, string[]> = {
+    General: [
+      "save",
+      "cancelCurrentDrag",
+      "openCommandPanel",
+      "openPublishDialog",
+      "openExportDialog",
+      "openKeyboardShortcuts",
+    ],
+    "Main navigation": [
+      "toggleDesignMode",
+      "togglePreviewMode",
+      "toggleContentMode",
+    ],
+    Components: [
+      "toggleComponentsPanel",
+      "duplicateInstance",
+      "deleteInstanceBuilder",
+      "editInstanceLabel",
+    ],
+    "Copy/Paste": ["copy", "cut", "paste", "duplicateInstance"],
+    "Undo/redo": ["undo", "redo"],
+    View: ["toggleContentMode"],
+    "Left-hand toolbar": [
+      "toggleNavigatorPanel",
+      "editComponent",
+      "expandNavigatorItem",
+      "collapseNavigatorItem",
+    ],
+    "Right-hand tabs": [
+      "openStylePanel",
+      "focusStyleSources",
+      "openSettingsPanel",
+      "toggleStylePanelFocusMode",
+      "toggleStylePanelAdvancedMode",
+    ],
+    "Device views": ["switchBreakpoint"],
+  };
+
+  // Sort shortcuts within each category by popularity
+  Object.keys(groupedCommands).forEach((category) => {
+    const order = shortcutOrder[category] || [];
+    groupedCommands[category].sort((a, b) => {
+      const aIndex = order.indexOf(a.name);
+      const bIndex = order.indexOf(b.name);
+      // If both are in the order list, sort by their position
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      // If only one is in the order list, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      // If neither is in the order list, maintain original order
+      return 0;
+    });
+  });
+
+  // Define category order by popularity
+  const categoryOrder = [
+    "General",
+    "Main navigation",
+    "Copy/Paste",
+    "Undo/redo",
+    "Components",
+    "Left-hand toolbar",
+    "Right-hand tabs",
+    "View",
+    "Device views",
+    "Other",
+  ];
+
+  // Sort categories by popularity
+  const sortedCategories = Object.keys(groupedCommands).sort((a, b) => {
+    const aIndex = categoryOrder.indexOf(a);
+    const bIndex = categoryOrder.indexOf(b);
+    // If both are in the order list, sort by their position
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    // If only one is in the order list, prioritize it
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    // If neither is in the order list, maintain original order
+    return 0;
+  });
+
   return (
     <Dialog
       open={isOpen}
@@ -101,89 +194,65 @@ export const KeyboardShortcutsDialog = () => {
     >
       <DialogContent
         css={{
-          width: "min(90vw, 800px)",
-          maxHeight: "85vh",
+          width: 700,
           display: "flex",
           flexDirection: "column",
         }}
       >
-        <DialogTitle>Keyboard Shortcuts</DialogTitle>
-        <ScrollArea
-          css={{
-            flexGrow: 1,
-            px: theme.spacing[9],
-            mx: `calc(${theme.spacing[9]} * -1)`,
-          }}
-        >
-          <Grid
-            gap={9}
-            css={{
-              gridTemplateColumns: "1fr 1fr",
-              "@media (max-width: 768px)": {
-                gridTemplateColumns: "1fr",
-              },
-            }}
-          >
-            {Object.entries(groupedCommands).map(
-              ([category, categoryCommands]) => (
-                <Box key={category} css={{ mb: theme.spacing[5] }}>
+        <DialogTitle>Keyboard shortcuts</DialogTitle>
+        <ScrollArea>
+          <Grid columns={2} gap={3} css={{ padding: theme.panel.padding }}>
+            {sortedCategories.map((category) => {
+              const categoryCommands = groupedCommands[category];
+              return (
+                <Box key={category}>
                   <Text
-                    css={{
-                      mb: theme.spacing[3],
-                      color: theme.colors.foregroundMain,
-                      fontWeight: 600,
-                      fontSize: theme.deprecatedFontSize[3],
-                    }}
+                    variant="titles"
+                    color="main"
+                    css={{ mb: theme.spacing[5] }}
                   >
                     {category}
                   </Text>
                   <Grid
-                    gap={1}
-                    css={{
-                      gridTemplateColumns: "auto 1fr",
-                      alignItems: "center",
-                      rowGap: theme.spacing[3],
-                    }}
+                    gap={2}
+                    align="center"
+                    css={{ gridTemplateColumns: "100px 1fr" }}
                   >
                     {categoryCommands.map((command) => {
                       const hotkey = command.defaultHotkeys
-                        ? filterHotkeyForOS(command.defaultHotkeys)
-                        : "";
+                        ? filterHotkeyByOs(command.defaultHotkeys)
+                        : undefined;
+
+                      if (!hotkey) {
+                        return;
+                      }
 
                       return (
                         <>
-                          <Box
+                          <Kbd
                             key={`${command.name}-kbd`}
-                            css={{
-                              display: "flex",
-                              gap: theme.spacing[1],
-                              justifyContent: "flex-start",
-                            }}
-                          >
-                            <Kbd
-                              value={hotkey.split("+") as string[]}
-                              color="moreSubtle"
-                            />
-                          </Box>
+                            value={hotkey.split("+") as string[]}
+                            color="moreSubtle"
+                          />
                           <Text
-                            key={`${command.name}-label`}
-                            css={{
-                              color: theme.colors.foregroundSubtle,
-                              fontSize: theme.deprecatedFontSize[2],
-                            }}
+                            key={`${command.name}-text`}
+                            variant="regular"
+                            color="subtle"
                           >
-                            {command.label ?? command.name}
+                            {("description" in command &&
+                              command.description) ||
+                              command.label ||
+                              command.name}
                           </Text>
                         </>
                       );
                     })}
                   </Grid>
                 </Box>
-              )
-            )}
+              );
+            })}
           </Grid>
         </ScrollArea>
-        <DialogClose />
       </DialogContent>
     </Dialog>
   );

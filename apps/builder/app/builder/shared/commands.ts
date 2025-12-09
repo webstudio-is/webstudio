@@ -329,6 +329,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "cancelCurrentDrag",
       label: "Deselect",
+      description: "Cancel drag or deselect",
       category: "General",
       defaultHotkeys: ["escape"],
       // radix check event.defaultPrevented before invoking callbacks
@@ -340,6 +341,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "clickCanvas",
+      description: "Reset UI state",
       hidden: true,
       handler: () => {
         $breakpointsMenuView.set(undefined);
@@ -351,6 +353,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "togglePreviewMode",
+      description: "View site without editing controls",
       category: "Main navigation",
       defaultHotkeys: ["meta+shift+p", "ctrl+shift+p"],
       handler: () => {
@@ -360,6 +363,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleDesignMode",
+      description: "Edit components and styles",
       category: "Main navigation",
       defaultHotkeys: ["meta+shift+d", "ctrl+shift+d"],
       handler: () => {
@@ -369,6 +373,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleContentMode",
+      description: "Edit content within blocks",
       category: "View",
       defaultHotkeys: ["meta+shift+c", "ctrl+shift+c"],
       handler: () => {
@@ -378,12 +383,14 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openBreakpointsMenu",
+      description: "Manage responsive breakpoints",
       handler: () => {
         $breakpointsMenuView.set("initial");
       },
     },
     {
       name: "openPublishDialog",
+      description: "Deploy your project",
       category: "General",
       defaultHotkeys: ["shift+P"],
       handler: () => {
@@ -393,6 +400,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openExportDialog",
+      description: "Export project code",
       category: "General",
       defaultHotkeys: ["shift+E"],
       handler: () => {
@@ -402,6 +410,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleComponentsPanel",
+      description: "Toggle components panel",
       category: "Components",
       defaultHotkeys: ["a"],
       handler: () => {
@@ -417,6 +426,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleNavigatorPanel",
+      description: "Toggle navigator panel",
       category: "Left-hand toolbar",
       defaultHotkeys: ["z"],
       handler: () => {
@@ -426,6 +436,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openStylePanel",
+      description: "Open style panel",
       category: "Right-hand tabs",
       defaultHotkeys: ["s"],
       handler: () => {
@@ -441,6 +452,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "focusStyleSources",
+      description: "Focus style sources input",
       category: "Right-hand tabs",
       defaultHotkeys: ["meta+enter", "ctrl+enter"],
       handler: () => {
@@ -459,6 +471,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleStylePanelFocusMode",
+      description: "Toggle style panel focus mode",
       category: "Right-hand tabs",
       defaultHotkeys: ["alt+shift+s"],
       handler: () => {
@@ -471,6 +484,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "toggleStylePanelAdvancedMode",
+      description: "Toggle style panel advanced mode",
       category: "Right-hand tabs",
       defaultHotkeys: ["alt+shift+a"],
       handler: () => {
@@ -483,6 +497,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openSettingsPanel",
+      description: "Open settings panel",
       category: "Right-hand tabs",
       defaultHotkeys: ["d"],
       handler: () => {
@@ -516,6 +531,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteInstanceBuilder",
       label: "Delete Instance",
+      description: "Delete selected instance",
       category: "Components",
       defaultHotkeys: ["backspace", "delete"],
       // See "deleteInstanceCanvas" for details on why the command is separated for the canvas and builder.
@@ -525,6 +541,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "duplicateInstance",
+      description: "Duplicate selected instance",
       category: "Copy/Paste",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
@@ -584,6 +601,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "editInstanceLabel",
+      description: "Edit instance label",
       category: "Components",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
@@ -598,31 +616,37 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "wrapInElement",
       label: "Wrap in an Element",
+      description: "Wrap in new element",
       handler: () => wrapIn(elementComponent),
     },
     {
       name: "wrapInLink",
       label: "Wrap in a Link",
+      description: "Wrap in link element",
       handler: () => wrapIn(elementComponent, "a"),
     },
     {
       name: "unwrap",
+      description: "Remove parent wrapper",
       handler: () => unwrap(),
     },
     {
       name: "replaceWithElement",
       label: "Replace with an Element",
+      description: "Replace with element",
       handler: () => replaceWith(elementComponent),
     },
     {
       name: "replaceWithLink",
       label: "Replace with a Link",
+      description: "Replace with link",
       handler: () => replaceWith(elementComponent, "a"),
     },
 
     {
       name: "pasteTailwind",
       label: "Paste HTML with Tailwind classes",
+      description: "Convert Tailwind to CSS",
       handler: async () => {
         const html = await navigator.clipboard.readText();
         let fragment = generateFragmentFromHtml(html);
@@ -636,6 +660,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "undo",
+      description: "Undo last action",
       category: "Undo/redo",
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+z", "ctrl+z"],
@@ -646,6 +671,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "redo",
+      description: "Redo last action",
       category: "Undo/redo",
       // safari use meta+z to reopen closed tabs, here added ctrl as alternative
       defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
@@ -657,6 +683,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "save",
+      description: "Save project",
       category: "General",
       defaultHotkeys: ["meta+s", "ctrl+s"],
       handler: async () => {
@@ -674,6 +701,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "openCommandPanel",
+      description: "Open command panel",
       category: "General",
       defaultHotkeys: ["meta+k", "ctrl+k"],
       handler: () => {
@@ -686,6 +714,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteUnusedTokens",
       label: "Delete unused tokens",
+      description: "Remove unused tokens",
       handler: () => {
         openDeleteUnusedTokensDialog();
       },
@@ -694,6 +723,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteUnusedDataVariables",
       label: "Delete unused data variables",
+      description: "Remove unused data variables",
       handler: () => {
         openDeleteUnusedDataVariablesDialog();
       },
@@ -702,6 +732,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "deleteUnusedCssVariables",
       label: "Delete unused CSS variables",
+      description: "Remove unused CSS variables",
       handler: () => {
         openDeleteUnusedCssVariablesDialog();
       },
@@ -709,6 +740,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
 
     {
       name: "openKeyboardShortcuts",
+      description: "View keyboard shortcuts",
       category: "General",
       defaultHotkeys: ["shift+?"],
       handler: () => {
