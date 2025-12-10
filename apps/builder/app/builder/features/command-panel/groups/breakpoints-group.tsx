@@ -13,9 +13,9 @@ import {
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
-import { setCanvasWidth } from "~/builder/features/breakpoints";
 import { closeCommandPanel } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
 export type BreakpointOption = BaseOption & {
   type: "breakpoint";

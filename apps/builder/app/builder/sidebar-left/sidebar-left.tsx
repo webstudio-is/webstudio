@@ -256,8 +256,10 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             setActiveSidebarPanel("none");
           }
         }}
+        resizable={activePanel === "navigator"}
         css={{
-          width: theme.spacing[30],
+          minWidth: theme.sizes.sidebarWidth,
+          maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden
           // to keep receiving the drag events.
           visibility:

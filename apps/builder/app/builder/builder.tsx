@@ -48,6 +48,7 @@ import {
   $dataLoadingState,
   $isCloneDialogOpen,
   $loadingState,
+  $leftSidebarWidth,
   type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -143,10 +144,12 @@ const getChromeLayout = ({
   isPreviewMode,
   navigatorLayout,
   activeSidebarPanel,
+  leftSidebarWidth,
 }: {
   isPreviewMode: boolean;
   navigatorLayout: Settings["navigatorLayout"];
   activeSidebarPanel?: SidebarPanelName;
+  leftSidebarWidth: number;
 }) => {
   if (isPreviewMode) {
     return {
@@ -161,7 +164,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked" && activeSidebarPanel !== "none") {
     return {
-      gridTemplateColumns: `auto ${theme.sizes.sidebarWidth} 1fr ${theme.sizes.sidebarWidth}`,
+      gridTemplateColumns: `auto ${leftSidebarWidth}px 1fr ${theme.sizes.sidebarWidth}`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -186,10 +189,12 @@ const ChromeWrapper = ({
   navigatorLayout,
 }: ChromeWrapperProps) => {
   const activeSidebarPanel = useStore($activeSidebarPanel);
+  const leftSidebarWidth = useStore($leftSidebarWidth);
   const gridLayout = getChromeLayout({
     isPreviewMode,
     navigatorLayout,
     activeSidebarPanel,
+    leftSidebarWidth,
   });
 
   return (
@@ -378,15 +383,10 @@ export const Builder = ({
               )}
             </Workspace>
           </Main>
+          <Main css={{ pointerEvents: "none" }}>
+            <CanvasToolsContainer />
+          </Main>
 
-          <SidePanel
-            gridArea="sidebar"
-            css={{
-              order: navigatorLayout === "docked" ? 1 : undefined,
-            }}
-          >
-            <SidebarLeft publish={publish} />
-          </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
@@ -406,9 +406,14 @@ export const Builder = ({
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
+            <SidebarLeft publish={publish} />
+          </SidePanel>
           <Topbar
             project={project}
             hasProPlan={userPlanFeatures.hasProPlan}

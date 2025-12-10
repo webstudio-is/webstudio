@@ -9,8 +9,17 @@ import {
   focusRingStyle,
   styled,
   theme,
+  useResize,
+  type CSS,
 } from "@webstudio-is/design-system";
-import { forwardRef, type ComponentProps, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
+import { $leftSidebarWidth } from "~/builder/shared/nano-states";
 
 export const SidebarTabs = styled(Tabs, {
   display: "flex",
@@ -96,7 +105,7 @@ export const SidebarTabsList = styled(TabsList, {
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-export const SidebarTabsContent = styled(TabsContent, {
+const sidebarTabsContentStyle = css({
   flexGrow: 1,
   position: "absolute",
   top: 0,
@@ -114,4 +123,47 @@ export const SidebarTabsContent = styled(TabsContent, {
     width: 1,
     background: theme.colors.borderMain,
   },
+  variants: {
+    resizable: {
+      true: {
+        overflow: "hidden",
+        resize: "horizontal",
+      },
+    },
+  },
 });
+
+export const SidebarTabsContent = ({
+  resizable,
+  css,
+  className,
+  ...props
+}: ComponentProps<typeof TabsContent> & {
+  css?: CSS;
+  resizable?: boolean;
+}) => {
+  const initializedRef = useRef(false);
+  const [element, setElement] = useResize({
+    onResizeEnd: (entries) => {
+      if (entries[0]) {
+        $leftSidebarWidth.set(entries[0].contentRect.width);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (element && !initializedRef.current) {
+      initializedRef.current = true;
+      const rect = element.getBoundingClientRect();
+      $leftSidebarWidth.set(rect.width);
+    }
+  }, [element]);
+
+  return (
+    <TabsContent
+      {...props}
+      ref={resizable ? setElement : undefined}
+      className={sidebarTabsContentStyle({ css, resizable })}
+    />
+  );
+};

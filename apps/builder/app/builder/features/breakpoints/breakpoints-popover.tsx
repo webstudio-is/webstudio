@@ -38,8 +38,8 @@ import {
   minCanvasWidth,
 } from "~/shared/breakpoints";
 import { $scale } from "~/builder/shared/nano-states";
-import { setCanvasWidth } from "./use-set-initial-canvas-width";
 import { serverSyncStore } from "~/shared/sync";
+import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
 export const BreakpointsPopover = () => {
   const view = useStore($breakpointsMenuView);

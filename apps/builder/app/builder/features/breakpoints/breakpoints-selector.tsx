@@ -16,7 +16,7 @@ import {
   $selectedBreakpointId,
 } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
-import { setCanvasWidth } from "./use-set-initial-canvas-width";
+import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";
 

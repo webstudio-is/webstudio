@@ -5,6 +5,7 @@ import {
 } from "~/shared/nano-states/misc";
 import { $canvasIframeState } from "~/shared/nano-states/canvas";
 import { $settings, getSetting } from "../client-settings";
+import { rawTheme } from "@webstudio-is/design-system";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -21,6 +22,10 @@ export const $workspaceRect = atom<DOMRect | undefined>();
 export const $canvasScrollbarSize = atom<
   { width: number; height: number } | undefined
 >();
+
+export const $leftSidebarWidth = atom<number>(
+  Number.parseFloat(rawTheme.spacing[30])
+);
 
 export const $scale = computed(
   [$canvasWidth, $workspaceRect],
