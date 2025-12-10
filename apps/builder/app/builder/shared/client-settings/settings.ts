@@ -1,9 +1,13 @@
 import { atom } from "nanostores";
 import { z } from "zod";
+import { sidebarPanelNames } from "~/builder/sidebar-left/types";
 
 const Settings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
+  sidebarPanelWidths: z
+    .record(z.enum(sidebarPanelNames), z.number())
+    .default({}),
 });
 
 export type Settings = z.infer<typeof Settings>;

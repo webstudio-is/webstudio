@@ -19,7 +19,6 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { $leftSidebarWidth } from "~/builder/shared/nano-states";
 
 export const SidebarTabs = styled(Tabs, {
   display: "flex",
@@ -133,29 +132,38 @@ const sidebarTabsContentStyle = css({
   },
 });
 
+type SidebarTabsContentProps = Omit<
+  ComponentProps<typeof TabsContent>,
+  "onResize"
+> & {
+  css?: CSS;
+  resizable?: boolean;
+  onResize?: (size: { width: number; height: number }) => void;
+};
+
 export const SidebarTabsContent = ({
   resizable,
   css,
-  className,
+  onResize,
   ...props
-}: ComponentProps<typeof TabsContent> & {
-  css?: CSS;
-  resizable?: boolean;
-}) => {
-  const initializedRef = useRef(false);
+}: SidebarTabsContentProps) => {
+  const onResizeRef = useRef(onResize);
+  onResizeRef.current = onResize;
   const [element, setElement] = useResize({
-    onResizeEnd: (entries) => {
-      if (entries[0]) {
-        $leftSidebarWidth.set(entries[0].contentRect.width);
+    onResize: (entries) => {
+      if (entries[0] && onResizeRef.current) {
+        onResizeRef.current({
+          width: entries[0].contentRect.width,
+          height: entries[0].contentRect.height,
+        });
       }
     },
   });
 
   useEffect(() => {
-    if (element && !initializedRef.current) {
-      initializedRef.current = true;
+    if (element && onResizeRef.current) {
       const rect = element.getBoundingClientRect();
-      $leftSidebarWidth.set(rect.width);
+      onResizeRef.current({ width: rect.width, height: rect.height });
     }
   }, [element]);
 

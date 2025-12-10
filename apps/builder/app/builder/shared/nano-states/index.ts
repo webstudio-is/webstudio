@@ -5,7 +5,7 @@ import {
 } from "~/shared/nano-states/misc";
 import { $canvasIframeState } from "~/shared/nano-states/canvas";
 import { $settings, getSetting } from "../client-settings";
-import { rawTheme } from "@webstudio-is/design-system";
+import type { SidebarPanelName } from "~/builder/sidebar-left/types";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -22,10 +22,6 @@ export const $workspaceRect = atom<DOMRect | undefined>();
 export const $canvasScrollbarSize = atom<
   { width: number; height: number } | undefined
 >();
-
-export const $leftSidebarWidth = atom<number>(
-  Number.parseFloat(rawTheme.spacing[30])
-);
 
 export const $scale = computed(
   [$canvasWidth, $workspaceRect],
@@ -107,14 +103,6 @@ export const $loadingState = computed(
     return { state, progress, readyStates };
   }
 );
-
-export type SidebarPanelName =
-  | "assets"
-  | "components"
-  | "navigator"
-  | "pages"
-  | "marketplace"
-  | "none";
 
 // Only used internally to avoid directly setting the value without using setActiveSidebarPanel.
 const $activeSidebarPanel_ = atom<SidebarPanelName | undefined>();
