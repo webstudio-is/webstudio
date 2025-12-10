@@ -45,7 +45,6 @@ import {
   camelCaseProperty,
   declarationDescriptions,
   isValidDeclaration,
-  propertiesData,
 } from "@webstudio-is/css-data";
 import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
