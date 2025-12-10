@@ -294,6 +294,34 @@ const $usedProFeatures = computed(
   }
 );
 
+const usePublishCountdown = (isPublishing: boolean) => {
+  const [countdown, setCountdown] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (isPublishing === false) {
+      setCountdown(undefined);
+      return;
+    }
+
+    setCountdown(60);
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === undefined || prev <= 0) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isPublishing]);
+
+  return countdown;
+};
+
 const Publish = ({
   project,
   timesLeft,
@@ -313,6 +341,7 @@ const Publish = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const hasProPlan = useStore($userPlanFeatures).hasProPlan;
+  const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
     if (hasProPlan === false) {
@@ -469,6 +498,8 @@ const Publish = ({
     : false;
 
   const isPublishInProgress = isPublishing || hasPendingState;
+  const showPendingState =
+    isPublishInProgress && (countdown === undefined || countdown === 0);
 
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
@@ -487,10 +518,12 @@ const Publish = ({
           ref={buttonRef}
           formAction={handlePublish}
           color="positive"
-          state={isPublishInProgress ? "pending" : undefined}
+          state={showPendingState ? "pending" : undefined}
           disabled={hasSelectedDomains === false || disabled}
         >
-          Publish
+          {countdown !== undefined && countdown > 0
+            ? `Publishing (${countdown}s)`
+            : "Publish"}
         </Button>
       </Tooltip>
     </Flex>
