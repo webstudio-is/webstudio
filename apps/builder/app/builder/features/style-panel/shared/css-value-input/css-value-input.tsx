@@ -60,13 +60,6 @@ import {
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
 
-// We need to enable scrub on properties that can have numeric value.
-const canBeNumber = (property: CssProperty, value: CssValueInputValue) => {
-  const unitGroups = propertiesData[property]?.unitGroups ?? [];
-  // allow scrubbing css variables with unit value
-  return unitGroups.length !== 0 || value.type === "unit";
-};
-
 // Subjective adjust ment based on how it feels on macbook/trackpad.
 // It won't be ideal for everyone with different input devices and preferences.
 // Ideally we also need some kind of acceleration setting with 1 value.
@@ -130,12 +123,21 @@ const useScrub = ({
     const scrubRefCurrent = scrubRef.current;
 
     // Support only auto keyword to be scrubbable
-    if (
-      inputRefCurrent === null ||
-      scrubRefCurrent === null ||
-      canBeNumber(property, valueRef.current) === false
-    ) {
+    if (inputRefCurrent === null || scrubRefCurrent === null) {
       return;
+    }
+
+    // Don't activate scrub for keyword values
+    if (valueRef.current.type === "keyword") {
+      return;
+    }
+
+    // Don't activate scrub for non-numeric intermediate values
+    if (valueRef.current.type === "intermediate") {
+      const numericValue = Number.parseFloat(valueRef.current.value);
+      if (Number.isNaN(numericValue)) {
+        return;
+      }
     }
 
     let unit: Unit = defaultUnit ?? "number";
