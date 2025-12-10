@@ -275,7 +275,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }}
         resizable={activePanel === "navigator"}
         css={{
-          width: getSidebarPanelWidth(activePanel),
+          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}px`,
+          width: "var(--sidebar-left-panel-width)",
           minWidth: theme.sizes.sidebarWidth,
           maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden

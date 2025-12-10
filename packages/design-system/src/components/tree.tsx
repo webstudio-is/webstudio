@@ -156,10 +156,8 @@ const ActionContainer = styled("div", {
   // to prevent focus loss while navigating with keyboard
   opacity: `var(${treeActionOpacity}, 0)`,
   position: "sticky",
-  translate: `calc(${theme.sizes.sidebarWidth} - 100%) -100%`,
-  paddingLeft: ITEM_PADDING_LEFT,
-  paddingRight: ITEM_PADDING_RIGHT,
-  left: 0,
+  translate: `-100% -100%`,
+  left: `calc(var(--sidebar-left-panel-width) - ${ITEM_PADDING_RIGHT}px)`,
   height: "inherit",
   display: "inline-flex",
   justifyContent: "center",
