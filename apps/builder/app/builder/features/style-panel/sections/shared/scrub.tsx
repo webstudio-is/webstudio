@@ -32,6 +32,14 @@ type HoverTarget<P> = {
   element: HTMLElement | SVGElement;
 };
 
+/**
+ * Scrub hook for visual spacing diagram (box model UI)
+ * - Works on any HTML/SVG element via hover target
+ * - Supports multi-property editing with modifier keys (Shift/Alt)
+ * - Has direction awareness (horizontal/vertical based on property)
+ * - Returns status object with isActive, properties, and values
+ * - Used in space.tsx for drag-to-adjust on the visual box model
+ */
 export const useScrub = <P extends CssProperty>(props: {
   value?: StyleValue;
   target: HoverTarget<P> | undefined;
@@ -65,6 +73,19 @@ export const useScrub = <P extends CssProperty>(props: {
 
   useEffect(() => {
     if (finalTarget === undefined) {
+      return;
+    }
+
+    // Don't activate scrub for keyword values
+    if (props.value?.type === "keyword") {
+      return;
+    }
+
+    // Don't activate scrub for non-numeric intermediate values
+    const numericValue = Number.parseFloat(
+      finalTarget.element.textContent ?? ""
+    );
+    if (Number.isNaN(numericValue)) {
       return;
     }
 
@@ -144,7 +165,7 @@ export const useScrub = <P extends CssProperty>(props: {
         );
       },
     });
-  }, [finalTarget]);
+  }, [finalTarget, props.value?.type]);
 
   return {
     isActive: activeTarget !== undefined,
