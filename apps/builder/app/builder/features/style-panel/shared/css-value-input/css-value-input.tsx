@@ -71,6 +71,15 @@ const scrubUnitAcceleration = new Map<Unit, number>([
   ["number", 1 / 20],
 ]);
 
+/**
+ * Scrub hook for numeric input fields
+ * - Works specifically on <input> elements (returns refs to attach)
+ * - Handles single property at a time
+ * - Manages intermediate values during typing
+ * - Has abort functionality (ESC key restores original)
+ * - Integrates with input focus/blur/selection behavior
+ * - Custom shouldHandleEvent for preventing scrub on vars/unit selects
+ */
 const useScrub = ({
   value,
   intermediateValue,
