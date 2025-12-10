@@ -730,6 +730,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "View keyboard shortcuts",
       category: "General",
       defaultHotkeys: ["shift+?"],
+      disableOnInputLikeControls: true,
       handler: () => {
         openKeyboardShortcutsDialog();
       },
