@@ -163,7 +163,7 @@ export const useScrub = <P extends CssProperty>(props: {
         );
       },
     });
-  }, [finalTarget]);
+  }, [finalTarget, props.value?.type]);
 
   return {
     isActive: activeTarget !== undefined,
