@@ -82,11 +82,9 @@ export const useScrub = <P extends CssProperty>(props: {
     }
 
     // Don't activate scrub for non-numeric intermediate values
-    if (props.value?.type === "intermediate") {
-      const numericValue = Number.parseFloat(props.value.value);
-      if (Number.isNaN(numericValue)) {
-        return;
-      }
+    const numericValue = Number.parseFloat(finalTarget.element.textContent);
+    if (Number.isNaN(numericValue)) {
+      return;
     }
 
     const property = finalTarget.property;
