@@ -385,6 +385,13 @@ export const Builder = ({
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
         >
+          <Box
+            data-dialog-boundary
+            css={{
+              gridArea: "sidebar / sidebar / main / inspector",
+              pointerEvents: "none",
+            }}
+          />
           <ProjectSettings />
           <Main>
             <Workspace>

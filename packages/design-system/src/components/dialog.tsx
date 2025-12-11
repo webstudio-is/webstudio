@@ -259,33 +259,26 @@ const useDraggable = ({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const calcStyle = useCallback(() => {
-    const margin = 20;
-    const availableWidth = bounds.width - margin * 2;
-    const availableHeight = bounds.height - margin * 2;
+    const availableWidth = bounds.width;
+    const availableHeight = bounds.height;
 
     const style: CSSProperties = isMaximized
       ? {
-          top: bounds.y + margin,
-          left: bounds.x + margin,
+          top: bounds.y,
+          left: bounds.x,
           width: availableWidth,
           height: availableHeight,
         }
       : !width || !height
         ? {
-            top: bounds.y + margin,
-            left: bounds.x + margin,
+            top: bounds.y,
+            left: bounds.x,
             maxWidth: availableWidth,
             maxHeight: availableHeight,
           }
         : {
-            top: Math.max(
-              bounds.y + margin,
-              bounds.y + bounds.height / 2 - height / 2
-            ),
-            left: Math.max(
-              bounds.x + margin,
-              bounds.x + bounds.width / 2 - width / 2
-            ),
+            top: Math.max(bounds.y, bounds.y + bounds.height / 2 - height / 2),
+            left: Math.max(bounds.x, bounds.x + bounds.width / 2 - width / 2),
             width,
             height,
           };
@@ -429,19 +422,14 @@ const useDraggable = ({
       return;
     }
 
-    const margin = 20;
-
     const { rect, point } = lastDragDataRef.current;
     const movementX = point.x - event.pageX;
     const movementY = point.y - event.pageY;
-    let left = Math.max(rect.x - movementX, bounds.x + margin);
-    left = Math.min(left, bounds.x + bounds.width - margin - rect.width);
-    let top = Math.max(rect.y - movementY, bounds.y + margin);
-    // Keep at least title visible at the bottom with margin
-    top = Math.min(
-      top,
-      bounds.y + bounds.height - margin - DIALOG_TITLE_HEIGHT
-    );
+    let left = Math.max(rect.x - movementX, bounds.x);
+    left = Math.min(left, bounds.x + bounds.width - rect.width);
+    let top = Math.max(rect.y - movementY, bounds.y);
+    // Keep at least title visible at the bottom
+    top = Math.min(top, bounds.y + bounds.height - DIALOG_TITLE_HEIGHT);
     target.style.left = `${left}px`;
     target.style.top = `${top}px`;
   };
