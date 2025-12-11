@@ -1,6 +1,5 @@
 import { customAlphabet } from "nanoid";
 import slugify from "slugify";
-import { createErrorResponse } from "@webstudio-is/trpc-interface/index.server";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -38,17 +37,24 @@ export const validateProjectDomain = (
     const domain = slugify(domainInput, slugifyOptions);
 
     if (domain.length < MIN_DOMAIN_LENGTH) {
-      return createErrorResponse(
-        `Minimum ${MIN_DOMAIN_LENGTH} characters required`
-      );
+      return {
+        success: false,
+        error: `Minimum ${MIN_DOMAIN_LENGTH} characters required`,
+      };
     }
 
     if (reservedDomains.includes(domain)) {
-      return createErrorResponse(`Domain ${domain} is reserved`);
+      return {
+        success: false,
+        error: `Domain ${domain} is reserved`,
+      };
     }
 
     if (reservedPrefixes.some((prefix) => domain.startsWith(prefix))) {
-      return createErrorResponse(`Domain ${domain} is reserved`);
+      return {
+        success: false,
+        error: `Domain ${domain} is reserved`,
+      };
     }
 
     return {
@@ -56,7 +62,10 @@ export const validateProjectDomain = (
       domain,
     };
   } catch {
-    return createErrorResponse(`Invalid domain ${domainInput}`);
+    return {
+      success: false,
+      error: `Invalid domain ${domainInput}`,
+    };
   }
 };
 
