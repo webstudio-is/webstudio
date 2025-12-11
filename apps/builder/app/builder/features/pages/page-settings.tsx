@@ -1675,7 +1675,6 @@ const PageSettingsView = ({
       >
         Page Settings
       </DialogTitle>
-      <Separator />
       <Form onSubmit={onClose} ref={containerRef} data-floating-panel-container>
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           {children}
