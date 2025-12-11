@@ -59,6 +59,7 @@ export const ProjectSettingsView = ({
           Number.parseInt(rightPanelWidth, 10)
         }
         height={Number.parseInt(rawTheme.spacing[35], 10)}
+        data-floating-panel-container
       >
         <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
           <Flex grow>
