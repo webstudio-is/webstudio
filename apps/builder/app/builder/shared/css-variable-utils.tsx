@@ -24,6 +24,7 @@ import type {
   StyleProperty,
   CssProperty,
 } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
@@ -35,58 +36,34 @@ export const openDeleteUnusedCssVariablesDialog = () => {
   $isDeleteUnusedCssVariablesDialogOpen.set(true);
 };
 
-// Traverse a StyleValue to find all var() references
-const findVarReferences = (
-  value: StyleValue,
-  callback: (varName: string) => void
-) => {
-  if (value.type === "var") {
-    callback(`--${value.value}`);
-  }
-
-  // Recursively traverse all properties that might contain StyleValue
-  for (const key in value) {
-    const prop = value[key as keyof typeof value];
-    if (prop == null) {
-      continue;
-    }
-    // Handle nested StyleValue
-    if (typeof prop === "object" && "type" in prop) {
-      findVarReferences(prop as StyleValue, callback);
-    }
-    // Handle arrays of StyleValue (tuple, layers)
-    else if (Array.isArray(prop)) {
-      for (const item of prop) {
-        if (typeof item === "object" && item !== null && "type" in item) {
-          findVarReferences(item as StyleValue, callback);
-        }
-      }
-    }
-  }
+// Utility: Escape regex special characters
+const escapeRegex = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-// Find var() references in HTML/CSS strings (for HTML Embed code prop)
-const findVarReferencesInString = (
-  code: string,
-  callback: (varName: string) => void
-) => {
-  // Match var(--name) or var(--name, fallback) patterns
-  const matches = code.matchAll(/var\(\s*(--[\w-]+)/g);
-  for (const match of matches) {
-    callback(match[1]);
-  }
+// Utility: Create regex to match variable name with word boundary
+// This avoids matching --color inside --color-dark
+const createVarNameRegex = (varName: string): RegExp => {
+  return new RegExp(`${escapeRegex(varName)}(?![\w-])`, "g");
+};
+
+// Traverse a StyleValue to find all var() references
+const findVarReferences = (value: StyleValue, varName: string): boolean => {
+  const valueStr = toValue(value);
+  return createVarNameRegex(varName).test(valueStr);
 };
 
 // Find all CSS variable references in HTML Embed code props
-const findVarReferencesInProps = (
-  props: Props,
-  callback: (varName: string) => void
-) => {
+const findVarReferencesInProps = (props: Props, varName: string): boolean => {
+  const regex = createVarNameRegex(varName);
   for (const prop of props.values()) {
     if (prop.type === "string" && prop.name === "code" && prop.value) {
-      findVarReferencesInString(prop.value, callback);
+      if (regex.test(prop.value)) {
+        return true;
+      }
     }
   }
+  return false;
 };
 
 // Find CSS variable usage counts (how many times each variable is referenced via var())
@@ -126,6 +103,14 @@ export const findCssVariableUsagesByInstance = ({
     instances.add(instanceId);
   };
 
+  // Collect all defined variables
+  const definedVariables = new Set<string>();
+  for (const styleDecl of styles.values()) {
+    if (styleDecl.property.startsWith("--")) {
+      definedVariables.add(styleDecl.property);
+    }
+  }
+
   // Track CSS variable references in StyleDecl values
   for (const styleDecl of styles.values()) {
     const instanceId = instancesByStyleSource.get(styleDecl.styleSourceId);
@@ -133,20 +118,26 @@ export const findCssVariableUsagesByInstance = ({
       continue;
     }
 
-    // Track CSS variable references (var(--name) in values)
-    // Note: We don't track definitions here, only actual usages
-    // Each reference counts as a usage, even if on the same instance
-    findVarReferences(styleDecl.value, (varName) => {
-      addVarReference(varName, instanceId);
-    });
+    // Check each defined variable if it's used in this style
+    for (const varName of definedVariables) {
+      if (findVarReferences(styleDecl.value, varName)) {
+        addVarReference(varName, instanceId);
+      }
+    }
   }
 
   // Track CSS variable references in HTML Embed code props
-  for (const prop of props.values()) {
-    if (prop.type === "string" && prop.name === "code" && prop.value) {
-      findVarReferencesInString(prop.value, (varName) => {
-        addVarReference(varName, prop.instanceId);
-      });
+  for (const varName of definedVariables) {
+    if (findVarReferencesInProps(props, varName)) {
+      // Find which instance this belongs to
+      for (const prop of props.values()) {
+        if (prop.type === "string" && prop.name === "code" && prop.value) {
+          const regex = createVarNameRegex(varName);
+          if (regex.test(prop.value)) {
+            addVarReference(varName, prop.instanceId);
+          }
+        }
+      }
     }
   }
 
@@ -223,14 +214,34 @@ export const $referencedCssVariables = computed(
   [$styles, $props],
   (styles, props) => {
     const referencedVariables = new Set<string>();
+
+    // Collect all defined variables first
+    const definedVariables = new Set<string>();
     for (const styleDecl of styles.values()) {
-      findVarReferences(styleDecl.value, (varName) => {
-        referencedVariables.add(varName);
-      });
+      if (styleDecl.property.startsWith("--")) {
+        definedVariables.add(styleDecl.property);
+      }
     }
-    findVarReferencesInProps(props, (varName) => {
-      referencedVariables.add(varName);
-    });
+
+    // Check which defined variables are referenced
+    for (const varName of definedVariables) {
+      // Check in styles
+      for (const styleDecl of styles.values()) {
+        if (findVarReferences(styleDecl.value, varName)) {
+          referencedVariables.add(varName);
+          break;
+        }
+      }
+
+      // Check in props if not already found
+      if (
+        !referencedVariables.has(varName) &&
+        findVarReferencesInProps(props, varName)
+      ) {
+        referencedVariables.add(varName);
+      }
+    }
+
     return referencedVariables;
   }
 );
@@ -282,46 +293,34 @@ const updateVarReferences = (
   oldProperty: string,
   newProperty: string
 ): StyleValue => {
-  if (value.type === "var") {
-    const currentVarName = `--${value.value}`;
-    if (currentVarName === oldProperty) {
-      value = {
-        ...value,
-        value: newProperty.slice(2), // Remove -- prefix
-      };
-    }
-  }
+  // For simple replacement, use JSON stringify/parse approach
+  // since toValue produces CSS string which is harder to parse back
+  let valueStr = JSON.stringify(value);
 
-  // Recursively update all properties that might contain StyleValue
-  const result = { ...value } as Record<string, unknown>;
-  for (const key in value) {
-    const prop = value[key as keyof typeof value];
-    if (prop == null || key === "type") {
-      continue;
-    }
-    // Handle nested StyleValue
-    if (typeof prop === "object" && "type" in prop) {
-      result[key] = updateVarReferences(
-        prop as StyleValue,
-        oldProperty,
-        newProperty
-      );
-    }
-    // Handle arrays of StyleValue (tuple, layers)
-    else if (Array.isArray(prop)) {
-      result[key] = prop.map((item) => {
-        if (typeof item === "object" && item !== null && "type" in item) {
-          return updateVarReferences(
-            item as StyleValue,
-            oldProperty,
-            newProperty
-          );
-        }
-        return item;
-      });
-    }
-  }
-  return result as StyleValue;
+  // Handle two patterns:
+  // 1. In var type objects: "value":"variable-name" (without --)
+  // 2. In literal strings: "--variable-name" (with --)
+
+  // Strip -- prefix for var type replacement
+  const oldVarName = oldProperty.startsWith("--")
+    ? oldProperty.slice(2)
+    : oldProperty;
+  const newVarName = newProperty.startsWith("--")
+    ? newProperty.slice(2)
+    : newProperty;
+
+  // Replace in var type value fields: "value":"old-name" -> "value":"new-name"
+  // Use word boundary to avoid replacing "color" in "color-dark"
+  const varTypeRegex = new RegExp(
+    `("value":")${escapeRegex(oldVarName)}(?![\\w-])`,
+    "g"
+  );
+  valueStr = valueStr.replace(varTypeRegex, `$1${newVarName}`);
+
+  // Also replace literal --variable-name in unparsed strings
+  valueStr = valueStr.replace(createVarNameRegex(oldProperty), newProperty);
+
+  return JSON.parse(valueStr) as StyleValue;
 };
 
 // Core rename logic without transaction wrapper (for testing)
@@ -369,18 +368,11 @@ export const updateVarReferencesInProps = (
   newProperty: string
 ): Props => {
   const updatedProps = new Map(props);
-  // Match var( followed by optional whitespace, the old property name, and then either:
-  // - closing paren )
-  // - comma (for fallback values)
-  // - whitespace
-  const regex = new RegExp(
-    `var\\(\\s*${oldProperty.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=[\\s,)])`,
-    "g"
-  );
+  const regex = createVarNameRegex(oldProperty);
 
   for (const [key, prop] of updatedProps) {
     if (prop.type === "string" && prop.name === "code" && prop.value) {
-      const updatedValue = prop.value.replace(regex, `var(${newProperty}`);
+      const updatedValue = prop.value.replace(regex, newProperty);
       if (updatedValue !== prop.value) {
         updatedProps.set(key, { ...prop, value: updatedValue });
       }
