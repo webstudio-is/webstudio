@@ -1,7 +1,5 @@
 import { styled, Collapsible, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { useEffect, useRef } from "react";
-import { $canvasToolsVisible } from "~/shared/nano-states";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   position: "absolute",
@@ -20,19 +18,8 @@ const CollapsibleContent = styled(Collapsible.Content, {
 });
 
 export const ExtendedPanel = ({ children }: { children: React.ReactNode }) => {
-  const settingsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Quick workaround to hide the outline above extended panels.
-    // These panels should ideally be implemented as `Sheet`-style dialogs.
-    $canvasToolsVisible.set(false);
-    return () => {
-      $canvasToolsVisible.set(true);
-    };
-  }, []);
-
   return (
-    <CollapsibleRoot ref={settingsRef} open={true}>
+    <CollapsibleRoot open={true}>
       <CollapsibleContent>
         <Flex
           direction="column"
