@@ -24,7 +24,7 @@ const computeFloatingPosition = (
   trigger: HTMLElement,
   floating: HTMLElement,
   container: HTMLElement,
-  placement: "left-start" | "right-start" | "bottom",
+  placement: "left-start" | "right-start" | "bottom-within",
   offsetOptions: OffsetOptions
 ): { x: number; y: number } => {
   const triggerRect = trigger.getBoundingClientRect();
@@ -48,21 +48,28 @@ const computeFloatingPosition = (
   if (placement === "left-start") {
     // Position aligned with the left edge of the container, top aligned with trigger
     x = containerRect.left + mainAxis;
+    // Align panel top with trigger top, using trigger's relative position within container
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
   } else if (placement === "right-start") {
     // Position to the right of the container, aligned with the top of trigger
     x = containerRect.right + mainAxis;
+    // Align panel top with trigger top, using trigger's relative position within container
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
-  } else if (placement === "bottom") {
-    // Position below the trigger
-    x = triggerRect.left + (alignmentAxis ?? 0);
-    y = triggerRect.bottom + mainAxis;
+  } else if (placement === "bottom-within") {
+    // Position below the trigger, centered horizontally within the container
+    // Center the panel horizontally within the container
+    x =
+      containerRect.left +
+      (containerRect.width - floatingRect.width) / 2 +
+      (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves horizontally)
     x += crossAxis;
+    // Y: below the trigger with 5px default offset
+    y = triggerRect.bottom + (mainAxis === 0 ? 5 : mainAxis);
   }
 
   // Keep within viewport bounds (simple shift)
@@ -109,10 +116,10 @@ type FloatingPanelProps = {
   resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
   height?: number;
-  // - bottom - below the trigger button
+  // - bottom-within - below the trigger button, within container bounds
   // - left-start - on the left side relative to the container, aligned with the top of the trigger button
   // - center - center of the screen
-  placement?: "left-start" | "right-start" | "center" | "bottom";
+  placement?: "left-start" | "right-start" | "center" | "bottom-within";
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
@@ -275,6 +282,9 @@ export const FloatingPanel = ({
         width={width}
         height={height}
         {...position}
+        boundaryTolerance={
+          placement === "bottom-within" ? { horizontal: Infinity } : undefined
+        }
         aria-describedby={undefined}
         ref={setContentElement}
         onInteractOutside={(event) => {

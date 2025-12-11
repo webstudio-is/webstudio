@@ -56,7 +56,7 @@ export const Bottom = () => {
   return (
     <Container>
       <FloatingPanel
-        placement="bottom"
+        placement="bottom-within"
         open
         title="Title"
         content={<Text>Content</Text>}

@@ -431,7 +431,7 @@ export const AnimationSection = ({
           action={
             <FloatingPanel
               title="Advanced Animation"
-              placement="bottom"
+              placement="bottom-within"
               content={
                 <AnimationConfig value={value} onChange={handleChange} />
               }

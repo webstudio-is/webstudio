@@ -42,7 +42,6 @@ if (placeholderImage) {
 }
 
 const panelStyle = css({
-  border: `1px solid ${theme.colors.borderMain}`,
   boxShadow: theme.shadows.panelSectionDropShadow,
   background: theme.colors.backgroundPanel,
   borderRadius: theme.borderRadius[7],
@@ -190,6 +189,7 @@ type UseDraggableProps = {
   isMaximized: boolean;
   minWidth?: number;
   minHeight?: number;
+  boundaryTolerance?: { horizontal?: number; vertical?: number };
 } & Partial<Rect>;
 
 const applyBoundaries = (
@@ -197,23 +197,33 @@ const applyBoundaries = (
   y: number,
   width: number,
   height: number,
-  bounds: Rect
+  bounds: Rect,
+  tolerance?: { horizontal?: number; vertical?: number }
 ) => {
-  // Constrain width and height to fit within bounds
-  const constrainedWidth = Math.min(width, bounds.width);
-  const constrainedHeight = Math.min(height, bounds.height);
+  const horizontalTolerance = tolerance?.horizontal ?? 0;
+  const verticalTolerance = tolerance?.vertical ?? 0;
 
-  // Constrain X axis within bounds (without forcing margin on the input position)
-  let constrainedX = Math.max(bounds.x, x);
+  // Constrain width and height to fit within bounds
+  const constrainedWidth = Math.min(
+    width,
+    bounds.width + horizontalTolerance * 2
+  );
+  const constrainedHeight = Math.min(
+    height,
+    bounds.height + verticalTolerance * 2
+  );
+
+  // Constrain X axis within bounds (with tolerance)
+  let constrainedX = Math.max(bounds.x - horizontalTolerance, x);
   constrainedX = Math.min(
-    bounds.x + bounds.width - constrainedWidth,
+    bounds.x + bounds.width + horizontalTolerance - constrainedWidth,
     constrainedX
   );
 
-  // Constrain Y axis within bounds (without forcing margin on the input position)
-  let constrainedY = Math.max(bounds.y, y);
+  // Constrain Y axis within bounds (with tolerance)
+  let constrainedY = Math.max(bounds.y - verticalTolerance, y);
   constrainedY = Math.min(
-    bounds.y + bounds.height - constrainedHeight,
+    bounds.y + bounds.height + verticalTolerance - constrainedHeight,
     constrainedY
   );
 
@@ -231,6 +241,7 @@ const useDraggable = ({
   minHeight,
   minWidth,
   isMaximized,
+  boundaryTolerance,
   ...props
 }: UseDraggableProps) => {
   const [x, setX] = useState(props.x);
@@ -298,7 +309,8 @@ const useDraggable = ({
           y,
           actualWidth,
           actualHeight,
-          bounds
+          bounds,
+          boundaryTolerance
         );
 
         style.left = constrained.x;
@@ -322,7 +334,8 @@ const useDraggable = ({
           0,
           actualWidth,
           actualHeight,
-          bounds
+          bounds,
+          boundaryTolerance
         );
 
         style.left = constrained.x;
@@ -344,7 +357,8 @@ const useDraggable = ({
           y,
           actualWidth,
           actualHeight,
-          bounds
+          bounds,
+          boundaryTolerance
         );
 
         style.top = constrained.y;
@@ -487,6 +501,7 @@ const ContentContainer = forwardRef(
       y,
       minWidth,
       minHeight,
+      boundaryTolerance,
       ...props
     }: ComponentProps<typeof Primitive.Content> &
       Partial<UseDraggableProps> & {
@@ -503,6 +518,7 @@ const ContentContainer = forwardRef(
       minWidth,
       minHeight,
       isMaximized,
+      boundaryTolerance,
     });
     const setPointerEvents = useSetPointerEvents(ref);
 
