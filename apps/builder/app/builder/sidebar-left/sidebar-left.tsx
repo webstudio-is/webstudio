@@ -277,7 +277,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             setActiveSidebarPanel("none");
           }
         }}
-        resizable={activePanel === "navigator"}
+        resizable={activePanel === "navigator" || activePanel === "components"}
         css={{
           "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
           width: "var(--sidebar-left-panel-width)",

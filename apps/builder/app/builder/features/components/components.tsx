@@ -23,10 +23,10 @@ import {
   findNextListItemIndex,
   Text,
   Box,
-  Grid,
   PanelTitle,
   Tooltip,
   Button,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
@@ -286,9 +286,9 @@ export const ComponentsPanel = ({
             fullWidth
           >
             <List asChild>
-              <Grid
+              <Flex
                 gap="1"
-                columns="3"
+                wrap="wrap"
                 css={{
                   paddingInline: theme.panel.paddingInline,
                   overflow: "auto",
@@ -309,6 +309,8 @@ export const ComponentsPanel = ({
                   >
                     <ComponentCard
                       {...{ [dragItemAttribute]: meta.name }}
+                      // Too hard to calculate, goal was to have 3 cards in one row on the smallest width and to fill it at the same ime
+                      css={{ width: 69 }}
                       label={meta.label}
                       description={meta.description}
                       icon={
@@ -328,7 +330,7 @@ export const ComponentsPanel = ({
                     <Text>No matching component</Text>
                   </Flex>
                 )}
-              </Grid>
+              </Flex>
             </List>
           </CollapsibleSection>
         ))}
