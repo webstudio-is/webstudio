@@ -157,9 +157,13 @@ const setSidebarPanelWidth = (panelName: string, width: number) => {
 
 const getSidebarPanelWidth = (panelName: SidebarPanelName) => {
   if (panelName === "none") {
-    return;
+    return "auto";
   }
-  return getSetting("sidebarPanelWidths")[panelName];
+  const width = getSetting("sidebarPanelWidths")[panelName];
+  if (width === undefined) {
+    return "auto";
+  }
+  return width + "px";
 };
 
 type SidebarLeftProps = {
@@ -275,7 +279,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }}
         resizable={activePanel === "navigator"}
         css={{
-          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}px`,
+          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
           width: "var(--sidebar-left-panel-width)",
           minWidth: theme.sizes.sidebarWidth,
           maxWidth: theme.spacing[35],

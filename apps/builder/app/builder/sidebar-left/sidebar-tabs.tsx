@@ -149,14 +149,16 @@ export const SidebarTabsContent = ({
 }: SidebarTabsContentProps) => {
   const onResizeRef = useRef(onResize);
   onResizeRef.current = onResize;
+
   const [element, setElement] = useResize({
-    onResize: (entries) => {
+    onResizeEnd: (entries) => {
       if (entries[0] && onResizeRef.current) {
         onResizeRef.current({
           width: entries[0].contentRect.width,
           height: entries[0].contentRect.height,
         });
       }
+      element?.style.removeProperty("width");
     },
   });
 

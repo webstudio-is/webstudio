@@ -125,7 +125,9 @@ export const useResize = ({
         isResizingRef.current = true;
         onResizeStartRef.current?.(entries);
       }
-      onResizeRef.current?.(entries);
+      requestAnimationFrame(() => {
+        onResizeRef.current?.(entries);
+      });
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         onResizeEndRef.current?.(entries);
