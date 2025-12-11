@@ -46,9 +46,9 @@ const computeFloatingPosition = (
   let y = 0;
 
   if (placement === "left-start") {
-    // Position aligned with the left edge of the container, top aligned with trigger
-    x = containerRect.left + mainAxis;
-    // Align panel top with trigger top, using trigger's relative position within container
+    // Position to the left of the container, aligned with the top of trigger
+    x = containerRect.left - floatingRect.width + mainAxis;
+    // Align panel top with trigger top
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
