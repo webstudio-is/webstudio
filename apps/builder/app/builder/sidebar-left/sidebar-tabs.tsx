@@ -125,7 +125,7 @@ const sidebarTabsContentStyle = css({
   variants: {
     resizable: {
       true: {
-        overflow: "hidden",
+        overflow: "auto",
         resize: "horizontal",
       },
     },
