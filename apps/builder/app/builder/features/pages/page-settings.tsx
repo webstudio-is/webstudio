@@ -1272,7 +1272,6 @@ const NewPageSettingsView = ({
       >
         New Page Settings
       </DialogTitle>
-      <Separator />
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );

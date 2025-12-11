@@ -287,7 +287,6 @@ const NewFolderSettingsView = ({
       >
         New Folder Settings
       </DialogTitle>
-      <Separator />
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
@@ -480,7 +479,6 @@ const FolderSettingsView = ({
       >
         Folder Settings
       </DialogTitle>
-      <Separator />
       <Form onSubmit={onClose}>{children}</Form>
     </>
   );
