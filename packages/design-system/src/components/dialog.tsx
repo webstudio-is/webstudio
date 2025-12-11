@@ -288,11 +288,16 @@ const useDraggable = ({
 
     if (isMaximized === false) {
       if (x !== undefined && y !== undefined) {
+        // Get actual rendered dimensions if width/height not specified
+        const actualWidth = width ?? ref.current?.offsetWidth ?? bounds.width;
+        const actualHeight =
+          height ?? ref.current?.offsetHeight ?? bounds.height;
+
         const constrained = applyBoundaries(
           x,
           y,
-          width ?? bounds.width,
-          height ?? bounds.height,
+          actualWidth,
+          actualHeight,
           bounds
         );
 
@@ -308,11 +313,15 @@ const useDraggable = ({
         style.bottom = "auto";
         style.margin = 0;
       } else if (x !== undefined) {
+        const actualWidth = width ?? ref.current?.offsetWidth ?? bounds.width;
+        const actualHeight =
+          height ?? ref.current?.offsetHeight ?? bounds.height;
+
         const constrained = applyBoundaries(
           x,
           0,
-          width ?? bounds.width,
-          height ?? bounds.height,
+          actualWidth,
+          actualHeight,
           bounds
         );
 
@@ -326,11 +335,15 @@ const useDraggable = ({
         style.right = "auto";
         style.margin = 0;
       } else if (y !== undefined) {
+        const actualWidth = width ?? ref.current?.offsetWidth ?? bounds.width;
+        const actualHeight =
+          height ?? ref.current?.offsetHeight ?? bounds.height;
+
         const constrained = applyBoundaries(
           0,
           y,
-          width ?? bounds.width,
-          height ?? bounds.height,
+          actualWidth,
+          actualHeight,
           bounds
         );
 
