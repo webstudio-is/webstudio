@@ -435,11 +435,9 @@ const useDraggable = ({
     const { rect, point } = lastDragDataRef.current;
     const movementX = point.x - event.pageX;
     const movementY = point.y - event.pageY;
-    let left = Math.max(rect.x - movementX, bounds.x);
-    left = Math.min(left, bounds.x + bounds.width - rect.width);
-    let top = Math.max(rect.y - movementY, bounds.y);
-    // Keep at least title visible at the bottom
-    top = Math.min(top, bounds.y + bounds.height - DIALOG_TITLE_HEIGHT);
+    // Allow dragging anywhere without constraints
+    const left = rect.x - movementX;
+    const top = rect.y - movementY;
     target.style.left = `${left}px`;
     target.style.top = `${top}px`;
   };
@@ -451,8 +449,23 @@ const useDraggable = ({
       return;
     }
     const rect = target.getBoundingClientRect();
-    setX(rect.x);
-    setY(rect.y);
+
+    // Apply constraints to snap to the closest valid position
+    let constrainedX = Math.max(rect.x, bounds.x);
+    constrainedX = Math.min(constrainedX, bounds.x + bounds.width - rect.width);
+    let constrainedY = Math.max(rect.y, bounds.y);
+    // Keep at least title visible at the bottom
+    constrainedY = Math.min(
+      constrainedY,
+      bounds.y + bounds.height - DIALOG_TITLE_HEIGHT
+    );
+
+    setX(constrainedX);
+    setY(constrainedY);
+
+    // Apply the constrained position immediately
+    target.style.left = `${constrainedX}px`;
+    target.style.top = `${constrainedY}px`;
   };
 
   return {
