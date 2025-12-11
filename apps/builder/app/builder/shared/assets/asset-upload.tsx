@@ -83,24 +83,19 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
 
   return (
     <form onChange={onChange}>
-      <Flex>
-        <input
-          accept={accept ?? acceptMap[type]}
-          type="file"
-          name={type}
-          multiple
-          ref={inputRef}
-          style={{ display: "none" }}
-        />
-        <Button
-          type="button"
-          onClick={() => inputRef?.current?.click()}
-          css={{ flexGrow: 1 }}
-          prefix={<UploadIcon />}
-        >
-          Upload
-        </Button>
-      </Flex>
+      <input
+        accept={accept ?? acceptMap[type]}
+        type="file"
+        name={type}
+        multiple
+        ref={inputRef}
+        style={{ display: "none" }}
+      />
+      <Button
+        type="button"
+        onClick={() => inputRef?.current?.click()}
+        prefix={<UploadIcon />}
+      ></Button>
     </form>
   );
 };

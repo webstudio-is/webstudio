@@ -157,11 +157,11 @@ const setSidebarPanelWidth = (panelName: string, width: number) => {
 
 const getSidebarPanelWidth = (panelName: SidebarPanelName) => {
   if (panelName === "none") {
-    return "auto";
+    return theme.sizes.sidebarWidth;
   }
   const width = getSetting("sidebarPanelWidths")[panelName];
   if (width === undefined) {
-    return "auto";
+    return theme.sizes.sidebarWidth;
   }
   return width + "px";
 };
@@ -277,7 +277,11 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
             setActiveSidebarPanel("none");
           }
         }}
-        resizable={activePanel === "navigator" || activePanel === "components"}
+        resizable={
+          activePanel === "navigator" ||
+          activePanel === "components" ||
+          activePanel === "assets"
+        }
         css={{
           "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
           width: "var(--sidebar-left-panel-width)",
