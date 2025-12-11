@@ -53,17 +53,15 @@ import {
   PanelBanner,
   css,
   Switch,
-  PanelTitle,
   TitleSuffixSpacer,
-  FloatingPanelProvider,
   ProBadge,
   Dialog,
   DialogClose,
   DialogContent,
   DialogTitle,
+  DialogTitleActions,
 } from "@webstudio-is/design-system";
 import {
-  ChevronsLeftIcon,
   CopyIcon,
   TrashIcon,
   HomeIcon,
@@ -1248,7 +1246,6 @@ export const NewPageSettings = ({
 const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
-  onClose,
   children,
 }: {
   onSubmit: () => void;
@@ -1258,20 +1255,9 @@ const NewPageSettingsView = ({
 }) => {
   return (
     <>
-      <PanelTitle
+      <DialogTitle
         suffix={
-          <>
-            <Tooltip content="Cancel" side="bottom">
-              <Button
-                onClick={onClose}
-                aria-label="Cancel"
-                prefix={<ChevronsLeftIcon />}
-                color="ghost"
-                // Tab should go:
-                //   trought form fields -> create button -> cancel button
-                tabIndex={3}
-              />
-            </Tooltip>
+          <DialogTitleActions>
             <TitleSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
@@ -1280,12 +1266,12 @@ const NewPageSettingsView = ({
             >
               {isSubmitting ? "Creating" : "Create page"}
             </Button>
-          </>
+            <DialogClose />
+          </DialogTitleActions>
         }
       >
         New Page Settings
-      </PanelTitle>
-      <Separator />
+      </DialogTitle>
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
@@ -1657,9 +1643,9 @@ const PageSettingsView = ({
   const containerRef = useRef<HTMLFormElement>(null);
   return (
     <>
-      <PanelTitle
+      <DialogTitle
         suffix={
-          <>
+          <DialogTitleActions>
             {isDesignMode && onDelete && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
@@ -1682,29 +1668,17 @@ const PageSettingsView = ({
                 />
               </Tooltip>
             )}
-
-            <Tooltip content="Close page settings" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<ChevronsLeftIcon />}
-                onClick={onClose}
-                aria-label="Close page settings"
-                tabIndex={2}
-              />
-            </Tooltip>
-          </>
+            <DialogClose />
+          </DialogTitleActions>
         }
       >
         Page Settings
-      </PanelTitle>
-      <Separator />
-      <FloatingPanelProvider container={containerRef}>
-        <Form onSubmit={onClose} ref={containerRef}>
-          <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
-            {children}
-          </fieldset>
-        </Form>
-      </FloatingPanelProvider>
+      </DialogTitle>
+      <Form onSubmit={onClose} ref={containerRef} data-floating-panel-container>
+        <fieldset style={{ display: "contents" }} disabled={!isDesignMode}>
+          {children}
+        </fieldset>
+      </Form>
     </>
   );
 };

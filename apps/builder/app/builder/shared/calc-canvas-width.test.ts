@@ -1,5 +1,29 @@
-import { test, expect, describe } from "vitest";
-import { calcCanvasWidth } from "./calc-canvas-width";
+import { test, expect, describe, beforeEach } from "vitest";
+import { calcCanvasWidth, setCanvasWidth } from "./calc-canvas-width";
+import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
+import { $breakpoints } from "~/shared/nano-states";
+
+// Helper to create a DOMRect-like object for testing
+const createRect = (width: number, height: number): DOMRect => ({
+  width,
+  height,
+  x: 0,
+  y: 0,
+  top: 0,
+  right: width,
+  bottom: height,
+  left: 0,
+  toJSON: () => ({
+    width,
+    height,
+    x: 0,
+    y: 0,
+    top: 0,
+    right: width,
+    bottom: height,
+    left: 0,
+  }),
+});
 
 const breakpoints = [
   { id: "0", label: "Base" },
@@ -238,3 +262,90 @@ describe("other breakpoints", () => {
     ).toStrictEqual(320);
   });
 });
+
+describe("setCanvasWidth", () => {
+  beforeEach(() => {
+    // Reset stores before each test
+    $canvasWidth.set(0);
+    $breakpoints.set(new Map());
+    $workspaceRect.set(undefined);
+  });
+
+  test("returns false when workspaceRect is undefined", () => {
+    const breakpoints = new Map([["0", { id: "0", label: "Base" }]]);
+    $breakpoints.set(breakpoints);
+    $workspaceRect.set(undefined);
+
+    expect(setCanvasWidth("0")).toBe(false);
+  });
+
+  test("returns false when selectedBreakpoint is not found", () => {
+    $workspaceRect.set(createRect(1000, 800));
+    $breakpoints.set(new Map([["0", { id: "0", label: "Base" }]]));
+
+    expect(setCanvasWidth("nonexistent")).toBe(false);
+  });
+
+  test("sets canvas width for base breakpoint", () => {
+    const workspaceWidth = 1200;
+    $workspaceRect.set(createRect(workspaceWidth, 800));
+    $breakpoints.set(new Map([["0", { id: "0", label: "Base" }]]));
+
+    const result = setCanvasWidth("0");
+
+    expect(result).toBe(true);
+    expect($canvasWidth.get()).toBe(workspaceWidth);
+  });
+
+  test("sets canvas width for max-width breakpoint", () => {
+    $workspaceRect.set(createRect(1200, 800));
+    $breakpoints.set(
+      new Map([
+        ["0", { id: "0", label: "Base" }],
+        ["1", { id: "1", label: "Tablet", maxWidth: 991 }],
+        ["2", { id: "2", label: "Mobile", maxWidth: 767 }],
+      ])
+    );
+
+    const result = setCanvasWidth("1");
+
+    expect(result).toBe(true);
+    expect($canvasWidth.get()).toBe(768); // maxWidth of previous breakpoint + 1
+  });
+
+  test("sets canvas width for min-width breakpoint", () => {
+    $workspaceRect.set(createRect(1000, 800));
+    $breakpoints.set(
+      new Map([
+        ["0", { id: "0", label: "Base" }],
+        ["1", { id: "1", label: "Large", minWidth: 1280 }],
+      ])
+    );
+
+    const result = setCanvasWidth("1");
+
+    expect(result).toBe(true);
+    expect($canvasWidth.get()).toBe(1280);
+  });
+
+  test("updates canvas width when called multiple times", () => {
+    $workspaceRect.set(createRect(1500, 800));
+    $breakpoints.set(
+      new Map([
+        ["0", { id: "0", label: "Base" }],
+        ["1", { id: "1", label: "Tablet", maxWidth: 991 }],
+        ["2", { id: "2", label: "Mobile", maxWidth: 767 }],
+      ])
+    );
+
+    setCanvasWidth("1");
+    expect($canvasWidth.get()).toBe(768); // Previous breakpoint maxWidth (767) + 1
+
+    setCanvasWidth("0");
+    expect($canvasWidth.get()).toBe(1500);
+  });
+});
+
+// Note: useSetCanvasWidth is a React hook with complex side effects (multiple store subscriptions
+// and cleanup logic). It's primarily tested through integration tests and component tests rather
+// than unit tests, as it orchestrates calls to setCanvasWidth which is fully unit tested above.

@@ -85,6 +85,8 @@ const SearchFieldBase: ForwardRefRenderFunction<
       onKeyDown={(event) => {
         if (event.key === "Escape" && value.length !== 0) {
           event.preventDefault();
+          // Required to prevent first click closing the dialog.
+          event.stopPropagation();
           handleCancel();
         }
         onKeyDown?.(event);

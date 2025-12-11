@@ -10,20 +10,15 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  PanelTitle,
+  DialogTitleActions,
   ScrollArea,
-  Separator,
   Text,
   TitleSuffixSpacer,
   Tooltip,
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  ChevronsLeftIcon,
-  InfoCircleIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
+import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   Folder,
   Pages,
@@ -265,7 +260,6 @@ export const NewFolderSettings = ({
 const NewFolderSettingsView = ({
   onSubmit,
   isSubmitting,
-  onClose,
   children,
 }: {
   onSubmit: () => void;
@@ -275,20 +269,9 @@ const NewFolderSettingsView = ({
 }) => {
   return (
     <>
-      <PanelTitle
+      <DialogTitle
         suffix={
-          <>
-            <Tooltip content="Cancel" side="bottom">
-              <Button
-                onClick={onClose}
-                aria-label="Cancel"
-                prefix={<ChevronsLeftIcon />}
-                color="ghost"
-                // Tab should go:
-                //   trought form fields -> create button -> cancel button
-                tabIndex={3}
-              />
-            </Tooltip>
+          <DialogTitleActions>
             <TitleSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
@@ -297,12 +280,12 @@ const NewFolderSettingsView = ({
             >
               {isSubmitting ? "Creating" : "Create folder"}
             </Button>
-          </>
+            <DialogClose />
+          </DialogTitleActions>
         }
       >
         New Folder Settings
-      </PanelTitle>
-      <Separator />
+      </DialogTitle>
       <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
@@ -466,9 +449,9 @@ const FolderSettingsView = ({
 
   return (
     <>
-      <PanelTitle
+      <DialogTitle
         suffix={
-          <>
+          <DialogTitleActions>
             {isDesignMode && (
               <Tooltip content="Delete folder" side="bottom">
                 <Button
@@ -480,15 +463,7 @@ const FolderSettingsView = ({
                 />
               </Tooltip>
             )}
-            <Tooltip content="Close folder settings" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<ChevronsLeftIcon />}
-                onClick={onClose}
-                aria-label="Close folder settings"
-                tabIndex={2}
-              />
-            </Tooltip>
+            <DialogClose />
             {showDeleteConfirmation && (
               <DeleteConfirmationDialog
                 folder={folder}
@@ -498,12 +473,11 @@ const FolderSettingsView = ({
                 onConfirm={onDelete}
               />
             )}
-          </>
+          </DialogTitleActions>
         }
       >
         Folder Settings
-      </PanelTitle>
-      <Separator />
+      </DialogTitle>
       <Form onSubmit={onClose}>{children}</Form>
     </>
   );

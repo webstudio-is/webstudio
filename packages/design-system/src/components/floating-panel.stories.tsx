@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { FloatingPanelProvider, FloatingPanel } from "./floating-panel";
+import { FloatingPanel } from "./floating-panel";
 import { Box } from "./box";
 import { Button } from "./button";
 import { Text } from "./text";
@@ -12,19 +12,18 @@ export default {
 const Container = ({ children }: { children: ReactNode }) => {
   const ref = useRef(null);
   return (
-    <FloatingPanelProvider container={ref}>
-      <Box
-        ref={ref}
-        css={{
-          display: "inline-block",
-          marginLeft: 300,
-          padding: 100,
-          border: `1px solid black`,
-        }}
-      >
-        {children}
-      </Box>
-    </FloatingPanelProvider>
+    <Box
+      ref={ref}
+      data-floating-panel-container
+      css={{
+        display: "inline-block",
+        marginLeft: 300,
+        padding: 100,
+        border: `1px solid black`,
+      }}
+    >
+      {children}
+    </Box>
   );
 };
 
@@ -57,7 +56,7 @@ export const Bottom = () => {
   return (
     <Container>
       <FloatingPanel
-        placement="bottom"
+        placement="bottom-within"
         open
         title="Title"
         content={<Text>Content</Text>}

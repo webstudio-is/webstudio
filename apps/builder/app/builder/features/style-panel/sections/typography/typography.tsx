@@ -278,7 +278,7 @@ const TypographySectionAdvancedPopover = () => {
   return (
     <FloatingPanel
       title="Advanced Typography"
-      placement="bottom"
+      placement="bottom-within"
       content={
         <Grid
           css={{

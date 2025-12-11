@@ -5,6 +5,7 @@ import {
   procedure,
   AuthorizationError,
   authorizeProject,
+  createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
 import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 
@@ -107,10 +108,7 @@ export const projectRouter = router({
         data: result.data?.count ?? 0,
       };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      } as const;
+      return createErrorResponse(error);
     }
   }),
 
@@ -140,10 +138,7 @@ export const projectRouter = router({
           data: publishedBuilds.data,
         };
       } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        } as const;
+        return createErrorResponse(error);
       }
     }),
 
@@ -184,10 +179,7 @@ export const projectRouter = router({
             success: true,
           };
         } catch (error) {
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-          } as const;
+          return createErrorResponse(error);
         }
       }
     ),

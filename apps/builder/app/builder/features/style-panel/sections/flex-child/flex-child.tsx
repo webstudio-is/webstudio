@@ -252,7 +252,7 @@ const FlexChildSectionSizingPopover = () => {
   return (
     <FloatingPanel
       title="Sizing"
-      placement="bottom"
+      placement="bottom-within"
       content={
         <Grid
           gap="3"
@@ -400,7 +400,7 @@ const FlexChildSectionOrderPopover = () => {
   return (
     <FloatingPanel
       title="Order"
-      placement="bottom"
+      placement="bottom-within"
       content={
         <Grid css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>

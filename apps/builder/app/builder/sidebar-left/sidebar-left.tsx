@@ -23,7 +23,6 @@ import {
   $activeSidebarPanel,
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
-  type SidebarPanelName,
 } from "~/builder/shared/nano-states";
 import {
   SidebarButton,
@@ -39,12 +38,13 @@ import {
   useOnDropEffect,
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
-import { getSetting } from "~/builder/shared/client-settings";
+import { getSetting, setSetting } from "~/builder/shared/client-settings";
 import { ComponentsPanel } from "~/builder/features/components";
 import { PagesPanel } from "~/builder/features/pages";
 import { NavigatorPanel } from "~/builder/features/navigator";
 import { AssetsPanel } from "~/builder/features/assets";
 import { MarketplacePanel } from "~/builder/features/marketplace";
+import type { SidebarPanelName } from "./types";
 
 const none = { Panel: () => null };
 
@@ -150,6 +150,22 @@ const panels: PanelConfig[] = [
   },
 ];
 
+const setSidebarPanelWidth = (panelName: string, width: number) => {
+  const widths = getSetting("sidebarPanelWidths");
+  setSetting("sidebarPanelWidths", { ...widths, [panelName]: width });
+};
+
+const getSidebarPanelWidth = (panelName: SidebarPanelName) => {
+  if (panelName === "none") {
+    return theme.sizes.sidebarWidth;
+  }
+  const width = getSetting("sidebarPanelWidths")[panelName];
+  if (width === undefined) {
+    return theme.sizes.sidebarWidth;
+  }
+  return width + "px";
+};
+
 type SidebarLeftProps = {
   publish: Publish;
 };
@@ -251,13 +267,22 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
 
       <SidebarTabsContent
         value={activePanel === "none" ? "" : activePanel}
+        onResize={({ width }) => {
+          if (activePanel !== "none") {
+            setSidebarPanelWidth(activePanel, width);
+          }
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             setActiveSidebarPanel("none");
           }
         }}
+        resizable
         css={{
-          width: theme.spacing[30],
+          "--sidebar-left-panel-width": `${getSidebarPanelWidth(activePanel)}`,
+          width: "var(--sidebar-left-panel-width)",
+          minWidth: theme.sizes.sidebarWidth,
+          maxWidth: theme.spacing[35],
           // We need the node to be rendered but hidden
           // to keep receiving the drag events.
           visibility:

@@ -1,9 +1,6 @@
 import {
   type ReactNode,
   type ComponentProps,
-  createContext,
-  type RefObject,
-  useContext,
   useState,
   useRef,
   useLayoutEffect,
@@ -26,32 +23,53 @@ type OffsetOptions =
 const computeFloatingPosition = (
   trigger: HTMLElement,
   floating: HTMLElement,
-  placement: "left-start" | "right-start" | "bottom",
+  container: HTMLElement,
+  placement: "left-start" | "right-start" | "bottom-within",
   offsetOptions: OffsetOptions
 ): { x: number; y: number } => {
   const triggerRect = trigger.getBoundingClientRect();
   const floatingRect = floating.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
 
   const mainAxis =
     typeof offsetOptions === "number"
       ? offsetOptions
       : (offsetOptions.mainAxis ?? 0);
+  const crossAxis =
+    typeof offsetOptions === "number" ? 0 : (offsetOptions.crossAxis ?? 0);
+  const alignmentAxis =
+    typeof offsetOptions === "number"
+      ? null
+      : (offsetOptions.alignmentAxis ?? null);
 
   let x = 0;
   let y = 0;
 
   if (placement === "left-start") {
-    // Position to the left of the trigger, aligned with the top
-    x = triggerRect.left - floatingRect.width - mainAxis;
-    y = triggerRect.top;
+    // Position to the left of the container, aligned with the top of trigger
+    x = containerRect.left - floatingRect.width + mainAxis;
+    // Align panel top with trigger top
+    y = triggerRect.top + (alignmentAxis ?? 0);
+    // Apply crossAxis offset (moves vertically)
+    y += crossAxis;
   } else if (placement === "right-start") {
-    // Position to the right of the trigger, aligned with the top
-    x = triggerRect.right + mainAxis;
-    y = triggerRect.top;
-  } else if (placement === "bottom") {
-    // Position below the trigger
-    x = triggerRect.left;
-    y = triggerRect.bottom + mainAxis;
+    // Position to the right of the container, aligned with the top of trigger
+    x = containerRect.right + mainAxis;
+    // Align panel top with trigger top, using trigger's relative position within container
+    y = triggerRect.top + (alignmentAxis ?? 0);
+    // Apply crossAxis offset (moves vertically)
+    y += crossAxis;
+  } else if (placement === "bottom-within") {
+    // Position below the trigger, centered horizontally within the container
+    // Center the panel horizontally within the container
+    x =
+      containerRect.left +
+      (containerRect.width - floatingRect.width) / 2 +
+      (alignmentAxis ?? 0);
+    // Apply crossAxis offset (moves horizontally)
+    x += crossAxis;
+    // Y: below the trigger with 5px default offset
+    y = triggerRect.bottom + (mainAxis === 0 ? 5 : mainAxis);
   }
 
   // Keep within viewport bounds (simple shift)
@@ -89,28 +107,8 @@ const contentFitsAtPosition = (
   );
 };
 
-const FloatingPanelContext = createContext<{
-  container: RefObject<null | HTMLElement>;
-}>({
-  container: {
-    current: null,
-  },
-});
-
-export const FloatingPanelProvider = ({
-  children,
-  container,
-}: {
-  children: JSX.Element;
-  container: RefObject<null | HTMLElement>;
-}) => (
-  <FloatingPanelContext.Provider value={{ container }}>
-    {children}
-  </FloatingPanelContext.Provider>
-);
-
 type FloatingPanelProps = {
-  title: ReactNode;
+  title?: ReactNode;
   content: ReactNode;
   children: ReactNode;
   titleSuffix?: ReactNode;
@@ -118,10 +116,10 @@ type FloatingPanelProps = {
   resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
   height?: number;
-  // - bottom - below the trigger button
+  // - bottom-within - below the trigger button, within container bounds
   // - left-start - on the left side relative to the container, aligned with the top of the trigger button
   // - center - center of the screen
-  placement?: "left-start" | "right-start" | "center" | "bottom";
+  placement?: "left-start" | "right-start" | "center" | "bottom-within";
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
@@ -131,7 +129,7 @@ const contentStyle = css({
   width: theme.sizes.sidebarWidth,
 });
 
-const defaultOffset = { mainAxis: 10 };
+const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
 
 export const FloatingPanel = ({
   title,
@@ -144,22 +142,31 @@ export const FloatingPanel = ({
   height,
   placement = "left-start",
   offset: offsetProp = defaultOffset,
-  open,
+  open: openProp,
   onOpenChange,
 }: FloatingPanelProps) => {
-  const { container: containerRef } = useContext(FloatingPanelContext);
+  // Support both controlled and uncontrolled modes
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
   const currentPositionRef = useRef<{ x: number; y: number }>();
+  const containerRef = useRef<HTMLElement | null>(null);
 
   // Wrap onOpenChange to reset position when panel closes
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      containerRef.current = null;
+    }
+    // Update internal state if uncontrolled
+    if (openProp === undefined) {
+      setInternalOpen(isOpen);
     }
     onOpenChange?.(isOpen);
   };
@@ -169,10 +176,19 @@ export const FloatingPanel = ({
     if (open === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      containerRef.current = null;
     }
   }, [open]);
 
   useLayoutEffect(() => {
+    // Find container when trigger is available and panel is opening
+    if (triggerRef.current && open && !containerRef.current) {
+      const container = triggerRef.current.closest(
+        "[data-floating-panel-container]"
+      ) as HTMLElement | null;
+      containerRef.current = container;
+    }
+
     if (
       triggerRef.current === null ||
       containerRef.current === null ||
@@ -199,6 +215,7 @@ export const FloatingPanel = ({
         const { x, y } = computeFloatingPosition(
           triggerRef.current,
           contentElement,
+          containerRef.current,
           placement,
           offsetProp
         );
@@ -208,14 +225,18 @@ export const FloatingPanel = ({
       }
 
       // Only recalculate if content doesn't fit at current position
+      const fits = contentFitsAtPosition(
+        contentElement,
+        currentPositionRef.current
+      );
 
-      if (contentFitsAtPosition(contentElement, currentPositionRef.current)) {
+      if (fits) {
         return;
       }
-
       const { x, y } = computeFloatingPosition(
         triggerRef.current,
         contentElement,
+        containerRef.current,
         placement,
         offsetProp
       );
@@ -261,7 +282,11 @@ export const FloatingPanel = ({
         width={width}
         height={height}
         {...position}
+        boundaryTolerance={
+          placement === "bottom-within" ? { horizontal: Infinity } : undefined
+        }
         aria-describedby={undefined}
+        ref={setContentElement}
         onInteractOutside={(event) => {
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
@@ -277,7 +302,6 @@ export const FloatingPanel = ({
             return;
           }
         }}
-        ref={setContentElement}
       >
         {content}
         {typeof title === "string" ? (

@@ -16,7 +16,6 @@ import {
   Separator,
   Tooltip,
   Kbd,
-  FloatingPanelProvider,
 } from "@webstudio-is/design-system";
 import { ModeMenu, StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanel } from "~/builder/features/settings-panel";
@@ -38,8 +37,10 @@ import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   return (
-    <Flex shrink={false} gap="1" align="center">
-      <InstanceIcon instance={instance} />
+    <Flex gap="1" align="center">
+      <Flex shrink={false}>
+        <InstanceIcon instance={instance} />
+      </Flex>
       <Text truncate variant="labelsSentenceCase">
         {getInstanceLabel(instance)}
       </Text>
@@ -107,57 +108,71 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
       disableHoverableContent={false}
       skipDelayDuration={0}
     >
-      <FloatingPanelProvider container={tabsRef}>
-        <PanelTabs
-          ref={tabsRef}
-          value={
-            availablePanels.has(activeInspectorPanel)
-              ? activeInspectorPanel
-              : Array.from(availablePanels)[0]
-          }
-          onValueChange={(panel) => {
-            $activeInspectorPanel.set(panel as PanelName);
-          }}
-          asChild
-        >
-          <Flex direction="column">
-            <PanelTabsList>
-              {availablePanels.has("style") && (
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      CSS for the selected instance&nbsp;&nbsp;
-                      <Kbd value={["S"]} color="moreSubtle" />
-                    </Text>
-                  }
-                >
-                  <div>
-                    <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
-                  </div>
-                </Tooltip>
-              )}
-              {availablePanels.has("settings") && (
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      Settings, properties and attributes of the selected
-                      instance&nbsp;&nbsp;
-                      <Kbd value={["D"]} color="moreSubtle" />
-                    </Text>
-                  }
-                >
-                  <div>
-                    <PanelTabsTrigger value="settings">
-                      Settings
-                    </PanelTabsTrigger>
-                  </div>
-                </Tooltip>
-              )}
-            </PanelTabsList>
-            <Separator />
-            <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
+      <PanelTabs
+        ref={tabsRef}
+        data-floating-panel-container
+        value={
+          availablePanels.has(activeInspectorPanel)
+            ? activeInspectorPanel
+            : Array.from(availablePanels)[0]
+        }
+        onValueChange={(panel) => {
+          $activeInspectorPanel.set(panel as PanelName);
+        }}
+        asChild
+      >
+        <Flex direction="column">
+          <PanelTabsList>
+            {availablePanels.has("style") && (
+              <Tooltip
+                variant="wrapped"
+                content={
+                  <Text>
+                    CSS for the selected instance&nbsp;&nbsp;
+                    <Kbd value={["S"]} color="moreSubtle" />
+                  </Text>
+                }
+              >
+                <div>
+                  <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+                </div>
+              </Tooltip>
+            )}
+            {availablePanels.has("settings") && (
+              <Tooltip
+                variant="wrapped"
+                content={
+                  <Text>
+                    Settings, properties and attributes of the selected
+                    instance&nbsp;&nbsp;
+                    <Kbd value={["D"]} color="moreSubtle" />
+                  </Text>
+                }
+              >
+                <div>
+                  <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+                </div>
+              </Tooltip>
+            )}
+          </PanelTabsList>
+          <Separator />
+          <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
+            <Flex
+              justify="between"
+              align="center"
+              shrink={false}
+              css={{
+                paddingInline: theme.panel.paddingInline,
+                height: theme.spacing[13],
+              }}
+            >
+              <InstanceInfo instance={selectedInstance} />
+              <ModeMenu />
+            </Flex>
+            <StylePanel $styleSourceInputElement={$styleSourceInputElement} />
+          </PanelTabsContent>
+          <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
+            <ScrollArea>
               <Flex
                 justify="between"
                 align="center"
@@ -168,34 +183,17 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 }}
               >
                 <InstanceInfo instance={selectedInstance} />
-                <ModeMenu />
               </Flex>
-              <StylePanel $styleSourceInputElement={$styleSourceInputElement} />
-            </PanelTabsContent>
-            <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
-              <ScrollArea>
-                <Flex
-                  justify="between"
-                  align="center"
-                  shrink={false}
-                  css={{
-                    paddingInline: theme.panel.paddingInline,
-                    height: theme.spacing[13],
-                  }}
-                >
-                  <InstanceInfo instance={selectedInstance} />
-                </Flex>
-                <SettingsPanel
-                  // Re-render when instance changes
-                  key={selectedInstance.id}
-                  selectedInstance={selectedInstance}
-                  selectedInstanceKey={selectedInstanceKey}
-                />
-              </ScrollArea>
-            </PanelTabsContent>
-          </Flex>
-        </PanelTabs>
-      </FloatingPanelProvider>
+              <SettingsPanel
+                // Re-render when instance changes
+                key={selectedInstance.id}
+                selectedInstance={selectedInstance}
+                selectedInstanceKey={selectedInstanceKey}
+              />
+            </ScrollArea>
+          </PanelTabsContent>
+        </Flex>
+      </PanelTabs>
     </EnhancedTooltipProvider>
   );
 };

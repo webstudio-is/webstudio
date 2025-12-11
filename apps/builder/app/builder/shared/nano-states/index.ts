@@ -5,6 +5,7 @@ import {
 } from "~/shared/nano-states/misc";
 import { $canvasIframeState } from "~/shared/nano-states/canvas";
 import { $settings, getSetting } from "../client-settings";
+import type { SidebarPanelName } from "~/builder/sidebar-left/types";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -102,14 +103,6 @@ export const $loadingState = computed(
     return { state, progress, readyStates };
   }
 );
-
-export type SidebarPanelName =
-  | "assets"
-  | "components"
-  | "navigator"
-  | "pages"
-  | "marketplace"
-  | "none";
 
 // Only used internally to avoid directly setting the value without using setActiveSidebarPanel.
 const $activeSidebarPanel_ = atom<SidebarPanelName | undefined>();

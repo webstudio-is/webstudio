@@ -2,7 +2,6 @@ import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { XIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type WsComponentMeta,
@@ -23,10 +22,7 @@ import {
   findNextListItemIndex,
   Text,
   Box,
-  Grid,
   PanelTitle,
-  Tooltip,
-  Button,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
@@ -240,7 +236,7 @@ export const ComponentsPanel = ({
 
   const { metasByCategory, availableComponents } = useStore($metas);
 
-  const { dragCard, draggableContainerRef } = useDraggable({
+  const { dragCard, draggableContainerRef, isDragging } = useDraggable({
     publish,
     availableComponents,
   });
@@ -253,20 +249,7 @@ export const ComponentsPanel = ({
 
   return (
     <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close panel" side="bottom">
-            <Button
-              color="ghost"
-              prefix={<XIcon />}
-              aria-label="Close panel"
-              onClick={onClose}
-            />
-          </Tooltip>
-        }
-      >
-        Components
-      </PanelTitle>
+      <PanelTitle>Components</PanelTitle>
       <Separator />
 
       <Box css={{ padding: theme.panel.padding }}>
@@ -286,9 +269,9 @@ export const ComponentsPanel = ({
             fullWidth
           >
             <List asChild>
-              <Grid
+              <Flex
                 gap="1"
-                columns="3"
+                wrap="wrap"
                 css={{
                   paddingInline: theme.panel.paddingInline,
                   overflow: "auto",
@@ -309,8 +292,11 @@ export const ComponentsPanel = ({
                   >
                     <ComponentCard
                       {...{ [dragItemAttribute]: meta.name }}
+                      // Too hard to calculate, goal was to have 3 cards in one row on the smallest width and to fill it at the same ime
+                      css={{ width: 69 }}
                       label={meta.label}
                       description={meta.description}
+                      disableTooltip={isDragging}
                       icon={
                         <InstanceIcon
                           size="auto"
@@ -328,7 +314,7 @@ export const ComponentsPanel = ({
                     <Text>No matching component</Text>
                   </Flex>
                 )}
-              </Grid>
+              </Flex>
             </List>
           </CollapsibleSection>
         ))}

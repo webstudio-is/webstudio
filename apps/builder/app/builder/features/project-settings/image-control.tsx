@@ -10,6 +10,7 @@ export const ImageControl = (props: {
   return (
     <FloatingPanel
       title="Images"
+      placement="bottom-within"
       content={
         <ImageManager
           onChange={(assetId) => {

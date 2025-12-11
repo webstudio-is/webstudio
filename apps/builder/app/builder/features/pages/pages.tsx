@@ -13,6 +13,8 @@ import {
   type TreeDropTarget,
   toast,
   ScrollArea,
+  FloatingPanel,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -23,9 +25,7 @@ import {
   NewPageIcon,
   PageIcon,
   DynamicPageIcon,
-  XIcon,
 } from "@webstudio-is/icons";
-import { ExtendedPanel } from "../../shared/extended-sidebar-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import {
   $editingPageId,
@@ -525,13 +525,14 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const editingItemId = useStore($editingPageId);
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (currentPage === undefined || pages === undefined) {
     return;
   }
 
   return (
-    <>
+    <div ref={containerRef} data-floating-panel-container>
       <PanelTitle
         suffix={
           <>
@@ -563,14 +564,6 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 </Tooltip>
               </>
             )}
-            <Tooltip content="Close panel" side="bottom">
-              <Button
-                color="ghost"
-                prefix={<XIcon />}
-                aria-label="Close panel"
-                onClick={onClose}
-              />
-            </Tooltip>
           </>
         }
       >
@@ -594,9 +587,9 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         }}
       />
       {editingItemId !== undefined && (
-        <ExtendedPanel>
-          <>
-            {isFolder(editingItemId, pages.folders) ? (
+        <FloatingPanel
+          content={
+            isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
                 editingFolderId={editingItemId}
                 onClose={() => $editingPageId.set(undefined)}
@@ -606,10 +599,20 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
                 editingPageId={editingItemId}
                 onClose={() => $editingPageId.set(undefined)}
               />
-            )}
-          </>
-        </ExtendedPanel>
+            )
+          }
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              $editingPageId.set(undefined);
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
       )}
-    </>
+    </div>
   );
 };

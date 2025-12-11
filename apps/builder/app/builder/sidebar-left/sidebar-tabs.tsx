@@ -9,8 +9,16 @@ import {
   focusRingStyle,
   styled,
   theme,
+  useResize,
+  type CSS,
 } from "@webstudio-is/design-system";
-import { forwardRef, type ComponentProps, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 
 export const SidebarTabs = styled(Tabs, {
   display: "flex",
@@ -96,7 +104,7 @@ export const SidebarTabsList = styled(TabsList, {
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-export const SidebarTabsContent = styled(TabsContent, {
+const sidebarTabsContentStyle = css({
   flexGrow: 1,
   position: "absolute",
   top: 0,
@@ -114,4 +122,58 @@ export const SidebarTabsContent = styled(TabsContent, {
     width: 1,
     background: theme.colors.borderMain,
   },
+  variants: {
+    resizable: {
+      true: {
+        overflow: "auto",
+        resize: "horizontal",
+      },
+    },
+  },
 });
+
+type SidebarTabsContentProps = Omit<
+  ComponentProps<typeof TabsContent>,
+  "onResize"
+> & {
+  css?: CSS;
+  resizable?: boolean;
+  onResize?: (size: { width: number; height: number }) => void;
+};
+
+export const SidebarTabsContent = ({
+  resizable,
+  css,
+  onResize,
+  ...props
+}: SidebarTabsContentProps) => {
+  const onResizeRef = useRef(onResize);
+  onResizeRef.current = onResize;
+
+  const [element, setElement] = useResize({
+    onResizeEnd: (entries) => {
+      if (entries[0] && onResizeRef.current) {
+        onResizeRef.current({
+          width: entries[0].contentRect.width,
+          height: entries[0].contentRect.height,
+        });
+      }
+      element?.style.removeProperty("width");
+    },
+  });
+
+  useEffect(() => {
+    if (element && onResizeRef.current) {
+      const rect = element.getBoundingClientRect();
+      onResizeRef.current({ width: rect.width, height: rect.height });
+    }
+  }, [element]);
+
+  return (
+    <TabsContent
+      {...props}
+      ref={resizable ? setElement : undefined}
+      className={sidebarTabsContentStyle({ css, resizable })}
+    />
+  );
+};

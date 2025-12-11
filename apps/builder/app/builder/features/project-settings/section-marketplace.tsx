@@ -297,6 +297,7 @@ export const SectionMarketplace = () => {
             autoGrow
             maxRows={10}
             value={data.description ?? ""}
+            color={errors?.description && "error"}
             onChange={handleSave("description")}
           />
         </InputErrorsTooltip>

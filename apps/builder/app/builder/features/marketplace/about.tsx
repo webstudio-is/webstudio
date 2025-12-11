@@ -1,5 +1,5 @@
 import {
-  Button,
+  DialogClose,
   Flex,
   Link,
   PanelTitle,
@@ -11,16 +11,10 @@ import {
   truncate,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { ChevronsLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
+import { ExternalLinkIcon } from "@webstudio-is/icons";
 import { builderUrl } from "~/shared/router-utils";
 
-export const About = ({
-  item,
-  onClose,
-}: {
-  item?: MarketplaceOverviewItem;
-  onClose: () => void;
-}) => {
+export const About = ({ item }: { item?: MarketplaceOverviewItem }) => {
   if (item === undefined) {
     return;
   }
@@ -29,23 +23,7 @@ export const About = ({
 
   return (
     <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close" side="bottom">
-            <Button
-              onClick={onClose}
-              aria-label="Close"
-              prefix={<ChevronsLeftIcon />}
-              color="ghost"
-              // Tab should go:
-              //   trought form fields -> create button -> cancel button
-              tabIndex={3}
-            />
-          </Tooltip>
-        }
-      >
-        {item.name}
-      </PanelTitle>
+      <PanelTitle suffix={<DialogClose />}>{item.name}</PanelTitle>
       <Separator />
 
       <Flex

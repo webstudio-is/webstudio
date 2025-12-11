@@ -164,14 +164,14 @@ export const AssetsShell = ({
         position: "relative",
       }}
     >
-      <Flex
-        css={{ padding: theme.panel.padding }}
-        gap="2"
-        direction="column"
-        shrink={false}
-      >
+      <Flex css={{ padding: theme.panel.padding }} gap="2">
+        <SearchField
+          css={{ flexGrow: 1 }}
+          {...searchProps}
+          autoFocus
+          placeholder="Search"
+        />
         <AssetUpload type={type} accept={accept} />
-        <SearchField {...searchProps} autoFocus placeholder="Search" />
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}

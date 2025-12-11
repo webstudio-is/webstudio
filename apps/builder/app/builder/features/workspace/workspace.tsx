@@ -8,10 +8,10 @@ import {
 } from "~/builder/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { useSetCanvasWidth } from "../breakpoints";
 import { selectInstance } from "~/shared/awareness";
 import { ResizeHandles } from "./canvas-tools/resize-handles";
 import { MediaBadge } from "./canvas-tools/media-badge";
+import { useSetCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
 const workspaceStyle = css({
   flexGrow: 1,

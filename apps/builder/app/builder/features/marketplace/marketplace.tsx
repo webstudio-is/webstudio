@@ -1,11 +1,10 @@
-import { XIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { SpinnerIcon } from "@webstudio-is/icons";
 import {
-  Button,
   Flex,
   PanelTitle,
   rawTheme,
   Separator,
-  Tooltip,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
@@ -13,11 +12,10 @@ import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
-import { ExtendedPanel } from "~/builder/shared/extended-sidebar-panel";
 import { About } from "./about";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 
-export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
+export const MarketplacePanel = (_props: { onClose: () => void }) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
   const [openAbout, setOpenAbout] = useState<Project["id"]>();
@@ -40,21 +38,8 @@ export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
     activeOverviewItem && buildData?.projectId === activeOverviewItem.projectId;
 
   return (
-    <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close panel" side="bottom">
-            <Button
-              color="ghost"
-              prefix={<XIcon />}
-              aria-label="Close panel"
-              onClick={onClose}
-            />
-          </Tooltip>
-        }
-      >
-        Marketplace
-      </PanelTitle>
+    <div data-floating-panel-container>
+      <PanelTitle>Marketplace</PanelTitle>
       <Separator />
       <Overview
         items={items}
@@ -88,15 +73,20 @@ export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
         </Flex>
       )}
       {openAboutItem !== undefined && (
-        <ExtendedPanel>
-          <About
-            item={openAboutItem}
-            onClose={() => {
+        <FloatingPanel
+          content={<About item={openAboutItem} />}
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
               setOpenAbout(undefined);
-            }}
-          />
-        </ExtendedPanel>
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
       )}
-    </>
+    </div>
   );
 };

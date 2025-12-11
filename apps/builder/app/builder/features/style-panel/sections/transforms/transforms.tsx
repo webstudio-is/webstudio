@@ -106,7 +106,7 @@ const TransformAdvancedPopover = () => {
   return (
     <FloatingPanel
       title="Advanced Transform"
-      placement="bottom"
+      placement="bottom-within"
       content={
         <Grid gap="2" css={{ padding: theme.panel.padding }}>
           <Grid css={{ gridTemplateColumns: `2fr 1fr` }}>

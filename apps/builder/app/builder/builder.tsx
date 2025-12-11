@@ -4,7 +4,14 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import {
+  theme,
+  Box,
+  type CSS,
+  Flex,
+  Grid,
+  rawTheme,
+} from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, createObjectPool } from "~/shared/sync";
 import {
@@ -12,7 +19,6 @@ import {
   startProjectSync,
   useSyncServer,
 } from "./shared/sync/sync-server";
-import { SidebarLeft } from "./sidebar-left";
 import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
@@ -48,7 +54,6 @@ import {
   $dataLoadingState,
   $isCloneDialogOpen,
   $loadingState,
-  type SidebarPanelName,
 } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
@@ -72,6 +77,8 @@ import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
 import { SyncClient } from "~/shared/sync-client";
 import { RemoteDialog } from "./features/help/remote-dialog";
+import type { SidebarPanelName } from "./sidebar-left/types";
+import { SidebarLeft } from "./sidebar-left/sidebar-left";
 
 registerContainers();
 
@@ -143,10 +150,12 @@ const getChromeLayout = ({
   isPreviewMode,
   navigatorLayout,
   activeSidebarPanel,
+  leftSidebarWidth,
 }: {
   isPreviewMode: boolean;
   navigatorLayout: Settings["navigatorLayout"];
   activeSidebarPanel?: SidebarPanelName;
+  leftSidebarWidth: number;
 }) => {
   if (isPreviewMode) {
     return {
@@ -161,7 +170,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked" && activeSidebarPanel !== "none") {
     return {
-      gridTemplateColumns: `auto ${theme.sizes.sidebarWidth} 1fr ${theme.sizes.sidebarWidth}`,
+      gridTemplateColumns: `auto ${leftSidebarWidth}px 1fr ${theme.sizes.sidebarWidth}`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -180,16 +189,26 @@ const getChromeLayout = ({
   };
 };
 
+const defaultSidebarWidth = Number.parseFloat(rawTheme.spacing[30]);
+
 const ChromeWrapper = ({
   children,
   isPreviewMode,
   navigatorLayout,
 }: ChromeWrapperProps) => {
   const activeSidebarPanel = useStore($activeSidebarPanel);
+  const settings = useStore($settings);
+  const leftSidebarWidth =
+    activeSidebarPanel === "none"
+      ? defaultSidebarWidth
+      : (settings.sidebarPanelWidths[activeSidebarPanel] ??
+        defaultSidebarWidth);
+
   const gridLayout = getChromeLayout({
     isPreviewMode,
     navigatorLayout,
     activeSidebarPanel,
+    leftSidebarWidth,
   });
 
   return (
@@ -366,6 +385,13 @@ export const Builder = ({
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
         >
+          <Box
+            data-dialog-boundary
+            css={{
+              gridArea: "sidebar / sidebar / main / inspector",
+              pointerEvents: "none",
+            }}
+          />
           <ProjectSettings />
           <Main>
             <Workspace>
@@ -378,15 +404,10 @@ export const Builder = ({
               )}
             </Workspace>
           </Main>
+          <Main css={{ pointerEvents: "none" }}>
+            <CanvasToolsContainer />
+          </Main>
 
-          <SidePanel
-            gridArea="sidebar"
-            css={{
-              order: navigatorLayout === "docked" ? 1 : undefined,
-            }}
-          >
-            <SidebarLeft publish={publish} />
-          </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
@@ -406,9 +427,14 @@ export const Builder = ({
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
+            <SidebarLeft publish={publish} />
+          </SidePanel>
           <Topbar
             project={project}
             hasProPlan={userPlanFeatures.hasProPlan}
