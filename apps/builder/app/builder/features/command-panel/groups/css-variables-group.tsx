@@ -130,7 +130,12 @@ export const CssVariablesGroup = ({
                   {formatUsageCount(usages)}
                 </Text>
               </Text>
-              <Text as="span" color="moreSubtle">
+              <Text
+                as="span"
+                css={{ maxWidth: "20ch" }}
+                truncate
+                color="moreSubtle"
+              >
                 {getInstanceLabel(instanceId)}
               </Text>
             </CommandItem>
