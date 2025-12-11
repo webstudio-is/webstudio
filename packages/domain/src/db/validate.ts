@@ -1,3 +1,5 @@
+import { createErrorResponse } from "@webstudio-is/trpc-interface/index.server";
+
 export const validateDomain = (
   domain: string
 ): { success: false; error: string } | { success: true; domain: string } => {
@@ -6,26 +8,21 @@ export const validateDomain = (
     const domainHost = domainUrl.host;
 
     if (domainHost.split(".").length < 2) {
-      return {
-        success: false,
-        error: `The domain "${domainHost}" must have at least two levels.`,
-      };
+      return createErrorResponse(
+        `The domain "${domainHost}" must have at least two levels.`
+      );
     }
 
     if (domainHost.split(".").length > 4) {
-      return {
-        success: false,
-        error: `The domain "${domainHost}" must have at most four levels.`,
-      };
+      return createErrorResponse(
+        `The domain "${domainHost}" must have at most four levels.`
+      );
     }
     return {
       success: true,
       domain: domainHost,
     };
   } catch {
-    return {
-      success: false,
-      error: `Invalid domain ${domain}`,
-    };
+    return createErrorResponse(`Invalid domain ${domain}`);
   }
 };

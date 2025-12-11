@@ -2,6 +2,7 @@ import {
   authorizeProject,
   type AppContext,
   AuthorizationError,
+  createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { validateDomain } from "./validate";
@@ -76,7 +77,7 @@ export const create = async (
     .eq("domain", domain);
 
   if (upsertResult.error) {
-    return { success: false, error: upsertResult.error.message };
+    return createErrorResponse(upsertResult.error);
   }
 
   // Get domain id (upsert in postgrest does not return anything in case of conflict and ignoreDuplicates)
@@ -87,7 +88,7 @@ export const create = async (
     .single();
 
   if (domainRow.error) {
-    return { success: false, error: domainRow.error.message };
+    return createErrorResponse(domainRow.error);
   }
 
   const domainId = domainRow.data.id;
@@ -101,7 +102,7 @@ export const create = async (
   });
 
   if (result.error) {
-    return { success: false, error: result.error.message };
+    return createErrorResponse(result.error);
   }
 
   return { success: true };
@@ -141,13 +142,13 @@ export const verify = async (
     .single();
 
   if (projectDomain.error) {
-    return { success: false, error: projectDomain.error.message };
+    return createErrorResponse(projectDomain.error);
   }
 
   const domain = projectDomain.data.domain?.domain;
 
   if (domain == null) {
-    return { success: false, error: "Domain not found" };
+    return createErrorResponse("Domain not found");
   }
 
   // @todo: TXT verification and domain initialization should be implemented in the future as queue service
@@ -169,7 +170,7 @@ export const verify = async (
     .eq("id", props.domainId);
 
   if (domainUpdateResult.error) {
-    return { success: false, error: domainUpdateResult.error.message };
+    return createErrorResponse(domainUpdateResult.error);
   }
 
   return { success: true };
@@ -202,7 +203,7 @@ export const remove = async (
     .eq("projectId", props.projectId);
 
   if (deleteResult.error) {
-    return { success: false, error: deleteResult.error.message };
+    return createErrorResponse(deleteResult.error);
   }
 
   return { success: true };
@@ -274,7 +275,7 @@ export const updateStatus = async (
     .single();
 
   if (updatedDomainResult.error) {
-    return { success: false, error: updatedDomainResult.error.message };
+    return createErrorResponse(updatedDomainResult.error);
   }
 
   return { success: true, domain: updatedDomainResult.data };
