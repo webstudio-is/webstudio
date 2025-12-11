@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
-import {
-  FloatingPanel,
-  FloatingPanelProvider,
-} from "@webstudio-is/design-system";
+import { FloatingPanel } from "@webstudio-is/design-system";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $breakpoints,
@@ -68,17 +65,19 @@ const BackgroundStory = ({ styleValue }: { styleValue: StyleValue }) => {
 
   return (
     <>
-      <div ref={elementRef} style={{ marginLeft: "400px" }}></div>
+      <div
+        ref={elementRef}
+        style={{ marginLeft: "400px" }}
+        data-floating-panel-container
+      ></div>
 
-      <FloatingPanelProvider container={elementRef}>
-        <FloatingPanel
-          open
-          title="Background"
-          content={<BackgroundContent index={0} />}
-        >
-          <button>Trigger</button>
-        </FloatingPanel>
-      </FloatingPanelProvider>
+      <FloatingPanel
+        open
+        title="Background"
+        content={<BackgroundContent index={0} />}
+      >
+        <button>Trigger</button>
+      </FloatingPanel>
     </>
   );
 };

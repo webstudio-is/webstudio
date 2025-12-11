@@ -13,7 +13,6 @@ import {
   type TreeDropTarget,
   toast,
   ScrollArea,
-  FloatingPanelProvider,
   FloatingPanel,
   rawTheme,
 } from "@webstudio-is/design-system";
@@ -533,92 +532,88 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   }
 
   return (
-    <FloatingPanelProvider container={containerRef}>
-      <div ref={containerRef}>
-        <PanelTitle
-          suffix={
-            <>
-              {isDesignMode && (
-                <>
-                  <Tooltip content="New folder" side="bottom">
-                    <Button
-                      onClick={() => {
-                        $editingPageId.set(
-                          editingItemId === newFolderId
-                            ? undefined
-                            : newFolderId
-                        );
-                      }}
-                      aria-label="New folder"
-                      prefix={<NewFolderIcon />}
-                      color="ghost"
-                    />
-                  </Tooltip>
-                  <Tooltip content="New page" side="bottom">
-                    <Button
-                      onClick={() => {
-                        $editingPageId.set(
-                          editingItemId === newPageId ? undefined : newPageId
-                        );
-                      }}
-                      aria-label="New page"
-                      prefix={<NewPageIcon />}
-                      color="ghost"
-                    />
-                  </Tooltip>
-                </>
-              )}
-            </>
-          }
-        >
-          Pages
-        </PanelTitle>
-        <Separator />
+    <div ref={containerRef} data-floating-panel-container>
+      <PanelTitle
+        suffix={
+          <>
+            {isDesignMode && (
+              <>
+                <Tooltip content="New folder" side="bottom">
+                  <Button
+                    onClick={() => {
+                      $editingPageId.set(
+                        editingItemId === newFolderId ? undefined : newFolderId
+                      );
+                    }}
+                    aria-label="New folder"
+                    prefix={<NewFolderIcon />}
+                    color="ghost"
+                  />
+                </Tooltip>
+                <Tooltip content="New page" side="bottom">
+                  <Button
+                    onClick={() => {
+                      $editingPageId.set(
+                        editingItemId === newPageId ? undefined : newPageId
+                      );
+                    }}
+                    aria-label="New page"
+                    prefix={<NewPageIcon />}
+                    color="ghost"
+                  />
+                </Tooltip>
+              </>
+            )}
+          </>
+        }
+      >
+        Pages
+      </PanelTitle>
+      <Separator />
 
-        <PagesTree
-          selectedPageId={currentPage.id}
-          onSelect={(itemId) => {
+      <PagesTree
+        selectedPageId={currentPage.id}
+        onSelect={(itemId) => {
+          selectPage(itemId);
+          onClose();
+        }}
+        editingItemId={editingItemId}
+        onEdit={(itemId) => {
+          // always select page when edit its settings
+          if (itemId && isFolder(itemId, pages.folders) === false) {
             selectPage(itemId);
-            onClose();
-          }}
-          editingItemId={editingItemId}
-          onEdit={(itemId) => {
-            // always select page when edit its settings
-            if (itemId && isFolder(itemId, pages.folders) === false) {
-              selectPage(itemId);
+          }
+          $editingPageId.set(itemId);
+        }}
+      />
+      {editingItemId !== undefined && (
+        <FloatingPanel
+          title={
+            isFolder(editingItemId, pages.folders) ? (
+              <FolderEditor
+                editingFolderId={editingItemId}
+                onClose={() => $editingPageId.set(undefined)}
+              />
+            ) : (
+              <PageEditor
+                editingPageId={editingItemId}
+                onClose={() => $editingPageId.set(undefined)}
+              />
+            )
+          }
+          content={<></>}
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              $editingPageId.set(undefined);
             }
-            $editingPageId.set(itemId);
           }}
-        />
-        {editingItemId !== undefined && (
-          <FloatingPanel
-            title={
-              isFolder(editingItemId, pages.folders) ? (
-                <FolderEditor
-                  editingFolderId={editingItemId}
-                  onClose={() => $editingPageId.set(undefined)}
-                />
-              ) : (
-                <PageEditor
-                  editingPageId={editingItemId}
-                  onClose={() => $editingPageId.set(undefined)}
-                />
-              )
-            }
-            content={<></>}
-            placement="right-start"
-            width={Number.parseFloat(rawTheme.spacing[35])}
-            open={true}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) {
-                $editingPageId.set(undefined);
-              }
-            }}
-          >
-            <span style={{ display: "none" }} />
-          </FloatingPanel>
-        )}
-      </div>
-    </FloatingPanelProvider>
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
+      )}
+    </div>
   );
 };

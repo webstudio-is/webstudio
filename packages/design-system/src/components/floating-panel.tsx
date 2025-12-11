@@ -1,9 +1,6 @@
 import {
   type ReactNode,
   type ComponentProps,
-  createContext,
-  type RefObject,
-  useContext,
   useState,
   useRef,
   useLayoutEffect,
@@ -34,6 +31,14 @@ const computeFloatingPosition = (
   const floatingRect = floating.getBoundingClientRect();
   const containerRect = container.getBoundingClientRect();
 
+  console.log("computeFloatingPosition called", {
+    placement,
+    triggerRect,
+    floatingRect,
+    containerRect,
+    offsetOptions,
+  });
+
   const mainAxis =
     typeof offsetOptions === "number"
       ? offsetOptions
@@ -50,27 +55,67 @@ const computeFloatingPosition = (
 
   if (placement === "left-start") {
     // Position to the left of the container, aligned with the top of trigger
+    // Panel's right edge should touch container's left edge
     x = containerRect.left - floatingRect.width - mainAxis;
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
+    console.log("left-start calculation", {
+      "containerRect.left": containerRect.left,
+      "floatingRect.width": floatingRect.width,
+      mainAxis,
+      calculatedX: x,
+      "panel right edge": x + floatingRect.width,
+      "should equal containerRect.left": containerRect.left,
+      "triggerRect.top": triggerRect.top,
+      alignmentAxis,
+      crossAxis,
+      calculatedY: y,
+    });
   } else if (placement === "right-start") {
     // Position to the right of the container, aligned with the top of trigger
     x = containerRect.right + mainAxis;
     y = triggerRect.top + (alignmentAxis ?? 0);
     // Apply crossAxis offset (moves vertically)
     y += crossAxis;
+    console.log("right-start calculation", {
+      "containerRect.right": containerRect.right,
+      mainAxis,
+      calculatedX: x,
+      "triggerRect.top": triggerRect.top,
+      alignmentAxis,
+      crossAxis,
+      calculatedY: y,
+    });
   } else if (placement === "bottom") {
     // Position below the trigger
     x = triggerRect.left + (alignmentAxis ?? 0);
     y = triggerRect.bottom + mainAxis;
     // Apply crossAxis offset (moves horizontally)
     x += crossAxis;
+    console.log("bottom calculation", {
+      "triggerRect.left": triggerRect.left,
+      alignmentAxis,
+      crossAxis,
+      calculatedX: x,
+      "triggerRect.bottom": triggerRect.bottom,
+      mainAxis,
+      calculatedY: y,
+    });
   }
+
+  const beforeAdjustment = { x, y };
 
   // Keep within viewport bounds (simple shift)
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
+
+  console.log("before viewport adjustment", {
+    x,
+    y,
+    viewportWidth,
+    viewportHeight,
+  });
 
   // Adjust horizontal position if needed
   if (x < 0) {
@@ -86,6 +131,12 @@ const computeFloatingPosition = (
     y = viewportHeight - floatingRect.height;
   }
 
+  console.log("after viewport adjustment", {
+    beforeAdjustment,
+    afterAdjustment: { x, y },
+    wasAdjusted: beforeAdjustment.x !== x || beforeAdjustment.y !== y,
+  });
+
   return { x, y };
 };
 
@@ -100,39 +151,6 @@ const contentFitsAtPosition = (
     y + rect.height <= window.innerHeight &&
     x >= 0 &&
     x + rect.width <= window.innerWidth
-  );
-};
-
-const FloatingPanelContext = createContext<{
-  container: RefObject<null | HTMLElement>;
-}>({
-  container: {
-    current: null,
-  },
-});
-
-export const FloatingPanelProvider = ({
-  children,
-  container,
-}: {
-  children: JSX.Element;
-  container: RefObject<null | HTMLElement>;
-}) => {
-  useLayoutEffect(() => {
-    if (container.current) {
-      container.current.setAttribute("data-dialog-boundary", "");
-    }
-    return () => {
-      if (container.current) {
-        container.current.removeAttribute("data-dialog-boundary");
-      }
-    };
-  }, [container]);
-
-  return (
-    <FloatingPanelContext.Provider value={{ container }}>
-      {children}
-    </FloatingPanelContext.Provider>
   );
 };
 
@@ -174,19 +192,20 @@ export const FloatingPanel = ({
   open,
   onOpenChange,
 }: FloatingPanelProps) => {
-  const { container: containerRef } = useContext(FloatingPanelContext);
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(
     null
   );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
   const currentPositionRef = useRef<{ x: number; y: number }>();
+  const containerRef = useRef<HTMLElement | null>(null);
 
   // Wrap onOpenChange to reset position when panel closes
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      containerRef.current = null;
     }
     onOpenChange?.(isOpen);
   };
@@ -196,10 +215,37 @@ export const FloatingPanel = ({
     if (open === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      containerRef.current = null;
     }
   }, [open]);
 
   useLayoutEffect(() => {
+    // Find container when trigger is available and panel is opening
+    if (triggerRef.current && open && !containerRef.current) {
+      const container = triggerRef.current.closest(
+        "[data-floating-panel-container]"
+      ) as HTMLElement | null;
+      console.log("Found container:", container);
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        console.log("Container position:", {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          x: rect.x,
+          "viewport width": window.innerWidth,
+          "is on right side": rect.right > window.innerWidth / 2,
+        });
+        container.setAttribute("data-dialog-boundary", "");
+      }
+      containerRef.current = container;
+    }
+
+    // Cleanup boundary attribute when panel closes
+    if (open === false && containerRef.current) {
+      containerRef.current.removeAttribute("data-dialog-boundary");
+    }
+
     if (
       triggerRef.current === null ||
       containerRef.current === null ||
@@ -218,11 +264,23 @@ export const FloatingPanel = ({
         containerRef.current === null ||
         contentElement === null
       ) {
+        console.log("updatePosition: refs not ready", {
+          trigger: triggerRef.current,
+          container: containerRef.current,
+          contentElement,
+        });
         return;
       }
 
+      console.log("updatePosition: starting", {
+        hasCurrentPosition: !!currentPositionRef.current,
+        placement,
+        offsetProp,
+      });
+
       // Set initial position once when panel opens
       if (!currentPositionRef.current) {
+        console.log("updatePosition: calculating initial position");
         const { x, y } = computeFloatingPosition(
           triggerRef.current,
           contentElement,
@@ -231,16 +289,27 @@ export const FloatingPanel = ({
           offsetProp
         );
         currentPositionRef.current = { x, y };
+        console.log("updatePosition: setting initial position", { x, y });
         setPosition({ x, y });
         return;
       }
 
       // Only recalculate if content doesn't fit at current position
+      const fits = contentFitsAtPosition(
+        contentElement,
+        currentPositionRef.current
+      );
+      console.log("updatePosition: checking if content fits", {
+        currentPosition: currentPositionRef.current,
+        fits,
+      });
 
-      if (contentFitsAtPosition(contentElement, currentPositionRef.current)) {
+      if (fits) {
+        console.log("updatePosition: content fits, not recalculating");
         return;
       }
 
+      console.log("updatePosition: content doesn't fit, recalculating");
       const { x, y } = computeFloatingPosition(
         triggerRef.current,
         contentElement,
@@ -253,8 +322,13 @@ export const FloatingPanel = ({
       // Only update state if position actually changed
       setPosition((current) => {
         if (current && current.x === x && current.y === y) {
+          console.log("updatePosition: position unchanged", { x, y });
           return current;
         }
+        console.log("updatePosition: updating position", {
+          from: current,
+          to: { x, y },
+        });
         return { x, y };
       });
     };

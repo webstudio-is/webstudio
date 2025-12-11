@@ -67,6 +67,7 @@ export const FontFamilyControl = () => {
       <Combobox<Item>
         suffix={
           <FloatingPanel
+            placement="left-start"
             title="Fonts"
             onOpenChange={setIsFontMangerOpen}
             content={
