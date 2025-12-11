@@ -10,6 +10,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type RefObject,
 } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
@@ -23,6 +24,8 @@ import { Button } from "./button";
 import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 import { Text } from "./text";
+
+const DIALOG_TITLE_HEIGHT = 40;
 
 export const DialogTrigger = Primitive.Trigger;
 
@@ -137,11 +140,90 @@ type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
 
+const useBoundary = () => {
+  const [boundaryRect, setBoundaryRect] = useState<Rect | undefined>(undefined);
+
+  useEffect(() => {
+    const boundaryElement = document.querySelector(
+      "[data-dialog-boundary]"
+    ) as HTMLElement | null;
+
+    if (!boundaryElement) {
+      setBoundaryRect(undefined);
+      return;
+    }
+
+    const updateBoundary = () => {
+      const rect = boundaryElement.getBoundingClientRect();
+      setBoundaryRect({
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      });
+    };
+
+    // Initial measurement
+    updateBoundary();
+
+    const resizeObserver = new ResizeObserver(updateBoundary);
+    resizeObserver.observe(boundaryElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return useMemo(
+    () =>
+      boundaryRect ?? {
+        x: 0,
+        y: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+    [boundaryRect]
+  );
+};
+
 type UseDraggableProps = {
   isMaximized: boolean;
   minWidth?: number;
   minHeight?: number;
 } & Partial<Rect>;
+
+const applyBoundaries = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  bounds: Rect
+) => {
+  // Constrain width and height to fit within bounds
+  const constrainedWidth = Math.min(width, bounds.width);
+  const constrainedHeight = Math.min(height, bounds.height);
+
+  // Constrain X axis within bounds (without forcing margin on the input position)
+  let constrainedX = Math.max(bounds.x, x);
+  constrainedX = Math.min(
+    bounds.x + bounds.width - constrainedWidth,
+    constrainedX
+  );
+
+  // Constrain Y axis within bounds (without forcing margin on the input position)
+  let constrainedY = Math.max(bounds.y, y);
+  constrainedY = Math.min(
+    bounds.y + bounds.height - constrainedHeight,
+    constrainedY
+  );
+
+  return {
+    x: constrainedX,
+    y: constrainedY,
+    width: constrainedWidth,
+    height: constrainedHeight,
+  };
+};
 
 const useDraggable = ({
   width,
@@ -153,6 +235,7 @@ const useDraggable = ({
 }: UseDraggableProps) => {
   const [x, setX] = useState(props.x);
   const [y, setY] = useState(props.y);
+  const bounds = useBoundary();
 
   const lastDragDataRef = useRef<
     | undefined
@@ -165,25 +248,33 @@ const useDraggable = ({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const calcStyle = useCallback(() => {
+    const margin = 20;
+    const availableWidth = bounds.width - margin * 2;
+    const availableHeight = bounds.height - margin * 2;
+
     const style: CSSProperties = isMaximized
       ? {
-          top: "calc(20px + 50% - 50vh)",
-          left: "calc(20px + 50% - 50vw)",
-          width: "calc(100vw - 40px)",
-          height: "calc(100vh - 40px)",
+          top: bounds.y + margin,
+          left: bounds.x + margin,
+          width: availableWidth,
+          height: availableHeight,
         }
       : !width || !height
         ? {
-            inset: 0,
-            margin: "auto",
-            width,
-            height,
+            top: bounds.y + margin,
+            left: bounds.x + margin,
+            maxWidth: availableWidth,
+            maxHeight: availableHeight,
           }
         : {
-            top: `max(20px, calc(50% - ${height / 2}px))`,
-            bottom: `max(20px, calc(50% - ${height / 2}px))`,
-            left: `max(20px, calc(50% - ${width / 2}px))`,
-            right: `max(20px, calc(50% - ${width / 2}px))`,
+            top: Math.max(
+              bounds.y + margin,
+              bounds.y + bounds.height / 2 - height / 2
+            ),
+            left: Math.max(
+              bounds.x + margin,
+              bounds.x + bounds.width / 2 - width / 2
+            ),
             width,
             height,
           };
@@ -196,19 +287,71 @@ const useDraggable = ({
     }
 
     if (isMaximized === false) {
-      if (x !== undefined) {
-        style.left = x;
+      if (x !== undefined && y !== undefined) {
+        const constrained = applyBoundaries(
+          x,
+          y,
+          width ?? bounds.width,
+          height ?? bounds.height,
+          bounds
+        );
+
+        style.left = constrained.x;
+        style.top = constrained.y;
+        if (width !== undefined) {
+          style.width = constrained.width;
+        }
+        if (height !== undefined) {
+          style.height = constrained.height;
+        }
         style.right = "auto";
-        style.margin = 0;
-      }
-      if (y !== undefined) {
-        style.top = y;
         style.bottom = "auto";
         style.margin = 0;
+      } else if (x !== undefined) {
+        const constrained = applyBoundaries(
+          x,
+          0,
+          width ?? bounds.width,
+          height ?? bounds.height,
+          bounds
+        );
+
+        style.left = constrained.x;
+        if (width !== undefined) {
+          style.width = constrained.width;
+        }
+        if (height !== undefined) {
+          style.height = constrained.height;
+        }
+        style.right = "auto";
+        style.margin = 0;
+      } else if (y !== undefined) {
+        const constrained = applyBoundaries(
+          0,
+          y,
+          width ?? bounds.width,
+          height ?? bounds.height,
+          bounds
+        );
+
+        style.top = constrained.y;
+        if (width !== undefined) {
+          style.width = constrained.width;
+        }
+        if (height !== undefined) {
+          style.height = constrained.height;
+        }
+        style.bottom = "auto";
+        style.margin = 0;
+      } else {
+        // Only apply max constraints when not positioned
+        style.maxWidth = availableWidth;
+        style.maxHeight = availableHeight;
       }
     }
+
     return style;
-  }, [x, y, width, height, isMaximized, minWidth, minHeight]);
+  }, [x, y, width, height, isMaximized, minWidth, minHeight, bounds]);
 
   const [style, setStyle] = useState(calcStyle());
 
@@ -258,14 +401,20 @@ const useDraggable = ({
     ) {
       return;
     }
+
+    const margin = 20;
+
     const { rect, point } = lastDragDataRef.current;
     const movementX = point.x - event.pageX;
     const movementY = point.y - event.pageY;
-    let left = Math.max(rect.x - movementX, 0);
-    left = Math.min(left, window.innerWidth - rect.width);
-    let top = Math.max(rect.y - movementY, 0);
-    // We want some part of the dialog to be visible but otherwise let it go off screen.
-    top = Math.min(top, window.innerHeight - 40);
+    let left = Math.max(rect.x - movementX, bounds.x + margin);
+    left = Math.min(left, bounds.x + bounds.width - margin - rect.width);
+    let top = Math.max(rect.y - movementY, bounds.y + margin);
+    // Keep at least title visible at the bottom with margin
+    top = Math.min(
+      top,
+      bounds.y + bounds.height - margin - DIALOG_TITLE_HEIGHT
+    );
     target.style.left = `${left}px`;
     target.style.top = `${top}px`;
   };

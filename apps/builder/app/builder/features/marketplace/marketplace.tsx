@@ -1,11 +1,9 @@
-import { XIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { SpinnerIcon } from "@webstudio-is/icons";
 import {
-  Button,
   Flex,
   PanelTitle,
   rawTheme,
   Separator,
-  Tooltip,
 } from "@webstudio-is/design-system";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
@@ -17,7 +15,7 @@ import { ExtendedPanel } from "~/builder/shared/extended-sidebar-panel";
 import { About } from "./about";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 
-export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
+export const MarketplacePanel = (_props: { onClose: () => void }) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
   const [openAbout, setOpenAbout] = useState<Project["id"]>();
@@ -41,20 +39,7 @@ export const MarketplacePanel = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close panel" side="bottom">
-            <Button
-              color="ghost"
-              prefix={<XIcon />}
-              aria-label="Close panel"
-              onClick={onClose}
-            />
-          </Tooltip>
-        }
-      >
-        Marketplace
-      </PanelTitle>
+      <PanelTitle>Marketplace</PanelTitle>
       <Separator />
       <Overview
         items={items}

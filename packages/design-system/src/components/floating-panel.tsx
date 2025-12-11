@@ -26,32 +26,46 @@ type OffsetOptions =
 const computeFloatingPosition = (
   trigger: HTMLElement,
   floating: HTMLElement,
+  container: HTMLElement,
   placement: "left-start" | "right-start" | "bottom",
   offsetOptions: OffsetOptions
 ): { x: number; y: number } => {
   const triggerRect = trigger.getBoundingClientRect();
   const floatingRect = floating.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
 
   const mainAxis =
     typeof offsetOptions === "number"
       ? offsetOptions
       : (offsetOptions.mainAxis ?? 0);
+  const crossAxis =
+    typeof offsetOptions === "number" ? 0 : (offsetOptions.crossAxis ?? 0);
+  const alignmentAxis =
+    typeof offsetOptions === "number"
+      ? null
+      : (offsetOptions.alignmentAxis ?? null);
 
   let x = 0;
   let y = 0;
 
   if (placement === "left-start") {
-    // Position to the left of the trigger, aligned with the top
-    x = triggerRect.left - floatingRect.width - mainAxis;
-    y = triggerRect.top;
+    // Position to the left of the container, aligned with the top of trigger
+    x = containerRect.left - floatingRect.width - mainAxis;
+    y = triggerRect.top + (alignmentAxis ?? 0);
+    // Apply crossAxis offset (moves vertically)
+    y += crossAxis;
   } else if (placement === "right-start") {
-    // Position to the right of the trigger, aligned with the top
-    x = triggerRect.right + mainAxis;
-    y = triggerRect.top;
+    // Position to the right of the container, aligned with the top of trigger
+    x = containerRect.right + mainAxis;
+    y = triggerRect.top + (alignmentAxis ?? 0);
+    // Apply crossAxis offset (moves vertically)
+    y += crossAxis;
   } else if (placement === "bottom") {
     // Position below the trigger
-    x = triggerRect.left;
+    x = triggerRect.left + (alignmentAxis ?? 0);
     y = triggerRect.bottom + mainAxis;
+    // Apply crossAxis offset (moves horizontally)
+    x += crossAxis;
   }
 
   // Keep within viewport bounds (simple shift)
@@ -103,11 +117,24 @@ export const FloatingPanelProvider = ({
 }: {
   children: JSX.Element;
   container: RefObject<null | HTMLElement>;
-}) => (
-  <FloatingPanelContext.Provider value={{ container }}>
-    {children}
-  </FloatingPanelContext.Provider>
-);
+}) => {
+  useLayoutEffect(() => {
+    if (container.current) {
+      container.current.setAttribute("data-dialog-boundary", "");
+    }
+    return () => {
+      if (container.current) {
+        container.current.removeAttribute("data-dialog-boundary");
+      }
+    };
+  }, [container]);
+
+  return (
+    <FloatingPanelContext.Provider value={{ container }}>
+      {children}
+    </FloatingPanelContext.Provider>
+  );
+};
 
 type FloatingPanelProps = {
   title: ReactNode;
@@ -131,7 +158,7 @@ const contentStyle = css({
   width: theme.sizes.sidebarWidth,
 });
 
-const defaultOffset = { mainAxis: 10 };
+const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
 
 export const FloatingPanel = ({
   title,
@@ -199,6 +226,7 @@ export const FloatingPanel = ({
         const { x, y } = computeFloatingPosition(
           triggerRef.current,
           contentElement,
+          containerRef.current,
           placement,
           offsetProp
         );
@@ -216,6 +244,7 @@ export const FloatingPanel = ({
       const { x, y } = computeFloatingPosition(
         triggerRef.current,
         contentElement,
+        containerRef.current,
         placement,
         offsetProp
       );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { XIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type WsComponentMeta,
@@ -24,8 +23,6 @@ import {
   Text,
   Box,
   PanelTitle,
-  Tooltip,
-  Button,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
@@ -252,20 +249,7 @@ export const ComponentsPanel = ({
 
   return (
     <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close panel" side="bottom">
-            <Button
-              color="ghost"
-              prefix={<XIcon />}
-              aria-label="Close panel"
-              onClick={onClose}
-            />
-          </Tooltip>
-        }
-      >
-        Components
-      </PanelTitle>
+      <PanelTitle>Components</PanelTitle>
       <Separator />
 
       <Box css={{ padding: theme.panel.padding }}>

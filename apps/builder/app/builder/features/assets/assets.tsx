@@ -1,29 +1,10 @@
-import {
-  Button,
-  PanelTitle,
-  Separator,
-  Tooltip,
-} from "@webstudio-is/design-system";
-import { XIcon } from "@webstudio-is/icons";
+import { PanelTitle, Separator } from "@webstudio-is/design-system";
 import { ImageManager } from "~/builder/shared/image-manager";
 
-export const AssetsPanel = ({ onClose }: { onClose: () => void }) => {
+export const AssetsPanel = (_props: { onClose: () => void }) => {
   return (
     <>
-      <PanelTitle
-        suffix={
-          <Tooltip content="Close panel" side="bottom">
-            <Button
-              color="ghost"
-              prefix={<XIcon />}
-              aria-label="Close panel"
-              onClick={onClose}
-            />
-          </Tooltip>
-        }
-      >
-        Assets
-      </PanelTitle>
+      <PanelTitle>Assets</PanelTitle>
       <Separator />
       <ImageManager />
     </>

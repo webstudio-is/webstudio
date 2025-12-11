@@ -110,6 +110,7 @@ export const Workspace = ({ children }: WorkspaceProps) => {
         className={workspaceStyle()}
         onClick={handleWorkspaceClick}
         ref={workspaceRef}
+        data-dialog-boundary
       >
         <div className={canvasContainerStyle()} style={canvasStyle}>
           {children}
