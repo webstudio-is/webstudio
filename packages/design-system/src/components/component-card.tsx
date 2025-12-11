@@ -68,14 +68,28 @@ type ComponentCardProps = {
   description?: string;
   icon: JSX.Element;
   state?: "hover" | "disabled" | "selected";
+  disableTooltip?: boolean;
   css?: CSS;
 } & ComponentProps<"div">;
 
 export const ComponentCard = forwardRef<HTMLDivElement, ComponentCardProps>(
-  ({ icon, label, className, css, state, description, ...props }, ref) => {
+  (
+    {
+      icon,
+      label,
+      className,
+      css,
+      state,
+      description,
+      disableTooltip,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <Tooltip
         disableHoverableContent
+        open={disableTooltip ? false : undefined}
         content={description ?? label}
         css={{ maxWidth: theme.spacing[28] }}
       >

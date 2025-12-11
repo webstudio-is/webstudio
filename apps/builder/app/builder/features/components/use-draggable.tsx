@@ -90,6 +90,7 @@ export const useDraggable = ({
   availableComponents: Set<string>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
+  const [isDragging, setIsDragging] = useState(false);
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const canvasRect = useStore($canvasRect);
   const scale = useStore($scale);
@@ -102,6 +103,7 @@ export const useDraggable = ({
     },
     onStart({ data: componentName }) {
       setDragComponent(componentName);
+      setIsDragging(true);
       publish({
         type: "dragStart",
         payload: {
@@ -123,6 +125,7 @@ export const useDraggable = ({
     },
     onEnd({ isCanceled }) {
       setDragComponent(undefined);
+      setIsDragging(false);
       publish({
         type: "dragEnd",
         payload: { isCanceled },
@@ -143,5 +146,6 @@ export const useDraggable = ({
   return {
     dragCard,
     draggableContainerRef: dragHandlers.rootRef,
+    isDragging,
   };
 };

@@ -236,7 +236,7 @@ export const ComponentsPanel = ({
 
   const { metasByCategory, availableComponents } = useStore($metas);
 
-  const { dragCard, draggableContainerRef } = useDraggable({
+  const { dragCard, draggableContainerRef, isDragging } = useDraggable({
     publish,
     availableComponents,
   });
@@ -296,6 +296,7 @@ export const ComponentsPanel = ({
                       css={{ width: 69 }}
                       label={meta.label}
                       description={meta.description}
+                      disableTooltip={isDragging}
                       icon={
                         <InstanceIcon
                           size="auto"
