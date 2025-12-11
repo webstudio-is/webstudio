@@ -588,7 +588,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       />
       {editingItemId !== undefined && (
         <FloatingPanel
-          title={
+          content={
             isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
                 editingFolderId={editingItemId}
@@ -601,7 +601,6 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
               />
             )
           }
-          content={<></>}
           placement="right-start"
           width={Number.parseFloat(rawTheme.spacing[35])}
           open={true}

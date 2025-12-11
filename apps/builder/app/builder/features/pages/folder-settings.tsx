@@ -12,7 +12,6 @@ import {
   Label,
   DialogTitleActions,
   ScrollArea,
-  Separator,
   Text,
   TitleSuffixSpacer,
   Tooltip,

@@ -371,7 +371,17 @@ const useDraggable = ({
     }
 
     return style;
-  }, [x, y, width, height, isMaximized, minWidth, minHeight, bounds]);
+  }, [
+    x,
+    y,
+    width,
+    height,
+    isMaximized,
+    minWidth,
+    minHeight,
+    bounds,
+    boundaryTolerance,
+  ]);
 
   const [style, setStyle] = useState(calcStyle());
 

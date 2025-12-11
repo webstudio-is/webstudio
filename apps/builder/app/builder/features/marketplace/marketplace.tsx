@@ -74,15 +74,7 @@ export const MarketplacePanel = (_props: { onClose: () => void }) => {
       )}
       {openAboutItem !== undefined && (
         <FloatingPanel
-          title={
-            <About
-              item={openAboutItem}
-              onClose={() => {
-                setOpenAbout(undefined);
-              }}
-            />
-          }
-          content={<></>}
+          content={<About item={openAboutItem} />}
           placement="right-start"
           width={Number.parseFloat(rawTheme.spacing[35])}
           open={true}

@@ -108,7 +108,7 @@ const contentFitsAtPosition = (
 };
 
 type FloatingPanelProps = {
-  title: ReactNode;
+  title?: ReactNode;
   content: ReactNode;
   children: ReactNode;
   titleSuffix?: ReactNode;
