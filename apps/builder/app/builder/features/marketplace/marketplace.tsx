@@ -4,6 +4,7 @@ import {
   PanelTitle,
   rawTheme,
   Separator,
+  FloatingPanel,
 } from "@webstudio-is/design-system";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
@@ -11,7 +12,6 @@ import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
-import { ExtendedPanel } from "~/builder/shared/extended-sidebar-panel";
 import { About } from "./about";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 
@@ -38,7 +38,7 @@ export const MarketplacePanel = (_props: { onClose: () => void }) => {
     activeOverviewItem && buildData?.projectId === activeOverviewItem.projectId;
 
   return (
-    <>
+    <div data-floating-panel-container>
       <PanelTitle>Marketplace</PanelTitle>
       <Separator />
       <Overview
@@ -73,15 +73,28 @@ export const MarketplacePanel = (_props: { onClose: () => void }) => {
         </Flex>
       )}
       {openAboutItem !== undefined && (
-        <ExtendedPanel>
-          <About
-            item={openAboutItem}
-            onClose={() => {
+        <FloatingPanel
+          title={
+            <About
+              item={openAboutItem}
+              onClose={() => {
+                setOpenAbout(undefined);
+              }}
+            />
+          }
+          content={<></>}
+          placement="right-start"
+          width={Number.parseFloat(rawTheme.spacing[35])}
+          open={true}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
               setOpenAbout(undefined);
-            }}
-          />
-        </ExtendedPanel>
+            }
+          }}
+        >
+          <span style={{ display: "none" }} />
+        </FloatingPanel>
       )}
-    </>
+    </div>
   );
 };
