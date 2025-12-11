@@ -37,8 +37,10 @@ import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   return (
-    <Flex shrink={false} gap="1" align="center">
-      <InstanceIcon instance={instance} />
+    <Flex gap="1" align="center">
+      <Flex shrink={false}>
+        <InstanceIcon instance={instance} />
+      </Flex>
       <Text truncate variant="labelsSentenceCase">
         {getInstanceLabel(instance)}
       </Text>
