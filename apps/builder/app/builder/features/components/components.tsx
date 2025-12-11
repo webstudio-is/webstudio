@@ -26,7 +26,6 @@ import {
   PanelTitle,
   Tooltip,
   Button,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { dragItemAttribute, useDraggable } from "./use-draggable";
