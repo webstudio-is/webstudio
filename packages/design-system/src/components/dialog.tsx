@@ -139,6 +139,132 @@ type Point = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rect = Point & Size;
 
+type Tolerance = {
+  horizontal?: number;
+  vertical?: number;
+};
+
+// Utility: Calculate inset CSS string from boundary rect
+const calculateInset = (
+  bounds: Rect,
+  windowWidth: number,
+  windowHeight: number
+): string => {
+  return `${bounds.y}px ${windowWidth - bounds.x - bounds.width}px ${windowHeight - bounds.y - bounds.height}px ${bounds.x}px`;
+};
+
+// Utility: Calculate centered dialog position
+const calculateCenteredPosition = (
+  bounds: Rect,
+  width?: number,
+  height?: number
+): { top: number; left: number } => {
+  return {
+    top: Math.max(bounds.y, bounds.y + bounds.height / 2 - (height ?? 0) / 2),
+    left: Math.max(bounds.x, bounds.x + bounds.width / 2 - (width ?? 0) / 2),
+  };
+};
+
+// Utility: Calculate dialog style based on positioning mode
+const calculateDialogStyle = (
+  bounds: Rect,
+  options: {
+    isMaximized: boolean;
+    width?: number;
+    height?: number;
+    minWidth?: number;
+    minHeight?: number;
+    windowWidth: number;
+    windowHeight: number;
+  }
+): CSSProperties => {
+  const {
+    isMaximized,
+    width,
+    height,
+    minWidth,
+    minHeight,
+    windowWidth,
+    windowHeight,
+  } = options;
+
+  if (isMaximized) {
+    return {
+      top: bounds.y,
+      left: bounds.x,
+      width: bounds.width,
+      height: bounds.height,
+    };
+  }
+
+  // If both width and height are specified, use centered positioning
+  if (width && height) {
+    const centered = calculateCenteredPosition(bounds, width, height);
+    return {
+      top: centered.top,
+      left: centered.left,
+      width,
+      height,
+      ...(minWidth && { minWidth }),
+      ...(minHeight && { minHeight }),
+    };
+  }
+
+  // Otherwise use inset-based centering with margin: auto
+  const style: CSSProperties = {
+    inset: calculateInset(bounds, windowWidth, windowHeight),
+    margin: "auto",
+    maxWidth: bounds.width,
+    maxHeight: bounds.height,
+  };
+
+  if (width !== undefined) {
+    style.width = width;
+  }
+  if (height !== undefined) {
+    style.height = height;
+  }
+  if (minWidth !== undefined) {
+    style.minWidth = minWidth;
+  }
+  if (minHeight !== undefined) {
+    style.minHeight = minHeight;
+  }
+
+  return style;
+};
+
+// Utility: Apply boundary constraints to dialog position and size
+const applyBoundaries = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  bounds: Rect,
+  tolerance?: Tolerance
+): Rect => {
+  const horizontalTolerance = tolerance?.horizontal ?? 0;
+  const verticalTolerance = tolerance?.vertical ?? 0;
+
+  const minX = bounds.x - horizontalTolerance;
+  const minY = bounds.y - verticalTolerance;
+  const maxWidth = bounds.width + horizontalTolerance * 2;
+  const maxHeight = bounds.height + verticalTolerance * 2;
+
+  const constrainedWidth = Math.min(width, maxWidth);
+  const constrainedHeight = Math.min(height, maxHeight);
+
+  const maxX = bounds.x + bounds.width + horizontalTolerance - constrainedWidth;
+  const maxY = bounds.y + bounds.height + verticalTolerance - constrainedHeight;
+
+  return {
+    x: Math.max(minX, Math.min(x, maxX)),
+    y: Math.max(minY, Math.min(y, maxY)),
+    width: constrainedWidth,
+    height: constrainedHeight,
+  };
+};
+
 const useBoundary = () => {
   const [boundaryRect, setBoundaryRect] = useState<Rect | undefined>(undefined);
 
@@ -192,49 +318,6 @@ type UseDraggableProps = {
   boundaryTolerance?: { horizontal?: number; vertical?: number };
 } & Partial<Rect>;
 
-const applyBoundaries = (
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  bounds: Rect,
-  tolerance?: { horizontal?: number; vertical?: number }
-) => {
-  const horizontalTolerance = tolerance?.horizontal ?? 0;
-  const verticalTolerance = tolerance?.vertical ?? 0;
-
-  // Constrain width and height to fit within bounds
-  const constrainedWidth = Math.min(
-    width,
-    bounds.width + horizontalTolerance * 2
-  );
-  const constrainedHeight = Math.min(
-    height,
-    bounds.height + verticalTolerance * 2
-  );
-
-  // Constrain X axis within bounds (with tolerance)
-  let constrainedX = Math.max(bounds.x - horizontalTolerance, x);
-  constrainedX = Math.min(
-    bounds.x + bounds.width + horizontalTolerance - constrainedWidth,
-    constrainedX
-  );
-
-  // Constrain Y axis within bounds (with tolerance)
-  let constrainedY = Math.max(bounds.y - verticalTolerance, y);
-  constrainedY = Math.min(
-    bounds.y + bounds.height + verticalTolerance - constrainedHeight,
-    constrainedY
-  );
-
-  return {
-    x: constrainedX,
-    y: constrainedY,
-    width: constrainedWidth,
-    height: constrainedHeight,
-  };
-};
-
 const useDraggable = ({
   width,
   height,
@@ -259,36 +342,15 @@ const useDraggable = ({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const calcStyle = useCallback(() => {
-    const availableWidth = bounds.width;
-    const availableHeight = bounds.height;
-
-    const style: CSSProperties = isMaximized
-      ? {
-          top: bounds.y,
-          left: bounds.x,
-          width: availableWidth,
-          height: availableHeight,
-        }
-      : !width || !height
-        ? {
-            top: bounds.y,
-            left: bounds.x,
-            maxWidth: availableWidth,
-            maxHeight: availableHeight,
-          }
-        : {
-            top: Math.max(bounds.y, bounds.y + bounds.height / 2 - height / 2),
-            left: Math.max(bounds.x, bounds.x + bounds.width / 2 - width / 2),
-            width,
-            height,
-          };
-
-    if (minWidth !== undefined) {
-      style.minWidth = minWidth;
-    }
-    if (minHeight !== undefined) {
-      style.minHeight = minHeight;
-    }
+    const style = calculateDialogStyle(bounds, {
+      isMaximized,
+      width,
+      height,
+      minWidth,
+      minHeight,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+    });
 
     if (isMaximized === false) {
       if (x !== undefined && y !== undefined) {
@@ -365,8 +427,8 @@ const useDraggable = ({
         style.margin = 0;
       } else {
         // Only apply max constraints when not positioned
-        style.maxWidth = availableWidth;
-        style.maxHeight = availableHeight;
+        style.maxWidth = bounds.width;
+        style.maxHeight = bounds.height;
       }
     }
 
@@ -664,3 +726,11 @@ const contentStyle = css(panelStyle, {
     },
   },
 });
+
+// Export utilities for testing
+export const __testing__ = {
+  calculateInset,
+  calculateCenteredPosition,
+  calculateDialogStyle,
+  applyBoundaries,
+};

@@ -16,7 +16,17 @@ export * from "./components/dropdown-menu";
 export * from "./components/context-menu";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
 export * from "./components/toggle-button";
-export * from "./components/dialog";
+export {
+  Dialog,
+  DialogTrigger,
+  DialogDescription,
+  DialogClose,
+  DialogMaximize,
+  DialogContent,
+  DialogTitle,
+  DialogTitleActions,
+  DialogActions,
+} from "./components/dialog";
 export * from "./components/floating-panel";
 export * from "./components/popover";
 export {

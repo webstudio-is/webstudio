@@ -15,9 +15,9 @@ import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   DeleteCssVariableDialog,
   RenameCssVariableDialog,
-  $usedCssVariablesInInstances,
   $cssVariableInstancesByVariable,
   $cssVariableDefinitionsByVariable,
+  $unusedCssVariables,
 } from "~/builder/shared/css-variable-utils";
 import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-data";
 import { InstanceList, showInstance } from "../shared/instance-list";
@@ -38,14 +38,14 @@ export type CssVariableOption = BaseOption & {
 };
 
 export const $cssVariableOptions = computed(
-  [$cssVariableDefinitionsByVariable, $usedCssVariablesInInstances],
-  (definitionsByVariable, usedVariablesInInstances) => {
+  [$cssVariableDefinitionsByVariable, $unusedCssVariables],
+  (definitionsByVariable, unusedVariables) => {
     const cssVariableOptions: CssVariableOption[] = [];
 
     // Create options for each defined CSS variable on each instance
     for (const [property, instanceIds] of definitionsByVariable) {
       for (const instanceId of instanceIds) {
-        const usages = usedVariablesInInstances.get(property) ?? 0;
+        const usages = unusedVariables.has(property) ? 0 : 1; // 0 if unused, 1+ otherwise
         cssVariableOptions.push({
           terms: [
             "css variables",
@@ -130,7 +130,12 @@ export const CssVariablesGroup = ({
                   {formatUsageCount(usages)}
                 </Text>
               </Text>
-              <Text as="span" color="moreSubtle">
+              <Text
+                as="span"
+                css={{ maxWidth: "20ch" }}
+                truncate
+                color="moreSubtle"
+              >
                 {getInstanceLabel(instanceId)}
               </Text>
             </CommandItem>
