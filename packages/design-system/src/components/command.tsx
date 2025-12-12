@@ -29,7 +29,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
 import { useDebounceEffect } from "../utilities";
 
-const panelWidth = "400px";
+const panelWidth = "500px";
 const itemHeight = "32px";
 const inputBorderBottomSize = "--command-input-border-bottom-width";
 

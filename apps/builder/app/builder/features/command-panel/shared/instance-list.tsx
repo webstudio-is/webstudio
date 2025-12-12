@@ -19,13 +19,18 @@ import {
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
+import {
+  $awareness,
+  findAwarenessByInstanceId,
+  getInstancePath,
+} from "~/shared/awareness";
 import { $commandContent } from "../command-state";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 
 export type InstanceOption = {
   label: string;
   id: string;
+  path: string;
 };
 
 type InstanceListProps = {
@@ -35,17 +40,38 @@ type InstanceListProps = {
 
 export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
   const instances = $instances.get();
-  const metas = $registeredComponentMetas.get();
+  const pages = $pages.get();
   const usedInInstances: InstanceOption[] = [];
   for (const instanceId of instanceIds) {
     const instance = instances.get(instanceId);
-    const meta = metas.get(instance?.component ?? "");
-    if (instance && meta) {
-      usedInInstances.push({
-        label: getInstanceLabel(instance),
-        id: instance.id,
-      });
+    if (!instance || !pages) {
+      continue;
     }
+    // Get the full instance selector path from the instance to root
+    const awareness = findAwarenessByInstanceId(pages, instances, instanceId);
+    if (!awareness.instanceSelector) {
+      continue;
+    }
+    const instancePath = getInstancePath(
+      awareness.instanceSelector,
+      instances,
+      undefined,
+      undefined
+    );
+    let pathString = "";
+    if (instancePath) {
+      pathString = instancePath
+        .slice()
+        .reverse()
+        .slice(1) // Skip the instance itself, only show ancestors
+        .map(({ instance }) => getInstanceLabel(instance))
+        .join("/");
+    }
+    usedInInstances.push({
+      label: getInstanceLabel(instance),
+      id: instance.id,
+      path: pathString ? `/${pathString}` : "",
+    });
   }
   const [search, setSearch] = useState("");
 
@@ -86,7 +112,7 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
                   <Text color="subtle">No instances found</Text>
                 </Flex>
               ) : (
-                matches.map(({ id, label }) => (
+                matches.map(({ id, label, path }) => (
                   <CommandItem
                     key={id}
                     value={id}
@@ -95,6 +121,15 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
                     }}
                   >
                     <Text variant="labelsTitleCase">{label}</Text>
+                    {path && (
+                      <Text
+                        color="moreSubtle"
+                        truncate
+                        css={{ maxWidth: "30ch" }}
+                      >
+                        {path}
+                      </Text>
+                    )}
                   </CommandItem>
                 ))
               )}
@@ -105,7 +140,7 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
       <CommandGroupFooter>
         <Flex grow>
           <Button tabIndex={-1} color="ghost" onClick={goBack}>
-            Back <Kbd value={["backspace"]} />
+            <Kbd value={["backspace"]} /> Back
           </Button>
         </Flex>
       </CommandGroupFooter>
