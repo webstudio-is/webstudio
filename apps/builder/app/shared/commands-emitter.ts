@@ -24,6 +24,10 @@ export type CommandMeta<CommandName extends string> = {
    * hide the command in meta+k panel
    */
   hidden?: boolean;
+  /**
+   * keep command panel open after executing the command
+   */
+  keepCommandPanelOpen?: boolean;
 };
 
 type CommandHandler = () => void;

@@ -8,11 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
 import type { TemplateMeta } from "@webstudio-is/template";
-import {
-  componentCategories,
-  collectionComponent,
-  elementComponent,
-} from "@webstudio-is/sdk";
+import { collectionComponent, elementComponent } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
@@ -28,8 +24,12 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { closeCommandPanel } from "../command-state";
+import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
+import {
+  shouldFilterCategory,
+  getComponentScore,
+} from "../shared/component-utils";
 
 export type ComponentOption = BaseOption & {
   type: "component";
@@ -41,48 +41,77 @@ export type ComponentOption = BaseOption & {
   firstInstance: { component: string };
 };
 
-const getComponentScore = (meta: ComponentOption) => {
-  const categoryScore = componentCategories.indexOf(meta.category ?? "hidden");
-  const componentScore = meta.order ?? Number.MAX_SAFE_INTEGER;
-  // shift category
-  return categoryScore * 1000 + componentScore;
-};
-
 export const $componentOptions = computed(
-  [$registeredComponentMetas, $registeredTemplates, $selectedPage],
-  (metas, templates, selectedPage) => {
+  [
+    $isCommandPanelOpen,
+    $registeredComponentMetas,
+    $registeredTemplates,
+    $selectedPage,
+  ],
+  (isOpen, metas, templates, selectedPage) => {
     const componentOptions: ComponentOption[] = [];
-    for (const [name, meta] of metas) {
-      const category = meta.category ?? "hidden";
-      if (category === "hidden" || category === "internal") {
-        continue;
-      }
+    if (!isOpen) {
+      return componentOptions;
+    }
 
+    const addComponentOption = ({
+      name,
+      category,
+      label,
+      icon,
+      order,
+      firstInstance,
+    }: {
+      name: string;
+      category: TemplateMeta["category"];
+      label: string;
+      icon?: string;
+      order?: number;
+      firstInstance: { component: string };
+    }) => {
       // show only xml category and collection component in xml documents
       if (selectedPage?.meta.documentType === "xml") {
         if (category !== "xml" && name !== collectionComponent) {
-          continue;
+          return;
         }
       } else {
         // show everything except xml category in html documents
         if (category === "xml") {
-          continue;
+          return;
         }
       }
-      const label = getInstanceLabel({ component: name });
+
       componentOptions.push({
         terms: ["components", label, category],
         type: "component",
         component: name,
         label,
         category,
+        icon,
+        order,
+        firstInstance,
+      });
+    };
+
+    for (const [name, meta] of metas) {
+      if (shouldFilterCategory(meta.category)) {
+        continue;
+      }
+      const category = meta.category ?? "hidden";
+      const label = meta.label ?? getInstanceLabel({ component: name });
+
+      addComponentOption({
+        name,
+        category,
+        label,
         icon: meta.icon,
         order: meta.order,
         firstInstance: { component: name },
       });
     }
+
     for (const [name, meta] of templates) {
-      if (meta.category === "hidden" || meta.category === "internal") {
+      if (shouldFilterCategory(meta.category)) {
         continue;
       }
 
@@ -91,17 +120,17 @@ export const $componentOptions = computed(
         meta.label ??
         componentMeta?.label ??
         getInstanceLabel({ component: name });
-      componentOptions.push({
-        terms: ["components", label, meta.category],
-        type: "component",
-        component: name,
-        label,
+
+      addComponentOption({
+        name,
         category: meta.category,
+        label,
         icon: meta.icon ?? componentMeta?.icon,
         order: meta.order,
         firstInstance: meta.template.instances[0],
       });
     }
+
     componentOptions.sort(
       (leftOption, rightOption) =>
         getComponentScore(leftOption) - getComponentScore(rightOption)

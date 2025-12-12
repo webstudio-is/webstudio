@@ -13,7 +13,7 @@ import {
   $selectedBreakpoint,
   $selectedBreakpointId,
 } from "~/shared/nano-states";
-import { closeCommandPanel } from "../command-state";
+import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
@@ -24,8 +24,11 @@ export type BreakpointOption = BaseOption & {
 };
 
 export const $breakpointOptions = computed(
-  [$breakpoints, $selectedBreakpoint],
-  (breakpoints, selectedBreakpoint) => {
+  [$isCommandPanelOpen, $breakpoints, $selectedBreakpoint],
+  (isOpen, breakpoints, selectedBreakpoint) => {
+    if (!isOpen) {
+      return [];
+    }
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
       compareMedia
     );

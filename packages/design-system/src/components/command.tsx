@@ -169,18 +169,23 @@ const CommandInputField = styled(CommandPrimitive.Input, {
 export const CommandInput = (
   props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
     action?: string;
+    placeholder?: string;
   }
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const contextAction = useSelectedAction();
-  const { action = contextAction, ...inputProps } = props;
+  const {
+    action = contextAction,
+    placeholder = "Type a command or search...",
+    ...inputProps
+  } = props;
   return (
     <CommandInputContainer>
       <CommandInputIcon />
       <CommandInputField
         ref={inputRef}
         autoFocus={true}
-        placeholder="Type a command or search..."
+        placeholder={placeholder}
         {...inputProps}
         onValueChange={(value) => {
           // reset scroll whenever search is changed

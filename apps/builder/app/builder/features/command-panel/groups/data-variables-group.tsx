@@ -12,6 +12,7 @@ import {
 import { $dataSources } from "~/shared/nano-states";
 import {
   $commandContent,
+  $isCommandPanelOpen,
   closeCommandPanel,
   focusCommandPanel,
 } from "../command-state";
@@ -36,9 +37,12 @@ export type DataVariableOption = BaseOption & {
 };
 
 export const $dataVariableOptions = computed(
-  [$dataSources, $usedVariablesInInstances],
-  (dataSources, usedInInstances) => {
+  [$isCommandPanelOpen, $dataSources, $usedVariablesInInstances],
+  (isOpen, dataSources, usedInInstances) => {
     const dataVariableOptions: DataVariableOption[] = [];
+    if (!isOpen) {
+      return dataVariableOptions;
+    }
 
     for (const dataSource of dataSources.values()) {
       if (

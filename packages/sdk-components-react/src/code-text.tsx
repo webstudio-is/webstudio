@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component will be replaced by the Element component in the future.
+ * Use Element with tag="code" instead.
+ */
 import {
   type ElementRef,
   type ComponentProps,

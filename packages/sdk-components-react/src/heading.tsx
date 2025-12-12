@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component will be replaced by the Element component in the future.
+ * Use Element with tag="h1", "h2", etc. instead.
+ */
 import {
   forwardRef,
   type ElementRef,
