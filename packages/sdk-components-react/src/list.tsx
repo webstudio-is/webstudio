@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component will be replaced by the Element component in the future.
+ * Use Element with tag="ul" or tag="ol" instead.
+ */
 import {
   forwardRef,
   createElement,

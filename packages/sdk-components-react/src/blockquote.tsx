@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component will be replaced by the Element component in the future.
+ * Use Element with tag="blockquote" instead.
+ */
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 export const defaultTag = "blockquote";
