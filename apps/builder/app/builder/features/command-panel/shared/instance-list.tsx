@@ -9,8 +9,6 @@ import {
   Flex,
   ScrollArea,
   Text,
-  Button,
-  Kbd,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/nano-states";
@@ -19,6 +17,7 @@ import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
 import { buildInstancePath } from "~/shared/instance-utils";
 import { $commandContent } from "../command-state";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
+import { BackButton } from "./back-button";
 
 export type InstanceOption = {
   label: string;
@@ -68,6 +67,7 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
     <>
       <CommandInput
         action="select"
+        placeholder="Search instances..."
         value={search}
         onValueChange={setSearch}
         onKeyDown={(event) => {
@@ -111,9 +111,7 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
       </Flex>
       <CommandGroupFooter>
         <Flex grow>
-          <Button tabIndex={-1} color="ghost" onClick={goBack}>
-            <Kbd value={["backspace"]} /> Back
-          </Button>
+          <BackButton />
         </Flex>
       </CommandGroupFooter>
     </>

@@ -1,2 +1,2 @@
-export { openCommandPanel } from "./command-state";
+export { openCommandPanel, $commandSearch } from "./command-state";
 export * from "./command-panel";

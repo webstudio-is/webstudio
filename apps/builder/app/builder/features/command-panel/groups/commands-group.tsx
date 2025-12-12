@@ -17,6 +17,7 @@ export type CommandOption = BaseOption & {
   name: string;
   label: string;
   keys?: string[];
+  keepCommandPanelOpen?: boolean;
 };
 
 export const $commandOptions = computed([$commandMetas], (commandMetas) => {
@@ -31,6 +32,7 @@ export const $commandOptions = computed([$commandMetas], (commandMetas) => {
         name,
         label,
         keys,
+        keepCommandPanelOpen: meta.keepCommandPanelOpen,
       });
     }
   }
@@ -47,13 +49,15 @@ export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
       heading={<CommandGroupHeading>Commands</CommandGroupHeading>}
       actions={["execute"]}
     >
-      {options.map(({ name, label, keys }) => (
+      {options.map(({ name, label, keys, keepCommandPanelOpen }) => (
         <CommandItem
           key={name}
           // preserve selected state when rerender
           value={name}
           onSelect={() => {
-            closeCommandPanel();
+            if (!keepCommandPanelOpen) {
+              closeCommandPanel();
+            }
             emitCommand(name as never);
           }}
         >
