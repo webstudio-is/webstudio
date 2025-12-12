@@ -15,7 +15,6 @@ import type { CssProperty } from "@webstudio-is/css-engine";
 import {
   DeleteCssVariableDialog,
   RenameCssVariableDialog,
-  $usedCssVariablesInInstances,
   $cssVariableInstancesByVariable,
   $cssVariableDefinitionsByVariable,
   $unusedCssVariables,

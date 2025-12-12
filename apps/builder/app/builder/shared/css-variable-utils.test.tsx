@@ -546,7 +546,7 @@ describe("findCssVariableUsagesByInstance", () => {
       ],
     ]);
 
-    const { counts, instances } = findCssVariableUsagesByInstance({
+    const { counts } = findCssVariableUsagesByInstance({
       styleSourceSelections,
       styles,
       props: new Map(),
@@ -732,7 +732,7 @@ describe("findCssVariableUsagesByInstance", () => {
       ],
     ]);
 
-    const { counts, instances } = findCssVariableUsagesByInstance({
+    const { counts } = findCssVariableUsagesByInstance({
       styleSourceSelections,
       styles,
       props: new Map(),
@@ -765,7 +765,7 @@ describe("findCssVariableUsagesByInstance", () => {
       ],
     ]);
 
-    const { counts, instances } = findCssVariableUsagesByInstance({
+    const { counts } = findCssVariableUsagesByInstance({
       styleSourceSelections,
       styles,
       props: new Map(),
@@ -792,7 +792,7 @@ describe("findCssVariableUsagesByInstance", () => {
       ],
     ]);
 
-    const { counts, instances } = findCssVariableUsagesByInstance({
+    const { counts } = findCssVariableUsagesByInstance({
       styleSourceSelections,
       styles,
       props: new Map(),
@@ -990,7 +990,7 @@ describe("performCssVariableRename", () => {
     });
   });
 
-  test("updates var() with CSS variable fallback", () => {
+  test("updates var() with keyword fallback (fallback unchanged)", () => {
     const styles = new Map<string, StyleDecl>([
       [
         "styleSourceId:base:color",
@@ -1001,23 +1001,23 @@ describe("performCssVariableRename", () => {
           value: {
             type: "var",
             value: "primary",
-            fallback: { type: "var", value: "fallback-color" },
-          } as StyleValue,
+            fallback: { type: "keyword", value: "blue" },
+          },
         },
       ],
     ]);
 
     const result = performCssVariableRename(
       styles,
-      "--fallback-color",
-      "--default-color"
+      "--primary",
+      "--primary-color"
     );
 
     const colorDecl = Array.from(result.values())[0];
     expect(colorDecl.value).toMatchObject({
       type: "var",
-      value: "primary",
-      fallback: { type: "var", value: "default-color" },
+      value: "primary-color",
+      fallback: { type: "keyword", value: "blue" },
     });
   });
 
@@ -1052,7 +1052,7 @@ describe("performCssVariableRename", () => {
     });
   });
 
-  test("updates both primary and fallback when renaming appears in both", () => {
+  test("updates var() primary value when it has a keyword fallback", () => {
     const styles = new Map<string, StyleDecl>([
       [
         "styleSourceId:base:color",
@@ -1063,8 +1063,8 @@ describe("performCssVariableRename", () => {
           value: {
             type: "var",
             value: "theme-color",
-            fallback: { type: "var", value: "theme-color" },
-          } as StyleValue,
+            fallback: { type: "keyword", value: "blue" },
+          },
         },
       ],
     ]);
@@ -1079,7 +1079,7 @@ describe("performCssVariableRename", () => {
     expect(colorDecl.value).toMatchObject({
       type: "var",
       value: "brand-color",
-      fallback: { type: "var", value: "brand-color" },
+      fallback: { type: "keyword", value: "blue" },
     });
   });
 
@@ -2633,12 +2633,12 @@ describe("Renaming with potential interference", () => {
     );
 
     const paddingDecl = Array.from(result.values()).find(
-      (d) => d.property === "padding"
+      (d) => (d.property as string) === "padding"
     );
     expect(paddingDecl?.value).toEqual({ type: "var", value: "new-spacing" });
 
     const widthDecl = Array.from(result.values()).find(
-      (d) => d.property === "width"
+      (d) => (d.property as string) === "width"
     );
     expect(widthDecl?.value).toEqual({
       type: "unparsed",
