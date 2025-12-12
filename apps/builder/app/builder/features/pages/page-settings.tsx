@@ -112,6 +112,7 @@ import {
 } from "./page-utils";
 import { Form } from "./form";
 import { CustomMetadata } from "./custom-metadata";
+import { SchemaMarkup } from "./schema-markup";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -128,6 +129,7 @@ const fieldDefaultValues = {
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
   customMetas: [{ property: "", content: `""` }],
+  schemaMarkup: [] as Array<{ type: "application/ld+json"; content: string }>,
   marketplaceInclude: false,
   marketplaceCategory: "",
   marketplaceThumbnailAssetId: "",
@@ -186,6 +188,14 @@ const SharedPageValues = z.object({
     .array(
       z.object({
         property: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional(),
+  schemaMarkup: z
+    .array(
+      z.object({
+        type: z.enum(["application/ld+json"]),
         content: z.string(),
       })
     )
@@ -284,6 +294,7 @@ const toFormValues = (
     documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
+    schemaMarkup: page.meta.schemaMarkup ?? fieldDefaultValues.schemaMarkup,
     marketplaceInclude: page.marketplace?.include ?? false,
     marketplaceCategory: page.marketplace?.category ?? "",
     marketplaceThumbnailAssetId: page.marketplace?.thumbnailAssetId ?? "",
@@ -1147,6 +1158,31 @@ const FormFields = ({
               />
             </div>
           </InputErrorsTooltip>
+
+          <Separator />
+
+          <SchemaMarkup
+            schemaMarkup={values.schemaMarkup}
+            onChange={(schemaMarkup) => {
+              onChange({
+                field: "schemaMarkup",
+                value: schemaMarkup,
+              });
+            }}
+            pageContext={{
+              pageName: values.name,
+              pageTitle: title,
+              pageDescription: description || undefined,
+              siteName: pages?.meta?.siteName || undefined,
+              siteUrl: pageUrl,
+              pagePath: values.path,
+              contactEmail: pages?.meta?.contactEmail || undefined,
+              language:
+                String(computeExpression(values.language, variableValues)) ||
+                undefined,
+              socialImageUrl: socialImageUrl || undefined,
+            }}
+          />
         </fieldset>
 
         {(project?.marketplaceApprovalStatus === "PENDING" ||
@@ -1371,6 +1407,11 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.customMetas !== undefined) {
       page.meta.custom = values.customMetas;
+    }
+
+    if (values.schemaMarkup !== undefined) {
+      page.meta.schemaMarkup =
+        values.schemaMarkup.length > 0 ? values.schemaMarkup : undefined;
     }
 
     if (values.documentType !== undefined) {

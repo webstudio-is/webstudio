@@ -14,6 +14,7 @@ export type PageMeta = {
   status?: number;
   redirect?: string;
   custom: Array<{ property: string; content: string }>;
+  schemaMarkup: Array<{ type: "application/ld+json"; content: string }>;
 };
 
 export const generatePageMeta = ({
@@ -96,6 +97,20 @@ export const generatePageMeta = ({
     customExpression += `      },\n`;
   }
   customExpression += `    ]`;
+
+  // Generate schemaMarkup expression
+  let schemaMarkupExpression = "";
+  schemaMarkupExpression += `[\n`;
+  for (const schema of page.meta.schemaMarkup ?? []) {
+    const typeExpression = JSON.stringify(schema.type);
+    const contentExpression = JSON.stringify(schema.content);
+    schemaMarkupExpression += `      {\n`;
+    schemaMarkupExpression += `        type: ${typeExpression},\n`;
+    schemaMarkupExpression += `        content: ${contentExpression},\n`;
+    schemaMarkupExpression += `      },\n`;
+  }
+  schemaMarkupExpression += `    ]`;
+
   let generated = "";
   generated += `export const getPageMeta = ({\n`;
   generated += `  system,\n`;
@@ -142,6 +157,7 @@ export const generatePageMeta = ({
   generated += `    status: ${statusExpression},\n`;
   generated += `    redirect: ${redirectExpression},\n`;
   generated += `    custom: ${customExpression},\n`;
+  generated += `    schemaMarkup: ${schemaMarkupExpression},\n`;
   generated += `  };\n`;
   generated += `};\n`;
   return generated;
