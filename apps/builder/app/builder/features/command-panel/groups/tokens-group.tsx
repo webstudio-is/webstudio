@@ -21,6 +21,7 @@ import {
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
+  $isCommandPanelOpen,
   closeCommandPanel,
   focusCommandPanel,
 } from "../command-state";
@@ -34,9 +35,12 @@ export type TokenOption = BaseOption & {
 };
 
 export const $tokenOptions = computed(
-  [$styleSources, $styleSourceUsages],
-  (styleSources, styleSourceUsages) => {
+  [$isCommandPanelOpen, $styleSources, $styleSourceUsages],
+  (isOpen, styleSources, styleSourceUsages) => {
     const tokenOptions: TokenOption[] = [];
+    if (!isOpen) {
+      return tokenOptions;
+    }
     for (const styleSource of styleSources.values()) {
       if (styleSource.type !== "token") {
         continue;

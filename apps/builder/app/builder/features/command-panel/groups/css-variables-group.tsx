@@ -23,6 +23,7 @@ import { deleteProperty } from "~/builder/features/style-panel/shared/use-style-
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
+  $isCommandPanelOpen,
   closeCommandPanel,
   focusCommandPanel,
 } from "../command-state";
@@ -38,9 +39,12 @@ export type CssVariableOption = BaseOption & {
 };
 
 export const $cssVariableOptions = computed(
-  [$cssVariableDefinitionsByVariable, $unusedCssVariables],
-  (definitionsByVariable, unusedVariables) => {
+  [$isCommandPanelOpen, $cssVariableDefinitionsByVariable, $unusedCssVariables],
+  (isOpen, definitionsByVariable, unusedVariables) => {
     const cssVariableOptions: CssVariableOption[] = [];
+    if (!isOpen) {
+      return cssVariableOptions;
+    }
 
     // Create options for each defined CSS variable on each instance
     for (const [property, instanceIds] of definitionsByVariable) {

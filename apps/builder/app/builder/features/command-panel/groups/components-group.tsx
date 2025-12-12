@@ -24,7 +24,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
-import { closeCommandPanel } from "../command-state";
+import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import {
   shouldFilterCategory,
@@ -42,9 +42,17 @@ export type ComponentOption = BaseOption & {
 };
 
 export const $componentOptions = computed(
-  [$registeredComponentMetas, $registeredTemplates, $selectedPage],
-  (metas, templates, selectedPage) => {
+  [
+    $isCommandPanelOpen,
+    $registeredComponentMetas,
+    $registeredTemplates,
+    $selectedPage,
+  ],
+  (isOpen, metas, templates, selectedPage) => {
     const componentOptions: ComponentOption[] = [];
+    if (!isOpen) {
+      return componentOptions;
+    }
 
     const addComponentOption = ({
       name,

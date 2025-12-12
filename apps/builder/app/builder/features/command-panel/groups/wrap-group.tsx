@@ -29,7 +29,11 @@ import {
   InstanceIcon,
 } from "~/builder/shared/instance-label";
 import { isTreeSatisfyingContentModel } from "~/shared/content-model";
-import { $commandContent, closeCommandPanel } from "../command-state";
+import {
+  $commandContent,
+  $isCommandPanelOpen,
+  closeCommandPanel,
+} from "../command-state";
 import { useState } from "react";
 import { BackButton } from "../shared/back-button";
 import { wrapIn } from "~/shared/instance-utils";
@@ -137,9 +141,18 @@ const canWrapInstance = (
 };
 
 const $wrapOptions = computed(
-  [$selectedInstancePath, $instances, $props, $registeredComponentMetas],
-  (instancePath, instances, props, metas) => {
+  [
+    $isCommandPanelOpen,
+    $selectedInstancePath,
+    $instances,
+    $props,
+    $registeredComponentMetas,
+  ],
+  (isOpen, instancePath, instances, props, metas) => {
     const wrapOptions: WrapOption[] = [];
+    if (!isOpen) {
+      return wrapOptions;
+    }
     if (instancePath === undefined || instancePath.length === 1) {
       return wrapOptions;
     }

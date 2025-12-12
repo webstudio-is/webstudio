@@ -20,27 +20,35 @@ export type CommandOption = BaseOption & {
   keepCommandPanelOpen?: boolean;
 };
 
-export const $commandOptions = computed([$commandMetas], (commandMetas) => {
-  const commandOptions: CommandOption[] = [];
-  for (const [name, meta] of commandMetas) {
-    if (!meta.hidden) {
-      const label = meta.label ?? humanizeString(name);
-      const keys = meta.defaultHotkeys?.[0]?.split("+");
-      commandOptions.push({
-        terms: ["shortcuts", "commands", label],
-        type: "command",
-        name,
-        label,
-        keys,
-        keepCommandPanelOpen: meta.keepCommandPanelOpen,
-      });
+import { $isCommandPanelOpen } from "../command-state";
+
+export const $commandOptions = computed(
+  [$isCommandPanelOpen, $commandMetas],
+  (isOpen, commandMetas) => {
+    if (!isOpen) {
+      return [];
     }
+    const commandOptions: CommandOption[] = [];
+    for (const [name, meta] of commandMetas) {
+      if (!meta.hidden) {
+        const label = meta.label ?? humanizeString(name);
+        const keys = meta.defaultHotkeys?.[0]?.split("+");
+        commandOptions.push({
+          terms: ["shortcuts", "commands", label],
+          type: "command",
+          name,
+          label,
+          keys,
+          keepCommandPanelOpen: meta.keepCommandPanelOpen,
+        });
+      }
+    }
+    commandOptions.sort(
+      (left, right) => (left.keys ? 0 : 1) - (right.keys ? 0 : 1)
+    );
+    return commandOptions;
   }
-  commandOptions.sort(
-    (left, right) => (left.keys ? 0 : 1) - (right.keys ? 0 : 1)
-  );
-  return commandOptions;
-});
+);
 
 export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
   return (
