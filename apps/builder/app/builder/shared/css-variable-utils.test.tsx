@@ -2358,3 +2358,832 @@ describe("findCssVariableUsagesByInstance - edge cases and malformed syntax", ()
     expect(counts.get("--color-darker")).toBeUndefined();
   });
 });
+
+describe("Word boundary edge cases - no-space contexts", () => {
+  test("tracks variable followed by percentage without space", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--opacity::",
+        createStyleDecl("local1", "base", "--opacity", "50"),
+      ],
+      [
+        "local1:base:background::",
+        createStyleDecl(
+          "local1",
+          "base",
+          "background",
+          "linear-gradient(90deg, red var(--opacity)%)"
+        ),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--opacity")).toBe(1);
+  });
+
+  test("tracks variable in tight arithmetic without spaces", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--size::",
+        createStyleDecl("local1", "base", "--size", "100px"),
+      ],
+      [
+        "local1:base:width::",
+        createStyleDecl("local1", "base", "width", "calc(var(--size)-10px)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--size")).toBe(1);
+  });
+
+  test("tracks variable followed by closing paren then another function", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--blur::",
+        createStyleDecl("local1", "base", "--blur", "5px"),
+      ],
+      [
+        "local1:base:--brightness::",
+        createStyleDecl("local1", "base", "--brightness", "1.2"),
+      ],
+      [
+        "local1:base:filter::",
+        createStyleDecl(
+          "local1",
+          "base",
+          "filter",
+          "blur(var(--blur))brightness(var(--brightness))"
+        ),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--blur")).toBe(1);
+    expect(counts.get("--brightness")).toBe(1);
+  });
+
+  test("tracks variable in malformed concatenation", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--value::",
+        createStyleDecl("local1", "base", "--value", "10"),
+      ],
+      [
+        "local1:base:content::",
+        // Malformed but user might try it
+        createStyleDecl("local1", "base", "content", "var(--value)px"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--value")).toBe(1);
+  });
+});
+
+describe("Renaming with potential interference", () => {
+  test("renames --color to --color-new without breaking", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:--color",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--color" as StyleProperty,
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+      [
+        "styleSourceId:base:backgroundColor",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "backgroundColor" as StyleProperty,
+          value: { type: "var", value: "color" },
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(styles, "--color", "--color-new");
+
+    const bgDecl = Array.from(result.values()).find(
+      (d) => d.property === "backgroundColor"
+    );
+    expect(bgDecl?.value).toEqual({ type: "var", value: "color-new" });
+
+    const colorDef = Array.from(result.values()).find(
+      (d) => d.property === "--color-new"
+    );
+    expect(colorDef).toBeDefined();
+    expect(colorDef?.value).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("renames --x to --xx without affecting --xxx", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:--x",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--x" as StyleProperty,
+          value: { type: "keyword", value: "value1" },
+        },
+      ],
+      [
+        "styleSourceId:base:--xxx",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--xxx" as StyleProperty,
+          value: { type: "keyword", value: "value2" },
+        },
+      ],
+      [
+        "styleSourceId:base:width",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "width" as StyleProperty,
+          value: { type: "var", value: "x" },
+        },
+      ],
+      [
+        "styleSourceId:base:height",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "height" as StyleProperty,
+          value: { type: "var", value: "xxx" },
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(styles, "--x", "--xx");
+
+    const widthDecl = Array.from(result.values()).find(
+      (d) => d.property === "width"
+    );
+    expect(widthDecl?.value).toEqual({ type: "var", value: "xx" });
+
+    const heightDecl = Array.from(result.values()).find(
+      (d) => d.property === "height"
+    );
+    // Should NOT be affected
+    expect(heightDecl?.value).toEqual({ type: "var", value: "xxx" });
+  });
+
+  test("handles variable in both var type and unparsed string", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:--spacing",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--spacing" as StyleProperty,
+          value: { type: "keyword", value: "10px" },
+        },
+      ],
+      [
+        "styleSourceId:base:padding",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "padding" as StyleProperty,
+          value: { type: "var", value: "spacing" },
+        },
+      ],
+      [
+        "styleSourceId:base:width",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "width" as StyleProperty,
+          value: {
+            type: "unparsed",
+            value: "calc(100% - var(--spacing))",
+          },
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(
+      styles,
+      "--spacing",
+      "--new-spacing"
+    );
+
+    const paddingDecl = Array.from(result.values()).find(
+      (d) => d.property === "padding"
+    );
+    expect(paddingDecl?.value).toEqual({ type: "var", value: "new-spacing" });
+
+    const widthDecl = Array.from(result.values()).find(
+      (d) => d.property === "width"
+    );
+    expect(widthDecl?.value).toEqual({
+      type: "unparsed",
+      value: "calc(100% - var(--new-spacing))",
+    });
+  });
+});
+
+describe("HTML Embed edge cases", () => {
+  test("tracks variables in minified CSS", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--primary::",
+        createStyleDecl("local1", "base", "--primary", "blue"),
+      ],
+      [
+        "local1:base:--secondary::",
+        createStyleDecl("local1", "base", "--secondary", "red"),
+      ],
+    ]);
+
+    const props = new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "box1",
+          type: "string" as const,
+          name: "code",
+          value:
+            "<style>.a{color:var(--primary);background:var(--secondary)}</style>",
+        },
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props,
+    });
+
+    expect(counts.get("--primary")).toBe(1);
+    expect(counts.get("--secondary")).toBe(1);
+  });
+
+  test("tracks variables in inline styles within HTML", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--text-color::",
+        createStyleDecl("local1", "base", "--text-color", "navy"),
+      ],
+      [
+        "local1:base:--bg-color::",
+        createStyleDecl("local1", "base", "--bg-color", "white"),
+      ],
+    ]);
+
+    const props = new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "box1",
+          type: "string" as const,
+          name: "code",
+          value: `
+            <div style="color: var(--text-color)">
+              <span style="background: var(--bg-color)">Text</span>
+            </div>
+          `,
+        },
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props,
+    });
+
+    expect(counts.get("--text-color")).toBe(1);
+    expect(counts.get("--bg-color")).toBe(1);
+  });
+
+  test("tracks variables with multiple HTML elements", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--spacing::",
+        createStyleDecl("local1", "base", "--spacing", "1rem"),
+      ],
+    ]);
+
+    const props = new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "box1",
+          type: "string" as const,
+          name: "code",
+          value: `
+            <div style="margin: var(--spacing)">
+              <p style="padding: var(--spacing)">Content</p>
+              <span style="gap: var(--spacing)">More</span>
+            </div>
+          `,
+        },
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props,
+    });
+
+    // Should count as 1 usage (same instance, even if multiple occurrences)
+    expect(counts.get("--spacing")).toBe(1);
+  });
+
+  test("updates variables in minified CSS", () => {
+    const props = new Map<string, Prop>([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "code",
+          type: "string",
+          value: ".x{color:var(--old);background:var(--old)}",
+        },
+      ],
+    ]);
+
+    const result = updateVarReferencesInProps(props, "--old", "--new");
+    const prop = result.get("prop1");
+
+    expect(prop!.value).toBe(".x{color:var(--new);background:var(--new)}");
+  });
+
+  test("updates variables in inline styles", () => {
+    const props = new Map<string, Prop>([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          name: "code",
+          type: "string",
+          value:
+            '<div style="color: var(--theme)"><span style="background: var(--theme)">Text</span></div>',
+        },
+      ],
+    ]);
+
+    const result = updateVarReferencesInProps(props, "--theme", "--brand");
+    const prop = result.get("prop1");
+
+    expect(prop!.value).toBe(
+      '<div style="color: var(--brand)"><span style="background: var(--brand)">Text</span></div>'
+    );
+  });
+});
+
+describe("Deeply nested structures", () => {
+  test("preserves deeply nested var in layers > function > tuple", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:filter",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "filter" as StyleProperty,
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "function",
+                name: "drop-shadow",
+                args: {
+                  type: "tuple",
+                  value: [
+                    { type: "unit", value: 0, unit: "px" },
+                    { type: "unit", value: 0, unit: "px" },
+                    { type: "var", value: "shadow-blur" },
+                    { type: "var", value: "shadow-color" },
+                  ],
+                },
+              } as StyleValue,
+            ],
+          } as StyleValue,
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(
+      styles,
+      "--shadow-blur",
+      "--blur-amount"
+    );
+
+    const filterDecl = Array.from(result.values())[0];
+    const filterValue = filterDecl.value as any;
+
+    expect(filterValue.type).toBe("layers");
+    expect(filterValue.value[0].type).toBe("function");
+    expect(filterValue.value[0].args.type).toBe("tuple");
+    expect(filterValue.value[0].args.value[2]).toEqual({
+      type: "var",
+      value: "blur-amount",
+    });
+    expect(filterValue.value[0].args.value[3]).toEqual({
+      type: "var",
+      value: "shadow-color",
+    });
+  });
+
+  test("handles shadow with var in all fields", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:boxShadow",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "boxShadow" as StyleProperty,
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "shadow",
+                offsetX: { type: "var", value: "offset-x" },
+                offsetY: { type: "var", value: "offset-y" },
+                blur: { type: "var", value: "blur-size" },
+                spread: { type: "var", value: "spread-size" },
+                color: { type: "var", value: "shadow-color" },
+              },
+            ],
+          } as StyleValue,
+        },
+      ],
+    ]);
+
+    // Test renaming each field independently
+    let result = performCssVariableRename(styles, "--offset-x", "--x");
+    let shadowDecl = Array.from(result.values())[0];
+    let shadowValue = (shadowDecl.value as any).value[0];
+    expect(shadowValue.offsetX).toEqual({ type: "var", value: "x" });
+
+    result = performCssVariableRename(styles, "--blur-size", "--blur");
+    shadowDecl = Array.from(result.values())[0];
+    shadowValue = (shadowDecl.value as any).value[0];
+    expect(shadowValue.blur).toEqual({ type: "var", value: "blur" });
+
+    result = performCssVariableRename(styles, "--shadow-color", "--color");
+    shadowDecl = Array.from(result.values())[0];
+    shadowValue = (shadowDecl.value as any).value[0];
+    expect(shadowValue.color).toEqual({ type: "var", value: "color" });
+  });
+
+  test("preserves 5-level nested structure", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:filter",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "filter" as StyleProperty,
+          value: {
+            type: "layers",
+            value: [
+              {
+                type: "function",
+                name: "drop-shadow",
+                args: {
+                  type: "tuple",
+                  value: [
+                    {
+                      type: "function",
+                      name: "calc",
+                      args: {
+                        type: "unparsed",
+                        value: "var(--deep-var) * 2",
+                      },
+                    } as StyleValue,
+                  ],
+                },
+              } as StyleValue,
+            ],
+          } as StyleValue,
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(
+      styles,
+      "--deep-var",
+      "--renamed-deep"
+    );
+
+    const filterDecl = Array.from(result.values())[0];
+    const filterValue = filterDecl.value as any;
+
+    expect(filterValue.value[0].args.value[0].args.value).toBe(
+      "var(--renamed-deep) * 2"
+    );
+  });
+});
+
+describe("Special character variable names", () => {
+  test("handles variables with special regex chars in complex values", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--color-$special::",
+        createStyleDecl("local1", "base", "--color-$special", "red"),
+      ],
+      [
+        "local1:base:width::",
+        createStyleDecl(
+          "local1",
+          "base",
+          "width",
+          "calc(var(--color-$special) * 2)"
+        ),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--color-$special")).toBe(1);
+  });
+
+  test("renames variables with special regex chars", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:--var-$test",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--var-$test" as StyleProperty,
+          value: { type: "keyword", value: "value" },
+        },
+      ],
+      [
+        "styleSourceId:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "color" as StyleProperty,
+          value: { type: "var", value: "var-$test" },
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(
+      styles,
+      "--var-$test",
+      "--var-$new"
+    );
+
+    const colorDecl = Array.from(result.values()).find(
+      (d) => d.property === "color"
+    );
+    expect(colorDecl?.value).toEqual({ type: "var", value: "var-$new" });
+  });
+
+  test("handles variables with dots", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--version-1.0::",
+        createStyleDecl("local1", "base", "--version-1.0", "value"),
+      ],
+      [
+        "local1:base:color::",
+        createStyleDecl("local1", "base", "color", "var(--version-1.0)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    expect(counts.get("--version-1.0")).toBe(1);
+  });
+
+  test("handles variables with parentheses in name", () => {
+    const styles = new Map<string, StyleDecl>([
+      [
+        "styleSourceId:base:--var(test)",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "--var(test)" as StyleProperty,
+          value: { type: "keyword", value: "value" },
+        },
+      ],
+      [
+        "styleSourceId:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "styleSourceId",
+          property: "color" as StyleProperty,
+          value: { type: "var", value: "var(test)" },
+        },
+      ],
+    ]);
+
+    const result = performCssVariableRename(
+      styles,
+      "--var(test)",
+      "--var-test"
+    );
+
+    const colorDecl = Array.from(result.values()).find(
+      (d) => d.property === "color"
+    );
+    expect(colorDecl?.value).toEqual({ type: "var", value: "var-test" });
+  });
+});
+
+describe("Performance and optimization validation", () => {
+  test("only tracks defined variables, not undefined ones", () => {
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--defined::",
+        createStyleDecl("local1", "base", "--defined", "value"),
+      ],
+      [
+        "local1:base:color::",
+        // References undefined variable
+        createStyleDecl("local1", "base", "color", "var(--undefined)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // Should not track --undefined since it's not defined
+    expect(counts.get("--undefined")).toBeUndefined();
+    expect(counts.size).toBe(0);
+  });
+
+  test("breaks early when finding referenced variables", () => {
+    // This test validates the optimization in $referencedCssVariables
+    const styleSourceSelections = new Map([
+      [
+        "box1",
+        {
+          instanceId: "box1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--used::",
+        createStyleDecl("local1", "base", "--used", "value"),
+      ],
+      [
+        "local1:base:color1::",
+        createStyleDecl("local1", "base", "color1", "var(--used)"),
+      ],
+      [
+        "local1:base:color2::",
+        // Another reference to same variable - should not increase processing
+        createStyleDecl("local1", "base", "color2", "var(--used)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // Both usages should be counted
+    expect(counts.get("--used")).toBe(2);
+  });
+});

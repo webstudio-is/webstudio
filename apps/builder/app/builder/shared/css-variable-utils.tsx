@@ -23,6 +23,7 @@ import type {
   StyleValue,
   StyleProperty,
   CssProperty,
+  CustomProperty,
 } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
@@ -43,6 +44,8 @@ const escapeRegex = (str: string): string => {
 
 // Utility: Create regex to match variable name with word boundary
 // This avoids matching --color inside --color-dark
+// Uses negative lookahead (?![\w-]) to ensure variable name doesn't continue
+// with word characters or hyphens, preventing partial matches.
 const createVarNameRegex = (varName: string): RegExp => {
   return new RegExp(`${escapeRegex(varName)}(?![\w-])`, "g");
 };
@@ -104,6 +107,9 @@ export const findCssVariableUsagesByInstance = ({
   };
 
   // Collect all defined variables
+  // Performance optimization: Only check variables that are defined
+  // instead of searching for all possible var() patterns.
+  // This is O(defined_vars × styles) instead of O(all_patterns × styles).
   const definedVariables = new Set<string>();
   for (const styleDecl of styles.values()) {
     if (styleDecl.property.startsWith("--")) {
@@ -167,10 +173,10 @@ export const $cssVariableInstancesByVariable = computed(
 
 // Get all defined CSS variables (unique properties that start with --)
 export const $definedCssVariables = computed($styles, (styles) => {
-  const definedVariables = new Set<string>();
+  const definedVariables = new Set<CustomProperty>();
   for (const styleDecl of styles.values()) {
     if (styleDecl.property.startsWith("--")) {
-      definedVariables.add(styleDecl.property);
+      definedVariables.add(styleDecl.property as CustomProperty);
     }
   }
   return definedVariables;
@@ -226,6 +232,8 @@ export const $referencedCssVariables = computed(
     // Check which defined variables are referenced
     for (const varName of definedVariables) {
       // Check in styles
+      // Performance optimization: We only need to know IF a variable is used (boolean),
+      // not HOW MANY times, so we break on first match.
       for (const styleDecl of styles.values()) {
         if (findVarReferences(styleDecl.value, varName)) {
           referencedVariables.add(varName);
@@ -299,7 +307,11 @@ const updateVarReferences = (
 
   // Handle two patterns:
   // 1. In var type objects: "value":"variable-name" (without --)
+  //    StyleValue stores var without -- prefix in "value" field
   // 2. In literal strings: "--variable-name" (with --)
+  //    Unparsed strings contain full --variable-name syntax
+  // Both patterns are needed because StyleValue can contain both structured
+  // var types and unparsed CSS strings with var() references
 
   // Strip -- prefix for var type replacement
   const oldVarName = oldProperty.startsWith("--")
@@ -424,7 +436,7 @@ export const deleteUnusedCssVariables = () => {
   const referencedVariables = $referencedCssVariables.get();
 
   // Find unused variables (defined but not referenced)
-  const unusedVariables: string[] = [];
+  const unusedVariables: CustomProperty[] = [];
   for (const varName of definedVariables) {
     if (!referencedVariables.has(varName)) {
       unusedVariables.push(varName);
@@ -436,8 +448,8 @@ export const deleteUnusedCssVariables = () => {
   }
 
   const batch = createBatchUpdate();
-  for (const varName of unusedVariables) {
-    batch.deleteProperty(varName as CssProperty);
+  for (const property of unusedVariables) {
+    batch.deleteProperty(property);
   }
   batch.publish();
 
