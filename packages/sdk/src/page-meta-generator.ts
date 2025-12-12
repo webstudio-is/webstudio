@@ -14,7 +14,7 @@ export type PageMeta = {
   status?: number;
   redirect?: string;
   custom: Array<{ property: string; content: string }>;
-  schemaMarkup: Array<{ type: "application/ld+json"; content: string }>;
+  schemaMarkup?: Array<{ type: "application/ld+json"; content: string }>;
 };
 
 export const generatePageMeta = ({
