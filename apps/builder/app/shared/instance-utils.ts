@@ -621,6 +621,7 @@ export const wrapIn = (component: string, tag?: string) => {
   const newInstanceId = nanoid();
   const newInstanceSelector = [newInstanceId, ...parentItem.instanceSelector];
   const metas = $registeredComponentMetas.get();
+
   try {
     updateWebstudioData((data) => {
       const isContent = isRichTextContent({
@@ -639,6 +640,7 @@ export const wrapIn = (component: string, tag?: string) => {
         component,
         children: [{ type: "id", value: selectedInstance.id }],
       };
+
       if (tag || component === elementComponent) {
         newInstance.tag = tag ?? "div";
       }
@@ -651,12 +653,14 @@ export const wrapIn = (component: string, tag?: string) => {
           }
         }
       }
+
       const isSatisfying = isTreeSatisfyingContentModel({
         instances: data.instances,
         props: data.props,
         metas,
         instanceSelector: newInstanceSelector,
       });
+
       if (isSatisfying === false) {
         const label = getInstanceLabel({ component, tag });
         toast.error(`Cannot wrap in ${label}`);

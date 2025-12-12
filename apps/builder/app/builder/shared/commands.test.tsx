@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { coreMetas } from "@webstudio-is/sdk";
+import { coreMetas, elementComponent } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { $, renderData, ws } from "@webstudio-is/template";
@@ -12,8 +12,6 @@ import {
 import { registerContainers } from "~/shared/sync";
 import { $awareness, selectInstance } from "~/shared/awareness";
 import { deleteSelectedInstance, replaceWith, unwrap } from "./commands";
-import { wrapIn } from "~/shared/instance-utils";
-import { elementComponent } from "@webstudio-is/sdk";
 
 registerContainers();
 
