@@ -269,18 +269,20 @@ const useDraggable = ({
           width: availableWidth,
           height: availableHeight,
         }
-      : !width || !height
+      : width && height
         ? {
-            top: bounds.y,
-            left: bounds.x,
-            maxWidth: availableWidth,
-            maxHeight: availableHeight,
-          }
-        : {
             top: Math.max(bounds.y, bounds.y + bounds.height / 2 - height / 2),
             left: Math.max(bounds.x, bounds.x + bounds.width / 2 - width / 2),
             width,
             height,
+          }
+        : {
+            inset: `${bounds.y}px ${window.innerWidth - bounds.x - bounds.width}px ${window.innerHeight - bounds.y - bounds.height}px ${bounds.x}px`,
+            margin: "auto",
+            width,
+            height,
+            maxWidth: availableWidth,
+            maxHeight: availableHeight,
           };
 
     if (minWidth !== undefined) {

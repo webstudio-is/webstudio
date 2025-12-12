@@ -613,6 +613,7 @@ export const DeleteUnusedCssVariablesDialog = () => {
       }}
     >
       <DialogContent
+        width={400}
         onKeyDown={(event) => {
           event.stopPropagation();
         }}
