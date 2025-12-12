@@ -22,14 +22,12 @@ import type {
 import type {
   StyleValue,
   StyleProperty,
-  CssProperty,
   CustomProperty,
 } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
-import { createBatchUpdate } from "~/builder/features/style-panel/shared/use-style-data";
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);
 
@@ -44,10 +42,10 @@ const escapeRegex = (str: string): string => {
 
 // Utility: Create regex to match variable name with word boundary
 // This avoids matching --color inside --color-dark
-// Uses negative lookahead (?![\w-]) to ensure variable name doesn't continue
+// Uses negative lookahead (?![\\w-]) to ensure variable name doesn't continue
 // with word characters or hyphens, preventing partial matches.
 const createVarNameRegex = (varName: string): RegExp => {
-  return new RegExp(`${escapeRegex(varName)}(?![\w-])`, "g");
+  return new RegExp(`${escapeRegex(varName)}(?![\\w-])`, "g");
 };
 
 // Traverse a StyleValue to find all var() references

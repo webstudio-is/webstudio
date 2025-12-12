@@ -1,5 +1,8 @@
 import { test, expect, describe } from "vitest";
 import { atom } from "nanostores";
+import type { StyleDecl, Styles, Prop } from "@webstudio-is/sdk";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { parseCssValue } from "@webstudio-is/css-data";
 import { $styles } from "~/shared/nano-states";
 import {
   findCssVariableUsagesByInstance,
@@ -7,9 +10,6 @@ import {
   performCssVariableRename,
   updateVarReferencesInProps,
 } from "./css-variable-utils";
-import type { StyleDecl, Styles, Prop } from "@webstudio-is/sdk";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
 
 // Mock the nano-states module
 const mockStyles = atom<Styles>(new Map());
@@ -2871,6 +2871,7 @@ describe("Deeply nested structures", () => {
     );
 
     const filterDecl = Array.from(result.values())[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filterValue = filterDecl.value as any;
 
     expect(filterValue.type).toBe("layers");
@@ -2914,16 +2915,19 @@ describe("Deeply nested structures", () => {
     // Test renaming each field independently
     let result = performCssVariableRename(styles, "--offset-x", "--x");
     let shadowDecl = Array.from(result.values())[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let shadowValue = (shadowDecl.value as any).value[0];
     expect(shadowValue.offsetX).toEqual({ type: "var", value: "x" });
 
     result = performCssVariableRename(styles, "--blur-size", "--blur");
     shadowDecl = Array.from(result.values())[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     shadowValue = (shadowDecl.value as any).value[0];
     expect(shadowValue.blur).toEqual({ type: "var", value: "blur" });
 
     result = performCssVariableRename(styles, "--shadow-color", "--color");
     shadowDecl = Array.from(result.values())[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     shadowValue = (shadowDecl.value as any).value[0];
     expect(shadowValue.color).toEqual({ type: "var", value: "color" });
   });
@@ -2969,6 +2973,7 @@ describe("Deeply nested structures", () => {
     );
 
     const filterDecl = Array.from(result.values())[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filterValue = filterDecl.value as any;
 
     expect(filterValue.value[0].args.value[0].args.value).toBe(
