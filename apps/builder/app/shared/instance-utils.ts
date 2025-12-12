@@ -18,6 +18,7 @@ import {
   type WebstudioData,
   type Resource,
   type WsComponentMeta,
+  type Pages,
   getStyleDeclKey,
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
@@ -63,6 +64,7 @@ import {
   $awareness,
   $selectedInstancePath,
   $selectedPage,
+  findAwarenessByInstanceId,
   getInstancePath,
   selectInstance,
   type InstancePath,
@@ -1383,4 +1385,36 @@ export const findClosestInsertable = (
     parentSelector,
     position: lastChildPosition + 1,
   };
+};
+
+/**
+ * Build the ancestor path array for an instance.
+ * Returns an array of labels for all ancestors from root to parent.
+ */
+export const buildInstancePath = (
+  instanceId: Instance["id"],
+  pages: Pages,
+  instances: Instances
+): string[] => {
+  const awareness = findAwarenessByInstanceId(pages, instances, instanceId);
+  if (!awareness.instanceSelector) {
+    return [];
+  }
+
+  const instancePath = getInstancePath(
+    awareness.instanceSelector,
+    instances,
+    undefined,
+    undefined
+  );
+
+  if (!instancePath) {
+    return [];
+  }
+
+  return instancePath
+    .slice()
+    .reverse()
+    .slice(0, -1) // Remove the instance itself (last element after reverse), keep only ancestors
+    .map(({ instance }) => getInstanceLabel(instance));
 };

@@ -13,24 +13,17 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import {
-  $instances,
-  $pages,
-  $registeredComponentMetas,
-} from "~/shared/nano-states";
+import { $instances, $pages } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import {
-  $awareness,
-  findAwarenessByInstanceId,
-  getInstancePath,
-} from "~/shared/awareness";
+import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
+import { buildInstancePath } from "~/shared/instance-utils";
 import { $commandContent } from "../command-state";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 
 export type InstanceOption = {
   label: string;
   id: string;
-  path: string;
+  path: string[];
 };
 
 type InstanceListProps = {
@@ -47,30 +40,11 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
     if (!instance || !pages) {
       continue;
     }
-    // Get the full instance selector path from the instance to root
-    const awareness = findAwarenessByInstanceId(pages, instances, instanceId);
-    if (!awareness.instanceSelector) {
-      continue;
-    }
-    const instancePath = getInstancePath(
-      awareness.instanceSelector,
-      instances,
-      undefined,
-      undefined
-    );
-    let pathString = "";
-    if (instancePath) {
-      pathString = instancePath
-        .slice()
-        .reverse()
-        .slice(1) // Skip the instance itself, only show ancestors
-        .map(({ instance }) => getInstanceLabel(instance))
-        .join("/");
-    }
+    const path = buildInstancePath(instanceId, pages, instances);
     usedInInstances.push({
       label: getInstanceLabel(instance),
       id: instance.id,
-      path: pathString ? `/${pathString}` : "",
+      path,
     });
   }
   const [search, setSearch] = useState("");
@@ -121,15 +95,13 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
                     }}
                   >
                     <Text variant="labelsTitleCase">{label}</Text>
-                    {path && (
-                      <Text
-                        color="moreSubtle"
-                        truncate
-                        css={{ maxWidth: "30ch" }}
-                      >
-                        {path}
-                      </Text>
-                    )}
+                    <Text
+                      color="moreSubtle"
+                      truncate
+                      css={{ maxWidth: "30ch" }}
+                    >
+                      /{path.join("/")}
+                    </Text>
                   </CommandItem>
                 ))
               )}
