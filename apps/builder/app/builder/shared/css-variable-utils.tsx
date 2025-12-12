@@ -254,6 +254,20 @@ export const $referencedCssVariables = computed(
   }
 );
 
+// Get all unused CSS variables (defined in instances but not referenced)
+export const $unusedCssVariables = computed(
+  [$cssVariableDefinitionsByVariable, $referencedCssVariables],
+  (definitionsByVariable, referencedVariables) => {
+    const unusedVariables = new Set<string>();
+    for (const varName of definitionsByVariable.keys()) {
+      if (!referencedVariables.has(varName)) {
+        unusedVariables.add(varName);
+      }
+    }
+    return unusedVariables;
+  }
+);
+
 export type CssVariableError =
   | { type: "required"; message: string }
   | { type: "invalid"; message: string }
@@ -432,28 +446,28 @@ export const renameCssVariable = (
 };
 
 export const deleteUnusedCssVariables = () => {
-  const definedVariables = $definedCssVariables.get();
-  const referencedVariables = $referencedCssVariables.get();
+  const unusedVariables = $unusedCssVariables.get();
 
-  // Find unused variables (defined but not referenced)
-  const unusedVariables: CustomProperty[] = [];
-  for (const varName of definedVariables) {
-    if (!referencedVariables.has(varName)) {
-      unusedVariables.push(varName);
-    }
-  }
-
-  if (unusedVariables.length === 0) {
+  if (unusedVariables.size === 0) {
     return 0;
   }
 
-  const batch = createBatchUpdate();
-  for (const property of unusedVariables) {
-    batch.deleteProperty(property);
-  }
-  batch.publish();
+  // Delete all unused variable declarations
+  serverSyncStore.createTransaction([$styles], (styles) => {
+    const keysToDelete: string[] = [];
 
-  return unusedVariables.length;
+    for (const [key, styleDecl] of styles) {
+      if (unusedVariables.has(styleDecl.property)) {
+        keysToDelete.push(key);
+      }
+    }
+
+    for (const key of keysToDelete) {
+      styles.delete(key);
+    }
+  });
+
+  return unusedVariables.size;
 };
 
 type DeleteCssVariableDialogProps = {
@@ -588,20 +602,14 @@ export const RenameCssVariableDialog = ({
 
 export const DeleteUnusedCssVariablesDialog = () => {
   const open = useStore($isDeleteUnusedCssVariablesDialogOpen);
-  const definedVariables = useStore($definedCssVariables);
-  const referencedVariables = useStore($referencedCssVariables);
+  const unusedVariables = useStore($unusedCssVariables);
 
   const handleClose = () => {
     $isDeleteUnusedCssVariablesDialogOpen.set(false);
   };
 
-  // Find unused variables (defined but not referenced)
-  const unusedVariables: string[] = [];
-  for (const varName of definedVariables) {
-    if (!referencedVariables.has(varName)) {
-      unusedVariables.push(varName);
-    }
-  }
+  // Convert Set to Array for display
+  const unusedVariablesArray = Array.from(unusedVariables);
 
   return (
     <Dialog
@@ -620,14 +628,14 @@ export const DeleteUnusedCssVariablesDialog = () => {
       >
         <DialogTitle>Delete unused CSS variables</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-          {unusedVariables.length === 0 ? (
+          {unusedVariablesArray.length === 0 ? (
             <Text>There are no unused CSS variables to delete.</Text>
           ) : (
             <>
               <Text>
-                Delete {unusedVariables.length} unused CSS{" "}
-                {unusedVariables.length === 1 ? "variable" : "variables"} from
-                the project?
+                Delete {unusedVariablesArray.length} unused CSS{" "}
+                {unusedVariablesArray.length === 1 ? "variable" : "variables"}{" "}
+                from the project?
               </Text>
               <Text
                 variant="mono"
@@ -639,12 +647,12 @@ export const DeleteUnusedCssVariablesDialog = () => {
                   wordBreak: "break-word",
                 }}
               >
-                {unusedVariables.join(", ")}
+                {unusedVariablesArray.join(", ")}
               </Text>
             </>
           )}
           <Flex direction="rowReverse" gap="2">
-            {unusedVariables.length > 0 && (
+            {unusedVariablesArray.length > 0 && (
               <Button
                 color="destructive"
                 onClick={() => {
@@ -664,7 +672,7 @@ export const DeleteUnusedCssVariablesDialog = () => {
             )}
             <DialogClose>
               <Button color="ghost">
-                {unusedVariables.length > 0 ? "Cancel" : "Close"}
+                {unusedVariablesArray.length > 0 ? "Cancel" : "Close"}
               </Button>
             </DialogClose>
           </Flex>

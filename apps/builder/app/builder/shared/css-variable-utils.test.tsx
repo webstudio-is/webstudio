@@ -3187,3 +3187,284 @@ describe("Performance and optimization validation", () => {
     expect(counts.get("--used")).toBe(2);
   });
 });
+
+describe("$unusedCssVariables and deleteUnusedCssVariables", () => {
+  test("identifies unused variables correctly", () => {
+    const styleSourceSelections = new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--used::",
+        createStyleDecl("local1", "base", "--used", "red"),
+      ],
+      [
+        "local1:base:--unused::",
+        createStyleDecl("local1", "base", "--unused", "blue"),
+      ],
+      [
+        "local1:base:color::",
+        createStyleDecl("local1", "base", "color", "var(--used)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // --used should have 1 usage, --unused should have 0
+    expect(counts.get("--used")).toBe(1);
+    expect(counts.get("--unused")).toBeUndefined();
+  });
+
+  test("only considers variables associated with instances", () => {
+    const styleSourceSelections = new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    // orphaned-source is not in styleSourceSelections
+    const styles = new Map([
+      [
+        "local1:base:--visible::",
+        createStyleDecl("local1", "base", "--visible", "red"),
+      ],
+      [
+        "orphaned-source:base:--orphaned::",
+        createStyleDecl("orphaned-source", "base", "--orphaned", "blue"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // --visible should be tracked (no usages, so undefined)
+    // --orphaned should not be tracked at all
+    expect(counts.has("--visible")).toBe(false);
+    expect(counts.has("--orphaned")).toBe(false);
+  });
+
+  test("detects variables used in HTML Embed code props", () => {
+    const styleSourceSelections = new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["local1"],
+        },
+      ],
+      [
+        "embed",
+        {
+          instanceId: "embed",
+          values: ["local2"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--used-in-embed::",
+        createStyleDecl("local1", "base", "--used-in-embed", "red"),
+      ],
+      [
+        "local1:base:--unused::",
+        createStyleDecl("local1", "base", "--unused", "blue"),
+      ],
+    ]);
+
+    const props = new Map([
+      [
+        "embed-code",
+        {
+          id: "embed-code",
+          instanceId: "embed",
+          type: "string" as const,
+          name: "code",
+          value: "<style>.test { color: var(--used-in-embed); }</style>",
+        },
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props,
+    });
+
+    // --used-in-embed should have 1 usage
+    expect(counts.get("--used-in-embed")).toBe(1);
+    expect(counts.get("--unused")).toBeUndefined();
+  });
+
+  test("handles variables on root instance", () => {
+    const styleSourceSelections = new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["root-local"],
+        },
+      ],
+      [
+        "child",
+        {
+          instanceId: "child",
+          values: ["child-local"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "root-local:base:--root-var::",
+        createStyleDecl("root-local", "base", "--root-var", "red"),
+      ],
+      [
+        "child-local:base:color::",
+        createStyleDecl("child-local", "base", "color", "var(--root-var)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // --root-var should be used by child
+    expect(counts.get("--root-var")).toBe(1);
+  });
+
+  test("distinguishes between similar variable names", () => {
+    const styleSourceSelections = new Map([
+      [
+        "root",
+        {
+          instanceId: "root",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--color::",
+        createStyleDecl("local1", "base", "--color", "red"),
+      ],
+      [
+        "local1:base:--color-dark::",
+        createStyleDecl("local1", "base", "--color-dark", "darkred"),
+      ],
+      [
+        "local1:base:background::",
+        // Uses --color but not --color-dark
+        createStyleDecl("local1", "base", "background", "var(--color)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // --color should be used, --color-dark should not
+    expect(counts.get("--color")).toBe(1);
+    expect(counts.get("--color-dark")).toBeUndefined();
+  });
+
+  test("handles multiple instances defining the same variable", () => {
+    const styleSourceSelections = new Map([
+      [
+        "instance1",
+        {
+          instanceId: "instance1",
+          values: ["local1"],
+        },
+      ],
+      [
+        "instance2",
+        {
+          instanceId: "instance2",
+          values: ["local2"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--shared::",
+        createStyleDecl("local1", "base", "--shared", "value1"),
+      ],
+      [
+        "local2:base:--shared::",
+        createStyleDecl("local2", "base", "--shared", "value2"),
+      ],
+      [
+        "local1:base:color::",
+        createStyleDecl("local1", "base", "color", "var(--shared)"),
+      ],
+    ]);
+
+    const { counts, instances } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // --shared should be used once
+    expect(counts.get("--shared")).toBe(1);
+    // Usage is from instance1
+    expect(instances.get("--shared")).toEqual(new Set(["instance1"]));
+  });
+
+  test("variables used only within same instance are counted", () => {
+    const styleSourceSelections = new Map([
+      [
+        "instance1",
+        {
+          instanceId: "instance1",
+          values: ["local1"],
+        },
+      ],
+    ]);
+
+    const styles = new Map([
+      [
+        "local1:base:--primary::",
+        createStyleDecl("local1", "base", "--primary", "blue"),
+      ],
+      [
+        "local1:base:color::",
+        createStyleDecl("local1", "base", "color", "var(--primary)"),
+      ],
+    ]);
+
+    const { counts } = findCssVariableUsagesByInstance({
+      styleSourceSelections,
+      styles,
+      props: new Map(),
+    });
+
+    // Variable defined and used in same instance
+    expect(counts.get("--primary")).toBe(1);
+  });
+});
