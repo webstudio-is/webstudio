@@ -31,6 +31,30 @@ const extensionToMime = new Map([
   [".woff2", "font/woff2"],
   [".ttf", "font/ttf"],
   [".otf", "font/otf"],
+  [".pdf", "application/pdf"],
+  [".js", "text/javascript"],
+  [".css", "text/css"],
+  [".doc", "application/msword"],
+  [
+    ".docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+  [".xls", "application/vnd.ms-excel"],
+  [
+    ".xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ],
+  [".ppt", "application/vnd.ms-powerpoint"],
+  [
+    ".pptx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ],
+  [".txt", "text/plain"],
+  [".csv", "text/csv"],
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".mp4", "video/mp4"],
+  [".mov", "video/quicktime"],
 ]);
 
 const mimeTypes = new Set(extensionToMime.values());
@@ -97,7 +121,7 @@ export const getAssetMime = ({
   type,
   format,
 }: {
-  type: "image" | "font";
+  type: "image" | "font" | "file";
   format: string;
 }): string | undefined => {
   const mime = `${type}/${format}`;

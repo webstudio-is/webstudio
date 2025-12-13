@@ -26,7 +26,11 @@ export const uploadToFs = async ({
   await writeFile(filepath, data);
 
   const assetData = await getAssetData({
-    type: type.startsWith("image") ? "image" : "font",
+    type: type.startsWith("image")
+      ? "image"
+      : type === "font"
+        ? "font"
+        : "file",
     size: data.byteLength,
     data,
     name,

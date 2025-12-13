@@ -22,6 +22,7 @@ export const formatAsset = ({
   };
 }): Asset => {
   const isFont = FONT_FORMATS.has(file.format as FontFormat);
+  const parsedMeta = JSON.parse(file.meta);
 
   if (isFont) {
     return {
@@ -34,10 +35,32 @@ export const formatAsset = ({
       type: "font",
       createdAt: file.createdAt,
       format: file.format as FontFormat,
-      meta: FontMeta.parse(JSON.parse(file.meta)),
+      meta: FontMeta.parse(parsedMeta),
     };
   }
 
+  // Check if it's an image by checking if meta has width and height
+  const isImage =
+    parsedMeta &&
+    typeof parsedMeta.width === "number" &&
+    typeof parsedMeta.height === "number";
+
+  if (isImage) {
+    return {
+      id: assetId,
+      name: file.name,
+      projectId,
+      filename: filename ?? undefined,
+      description: description ?? undefined,
+      size: file.size,
+      type: "image",
+      format: file.format,
+      createdAt: file.createdAt,
+      meta: ImageMeta.parse(parsedMeta),
+    };
+  }
+
+  // Default to file type for everything else
   return {
     id: assetId,
     name: file.name,
@@ -45,9 +68,9 @@ export const formatAsset = ({
     filename: filename ?? undefined,
     description: description ?? undefined,
     size: file.size,
-    type: "image",
+    type: "file",
     format: file.format,
     createdAt: file.createdAt,
-    meta: ImageMeta.parse(JSON.parse(file.meta)),
+    meta: {},
   };
 };
