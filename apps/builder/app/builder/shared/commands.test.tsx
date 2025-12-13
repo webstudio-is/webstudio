@@ -244,4 +244,22 @@ describe("unwrap", () => {
     unwrap();
     expect($instances.get()).toEqual(instances);
   });
+
+  test("avoid unwrapping direct child of body (no wrapper)", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box1">
+          <$.Text ws:id="text1">text</$.Text>
+        </$.Box>
+        <$.Box ws:id="box2"></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+    selectInstance(["box1", "body"]);
+    unwrap();
+    // box1 should remain unchanged since unwrapping would put its children directly in body
+    // which would be the unwrap operation, but there's no "wrapper" - body is the root
+    expect($instances.get()).toEqual(instances);
+  });
 });
