@@ -71,6 +71,7 @@ import {
   getInstanceLabel,
   InstanceIcon,
 } from "~/builder/shared/instance-label";
+import { InstanceContextMenu } from "~/builder/shared/instance-context-menu";
 
 type TreeItemAncestor =
   | undefined
@@ -740,59 +741,61 @@ export const NavigatorTree = () => {
               }}
               onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
             >
-              <TreeNode
-                level={level}
-                isSelected={selectedKey === key}
-                isHighlighted={hoveredKey === key || dropTargetKey === key}
-                isExpanded={item.isExpanded}
-                isActionVisible={isAnimating}
-                onExpand={(isExpanded, all) =>
-                  handleExpand(item, isExpanded, all)
-                }
-                nodeProps={{
-                  style: {
-                    opacity: item.isHidden ? 0.4 : undefined,
-                    color: item.isReusable
-                      ? rawTheme.colors.foregroundReusable
-                      : undefined,
-                  },
-                }}
-                buttonProps={{
-                  onMouseEnter: () => {
-                    $hoveredInstanceSelector.set(item.selector);
-                    $blockChildOutline.set(undefined);
-                  },
-                  onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-                  onClick: (event) =>
-                    selectInstanceAndClearSelection(item.selector, event),
-                  onFocus: (event) =>
-                    selectInstanceAndClearSelection(item.selector, event),
-                  onKeyDown: (event) => {
-                    if (event.key === "Enter") {
-                      emitCommand("editInstanceText");
-                    }
-                  },
-                }}
-                action={
-                  <ShowToggle
-                    instance={item.instance}
-                    value={show}
-                    isAnimating={isAnimating}
-                  />
-                }
-              >
-                <TreeNodeContent
-                  instance={item.instance}
-                  isEditing={
-                    item.selector.join() === editingItemSelector?.join()
+              <InstanceContextMenu>
+                <TreeNode
+                  level={level}
+                  isSelected={selectedKey === key}
+                  isHighlighted={hoveredKey === key || dropTargetKey === key}
+                  isExpanded={item.isExpanded}
+                  isActionVisible={isAnimating}
+                  onExpand={(isExpanded, all) =>
+                    handleExpand(item, isExpanded, all)
                   }
-                  onIsEditingChange={(isEditing) => {
-                    $editingItemSelector.set(
-                      isEditing === true ? item.selector : undefined
-                    );
+                  nodeProps={{
+                    style: {
+                      opacity: item.isHidden ? 0.4 : undefined,
+                      color: item.isReusable
+                        ? rawTheme.colors.foregroundReusable
+                        : undefined,
+                    },
                   }}
-                />
-              </TreeNode>
+                  buttonProps={{
+                    onMouseEnter: () => {
+                      $hoveredInstanceSelector.set(item.selector);
+                      $blockChildOutline.set(undefined);
+                    },
+                    onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
+                    onClick: (event) =>
+                      selectInstanceAndClearSelection(item.selector, event),
+                    onFocus: (event) =>
+                      selectInstanceAndClearSelection(item.selector, event),
+                    onKeyDown: (event) => {
+                      if (event.key === "Enter") {
+                        emitCommand("editInstanceText");
+                      }
+                    },
+                  }}
+                  action={
+                    <ShowToggle
+                      instance={item.instance}
+                      value={show}
+                      isAnimating={isAnimating}
+                    />
+                  }
+                >
+                  <TreeNodeContent
+                    instance={item.instance}
+                    isEditing={
+                      item.selector.join() === editingItemSelector?.join()
+                    }
+                    onIsEditingChange={(isEditing) => {
+                      $editingItemSelector.set(
+                        isEditing === true ? item.selector : undefined
+                      );
+                    }}
+                  />
+                </TreeNode>
+              </InstanceContextMenu>
             </TreeSortableItem>
           );
         })}
