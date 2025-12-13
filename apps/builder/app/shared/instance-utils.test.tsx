@@ -28,6 +28,7 @@ import {
   portalComponent,
   elementComponent,
 } from "@webstudio-is/sdk";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   deleteInstanceMutable,

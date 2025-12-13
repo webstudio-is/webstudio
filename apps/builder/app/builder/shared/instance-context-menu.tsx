@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   ContextMenu,
