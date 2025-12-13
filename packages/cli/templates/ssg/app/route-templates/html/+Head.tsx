@@ -63,6 +63,15 @@ export const Head = ({ data }: { data: PageContext["data"] }) => {
         isTwitterCardSizeDefined === false && (
           <meta property="twitter:card" content="summary_large_image" />
         )}
+      {pageMeta.schemaMarkup?.map((script, index) => (
+        <script
+          key={index}
+          type={script.type}
+          dangerouslySetInnerHTML={{
+            __html: script.content,
+          }}
+        />
+      ))}
 
       {favIconAsset && (
         <link

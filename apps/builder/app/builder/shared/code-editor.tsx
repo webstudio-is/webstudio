@@ -26,6 +26,7 @@ import {
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
 import { markdown } from "@codemirror/lang-markdown";
+import { json } from "@codemirror/lang-json";
 import { css } from "@webstudio-is/design-system";
 import {
   EditorContent,
@@ -115,10 +116,24 @@ const getCssPropertiesExtensions = () => [
   autocompletion({ icons: false }),
 ];
 
+const getJsonExtensions = () => [
+  highlightActiveLine(),
+  highlightSpecialChars(),
+  indentOnInput(),
+  json(),
+  bracketMatching(),
+  closeBrackets(),
+  // render autocomplete in body
+  // to prevent popover scroll overflow
+  tooltips({ parent: document.body }),
+  autocompletion({ icons: false }),
+  keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+];
+
 export const CodeEditor = forwardRef<
   HTMLDivElement,
   Omit<ComponentProps<typeof EditorContent>, "extensions"> & {
-    lang?: "html" | "markdown" | "css-properties";
+    lang?: "html" | "markdown" | "css-properties" | "json";
     title?: ReactNode;
     size?: "default" | "small";
   }
@@ -134,6 +149,10 @@ export const CodeEditor = forwardRef<
 
     if (lang === "css-properties") {
       return getCssPropertiesExtensions();
+    }
+
+    if (lang === "json") {
+      return getJsonExtensions();
     }
 
     if (lang === undefined) {

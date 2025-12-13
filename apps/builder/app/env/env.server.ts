@@ -64,6 +64,10 @@ const env = {
   POSTGREST_URL: process.env.POSTGREST_URL ?? "http://localhost:3000",
   POSTGREST_API_KEY: process.env.POSTGREST_API_KEY ?? "",
 
+  // AI Features (OpenAI)
+  OPENAI_KEY: process.env.OPENAI_KEY,
+  OPENAI_ORG: process.env.OPENAI_ORG,
+
   SECURE_COOKIE: true,
 
   // Used for project oauth login flow @todo remove ??
