@@ -2,6 +2,7 @@ import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   type Instances,
   type StyleSource,
@@ -608,6 +609,32 @@ export const deleteInstanceMutable = (
     }
   }
   return true;
+};
+
+export const toggleInstanceShow = (instanceId: Instance["id"]) => {
+  serverSyncStore.createTransaction([$props], (props) => {
+    const allProps = Array.from(props.values());
+    const instanceProps = allProps.filter(
+      (prop) => prop.instanceId === instanceId
+    );
+    let showProp = instanceProps.find((prop) => prop.name === showAttribute);
+
+    // Toggle the show value
+    const newValue = showProp?.type === "boolean" ? !showProp.value : false;
+
+    if (showProp === undefined) {
+      showProp = {
+        id: nanoid(),
+        instanceId,
+        name: showAttribute,
+        type: "boolean",
+        value: newValue,
+      };
+    }
+    if (showProp.type === "boolean") {
+      props.set(showProp.id, { ...showProp, value: newValue });
+    }
+  });
 };
 
 export const wrapIn = (component: string, tag?: string) => {

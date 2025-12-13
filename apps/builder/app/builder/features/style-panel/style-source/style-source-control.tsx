@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
 const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
@@ -85,11 +85,13 @@ const MenuTriggerGradient = styled(Box, {
 
 type MenuProps = {
   children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const Menu = (props: MenuProps) => {
   return (
-    <DropdownMenu modal>
+    <DropdownMenu modal open={props.open} onOpenChange={props.onOpenChange}>
       <DropdownMenuTrigger asChild>
         <MenuTrigger aria-label="Menu Button">
           <MenuTriggerGradient />
@@ -310,6 +312,15 @@ export const StyleSourceControl = ({
   onSelect,
 }: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleContextMenu = (event: React.MouseEvent) => {
+    if (showMenu && disabled === false && isEditing === false) {
+      event.preventDefault();
+      setMenuOpen(true);
+    }
+  };
+
   return (
     <Tooltip
       content={error ? errors[error.type] : ""}
@@ -330,6 +341,7 @@ export const StyleSourceControl = ({
             isEditing={isEditing}
             tabIndex={-1}
             onClick={onSelect}
+            onContextMenu={handleContextMenu}
           >
             {source === "local" ? (
               <Flex justify="center" align="center">
@@ -357,7 +369,11 @@ export const StyleSourceControl = ({
         {stateLabel !== undefined && (
           <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
         )}
-        {showMenu && <Menu>{menuItems}</Menu>}
+        {showMenu && (
+          <Menu open={menuOpen} onOpenChange={setMenuOpen}>
+            {menuItems}
+          </Menu>
+        )}
       </StyleSourceContainer>
     </Tooltip>
   );

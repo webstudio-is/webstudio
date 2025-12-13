@@ -37,7 +37,11 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import {
+  $selectedInstancePath,
+  selectInstance,
+  $selectedPage,
+} from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { builderApi } from "~/shared/builder-api";
@@ -211,6 +215,16 @@ export const unwrap = () => {
     return;
   }
   const [selectedItem, parentItem] = instancePath;
+
+  // Prevent unwrapping if parent is the root instance (e.g., Body)
+  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
+  if (
+    rootInstanceId !== undefined &&
+    parentItem.instance.id === rootInstanceId
+  ) {
+    return;
+  }
+
   try {
     updateWebstudioData((data) => {
       const instanceSelector = findClosestNonTextualContainer({
