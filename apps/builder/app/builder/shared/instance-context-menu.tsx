@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -7,11 +8,25 @@ import {
   ContextMenuTrigger,
   theme,
 } from "@webstudio-is/design-system";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import { instanceText } from "~/shared/copy-paste/plugin-instance";
 import { emitCommand } from "./commands";
+import { $selectedInstancePath } from "~/shared/awareness";
+import { toggleInstanceShow } from "~/shared/instance-utils";
+import { $propValuesByInstanceSelector } from "~/shared/nano-states";
+import { getInstanceKey } from "~/shared/awareness";
 
 export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
-  const lastClickedButton = useRef<HTMLElement | undefined>();
+  const instancePath = useStore($selectedInstancePath);
+  const propValues = useStore($propValuesByInstanceSelector);
+
+  const instanceSelector = instancePath?.[0]?.instanceSelector;
+  const show = instanceSelector
+    ? Boolean(
+        propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
+          true
+      )
+    : true;
 
   const handleCopy = () => {
     const data = instanceText.onCopy?.();
@@ -37,7 +52,10 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
   };
 
   const handleHide = () => {
-    // @todo implement hide functionality
+    if (instancePath?.[0] === undefined) {
+      return;
+    }
+    toggleInstanceShow(instancePath[0].instance.id);
   };
 
   const handleWrap = () => {
@@ -46,10 +64,6 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
 
   const handleUnwrap = () => {
     emitCommand("unwrap");
-  };
-
-  const handleReplaceWith = () => {
-    // @todo open replace with menu/command panel
   };
 
   const handleDelete = () => {
@@ -64,15 +78,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
           if (!(event.target instanceof HTMLElement)) {
             return;
           }
-          const button =
-            event.target.closest<HTMLElement>("[data-tree-button]");
-          if (button) {
-            lastClickedButton.current = button;
-            const instanceId = button.getAttribute("data-instance-id");
-            console.log("Context menu instance ID:", instanceId);
-            // Select the instance when right-clicking
-            button.click();
-          }
+          event.target.closest<HTMLElement>("[data-tree-button]")?.click();
         }}
       >
         {children}
@@ -83,7 +89,9 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         <ContextMenuItem onSelect={handleCut}>Cut</ContextMenuItem>
         <ContextMenuItem onSelect={handleDuplicate}>Duplicate</ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem onSelect={handleHide}>Hide</ContextMenuItem>
+        <ContextMenuItem onSelect={handleHide}>
+          {show ? "Hide" : "Show"}
+        </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleWrap}>Wrap</ContextMenuItem>
         <ContextMenuItem onSelect={handleUnwrap}>Unwrap</ContextMenuItem>

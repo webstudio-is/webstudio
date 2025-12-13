@@ -41,6 +41,7 @@ import {
   insertWebstudioElementAt,
   buildInstancePath,
   wrapIn,
+  toggleInstanceShow,
 } from "./instance-utils";
 import {
   $assets,
@@ -1785,5 +1786,76 @@ describe("buildInstancePath", () => {
 
     const result = buildInstancePath("linkId", pages, instances);
     expect(result).toEqual(["Main Body", "Navigation"]);
+  });
+});
+
+describe("toggleInstanceShow", () => {
+  test("creates show prop with false value when it doesn't exist", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(new Map());
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const props = $props.get();
+    const showProp = Array.from(props.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp).toEqual({
+      id: expect.any(String),
+      instanceId: "box",
+      name: showAttribute,
+      type: "boolean",
+      value: false,
+    });
+  });
+
+  test("toggles show prop from true to false", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:show={true}></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const updatedProps = $props.get();
+    const showProp = Array.from(updatedProps.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp?.type).toBe("boolean");
+    if (showProp?.type === "boolean") {
+      expect(showProp.value).toBe(false);
+    }
+  });
+
+  test("toggles show prop from false to true", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:show={false}></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const updatedProps = $props.get();
+    const showProp = Array.from(updatedProps.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp?.type).toBe("boolean");
+    if (showProp?.type === "boolean") {
+      expect(showProp.value).toBe(true);
+    }
   });
 });
