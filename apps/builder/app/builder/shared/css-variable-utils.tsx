@@ -598,16 +598,74 @@ export const RenameCssVariableDialog = ({
   );
 };
 
+const DeleteUnusedCssVariablesDialogContent = ({
+  onClose,
+}: {
+  onClose: () => void;
+}) => {
+  const unusedVariables = useStore($unusedCssVariables);
+  // Convert Set to Array for display
+  const unusedVariablesArray = Array.from(unusedVariables);
+
+  return (
+    <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
+      {unusedVariablesArray.length === 0 ? (
+        <Text>There are no unused CSS variables to delete.</Text>
+      ) : (
+        <>
+          <Text>
+            Delete {unusedVariablesArray.length} unused CSS{" "}
+            {unusedVariablesArray.length === 1 ? "variable" : "variables"} from
+            the project?
+          </Text>
+          <Text
+            variant="mono"
+            css={{
+              maxHeight: 200,
+              overflowY: "auto",
+              backgroundColor: theme.colors.backgroundPanel,
+              borderRadius: theme.borderRadius[4],
+              wordBreak: "break-word",
+            }}
+          >
+            {unusedVariablesArray.join(", ")}
+          </Text>
+        </>
+      )}
+      <Flex direction="rowReverse" gap="2">
+        {unusedVariablesArray.length > 0 && (
+          <Button
+            color="destructive"
+            onClick={() => {
+              const deletedCount = deleteUnusedCssVariables();
+              onClose();
+              if (deletedCount === 0) {
+                toast.info("No unused CSS variables to delete");
+              } else {
+                toast.success(
+                  `Deleted ${deletedCount} unused CSS ${deletedCount === 1 ? "variable" : "variables"}`
+                );
+              }
+            }}
+          >
+            Delete
+          </Button>
+        )}
+        <DialogClose>
+          <Button color="ghost">
+            {unusedVariablesArray.length > 0 ? "Cancel" : "Close"}
+          </Button>
+        </DialogClose>
+      </Flex>
+    </Flex>
+  );
+};
+
 export const DeleteUnusedCssVariablesDialog = () => {
   const open = useStore($isDeleteUnusedCssVariablesDialogOpen);
-  const unusedVariables = useStore($unusedCssVariables);
-
   const handleClose = () => {
     $isDeleteUnusedCssVariablesDialogOpen.set(false);
   };
-
-  // Convert Set to Array for display
-  const unusedVariablesArray = Array.from(unusedVariables);
 
   return (
     <Dialog
@@ -625,56 +683,7 @@ export const DeleteUnusedCssVariablesDialog = () => {
         }}
       >
         <DialogTitle>Delete unused CSS variables</DialogTitle>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-          {unusedVariablesArray.length === 0 ? (
-            <Text>There are no unused CSS variables to delete.</Text>
-          ) : (
-            <>
-              <Text>
-                Delete {unusedVariablesArray.length} unused CSS{" "}
-                {unusedVariablesArray.length === 1 ? "variable" : "variables"}{" "}
-                from the project?
-              </Text>
-              <Text
-                variant="mono"
-                css={{
-                  maxHeight: 200,
-                  overflowY: "auto",
-                  backgroundColor: theme.colors.backgroundPanel,
-                  borderRadius: theme.borderRadius[4],
-                  wordBreak: "break-word",
-                }}
-              >
-                {unusedVariablesArray.join(", ")}
-              </Text>
-            </>
-          )}
-          <Flex direction="rowReverse" gap="2">
-            {unusedVariablesArray.length > 0 && (
-              <Button
-                color="destructive"
-                onClick={() => {
-                  const deletedCount = deleteUnusedCssVariables();
-                  handleClose();
-                  if (deletedCount === 0) {
-                    toast.info("No unused CSS variables to delete");
-                  } else {
-                    toast.success(
-                      `Deleted ${deletedCount} unused CSS ${deletedCount === 1 ? "variable" : "variables"}`
-                    );
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            )}
-            <DialogClose>
-              <Button color="ghost">
-                {unusedVariablesArray.length > 0 ? "Cancel" : "Close"}
-              </Button>
-            </DialogClose>
-          </Flex>
-        </Flex>
+        <DeleteUnusedCssVariablesDialogContent onClose={handleClose} />
       </DialogContent>
     </Dialog>
   );
