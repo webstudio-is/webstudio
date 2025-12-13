@@ -59,6 +59,13 @@ const additionalShortcuts = [
     defaultHotkeys: ["←"],
   },
   {
+    name: "expandAllNavigatorNodes",
+    label: "Expand all nodes",
+    description: "Click on arrow to expand or collapse all nodes",
+    category: "Navigator",
+    defaultHotkeys: ["meta+click", "ctrl+click"],
+  },
+  {
     name: "switchBreakpoint",
     label: "Switch breakpoints",
     description: "Switch to breakpoint by number (1-9)",
@@ -114,6 +121,7 @@ export const KeyboardShortcutsDialog = () => {
       "duplicateInstance",
       "expandNavigatorItem",
       "collapseNavigatorItem",
+      "expandAllNavigatorNodes",
     ],
     Panels: [
       "toggleComponentsPanel",
