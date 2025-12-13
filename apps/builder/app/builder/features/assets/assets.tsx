@@ -1,12 +1,12 @@
 import { PanelTitle, Separator } from "@webstudio-is/design-system";
-import { ImageManager } from "~/builder/shared/image-manager";
+import { AssetManager } from "~/builder/shared/asset-manager";
 
 export const AssetsPanel = (_props: { onClose: () => void }) => {
   return (
     <>
       <PanelTitle>Assets</PanelTitle>
       <Separator />
-      <ImageManager />
+      <AssetManager />
     </>
   );
 };

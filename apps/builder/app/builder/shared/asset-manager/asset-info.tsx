@@ -253,7 +253,7 @@ const useLocalValue = <Type extends string>(
   ] as const;
 };
 
-const ImageInfoContent = ({
+const AssetInfoContent = ({
   asset,
   usages,
 }: {
@@ -367,12 +367,12 @@ const ImageInfoContent = ({
       </Box>
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
-        <Label htmlFor="image-manager-filename">Name</Label>
+        <Label htmlFor="asset-manager-filename">Name</Label>
         <InputErrorsTooltip
           errors={filenameError ? [filenameError] : undefined}
         >
           <InputField
-            id="image-manager-filename"
+            id="asset-manager-filename"
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -385,7 +385,7 @@ const ImageInfoContent = ({
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label
-          htmlFor="image-manager-description"
+          htmlFor="asset-manager-description"
           css={{ display: "flex", alignItems: "center", gap: 4 }}
         >
           Description
@@ -397,7 +397,7 @@ const ImageInfoContent = ({
           </Tooltip>
         </Label>
         <InputField
-          id="image-manager-description"
+          id="asset-manager-description"
           placeholder='Enter "alt" text'
           value={description}
           onChange={(event) => setDescription(event.target.value)}
@@ -460,7 +460,11 @@ const ImageInfoContent = ({
             <IconButton
               as="a"
               download={formatAssetName(asset)}
-              href={`/cgi/image/${asset.name}?format=raw`}
+              href={
+                asset.type === "image"
+                  ? `/cgi/image/${asset.name}?format=raw`
+                  : `/cgi/asset/${asset.name}`
+              }
             >
               <DownloadIcon />
             </IconButton>
@@ -471,13 +475,13 @@ const ImageInfoContent = ({
   );
 };
 
-const triggerVisibilityVar = `--ws-image-info-trigger-visibility`;
+const triggerVisibilityVar = `--ws-asset-info-trigger-visibility`;
 
 export const imageInfoCssVars = ({ show }: { show: boolean }) => ({
   [triggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
-export const ImageInfo = ({ asset }: { asset: Asset }) => {
+export const AssetInfo = ({ asset }: { asset: Asset }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   return (
@@ -499,7 +503,11 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
                 fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
               },
               "&:hover": {
-                color: theme.colors.foregroundIconMain,
+                color: theme.colors.backgroundIconSubtle,
+                background: "transparent",
+                "& svg": {
+                  fill: `oklch(from ${theme.colors.white} l c h / 1)`,
+                },
               },
             }}
             icon={<GearIcon />}
@@ -507,7 +515,7 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
         </PopoverTrigger>
         <PopoverContent css={{ minWidth: 250 }}>
           <PopoverTitle>Asset Details</PopoverTitle>
-          <ImageInfoContent asset={asset} usages={usages} />
+          <AssetInfoContent asset={asset} usages={usages} />
         </PopoverContent>
       </Popover>
       {usages.length === 0 && (

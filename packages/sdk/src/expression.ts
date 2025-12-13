@@ -43,7 +43,14 @@ export const allowedStringMethods = new Set([
   "toLocaleUpperCase",
 ]);
 
-export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+export const allowedArrayMethods = new Set([
+  "at",
+  "includes",
+  "join",
+  "slice",
+  "find",
+  "filter",
+]);
 
 export const lintExpression = ({
   expression,
@@ -87,8 +94,44 @@ export const lintExpression = ({
       // support parsing import to forbid explicitly
       sourceType: "module",
     });
+
+    // Track arrow functions that are used as callbacks for safe array methods
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allowedArrowFunctions = new Set<any>();
+    // Track arrow function parameters to skip validation
+    const arrowFunctionParams = new Set<string>();
+
+    // First pass: identify arrow functions used in safe contexts
+    simple(root, {
+      CallExpression(node) {
+        if (node.callee.type === "MemberExpression") {
+          if (node.callee.property.type === "Identifier") {
+            const methodName = node.callee.property.name;
+            if (allowedArrayMethods.has(methodName)) {
+              // Mark arrow function arguments as allowed
+              for (const arg of node.arguments) {
+                if (arg.type === "ArrowFunctionExpression") {
+                  allowedArrowFunctions.add(arg);
+                  // Collect parameter names
+                  for (const param of arg.params) {
+                    if (param.type === "Identifier") {
+                      arrowFunctionParams.add(param.name);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    });
+
     simple(root, {
       Identifier(node) {
+        // Skip validation for arrow function parameters
+        if (arrowFunctionParams.has(node.name)) {
+          return;
+        }
         if (availableVariables.has(node.name) === false) {
           addMessage(
             `"${node.name}" is not defined in the scope`,
@@ -152,7 +195,12 @@ export const lintExpression = ({
       },
       NewExpression: addMessage("Classes are not supported"),
       SequenceExpression: addMessage(`Only single expression is supported`),
-      ArrowFunctionExpression: addMessage("Functions are not supported"),
+      ArrowFunctionExpression(node) {
+        // Allow arrow functions only when used as callbacks for safe array methods
+        if (!allowedArrowFunctions.has(node)) {
+          addMessage("Functions are not supported")(node);
+        }
+      },
       TaggedTemplateExpression: addMessage("Tagged template is not supported"),
       ClassExpression: addMessage("Classes are not supported"),
       MetaProperty: addMessage("Imports are not supported"),

@@ -44,6 +44,8 @@ const useUpload = (type: AssetType) => {
 const acceptMap = {
   image: imageMimeTypes.join(", "),
   font: FONT_MIME_TYPES,
+  // We allow everything by default for files, specific validation happens elsewhere if needed
+  file: undefined,
 };
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept#unique_file_type_specifiers
@@ -70,7 +72,12 @@ export const acceptUploadType = (
     return acceptFileTypeSpecifier(accept, file);
   }
 
-  return acceptFileTypeSpecifier(acceptMap[assetType], file);
+  const accepted = acceptMap[assetType];
+  if (accepted === undefined) {
+    return true;
+  }
+
+  return acceptFileTypeSpecifier(accepted, file);
 };
 
 type AssetUploadProps = {

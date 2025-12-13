@@ -1,7 +1,8 @@
 import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
+import { PageIcon } from "@webstudio-is/icons";
 import { UploadingAnimation } from "./uploading-animation";
-import { ImageInfo, imageInfoCssVars } from "./image-info";
+import { AssetInfo, imageInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
@@ -101,21 +102,35 @@ const Thumbnail = styled(Box, {
   height: theme.spacing[19],
   flexShrink: 0,
   position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-type ImageThumbnailProps = {
+const GenericFilePreview = ({ ext }: { ext: string }) => {
+  return (
+    <Flex direction="column" align="center" gap={1}>
+      <PageIcon size={48} />
+      <Text variant="tiny" color="subtle">
+        {ext.toUpperCase()}
+      </Text>
+    </Flex>
+  );
+};
+
+type AssetThumbnailProps = {
   assetContainer: AssetContainer;
   onSelect: (assetContainer?: AssetContainer) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   state?: "selected";
 };
 
-export const ImageThumbnail = ({
+export const AssetThumbnail = ({
   assetContainer,
   onSelect,
   onChange,
   state,
-}: ImageThumbnailProps) => {
+}: AssetThumbnailProps) => {
   const { asset } = assetContainer;
   const { basename, ext } = parseAssetName(asset.name);
   const alt = asset.description ?? formatAssetName(asset);
@@ -147,22 +162,26 @@ export const ImageThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {isVideoFormat(asset.format) &&
-        assetContainer.status === "uploading" ? (
-          <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
+        {asset.type === "image" ? (
+          isVideoFormat(asset.format) &&
+          assetContainer.status === "uploading" ? (
+            <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
+          ) : (
+            <StyledWebstudioImage
+              assetId={asset.id}
+              name={asset.name}
+              objectURL={
+                assetContainer.status === "uploading"
+                  ? assetContainer.objectURL
+                  : undefined
+              }
+              alt={alt}
+              // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
+              width={64}
+            />
+          )
         ) : (
-          <StyledWebstudioImage
-            assetId={asset.id}
-            name={asset.name}
-            objectURL={
-              assetContainer.status === "uploading"
-                ? assetContainer.objectURL
-                : undefined
-            }
-            alt={alt}
-            // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
-            width={64}
-          />
+          <GenericFilePreview ext={ext} />
         )}
       </Thumbnail>
       <Flex css={{ width: "100%", paddingBottom: 4 }}>
@@ -172,7 +191,7 @@ export const ImageThumbnail = ({
         <Text variant="tiny">.{ext}</Text>
       </Flex>
       {assetContainer.status === "uploaded" && (
-        <ImageInfo asset={assetContainer.asset} />
+        <AssetInfo asset={assetContainer.asset} />
       )}
       {isUploading && <UploadingAnimation />}
     </ThumbnailContainer>

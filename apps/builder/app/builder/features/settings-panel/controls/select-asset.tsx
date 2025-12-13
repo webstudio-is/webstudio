@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { Button, Flex, Text, FloatingPanel } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/nano-states";
-import { ImageManager } from "~/builder/shared/image-manager";
+import { ImageManager } from "~/builder/shared/asset-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
