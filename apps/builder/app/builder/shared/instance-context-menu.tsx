@@ -13,16 +13,21 @@ import {
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { instanceText } from "~/shared/copy-paste/plugin-instance";
 import { emitCommand } from "./commands";
-import { $selectedInstancePath } from "~/shared/awareness";
+import { $selectedInstancePath, $selectedPage } from "~/shared/awareness";
 import { toggleInstanceShow, canUnwrapInstance } from "~/shared/instance-utils";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
 import { getInstanceKey } from "~/shared/awareness";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 
 export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
   const instancePath = useStore($selectedInstancePath);
   const propValues = useStore($propValuesByInstanceSelector);
+  const selectedPage = useStore($selectedPage);
 
   const instanceSelector = instancePath?.[0]?.instanceSelector;
+  const instanceId = instancePath?.[0]?.instance.id;
+  const rootInstanceId = selectedPage?.rootInstanceId;
+
   const show = instanceSelector
     ? Boolean(
         propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
@@ -31,6 +36,13 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
     : true;
 
   const canUnwrap = instancePath ? canUnwrapInstance(instancePath) : false;
+
+  // Prevent hiding/copying/cutting/duplicating root or body
+  const canHide =
+    instanceId !== ROOT_INSTANCE_ID && instanceId !== rootInstanceId;
+
+  const canCopyCutDuplicate =
+    instanceId !== ROOT_INSTANCE_ID && instanceId !== rootInstanceId;
 
   const handleCopy = () => {
     const data = instanceText.onCopy?.();
@@ -70,6 +82,10 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
     emitCommand("focusStyleSources");
   };
 
+  const handleOpenSettings = () => {
+    emitCommand("openSettingsPanel");
+  };
+
   const handleWrap = () => {
     emitCommand("wrap");
   };
@@ -96,7 +112,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent css={{ width: theme.spacing[28] }}>
-        <ContextMenuItem onSelect={handleCopy}>
+        <ContextMenuItem disabled={!canCopyCutDuplicate} onSelect={handleCopy}>
           Copy
           <ContextMenuItemRightSlot>
             <Kbd value={["meta", "c"]} />
@@ -108,40 +124,49 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
             <Kbd value={["meta", "v"]} />
           </ContextMenuItemRightSlot>
         </ContextMenuItem>
-        <ContextMenuItem onSelect={handleCut}>
+        <ContextMenuItem disabled={!canCopyCutDuplicate} onSelect={handleCut}>
           Cut
           <ContextMenuItemRightSlot>
             <Kbd value={["meta", "x"]} />
           </ContextMenuItemRightSlot>
         </ContextMenuItem>
-        <ContextMenuItem onSelect={handleDuplicate}>
+        <ContextMenuItem
+          disabled={!canCopyCutDuplicate}
+          onSelect={handleDuplicate}
+        >
           Duplicate
           <ContextMenuItemRightSlot>
             <Kbd value={["meta", "d"]} />
           </ContextMenuItemRightSlot>
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem onSelect={handleHide}>
+        <ContextMenuItem disabled={!canHide} onSelect={handleHide}>
           {show ? "Hide" : "Show"}
         </ContextMenuItem>
-        <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleRename}>
           Rename
           <ContextMenuItemRightSlot>
             <Kbd value={["meta", "e"]} />
           </ContextMenuItemRightSlot>
         </ContextMenuItem>
+        <ContextMenuItem onSelect={handleWrap}>Wrap</ContextMenuItem>
+        <ContextMenuItem disabled={!canUnwrap} onSelect={handleUnwrap}>
+          Unwrap
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleAddToken}>
           Add token
           <ContextMenuItemRightSlot>
             <Kbd value={["meta", "enter"]} />
           </ContextMenuItemRightSlot>
         </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem onSelect={handleWrap}>Wrap</ContextMenuItem>
-        <ContextMenuItem disabled={!canUnwrap} onSelect={handleUnwrap}>
-          Unwrap
+        <ContextMenuItem onSelect={handleOpenSettings}>
+          Open settings
+          <ContextMenuItemRightSlot>
+            <Kbd value={["d"]} />
+          </ContextMenuItemRightSlot>
         </ContextMenuItem>
+
         {/* <ContextMenuItem onSelect={handleReplaceWith}>
           Replace with
         </ContextMenuItem> */}
