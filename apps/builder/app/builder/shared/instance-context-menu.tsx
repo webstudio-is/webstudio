@@ -9,6 +9,7 @@ import {
   ContextMenuTrigger,
   theme,
   Kbd,
+  Box,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { instanceText } from "~/shared/copy-paste/plugin-instance";
@@ -61,7 +62,7 @@ export const MenuItems = () => {
   const permissions = getMenuPermissions(instancePath);
 
   return (
-    <>
+    <Box css={{ width: theme.spacing[28] }}>
       <ContextMenuItem
         disabled={!permissions.canCopy}
         onSelect={() => {
@@ -186,7 +187,7 @@ export const MenuItems = () => {
           <Kbd value={["delete"]} />
         </ContextMenuItemRightSlot>
       </ContextMenuItem>
-    </>
+    </Box>
   );
 };
 
@@ -204,7 +205,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
       >
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent css={{ width: theme.spacing[28] }}>
+      <ContextMenuContent>
         <MenuItems />
       </ContextMenuContent>
     </ContextMenu>
