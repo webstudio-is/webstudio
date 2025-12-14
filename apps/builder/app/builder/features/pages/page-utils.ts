@@ -300,3 +300,66 @@ export const duplicatePage = (pageId: Page["id"]) => {
   });
   return newPageId;
 };
+
+export const isFolder = (id: string, folders: Array<Folder>) => {
+  return folders.some((folder) => folder.id === id);
+};
+
+type DropTarget = {
+  parentId: string;
+  beforeId?: string;
+  afterId?: string;
+  indexWithinChildren: number;
+};
+
+type TreeDropTarget = {
+  parentLevel: number;
+  beforeLevel?: number;
+  afterLevel?: number;
+};
+
+export const getStoredDropTarget = (
+  selector: string[],
+  dropTarget: TreeDropTarget
+): undefined | DropTarget => {
+  const parentId = selector.at(-dropTarget.parentLevel - 1);
+  const beforeId =
+    dropTarget.beforeLevel === undefined
+      ? undefined
+      : selector.at(-dropTarget.beforeLevel - 1);
+  const afterId =
+    dropTarget.afterLevel === undefined
+      ? undefined
+      : selector.at(-dropTarget.afterLevel - 1);
+  const pages = $pages.get();
+  const parentFolder = pages?.folders.find((item) => item.id === parentId);
+  let indexWithinChildren = 0;
+  if (parentFolder) {
+    const beforeIndex = parentFolder.children.indexOf(beforeId ?? "");
+    const afterIndex = parentFolder.children.indexOf(afterId ?? "");
+    if (beforeIndex > -1) {
+      indexWithinChildren = beforeIndex;
+    } else if (afterIndex > -1) {
+      indexWithinChildren = afterIndex + 1;
+    }
+  }
+  if (parentId) {
+    return { parentId, beforeId, afterId, indexWithinChildren };
+  }
+};
+
+export const canDrop = (dropTarget: DropTarget, folders: Folder[]) => {
+  // allow dropping only inside folders
+  if (isFolder(dropTarget.parentId, folders) === false) {
+    return false;
+  }
+  // forbid dropping in the beginning of root folder
+  // which is always used by home page
+  if (
+    isRootFolder({ id: dropTarget.parentId }) &&
+    dropTarget.indexWithinChildren === 0
+  ) {
+    return false;
+  }
+  return true;
+};

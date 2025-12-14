@@ -7,6 +7,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
   theme,
+  Kbd,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { instanceText } from "~/shared/copy-paste/plugin-instance";
@@ -87,7 +88,10 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         <ContextMenuItem onSelect={handleCopy}>Copy</ContextMenuItem>
         <ContextMenuItem onSelect={handlePaste}>Paste</ContextMenuItem>
         <ContextMenuItem onSelect={handleCut}>Cut</ContextMenuItem>
-        <ContextMenuItem onSelect={handleDuplicate}>Duplicate</ContextMenuItem>
+        <ContextMenuItem onSelect={handleDuplicate}>
+          Duplicate
+          <Kbd value={["cmd", "d"]} />
+        </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleHide}>
           {show ? "Hide" : "Show"}
@@ -101,6 +105,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         <ContextMenuSeparator />
         <ContextMenuItem destructive onSelect={handleDelete}>
           Delete
+          <Kbd value={["delete"]} />
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

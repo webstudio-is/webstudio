@@ -629,3 +629,221 @@ test("page root scope should provide page system variable value", () => {
     ]),
   });
 });
+
+describe("deletePageMutable", () => {
+  test("should delete a page from pages array", async () => {
+    const { pages: pagesData, register, p } = createPages();
+    register([p("page1", "/page1"), p("page2", "/page2")]);
+
+    // Create minimal WebstudioData
+    const data = {
+      pages: pagesData,
+      instances: new Map(),
+    } as any;
+
+    const { deletePageMutable } = await import("./page-utils");
+    deletePageMutable("page1", data);
+
+    expect(pagesData.pages.find((page) => page.id === "page1")).toBeUndefined();
+    expect(pagesData.pages.find((page) => page.id === "page2")).toBeDefined();
+  });
+
+  test("should delete page instance", async () => {
+    const { pages: pagesData, register, p } = createPages();
+    register([p("page1", "/page1")]);
+
+    const page = pagesData.pages.find((page) => page.id === "page1");
+    const rootInstanceId = page?.rootInstanceId;
+
+    // Create minimal WebstudioData with all required properties
+    const data = {
+      pages: pagesData,
+      instances: new Map([
+        [
+          rootInstanceId!,
+          {
+            id: rootInstanceId,
+            type: "instance",
+            component: "Body",
+            children: [],
+          },
+        ],
+      ]),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      breakpoints: new Map(),
+      styles: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      resources: new Map(),
+    } as any;
+
+    const { deletePageMutable } = await import("./page-utils");
+    deletePageMutable("page1", data);
+
+    expect(data.instances.has(rootInstanceId!)).toBe(false);
+  });
+
+  test("should remove page from folder children", async () => {
+    const { pages: pagesData, register, p, f } = createPages();
+    register([f("folder1", [p("page1", "/page1")])]);
+
+    const folder = pagesData.folders.find((folder) => folder.id === "folder1");
+    expect(folder?.children).toContain("page1");
+
+    // Create minimal WebstudioData
+    const data = {
+      pages: pagesData,
+      instances: new Map(),
+    } as any;
+
+    const { deletePageMutable } = await import("./page-utils");
+    deletePageMutable("page1", data);
+
+    expect(folder?.children).not.toContain("page1");
+  });
+});
+
+describe("isFolder", () => {
+  test("should return true for existing folder id", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", [])]);
+
+    const { isFolder } = await import("./page-utils");
+    expect(isFolder("folder1", pagesData.folders)).toBe(true);
+  });
+
+  test("should return false for non-existing folder id", async () => {
+    const { pages: pagesData } = createPages();
+
+    const { isFolder } = await import("./page-utils");
+    expect(isFolder("nonexistent", pagesData.folders)).toBe(false);
+  });
+
+  test("should return false for page id", async () => {
+    const { pages: pagesData, register, p } = createPages();
+    register([p("page1", "/page1")]);
+
+    const { isFolder } = await import("./page-utils");
+    expect(isFolder("page1", pagesData.folders)).toBe(false);
+  });
+});
+
+describe("getStoredDropTarget", () => {
+  test("should return drop target with parent id", async () => {
+    const { pages: pagesData, register, f, p } = createPages();
+    register([f("folder1", [p("page1", "/page1")])]);
+    $pages.set(pagesData);
+
+    const { getStoredDropTarget } = await import("./page-utils");
+    // selector order is [item, parent, grandparent, ...]
+    const selector = ["page1", "folder1", ROOT_FOLDER_ID];
+    const dropTarget = { parentLevel: 1, beforeLevel: 1 };
+
+    const result = getStoredDropTarget(selector, dropTarget);
+
+    expect(result).toEqual({
+      parentId: "folder1",
+      beforeId: "folder1",
+      afterId: undefined,
+      indexWithinChildren: 0,
+    });
+  });
+
+  test("should calculate indexWithinChildren based on beforeId", async () => {
+    const { pages: pagesData, register, f, p } = createPages();
+    register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
+    $pages.set(pagesData);
+
+    const { getStoredDropTarget } = await import("./page-utils");
+    const selector = ["page2", "folder1", ROOT_FOLDER_ID];
+    const dropTarget = { parentLevel: 1, beforeLevel: 0 };
+
+    const result = getStoredDropTarget(selector, dropTarget);
+
+    // beforeLevel: 0 means selector.at(-0-1) = selector.at(-1) = ROOT_FOLDER_ID
+    // But ROOT_FOLDER_ID is not in folder1's children, so indexWithinChildren = 0
+    expect(result?.indexWithinChildren).toBe(0);
+  });
+
+  test("should calculate indexWithinChildren based on afterId", async () => {
+    const { pages: pagesData, register, f, p } = createPages();
+    register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
+    $pages.set(pagesData);
+
+    const { getStoredDropTarget } = await import("./page-utils");
+    const selector = ["page1", "folder1", ROOT_FOLDER_ID];
+    const dropTarget = { parentLevel: 1, afterLevel: 0 };
+
+    const result = getStoredDropTarget(selector, dropTarget);
+
+    // afterLevel: 0 means selector.at(-0-1) = selector.at(-1) = ROOT_FOLDER_ID
+    // But ROOT_FOLDER_ID is not in folder1's children, so indexWithinChildren = 0
+    expect(result?.indexWithinChildren).toBe(0);
+  });
+
+  test("should return undefined when parent id is undefined", async () => {
+    const { pages: pagesData } = createPages();
+    $pages.set(pagesData);
+
+    const { getStoredDropTarget } = await import("./page-utils");
+    const selector = ["page1"];
+    const dropTarget = { parentLevel: 5 };
+
+    const result = getStoredDropTarget(selector, dropTarget);
+
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("canDrop", () => {
+  test("should allow dropping inside a folder", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", [])]);
+
+    const { canDrop } = await import("./page-utils");
+    const dropTarget = {
+      parentId: "folder1",
+      indexWithinChildren: 1,
+    };
+
+    expect(canDrop(dropTarget, pagesData.folders)).toBe(true);
+  });
+
+  test("should forbid dropping on non-folder", async () => {
+    const { pages: pagesData, register, p } = createPages();
+    register([p("page1", "/page1")]);
+
+    const { canDrop } = await import("./page-utils");
+    const dropTarget = {
+      parentId: "page1",
+      indexWithinChildren: 0,
+    };
+
+    expect(canDrop(dropTarget, pagesData.folders)).toBe(false);
+  });
+
+  test("should forbid dropping at index 0 of root folder", async () => {
+    const { pages: pagesData } = createPages();
+
+    const { canDrop } = await import("./page-utils");
+    const dropTarget = {
+      parentId: ROOT_FOLDER_ID,
+      indexWithinChildren: 0,
+    };
+
+    expect(canDrop(dropTarget, pagesData.folders)).toBe(false);
+  });
+
+  test("should allow dropping at index > 0 of root folder", async () => {
+    const { pages: pagesData } = createPages();
+
+    const { canDrop } = await import("./page-utils");
+    const dropTarget = {
+      parentId: ROOT_FOLDER_ID,
+      indexWithinChildren: 1,
+    };
+
+    expect(canDrop(dropTarget, pagesData.folders)).toBe(true);
+  });
+});
