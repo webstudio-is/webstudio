@@ -2073,7 +2073,7 @@ describe("canUnwrapInstance", () => {
         instanceSelector: ["parent", "body"],
         instance: instances.get("parent")!,
       },
-    ] as any;
+    ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(true);
   });
@@ -2101,7 +2101,7 @@ describe("canUnwrapInstance", () => {
         instanceSelector: ["body"],
         instance: instances.get("body")!,
       },
-    ] as any;
+    ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(false);
   });
@@ -2131,7 +2131,7 @@ describe("canUnwrapInstance", () => {
         instanceSelector: ["paragraph", "body"],
         instance: instances.get("paragraph")!,
       },
-    ] as any;
+    ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(false);
   });

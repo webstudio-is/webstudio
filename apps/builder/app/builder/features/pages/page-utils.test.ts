@@ -641,9 +641,9 @@ describe("deletePageMutable", () => {
     const data = {
       pages: pagesData,
       instances: new Map(),
-    } as any;
+    } as Partial<WebstudioData>;
 
-    const { deletePageMutable } = await import("./page-utils");
+    const { duplicateFolder } = await import("./page-utils");
     deletePageMutable("page1", data);
 
     expect(pagesData.pages.find((page) => page.id === "page1")).toBeUndefined();
@@ -678,7 +678,7 @@ describe("deletePageMutable", () => {
       props: new Map(),
       dataSources: new Map(),
       resources: new Map(),
-    } as any;
+    } as Partial<WebstudioData>;
 
     const { deletePageMutable } = await import("./page-utils");
     deletePageMutable("page1", data);
@@ -697,7 +697,7 @@ describe("deletePageMutable", () => {
     const data = {
       pages: pagesData,
       instances: new Map(),
-    } as any;
+    } as Partial<WebstudioData>;
 
     const { deletePageMutable } = await import("./page-utils");
     deletePageMutable("page1", data);
