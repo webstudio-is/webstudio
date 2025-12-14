@@ -706,7 +706,7 @@ export const canUnwrapInstance = (instancePath: InstancePath) => {
   if (instancePath.length < 2) {
     return false;
   }
-  const [selectedItem, parentItem] = instancePath;
+  const [, parentItem] = instancePath;
 
   // Prevent unwrapping if parent is the root instance (e.g., Body)
   const rootInstanceId = $selectedPage.get()?.rootInstanceId;
