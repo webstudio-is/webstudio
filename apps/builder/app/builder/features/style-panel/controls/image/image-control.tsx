@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { CssProperty, InvalidValue } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/nano-states";
-import { ImageManager } from "~/builder/shared/image-manager";
+import { ImageManager } from "~/shared/image-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,

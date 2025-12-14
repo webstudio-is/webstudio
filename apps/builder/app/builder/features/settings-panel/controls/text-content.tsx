@@ -18,7 +18,7 @@ import {
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { CodeEditor } from "~/builder/shared/code-editor";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
   useLocalValue,

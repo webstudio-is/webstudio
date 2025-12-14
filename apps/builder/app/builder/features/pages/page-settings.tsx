@@ -82,7 +82,7 @@ import {
 } from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
 // @todo should be moved to shared because features should not depend on features
-import { ImageControl } from "~/builder/features/project-settings";
+import { ImageControl } from "~/shared/project-settings";
 // @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {

@@ -82,10 +82,10 @@ import {
   type Templates,
 } from "@webstudio-is/sdk";
 import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
-import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import { RelativeTime } from "~/builder/shared/relative-time";
-import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
+import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 
 type ChangeProjectDomainProps = {
   project: Project;

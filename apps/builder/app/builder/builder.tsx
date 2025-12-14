@@ -47,7 +47,7 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
-import { ProjectSettings } from "./features/project-settings";
+import { ProjectSettings } from "~/shared/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
   $activeSidebarPanel,

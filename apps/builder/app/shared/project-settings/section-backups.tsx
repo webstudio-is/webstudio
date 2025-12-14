@@ -21,7 +21,7 @@ import { UpgradeIcon } from "@webstudio-is/icons";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { $project, $userPlanFeatures } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
-import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
+import cmsUpgradeBanner from "../cms-upgrade-banner.svg?url";
 
 const formatPublishDate = (date: string) => {
   try {

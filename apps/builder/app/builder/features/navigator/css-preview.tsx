@@ -9,7 +9,7 @@ import {
 import { generateStyleMap, mergeStyles } from "@webstudio-is/css-engine";
 import type { StyleMap } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { highlightCss } from "~/builder/shared/code-highlight";
+import { highlightCss } from "~/shared/code-highlight";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "~/builder/features/style-panel/shared/model";
 import { $selectedInstance } from "~/shared/awareness";

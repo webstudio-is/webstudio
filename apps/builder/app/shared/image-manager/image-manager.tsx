@@ -11,7 +11,11 @@ import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/asset-uploader";
-import { AssetsShell, type AssetContainer, useAssets } from "../assets";
+import {
+  AssetsShell,
+  type AssetContainer,
+  useAssets,
+} from "~/builder/shared/assets";
 import { ImageThumbnail } from "./image-thumbnail";
 
 const useLogic = ({

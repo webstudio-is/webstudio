@@ -29,8 +29,8 @@ import {
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
-import { CodeEditor } from "~/builder/shared/code-editor";
-import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { CodeEditor } from "~/shared/code-editor";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 
 const imgStyle = css({
   objectFit: "contain",

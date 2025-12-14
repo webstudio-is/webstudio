@@ -59,9 +59,19 @@ import {
   selectPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { deleteAssets, $usagesByAssetId, type AssetUsage } from "../assets";
-import { $activeInspectorPanel, setActiveSidebarPanel } from "../nano-states";
-import { formatAssetName, parseAssetName } from "../assets/asset-utils";
+import {
+  deleteAssets,
+  $usagesByAssetId,
+  type AssetUsage,
+} from "~/builder/shared/assets";
+import {
+  $activeInspectorPanel,
+  setActiveSidebarPanel,
+} from "~/builder/shared/nano-states";
+import {
+  formatAssetName,
+  parseAssetName,
+} from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 
 const buttonLinkClass = css({
