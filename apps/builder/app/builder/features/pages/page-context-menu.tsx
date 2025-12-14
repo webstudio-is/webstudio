@@ -5,7 +5,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@webstudio-is/design-system";
-import { duplicatePage } from "./page-utils";
+import { duplicatePage, duplicateFolder } from "./page-utils";
 
 type PageContextMenuProps = {
   children: ReactNode;
@@ -24,6 +24,8 @@ export const PageContextMenu = ({
   const handleDuplicate = () => {
     if (pageId) {
       duplicatePage(pageId);
+    } else if (folderId) {
+      duplicateFolder(folderId);
     }
   };
 
@@ -59,7 +61,10 @@ export const PageContextMenu = ({
           {children}
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onSelect={handleDuplicate} disabled={!pageId}>
+          <ContextMenuItem
+            onSelect={handleDuplicate}
+            disabled={!pageId && !folderId}
+          >
             Duplicate
           </ContextMenuItem>
           <ContextMenuItem

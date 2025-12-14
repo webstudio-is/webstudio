@@ -44,6 +44,7 @@ import {
   reparentPageOrFolderMutable,
   deletePageMutable,
   deleteFolderWithChildrenMutable,
+  duplicateFolder,
   isFolder,
   getStoredDropTarget,
   canDrop,
@@ -507,6 +508,13 @@ const FolderEditor = ({
     setFolderIdToDelete(editingFolderId);
   };
 
+  const handleDuplicate = () => {
+    const newFolderId = duplicateFolder(editingFolderId);
+    if (newFolderId) {
+      $editingPageId.set(newFolderId);
+    }
+  };
+
   if (editingFolderId === newFolderId) {
     return (
       <NewFolderSettings
@@ -539,6 +547,7 @@ const FolderEditor = ({
       <FolderSettings
         onClose={onClose}
         onRequestDelete={handleRequestDelete}
+        onDuplicate={handleDuplicate}
         folderId={editingFolderId}
         key={editingFolderId}
       />
@@ -571,7 +580,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
     return;
   }
 
-  const handleDeleteConfirm = () => {
+  const handlePageDeleteConfirm = () => {
     if (pageIdToDelete) {
       updateWebstudioData((data) => {
         deletePageMutable(pageIdToDelete, data);
@@ -697,7 +706,7 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         <DeletePageConfirmationDialog
           page={findPageByIdOrPath(pageIdToDelete, pages)!}
           onClose={() => setPageIdToDelete(undefined)}
-          onConfirm={handleDeleteConfirm}
+          onConfirm={handlePageDeleteConfirm}
         />
       )}
       {folderIdToDelete && (

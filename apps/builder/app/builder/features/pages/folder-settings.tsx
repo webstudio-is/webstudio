@@ -15,7 +15,7 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, TrashIcon, CopyIcon } from "@webstudio-is/icons";
 import {
   Folder,
   Pages,
@@ -332,10 +332,12 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
 export const FolderSettings = ({
   onClose,
   onRequestDelete,
+  onDuplicate,
   folderId,
 }: {
   onClose: () => void;
   onRequestDelete?: () => void;
+  onDuplicate?: (newFolderId: string) => void;
   folderId: string;
 }) => {
   const pages = useStore($pages);
@@ -396,6 +398,12 @@ export const FolderSettings = ({
     }
   };
 
+  const handleDuplicate = () => {
+    if (onDuplicate) {
+      onDuplicate(folderId);
+    }
+  };
+
   return (
     <>
       <DialogTitle
@@ -408,6 +416,17 @@ export const FolderSettings = ({
                   prefix={<TrashIcon />}
                   onClick={handleRequestDelete}
                   aria-label="Delete folder"
+                  tabIndex={2}
+                />
+              </Tooltip>
+            )}
+            {isDesignMode && onDuplicate && (
+              <Tooltip content="Duplicate folder" side="bottom">
+                <Button
+                  color="ghost"
+                  prefix={<CopyIcon />}
+                  onClick={handleDuplicate}
+                  aria-label="Duplicate folder"
                   tabIndex={2}
                 />
               </Tooltip>

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import {
   isRootFolder,
   type Folder,
@@ -24,6 +25,7 @@ import {
   $dataSourceVariables,
   $dataSources,
   $pages,
+  $project,
   $resources,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
@@ -845,5 +847,119 @@ describe("canDrop", () => {
     };
 
     expect(canDrop(dropTarget, pagesData.folders)).toBe(true);
+  });
+});
+
+describe("duplicateFolder", () => {
+  $project.set({ id: "projectId" } as Project);
+
+  test("should duplicate a folder with deduplicated name", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", [])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder = updatedPages.folders.find(
+      (folder) => folder.id === newFolderId
+    );
+    expect(newFolder).toBeDefined();
+    expect(newFolder?.name).toBe("folder1 (1)");
+    expect(newFolder?.slug).toBe("folder1-1");
+  });
+
+  test("should duplicate a folder with pages", async () => {
+    const { pages: pagesData, register, f, p } = createPages();
+    register([f("folder1", [p("page1", "/page1"), p("page2", "/page2")])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder = updatedPages.folders.find(
+      (folder) => folder.id === newFolderId
+    );
+    expect(newFolder).toBeDefined();
+    // Note: Page duplication is handled by insertPageCopyMutable from ~/shared/page-utils
+    // which requires full WebstudioData setup. Here we just verify the folder structure.
+    expect(newFolder?.children.length).toBeGreaterThan(0);
+  });
+
+  test("should duplicate a folder with nested folders", async () => {
+    const { pages: pagesData, register, f, p } = createPages();
+    register([
+      f("folder1", [
+        f("subfolder1", [p("page1", "/page1")]),
+        p("page2", "/page2"),
+      ]),
+    ]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder = updatedPages.folders.find(
+      (folder) => folder.id === newFolderId
+    );
+    expect(newFolder).toBeDefined();
+    expect(newFolder?.children.length).toBeGreaterThan(0);
+
+    // Check that subfolder was duplicated
+    const subFolderChild = newFolder?.children.find((childId) =>
+      updatedPages.folders.some((folder) => folder.id === childId)
+    );
+    expect(subFolderChild).toBeDefined();
+    const subFolder = updatedPages.folders.find(
+      (folder) => folder.id === subFolderChild
+    );
+    expect(subFolder).toBeDefined();
+    expect(subFolder?.name).toBe("subfolder1 (1)");
+  });
+
+  test("should deduplicate folder names correctly with existing copies", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", "folder1", []), f("folder1 (1)", "folder1-1", [])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    expect(newFolderId).toBeDefined();
+    const updatedPages = $pages.get()!;
+    const newFolder = updatedPages.folders.find(
+      (folder) => folder.id === newFolderId
+    );
+    expect(newFolder?.name).toBe("folder1 (2)");
+    expect(newFolder?.slug).toBe("folder1-2");
+  });
+
+  test("should register duplicated folder in parent folder", async () => {
+    const { pages: pagesData, register, f } = createPages();
+    register([f("folder1", [])]);
+
+    $pages.set(pagesData);
+    updateCurrentSystem(initialSystem);
+
+    const { duplicateFolder } = await import("./page-utils");
+    const newFolderId = duplicateFolder("folder1");
+
+    const updatedPages = $pages.get()!;
+    const rootFolder = updatedPages.folders.find(isRootFolder);
+    expect(rootFolder?.children).toContain(newFolderId);
   });
 });

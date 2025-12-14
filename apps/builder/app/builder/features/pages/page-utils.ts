@@ -1,4 +1,5 @@
 import { computed } from "nanostores";
+import { nanoid } from "nanoid";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
   type Page,
@@ -299,6 +300,130 @@ export const duplicatePage = (pageId: Page["id"]) => {
     });
   });
   return newPageId;
+};
+
+const deduplicateName = (usedNames: Set<string>, name: string) => {
+  const { name: baseName = name, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  let nameNumber = Number(copyNumber ?? "0");
+  let newName: string;
+  do {
+    nameNumber += 1;
+    newName = `${baseName} (${nameNumber})`;
+  } while (usedNames.has(newName));
+  return newName;
+};
+
+const deduplicateSlug = (usedSlugs: Set<string>, slug: string) => {
+  // extract a number from "slug-N"
+  const { slug: baseSlug = slug, copyNumber } =
+    slug.match(/^(?<slug>.+)-(?<copyNumber>\d+)$/)?.groups ?? {};
+  let counter = Number(copyNumber ?? "0");
+  let newSlug: string;
+  do {
+    counter += 1;
+    newSlug = baseSlug ? `${baseSlug}-${counter}` : `copy-${counter}`;
+  } while (usedSlugs.has(newSlug));
+  return newSlug;
+};
+
+const insertFolderCopyMutable = ({
+  source,
+  target,
+}: {
+  source: { data: WebstudioData; folderId: Folder["id"] };
+  target: { data: WebstudioData; parentFolderId: Folder["id"] };
+}): Folder["id"] | undefined => {
+  const sourceFolder = source.data.pages.folders.find(
+    (folder) => folder.id === source.folderId
+  );
+  if (sourceFolder === undefined) {
+    return;
+  }
+
+  const parentFolder = target.data.pages.folders.find(
+    (folder) => folder.id === target.parentFolderId
+  );
+  const usedNames = new Set<string>();
+  const usedSlugs = new Set<string>();
+  for (const childId of parentFolder?.children ?? []) {
+    const childFolder = target.data.pages.folders.find(
+      (folder) => folder.id === childId
+    );
+    if (childFolder) {
+      usedNames.add(childFolder.name);
+      usedSlugs.add(childFolder.slug);
+      continue;
+    }
+    const childPage = target.data.pages.pages.find(
+      (page) => page.id === childId
+    );
+    if (childPage) {
+      usedNames.add(childPage.name);
+    }
+  }
+
+  // Create new folder with deduplicated name and slug
+  const newFolderId = nanoid();
+  const newFolder: Folder = {
+    id: newFolderId,
+    name: deduplicateName(usedNames, sourceFolder.name),
+    slug: deduplicateSlug(usedSlugs, sourceFolder.slug),
+    children: [],
+  };
+
+  // Add new folder to the folders array
+  target.data.pages.folders.push(newFolder);
+
+  // Register new folder in parent
+  for (const folder of target.data.pages.folders) {
+    if (folder.id === target.parentFolderId) {
+      folder.children.push(newFolderId);
+    }
+  }
+
+  // Duplicate all children (pages and nested folders)
+  for (const childId of sourceFolder.children) {
+    const childFolder = source.data.pages.folders.find(
+      (folder) => folder.id === childId
+    );
+
+    if (childFolder) {
+      // It's a nested folder - duplicate it recursively
+      insertFolderCopyMutable({
+        source: { data: source.data, folderId: childId },
+        target: { data: target.data, parentFolderId: newFolderId },
+      });
+    } else {
+      // It's a page - duplicate it
+      insertPageCopyMutable({
+        source: { data: source.data, pageId: childId },
+        target: { data: target.data, folderId: newFolderId },
+      });
+    }
+  }
+
+  return newFolderId;
+};
+
+export const duplicateFolder = (folderId: Folder["id"]) => {
+  const pages = $pages.get();
+  const currentFolder = findParentFolderByChildId(
+    folderId,
+    pages?.folders ?? []
+  );
+  if (currentFolder === undefined) {
+    return;
+  }
+  let newFolderId: undefined | string;
+  updateWebstudioData((data) => {
+    newFolderId = insertFolderCopyMutable({
+      source: { data, folderId },
+      target: { data, parentFolderId: currentFolder.id },
+    });
+  });
+  return newFolderId;
 };
 
 export const isFolder = (id: string, folders: Array<Folder>) => {
