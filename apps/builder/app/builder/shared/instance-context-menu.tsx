@@ -7,9 +7,6 @@ import {
   ContextMenuItemRightSlot,
   ContextMenuSeparator,
   ContextMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   theme,
   Kbd,
 } from "@webstudio-is/design-system";
@@ -48,26 +45,24 @@ const getMenuPermissions = (instancePath: InstancePath | undefined) => {
   };
 };
 
-const MenuItems = ({
-  show,
-  permissions,
-  ItemComponent,
-  ItemRightSlot,
-  SeparatorComponent,
-}: {
-  show: boolean;
-  permissions: ReturnType<typeof getMenuPermissions>;
-  ItemComponent: typeof ContextMenuItem | typeof DropdownMenuItem;
-  ItemRightSlot: typeof ContextMenuItemRightSlot;
-  SeparatorComponent:
-    | typeof ContextMenuSeparator
-    | typeof DropdownMenuSeparator;
-}) => {
+export const MenuItems = () => {
   const instancePath = useStore($selectedInstancePath);
+  const propValues = useStore($propValuesByInstanceSelector);
+
+  const instanceSelector = instancePath?.[0]?.instanceSelector;
+
+  const show = instanceSelector
+    ? Boolean(
+        propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
+          true
+      )
+    : true;
+
+  const permissions = getMenuPermissions(instancePath);
 
   return (
     <>
-      <ItemComponent
+      <ContextMenuItem
         disabled={!permissions.canCopy}
         onSelect={() => {
           const data = instanceText.onCopy?.();
@@ -77,11 +72,11 @@ const MenuItems = ({
         }}
       >
         Copy
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "c"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canPaste}
         onSelect={async () => {
           const text = await navigator.clipboard.readText();
@@ -89,11 +84,11 @@ const MenuItems = ({
         }}
       >
         Paste
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "v"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canCut}
         onSelect={() => {
           const data = instanceText.onCut?.();
@@ -103,23 +98,23 @@ const MenuItems = ({
         }}
       >
         Cut
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "x"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canDuplicate}
         onSelect={() => {
           emitCommand("duplicateInstance");
         }}
       >
         Duplicate
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "d"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <SeparatorComponent />
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
         disabled={!permissions.canHide}
         onSelect={() => {
           if (instancePath?.[0] === undefined) {
@@ -129,57 +124,57 @@ const MenuItems = ({
         }}
       >
         {show ? "Hide" : "Show"}
-      </ItemComponent>
-      <ItemComponent
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canRename}
         onSelect={() => {
           emitCommand("editInstanceLabel");
         }}
       >
         Rename
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "e"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canWrap}
         onSelect={() => {
           emitCommand("wrap");
         }}
       >
         Wrap
-      </ItemComponent>
-      <ItemComponent
+      </ContextMenuItem>
+      <ContextMenuItem
         disabled={!permissions.canUnwrap}
         onSelect={() => {
           emitCommand("unwrap");
         }}
       >
         Unwrap
-      </ItemComponent>
-      <SeparatorComponent />
-      <ItemComponent
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
         onSelect={() => {
           emitCommand("focusStyleSources");
         }}
       >
         Add token
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["meta", "enter"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
         onSelect={() => {
           emitCommand("openSettingsPanel");
         }}
       >
         Open settings
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["d"]} />
-        </ItemRightSlot>
-      </ItemComponent>
-      <SeparatorComponent />
-      <ItemComponent
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
         disabled={!permissions.canDelete}
         destructive
         onSelect={() => {
@@ -187,65 +182,15 @@ const MenuItems = ({
         }}
       >
         Delete
-        <ItemRightSlot>
+        <ContextMenuItemRightSlot>
           <Kbd value={["delete"]} />
-        </ItemRightSlot>
-      </ItemComponent>
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
     </>
   );
 };
 
-export const InstanceContextMenuItems = () => {
-  const instancePath = useStore($selectedInstancePath);
-  const propValues = useStore($propValuesByInstanceSelector);
-
-  const instanceSelector = instancePath?.[0]?.instanceSelector;
-
-  const show = instanceSelector
-    ? Boolean(
-        propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
-          true
-      )
-    : true;
-
-  const permissions = getMenuPermissions(instancePath);
-
-  return (
-    <DropdownMenuContent
-      css={{ width: theme.spacing[28] }}
-      sideOffset={0}
-      align="start"
-      side="bottom"
-      onCloseAutoFocus={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <MenuItems
-        show={show}
-        permissions={permissions}
-        ItemComponent={DropdownMenuItem}
-        ItemRightSlot={ContextMenuItemRightSlot}
-        SeparatorComponent={DropdownMenuSeparator}
-      />
-    </DropdownMenuContent>
-  );
-};
-
 export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
-  const instancePath = useStore($selectedInstancePath);
-  const propValues = useStore($propValuesByInstanceSelector);
-
-  const instanceSelector = instancePath?.[0]?.instanceSelector;
-
-  const show = instanceSelector
-    ? Boolean(
-        propValues.get(getInstanceKey(instanceSelector))?.get(showAttribute) ??
-          true
-      )
-    : true;
-
-  const permissions = getMenuPermissions(instancePath);
-
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -260,13 +205,7 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent css={{ width: theme.spacing[28] }}>
-        <MenuItems
-          show={show}
-          permissions={permissions}
-          ItemComponent={ContextMenuItem}
-          ItemRightSlot={ContextMenuItemRightSlot}
-          SeparatorComponent={ContextMenuSeparator}
-        />
+        <MenuItems />
       </ContextMenuContent>
     </ContextMenu>
   );

@@ -1,21 +1,48 @@
 import { useStore } from "@nanostores/react";
 import { $instanceContextMenu } from "~/shared/nano-states";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { selectInstance } from "~/shared/awareness";
-import { DropdownMenu, DropdownMenuTrigger } from "@webstudio-is/design-system";
-import { InstanceContextMenuItems } from "~/builder/shared/instance-context-menu";
-import { $scale } from "~/builder/shared/nano-states";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+} from "@webstudio-is/design-system";
+import { MenuItems } from "~/builder/shared/instance-context-menu";
+import { $scale, $canvasRect } from "~/builder/shared/nano-states";
 import { applyScale } from "./outline";
 
 export const CanvasInstanceContextMenu = () => {
   const contextMenu = useStore($instanceContextMenu);
   const scale = useStore($scale);
+  const canvasRect = useStore($canvasRect);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (contextMenu) {
+    if (contextMenu && triggerRef.current && canvasRect) {
       selectInstance(contextMenu.instanceSelector);
+
+      // Calculate the scaled and offset position
+      const scaledPosition = applyScale(
+        {
+          left: contextMenu.position.x,
+          top: contextMenu.position.y,
+          width: 0,
+          height: 0,
+        },
+        scale
+      );
+
+      // Trigger context menu by dispatching a contextmenu event with proper coordinates
+      const event = new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: canvasRect.left + scaledPosition.left,
+        clientY: canvasRect.top + scaledPosition.top,
+      });
+      triggerRef.current.dispatchEvent(event);
     }
-  }, [contextMenu]);
+  }, [contextMenu, canvasRect, scale]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -23,36 +50,16 @@ export const CanvasInstanceContextMenu = () => {
     }
   };
 
-  if (!contextMenu) {
+  if (!contextMenu || !canvasRect) {
     return;
   }
 
-  // Position from canvas iframe needs to be scaled to match builder's canvas zoom level
-  const scaledRect = applyScale(
-    {
-      left: contextMenu.position.x,
-      top: contextMenu.position.y,
-      width: 0,
-      height: 0,
-    },
-    scale
-  );
-
   return (
-    <DropdownMenu open onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <div
-          style={{
-            position: "absolute",
-            left: scaledRect.left,
-            top: scaledRect.top,
-            width: 1,
-            height: 1,
-            pointerEvents: "none",
-          }}
-        />
-      </DropdownMenuTrigger>
-      <InstanceContextMenuItems />
-    </DropdownMenu>
+    <ContextMenu onOpenChange={handleOpenChange}>
+      <ContextMenuTrigger ref={triggerRef} style={{ display: "none" }} />
+      <ContextMenuContent>
+        <MenuItems />
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };
