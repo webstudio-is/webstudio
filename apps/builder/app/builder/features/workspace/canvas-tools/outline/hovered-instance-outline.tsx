@@ -13,7 +13,7 @@ import { findClosestSlot } from "~/shared/instance-utils";
 import { isDescendantOrSelf } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
-import { applyScale } from "./apply-scale";
+import { applyScale } from "../apply-scale";
 
 export const HoveredInstanceOutline = () => {
   const instances = useStore($instances);

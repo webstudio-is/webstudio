@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { $collaborativeInstanceRect } from "~/shared/nano-states";
 import { Outline } from "./outline";
-import { applyScale } from "./apply-scale";
+import { applyScale } from "../apply-scale";
 import { $scale, $clampingRect } from "~/builder/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 

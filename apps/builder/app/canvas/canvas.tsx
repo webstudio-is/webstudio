@@ -74,6 +74,7 @@ import { subscribeScrollbarSize } from "./scrollbar-width";
 import { compareMedia } from "@webstudio-is/css-engine";
 import { builderApi } from "~/shared/builder-api";
 import { useDebounceEffect } from "@webstudio-is/design-system";
+import { subscribeInstanceContextMenu } from "./instance-context-menu";
 
 registerContainers();
 
@@ -301,6 +302,8 @@ export const Canvas = () => {
   useHashLinkSync();
 
   useEffect(subscribeInterceptedEvents, []);
+
+  useEffect(subscribeInstanceContextMenu, []);
 
   const components = useStore($registeredComponents);
   const instances = useStore($instances);

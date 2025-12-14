@@ -73,6 +73,15 @@ export const $blockChildOutline = atom<undefined | BlockChildOutline>(
   undefined
 );
 
+export type InstanceContextMenu = {
+  position: { x: number; y: number };
+  instanceSelector: InstanceSelector;
+};
+
+export const $instanceContextMenu = atom<undefined | InstanceContextMenu>(
+  undefined
+);
+
 export const findBlockChildSelector = (instanceSelector: InstanceSelector) => {
   const instances = $instances.get();
   let blockChildSelector: InstanceSelector | undefined = undefined;
