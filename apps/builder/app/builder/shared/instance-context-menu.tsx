@@ -4,6 +4,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuItemRightSlot,
   ContextMenuSeparator,
   ContextMenuTrigger,
   theme,
@@ -85,12 +86,29 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent css={{ width: theme.spacing[28] }}>
-        <ContextMenuItem onSelect={handleCopy}>Copy</ContextMenuItem>
-        <ContextMenuItem onSelect={handlePaste}>Paste</ContextMenuItem>
-        <ContextMenuItem onSelect={handleCut}>Cut</ContextMenuItem>
+        <ContextMenuItem onSelect={handleCopy}>
+          Copy
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "c"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handlePaste}>
+          Paste
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "v"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handleCut}>
+          Cut
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "x"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
         <ContextMenuItem onSelect={handleDuplicate}>
           Duplicate
-          <Kbd value={["cmd", "d"]} />
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "d"]} />
+          </ContextMenuItemRightSlot>
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleHide}>
@@ -105,7 +123,9 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
         <ContextMenuSeparator />
         <ContextMenuItem destructive onSelect={handleDelete}>
           Delete
-          <Kbd value={["delete"]} />
+          <ContextMenuItemRightSlot>
+            <Kbd value={["delete"]} />
+          </ContextMenuItemRightSlot>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
