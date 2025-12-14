@@ -163,3 +163,23 @@ export const initCopyPasteForContentEditMode = ({
     signal,
   });
 };
+
+// Public API for programmatic copy/paste/cut operations
+export const copyInstance = () => {
+  const data = instanceText.onCopy?.();
+  if (data) {
+    navigator.clipboard.writeText(data);
+  }
+};
+
+export const pasteInstance = async () => {
+  const text = await navigator.clipboard.readText();
+  instanceText.onPaste?.(text);
+};
+
+export const cutInstance = () => {
+  const data = instanceText.onCut?.();
+  if (data) {
+    navigator.clipboard.writeText(data);
+  }
+};

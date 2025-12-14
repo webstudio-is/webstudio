@@ -28,6 +28,7 @@ import {
   portalComponent,
   elementComponent,
 } from "@webstudio-is/sdk";
+import { showAttribute } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   deleteInstanceMutable,
@@ -41,7 +42,11 @@ import {
   insertWebstudioElementAt,
   buildInstancePath,
   wrapIn,
+  toggleInstanceShow,
+  unwrapInstanceMutable,
+  canUnwrapInstance,
 } from "./instance-utils";
+import type { InstancePath } from "./awareness";
 import {
   $assets,
   $breakpoints,
@@ -1785,5 +1790,350 @@ describe("buildInstancePath", () => {
 
     const result = buildInstancePath("linkId", pages, instances);
     expect(result).toEqual(["Main Body", "Navigation"]);
+  });
+});
+
+describe("toggleInstanceShow", () => {
+  test("creates show prop with false value when it doesn't exist", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(new Map());
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const props = $props.get();
+    const showProp = Array.from(props.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp).toEqual({
+      id: expect.any(String),
+      instanceId: "box",
+      name: showAttribute,
+      type: "boolean",
+      value: false,
+    });
+  });
+
+  test("toggles show prop from true to false", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:show={true}></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const updatedProps = $props.get();
+    const showProp = Array.from(updatedProps.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp?.type).toBe("boolean");
+    if (showProp?.type === "boolean") {
+      expect(showProp.value).toBe(false);
+    }
+  });
+
+  test("toggles show prop from false to true", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box" ws:show={false}></$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
+
+    toggleInstanceShow("box");
+
+    const updatedProps = $props.get();
+    const showProp = Array.from(updatedProps.values()).find(
+      (prop) => prop.instanceId === "box" && prop.name === showAttribute
+    );
+    expect(showProp?.type).toBe("boolean");
+    if (showProp?.type === "boolean") {
+      expect(showProp.value).toBe(true);
+    }
+  });
+});
+
+describe("unwrap instance", () => {
+  test("unwraps instance and moves children to parent", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="wrapper">
+            <$.Box ws:id="child1"></$.Box>
+            <$.Box ws:id="child2"></$.Box>
+          </$.Box>
+        </$.Box>
+      </$.Body>
+    );
+
+    const selectedItem = {
+      instanceSelector: ["wrapper", "parent", "body"],
+      instance: instances.get("wrapper")!,
+    };
+    const parentItem = {
+      instanceSelector: ["parent", "body"],
+      instance: instances.get("parent")!,
+    };
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem,
+      parentItem,
+    });
+
+    expect(result.success).toBe(true);
+    expect(instances.has("parent")).toBe(false);
+    const bodyInstance = instances.get("body")!;
+    expect(bodyInstance.children).toEqual([{ type: "id", value: "wrapper" }]);
+  });
+
+  test("fails to unwrap textual instance", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box">
+          <$.Paragraph ws:id="paragraph">
+            <$.Bold ws:id="bold">text</$.Bold>
+          </$.Paragraph>
+        </$.Box>
+      </$.Body>
+    );
+
+    const selectedItem = {
+      instanceSelector: ["bold", "paragraph", "box", "body"],
+      instance: instances.get("bold")!,
+    };
+    const parentItem = {
+      instanceSelector: ["paragraph", "box", "body"],
+      instance: instances.get("paragraph")!,
+    };
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem,
+      parentItem,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Cannot unwrap textual instance");
+  });
+
+  test("fails to unwrap if content model is violated", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="outerBox">
+          <$.Form ws:id="form">
+            <$.Box ws:id="innerBox">
+              <$.Form ws:id="nestedForm"></$.Form>
+            </$.Box>
+          </$.Form>
+        </$.Box>
+      </$.Body>
+    );
+
+    const selectedItem = {
+      instanceSelector: ["form", "outerBox", "body"],
+      instance: instances.get("form")!,
+    };
+    const parentItem = {
+      instanceSelector: ["outerBox", "body"],
+      instance: instances.get("outerBox")!,
+    };
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem,
+      parentItem,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Cannot unwrap instance");
+  });
+
+  test("unwrapping replaces parent with selected in grandparent", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="child"></$.Box>
+        </$.Box>
+      </$.Body>
+    );
+
+    const selectedItem = {
+      instanceSelector: ["child", "parent", "body"],
+      instance: instances.get("child")!,
+    };
+    const parentItem = {
+      instanceSelector: ["parent", "body"],
+      instance: instances.get("parent")!,
+    };
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem,
+      parentItem,
+    });
+
+    expect(result.success).toBe(true);
+    expect(instances.has("parent")).toBe(false);
+    expect(instances.has("child")).toBe(true);
+    const bodyInstance = instances.get("body")!;
+    expect(bodyInstance.children).toEqual([{ type: "id", value: "child" }]);
+  });
+
+  test("unwrapping removes selected from parent and moves it to grandparent", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Image ws:id="image"></$.Image>
+          <$.Link ws:id="link"></$.Link>
+        </$.Box>
+      </$.Body>
+    );
+
+    const selectedItem = {
+      instanceSelector: ["image", "parent", "body"],
+      instance: instances.get("image")!,
+    };
+    const parentItem = {
+      instanceSelector: ["parent", "body"],
+      instance: instances.get("parent")!,
+    };
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem,
+      parentItem,
+    });
+
+    expect(result.success).toBe(true);
+    expect(instances.has("parent")).toBe(true); // Parent still exists
+    expect(instances.has("image")).toBe(true);
+    expect(instances.has("link")).toBe(true);
+
+    const bodyInstance = instances.get("body")!;
+    expect(bodyInstance.children).toEqual([
+      { type: "id", value: "parent" },
+      { type: "id", value: "image" },
+    ]);
+
+    const parentInstance = instances.get("parent")!;
+    expect(parentInstance.children).toEqual([{ type: "id", value: "link" }]);
+  });
+});
+
+describe("canUnwrapInstance", () => {
+  beforeEach(() => {
+    $project.set({ id: "projectId" } as Project);
+    $registeredComponentMetas.set(defaultMetasMap);
+  });
+
+  test("returns true for unwrappable instance", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="wrapper">
+            <$.Box ws:id="child"></$.Box>
+          </$.Box>
+        </$.Box>
+      </$.Body>
+    );
+
+    $instances.set(instances);
+    $props.set(props);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const instancePath = [
+      {
+        instanceSelector: ["wrapper", "parent", "body"],
+        instance: instances.get("wrapper")!,
+      },
+      {
+        instanceSelector: ["parent", "body"],
+        instance: instances.get("parent")!,
+      },
+    ] satisfies InstancePath;
+
+    expect(canUnwrapInstance(instancePath)).toBe(true);
+  });
+
+  test("returns false if parent is root instance", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </$.Body>
+    );
+
+    $instances.set(instances);
+    $props.set(props);
+    $registeredComponentMetas.set(defaultMetasMap);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const instancePath = [
+      {
+        instanceSelector: ["box", "body"],
+        instance: instances.get("box")!,
+      },
+      {
+        instanceSelector: ["body"],
+        instance: instances.get("body")!,
+      },
+    ] satisfies InstancePath;
+
+    expect(canUnwrapInstance(instancePath)).toBe(false);
+  });
+
+  test("returns false for textual instance", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <$.Paragraph ws:id="paragraph">
+          <$.Bold ws:id="bold">text</$.Bold>
+        </$.Paragraph>
+      </$.Body>
+    );
+
+    $instances.set(instances);
+    $props.set(props);
+    $registeredComponentMetas.set(defaultMetasMap);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const instancePath = [
+      {
+        instanceSelector: ["bold", "paragraph", "body"],
+        instance: instances.get("bold")!,
+      },
+      {
+        instanceSelector: ["paragraph", "body"],
+        instance: instances.get("paragraph")!,
+      },
+    ] satisfies InstancePath;
+
+    expect(canUnwrapInstance(instancePath)).toBe(false);
   });
 });

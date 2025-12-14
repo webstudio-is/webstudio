@@ -7,7 +7,7 @@ import {
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { isDescendantOrSelf } from "~/shared/tree-utils";
 import { Outline } from "./outline";
-import { applyScale } from "./apply-scale";
+import { applyScale } from "../apply-scale";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { findClosestSlot } from "~/shared/instance-utils";
 import { $ephemeralStyles } from "~/canvas/stores";

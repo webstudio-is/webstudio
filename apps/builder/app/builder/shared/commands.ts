@@ -27,6 +27,8 @@ import {
   insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
+  unwrapInstanceMutable,
+  canUnwrapInstance,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -44,10 +46,7 @@ import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
 import { atom } from "nanostores";
-import {
-  findClosestNonTextualContainer,
-  isTreeSatisfyingContentModel,
-} from "~/shared/content-model";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
@@ -59,6 +58,12 @@ import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-util
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
+import {
+  copyInstance,
+  pasteInstance,
+  cutInstance,
+} from "~/shared/copy-paste/init-copy-paste";
+import { toggleInstanceShow } from "~/shared/instance-utils";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -204,47 +209,34 @@ export const replaceWith = (component: string, tag?: string) => {
   }
 };
 
-export const unwrap = () => {
+const unwrap = () => {
   const instancePath = $selectedInstancePath.get();
-  // global root or body are selected
-  if (instancePath === undefined || instancePath.length === 1) {
+  if (instancePath === undefined || !canUnwrapInstance(instancePath)) {
     return;
   }
+
   const [selectedItem, parentItem] = instancePath;
+
   try {
     updateWebstudioData((data) => {
-      const instanceSelector = findClosestNonTextualContainer({
-        metas: $registeredComponentMetas.get(),
-        props: data.props,
-        instances: data.instances,
-        instanceSelector: selectedItem.instanceSelector,
-      });
-      if (selectedItem.instanceSelector.join() !== instanceSelector.join()) {
-        toast.error(`Cannot unwrap textual instance`);
-        throw Error("Abort transaction");
-      }
-      const parentInstance = data.instances.get(parentItem.instance.id);
-      const selectedInstance = data.instances.get(selectedItem.instance.id);
-      data.instances.delete(selectedItem.instance.id);
-      if (parentInstance && selectedInstance) {
-        const index = parentInstance.children.findIndex(
-          (child) =>
-            child.type === "id" && child.value === selectedItem.instance.id
-        );
-        parentInstance.children.splice(index, 1, ...selectedInstance.children);
-      }
-      const matches = isTreeSatisfyingContentModel({
+      const result = unwrapInstanceMutable({
         instances: data.instances,
         props: data.props,
         metas: $registeredComponentMetas.get(),
-        instanceSelector: parentItem.instanceSelector,
+        selectedItem,
+        parentItem,
       });
-      if (matches === false) {
-        toast.error(`Cannot unwrap instance`);
+
+      if (!result.success) {
+        toast.error(result.error ?? "Cannot unwrap instance");
         throw Error("Abort transaction");
       }
     });
-    selectInstance(parentItem.instanceSelector);
+    // After unwrap, select the child that replaced the parent
+    selectInstance([
+      selectedItem.instance.id,
+      ...parentItem.instanceSelector.slice(1),
+    ]);
   } catch {
     // do nothing
   }
@@ -454,6 +446,41 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint7", 7),
     makeBreakpointCommand("selectBreakpoint8", 8),
     makeBreakpointCommand("selectBreakpoint9", 9),
+    {
+      name: "copy",
+      description: "Copy selected instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+c", "ctrl+c"],
+      disableOnInputLikeControls: true,
+      handler: copyInstance,
+    },
+    {
+      name: "paste",
+      description: "Paste copied instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+v", "ctrl+v"],
+      disableOnInputLikeControls: true,
+      handler: pasteInstance,
+    },
+    {
+      name: "cut",
+      description: "Cut selected instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+x", "ctrl+x"],
+      disableOnInputLikeControls: true,
+      handler: cutInstance,
+    },
+    {
+      name: "toggleShow",
+      description: "Toggle instance visibility",
+      category: "Navigator",
+      handler: () => {
+        const instancePath = $selectedInstancePath.get();
+        if (instancePath?.[0]) {
+          toggleInstanceShow(instancePath[0].instance.id);
+        }
+      },
+    },
     {
       name: "deleteInstanceBuilder",
       label: "Delete Instance",

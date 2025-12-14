@@ -33,6 +33,7 @@ import {
   $commandContent,
   $isCommandPanelOpen,
   closeCommandPanel,
+  openCommandPanel,
 } from "../command-state";
 import { useState } from "react";
 import { BackButton } from "../shared/back-button";
@@ -302,6 +303,7 @@ const WrapComponentsList = () => {
 };
 
 export const showWrapComponentsList = () => {
+  openCommandPanel();
   $commandContent.set(<WrapComponentsList />);
 };
 

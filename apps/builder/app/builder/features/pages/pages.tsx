@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Tooltip,
@@ -27,6 +27,11 @@ import {
   DynamicPageIcon,
 } from "@webstudio-is/icons";
 import { NewPageSettings, PageSettings } from "./page-settings";
+import { PageContextMenu } from "./page-context-menu";
+import {
+  DeletePageConfirmationDialog,
+  DeleteFolderConfirmationDialog,
+} from "./confirmation-dialogs";
 import {
   $editingPageId,
   $isContentMode,
@@ -37,6 +42,12 @@ import {
   getAllChildrenAndSelf,
   reparentOrphansMutable,
   reparentPageOrFolderMutable,
+  deletePageMutable,
+  deleteFolderWithChildrenMutable,
+  duplicateFolder,
+  isFolder,
+  getStoredDropTarget,
+  canDrop,
 } from "./page-utils";
 import {
   FolderSettings,
@@ -50,6 +61,7 @@ import {
   ROOT_FOLDER_ID,
   type Folder,
   type Page,
+  findPageByIdOrPath,
 } from "@webstudio-is/sdk";
 import { atom, computed } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
@@ -127,10 +139,6 @@ const useReparentOrphans = () => {
   });
 };
 
-const isFolder = (id: string, folders: Array<Folder>) => {
-  return id === newFolderId || folders.some((folder) => folder.id === id);
-};
-
 // We want to keep the state when panel is closed and opened again.
 const $expandedItems = atom(new Set<string>());
 
@@ -164,36 +172,6 @@ type DropTarget = {
 };
 
 const $dropTarget = atom<undefined | DropTarget>();
-
-const getStoredDropTarget = (
-  selector: string[],
-  dropTarget: TreeDropTarget
-): undefined | DropTarget => {
-  const parentId = selector.at(-dropTarget.parentLevel - 1);
-  const beforeId =
-    dropTarget.beforeLevel === undefined
-      ? undefined
-      : selector.at(-dropTarget.beforeLevel - 1);
-  const afterId =
-    dropTarget.afterLevel === undefined
-      ? undefined
-      : selector.at(-dropTarget.afterLevel - 1);
-  const pages = $pages.get();
-  const parentFolder = pages?.folders.find((item) => item.id === parentId);
-  let indexWithinChildren = 0;
-  if (parentFolder) {
-    const beforeIndex = parentFolder.children.indexOf(beforeId ?? "");
-    const afterIndex = parentFolder.children.indexOf(afterId ?? "");
-    if (beforeIndex > -1) {
-      indexWithinChildren = beforeIndex;
-    } else if (afterIndex > -1) {
-      indexWithinChildren = afterIndex + 1;
-    }
-  }
-  if (parentId) {
-    return { parentId, beforeId, afterId, indexWithinChildren };
-  }
-};
 
 const $flatPagesTree = computed(
   [$pages, $expandedItems, $dropTarget],
@@ -275,22 +253,6 @@ const $flatPagesTree = computed(
     return flatPagesTree;
   }
 );
-
-const canDrop = (dropTarget: DropTarget, folders: Folder[]) => {
-  // allow dropping only inside folders
-  if (isFolder(dropTarget.parentId, folders) === false) {
-    return false;
-  }
-  // forbid dropping in the beginning of root folder
-  // which is always used by home page
-  if (
-    isRootFolder({ id: dropTarget.parentId }) &&
-    dropTarget.indexWithinChildren === 0
-  ) {
-    return false;
-  }
-  return true;
-};
 
 const PagesTree = ({
   onSelect,
@@ -407,6 +369,14 @@ const PagesTree = ({
                       onSelect(item.id);
                     }
                   },
+                  ...(item.type === "page" &&
+                    item.id !== pages?.homePage.id && {
+                      "data-page-id": item.id,
+                    }),
+                  ...(item.type === "folder" &&
+                    !isRootFolder({ id: item.id }) && {
+                      "data-folder-id": item.id,
+                    }),
                 }}
                 action={
                   <ItemSuffix
@@ -457,6 +427,8 @@ const PageEditor = ({
   onClose: () => void;
 }) => {
   const currentPage = useStore($selectedPage);
+  const pages = useStore($pages);
+  const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
 
   if (editingPageId === newPageId) {
     return (
@@ -470,26 +442,53 @@ const PageEditor = ({
     );
   }
 
+  const handleRequestDelete = () => {
+    if (pages) {
+      const page = findPageByIdOrPath(editingPageId, pages);
+      if (page) {
+        setPageIdToDelete(page.id);
+      }
+    }
+  };
+
+  const handleDelete = () => {
+    if (pageIdToDelete) {
+      updateWebstudioData((data) => {
+        deletePageMutable(pageIdToDelete, data);
+      });
+    }
+    onClose();
+    // switch to home page when deleted currently selected page
+    if (editingPageId === currentPage?.id) {
+      if (pages) {
+        selectPage(pages.homePage.id);
+      }
+    }
+  };
+
   return (
-    <PageSettings
-      onClose={onClose}
-      onDelete={() => {
-        onClose();
-        // switch to home page when deleted currently selected page
-        if (editingPageId === currentPage?.id) {
-          const pages = $pages.get();
-          if (pages) {
-            selectPage(pages.homePage.id);
-          }
-        }
-      }}
-      onDuplicate={(newPageId) => {
-        onClose();
-        selectPage(newPageId);
-      }}
-      pageId={editingPageId}
-      key={editingPageId}
-    />
+    <>
+      <PageSettings
+        onClose={onClose}
+        onDelete={handleRequestDelete}
+        onDuplicate={(newPageId) => {
+          onClose();
+          selectPage(newPageId);
+        }}
+        pageId={editingPageId}
+        key={editingPageId}
+      />
+      {pageIdToDelete && pages && (
+        <DeletePageConfirmationDialog
+          page={findPageByIdOrPath(pageIdToDelete, pages)!}
+          onClose={() => setPageIdToDelete(undefined)}
+          onConfirm={() => {
+            setPageIdToDelete(undefined);
+            handleDelete();
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -500,6 +499,22 @@ const FolderEditor = ({
   editingFolderId: string;
   onClose: () => void;
 }) => {
+  const pages = useStore($pages);
+  const [folderIdToDelete, setFolderIdToDelete] = useState<
+    string | undefined
+  >();
+
+  const handleRequestDelete = () => {
+    setFolderIdToDelete(editingFolderId);
+  };
+
+  const handleDuplicate = () => {
+    const newFolderId = duplicateFolder(editingFolderId);
+    if (newFolderId) {
+      $editingPageId.set(newFolderId);
+    }
+  };
+
   if (editingFolderId === newFolderId) {
     return (
       <NewFolderSettings
@@ -510,13 +525,43 @@ const FolderEditor = ({
     );
   }
 
+  const handleDelete = () => {
+    if (folderIdToDelete) {
+      updateWebstudioData((data) => {
+        const { pageIds } = deleteFolderWithChildrenMutable(
+          folderIdToDelete,
+          data.pages.folders
+        );
+        pageIds.forEach((pageId) => {
+          deletePageMutable(pageId, data);
+        });
+      });
+    }
+    onClose();
+  };
+
+  const folder = pages?.folders.find(({ id }) => id === editingFolderId);
+
   return (
-    <FolderSettings
-      onClose={onClose}
-      onDelete={onClose}
-      folderId={editingFolderId}
-      key={editingFolderId}
-    />
+    <>
+      <FolderSettings
+        onClose={onClose}
+        onRequestDelete={handleRequestDelete}
+        onDuplicate={handleDuplicate}
+        folderId={editingFolderId}
+        key={editingFolderId}
+      />
+      {folderIdToDelete && folder && (
+        <DeleteFolderConfirmationDialog
+          folder={folder}
+          onClose={() => setFolderIdToDelete(undefined)}
+          onConfirm={() => {
+            setFolderIdToDelete(undefined);
+            handleDelete();
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -526,10 +571,46 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
   const pages = useStore($pages);
   const isDesignMode = useStore($isDesignMode);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [pageIdToDelete, setPageIdToDelete] = useState<string | undefined>();
+  const [folderIdToDelete, setFolderIdToDelete] = useState<
+    string | undefined
+  >();
 
   if (currentPage === undefined || pages === undefined) {
     return;
   }
+
+  const handlePageDeleteConfirm = () => {
+    if (pageIdToDelete) {
+      updateWebstudioData((data) => {
+        deletePageMutable(pageIdToDelete, data);
+      });
+      // Close settings if this page was being edited
+      if (editingItemId === pageIdToDelete) {
+        $editingPageId.set(undefined);
+      }
+    }
+    setPageIdToDelete(undefined);
+  };
+
+  const handleDeleteFolderConfirm = () => {
+    if (folderIdToDelete) {
+      updateWebstudioData((data) => {
+        const { pageIds } = deleteFolderWithChildrenMutable(
+          folderIdToDelete,
+          data.pages.folders
+        );
+        pageIds.forEach((pageId) => {
+          deletePageMutable(pageId, data);
+        });
+      });
+      // Close settings if this folder was being edited
+      if (editingItemId === folderIdToDelete) {
+        $editingPageId.set(undefined);
+      }
+    }
+    setFolderIdToDelete(undefined);
+  };
 
   return (
     <div ref={containerRef} data-floating-panel-container>
@@ -571,24 +652,32 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
       </PanelTitle>
       <Separator />
 
-      <PagesTree
-        selectedPageId={currentPage.id}
-        onSelect={(itemId) => {
-          selectPage(itemId);
-          onClose();
-        }}
-        editingItemId={editingItemId}
-        onEdit={(itemId) => {
-          // always select page when edit its settings
-          if (itemId && isFolder(itemId, pages.folders) === false) {
-            selectPage(itemId);
-          }
-          $editingPageId.set(itemId);
-        }}
-      />
+      <PageContextMenu
+        onRequestDeletePage={setPageIdToDelete}
+        onRequestDeleteFolder={setFolderIdToDelete}
+      >
+        <div>
+          <PagesTree
+            selectedPageId={currentPage.id}
+            onSelect={(itemId) => {
+              selectPage(itemId);
+              onClose();
+            }}
+            editingItemId={editingItemId}
+            onEdit={(itemId) => {
+              // always select page when edit its settings
+              if (itemId && isFolder(itemId, pages.folders) === false) {
+                selectPage(itemId);
+              }
+              $editingPageId.set(itemId);
+            }}
+          />
+        </div>
+      </PageContextMenu>
       {editingItemId !== undefined && (
         <FloatingPanel
           content={
+            editingItemId === newFolderId ||
             isFolder(editingItemId, pages.folders) ? (
               <FolderEditor
                 editingFolderId={editingItemId}
@@ -612,6 +701,20 @@ export const PagesPanel = ({ onClose }: { onClose: () => void }) => {
         >
           <span style={{ display: "none" }} />
         </FloatingPanel>
+      )}
+      {pageIdToDelete && (
+        <DeletePageConfirmationDialog
+          page={findPageByIdOrPath(pageIdToDelete, pages)!}
+          onClose={() => setPageIdToDelete(undefined)}
+          onConfirm={handlePageDeleteConfirm}
+        />
+      )}
+      {folderIdToDelete && (
+        <DeleteFolderConfirmationDialog
+          folder={pages.folders.find(({ id }) => id === folderIdToDelete)!}
+          onClose={() => setFolderIdToDelete(undefined)}
+          onConfirm={handleDeleteFolderConfirm}
+        />
       )}
     </div>
   );

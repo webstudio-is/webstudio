@@ -1,9 +1,7 @@
 import { useStore } from "@nanostores/react";
 import {
   Button,
-  Dialog,
   DialogClose,
-  DialogContent,
   DialogTitle,
   Flex,
   Grid,
@@ -12,13 +10,12 @@ import {
   Label,
   DialogTitleActions,
   ScrollArea,
-  Text,
   TitleSuffixSpacer,
   Tooltip,
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, TrashIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, TrashIcon, CopyIcon } from "@webstudio-is/icons";
 import {
   Folder,
   Pages,
@@ -26,23 +23,17 @@ import {
   findParentFolderByChildId,
 } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
-import { useCallback, useState, type FocusEventHandler, type JSX } from "react";
+import { useCallback, useState, type FocusEventHandler } from "react";
 import slugify from "slugify";
 import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod";
 import { useIds } from "~/shared/form-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { updateWebstudioData } from "~/shared/instance-utils";
 import { $pages, $isDesignMode } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { Form } from "./form";
-import {
-  deleteFolderWithChildrenMutable,
-  deletePageMutable,
-  isSlugAvailable,
-  registerFolderChildMutable,
-} from "./page-utils";
+import { isSlugAvailable, registerFolderChildMutable } from "./page-utils";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -206,13 +197,16 @@ const nameToSlug = (name: string) => {
 export const newFolderId = "new-folder";
 
 export const NewFolderSettings = ({
-  onClose,
+  onClose: _onClose,
   onSuccess,
+  onRequestDelete,
 }: {
   onClose: () => void;
   onSuccess: (folderId: Folder["id"]) => void;
+  onRequestDelete?: () => void;
 }) => {
   const pages = useStore($pages);
+  const isDesignMode = useStore($isDesignMode);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
@@ -220,6 +214,7 @@ export const NewFolderSettings = ({
   });
 
   const errors = validateValues(pages, values);
+
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
@@ -228,54 +223,34 @@ export const NewFolderSettings = ({
     }
   };
 
-  return (
-    <NewFolderSettingsView
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      isSubmitting={false}
-    >
-      <FormFields
-        autoSelect
-        errors={errors}
-        disabled={false}
-        values={values}
-        folderId={newFolderId}
-        onChange={(value) => {
-          setValues((values) => {
-            const changes = { [value.field]: value.value };
+  const handleRequestDelete = () => {
+    if (onRequestDelete) {
+      onRequestDelete();
+    }
+  };
 
-            if (value.field === "name") {
-              if (values.slug === nameToSlug(values.name)) {
-                changes.slug = nameToSlug(value.value);
-              }
-            }
-            return { ...values, ...changes };
-          });
-        }}
-      />
-    </NewFolderSettingsView>
-  );
-};
+  const isSubmitting = false;
 
-const NewFolderSettingsView = ({
-  onSubmit,
-  isSubmitting,
-  children,
-}: {
-  onSubmit: () => void;
-  isSubmitting: boolean;
-  onClose: () => void;
-  children: JSX.Element;
-}) => {
   return (
     <>
       <DialogTitle
         suffix={
           <DialogTitleActions>
+            {isDesignMode && onRequestDelete && (
+              <Tooltip content="Delete folder" side="bottom">
+                <Button
+                  color="ghost"
+                  prefix={<TrashIcon />}
+                  onClick={handleRequestDelete}
+                  aria-label="Delete folder"
+                  tabIndex={2}
+                />
+              </Tooltip>
+            )}
             <TitleSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
-              onClick={onSubmit}
+              onClick={handleSubmit}
               tabIndex={2}
             >
               {isSubmitting ? "Creating" : "Create folder"}
@@ -286,7 +261,27 @@ const NewFolderSettingsView = ({
       >
         New Folder Settings
       </DialogTitle>
-      <Form onSubmit={onSubmit}>{children}</Form>
+      <Form onSubmit={handleSubmit}>
+        <FormFields
+          autoSelect
+          errors={errors}
+          disabled={false}
+          values={values}
+          folderId={newFolderId}
+          onChange={(value) => {
+            setValues((values) => {
+              const changes = { [value.field]: value.value };
+
+              if (value.field === "name") {
+                if (values.slug === nameToSlug(values.name)) {
+                  changes.slug = nameToSlug(value.value);
+                }
+              }
+              return { ...values, ...changes };
+            });
+          }}
+        />
+      </Form>
     </>
   );
 };
@@ -336,16 +331,19 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
 
 export const FolderSettings = ({
   onClose,
-  onDelete,
+  onRequestDelete,
+  onDuplicate,
   folderId,
 }: {
   onClose: () => void;
-  onDelete: () => void;
+  onRequestDelete?: () => void;
+  onDuplicate?: (newFolderId: string) => void;
   folderId: string;
 }) => {
   const pages = useStore($pages);
   const folder = pages?.folders.find(({ id }) => id === folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
+  const isDesignMode = useStore($isDesignMode);
 
   const values: Values = {
     ...(pages ? toFormValues(folderId, pages.folders) : fieldDefaultValues),
@@ -394,136 +392,59 @@ export const FolderSettings = ({
     return null;
   }
 
-  const handleDelete = () => {
-    updateWebstudioData((data) => {
-      const { pageIds } = deleteFolderWithChildrenMutable(
-        folderId,
-        data.pages.folders
-      );
-      pageIds.forEach((pageId) => {
-        deletePageMutable(pageId, data);
-      });
-    });
-    onDelete();
-  };
-
-  return (
-    <FolderSettingsView
-      folder={folder}
-      onClose={onClose}
-      onDelete={handleDelete}
-    >
-      <FormFields
-        folderId={folderId}
-        errors={errors}
-        values={values}
-        onChange={handleChange}
-      />
-    </FolderSettingsView>
-  );
-};
-
-const FolderSettingsView = ({
-  onDelete,
-  onClose,
-  children,
-  folder,
-}: {
-  onDelete: () => void;
-  onClose: () => void;
-  children: JSX.Element;
-  folder: Folder;
-}) => {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    useState<boolean>(false);
-
-  const hanldeRequestDelete = () => {
-    if (folder.children.length > 0) {
-      setShowDeleteConfirmation(true);
-      return;
+  const handleRequestDelete = () => {
+    if (onRequestDelete) {
+      onRequestDelete();
     }
-    onDelete();
   };
 
-  const isDesignMode = useStore($isDesignMode);
+  const handleDuplicate = () => {
+    if (onDuplicate) {
+      onDuplicate(folderId);
+    }
+  };
 
   return (
     <>
       <DialogTitle
         suffix={
           <DialogTitleActions>
-            {isDesignMode && (
+            {isDesignMode && onRequestDelete && (
               <Tooltip content="Delete folder" side="bottom">
                 <Button
                   color="ghost"
                   prefix={<TrashIcon />}
-                  onClick={hanldeRequestDelete}
+                  onClick={handleRequestDelete}
                   aria-label="Delete folder"
                   tabIndex={2}
                 />
               </Tooltip>
             )}
-            <DialogClose />
-            {showDeleteConfirmation && (
-              <DeleteConfirmationDialog
-                folder={folder}
-                onClose={() => {
-                  setShowDeleteConfirmation(false);
-                }}
-                onConfirm={onDelete}
-              />
+            {isDesignMode && onDuplicate && (
+              <Tooltip content="Duplicate folder" side="bottom">
+                <Button
+                  color="ghost"
+                  prefix={<CopyIcon />}
+                  onClick={handleDuplicate}
+                  aria-label="Duplicate folder"
+                  tabIndex={2}
+                />
+              </Tooltip>
             )}
+            <DialogClose />
           </DialogTitleActions>
         }
       >
         Folder Settings
       </DialogTitle>
-      <Form onSubmit={onClose}>{children}</Form>
+      <Form onSubmit={onClose}>
+        <FormFields
+          folderId={folderId}
+          errors={errors}
+          values={values}
+          onChange={handleChange}
+        />
+      </Form>
     </>
-  );
-};
-
-type DeleteConfirmationDialogProps = {
-  onClose: () => void;
-  onConfirm: () => void;
-  folder: Folder;
-};
-
-const DeleteConfirmationDialog = ({
-  onClose,
-  onConfirm,
-  folder,
-}: DeleteConfirmationDialogProps) => {
-  return (
-    <Dialog
-      open
-      onOpenChange={(isOpen) => {
-        if (isOpen === false) {
-          onClose();
-        }
-      }}
-    >
-      <DialogContent>
-        <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
-          <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
-          <Flex direction="rowReverse" gap="2">
-            <DialogClose>
-              <Button
-                color="destructive"
-                onClick={() => {
-                  onConfirm();
-                }}
-              >
-                Delete
-              </Button>
-            </DialogClose>
-            <DialogClose>
-              <Button color="ghost">Cancel</Button>
-            </DialogClose>
-          </Flex>
-        </Flex>
-        <DialogTitle>Delete confirmation</DialogTitle>
-      </DialogContent>
-    </Dialog>
   );
 };

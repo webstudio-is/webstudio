@@ -20,6 +20,7 @@ import { applyScale } from "./outline";
 import { $clampingRect, $scale } from "~/builder/shared/nano-states";
 import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 import { TextEditorContextMenu } from "./block-editor-context-menu";
+import { CanvasInstanceContextMenu } from "./canvas-instance-context-menu";
 
 const containerStyle = css({
   position: "absolute",
@@ -84,6 +85,7 @@ export const CanvasTools = () => {
           <CollaborativeInstanceOutline />
           <BlockChildHoveredInstanceOutline />
           <TextEditorContextMenu />
+          <CanvasInstanceContextMenu />
         </>
       )}
     </>

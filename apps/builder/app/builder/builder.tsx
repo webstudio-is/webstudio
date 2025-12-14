@@ -79,6 +79,7 @@ import { SyncClient } from "~/shared/sync-client";
 import { RemoteDialog } from "./features/help/remote-dialog";
 import type { SidebarPanelName } from "./sidebar-left/types";
 import { SidebarLeft } from "./sidebar-left/sidebar-left";
+import { useDisableContextMenu } from "./shared/use-disable-context-menu";
 
 registerContainers();
 
@@ -296,6 +297,7 @@ export const Builder = ({
   useToastErrors();
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
+  useDisableContextMenu();
 
   useUnmount(() => {
     $pages.set(undefined);
