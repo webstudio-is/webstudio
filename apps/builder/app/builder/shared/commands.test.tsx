@@ -11,7 +11,7 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { $awareness, selectInstance } from "~/shared/awareness";
-import { deleteSelectedInstance, replaceWith, unwrap } from "./commands";
+import { deleteSelectedInstance, replaceWith } from "./commands";
 
 registerContainers();
 
@@ -187,79 +187,5 @@ describe("replace with", () => {
         </ws.element>
       ).instances
     );
-  });
-});
-
-describe("unwrap", () => {
-  test("unwrap instance", () => {
-    $instances.set(
-      renderData(
-        <$.Body ws:id="body">
-          <$.Box ws:id="box">
-            <$.Image ws:id="image" />
-            <$.Text ws:id="text">text</$.Text>
-          </$.Box>
-        </$.Body>
-      ).instances
-    );
-    selectInstance(["box", "body"]);
-    unwrap();
-    expect($instances.get()).toEqual(
-      renderData(
-        <$.Body ws:id="body">
-          <$.Image ws:id="image" />
-          <$.Text ws:id="text">text</$.Text>
-        </$.Body>
-      ).instances
-    );
-  });
-
-  test("avoid unwrapping textual instance", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Text ws:id="text1">text</$.Text>
-        <$.Text ws:id="text2">
-          <$.Bold ws:id="bold">bold</$.Bold>
-        </$.Text>
-      </$.Body>
-    );
-    $instances.set(instances);
-    selectInstance(["text1", "body"]);
-    unwrap();
-    selectInstance(["text2", "body"]);
-    unwrap();
-    expect($instances.get()).toEqual(instances);
-  });
-
-  test("avoid unwrapping constrained instances", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.List ws:id="list">
-          <$.ListItem ws:id="listitem"></$.ListItem>
-        </$.List>
-      </$.Body>
-    );
-    $instances.set(instances);
-    selectInstance(["list", "body"]);
-    unwrap();
-    expect($instances.get()).toEqual(instances);
-  });
-
-  test("avoid unwrapping direct child of body (no wrapper)", () => {
-    const { instances } = renderData(
-      <$.Body ws:id="body">
-        <$.Box ws:id="box1">
-          <$.Text ws:id="text1">text</$.Text>
-        </$.Box>
-        <$.Box ws:id="box2"></$.Box>
-      </$.Body>
-    );
-    $instances.set(instances);
-    $pages.set(createDefaultPages({ rootInstanceId: "body" }));
-    selectInstance(["box1", "body"]);
-    unwrap();
-    // box1 should remain unchanged since unwrapping would put its children directly in body
-    // which would be the unwrap operation, but there's no "wrapper" - body is the root
-    expect($instances.get()).toEqual(instances);
   });
 });

@@ -14,7 +14,7 @@ import { showAttribute } from "@webstudio-is/react-sdk";
 import { instanceText } from "~/shared/copy-paste/plugin-instance";
 import { emitCommand } from "./commands";
 import { $selectedInstancePath } from "~/shared/awareness";
-import { toggleInstanceShow } from "~/shared/instance-utils";
+import { toggleInstanceShow, canUnwrapInstance } from "~/shared/instance-utils";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
 import { getInstanceKey } from "~/shared/awareness";
 
@@ -29,6 +29,8 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
           true
       )
     : true;
+
+  const canUnwrap = instancePath ? canUnwrapInstance(instancePath) : false;
 
   const handleCopy = () => {
     const data = instanceText.onCopy?.();
@@ -58,6 +60,14 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
       return;
     }
     toggleInstanceShow(instancePath[0].instance.id);
+  };
+
+  const handleRename = () => {
+    emitCommand("editInstanceLabel");
+  };
+
+  const handleAddToken = () => {
+    emitCommand("focusStyleSources");
   };
 
   const handleWrap = () => {
@@ -115,8 +125,23 @@ export const InstanceContextMenu = ({ children }: { children: ReactNode }) => {
           {show ? "Hide" : "Show"}
         </ContextMenuItem>
         <ContextMenuSeparator />
+        <ContextMenuItem onSelect={handleRename}>
+          Rename
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "e"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={handleAddToken}>
+          Add token
+          <ContextMenuItemRightSlot>
+            <Kbd value={["meta", "enter"]} />
+          </ContextMenuItemRightSlot>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         <ContextMenuItem onSelect={handleWrap}>Wrap</ContextMenuItem>
-        <ContextMenuItem onSelect={handleUnwrap}>Unwrap</ContextMenuItem>
+        <ContextMenuItem disabled={!canUnwrap} onSelect={handleUnwrap}>
+          Unwrap
+        </ContextMenuItem>
         {/* <ContextMenuItem onSelect={handleReplaceWith}>
           Replace with
         </ContextMenuItem> */}

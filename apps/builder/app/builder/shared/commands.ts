@@ -27,6 +27,8 @@ import {
   insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
+  unwrapInstanceMutable,
+  canUnwrapInstance,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -37,21 +39,14 @@ import {
   setActiveSidebarPanel,
   toggleActiveSidebarPanel,
 } from "./nano-states";
-import {
-  $selectedInstancePath,
-  selectInstance,
-  $selectedPage,
-} from "~/shared/awareness";
+import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
 import { atom } from "nanostores";
-import {
-  findClosestNonTextualContainer,
-  isTreeSatisfyingContentModel,
-} from "~/shared/content-model";
+import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
@@ -208,57 +203,34 @@ export const replaceWith = (component: string, tag?: string) => {
   }
 };
 
-export const unwrap = () => {
+const unwrap = () => {
   const instancePath = $selectedInstancePath.get();
-  // global root or body are selected
-  if (instancePath === undefined || instancePath.length === 1) {
+  if (instancePath === undefined || !canUnwrapInstance(instancePath)) {
     return;
   }
-  const [selectedItem, parentItem] = instancePath;
 
-  // Prevent unwrapping if parent is the root instance (e.g., Body)
-  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
-  if (
-    rootInstanceId !== undefined &&
-    parentItem.instance.id === rootInstanceId
-  ) {
-    return;
-  }
+  const [selectedItem, parentItem] = instancePath;
 
   try {
     updateWebstudioData((data) => {
-      const instanceSelector = findClosestNonTextualContainer({
-        metas: $registeredComponentMetas.get(),
-        props: data.props,
-        instances: data.instances,
-        instanceSelector: selectedItem.instanceSelector,
-      });
-      if (selectedItem.instanceSelector.join() !== instanceSelector.join()) {
-        toast.error(`Cannot unwrap textual instance`);
-        throw Error("Abort transaction");
-      }
-      const parentInstance = data.instances.get(parentItem.instance.id);
-      const selectedInstance = data.instances.get(selectedItem.instance.id);
-      data.instances.delete(selectedItem.instance.id);
-      if (parentInstance && selectedInstance) {
-        const index = parentInstance.children.findIndex(
-          (child) =>
-            child.type === "id" && child.value === selectedItem.instance.id
-        );
-        parentInstance.children.splice(index, 1, ...selectedInstance.children);
-      }
-      const matches = isTreeSatisfyingContentModel({
+      const result = unwrapInstanceMutable({
         instances: data.instances,
         props: data.props,
         metas: $registeredComponentMetas.get(),
-        instanceSelector: parentItem.instanceSelector,
+        selectedItem,
+        parentItem,
       });
-      if (matches === false) {
-        toast.error(`Cannot unwrap instance`);
+
+      if (!result.success) {
+        toast.error(result.error ?? "Cannot unwrap instance");
         throw Error("Abort transaction");
       }
     });
-    selectInstance(parentItem.instanceSelector);
+    // After unwrap, select the child that replaced the parent
+    selectInstance([
+      selectedItem.instance.id,
+      ...parentItem.instanceSelector.slice(1),
+    ]);
   } catch {
     // do nothing
   }
