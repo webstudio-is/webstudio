@@ -9,6 +9,7 @@ import {
   type Page,
   SYSTEM_VARIABLE_ID,
   Resource,
+  type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
@@ -20,6 +21,7 @@ import {
   $pageRootScope,
   isPathAvailable,
   reparentPageOrFolderMutable,
+  deletePageMutable,
 } from "./page-utils";
 import {
   $dataSourceVariables,
@@ -641,9 +643,8 @@ describe("deletePageMutable", () => {
     const data = {
       pages: pagesData,
       instances: new Map(),
-    } as Partial<WebstudioData>;
+    } as unknown as WebstudioData;
 
-    const { duplicateFolder } = await import("./page-utils");
     deletePageMutable("page1", data);
 
     expect(pagesData.pages.find((page) => page.id === "page1")).toBeUndefined();
@@ -678,9 +679,8 @@ describe("deletePageMutable", () => {
       props: new Map(),
       dataSources: new Map(),
       resources: new Map(),
-    } as Partial<WebstudioData>;
+    } as unknown as WebstudioData;
 
-    const { deletePageMutable } = await import("./page-utils");
     deletePageMutable("page1", data);
 
     expect(data.instances.has(rootInstanceId!)).toBe(false);
@@ -697,9 +697,8 @@ describe("deletePageMutable", () => {
     const data = {
       pages: pagesData,
       instances: new Map(),
-    } as Partial<WebstudioData>;
+    } as unknown as WebstudioData;
 
-    const { deletePageMutable } = await import("./page-utils");
     deletePageMutable("page1", data);
 
     expect(folder?.children).not.toContain("page1");

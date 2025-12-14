@@ -46,6 +46,7 @@ import {
   unwrapInstanceMutable,
   canUnwrapInstance,
 } from "./instance-utils";
+import type { InstancePath } from "./awareness";
 import {
   $assets,
   $breakpoints,
