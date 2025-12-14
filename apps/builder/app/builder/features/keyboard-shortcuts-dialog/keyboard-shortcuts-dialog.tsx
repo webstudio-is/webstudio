@@ -24,27 +24,6 @@ export const openKeyboardShortcutsDialog = () => {
 // Additional shortcuts not in commands system but should be shown
 const additionalShortcuts = [
   {
-    name: "copy",
-    label: "Copy",
-    description: "Copy selected instance",
-    category: "Navigator",
-    defaultHotkeys: ["meta+c", "ctrl+c"],
-  },
-  {
-    name: "cut",
-    label: "Cut",
-    description: "Cut selected instance",
-    category: "Navigator",
-    defaultHotkeys: ["meta+x", "ctrl+x"],
-  },
-  {
-    name: "paste",
-    label: "Paste",
-    description: "Paste copied instance",
-    category: "Navigator",
-    defaultHotkeys: ["meta+v", "ctrl+v"],
-  },
-  {
     name: "expandNavigatorItem",
     label: "Expand Navigator item",
     description: "Expand navigator item",

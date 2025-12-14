@@ -58,6 +58,12 @@ import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-util
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
+import {
+  copyInstance,
+  pasteInstance,
+  cutInstance,
+} from "~/shared/copy-paste/init-copy-paste";
+import { toggleInstanceShow } from "~/shared/instance-utils";
 
 export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
@@ -440,6 +446,41 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint7", 7),
     makeBreakpointCommand("selectBreakpoint8", 8),
     makeBreakpointCommand("selectBreakpoint9", 9),
+    {
+      name: "copy",
+      description: "Copy selected instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+c", "ctrl+c"],
+      disableOnInputLikeControls: true,
+      handler: copyInstance,
+    },
+    {
+      name: "paste",
+      description: "Paste copied instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+v", "ctrl+v"],
+      disableOnInputLikeControls: true,
+      handler: pasteInstance,
+    },
+    {
+      name: "cut",
+      description: "Cut selected instance",
+      category: "Navigator",
+      defaultHotkeys: ["meta+x", "ctrl+x"],
+      disableOnInputLikeControls: true,
+      handler: cutInstance,
+    },
+    {
+      name: "toggleShow",
+      description: "Toggle instance visibility",
+      category: "Navigator",
+      handler: () => {
+        const instancePath = $selectedInstancePath.get();
+        if (instancePath?.[0]) {
+          toggleInstanceShow(instancePath[0].instance.id);
+        }
+      },
+    },
     {
       name: "deleteInstanceBuilder",
       label: "Delete Instance",

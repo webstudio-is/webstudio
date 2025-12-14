@@ -12,14 +12,13 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { showAttribute } from "@webstudio-is/react-sdk";
-import { instanceText } from "~/shared/copy-paste/plugin-instance";
 import { emitCommand } from "./commands";
 import {
   $selectedInstancePath,
   $selectedPage,
   getInstanceKey,
 } from "~/shared/awareness";
-import { toggleInstanceShow, canUnwrapInstance } from "~/shared/instance-utils";
+import { canUnwrapInstance } from "~/shared/instance-utils";
 import { $propValuesByInstanceSelector } from "~/shared/nano-states";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import type { InstancePath } from "~/shared/awareness";
@@ -66,10 +65,7 @@ export const MenuItems = () => {
       <ContextMenuItem
         disabled={!permissions.canCopy}
         onSelect={() => {
-          const data = instanceText.onCopy?.();
-          if (data) {
-            navigator.clipboard.writeText(data);
-          }
+          emitCommand("copy");
         }}
       >
         Copy
@@ -79,9 +75,8 @@ export const MenuItems = () => {
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!permissions.canPaste}
-        onSelect={async () => {
-          const text = await navigator.clipboard.readText();
-          instanceText.onPaste?.(text);
+        onSelect={() => {
+          emitCommand("paste");
         }}
       >
         Paste
@@ -92,10 +87,7 @@ export const MenuItems = () => {
       <ContextMenuItem
         disabled={!permissions.canCut}
         onSelect={() => {
-          const data = instanceText.onCut?.();
-          if (data) {
-            navigator.clipboard.writeText(data);
-          }
+          emitCommand("cut");
         }}
       >
         Cut
@@ -118,10 +110,7 @@ export const MenuItems = () => {
       <ContextMenuItem
         disabled={!permissions.canHide}
         onSelect={() => {
-          if (instancePath?.[0] === undefined) {
-            return;
-          }
-          toggleInstanceShow(instancePath[0].instance.id);
+          emitCommand("toggleShow");
         }}
       >
         {show ? "Hide" : "Show"}
