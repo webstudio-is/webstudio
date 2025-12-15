@@ -70,12 +70,13 @@ type HoverTarget = {
 export const InsetControl = () => {
   const styles = useComputedStyles(["top", "right", "bottom", "left"]);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
+  const styleValue = styles.find(
+    (styleDecl) => styleDecl.property === hoverTarget?.property
+  );
 
   const scrubStatus = useScrub({
-    value: styles.find(
-      (styleDecl) => styleDecl.property === hoverTarget?.property
-    )?.usedValue,
-    target: hoverTarget,
+    value: styleValue?.usedValue,
+    target: styleValue?.cascadedValue.type === "unit" ? hoverTarget : undefined,
     getModifiersGroup: getInsetModifiersGroup,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
