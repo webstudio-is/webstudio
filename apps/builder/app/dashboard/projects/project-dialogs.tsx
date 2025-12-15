@@ -27,11 +27,13 @@ import {
   type SectionName,
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { TagsDialog } from "./tags";
 import {
   destroyClientSync,
   initializeClientSync,
 } from "~/shared/sync/sync-client";
+import { $userPlanFeatures } from "~/shared/nano-states";
 
 export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
 
@@ -409,24 +411,28 @@ const ProjectSettingsDialogContainer = ({
   projectId,
   onOpenChange,
   isOpen,
+  userPlanFeatures,
 }: {
   projectId: string;
   onOpenChange: (isOpen: boolean) => void;
   isOpen: boolean;
+  userPlanFeatures: UserPlanFeatures;
 }) => {
   const [currentSection, setCurrentSection] = useState<
     SectionName | undefined
   >();
 
-  // Set section when dialog opens
+  // Set section and user plan features when dialog opens
   useEffect(() => {
-    setCurrentSection(isOpen ? "general" : undefined);
-
-    // Reset data stores and stop sync when dialog closes
-    if (!isOpen) {
+    if (isOpen) {
+      setCurrentSection("general");
+      $userPlanFeatures.set(userPlanFeatures);
+    } else {
+      setCurrentSection(undefined);
+      // Reset data stores and stop sync when dialog closes
       destroyClientSync();
     }
-  }, [isOpen]);
+  }, [isOpen, userPlanFeatures]);
 
   // Initialize sync when settings dialog is opened
   useEffect(() => {
@@ -465,7 +471,7 @@ type ProjectDialogsProps = {
   openDialog: DialogType | undefined;
   onOpenDialogChange: (dialog: DialogType | undefined) => void;
   onHiddenChange: (isHidden: boolean) => void;
-  hasProPlan: boolean;
+  userPlanFeatures: UserPlanFeatures;
   projectsTags: User["projectsTags"];
 };
 
@@ -479,7 +485,7 @@ export const ProjectDialogs = ({
   openDialog,
   onOpenDialogChange,
   onHiddenChange,
-  hasProPlan,
+  userPlanFeatures,
   projectsTags,
 }: ProjectDialogsProps) => {
   const projectTagsIds = (tags || [])
@@ -508,7 +514,7 @@ export const ProjectDialogs = ({
         isOpen={openDialog === "share"}
         onOpenChange={(open) => onOpenDialogChange(open ? "share" : undefined)}
         projectId={projectId}
-        hasProPlan={hasProPlan}
+        hasProPlan={userPlanFeatures.hasProPlan}
       />
       <TagsDialog
         projectId={projectId}
@@ -523,6 +529,7 @@ export const ProjectDialogs = ({
           onOpenDialogChange(open ? "settings" : undefined)
         }
         isOpen={openDialog === "settings"}
+        userPlanFeatures={userPlanFeatures}
       />
     </>
   );

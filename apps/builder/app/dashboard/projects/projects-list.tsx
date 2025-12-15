@@ -14,6 +14,7 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
@@ -68,7 +69,7 @@ const tableStyles = css({
 
 type ProjectsListItemProps = {
   project: DashboardProject;
-  hasProPlan: boolean;
+  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
 };
@@ -84,7 +85,7 @@ export const ProjectsListItem = ({
     tags,
     domainsVirtual,
   },
-  hasProPlan,
+  userPlanFeatures,
   publisherHost,
   projectsTags,
 }: ProjectsListItemProps) => {
@@ -167,7 +168,7 @@ export const ProjectsListItem = ({
         openDialog={openDialog}
         onOpenDialogChange={setOpenDialog}
         onHiddenChange={setIsHidden}
-        hasProPlan={hasProPlan}
+        userPlanFeatures={userPlanFeatures}
         projectsTags={projectsTags}
       />
     </>
@@ -176,7 +177,7 @@ export const ProjectsListItem = ({
 
 type ProjectsListProps = {
   projects: Array<DashboardProject>;
-  hasProPlan: boolean;
+  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
   sortBy?: SortField;
@@ -194,7 +195,7 @@ const columns: Array<{ field: SortField; label: string } | null> = [
 
 export const ProjectsList = ({
   projects,
-  hasProPlan,
+  userPlanFeatures,
   publisherHost,
   projectsTags,
   sortBy,
@@ -251,7 +252,7 @@ export const ProjectsList = ({
             <ProjectsListItem
               key={project.id}
               project={project}
-              hasProPlan={hasProPlan}
+              userPlanFeatures={userPlanFeatures}
               publisherHost={publisherHost}
               projectsTags={projectsTags}
             />
