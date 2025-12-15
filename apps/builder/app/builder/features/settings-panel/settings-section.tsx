@@ -2,9 +2,9 @@ import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import { InputField } from "@webstudio-is/design-system";
-import { $instances } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import { HorizontalLayout, Label, Row, useLocalValue } from "./shared";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/awareness";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 

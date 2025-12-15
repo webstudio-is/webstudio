@@ -12,7 +12,8 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $editingPageId, $pages } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
+import { $editingPageId } from "~/shared/nano-states";
 
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";

@@ -71,7 +71,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   foldGutterExtension,
-} from "~/builder/shared/code-editor-base";
+} from "~/shared/code-editor-base";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   findUnsetVariableNames,

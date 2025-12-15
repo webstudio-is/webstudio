@@ -8,7 +8,7 @@ import {
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { Section } from "./transitions";
 import { $awareness } from "~/shared/awareness";
 import { createDefaultPages } from "@webstudio-is/project-build";

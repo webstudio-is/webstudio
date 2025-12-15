@@ -34,7 +34,7 @@ import {
   EditorDialogControl,
   foldGutterExtension,
   getCodeEditorCssVars,
-} from "./code-editor-base";
+} from "~/shared/code-editor-base";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 
 const wrapperStyle = css({

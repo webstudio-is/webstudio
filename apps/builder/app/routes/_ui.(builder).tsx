@@ -11,8 +11,6 @@ import {
   type HeadersArgs,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-
-import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
@@ -48,12 +46,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (data === undefined) {
     return metas;
   }
-  const { project } = data;
 
-  if (project.title) {
-    metas.push({ title: project.title });
-  }
-
+  // Project title will be set dynamically after data loads
   return metas;
 };
 
@@ -139,11 +133,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         context
       )) ?? "view";
 
-    const devBuild = await loadBuildIdAndVersionByProjectId(
-      context,
-      project.id
-    );
-
     const end = Date.now();
 
     const diff = end - start;
@@ -176,8 +165,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       throw new AuthorizationError("Project must have project userId defined");
     }
 
-    const publisherHost = env.PUBLISHER_HOST;
-
     const headers = new Headers();
 
     if (context.authorization.type === "token") {
@@ -209,12 +196,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
 
     return json(
       {
-        project,
-        publisherHost,
-        build: {
-          id: devBuild.id,
-          version: devBuild.version,
-        },
+        projectId: project.id,
         authToken,
         authTokenPermissions,
         authPermit,
@@ -260,7 +242,7 @@ const BuilderRoute = () => {
     <ClientOnly>
       {/* Using a key here ensures that certain effects are re-executed inside the builder,
       especially in cases like cloning a project */}
-      <Builder key={data.project.id} {...data} />
+      <Builder key={data.projectId} {...data} />
     </ClientOnly>
   );
 };

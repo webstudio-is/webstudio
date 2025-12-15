@@ -16,7 +16,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   getCodeEditorCssVars,
-} from "~/builder/shared/code-editor-base";
+} from "~/shared/code-editor-base";
 import { $availableVariables } from "./model";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];

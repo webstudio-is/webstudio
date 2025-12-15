@@ -19,9 +19,10 @@ import {
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
-import { $project, $userPlanFeatures } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
+import { $userPlanFeatures } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
-import cmsUpgradeBanner from "../settings-panel/cms-upgrade-banner.svg?url";
+import cmsUpgradeBanner from "../cms-upgrade-banner.svg?url";
 
 const formatPublishDate = (date: string) => {
   try {
@@ -35,10 +36,16 @@ const formatPublishDate = (date: string) => {
   }
 };
 
-export const SectionBackups = () => {
+export const SectionBackups = ({
+  projectId: projectIdProp,
+}: {
+  projectId?: string;
+}) => {
   const { hasProPlan } = useStore($userPlanFeatures);
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
-  const projectId = $project.get()?.id ?? "";
+  const project = useStore($project);
+  const projectId = projectIdProp ?? project?.id ?? "";
+
   useEffect(() => {
     load({ projectId });
   }, [load, projectId]);

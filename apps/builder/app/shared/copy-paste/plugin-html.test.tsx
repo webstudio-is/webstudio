@@ -3,7 +3,7 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { renderData, ws } from "@webstudio-is/template";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { registerContainers } from "../sync";
+import { registerContainers } from "../sync/sync-stores";
 import { $instances, $pages, $project } from "../nano-states";
 import { $awareness } from "../awareness";
 import { html } from "./plugin-html";

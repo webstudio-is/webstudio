@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach } from "vitest";
 import { calcCanvasWidth, setCanvasWidth } from "./calc-canvas-width";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
-import { $breakpoints } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
 
 // Helper to create a DOMRect-like object for testing
 const createRect = (width: number, height: number): DOMRect => ({

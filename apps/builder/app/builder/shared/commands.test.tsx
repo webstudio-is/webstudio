@@ -9,7 +9,7 @@ import {
   $props,
   $registeredComponentMetas,
 } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { $awareness, selectInstance } from "~/shared/awareness";
 import { deleteSelectedInstance, replaceWith } from "./commands";
 

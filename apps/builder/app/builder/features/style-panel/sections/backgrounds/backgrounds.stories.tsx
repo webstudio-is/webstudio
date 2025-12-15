@@ -1,6 +1,6 @@
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import { styled, theme } from "@webstudio-is/design-system";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   $breakpoints,
   $instances,

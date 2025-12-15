@@ -8,23 +8,18 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import type { DialogType } from "./project-dialogs";
+import { useDuplicateProject } from "./project-dialogs";
 
 type ProjectMenuProps = {
-  onDelete: () => void;
-  onRename: () => void;
-  onDuplicate: () => void;
-  onShare: () => void;
-  onUpdateTags: () => void;
+  projectId: string;
+  onOpenChange: (dialog: DialogType) => void;
 };
 
-export const ProjectMenu = ({
-  onDelete,
-  onRename,
-  onDuplicate,
-  onShare,
-  onUpdateTags,
-}: ProjectMenuProps) => {
+export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const handleDuplicateProject = useDuplicateProject(projectId);
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -37,11 +32,24 @@ export const ProjectMenu = ({
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" css={{ width: theme.spacing[24] }}>
-        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onUpdateTags}>Tags</DropdownMenuItem>
-        <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleDuplicateProject}>
+          Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("rename")}>
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("share")}>
+          Share
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("tags")}>
+          Tags
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("settings")}>
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("delete")}>
+          Delete
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

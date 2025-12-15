@@ -130,30 +130,6 @@ export const loadBuildById = async (context: AppContext, id: Build["id"]) => {
   return parseCompactBuild(build);
 };
 
-export const loadBuildIdAndVersionByProjectId = async (
-  context: AppContext,
-  projectId: Build["projectId"]
-): Promise<{ id: string; version: number }> => {
-  const build = await context.postgrest.client
-    .from("Build")
-    .select("id,version")
-    .eq("projectId", projectId)
-    .is("deployment", null);
-  // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
-
-  if (build.error) {
-    throw build.error;
-  }
-
-  if (build.data.length !== 1) {
-    throw new Error(
-      `Results contain ${build.data.length} row(s) requires 1 row`
-    );
-  }
-
-  return build.data[0];
-};
-
 export const loadDevBuildByProjectId = async (
   context: AppContext,
   projectId: Build["projectId"]

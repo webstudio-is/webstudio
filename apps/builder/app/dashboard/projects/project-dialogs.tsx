@@ -21,6 +21,19 @@ import { Title } from "@webstudio-is/project";
 import { builderUrl } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import type { DashboardProject } from "@webstudio-is/dashboard";
+import {
+  ProjectSettingsDialog,
+  type SectionName,
+} from "~/shared/project-settings";
+import type { User } from "~/shared/db/user.server";
+import { TagsDialog } from "./tags";
+import {
+  destroyClientSync,
+  initializeClientSync,
+} from "~/shared/sync/sync-client";
+
+export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
 
 type DialogProps = {
   title: string;
@@ -129,8 +142,6 @@ const useCreateProject = () => {
     setErrors(errors);
     if (parsed.success) {
       send({ title }, (data) => {
-        console.info("data");
-
         if (data?.id) {
           window.location.href = builderUrl({
             origin: window.origin,
@@ -361,7 +372,7 @@ export const DeleteProjectDialog = ({
   );
 };
 
-export const useCloneProject = (projectId: string) => {
+export const useDuplicateProject = (projectId: string) => {
   const { send } = trpcClient.dashboardProject.clone.useMutation();
   const revalidator = useRevalidator();
 
@@ -387,5 +398,132 @@ export const ShareProjectDialog = ({
     <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ShareProjectContainer hasProPlan={hasProPlan} projectId={projectId} />
     </Dialog>
+  );
+};
+
+/**
+ * Container component that manages data loading for ProjectSettingsDialog.
+ * Handles sync initialization when the dialog is opened from the dashboard.
+ */
+const ProjectSettingsDialogContainer = ({
+  projectId,
+  onOpenChange,
+  isOpen,
+}: {
+  projectId: string;
+  onOpenChange: (isOpen: boolean) => void;
+  isOpen: boolean;
+}) => {
+  const [currentSection, setCurrentSection] = useState<
+    SectionName | undefined
+  >();
+
+  // Set section when dialog opens
+  useEffect(() => {
+    setCurrentSection(isOpen ? "general" : undefined);
+
+    // Reset data stores and stop sync when dialog closes
+    if (!isOpen) {
+      destroyClientSync();
+    }
+  }, [isOpen]);
+
+  // Initialize sync when settings dialog is opened
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    // Initialize sync which will load data, start project sync, and start polling
+    const controller = new AbortController();
+
+    initializeClientSync({
+      projectId,
+      authPermit: "own", // Dashboard projects are always owned by the current user
+      signal: controller.signal,
+    });
+
+    return () => {
+      controller.abort("settings-closed");
+    };
+  }, [isOpen, projectId]);
+
+  return (
+    <ProjectSettingsDialog
+      projectId={projectId}
+      currentSection={currentSection}
+      onSectionChange={setCurrentSection}
+      onOpenChange={onOpenChange}
+    />
+  );
+};
+
+type ProjectDialogsProps = {
+  projectId: string;
+  title: string;
+  tags: DashboardProject["tags"];
+  openDialog: DialogType | undefined;
+  onOpenDialogChange: (dialog: DialogType | undefined) => void;
+  onHiddenChange: (isHidden: boolean) => void;
+  hasProPlan: boolean;
+  projectsTags: User["projectsTags"];
+};
+
+/**
+ * Shared component that handles all project dialogs.
+ */
+export const ProjectDialogs = ({
+  projectId,
+  title,
+  tags,
+  openDialog,
+  onOpenDialogChange,
+  onHiddenChange,
+  hasProPlan,
+  projectsTags,
+}: ProjectDialogsProps) => {
+  const projectTagsIds = (tags || [])
+    .map((tagId) => {
+      const tag = projectsTags.find((tag) => tag.id === tagId);
+      return tag ? tag.id : undefined;
+    })
+    .filter(Boolean) as string[];
+
+  return (
+    <>
+      <RenameProjectDialog
+        isOpen={openDialog === "rename"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "rename" : undefined)}
+        title={title}
+        projectId={projectId}
+      />
+      <DeleteProjectDialog
+        isOpen={openDialog === "delete"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "delete" : undefined)}
+        onHiddenChange={onHiddenChange}
+        title={title}
+        projectId={projectId}
+      />
+      <ShareProjectDialog
+        isOpen={openDialog === "share"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "share" : undefined)}
+        projectId={projectId}
+        hasProPlan={hasProPlan}
+      />
+      <TagsDialog
+        projectId={projectId}
+        projectsTags={projectsTags}
+        projectTagsIds={projectTagsIds}
+        isOpen={openDialog === "tags"}
+        onOpenChange={(open) => onOpenDialogChange(open ? "tags" : undefined)}
+      />
+      <ProjectSettingsDialogContainer
+        projectId={projectId}
+        onOpenChange={(open) =>
+          onOpenDialogChange(open ? "settings" : undefined)
+        }
+        isOpen={openDialog === "settings"}
+      />
+    </>
   );
 };

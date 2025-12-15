@@ -32,11 +32,11 @@ import {
 import { Entri } from "./entri";
 import { nativeClient } from "~/shared/trpc/trpc-client";
 import { useStore } from "@nanostores/react";
-import { $publisherHost } from "~/shared/nano-states";
+import { $publisherHost } from "~/shared/sync/data-stores";
 import { extractCname } from "./cname";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { DomainCheckbox } from "./domain-checkbox";
-import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
 
 export type Domain = Project["domainsVirtual"][number];

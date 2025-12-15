@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState, type JSX, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { usePublish, $publisher } from "~/shared/pubsub";
-import type { Build } from "@webstudio-is/project-build";
-import type { Project } from "@webstudio-is/project";
 import {
   theme,
   Box,
@@ -13,12 +10,9 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import { registerContainers, createObjectPool } from "~/shared/sync";
-import {
-  ServerSyncStorage,
-  startProjectSync,
-  useSyncServer,
-} from "./shared/sync/sync-server";
+import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
+import { usePreventUnload } from "~/shared/sync/project-queue";
+import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
@@ -35,7 +29,6 @@ import {
   $project,
   subscribeResources,
   $authTokenPermissions,
-  $publisherHost,
   $isDesignMode,
   $isContentMode,
   $userPlanFeatures,
@@ -47,7 +40,7 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
-import { ProjectSettings } from "./features/project-settings";
+import { ProjectSettings } from "~/shared/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import {
   $activeSidebarPanel,
@@ -75,13 +68,10 @@ import {
 } from "~/shared/copy-paste/init-copy-paste";
 import { useInertHandlers } from "./shared/inert-handlers";
 import { TextToolbar } from "./features/workspace/canvas-tools/text-toolbar";
-import { SyncClient } from "~/shared/sync-client";
 import { RemoteDialog } from "./features/help/remote-dialog";
 import type { SidebarPanelName } from "./sidebar-left/types";
 import { SidebarLeft } from "./sidebar-left/sidebar-left";
 import { useDisableContextMenu } from "./shared/use-disable-context-menu";
-
-registerContainers();
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -227,16 +217,8 @@ const ChromeWrapper = ({
   );
 };
 
-const builderClient = new SyncClient({
-  role: "leader",
-  object: createObjectPool(),
-  storages: [new ServerSyncStorage()],
-});
-
 export type BuilderProps = {
-  project: Project;
-  publisherHost: string;
-  build: Pick<Build, "id" | "version">;
+  projectId: string;
   authToken?: string;
   authPermit: AuthPermit;
   authTokenPermissions: TokenPermissions;
@@ -244,9 +226,7 @@ export type BuilderProps = {
 };
 
 export const Builder = ({
-  project,
-  publisherHost,
-  build,
+  projectId,
   authToken,
   authPermit,
   userPlanFeatures,
@@ -256,8 +236,6 @@ export const Builder = ({
 
   useMount(() => {
     // additional data stores
-    $project.set(project);
-    $publisherHost.set(publisherHost);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);
@@ -266,16 +244,12 @@ export const Builder = ({
     const controller = new AbortController();
 
     $dataLoadingState.set("loading");
-    builderClient.connect({
+    initializeClientSync({
+      projectId,
+      authPermit,
+      authToken,
       signal: controller.signal,
       onReady() {
-        startProjectSync({
-          projectId: project.id,
-          buildId: build.id,
-          version: build.version,
-          authPermit,
-          authToken,
-        });
         updateWebstudioData((data) => {
           migrateWebstudioDataMutable(data);
         });
@@ -288,6 +262,7 @@ export const Builder = ({
         // @todo make needs error handling and error state? e.g. a toast
       },
     });
+
     return () => {
       $dataLoadingState.set("idle");
       controller.abort("unmount");
@@ -310,10 +285,9 @@ export const Builder = ({
     $publisher.set({ publish });
   }, [publish]);
 
-  useSyncServer({
-    projectId: project.id,
-    authPermit,
-  });
+  const project = useStore($project);
+
+  usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const isDesignMode = useStore($isDesignMode);
@@ -325,10 +299,13 @@ export const Builder = ({
     () =>
       mergeRefs((element: HTMLIFrameElement | null) => {
         if (element?.contentWindow) {
-          // added to iframe window and stored in local variable right away to prevent
-          // overriding in emebedded scripts on canvas
-          element.contentWindow.__webstudioSharedSyncEmitter__ =
-            builderClient.emitter;
+          const client = getSyncClient();
+          if (client) {
+            // added to iframe window and stored in local variable right away to prevent
+            // overriding in emebedded scripts on canvas
+            element.contentWindow.__webstudioSharedSyncEmitter__ =
+              client.emitter;
+          }
         }
       }, publishRef),
     [publishRef]
@@ -375,6 +352,15 @@ export const Builder = ({
 
   const inertHandlers = useInertHandlers();
 
+  // Show loading screen if project isn't ready yet
+  if (!project || dataLoadingState !== "loaded") {
+    return (
+      <TooltipProvider>
+        <Loading state={loadingState} />
+      </TooltipProvider>
+    );
+  }
+
   return (
     <TooltipProvider>
       <div
@@ -397,7 +383,7 @@ export const Builder = ({
           <ProjectSettings />
           <Main>
             <Workspace>
-              {dataLoadingState === "loaded" && (
+              {dataLoadingState === "loaded" && project && (
                 <CanvasIframe
                   ref={iframeRefCallback}
                   src={canvasUrl}
@@ -437,36 +423,40 @@ export const Builder = ({
           >
             <SidebarLeft publish={publish} />
           </SidePanel>
-          <Topbar
-            project={project}
-            hasProPlan={userPlanFeatures.hasProPlan}
-            css={{ gridArea: "header" }}
-            loading={
-              <LoadingBackground
-                // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
-                show={
-                  loadingState.readyStates.get("dataLoadingState")
-                    ? false
-                    : true
-                }
-              />
-            }
-          />
+          {project ? (
+            <Topbar
+              project={project}
+              hasProPlan={userPlanFeatures.hasProPlan}
+              css={{ gridArea: "header" }}
+              loading={
+                <LoadingBackground
+                  // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
+                  show={
+                    loadingState.readyStates.get("dataLoadingState")
+                      ? false
+                      : true
+                  }
+                />
+              }
+            />
+          ) : null}
           <Main css={{ pointerEvents: "none" }}>
             <TextToolbar />
           </Main>
           {isPreviewMode === false && <Footer />}
-          <CloneProjectDialog
-            isOpen={isCloneDialogOpen}
-            onOpenChange={$isCloneDialogOpen.set}
-            project={project}
-            onCreate={(projectId) => {
-              window.location.href = builderUrl({
-                origin: window.origin,
-                projectId: projectId,
-              });
-            }}
-          />
+          {project ? (
+            <CloneProjectDialog
+              isOpen={isCloneDialogOpen}
+              onOpenChange={$isCloneDialogOpen.set}
+              project={project}
+              onCreate={(projectId) => {
+                window.location.href = builderUrl({
+                  origin: window.origin,
+                  projectId: projectId,
+                });
+              }}
+            />
+          ) : null}
         </ChromeWrapper>
         <Loading state={loadingState} />
         <BlockingAlerts />

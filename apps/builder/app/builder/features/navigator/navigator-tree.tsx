@@ -52,7 +52,7 @@ import {
   $propValuesByInstanceSelectorWithMemoryProps,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { reparentInstance, toggleInstanceShow } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { useContentEditable } from "~/shared/dom-hooks";

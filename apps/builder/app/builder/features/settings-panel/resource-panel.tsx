@@ -61,7 +61,7 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-} from "~/builder/shared/code-editor-base";
+} from "~/shared/code-editor-base";
 import {
   $selectedInstance,
   $selectedInstancePathWithRoot,

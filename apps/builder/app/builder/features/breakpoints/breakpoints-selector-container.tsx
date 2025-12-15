@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
-import { $breakpoints, $selectedBreakpoint } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/sync/data-stores";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 import { BreakpointsSelector } from "./breakpoints-selector";
 
 export const BreakpointsSelectorContainer = () => {

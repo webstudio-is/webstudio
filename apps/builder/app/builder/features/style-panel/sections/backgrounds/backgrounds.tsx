@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 import { ColorControl } from "../../controls/color/color-control";
 import { RepeatedStyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";

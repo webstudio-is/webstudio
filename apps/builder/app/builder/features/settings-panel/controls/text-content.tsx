@@ -12,13 +12,13 @@ import {
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
-import { $instances } from "~/shared/nano-states";
+import { $instances } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import { CodeEditor } from "~/builder/shared/code-editor";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   type ControlProps,
   useLocalValue,

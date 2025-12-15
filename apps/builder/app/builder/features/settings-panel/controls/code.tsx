@@ -14,7 +14,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import { CodeEditor } from "~/builder/shared/code-editor";
+import { CodeEditor } from "~/shared/code-editor";
 import {
   BindingControl,
   BindingPopover,

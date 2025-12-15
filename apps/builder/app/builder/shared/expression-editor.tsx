@@ -39,7 +39,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
   type EditorApi,
-} from "./code-editor-base";
+} from "~/shared/code-editor-base";
 import {
   decodeDataVariableName,
   encodeDataVariableName,
@@ -525,14 +525,14 @@ export const ExpressionEditor = ({
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
-      onChange={(newValue) => {
+      onChange={(newValue: string) => {
         const expressionWithRestoredVariables = restoreExpressionVariables({
           expression: newValue,
           maskedIdByName: idByName,
         });
         onChange(expressionWithRestoredVariables);
       }}
-      onChangeComplete={(newValue) => {
+      onChangeComplete={(newValue: string) => {
         const expressionWithRestoredVariables = restoreExpressionVariables({
           expression: newValue,
           maskedIdByName: idByName,

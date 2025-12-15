@@ -1,12 +1,12 @@
 import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ProjectSettingsView } from "./project-settings";
-import { $pages, $project } from "~/shared/nano-states";
+import { ProjectSettingsDialog } from "./project-settings";
+import { $pages, $project } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
 
 export default {
   title: "Project Settings",
-  component: ProjectSettingsView,
+  component: ProjectSettingsDialog,
 };
 
 const createRouter = (element: JSX.Element) =>
@@ -21,7 +21,9 @@ const createRouter = (element: JSX.Element) =>
 $project.set({ id: "projectId" } as Project);
 
 export const General = () => {
-  const router = createRouter(<ProjectSettingsView currentSection="general" />);
+  const router = createRouter(
+    <ProjectSettingsDialog currentSection="general" />
+  );
   return <RouterProvider router={router} />;
 };
 
@@ -49,7 +51,7 @@ export const Redirects = () => {
   });
 
   const router = createRouter(
-    <ProjectSettingsView currentSection="redirects" />
+    <ProjectSettingsDialog currentSection="redirects" />
   );
   return <RouterProvider router={router} />;
 };

@@ -7,7 +7,7 @@ import {
 } from "~/builder/shared/url-pattern";
 import { $selectedPage } from "./awareness";
 import { $pages, $publishedOrigin } from "./nano-states";
-import { serverSyncStore } from "./sync";
+import { serverSyncStore } from "./sync/sync-stores";
 
 export const $systemDataByPage = atom(
   new Map<Page["id"], Pick<System, "search" | "params">>()

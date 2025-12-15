@@ -31,7 +31,7 @@ import {
   canUnwrapInstance,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,
@@ -53,7 +53,7 @@ import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
 import { $instanceTags } from "../features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
-import { isSyncIdle } from "./sync/sync-server";
+import { isSyncIdle } from "~/shared/sync/project-queue";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";

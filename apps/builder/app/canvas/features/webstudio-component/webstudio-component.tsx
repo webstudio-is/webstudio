@@ -57,7 +57,7 @@ import {
 } from "~/shared/tree-utils";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
 import {
   $selectedPage,

@@ -25,7 +25,7 @@ import {
   findParentFolderByChildId,
   findTreeInstanceIds,
 } from "@webstudio-is/sdk";
-import { $instances, $pages, $props } from "~/shared/nano-states";
+import { $instances, $pages, $props } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,

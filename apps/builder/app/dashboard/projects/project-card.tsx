@@ -13,12 +13,7 @@ import {
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
-import {
-  RenameProjectDialog,
-  DeleteProjectDialog,
-  useCloneProject,
-  ShareProjectDialog,
-} from "./project-dialogs";
+import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
@@ -26,7 +21,6 @@ import {
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
-import { TagsDialog } from "./tags";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
@@ -85,12 +79,8 @@ export const ProjectCard = ({
       d.status === "ACTIVE" && d.verified
   )?.domain;
   const displayDomain = customDomain ?? `${domain}.${publisherHost}`;
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState<DialogType | undefined>();
   const [isHidden, setIsHidden] = useState(false);
-  const handleCloneProject = useCloneProject(id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Makes sure there are no project tags that reference deleted User tags.
@@ -225,39 +215,17 @@ export const ProjectCard = ({
             <Text color="subtle">Not Published</Text>
           )}
         </Flex>
-        <ProjectMenu
-          onDelete={() => setIsDeleteDialogOpen(true)}
-          onRename={() => setIsRenameDialogOpen(true)}
-          onShare={() => setIsShareDialogOpen(true)}
-          onDuplicate={handleCloneProject}
-          onUpdateTags={() => setIsTagsDialogOpen(true)}
-        />
+        <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
       </CardFooter>
-      <RenameProjectDialog
-        isOpen={isRenameDialogOpen}
-        onOpenChange={setIsRenameDialogOpen}
-        title={title}
+      <ProjectDialogs
         projectId={id}
-      />
-      <DeleteProjectDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        title={title}
+        tags={tags}
+        openDialog={openDialog}
+        onOpenDialogChange={setOpenDialog}
         onHiddenChange={setIsHidden}
-        title={title}
-        projectId={id}
-      />
-      <ShareProjectDialog
-        isOpen={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
-        projectId={id}
         hasProPlan={hasProPlan}
-      />
-      <TagsDialog
-        projectId={id}
         projectsTags={projectsTags}
-        projectTagsIds={projectTagsIds}
-        isOpen={isTagsDialogOpen}
-        onOpenChange={setIsTagsDialogOpen}
       />
     </Card>
   );

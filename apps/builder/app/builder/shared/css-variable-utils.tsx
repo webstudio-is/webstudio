@@ -25,8 +25,12 @@ import type {
   CustomProperty,
 } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { $styles, $styleSourceSelections, $props } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
+import {
+  $styles,
+  $styleSourceSelections,
+  $props,
+} from "~/shared/sync/data-stores";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
 
 const $isDeleteUnusedCssVariablesDialogOpen = atom(false);

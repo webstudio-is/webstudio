@@ -3,7 +3,7 @@ import { atom } from "nanostores";
 import type { StyleDecl, Styles, Prop } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { $styles } from "~/shared/nano-states";
+import { $styles } from "~/shared/sync/data-stores";
 import {
   findCssVariableUsagesByInstance,
   validateCssVariableName,

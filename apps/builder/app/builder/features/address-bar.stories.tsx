@@ -2,8 +2,8 @@ import { useStore } from "@nanostores/react";
 import type { Meta, StoryFn } from "@storybook/react";
 import { Box, Text, theme } from "@webstudio-is/design-system";
 import { AddressBarPopover } from "./address-bar";
-import { $dataSources, $pages } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { $dataSources, $pages } from "~/shared/sync/data-stores";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { $awareness, $selectedPage } from "~/shared/awareness";
 import { $currentSystem } from "~/shared/system";
 

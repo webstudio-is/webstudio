@@ -4,21 +4,13 @@ import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
-  Assets,
-  DataSources,
   Instance,
   Prop,
   Props,
-  Resource,
   StyleDecl,
-  Styles,
   StyleSource,
-  StyleSources,
-  StyleSourceSelections,
 } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
-import type { Project } from "@webstudio-is/project";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
@@ -26,21 +18,37 @@ import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "node_modules/@webstudio-is/design-system/src/components/primitives/dnd/geometry-utils";
 import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
+import {
+  $project,
+  $publisherHost,
+  $dataSources,
+  $resources,
+  $props,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+  $assets,
+  $marketplaceProduct,
+} from "../sync/data-stores";
 
-export const $project = atom<Project | undefined>();
-
-export const $publisherHost = atom<string>("wstd.work");
+// Re-export data stores for backward compatibility
+export {
+  $project,
+  $publisherHost,
+  $dataSources,
+  $resources,
+  $props,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+  $assets,
+  $marketplaceProduct,
+};
 
 export const $publishedOrigin = computed(
   [$project, $publisherHost],
   (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
 );
-
-export const $dataSources = atom<DataSources>(new Map());
-
-export const $resources = atom(new Map<Resource["id"], Resource>());
-
-export const $props = atom<Props>(new Map());
 
 export const $memoryProps = atom<Map<string, Props>>(new Map());
 
@@ -59,27 +67,6 @@ export const $propsIndex = computed($props, (props) => {
     propsByInstanceId,
   };
 });
-
-/**
- * $styles contains actual styling rules
- * (breakpointId, styleSourceId, property, value, listed), tied to styleSourceIds
- * $styles.styleSourceId -> $styleSources.id
- */
-export const $styles = atom<Styles>(new Map());
-
-/**
- * styleSources defines where styles come from (local or token).
- *
- * $styles contains actual styling rules, tied to styleSourceIds.
- * $styles.styleSourceId -> $styleSources.id
- */
-export const $styleSources = atom<StyleSources>(new Map());
-
-/**
- * This is a list of connections between instances (instanceIds) and styleSources.
- * $styleSourceSelections.values[] -> $styleSources.id[]
- */
-export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
@@ -136,8 +123,6 @@ export const $stylesIndex = computed(
     };
   }
 );
-
-export const $assets = atom<Assets>(new Map());
 
 export type UploadingFileData = Simplify<
   {
@@ -486,7 +471,5 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-
-export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
 
 export const $canvasToolsVisible = atom<boolean>(true);

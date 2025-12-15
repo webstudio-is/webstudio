@@ -11,7 +11,8 @@ import {
   useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
-import { $selectedStyleSources, $styleSources } from "~/shared/nano-states";
+import { $styleSources } from "~/shared/sync/data-stores";
+import { $selectedStyleSources } from "~/shared/nano-states";
 import {
   deleteStyleSource,
   DeleteStyleSourceDialog,

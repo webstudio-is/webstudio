@@ -6,6 +6,7 @@ import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { allowedDestinations } from "~/services/destinations.server";
+import env from "~/env/env.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
@@ -28,5 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return {
     ...build,
     assets,
+    project,
+    publisherHost: env.PUBLISHER_HOST,
   };
 };

@@ -7,7 +7,7 @@ import {
   toValue,
   type CssProperty,
 } from "@webstudio-is/css-engine";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { humanizeString } from "~/shared/string-utils";
 import { useComputedStyles } from "../../shared/model";

@@ -10,7 +10,7 @@ import {
   formatAssetName,
   isVideoFormat,
   parseAssetName,
-} from "../assets/asset-utils";
+} from "~/builder/shared/assets/asset-utils";
 
 const StyledWebstudioImage = styled(Image, {
   position: "absolute",

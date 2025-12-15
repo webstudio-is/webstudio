@@ -16,7 +16,7 @@ import {
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
-import { registerContainers } from "../sync";
+import { registerContainers } from "../sync/sync-stores";
 import {
   $instances,
   $dataSources,

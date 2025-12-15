@@ -35,7 +35,7 @@ import {
   PlusIcon,
   InfoCircleIcon,
 } from "@webstudio-is/icons";
-import { CopyToClipboard } from "~/builder/shared/copy-to-clipboard";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { useIds } from "../form-utils";
 import type { BuilderMode } from "../nano-states";
 

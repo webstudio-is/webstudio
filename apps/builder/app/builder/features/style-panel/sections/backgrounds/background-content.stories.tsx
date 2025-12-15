@@ -10,7 +10,7 @@ import {
   $styles,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { BackgroundContent } from "./background-content";
 import { $awareness } from "~/shared/awareness";
 import { useComputedStyleDecl } from "../../shared/model";

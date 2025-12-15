@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Page, Pages } from "@webstudio-is/sdk";
-import { $pages } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { $pages } from "~/shared/sync/data-stores";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { updateCurrentSystem } from "./system";
 import { selectPage } from "./awareness";
 

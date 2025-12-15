@@ -11,7 +11,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import { $instances, $pages } from "~/shared/nano-states";
+import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
 import { buildInstancePath } from "~/shared/instance-utils";

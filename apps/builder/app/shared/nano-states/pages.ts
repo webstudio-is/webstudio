@@ -1,7 +1,9 @@
 import { atom } from "nanostores";
-import type { Page, Pages } from "@webstudio-is/sdk";
+import type { Page } from "@webstudio-is/sdk";
+import { $pages } from "../sync/data-stores";
 
-export const $pages = atom<undefined | Pages>(undefined);
+// Re-export for backward compatibility
+export { $pages };
 
 export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
 

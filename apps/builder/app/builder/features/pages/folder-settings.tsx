@@ -30,8 +30,9 @@ import { z } from "zod";
 import { useIds } from "~/shared/form-utils";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
-import { $pages, $isDesignMode } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
+import { $pages } from "~/shared/sync/data-stores";
+import { $isDesignMode } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { Form } from "./form";
 import { isSlugAvailable, registerFolderChildMutable } from "./page-utils";
 

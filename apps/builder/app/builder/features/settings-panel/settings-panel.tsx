@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import cmsUpgradeBanner from "./cms-upgrade-banner.svg?url";
+import cmsUpgradeBanner from "~/shared/cms-upgrade-banner.svg?url";
 import { $isDesignMode, $userPlanFeatures } from "~/shared/nano-states";
 
 export const SettingsPanel = ({

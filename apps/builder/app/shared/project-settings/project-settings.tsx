@@ -25,7 +25,10 @@ import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
 import { SectionBackups } from "./section-backups";
 
-const sections = new Map<SectionName, FunctionComponent>([
+const sections = new Map<
+  SectionName,
+  FunctionComponent<{ projectId?: string }>
+>([
   ["general", SectionGeneral],
   ["redirects", SectionRedirects],
   ["publish", SectionPublish],
@@ -33,14 +36,16 @@ const sections = new Map<SectionName, FunctionComponent>([
   ["backups", SectionBackups],
 ] as const);
 
-export const ProjectSettingsView = ({
+export const ProjectSettingsDialog = ({
   currentSection,
   onSectionChange,
   onOpenChange,
+  projectId,
 }: {
   currentSection?: SectionName;
   onSectionChange?: (section: SectionName) => void;
   onOpenChange?: (isOpen: boolean) => void;
+  projectId?: string;
 }) => {
   const isDesignMode = useStore($isDesignMode);
   const SectionComponent = currentSection
@@ -110,7 +115,7 @@ export const ProjectSettingsView = ({
             </List>
             <ScrollArea css={{ width: "100%" }}>
               <Grid gap={2} css={{ py: theme.spacing[5] }}>
-                {SectionComponent && <SectionComponent />}
+                {SectionComponent && <SectionComponent projectId={projectId} />}
                 <div />
               </Grid>
             </ScrollArea>
@@ -129,7 +134,7 @@ export const ProjectSettings = () => {
   const currentSection = useStore($openProjectSettings);
 
   return (
-    <ProjectSettingsView
+    <ProjectSettingsDialog
       currentSection={currentSection}
       onSectionChange={$openProjectSettings.set}
       onOpenChange={(open) => {
