@@ -21,6 +21,7 @@ import {
   ReactSdkContext,
   PageSettingsMeta,
   PageSettingsTitle,
+  PageSettingsSchemaMarkup,
 } from "@webstudio-is/react-sdk/runtime";
 import {
   projectId,
@@ -308,6 +309,7 @@ const Outlet = () => {
         assetBaseUrl={constants.assetBaseUrl}
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
+      <PageSettingsSchemaMarkup pageMeta={pageMeta} />
     </ReactSdkContext.Provider>
   );
 };

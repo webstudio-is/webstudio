@@ -70,6 +70,14 @@ const commonPageFields = {
         })
       )
       .optional(),
+    schemaMarkup: z
+      .array(
+        z.object({
+          type: z.enum(["application/ld+json"]),
+          content: z.string(),
+        })
+      )
+      .optional(),
   }),
   marketplace: z.optional(
     z.object({

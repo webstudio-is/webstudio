@@ -4,6 +4,7 @@ export * from "./variable-state";
 export { PageSettingsMeta } from "./page-settings-meta";
 export { PageSettingsTitle } from "./page-settings-title";
 export { PageSettingsCanonicalLink } from "./page-settings-canonical-link";
+export { PageSettingsSchemaMarkup } from "./page-settings-schema-markup";
 
 /**
  * React has issues rendering certain elements, such as errors when a <link> element has children.

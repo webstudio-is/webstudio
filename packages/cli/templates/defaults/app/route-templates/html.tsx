@@ -22,6 +22,7 @@ import {
   PageSettingsMeta,
   PageSettingsTitle,
   PageSettingsCanonicalLink,
+  PageSettingsSchemaMarkup,
 } from "@webstudio-is/react-sdk/runtime";
 import {
   projectId,
@@ -310,6 +311,7 @@ const Outlet = () => {
       />
       <PageSettingsTitle>{pageMeta.title}</PageSettingsTitle>
       <PageSettingsCanonicalLink href={url} />
+      <PageSettingsSchemaMarkup pageMeta={pageMeta} />
     </ReactSdkContext.Provider>
   );
 };

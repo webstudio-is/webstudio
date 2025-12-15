@@ -6,6 +6,7 @@ import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { marketplaceRouter } from "~/shared/marketplace/router.server";
 import { userRouter } from "./user-router.server";
 import { logoutRouter } from "./logout-router.server";
+import { aiRouter } from "./ai-router.server";
 
 export const appRouter = router({
   user: userRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   authorizationToken: authorizationTokenRouter,
   dashboardProject: dashboardProjectRouter,
   logout: logoutRouter,
+  ai: aiRouter,
 });
 
 export type AppRouter = typeof appRouter;
