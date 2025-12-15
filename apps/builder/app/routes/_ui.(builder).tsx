@@ -11,8 +11,6 @@ import {
   type HeadersArgs,
   type LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-
-import { loadBuildIdAndVersionByProjectId } from "@webstudio-is/project-build/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
@@ -134,11 +132,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         },
         context
       )) ?? "view";
-
-    const devBuild = await loadBuildIdAndVersionByProjectId(
-      context,
-      project.id
-    );
 
     const end = Date.now();
 
