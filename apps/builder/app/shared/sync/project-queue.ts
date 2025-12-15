@@ -11,6 +11,8 @@ import { fetch } from "~/shared/fetch.client";
 import type { SyncStorage, Transaction } from "~/shared/sync-client";
 import { loadBuilderData } from "~/shared/builder-data";
 
+export { commandQueue };
+
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;
 
@@ -87,14 +89,69 @@ const retry = async function* () {
   }
 };
 
-let syncServerIsRunning = false;
+let isPolling = false;
+let pollingAbortController: AbortController | undefined;
 
-const syncServer = async function () {
-  if (syncServerIsRunning) {
+/**
+ * Start the queue polling loop.
+ * Called automatically by initializeSyncClient after project sync is set up.
+ */
+const startPolling = () => {
+  if (pollingAbortController) {
+    return; // Already running
+  }
+  pollingAbortController = new AbortController();
+  pollQueue(pollingAbortController.signal);
+};
+
+/**
+ * Stop the queue polling loop.
+ * Call this to stop transaction synchronization (e.g., when closing a dialog).
+ */
+export const stopPolling = () => {
+  if (pollingAbortController) {
+    pollingAbortController.abort();
+    pollingAbortController = undefined;
+  }
+};
+
+/**
+ * Enqueue project details for synchronization.
+ * Called automatically by initializeSyncClient after loading builder data.
+ */
+export const enqueueProjectDetails = ({
+  projectId,
+  buildId,
+  version,
+  authPermit,
+  authToken,
+}: {
+  buildId: Build["id"];
+  projectId: Project["id"];
+  authToken: string | undefined;
+  version: number;
+  authPermit: AuthPermit;
+}) => {
+  if (authPermit === "view") {
+    return;
+  }
+  commandQueue.enqueue({
+    type: "setDetails",
+    projectId,
+    buildId,
+    version,
+    authToken,
+  });
+  // Start polling if not already started
+  startPolling();
+};
+
+const pollQueue = async (signal: AbortSignal) => {
+  if (isPolling) {
     return;
   }
 
-  syncServerIsRunning = true;
+  isPolling = true;
 
   const detailsMap = new Map<
     Project["id"],
@@ -102,6 +159,12 @@ const syncServer = async function () {
   >();
 
   polling: for await (const command of pollCommands()) {
+    // Check if aborted
+    if (signal.aborted) {
+      isPolling = false;
+      break polling;
+    }
+
     if (command.type === "setDetails") {
       // At this moment we can be sure that all transactions for the command.projectId is already synchronized
       // There are 2 options
@@ -261,46 +324,6 @@ const syncServer = async function () {
   }
 };
 
-export const startProjectSync = ({
-  projectId,
-  buildId,
-  version,
-  authPermit,
-  authToken,
-}: {
-  buildId: Build["id"];
-  projectId: Project["id"];
-  authToken: string | undefined;
-  version: number;
-  authPermit: AuthPermit;
-}) => {
-  if (authPermit === "view") {
-    return;
-  }
-  commandQueue.enqueue({
-    type: "setDetails",
-    projectId,
-    buildId,
-    version,
-    authToken,
-  });
-};
-
-const useSyncProject = ({
-  projectId,
-  authPermit,
-}: {
-  projectId: Project["id"];
-  authPermit: AuthPermit;
-}) => {
-  useEffect(() => {
-    if (authPermit === "view") {
-      return;
-    }
-    syncServer();
-  }, [projectId, authPermit]);
-};
-
 export class ServerSyncStorage implements SyncStorage {
   name = "server";
   private projectId: string;
@@ -368,17 +391,7 @@ export const isSyncIdle = () => {
   });
 };
 
-type SyncServerProps = {
-  projectId: Project["id"];
-  authPermit: AuthPermit;
-};
-
-export const useSyncServer = ({ projectId, authPermit }: SyncServerProps) => {
-  useSyncProject({
-    projectId,
-    authPermit,
-  });
-
+export const usePreventUnload = () => {
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
       const { status } = $queueStatus.get();

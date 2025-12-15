@@ -1,6 +1,6 @@
 /**
  * All data stores used by the sync infrastructure.
- * This provides a single source of truth for stores used in sync-init and sync-stores.
+ * This provides a single source of truth for stores used in sync-server and sync-stores.
  */
 
 import { atom } from "nanostores";

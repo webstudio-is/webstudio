@@ -23,6 +23,12 @@ export type BuilderData = WebstudioData & {
   project: Project;
 };
 
+export type LoadedBuilderData = BuilderData &
+  Pick<
+    Awaited<ReturnType<typeof loader>>,
+    "id" | "version" | "publisherHost" | "projectId"
+  >;
+
 export const getBuilderData = (): BuilderData => {
   const pages = $pages.get();
   if (pages === undefined) {
@@ -57,7 +63,7 @@ export const loadBuilderData = async ({
 }: {
   projectId: string;
   signal: AbortSignal;
-}) => {
+}): Promise<LoadedBuilderData> => {
   const currentUrl = new URL(location.href);
   const url = new URL(`/rest/data/${projectId}`, currentUrl.origin);
   const headers = new Headers();
@@ -65,9 +71,11 @@ export const loadBuilderData = async ({
   const response = await fetch(url, { headers, signal });
 
   if (response.ok) {
-    const data: Awaited<ReturnType<typeof loader>> = await response.json();
+    const data = (await response.json()) as Awaited<ReturnType<typeof loader>>;
     return {
+      id: data.id,
       version: data.version,
+      projectId: data.projectId,
       project: data.project,
       publisherHost: data.publisherHost,
       assets: new Map(data.assets.map(getPair)),
@@ -83,7 +91,7 @@ export const loadBuilderData = async ({
       ),
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
       marketplaceProduct: data.marketplaceProduct,
-    } satisfies BuilderData & { version: number; publisherHost: string };
+    };
   }
 
   const text = await response.text();

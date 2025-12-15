@@ -220,7 +220,6 @@ export const ProjectCard = ({
       <ProjectDialogs
         projectId={id}
         title={title}
-        latestBuildVirtual={latestBuildVirtual}
         tags={tags}
         openDialog={openDialog}
         onOpenDialogChange={setOpenDialog}

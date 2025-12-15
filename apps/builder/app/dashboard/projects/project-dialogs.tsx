@@ -28,13 +28,9 @@ import {
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
-import {
-  $project,
-  $pages,
-  $authPermit,
-  $authToken,
-} from "~/shared/nano-states";
-import { initializeSync } from "~/shared/sync/sync-init";
+import { $authPermit, $authToken } from "~/shared/nano-states";
+import { initializeSyncClient } from "~/shared/sync/sync-client";
+import { stopPolling } from "~/shared/sync/project-queue";
 import { resetDataStores } from "~/shared/sync/data-stores";
 
 export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
@@ -413,12 +409,10 @@ export const ShareProjectDialog = ({
  */
 const ProjectSettingsDialogContainer = ({
   projectId,
-  latestBuildVirtual,
   onOpenChange,
   isOpen,
 }: {
   projectId: string;
-  latestBuildVirtual: DashboardProject["latestBuildVirtual"] | undefined;
   onOpenChange: (isOpen: boolean) => void;
   isOpen: boolean;
 }) => {
@@ -430,8 +424,9 @@ const ProjectSettingsDialogContainer = ({
   useEffect(() => {
     setCurrentSection(isOpen ? "general" : undefined);
 
-    // Reset data stores when dialog closes to prevent data leakage
+    // Reset data stores and stop sync when dialog closes
     if (!isOpen) {
+      stopPolling();
       resetDataStores();
     }
   }, [isOpen]);
@@ -442,41 +437,22 @@ const ProjectSettingsDialogContainer = ({
       return;
     }
 
-    // Check if data is already loaded for this specific project
-    const pages = $pages.get();
-    const project = $project.get();
-    const hasPages = pages !== undefined;
-    const hasProject = project?.id === projectId;
-
-    if (hasPages && hasProject) {
-      return;
-    }
-
-    // Need to load data - require latestBuildVirtual
-    if (!latestBuildVirtual) {
-      return;
-    }
-
+    // Initialize sync which will load data, start project sync, and start polling
     const controller = new AbortController();
     const authPermit = $authPermit.get();
     const authToken = $authToken.get();
 
-    initializeSync({
+    initializeSyncClient({
       projectId,
-      buildId: latestBuildVirtual.buildId,
-      version: undefined,
       authPermit,
       authToken,
       signal: controller.signal,
-      onReady() {
-        // Data loaded successfully
-      },
     });
 
     return () => {
       controller.abort("settings-closed");
     };
-  }, [isOpen, projectId, latestBuildVirtual]);
+  }, [isOpen, projectId]);
 
   return (
     <ProjectSettingsDialog
@@ -491,7 +467,6 @@ const ProjectSettingsDialogContainer = ({
 type ProjectDialogsProps = {
   projectId: string;
   title: string;
-  latestBuildVirtual: DashboardProject["latestBuildVirtual"];
   tags: DashboardProject["tags"];
   openDialog: DialogType | undefined;
   onOpenDialogChange: (dialog: DialogType | undefined) => void;
@@ -506,7 +481,6 @@ type ProjectDialogsProps = {
 export const ProjectDialogs = ({
   projectId,
   title,
-  latestBuildVirtual,
   tags,
   openDialog,
   onOpenDialogChange,
@@ -551,7 +525,6 @@ export const ProjectDialogs = ({
       />
       <ProjectSettingsDialogContainer
         projectId={projectId}
-        latestBuildVirtual={latestBuildVirtual}
         onOpenChange={(open) =>
           onOpenDialogChange(open ? "settings" : undefined)
         }

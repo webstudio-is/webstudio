@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
-import { $queueStatus } from "~/builder/shared/sync";
+import { $queueStatus } from "~/shared/sync/project-queue";
 
 const $isOnline = atom(false);
 

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState, type JSX, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { usePublish, $publisher } from "~/shared/pubsub";
-import type { Build } from "@webstudio-is/project-build";
 import {
   theme,
   Box,
@@ -12,11 +10,8 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import {
-  initializeSync,
-  getSyncClient,
-  useSyncServer,
-} from "~/shared/sync/sync-init";
+import { initializeSyncClient, getSyncClient } from "~/shared/sync/sync-client";
+import { usePreventUnload } from "~/shared/sync/project-queue";
 import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";
@@ -223,7 +218,6 @@ const ChromeWrapper = ({
 
 export type BuilderProps = {
   projectId: string;
-  build: Pick<Build, "id" | "version">;
   authToken?: string;
   authPermit: AuthPermit;
   authTokenPermissions: TokenPermissions;
@@ -232,7 +226,6 @@ export type BuilderProps = {
 
 export const Builder = ({
   projectId,
-  build,
   authToken,
   authPermit,
   userPlanFeatures,
@@ -250,10 +243,8 @@ export const Builder = ({
     const controller = new AbortController();
 
     $dataLoadingState.set("loading");
-    initializeSync({
+    initializeSyncClient({
       projectId,
-      buildId: build.id,
-      version: build.version,
       authPermit,
       authToken,
       signal: controller.signal,
@@ -295,10 +286,7 @@ export const Builder = ({
 
   const project = useStore($project);
 
-  useSyncServer({
-    projectId: project?.id ?? "",
-    authPermit,
-  });
+  usePreventUnload();
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const isDesignMode = useStore($isDesignMode);

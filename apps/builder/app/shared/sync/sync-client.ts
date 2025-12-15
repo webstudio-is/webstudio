@@ -1,13 +1,8 @@
-import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { SyncClient } from "~/shared/sync-client";
 import { registerContainers, createObjectPool } from "./sync-stores";
-import {
-  ServerSyncStorage,
-  startProjectSync,
-  useSyncServer as useSyncServerOriginal,
-} from "~/builder/shared/sync/sync-server";
+import { ServerSyncStorage, enqueueProjectDetails } from "./project-queue";
 import { loadBuilderData } from "~/shared/builder-data";
 import {
   $project,
@@ -33,18 +28,14 @@ let currentProjectId: string | undefined;
  * Initialize the sync infrastructure and load project data.
  * Can be used from both the builder and dashboard contexts.
  */
-export const initializeSync = ({
+export const initializeSyncClient = ({
   projectId,
-  buildId,
-  version,
   authPermit = "own",
   authToken,
   signal,
   onReady,
 }: {
   projectId: Project["id"];
-  buildId?: Build["id"];
-  version?: number;
   authPermit?: AuthPermit;
   authToken?: string;
   signal: AbortSignal;
@@ -78,54 +69,33 @@ export const initializeSync = ({
       const needsDataLoad =
         !$pages.get() || currentProjectInStore !== projectId;
 
-      if (!needsDataLoad) {
-        // Data already loaded (builder context)
-        if (buildId && version !== undefined && authPermit !== "view") {
-          startProjectSync({
-            projectId,
-            buildId,
-            version,
-            authPermit,
-            authToken,
-          });
-        }
-        onReady?.();
-        return;
-      }
-
       loadBuilderData({ projectId, signal })
         .then((data) => {
-          // Set publisherHost from loaded data (needed for $publishedOrigin computed store)
-          $publisherHost.set(data.publisherHost);
+          if (needsDataLoad) {
+            // Set publisherHost from loaded data (needed for $publishedOrigin computed store)
+            $publisherHost.set(data.publisherHost);
 
-          // Set all the stores with loaded data
-          $project.set(data.project);
-          $pages.set(data.pages);
-          $assets.set(data.assets);
-          $instances.set(data.instances);
-          $props.set(data.props);
-          $dataSources.set(data.dataSources);
-          $resources.set(data.resources);
-          $breakpoints.set(data.breakpoints);
-          $styleSources.set(data.styleSources);
-          $styleSourceSelections.set(data.styleSourceSelections);
-          $styles.set(data.styles);
-          $marketplaceProduct.set(data.marketplaceProduct);
+            // Set all the stores with loaded data
+            $project.set(data.project);
+            $pages.set(data.pages);
+            $assets.set(data.assets);
+            $instances.set(data.instances);
+            $props.set(data.props);
+            $dataSources.set(data.dataSources);
+            $resources.set(data.resources);
+            $breakpoints.set(data.breakpoints);
+            $styleSources.set(data.styleSources);
+            $styleSourceSelections.set(data.styleSourceSelections);
+            $styles.set(data.styles);
+            $marketplaceProduct.set(data.marketplaceProduct);
+          }
 
-          // Start project sync with build info from loaded data or params
-          const syncBuildId = buildId;
-          const syncVersion = version ?? data.version;
-
-          // Only start project sync if we have write permissions
-          if (
-            syncBuildId &&
-            syncVersion !== undefined &&
-            authPermit !== "view"
-          ) {
-            startProjectSync({
+          // Start project sync with build info from loaded data
+          if (authPermit !== "view") {
+            enqueueProjectDetails({
               projectId,
-              buildId: syncBuildId,
-              version: syncVersion,
+              buildId: data.id,
+              version: data.version,
               authPermit,
               authToken,
             });
@@ -143,6 +113,3 @@ export const initializeSync = ({
 };
 
 export const getSyncClient = () => syncClient;
-
-// Re-export useSyncServer for builder usage
-export const useSyncServer = useSyncServerOriginal;

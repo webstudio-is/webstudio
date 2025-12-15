@@ -204,10 +204,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     return json(
       {
         projectId: project.id,
-        build: {
-          id: devBuild.id,
-          version: devBuild.version,
-        },
         authToken,
         authTokenPermissions,
         authPermit,

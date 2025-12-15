@@ -53,7 +53,7 @@ import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { getInstanceLabel } from "./instance-label";
 import { $instanceTags } from "../features/style-panel/shared/model";
 import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
-import { isSyncIdle } from "./sync/sync-server";
+import { isSyncIdle } from "~/shared/sync/project-queue";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";

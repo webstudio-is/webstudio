@@ -163,7 +163,6 @@ export const ProjectsListItem = ({
       <ProjectDialogs
         projectId={id}
         title={title}
-        latestBuildVirtual={latestBuildVirtual}
         tags={tags}
         openDialog={openDialog}
         onOpenDialogChange={setOpenDialog}
