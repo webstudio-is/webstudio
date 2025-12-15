@@ -68,11 +68,11 @@
               stroke-dashoffset: 263.88;
               animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1)
           }
-          100% {
-              stroke-dashoffset: 251.885909
-          }
           75% {
               stroke-dashoffset: 131.945
+          }
+          100% {
+              stroke-dashoffset: 251.885909
           }
       }
     ]]>

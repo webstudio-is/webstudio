@@ -38,7 +38,7 @@ const sharedPlugins: Config["plugins"] = [
     name: "prefixIds",
     params: {
       prefix: (_node: unknown, info: { path?: string }) =>
-        getHashedPrefix(info.path),
+        `c${getHashedPrefix(info.path)}`,
       prefixClassNames: false,
     },
   },
