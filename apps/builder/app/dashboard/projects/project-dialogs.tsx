@@ -1,5 +1,6 @@
 import { useRevalidator } from "@remix-run/react";
 import { useEffect, useState, type JSX } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   Button,
@@ -421,14 +422,19 @@ const ProjectSettingsDialogContainer = ({
   const [currentSection, setCurrentSection] = useState<
     SectionName | undefined
   >();
+  const [loadingState, setLoadingState] = useState<
+    "idle" | "loading" | "loaded"
+  >("idle");
 
   // Set section and user plan features when dialog opens
   useEffect(() => {
     if (isOpen) {
       setCurrentSection("general");
       $userPlanFeatures.set(userPlanFeatures);
+      setLoadingState("loading");
     } else {
       setCurrentSection(undefined);
+      setLoadingState("idle");
       // Reset data stores and stop sync when dialog closes
       destroyClientSync();
     }
@@ -447,6 +453,9 @@ const ProjectSettingsDialogContainer = ({
       projectId,
       authPermit: "own", // Dashboard projects are always owned by the current user
       signal: controller.signal,
+      onReady() {
+        setLoadingState("loaded");
+      },
     });
 
     return () => {
@@ -460,6 +469,7 @@ const ProjectSettingsDialogContainer = ({
       currentSection={currentSection}
       onSectionChange={setCurrentSection}
       onOpenChange={onOpenChange}
+      status={loadingState}
     />
   );
 };

@@ -13,6 +13,7 @@ import {
   Text,
   rawTheme,
 } from "@webstudio-is/design-system";
+import { SpinnerIcon } from "@webstudio-is/icons";
 import {
   $openProjectSettings,
   type SectionName,
@@ -41,11 +42,13 @@ export const ProjectSettingsDialog = ({
   onSectionChange,
   onOpenChange,
   projectId,
+  status = "loaded",
 }: {
   currentSection?: SectionName;
   onSectionChange?: (section: SectionName) => void;
   onOpenChange?: (isOpen: boolean) => void;
   projectId?: string;
+  status?: "idle" | "loading" | "loaded";
 }) => {
   const isDesignMode = useStore($isDesignMode);
   const SectionComponent = currentSection
@@ -114,10 +117,17 @@ export const ProjectSettingsDialog = ({
               </Flex>
             </List>
             <ScrollArea css={{ width: "100%" }}>
-              <Grid gap={2} css={{ py: theme.spacing[5] }}>
-                {SectionComponent && <SectionComponent projectId={projectId} />}
-                <div />
-              </Grid>
+              {status === "loading" ? (
+                <Flex justify="center" align="center" css={{ minHeight: 400 }}>
+                  <SpinnerIcon size={rawTheme.spacing[15]} />
+                </Flex>
+              ) : (
+                <Grid gap={2} css={{ paddingInline: theme.spacing[5] }}>
+                  {SectionComponent && (
+                    <SectionComponent projectId={projectId} />
+                  )}
+                </Grid>
+              )}
             </ScrollArea>
           </Flex>
           {/* Title is at the end intentionally,
