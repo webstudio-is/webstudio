@@ -12,6 +12,7 @@ import {
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { initializeSyncClient, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
+import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";

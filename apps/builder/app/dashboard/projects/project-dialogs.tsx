@@ -28,7 +28,6 @@ import {
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
-import { $authPermit, $authToken } from "~/shared/nano-states";
 import { initializeSyncClient } from "~/shared/sync/sync-client";
 import { stopPolling } from "~/shared/sync/project-queue";
 import { resetDataStores } from "~/shared/sync/data-stores";
@@ -439,13 +438,9 @@ const ProjectSettingsDialogContainer = ({
 
     // Initialize sync which will load data, start project sync, and start polling
     const controller = new AbortController();
-    const authPermit = $authPermit.get();
-    const authToken = $authToken.get();
 
     initializeSyncClient({
       projectId,
-      authPermit,
-      authToken,
       signal: controller.signal,
     });
 

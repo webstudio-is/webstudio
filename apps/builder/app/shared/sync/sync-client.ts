@@ -2,7 +2,11 @@ import type { Project } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { SyncClient } from "~/shared/sync-client";
 import { registerContainers, createObjectPool } from "./sync-stores";
-import { ServerSyncStorage, enqueueProjectDetails } from "./project-queue";
+import {
+  ServerSyncStorage,
+  enqueueProjectDetails,
+  startPolling,
+} from "./project-queue";
 import { loadBuilderData } from "~/shared/builder-data";
 import {
   $project,
@@ -99,6 +103,7 @@ export const initializeSyncClient = ({
               authPermit,
               authToken,
             });
+            startPolling();
           }
 
           onReady?.();

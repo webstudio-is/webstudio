@@ -96,7 +96,7 @@ let pollingAbortController: AbortController | undefined;
  * Start the queue polling loop.
  * Called automatically by initializeSyncClient after project sync is set up.
  */
-const startPolling = () => {
+export const startPolling = () => {
   if (pollingAbortController) {
     return; // Already running
   }
@@ -142,8 +142,6 @@ export const enqueueProjectDetails = ({
     version,
     authToken,
   });
-  // Start polling if not already started
-  startPolling();
 };
 
 const pollQueue = async (signal: AbortSignal) => {
