@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Grid,
@@ -95,6 +95,14 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
   const [meta, setMeta] = useState(() => pages?.meta ?? defaultMetaSettings);
   const siteNameId = useId();
   const contactEmailId = useId();
+
+  // Update meta when pages data loads (important for dashboard mode)
+  useEffect(() => {
+    if (pages?.meta) {
+      setMeta(pages.meta);
+    }
+  }, [pages?.meta]);
+
   const contactEmailError = validateContactEmail(
     meta.contactEmail ?? "",
     maxContactEmails
