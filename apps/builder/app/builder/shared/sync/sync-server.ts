@@ -9,7 +9,6 @@ import { restPatchPath } from "~/shared/router-utils";
 import { toast } from "@webstudio-is/design-system";
 import { fetch } from "~/shared/fetch.client";
 import type { SyncStorage, Transaction } from "~/shared/sync-client";
-import { $project } from "~/shared/nano-states";
 import { loadBuilderData } from "~/shared/builder-data";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
@@ -304,18 +303,23 @@ const useSyncProject = ({
 
 export class ServerSyncStorage implements SyncStorage {
   name = "server";
+  private projectId: string;
+
+  constructor(projectId: string) {
+    this.projectId = projectId;
+  }
+
   sendTransaction(transaction: Transaction<Change[]>) {
     if (transaction.object === "server") {
-      const projectId = $project.get()?.id ?? "";
       commandQueue.enqueue({
         type: "transactions",
         transactions: [transaction],
-        projectId,
+        projectId: this.projectId,
       });
     }
   }
   subscribe(setState: (state: unknown) => void, signal: AbortSignal) {
-    const projectId = $project.get()?.id ?? "";
+    const projectId = this.projectId;
     loadBuilderData({ projectId, signal })
       .then((data) => {
         const serverData = new Map(Object.entries(data));

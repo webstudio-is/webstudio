@@ -35,10 +35,16 @@ const formatPublishDate = (date: string) => {
   }
 };
 
-export const SectionBackups = () => {
+export const SectionBackups = ({
+  projectId: projectIdProp,
+}: {
+  projectId?: string;
+}) => {
   const { hasProPlan } = useStore($userPlanFeatures);
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
-  const projectId = $project.get()?.id ?? "";
+  const project = useStore($project);
+  const projectId = projectIdProp ?? project?.id ?? "";
+
   useEffect(() => {
     load({ projectId });
   }, [load, projectId]);

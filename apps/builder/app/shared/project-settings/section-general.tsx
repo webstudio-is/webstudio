@@ -86,26 +86,24 @@ const saveSetting = <Name extends keyof ProjectMeta>(
   });
 };
 
-export const SectionGeneral = () => {
+export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
   const { maxContactEmails } = useStore($userPlanFeatures);
   const allowContactEmail = maxContactEmails > 0;
-  const [meta, setMeta] = useState(
-    () => $pages.get()?.meta ?? defaultMetaSettings
-  );
+  const pages = useStore($pages);
+  const project = useStore($project);
+  const assets = useStore($assets);
+  const [meta, setMeta] = useState(() => pages?.meta ?? defaultMetaSettings);
   const siteNameId = useId();
   const contactEmailId = useId();
   const contactEmailError = validateContactEmail(
     meta.contactEmail ?? "",
     maxContactEmails
   );
-  const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
-  const project = $project.get();
 
-  if (project === undefined) {
-    return;
-  }
+  // Use projectId prop if available (dashboard mode), otherwise use project from store (builder mode)
+  const effectiveProjectId = projectId ?? project?.id ?? "";
 
   const handleSave = <Name extends keyof ProjectMeta>(
     name: keyof ProjectMeta
@@ -125,8 +123,8 @@ export const SectionGeneral = () => {
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
           <Text variant="labelsSentenceCase">Project ID:</Text>
-          <Text userSelect="text">{project.id}</Text>
-          <CopyToClipboard text={project.id} copyText="Copy ID">
+          <Text userSelect="text">{effectiveProjectId}</Text>
+          <CopyToClipboard text={effectiveProjectId} copyText="Copy ID">
             <IconButton aria-label="Copy ID">
               <CopyIcon aria-hidden />
             </IconButton>

@@ -1,7 +1,9 @@
 import { getStyleDeclKey, type WebstudioData } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import type { loader } from "~/routes/rest.data.$projectId";
 import {
+  $project,
   $assets,
   $breakpoints,
   $dataSources,
@@ -18,6 +20,7 @@ import { fetch } from "~/shared/fetch.client";
 
 export type BuilderData = WebstudioData & {
   marketplaceProduct: undefined | MarketplaceProduct;
+  project: Project;
 };
 
 export const getBuilderData = (): BuilderData => {
@@ -25,8 +28,13 @@ export const getBuilderData = (): BuilderData => {
   if (pages === undefined) {
     throw Error(`Cannot get webstudio data with empty pages`);
   }
+  const project = $project.get();
+  if (project === undefined) {
+    throw Error(`Cannot get webstudio data with empty project`);
+  }
   return {
     pages,
+    project,
     instances: $instances.get(),
     props: $props.get(),
     dataSources: $dataSources.get(),
@@ -50,15 +58,24 @@ export const loadBuilderData = async ({
   projectId: string;
   signal: AbortSignal;
 }) => {
+  console.log("[loadBuilderData] Called with projectId:", projectId);
+
   const currentUrl = new URL(location.href);
   const url = new URL(`/rest/data/${projectId}`, currentUrl.origin);
   const headers = new Headers();
+
+  console.log("[loadBuilderData] About to fetch, url:", url.toString());
+
   const response = await fetch(url, { headers, signal });
+
+  console.log("[loadBuilderData] Fetch completed, status:", response.status);
 
   if (response.ok) {
     const data: Awaited<ReturnType<typeof loader>> = await response.json();
     return {
       version: data.version,
+      project: data.project,
+      publisherHost: data.publisherHost,
       assets: new Map(data.assets.map(getPair)),
       instances: new Map(data.instances.map(getPair)),
       dataSources: new Map(data.dataSources.map(getPair)),
@@ -72,7 +89,7 @@ export const loadBuilderData = async ({
       ),
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
       marketplaceProduct: data.marketplaceProduct,
-    } satisfies BuilderData & { version: number };
+    } satisfies BuilderData & { version: number; publisherHost: string };
   }
 
   const text = await response.text();
