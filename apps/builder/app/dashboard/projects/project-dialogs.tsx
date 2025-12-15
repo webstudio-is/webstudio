@@ -142,8 +142,6 @@ const useCreateProject = () => {
     setErrors(errors);
     if (parsed.success) {
       send({ title }, (data) => {
-        console.info("data");
-
         if (data?.id) {
           window.location.href = builderUrl({
             origin: window.origin,

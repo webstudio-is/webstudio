@@ -309,7 +309,7 @@ const pollQueue = async (signal: AbortSignal) => {
           const text = await response.text();
           // To investigate some strange errors we have seen
 
-          console.info(`Non ok respone: ${text}`);
+          console.info(`Non ok response: ${text}`);
         }
       } catch (error) {
         if (navigator.onLine) {
