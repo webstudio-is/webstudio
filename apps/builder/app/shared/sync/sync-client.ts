@@ -5,7 +5,6 @@ import { registerContainers, createObjectPool } from "./sync-stores";
 import {
   ServerSyncStorage,
   enqueueProjectDetails,
-  startPolling,
   stopPolling,
 } from "./project-queue";
 import { loadBuilderData } from "~/shared/builder-data";
@@ -35,19 +34,18 @@ let currentProjectId: string | undefined;
  */
 export const initializeClientSync = ({
   projectId,
-  authPermit = "own",
+  authPermit,
   authToken,
   signal,
   onReady,
 }: {
   projectId: Project["id"];
-  authPermit?: AuthPermit;
+  authPermit: AuthPermit;
   authToken?: string;
   signal: AbortSignal;
   onReady?: () => void;
 }) => {
-  // Note: We allow "view" permit for loading data from dashboard
-  // Only "view" should skip if we need write access later
+  // Note: "view" permit will skip transaction synchronization
 
   // Reset sync client if projectId changed
   if (client && currentProjectId !== projectId) {
@@ -104,7 +102,6 @@ export const initializeClientSync = ({
               authPermit,
               authToken,
             });
-            startPolling();
           }
 
           onReady?.();

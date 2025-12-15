@@ -441,6 +441,7 @@ const ProjectSettingsDialogContainer = ({
 
     initializeClientSync({
       projectId,
+      authPermit: "own", // Dashboard projects are always owned by the current user
       signal: controller.signal,
     });
 

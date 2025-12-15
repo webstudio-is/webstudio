@@ -94,9 +94,9 @@ let pollingAbortController: AbortController | undefined;
 
 /**
  * Start the queue polling loop.
- * Called automatically by initializeClientSync after project sync is set up.
+ * Called automatically by enqueueProjectDetails.
  */
-export const startPolling = () => {
+const startPolling = () => {
   if (pollingAbortController) {
     return; // Already running
   }
@@ -113,6 +113,7 @@ export const stopPolling = () => {
     pollingAbortController.abort();
     pollingAbortController = undefined;
   }
+  isPolling = false;
 };
 
 /**
@@ -142,6 +143,8 @@ export const enqueueProjectDetails = ({
     version,
     authToken,
   });
+  // Start polling after enqueuing to ensure command is in queue
+  startPolling();
 };
 
 const pollQueue = async (signal: AbortSignal) => {
