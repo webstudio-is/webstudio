@@ -6,6 +6,7 @@ import {
   ServerSyncStorage,
   enqueueProjectDetails,
   startPolling,
+  stopPolling,
 } from "./project-queue";
 import { loadBuilderData } from "~/shared/builder-data";
 import {
@@ -25,14 +26,14 @@ import {
   resetDataStores,
 } from "./data-stores";
 
-let syncClient: SyncClient | undefined;
+let client: SyncClient | undefined;
 let currentProjectId: string | undefined;
 
 /**
  * Initialize the sync infrastructure and load project data.
  * Can be used from both the builder and dashboard contexts.
  */
-export const initializeSyncClient = ({
+export const initializeClientSync = ({
   projectId,
   authPermit = "own",
   authToken,
@@ -49,15 +50,15 @@ export const initializeSyncClient = ({
   // Only "view" should skip if we need write access later
 
   // Reset sync client if projectId changed
-  if (syncClient && currentProjectId !== projectId) {
-    resetDataStores();
-    syncClient = undefined;
+  if (client && currentProjectId !== projectId) {
+    destroyClientSync();
+    client = undefined;
   }
 
   // Only register containers once and create sync client
-  if (!syncClient) {
+  if (!client) {
     registerContainers();
-    syncClient = new SyncClient({
+    client = new SyncClient({
       role: "leader",
       object: createObjectPool(),
       storages: [new ServerSyncStorage(projectId)],
@@ -65,7 +66,7 @@ export const initializeSyncClient = ({
     currentProjectId = projectId;
   }
 
-  syncClient.connect({
+  client.connect({
     signal,
     onReady() {
       // Load builder data if we don't have it yet OR if projectId changed
@@ -117,4 +118,13 @@ export const initializeSyncClient = ({
   });
 };
 
-export const getSyncClient = () => syncClient;
+/**
+ * Destroy sync client and reset all data stores.
+ * Call this when closing the builder or switching between projects.
+ */
+export const destroyClientSync = () => {
+  resetDataStores();
+  stopPolling();
+};
+
+export const getSyncClient = () => client;

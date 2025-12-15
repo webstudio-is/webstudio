@@ -10,7 +10,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import { initializeSyncClient, getSyncClient } from "~/shared/sync/sync-client";
+import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
@@ -244,7 +244,7 @@ export const Builder = ({
     const controller = new AbortController();
 
     $dataLoadingState.set("loading");
-    initializeSyncClient({
+    initializeClientSync({
       projectId,
       authPermit,
       authToken,

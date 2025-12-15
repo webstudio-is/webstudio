@@ -28,9 +28,10 @@ import {
 } from "~/shared/project-settings";
 import type { User } from "~/shared/db/user.server";
 import { TagsDialog } from "./tags";
-import { initializeSyncClient } from "~/shared/sync/sync-client";
-import { stopPolling } from "~/shared/sync/project-queue";
-import { resetDataStores } from "~/shared/sync/data-stores";
+import {
+  destroyClientSync,
+  initializeClientSync,
+} from "~/shared/sync/sync-client";
 
 export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
 
@@ -425,8 +426,7 @@ const ProjectSettingsDialogContainer = ({
 
     // Reset data stores and stop sync when dialog closes
     if (!isOpen) {
-      stopPolling();
-      resetDataStores();
+      destroyClientSync();
     }
   }, [isOpen]);
 
@@ -439,7 +439,7 @@ const ProjectSettingsDialogContainer = ({
     // Initialize sync which will load data, start project sync, and start polling
     const controller = new AbortController();
 
-    initializeSyncClient({
+    initializeClientSync({
       projectId,
       signal: controller.signal,
     });

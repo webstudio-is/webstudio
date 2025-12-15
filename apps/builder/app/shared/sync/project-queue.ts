@@ -94,7 +94,7 @@ let pollingAbortController: AbortController | undefined;
 
 /**
  * Start the queue polling loop.
- * Called automatically by initializeSyncClient after project sync is set up.
+ * Called automatically by initializeClientSync after project sync is set up.
  */
 export const startPolling = () => {
   if (pollingAbortController) {
@@ -117,7 +117,7 @@ export const stopPolling = () => {
 
 /**
  * Enqueue project details for synchronization.
- * Called automatically by initializeSyncClient after loading builder data.
+ * Called automatically by initializeClientSync after loading builder data.
  */
 export const enqueueProjectDetails = ({
   projectId,
