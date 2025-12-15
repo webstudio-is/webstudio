@@ -17,7 +17,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { Image, wsImageLoader } from "@webstudio-is/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MarketplaceProduct,
   marketplaceCategories,
@@ -29,6 +29,7 @@ import { MarketplaceApprovalStatus } from "@webstudio-is/project";
 import { serverSyncStore } from "~/shared/sync";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
+import { MARKETPLACE_SHARE_LINK } from "~/shared/share-project";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
@@ -69,6 +70,15 @@ const useMarketplaceApprovalStatus = () => {
     trpcClient.project.setMarketplaceApprovalStatus.useMutation();
   const project = useStore($project);
 
+  const { send: createToken } =
+    trpcClient.authorizationToken.create.useMutation();
+
+  const { send: removeToken } =
+    trpcClient.authorizationToken.remove.useMutation();
+
+  const { load } = trpcClient.authorizationToken.findMany.useQuery();
+  const marketPlaceToken = useRef<string>();
+
   const status =
     data?.marketplaceApprovalStatus ??
     project?.marketplaceApprovalStatus ??
@@ -88,6 +98,20 @@ const useMarketplaceApprovalStatus = () => {
     }
   };
 
+  useEffect(() => {
+    const project = $project.get();
+    if (project) {
+      load({ projectId: project?.id }, (data) => {
+        const searchToken = data.find(
+          (authToken) => authToken.name === MARKETPLACE_SHARE_LINK
+        );
+
+        console.info(searchToken);
+        marketPlaceToken.current = searchToken ? searchToken.token : undefined;
+      });
+    }
+  }, [marketPlaceToken, load]);
+
   return {
     status,
     state,
@@ -100,6 +124,11 @@ const useMarketplaceApprovalStatus = () => {
           },
           handleSuccess
         );
+        createToken({
+          projectId: project.id,
+          relation: "viewers",
+          name: MARKETPLACE_SHARE_LINK,
+        });
       }
     },
     unlist() {
@@ -111,6 +140,12 @@ const useMarketplaceApprovalStatus = () => {
           },
           handleSuccess
         );
+        if (marketPlaceToken.current) {
+          removeToken({
+            projectId: project.id,
+            token: marketPlaceToken.current,
+          });
+        }
       }
     },
   };

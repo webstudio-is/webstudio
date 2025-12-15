@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { builderUrl } from "~/shared/router-utils";
 import { trpcClient } from "../trpc/trpc-client";
-import { ShareProject, type LinkOptions } from "./share-project";
+import {
+  MARKETPLACE_SHARE_LINK,
+  ShareProject,
+  type LinkOptions,
+} from "./share-project";
 
 const useShareProjectContainer = (projectId: string) => {
   const {
@@ -21,7 +25,12 @@ const useShareProjectContainer = (projectId: string) => {
 
   useEffect(() => {
     load({ projectId }, (data) => {
-      setLinks(data ?? []);
+      // prevent user from editing the auto-generated market place share token
+      const filterLinks = data.filter(
+        (link) => link.name !== MARKETPLACE_SHARE_LINK
+      );
+
+      setLinks(filterLinks ?? []);
     });
   }, [load, projectId]);
 
@@ -66,7 +75,10 @@ const useShareProjectContainer = (projectId: string) => {
       },
       () => {
         load({ projectId }, (data) => {
-          setLinks(data ?? []);
+          const filterLinks = data.filter(
+            (link) => link.name !== MARKETPLACE_SHARE_LINK
+          );
+          setLinks(filterLinks ?? []);
         });
       }
     );
