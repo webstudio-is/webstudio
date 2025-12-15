@@ -80,7 +80,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 // @todo should be moved to shared because features should not depend on features
 import { ImageControl } from "~/shared/project-settings";
 // @todo should be moved to shared because features should not depend on features

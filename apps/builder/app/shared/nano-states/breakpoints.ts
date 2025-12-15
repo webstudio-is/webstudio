@@ -1,12 +1,14 @@
 import { atom, computed } from "nanostores";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
+import type { Breakpoint } from "@webstudio-is/sdk";
+import { $breakpoints } from "../sync/data-stores";
+
+// Re-export for backward compatibility
+export { $breakpoints };
 
 export const isBaseBreakpoint = (breakpoint: {
   minWidth?: number;
   maxWidth?: number;
 }) => breakpoint.minWidth === undefined && breakpoint.maxWidth === undefined;
-
-export const $breakpoints = atom<Breakpoints>(new Map());
 
 export const $selectedBreakpointId = atom<undefined | Breakpoint["id"]>(
   undefined

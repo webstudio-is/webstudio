@@ -7,9 +7,9 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import type { CompilerSettings } from "@webstudio-is/sdk";
-import { $pages } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
 import { useIds } from "~/shared/form-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { sectionSpacing } from "./utils";
 
 const defaultPublishSettings: CompilerSettings = {

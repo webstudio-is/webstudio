@@ -12,7 +12,11 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import { initializeSync, getSyncClient, useSyncServer } from "~/shared/sync";
+import {
+  initializeSync,
+  getSyncClient,
+  useSyncServer,
+} from "~/shared/sync/sync-init";
 import { Inspector } from "./inspector";
 import { Topbar } from "./features/topbar";
 import { Footer } from "./features/footer";

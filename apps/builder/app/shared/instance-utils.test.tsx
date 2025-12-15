@@ -61,7 +61,7 @@ import {
   $registeredComponentMetas,
   $resources,
 } from "./nano-states";
-import { registerContainers } from "./sync";
+import { registerContainers } from "./sync/sync-stores";
 import {
   $awareness,
   getInstancePath,

@@ -1,7 +1,7 @@
 import { $pages } from "~/shared/nano-states/pages";
 import { PageSettings } from "./page-settings";
 import { Grid, theme } from "@webstudio-is/design-system";
-import { $assets, $project } from "~/shared/nano-states";
+import { $assets, $project } from "~/shared/sync/data-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { isRootFolder } from "@webstudio-is/sdk";
 

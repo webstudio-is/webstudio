@@ -5,7 +5,7 @@ import { ImageControl } from "../../controls";
 import { PropertyInlineLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { BackgroundCodeEditor } from "./background-code-editor";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 
 const isAbsoluteURL = (value: string) => {
   try {

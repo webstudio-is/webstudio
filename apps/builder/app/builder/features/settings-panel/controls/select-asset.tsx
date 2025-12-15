@@ -3,7 +3,7 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Text, FloatingPanel } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
-import { $assets } from "~/shared/nano-states";
+import { $assets } from "~/shared/sync/data-stores";
 import { ImageManager } from "~/shared/image-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";

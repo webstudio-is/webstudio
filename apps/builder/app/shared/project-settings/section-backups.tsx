@@ -19,7 +19,8 @@ import {
 } from "@webstudio-is/design-system";
 import { UpgradeIcon } from "@webstudio-is/icons";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
-import { $project, $userPlanFeatures } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
+import { $userPlanFeatures } from "~/shared/nano-states";
 import { sectionSpacing } from "./utils";
 import cmsUpgradeBanner from "../cms-upgrade-banner.svg?url";
 

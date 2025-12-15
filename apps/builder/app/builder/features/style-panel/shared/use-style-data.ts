@@ -9,7 +9,7 @@ import {
   $styleSources,
   $styles,
 } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $ephemeralStyles } from "~/canvas/stores";
 import { $selectedInstance } from "~/shared/awareness";
 

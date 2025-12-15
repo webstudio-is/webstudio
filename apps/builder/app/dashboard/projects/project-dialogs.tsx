@@ -34,7 +34,8 @@ import {
   $authPermit,
   $authToken,
 } from "~/shared/nano-states";
-import { initializeSync } from "~/shared/sync";
+import { initializeSync } from "~/shared/sync/sync-init";
+import { resetDataStores } from "~/shared/sync/data-stores";
 
 export type DialogType = "rename" | "delete" | "share" | "tags" | "settings";
 
@@ -428,6 +429,11 @@ const ProjectSettingsDialogContainer = ({
   // Set section when dialog opens
   useEffect(() => {
     setCurrentSection(isOpen ? "general" : undefined);
+
+    // Reset data stores when dialog closes to prevent data leakage
+    if (!isOpen) {
+      resetDataStores();
+    }
   }, [isOpen]);
 
   // Initialize sync when settings dialog is opened

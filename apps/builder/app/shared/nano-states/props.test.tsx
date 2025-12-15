@@ -30,7 +30,7 @@ import {
   ws,
 } from "@webstudio-is/template";
 import { $systemDataByPage, updateCurrentSystem } from "../system";
-import { registerContainers } from "../sync";
+import { registerContainers } from "../sync/sync-stores";
 import { $resourcesCache, getResourceKey } from "../resources";
 
 const initialSystem = {

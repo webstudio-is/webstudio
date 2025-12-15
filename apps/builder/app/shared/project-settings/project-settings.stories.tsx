@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProjectSettingsDialog } from "./project-settings";
-import { $pages, $project } from "~/shared/nano-states";
+import { $pages, $project } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
 
 export default {

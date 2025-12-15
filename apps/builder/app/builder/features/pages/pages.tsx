@@ -54,7 +54,7 @@ import {
   NewFolderSettings,
   newFolderId,
 } from "./folder-settings";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   isRootFolder,

@@ -24,7 +24,7 @@ import {
   registerContainers,
   serverSyncStore,
   useCanvasStore,
-} from "~/shared/sync";
+} from "~/shared/sync/sync-stores";
 import {
   GlobalStyles,
   subscribeStyles,

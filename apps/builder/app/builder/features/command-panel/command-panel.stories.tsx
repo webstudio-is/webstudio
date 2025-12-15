@@ -9,7 +9,7 @@ import {
   $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { $awareness } from "~/shared/awareness";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
 

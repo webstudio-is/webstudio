@@ -23,10 +23,14 @@ import {
   marketplaceCategories,
 } from "@webstudio-is/project-build";
 import { ImageControl } from "./image-control";
-import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
+import {
+  $assets,
+  $marketplaceProduct,
+  $project,
+} from "~/shared/sync/data-stores";
 import { useIds } from "~/shared/form-utils";
 import { MarketplaceApprovalStatus } from "@webstudio-is/project";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { trpcClient } from "~/shared/trpc/trpc-client";
 import { rightPanelWidth, sectionSpacing } from "./utils";
 

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { atom } from "nanostores";
-import { $dataSources } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import { validateDataVariableName } from "./data-variable-utils";
 import type { DataSources, DataSource } from "@webstudio-is/sdk";
 

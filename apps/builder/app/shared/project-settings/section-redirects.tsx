@@ -22,8 +22,9 @@ import {
 } from "@webstudio-is/sdk";
 import { useRef, useState, type ChangeEvent } from "react";
 import { flushSync } from "react-dom";
-import { $pages, $publishedOrigin } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
+import { $pages } from "~/shared/sync/data-stores";
+import { $publishedOrigin } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {

@@ -58,17 +58,11 @@ export const loadBuilderData = async ({
   projectId: string;
   signal: AbortSignal;
 }) => {
-  console.log("[loadBuilderData] Called with projectId:", projectId);
-
   const currentUrl = new URL(location.href);
   const url = new URL(`/rest/data/${projectId}`, currentUrl.origin);
   const headers = new Headers();
 
-  console.log("[loadBuilderData] About to fetch, url:", url.toString());
-
   const response = await fetch(url, { headers, signal });
-
-  console.log("[loadBuilderData] Fetch completed, status:", response.status);
 
   if (response.ok) {
     const data: Awaited<ReturnType<typeof loader>> = await response.json();

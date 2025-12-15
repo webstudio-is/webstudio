@@ -31,7 +31,7 @@ import {
   canUnwrapInstance,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
   $activeInspectorPanel,

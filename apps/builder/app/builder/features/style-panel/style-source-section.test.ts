@@ -1,6 +1,6 @@
 import { enableMapSet } from "immer";
 import { expect, test } from "vitest";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import {
   $instances,
   $selectedStyleSources,

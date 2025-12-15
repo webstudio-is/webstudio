@@ -30,7 +30,7 @@ import {
   $project,
   $resources,
 } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { $awareness } from "~/shared/awareness";
 import { updateCurrentSystem } from "~/shared/system";
 import { $resourcesCache, getResourceKey } from "~/shared/resources";

@@ -12,6 +12,10 @@ import {
   $styleSources,
   $styleSourceSelections,
   $assets,
+  $resources,
+  $marketplaceProduct,
+} from "./data-stores";
+import {
   $selectedPageHash,
   $selectedInstanceSizes,
   $selectedInstanceRenderState,
@@ -23,8 +27,6 @@ import {
   $dataSourceVariables,
   $dragAndDropState,
   $selectedInstanceStates,
-  $resources,
-  $marketplaceProduct,
   $canvasIframeState,
   $uploadingFilesDataStore,
   $memoryProps,

@@ -58,7 +58,7 @@ import {
   wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
-import { serverSyncStore } from "./sync";
+import { serverSyncStore } from "./sync/sync-stores";
 import { setDifference, setUnion } from "./shim";
 import { breakCyclesMutable, findCycles } from "@webstudio-is/project-build";
 import {

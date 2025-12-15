@@ -23,7 +23,8 @@ import {
   $styles,
   $marketplaceProduct,
   $publisherHost,
-} from "~/shared/nano-states";
+  resetDataStores,
+} from "./data-stores";
 
 let syncClient: SyncClient | undefined;
 let currentProjectId: string | undefined;
@@ -49,32 +50,17 @@ export const initializeSync = ({
   signal: AbortSignal;
   onReady?: () => void;
 }) => {
-  console.log("[sync-init] initializeSync called", {
-    projectId,
-    buildId,
-    version,
-    authPermit,
-  });
-
   // Note: We allow "view" permit for loading data from dashboard
   // Only "view" should skip if we need write access later
 
   // Reset sync client if projectId changed
   if (syncClient && currentProjectId !== projectId) {
-    console.log(
-      "[sync-init] ProjectId changed, resetting sync client",
-      currentProjectId,
-      "->",
-      projectId
-    );
+    resetDataStores();
     syncClient = undefined;
   }
 
   // Only register containers once and create sync client
   if (!syncClient) {
-    console.log(
-      "[sync-init] Creating new sync client and registering containers"
-    );
     registerContainers();
     syncClient = new SyncClient({
       role: "leader",
@@ -82,28 +68,18 @@ export const initializeSync = ({
       storages: [new ServerSyncStorage(projectId)],
     });
     currentProjectId = projectId;
-  } else {
-    console.log("[sync-init] Reusing existing sync client");
   }
 
   syncClient.connect({
     signal,
     onReady() {
-      console.log("[sync-init] SyncClient connected");
-
       // Load builder data if we don't have it yet OR if projectId changed
       const currentProjectInStore = $project.get()?.id;
       const needsDataLoad =
         !$pages.get() || currentProjectInStore !== projectId;
-      console.log("[sync-init] Needs data load?", needsDataLoad, {
-        hasPages: !!$pages.get(),
-        currentProjectInStore,
-        requestedProjectId: projectId,
-      });
 
       if (!needsDataLoad) {
         // Data already loaded (builder context)
-        console.log("[sync-init] Data already loaded, starting sync directly");
         if (buildId && version !== undefined && authPermit !== "view") {
           startProjectSync({
             projectId,
@@ -112,28 +88,13 @@ export const initializeSync = ({
             authPermit,
             authToken,
           });
-        } else if (authPermit === "view") {
-          console.log("[sync-init] Skipping project sync - view-only mode");
         }
-        console.log("[sync-init] Calling onReady callback");
         onReady?.();
         return;
       }
 
-      console.log("[sync-init] Loading builder data for project", projectId);
-      console.log(
-        "[sync-init] About to call loadBuilderData with projectId:",
-        projectId
-      );
       loadBuilderData({ projectId, signal })
         .then((data) => {
-          console.log("[sync-init] Builder data loaded", {
-            pages: data.pages?.pages?.length,
-            instances: data.instances.size,
-            assets: data.assets.size,
-            version: data.version,
-          });
-
           // Set publisherHost from loaded data (needed for $publishedOrigin computed store)
           $publisherHost.set(data.publisherHost);
 
@@ -151,17 +112,9 @@ export const initializeSync = ({
           $styles.set(data.styles);
           $marketplaceProduct.set(data.marketplaceProduct);
 
-          console.log("[sync-init] All stores set");
-
           // Start project sync with build info from loaded data or params
           const syncBuildId = buildId;
           const syncVersion = version ?? data.version;
-
-          console.log("[sync-init] Starting project sync", {
-            syncBuildId,
-            syncVersion,
-            authPermit,
-          });
 
           // Only start project sync if we have write permissions
           if (
@@ -176,18 +129,13 @@ export const initializeSync = ({
               authPermit,
               authToken,
             });
-          } else if (authPermit === "view") {
-            console.log("[sync-init] Skipping project sync - view-only mode");
           }
 
-          console.log("[sync-init] Calling onReady callback");
           onReady?.();
         })
         .catch((error) => {
           if (error.name !== "AbortError") {
-            console.error("[sync-init] Failed to load project data:", error);
-          } else {
-            console.log("[sync-init] Load aborted");
+            console.error("Failed to load project data:", error);
           }
         });
     },

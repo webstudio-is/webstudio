@@ -7,7 +7,8 @@ import {
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
 import type { Page } from "@webstudio-is/sdk";
-import { $pages, $editingPageId } from "~/shared/nano-states";
+import { $pages } from "~/shared/sync/data-stores";
+import { $editingPageId } from "~/shared/nano-states";
 import { $selectedPage, selectPage } from "~/shared/awareness";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";

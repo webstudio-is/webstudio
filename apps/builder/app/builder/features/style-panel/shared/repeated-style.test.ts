@@ -25,7 +25,7 @@ import {
   $styleSources,
   $styleSourceSelections,
 } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync/sync-stores";
 import { setProperty } from "./use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $awareness } from "~/shared/awareness";

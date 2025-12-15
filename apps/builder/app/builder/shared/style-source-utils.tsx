@@ -22,7 +22,7 @@ import {
   $selectedStyleState,
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/awareness";
 
 const $isDeleteUnusedTokensDialogOpen = atom(false);

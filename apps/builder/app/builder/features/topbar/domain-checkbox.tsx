@@ -9,7 +9,8 @@ import {
   Checkbox,
 } from "@webstudio-is/design-system";
 
-import { $project, $userPlanFeatures } from "~/shared/nano-states";
+import { $project } from "~/shared/sync/data-stores";
+import { $userPlanFeatures } from "~/shared/nano-states";
 
 export const domainToPublishName = "domainToPublish[]";
 

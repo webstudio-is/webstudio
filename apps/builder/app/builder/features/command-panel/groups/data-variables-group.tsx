@@ -9,7 +9,7 @@ import {
   useSelectedAction,
   useResetActionIndex,
 } from "@webstudio-is/design-system";
-import { $dataSources } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import {
   $commandContent,
   $isCommandPanelOpen,

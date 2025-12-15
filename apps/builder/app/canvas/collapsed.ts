@@ -9,7 +9,7 @@ import {
 } from "~/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import { $selectedPage } from "~/shared/awareness";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { doNotTrackMutation } from "~/shared/dom-utils";
 
 const isHtmlTag = (tag: string): tag is HtmlTags =>

@@ -32,7 +32,7 @@ import {
 } from "~/shared/nano-states";
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
-import { serverSyncStore } from "~/shared/sync";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";

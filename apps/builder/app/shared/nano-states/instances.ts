@@ -1,6 +1,9 @@
 import { atom } from "nanostores";
-import type { Instances } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
+import { $instances } from "../sync/data-stores";
+
+// Re-export for backward compatibility
+export { $instances };
 
 export const $isResizingCanvas = atom(false);
 
@@ -60,5 +63,3 @@ export const execTextEditorContextMenuCommand = (
 ) => {
   $textEditorContextMenuCommand.set(command);
 };
-
-export const $instances = atom<Instances>(new Map());
