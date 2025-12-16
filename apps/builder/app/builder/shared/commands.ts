@@ -60,7 +60,7 @@ import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variabl
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
 import {
   copyInstance,
-  pasteInstance,
+  emitPaste,
   cutInstance,
 } from "~/shared/copy-paste/init-copy-paste";
 import { toggleInstanceShow } from "~/shared/instance-utils";
@@ -450,24 +450,18 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "copy",
       description: "Copy selected instance",
       category: "Navigator",
-      defaultHotkeys: ["meta+c", "ctrl+c"],
-      disableOnInputLikeControls: true,
       handler: copyInstance,
     },
     {
       name: "paste",
       description: "Paste copied instance",
       category: "Navigator",
-      defaultHotkeys: ["meta+v", "ctrl+v"],
-      disableOnInputLikeControls: true,
-      handler: pasteInstance,
+      handler: emitPaste,
     },
     {
       name: "cut",
       description: "Cut selected instance",
       category: "Navigator",
-      defaultHotkeys: ["meta+x", "ctrl+x"],
-      disableOnInputLikeControls: true,
       handler: cutInstance,
     },
     {
