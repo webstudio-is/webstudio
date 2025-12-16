@@ -122,7 +122,7 @@ export const ProjectSettingsDialog = ({
                   <SpinnerIcon size={rawTheme.spacing[15]} />
                 </Flex>
               ) : (
-                <Grid gap={2} css={{ paddingInline: theme.spacing[5] }}>
+                <Grid gap={2} css={{ paddingBlock: theme.spacing[5] }}>
                   {SectionComponent && (
                     <SectionComponent projectId={projectId} />
                   )}
