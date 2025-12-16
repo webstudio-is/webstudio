@@ -61,7 +61,7 @@ export const SearchResults = (props: DashboardData) => {
             </Text>
             <ProjectsGrid
               projects={results.projects}
-              hasProPlan={userPlanFeatures.hasProPlan}
+              userPlanFeatures={userPlanFeatures}
               publisherHost={publisherHost}
               projectsTags={props.user.projectsTags}
             />

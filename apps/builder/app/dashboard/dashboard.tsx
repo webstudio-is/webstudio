@@ -255,7 +255,7 @@ export const Dashboard = () => {
         {view === "projects" && (
           <Projects
             projects={projects}
-            hasProPlan={userPlanFeatures.hasProPlan}
+            userPlanFeatures={userPlanFeatures}
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
           />

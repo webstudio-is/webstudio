@@ -21,6 +21,7 @@ import {
 import { Spinner } from "../shared/spinner";
 import { Card, CardContent, CardFooter } from "../shared/card";
 import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 
@@ -51,7 +52,7 @@ const PublishedLink = ({
 
 type ProjectCardProps = {
   project: DashboardProject;
-  hasProPlan: boolean;
+  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
 };
@@ -68,7 +69,7 @@ export const ProjectCard = ({
     tags,
     domainsVirtual,
   },
-  hasProPlan,
+  userPlanFeatures,
   publisherHost,
   projectsTags,
   ...props
@@ -224,7 +225,7 @@ export const ProjectCard = ({
         openDialog={openDialog}
         onOpenDialogChange={setOpenDialog}
         onHiddenChange={setIsHidden}
-        hasProPlan={hasProPlan}
+        userPlanFeatures={userPlanFeatures}
         projectsTags={projectsTags}
       />
     </Card>
