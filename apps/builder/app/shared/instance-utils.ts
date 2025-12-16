@@ -636,15 +636,18 @@ export const unwrapInstanceMutable = ({
   };
   parentItem: { instanceSelector: InstanceSelector; instance: { id: string } };
 }): { success: boolean; error?: string } => {
-  const instanceSelector = findClosestNonTextualContainer({
-    metas,
-    props,
-    instances,
-    instanceSelector: parentItem.instanceSelector,
-  });
-  if (parentItem.instanceSelector.join() !== instanceSelector.join()) {
+  // Check if the selected instance is rich text content (like Bold, Italic in Paragraph)
+  if (
+    isRichTextContent({
+      instanceSelector: selectedItem.instanceSelector,
+      instances,
+      props,
+      metas,
+    })
+  ) {
     return { success: false, error: "Cannot unwrap textual instance" };
   }
+
   const parentInstance = instances.get(parentItem.instance.id);
   const selectedInstance = instances.get(selectedItem.instance.id);
   if (!parentInstance || !selectedInstance) {
@@ -711,11 +714,12 @@ export const unwrapInstanceMutable = ({
 };
 
 export const canUnwrapInstance = (instancePath: InstancePath) => {
-  // global root or body are selected
-  if (instancePath.length < 2) {
+  // Need at least 3 levels: selected, parent, and grandparent
+  // Can't unwrap if there's no grandparent to move the selected instance to
+  if (instancePath.length < 3) {
     return false;
   }
-  const [, parentItem] = instancePath;
+  const [selectedItem, parentItem] = instancePath;
 
   // Prevent unwrapping if parent is the root instance (e.g., Body)
   const rootInstanceId = $selectedPage.get()?.rootInstanceId;
@@ -726,19 +730,19 @@ export const canUnwrapInstance = (instancePath: InstancePath) => {
     return false;
   }
 
-  // Check if parent is inside a textual container
+  // Check if the selected instance is rich text content (like Bold, Italic in Paragraph)
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
 
-  const instanceSelector = findClosestNonTextualContainer({
-    metas,
-    props,
-    instances,
-    instanceSelector: parentItem.instanceSelector,
-  });
-
-  if (parentItem.instanceSelector.join() !== instanceSelector.join()) {
+  if (
+    isRichTextContent({
+      instanceSelector: selectedItem.instanceSelector,
+      instances,
+      props,
+      metas,
+    })
+  ) {
     return false;
   }
 

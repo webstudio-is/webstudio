@@ -2077,6 +2077,10 @@ describe("canUnwrapInstance", () => {
         instanceSelector: ["parent", "body"],
         instance: instances.get("parent")!,
       },
+      {
+        instanceSelector: ["body"],
+        instance: instances.get("body")!,
+      },
     ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(true);
@@ -2138,6 +2142,78 @@ describe("canUnwrapInstance", () => {
     ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(false);
+  });
+
+  test("returns true for Body > div > a scenario", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <ws.element ws:tag="div" ws:id="div">
+          <ws.element ws:tag="a" ws:id="link">
+            Link text
+          </ws.element>
+        </ws.element>
+      </$.Body>
+    );
+
+    $instances.set(instances);
+    $props.set(props);
+    $registeredComponentMetas.set(defaultMetasMap);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const instancePath = [
+      {
+        instanceSelector: ["link", "div", "body"],
+        instance: instances.get("link")!,
+      },
+      {
+        instanceSelector: ["div", "body"],
+        instance: instances.get("div")!,
+      },
+      {
+        instanceSelector: ["body"],
+        instance: instances.get("body")!,
+      },
+    ] satisfies InstancePath;
+
+    // Should be able to unwrap the link from the div
+    expect(canUnwrapInstance(instancePath)).toBe(true);
+  });
+
+  test("unwrapInstanceMutable works for Body > div > a scenario", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <ws.element ws:tag="div" ws:id="div">
+          <ws.element ws:tag="a" ws:id="link">
+            Link text
+          </ws.element>
+        </ws.element>
+      </$.Body>
+    );
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem: {
+        instanceSelector: ["link", "div", "body"],
+        instance: instances.get("link")!,
+      },
+      parentItem: {
+        instanceSelector: ["div", "body"],
+        instance: instances.get("div")!,
+      },
+    });
+
+    expect(result.success).toBe(true);
+
+    // Verify the link is now a direct child of body
+    const body = instances.get("body")!;
+    expect(body.children).toContainEqual({ type: "id", value: "link" });
+
+    // Verify the div was deleted since it has no more children
+    expect(instances.has("div")).toBe(false);
   });
 });
 
