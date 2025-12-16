@@ -37,7 +37,7 @@ import {
 } from "../command-state";
 import { useState } from "react";
 import { BackButton } from "../shared/back-button";
-import { wrapIn } from "~/shared/instance-utils";
+import { wrapInstance } from "~/shared/instance-utils";
 
 type WrapOption = {
   component: string;
@@ -275,7 +275,7 @@ const WrapComponentsList = () => {
                       key={key}
                       value={key}
                       onSelect={() => {
-                        wrapIn(component, tag);
+                        wrapInstance(component, tag);
                         closeCommandPanel();
                       }}
                     >

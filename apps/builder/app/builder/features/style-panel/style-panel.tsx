@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { computed, type WritableAtom } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   theme,
@@ -119,11 +119,7 @@ export const ModeMenu = () => {
   );
 };
 
-export const StylePanel = ({
-  $styleSourceInputElement,
-}: {
-  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
-}) => {
+export const StylePanel = () => {
   const { stylePanelMode } = useStore($settings);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const tag = useStore($selectedInstanceTag);
@@ -184,9 +180,7 @@ export const StylePanel = ({
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
           Style Sources
         </Text>
-        <StyleSourcesSection
-          $styleSourceInputElement={$styleSourceInputElement}
-        />
+        <StyleSourcesSection />
       </Box>
       <Separator />
       <ScrollArea>
