@@ -6,6 +6,7 @@ import {
   PopoverTrigger,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
+import { nanoid } from "nanoid";
 import { type LinkOptions, ShareProject } from "./share-project";
 
 export default {
@@ -15,7 +16,7 @@ export default {
 
 const initialLinks: Array<LinkOptions> = [
   {
-    token: crypto.randomUUID(),
+    token: nanoid(),
     name: "View Only",
     relation: "viewers",
     canClone: false,
@@ -23,7 +24,7 @@ const initialLinks: Array<LinkOptions> = [
     canPublish: false,
   },
   {
-    token: crypto.randomUUID(),
+    token: nanoid(),
     name: "View and Edit",
     relation: "editors",
     canClone: false,
@@ -31,7 +32,7 @@ const initialLinks: Array<LinkOptions> = [
     canPublish: false,
   },
   {
-    token: crypto.randomUUID(),
+    token: nanoid(),
     name: "Build",
     relation: "builders",
     canClone: false,
@@ -62,7 +63,7 @@ const useShareProject = (
     setLinks([
       ...links,
       {
-        token: crypto.randomUUID(),
+        token: nanoid(),
         name: "Custom Link",
         relation: "viewers",
         canClone: false,

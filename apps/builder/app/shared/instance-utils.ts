@@ -2,7 +2,7 @@ import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { builderApi } from "~/shared/builder-api";
-import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
+import { equalMedia, type StyleValue, toValue } from "@webstudio-is/css-engine";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   type Instances,
@@ -1326,6 +1326,23 @@ const replaceDataSources = (
   });
 };
 
+/**
+ * Token Conflict Resolution Rules:
+ *
+ * When inserting a fragment with tokens, the following rules determine whether to reuse,
+ * rename, or create new tokens:
+ *
+ * 1. Same name + Same styles → Reuse existing token (no new token created)
+ * 2. Same name + Different styles → Add counter suffix (e.g., "myToken-1", "myToken-2")
+ * 3. Different name + Same styles → Insert as new token with its own name
+ * 4. Different name + Different styles → Insert as new token normally
+ * 5. Name collision safeguard → Always add counter suffix if name already exists
+ * 6. Style comparison → Only compares CSS signatures when token names match
+ *
+ * All new tokens receive a fresh UUID to prevent ID collisions. The tokenIdMap tracks
+ * originalFragmentTokenId → newTokenId (or existingTokenId if reused) to ensure all
+ * references (styles, styleSourceSelections) are updated correctly.
+ */
 export const insertWebstudioFragmentCopy = ({
   data,
   fragment,
@@ -1408,24 +1425,136 @@ export const insertWebstudioFragmentCopy = ({
     }
   }
 
+  // Helper to generate normalized CSS string for comparing token styles
+  const getTokenStylesSignature = (
+    styleSourceId: StyleSource["id"],
+    fragmentStyles: StyleDecl[]
+  ): string => {
+    const tokenStyles = fragmentStyles
+      .filter((decl) => decl.styleSourceId === styleSourceId)
+      .map((decl) => {
+        // Get merged breakpoint id to ensure consistent comparison
+        const breakpointId =
+          mergedBreakpointIds.get(decl.breakpointId) ?? decl.breakpointId;
+        const breakpoint = breakpoints.get(breakpointId);
+        const breakpointKey = breakpoint
+          ? JSON.stringify({ minWidth: breakpoint.minWidth })
+          : "base";
+        const state = decl.state ?? "";
+        return `${breakpointKey}|${state}|${decl.property}:${toValue(decl.value)}`;
+      })
+      .sort()
+      .join(";");
+    return tokenStyles;
+  };
+
+  // Build a map of existing tokens by name
+  const existingTokensByName = new Map<string, StyleSource[]>();
+
+  for (const styleSource of styleSources.values()) {
+    if (styleSource.type !== "token") {
+      continue;
+    }
+    const tokensWithName = existingTokensByName.get(styleSource.name) ?? [];
+    tokensWithName.push(styleSource);
+    existingTokensByName.set(styleSource.name, tokensWithName);
+  }
+
   // insert tokens with their styles
 
   const tokenStyleSourceIds = new Set<StyleSource["id"]>();
+  const tokenIdMap = new Map<StyleSource["id"], StyleSource["id"]>(); // old id -> new id
+
   for (const styleSource of fragment.styleSources) {
-    // prevent inserting styles when token is already present
-    if (styleSource.type === "local" || styleSources.has(styleSource.id)) {
+    if (styleSource.type === "local") {
       continue;
     }
     styleSource.type satisfies "token";
-    tokenStyleSourceIds.add(styleSource.id);
-    styleSources.set(styleSource.id, styleSource);
+
+    const originalFragmentTokenId = styleSource.id;
+    const newTokenId = nanoid();
+
+    // Check if there's an existing token with the same name
+    const tokensWithSameName = existingTokensByName.get(styleSource.name);
+
+    if (tokensWithSameName && tokensWithSameName.length > 0) {
+      // Same name exists - compare styles to decide if we can reuse
+      const signature = getTokenStylesSignature(
+        originalFragmentTokenId,
+        fragment.styles
+      );
+
+      const hasMatchingStyles = tokensWithSameName.some((existing) => {
+        const existingSignature = getTokenStylesSignature(
+          existing.id,
+          Array.from(styles.values())
+        );
+        return existingSignature === signature;
+      });
+
+      if (hasMatchingStyles) {
+        // Same name AND same styles -> reuse existing token
+        const existingToken = tokensWithSameName[0];
+        if (existingToken.type !== "token") {
+          continue;
+        }
+        tokenIdMap.set(originalFragmentTokenId, existingToken.id);
+        continue; // Don't insert, reuse existing
+      } else {
+        // Same name but different styles -> add counter suffix
+        let maxCounter = 0;
+        const baseNamePattern = new RegExp(
+          `^${styleSource.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-(\\d+))?$`
+        );
+        for (const existing of styleSources.values()) {
+          if (existing.type !== "token") {
+            continue;
+          }
+          const match = existing.name.match(baseNamePattern);
+          if (match) {
+            const counter = match[1] ? parseInt(match[1], 10) : 0;
+            maxCounter = Math.max(maxCounter, counter);
+          }
+        }
+        const newName = `${styleSource.name}-${maxCounter + 1}`;
+        const newStyleSource = {
+          ...styleSource,
+          id: newTokenId,
+          name: newName,
+        };
+        tokenStyleSourceIds.add(originalFragmentTokenId);
+        styleSources.set(newTokenId, newStyleSource);
+        tokenIdMap.set(originalFragmentTokenId, newTokenId);
+
+        // Add to tracking maps
+        const tokensWithNewName = existingTokensByName.get(newName) ?? [];
+        tokensWithNewName.push(newStyleSource);
+        existingTokensByName.set(newName, tokensWithNewName);
+        continue;
+      }
+    }
+
+    // Different name (or no existing tokens) -> insert with new ID
+    const newStyleSource = { ...styleSource, id: newTokenId };
+    tokenStyleSourceIds.add(originalFragmentTokenId);
+    styleSources.set(newTokenId, newStyleSource);
+    tokenIdMap.set(originalFragmentTokenId, newTokenId);
+
+    // Add to tracking maps
+    const tokensWithName = existingTokensByName.get(styleSource.name) ?? [];
+    tokensWithName.push(newStyleSource);
+    existingTokensByName.set(styleSource.name, tokensWithName);
   }
+
   for (const styleDecl of fragment.styles) {
     if (tokenStyleSourceIds.has(styleDecl.styleSourceId)) {
       const { breakpointId } = styleDecl;
       const newStyleDecl: StyleDecl = {
         ...styleDecl,
         breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
+        // Remap the styleSourceId to the new token ID
+        styleSourceId:
+          tokenIdMap.get(styleDecl.styleSourceId) ?? styleDecl.styleSourceId,
       };
       styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
     }
@@ -1707,6 +1836,12 @@ export const insertWebstudioFragmentCopy = ({
           styleSourceId = newId;
         }
         newLocalStyleSourceIds.set(newLocalStyleSource.id, styleSourceId);
+      } else {
+        // Check if this is a token that was mapped to an existing token
+        const mappedTokenId = tokenIdMap.get(styleSourceId);
+        if (mappedTokenId) {
+          styleSourceId = mappedTokenId;
+        }
       }
       newStyleSourceIds.push(styleSourceId);
     }

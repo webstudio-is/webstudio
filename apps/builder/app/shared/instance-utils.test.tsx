@@ -1372,62 +1372,21 @@ describe("insert webstudio fragment copy", () => {
     ]);
   });
 
-  test("insert missing tokens and use merged breakpoint ids", () => {
+  // Case 2: Same styles AND same name -> reuse existing token
+  test("token with same styles and same name reuses existing token", () => {
     const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "oldLabel" },
-    ]);
-    const data = getWebstudioDataStub({ breakpoints, styleSources });
-    insertWebstudioFragmentCopy({
-      data,
-      fragment: {
-        ...emptyFragment,
-        breakpoints: [{ id: "new_base", label: "Base" }],
-        styleSources: [
-          { id: "token1", type: "token", name: "newLabel" },
-          { id: "token2", type: "token", name: "myToken" },
-        ],
-        styles: [
-          {
-            styleSourceId: "token1",
-            breakpointId: "new_base",
-            property: "color",
-            value: { type: "keyword", value: "red" },
-          },
-          {
-            styleSourceId: "token2",
-            breakpointId: "new_base",
-            property: "color",
-            value: { type: "keyword", value: "green" },
-          },
-        ],
-      },
-      availableVariables: [],
-      projectId: "",
-    });
-    expect(Array.from(data.styleSources.values())).toEqual([
-      { id: "token1", type: "token", name: "oldLabel" },
-      { id: "token2", type: "token", name: "myToken" },
-    ]);
-    expect(Array.from(data.styles.values())).toEqual([
-      {
-        styleSourceId: "token2",
-        breakpointId: "base",
-        property: "color",
-        value: { type: "keyword", value: "green" },
-      },
-    ]);
-  });
-
-  test("insert token with same name but different id creates duplicate", () => {
-    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const styleSources = toMap<StyleSource>([
-      { id: "token1", type: "token", name: "myToken" },
+      { id: "existingToken", type: "token", name: "primaryColor" },
     ]);
     const styles = new Map([
-      createStyleDeclPair("token1", "base", "color", {
+      createStyleDeclPair("existingToken", "base", "color", {
         type: "keyword",
-        value: "blue",
+        value: "red",
+      }),
+      createStyleDeclPair("existingToken", "base", "fontSize", {
+        type: "unit",
+        value: 16,
+        unit: "px",
       }),
     ]);
     const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
@@ -1438,15 +1397,21 @@ describe("insert webstudio fragment copy", () => {
         ...emptyFragment,
         breakpoints: [{ id: "base", label: "base" }],
         styleSources: [
-          // Same name "myToken" but different id "token2"
-          { id: "token2", type: "token", name: "myToken" },
+          // Same name "primaryColor", same styles, different id
+          { id: "newToken", type: "token", name: "primaryColor" },
         ],
         styles: [
           {
-            styleSourceId: "token2",
+            styleSourceId: "newToken",
             breakpointId: "base",
             property: "color",
             value: { type: "keyword", value: "red" },
+          },
+          {
+            styleSourceId: "newToken",
+            breakpointId: "base",
+            property: "fontSize",
+            value: { type: "unit", value: 16, unit: "px" },
           },
         ],
       },
@@ -1454,28 +1419,29 @@ describe("insert webstudio fragment copy", () => {
       projectId: "",
     });
 
-    // Both tokens should exist with the same name but different ids and styles
+    // Should reuse existing token, not create a new one
     expect(Array.from(data.styleSources.values())).toEqual([
-      { id: "token1", type: "token", name: "myToken" },
-      { id: "token2", type: "token", name: "myToken" },
+      { id: "existingToken", type: "token", name: "primaryColor" },
     ]);
+    // No new styles should be added
     expect(Array.from(data.styles.values())).toEqual([
       {
-        styleSourceId: "token1",
-        breakpointId: "base",
-        property: "color",
-        value: { type: "keyword", value: "blue" },
-      },
-      {
-        styleSourceId: "token2",
+        styleSourceId: "existingToken",
         breakpointId: "base",
         property: "color",
         value: { type: "keyword", value: "red" },
       },
+      {
+        styleSourceId: "existingToken",
+        breakpointId: "base",
+        property: "fontSize",
+        value: { type: "unit", value: 16, unit: "px" },
+      },
     ]);
   });
 
-  test("insert token with different id and name but identical styles creates duplicate", () => {
+  // Case 3: Same styles but different name -> insert new token with original name
+  test("token with same styles but different name inserts new token", () => {
     const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
     const styleSources = toMap<StyleSource>([
       { id: "token1", type: "token", name: "primaryColor" },
@@ -1494,7 +1460,7 @@ describe("insert webstudio fragment copy", () => {
         ...emptyFragment,
         breakpoints: [{ id: "base", label: "base" }],
         styleSources: [
-          // Different name "accentColor" and different id "token2"
+          // Different name "accentColor", same styles
           { id: "token2", type: "token", name: "accentColor" },
         ],
         styles: [
@@ -1502,7 +1468,6 @@ describe("insert webstudio fragment copy", () => {
             styleSourceId: "token2",
             breakpointId: "base",
             property: "color",
-            // Same style value as token1
             value: { type: "keyword", value: "red" },
           },
         ],
@@ -1511,25 +1476,614 @@ describe("insert webstudio fragment copy", () => {
       projectId: "",
     });
 
-    // Both tokens should exist with different names but identical style values
-    expect(Array.from(data.styleSources.values())).toEqual([
+    // Should insert new token with its original name
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]).toEqual({
+      id: "token1",
+      type: "token",
+      name: "primaryColor",
+    });
+    expect(tokens[1]).toMatchObject({ type: "token", name: "accentColor" });
+    expect(tokens[1].id).not.toBe("token2"); // Should have new ID
+
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(2);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "token1",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(tokenStyles[1]).toMatchObject({
+      styleSourceId: tokens[1].id, // Should reference new token ID
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  // Case 4: Different styles but same name -> add counter suffix
+  test("token with different styles but same name adds counter suffix", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "token1", type: "token", name: "myToken" },
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("token1", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Same name "myToken", different styles
+          { id: "token2", type: "token", name: "myToken" },
+        ],
+        styles: [
+          {
+            styleSourceId: "token2",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should add counter suffix to the new token
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]).toEqual({ id: "token1", type: "token", name: "myToken" });
+    expect(tokens[1]).toMatchObject({ type: "token", name: "myToken-1" });
+    expect(tokens[1].id).not.toBe("token2"); // Should have new ID
+
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(2);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "token1",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    expect(tokenStyles[1]).toMatchObject({
+      styleSourceId: tokens[1].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  // Case 4b: Multiple counter suffixes
+  test("token with name conflict increments counter correctly", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "token1", type: "token", name: "myToken" },
+      { id: "token2", type: "token", name: "myToken-1" },
+      { id: "token3", type: "token", name: "myToken-2" },
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("token1", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
+      createStyleDeclPair("token2", "base", "color", {
+        type: "keyword",
+        value: "green",
+      }),
+      createStyleDeclPair("token3", "base", "color", {
+        type: "keyword",
+        value: "yellow",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [{ id: "token4", type: "token", name: "myToken" }],
+        styles: [
+          {
+            styleSourceId: "token4",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should use counter 3
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(4);
+    expect(tokens[0]).toEqual({ id: "token1", type: "token", name: "myToken" });
+    expect(tokens[1]).toEqual({
+      id: "token2",
+      type: "token",
+      name: "myToken-1",
+    });
+    expect(tokens[2]).toEqual({
+      id: "token3",
+      type: "token",
+      name: "myToken-2",
+    });
+    expect(tokens[3]).toMatchObject({ type: "token", name: "myToken-3" });
+    expect(tokens[3].id).not.toBe("token4"); // Should have new ID
+  });
+
+  // Case 6: Different styles and different name -> insert as-is
+  test("token with different styles and different name inserts normally", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
       { id: "token1", type: "token", name: "primaryColor" },
-      { id: "token2", type: "token", name: "accentColor" },
     ]);
-    expect(Array.from(data.styles.values())).toEqual([
-      {
-        styleSourceId: "token1",
-        breakpointId: "base",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
-      {
-        styleSourceId: "token2",
-        breakpointId: "base",
-        property: "color",
-        value: { type: "keyword", value: "red" },
-      },
+    const styles = new Map([
+      createStyleDeclPair("token1", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
     ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [{ id: "token2", type: "token", name: "secondaryColor" }],
+        styles: [
+          {
+            styleSourceId: "token2",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should insert new token normally
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]).toEqual({
+      id: "token1",
+      type: "token",
+      name: "primaryColor",
+    });
+    expect(tokens[1]).toMatchObject({ type: "token", name: "secondaryColor" });
+    expect(tokens[1].id).not.toBe("token2"); // Should have new ID
+
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(2);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "token1",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    expect(tokenStyles[1]).toMatchObject({
+      styleSourceId: tokens[1].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  // Test that instance with matching token gets the token reference updated
+  test("instance with reused token updates styleSourceSelection to existing token id", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "existingToken", type: "token", name: "primaryColor" },
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("existingToken", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        instances: [
+          {
+            type: "instance",
+            id: "box",
+            component: "Box",
+            children: [],
+          },
+        ],
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Same name and same styles as existingToken
+          { id: "newToken", type: "token", name: "primaryColor" },
+        ],
+        styleSourceSelections: [{ instanceId: "box", values: ["newToken"] }],
+        styles: [
+          {
+            styleSourceId: "newToken",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should reuse existing token
+    expect(Array.from(data.styleSources.values())).toEqual([
+      { id: "existingToken", type: "token", name: "primaryColor" },
+    ]);
+
+    // The instance should reference the existing token, not the new one
+    const newBoxId = Array.from(data.instances.keys())[0];
+    expect(data.styleSourceSelections.get(newBoxId)).toEqual({
+      instanceId: newBoxId,
+      values: ["existingToken"], // Should use existing token id, not "newToken"
+    });
+  });
+
+  // Case 3 safeguard: Same styles but different name gets suffix when name conflicts
+  test("token with same styles but different name adds suffix when name already exists", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "token1", type: "token", name: "primaryColor" },
+      { id: "token2", type: "token", name: "accentColor" }, // This name is taken
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("token1", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+      createStyleDeclPair("token2", "base", "fontSize", {
+        type: "unit",
+        value: 16,
+        unit: "px",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Same styles as token1, but wants to use name "accentColor" which is already taken
+          { id: "token3", type: "token", name: "accentColor" },
+        ],
+        styles: [
+          {
+            styleSourceId: "token3",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should add counter suffix to prevent duplicate name
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(3);
+    expect(tokens[0]).toEqual({
+      id: "token1",
+      type: "token",
+      name: "primaryColor",
+    });
+    expect(tokens[1]).toEqual({
+      id: "token2",
+      type: "token",
+      name: "accentColor",
+    });
+    expect(tokens[2]).toMatchObject({ type: "token", name: "accentColor-1" });
+    expect(tokens[2].id).not.toBe("token3"); // Should have new ID
+
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(3);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "token1",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(tokenStyles[1]).toEqual({
+      styleSourceId: "token2",
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "unit", value: 16, unit: "px" },
+    });
+    expect(tokenStyles[2]).toMatchObject({
+      styleSourceId: tokens[2].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  // Case 6 safeguard: Different styles and different name gets suffix when name conflicts
+  test("token with different styles and name adds suffix when name already exists", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "token1", type: "token", name: "primaryColor" },
+      { id: "token2", type: "token", name: "secondaryColor" }, // This name is taken
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("token1", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
+      createStyleDeclPair("token2", "base", "color", {
+        type: "keyword",
+        value: "green",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Different styles from both existing tokens, but wants name "secondaryColor"
+          { id: "token3", type: "token", name: "secondaryColor" },
+        ],
+        styles: [
+          {
+            styleSourceId: "token3",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should add counter suffix to prevent duplicate name
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(3);
+    expect(tokens[0]).toEqual({
+      id: "token1",
+      type: "token",
+      name: "primaryColor",
+    });
+    expect(tokens[1]).toEqual({
+      id: "token2",
+      type: "token",
+      name: "secondaryColor",
+    });
+    expect(tokens[2]).toMatchObject({
+      type: "token",
+      name: "secondaryColor-1",
+    });
+    expect(tokens[2].id).not.toBe("token3"); // Should have new ID
+
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(3);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "token1",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    expect(tokenStyles[1]).toEqual({
+      styleSourceId: "token2",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    });
+    expect(tokenStyles[2]).toMatchObject({
+      styleSourceId: tokens[2].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+  });
+
+  // Test that existing token with same styles but different name stays untouched
+  test("existing token with matching styles but different name stays untouched when inserting new token", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "existingToken", type: "token", name: "primaryColor" },
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("existingToken", "base", "color", {
+        type: "keyword",
+        value: "red",
+      }),
+      createStyleDeclPair("existingToken", "base", "fontSize", {
+        type: "unit",
+        value: 16,
+        unit: "px",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Different name "accentColor", same styles as existingToken
+          { id: "newToken", type: "token", name: "accentColor" },
+        ],
+        styles: [
+          {
+            styleSourceId: "newToken",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+          {
+            styleSourceId: "newToken",
+            breakpointId: "base",
+            property: "fontSize",
+            value: { type: "unit", value: 16, unit: "px" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Should insert new token with its own name, leaving existing one untouched
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]).toEqual({
+      id: "existingToken",
+      type: "token",
+      name: "primaryColor",
+    });
+    expect(tokens[1]).toMatchObject({ type: "token", name: "accentColor" });
+    expect(tokens[1].id).not.toBe("newToken"); // Should have new ID
+
+    // Both tokens should have their own styles
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(4);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "existingToken",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(tokenStyles[1]).toEqual({
+      styleSourceId: "existingToken",
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "unit", value: 16, unit: "px" },
+    });
+    expect(tokenStyles[2]).toMatchObject({
+      styleSourceId: tokens[1].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(tokenStyles[3]).toMatchObject({
+      styleSourceId: tokens[1].id,
+      breakpointId: "base",
+      property: "fontSize",
+      value: { type: "unit", value: 16, unit: "px" },
+    });
+  });
+
+  // Critical test: inserting base name when suffixed version exists
+  test("inserting token 'bbb' when 'bbb-1' with same styles exists inserts both tokens", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "existingToken", type: "token", name: "bbb-1" },
+    ]);
+    const styles = new Map([
+      createStyleDeclPair("existingToken", "base", "color", {
+        type: "keyword",
+        value: "blue",
+      }),
+    ]);
+    const data = getWebstudioDataStub({ breakpoints, styleSources, styles });
+
+    // Add an instance that uses the existing token
+    const existingInstance = createInstance("existingInstance", "Box", []);
+    data.instances.set("existingInstance", existingInstance);
+    data.styleSourceSelections.set("existingInstance", {
+      instanceId: "existingInstance",
+      values: ["existingToken"],
+    });
+
+    insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        instances: [
+          {
+            type: "instance",
+            id: "box",
+            component: "Box",
+            children: [],
+          },
+        ],
+        breakpoints: [{ id: "base", label: "base" }],
+        styleSources: [
+          // Inserting "bbb" with same styles as "bbb-1"
+          { id: "newToken", type: "token", name: "bbb" },
+        ],
+        styleSourceSelections: [{ instanceId: "box", values: ["newToken"] }],
+        styles: [
+          {
+            styleSourceId: "newToken",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "blue" },
+          },
+        ],
+      },
+      availableVariables: [],
+      projectId: "",
+    });
+
+    // Both tokens should exist
+    const tokens = Array.from(data.styleSources.values());
+    expect(tokens).toHaveLength(2);
+    expect(tokens[0]).toEqual({
+      id: "existingToken",
+      type: "token",
+      name: "bbb-1",
+    });
+    expect(tokens[1]).toMatchObject({ type: "token", name: "bbb" }); // Different name, so inserted as-is
+    expect(tokens[1].id).not.toBe("newToken"); // Should have new ID
+
+    // Both should have their own styles
+    const tokenStyles = Array.from(data.styles.values());
+    expect(tokenStyles).toHaveLength(2);
+    expect(tokenStyles[0]).toEqual({
+      styleSourceId: "existingToken",
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    expect(tokenStyles[1]).toMatchObject({
+      styleSourceId: tokens[1].id,
+      breakpointId: "base",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+
+    // The EXISTING instance should still reference "bbb-1" (existingToken)
+    expect(data.styleSourceSelections.get("existingInstance")).toEqual({
+      instanceId: "existingInstance",
+      values: ["existingToken"],
+    });
+
+    // The new instance should reference the new token "bbb" (tokens[1].id)
+    const newBoxId = Array.from(data.instances.keys()).find(
+      (id) => id !== "existingInstance"
+    );
+    expect(data.styleSourceSelections.get(newBoxId!)).toEqual({
+      instanceId: newBoxId,
+      values: [tokens[1].id],
+    });
   });
 
   test("insert local styles with new ids and use merged breakpoint ids", () => {
