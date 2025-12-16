@@ -19,7 +19,7 @@ import {
 } from "../features/text-editor/toolbar-connector";
 import { selectInstance } from "~/shared/awareness";
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
-import { deleteSelectedInstance } from "~/builder/shared/commands";
+import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { findClosestRichText } from "~/shared/content-model";
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({

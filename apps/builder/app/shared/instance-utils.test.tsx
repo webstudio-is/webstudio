@@ -41,10 +41,13 @@ import {
   insertWebstudioFragmentAt,
   insertWebstudioElementAt,
   buildInstancePath,
-  wrapIn,
+  wrapInstance,
   toggleInstanceShow,
   unwrapInstanceMutable,
   canUnwrapInstance,
+  canConvertInstance,
+  convertInstance,
+  deleteSelectedInstance,
 } from "./instance-utils";
 import type { InstancePath } from "./awareness";
 import {
@@ -1031,7 +1034,7 @@ describe("wrap in", () => {
       ).instances
     );
     selectInstance(["divId", "bodyId"]);
-    wrapIn(elementComponent, "a");
+    wrapInstance(elementComponent, "a");
     expect($instances.get()).toEqual(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
@@ -1052,7 +1055,7 @@ describe("wrap in", () => {
       ).instances
     );
     selectInstance(["imageId", "bodyId"]);
-    wrapIn(elementComponent);
+    wrapInstance(elementComponent);
     expect($instances.get()).toEqual(
       renderData(
         <ws.element ws:tag="body" ws:id="bodyId">
@@ -1074,7 +1077,7 @@ describe("wrap in", () => {
     );
     $instances.set(instances);
     selectInstance(["textId", "bodyId"]);
-    wrapIn(elementComponent, "a");
+    wrapInstance(elementComponent, "a");
     // nothing is changed
     expect($instances.get()).toEqual(instances);
   });
@@ -1089,7 +1092,7 @@ describe("wrap in", () => {
     );
     $instances.set(instances);
     selectInstance(["boldId", "textId", "bodyId"]);
-    wrapIn(elementComponent);
+    wrapInstance(elementComponent);
     // nothing is changed
     expect($instances.get()).toEqual(instances);
   });
@@ -1104,7 +1107,7 @@ describe("wrap in", () => {
     );
     $instances.set(instances);
     selectInstance(["listItemId", "listId", "bodyId"]);
-    wrapIn(elementComponent);
+    wrapInstance(elementComponent);
     // nothing is changed
     expect($instances.get()).toEqual(instances);
   });
@@ -2074,6 +2077,10 @@ describe("canUnwrapInstance", () => {
         instanceSelector: ["parent", "body"],
         instance: instances.get("parent")!,
       },
+      {
+        instanceSelector: ["body"],
+        instance: instances.get("body")!,
+      },
     ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(true);
@@ -2135,5 +2142,405 @@ describe("canUnwrapInstance", () => {
     ] satisfies InstancePath;
 
     expect(canUnwrapInstance(instancePath)).toBe(false);
+  });
+
+  test("returns true for Body > div > a scenario", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <ws.element ws:tag="div" ws:id="div">
+          <ws.element ws:tag="a" ws:id="link">
+            Link text
+          </ws.element>
+        </ws.element>
+      </$.Body>
+    );
+
+    $instances.set(instances);
+    $props.set(props);
+    $registeredComponentMetas.set(defaultMetasMap);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const instancePath = [
+      {
+        instanceSelector: ["link", "div", "body"],
+        instance: instances.get("link")!,
+      },
+      {
+        instanceSelector: ["div", "body"],
+        instance: instances.get("div")!,
+      },
+      {
+        instanceSelector: ["body"],
+        instance: instances.get("body")!,
+      },
+    ] satisfies InstancePath;
+
+    // Should be able to unwrap the link from the div
+    expect(canUnwrapInstance(instancePath)).toBe(true);
+  });
+
+  test("unwrapInstanceMutable works for Body > div > a scenario", () => {
+    const { instances, props } = renderData(
+      <$.Body ws:id="body">
+        <ws.element ws:tag="div" ws:id="div">
+          <ws.element ws:tag="a" ws:id="link">
+            Link text
+          </ws.element>
+        </ws.element>
+      </$.Body>
+    );
+
+    const result = unwrapInstanceMutable({
+      instances,
+      props,
+      metas: defaultMetasMap,
+      selectedItem: {
+        instanceSelector: ["link", "div", "body"],
+        instance: instances.get("link")!,
+      },
+      parentItem: {
+        instanceSelector: ["div", "body"],
+        instance: instances.get("div")!,
+      },
+    });
+
+    expect(result.success).toBe(true);
+
+    // Verify the link is now a direct child of body
+    const body = instances.get("body")!;
+    expect(body.children).toContainEqual({ type: "id", value: "link" });
+
+    // Verify the div was deleted since it has no more children
+    expect(instances.has("div")).toBe(false);
+  });
+});
+
+describe("canConvertInstance", () => {
+  test("returns true for valid conversion", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </ws.element>
+    );
+
+    const result = canConvertInstance(
+      "box",
+      ["box", "body"],
+      elementComponent,
+      "div",
+      instances,
+      props,
+      defaultMetasMap
+    );
+
+    expect(result).toBe(true);
+  });
+
+  test("returns false for non-existent instance", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body"></ws.element>
+    );
+
+    const result = canConvertInstance(
+      "nonexistent",
+      ["nonexistent", "body"],
+      elementComponent,
+      "div",
+      instances,
+      props,
+      defaultMetasMap
+    );
+
+    expect(result).toBe(false);
+  });
+
+  test("returns true when converting Box to Heading", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </ws.element>
+    );
+
+    const result = canConvertInstance(
+      "box",
+      ["box", "body"],
+      "@webstudio-is/sdk-components-react:Heading",
+      undefined,
+      instances,
+      props,
+      defaultMetasMap
+    );
+
+    expect(result).toBe(true);
+  });
+
+  test("uses preset tag when available", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="body">
+        <$.Box ws:id="box"></$.Box>
+      </ws.element>
+    );
+
+    const result = canConvertInstance(
+      "box",
+      ["box", "body"],
+      "@webstudio-is/sdk-components-react:Heading",
+      undefined,
+      instances,
+      props,
+      defaultMetasMap
+    );
+
+    expect(result).toBe(true);
+  });
+});
+
+describe("convertInstance", () => {
+  beforeEach(() => {
+    $registeredComponentMetas.set(defaultMetasMap);
+  });
+
+  test("converts legacy tag to element", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box tag="article" ws:id="articleId"></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["articleId", "bodyId"]);
+    convertInstance(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
+  test("migrates legacy properties", () => {
+    const { instances, props } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <$.Box
+          ws:tag="div"
+          ws:id="divId"
+          className="my-class"
+          htmlFor="my-id"
+        ></$.Box>
+      </ws.element>
+    );
+    $instances.set(instances);
+    $props.set(props);
+    selectInstance(["divId", "bodyId"]);
+    convertInstance(elementComponent);
+    const { instances: newInstances, props: newProps } = renderData(
+      <ws.element ws:tag="body" ws:id="bodyId">
+        <ws.element
+          ws:tag="div"
+          ws:id="divId"
+          class="my-class"
+          for="my-id"
+        ></ws.element>
+      </ws.element>
+    );
+    expect({ instances: $instances.get(), props: $props.get() }).toEqual({
+      instances: newInstances,
+      props: newProps,
+    });
+  });
+
+  test("preserves currently specified tag", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:tag="article" ws:id="articleId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["articleId", "bodyId"]);
+    convertInstance(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="article" ws:id="articleId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("converts to first tag from presets", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Heading ws:id="headingId"></$.Heading>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["headingId", "bodyId"]);
+    convertInstance(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="h1" ws:id="headingId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("falls back to div", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="divId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["divId", "bodyId"]);
+    convertInstance(elementComponent);
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="div" ws:id="divId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("converts with specific tag", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="divId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["divId", "bodyId"]);
+    convertInstance(elementComponent, "a");
+    expect($instances.get()).toEqual(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <ws.element ws:tag="a" ws:id="divId"></ws.element>
+        </ws.element>
+      ).instances
+    );
+  });
+
+  test("converts between components", () => {
+    $instances.set(
+      renderData(
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.element>
+      ).instances
+    );
+    selectInstance(["boxId", "bodyId"]);
+    convertInstance("@webstudio-is/sdk-components-react:Heading");
+    const result = $instances.get();
+    const boxInstance = result.get("boxId");
+    expect(boxInstance?.component).toBe(
+      "@webstudio-is/sdk-components-react:Heading"
+    );
+  });
+
+  test("prevents converting root instance", () => {
+    const initialInstances = renderData(
+      <ws.element ws:tag="html" ws:id="rootId">
+        <ws.element ws:tag="body" ws:id="bodyId"></ws.element>
+      </ws.element>
+    ).instances;
+    $instances.set(initialInstances);
+    selectInstance(["rootId"]);
+    convertInstance(elementComponent, "div");
+    // Should not change
+    expect($instances.get()).toEqual(initialInstances);
+  });
+
+  test("prevents converting body instance", () => {
+    const pages = createDefaultPages({ rootInstanceId: "bodyId" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+
+    const initialInstances = renderData(
+      <ws.element ws:tag="html" ws:id="rootId">
+        <ws.element ws:tag="body" ws:id="bodyId">
+          <$.Box ws:id="boxId"></$.Box>
+        </ws.element>
+      </ws.element>
+    ).instances;
+    $instances.set(initialInstances);
+    selectInstance(["bodyId", "rootId"]);
+    convertInstance(elementComponent, "div");
+    // Should not change
+    expect($instances.get()).toEqual(initialInstances);
+  });
+});
+
+describe("deleteSelectedInstance", () => {
+  test("delete selected instance and select next one", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="child1"></$.Box>
+          <$.Box ws:id="child2"></$.Box>
+          <$.Box ws:id="child3"></$.Box>
+        </$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["child2", "parent", "body"]);
+    deleteSelectedInstance();
+    expect($awareness.get()?.instanceSelector).toEqual([
+      "child3",
+      "parent",
+      "body",
+    ]);
+  });
+
+  test("delete selected instance and select previous one", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="child1"></$.Box>
+          <$.Box ws:id="child2"></$.Box>
+          <$.Box ws:id="child3"></$.Box>
+        </$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["child3", "parent", "body"]);
+    deleteSelectedInstance();
+    expect($awareness.get()?.instanceSelector).toEqual([
+      "child2",
+      "parent",
+      "body",
+    ]);
+  });
+
+  test("delete selected instance and select parent one", () => {
+    const { instances } = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="parent">
+          <$.Box ws:id="child1"></$.Box>
+        </$.Box>
+      </$.Body>
+    );
+    $instances.set(instances);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["child1", "parent", "body"]);
+    deleteSelectedInstance();
+    expect($awareness.get()?.instanceSelector).toEqual(["parent", "body"]);
   });
 });

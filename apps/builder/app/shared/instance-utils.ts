@@ -1,6 +1,7 @@
 import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
+import { builderApi } from "~/shared/builder-api";
 import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import {
@@ -33,6 +34,8 @@ import {
   Props,
   elementComponent,
   tags,
+  blockTemplateComponent,
+  isComponentDetachable,
 } from "@webstudio-is/sdk";
 import {
   $props,
@@ -48,6 +51,10 @@ import {
   $resources,
   $registeredTemplates,
   $project,
+  $isPreviewMode,
+  $textEditingInstanceSelector,
+  $isContentMode,
+  findBlockSelector,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -84,6 +91,8 @@ import {
 } from "./content-model";
 import type { Project } from "@webstudio-is/project";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
+import { $instanceTags } from "~/builder/features/style-panel/shared/model";
+import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 
 /**
  * structuredClone can be invoked on draft and throw error
@@ -627,15 +636,18 @@ export const unwrapInstanceMutable = ({
   };
   parentItem: { instanceSelector: InstanceSelector; instance: { id: string } };
 }): { success: boolean; error?: string } => {
-  const instanceSelector = findClosestNonTextualContainer({
-    metas,
-    props,
-    instances,
-    instanceSelector: parentItem.instanceSelector,
-  });
-  if (parentItem.instanceSelector.join() !== instanceSelector.join()) {
+  // Check if the selected instance is rich text content (like Bold, Italic in Paragraph)
+  if (
+    isRichTextContent({
+      instanceSelector: selectedItem.instanceSelector,
+      instances,
+      props,
+      metas,
+    })
+  ) {
     return { success: false, error: "Cannot unwrap textual instance" };
   }
+
   const parentInstance = instances.get(parentItem.instance.id);
   const selectedInstance = instances.get(selectedItem.instance.id);
   if (!parentInstance || !selectedInstance) {
@@ -702,11 +714,12 @@ export const unwrapInstanceMutable = ({
 };
 
 export const canUnwrapInstance = (instancePath: InstancePath) => {
-  // global root or body are selected
-  if (instancePath.length < 2) {
+  // Need at least 3 levels: selected, parent, and grandparent
+  // Can't unwrap if there's no grandparent to move the selected instance to
+  if (instancePath.length < 3) {
     return false;
   }
-  const [, parentItem] = instancePath;
+  const [selectedItem, parentItem] = instancePath;
 
   // Prevent unwrapping if parent is the root instance (e.g., Body)
   const rootInstanceId = $selectedPage.get()?.rootInstanceId;
@@ -717,19 +730,19 @@ export const canUnwrapInstance = (instancePath: InstancePath) => {
     return false;
   }
 
-  // Check if parent is inside a textual container
+  // Check if the selected instance is rich text content (like Bold, Italic in Paragraph)
   const instances = $instances.get();
   const props = $props.get();
   const metas = $registeredComponentMetas.get();
 
-  const instanceSelector = findClosestNonTextualContainer({
-    metas,
-    props,
-    instances,
-    instanceSelector: parentItem.instanceSelector,
-  });
-
-  if (parentItem.instanceSelector.join() !== instanceSelector.join()) {
+  if (
+    isRichTextContent({
+      instanceSelector: selectedItem.instanceSelector,
+      instances,
+      props,
+      metas,
+    })
+  ) {
     return false;
   }
 
@@ -762,7 +775,7 @@ export const toggleInstanceShow = (instanceId: Instance["id"]) => {
   });
 };
 
-export const wrapIn = (component: string, tag?: string) => {
+export const wrapInstance = (component: string, tag?: string) => {
   const instancePath = $selectedInstancePath.get();
   // global root or body are selected
   if (instancePath === undefined || instancePath.length === 1) {
@@ -823,6 +836,215 @@ export const wrapIn = (component: string, tag?: string) => {
   } catch {
     // do nothing
   }
+};
+
+// Check if an instance can be converted to a specific component or tag
+export const canConvertInstance = (
+  selectedInstanceId: string,
+  selectedInstanceSelector: string[],
+  component: string,
+  tag: string | undefined,
+  instances: Instances,
+  props: Props,
+  metas: Map<Instance["component"], WsComponentMeta>
+): boolean => {
+  const selectedInstance = instances.get(selectedInstanceId);
+
+  if (!selectedInstance) {
+    return false;
+  }
+
+  // Create a test instance with the new component/tag
+  const testInstance: Instance = {
+    ...selectedInstance,
+    component,
+  };
+
+  if (tag || component === elementComponent) {
+    testInstance.tag = tag ?? "div";
+  } else {
+    // For components with presetStyle (like Heading, Box), infer default tag
+    const meta = metas.get(component);
+    const defaultTag = Object.keys(
+      (meta as { presetStyle?: Record<string, unknown> })?.presetStyle ?? {}
+    ).at(0);
+    if (defaultTag) {
+      testInstance.tag = defaultTag;
+    }
+  }
+
+  const newInstances = new Map(instances);
+  newInstances.set(testInstance.id, testInstance);
+
+  // Validate the converted instance satisfies content model
+  return isTreeSatisfyingContentModel({
+    instances: newInstances,
+    props,
+    metas,
+    instanceSelector: selectedInstanceSelector,
+  });
+};
+
+export const convertInstance = (component: string, tag?: string) => {
+  const instancePath = $selectedInstancePath.get();
+  // global root or body are selected
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem] = instancePath;
+  const selectedInstance = selectedItem.instance;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
+  const metas = $registeredComponentMetas.get();
+  const instanceTags = $instanceTags.get();
+  try {
+    updateWebstudioData((data) => {
+      const instance = data.instances.get(selectedInstance.id);
+      if (instance === undefined) {
+        return;
+      }
+      instance.component = component;
+      // convert to specified tag or with currently used
+      if (tag || component === elementComponent) {
+        instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
+        // delete legacy tag prop if specified
+        for (const prop of data.props.values()) {
+          if (prop.instanceId !== selectedInstance.id) {
+            continue;
+          }
+          if (prop.name === "tag") {
+            data.props.delete(prop.id);
+            continue;
+          }
+          const newName = reactPropsToStandardAttributes[prop.name];
+          if (newName) {
+            const newId = `${prop.instanceId}:${newName}`;
+            data.props.delete(prop.id);
+            data.props.set(newId, { ...prop, id: newId, name: newName });
+          }
+        }
+      }
+      const isSatisfying = isTreeSatisfyingContentModel({
+        instances: data.instances,
+        props: data.props,
+        metas,
+        instanceSelector: selectedInstanceSelector,
+      });
+      if (isSatisfying === false) {
+        const label = getInstanceLabel({ component, tag });
+        toast.error(`Cannot convert to ${label}`);
+        throw Error("Abort transaction");
+      }
+    });
+  } catch {
+    // do nothing
+  }
+};
+
+export const unwrapInstance = () => {
+  const instancePath = $selectedInstancePath.get();
+  if (instancePath === undefined || !canUnwrapInstance(instancePath)) {
+    return;
+  }
+
+  const [selectedItem, parentItem] = instancePath;
+
+  try {
+    updateWebstudioData((data) => {
+      const result = unwrapInstanceMutable({
+        instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
+        selectedItem,
+        parentItem,
+      });
+
+      if (!result.success) {
+        toast.error(result.error ?? "Cannot unwrap instance");
+        throw Error("Abort transaction");
+      }
+    });
+    // After unwrap, select the child that replaced the parent
+    selectInstance([
+      selectedItem.instance.id,
+      ...parentItem.instanceSelector.slice(1),
+    ]);
+  } catch {
+    // do nothing
+  }
+};
+
+export const deleteSelectedInstance = () => {
+  if ($isPreviewMode.get()) {
+    return;
+  }
+  const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+  const instancePath = $selectedInstancePath.get();
+  // cannot delete instance while editing
+  if (textEditingInstanceSelector) {
+    return;
+  }
+  if (instancePath === undefined || instancePath.length === 1) {
+    return;
+  }
+  const [selectedItem, parentItem] = instancePath;
+  const selectedInstanceSelector = selectedItem.instanceSelector;
+  const instances = $instances.get();
+  if (!isComponentDetachable(selectedItem.instance.component)) {
+    toast.error(
+      "This instance can not be moved outside of its parent component."
+    );
+    return false;
+  }
+
+  if ($isContentMode.get()) {
+    // In content mode we are allowing to delete childen of the editable block
+    const editableInstanceSelector = findBlockSelector(
+      selectedInstanceSelector,
+      instances
+    );
+    if (editableInstanceSelector === undefined) {
+      builderApi.toast.info("You can't delete this instance in conent mode.");
+      return;
+    }
+
+    const isChildOfBlock =
+      selectedInstanceSelector.length - editableInstanceSelector.length === 1;
+
+    const isTemplateInstance =
+      instances.get(selectedInstanceSelector[0])?.component ===
+      blockTemplateComponent;
+
+    if (isTemplateInstance) {
+      builderApi.toast.info("You can't delete this instance in content mode.");
+      return;
+    }
+
+    if (!isChildOfBlock) {
+      builderApi.toast.info("You can't delete this instance in content mode.");
+      return;
+    }
+  }
+
+  // find next selected instance
+  let newSelectedInstanceSelector: undefined | InstanceSelector;
+  const parentInstanceSelector = parentItem.instanceSelector;
+  const siblingIds = parentItem.instance.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  const position = siblingIds.indexOf(selectedItem.instance.id);
+  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+  if (siblingId) {
+    // select next or previous sibling if possible
+    newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
+  } else {
+    // fallback to parent
+    newSelectedInstanceSelector = parentInstanceSelector;
+  }
+  updateWebstudioData((data) => {
+    if (deleteInstanceMutable(data, instancePath)) {
+      selectInstance(newSelectedInstanceSelector);
+    }
+  });
 };
 
 const traverseStyleValue = (

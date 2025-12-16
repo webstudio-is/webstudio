@@ -1,36 +1,31 @@
-import {
-  blockTemplateComponent,
-  elementComponent,
-  isComponentDetachable,
-} from "@webstudio-is/sdk";
 import { toast } from "@webstudio-is/design-system";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
-  $instances,
-  $textEditingInstanceSelector,
   $isDesignMode,
   toggleBuilderMode,
-  $isPreviewMode,
-  $isContentMode,
-  $registeredComponentMetas,
-  findBlockSelector,
   $project,
 } from "~/shared/nano-states";
+
+// Declare command for type safety
+declare module "~/shared/pubsub" {
+  interface CommandRegistry {
+    focusStyleSourceInput: undefined;
+  }
+}
+
 import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
 import {
-  deleteInstanceMutable,
+  updateWebstudioData,
+  unwrapInstance,
+  deleteSelectedInstance,
   extractWebstudioFragment,
   insertWebstudioFragmentAt,
   insertWebstudioFragmentCopy,
-  updateWebstudioData,
-  unwrapInstanceMutable,
-  canUnwrapInstance,
 } from "~/shared/instance-utils";
-import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $publisher } from "~/shared/pubsub";
 import {
@@ -42,17 +37,13 @@ import {
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 import { openCommandPanel } from "../features/command-panel";
 import { showWrapComponentsList } from "../features/command-panel/groups/wrap-group";
+import { showConvertComponentsList } from "../features/command-panel/groups/convert-group";
 import { builderApi } from "~/shared/builder-api";
 import { getSetting, setSetting } from "./client-settings";
 import { findAvailableVariables } from "~/shared/data-variables";
-import { atom } from "nanostores";
-import { isTreeSatisfyingContentModel } from "~/shared/content-model";
 import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
-import { getInstanceLabel } from "./instance-label";
-import { $instanceTags } from "../features/style-panel/shared/model";
-import { reactPropsToStandardAttributes } from "@webstudio-is/react-sdk";
 import { isSyncIdle } from "~/shared/sync/project-queue";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
@@ -64,8 +55,6 @@ import {
   cutInstance,
 } from "~/shared/copy-paste/init-copy-paste";
 import { toggleInstanceShow } from "~/shared/instance-utils";
-
-export const $styleSourceInputElement = atom<HTMLInputElement | undefined>();
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -79,168 +68,6 @@ const makeBreakpointCommand = <CommandName extends string>(
     selectBreakpointByOrder(number);
   },
 });
-
-export const deleteSelectedInstance = () => {
-  if ($isPreviewMode.get()) {
-    return;
-  }
-  const textEditingInstanceSelector = $textEditingInstanceSelector.get();
-  const instancePath = $selectedInstancePath.get();
-  // cannot delete instance while editing
-  if (textEditingInstanceSelector) {
-    return;
-  }
-  if (instancePath === undefined || instancePath.length === 1) {
-    return;
-  }
-  const [selectedItem, parentItem] = instancePath;
-  const selectedInstanceSelector = selectedItem.instanceSelector;
-  const instances = $instances.get();
-  if (!isComponentDetachable(selectedItem.instance.component)) {
-    toast.error(
-      "This instance can not be moved outside of its parent component."
-    );
-    return false;
-  }
-
-  if ($isContentMode.get()) {
-    // In content mode we are allowing to delete childen of the editable block
-    const editableInstanceSelector = findBlockSelector(
-      selectedInstanceSelector,
-      instances
-    );
-    if (editableInstanceSelector === undefined) {
-      builderApi.toast.info("You can't delete this instance in conent mode.");
-      return;
-    }
-
-    const isChildOfBlock =
-      selectedInstanceSelector.length - editableInstanceSelector.length === 1;
-
-    const isTemplateInstance =
-      instances.get(selectedInstanceSelector[0])?.component ===
-      blockTemplateComponent;
-
-    if (isTemplateInstance) {
-      builderApi.toast.info("You can't delete this instance in content mode.");
-      return;
-    }
-
-    if (!isChildOfBlock) {
-      builderApi.toast.info("You can't delete this instance in content mode.");
-      return;
-    }
-  }
-
-  // find next selected instance
-  let newSelectedInstanceSelector: undefined | InstanceSelector;
-  const parentInstanceSelector = parentItem.instanceSelector;
-  const siblingIds = parentItem.instance.children
-    .filter((child) => child.type === "id")
-    .map((child) => child.value);
-  const position = siblingIds.indexOf(selectedItem.instance.id);
-  const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
-  if (siblingId) {
-    // select next or previous sibling if possible
-    newSelectedInstanceSelector = [siblingId, ...parentInstanceSelector];
-  } else {
-    // fallback to parent
-    newSelectedInstanceSelector = parentInstanceSelector;
-  }
-  updateWebstudioData((data) => {
-    if (deleteInstanceMutable(data, instancePath)) {
-      selectInstance(newSelectedInstanceSelector);
-    }
-  });
-};
-
-export const replaceWith = (component: string, tag?: string) => {
-  const instancePath = $selectedInstancePath.get();
-  // global root or body are selected
-  if (instancePath === undefined || instancePath.length === 1) {
-    return;
-  }
-  const [selectedItem] = instancePath;
-  const selectedInstance = selectedItem.instance;
-  const selectedInstanceSelector = selectedItem.instanceSelector;
-  const metas = $registeredComponentMetas.get();
-  const instanceTags = $instanceTags.get();
-  try {
-    updateWebstudioData((data) => {
-      const instance = data.instances.get(selectedInstance.id);
-      if (instance === undefined) {
-        return;
-      }
-      instance.component = component;
-      // replace with specified tag or with currently used
-      if (tag || component === elementComponent) {
-        instance.tag = tag ?? instanceTags.get(selectedInstance.id) ?? "div";
-        // delete legacy tag prop if specified
-        for (const prop of data.props.values()) {
-          if (prop.instanceId !== selectedInstance.id) {
-            continue;
-          }
-          if (prop.name === "tag") {
-            data.props.delete(prop.id);
-            continue;
-          }
-          const newName = reactPropsToStandardAttributes[prop.name];
-          if (newName) {
-            const newId = `${prop.instanceId}:${newName}`;
-            data.props.delete(prop.id);
-            data.props.set(newId, { ...prop, id: newId, name: newName });
-          }
-        }
-      }
-      const isSatisfying = isTreeSatisfyingContentModel({
-        instances: data.instances,
-        props: data.props,
-        metas,
-        instanceSelector: selectedInstanceSelector,
-      });
-      if (isSatisfying === false) {
-        const label = getInstanceLabel({ component, tag });
-        toast.error(`Cannot replace with ${label}`);
-        throw Error("Abort transaction");
-      }
-    });
-  } catch {
-    // do nothing
-  }
-};
-
-const unwrap = () => {
-  const instancePath = $selectedInstancePath.get();
-  if (instancePath === undefined || !canUnwrapInstance(instancePath)) {
-    return;
-  }
-
-  const [selectedItem, parentItem] = instancePath;
-
-  try {
-    updateWebstudioData((data) => {
-      const result = unwrapInstanceMutable({
-        instances: data.instances,
-        props: data.props,
-        metas: $registeredComponentMetas.get(),
-        selectedItem,
-        parentItem,
-      });
-
-      if (!result.success) {
-        toast.error(result.error ?? "Cannot unwrap instance");
-        throw Error("Abort transaction");
-      }
-    });
-    // After unwrap, select the child that replaced the parent
-    selectInstance([
-      selectedItem.instance.id,
-      ...parentItem.instanceSelector.slice(1),
-    ]);
-  } catch {
-    // do nothing
-  }
-};
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
@@ -396,10 +223,19 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         $activeInspectorPanel.set("style");
         requestAnimationFrame(() => {
-          $styleSourceInputElement.get()?.focus();
+          emitCommand("focusStyleSourceInput");
         });
       },
       disableOnInputLikeControls: true,
+    },
+    {
+      name: "focusStyleSourceInput",
+      description: "Focus style source input",
+      hidden: true,
+      handler: () => {
+        // This command is handled by the style panel component
+        // It's emitted by openStylePanel command
+      },
     },
     {
       name: "toggleStylePanelFocusMode",
@@ -564,6 +400,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "wrap",
       label: "Wrap",
       description: "Wrap",
+      category: "Navigator",
+      defaultHotkeys: ["meta+alt+g", "ctrl+alt+g"],
       keepCommandPanelOpen: true,
       handler: () => {
         showWrapComponentsList();
@@ -572,19 +410,19 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "unwrap",
       description: "Remove parent wrapper",
-      handler: () => unwrap(),
+      category: "Navigator",
+      defaultHotkeys: ["meta+shift+g", "ctrl+shift+g"],
+      handler: () => unwrapInstance(),
     },
     {
-      name: "replaceWithElement",
-      label: "Replace with an Element",
-      description: "Replace with element",
-      handler: () => replaceWith(elementComponent),
-    },
-    {
-      name: "replaceWithLink",
-      label: "Replace with a Link",
-      description: "Replace with link",
-      handler: () => replaceWith(elementComponent, "a"),
+      name: "convert",
+      label: "Convert",
+      description: "Convert component",
+      category: "Navigator",
+      keepCommandPanelOpen: true,
+      handler: () => {
+        showConvertComponentsList();
+      },
     },
 
     {

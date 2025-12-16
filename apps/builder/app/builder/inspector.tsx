@@ -32,7 +32,6 @@ import {
   $selectedInstanceKey,
   $selectedPage,
 } from "~/shared/awareness";
-import { $styleSourceInputElement } from "./shared/commands";
 import { InstanceIcon, getInstanceLabel } from "./shared/instance-label";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
@@ -169,7 +168,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
               <InstanceInfo instance={selectedInstance} />
               <ModeMenu />
             </Flex>
-            <StylePanel $styleSourceInputElement={$styleSourceInputElement} />
+            <StylePanel />
           </PanelTabsContent>
           <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
             <ScrollArea>

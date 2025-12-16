@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
-import { computed, type WritableAtom } from "nanostores";
+import { computed } from "nanostores";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import {
   type Instance,
@@ -33,9 +33,17 @@ import {
 import { removeByMutable } from "~/shared/array-utils";
 import { cloneStyles } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";
+
+// Declare command for this module
+declare module "~/shared/pubsub" {
+  interface CommandRegistry {
+    focusStyleSourceInput: undefined;
+  }
+}
 
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
@@ -329,17 +337,25 @@ const $availableStyleSources = computed([$styleSources], (styleSources) => {
   return availableStylesSources;
 });
 
-export const StyleSourcesSection = ({
-  $styleSourceInputElement,
-}: {
-  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
-}) => {
+export const StyleSourcesSection = () => {
+  const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
   const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
   const selectedInstanceStyleSources = useStore($selectedInstanceStyleSources);
   const selectedInstanceStatesByStyleSourceId = useStore(
     $selectedInstanceStatesByStyleSourceId
   );
+
+  // Subscribe to focusStyleSourceInput command
+  useEffect(() => {
+    const unsubscribe = subscribe("command:focusStyleSourceInput", () => {
+      if (inputRef) {
+        inputRef.focus();
+      }
+    });
+    return unsubscribe;
+  }, [inputRef]);
+
   const value = selectedInstanceStyleSources.map((styleSource) =>
     convertToInputItem(
       styleSource,
@@ -366,7 +382,7 @@ export const StyleSourcesSection = ({
   return (
     <>
       <StyleSourceInput
-        $styleSourceInputElement={$styleSourceInputElement}
+        inputRef={setInputRef}
         error={error}
         items={availableStyleSources}
         value={value}

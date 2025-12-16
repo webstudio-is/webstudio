@@ -62,7 +62,6 @@ import { StyleSourceBadge } from "./style-source-badge";
 import { humanizeString } from "~/shared/string-utils";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import type { WritableAtom } from "nanostores";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -279,7 +278,7 @@ const categories = [
 ] satisfies ComponentState["category"][];
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
-  $styleSourceInputElement: WritableAtom<HTMLInputElement | undefined>;
+  inputRef: (element: HTMLInputElement | null) => void;
   error?: StyleSourceError;
   items?: Array<Item>;
   value?: Array<Item>;
@@ -565,9 +564,7 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
-            inputRef={(element) =>
-              props.$styleSourceInputElement.set(element ?? undefined)
-            }
+            inputRef={props.inputRef}
             error={props.error}
             renderStyleSourceMenuItems={(item, hasStyles) =>
               renderMenuItems({

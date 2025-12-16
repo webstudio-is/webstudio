@@ -41,6 +41,7 @@ const getMenuPermissions = (instancePath: InstancePath | undefined) => {
     canRename: !isRoot,
     canWrap: !isRootOrBody,
     canUnwrap,
+    canConvert: !isRootOrBody,
     canDelete: !isRootOrBody,
   };
 };
@@ -133,6 +134,9 @@ export const MenuItems = () => {
         }}
       >
         Wrap
+        <ContextMenuItemRightSlot>
+          <Kbd value={["meta", "alt", "g"]} />
+        </ContextMenuItemRightSlot>
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!permissions.canUnwrap}
@@ -141,6 +145,17 @@ export const MenuItems = () => {
         }}
       >
         Unwrap
+        <ContextMenuItemRightSlot>
+          <Kbd value={["meta", "shift", "g"]} />
+        </ContextMenuItemRightSlot>
+      </ContextMenuItem>
+      <ContextMenuItem
+        disabled={!permissions.canConvert}
+        onSelect={() => {
+          emitCommand("convert");
+        }}
+      >
+        Convert
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem
