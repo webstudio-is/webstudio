@@ -6,6 +6,9 @@ type TestPublishMap = {
   noPayloadAction: undefined;
   numberAction: number;
   storybook: string;
+  command: { source: string; name: string };
+  "command:testCommand": undefined;
+  "command:anotherCommand": undefined;
 };
 
 // Helper to cast to Window type for test mocking
@@ -512,6 +515,182 @@ describe("createPubsub", () => {
         expect.any(Function),
         false
       );
+    });
+  });
+
+  describe("command-specific subscriptions", () => {
+    test("should subscribe to specific command and call handler", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const handler = vi.fn();
+      pubsub.subscribe("command:testCommand", handler);
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: { source: "builder", name: "testCommand" },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      // Wait for requestAnimationFrame callback
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(handler).toHaveBeenCalledWith(undefined);
+    });
+
+    test("should only call handler for matching command", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+
+      pubsub.subscribe("command:testCommand", handler1);
+      pubsub.subscribe("command:anotherCommand", handler2);
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      // Send testCommand
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: { source: "builder", name: "testCommand" },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(handler1).toHaveBeenCalledTimes(1);
+      expect(handler2).not.toHaveBeenCalled();
+    });
+
+    test("should call both general command handler and specific command handler", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const generalHandler = vi.fn();
+      const specificHandler = vi.fn();
+
+      pubsub.subscribe("command", generalHandler);
+      pubsub.subscribe("command:testCommand", specificHandler);
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: { source: "builder", name: "testCommand" },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(generalHandler).toHaveBeenCalledWith({
+        source: "builder",
+        name: "testCommand",
+      });
+      expect(specificHandler).toHaveBeenCalledWith(undefined);
+    });
+
+    test("should unsubscribe from specific command", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const handler = vi.fn();
+      const unsubscribe = pubsub.subscribe("command:testCommand", handler);
+
+      unsubscribe();
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: { source: "builder", name: "testCommand" },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("should handle multiple subscribers to the same specific command", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+
+      pubsub.subscribe("command:testCommand", handler1);
+      pubsub.subscribe("command:testCommand", handler2);
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: { source: "builder", name: "testCommand" },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(handler1).toHaveBeenCalledWith(undefined);
+      expect(handler2).toHaveBeenCalledWith(undefined);
     });
   });
 });

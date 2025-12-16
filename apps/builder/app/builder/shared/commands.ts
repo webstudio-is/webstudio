@@ -6,6 +6,14 @@ import {
   toggleBuilderMode,
   $project,
 } from "~/shared/nano-states";
+
+// Declare command for type safety
+declare module "~/shared/pubsub" {
+  interface CommandRegistry {
+    focusStyleSourceInput: undefined;
+  }
+}
+
 import {
   $breakpointsMenuView,
   selectBreakpointByOrder,

@@ -38,6 +38,13 @@ import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";
 
+// Declare command for this module
+declare module "~/shared/pubsub" {
+  interface CommandRegistry {
+    focusStyleSourceInput: undefined;
+  }
+}
+
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
   state?: StyleDecl["state"]
@@ -341,8 +348,8 @@ export const StyleSourcesSection = () => {
 
   // Subscribe to focusStyleSourceInput command
   useEffect(() => {
-    const unsubscribe = subscribe("command", (command) => {
-      if (command.name === "focusStyleSourceInput" && inputRef) {
+    const unsubscribe = subscribe("command:focusStyleSourceInput", () => {
+      if (inputRef) {
         inputRef.focus();
       }
     });
