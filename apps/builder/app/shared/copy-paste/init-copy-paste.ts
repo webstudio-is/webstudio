@@ -172,9 +172,20 @@ export const copyInstance = () => {
   }
 };
 
-export const pasteInstance = async () => {
+export const emitPaste = async () => {
   const text = await navigator.clipboard.readText();
-  instanceText.onPaste?.(text);
+
+  // Create and dispatch a paste event to go through the normal handlePaste flow
+  const dataTransfer = new DataTransfer();
+  dataTransfer.setData("text/plain", text);
+
+  const pasteEvent = new ClipboardEvent("paste", {
+    clipboardData: dataTransfer,
+    bubbles: true,
+    cancelable: true,
+  });
+
+  document.dispatchEvent(pasteEvent);
 };
 
 export const cutInstance = () => {
