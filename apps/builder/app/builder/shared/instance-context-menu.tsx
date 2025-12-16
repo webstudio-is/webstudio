@@ -133,6 +133,9 @@ export const MenuItems = () => {
         }}
       >
         Wrap
+        <ContextMenuItemRightSlot>
+          <Kbd value={["meta", "alt", "g"]} />
+        </ContextMenuItemRightSlot>
       </ContextMenuItem>
       <ContextMenuItem
         disabled={!permissions.canUnwrap}
@@ -141,6 +144,9 @@ export const MenuItems = () => {
         }}
       >
         Unwrap
+        <ContextMenuItemRightSlot>
+          <Kbd value={["meta", "shift", "g"]} />
+        </ContextMenuItemRightSlot>
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem

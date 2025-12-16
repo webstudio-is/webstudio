@@ -98,6 +98,8 @@ export const KeyboardShortcutsDialog = () => {
       "cut",
       "paste",
       "duplicateInstance",
+      "wrap",
+      "unwrap",
       "expandNavigatorItem",
       "collapseNavigatorItem",
       "expandAllNavigatorNodes",

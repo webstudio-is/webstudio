@@ -564,6 +564,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "wrap",
       label: "Wrap",
       description: "Wrap",
+      category: "Navigator",
+      defaultHotkeys: ["meta+alt+g", "ctrl+alt+g"],
       keepCommandPanelOpen: true,
       handler: () => {
         showWrapComponentsList();
@@ -572,6 +574,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "unwrap",
       description: "Remove parent wrapper",
+      category: "Navigator",
+      defaultHotkeys: ["meta+shift+g", "ctrl+shift+g"],
       handler: () => unwrap(),
     },
     {
