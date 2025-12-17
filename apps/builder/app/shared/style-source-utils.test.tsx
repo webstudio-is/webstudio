@@ -22,6 +22,7 @@ import {
   renameStyleSourceMutable,
   deleteLocalStyleSourcesMutable,
   collectStyleSourcesFromInstances,
+  findDuplicateTokens,
 } from "./style-source-utils";
 
 enableMapSet();
@@ -1356,7 +1357,7 @@ describe("findUnusedTokens", () => {
       ],
       ["local1", { type: "local", id: "local1" } as StyleSource],
     ]);
-    const styleSourceUsages = new Map([
+    const styleSourceUsages = new Map<string, Set<string>>([
       ["token1", new Set(["instance1", "instance2"])],
       ["token2", new Set()],
       ["local1", new Set(["instance3"])],
@@ -2010,5 +2011,445 @@ describe("collectStyleSourcesFromInstances", () => {
     expect(result.styleSourceSelectionsArray).toHaveLength(2);
     expect(result.styleSourcesMap.size).toBe(1);
     expect(result.stylesArray).toHaveLength(1);
+  });
+});
+
+describe("findDuplicateTokens", () => {
+  test("finds tokens with identical styles", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        { type: "token", id: "token1", name: "Primary Red" } as StyleSource,
+      ],
+      [
+        "token2",
+        { type: "token", id: "token2", name: "Accent Red" } as StyleSource,
+      ],
+      ["token3", { type: "token", id: "token3", name: "Blue" } as StyleSource],
+      ["local1", { type: "local", id: "local1" } as StyleSource],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token3:base:color",
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(2);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+    expect(duplicates.has("token3")).toBe(false);
+    expect(duplicates.has("local1")).toBe(false);
+  });
+
+  test("finds tokens with same name", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        { type: "token", id: "token1", name: "Primary" } as StyleSource,
+      ],
+      [
+        "token2",
+        { type: "token", id: "token2", name: "Primary" } as StyleSource,
+      ],
+      [
+        "token3",
+        { type: "token", id: "token3", name: "Secondary" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+      [
+        "token3:base:color",
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "green",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(2);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+    expect(duplicates.has("token3")).toBe(false);
+  });
+
+  test("finds tokens with same name AND same styles without duplicating", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        { type: "token", id: "token1", name: "Primary" } as StyleSource,
+      ],
+      [
+        "token2",
+        { type: "token", id: "token2", name: "Primary" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(2);
+    // Should list each token only once, not twice (once for name, once for styles)
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+  });
+
+  test("finds mixed duplicates: some by style, some by name", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      ["token1", { type: "token", id: "token1", name: "Red A" } as StyleSource],
+      ["token2", { type: "token", id: "token2", name: "Red B" } as StyleSource],
+      [
+        "token3",
+        { type: "token", id: "token3", name: "Duplicate Name" } as StyleSource,
+      ],
+      [
+        "token4",
+        { type: "token", id: "token4", name: "Duplicate Name" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token3:base:color",
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+      [
+        "token4:base:color",
+        createStyleDecl("token4", "base", "color", {
+          type: "keyword",
+          value: "green",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(4);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+    expect(duplicates.get("token3")).toEqual(["token4"]);
+    expect(duplicates.get("token4")).toEqual(["token3"]);
+  });
+
+  test("finds multiple groups of duplicates", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      ["token1", { type: "token", id: "token1", name: "Red 1" } as StyleSource],
+      ["token2", { type: "token", id: "token2", name: "Red 2" } as StyleSource],
+      [
+        "token3",
+        { type: "token", id: "token3", name: "Blue 1" } as StyleSource,
+      ],
+      [
+        "token4",
+        { type: "token", id: "token4", name: "Blue 2" } as StyleSource,
+      ],
+      [
+        "token5",
+        { type: "token", id: "token5", name: "Blue 3" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token3:base:color",
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+      [
+        "token4:base:color",
+        createStyleDecl("token4", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+      [
+        "token5:base:color",
+        createStyleDecl("token5", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(5);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+    expect(duplicates.get("token3")).toEqual(["token4", "token5"]);
+    expect(duplicates.get("token4")).toEqual(["token3", "token5"]);
+    expect(duplicates.get("token5")).toEqual(["token3", "token4"]);
+  });
+
+  test("returns empty map when no duplicates exist", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      ["token1", { type: "token", id: "token1", name: "Red" } as StyleSource],
+      ["token2", { type: "token", id: "token2", name: "Blue" } as StyleSource],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(0);
+  });
+
+  test("compares tokens across breakpoints and states", () => {
+    const breakpoints = toMap<Breakpoint>([
+      { id: "base", label: "base" },
+      { id: "tablet", label: "tablet", minWidth: 768 },
+    ]);
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        { type: "token", id: "token1", name: "Token 1" } as StyleSource,
+      ],
+      [
+        "token2",
+        { type: "token", id: "token2", name: "Token 2" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token1:base:color",
+        createStyleDecl("token1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token1:tablet:color",
+        {
+          ...createStyleDecl("token1", "tablet", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+          state: ":hover",
+        },
+      ],
+      [
+        "token2:base:color",
+        createStyleDecl("token2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "token2:tablet:color",
+        {
+          ...createStyleDecl("token2", "tablet", "color", {
+            type: "keyword",
+            value: "blue",
+          }),
+          state: ":hover",
+        },
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(2);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+  });
+
+  test("ignores local style sources", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      ["local1", { type: "local", id: "local1" } as StyleSource],
+      ["local2", { type: "local", id: "local2" } as StyleSource],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "local1:base:color",
+        createStyleDecl("local1", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+      [
+        "local2:base:color",
+        createStyleDecl("local2", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    expect(duplicates.size).toBe(0);
+  });
+
+  test("handles tokens with no styles", () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources: StyleSources = new Map([
+      [
+        "token1",
+        { type: "token", id: "token1", name: "Empty 1" } as StyleSource,
+      ],
+      [
+        "token2",
+        { type: "token", id: "token2", name: "Empty 2" } as StyleSource,
+      ],
+      [
+        "token3",
+        { type: "token", id: "token3", name: "With Styles" } as StyleSource,
+      ],
+    ]);
+    const styles: Styles = new Map([
+      [
+        "token3:base:color",
+        createStyleDecl("token3", "base", "color", {
+          type: "keyword",
+          value: "red",
+        }),
+      ],
+    ]);
+
+    const duplicates = findDuplicateTokens({
+      styleSources,
+      styles,
+      breakpoints,
+    });
+
+    // Empty tokens should be considered duplicates of each other
+    expect(duplicates.size).toBe(2);
+    expect(duplicates.get("token1")).toEqual(["token2"]);
+    expect(duplicates.get("token2")).toEqual(["token1"]);
+    expect(duplicates.has("token3")).toBe(false);
   });
 });

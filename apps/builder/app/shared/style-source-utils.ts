@@ -548,3 +548,89 @@ export const collectStyleSourcesFromInstances = ({
     stylesArray,
   };
 };
+
+/**
+ * Find tokens that have duplicates based on:
+ * 1. Identical styles (same CSS signature)
+ * 2. Same token name
+ *
+ * Returns a map where keys are token IDs and values are arrays of duplicate token IDs.
+ * Only includes tokens that have at least one duplicate.
+ */
+export const findDuplicateTokens = ({
+  styleSources,
+  styles,
+  breakpoints,
+}: {
+  styleSources: StyleSources;
+  styles: Styles;
+  breakpoints: Map<Breakpoint["id"], Breakpoint>;
+}): Map<StyleSource["id"], StyleSource["id"][]> => {
+  const duplicatesMap = new Map<StyleSource["id"], StyleSource["id"][]>();
+  const stylesArray = Array.from(styles.values());
+  const tokens = Array.from(styleSources.values()).filter(
+    (source): source is Extract<StyleSource, { type: "token" }> =>
+      source.type === "token"
+  );
+
+  // Build a map of signature -> token IDs
+  const signatureToTokenIds = new Map<string, StyleSource["id"][]>();
+  // Build a map of name -> token IDs
+  const nameToTokenIds = new Map<string, StyleSource["id"][]>();
+
+  for (const token of tokens) {
+    // Group by signature (identical styles)
+    const signature = getStyleSourceStylesSignature(
+      token.id,
+      stylesArray,
+      breakpoints,
+      new Map()
+    );
+
+    if (!signatureToTokenIds.has(signature)) {
+      signatureToTokenIds.set(signature, []);
+    }
+    signatureToTokenIds.get(signature)!.push(token.id);
+
+    // Group by name (same token name)
+    if (!nameToTokenIds.has(token.name)) {
+      nameToTokenIds.set(token.name, []);
+    }
+    nameToTokenIds.get(token.name)!.push(token.id);
+  }
+
+  // Build the duplicates map - include tokens with signature OR name duplicates
+  const processedTokens = new Set<StyleSource["id"]>();
+
+  for (const [_signature, tokenIds] of signatureToTokenIds) {
+    if (tokenIds.length > 1) {
+      for (const tokenId of tokenIds) {
+        if (!duplicatesMap.has(tokenId)) {
+          duplicatesMap.set(tokenId, []);
+        }
+        const duplicates = tokenIds.filter((id) => id !== tokenId);
+        duplicatesMap.get(tokenId)!.push(...duplicates);
+        processedTokens.add(tokenId);
+      }
+    }
+  }
+
+  for (const [_name, tokenIds] of nameToTokenIds) {
+    if (tokenIds.length > 1) {
+      for (const tokenId of tokenIds) {
+        if (!duplicatesMap.has(tokenId)) {
+          duplicatesMap.set(tokenId, []);
+        }
+        const duplicates = tokenIds.filter((id) => id !== tokenId);
+        // Avoid adding the same duplicate twice
+        for (const duplicate of duplicates) {
+          if (!duplicatesMap.get(tokenId)!.includes(duplicate)) {
+            duplicatesMap.get(tokenId)!.push(duplicate);
+          }
+        }
+      }
+    }
+  }
+
+  return duplicatesMap;
+};

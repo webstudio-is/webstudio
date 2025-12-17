@@ -503,6 +503,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
 
     {
+      name: "findDuplicateTokens",
+      label: "Find duplicate tokens",
+      description: "Find tokens with identical styles or names",
+      handler: () => {
+        // Import needed to avoid circular dependency
+        import(
+          "~/builder/features/command-panel/groups/duplicate-tokens-group"
+        ).then(({ showDuplicateTokensView }) => {
+          showDuplicateTokensView();
+        });
+      },
+    },
+
+    {
       name: "deleteUnusedDataVariables",
       label: "Delete unused data variables",
       description: "Remove unused data variables",

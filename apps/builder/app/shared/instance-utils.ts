@@ -7,10 +7,8 @@ import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   type Instances,
   type Instance,
-  type StyleSourceSelection,
   type StyleDecl,
   type Asset,
-  type StyleSources,
   type Breakpoints,
   type DataSources,
   type DataSource,
