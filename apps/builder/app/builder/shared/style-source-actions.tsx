@@ -21,9 +21,19 @@ import {
   $selectedStyleSources,
   $selectedStyleState,
 } from "~/shared/nano-states";
-import { removeByMutable } from "~/shared/array-utils";
+import {
+  deleteStyleSourceMutable,
+  findUnusedTokens,
+  deleteStyleSourcesMutable,
+  validateAndRenameStyleSource,
+  renameStyleSourceMutable,
+  type RenameStyleSourceError,
+} from "~/shared/style-source-utils";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { $selectedInstance } from "~/shared/awareness";
+
+// Re-export the type for convenience
+export type { RenameStyleSourceError };
 
 const $isDeleteUnusedTokensDialogOpen = atom(false);
 
@@ -66,20 +76,12 @@ export const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
   serverSyncStore.createTransaction(
     [$styleSources, $styleSourceSelections, $styles],
     (styleSources, styleSourceSelections, styles) => {
-      styleSources.delete(styleSourceId);
-      for (const styleSourceSelection of styleSourceSelections.values()) {
-        if (styleSourceSelection.values.includes(styleSourceId)) {
-          removeByMutable(
-            styleSourceSelection.values,
-            (item) => item === styleSourceId
-          );
-        }
-      }
-      for (const [styleDeclKey, styleDecl] of styles) {
-        if (styleDecl.styleSourceId === styleSourceId) {
-          styles.delete(styleDeclKey);
-        }
-      }
+      deleteStyleSourceMutable({
+        styleSourceId,
+        styleSources,
+        styleSourceSelections,
+        styles,
+      });
     }
   );
   // reset selected style source if necessary
@@ -89,16 +91,7 @@ export const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
 export const deleteUnusedTokens = () => {
   const styleSources = $styleSources.get();
   const styleSourceUsages = $styleSourceUsages.get();
-  const unusedTokenIds: StyleSource["id"][] = [];
-
-  for (const styleSource of styleSources.values()) {
-    if (styleSource.type === "token") {
-      const usages = styleSourceUsages.get(styleSource.id);
-      if (usages === undefined || usages.size === 0) {
-        unusedTokenIds.push(styleSource.id);
-      }
-    }
-  }
+  const unusedTokenIds = findUnusedTokens({ styleSources, styleSourceUsages });
 
   if (unusedTokenIds.length === 0) {
     return 0;
@@ -107,54 +100,33 @@ export const deleteUnusedTokens = () => {
   serverSyncStore.createTransaction(
     [$styleSources, $styleSourceSelections, $styles],
     (styleSources, styleSourceSelections, styles) => {
-      for (const styleSourceId of unusedTokenIds) {
-        styleSources.delete(styleSourceId);
-        for (const styleSourceSelection of styleSourceSelections.values()) {
-          if (styleSourceSelection.values.includes(styleSourceId)) {
-            removeByMutable(
-              styleSourceSelection.values,
-              (item) => item === styleSourceId
-            );
-          }
-        }
-        for (const [styleDeclKey, styleDecl] of styles) {
-          if (styleDecl.styleSourceId === styleSourceId) {
-            styles.delete(styleDeclKey);
-          }
-        }
-      }
+      deleteStyleSourcesMutable({
+        styleSourceIds: unusedTokenIds,
+        styleSources,
+        styleSourceSelections,
+        styles,
+      });
     }
   );
 
   return unusedTokenIds.length;
 };
 
-export type RenameStyleSourceError =
-  | { type: "minlength"; id: StyleSource["id"] }
-  | { type: "duplicate"; id: StyleSource["id"] };
-
 export const renameStyleSource = (
   id: StyleSource["id"],
   name: string
 ): RenameStyleSourceError | undefined => {
   const styleSources = $styleSources.get();
-  if (name.trim().length === 0) {
-    return { type: "minlength", id };
-  }
-  for (const styleSource of styleSources.values()) {
-    if (
-      styleSource.type === "token" &&
-      styleSource.name === name &&
-      styleSource.id !== id
-    ) {
-      return { type: "duplicate", id };
-    }
+  const validationError = validateAndRenameStyleSource({
+    id,
+    name,
+    styleSources,
+  });
+  if (validationError) {
+    return validationError;
   }
   serverSyncStore.createTransaction([$styleSources], (styleSources) => {
-    const styleSource = styleSources.get(id);
-    if (styleSource?.type === "token") {
-      styleSource.name = name;
-    }
+    renameStyleSourceMutable({ id, name, styleSources });
   });
 };
 
@@ -301,15 +273,15 @@ export const DeleteUnusedTokensDialog = () => {
     $isDeleteUnusedTokensDialogOpen.set(false);
   };
 
-  const unusedTokens: Array<{ id: string; name: string }> = [];
-  for (const styleSource of styleSources.values()) {
-    if (styleSource.type === "token") {
-      const usages = styleSourceUsages.get(styleSource.id);
-      if (usages === undefined || usages.size === 0) {
-        unusedTokens.push({ id: styleSource.id, name: styleSource.name });
-      }
-    }
-  }
+  const unusedTokenIds = findUnusedTokens({ styleSources, styleSourceUsages });
+  const unusedTokens: Array<{ id: string; name: string }> = unusedTokenIds
+    .map((id) => {
+      const styleSource = styleSources.get(id);
+      return styleSource?.type === "token"
+        ? { id, name: styleSource.name }
+        : null;
+    })
+    .filter((token): token is { id: string; name: string } => token !== null);
 
   return (
     <Dialog

@@ -18,7 +18,7 @@ import {
   DeleteStyleSourceDialog,
   RenameStyleSourceDialog,
   $styleSourceUsages,
-} from "~/builder/shared/style-source-utils";
+} from "~/builder/shared/style-source-actions";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
