@@ -1,14 +1,20 @@
 import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { matchSorter } from "match-sorter";
 import {
   CommandGroup,
   CommandGroupHeading,
+  CommandGroupFooter,
+  CommandFooter,
   CommandItem,
+  CommandInput,
+  CommandList,
   Text,
+  Flex,
+  ScrollArea,
   toast,
   useSelectedAction,
-  useResetActionIndex,
 } from "@webstudio-is/design-system";
 import type { Instance, StyleSource } from "@webstudio-is/sdk";
 import {
@@ -18,22 +24,17 @@ import {
 } from "~/shared/sync/data-stores";
 import { $selectedStyleSources } from "~/shared/nano-states";
 import { findDuplicateTokens } from "~/shared/style-source-utils";
-import {
-  deleteStyleSource,
-  DeleteStyleSourceDialog,
-  RenameStyleSourceDialog,
-  $styleSourceUsages,
-} from "~/builder/shared/style-source-actions";
+import { $styleSourceUsages } from "~/builder/shared/style-source-actions";
 import { InstanceList, showInstance } from "../shared/instance-list";
 import {
   $commandContent,
-  $isCommandPanelOpen,
+  $commandContentKey,
   closeCommandPanel,
-  focusCommandPanel,
   openCommandPanel,
 } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
+import { BackButton } from "../shared/back-button";
 
 export type DuplicateTokenOption = BaseOption & {
   type: "duplicateToken";
@@ -43,18 +44,9 @@ export type DuplicateTokenOption = BaseOption & {
 };
 
 export const $duplicateTokenOptions = computed(
-  [
-    $isCommandPanelOpen,
-    $styleSources,
-    $styles,
-    $breakpoints,
-    $styleSourceUsages,
-  ],
-  (isOpen, styleSources, styles, breakpoints, styleSourceUsages) => {
+  [$styleSources, $styles, $breakpoints, $styleSourceUsages],
+  (styleSources, styles, breakpoints, styleSourceUsages) => {
     const duplicateTokenOptions: DuplicateTokenOption[] = [];
-    if (!isOpen) {
-      return duplicateTokenOptions;
-    }
 
     const duplicatesMap = findDuplicateTokens({
       styleSources,
@@ -110,48 +102,137 @@ const selectToken = (
 
 const DuplicateTokensList = ({
   duplicateIds,
+  tokenName,
 }: {
   duplicateIds: StyleSource["id"][];
+  tokenName: string;
 }) => {
   const styleSources = useStore($styleSources);
   const usages = useStore($styleSourceUsages);
+  const duplicateTokenOptions = $duplicateTokenOptions.get();
+  const action = useSelectedAction();
+  const [search, setSearch] = useState("");
+
+  // Build options for search
+  const options = duplicateIds
+    .map((duplicateId) => {
+      const duplicate = styleSources.get(duplicateId);
+      if (duplicate?.type !== "token") {
+        return null;
+      }
+      const duplicateUsages = usages.get(duplicateId)?.size ?? 0;
+      return {
+        id: duplicateId,
+        token: duplicate,
+        usages: duplicateUsages,
+        terms: [duplicate.name, ...getUsageSearchTerms(duplicateUsages)],
+      };
+    })
+    .filter((opt): opt is NonNullable<typeof opt> => opt !== null);
+
+  let matches = options;
+  // prevent searching when value is empty to preserve original items order
+  if (search.trim().length > 0) {
+    for (const word of search.trim().split(/\s+/)) {
+      matches = matchSorter(matches, word, {
+        keys: ["terms"],
+      });
+    }
+  }
 
   return (
-    <CommandGroup
-      name="duplicates"
-      heading={<CommandGroupHeading>Duplicate Tokens</CommandGroupHeading>}
-      actions={["find"]}
-    >
-      {duplicateIds.map((duplicateId) => {
-        const duplicate = styleSources.get(duplicateId);
-        if (duplicate?.type !== "token") {
-          return null;
-        }
-        const duplicateUsages = usages.get(duplicateId)?.size ?? 0;
-        return (
-          <CommandItem
-            key={duplicateId}
-            value={duplicateId}
-            onSelect={() => {
-              $commandContent.set(<TokenInstances tokenId={duplicateId} />);
+    <>
+      <CommandInput
+        placeholder="Search duplicates..."
+        value={search}
+        onValueChange={(value) => setSearch(value)}
+        onKeyDown={(event) => {
+          if (event.key === "Backspace" && search === "") {
+            event.preventDefault();
+            // Go back to duplicate tokens view
+            $commandContentKey.set($commandContentKey.get() + 1);
+            $commandContent.set(
+              <DuplicateTokensGroup options={duplicateTokenOptions} />
+            );
+          }
+        }}
+      />
+      <Flex direction="column" css={{ maxHeight: 300 }}>
+        <ScrollArea>
+          <CommandList key={tokenName}>
+            <CommandGroup
+              name="duplicates"
+              heading={
+                <CommandGroupHeading>
+                  Duplicates of {tokenName}
+                </CommandGroupHeading>
+              }
+              actions={["show duplicates", "show instances"]}
+            >
+              {matches.map(({ id, token, usages: duplicateUsages }) => (
+                <CommandItem
+                  key={id}
+                  value={id}
+                  onSelect={() => {
+                    if (action === "show duplicates" || !action) {
+                      // Show duplicates of this duplicate token
+                      const allDuplicates = duplicateTokenOptions.find(
+                        (opt) => opt.token.id === id
+                      )?.duplicates;
+                      if (allDuplicates) {
+                        $commandContentKey.set($commandContentKey.get() + 1);
+                        $commandContent.set(
+                          <DuplicateTokensList
+                            duplicateIds={allDuplicates}
+                            tokenName={token.name}
+                          />
+                        );
+                      }
+                    }
+                    if (
+                      action === "show instances" ||
+                      action === "find instances" ||
+                      action === "find"
+                    ) {
+                      $commandContentKey.set($commandContentKey.get() + 1);
+                      $commandContent.set(<TokenInstances tokenId={id} />);
+                    }
+                  }}
+                >
+                  <Text variant="labelsTitleCase">
+                    {token.name}{" "}
+                    <Text as="span" color="moreSubtle">
+                      {formatUsageCount(duplicateUsages)}
+                    </Text>
+                  </Text>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </ScrollArea>
+      </Flex>
+      <CommandGroupFooter>
+        <Flex align="center" justify="between" css={{ width: "100%" }}>
+          <BackButton
+            onClick={() => {
+              // Go back to duplicate tokens view
+              $commandContentKey.set($commandContentKey.get() + 1);
+              $commandContent.set(
+                <DuplicateTokensGroup options={duplicateTokenOptions} />
+              );
             }}
-          >
-            <Text variant="labelsTitleCase">
-              {duplicate.name}{" "}
-              <Text as="span" color="moreSubtle">
-                {formatUsageCount(duplicateUsages)}
-              </Text>
-            </Text>
-          </CommandItem>
-        );
-      })}
-    </CommandGroup>
+          />
+          <CommandFooter />
+        </Flex>
+      </CommandGroupFooter>
+    </>
   );
 };
 
 const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
   const usages = useStore($styleSourceUsages);
   const usedInInstanceIds = usages.get(tokenId) ?? new Set();
+  const duplicateTokenOptions = $duplicateTokenOptions.get();
 
   return (
     <InstanceList
@@ -159,6 +240,13 @@ const TokenInstances = ({ tokenId }: { tokenId: StyleSource["id"] }) => {
       onSelect={(instanceId) => {
         selectToken(instanceId, tokenId);
         closeCommandPanel();
+      }}
+      onBack={() => {
+        // Go back to duplicate tokens view
+        $commandContentKey.set($commandContentKey.get() + 1);
+        $commandContent.set(
+          <DuplicateTokensGroup options={duplicateTokenOptions} />
+        );
       }}
     />
   );
@@ -170,80 +258,95 @@ export const DuplicateTokensGroup = ({
   options: DuplicateTokenOption[];
 }) => {
   const action = useSelectedAction();
-  const resetActionIndex = useResetActionIndex();
-  const [tokenDialog, setTokenDialog] = useState<
-    | (Extract<StyleSource, { type: "token" }> & {
-        action: "rename" | "delete";
-      })
-    | undefined
-  >();
+  const [search, setSearch] = useState("");
+
+  let matches = options;
+  // prevent searching when value is empty to preserve original items order
+  if (search.trim().length > 0) {
+    for (const word of search.trim().split(/\s+/)) {
+      matches = matchSorter(matches, word, {
+        keys: ["terms"],
+      });
+    }
+  }
 
   return (
     <>
-      <CommandGroup
-        name="duplicateToken"
-        heading={<CommandGroupHeading>Duplicate Tokens</CommandGroupHeading>}
-        actions={["show duplicates", "find", "rename", "delete"]}
-      >
-        {options.map(({ token, duplicates, usages }) => (
-          <CommandItem
-            key={token.id}
-            // preserve selected state when rerender
-            value={token.id}
-            onSelect={() => {
-              if (action === "show duplicates") {
-                $commandContent.set(
-                  <DuplicateTokensList duplicateIds={duplicates} />
-                );
+      <CommandInput
+        placeholder="Search duplicate tokens..."
+        value={search}
+        onValueChange={(value) => setSearch(value)}
+        onKeyDown={(event) => {
+          if (event.key === "Backspace" && search === "") {
+            event.preventDefault();
+            // Go back to main command panel
+            $commandContentKey.set($commandContentKey.get() + 1);
+            $commandContent.set(undefined);
+          }
+        }}
+      />
+      <Flex direction="column" css={{ maxHeight: 300 }}>
+        <ScrollArea>
+          <CommandList key="duplicate-tokens-main">
+            <CommandGroup
+              name="duplicateToken"
+              heading={
+                <CommandGroupHeading>Duplicate tokens</CommandGroupHeading>
               }
-              if (action === "find") {
-                $commandContent.set(<TokenInstances tokenId={token.id} />);
-              }
-              if (action === "rename") {
-                setTokenDialog({ ...token, action: "rename" });
-              }
-              if (action === "delete") {
-                setTokenDialog({ ...token, action: "delete" });
-              }
+              actions={["show duplicates", "show instances"]}
+            >
+              {matches.map(({ token, duplicates, usages }) => (
+                <CommandItem
+                  key={token.id}
+                  // preserve selected state when rerender
+                  value={token.id}
+                  onSelect={() => {
+                    if (action === "show duplicates" || !action) {
+                      $commandContentKey.set($commandContentKey.get() + 1);
+                      $commandContent.set(
+                        <DuplicateTokensList
+                          duplicateIds={duplicates}
+                          tokenName={token.name}
+                        />
+                      );
+                    }
+                    if (
+                      action === "show instances" ||
+                      action === "find instances" ||
+                      action === "find"
+                    ) {
+                      $commandContentKey.set($commandContentKey.get() + 1);
+                      $commandContent.set(
+                        <TokenInstances tokenId={token.id} />
+                      );
+                    }
+                  }}
+                >
+                  <Text variant="labelsTitleCase">
+                    {token.name}{" "}
+                    <Text as="span" color="moreSubtle">
+                      {formatUsageCount(usages)} · {duplicates.length} duplicate
+                      {duplicates.length !== 1 ? "s" : ""}
+                    </Text>
+                  </Text>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </ScrollArea>
+      </Flex>
+      <CommandGroupFooter>
+        <Flex align="center" justify="between" css={{ width: "100%" }}>
+          <BackButton
+            onClick={() => {
+              // Go back to main command panel
+              $commandContentKey.set($commandContentKey.get() + 1);
+              $commandContent.set(undefined);
             }}
-          >
-            <Text variant="labelsTitleCase">
-              {token.name}{" "}
-              <Text as="span" color="moreSubtle">
-                {formatUsageCount(usages)} · {duplicates.length} duplicate
-                {duplicates.length !== 1 ? "s" : ""}
-              </Text>
-            </Text>
-          </CommandItem>
-        ))}
-      </CommandGroup>
-      <RenameStyleSourceDialog
-        styleSource={tokenDialog?.action === "rename" ? tokenDialog : undefined}
-        onClose={() => {
-          setTokenDialog(undefined);
-          resetActionIndex();
-          focusCommandPanel();
-        }}
-        onConfirm={(_styleSourceId, newName) => {
-          toast.success(
-            `Token renamed from "${tokenDialog?.name}" to "${newName}"`
-          );
-          setTokenDialog(undefined);
-        }}
-      />
-      <DeleteStyleSourceDialog
-        styleSource={tokenDialog?.action === "delete" ? tokenDialog : undefined}
-        onClose={() => {
-          setTokenDialog(undefined);
-          resetActionIndex();
-          focusCommandPanel();
-        }}
-        onConfirm={(styleSourceId) => {
-          deleteStyleSource(styleSourceId);
-          toast.success(`Token "${tokenDialog?.name}" deleted`);
-          setTokenDialog(undefined);
-        }}
-      />
+          />
+          <CommandFooter />
+        </Flex>
+      </CommandGroupFooter>
     </>
   );
 };

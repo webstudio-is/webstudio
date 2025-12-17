@@ -98,7 +98,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
       <CommandGroup
         name="token"
         heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
-        actions={["find", "rename", "delete"]}
+        actions={["show instances", "rename", "delete"]}
       >
         {options.map(({ token, usages }) => (
           <CommandItem
@@ -106,7 +106,11 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             // preserve selected state when rerender
             value={token.id}
             onSelect={() => {
-              if (action === "find") {
+              if (
+                action === "show instances" ||
+                action === "find instances" ||
+                action === "find"
+              ) {
                 $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
               if (action === "rename") {

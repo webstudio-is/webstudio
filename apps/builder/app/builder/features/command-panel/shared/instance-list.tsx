@@ -28,9 +28,14 @@ export type InstanceOption = {
 type InstanceListProps = {
   instanceIds: Set<Instance["id"]>;
   onSelect: (instanceId: Instance["id"]) => void;
+  onBack?: () => void;
 };
 
-export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
+export const InstanceList = ({
+  instanceIds,
+  onSelect,
+  onBack,
+}: InstanceListProps) => {
   const instances = $instances.get();
   const pages = $pages.get();
   const usedInInstances: InstanceOption[] = [];
@@ -49,7 +54,11 @@ export const InstanceList = ({ instanceIds, onSelect }: InstanceListProps) => {
   const [search, setSearch] = useState("");
 
   const goBack = () => {
-    $commandContent.set(undefined);
+    if (onBack) {
+      onBack();
+    } else {
+      $commandContent.set(undefined);
+    }
   };
 
   let matches = usedInInstances;
