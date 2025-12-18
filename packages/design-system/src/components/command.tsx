@@ -28,6 +28,7 @@ import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
 import { useDebounceEffect } from "../utilities";
+import { Flex } from "./flex";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -311,7 +312,12 @@ export const CommandFooter = () => {
   );
 };
 
-export const CommandList = CommandPrimitive.List;
+export const CommandList = styled(CommandPrimitive.List, {
+  "& [cmdk-group-heading]": {
+    position: "sticky",
+    top: 0,
+  },
+});
 
 type CommandGroupProps = Omit<
   ComponentPropsWithoutRef<typeof CommandPrimitive.Group>,
@@ -319,19 +325,58 @@ type CommandGroupProps = Omit<
 > & {
   name: string;
   actions: string[];
+  hideAfterItemsAmount?: number;
 };
 
 export const CommandGroup = ({
   name,
   actions,
+  children,
+  hideAfterItemsAmount = 50,
   ...props
 }: CommandGroupProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const itemCount = Array.isArray(children) ? children.length : 0;
+  const showMoreButton = itemCount > hideAfterItemsAmount && !isExpanded;
+
+  // Hide items beyond maxItems when not expanded
+  useEffect(() => {
+    const groupElement = groupRef.current;
+    if (!groupElement || itemCount <= hideAfterItemsAmount || itemCount === 0) {
+      return;
+    }
+
+    const items = groupElement.querySelectorAll("[cmdk-item]");
+    items.forEach((item, index) => {
+      if (item instanceof HTMLElement) {
+        item.style.display =
+          isExpanded || index < hideAfterItemsAmount ? "" : "none";
+      }
+    });
+  }, [isExpanded, itemCount, hideAfterItemsAmount]);
+
   return (
-    <CommandPrimitive.Group
-      {...props}
-      value={name}
-      data-actions={actions.join()}
-    />
+    <div ref={groupRef}>
+      <CommandPrimitive.Group
+        {...props}
+        value={name}
+        data-actions={actions.join()}
+      >
+        {children}
+      </CommandPrimitive.Group>
+      {showMoreButton && (
+        <Flex justify="center" css={{ padding: theme.spacing[2] }}>
+          <Button
+            color="ghost"
+            onClick={() => setIsExpanded(true)}
+            type="button"
+          >
+            Show more ({itemCount - hideAfterItemsAmount} hidden)
+          </Button>
+        </Flex>
+      )}
+    </div>
   );
 };
 
@@ -409,6 +454,7 @@ export const CommandGroupHeading = styled("div", {
   ...textVariants.labelsSentenceCase,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
+  backgroundColor: theme.colors.backgroundControls,
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
