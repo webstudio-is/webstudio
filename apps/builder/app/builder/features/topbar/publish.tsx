@@ -57,6 +57,7 @@ import {
   $project,
   $publishedOrigin,
   $userPlanFeatures,
+  $stagingUsername,
   $stagingPassword,
 } from "~/shared/nano-states";
 import {
@@ -102,6 +103,7 @@ const ChangeProjectDomain = ({
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
   const selectedPagePath = useStore($selectedPagePath);
+  const stagingUsername = useStore($stagingUsername);
   const stagingPassword = useStore($stagingPassword);
 
   const [domain, setDomain] = useState(project.domain);
@@ -236,6 +238,23 @@ const ChangeProjectDomain = ({
           />
           {error !== undefined && <Text color="destructive">{error}</Text>}
         </Grid>
+        {stagingUsername && (
+          <Grid flow="column" align="center" gap={2}>
+            <Label
+              htmlFor={`${id}-username`}
+              css={{ width: theme.spacing[20] }}
+            >
+              Username:
+            </Label>
+            <InputField
+              text="mono"
+              id={`${id}-username`}
+              type="text"
+              value={stagingUsername}
+              readOnly
+            />
+          </Grid>
+        )}
         {stagingPassword && (
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>

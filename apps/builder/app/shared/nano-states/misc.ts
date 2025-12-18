@@ -334,7 +334,8 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 
 export const $authToken = atom<string | undefined>(undefined);
 
-export const $stagingPassword = atom<string>();
+export const $stagingUsername = atom<string | undefined>();
+export const $stagingPassword = atom<string | undefined>();
 
 export const $isContentModeAllowed = computed(
   [$authToken, $userPlanFeatures],
