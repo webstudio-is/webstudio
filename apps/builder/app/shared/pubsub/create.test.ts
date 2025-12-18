@@ -549,7 +549,10 @@ describe("createPubsub", () => {
       // Wait for requestAnimationFrame callback
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(handler).toHaveBeenCalledWith(undefined);
+      expect(handler).toHaveBeenCalledWith({
+        source: "builder",
+        name: "testCommand",
+      });
     });
 
     test("should only call handler for matching command", async () => {
@@ -623,7 +626,10 @@ describe("createPubsub", () => {
         source: "builder",
         name: "testCommand",
       });
-      expect(specificHandler).toHaveBeenCalledWith(undefined);
+      expect(specificHandler).toHaveBeenCalledWith({
+        source: "builder",
+        name: "testCommand",
+      });
     });
 
     test("should unsubscribe from specific command", async () => {
@@ -690,8 +696,14 @@ describe("createPubsub", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(handler1).toHaveBeenCalledWith(undefined);
-      expect(handler2).toHaveBeenCalledWith(undefined);
+      expect(handler1).toHaveBeenCalledWith({
+        source: "builder",
+        name: "testCommand",
+      });
+      expect(handler2).toHaveBeenCalledWith({
+        source: "builder",
+        name: "testCommand",
+      });
     });
 
     test("should pass payload to command-specific subscribers", async () => {

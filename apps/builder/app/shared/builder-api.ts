@@ -2,6 +2,7 @@ import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
 import { uploadAssets } from "~/builder/shared/assets/use-assets";
+import { showTokenConflictDialog } from "./token-conflict-dialog";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
 
@@ -23,6 +24,7 @@ const _builderApi = {
 
     return new Map([...urlToIds.entries()].map(([url, id]) => [url.href, id]));
   },
+  showTokenConflictDialog,
 };
 
 declare global {

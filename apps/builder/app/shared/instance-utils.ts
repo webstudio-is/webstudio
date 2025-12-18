@@ -34,10 +34,7 @@ import {
   isComponentDetachable,
 } from "@webstudio-is/sdk";
 import { detectTokenConflicts } from "./style-source-utils";
-import {
-  showTokenConflictDialog,
-  type ConflictResolution,
-} from "./token-conflict-dialog";
+import { type ConflictResolution } from "./token-conflict-dialog";
 import { buildMergedBreakpointIds } from "./breakpoints-utils";
 import {
   $props,
@@ -1825,16 +1822,6 @@ export const insertFragmentWithConflictResolution = async ({
   }
 
   // Show conflict dialog and wait for user choice
-  return new Promise((resolve, reject) => {
-    showTokenConflictDialog(
-      conflicts,
-      (resolution) => {
-        resolve(resolution);
-      },
-      () => {
-        // User cancelled
-        reject(new Error("User cancelled"));
-      }
-    );
-  });
+  const resolution = await builderApi.showTokenConflictDialog(conflicts);
+  return resolution;
 };

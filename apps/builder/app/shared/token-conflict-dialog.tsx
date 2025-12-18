@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { atom } from "nanostores";
-import { useStore } from "@nanostores/react";
 import {
   Dialog,
   DialogContent,
@@ -19,43 +17,86 @@ import type { TokenConflict } from "./style-source-utils";
 
 export type ConflictResolution = "ours" | "theirs";
 
-type ConflictState =
-  | {
-      conflicts: TokenConflict[];
-      onResolve: (resolution: ConflictResolution) => void;
-      onCancel: () => void;
-    }
+// Track the current dialog state setter
+let currentSetDialogState:
+  | ((
+      state:
+        | {
+            conflicts: TokenConflict[];
+            resolve: (resolution: ConflictResolution) => void;
+          }
+        | undefined
+    ) => void)
   | undefined;
 
-const $tokenConflictState = atom<ConflictState>(undefined);
-
 export const showTokenConflictDialog = (
-  conflicts: TokenConflict[],
-  onResolve: (resolution: ConflictResolution) => void,
-  onCancel: () => void
-) => {
-  $tokenConflictState.set({
-    conflicts,
-    onResolve,
-    onCancel,
+  conflicts: Array<{
+    tokenName: string;
+    fragmentTokenId: string;
+  }>
+): Promise<ConflictResolution> => {
+  return new Promise((resolve) => {
+    if (!currentSetDialogState) {
+      throw new Error("TokenConflictDialog not mounted");
+    }
+
+    const fullConflicts: TokenConflict[] = conflicts.map((c) => ({
+      tokenName: c.tokenName,
+      fragmentTokenId: c.fragmentTokenId,
+      fragmentToken: {
+        type: "token" as const,
+        id: c.fragmentTokenId,
+        name: c.tokenName,
+      },
+      existingToken: {
+        type: "token" as const,
+        id: "existing",
+        name: c.tokenName,
+      },
+    }));
+
+    currentSetDialogState({
+      conflicts: fullConflicts,
+      resolve,
+    });
   });
 };
 
 export const TokenConflictDialog = () => {
-  const state = useStore($tokenConflictState);
+  const [dialogState, setDialogState] = useState<
+    | {
+        conflicts: TokenConflict[];
+        resolve: (resolution: ConflictResolution) => void;
+      }
+    | undefined
+  >();
   const [resolution, setResolution] = useState<ConflictResolution | undefined>(
     "theirs"
   );
 
-  if (!state) {
-    return null;
+  // Register the setDialogState function
+  currentSetDialogState = setDialogState;
+
+  if (!dialogState) {
+    return;
   }
 
-  const { conflicts, onResolve, onCancel } = state;
+  const { conflicts, resolve } = dialogState;
 
   const handleClose = () => {
-    $tokenConflictState.set(undefined);
+    setDialogState(undefined);
     setResolution("theirs");
+  };
+
+  const handleResolve = () => {
+    if (resolution) {
+      resolve(resolution);
+      handleClose();
+    }
+  };
+
+  const handleCancel = () => {
+    handleClose();
   };
 
   if (conflicts.length === 0) {
@@ -70,13 +111,12 @@ export const TokenConflictDialog = () => {
       open={true}
       onOpenChange={(open) => {
         if (!open) {
-          onCancel();
-          handleClose();
+          handleCancel();
         }
       }}
     >
       <DialogContent css={{ minWidth: "30ch" }}>
-        <DialogTitle>Token Conflict Detected</DialogTitle>
+        <DialogTitle>Token conflict detected</DialogTitle>
         <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
           <DialogDescription asChild>
             <Text as="p">
@@ -133,24 +173,10 @@ export const TokenConflictDialog = () => {
         </RadioGroup>
 
         <DialogActions>
-          <Button
-            color="positive"
-            onClick={() => {
-              if (resolution) {
-                onResolve(resolution);
-                handleClose();
-              }
-            }}
-          >
+          <Button color="positive" onClick={handleResolve}>
             Continue
           </Button>
-          <Button
-            color="ghost"
-            onClick={() => {
-              onCancel();
-              handleClose();
-            }}
-          >
+          <Button color="ghost" onClick={handleCancel}>
             Cancel
           </Button>
         </DialogActions>
