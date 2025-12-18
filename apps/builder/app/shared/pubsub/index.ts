@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 import { createPubsub } from "./create";
 
 // Allow commands to declare their types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CommandRegistry {}
 
 // Generate namespaced command types from CommandRegistry
