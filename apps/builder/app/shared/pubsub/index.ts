@@ -1,7 +1,15 @@
 import { atom } from "nanostores";
 import { createPubsub } from "./create";
 
-export interface PubsubMap {
+// Allow commands to declare their types
+export interface CommandRegistry {}
+
+// Generate namespaced command types from CommandRegistry
+type NamespacedCommands = {
+  [K in keyof CommandRegistry as `command:${K & string}`]: CommandRegistry[K];
+};
+
+export interface PubsubMap extends NamespacedCommands {
   command: {
     source: string;
     name: string;

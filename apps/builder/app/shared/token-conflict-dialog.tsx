@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   Dialog,
   DialogContent,
@@ -17,17 +19,14 @@ import type { TokenConflict } from "./style-source-utils";
 
 export type ConflictResolution = "ours" | "theirs" | "merge";
 
-// Track the current dialog state setter
-let currentSetDialogState:
-  | ((
-      state:
-        | {
-            conflicts: TokenConflict[];
-            resolve: (resolution: ConflictResolution) => void;
-          }
-        | undefined
-    ) => void)
+type DialogState =
+  | {
+      conflicts: TokenConflict[];
+      resolve: (resolution: ConflictResolution) => void;
+    }
   | undefined;
+
+const $tokenConflictDialogState = atom<DialogState>(undefined);
 
 export const showTokenConflictDialog = (
   conflicts: Array<{
@@ -36,10 +35,6 @@ export const showTokenConflictDialog = (
   }>
 ): Promise<ConflictResolution> => {
   return new Promise((resolve) => {
-    if (!currentSetDialogState) {
-      throw new Error("TokenConflictDialog not mounted");
-    }
-
     const fullConflicts: TokenConflict[] = conflicts.map((c) => ({
       tokenName: c.tokenName,
       fragmentTokenId: c.fragmentTokenId,
@@ -55,7 +50,7 @@ export const showTokenConflictDialog = (
       },
     }));
 
-    currentSetDialogState({
+    $tokenConflictDialogState.set({
       conflicts: fullConflicts,
       resolve,
     });
@@ -63,19 +58,10 @@ export const showTokenConflictDialog = (
 };
 
 export const TokenConflictDialog = () => {
-  const [dialogState, setDialogState] = useState<
-    | {
-        conflicts: TokenConflict[];
-        resolve: (resolution: ConflictResolution) => void;
-      }
-    | undefined
-  >();
+  const dialogState = useStore($tokenConflictDialogState);
   const [resolution, setResolution] = useState<ConflictResolution | undefined>(
     "theirs"
   );
-
-  // Register the setDialogState function
-  currentSetDialogState = setDialogState;
 
   if (!dialogState) {
     return;
@@ -84,7 +70,7 @@ export const TokenConflictDialog = () => {
   const { conflicts, resolve } = dialogState;
 
   const handleClose = () => {
-    setDialogState(undefined);
+    $tokenConflictDialogState.set(undefined);
     setResolution("theirs");
   };
 

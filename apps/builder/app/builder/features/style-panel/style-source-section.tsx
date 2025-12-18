@@ -348,8 +348,8 @@ export const StyleSourcesSection = () => {
 
   // Subscribe to focusStyleSourceInput command
   useEffect(() => {
-    const unsubscribe = subscribe("command", (command) => {
-      if (command.type === "focusStyleSourceInput" && inputRef) {
+    const unsubscribe = subscribe("command:focusStyleSourceInput", () => {
+      if (inputRef) {
         inputRef.focus();
       }
     });
