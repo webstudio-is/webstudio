@@ -1323,13 +1323,13 @@ export const insertWebstudioFragmentCopy = ({
   fragment,
   availableVariables,
   projectId,
-  onConflict = "theirs",
+  conflictResolution = "theirs",
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
   projectId: Project["id"];
-  onConflict?: ConflictResolution;
+  conflictResolution?: ConflictResolution;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -1407,7 +1407,7 @@ export const insertWebstudioFragmentCopy = ({
       existingStyles: styles,
       breakpoints,
       mergedBreakpointIds,
-      onConflict,
+      conflictResolution,
     });
 
   // Update styleSources map with the new tokens
@@ -1822,6 +1822,5 @@ export const insertFragmentWithConflictResolution = async ({
   }
 
   // Show conflict dialog and wait for user choice
-  const resolution = await builderApi.showTokenConflictDialog(conflicts);
-  return resolution;
+  return await builderApi.showTokenConflictDialog(conflicts);
 };

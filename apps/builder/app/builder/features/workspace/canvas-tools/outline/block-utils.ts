@@ -177,7 +177,7 @@ export const insertTemplateAt = async (
   };
 
   try {
-    const onConflict = await insertFragmentWithConflictResolution({
+    const conflictResolution = await insertFragmentWithConflictResolution({
       fragment,
     });
 
@@ -190,7 +190,7 @@ export const insertTemplateAt = async (
           startingInstanceId: target.parentSelector[0],
         }),
         projectId: project.id,
-        onConflict,
+        conflictResolution,
       });
       const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
       if (newRootInstanceId === undefined) {

@@ -169,7 +169,7 @@ const onPaste = async (clipboardData: string) => {
   }
 
   try {
-    const onConflict = await insertFragmentWithConflictResolution({
+    const conflictResolution = await insertFragmentWithConflictResolution({
       fragment,
     });
     updateWebstudioData((data) => {
@@ -181,7 +181,7 @@ const onPaste = async (clipboardData: string) => {
           startingInstanceId: pasteTarget.parentSelector[0],
         }),
         projectId: project.id,
-        onConflict,
+        conflictResolution,
       });
       const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
       if (newRootInstanceId === undefined) {

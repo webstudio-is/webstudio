@@ -23,6 +23,8 @@ import {
   deleteLocalStyleSourcesMutable,
   collectStyleSourcesFromInstances,
   findDuplicateTokens,
+  findTokenWithMatchingStyles,
+  detectTokenConflicts,
 } from "./style-source-utils";
 
 enableMapSet();
@@ -803,6 +805,75 @@ describe("insertStyleSources", () => {
     expect(tokens[1]).toMatchObject({ type: "token", name: "bbb" }); // Different name, so inserted as-is
     expect(tokens[1].id).not.toBe("newToken"); // Should have new ID
     expect(styleSourceIdMap.get("newToken")).toBe(tokens[1].id);
+  });
+
+  // Test merge conflict resolution
+  test('token with different styles and same name merges when conflictResolution="merge"', () => {
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const existingStyleSources = toMap<StyleSource>([
+      { id: "existingToken", type: "token", name: "primaryColor" },
+    ]);
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "existingToken:base:color:",
+        createStyleDecl("existingToken", "base", "color", {
+          type: "keyword",
+          value: "blue",
+        }),
+      ],
+      [
+        "existingToken:base:fontSize:",
+        createStyleDecl("existingToken", "base", "fontSize", {
+          type: "unit",
+          value: 16,
+          unit: "px",
+        }),
+      ],
+    ]);
+
+    const fragmentStyleSources: StyleSource[] = [
+      { id: "newToken", type: "token", name: "primaryColor" },
+    ];
+    const fragmentStyles: StyleDecl[] = [
+      createStyleDecl("newToken", "base", "color", {
+        type: "keyword",
+        value: "red", // Different color - should override
+      }),
+      createStyleDecl("newToken", "base", "fontWeight", {
+        type: "keyword",
+        value: "bold", // Additional property - should be added
+      }),
+    ];
+
+    const { styleSourceIds, styleSourceIdMap, updatedStyleSources } =
+      insertStyleSources({
+        fragmentStyleSources,
+        fragmentStyles,
+        existingStyleSources,
+        existingStyles,
+        breakpoints,
+        mergedBreakpointIds: new Map(),
+        conflictResolution: "merge",
+      });
+
+    // Should keep existing token (no new token created)
+    const tokens = Array.from(updatedStyleSources.values());
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]).toEqual({
+      id: "existingToken",
+      type: "token",
+      name: "primaryColor",
+    });
+
+    // Should map the fragment token to the existing token
+    expect(styleSourceIdMap.get("newToken")).toBe("existingToken");
+
+    // Should mark the fragment token for style insertion
+    // This tells insertWebstudioFragment to insert these styles, which will:
+    // - Override existing "color" from blue to red
+    // - Keep existing "fontSize" at 16px
+    // - Add new "fontWeight" bold
+    expect(styleSourceIds.has("newToken")).toBe(true);
   });
 });
 
@@ -2451,5 +2522,545 @@ describe("findDuplicateTokens", () => {
     expect(duplicates.get("token1")).toEqual(["token2"]);
     expect(duplicates.get("token2")).toEqual(["token1"]);
     expect(duplicates.has("token3")).toBe(false);
+  });
+});
+
+describe("findTokenWithMatchingStyles", () => {
+  const breakpoints = new Map<Breakpoint["id"], Breakpoint>([
+    ["base", { id: "base", label: "Base" }],
+  ]);
+
+  test("returns no conflict when token name doesn't exist", () => {
+    const existingTokens: StyleSource[] = [
+      { type: "token", id: "existing1", name: "PrimaryColor" },
+    ];
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "SecondaryColor",
+      tokenStyles: [],
+      existingTokens,
+      existingStyles: [],
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(false);
+    expect(result.matchingToken).toBeUndefined();
+  });
+
+  test("returns matching token when name and styles match", () => {
+    const existingToken: Extract<StyleSource, { type: "token" }> = {
+      type: "token",
+      id: "existing1",
+      name: "PrimaryColor",
+    };
+
+    const existingStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const tokenStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "PrimaryColor",
+      tokenStyles,
+      existingTokens: [existingToken],
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(false);
+    expect(result.matchingToken).toBeDefined();
+    expect(result.matchingToken?.id).toBe("existing1");
+  });
+
+  test("returns conflict when name matches but styles differ", () => {
+    const existingToken: Extract<StyleSource, { type: "token" }> = {
+      type: "token",
+      id: "existing1",
+      name: "PrimaryColor",
+    };
+
+    const existingStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const tokenStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "color",
+        value: { type: "keyword", value: "blue" }, // Different color
+      },
+    ];
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "PrimaryColor",
+      tokenStyles,
+      existingTokens: [existingToken],
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(true);
+    expect(result.matchingToken).toBeUndefined();
+  });
+
+  test("matches token with multiple style properties", () => {
+    const existingToken: Extract<StyleSource, { type: "token" }> = {
+      type: "token",
+      id: "existing1",
+      name: "ButtonStyle",
+    };
+
+    const existingStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "color",
+        value: { type: "keyword", value: "white" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "blue" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "paddingTop",
+        value: { type: "unit", value: 10, unit: "px" },
+      },
+    ];
+
+    const tokenStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "paddingTop",
+        value: { type: "unit", value: 10, unit: "px" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "blue" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "color",
+        value: { type: "keyword", value: "white" },
+      },
+    ];
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "ButtonStyle",
+      tokenStyles,
+      existingTokens: [existingToken],
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(false);
+    expect(result.matchingToken?.id).toBe("existing1");
+  });
+
+  test("detects conflict when one style property differs", () => {
+    const existingToken: Extract<StyleSource, { type: "token" }> = {
+      type: "token",
+      id: "existing1",
+      name: "ButtonStyle",
+    };
+
+    const existingStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "color",
+        value: { type: "keyword", value: "white" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "existing1",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "blue" },
+      },
+    ];
+
+    const tokenStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "color",
+        value: { type: "keyword", value: "white" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "fragment1",
+        property: "backgroundColor",
+        value: { type: "keyword", value: "red" }, // Different!
+      },
+    ];
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "ButtonStyle",
+      tokenStyles,
+      existingTokens: [existingToken],
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(true);
+    expect(result.matchingToken).toBeUndefined();
+  });
+
+  test("handles empty token styles", () => {
+    const existingToken: Extract<StyleSource, { type: "token" }> = {
+      type: "token",
+      id: "existing1",
+      name: "EmptyToken",
+    };
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: "EmptyToken",
+      tokenStyles: [],
+      existingTokens: [existingToken],
+      existingStyles: [],
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(result.hasConflict).toBe(false);
+    expect(result.matchingToken?.id).toBe("existing1");
+  });
+});
+
+describe("detectTokenConflicts", () => {
+  const breakpoints = new Map<Breakpoint["id"], Breakpoint>([
+    ["base", { id: "base", label: "Base" }],
+  ]);
+
+  test("returns empty array when no conflicts exist", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "NewToken" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "frag1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "ExistingToken" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "exist1:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "exist1",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+    ]);
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test("detects conflict when token name exists with different styles", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "PrimaryColor" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "frag1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "PrimaryColor" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "exist1:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "exist1",
+          property: "color",
+          value: { type: "keyword", value: "blue" }, // Different color
+        },
+      ],
+    ]);
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].tokenName).toBe("PrimaryColor");
+    expect(conflicts[0].fragmentTokenId).toBe("frag1");
+    expect(conflicts[0].existingToken.id).toBe("exist1");
+  });
+
+  test("detects multiple conflicts", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "PrimaryColor" },
+      { type: "token", id: "frag2", name: "SecondaryColor" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "frag1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "frag2",
+        property: "color",
+        value: { type: "keyword", value: "green" },
+      },
+    ];
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "PrimaryColor" }],
+      ["exist2", { type: "token", id: "exist2", name: "SecondaryColor" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "exist1:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "exist1",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ],
+      [
+        "exist2:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "exist2",
+          property: "color",
+          value: { type: "keyword", value: "yellow" },
+        },
+      ],
+    ]);
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(2);
+    expect(conflicts[0].tokenName).toBe("PrimaryColor");
+    expect(conflicts[1].tokenName).toBe("SecondaryColor");
+  });
+
+  test("ignores local style sources", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "local", id: "frag1" },
+      { type: "token", id: "frag2", name: "SomeToken" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "frag1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+      {
+        breakpointId: "base",
+        styleSourceId: "frag2",
+        property: "color",
+        value: { type: "keyword", value: "blue" },
+      },
+    ];
+
+    const existingStyleSources = new Map<string, StyleSource>();
+    const existingStyles = new Map<string, StyleDecl>();
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test("no conflict when token name matches and styles match", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "SharedToken" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "base",
+        styleSourceId: "frag1",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "SharedToken" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "exist1:base:color",
+        {
+          breakpointId: "base",
+          styleSourceId: "exist1",
+          property: "color",
+          value: { type: "keyword", value: "red" }, // Same color
+        },
+      ],
+    ]);
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test("handles tokens with no styles", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "EmptyToken" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [];
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "EmptyToken" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>();
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds: new Map(),
+    });
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  test("uses merged breakpoint IDs when comparing", () => {
+    const fragmentStyleSources: StyleSource[] = [
+      { type: "token", id: "frag1", name: "ResponsiveToken" },
+    ];
+
+    const fragmentStyles: StyleDecl[] = [
+      {
+        breakpointId: "tablet-frag",
+        styleSourceId: "frag1",
+        property: "fontSize",
+        value: { type: "unit", value: 18, unit: "px" },
+      },
+    ];
+
+    const breakpointsMap = new Map<Breakpoint["id"], Breakpoint>([
+      ["base", { id: "base", label: "Base" }],
+      ["tablet-exist", { id: "tablet-exist", minWidth: 768, label: "Tablet" }],
+    ]);
+
+    const mergedBreakpointIds = new Map([["tablet-frag", "tablet-exist"]]);
+
+    const existingStyleSources = new Map<string, StyleSource>([
+      ["exist1", { type: "token", id: "exist1", name: "ResponsiveToken" }],
+    ]);
+
+    const existingStyles = new Map<string, StyleDecl>([
+      [
+        "exist1:tablet-exist:fontSize",
+        {
+          breakpointId: "tablet-exist",
+          styleSourceId: "exist1",
+          property: "fontSize",
+          value: { type: "unit", value: 18, unit: "px" },
+        },
+      ],
+    ]);
+
+    const conflicts = detectTokenConflicts({
+      fragmentStyleSources,
+      fragmentStyles,
+      existingStyleSources,
+      existingStyles,
+      breakpoints: breakpointsMap,
+      mergedBreakpointIds,
+    });
+
+    // Should be no conflict since the breakpoints are merged and styles match
+    expect(conflicts).toHaveLength(0);
   });
 });

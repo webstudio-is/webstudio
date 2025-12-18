@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { TokenConflict } from "./style-source-utils";
 
-export type ConflictResolution = "ours" | "theirs";
+export type ConflictResolution = "ours" | "theirs" | "merge";
 
 // Track the current dialog state setter
 let currentSetDialogState:
@@ -115,9 +115,15 @@ export const TokenConflictDialog = () => {
         }
       }}
     >
-      <DialogContent css={{ minWidth: "30ch" }}>
+      <DialogContent css={{ minWidth: "40ch" }}>
         <DialogTitle>Token conflict detected</DialogTitle>
-        <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+        <Flex
+          direction="column"
+          gap="2"
+          css={{
+            padding: theme.panel.padding,
+          }}
+        >
           <DialogDescription asChild>
             <Text as="p">
               {conflictCount === 1
@@ -125,53 +131,98 @@ export const TokenConflictDialog = () => {
                 : `${conflictCount} tokens already exist with the same names but different styles.`}
             </Text>
           </DialogDescription>
-          <Text color="subtle">
-            Choose "theirs" to keep the incoming tokens (renamed with suffix) or
-            "ours" to use your existing project tokens.
-          </Text>
-        </Flex>
 
-        <RadioGroup
-          value={resolution}
-          onValueChange={(value) => setResolution(value as ConflictResolution)}
-        >
-          <Flex
-            gap="3"
-            css={{
-              paddingInline: theme.panel.paddingInline,
-              paddingBottom: theme.spacing[5],
-            }}
+          <RadioGroup
+            value={resolution}
+            onValueChange={(value) =>
+              setResolution(value as ConflictResolution)
+            }
           >
-            <Label>
-              <Flex
-                gap="2"
-                align="center"
-                css={{
-                  padding: theme.spacing[3],
-                  cursor: "pointer",
-                }}
-              >
-                <Radio value="theirs" />
-                <Text>Theirs</Text>
-              </Flex>
-            </Label>
+            <Flex direction="column" gap="1">
+              <Label>
+                <Flex
+                  gap="2"
+                  css={{
+                    padding: theme.spacing[3],
+                    cursor: "pointer",
+                    borderRadius: theme.borderRadius[4],
+                    "&:hover": {
+                      backgroundColor: theme.colors.backgroundHover,
+                    },
+                  }}
+                >
+                  <Radio value="theirs" />
+                  <Flex direction="column" gap="1">
+                    <Text variant="labelsTitleCase">Theirs</Text>
+                    <Text color="subtle">
+                      Keep incoming tokens with a suffix added to their names
+                      (e.g., "primaryColor-1")
+                    </Text>
+                  </Flex>
+                </Flex>
+              </Label>
 
-            <Label>
-              <Flex
-                gap="2"
-                align="center"
-                css={{
-                  padding: theme.spacing[3],
-                  cursor: "pointer",
-                }}
-              >
-                <Radio value="ours" />
-                <Text>Ours</Text>
-              </Flex>
-            </Label>
+              <Label>
+                <Flex
+                  gap="2"
+                  css={{
+                    padding: theme.spacing[3],
+                    cursor: "pointer",
+                    borderRadius: theme.borderRadius[4],
+                    "&:hover": {
+                      backgroundColor: theme.colors.backgroundHover,
+                    },
+                  }}
+                >
+                  <Radio value="ours" />
+                  <Flex direction="column" gap="1">
+                    <Text variant="labelsTitleCase">Ours</Text>
+                    <Text color="subtle">
+                      Discard incoming tokens and use your existing project
+                      tokens instead
+                    </Text>
+                  </Flex>
+                </Flex>
+              </Label>
+
+              <Label>
+                <Flex
+                  gap="2"
+                  css={{
+                    padding: theme.spacing[3],
+                    cursor: "pointer",
+                    borderRadius: theme.borderRadius[4],
+                    "&:hover": {
+                      backgroundColor: theme.colors.backgroundHover,
+                    },
+                  }}
+                >
+                  <Radio value="merge" />
+                  <Flex direction="column" gap="1">
+                    <Text variant="labelsTitleCase">Merge</Text>
+                    <Text color="subtle">
+                      Combine both into your existing token (incoming styles
+                      override existing ones)
+                    </Text>
+                  </Flex>
+                </Flex>
+              </Label>
+            </Flex>
+          </RadioGroup>
+
+          <Flex as="details" direction="column" gap="1">
+            <Text as="summary">Show conflicting tokens</Text>
+            <Text
+              color="subtle"
+              css={{
+                maxHeight: 150,
+                overflow: "auto",
+              }}
+            >
+              {conflicts.map((conflict) => conflict.tokenName).join(", ")}
+            </Text>
           </Flex>
-        </RadioGroup>
-
+        </Flex>
         <DialogActions>
           <Button color="positive" onClick={handleResolve}>
             Continue

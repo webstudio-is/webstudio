@@ -196,7 +196,7 @@ export const insertStyleSources = ({
   existingStyles,
   breakpoints,
   mergedBreakpointIds,
-  onConflict = "theirs",
+  conflictResolution = "theirs",
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
@@ -204,8 +204,8 @@ export const insertStyleSources = ({
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
   mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
-  /** How to handle conflicts: "theirs" = add suffix (keep incoming), "ours" = use existing token */
-  onConflict?: ConflictResolution;
+  /** How to handle conflicts: "theirs" = add suffix (keep incoming), "ours" = use existing token, "merge" = merge styles (theirs overrides ours) */
+  conflictResolution?: ConflictResolution;
 }): {
   styleSourceIds: Set<StyleSource["id"]>;
   styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
@@ -260,7 +260,7 @@ export const insertStyleSources = ({
 
       if (result.hasConflict) {
         // Same name but different styles
-        if (onConflict === "ours") {
+        if (conflictResolution === "ours") {
           // Use the existing token instead of creating a new one
           const existingToken = tokensWithSameName[0];
           if (existingToken.type !== "token") {
@@ -268,6 +268,20 @@ export const insertStyleSources = ({
           }
           styleSourceIdMap.set(originalFragmentTokenId, existingToken.id);
           continue; // Don't insert, use existing
+        } else if (conflictResolution === "merge") {
+          // Merge: keep existing token name/id, but merge styles (theirs overrides ours)
+          const existingToken = tokensWithSameName[0];
+          if (existingToken.type !== "token") {
+            continue;
+          }
+
+          // Map the fragment token to the existing token
+          styleSourceIdMap.set(originalFragmentTokenId, existingToken.id);
+
+          // Mark the existing token for style insertion
+          // This will allow the fragment styles to be added/merged
+          styleSourceIds.add(originalFragmentTokenId);
+          continue;
         } else {
           // Default: add counter suffix
           let maxCounter = 0;
