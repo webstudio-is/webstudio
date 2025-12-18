@@ -325,7 +325,6 @@ type CommandGroupProps = Omit<
 > & {
   name: string;
   actions: string[];
-  children: Array<React.ReactElement>;
   hideAfterItemsAmount?: number;
 };
 
@@ -338,13 +337,13 @@ export const CommandGroup = ({
 }: CommandGroupProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const groupRef = useRef<HTMLDivElement>(null);
-  const itemCount = children.length;
+  const itemCount = Array.isArray(children) ? children.length : 0;
   const showMoreButton = itemCount > hideAfterItemsAmount && !isExpanded;
 
   // Hide items beyond maxItems when not expanded
   useEffect(() => {
     const groupElement = groupRef.current;
-    if (!groupElement || itemCount <= hideAfterItemsAmount) {
+    if (!groupElement || itemCount <= hideAfterItemsAmount || itemCount === 0) {
       return;
     }
 
