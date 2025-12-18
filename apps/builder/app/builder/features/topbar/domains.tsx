@@ -13,12 +13,7 @@ import {
   toast,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import {
-  AlertIcon,
-  CheckCircleIcon,
-  ExternalLinkIcon,
-  CopyIcon,
-} from "@webstudio-is/icons";
+import { AlertIcon, CheckCircleIcon, CopyIcon } from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   Fragment,
