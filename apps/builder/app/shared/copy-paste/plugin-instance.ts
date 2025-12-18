@@ -122,6 +122,10 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
     return;
   }
 
+  if (data.instances.length === 0) {
+    return;
+  }
+
   const newInstances: Instances = new Map();
   for (const instance of data.instances) {
     newInstances.set(instance.id, instance);
