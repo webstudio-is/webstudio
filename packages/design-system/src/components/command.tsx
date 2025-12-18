@@ -326,7 +326,7 @@ type CommandGroupProps = Omit<
   name: string;
   actions: string[];
   children: Array<React.ReactElement>;
-  hideAfterItemsAmount: number;
+  hideAfterItemsAmount?: number;
 };
 
 export const CommandGroup = ({
@@ -344,7 +344,7 @@ export const CommandGroup = ({
   // Hide items beyond maxItems when not expanded
   useEffect(() => {
     const groupElement = groupRef.current;
-    if (!groupElement) {
+    if (!groupElement || itemCount <= hideAfterItemsAmount) {
       return;
     }
 
