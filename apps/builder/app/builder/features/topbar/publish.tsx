@@ -57,6 +57,7 @@ import {
   $project,
   $publishedOrigin,
   $userPlanFeatures,
+  $stagingPassword,
 } from "~/shared/nano-states";
 import {
   $publishDialog,
@@ -72,6 +73,7 @@ import {
   GearIcon,
   UpgradeIcon,
   HelpIcon,
+  InfoCircleIcon,
 } from "@webstudio-is/icons";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
@@ -100,6 +102,7 @@ const ChangeProjectDomain = ({
   const id = useId();
   const publishedOrigin = useStore($publishedOrigin);
   const selectedPagePath = useStore($selectedPagePath);
+  const stagingPassword = useStore($stagingPassword);
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -233,18 +236,30 @@ const ChangeProjectDomain = ({
           />
           {error !== undefined && <Text color="destructive">{error}</Text>}
         </Grid>
-        <Grid flow="column" align="center" gap={2}>
-          <Label htmlFor={`${id}-password`} css={{ width: theme.spacing[20] }}>
-            Password:
-          </Label>
-          <InputField
-            text="mono"
-            id={`${id}-password`}
-            type="text"
-            value="webstudio"
-            readOnly
-          />
-        </Grid>
+        {stagingPassword && (
+          <Grid flow="column" align="center" gap={2}>
+            <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
+              <Label htmlFor={`${id}-password`}>Password:</Label>
+              <Tooltip
+                content="This password is read-only and cannot be changed. It is the same for every user. This prevents phishing attacks."
+                variant="wrapped"
+              >
+                <InfoCircleIcon
+                  tabIndex={0}
+                  style={{ flexShrink: 0 }}
+                  color={rawTheme.colors.foregroundSubtle}
+                />
+              </Tooltip>
+            </Flex>
+            <InputField
+              text="mono"
+              id={`${id}-password`}
+              type="text"
+              value={stagingPassword}
+              readOnly
+            />
+          </Grid>
+        )}
       </Grid>
     </CollapsibleDomainSection>
   );
