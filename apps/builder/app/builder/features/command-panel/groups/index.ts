@@ -18,6 +18,10 @@ import {
 } from "./commands-group";
 import { $tokenOptions, TokensGroup, type TokenOption } from "./tokens-group";
 import {
+  DuplicateTokensGroup,
+  type DuplicateTokenOption,
+} from "./duplicate-tokens-group";
+import {
   $dataVariableOptions,
   DataVariablesGroup,
   type DataVariableOption,
@@ -35,6 +39,7 @@ export type Option =
   | PageOption
   | CommandOption
   | TokenOption
+  | DuplicateTokenOption
   | DataVariableOption
   | CssVariableOption;
 
@@ -88,6 +93,7 @@ export const groups: {
   page: PagesGroup,
   command: CommandsGroup,
   token: TokensGroup,
+  duplicateToken: DuplicateTokensGroup,
   dataVariable: DataVariablesGroup,
   cssVariable: CssVariablesGroup,
 };
@@ -99,6 +105,7 @@ export type {
   PageOption,
   CommandOption,
   TokenOption,
+  DuplicateTokenOption,
   DataVariableOption,
   CssVariableOption,
 };
@@ -110,6 +117,7 @@ export {
   PagesGroup,
   CommandsGroup,
   TokensGroup,
+  DuplicateTokensGroup,
   DataVariablesGroup,
   CssVariablesGroup,
 };

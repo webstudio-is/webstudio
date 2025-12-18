@@ -406,7 +406,7 @@ export const CommandItem = ({
 };
 
 export const CommandGroupHeading = styled("div", {
-  ...textVariants.titles,
+  ...textVariants.labelsSentenceCase,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
   gap: theme.spacing[5],
@@ -416,7 +416,7 @@ export const CommandGroupHeading = styled("div", {
 });
 
 export const CommandGroupFooter = styled("div", {
-  ...textVariants.titles,
+  ...textVariants.labelsSentenceCase,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
   gap: theme.spacing[5],

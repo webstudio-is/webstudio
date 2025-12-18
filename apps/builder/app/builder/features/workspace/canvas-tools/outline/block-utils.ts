@@ -10,6 +10,7 @@ import {
   insertInstanceChildrenMutable,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
+  insertFragmentWithConflictResolution,
 } from "~/shared/instance-utils";
 import {
   $instances,
@@ -142,7 +143,7 @@ export const insertListItemAt = (listItemSelector: InstanceSelector) => {
   });
 };
 
-export const insertTemplateAt = (
+export const insertTemplateAt = async (
   templateSelector: InstanceSelector,
   anchor: InstanceSelector,
   insertBefore: boolean
@@ -175,52 +176,62 @@ export const insertTemplateAt = (
     position,
   };
 
-  updateWebstudioData((data) => {
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
+  try {
+    const conflictResolution = await insertFragmentWithConflictResolution({
       fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: target.parentSelector[0],
-      }),
-      projectId: project.id,
-    });
-    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const children: Instance["children"] = [
-      { type: "id", value: newRootInstanceId },
-    ];
-
-    insertInstanceChildrenMutable(data, children, target);
-
-    const selectedInstanceSelector = [
-      newRootInstanceId,
-      ...target.parentSelector,
-    ];
-
-    const selectors: InstanceSelector[] = [];
-
-    findAllEditableInstanceSelector({
-      instanceSelector: selectedInstanceSelector,
-      instances: data.instances,
-      props: data.props,
-      metas: $registeredComponentMetas.get(),
-      results: selectors,
     });
 
-    const editableInstanceSelector = selectors[0];
-
-    if (editableInstanceSelector) {
-      $textEditingInstanceSelector.set({
-        selector: editableInstanceSelector,
-        reason: "new",
+    updateWebstudioData((data) => {
+      const { newInstanceIds } = insertWebstudioFragmentCopy({
+        data,
+        fragment,
+        availableVariables: findAvailableVariables({
+          ...data,
+          startingInstanceId: target.parentSelector[0],
+        }),
+        projectId: project.id,
+        conflictResolution,
       });
-    } else {
-      $textEditingInstanceSelector.set(undefined);
-    }
+      const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+      if (newRootInstanceId === undefined) {
+        return;
+      }
+      const children: Instance["children"] = [
+        { type: "id", value: newRootInstanceId },
+      ];
 
-    selectInstance([newRootInstanceId, ...target.parentSelector]);
-  });
+      insertInstanceChildrenMutable(data, children, target);
+
+      const selectedInstanceSelector = [
+        newRootInstanceId,
+        ...target.parentSelector,
+      ];
+
+      const selectors: InstanceSelector[] = [];
+
+      findAllEditableInstanceSelector({
+        instanceSelector: selectedInstanceSelector,
+        instances: data.instances,
+        props: data.props,
+        metas: $registeredComponentMetas.get(),
+        results: selectors,
+      });
+
+      const editableInstanceSelector = selectors[0];
+
+      if (editableInstanceSelector) {
+        $textEditingInstanceSelector.set({
+          selector: editableInstanceSelector,
+          reason: "new",
+        });
+      } else {
+        $textEditingInstanceSelector.set(undefined);
+      }
+
+      selectInstance([newRootInstanceId, ...target.parentSelector]);
+    });
+  } catch {
+    // User cancelled the operation
+    return;
+  }
 };

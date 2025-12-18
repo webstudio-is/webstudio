@@ -113,7 +113,11 @@ export const createPubsub = <PublishMap>() => {
         "name" in action.payload
       ) {
         const commandName = (action.payload as { name: string }).name;
-        emitter.emit(`command:${commandName}` as keyof PublishMap, undefined);
+        // Pass the full payload to command-specific subscribers
+        emitter.emit(
+          `command:${commandName}` as keyof PublishMap,
+          action.payload
+        );
       }
     });
   };

@@ -45,7 +45,7 @@ import { generateFragmentFromHtml } from "~/shared/html";
 import { generateFragmentFromTailwind } from "~/shared/tailwind/tailwind";
 import { denormalizeSrcProps } from "~/shared/copy-paste/asset-upload";
 import { isSyncIdle } from "~/shared/sync/project-queue";
-import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-utils";
+import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-actions";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
@@ -499,6 +499,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "Remove unused tokens",
       handler: () => {
         openDeleteUnusedTokensDialog();
+      },
+    },
+
+    {
+      name: "findDuplicateTokens",
+      label: "Find duplicate tokens",
+      description: "Find tokens with identical styles or names",
+      handler: () => {
+        // Import needed to avoid circular dependency
+        import(
+          "~/builder/features/command-panel/groups/duplicate-tokens-group"
+        ).then(({ showDuplicateTokensView }) => {
+          showDuplicateTokensView();
+        });
       },
     },
 

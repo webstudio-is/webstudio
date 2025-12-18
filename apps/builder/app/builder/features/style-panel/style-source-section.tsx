@@ -18,7 +18,7 @@ import {
   type RenameStyleSourceError,
   deleteStyleSource,
   DeleteStyleSourceDialog,
-} from "~/builder/shared/style-source-utils";
+} from "~/builder/shared/style-source-actions";
 import {
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,

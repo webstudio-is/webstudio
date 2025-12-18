@@ -14,6 +14,7 @@ import {
   $commandContent,
   $isCommandPanelOpen,
   $commandSearch,
+  $commandContentKey,
   closeCommandPanel,
 } from "./command-state";
 import { $allOptions, groups, type Option } from "./groups";
@@ -64,13 +65,14 @@ const CommandDialogContent = () => {
 export const CommandPanel = () => {
   const isOpen = useStore($isCommandPanelOpen);
   const commandContent = useStore($commandContent);
+  const contentKey = useStore($commandContentKey);
 
   return (
     <CommandDialog
       open={isOpen}
       onOpenChange={() => closeCommandPanel({ restoreFocus: true })}
     >
-      <Command shouldFilter={false}>
+      <Command key={contentKey} shouldFilter={false}>
         {commandContent ?? <CommandDialogContent />}
       </Command>
     </CommandDialog>

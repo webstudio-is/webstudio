@@ -684,7 +684,7 @@ export const DialogTitleActions = ({ children }: { children: ReactNode }) => {
 export const DialogActions = ({ children }: { children: ReactNode }) => {
   return (
     <Flex
-      gap="1"
+      gap="2"
       css={{
         padding: theme.panel.padding,
         // Making sure the tab order is the last item first.
