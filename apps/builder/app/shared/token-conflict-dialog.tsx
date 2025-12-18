@@ -156,7 +156,7 @@ export const TokenConflictDialog = () => {
                     <Text variant="labelsTitleCase">Theirs</Text>
                     <Text color="subtle">
                       Keep incoming tokens with a suffix added to their names
-                      (e.g., "primaryColor-1")
+                      (e.g., "primary-color-1")
                     </Text>
                   </Flex>
                 </Flex>
