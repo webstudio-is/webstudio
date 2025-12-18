@@ -59,6 +59,7 @@ import {
   $userPlanFeatures,
   $stagingUsername,
   $stagingPassword,
+  $publisherHost,
 } from "~/shared/nano-states";
 import {
   $publishDialog,
@@ -68,7 +69,6 @@ import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   CheckCircleIcon,
-  ExternalLinkIcon,
   AlertIcon,
   CopyIcon,
   GearIcon,
@@ -105,6 +105,7 @@ const ChangeProjectDomain = ({
   const selectedPagePath = useStore($selectedPagePath);
   const stagingUsername = useStore($stagingUsername);
   const stagingPassword = useStore($stagingPassword);
+  const publisherHost = useStore($publisherHost);
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -112,6 +113,16 @@ const ChangeProjectDomain = ({
 
   const pageUrl = new URL(publishedOrigin);
   pageUrl.pathname = selectedPagePath;
+
+  // Add username:password@ for staging domains
+  if (
+    stagingUsername &&
+    stagingPassword &&
+    pageUrl.hostname.endsWith(`.${publisherHost}`)
+  ) {
+    pageUrl.username = stagingUsername;
+    pageUrl.password = stagingPassword;
+  }
 
   const updateProjectDomain = async () => {
     setIsUpdateInProgress(true);
@@ -184,25 +195,15 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-          <Tooltip
-            content={
-              <Text css={{ wordBreak: "break-all" }}>
-                Proceed to {pageUrl.toString()}
-              </Text>
-            }
-            variant="wrapped"
+
+          <CopyToClipboard
+            text={pageUrl.toString()}
+            copyText={`Copy link: ${pageUrl.toString()}`}
           >
-            <IconButton
-              type="button"
-              tabIndex={-1}
-              onClick={(event) => {
-                window.open(pageUrl, "_blank");
-                event.preventDefault();
-              }}
-            >
-              <ExternalLinkIcon />
+            <IconButton type="button" tabIndex={-1}>
+              <CopyIcon />
             </IconButton>
-          </Tooltip>
+          </CopyToClipboard>
         </Grid>
       }
     >
