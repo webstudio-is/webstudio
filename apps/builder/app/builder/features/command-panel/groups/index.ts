@@ -31,6 +31,11 @@ import {
   CssVariablesGroup,
   type CssVariableOption,
 } from "./css-variables-group";
+import {
+  $instanceOptions,
+  InstancesGroup,
+  type InstanceOption,
+} from "./instances-group";
 
 export type Option =
   | ComponentOption
@@ -41,7 +46,8 @@ export type Option =
   | TokenOption
   | DuplicateTokenOption
   | DataVariableOption
-  | CssVariableOption;
+  | CssVariableOption
+  | InstanceOption;
 
 export type OptionByType<T extends Option["type"]> = Extract<
   Option,
@@ -58,6 +64,7 @@ export const $allOptions = computed(
     $tokenOptions,
     $dataVariableOptions,
     $cssVariableOptions,
+    $instanceOptions,
   ],
   (
     componentOptions,
@@ -67,7 +74,8 @@ export const $allOptions = computed(
     commandOptions,
     tokenOptions,
     dataVariableOptions,
-    cssVariableOptions
+    cssVariableOptions,
+    instanceOptions
   ) => [
     ...commandOptions,
     ...componentOptions,
@@ -77,6 +85,7 @@ export const $allOptions = computed(
     ...tokenOptions,
     ...dataVariableOptions,
     ...cssVariableOptions,
+    ...instanceOptions,
   ]
 );
 
@@ -96,6 +105,7 @@ export const groups: {
   duplicateToken: DuplicateTokensGroup,
   dataVariable: DataVariablesGroup,
   cssVariable: CssVariablesGroup,
+  instance: InstancesGroup,
 };
 
 export type {
@@ -108,6 +118,7 @@ export type {
   DuplicateTokenOption,
   DataVariableOption,
   CssVariableOption,
+  InstanceOption,
 };
 
 export {
@@ -120,4 +131,5 @@ export {
   DuplicateTokensGroup,
   DataVariablesGroup,
   CssVariablesGroup,
+  InstancesGroup,
 };
