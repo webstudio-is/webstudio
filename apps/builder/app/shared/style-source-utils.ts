@@ -11,6 +11,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { getStyleDeclKey, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { toValue } from "@webstudio-is/css-engine";
+import type { ConflictResolution } from "./token-conflict-dialog";
 import { removeByMutable } from "./array-utils";
 
 /**
@@ -43,13 +44,142 @@ export const getStyleSourceStylesSignature = (
 };
 
 /**
+ * Check if a token with the same name and matching styles already exists.
+ * Returns the existing token if found, undefined otherwise.
+ */
+export const findTokenWithMatchingStyles = ({
+  tokenName,
+  tokenStyles,
+  existingTokens,
+  existingStyles,
+  breakpoints,
+  mergedBreakpointIds,
+}: {
+  tokenName: string;
+  tokenStyles: StyleDecl[];
+  existingTokens: StyleSource[];
+  existingStyles: StyleDecl[];
+  breakpoints: Map<Breakpoint["id"], Breakpoint>;
+  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+}):
+  | {
+      hasConflict: false;
+      matchingToken: Extract<StyleSource, { type: "token" }>;
+    }
+  | { hasConflict: true; matchingToken: undefined }
+  | { hasConflict: false; matchingToken: undefined } => {
+  // Find tokens with the same name
+  const tokensWithSameName = existingTokens.filter(
+    (token) => token.type === "token" && token.name === tokenName
+  );
+
+  if (tokensWithSameName.length === 0) {
+    return { hasConflict: false, matchingToken: undefined };
+  }
+
+  // Get the signature of the token we're checking
+  // Use a temporary ID since we're just comparing styles
+  const tempId = "temp";
+  const signature = getStyleSourceStylesSignature(
+    tempId,
+    tokenStyles.map((style) => ({ ...style, styleSourceId: tempId })),
+    breakpoints,
+    mergedBreakpointIds
+  );
+
+  // Check if any existing token with the same name has matching styles
+  for (const existing of tokensWithSameName) {
+    if (existing.type !== "token") {
+      continue;
+    }
+    const existingSignature = getStyleSourceStylesSignature(
+      existing.id,
+      existingStyles,
+      breakpoints,
+      mergedBreakpointIds
+    );
+    if (existingSignature === signature) {
+      return { hasConflict: false, matchingToken: existing };
+    }
+  }
+
+  // Same name but different styles = conflict
+  return { hasConflict: true, matchingToken: undefined };
+};
+
+export type TokenConflict = {
+  tokenName: string;
+  fragmentTokenId: StyleSource["id"];
+  fragmentToken: Extract<StyleSource, { type: "token" }>;
+  existingToken: Extract<StyleSource, { type: "token" }>;
+};
+
+/**
+ * Detect all token conflicts before insertion.
+ * Returns an array of conflicts where fragment tokens have the same name but different styles than existing tokens.
+ */
+export const detectTokenConflicts = ({
+  fragmentStyleSources,
+  fragmentStyles,
+  existingStyleSources,
+  existingStyles,
+  breakpoints,
+  mergedBreakpointIds,
+}: {
+  fragmentStyleSources: StyleSource[];
+  fragmentStyles: StyleDecl[];
+  existingStyleSources: StyleSources;
+  existingStyles: Styles;
+  breakpoints: Map<Breakpoint["id"], Breakpoint>;
+  mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+}): TokenConflict[] => {
+  const conflicts: TokenConflict[] = [];
+  const existingTokens = Array.from(existingStyleSources.values());
+  const existingStylesArray = Array.from(existingStyles.values());
+
+  for (const styleSource of fragmentStyleSources) {
+    if (styleSource.type !== "token") {
+      continue;
+    }
+
+    const result = findTokenWithMatchingStyles({
+      tokenName: styleSource.name,
+      tokenStyles: fragmentStyles.filter(
+        (decl) => decl.styleSourceId === styleSource.id
+      ),
+      existingTokens,
+      existingStyles: existingStylesArray,
+      breakpoints,
+      mergedBreakpointIds,
+    });
+
+    if (result.hasConflict) {
+      // Find the first existing token with the same name for display purposes
+      const existingToken = existingTokens.find(
+        (token) => token.type === "token" && token.name === styleSource.name
+      );
+      if (existingToken && existingToken.type === "token") {
+        conflicts.push({
+          tokenName: styleSource.name,
+          fragmentTokenId: styleSource.id,
+          fragmentToken: styleSource,
+          existingToken,
+        });
+      }
+    }
+  }
+
+  return conflicts;
+};
+
+/**
  * Style Source Conflict Resolution Rules:
  *
  * When inserting a fragment with style sources (tokens), the following rules determine whether to reuse,
  * rename, or create new style sources:
  *
  * 1. Same name + Same styles → Reuse existing style source (no new style source created)
- * 2. Same name + Different styles → Add counter suffix (e.g., "myToken-1", "myToken-2")
+ * 2. Same name + Different styles → Add counter suffix (e.g., "myToken-1", "myToken-2") OR use existing based on onConflict
  * 3. Different name + Same styles → Insert as new style source with its own name
  * 4. Different name + Different styles → Insert as new style source normally
  * 5. Name collision safeguard → Always add counter suffix if name already exists
@@ -66,6 +196,7 @@ export const insertStyleSources = ({
   existingStyles,
   breakpoints,
   mergedBreakpointIds,
+  onConflict = "theirs",
 }: {
   fragmentStyleSources: StyleSource[];
   fragmentStyles: StyleDecl[];
@@ -73,6 +204,8 @@ export const insertStyleSources = ({
   existingStyles: Styles;
   breakpoints: Map<Breakpoint["id"], Breakpoint>;
   mergedBreakpointIds: Map<Breakpoint["id"], Breakpoint["id"]>;
+  /** How to handle conflicts: "theirs" = add suffix (keep incoming), "ours" = use existing token */
+  onConflict?: ConflictResolution;
 }): {
   styleSourceIds: Set<StyleSource["id"]>;
   styleSourceIdMap: Map<StyleSource["id"], StyleSource["id"]>;
@@ -108,62 +241,65 @@ export const insertStyleSources = ({
 
     if (tokensWithSameName && tokensWithSameName.length > 0) {
       // Same name exists - compare styles to decide if we can reuse
-      const signature = getStyleSourceStylesSignature(
-        originalFragmentTokenId,
-        fragmentStyles,
+      const result = findTokenWithMatchingStyles({
+        tokenName: styleSource.name,
+        tokenStyles: fragmentStyles.filter(
+          (decl) => decl.styleSourceId === originalFragmentTokenId
+        ),
+        existingTokens: tokensWithSameName,
+        existingStyles: Array.from(existingStyles.values()),
         breakpoints,
-        mergedBreakpointIds
-      );
-
-      const hasMatchingStyles = tokensWithSameName.some((existing) => {
-        const existingSignature = getStyleSourceStylesSignature(
-          existing.id,
-          Array.from(existingStyles.values()),
-          breakpoints,
-          mergedBreakpointIds
-        );
-        return existingSignature === signature;
+        mergedBreakpointIds,
       });
 
-      if (hasMatchingStyles) {
+      if (result.matchingToken) {
         // Same name AND same styles -> reuse existing token
-        const existingToken = tokensWithSameName[0];
-        if (existingToken.type !== "token") {
-          continue;
-        }
-        styleSourceIdMap.set(originalFragmentTokenId, existingToken.id);
+        styleSourceIdMap.set(originalFragmentTokenId, result.matchingToken.id);
         continue; // Don't insert, reuse existing
-      } else {
-        // Same name but different styles -> add counter suffix
-        let maxCounter = 0;
-        const baseNamePattern = new RegExp(
-          `^${styleSource.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-(\\d+))?$`
-        );
-        for (const existing of updatedStyleSources.values()) {
-          if (existing.type !== "token") {
+      }
+
+      if (result.hasConflict) {
+        // Same name but different styles
+        if (onConflict === "ours") {
+          // Use the existing token instead of creating a new one
+          const existingToken = tokensWithSameName[0];
+          if (existingToken.type !== "token") {
             continue;
           }
-          const match = existing.name.match(baseNamePattern);
-          if (match) {
-            const counter = match[1] ? parseInt(match[1], 10) : 0;
-            maxCounter = Math.max(maxCounter, counter);
+          styleSourceIdMap.set(originalFragmentTokenId, existingToken.id);
+          continue; // Don't insert, use existing
+        } else {
+          // Default: add counter suffix
+          let maxCounter = 0;
+          const baseNamePattern = new RegExp(
+            `^${styleSource.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-(\\d+))?$`
+          );
+          for (const existing of updatedStyleSources.values()) {
+            if (existing.type !== "token") {
+              continue;
+            }
+            const match = existing.name.match(baseNamePattern);
+            if (match) {
+              const counter = match[1] ? parseInt(match[1], 10) : 0;
+              maxCounter = Math.max(maxCounter, counter);
+            }
           }
-        }
-        const newName = `${styleSource.name}-${maxCounter + 1}`;
-        const newStyleSource = {
-          ...styleSource,
-          id: newTokenId,
-          name: newName,
-        };
-        styleSourceIds.add(originalFragmentTokenId);
-        updatedStyleSources.set(newTokenId, newStyleSource);
-        styleSourceIdMap.set(originalFragmentTokenId, newTokenId);
+          const newName = `${styleSource.name}-${maxCounter + 1}`;
+          const newStyleSource = {
+            ...styleSource,
+            id: newTokenId,
+            name: newName,
+          };
+          styleSourceIds.add(originalFragmentTokenId);
+          updatedStyleSources.set(newTokenId, newStyleSource);
+          styleSourceIdMap.set(originalFragmentTokenId, newTokenId);
 
-        // Add to tracking maps
-        const tokensWithNewName = existingTokensByName.get(newName) ?? [];
-        tokensWithNewName.push(newStyleSource);
-        existingTokensByName.set(newName, tokensWithNewName);
-        continue;
+          // Add to tracking maps
+          const tokensWithNewName = existingTokensByName.get(newName) ?? [];
+          tokensWithNewName.push(newStyleSource);
+          existingTokensByName.set(newName, tokensWithNewName);
+          continue;
+        }
       }
     }
 

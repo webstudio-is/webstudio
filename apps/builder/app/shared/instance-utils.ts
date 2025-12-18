@@ -2,7 +2,7 @@ import { current, isDraft } from "immer";
 import { nanoid } from "nanoid";
 import { toast } from "@webstudio-is/design-system";
 import { builderApi } from "~/shared/builder-api";
-import { equalMedia, type StyleValue } from "@webstudio-is/css-engine";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import {
   type Instances,
@@ -12,7 +12,6 @@ import {
   type Breakpoints,
   type DataSources,
   type DataSource,
-  type Breakpoint,
   type WebstudioFragment,
   type WebstudioData,
   type Resource,
@@ -34,6 +33,12 @@ import {
   blockTemplateComponent,
   isComponentDetachable,
 } from "@webstudio-is/sdk";
+import { detectTokenConflicts } from "./style-source-utils";
+import {
+  showTokenConflictDialog,
+  type ConflictResolution,
+} from "./token-conflict-dialog";
+import { buildMergedBreakpointIds } from "./breakpoints-utils";
 import {
   $props,
   $styles,
@@ -1321,11 +1326,13 @@ export const insertWebstudioFragmentCopy = ({
   fragment,
   availableVariables,
   projectId,
+  onConflict = "theirs",
 }: {
   data: Omit<WebstudioData, "pages">;
   fragment: WebstudioFragment;
   availableVariables: DataSource[];
   projectId: Project["id"];
+  onConflict?: ConflictResolution;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
@@ -1383,17 +1390,12 @@ export const insertWebstudioFragmentCopy = ({
 
   // merge breakpoints
 
-  const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>();
+  const mergedBreakpointIds = buildMergedBreakpointIds(
+    fragment.breakpoints,
+    breakpoints
+  );
   for (const newBreakpoint of fragment.breakpoints) {
-    let matched = false;
-    for (const breakpoint of breakpoints.values()) {
-      if (equalMedia(breakpoint, newBreakpoint)) {
-        matched = true;
-        mergedBreakpointIds.set(newBreakpoint.id, breakpoint.id);
-        break;
-      }
-    }
-    if (matched === false) {
+    if (mergedBreakpointIds.has(newBreakpoint.id) === false) {
       breakpoints.set(newBreakpoint.id, newBreakpoint);
     }
   }
@@ -1408,6 +1410,7 @@ export const insertWebstudioFragmentCopy = ({
       existingStyles: styles,
       breakpoints,
       mergedBreakpointIds,
+      onConflict,
     });
 
   // Update styleSources map with the new tokens
@@ -1783,4 +1786,55 @@ export const buildInstancePath = (
     .reverse()
     .slice(0, -1) // Remove the instance itself (last element after reverse), keep only ancestors
     .map(({ instance }) => getInstanceLabel(instance));
+};
+
+/**
+ * Detects token conflicts and shows resolution dialog if needed.
+ * Returns the conflict resolution strategy to use.
+ *
+ * @param fragment - The fragment to check for conflicts
+ * @returns Promise that resolves with "theirs" (keep incoming) or "ours" (use existing), or rejects if user cancels
+ */
+export const insertFragmentWithConflictResolution = async ({
+  fragment,
+}: {
+  fragment: WebstudioFragment;
+}): Promise<ConflictResolution> => {
+  const data = getWebstudioData();
+  if (data === undefined) {
+    throw new Error("No webstudio data available");
+  }
+
+  const mergedBreakpointIds = buildMergedBreakpointIds(
+    fragment.breakpoints,
+    data.breakpoints
+  );
+
+  const conflicts = detectTokenConflicts({
+    fragmentStyleSources: fragment.styleSources,
+    fragmentStyles: fragment.styles,
+    existingStyleSources: data.styleSources,
+    existingStyles: data.styles,
+    breakpoints: data.breakpoints,
+    mergedBreakpointIds,
+  });
+
+  if (conflicts.length === 0) {
+    // No conflicts, use theirs (doesn't matter which since there are no conflicts)
+    return "theirs";
+  }
+
+  // Show conflict dialog and wait for user choice
+  return new Promise((resolve, reject) => {
+    showTokenConflictDialog(
+      conflicts,
+      (resolution) => {
+        resolve(resolution);
+      },
+      () => {
+        // User cancelled
+        reject(new Error("User cancelled"));
+      }
+    );
+  });
 };

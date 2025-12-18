@@ -23,6 +23,7 @@ import {
   getWebstudioData,
   insertInstanceChildrenMutable,
   findClosestInsertable,
+  insertFragmentWithConflictResolution,
   type Insertable,
 } from "../instance-utils";
 import { $selectedInstancePath } from "../awareness";
@@ -155,7 +156,7 @@ const findPasteTarget = (data: InstanceData): undefined | Insertable => {
   return insertable;
 };
 
-const onPaste = (clipboardData: string) => {
+const onPaste = async (clipboardData: string) => {
   const project = $project.get();
   const fragment = parse(clipboardData);
   if (fragment === undefined || project === undefined) {
@@ -167,25 +168,34 @@ const onPaste = (clipboardData: string) => {
     return false;
   }
 
-  updateWebstudioData((data) => {
-    const { newInstanceIds } = insertWebstudioFragmentCopy({
-      data,
+  try {
+    const onConflict = await insertFragmentWithConflictResolution({
       fragment,
-      availableVariables: findAvailableVariables({
-        ...data,
-        startingInstanceId: pasteTarget.parentSelector[0],
-      }),
-      projectId: project.id,
     });
-    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const children: Instance["children"] = [
-      { type: "id", value: newRootInstanceId },
-    ];
-    insertInstanceChildrenMutable(data, children, pasteTarget);
-  });
+    updateWebstudioData((data) => {
+      const { newInstanceIds } = insertWebstudioFragmentCopy({
+        data,
+        fragment,
+        availableVariables: findAvailableVariables({
+          ...data,
+          startingInstanceId: pasteTarget.parentSelector[0],
+        }),
+        projectId: project.id,
+        onConflict,
+      });
+      const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+      if (newRootInstanceId === undefined) {
+        return;
+      }
+      const children: Instance["children"] = [
+        { type: "id", value: newRootInstanceId },
+      ];
+      insertInstanceChildrenMutable(data, children, pasteTarget);
+    });
+  } catch (error) {
+    // User cancelled
+    return false;
+  }
 
   return true;
 };

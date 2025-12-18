@@ -5,7 +5,7 @@ import {
   groupBreakpoints,
   isBaseBreakpoint,
   minCanvasWidth,
-} from "~/shared/breakpoints";
+} from "~/shared/breakpoints-utils";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
 import {
   $breakpoints,

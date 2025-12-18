@@ -1,5 +1,8 @@
-export { isBaseBreakpoint } from "~/shared/nano-states/breakpoints";
+export {
+  isBaseBreakpoint,
+  groupBreakpoints,
+  buildMergedBreakpointIds,
+  minCanvasWidth,
+} from "../breakpoints-utils";
 export * from "./select-breakpoint-by-order";
-export * from "./group-breakpoints";
-export * from "./constants";
 export * from "./stores";

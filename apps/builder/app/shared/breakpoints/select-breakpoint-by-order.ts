@@ -1,4 +1,4 @@
-import { groupBreakpoints } from "./group-breakpoints";
+import { groupBreakpoints } from "../breakpoints-utils";
 import { $selectedBreakpointId, $breakpoints } from "../nano-states";
 import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 
