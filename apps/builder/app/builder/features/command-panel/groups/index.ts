@@ -69,11 +69,11 @@ export const $allOptions = computed(
     dataVariableOptions,
     cssVariableOptions
   ) => [
-    ...componentOptions,
-    ...tagOptions,
-    ...breakpointOptions,
-    ...pageOptions,
     ...commandOptions,
+    ...componentOptions,
+    ...pageOptions,
+    ...breakpointOptions,
+    ...tagOptions,
     ...tokenOptions,
     ...dataVariableOptions,
     ...cssVariableOptions,

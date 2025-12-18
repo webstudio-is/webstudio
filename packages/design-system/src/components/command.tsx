@@ -311,7 +311,12 @@ export const CommandFooter = () => {
   );
 };
 
-export const CommandList = CommandPrimitive.List;
+export const CommandList = styled(CommandPrimitive.List, {
+  "& [cmdk-group-heading]": {
+    position: "sticky",
+    top: 0,
+  },
+});
 
 type CommandGroupProps = Omit<
   ComponentPropsWithoutRef<typeof CommandPrimitive.Group>,
@@ -409,6 +414,7 @@ export const CommandGroupHeading = styled("div", {
   ...textVariants.labelsSentenceCase,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
+  backgroundColor: theme.colors.backgroundControls,
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
