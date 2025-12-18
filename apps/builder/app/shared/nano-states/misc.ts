@@ -334,6 +334,8 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 
 export const $authToken = atom<string | undefined>(undefined);
 
+export const $stagingPassword = atom<string>("webstudio");
+
 export const $isContentModeAllowed = computed(
   [$authToken, $userPlanFeatures],
   (token, userPlanFeatures) => {

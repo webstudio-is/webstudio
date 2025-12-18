@@ -201,6 +201,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         authTokenPermissions,
         authPermit,
         userPlanFeatures,
+        stagingPassword: env.STAGING_PASSWORD,
       } as const,
       {
         headers,

@@ -201,9 +201,11 @@ const ChangeProjectDomain = ({
         </Grid>
       }
     >
-      <Grid gap={3}>
-        <Grid gap={1}>
-          <Label htmlFor={id}>Domain:</Label>
+      <Grid gap={2}>
+        <Grid flow="column" align="center" gap={2}>
+          <Label htmlFor={id} css={{ width: theme.spacing[20] }}>
+            Domain:
+          </Label>
           <InputField
             text="mono"
             id={id}
@@ -230,6 +232,18 @@ const ChangeProjectDomain = ({
             color={error !== undefined ? "error" : undefined}
           />
           {error !== undefined && <Text color="destructive">{error}</Text>}
+        </Grid>
+        <Grid flow="column" align="center" gap={2}>
+          <Label htmlFor={`${id}-password`} css={{ width: theme.spacing[20] }}>
+            Password:
+          </Label>
+          <InputField
+            text="mono"
+            id={`${id}-password`}
+            type="text"
+            value="webstudio"
+            readOnly
+          />
         </Grid>
       </Grid>
     </CollapsibleDomainSection>

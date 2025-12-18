@@ -56,6 +56,8 @@ const env = {
 
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || "wstd.work",
 
+  STAGING_PASSWORD: process.env.STAGING_PASSWORD ?? "webstudio",
+
   FEATURES: process.env.FEATURES ?? "",
 
   // current user plan features (default)
