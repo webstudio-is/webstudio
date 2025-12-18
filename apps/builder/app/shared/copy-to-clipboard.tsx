@@ -8,8 +8,8 @@ export const CopyToClipboard = ({
   children,
 }: {
   text: string;
-  copyText?: string;
-  copiedText?: string;
+  copyText?: React.ReactNode;
+  copiedText?: React.ReactNode;
   children: React.ReactNode;
 }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -17,7 +17,8 @@ export const CopyToClipboard = ({
   return (
     <div
       style={{ display: "contents" }}
-      onClick={() => {
+      onClick={(event) => {
+        event.preventDefault();
         navigator.clipboard.writeText(text);
         setIsCopied(true);
       }}
@@ -27,6 +28,7 @@ export const CopyToClipboard = ({
         // Changing the key seems like a workaround to address this issue.
         key={isCopied ? "copied" : "copy"}
         disableHoverableContent
+        variant="wrapped"
         content={isCopied ? copiedText : copyText}
         open={isCopied === true ? true : undefined}
         onOpenChange={(isOpen) => {
