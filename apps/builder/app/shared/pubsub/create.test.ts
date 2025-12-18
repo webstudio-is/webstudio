@@ -6,8 +6,9 @@ type TestPublishMap = {
   noPayloadAction: undefined;
   numberAction: number;
   storybook: string;
-  command: { source: string; name: string };
+  command: { source: string; name: string; [key: string]: unknown };
   "command:testCommand": undefined;
+  "command:commandWithPayload": { data: string; count: number };
   "command:anotherCommand": undefined;
 };
 
@@ -691,6 +692,47 @@ describe("createPubsub", () => {
 
       expect(handler1).toHaveBeenCalledWith(undefined);
       expect(handler2).toHaveBeenCalledWith(undefined);
+    });
+
+    test("should pass payload to command-specific subscribers", async () => {
+      global.window.self = asWindow(global.window);
+      global.window.top = asWindow(global.window);
+
+      const localAddEventListenerSpy = vi.fn();
+      global.window.addEventListener = localAddEventListenerSpy;
+
+      const pubsub = createPubsub<TestPublishMap>();
+
+      const handler = vi.fn();
+      pubsub.subscribe("command:commandWithPayload", handler);
+
+      const messageHandler = localAddEventListenerSpy.mock.calls[0][1];
+
+      const mockEvent = {
+        data: {
+          action: {
+            type: "command",
+            payload: {
+              source: "builder",
+              name: "commandWithPayload",
+              data: "test-data",
+              count: 42,
+            },
+          },
+          token: "development-token",
+        },
+      };
+
+      messageHandler(mockEvent);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(handler).toHaveBeenCalledWith({
+        source: "builder",
+        name: "commandWithPayload",
+        data: "test-data",
+        count: 42,
+      });
     });
   });
 });
