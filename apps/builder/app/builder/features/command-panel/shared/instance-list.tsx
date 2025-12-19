@@ -103,7 +103,7 @@ export const InstanceList = ({
                       onSelect(id);
                     }}
                   >
-                    <Text variant="labelsTitleCase">{label}</Text>
+                    <Text>{label}</Text>
                     <Text
                       color="moreSubtle"
                       truncate

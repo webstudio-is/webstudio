@@ -129,7 +129,7 @@ export const DataVariablesGroup = ({
                 }
               }}
             >
-              <Text variant="labelsSentenceCase">
+              <Text>
                 {option.name}{" "}
                 <Text as="span" color="moreSubtle">
                   {formatUsageCount(option.usages)}
