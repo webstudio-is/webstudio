@@ -335,26 +335,14 @@ export const CommandGroup = ({
   hideAfterItemsAmount = 50,
   ...props
 }: CommandGroupProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(hideAfterItemsAmount);
   const groupRef = useRef<HTMLDivElement>(null);
   const itemCount = Array.isArray(children) ? children.length : 0;
-  const showMoreButton = itemCount > hideAfterItemsAmount && !isExpanded;
+  const hasMoreItems = itemCount > visibleCount;
 
-  // Hide items beyond maxItems when not expanded
-  useEffect(() => {
-    const groupElement = groupRef.current;
-    if (!groupElement || itemCount <= hideAfterItemsAmount || itemCount === 0) {
-      return;
-    }
-
-    const items = groupElement.querySelectorAll("[cmdk-item]");
-    items.forEach((item, index) => {
-      if (item instanceof HTMLElement) {
-        item.style.display =
-          isExpanded || index < hideAfterItemsAmount ? "" : "none";
-      }
-    });
-  }, [isExpanded, itemCount, hideAfterItemsAmount]);
+  const handleShowMore = () => {
+    setVisibleCount((prev) => prev + 100);
+  };
 
   return (
     <div ref={groupRef}>
@@ -363,16 +351,17 @@ export const CommandGroup = ({
         value={name}
         data-actions={actions.join()}
       >
-        {children}
+        {
+          // Show items up to visibleCount
+          Array.isArray(children) && hasMoreItems
+            ? children.slice(0, visibleCount)
+            : children
+        }
       </CommandPrimitive.Group>
-      {showMoreButton && (
+      {hasMoreItems && (
         <Flex justify="center" css={{ padding: theme.spacing[2] }}>
-          <Button
-            color="ghost"
-            onClick={() => setIsExpanded(true)}
-            type="button"
-          >
-            Show more ({itemCount - hideAfterItemsAmount} hidden)
+          <Button color="ghost" onClick={handleShowMore} type="button">
+            Show more ({itemCount - visibleCount} hidden)
           </Button>
         </Flex>
       )}
