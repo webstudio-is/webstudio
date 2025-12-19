@@ -74,7 +74,7 @@ export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
               }
             }}
           >
-            <Text variant="labelsTitleCase">{label}</Text>
+            <Text>{label}</Text>
             <Text color="moreSubtle" truncate css={{ maxWidth: "30ch" }}>
               {componentLabel}
             </Text>

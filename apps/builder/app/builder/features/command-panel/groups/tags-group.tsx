@@ -117,7 +117,7 @@ export const TagsGroup = ({ options }: { options: TagOption[] }) => {
               <CommandIcon>
                 <InstanceIcon instance={{ component: elementComponent, tag }} />
               </CommandIcon>
-              <Text variant="labelsSentenceCase">{`<${tag}>`}</Text>
+              <Text>{`<${tag}>`}</Text>
             </Flex>
           </CommandItem>
         );

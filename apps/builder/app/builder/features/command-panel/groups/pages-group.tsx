@@ -69,7 +69,7 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
             }
           }}
         >
-          <Text variant="labelsTitleCase">{page.name}</Text>
+          <Text>{page.name}</Text>
         </CommandItem>
       ))}
     </CommandGroup>

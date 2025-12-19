@@ -199,7 +199,7 @@ const DuplicateTokensList = ({
                     }
                   }}
                 >
-                  <Text variant="labelsTitleCase">
+                  <Text>
                     {token.name}{" "}
                     <Text as="span" color="moreSubtle">
                       {formatUsageCount(duplicateUsages)}

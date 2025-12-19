@@ -166,7 +166,7 @@ const ConvertComponentsList = () => {
                         <CommandIcon>
                           <InstanceIcon instance={{ component, tag }} />
                         </CommandIcon>
-                        <Text variant="labelsSentenceCase">{label}</Text>
+                        <Text>{label}</Text>
                       </Flex>
                     </CommandItem>
                   );

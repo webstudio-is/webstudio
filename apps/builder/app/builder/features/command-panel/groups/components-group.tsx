@@ -172,7 +172,7 @@ export const ComponentsGroup = ({
               <CommandIcon>
                 <InstanceIcon instance={firstInstance} icon={icon} />
               </CommandIcon>
-              <Text variant="labelsTitleCase">
+              <Text>
                 {label}{" "}
                 <Text as="span" color="moreSubtle">
                   {humanizeString(category)}
