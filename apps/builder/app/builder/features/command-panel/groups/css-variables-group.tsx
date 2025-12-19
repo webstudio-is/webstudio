@@ -100,7 +100,11 @@ export const CssVariablesGroup = ({
     <>
       <CommandGroup
         name="cssVariable"
-        heading={<CommandGroupHeading>CSS Variables</CommandGroupHeading>}
+        heading={
+          <CommandGroupHeading>
+            CSS Variables ({options.length})
+          </CommandGroupHeading>
+        }
         actions={["select", "find usages", "rename", "delete"]}
       >
         {options.map(({ property, instanceId, usages, terms }) => {

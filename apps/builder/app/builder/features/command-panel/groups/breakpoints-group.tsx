@@ -70,7 +70,11 @@ export const BreakpointsGroup = ({
   return (
     <CommandGroup
       name="breakpoint"
-      heading={<CommandGroupHeading>Breakpoints</CommandGroupHeading>}
+      heading={
+        <CommandGroupHeading>
+          Breakpoints ({options.length})
+        </CommandGroupHeading>
+      }
       actions={["select"]}
     >
       {options.map(({ breakpoint, keys }) => (

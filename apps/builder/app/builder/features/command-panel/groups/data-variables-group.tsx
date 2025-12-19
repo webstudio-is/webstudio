@@ -102,7 +102,11 @@ export const DataVariablesGroup = ({
     <>
       <CommandGroup
         name="dataVariable"
-        heading={<CommandGroupHeading>Data variables</CommandGroupHeading>}
+        heading={
+          <CommandGroupHeading>
+            Data variables ({options.length})
+          </CommandGroupHeading>
+        }
         actions={["select", "find usages", "rename", "delete"]}
       >
         {options.map((option) => {

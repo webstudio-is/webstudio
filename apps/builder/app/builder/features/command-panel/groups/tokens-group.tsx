@@ -97,7 +97,9 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
     <>
       <CommandGroup
         name="token"
-        heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
+        heading={
+          <CommandGroupHeading>Tokens ({options.length})</CommandGroupHeading>
+        }
         actions={["show instances", "rename", "delete"]}
       >
         {options.map(({ token, usages }) => (

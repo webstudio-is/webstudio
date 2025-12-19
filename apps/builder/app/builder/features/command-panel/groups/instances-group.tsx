@@ -44,7 +44,9 @@ export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
   return (
     <CommandGroup
       name="instance"
-      heading={<CommandGroupHeading>Instances</CommandGroupHeading>}
+      heading={
+        <CommandGroupHeading>Instances ({options.length})</CommandGroupHeading>
+      }
       actions={["select"]}
     >
       {options.map(({ instance }) => {

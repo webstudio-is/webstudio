@@ -47,7 +47,9 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
   return (
     <CommandGroup
       name="page"
-      heading={<CommandGroupHeading>Pages</CommandGroupHeading>}
+      heading={
+        <CommandGroupHeading>Pages ({options.length})</CommandGroupHeading>
+      }
       actions={["select", "settings"]}
     >
       {options.map(({ page }) => (
