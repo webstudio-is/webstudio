@@ -47,7 +47,7 @@ export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
       heading={
         <CommandGroupHeading>Instances ({options.length})</CommandGroupHeading>
       }
-      actions={["select"]}
+      actions={[{ name: "select", label: "Select" }]}
     >
       {options.map(({ instance }) => {
         const label = getInstanceLabel(instance);

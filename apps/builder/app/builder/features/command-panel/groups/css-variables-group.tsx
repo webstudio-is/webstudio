@@ -105,7 +105,12 @@ export const CssVariablesGroup = ({
             CSS Variables ({options.length})
           </CommandGroupHeading>
         }
-        actions={["select", "find usages", "rename", "delete"]}
+        actions={[
+          { name: "select", label: "Select" },
+          { name: "findUsages", label: "Find usages" },
+          { name: "rename", label: "Rename" },
+          { name: "delete", label: "Delete" },
+        ]}
       >
         {options.map(({ property, instanceId, usages, terms }) => {
           return (
@@ -115,19 +120,19 @@ export const CssVariablesGroup = ({
               // preserve selected state when rerender
               value={`${property}-${instanceId}`}
               onSelect={() => {
-                if (action === "select") {
+                if (action?.name === "select") {
                   showInstance(instanceId, "style");
                   closeCommandPanel();
                 }
-                if (action === "find usages") {
+                if (action?.name === "findUsages") {
                   $commandContent.set(
                     <CssVariableInstances property={property} />
                   );
                 }
-                if (action === "rename") {
+                if (action?.name === "rename") {
                   setVariableDialog({ action: "rename", property });
                 }
-                if (action === "delete") {
+                if (action?.name === "delete") {
                   setVariableDialog({ action: "delete", property });
                 }
               }}

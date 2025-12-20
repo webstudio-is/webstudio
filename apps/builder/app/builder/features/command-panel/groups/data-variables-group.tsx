@@ -107,7 +107,12 @@ export const DataVariablesGroup = ({
             Data variables ({options.length})
           </CommandGroupHeading>
         }
-        actions={["select", "find usages", "rename", "delete"]}
+        actions={[
+          { name: "select", label: "Select" },
+          { name: "findUsages", label: "Find usages" },
+          { name: "rename", label: "Rename" },
+          { name: "delete", label: "Delete" },
+        ]}
       >
         {options.map((option) => {
           return (
@@ -116,19 +121,19 @@ export const DataVariablesGroup = ({
               key={option.id}
               value={option.id}
               onSelect={() => {
-                if (action === "select") {
+                if (action?.name === "select") {
                   showInstance(option.instanceId, "settings");
                   closeCommandPanel();
                 }
-                if (action === "find usages") {
+                if (action?.name === "findUsages") {
                   $commandContent.set(
                     <DataVariableInstances variableId={option.id} />
                   );
                 }
-                if (action === "rename") {
+                if (action?.name === "rename") {
                   setVariableDialog({ ...option, action: "rename" });
                 }
-                if (action === "delete") {
+                if (action?.name === "delete") {
                   setVariableDialog({ ...option, action: "delete" });
                 }
               }}

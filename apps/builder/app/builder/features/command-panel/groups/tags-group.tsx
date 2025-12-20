@@ -84,7 +84,7 @@ export const TagsGroup = ({ options }: { options: TagOption[] }) => {
       heading={
         <CommandGroupHeading>Tags ({options.length})</CommandGroupHeading>
       }
-      actions={["add"]}
+      actions={[{ name: "add", label: "Add" }]}
     >
       {options.map(({ tag }) => {
         return (

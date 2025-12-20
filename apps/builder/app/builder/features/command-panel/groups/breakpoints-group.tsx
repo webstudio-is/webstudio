@@ -75,7 +75,7 @@ export const BreakpointsGroup = ({
           Breakpoints ({options.length})
         </CommandGroupHeading>
       }
-      actions={["select"]}
+      actions={[{ name: "select", label: "Select" }]}
     >
       {options.map(({ breakpoint, keys }) => (
         <CommandItem

@@ -150,7 +150,7 @@ export const ComponentsGroup = ({
       heading={
         <CommandGroupHeading>Components ({options.length})</CommandGroupHeading>
       }
-      actions={["add"]}
+      actions={[{ name: "add", label: "Add" }]}
     >
       {options.map(({ component, label, category, icon, firstInstance }) => {
         return (

@@ -18,6 +18,7 @@ import {
   closeCommandPanel,
 } from "./command-state";
 import { $allOptions, groups, type Option } from "./groups";
+import { useAutoSelectFirstItem } from "./shared/auto-select";
 
 const renderGroup = (type: Option["type"], matches: Option[]): JSX.Element => {
   const Group = groups[type];
@@ -28,6 +29,8 @@ const renderGroup = (type: Option["type"], matches: Option[]): JSX.Element => {
 const CommandDialogContent = () => {
   const search = useStore($commandSearch);
   const options = useStore($allOptions);
+  const listRef = useAutoSelectFirstItem(search);
+
   let matches = options;
   // prevent searching when value is empty
   // to preserve original items order
@@ -42,6 +45,7 @@ const CommandDialogContent = () => {
     matches,
     (match) => match.type
   );
+
   return (
     <>
       <CommandInput
@@ -50,7 +54,7 @@ const CommandDialogContent = () => {
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
-          <CommandList>
+          <CommandList ref={listRef}>
             {Array.from(matchGroups).map(([type, matches]) =>
               renderGroup(type, matches)
             )}
