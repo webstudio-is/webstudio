@@ -4,9 +4,12 @@ import {
   useEffect,
   useRef,
   useState,
+  useCallback,
   type ComponentPropsWithoutRef,
   type Dispatch,
   type SetStateAction,
+  type ComponentProps,
+  type ReactNode,
 } from "react";
 import {
   Command as CommandPrimitive,
@@ -21,7 +24,7 @@ import {
   DialogOverlay,
   DialogContent,
 } from "@radix-ui/react-dialog";
-import { SearchIcon } from "@webstudio-is/icons";
+import { SearchIcon, ChevronLeftIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Text, textVariants } from "./text";
 import { Button } from "./button";
@@ -29,6 +32,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Kbd } from "./kbd";
 import { useDebounceEffect } from "../utilities";
 import { Flex } from "./flex";
+import { InputField } from "./input-field";
+import { SmallIconButton } from "./small-icon-button";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -64,10 +69,16 @@ const lowerCasedFilter: CommandProps["filter"] = (
     aliases
   );
 
+export type CommandAction = {
+  name: string;
+  label: string;
+};
+
 type CommandState = {
   highlightedGroup: string;
-  actions: string[];
+  actions: CommandAction[];
   actionIndex: number;
+  footerContent: ReactNode;
 };
 
 const CommandContext = createContext<
@@ -77,6 +88,7 @@ const CommandContext = createContext<
     highlightedGroup: "",
     actions: [],
     actionIndex: 0,
+    footerContent: undefined,
   },
   () => {},
 ]);
@@ -93,11 +105,22 @@ export const useResetActionIndex = () => {
   };
 };
 
+const useSetFooterContent = () => {
+  const [, setState] = useContext(CommandContext);
+  return useCallback(
+    (content: ReactNode) => {
+      setState((prev) => ({ ...prev, footerContent: content }));
+    },
+    [setState]
+  );
+};
+
 export const Command = (props: CommandProps) => {
   const state = useState<CommandState>({
     highlightedGroup: "",
     actions: [],
     actionIndex: 0,
+    footerContent: undefined,
   });
   return (
     <CommandContext.Provider value={state}>
@@ -139,38 +162,32 @@ export const CommandDialog = ({
 };
 
 const CommandInputContainer = styled("div", {
-  display: "grid",
-  gridTemplateColumns: `${itemHeight} 1fr max-content`,
-  height: theme.spacing[15],
   borderBottom: `var(${inputBorderBottomSize}) solid ${theme.colors.borderMain}`,
 });
 
-const CommandInputIcon = styled(SearchIcon, {
-  gridColumn: "1 / 2",
-  gridRow: "1 / 2",
-  placeSelf: "center",
+export const CommandSearchIcon = styled(SearchIcon, {
+  display: "flex",
+  width: theme.spacing[11],
   color: theme.colors.foregroundSubtle,
 });
 
-const CommandInputField = styled(CommandPrimitive.Input, {
-  all: "unset",
-  gridColumn: "1 / 3",
-  gridRow: "1 / 2",
-  // add space for icon
-  paddingLeft: itemHeight,
-  paddingRight: theme.spacing[2],
-  color: theme.colors.foregroundMain,
-  ...textVariants.regular,
-  lineHeight: 1,
-  "&::placeholder": {
-    color: theme.colors.foregroundSubtle,
-  },
+export const CommandBackIcon = styled(ChevronLeftIcon, {
+  display: "flex",
+  width: theme.spacing[11],
+  color: theme.colors.foregroundSubtle,
+});
+
+const CommandInputField = styled(InputField, {
+  "--sizes-controlHeight": theme.spacing[15],
+  border: "none",
+  paddingInline: theme.spacing[4],
 });
 
 export const CommandInput = (
-  props: ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
-    action?: string;
-    placeholder?: string;
+  props: ComponentProps<typeof InputField> & {
+    action?: CommandAction;
+    onBack?: () => void;
+    onValueChange?: (value: string) => void;
   }
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -178,17 +195,40 @@ export const CommandInput = (
   const {
     action = contextAction,
     placeholder = "Type a command or search...",
+    prefix,
+    onBack,
+    value,
+    onValueChange,
+    ref,
     ...inputProps
   } = props;
   return (
     <CommandInputContainer>
-      <CommandInputIcon />
       <CommandInputField
-        ref={inputRef}
+        prefix={prefix ?? <CommandSearchIcon />}
+        suffix={
+          action && (
+            <Text
+              color="moreSubtle"
+              css={{ alignSelf: "center", paddingInline: theme.spacing[5] }}
+            >
+              {action.label} <Kbd value={["enter"]} color="moreSubtle" />
+            </Text>
+          )
+        }
+        inputRef={inputRef}
         autoFocus={true}
         placeholder={placeholder}
+        value={value}
         {...inputProps}
-        onValueChange={(value) => {
+        onKeyDown={(event) => {
+          if (onBack && event.key === "Backspace" && value === "") {
+            event.preventDefault();
+            onBack();
+          }
+          inputProps.onKeyDown?.(event);
+        }}
+        onChange={(event) => {
           // reset scroll whenever search is changed
           requestAnimationFrame(() => {
             inputRef.current
@@ -196,23 +236,16 @@ export const CommandInput = (
               ?.querySelector("[data-radix-scroll-area-viewport]")
               ?.scrollTo(0, 0);
           });
-          inputProps.onValueChange?.(value);
+          onValueChange?.(event.target.value);
         }}
       />
-      <Text
-        variant="labelsTitleCase"
-        color="moreSubtle"
-        css={{ alignSelf: "center", paddingInline: theme.spacing[5] }}
-      >
-        {action} <Kbd value={["enter"]} color="moreSubtle" />
-      </Text>
     </CommandInputContainer>
   );
 };
 
 const ActionsCommand = styled(CommandPrimitive, {});
 
-export const CommandFooter = () => {
+export const CommandFooter = ({ children }: { children?: ReactNode }) => {
   const [isActionOpen, setIsActionOpen] = useState(false);
   const scheduleEffect = useDebounceEffect();
 
@@ -227,14 +260,19 @@ export const CommandFooter = () => {
       "[cmdk-group]:has([aria-selected=true])"
     );
     const highlightedGroup = selectedGroup?.getAttribute("data-value") ?? "";
-    const actions =
-      selectedGroup?.getAttribute("data-actions")?.split(",") ?? [];
+    const actionsJson = selectedGroup?.getAttribute("data-actions") ?? "[]";
+    let actions: CommandAction[] = [];
+    try {
+      actions = JSON.parse(actionsJson);
+    } catch {
+      // fallback to empty array if parsing fails
+    }
     setState((prev) => {
       // reset index only when group is changed
       if (prev.highlightedGroup === highlightedGroup) {
         return prev;
       }
-      return { highlightedGroup, actions, actionIndex: 0 };
+      return { ...prev, highlightedGroup, actions, actionIndex: 0 };
     });
   }, [highlightedValue, setState]);
 
@@ -259,6 +297,7 @@ export const CommandFooter = () => {
 
   return (
     <CommandGroupFooter ref={actionsRef}>
+      {children || state.footerContent}
       <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
         <PopoverTrigger asChild>
           <Button tabIndex={-1} color="ghost" data-action-trigger>
@@ -284,7 +323,7 @@ export const CommandFooter = () => {
             <CommandList data-action-list>
               {state.actions.map((action, actionIndex) => (
                 <CommandItem
-                  key={action}
+                  key={action.name}
                   allowSingleClick
                   onSelect={() => {
                     setState((prev) => ({ ...prev, actionIndex }));
@@ -301,7 +340,7 @@ export const CommandFooter = () => {
                     });
                   }}
                 >
-                  <Text variant="labelsTitleCase">{action}</Text>
+                  <Text>{action.label}</Text>
                 </CommandItem>
               ))}
             </CommandList>
@@ -324,7 +363,7 @@ type CommandGroupProps = Omit<
   "value"
 > & {
   name: string;
-  actions: string[];
+  actions: CommandAction[];
   hideAfterItemsAmount?: number;
 };
 
@@ -349,7 +388,7 @@ export const CommandGroup = ({
       <CommandPrimitive.Group
         {...props}
         value={name}
-        data-actions={actions.join()}
+        data-actions={JSON.stringify(actions)}
       >
         {
           // Show items up to visibleCount
@@ -462,6 +501,18 @@ export const CommandGroupFooter = styled("div", {
   borderTop: `1px solid ${theme.colors.borderMain}`,
 });
 
+export const CommandBackButton = ({ onClick }: { onClick?: () => void }) => {
+  return (
+    <SmallIconButton
+      icon={<CommandBackIcon />}
+      tabIndex={-1}
+      onClick={onClick}
+      aria-label="Go back"
+      css={{ display: "flex" }}
+    />
+  );
+};
+
 const CommandItemStyled = styled(CommandPrimitive.Item, {
   display: "grid",
   gridTemplateColumns: `1fr max-content`,
@@ -481,3 +532,5 @@ export const CommandIcon = styled("div", {
   height: theme.spacing[9],
   placeSelf: "center",
 });
+
+export { useCommandState, useSetFooterContent };

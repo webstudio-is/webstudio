@@ -1,10 +1,11 @@
 import {
   CommandGroup,
-  CommandGroupFooter,
   CommandIcon,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandBackButton,
+  CommandFooter,
   Flex,
   ScrollArea,
   Text,
@@ -36,7 +37,6 @@ import {
   openCommandPanel,
 } from "../command-state";
 import { useState } from "react";
-import { BackButton } from "../shared/back-button";
 import { wrapInstance } from "~/shared/instance-utils";
 
 type WrapOption = {
@@ -243,19 +243,19 @@ const WrapComponentsList = () => {
     }
   }
 
+  const goBack = () => {
+    $commandContent.set(undefined);
+  };
+
   return (
     <>
       <CommandInput
-        action="wrap"
+        action={{ name: "wrap", label: "Wrap" }}
         placeholder="Search components to wrap with..."
         value={search}
         onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            $commandContent.set(undefined);
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -267,7 +267,10 @@ const WrapComponentsList = () => {
                 </Text>
               </Flex>
             ) : (
-              <CommandGroup name="wrap-components" actions={["wrap"]}>
+              <CommandGroup
+                name="wrap-components"
+                actions={[{ name: "wrap", label: "Wrap" }]}
+              >
                 {matches.map(({ component, tag, label }) => {
                   const key = tag ? `${component}:${tag}` : component;
                   return (
@@ -293,11 +296,7 @@ const WrapComponentsList = () => {
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <BackButton />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter />
     </>
   );
 };

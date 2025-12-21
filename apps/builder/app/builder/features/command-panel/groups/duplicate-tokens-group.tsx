@@ -5,11 +5,11 @@ import { matchSorter } from "match-sorter";
 import {
   CommandGroup,
   CommandGroupHeading,
-  CommandGroupFooter,
   CommandFooter,
   CommandItem,
   CommandInput,
   CommandList,
+  CommandBackButton,
   Text,
   Flex,
   ScrollArea,
@@ -34,7 +34,6 @@ import {
 } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { formatUsageCount, getUsageSearchTerms } from "../shared/usage-utils";
-import { BackButton } from "../shared/back-button";
 
 export type DuplicateTokenOption = BaseOption & {
   type: "duplicateToken";
@@ -140,22 +139,22 @@ const DuplicateTokensList = ({
     }
   }
 
+  const goBack = () => {
+    // Go back to duplicate tokens view
+    $commandContentKey.set($commandContentKey.get() + 1);
+    $commandContent.set(
+      <DuplicateTokensGroup options={duplicateTokenOptions} />
+    );
+  };
+
   return (
     <>
       <CommandInput
         placeholder="Search duplicates..."
         value={search}
         onValueChange={(value) => setSearch(value)}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            // Go back to duplicate tokens view
-            $commandContentKey.set($commandContentKey.get() + 1);
-            $commandContent.set(
-              <DuplicateTokensGroup options={duplicateTokenOptions} />
-            );
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -167,14 +166,17 @@ const DuplicateTokensList = ({
                   Duplicates of {tokenName}
                 </CommandGroupHeading>
               }
-              actions={["show duplicates", "show instances"]}
+              actions={[
+                { name: "show duplicates", label: "Show duplicates" },
+                { name: "show instances", label: "Show instances" },
+              ]}
             >
               {matches.map(({ id, token, usages: duplicateUsages }) => (
                 <CommandItem
                   key={id}
                   value={id}
                   onSelect={() => {
-                    if (action === "show duplicates" || !action) {
+                    if (action?.name === "showDuplicates" || !action) {
                       // Show duplicates of this duplicate token
                       const allDuplicates = duplicateTokenOptions.find(
                         (opt) => opt.token.id === id
@@ -190,9 +192,9 @@ const DuplicateTokensList = ({
                       }
                     }
                     if (
-                      action === "show instances" ||
-                      action === "find instances" ||
-                      action === "find"
+                      action?.name === "showInstances" ||
+                      action?.name === "findInstances" ||
+                      action?.name === "find"
                     ) {
                       $commandContentKey.set($commandContentKey.get() + 1);
                       $commandContent.set(<TokenInstances tokenId={id} />);
@@ -211,20 +213,7 @@ const DuplicateTokensList = ({
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex align="center" justify="between" css={{ width: "100%" }}>
-          <BackButton
-            onClick={() => {
-              // Go back to duplicate tokens view
-              $commandContentKey.set($commandContentKey.get() + 1);
-              $commandContent.set(
-                <DuplicateTokensGroup options={duplicateTokenOptions} />
-              );
-            }}
-          />
-          <CommandFooter />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter />
     </>
   );
 };
@@ -270,20 +259,20 @@ export const DuplicateTokensGroup = ({
     }
   }
 
+  const goBack = () => {
+    // Go back to main command panel
+    $commandContentKey.set($commandContentKey.get() + 1);
+    $commandContent.set(undefined);
+  };
+
   return (
     <>
       <CommandInput
         placeholder="Search duplicate tokens..."
         value={search}
         onValueChange={(value) => setSearch(value)}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            // Go back to main command panel
-            $commandContentKey.set($commandContentKey.get() + 1);
-            $commandContent.set(undefined);
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -293,7 +282,10 @@ export const DuplicateTokensGroup = ({
               heading={
                 <CommandGroupHeading>Duplicate tokens</CommandGroupHeading>
               }
-              actions={["show duplicates", "show instances"]}
+              actions={[
+                { name: "showDuplicates", label: "Show duplicates" },
+                { name: "showInstances", label: "Show instances" },
+              ]}
             >
               {matches.map(({ token, duplicates, usages }) => (
                 <CommandItem
@@ -301,7 +293,7 @@ export const DuplicateTokensGroup = ({
                   // preserve selected state when rerender
                   value={token.id}
                   onSelect={() => {
-                    if (action === "show duplicates" || !action) {
+                    if (action?.name === "showDuplicates" || !action) {
                       $commandContentKey.set($commandContentKey.get() + 1);
                       $commandContent.set(
                         <DuplicateTokensList
@@ -311,9 +303,9 @@ export const DuplicateTokensGroup = ({
                       );
                     }
                     if (
-                      action === "show instances" ||
-                      action === "find instances" ||
-                      action === "find"
+                      action?.name === "showInstances" ||
+                      action?.name === "findInstances" ||
+                      action?.name === "find"
                     ) {
                       $commandContentKey.set($commandContentKey.get() + 1);
                       $commandContent.set(
@@ -335,18 +327,7 @@ export const DuplicateTokensGroup = ({
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex align="center" justify="between" css={{ width: "100%" }}>
-          <BackButton
-            onClick={() => {
-              // Go back to main command panel
-              $commandContentKey.set($commandContentKey.get() + 1);
-              $commandContent.set(undefined);
-            }}
-          />
-          <CommandFooter />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter />
     </>
   );
 };

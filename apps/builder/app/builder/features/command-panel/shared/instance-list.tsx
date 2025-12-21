@@ -2,27 +2,33 @@ import { useState } from "react";
 import { matchSorter } from "match-sorter";
 import {
   CommandGroup,
-  CommandGroupFooter,
+  CommandFooter,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandBackButton,
   Flex,
   ScrollArea,
   Text,
+  useSelectedAction,
+  useCommandState,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { $instances, $pages } from "~/shared/sync/data-stores";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-import { $awareness, findAwarenessByInstanceId } from "~/shared/awareness";
 import { buildInstancePath } from "~/shared/instance-utils";
-import { $commandContent } from "../command-state";
+import { $commandContent } from "~/builder/features/command-panel/command-state";
+import { findAwarenessByInstanceId } from "~/shared/awareness";
+import { $awareness } from "~/shared/awareness";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
-import { BackButton } from "./back-button";
+import { useAutoSelectFirstItem } from "./auto-select";
+import { InstancePathFooter } from "./instance-path-footer";
 
 export type InstanceOption = {
   label: string;
   id: string;
   path: string[];
+  pageName: string;
 };
 
 type InstanceListProps = {
@@ -38,6 +44,8 @@ export const InstanceList = ({
 }: InstanceListProps) => {
   const instances = $instances.get();
   const pages = $pages.get();
+  const action = useSelectedAction();
+  const highlightedValue = useCommandState((state) => state.value);
   const usedInInstances: InstanceOption[] = [];
   for (const instanceId of instanceIds) {
     const instance = instances.get(instanceId);
@@ -45,13 +53,18 @@ export const InstanceList = ({
       continue;
     }
     const path = buildInstancePath(instanceId, pages, instances);
+    const awareness = findAwarenessByInstanceId(pages, instances, instanceId);
+    const page = pages.pages.find((p) => p.id === awareness.pageId);
     usedInInstances.push({
       label: getInstanceLabel(instance),
       id: instance.id,
       path,
+      pageName: page?.name ?? "",
     });
   }
   const [search, setSearch] = useState("");
+
+  const listRef = useAutoSelectFirstItem(search);
 
   const goBack = () => {
     if (onBack) {
@@ -72,45 +85,50 @@ export const InstanceList = ({
     }
   }
 
+  const selectedInstance = usedInInstances.find(
+    (instance) => instance.id === highlightedValue
+  );
+
   return (
     <>
       <CommandInput
-        action="select"
+        action={{ name: "select", label: "Select" }}
         placeholder="Search instances..."
         value={search}
         onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            goBack();
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
-          <CommandList>
-            <CommandGroup name="instance" actions={["select"]}>
+          <CommandList ref={listRef}>
+            <CommandGroup
+              name="instance"
+              actions={[
+                { name: "select", label: "Select" },
+                { name: "settings", label: "Settings" },
+              ]}
+            >
               {matches.length === 0 ? (
                 <Flex justify="center" align="center" css={{ minHeight: 100 }}>
                   <Text color="subtle">No instances found</Text>
                 </Flex>
               ) : (
-                matches.map(({ id, label, path }) => (
+                matches.map(({ id, label, pageName }) => (
                   <CommandItem
                     key={id}
                     value={id}
                     onSelect={() => {
-                      onSelect(id);
+                      if (action?.name === "select" || !action) {
+                        onSelect(id);
+                      }
+                      if (action?.name === "settings") {
+                        showInstance(id, "settings");
+                      }
                     }}
                   >
                     <Text>{label}</Text>
-                    <Text
-                      color="moreSubtle"
-                      truncate
-                      css={{ maxWidth: "30ch" }}
-                    >
-                      /{path.join("/")}
-                    </Text>
+                    <Text color="moreSubtle">{pageName}</Text>
                   </CommandItem>
                 ))
               )}
@@ -118,11 +136,11 @@ export const InstanceList = ({
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <BackButton />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter>
+        {selectedInstance && (
+          <InstancePathFooter instanceId={selectedInstance.id} />
+        )}
+      </CommandFooter>
     </>
   );
 };
