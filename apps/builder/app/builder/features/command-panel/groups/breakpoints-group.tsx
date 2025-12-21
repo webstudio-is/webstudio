@@ -84,9 +84,7 @@ export const BreakpointsGroup = ({
             setCanvasWidth(breakpoint.id);
           }}
         >
-          <Text variant="labelsTitleCase">
-            {getBreakpointLabel(breakpoint)}
-          </Text>
+          <Text>{getBreakpointLabel(breakpoint)}</Text>
           <Kbd value={keys} />
         </CommandItem>
       ))}

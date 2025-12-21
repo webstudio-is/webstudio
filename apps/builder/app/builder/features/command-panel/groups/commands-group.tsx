@@ -69,7 +69,7 @@ export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
             emitCommand(name as never);
           }}
         >
-          <Text variant="labelsSentenceCase">{label}</Text>
+          <Text>{label}</Text>
           {keys && <Kbd value={keys} />}
         </CommandItem>
       ))}

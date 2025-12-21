@@ -121,7 +121,7 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
               }
             }}
           >
-            <Text variant="labelsTitleCase">
+            <Text>
               {token.name}{" "}
               <Text as="span" color="moreSubtle">
                 {formatUsageCount(usages)}
