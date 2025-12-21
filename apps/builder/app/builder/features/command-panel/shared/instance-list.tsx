@@ -22,6 +22,7 @@ import { findAwarenessByInstanceId } from "~/shared/awareness";
 import { $awareness } from "~/shared/awareness";
 import { $activeInspectorPanel } from "~/builder/shared/nano-states";
 import { useAutoSelectFirstItem } from "./auto-select";
+import { InstancePathFooter } from "./instance-path-footer";
 
 export type InstanceOption = {
   label: string;
@@ -137,11 +138,7 @@ export const InstanceList = ({
       </Flex>
       <CommandFooter>
         {selectedInstance && (
-          <Flex grow>
-            <Text color="moreSubtle" truncate>
-              /{selectedInstance.path.join("/")}
-            </Text>
-          </Flex>
+          <InstancePathFooter instanceId={selectedInstance.id} />
         )}
       </CommandFooter>
     </>

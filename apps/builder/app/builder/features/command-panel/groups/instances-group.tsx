@@ -3,6 +3,8 @@ import {
   CommandGroupHeading,
   CommandItem,
   Text,
+  useCommandState,
+  useSetFooterContent,
 } from "@webstudio-is/design-system";
 import { computed } from "nanostores";
 import { parseComponentName } from "@webstudio-is/sdk";
@@ -14,6 +16,8 @@ import { closeCommandPanel, $isCommandPanelOpen } from "../command-state";
 import type { BaseOption } from "../shared/types";
 import { setActiveSidebarPanel } from "~/builder/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
+import { useEffect } from "react";
+import { InstancePathFooter } from "../shared/instance-path-footer";
 
 export type InstanceOption = BaseOption & {
   type: "instance";
@@ -41,6 +45,17 @@ export const $instanceOptions = computed(
 );
 
 export const InstancesGroup = ({ options }: { options: InstanceOption[] }) => {
+  const highlightedValue = useCommandState((state) => state.value);
+  const setFooterContent = useSetFooterContent();
+
+  useEffect(() => {
+    setFooterContent(
+      highlightedValue ? (
+        <InstancePathFooter instanceId={highlightedValue} />
+      ) : undefined
+    );
+  }, [highlightedValue, setFooterContent]);
+
   return (
     <CommandGroup
       name="instance"

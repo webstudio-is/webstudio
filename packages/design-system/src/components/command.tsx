@@ -4,10 +4,12 @@ import {
   useEffect,
   useRef,
   useState,
+  useCallback,
   type ComponentPropsWithoutRef,
   type Dispatch,
   type SetStateAction,
   type ComponentProps,
+  type ReactNode,
 } from "react";
 import {
   Command as CommandPrimitive,
@@ -76,6 +78,7 @@ type CommandState = {
   highlightedGroup: string;
   actions: CommandAction[];
   actionIndex: number;
+  footerContent: ReactNode;
 };
 
 const CommandContext = createContext<
@@ -85,6 +88,7 @@ const CommandContext = createContext<
     highlightedGroup: "",
     actions: [],
     actionIndex: 0,
+    footerContent: undefined,
   },
   () => {},
 ]);
@@ -101,11 +105,22 @@ export const useResetActionIndex = () => {
   };
 };
 
+const useSetFooterContent = () => {
+  const [, setState] = useContext(CommandContext);
+  return useCallback(
+    (content: ReactNode) => {
+      setState((prev) => ({ ...prev, footerContent: content }));
+    },
+    [setState]
+  );
+};
+
 export const Command = (props: CommandProps) => {
   const state = useState<CommandState>({
     highlightedGroup: "",
     actions: [],
     actionIndex: 0,
+    footerContent: undefined,
   });
   return (
     <CommandContext.Provider value={state}>
@@ -230,7 +245,7 @@ export const CommandInput = (
 
 const ActionsCommand = styled(CommandPrimitive, {});
 
-export const CommandFooter = ({ children }: { children?: React.ReactNode }) => {
+export const CommandFooter = ({ children }: { children?: ReactNode }) => {
   const [isActionOpen, setIsActionOpen] = useState(false);
   const scheduleEffect = useDebounceEffect();
 
@@ -257,7 +272,7 @@ export const CommandFooter = ({ children }: { children?: React.ReactNode }) => {
       if (prev.highlightedGroup === highlightedGroup) {
         return prev;
       }
-      return { highlightedGroup, actions, actionIndex: 0 };
+      return { ...prev, highlightedGroup, actions, actionIndex: 0 };
     });
   }, [highlightedValue, setState]);
 
@@ -282,7 +297,7 @@ export const CommandFooter = ({ children }: { children?: React.ReactNode }) => {
 
   return (
     <CommandGroupFooter ref={actionsRef}>
-      {children}
+      {children || state.footerContent}
       <Popover open={isActionOpen} onOpenChange={setIsActionOpen}>
         <PopoverTrigger asChild>
           <Button tabIndex={-1} color="ghost" data-action-trigger>
@@ -518,4 +533,4 @@ export const CommandIcon = styled("div", {
   placeSelf: "center",
 });
 
-export { useCommandState };
+export { useCommandState, useSetFooterContent };
