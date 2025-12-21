@@ -392,6 +392,30 @@ export const Builder = ({
           <ProjectSettings />
 
           <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
+            <SidebarLeft publish={publish} />
+          </SidePanel>
+          {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
+          <Main>
+            <Workspace>
+              {dataLoadingState === "loaded" && project && (
+                <CanvasIframe
+                  ref={iframeRefCallback}
+                  src={canvasUrl}
+                  title={project.title}
+                />
+              )}
+            </Workspace>
+          </Main>
+          <Main css={{ pointerEvents: "none" }}>
+            <CanvasToolsContainer />
+          </Main>
+
+          <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
             css={{
@@ -410,30 +434,6 @@ export const Builder = ({
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
-          <SidePanel
-            gridArea="sidebar"
-            css={{
-              order: navigatorLayout === "docked" ? 1 : undefined,
-            }}
-          >
-            <SidebarLeft publish={publish} />
-          </SidePanel>
-          {/* Main must be after side panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
-          <Main>
-            <Workspace>
-              {dataLoadingState === "loaded" && project && (
-                <CanvasIframe
-                  ref={iframeRefCallback}
-                  src={canvasUrl}
-                  title={project.title}
-                />
-              )}
-            </Workspace>
-          </Main>
-          <Main css={{ pointerEvents: "none" }}>
-            <CanvasToolsContainer />
-          </Main>
-
           {project ? (
             <Topbar
               project={project}
