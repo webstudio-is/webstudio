@@ -305,12 +305,15 @@ export const BlockChildHoveredInstanceOutline = () => {
         css={{
           position: "absolute",
           left: 0,
+          paddingRight: theme.sizes.controlHeight,
           ...(isTopEdgeHidden
             ? {
                 bottom: `calc(-${theme.sizes.controlHeight} )`,
+                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
               }
             : {
                 top: `calc(-${theme.sizes.controlHeight})`,
+                clipPath: `polygon(0% 0%, ${theme.sizes.controlHeight} 0%, 100% 100%, 0% 100%)`,
               }),
           // Define grace area for the button
           pointerEvents: isMenuOpen ? "none" : "all",
