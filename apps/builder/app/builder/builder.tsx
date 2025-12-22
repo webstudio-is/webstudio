@@ -391,14 +391,6 @@ export const Builder = ({
           />
           <ProjectSettings />
 
-          <SidePanel
-            gridArea="sidebar"
-            css={{
-              order: navigatorLayout === "docked" ? 1 : undefined,
-            }}
-          >
-            <SidebarLeft publish={publish} />
-          </SidePanel>
           {/* Main must be after left sidebar panels because in content mode the Plus button must be above the left sidebar, otherwise it won't be visible when content is full width */}
           <Main>
             <Workspace>
@@ -414,6 +406,14 @@ export const Builder = ({
           <Main css={{ pointerEvents: "none" }}>
             <CanvasToolsContainer />
           </Main>
+          <SidePanel
+            gridArea="sidebar"
+            css={{
+              order: navigatorLayout === "docked" ? 1 : undefined,
+            }}
+          >
+            <SidebarLeft publish={publish} />
+          </SidePanel>
 
           <SidePanel
             gridArea="inspector"
