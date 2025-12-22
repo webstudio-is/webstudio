@@ -1,43 +1,33 @@
 import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
+import {
+  getMimeTypeByExtension,
+  getImageExtensions,
+  getImageMimeTypes,
+  isVideoFormat as isVideoFormatUtil,
+} from "@webstudio-is/asset-uploader";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-const videoExtensionToMime = [
-  [".mp4", "video/mp4"],
-  [".webm", "video/webm"],
-  [".mpg", "video/mpeg"],
-  [".mpeg", "video/mpeg"],
-  [".mov", "video/quicktime"],
-] as const;
+const imageExtensions = getImageExtensions();
 
-const extensionToMime = new Map([
-  [".gif", "image/gif"],
-  [".ico", "image/x-icon"],
-  [".jpeg", "image/jpeg"],
-  [".jpg", "image/jpeg"],
-  [".png", "image/png"],
-  [".svg", "image/svg+xml"],
-  [".webp", "image/webp"],
-  // Support video formats as images
-  ...videoExtensionToMime,
-] as const);
+export const isVideoFormat = isVideoFormatUtil;
 
-export const isVideoFormat = (format: string) => {
-  return videoExtensionToMime.some(([extension]) => extension.includes(format));
-};
-
-const extensions = [...extensionToMime.keys()];
-
-export const imageMimeTypes = [...extensionToMime.values()];
+export const imageMimeTypes = getImageMimeTypes();
 
 export const getImageNameAndType = (fileName: string) => {
-  const extension = extensions.find((ext) => fileName.endsWith(ext));
+  // Extract extension from filename
+  const extractedExt = fileName.split(".").pop()?.toLowerCase();
 
-  if (extension == null) {
+  if (!extractedExt) {
     return;
   }
 
-  return [extensionToMime.get(extension)!, fileName] as const;
+  // Check if it's a valid image extension
+  if (!imageExtensions.includes(extractedExt)) {
+    return;
+  }
+
+  return [getMimeTypeByExtension(extractedExt)!, fileName] as const;
 };
 
 const extractImageNameAndMimeTypeFromUrl = (url: URL) => {

@@ -2,57 +2,22 @@ import { createReadStream, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import {
+  getMimeTypeByFilename,
+  isAllowedExtension,
+} from "@webstudio-is/asset-uploader";
 import env from "~/env/env.server";
 import { fileUploadPath } from "~/shared/asset-client";
 
 const decodePathFragment = (fragment: string) => {
-  return decodeURIComponent(fragment);
-};
+  const decoded = decodeURIComponent(fragment);
 
-// Get MIME type from file extension
-const getMimeType = (fileName: string): string => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
+  // Prevent path traversal attacks
+  if (decoded.includes("..") || decoded.startsWith("/")) {
+    throw new Error("Invalid file path");
+  }
 
-  const mimeTypes: Record<string, string> = {
-    // Documents
-    pdf: "application/pdf",
-    doc: "application/msword",
-    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
-    // Spreadsheets
-    xls: "application/vnd.ms-excel",
-    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-
-    // Presentations
-    ppt: "application/vnd.ms-powerpoint",
-    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-
-    // Code files
-    js: "text/javascript",
-    css: "text/css",
-
-    // Text files
-    txt: "text/plain",
-    csv: "text/csv",
-
-    // Audio
-    mp3: "audio/mpeg",
-    wav: "audio/wav",
-
-    // Video
-    mp4: "video/mp4",
-    mov: "video/quicktime",
-
-    // Images (fallback)
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    gif: "image/gif",
-    svg: "image/svg+xml",
-    webp: "image/webp",
-  };
-
-  return mimeTypes[extension || ""] || "application/octet-stream";
+  return decoded;
 };
 
 // This route serves generic assets without processing
@@ -108,7 +73,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const contentType = getMimeType(name);
+  // Validate file extension against allowed types
+  const extension = name.split(".").pop()?.toLowerCase();
+  const contentType = getMimeTypeByFilename(name);
+
+  // Reject files with disallowed extensions or MIME types
+  if (
+    contentType === "application/octet-stream" ||
+    !extension ||
+    !isAllowedExtension(extension)
+  ) {
+    throw new Response("File type not allowed", {
+      status: 403,
+    });
+  }
 
   return new Response(
     createReadableStreamFromReadable(createReadStream(filePath)),

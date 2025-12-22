@@ -2,7 +2,7 @@ import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
 import { PageIcon } from "@webstudio-is/icons";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetInfo, imageInfoCssVars } from "./asset-info";
+import { AssetInfo, assetInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
@@ -77,7 +77,7 @@ const ThumbnailContainer = styled(Box, {
   overflow: "hidden",
   padding: 2,
   "&:hover": {
-    ...imageInfoCssVars({ show: true }),
+    ...assetInfoCssVars({ show: true }),
     backgroundColor: theme.colors.backgroundAssetcardHover,
   },
   variants: {
@@ -91,7 +91,7 @@ const ThumbnailContainer = styled(Box, {
         outline: `1px solid ${theme.colors.borderFocus}`,
         outlineOffset: -1,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...imageInfoCssVars({ show: true }),
+        ...assetInfoCssVars({ show: true }),
       },
     },
   },

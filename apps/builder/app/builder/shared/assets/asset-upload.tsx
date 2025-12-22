@@ -44,7 +44,7 @@ const useUpload = (type: AssetType) => {
 const acceptMap = {
   image: imageMimeTypes.join(", "),
   font: FONT_MIME_TYPES,
-  // We allow everything by default for files, specific validation happens elsewhere if needed
+  // We allow everything by default for files, specific validation happens serverside
   file: undefined,
 };
 

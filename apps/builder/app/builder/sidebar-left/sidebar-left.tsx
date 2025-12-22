@@ -11,7 +11,6 @@ import { theme } from "@webstudio-is/design-system";
 import {
   ExtensionIcon,
   HelpIcon,
-  ImageIcon,
   NavigatorIcon,
   PageIcon,
   PlusIcon,

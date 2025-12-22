@@ -1,0 +1,257 @@
+/**
+ * Central registry of allowed file types, extensions, and MIME types
+ * for asset uploads and serving.
+ *
+ * IMPORTANT: For images, we only support formats that Cloudflare Image Resizing can process.
+ * Supported by Cloudflare: JPEG, PNG, GIF, WebP, SVG, AVIF
+ * See: https://developers.cloudflare.com/images/image-resizing/format-limitations/
+ *
+ * Other formats (BMP, ICO, TIFF) are allowed for upload but served as-is without optimization.
+ */
+
+export const ALLOWED_FILE_TYPES = {
+  // Documents
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+  // Spreadsheets
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  csv: "text/csv",
+
+  // Presentations
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
+  // Text/Code
+  txt: "text/plain",
+  md: "text/markdown",
+  js: "text/javascript",
+  css: "text/css",
+  json: "application/json",
+  html: "text/html",
+  xml: "application/xml",
+
+  // Audio
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  ogg: "audio/ogg",
+  m4a: "audio/mp4",
+
+  // Video
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  avi: "video/x-msvideo",
+  webm: "video/webm",
+
+  // Images
+  // Note: Cloudflare Image Resizing supports: jpg, jpeg, png, gif, webp, svg, avif
+  // Other formats (bmp, ico, tif, tiff) are served as-is without optimization
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  svg: "image/svg+xml",
+  webp: "image/webp",
+  avif: "image/avif",
+  ico: "image/vnd.microsoft.icon", // Used for favicons
+  bmp: "image/bmp", // Served without optimization
+  tif: "image/tiff", // Served without optimization
+  tiff: "image/tiff", // Served without optimization
+
+  // Fonts
+  woff: "font/woff",
+  woff2: "font/woff2",
+  ttf: "font/ttf",
+  otf: "font/otf",
+} as const;
+
+export type AllowedFileExtension = keyof typeof ALLOWED_FILE_TYPES;
+
+/**
+ * Set of allowed file extensions for quick lookup
+ */
+export const ALLOWED_FILE_EXTENSIONS: ReadonlySet<string> = new Set<string>(
+  Object.keys(ALLOWED_FILE_TYPES)
+);
+
+/**
+ * Set of allowed MIME type categories
+ */
+export const ALLOWED_MIME_CATEGORIES: ReadonlySet<string> = new Set([
+  "image",
+  "video",
+  "audio",
+  "font",
+  "text",
+  "application",
+]);
+
+/**
+ * Get MIME type for a given file extension
+ */
+export const getMimeTypeByExtension = (
+  extension: string
+): string | undefined => {
+  return ALLOWED_FILE_TYPES[extension.toLowerCase() as AllowedFileExtension];
+};
+
+/**
+ * Get MIME type from a filename
+ */
+export const getMimeTypeByFilename = (fileName: string): string => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (!extension) {
+    return "application/octet-stream";
+  }
+  return getMimeTypeByExtension(extension) ?? "application/octet-stream";
+};
+
+/**
+ * Check if a file extension is allowed
+ */
+export const isAllowedExtension = (extension: string): boolean => {
+  return ALLOWED_FILE_EXTENSIONS.has(extension.toLowerCase());
+};
+
+/**
+ * Check if a MIME type category is allowed
+ */
+export const isAllowedMimeCategory = (mimeType: string): boolean => {
+  const category = mimeType.split("/")[0];
+  return ALLOWED_MIME_CATEGORIES.has(category);
+};
+
+/**
+ * Validate a filename and return its extension and MIME type
+ * @throws Error if file extension is not allowed
+ */
+export const validateFileName = (
+  fileName: string
+): { extension: string; mimeType: string } => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (!extension) {
+    throw new Error("File must have an extension");
+  }
+
+  if (!isAllowedExtension(extension)) {
+    throw new Error(
+      `File type "${extension}" is not allowed. Allowed types: ${Array.from(
+        ALLOWED_FILE_EXTENSIONS
+      ).join(", ")}`
+    );
+  }
+
+  const mimeType = getMimeTypeByExtension(extension);
+  if (!mimeType) {
+    throw new Error(
+      `Could not determine MIME type for extension: ${extension}`
+    );
+  }
+
+  return { extension, mimeType };
+};
+
+/**
+ * Get all image file extensions
+ */
+export const getImageExtensions = (): string[] => {
+  return Object.keys(ALLOWED_FILE_TYPES).filter((ext) => {
+    const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
+    return mimeType.startsWith("image/");
+  });
+};
+
+/**
+ * Get all image MIME types
+ */
+export const getImageMimeTypes = (): string[] => {
+  return getImageExtensions()
+    .map((ext) => getMimeTypeByExtension(ext))
+    .filter((mime): mime is string => mime !== undefined);
+};
+
+/**
+ * Get all video file extensions
+ */
+export const getVideoExtensions = (): string[] => {
+  return Object.keys(ALLOWED_FILE_TYPES).filter((ext) => {
+    const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
+    return mimeType.startsWith("video/");
+  });
+};
+
+/**
+ * Get all video MIME types
+ */
+export const getVideoMimeTypes = (): string[] => {
+  return getVideoExtensions()
+    .map((ext) => getMimeTypeByExtension(ext))
+    .filter((mime): mime is string => mime !== undefined);
+};
+
+/**
+ * Check if a format is a video format
+ */
+export const isVideoFormat = (format: string): boolean => {
+  return getVideoExtensions().includes(format.toLowerCase());
+};
+
+/**
+ * Get file extensions grouped by user-friendly categories for UI display
+ */
+export const getFileExtensionsByCategory = (): Record<string, string[]> => {
+  const categories: Record<string, string[]> = {
+    images: [],
+    fonts: [],
+    documents: [],
+    spreadsheets: [],
+    presentations: [],
+    code: [],
+    text: [],
+    audio: [],
+    video: [],
+  };
+
+  Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
+    const [category, subtype] = mimeType.split("/");
+
+    if (category === "image") {
+      categories.images.push(ext);
+    } else if (category === "font") {
+      categories.fonts.push(ext);
+    } else if (category === "audio") {
+      categories.audio.push(ext);
+    } else if (category === "video") {
+      categories.video.push(ext);
+    } else if (category === "text") {
+      // CSV is text/csv but belongs in spreadsheets
+      if (mimeType === "text/csv") {
+        categories.spreadsheets.push(ext);
+      } else if (
+        ["javascript", "css", "html", "xml"].some((t) => subtype.includes(t))
+      ) {
+        categories.code.push(ext);
+      } else {
+        categories.text.push(ext);
+      }
+    } else if (category === "application") {
+      if (subtype.includes("pdf") || subtype.includes("word")) {
+        categories.documents.push(ext);
+      } else if (subtype.includes("excel") || subtype.includes("spreadsheet")) {
+        categories.spreadsheets.push(ext);
+      } else if (
+        subtype.includes("powerpoint") ||
+        subtype.includes("presentation")
+      ) {
+        categories.presentations.push(ext);
+      } else if (subtype.includes("json") || subtype.includes("xml")) {
+        categories.code.push(ext);
+      }
+    }
+  });
+
+  return categories;
+};

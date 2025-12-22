@@ -13,24 +13,17 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
+  getFileExtensionsByCategory,
 } from "@webstudio-is/asset-uploader";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 
-// Define file format categories
-const FORMAT_CATEGORIES: Record<string, string[]> = {
-  images: ["jpg", "jpeg", "png", "gif", "svg", "webp", "avif", "bmp", "ico"],
-  fonts: ["woff", "woff2", "ttf", "otf"],
-  documents: ["pdf", "doc", "docx"],
-  spreadsheets: ["xls", "xlsx", "csv"],
-  presentations: ["ppt", "pptx"],
-  code: ["js", "css", "json", "html", "xml"],
-  text: ["txt", "md"],
-  audio: ["mp3", "wav", "ogg", "m4a"],
-  video: ["mp4", "mov", "avi", "webm"],
-};
+// Get format categories for UI grouping
+const FORMAT_CATEGORIES = getFileExtensionsByCategory();
 
-type FormatCategory = string;
+type FormatCategory = keyof typeof FORMAT_CATEGORIES;
+
+const ALL_FORMATS = "all" as const;
 
 const useLogic = ({
   onChange,
@@ -42,9 +35,9 @@ const useLogic = ({
   const { assetContainers } = useAssets();
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedFormat, setSelectedFormat] = useState<FormatCategory | "all">(
-    "all"
-  );
+  const [selectedFormat, setSelectedFormat] = useState<
+    FormatCategory | typeof ALL_FORMATS
+  >(ALL_FORMATS);
 
   const searchProps = useSearchFieldKeys({
     onMove({ direction }) {
@@ -100,7 +93,7 @@ const useLogic = ({
     }
 
     // Filter by selected format category
-    if (selectedFormat !== "all") {
+    if (selectedFormat !== ALL_FORMATS) {
       const allowedExtensions = FORMAT_CATEGORIES[selectedFormat] || [];
       acceptable = acceptable.filter((item) =>
         allowedExtensions.includes(item.asset.format.toLowerCase())
@@ -175,12 +168,14 @@ export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
               value={selectedFormat}
               onValueChange={(value) => {
                 if (value) {
-                  setSelectedFormat(value);
+                  setSelectedFormat(
+                    value as FormatCategory | typeof ALL_FORMATS
+                  );
                 }
               }}
               css={{ width: "100%" }}
             >
-              <ToggleGroupButton value="all">All</ToggleGroupButton>
+              <ToggleGroupButton value={ALL_FORMATS}>All</ToggleGroupButton>
               {availableFormats.map((format) => (
                 <ToggleGroupButton key={format} value={format}>
                   {format.charAt(0).toUpperCase() + format.slice(1)}

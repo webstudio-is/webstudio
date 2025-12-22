@@ -2,7 +2,9 @@ import { z } from "zod";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
+import { isAllowedMimeCategory } from "@webstudio-is/asset-uploader";
 import type { ActionData } from "~/builder/shared/assets";
+import { imageMimeTypes } from "~/builder/shared/assets/asset-utils";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -35,12 +37,11 @@ export const action = async (
 
       if (contentType?.includes("application/json")) {
         const { url } = UrlBody.parse(await request.json());
+
         const imageRequest = await fetch(url, {
           method: "GET",
           headers: {
-            // Image formats we support
-            Accept:
-              "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/x-icon,image/ico",
+            Accept: imageMimeTypes.join(","),
           },
         });
 
@@ -61,6 +62,16 @@ export const action = async (
 
       const url = new URL(request.url);
       const contentTypeArr = contentType?.split(";")[0]?.split("/") ?? [];
+
+      // Validate MIME type against allowed categories
+      const mimeCategory = contentTypeArr[0];
+      if (
+        mimeCategory &&
+        contentType &&
+        !isAllowedMimeCategory(contentType.split(";")[0])
+      ) {
+        throw new Error(`MIME type "${mimeCategory}/*" is not allowed`);
+      }
 
       const format =
         contentTypeArr[0] === "video" ? contentTypeArr[1] : undefined;

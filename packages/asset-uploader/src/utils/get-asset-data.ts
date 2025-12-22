@@ -3,6 +3,7 @@ import { imageMeta } from "image-meta";
 import { FontMeta } from "@webstudio-is/fonts";
 import { ImageMeta } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
+import { validateFileName } from "./allowed-file-types";
 
 export type AssetData = {
   size: number;
@@ -68,11 +69,8 @@ export const getAssetData = async (
     };
   }
 
-  const extension = options.name.split(".").pop();
-
-  if (extension === undefined) {
-    throw new Error("Unknown file format");
-  }
+  // Validate file name and get extension
+  const { extension } = validateFileName(options.name);
 
   return {
     size: options.size,

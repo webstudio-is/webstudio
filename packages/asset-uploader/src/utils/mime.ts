@@ -3,6 +3,7 @@
 
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
+import { ALLOWED_FILE_TYPES } from "./allowed-file-types";
 
 const mimeCategories = [
   "image",
@@ -15,51 +16,14 @@ const mimeCategories = [
 
 type MimeCategory = (typeof mimeCategories)[number];
 
-const extensionToMime = new Map([
-  [".avif", "image/avif"],
-  [".bmp", "image/bmp"],
-  [".gif", "image/gif"],
-  [".ico", "image/vnd.microsoft.icon"],
-  [".jpeg", "image/jpeg"],
-  [".jpg", "image/jpeg"],
-  [".png", "image/png"],
-  [".svg", "image/svg+xml"],
-  [".tif", "image/tiff"],
-  [".tiff", "image/tiff"],
-  [".webp", "image/webp"],
-  [".woff", "font/woff"],
-  [".woff2", "font/woff2"],
-  [".ttf", "font/ttf"],
-  [".otf", "font/otf"],
-  [".pdf", "application/pdf"],
-  [".js", "text/javascript"],
-  [".css", "text/css"],
-  [".doc", "application/msword"],
-  [
-    ".docx",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ],
-  [".xls", "application/vnd.ms-excel"],
-  [
-    ".xlsx",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ],
-  [".ppt", "application/vnd.ms-powerpoint"],
-  [
-    ".pptx",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  ],
-  [".txt", "text/plain"],
-  [".csv", "text/csv"],
-  [".mp3", "audio/mpeg"],
-  [".wav", "audio/wav"],
-  [".mp4", "video/mp4"],
-  [".mov", "video/quicktime"],
-]);
+// Create extensionToMime map from centralized ALLOWED_FILE_TYPES
+const extensionToMime = new Map(
+  Object.entries(ALLOWED_FILE_TYPES).map(([ext, mime]) => [`.${ext}`, mime])
+);
 
-const mimeTypes = new Set(extensionToMime.values());
+const mimeTypes = new Set<string>(extensionToMime.values());
 
-const mimePatterns = new Set([
+const mimePatterns = new Set<string>([
   ...mimeTypes.values(),
   ...mimeCategories.map((category): `${MimeCategory}/*` => `${category}/*`),
 ]);

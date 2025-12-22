@@ -16,7 +16,7 @@ import {
   type AssetContainer,
   useAssets,
 } from "~/builder/shared/assets";
-import { ImageThumbnail } from "./image-thumbnail";
+import { AssetThumbnail } from "./image-thumbnail";
 
 const useLogic = ({
   onChange,
@@ -130,11 +130,11 @@ export const ImageManager = ({ accept, onChange }: ImageManagerProps) => {
         css={{ paddingInline: theme.panel.paddingInline }}
       >
         {filteredItems.map((assetContainer, index) => (
-          <ImageThumbnail
+          <AssetThumbnail
             key={assetContainer.asset.id}
             assetContainer={assetContainer}
             onSelect={handleSelect}
-            onChange={(assetContainer) => {
+            onChange={(assetContainer: AssetContainer) => {
               if (assetContainer.asset.type === "image") {
                 onChange?.(assetContainer.asset.id);
               }

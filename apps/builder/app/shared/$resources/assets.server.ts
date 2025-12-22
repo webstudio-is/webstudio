@@ -10,13 +10,17 @@ import { createContext } from "../context.server";
  */
 export const loader = async ({ request }: { request: Request }) => {
   if (isBuilder(request) === false) {
-    throw new Error("Only builder requests are allowed");
+    throw new Error(
+      "Asset resource loader can only be accessed from the builder interface"
+    );
   }
 
   const { projectId } = parseBuilderUrl(request.url);
 
   if (projectId === undefined) {
-    throw new Error("projectId is required");
+    throw new Error(
+      "Project ID is required to load assets. Ensure the request includes a valid project context."
+    );
   }
 
   const context = await createContext(request);

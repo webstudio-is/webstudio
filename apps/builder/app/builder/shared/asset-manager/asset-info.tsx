@@ -487,7 +487,7 @@ const AssetInfoContent = ({
 
 const triggerVisibilityVar = `--ws-asset-info-trigger-visibility`;
 
-export const imageInfoCssVars = ({ show }: { show: boolean }) => ({
+export const assetInfoCssVars = ({ show }: { show: boolean }) => ({
   [triggerVisibilityVar]: show ? "visible" : "hidden",
 });
 

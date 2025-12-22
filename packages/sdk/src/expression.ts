@@ -1,6 +1,7 @@
 import {
   type Expression,
   type Identifier,
+  type Node,
   parse,
   parseExpressionAt,
 } from "acorn";
@@ -96,8 +97,8 @@ export const lintExpression = ({
     });
 
     // Track arrow functions that are used as callbacks for safe array methods
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allowedArrowFunctions = new Set<any>();
+    type ArrowFunctionNode = Node & { type: "ArrowFunctionExpression" };
+    const allowedArrowFunctions = new Set<ArrowFunctionNode>();
     // Track arrow function parameters to skip validation
     const arrowFunctionParams = new Set<string>();
 
