@@ -220,13 +220,6 @@ export const TemplatesMenu = ({
   );
 };
 
-/**
- * The button's grace area must slightly overlap with the outline rectangle.
- * This is because the outline rectangle has `pointer-events: none`, and some UI elements, like resize handles, are placed above it.
- * The overlap ensures the grace area starts earlier to account for this.
- */
-const graceAreaOverlap = theme.spacing[6];
-
 export const BlockChildHoveredInstanceOutline = () => {
   const blockChildOutline = useStore($blockChildOutline);
   const scale = useStore($scale);
