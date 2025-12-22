@@ -220,15 +220,6 @@ export const TemplatesMenu = ({
   );
 };
 
-const distanceToButton = theme.spacing[4];
-
-/**
- * The button's grace area must slightly overlap with the outline rectangle.
- * This is because the outline rectangle has `pointer-events: none`, and some UI elements, like resize handles, are placed above it.
- * The overlap ensures the grace area starts earlier to account for this.
- */
-const graceAreaOverlap = theme.spacing[4];
-
 export const BlockChildHoveredInstanceOutline = () => {
   const blockChildOutline = useStore($blockChildOutline);
   const scale = useStore($scale);
@@ -287,6 +278,9 @@ export const BlockChildHoveredInstanceOutline = () => {
 
   const rect = applyScale(outline.rect, scale);
 
+  // Check if the top edge of the component is hidden (clipped by viewport/clamping)
+  const isTopEdgeHidden = rect.top < clampingRect.top;
+
   const isAddMode = isMenuOpen || !modifierKeys.altKey || !hasChildren;
 
   const tooltipContent = (
@@ -307,100 +301,106 @@ export const BlockChildHoveredInstanceOutline = () => {
 
   return (
     <Outline rect={rect} clampingRect={clampingRect}>
-      <div
-        style={{
-          width: 0,
-          display: "grid",
+      <Flex
+        css={{
+          position: "absolute",
+          left: 0,
+          paddingRight: theme.sizes.controlHeight,
+          ...(isTopEdgeHidden
+            ? {
+                bottom: `calc(-${theme.sizes.controlHeight} )`,
+                clipPath: `polygon(0% 0%, 100% 0%, ${theme.sizes.controlHeight} 100%, 0% 100%)`,
+              }
+            : {
+                top: `calc(-${theme.sizes.controlHeight})`,
+                clipPath: `polygon(0% 0%, ${theme.sizes.controlHeight} 0%, 100% 100%, 0% 100%)`,
+              }),
+          // Define grace area for the button
+          pointerEvents: isMenuOpen ? "none" : "all",
+        }}
+        onMouseEnter={() => {
+          clearTimeout(timeoutRef.current);
+          setButtonOutline(outline);
+        }}
+        onMouseLeave={() => {
+          if (isMenuOpen) {
+            return;
+          }
 
-          alignContent: "stretch",
-          justifyContent: "end",
+          clearTimeout(timeoutRef.current);
+
+          timeoutRef.current = setTimeout(() => {
+            setButtonOutline(undefined);
+          }, 100);
         }}
       >
-        <Flex
-          css={{
-            // Define grace area for the button
-            width: `calc(${theme.sizes.controlHeight} + ${distanceToButton} + ${graceAreaOverlap})`,
-            marginRight: `-${graceAreaOverlap}`,
-            pointerEvents: isMenuOpen ? "none" : "all",
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, calc(100% - ${graceAreaOverlap}) 100%, 0% ${theme.sizes.controlHeight})`,
-          }}
-          onMouseEnter={() => {
-            clearTimeout(timeoutRef.current);
-
-            setButtonOutline(outline);
-          }}
-          onMouseLeave={() => {
-            if (isMenuOpen) {
+        <TemplatesMenu
+          open={isMenuOpen}
+          onOpenChange={(open) => {
+            if (!isAddMode) {
               return;
             }
 
-            clearTimeout(timeoutRef.current);
+            setIsMenuOpen(open);
 
-            timeoutRef.current = setTimeout(() => {
+            if (!open) {
               setButtonOutline(undefined);
-            }, 100);
+            }
           }}
+          anchor={outline.selector}
+          triggerTooltipContent={tooltipContent}
+          templates={templates}
+          onValueChangeComplete={(templateSelector) => {
+            const insertBefore = modifierKeys.altKey;
+            insertTemplateAt(templateSelector, outline.selector, insertBefore);
+          }}
+          value={undefined}
+          modal={true}
+          inert={false}
+          preventFocusOnHover={false}
         >
-          <TemplatesMenu
-            open={isMenuOpen}
-            onOpenChange={(open) => {
-              if (!isAddMode) {
+          <IconButton
+            variant={isAddMode ? "local" : "overwritten"}
+            onClick={() => {
+              if (isAddMode) {
                 return;
               }
 
-              setIsMenuOpen(open);
+              updateWebstudioData((data) => {
+                deleteInstanceMutable(
+                  data,
+                  getInstancePath(outline.selector, data.instances)
+                );
+              });
 
-              if (!open) {
-                setButtonOutline(undefined);
-              }
+              setButtonOutline(undefined);
+              $blockChildOutline.set(undefined);
+              $hoveredInstanceSelector.set(undefined);
+              $hoveredInstanceOutline.set(undefined);
             }}
-            anchor={outline.selector}
-            triggerTooltipContent={tooltipContent}
-            templates={templates}
-            onValueChangeComplete={(templateSelector) => {
-              const insertBefore = modifierKeys.altKey;
-              insertTemplateAt(
-                templateSelector,
-                outline.selector,
-                insertBefore
-              );
+            css={{
+              borderStyle: "solid",
+              borderColor: isAddMode
+                ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
+                : undefined,
+              borderRadius: theme.borderRadius[4],
+              ...(isTopEdgeHidden
+                ? {
+                    borderTopLeftRadius: 0,
+                    borderTopRightRadius: 0,
+                  }
+                : {
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 0,
+                  }),
+              // Define grace area for the button
+              pointerEvents: isMenuOpen ? "none" : "all",
             }}
-            value={undefined}
-            modal={true}
-            inert={false}
-            preventFocusOnHover={false}
           >
-            <IconButton
-              variant={isAddMode ? "local" : "overwritten"}
-              onClick={() => {
-                if (isAddMode) {
-                  return;
-                }
-
-                updateWebstudioData((data) => {
-                  deleteInstanceMutable(
-                    data,
-                    getInstancePath(outline.selector, data.instances)
-                  );
-                });
-
-                setButtonOutline(undefined);
-                $blockChildOutline.set(undefined);
-                $hoveredInstanceSelector.set(undefined);
-                $hoveredInstanceOutline.set(undefined);
-              }}
-              css={{
-                borderStyle: "solid",
-                borderColor: isAddMode
-                  ? `oklch(from ${theme.colors.backgroundPrimary} l c h / 0.7)`
-                  : undefined,
-              }}
-            >
-              {isAddMode ? <PlusIcon /> : <TrashIcon />}
-            </IconButton>
-          </TemplatesMenu>
-        </Flex>
-      </div>
+            {isAddMode ? <PlusIcon /> : <TrashIcon />}
+          </IconButton>
+        </TemplatesMenu>
+      </Flex>
     </Outline>
   );
 };
