@@ -28,7 +28,11 @@ const CommandContent = () => {
         <CommandGroup
           heading={<CommandGroupHeading>Suggestions</CommandGroupHeading>}
           name="suggestions"
-          actions={["select", "edit", "delete"]}
+          actions={[
+            { name: "select", label: "Select" },
+            { name: "edit", label: "Edit" },
+            { name: "delete", label: "Delete" },
+          ]}
         >
           <CommandItem>
             <Flex gap={2}>
@@ -58,7 +62,7 @@ const CommandContent = () => {
         <CommandGroup
           heading={<CommandGroupHeading>Settings</CommandGroupHeading>}
           name="settings"
-          actions={["open"]}
+          actions={[{ name: "open", label: "Open" }]}
         >
           <CommandItem>
             <Flex gap={2}>

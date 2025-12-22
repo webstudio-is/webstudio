@@ -97,8 +97,14 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
     <>
       <CommandGroup
         name="token"
-        heading={<CommandGroupHeading>Tokens</CommandGroupHeading>}
-        actions={["show instances", "rename", "delete"]}
+        heading={
+          <CommandGroupHeading>Tokens ({options.length})</CommandGroupHeading>
+        }
+        actions={[
+          { name: "showInstances", label: "Show instances" },
+          { name: "rename", label: "Rename" },
+          { name: "delete", label: "Delete" },
+        ]}
       >
         {options.map(({ token, usages }) => (
           <CommandItem
@@ -107,16 +113,16 @@ export const TokensGroup = ({ options }: { options: TokenOption[] }) => {
             value={token.id}
             onSelect={() => {
               if (
-                action === "show instances" ||
-                action === "find instances" ||
-                action === "find"
+                action?.name === "showInstances" ||
+                action?.name === "findInstances" ||
+                action?.name === "find"
               ) {
                 $commandContent.set(<TokenInstances tokenId={token.id} />);
               }
-              if (action === "rename") {
+              if (action?.name === "rename") {
                 setTokenDialog({ ...token, action: "rename" });
               }
-              if (action === "delete") {
+              if (action?.name === "delete") {
                 setTokenDialog({ ...token, action: "delete" });
               }
             }}

@@ -54,8 +54,10 @@ export const CommandsGroup = ({ options }: { options: CommandOption[] }) => {
   return (
     <CommandGroup
       name="command"
-      heading={<CommandGroupHeading>Commands</CommandGroupHeading>}
-      actions={["execute"]}
+      heading={
+        <CommandGroupHeading>Commands ({options.length})</CommandGroupHeading>
+      }
+      actions={[{ name: "execute", label: "Execute" }]}
     >
       {options.map(({ name, label, keys, keepCommandPanelOpen }) => (
         <CommandItem

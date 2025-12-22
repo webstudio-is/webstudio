@@ -1,10 +1,11 @@
 import {
   CommandGroup,
-  CommandGroupFooter,
   CommandIcon,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandBackButton,
+  CommandFooter,
   Flex,
   ScrollArea,
   Text,
@@ -30,7 +31,6 @@ import {
   openCommandPanel,
 } from "../command-state";
 import { useState } from "react";
-import { BackButton } from "../shared/back-button";
 import { convertInstance } from "~/shared/instance-utils";
 
 type ConvertOption = {
@@ -126,19 +126,19 @@ const ConvertComponentsList = () => {
     }
   }
 
+  const goBack = () => {
+    $commandContent.set(undefined);
+  };
+
   return (
     <>
       <CommandInput
-        action="convert"
+        action={{ name: "convert", label: "Convert" }}
         placeholder="Search components to convert..."
         value={search}
         onValueChange={setSearch}
-        onKeyDown={(event) => {
-          if (event.key === "Backspace" && search === "") {
-            event.preventDefault();
-            $commandContent.set(undefined);
-          }
-        }}
+        prefix={<CommandBackButton onClick={goBack} />}
+        onBack={goBack}
       />
       <Flex direction="column" css={{ maxHeight: 300 }}>
         <ScrollArea>
@@ -150,7 +150,10 @@ const ConvertComponentsList = () => {
                 </Text>
               </Flex>
             ) : (
-              <CommandGroup name="convert-components" actions={["convert"]}>
+              <CommandGroup
+                name="convert-components"
+                actions={[{ name: "convert", label: "Convert" }]}
+              >
                 {matches.map(({ component, tag, label }) => {
                   const key = tag ? `${component}:${tag}` : component;
                   return (
@@ -176,11 +179,7 @@ const ConvertComponentsList = () => {
           </CommandList>
         </ScrollArea>
       </Flex>
-      <CommandGroupFooter>
-        <Flex grow>
-          <BackButton />
-        </Flex>
-      </CommandGroupFooter>
+      <CommandFooter />
     </>
   );
 };

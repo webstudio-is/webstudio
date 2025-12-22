@@ -47,8 +47,13 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
   return (
     <CommandGroup
       name="page"
-      heading={<CommandGroupHeading>Pages</CommandGroupHeading>}
-      actions={["select", "settings"]}
+      heading={
+        <CommandGroupHeading>Pages ({options.length})</CommandGroupHeading>
+      }
+      actions={[
+        { name: "select", label: "Select" },
+        { name: "settings", label: "Settings" },
+      ]}
     >
       {options.map(({ page }) => (
         <CommandItem
@@ -57,12 +62,12 @@ export const PagesGroup = ({ options }: { options: PageOption[] }) => {
           value={page.id}
           onSelect={() => {
             closeCommandPanel();
-            if (action === "select") {
+            if (action?.name === "select") {
               selectPage(page.id);
               setActiveSidebarPanel("auto");
               $editingPageId.set(undefined);
             }
-            if (action === "settings") {
+            if (action?.name === "settings") {
               selectPage(page.id);
               setActiveSidebarPanel("pages");
               $editingPageId.set(page.id);
