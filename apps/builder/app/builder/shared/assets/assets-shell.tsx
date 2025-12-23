@@ -183,14 +183,16 @@ export const AssetsShell = ({
         position: "relative",
       }}
     >
-      <Flex css={{ padding: theme.panel.padding }} gap="2">
-        {filters}
+      <Flex css={{ padding: theme.panel.padding }} gap="2" wrap="wrap">
         <SearchField
-          css={{ flexGrow: 1 }}
+          css={{
+            flexGrow: 1,
+          }}
           {...searchProps}
           autoFocus
           placeholder="Search"
         />
+        {filters}
         {uploadButton}
       </Flex>
       <Separator />

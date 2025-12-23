@@ -41,6 +41,7 @@ export const AssetFilters = ({
         }
         return titleCase(`${option} (${formatCounts[option] || 0})`);
       }}
+      css={{ flexGrow: 1 }}
     />
   );
 };
