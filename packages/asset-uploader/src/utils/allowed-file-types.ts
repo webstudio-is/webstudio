@@ -33,6 +33,10 @@ export const ALLOWED_FILE_TYPES = {
   html: "text/html",
   xml: "application/xml",
 
+  // Archives
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+
   // Audio
   mp3: "audio/mpeg",
   wav: "audio/wav",
