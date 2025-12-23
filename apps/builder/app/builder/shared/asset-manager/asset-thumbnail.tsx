@@ -1,6 +1,7 @@
 import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
-import { PageIcon, VideoIcon, TextIcon } from "@webstudio-is/icons";
+import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
+import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetInfo, assetInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
@@ -21,13 +22,9 @@ import type { FileCategory } from "@webstudio-is/asset-uploader";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
-const CATEGORY_ICON_MAP: Record<FileCategory, IconComponent> = {
-  images: PageIcon,
-  fonts: PageIcon,
-  video: VideoIcon,
-  code: TextIcon,
+const CATEGORY_ICON_MAP: Partial<Record<FileCategory, IconComponent>> = {
+  fonts: TextCapitalizeIcon,
   documents: PageIcon,
-  audio: PageIcon,
 };
 
 const isImageFormat = (format: string): boolean => {
@@ -150,13 +147,26 @@ const GenericFilePreview = ({
   format: string;
 }) => {
   const Icon = getFileIcon(format);
+  const showExtension = Icon === PageIcon;
+
   return (
-    <Flex direction="column" align="center" gap={1}>
-      <Icon size={48} />
-      <Text variant="tiny" color="subtle">
-        {ext.toUpperCase()}
-      </Text>
-    </Flex>
+    <Box css={{ position: "relative" }}>
+      <Icon size={48} strokeWidth={0.5} />
+      {showExtension && (
+        <Text
+          variant="tiny"
+          color="subtle"
+          css={{
+            position: "absolute",
+            top: 30,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {ext.toUpperCase()}
+        </Text>
+      )}
+    </Box>
   );
 };
 
@@ -218,16 +228,21 @@ export const AssetThumbnail = ({
             // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
             width={64}
           />
-        ) : isVideoFormat(asset.format) &&
-          assetContainer.status === "uploading" ? (
-          // Video files being uploaded - show video preview
-          <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
+        ) : isVideoFormat(asset.format) ? (
+          // Video files - show video thumbnail (first frame)
+          <StyledWebstudioVideo
+            src={
+              assetContainer.status === "uploading"
+                ? assetContainer.objectURL
+                : wsVideoLoader({ src: asset.name })
+            }
+          />
         ) : (
           // Other files - show icon based on category
           <GenericFilePreview ext={ext} format={asset.format} />
         )}
       </Thumbnail>
-      <Flex css={{ width: "100%", paddingBottom: 4 }}>
+      <Flex css={{ width: "100%", paddingBottom: 4 }} justify="center">
         <Text variant="tiny" truncate>
           {asset.filename ?? basename}
         </Text>

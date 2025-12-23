@@ -105,6 +105,7 @@ export const ImageControl = ({
         titleSuffix={<AssetUpload type="image" />}
         content={
           <ImageManager
+            accept="image/*"
             onChange={(assetId) => {
               setRepeatedStyleItem(styleDecl, index, {
                 type: "image",

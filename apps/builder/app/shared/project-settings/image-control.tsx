@@ -13,6 +13,7 @@ export const ImageControl = (props: {
       placement="bottom-within"
       content={
         <ImageManager
+          accept="image/*"
           onChange={(assetId) => {
             props.onAssetIdChange(assetId);
           }}
