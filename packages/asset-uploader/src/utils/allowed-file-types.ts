@@ -135,7 +135,14 @@ export const FONT_EXTENSIONS: readonly string[] = Object.keys(
 /**
  * File extensions grouped by user-friendly categories for UI display
  */
-export const FILE_EXTENSIONS_BY_CATEGORY = (() => {
+export const FILE_EXTENSIONS_BY_CATEGORY: Readonly<{
+  images: string[];
+  fonts: string[];
+  documents: string[];
+  code: string[];
+  audio: string[];
+  video: string[];
+}> = (() => {
   const categories = {
     images: [] as string[],
     fonts: [] as string[],
