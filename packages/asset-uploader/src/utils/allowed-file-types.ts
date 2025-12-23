@@ -202,14 +202,14 @@ export const isVideoFormat = (format: string): boolean => {
 /**
  * Get file extensions grouped by user-friendly categories for UI display
  */
-export const getFileExtensionsByCategory = (): Record<string, string[]> => {
-  const categories: Record<string, string[]> = {
-    images: [],
-    fonts: [],
-    documents: [],
-    code: [],
-    audio: [],
-    video: [],
+export const getFileExtensionsByCategory = () => {
+  const categories = {
+    images: [] as string[],
+    fonts: [] as string[],
+    documents: [] as string[],
+    code: [] as string[],
+    audio: [] as string[],
+    video: [] as string[],
   };
 
   Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
@@ -248,3 +248,5 @@ export const getFileExtensionsByCategory = (): Record<string, string[]> => {
 
   return categories;
 };
+
+export type FileCategory = keyof ReturnType<typeof getFileExtensionsByCategory>;

@@ -14,6 +14,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { acceptUploadType, validateFiles } from "./asset-upload";
+import { detectAssetType } from "./asset-utils";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -41,6 +42,7 @@ type AssetsShellProps = {
   accept?: string;
   isEmpty: boolean;
   filters?: JSX.Element;
+  uploadButton?: JSX.Element;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -59,6 +61,7 @@ export const AssetsShell = ({
   type,
   accept,
   filters,
+  uploadButton,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [monitorState, setMonitorState] =
@@ -146,7 +149,21 @@ export const AssetsShell = ({
               return false;
             });
 
-          uploadAssets(type, files);
+          // Group files by their detected type
+          const filesByType = new Map<string, File[]>();
+          for (const file of files) {
+            const detectedType = detectAssetType(file);
+            if (!filesByType.has(detectedType)) {
+              filesByType.set(detectedType, []);
+            }
+            filesByType.get(detectedType)!.push(file);
+          }
+
+          // Upload each group with the correct type
+          for (const [detectedType, filesOfType] of filesByType) {
+            uploadAssets(detectedType as AssetType, filesOfType);
+          }
+
           uploadAssets(type, droppedUrls);
         },
       })
@@ -174,6 +191,7 @@ export const AssetsShell = ({
           placeholder="Search"
         />
         {filters}
+        {uploadButton}
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}

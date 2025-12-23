@@ -1,6 +1,6 @@
 import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
-import { PageIcon } from "@webstudio-is/icons";
+import { PageIcon, VideoIcon, TextIcon } from "@webstudio-is/icons";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetInfo, assetInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
@@ -12,6 +12,42 @@ import {
   isVideoFormat,
   parseAssetName,
 } from "~/builder/shared/assets/asset-utils";
+import type { IconComponent } from "@webstudio-is/icons";
+import {
+  getFileExtensionsByCategory,
+  getImageExtensions,
+} from "@webstudio-is/asset-uploader";
+import type { FileCategory } from "@webstudio-is/asset-uploader";
+
+const FORMAT_CATEGORIES = getFileExtensionsByCategory();
+const IMAGE_EXTENSIONS = getImageExtensions();
+
+const CATEGORY_ICON_MAP: Record<FileCategory, IconComponent> = {
+  images: PageIcon,
+  fonts: PageIcon,
+  video: VideoIcon,
+  code: TextIcon,
+  documents: PageIcon,
+  audio: PageIcon,
+};
+
+const isImageFormat = (format: string): boolean => {
+  return IMAGE_EXTENSIONS.includes(format.toLowerCase());
+};
+
+const getFileIcon = (format: string): IconComponent => {
+  const lowerFormat = format.toLowerCase();
+
+  // Check which category this format belongs to
+  for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
+    if (extensions.includes(lowerFormat)) {
+      return CATEGORY_ICON_MAP[category as FileCategory] ?? PageIcon;
+    }
+  }
+
+  // Default to PageIcon if not found in any category
+  return PageIcon;
+};
 
 const StyledWebstudioImage = styled(Image, {
   position: "absolute",
@@ -107,10 +143,17 @@ const Thumbnail = styled(Box, {
   justifyContent: "center",
 });
 
-const GenericFilePreview = ({ ext }: { ext: string }) => {
+const GenericFilePreview = ({
+  ext,
+  format,
+}: {
+  ext: string;
+  format: string;
+}) => {
+  const Icon = getFileIcon(format);
   return (
     <Flex direction="column" align="center" gap={1}>
-      <PageIcon size={48} />
+      <Icon size={48} />
       <Text variant="tiny" color="subtle">
         {ext.toUpperCase()}
       </Text>
@@ -162,26 +205,27 @@ export const AssetThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {asset.type === "image" ? (
-          isVideoFormat(asset.format) &&
+        {isImageFormat(asset.format) ? (
+          // Image files - show preview
+          <StyledWebstudioImage
+            assetId={asset.id}
+            name={asset.name}
+            objectURL={
+              assetContainer.status === "uploading"
+                ? assetContainer.objectURL
+                : undefined
+            }
+            alt={alt}
+            // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
+            width={64}
+          />
+        ) : isVideoFormat(asset.format) &&
           assetContainer.status === "uploading" ? (
-            <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
-          ) : (
-            <StyledWebstudioImage
-              assetId={asset.id}
-              name={asset.name}
-              objectURL={
-                assetContainer.status === "uploading"
-                  ? assetContainer.objectURL
-                  : undefined
-              }
-              alt={alt}
-              // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
-              width={64}
-            />
-          )
+          // Video files being uploaded - show video preview
+          <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
         ) : (
-          <GenericFilePreview ext={ext} />
+          // Other files - show icon based on category
+          <GenericFilePreview ext={ext} format={asset.format} />
         )}
       </Thumbnail>
       <Flex css={{ width: "100%", paddingBottom: 4 }}>

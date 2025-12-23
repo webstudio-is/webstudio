@@ -9,6 +9,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./use-assets";
+import { detectAssetType } from "./asset-utils";
 import { $authPermit } from "~/shared/nano-states";
 import { imageMimeTypes } from "./asset-utils";
 
@@ -24,7 +25,7 @@ export const validateFiles = (files: File[]) => {
   return files.filter((file) => file.size <= maxSize);
 };
 
-const useUpload = (type: AssetType) => {
+const useUpload = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -34,7 +35,22 @@ const useUpload = (type: AssetType) => {
       return;
     }
     const files = validateFiles(Array.from(input?.files ?? []));
-    uploadAssets(type, files);
+
+    // Group files by their detected type
+    const filesByType = new Map<AssetType, File[]>();
+    for (const file of files) {
+      const detectedType = detectAssetType(file);
+      if (!filesByType.has(detectedType)) {
+        filesByType.set(detectedType, []);
+      }
+      filesByType.get(detectedType)!.push(file);
+    }
+
+    // Upload each group with the correct type
+    for (const [detectedType, filesOfType] of filesByType) {
+      uploadAssets(detectedType, filesOfType);
+    }
+
     form.reset();
   };
 
@@ -86,7 +102,7 @@ type AssetUploadProps = {
 };
 
 const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
-  const { inputRef, onChange } = useUpload(type);
+  const { inputRef, onChange } = useUpload();
 
   return (
     <form onChange={onChange}>

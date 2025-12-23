@@ -11,7 +11,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { UploadIcon } from "@webstudio-is/icons";
 import { keywordValues, parseCssValue } from "@webstudio-is/css-data";
 import { FontsManager } from "~/builder/shared/fonts-manager";
-import { useAssets } from "~/builder/shared/assets";
+import { useAssets, AssetUpload } from "~/builder/shared/assets";
 import { toItems } from "~/builder/shared/fonts-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import { setProperty } from "../../shared/use-style-data";
@@ -69,6 +69,7 @@ export const FontFamilyControl = () => {
           <FloatingPanel
             placement="left-start"
             title="Fonts"
+            titleSuffix={<AssetUpload type="font" />}
             onOpenChange={setIsFontMangerOpen}
             content={
               <FontsManager

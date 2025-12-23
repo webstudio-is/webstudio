@@ -35,29 +35,42 @@ export const action = async (
 
       const contentType = request.headers.get("Content-Type");
 
+      // Check if this is a request to download from URL (has url field in JSON body)
+      // vs uploading a JSON file directly (JSON file content in body)
       if (contentType?.includes("application/json")) {
-        const { url } = UrlBody.parse(await request.json());
+        const jsonBody = await request.json();
+        const urlParse = UrlBody.safeParse(jsonBody);
 
-        const imageRequest = await fetch(url, {
-          method: "GET",
-          headers: {
-            Accept: imageMimeTypes.join(","),
-          },
-        });
+        // Only fetch from URL if the body has a valid url field
+        if (urlParse.success) {
+          const { url } = urlParse.data;
 
-        if (false === imageRequest.ok) {
-          const error = await imageRequest.text();
-          const errors = `An error occurred while fetching the image at ${url}: ${error.slice(0, 500)}`;
-          throw new Error(errors);
+          const imageRequest = await fetch(url, {
+            method: "GET",
+            headers: {
+              Accept: imageMimeTypes.join(","),
+            },
+          });
+
+          if (false === imageRequest.ok) {
+            const error = await imageRequest.text();
+            const errors = `An error occurred while fetching the image at ${url}: ${error.slice(0, 500)}`;
+            throw new Error(errors);
+          }
+
+          if (imageRequest.body === null) {
+            throw new Error(
+              `An error occurred while fetching the image at ${url}: Image body is null`
+            );
+          }
+
+          body = imageRequest.body;
+        } else {
+          // This is a JSON file being uploaded, use the JSON content as body
+          body = new Blob([JSON.stringify(jsonBody)], {
+            type: "application/json",
+          }).stream();
         }
-
-        if (imageRequest.body === null) {
-          throw new Error(
-            `An error occurred while fetching the image at ${url}: Image body is null`
-          );
-        }
-
-        body = imageRequest.body;
       }
 
       const url = new URL(request.url);

@@ -6,6 +6,7 @@ import {
   getImageMimeTypes,
   isVideoFormat as isVideoFormatUtil,
 } from "@webstudio-is/asset-uploader";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { UploadingFileData } from "~/shared/nano-states";
 
 const imageExtensions = getImageExtensions();
@@ -13,6 +14,28 @@ const imageExtensions = getImageExtensions();
 export const isVideoFormat = isVideoFormatUtil;
 
 export const imageMimeTypes = getImageMimeTypes();
+
+const FONT_EXTENSIONS = ["woff", "woff2", "ttf", "otf"];
+
+/**
+ * Detect the asset type from a file based on its extension
+ */
+export const detectAssetType = (file: File): AssetType => {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (!ext) {
+    return "file";
+  }
+
+  if (imageExtensions.includes(ext)) {
+    return "image";
+  }
+
+  if (FONT_EXTENSIONS.includes(ext)) {
+    return "font";
+  }
+
+  return "file";
+};
 
 export const getImageNameAndType = (fileName: string) => {
   // Extract extension from filename
