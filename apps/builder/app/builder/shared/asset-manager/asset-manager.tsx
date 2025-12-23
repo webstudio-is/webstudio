@@ -10,16 +10,13 @@ import type { Asset } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
-  getFileExtensionsByCategory,
+  FILE_EXTENSIONS_BY_CATEGORY,
 } from "@webstudio-is/asset-uploader";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { AssetFilters } from "./asset-filters";
 
-// Get format categories for UI grouping
-const FORMAT_CATEGORIES = getFileExtensionsByCategory();
-
-type FormatCategory = keyof typeof FORMAT_CATEGORIES;
+type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
 
 const ALL_FORMATS = "all" as const;
 
@@ -63,7 +60,9 @@ const useLogic = ({
     assetContainers.forEach((container) => {
       const format = container.asset.format.toLowerCase();
 
-      for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
+      for (const [category, extensions] of Object.entries(
+        FILE_EXTENSIONS_BY_CATEGORY
+      )) {
         if (extensions.includes(format)) {
           counts[category] = (counts[category] || 0) + 1;
           break;
@@ -92,7 +91,8 @@ const useLogic = ({
 
     // Filter by selected format category
     if (selectedFormat !== ALL_FORMATS) {
-      const allowedExtensions = FORMAT_CATEGORIES[selectedFormat] || [];
+      const allowedExtensions =
+        FILE_EXTENSIONS_BY_CATEGORY[selectedFormat] || [];
       acceptable = acceptable.filter((item) =>
         allowedExtensions.includes(item.asset.format.toLowerCase())
       );
@@ -152,10 +152,6 @@ export const AssetManager = ({
 
   return (
     <AssetsShell
-      searchProps={searchProps}
-      isEmpty={filteredItems.length === 0}
-      type="file"
-      accept={accept}
       filters={
         showFilters ? (
           <AssetFilters
@@ -165,6 +161,10 @@ export const AssetManager = ({
           />
         ) : undefined
       }
+      searchProps={searchProps}
+      isEmpty={filteredItems.length === 0}
+      type="file"
+      accept={accept}
     >
       <>
         <Grid

@@ -14,7 +14,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { acceptUploadType, validateFiles } from "./asset-upload";
-import { detectAssetType } from "./asset-utils";
+import { detectAssetType } from "@webstudio-is/asset-uploader";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -36,12 +36,12 @@ import {
 } from "./drag-monitor";
 
 type AssetsShellProps = {
+  filters?: JSX.Element;
   searchProps: ComponentProps<typeof SearchField>;
   children: JSX.Element;
   type: AssetType;
   accept?: string;
   isEmpty: boolean;
-  filters?: JSX.Element;
   uploadButton?: JSX.Element;
 };
 
@@ -55,12 +55,12 @@ const OVER = 2;
 type DropTargetState = typeof IDLE | typeof OVER;
 
 export const AssetsShell = ({
+  filters,
   searchProps,
   isEmpty,
   children,
   type,
   accept,
-  filters,
   uploadButton,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -184,13 +184,13 @@ export const AssetsShell = ({
       }}
     >
       <Flex css={{ padding: theme.panel.padding }} gap="2">
+        {filters}
         <SearchField
           css={{ flexGrow: 1 }}
           {...searchProps}
           autoFocus
           placeholder="Search"
         />
-        {filters}
         {uploadButton}
       </Flex>
       <Separator />

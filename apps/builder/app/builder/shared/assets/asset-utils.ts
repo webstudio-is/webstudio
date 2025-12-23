@@ -2,40 +2,11 @@ import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 import {
   getMimeTypeByExtension,
-  getImageExtensions,
-  getImageMimeTypes,
-  isVideoFormat as isVideoFormatUtil,
+  IMAGE_EXTENSIONS,
 } from "@webstudio-is/asset-uploader";
-import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-const imageExtensions = getImageExtensions();
-
-export const isVideoFormat = isVideoFormatUtil;
-
-export const imageMimeTypes = getImageMimeTypes();
-
-const FONT_EXTENSIONS = ["woff", "woff2", "ttf", "otf"];
-
-/**
- * Detect the asset type from a file based on its extension
- */
-export const detectAssetType = (file: File): AssetType => {
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  if (!ext) {
-    return "file";
-  }
-
-  if (imageExtensions.includes(ext)) {
-    return "image";
-  }
-
-  if (FONT_EXTENSIONS.includes(ext)) {
-    return "font";
-  }
-
-  return "file";
-};
+export { detectAssetType } from "@webstudio-is/asset-uploader";
 
 export const getImageNameAndType = (fileName: string) => {
   // Extract extension from filename
@@ -46,7 +17,7 @@ export const getImageNameAndType = (fileName: string) => {
   }
 
   // Check if it's a valid image extension
-  if (!imageExtensions.includes(extractedExt)) {
+  if (!IMAGE_EXTENSIONS.includes(extractedExt)) {
     return;
   }
 

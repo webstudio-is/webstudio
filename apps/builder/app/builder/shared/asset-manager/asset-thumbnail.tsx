@@ -9,18 +9,17 @@ import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { theme } from "@webstudio-is/design-system";
 import {
   formatAssetName,
-  isVideoFormat,
   parseAssetName,
 } from "~/builder/shared/assets/asset-utils";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
-  getFileExtensionsByCategory,
-  getImageExtensions,
+  FILE_EXTENSIONS_BY_CATEGORY,
+  IMAGE_EXTENSIONS,
+  isVideoFormat,
 } from "@webstudio-is/asset-uploader";
 import type { FileCategory } from "@webstudio-is/asset-uploader";
 
-const FORMAT_CATEGORIES = getFileExtensionsByCategory();
-const IMAGE_EXTENSIONS = getImageExtensions();
+const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Record<FileCategory, IconComponent> = {
   images: PageIcon,

@@ -89,6 +89,102 @@ export const ALLOWED_MIME_CATEGORIES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * All image file extensions
+ */
+export const IMAGE_EXTENSIONS: readonly string[] = Object.keys(
+  ALLOWED_FILE_TYPES
+).filter((ext) => {
+  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
+  return mimeType.startsWith("image/");
+});
+
+/**
+ * All image MIME types
+ */
+export const IMAGE_MIME_TYPES: readonly string[] = IMAGE_EXTENSIONS.map(
+  (ext) => ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES]
+);
+
+/**
+ * All video file extensions
+ */
+export const VIDEO_EXTENSIONS: readonly string[] = Object.keys(
+  ALLOWED_FILE_TYPES
+).filter((ext) => {
+  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
+  return mimeType.startsWith("video/");
+});
+
+/**
+ * All video MIME types
+ */
+export const VIDEO_MIME_TYPES: readonly string[] = VIDEO_EXTENSIONS.map(
+  (ext) => ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES]
+);
+
+/**
+ * All font file extensions
+ */
+export const FONT_EXTENSIONS: readonly string[] = Object.keys(
+  ALLOWED_FILE_TYPES
+).filter((ext) => {
+  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
+  return mimeType.startsWith("font/");
+});
+
+/**
+ * File extensions grouped by user-friendly categories for UI display
+ */
+export const FILE_EXTENSIONS_BY_CATEGORY = (() => {
+  const categories = {
+    images: [] as string[],
+    fonts: [] as string[],
+    documents: [] as string[],
+    code: [] as string[],
+    audio: [] as string[],
+    video: [] as string[],
+  };
+
+  Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
+    const [category, subtype] = mimeType.split("/");
+
+    if (category === "image") {
+      categories.images.push(ext);
+    } else if (category === "font") {
+      categories.fonts.push(ext);
+    } else if (category === "audio") {
+      categories.audio.push(ext);
+    } else if (category === "video") {
+      categories.video.push(ext);
+    } else if (category === "text") {
+      // CSV and text files belong in documents
+      if (
+        ["javascript", "css", "html", "xml"].some((t) => subtype.includes(t))
+      ) {
+        categories.code.push(ext);
+      } else {
+        categories.documents.push(ext);
+      }
+    } else if (category === "application") {
+      // Check for specific code file types (but not office docs that contain "xml" in MIME type)
+      if (
+        (subtype.includes("json") || subtype === "xml") &&
+        !subtype.includes("officedocument")
+      ) {
+        categories.code.push(ext);
+      } else {
+        // All other application types (PDF, Word, Excel, PowerPoint, etc.) go to documents
+        categories.documents.push(ext);
+      }
+    }
+  });
+
+  return categories as Readonly<typeof categories>;
+})();
+
+export type FileCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
+
+/**
  * Get MIME type for a given file extension
  */
 export const getMimeTypeByExtension = (
@@ -155,98 +251,28 @@ export const validateFileName = (
 };
 
 /**
- * Get all image file extensions
- */
-export const getImageExtensions = (): string[] => {
-  return Object.keys(ALLOWED_FILE_TYPES).filter((ext) => {
-    const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
-    return mimeType.startsWith("image/");
-  });
-};
-
-/**
- * Get all image MIME types
- */
-export const getImageMimeTypes = (): string[] => {
-  return getImageExtensions()
-    .map((ext) => getMimeTypeByExtension(ext))
-    .filter((mime): mime is string => mime !== undefined);
-};
-
-/**
- * Get all video file extensions
- */
-export const getVideoExtensions = (): string[] => {
-  return Object.keys(ALLOWED_FILE_TYPES).filter((ext) => {
-    const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
-    return mimeType.startsWith("video/");
-  });
-};
-
-/**
- * Get all video MIME types
- */
-export const getVideoMimeTypes = (): string[] => {
-  return getVideoExtensions()
-    .map((ext) => getMimeTypeByExtension(ext))
-    .filter((mime): mime is string => mime !== undefined);
-};
-
-/**
  * Check if a format is a video format
  */
 export const isVideoFormat = (format: string): boolean => {
-  return getVideoExtensions().includes(format.toLowerCase());
+  return VIDEO_EXTENSIONS.includes(format.toLowerCase());
 };
 
 /**
- * Get file extensions grouped by user-friendly categories for UI display
+ * Detect the asset type from a file based on its extension
  */
-export const getFileExtensionsByCategory = () => {
-  const categories = {
-    images: [] as string[],
-    fonts: [] as string[],
-    documents: [] as string[],
-    code: [] as string[],
-    audio: [] as string[],
-    video: [] as string[],
-  };
+export const detectAssetType = (file: File): "image" | "font" | "file" => {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (!ext) {
+    return "file";
+  }
 
-  Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
-    const [category, subtype] = mimeType.split("/");
+  if (IMAGE_EXTENSIONS.includes(ext)) {
+    return "image";
+  }
 
-    if (category === "image") {
-      categories.images.push(ext);
-    } else if (category === "font") {
-      categories.fonts.push(ext);
-    } else if (category === "audio") {
-      categories.audio.push(ext);
-    } else if (category === "video") {
-      categories.video.push(ext);
-    } else if (category === "text") {
-      // CSV and text files belong in documents
-      if (
-        ["javascript", "css", "html", "xml"].some((t) => subtype.includes(t))
-      ) {
-        categories.code.push(ext);
-      } else {
-        categories.documents.push(ext);
-      }
-    } else if (category === "application") {
-      // Check for specific code file types (but not office docs that contain "xml" in MIME type)
-      if (
-        (subtype.includes("json") || subtype === "xml") &&
-        !subtype.includes("officedocument")
-      ) {
-        categories.code.push(ext);
-      } else {
-        // All other application types (PDF, Word, Excel, PowerPoint, etc.) go to documents
-        categories.documents.push(ext);
-      }
-    }
-  });
+  if (FONT_EXTENSIONS.includes(ext)) {
+    return "font";
+  }
 
-  return categories;
+  return "file";
 };
-
-export type FileCategory = keyof ReturnType<typeof getFileExtensionsByCategory>;

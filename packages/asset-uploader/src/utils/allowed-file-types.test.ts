@@ -6,12 +6,14 @@ import {
   isAllowedExtension,
   isAllowedMimeCategory,
   validateFileName,
-  getImageExtensions,
-  getImageMimeTypes,
-  getVideoExtensions,
-  getVideoMimeTypes,
+  IMAGE_EXTENSIONS,
+  IMAGE_MIME_TYPES,
+  VIDEO_EXTENSIONS,
+  VIDEO_MIME_TYPES,
   isVideoFormat,
-  getFileExtensionsByCategory,
+  FONT_EXTENSIONS,
+  FILE_EXTENSIONS_BY_CATEGORY,
+  detectAssetType,
 } from "./allowed-file-types";
 
 describe("allowed-file-types", () => {
@@ -169,63 +171,55 @@ describe("allowed-file-types", () => {
     });
   });
 
-  describe("getImageExtensions", () => {
-    test("returns an array", () => {
-      const extensions = getImageExtensions();
-      expect(Array.isArray(extensions)).toBe(true);
-      expect(extensions.length).toBeGreaterThan(0);
+  describe("IMAGE_EXTENSIONS", () => {
+    test("is an array", () => {
+      expect(Array.isArray(IMAGE_EXTENSIONS)).toBe(true);
+      expect(IMAGE_EXTENSIONS.length).toBeGreaterThan(0);
     });
 
-    test("all returned extensions are image types", () => {
-      const extensions = getImageExtensions();
-      extensions.forEach((ext) => {
+    test("all extensions are image types", () => {
+      IMAGE_EXTENSIONS.forEach((ext) => {
         const mimeType = getMimeTypeByExtension(ext);
         expect(mimeType?.startsWith("image/")).toBe(true);
       });
     });
   });
 
-  describe("getImageMimeTypes", () => {
-    test("returns an array of MIME types", () => {
-      const mimeTypes = getImageMimeTypes();
-      expect(Array.isArray(mimeTypes)).toBe(true);
-      expect(mimeTypes.length).toBeGreaterThan(0);
+  describe("IMAGE_MIME_TYPES", () => {
+    test("is an array of MIME types", () => {
+      expect(Array.isArray(IMAGE_MIME_TYPES)).toBe(true);
+      expect(IMAGE_MIME_TYPES.length).toBeGreaterThan(0);
     });
 
     test("all MIME types start with image/", () => {
-      const mimeTypes = getImageMimeTypes();
-      mimeTypes.forEach((mime) => {
+      IMAGE_MIME_TYPES.forEach((mime) => {
         expect(mime.startsWith("image/")).toBe(true);
       });
     });
   });
 
-  describe("getVideoExtensions", () => {
-    test("returns an array", () => {
-      const extensions = getVideoExtensions();
-      expect(Array.isArray(extensions)).toBe(true);
-      expect(extensions.length).toBeGreaterThan(0);
+  describe("VIDEO_EXTENSIONS", () => {
+    test("is an array", () => {
+      expect(Array.isArray(VIDEO_EXTENSIONS)).toBe(true);
+      expect(VIDEO_EXTENSIONS.length).toBeGreaterThan(0);
     });
 
-    test("all returned extensions are video types", () => {
-      const extensions = getVideoExtensions();
-      extensions.forEach((ext) => {
+    test("all extensions are video types", () => {
+      VIDEO_EXTENSIONS.forEach((ext) => {
         const mimeType = getMimeTypeByExtension(ext);
         expect(mimeType?.startsWith("video/")).toBe(true);
       });
     });
   });
 
-  describe("getVideoMimeTypes", () => {
-    test("returns an array of MIME types", () => {
-      const mimeTypes = getVideoMimeTypes();
-      expect(Array.isArray(mimeTypes)).toBe(true);
-      expect(mimeTypes.length).toBeGreaterThan(0);
+  describe("VIDEO_MIME_TYPES", () => {
+    test("is an array of MIME types", () => {
+      expect(Array.isArray(VIDEO_MIME_TYPES)).toBe(true);
+      expect(VIDEO_MIME_TYPES.length).toBeGreaterThan(0);
     });
 
     test("all MIME types start with video/", () => {
-      const mimeTypes = getVideoMimeTypes();
-      mimeTypes.forEach((mime) => {
+      VIDEO_MIME_TYPES.forEach((mime) => {
         expect(mime.startsWith("video/")).toBe(true);
       });
     });
@@ -258,84 +252,140 @@ describe("allowed-file-types", () => {
     });
   });
 
-  describe("getFileExtensionsByCategory", () => {
-    test("returns object with all expected categories", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories).toHaveProperty("images");
-      expect(categories).toHaveProperty("fonts");
-      expect(categories).toHaveProperty("documents");
-      expect(categories).toHaveProperty("code");
-      expect(categories).toHaveProperty("audio");
-      expect(categories).toHaveProperty("video");
+  describe("FONT_EXTENSIONS", () => {
+    test("is an array", () => {
+      expect(Array.isArray(FONT_EXTENSIONS)).toBe(true);
+      expect(FONT_EXTENSIONS.length).toBeGreaterThan(0);
+    });
+
+    test("all extensions are font types", () => {
+      FONT_EXTENSIONS.forEach((ext) => {
+        const mimeType = getMimeTypeByExtension(ext);
+        expect(mimeType?.startsWith("font/")).toBe(true);
+      });
+    });
+
+    test("includes common font formats", () => {
+      expect(FONT_EXTENSIONS).toContain("woff");
+      expect(FONT_EXTENSIONS).toContain("woff2");
+      expect(FONT_EXTENSIONS).toContain("ttf");
+      expect(FONT_EXTENSIONS).toContain("otf");
+    });
+  });
+
+  describe("FILE_EXTENSIONS_BY_CATEGORY", () => {
+    test("has all expected categories", () => {
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("images");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("fonts");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("documents");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("code");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("audio");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("video");
     });
 
     test("images category contains image extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.images).toContain("jpg");
-      expect(categories.images).toContain("png");
-      expect(categories.images).toContain("gif");
-      expect(categories.images).toContain("svg");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("jpg");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("png");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("gif");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("svg");
     });
 
     test("fonts category contains font extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.fonts).toContain("woff");
-      expect(categories.fonts).toContain("woff2");
-      expect(categories.fonts).toContain("ttf");
-      expect(categories.fonts).toContain("otf");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("woff");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("woff2");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("ttf");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("otf");
     });
 
     test("documents category contains all document extensions", () => {
-      const categories = getFileExtensionsByCategory();
       // Office documents
-      expect(categories.documents).toContain("pdf");
-      expect(categories.documents).toContain("doc");
-      expect(categories.documents).toContain("docx");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("pdf");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("doc");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("docx");
       // Spreadsheets
-      expect(categories.documents).toContain("xls");
-      expect(categories.documents).toContain("xlsx");
-      expect(categories.documents).toContain("csv");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("xls");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("xlsx");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("csv");
       // Presentations
-      expect(categories.documents).toContain("ppt");
-      expect(categories.documents).toContain("pptx");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("ppt");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("pptx");
       // Text files
-      expect(categories.documents).toContain("txt");
-      expect(categories.documents).toContain("md");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("txt");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("md");
     });
 
     test("code category contains code file extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.code).toContain("js");
-      expect(categories.code).toContain("css");
-      expect(categories.code).toContain("json");
-      expect(categories.code).toContain("html");
-      expect(categories.code).toContain("xml");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("js");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("css");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("json");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("html");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("xml");
     });
 
     test("audio category contains audio extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.audio).toContain("mp3");
-      expect(categories.audio).toContain("wav");
-      expect(categories.audio).toContain("ogg");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.audio).toContain("mp3");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.audio).toContain("wav");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.audio).toContain("ogg");
     });
 
     test("video category contains video extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.video).toContain("mp4");
-      expect(categories.video).toContain("webm");
-      expect(categories.video).toContain("mov");
-      expect(categories.video).toContain("avi");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.video).toContain("mp4");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.video).toContain("webm");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.video).toContain("mov");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.video).toContain("avi");
     });
 
     test("all extensions are accounted for", () => {
-      const categories = getFileExtensionsByCategory();
-      const allCategoryExtensions = Object.values(categories).flat();
+      const allCategoryExtensions = Object.values(
+        FILE_EXTENSIONS_BY_CATEGORY
+      ).flat();
       const allExtensions = Object.keys(ALLOWED_FILE_TYPES);
 
       // Every extension should be in at least one category
       allExtensions.forEach((ext) => {
         expect(allCategoryExtensions).toContain(ext);
       });
+    });
+  });
+
+  describe("detectAssetType", () => {
+    test("detects image files", () => {
+      expect(detectAssetType(new File([], "photo.jpg"))).toBe("image");
+      expect(detectAssetType(new File([], "image.png"))).toBe("image");
+      expect(detectAssetType(new File([], "graphic.gif"))).toBe("image");
+      expect(detectAssetType(new File([], "vector.svg"))).toBe("image");
+      expect(detectAssetType(new File([], "picture.webp"))).toBe("image");
+    });
+
+    test("detects font files", () => {
+      expect(detectAssetType(new File([], "font.woff"))).toBe("font");
+      expect(detectAssetType(new File([], "font.woff2"))).toBe("font");
+      expect(detectAssetType(new File([], "font.ttf"))).toBe("font");
+      expect(detectAssetType(new File([], "font.otf"))).toBe("font");
+    });
+
+    test("returns file for other types", () => {
+      expect(detectAssetType(new File([], "document.pdf"))).toBe("file");
+      expect(detectAssetType(new File([], "video.mp4"))).toBe("file");
+      expect(detectAssetType(new File([], "audio.mp3"))).toBe("file");
+      expect(detectAssetType(new File([], "data.json"))).toBe("file");
+      expect(detectAssetType(new File([], "doc.docx"))).toBe("file");
+    });
+
+    test("is case-insensitive", () => {
+      expect(detectAssetType(new File([], "PHOTO.JPG"))).toBe("image");
+      expect(detectAssetType(new File([], "FONT.WOFF2"))).toBe("font");
+      expect(detectAssetType(new File([], "DOC.PDF"))).toBe("file");
+    });
+
+    test("handles files without extension", () => {
+      expect(detectAssetType(new File([], "filename"))).toBe("file");
+    });
+
+    test("handles files with multiple dots", () => {
+      expect(detectAssetType(new File([], "my.photo.file.png"))).toBe("image");
+      expect(detectAssetType(new File([], "my.font.file.woff2"))).toBe("font");
+      expect(detectAssetType(new File([], "my.doc.file.pdf"))).toBe("file");
     });
   });
 });

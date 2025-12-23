@@ -1,18 +1,8 @@
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
-import { getFileExtensionsByCategory } from "@webstudio-is/asset-uploader";
+import { Select } from "@webstudio-is/design-system";
+import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/asset-uploader";
+import { titleCase } from "title-case";
 
-// Get format categories for UI grouping
-const FORMAT_CATEGORIES = getFileExtensionsByCategory();
-
-type FormatCategory = keyof typeof FORMAT_CATEGORIES;
+type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
 
 const ALL_FORMATS = "all" as const;
 
@@ -27,46 +17,30 @@ export const AssetFilters = ({
   selectedFormat,
   onFormatChange,
 }: AssetFiltersProps) => {
-  const categories = Object.keys(FORMAT_CATEGORIES).sort();
+  const categories = Object.keys(
+    FILE_EXTENSIONS_BY_CATEGORY
+  ) as FormatCategory[];
   const totalCount = Object.values(formatCounts).reduce(
     (sum, count) => sum + count,
     0
   );
 
-  const formatLabel =
-    selectedFormat === ALL_FORMATS
-      ? "All"
-      : selectedFormat.charAt(0).toUpperCase() + selectedFormat.slice(1);
+  const options: Array<FormatCategory | typeof ALL_FORMATS> = [
+    ALL_FORMATS,
+    ...categories.sort(),
+  ];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button color="ghost" prefix={<ChevronDownIcon />}>
-          {formatLabel}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuRadioGroup
-          value={selectedFormat}
-          onValueChange={(value) => {
-            if (value) {
-              onFormatChange(value as FormatCategory | typeof ALL_FORMATS);
-            }
-          }}
-        >
-          <DropdownMenuRadioItem value={ALL_FORMATS}>
-            All ({totalCount})
-          </DropdownMenuRadioItem>
-          {categories.map((category) => {
-            const count = formatCounts[category] || 0;
-            return (
-              <DropdownMenuRadioItem key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
-              </DropdownMenuRadioItem>
-            );
-          })}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Select
+      options={options}
+      value={selectedFormat}
+      onChange={onFormatChange}
+      getLabel={(option: FormatCategory | typeof ALL_FORMATS) => {
+        if (option === ALL_FORMATS) {
+          return `All (${totalCount})`;
+        }
+        return titleCase(`${option} (${formatCounts[option] || 0})`);
+      }}
+    />
   );
 };

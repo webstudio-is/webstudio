@@ -5,6 +5,7 @@ import {
   getImageNameAndType,
   getSha256Hash,
 } from "./asset-utils";
+import { detectAssetType } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/sdk";
 
 describe("parseAssetName", () => {
@@ -138,5 +139,46 @@ describe("getSha256Hash", () => {
     expect(hash).toBe(
       "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
     );
+  });
+});
+
+describe("detectAssetType", () => {
+  test("detects image files", () => {
+    expect(detectAssetType(new File([], "photo.jpg"))).toBe("image");
+    expect(detectAssetType(new File([], "image.png"))).toBe("image");
+    expect(detectAssetType(new File([], "graphic.gif"))).toBe("image");
+    expect(detectAssetType(new File([], "vector.svg"))).toBe("image");
+    expect(detectAssetType(new File([], "picture.webp"))).toBe("image");
+  });
+
+  test("detects font files", () => {
+    expect(detectAssetType(new File([], "font.woff"))).toBe("font");
+    expect(detectAssetType(new File([], "font.woff2"))).toBe("font");
+    expect(detectAssetType(new File([], "font.ttf"))).toBe("font");
+    expect(detectAssetType(new File([], "font.otf"))).toBe("font");
+  });
+
+  test("returns file for other types", () => {
+    expect(detectAssetType(new File([], "document.pdf"))).toBe("file");
+    expect(detectAssetType(new File([], "video.mp4"))).toBe("file");
+    expect(detectAssetType(new File([], "audio.mp3"))).toBe("file");
+    expect(detectAssetType(new File([], "data.json"))).toBe("file");
+    expect(detectAssetType(new File([], "doc.docx"))).toBe("file");
+  });
+
+  test("is case-insensitive", () => {
+    expect(detectAssetType(new File([], "PHOTO.JPG"))).toBe("image");
+    expect(detectAssetType(new File([], "FONT.WOFF2"))).toBe("font");
+    expect(detectAssetType(new File([], "DOC.PDF"))).toBe("file");
+  });
+
+  test("handles files without extension", () => {
+    expect(detectAssetType(new File([], "filename"))).toBe("file");
+  });
+
+  test("handles files with multiple dots", () => {
+    expect(detectAssetType(new File([], "my.photo.file.png"))).toBe("image");
+    expect(detectAssetType(new File([], "my.font.file.woff2"))).toBe("font");
+    expect(detectAssetType(new File([], "my.doc.file.pdf"))).toBe("file");
   });
 });

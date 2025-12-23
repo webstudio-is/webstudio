@@ -9,9 +9,9 @@ import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { theme } from "@webstudio-is/design-system";
 import {
   formatAssetName,
-  isVideoFormat,
   parseAssetName,
 } from "~/builder/shared/assets/asset-utils";
+import { isVideoFormat } from "@webstudio-is/asset-uploader";
 
 const StyledWebstudioImage = styled(Image, {
   position: "absolute",

@@ -6,12 +6,12 @@ import {
   type AssetType,
   MAX_UPLOAD_SIZE,
   toBytes,
+  IMAGE_MIME_TYPES,
+  detectAssetType,
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./use-assets";
-import { detectAssetType } from "./asset-utils";
 import { $authPermit } from "~/shared/nano-states";
-import { imageMimeTypes } from "./asset-utils";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
@@ -58,7 +58,7 @@ const useUpload = () => {
 };
 
 const acceptMap = {
-  image: imageMimeTypes.join(", "),
+  image: IMAGE_MIME_TYPES.join(", "),
   font: FONT_MIME_TYPES,
   // We allow everything by default for files, specific validation happens serverside
   file: undefined,

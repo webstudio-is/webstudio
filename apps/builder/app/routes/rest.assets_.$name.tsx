@@ -2,9 +2,11 @@ import { z } from "zod";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
-import { isAllowedMimeCategory } from "@webstudio-is/asset-uploader";
+import {
+  isAllowedMimeCategory,
+  IMAGE_MIME_TYPES,
+} from "@webstudio-is/asset-uploader";
 import type { ActionData } from "~/builder/shared/assets";
-import { imageMimeTypes } from "~/builder/shared/assets/asset-utils";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -48,7 +50,7 @@ export const action = async (
           const imageRequest = await fetch(url, {
             method: "GET",
             headers: {
-              Accept: imageMimeTypes.join(","),
+              Accept: IMAGE_MIME_TYPES.join(","),
             },
           });
 
