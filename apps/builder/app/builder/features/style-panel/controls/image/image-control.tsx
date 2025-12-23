@@ -15,6 +15,7 @@ import {
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { AssetUpload } from "~/builder/shared/assets";
 
 const isValidURL = (value: string) => {
   try {
@@ -101,6 +102,7 @@ export const ImageControl = ({
       />
       <FloatingPanel
         title="Images"
+        titleSuffix={<AssetUpload type="image" />}
         content={
           <ImageManager
             onChange={(assetId) => {

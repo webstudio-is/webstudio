@@ -264,10 +264,7 @@ describe("allowed-file-types", () => {
       expect(categories).toHaveProperty("images");
       expect(categories).toHaveProperty("fonts");
       expect(categories).toHaveProperty("documents");
-      expect(categories).toHaveProperty("spreadsheets");
-      expect(categories).toHaveProperty("presentations");
       expect(categories).toHaveProperty("code");
-      expect(categories).toHaveProperty("text");
       expect(categories).toHaveProperty("audio");
       expect(categories).toHaveProperty("video");
     });
@@ -288,24 +285,22 @@ describe("allowed-file-types", () => {
       expect(categories.fonts).toContain("otf");
     });
 
-    test("documents category contains document extensions", () => {
+    test("documents category contains all document extensions", () => {
       const categories = getFileExtensionsByCategory();
+      // Office documents
       expect(categories.documents).toContain("pdf");
       expect(categories.documents).toContain("doc");
       expect(categories.documents).toContain("docx");
-    });
-
-    test("spreadsheets category contains spreadsheet extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.spreadsheets).toContain("xls");
-      expect(categories.spreadsheets).toContain("xlsx");
-      expect(categories.spreadsheets).toContain("csv");
-    });
-
-    test("presentations category contains presentation extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.presentations).toContain("ppt");
-      expect(categories.presentations).toContain("pptx");
+      // Spreadsheets
+      expect(categories.documents).toContain("xls");
+      expect(categories.documents).toContain("xlsx");
+      expect(categories.documents).toContain("csv");
+      // Presentations
+      expect(categories.documents).toContain("ppt");
+      expect(categories.documents).toContain("pptx");
+      // Text files
+      expect(categories.documents).toContain("txt");
+      expect(categories.documents).toContain("md");
     });
 
     test("code category contains code file extensions", () => {
@@ -315,12 +310,6 @@ describe("allowed-file-types", () => {
       expect(categories.code).toContain("json");
       expect(categories.code).toContain("html");
       expect(categories.code).toContain("xml");
-    });
-
-    test("text category contains text file extensions", () => {
-      const categories = getFileExtensionsByCategory();
-      expect(categories.text).toContain("txt");
-      expect(categories.text).toContain("md");
     });
 
     test("audio category contains audio extensions", () => {

@@ -99,6 +99,7 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
         style={{ display: "none" }}
       />
       <Button
+        color="ghost"
         type="button"
         onClick={() => inputRef?.current?.click()}
         prefix={<UploadIcon />}

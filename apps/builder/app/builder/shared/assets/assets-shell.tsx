@@ -13,7 +13,7 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { AssetUpload, acceptUploadType, validateFiles } from "./asset-upload";
+import { acceptUploadType, validateFiles } from "./asset-upload";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -40,6 +40,7 @@ type AssetsShellProps = {
   type: AssetType;
   accept?: string;
   isEmpty: boolean;
+  filters?: JSX.Element;
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
@@ -57,6 +58,7 @@ export const AssetsShell = ({
   children,
   type,
   accept,
+  filters,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [monitorState, setMonitorState] =
@@ -171,7 +173,7 @@ export const AssetsShell = ({
           autoFocus
           placeholder="Search"
         />
-        <AssetUpload type={type} accept={accept} />
+        {filters}
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}

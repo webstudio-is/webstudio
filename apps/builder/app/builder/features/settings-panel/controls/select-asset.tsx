@@ -8,6 +8,7 @@ import { ImageManager } from "~/builder/shared/asset-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { AssetUpload } from "~/builder/shared/assets";
 
 // tests whether we can use ImageManager for the given "accept" value
 const isImageAccept = (accept?: string) => {
@@ -45,6 +46,7 @@ export const SelectAsset = ({ prop, onChange, accept }: Props) => {
     <Flex gap={2} css={{ flex: 1 }} align="center">
       <FloatingPanel
         title="Images"
+        titleSuffix={<AssetUpload type="image" accept={accept} />}
         content={
           <ImageManager
             onChange={(assetId) => onChange({ type: "asset", value: assetId })}

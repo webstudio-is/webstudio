@@ -5,9 +5,6 @@ import {
   findNextListItemIndex,
   theme,
   useSearchFieldKeys,
-  ToggleGroup,
-  ToggleGroupButton,
-  Flex,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
 import {
@@ -17,6 +14,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
+import { AssetFilters } from "./asset-filters";
 
 // Get format categories for UI grouping
 const FORMAT_CATEGORIES = getFileExtensionsByCategory();
@@ -59,21 +57,21 @@ const useLogic = ({
   });
 
   // Get available format categories based on existing assets
-  const availableFormats = useMemo(() => {
-    const formats = new Set<string>();
+  const formatCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
 
     assetContainers.forEach((container) => {
       const format = container.asset.format.toLowerCase();
 
       for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
         if (extensions.includes(format)) {
-          formats.add(category);
+          counts[category] = (counts[category] || 0) + 1;
           break;
         }
       }
     });
 
-    return Array.from(formats).sort();
+    return counts;
   }, [assetContainers]);
 
   const filteredItems = useMemo(() => {
@@ -120,7 +118,7 @@ const useLogic = ({
     filteredItems,
     handleSelect,
     selectedIndex,
-    availableFormats,
+    formatCounts,
     selectedFormat,
     setSelectedFormat,
   };
@@ -130,15 +128,21 @@ type AssetManagerProps = {
   onChange?: (assetId: Asset["id"]) => void;
   /** acceptable file types in the `<imput accept>` attribute format */
   accept?: string;
+  /** whether to show format filters dropdown */
+  showFilters?: boolean;
 };
 
-export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
+export const AssetManager = ({
+  accept,
+  onChange,
+  showFilters = false,
+}: AssetManagerProps) => {
   const {
     handleSelect,
     filteredItems,
     searchProps,
     selectedIndex,
-    availableFormats,
+    formatCounts,
     selectedFormat,
     setSelectedFormat,
   } = useLogic({
@@ -152,38 +156,17 @@ export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
       isEmpty={filteredItems.length === 0}
       type="file"
       accept={accept}
+      filters={
+        showFilters ? (
+          <AssetFilters
+            formatCounts={formatCounts}
+            selectedFormat={selectedFormat}
+            onFormatChange={setSelectedFormat}
+          />
+        ) : undefined
+      }
     >
       <>
-        {availableFormats.length > 0 && (
-          <Flex
-            gap="1"
-            wrap="wrap"
-            css={{
-              paddingInline: theme.panel.paddingInline,
-              paddingBottom: theme.spacing[5],
-            }}
-          >
-            <ToggleGroup
-              type="single"
-              value={selectedFormat}
-              onValueChange={(value) => {
-                if (value) {
-                  setSelectedFormat(
-                    value as FormatCategory | typeof ALL_FORMATS
-                  );
-                }
-              }}
-              css={{ width: "100%" }}
-            >
-              <ToggleGroupButton value={ALL_FORMATS}>All</ToggleGroupButton>
-              {availableFormats.map((format) => (
-                <ToggleGroupButton key={format} value={format}>
-                  {format.charAt(0).toUpperCase() + format.slice(1)}
-                </ToggleGroupButton>
-              ))}
-            </ToggleGroup>
-          </Flex>
-        )}
         <Grid
           columns={3}
           gap="2"

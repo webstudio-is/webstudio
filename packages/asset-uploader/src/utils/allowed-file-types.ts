@@ -207,10 +207,7 @@ export const getFileExtensionsByCategory = (): Record<string, string[]> => {
     images: [],
     fonts: [],
     documents: [],
-    spreadsheets: [],
-    presentations: [],
     code: [],
-    text: [],
     audio: [],
     video: [],
   };
@@ -227,28 +224,24 @@ export const getFileExtensionsByCategory = (): Record<string, string[]> => {
     } else if (category === "video") {
       categories.video.push(ext);
     } else if (category === "text") {
-      // CSV is text/csv but belongs in spreadsheets
-      if (mimeType === "text/csv") {
-        categories.spreadsheets.push(ext);
-      } else if (
+      // CSV and text files belong in documents
+      if (
         ["javascript", "css", "html", "xml"].some((t) => subtype.includes(t))
       ) {
         categories.code.push(ext);
       } else {
-        categories.text.push(ext);
+        categories.documents.push(ext);
       }
     } else if (category === "application") {
-      if (subtype.includes("pdf") || subtype.includes("word")) {
-        categories.documents.push(ext);
-      } else if (subtype.includes("excel") || subtype.includes("spreadsheet")) {
-        categories.spreadsheets.push(ext);
-      } else if (
-        subtype.includes("powerpoint") ||
-        subtype.includes("presentation")
+      // Check for specific code file types (but not office docs that contain "xml" in MIME type)
+      if (
+        (subtype.includes("json") || subtype === "xml") &&
+        !subtype.includes("officedocument")
       ) {
-        categories.presentations.push(ext);
-      } else if (subtype.includes("json") || subtype.includes("xml")) {
         categories.code.push(ext);
+      } else {
+        // All other application types (PDF, Word, Excel, PowerPoint, etc.) go to documents
+        categories.documents.push(ext);
       }
     }
   });

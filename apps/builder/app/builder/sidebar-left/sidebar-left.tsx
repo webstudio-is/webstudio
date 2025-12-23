@@ -11,10 +11,10 @@ import { theme } from "@webstudio-is/design-system";
 import {
   ExtensionIcon,
   HelpIcon,
+  ImageIcon,
   NavigatorIcon,
   PageIcon,
   PlusIcon,
-  UploadIcon,
   type IconComponent,
 } from "@webstudio-is/icons";
 import { HelpCenter } from "../features/help/help-center";
@@ -136,7 +136,7 @@ const panels: PanelConfig[] = [
   {
     name: "assets",
     label: "Assets",
-    Icon: UploadIcon,
+    Icon: ImageIcon,
     Panel: AssetsPanel,
   },
   {
