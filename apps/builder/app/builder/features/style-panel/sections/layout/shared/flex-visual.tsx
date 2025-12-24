@@ -53,6 +53,7 @@ export const FlexVisual = () => {
 
   // Determine if we're in column mode based on display type
   const isGrid = displayValue === "grid" || displayValue === "inline-grid";
+  const isDense = isGrid && gridAutoFlowValue.includes("dense");
   const isFlexDirectionColumn = isGrid
     ? gridAutoFlowValue.includes("column")
     : flexDirectionValue === "column" ||
@@ -169,10 +170,10 @@ export const FlexVisual = () => {
           height: "100%",
           gridArea: "-1 / -1 / 1 / 1", // fill whole grid
           p: 2,
-          gap: 2.5,
           pointerEvents: "none",
         }}
         style={{
+          gap: isDense ? 0.8 : 2.5,
           flexDirection: (isFlexDirectionColumn
             ? "column"
             : "row") as CSSProperties["flexDirection"],
@@ -194,8 +195,8 @@ export const FlexVisual = () => {
               borderRadius: theme.borderRadius[1],
               backgroundColor: "currentColor",
               ...(isFlexDirectionColumn
-                ? { minWidth: size, minHeight: 3 }
-                : { minWidth: 3, minHeight: size }),
+                ? { minWidth: size, minHeight: isDense ? 5 : 3 }
+                : { minWidth: isDense ? 5 : 3, minHeight: size }),
             }}
           />
         ))}
