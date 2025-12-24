@@ -19,7 +19,7 @@ import { AssetSortSelect, sortAssets, type SortState } from "./asset-sort";
 
 const useLogic = ({
   onChange,
-  accept,
+  accept = "*",
 }: {
   onChange?: (assetId: Asset["id"]) => void;
   accept?: string;
@@ -28,9 +28,28 @@ const useLogic = ({
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  // Initialize selectedExtensions based on accept prop
   const [selectedExtensions, setSelectedExtensions] = useState<
     AllowedFileExtension[] | "*"
-  >("*");
+  >(() => {
+    const patterns = acceptToMimePatterns(accept);
+    if (patterns === "*") {
+      return "*";
+    }
+    // Convert MIME patterns to extensions
+    const extensions: AllowedFileExtension[] = [];
+    assetContainers.forEach((container) => {
+      if (doesAssetMatchMimePatterns(container.asset, patterns)) {
+        const ext =
+          container.asset.format.toLowerCase() as AllowedFileExtension;
+        if (!extensions.includes(ext)) {
+          extensions.push(ext);
+        }
+      }
+    });
+    return extensions.length > 0 ? extensions : "*";
+  });
+
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "createdAt",
     order: "desc",
@@ -55,7 +74,12 @@ const useLogic = ({
     },
   });
 
-  // Get available format counts based on existing assets
+  // Filter assets by accept prop first to get the base set
+  const acceptableAssets = useMemo(() => {
+    return assetContainers;
+  }, [assetContainers]);
+
+  // Get available format counts based on all assets
   const formatCounts = useMemo(() => {
     const counts: Partial<Record<AllowedFileExtension, number>> = {};
 
@@ -69,22 +93,10 @@ const useLogic = ({
   }, [assetContainers]);
 
   const filteredItems = useMemo(() => {
-    let acceptable = assetContainers;
-    const patterns = acceptToMimePatterns(accept ?? "");
+    // Start with all assets
+    let acceptable = acceptableAssets;
 
-    if (patterns !== "*") {
-      acceptable = assetContainers.filter((item) =>
-        doesAssetMatchMimePatterns(item.asset, patterns)
-      );
-    } else if (accept !== undefined) {
-      // Filter by file extension
-      const extensions = accept.split(",").map((ext) => ext.trim());
-      acceptable = assetContainers.filter((item) =>
-        extensions.some((ext) => item.asset.name.endsWith(ext))
-      );
-    }
-
-    // Filter by selected extensions
+    // Filter by selected extensions (user's category selection)
     if (selectedExtensions !== "*") {
       acceptable = acceptable.filter((item) =>
         selectedExtensions.includes(
@@ -102,13 +114,7 @@ const useLogic = ({
 
     // Apply sorting
     return sortAssets(result, sortState);
-  }, [
-    assetContainers,
-    accept,
-    searchProps.value,
-    selectedExtensions,
-    sortState,
-  ]);
+  }, [acceptableAssets, searchProps.value, selectedExtensions, sortState]);
 
   const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
