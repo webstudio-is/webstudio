@@ -1835,6 +1835,9 @@ importers:
       type-fest:
         specifier: ^4.37.0
         version: 4.37.0
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
       zod:
         specifier: ^3.24.2
         version: 3.24.2

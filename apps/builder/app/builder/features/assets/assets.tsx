@@ -7,7 +7,7 @@ export const AssetsPanel = (_props: { onClose: () => void }) => {
     <>
       <PanelTitle suffix={<AssetUpload type="file" />}>Assets</PanelTitle>
       <Separator />
-      <AssetManager showFilters={true} />
+      <AssetManager />
     </>
   );
 };

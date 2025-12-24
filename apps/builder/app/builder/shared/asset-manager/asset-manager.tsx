@@ -8,17 +8,17 @@ import {
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
-import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/sdk";
 import {
+  FILE_EXTENSIONS_BY_CATEGORY,
+  type MimeCategory,
   acceptToMimePatterns,
+  acceptToMimeCategories,
   doesAssetMatchMimePatterns,
-} from "@webstudio-is/asset-uploader";
+} from "@webstudio-is/sdk";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { AssetFilters } from "./asset-filters";
 import { AssetSortSelect, sortAssets, type SortState } from "./asset-sort";
-
-type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
 
 const ALL_FORMATS = "all" as const;
 
@@ -32,9 +32,25 @@ const useLogic = ({
   const { assetContainers } = useAssets();
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // Auto-select format based on accept prop, default to "all"
+  const initialFormat = useMemo((): MimeCategory | typeof ALL_FORMATS => {
+    if (!accept) {
+      return ALL_FORMATS;
+    }
+
+    const categories = acceptToMimeCategories(accept);
+    if (categories === "*" || categories.size !== 1) {
+      return ALL_FORMATS;
+    }
+
+    // Get the single category - it's already a MimeCategory
+    return Array.from(categories)[0];
+  }, [accept]);
+
   const [selectedFormat, setSelectedFormat] = useState<
-    FormatCategory | typeof ALL_FORMATS
-  >(ALL_FORMATS);
+    MimeCategory | typeof ALL_FORMATS
+  >(initialFormat);
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "createdAt",
     order: "desc",
@@ -139,15 +155,9 @@ type AssetManagerProps = {
   onChange?: (assetId: Asset["id"]) => void;
   /** acceptable file types in the `<imput accept>` attribute format */
   accept?: string;
-  /** whether to show format filters dropdown */
-  showFilters?: boolean;
 };
 
-export const AssetManager = ({
-  accept,
-  onChange,
-  showFilters = false,
-}: AssetManagerProps) => {
+export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
   const {
     handleSelect,
     filteredItems,
@@ -167,13 +177,11 @@ export const AssetManager = ({
     <AssetsShell
       filters={
         <Flex gap="2" grow>
-          {showFilters && (
-            <AssetFilters
-              formatCounts={formatCounts}
-              selectedFormat={selectedFormat}
-              onFormatChange={setSelectedFormat}
-            />
-          )}
+          <AssetFilters
+            formatCounts={formatCounts}
+            selectedFormat={selectedFormat}
+            onFormatChange={setSelectedFormat}
+          />
           <AssetSortSelect value={sortState} onValueChange={setSortState} />
         </Flex>
       }

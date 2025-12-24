@@ -15,6 +15,10 @@ import {
   detectAssetType,
   decodePathFragment,
   getAssetUrl,
+  acceptToMimePatterns,
+  acceptToMimeCategories,
+  getAssetMime,
+  doesAssetMatchMimePatterns,
 } from "./assets";
 
 describe("allowed-file-types", () => {
@@ -97,12 +101,12 @@ describe("allowed-file-types", () => {
 
   describe("isAllowedMimeCategory", () => {
     test("returns true for valid MIME categories", () => {
-      expect(isAllowedMimeCategory("image/jpeg")).toBe(true);
-      expect(isAllowedMimeCategory("video/mp4")).toBe(true);
-      expect(isAllowedMimeCategory("audio/mpeg")).toBe(true);
-      expect(isAllowedMimeCategory("font/woff")).toBe(true);
-      expect(isAllowedMimeCategory("text/plain")).toBe(true);
-      expect(isAllowedMimeCategory("application/pdf")).toBe(true);
+      expect(isAllowedMimeCategory("image")).toBe(true);
+      expect(isAllowedMimeCategory("video")).toBe(true);
+      expect(isAllowedMimeCategory("audio")).toBe(true);
+      expect(isAllowedMimeCategory("font")).toBe(true);
+      expect(isAllowedMimeCategory("text")).toBe(true);
+      expect(isAllowedMimeCategory("application")).toBe(true);
     });
 
     test("returns false for invalid MIME categories", () => {
@@ -249,51 +253,51 @@ describe("allowed-file-types", () => {
 
   describe("FILE_EXTENSIONS_BY_CATEGORY", () => {
     test("has all expected categories", () => {
-      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("images");
-      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("fonts");
-      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("documents");
-      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("code");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("image");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("font");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("text");
+      expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("application");
       expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("audio");
       expect(FILE_EXTENSIONS_BY_CATEGORY).toHaveProperty("video");
     });
 
-    test("images category contains image extensions", () => {
-      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("jpg");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("png");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("gif");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.images).toContain("svg");
+    test("image category contains image extensions", () => {
+      expect(FILE_EXTENSIONS_BY_CATEGORY.image).toContain("jpg");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.image).toContain("png");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.image).toContain("gif");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.image).toContain("svg");
     });
 
-    test("fonts category contains font extensions", () => {
-      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("woff");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("woff2");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("ttf");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.fonts).toContain("otf");
+    test("font category contains font extensions", () => {
+      expect(FILE_EXTENSIONS_BY_CATEGORY.font).toContain("woff");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.font).toContain("woff2");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.font).toContain("ttf");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.font).toContain("otf");
     });
 
-    test("documents category contains all document extensions", () => {
+    test("application category contains document extensions", () => {
       // Office documents
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("pdf");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("doc");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("docx");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("pdf");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("doc");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("docx");
       // Spreadsheets
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("xls");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("xlsx");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("csv");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("xls");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("xlsx");
       // Presentations
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("ppt");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("pptx");
-      // Text files
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("txt");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.documents).toContain("md");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("ppt");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("pptx");
+      // Archives
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("zip");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.application).toContain("rar");
     });
 
-    test("code category contains code file extensions", () => {
-      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("js");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("css");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("json");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("html");
-      expect(FILE_EXTENSIONS_BY_CATEGORY.code).toContain("xml");
+    test("text category contains text file extensions", () => {
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("txt");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("md");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("csv");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("js");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("css");
+      expect(FILE_EXTENSIONS_BY_CATEGORY.text).toContain("html");
     });
 
     test("audio category contains audio extensions", () => {
@@ -519,6 +523,314 @@ describe("allowed-file-types", () => {
       const url = getAssetUrl(specialAsset, "https://example.com");
       // URL constructor automatically encodes special characters in pathname
       expect(url.pathname).toBe("/cgi/asset/my%20document%20(1).pdf");
+    });
+  });
+
+  describe("acceptToMimePatterns", () => {
+    test("returns * if accept is empty or * or */*", () => {
+      expect(acceptToMimePatterns("")).toBe("*");
+      expect(acceptToMimePatterns("*")).toBe("*");
+      expect(acceptToMimePatterns("*/*")).toBe("*");
+      expect(acceptToMimePatterns("*,.png")).toBe("*");
+    });
+
+    test("returns * if it doesn't recognise a pattern", () => {
+      expect(acceptToMimePatterns("image/wrong")).toBe("*");
+      expect(acceptToMimePatterns("wrong/*")).toBe("*");
+      expect(acceptToMimePatterns(".wrong")).toBe("*");
+    });
+
+    test("leaves full mimes as is", () => {
+      expect(acceptToMimePatterns("image/png,font/otf")).toEqual(
+        new Set(["image/png", "font/otf"])
+      );
+    });
+
+    test("leaves mime patterns as is", () => {
+      expect(acceptToMimePatterns("image/*,font/*")).toEqual(
+        new Set(["image/*", "font/*"])
+      );
+    });
+
+    test("converts extensions to mimes", () => {
+      expect(acceptToMimePatterns(".svg,.otf")).toEqual(
+        new Set(["image/svg+xml", "font/otf"])
+      );
+    });
+  });
+
+  describe("acceptToMimeCategories", () => {
+    test("returns * if accept is empty or * or */*", () => {
+      expect(acceptToMimeCategories("")).toBe("*");
+      expect(acceptToMimeCategories("*")).toBe("*");
+      expect(acceptToMimeCategories("*/*")).toBe("*");
+      expect(acceptToMimeCategories("*,.png")).toBe("*");
+    });
+
+    test("returns * if it doesn't recognise a pattern", () => {
+      expect(acceptToMimeCategories("image/wrong")).toBe("*");
+      expect(acceptToMimeCategories("wrong/*")).toBe("*");
+      expect(acceptToMimeCategories(".wrong")).toBe("*");
+    });
+
+    test("handles full mimes", () => {
+      expect(acceptToMimeCategories("image/png,font/otf")).toEqual(
+        new Set(["image", "font"])
+      );
+    });
+
+    test("handles mime patterns", () => {
+      expect(acceptToMimeCategories("image/*,font/*")).toEqual(
+        new Set(["image", "font"])
+      );
+    });
+
+    test("handles extensions", () => {
+      expect(acceptToMimeCategories(".svg,.otf")).toEqual(
+        new Set(["image", "font"])
+      );
+    });
+  });
+
+  describe("getAssetMime", () => {
+    test("handles woff", () => {
+      expect(getAssetMime({ type: "font", format: "woff" })).toBe("font/woff");
+    });
+
+    test("handles png", () => {
+      expect(getAssetMime({ type: "image", format: "png" })).toBe("image/png");
+    });
+
+    test("handles svg", () => {
+      expect(getAssetMime({ type: "image", format: "svg" })).toBe(
+        "image/svg+xml"
+      );
+    });
+
+    test("returns undefined for unknown format", () => {
+      expect(
+        getAssetMime({ type: "image", format: "unknown" })
+      ).toBeUndefined();
+    });
+  });
+
+  describe("doesAssetMatchMimePatterns", () => {
+    test("returns true if mime patterns is *", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "png", name: "test.png" },
+          "*"
+        )
+      ).toBe(true);
+    });
+
+    test("handles full mimes", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "svg", name: "test.svg" },
+          new Set(["image/svg+xml"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "svg", name: "test.svg" },
+          new Set(["image/png"])
+        )
+      ).toBe(false);
+    });
+
+    test("handles mime patterns", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "svg", name: "test.svg" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "svg", name: "test.svg" },
+          new Set(["font/*"])
+        )
+      ).toBe(false);
+    });
+
+    test("if asset format has unexpected value, returns false", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "unknown", name: "test.unknown" },
+          new Set(["image/*"])
+        )
+      ).toBe(false);
+    });
+
+    test("handles uppercase format extensions", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "JPG", name: "test.JPG" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "PNG", name: "test.PNG" },
+          new Set(["image/png"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "font", format: "WOFF2", name: "font.WOFF2" },
+          new Set(["font/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles normal image assets", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "jpg", name: "test.jpg" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles legacy assets with type 'file' but image extension", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "jpg", name: "test.jpg" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "JPG", name: "test.JPG" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "png", name: "test.png" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles legacy assets with type 'file' but font extension", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "woff2", name: "font.woff2" },
+          new Set(["font/*"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "ttf", name: "font.ttf" },
+          new Set(["font/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles video assets stored as type 'file'", () => {
+      // Videos are always stored as type "file" in the database
+      // They should match video/* patterns via normal MIME matching
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "mp4", name: "video.mp4" },
+          new Set(["video/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("does not match legacy file assets with wrong pattern", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "jpg", name: "test.jpg" },
+          new Set(["font/*"])
+        )
+      ).toBe(false);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "pdf", name: "doc.pdf" },
+          new Set(["image/*"])
+        )
+      ).toBe(false);
+    });
+
+    test("handles real file assets (not legacy)", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "pdf", name: "doc.pdf" },
+          new Set(["application/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles assets without extension in name", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test" },
+          new Set(["image/*"])
+        )
+      ).toBe(false);
+    });
+
+    test("handles assets with mismatched format and extension", () => {
+      // Format says jpg but filename says png - should match based on format first
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "jpg", name: "test.png" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+      // If format is unknown, falls back to filename extension
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test.png" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles uppercase extensions in filenames", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test.JPG" },
+          new Set(["image/*"])
+        )
+      ).toBe(true);
+    });
+
+    test("handles specific MIME types with fallback", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test.jpg" },
+          new Set(["image/jpeg"])
+        )
+      ).toBe(true);
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test.jpg" },
+          new Set(["image/png"])
+        )
+      ).toBe(false);
+    });
+
+    test("handles multiple patterns with fallback", () => {
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "file", format: "unknown", name: "test.jpg" },
+          new Set(["image/png", "image/jpeg", "image/gif"])
+        )
+      ).toBe(true);
+    });
+
+    test("only uses fallback for type 'file' assets", () => {
+      // Image type with unknown format should not fallback to name
+      expect(
+        doesAssetMatchMimePatterns(
+          { type: "image", format: "unknown", name: "test.jpg" },
+          new Set(["image/*"])
+        )
+      ).toBe(false);
     });
   });
 });

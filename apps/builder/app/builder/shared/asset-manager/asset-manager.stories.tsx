@@ -46,7 +46,7 @@ const AssetManagerStory = () => {
 
   return (
     <div style={{ width: 400, display: "flex" }}>
-      <AssetManager showFilters={true} />
+      <AssetManager />
     </div>
   );
 };

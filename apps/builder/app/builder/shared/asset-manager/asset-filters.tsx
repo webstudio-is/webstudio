@@ -1,15 +1,16 @@
 import { Select } from "@webstudio-is/design-system";
-import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/sdk";
+import {
+  FILE_EXTENSIONS_BY_CATEGORY,
+  type MimeCategory,
+} from "@webstudio-is/sdk";
 import { titleCase } from "title-case";
-
-type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
 
 const ALL_FORMATS = "all" as const;
 
 type AssetFiltersProps = {
   formatCounts: Record<string, number>;
-  selectedFormat: FormatCategory | typeof ALL_FORMATS;
-  onFormatChange: (format: FormatCategory | typeof ALL_FORMATS) => void;
+  selectedFormat: MimeCategory | typeof ALL_FORMATS;
+  onFormatChange: (format: MimeCategory | typeof ALL_FORMATS) => void;
 };
 
 export const AssetFilters = ({
@@ -17,15 +18,13 @@ export const AssetFilters = ({
   selectedFormat,
   onFormatChange,
 }: AssetFiltersProps) => {
-  const categories = Object.keys(
-    FILE_EXTENSIONS_BY_CATEGORY
-  ) as FormatCategory[];
+  const categories = Object.keys(FILE_EXTENSIONS_BY_CATEGORY) as MimeCategory[];
   const totalCount = Object.values(formatCounts).reduce(
     (sum, count) => sum + count,
     0
   );
 
-  const options: Array<FormatCategory | typeof ALL_FORMATS> = [
+  const options: Array<MimeCategory | typeof ALL_FORMATS> = [
     ALL_FORMATS,
     ...categories.sort(),
   ];
@@ -35,7 +34,7 @@ export const AssetFilters = ({
       options={options}
       value={selectedFormat}
       onChange={onFormatChange}
-      getLabel={(option: FormatCategory | typeof ALL_FORMATS) => {
+      getLabel={(option: MimeCategory | typeof ALL_FORMATS) => {
         if (option === ALL_FORMATS) {
           return `All (${totalCount})`;
         }

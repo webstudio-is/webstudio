@@ -1,3 +1,4 @@
+import warnOnce from "warn-once";
 import type { Asset } from "./schema/assets";
 
 /**
@@ -85,24 +86,71 @@ export const ALLOWED_FILE_EXTENSIONS: ReadonlySet<string> = new Set<string>(
 /**
  * Set of allowed MIME type categories
  */
-export const ALLOWED_MIME_CATEGORIES: ReadonlySet<string> = new Set([
+export const MIME_CATEGORIES = [
   "image",
   "video",
   "audio",
   "font",
   "text",
   "application",
+] as const;
+
+export type MimeCategory = (typeof MIME_CATEGORIES)[number];
+
+/**
+ * File extensions grouped by MIME category for UI display and filtering
+ */
+export const FILE_EXTENSIONS_BY_CATEGORY: Readonly<
+  Record<MimeCategory, string[]>
+> = (() => {
+  const categories: Record<MimeCategory, string[]> = {
+    image: [],
+    font: [],
+    audio: [],
+    video: [],
+    text: [],
+    application: [],
+  };
+
+  Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
+    const [category] = mimeType.split("/") as [MimeCategory];
+
+    if (category in categories) {
+      categories[category].push(ext);
+    }
+  });
+
+  return categories;
+})();
+
+// Create extension-to-MIME map for utilities
+const extensionToMime = new Map(
+  Object.entries(ALLOWED_FILE_TYPES).map(([ext, mime]) => [`.${ext}`, mime])
+);
+
+const mimeTypes = new Set<string>(extensionToMime.values());
+
+const mimePatterns = new Set<string>([
+  ...mimeTypes.values(),
+  ...MIME_CATEGORIES.map((category): `${MimeCategory}/*` => `${category}/*`),
 ]);
+
+const getCategory = (pattern: string): MimeCategory => {
+  const categoryAsString = pattern.split("/")[0];
+  const category = MIME_CATEGORIES.find(
+    (category) => category === categoryAsString
+  );
+  if (category === undefined) {
+    throw new Error(`Invalid mime pattern: ${pattern}`);
+  }
+  return category;
+};
 
 /**
  * All image file extensions
  */
-export const IMAGE_EXTENSIONS: readonly string[] = Object.keys(
-  ALLOWED_FILE_TYPES
-).filter((ext) => {
-  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
-  return mimeType.startsWith("image/");
-});
+export const IMAGE_EXTENSIONS: readonly string[] =
+  FILE_EXTENSIONS_BY_CATEGORY.image;
 
 /**
  * All image MIME types
@@ -114,12 +162,8 @@ export const IMAGE_MIME_TYPES: readonly string[] = IMAGE_EXTENSIONS.map(
 /**
  * All video file extensions
  */
-export const VIDEO_EXTENSIONS: readonly string[] = Object.keys(
-  ALLOWED_FILE_TYPES
-).filter((ext) => {
-  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
-  return mimeType.startsWith("video/");
-});
+export const VIDEO_EXTENSIONS: readonly string[] =
+  FILE_EXTENSIONS_BY_CATEGORY.video;
 
 /**
  * All video MIME types
@@ -131,71 +175,8 @@ export const VIDEO_MIME_TYPES: readonly string[] = VIDEO_EXTENSIONS.map(
 /**
  * All font file extensions
  */
-export const FONT_EXTENSIONS: readonly string[] = Object.keys(
-  ALLOWED_FILE_TYPES
-).filter((ext) => {
-  const mimeType = ALLOWED_FILE_TYPES[ext as keyof typeof ALLOWED_FILE_TYPES];
-  return mimeType.startsWith("font/");
-});
-
-/**
- * File extensions grouped by user-friendly categories for UI display
- */
-export const FILE_EXTENSIONS_BY_CATEGORY: Readonly<{
-  images: string[];
-  fonts: string[];
-  documents: string[];
-  code: string[];
-  audio: string[];
-  video: string[];
-}> = (() => {
-  const categories = {
-    images: [] as string[],
-    fonts: [] as string[],
-    documents: [] as string[],
-    code: [] as string[],
-    audio: [] as string[],
-    video: [] as string[],
-  };
-
-  Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
-    const [category, subtype] = mimeType.split("/");
-
-    if (category === "image") {
-      categories.images.push(ext);
-    } else if (category === "font") {
-      categories.fonts.push(ext);
-    } else if (category === "audio") {
-      categories.audio.push(ext);
-    } else if (category === "video") {
-      categories.video.push(ext);
-    } else if (category === "text") {
-      // CSV and text files belong in documents
-      if (
-        ["javascript", "css", "html", "xml"].some((t) => subtype.includes(t))
-      ) {
-        categories.code.push(ext);
-      } else {
-        categories.documents.push(ext);
-      }
-    } else if (category === "application") {
-      // Check for specific code file types (but not office docs that contain "xml" in MIME type)
-      if (
-        (subtype.includes("json") || subtype === "xml") &&
-        !subtype.includes("officedocument")
-      ) {
-        categories.code.push(ext);
-      } else {
-        // All other application types (PDF, Word, Excel, PowerPoint, etc.) go to documents
-        categories.documents.push(ext);
-      }
-    }
-  });
-
-  return categories as Readonly<typeof categories>;
-})();
-
-export type FileCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
+export const FONT_EXTENSIONS: readonly string[] =
+  FILE_EXTENSIONS_BY_CATEGORY.font;
 
 /**
  * Get MIME type for a given file extension
@@ -227,9 +208,126 @@ export const isAllowedExtension = (extension: string): boolean => {
 /**
  * Check if a MIME type category is allowed
  */
-export const isAllowedMimeCategory = (mimeType: string): boolean => {
-  const category = mimeType.split("/")[0];
-  return ALLOWED_MIME_CATEGORIES.has(category);
+export const isAllowedMimeCategory = (category: string): boolean => {
+  return MIME_CATEGORIES.includes(category as MimeCategory);
+};
+
+/**
+ * Convert accept attribute value to MIME patterns.
+ * `".svg,font/otf,text/*"` -> `"image/svg+xml", "font/otf", "text/*"`
+ */
+export const acceptToMimePatterns = (accept: string): Set<string> | "*" => {
+  const result = new Set<string>();
+
+  if (accept === "") {
+    return "*";
+  }
+
+  for (const type of accept.split(",")) {
+    const trimmed = type.trim();
+    if (trimmed === "*" || trimmed === "*/*") {
+      return "*";
+    }
+    if (mimePatterns.has(trimmed)) {
+      result.add(trimmed);
+      continue;
+    }
+    const mime = extensionToMime.get(trimmed);
+
+    if (mime === undefined) {
+      warnOnce(
+        true,
+        `Couldn't not parse accept attribute value: ${trimmed}. Falling back to "*".`
+      );
+      return "*";
+    }
+
+    result.add(mime);
+  }
+
+  return result;
+};
+
+/**
+ * Convert accept attribute value to MIME categories.
+ * `".svg,font/otf,text/*"` -> `"image", "font", "text"`
+ */
+export const acceptToMimeCategories = (
+  accept: string
+): Set<MimeCategory> | "*" => {
+  const patterns = acceptToMimePatterns(accept);
+  if (patterns === "*") {
+    return "*";
+  }
+  const categories = new Set<MimeCategory>();
+  for (const pattern of patterns) {
+    categories.add(getCategory(pattern));
+  }
+  return categories;
+};
+
+/**
+ * Get MIME type for an asset based on its type and format
+ */
+export const getAssetMime = ({
+  type,
+  format,
+}: {
+  type: "image" | "font" | "file";
+  format: string;
+}): string | undefined => {
+  const lowerFormat = format.toLowerCase();
+  const mime = `${type}/${lowerFormat}`;
+  if (mimeTypes.has(mime)) {
+    return mime;
+  }
+  const mime2 = extensionToMime.get(`.${lowerFormat}`);
+  if (mime2 === undefined) {
+    warnOnce(
+      true,
+      `Couldn't determine mime type of asset: ${type}, ${format}.`
+    );
+  }
+  return mime2;
+};
+
+/**
+ * Check if an asset matches the given MIME patterns.
+ * Supports legacy assets that were incorrectly stored with type "file".
+ */
+export const doesAssetMatchMimePatterns = (
+  asset: Pick<Asset, "format" | "type" | "name">,
+  patterns: Set<string> | "*"
+): boolean => {
+  if (patterns === "*") {
+    return true;
+  }
+
+  // Try matching based on asset type and format
+  const mime = getAssetMime(asset);
+  if (mime !== undefined) {
+    if (patterns.has(mime) || patterns.has(`${getCategory(mime)}/*`)) {
+      return true;
+    }
+  }
+
+  // If it doesn't match and the asset type is "file" and has a name,
+  // try detecting the actual MIME type from the filename extension
+  // This handles legacy assets that were incorrectly stored as type "file"
+  if (asset.type === "file" && asset.name) {
+    const extension = asset.name.split(".").pop()?.toLowerCase();
+    if (extension) {
+      const mimeFromExtension = extensionToMime.get(`.${extension}`);
+      if (mimeFromExtension) {
+        return (
+          patterns.has(mimeFromExtension) ||
+          patterns.has(`${getCategory(mimeFromExtension)}/*`)
+        );
+      }
+    }
+  }
+
+  return false;
 };
 
 /**

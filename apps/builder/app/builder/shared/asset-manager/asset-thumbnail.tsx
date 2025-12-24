@@ -17,13 +17,13 @@ import {
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
 } from "@webstudio-is/sdk";
-import type { FileCategory } from "@webstudio-is/sdk";
+import type { MimeCategory } from "@webstudio-is/sdk";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
-const CATEGORY_ICON_MAP: Partial<Record<FileCategory, IconComponent>> = {
-  fonts: TextCapitalizeIcon,
-  documents: PageIcon,
+const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
+  text: TextCapitalizeIcon,
+  application: PageIcon,
 };
 
 const getFileIcon = (format: string): IconComponent => {
@@ -32,7 +32,7 @@ const getFileIcon = (format: string): IconComponent => {
   // Check which category this format belongs to
   for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
     if (extensions.includes(lowerFormat)) {
-      return CATEGORY_ICON_MAP[category as FileCategory] ?? PageIcon;
+      return CATEGORY_ICON_MAP[category as MimeCategory] ?? PageIcon;
     }
   }
 
