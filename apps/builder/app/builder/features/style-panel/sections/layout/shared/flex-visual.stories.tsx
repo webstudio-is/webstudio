@@ -1,9 +1,9 @@
 import { Box, Flex } from "@webstudio-is/design-system";
-import { FlexGrid as FlexGridComponent } from "./flex-grid";
+import { FlexVisual as FlexVisualComponent } from "./flex-visual";
 
 export default {
-  title: "Style Panel/Layout/Flex Grid",
-  component: FlexGridComponent,
+  title: "Style Panel/Layout/Flex Visual",
+  component: FlexVisualComponent,
 };
 
 const alignItems = ["normal", "stretch", "baseline", "center", "start", "end"];

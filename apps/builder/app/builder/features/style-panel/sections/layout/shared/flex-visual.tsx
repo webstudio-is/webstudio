@@ -32,21 +32,31 @@ const shouldHideDot = ({
   return false;
 };
 
-export const FlexGrid = () => {
+export const FlexVisual = () => {
   const styles = useComputedStyles([
+    "display",
     "flex-direction",
+    "grid-auto-flow",
     "justify-content",
     "align-items",
   ]);
   const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [flexDirection, justifyContent, alignItems] = styles;
+  const [display, flexDirection, gridAutoFlow, justifyContent, alignItems] =
+    styles;
+  const displayValue = toValue(display.cascadedValue);
   const flexDirectionValue = toValue(flexDirection.cascadedValue);
+  const gridAutoFlowValue = toValue(gridAutoFlow.cascadedValue);
   const justifyContentValue = toValue(justifyContent.cascadedValue);
   const alignItemsValue = toValue(alignItems.cascadedValue);
   const alignment = ["start", "center", "end"];
   const gridSize = alignment.length;
-  const isFlexDirectionColumn =
-    flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
+
+  // Determine if we're in column mode based on display type
+  const isGrid = displayValue === "grid" || displayValue === "inline-grid";
+  const isFlexDirectionColumn = isGrid
+    ? gridAutoFlowValue.includes("column")
+    : flexDirectionValue === "column" ||
+      flexDirectionValue === "column-reverse";
 
   let color = theme.colors.foregroundFlexUiMain;
 
@@ -163,7 +173,9 @@ export const FlexGrid = () => {
           pointerEvents: "none",
         }}
         style={{
-          flexDirection: flexDirectionValue as CSSProperties["flexDirection"],
+          flexDirection: (isFlexDirectionColumn
+            ? "column"
+            : "row") as CSSProperties["flexDirection"],
           justifyContent: justifyContentValue,
           alignItems: alignItemsValue,
           ...addjustLinesPadding(
