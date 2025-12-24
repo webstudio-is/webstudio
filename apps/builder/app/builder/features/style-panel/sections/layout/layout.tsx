@@ -38,6 +38,7 @@ import {
   AlignContentSpaceAroundIcon,
   AlignContentSpaceBetweenIcon,
   AlignContentStretchIcon,
+  RepeatGridIcon,
 } from "@webstudio-is/icons";
 import { MenuControl, SelectControl } from "../../controls";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
@@ -54,7 +55,7 @@ import {
   $availableUnitVariables,
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { FlexGrid } from "./shared/flex-grid";
+import { FlexVisual } from "./shared/flex-visual";
 import { GridVisual } from "./shared/grid-visual";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -474,7 +475,7 @@ const LayoutSectionFlex = () => {
   return (
     <Flex direction="column" gap="2">
       <Flex css={{ gap: theme.spacing[7] }} align="stretch">
-        <FlexGrid />
+        <FlexVisual />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
@@ -520,7 +521,7 @@ const LayoutSectionGrid = () => {
     <Flex direction="column" gap="2">
       <GridVisual />
       <Flex css={{ gap: theme.spacing[7] }} align="stretch">
-        <FlexGrid />
+        <FlexVisual />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
@@ -528,6 +529,12 @@ const LayoutSectionGrid = () => {
               items={[
                 { name: "row", label: "Row", icon: ArrowRightIcon },
                 { name: "column", label: "Column", icon: ArrowDownIcon },
+                { name: "row dense", label: "Row Dense", icon: RepeatGridIcon },
+                {
+                  name: "column dense",
+                  label: "Column Dense",
+                  icon: RepeatGridIcon,
+                },
               ]}
             />
             <MenuControl
