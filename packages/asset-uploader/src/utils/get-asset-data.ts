@@ -1,19 +1,19 @@
 import { z } from "zod";
 import { imageMeta } from "image-meta";
 import { FontMeta } from "@webstudio-is/fonts";
-import { ImageMeta } from "@webstudio-is/sdk";
+import { ImageMeta, validateFileName } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
 
 export type AssetData = {
   size: number;
   format: string;
-  meta: ImageMeta | FontMeta;
+  meta: ImageMeta | FontMeta | object;
 };
 
 export const AssetData: z.ZodType<AssetData> = z.object({
   size: z.number(),
   format: z.string(),
-  meta: z.union([ImageMeta, FontMeta]),
+  meta: z.union([ImageMeta, FontMeta, z.object({})]),
 });
 
 type BaseAssetOptions = {
@@ -26,7 +26,8 @@ type AssetOptions =
   | ({
       type: "image";
     } & BaseAssetOptions)
-  | ({ type: "font" } & BaseAssetOptions);
+  | ({ type: "font" } & BaseAssetOptions)
+  | ({ type: "file" } & BaseAssetOptions);
 
 export const getAssetData = async (
   options: AssetOptions
@@ -56,11 +57,23 @@ export const getAssetData = async (
       meta: { width, height },
     };
   }
-  const { format, ...meta } = getFontData(options.data, options.name);
+
+  if (options.type === "font") {
+    const { format, ...meta } = getFontData(options.data, options.name);
+
+    return {
+      size: options.size,
+      format,
+      meta,
+    };
+  }
+
+  // Validate file name and get extension
+  const { extension } = validateFileName(options.name);
 
   return {
     size: options.size,
-    format,
-    meta,
+    format: extension,
+    meta: {},
   };
 };

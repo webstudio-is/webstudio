@@ -35,7 +35,15 @@ export const ImageAsset = z.object({
 });
 export type ImageAsset = z.infer<typeof ImageAsset>;
 
-export const Asset = z.union([FontAsset, ImageAsset]);
+export const FileAsset = z.object({
+  ...baseAsset,
+  format: z.string(),
+  meta: z.object({}),
+  type: z.literal("file"),
+});
+export type FileAsset = z.infer<typeof FileAsset>;
+
+export const Asset = z.union([FontAsset, ImageAsset, FileAsset]);
 export type Asset = z.infer<typeof Asset>;
 
 export const Assets = z.map(AssetId, Asset);

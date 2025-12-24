@@ -2,15 +2,12 @@ import { type ChangeEvent, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import {
-  type AssetType,
-  MAX_UPLOAD_SIZE,
-  toBytes,
-} from "@webstudio-is/asset-uploader";
+import { IMAGE_MIME_TYPES, detectAssetType } from "@webstudio-is/sdk";
+import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./use-assets";
 import { $authPermit } from "~/shared/nano-states";
-import { imageMimeTypes } from "./asset-utils";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
@@ -24,7 +21,7 @@ export const validateFiles = (files: File[]) => {
   return files.filter((file) => file.size <= maxSize);
 };
 
-const useUpload = (type: AssetType) => {
+const useUpload = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -34,7 +31,22 @@ const useUpload = (type: AssetType) => {
       return;
     }
     const files = validateFiles(Array.from(input?.files ?? []));
-    uploadAssets(type, files);
+
+    // Group files by their detected type
+    const filesByType = new Map<AssetType, File[]>();
+    for (const file of files) {
+      const detectedType = detectAssetType(file.name);
+      if (!filesByType.has(detectedType)) {
+        filesByType.set(detectedType, []);
+      }
+      filesByType.get(detectedType)!.push(file);
+    }
+
+    // Upload each group with the correct type
+    for (const [detectedType, filesOfType] of filesByType) {
+      uploadAssets(detectedType, filesOfType);
+    }
+
     form.reset();
   };
 
@@ -42,8 +54,11 @@ const useUpload = (type: AssetType) => {
 };
 
 const acceptMap = {
-  image: imageMimeTypes.join(", "),
+  image: IMAGE_MIME_TYPES.join(", "),
   font: FONT_MIME_TYPES,
+  video: undefined, // Videos can be uploaded through file type
+  // We allow everything by default for files, specific validation happens serverside
+  file: undefined,
 };
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept#unique_file_type_specifiers
@@ -70,7 +85,12 @@ export const acceptUploadType = (
     return acceptFileTypeSpecifier(accept, file);
   }
 
-  return acceptFileTypeSpecifier(acceptMap[assetType], file);
+  const accepted = acceptMap[assetType];
+  if (accepted === undefined) {
+    return true;
+  }
+
+  return acceptFileTypeSpecifier(accepted, file);
 };
 
 type AssetUploadProps = {
@@ -79,7 +99,7 @@ type AssetUploadProps = {
 };
 
 const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
-  const { inputRef, onChange } = useUpload(type);
+  const { inputRef, onChange } = useUpload();
 
   return (
     <form onChange={onChange}>
@@ -92,6 +112,7 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
         style={{ display: "none" }}
       />
       <Button
+        color="ghost"
         type="button"
         onClick={() => inputRef?.current?.click()}
         prefix={<UploadIcon />}

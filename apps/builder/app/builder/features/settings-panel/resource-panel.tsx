@@ -29,6 +29,7 @@ import {
   serializeValue,
   sitemapResourceUrl,
   currentDateResourceUrl,
+  assetsResourceUrl,
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
@@ -998,6 +999,12 @@ export const SystemResourceForm = forwardRef<
       value: JSON.stringify(currentDateResourceUrl),
       description:
         "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
+    },
+    {
+      label: "Assets",
+      value: JSON.stringify(assetsResourceUrl),
+      description:
+        "Resource that loads the list of assets of the current project.",
     },
   ];
 

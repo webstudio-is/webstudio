@@ -54,6 +54,12 @@ export const AnimationGroupIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill=
 
 export const ArrowDownAZIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".667" d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M13.333 5.333H10M10 6.667V4.333a1.667 1.667 0 1 1 3.333 0v2.334M10 9.333h3.333l-3.333 4h3.333"/></svg>`;
 
+export const ArrowDownNarrowWideIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".667" d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M7.333 2.667H10M7.333 5.333H12M7.333 8H14"/></svg>`;
+
+export const ArrowDownWideNarrowIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".667" d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M7.333 2.667H14M7.333 5.333H12M7.333 8H10"/></svg>`;
+
+export const ArrowDownZAIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".667" d="m2 10.667 2.667 2.666 2.666-2.666M4.667 2.667v10.666M10 2.667h3.333l-3.333 4h3.333M10 13.333V11a1.667 1.667 0 1 1 3.333 0v2.333M13.333 12H10"/></svg>`;
+
 export const ArrowDownIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 3.333v9.334M12.667 8 8 12.667 3.333 8"/></svg>`;
 
 export const ArrowLeftIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="100%" height="100%" style="display: block;"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.667 8H3.333M8 3.333 3.333 8 8 12.667"/></svg>`;

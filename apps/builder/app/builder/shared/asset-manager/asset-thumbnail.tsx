@@ -1,16 +1,44 @@
 import type { KeyboardEvent, FocusEvent } from "react";
 import { Box, Flex, styled, Text } from "@webstudio-is/design-system";
+import { PageIcon, TextCapitalizeIcon } from "@webstudio-is/icons";
+import { wsVideoLoader } from "@webstudio-is/image";
 import { UploadingAnimation } from "./uploading-animation";
-import { ImageInfo, imageInfoCssVars } from "./image-info";
+import { AssetInfo, assetInfoCssVars } from "./asset-info";
 import type { AssetContainer } from "~/builder/shared/assets";
 import { Image } from "./image";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { theme } from "@webstudio-is/design-system";
 import {
   formatAssetName,
-  isVideoFormat,
   parseAssetName,
 } from "~/builder/shared/assets/asset-utils";
+import type { IconComponent } from "@webstudio-is/icons";
+import type { AllowedFileExtension } from "@webstudio-is/sdk";
+import {
+  FILE_EXTENSIONS_BY_CATEGORY,
+  detectAssetType,
+} from "@webstudio-is/sdk";
+import type { MimeCategory } from "@webstudio-is/sdk";
+
+const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
+
+const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
+  font: TextCapitalizeIcon,
+};
+
+const getFileIcon = (format: string): IconComponent => {
+  const lowerFormat = format.toLowerCase();
+
+  // Check which category this format belongs to
+  for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
+    if (extensions.includes(lowerFormat as AllowedFileExtension)) {
+      return CATEGORY_ICON_MAP[category as MimeCategory] ?? PageIcon;
+    }
+  }
+
+  // Default to PageIcon if not found in any category
+  return PageIcon;
+};
 
 const StyledWebstudioImage = styled(Image, {
   position: "absolute",
@@ -76,7 +104,7 @@ const ThumbnailContainer = styled(Box, {
   overflow: "hidden",
   padding: 2,
   "&:hover": {
-    ...imageInfoCssVars({ show: true }),
+    ...assetInfoCssVars({ show: true }),
     backgroundColor: theme.colors.backgroundAssetcardHover,
   },
   variants: {
@@ -90,7 +118,7 @@ const ThumbnailContainer = styled(Box, {
         outline: `1px solid ${theme.colors.borderFocus}`,
         outlineOffset: -1,
         backgroundColor: theme.colors.backgroundAssetcardHover,
-        ...imageInfoCssVars({ show: true }),
+        ...assetInfoCssVars({ show: true }),
       },
     },
   },
@@ -101,25 +129,60 @@ const Thumbnail = styled(Box, {
   height: theme.spacing[19],
   flexShrink: 0,
   position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-type ImageThumbnailProps = {
+const GenericFilePreview = ({
+  ext,
+  format,
+}: {
+  ext: string;
+  format: string;
+}) => {
+  const Icon = getFileIcon(format);
+  const showExtension = Icon === PageIcon;
+
+  return (
+    <Box css={{ position: "relative" }}>
+      <Icon size={48} strokeWidth={0.5} />
+      {showExtension && (
+        <Text
+          variant="tiny"
+          color="subtle"
+          css={{
+            position: "absolute",
+            top: 30,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {ext.toUpperCase()}
+        </Text>
+      )}
+    </Box>
+  );
+};
+
+type AssetThumbnailProps = {
   assetContainer: AssetContainer;
   onSelect: (assetContainer?: AssetContainer) => void;
   onChange?: (assetContainer: AssetContainer) => void;
   state?: "selected";
 };
 
-export const ImageThumbnail = ({
+export const AssetThumbnail = ({
   assetContainer,
   onSelect,
   onChange,
   state,
-}: ImageThumbnailProps) => {
+}: AssetThumbnailProps) => {
   const { asset } = assetContainer;
   const { basename, ext } = parseAssetName(asset.name);
   const alt = asset.description ?? formatAssetName(asset);
   const isUploading = assetContainer.status === "uploading";
+  const assetType = detectAssetType(asset.name);
 
   return (
     <ThumbnailContainer
@@ -147,10 +210,8 @@ export const ImageThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {isVideoFormat(asset.format) &&
-        assetContainer.status === "uploading" ? (
-          <StyledWebstudioVideo width={64} src={assetContainer.objectURL} />
-        ) : (
+        {assetType === "image" ? (
+          // Image files - show preview
           <StyledWebstudioImage
             assetId={asset.id}
             name={asset.name}
@@ -163,16 +224,28 @@ export const ImageThumbnail = ({
             // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
             width={64}
           />
+        ) : assetType === "video" ? (
+          // Video files - show video thumbnail (first frame)
+          <StyledWebstudioVideo
+            src={
+              assetContainer.status === "uploading"
+                ? assetContainer.objectURL
+                : wsVideoLoader({ src: asset.name })
+            }
+          />
+        ) : (
+          // Other files - show icon based on category
+          <GenericFilePreview ext={ext} format={asset.format} />
         )}
       </Thumbnail>
-      <Flex css={{ width: "100%", paddingBottom: 4 }}>
+      <Flex css={{ width: "100%", paddingBottom: 4 }} justify="center">
         <Text variant="tiny" truncate>
           {asset.filename ?? basename}
         </Text>
         <Text variant="tiny">.{ext}</Text>
       </Flex>
       {assetContainer.status === "uploaded" && (
-        <ImageInfo asset={assetContainer.asset} />
+        <AssetInfo asset={assetContainer.asset} />
       )}
       {isUploading && <UploadingAnimation />}
     </ThumbnailContainer>

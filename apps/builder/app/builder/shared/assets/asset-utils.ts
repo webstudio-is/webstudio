@@ -1,43 +1,34 @@
-import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  FontAsset,
+  ImageAsset,
+  AllowedFileExtension,
+} from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
+import {
+  getMimeTypeByExtension,
+  IMAGE_EXTENSIONS,
+  detectAssetType,
+  getAssetUrl,
+} from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-const videoExtensionToMime = [
-  [".mp4", "video/mp4"],
-  [".webm", "video/webm"],
-  [".mpg", "video/mpeg"],
-  [".mpeg", "video/mpeg"],
-  [".mov", "video/quicktime"],
-] as const;
-
-const extensionToMime = new Map([
-  [".gif", "image/gif"],
-  [".ico", "image/x-icon"],
-  [".jpeg", "image/jpeg"],
-  [".jpg", "image/jpeg"],
-  [".png", "image/png"],
-  [".svg", "image/svg+xml"],
-  [".webp", "image/webp"],
-  // Support video formats as images
-  ...videoExtensionToMime,
-] as const);
-
-export const isVideoFormat = (format: string) => {
-  return videoExtensionToMime.some(([extension]) => extension.includes(format));
-};
-
-const extensions = [...extensionToMime.keys()];
-
-export const imageMimeTypes = [...extensionToMime.values()];
+export { detectAssetType, getAssetUrl };
 
 export const getImageNameAndType = (fileName: string) => {
-  const extension = extensions.find((ext) => fileName.endsWith(ext));
+  // Extract extension from filename
+  const extractedExt = fileName.split(".").pop()?.toLowerCase();
 
-  if (extension == null) {
+  if (!extractedExt) {
     return;
   }
 
-  return [extensionToMime.get(extension)!, fileName] as const;
+  // Check if it's a valid image extension
+  if (!IMAGE_EXTENSIONS.includes(extractedExt as AllowedFileExtension)) {
+    return;
+  }
+
+  return [getMimeTypeByExtension(extractedExt)!, fileName] as const;
 };
 
 const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
@@ -111,16 +102,18 @@ export const getFileName = (file: File | URL) => {
 export const uploadingFileDataToAsset = (
   fileData: UploadingFileData
 ): Asset => {
-  const mimeType = getMimeType(
-    fileData.source === "file" ? fileData.file : new URL(fileData.url)
-  );
+  const fileOrUrl =
+    fileData.source === "file" ? fileData.file : new URL(fileData.url);
+  const fileName = getFileName(fileOrUrl);
+  const mimeType = getMimeType(fileOrUrl);
   const format = mimeType.split("/")[1];
+  const assetType = detectAssetType(fileName);
 
-  if (mimeType.startsWith("video/")) {
+  if (assetType === "video") {
     // Use image type for now
     const asset: ImageAsset = {
       id: fileData.assetId,
-      name: fileData.objectURL,
+      name: fileName,
       format,
       type: "image",
       description: "",
@@ -137,10 +130,10 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  if (mimeType.startsWith("image/")) {
+  if (assetType === "image") {
     const asset: ImageAsset = {
       id: fileData.assetId,
-      name: fileData.objectURL,
+      name: fileName,
       format,
       type: "image",
       description: "",
@@ -157,20 +150,37 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  const asset: FontAsset = {
+  if (assetType === "font") {
+    const asset: FontAsset = {
+      id: fileData.assetId,
+      name: fileName,
+      format: format as FontAsset["format"],
+      type: "font",
+      description: "",
+      createdAt: "",
+      projectId: "",
+      size: 0,
+      meta: {
+        family: "system",
+        style: "normal",
+        weight: 400,
+      },
+    };
+
+    return asset;
+  }
+
+  // Default to file type for all other types (documents, code, audio, etc.)
+  const asset: Asset = {
     id: fileData.assetId,
-    name: fileData.objectURL,
-    format: "woff2",
-    type: "font",
+    name: fileName,
+    format,
+    type: "file",
     description: "",
     createdAt: "",
     projectId: "",
     size: 0,
-    meta: {
-      family: "system",
-      style: "normal",
-      weight: 400,
-    },
+    meta: {},
   };
 
   return asset;
