@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { wsImageLoader } from "@webstudio-is/image";
+import { decodePathFragment } from "@webstudio-is/sdk";
 import env from "~/env/env.server";
 import { getImageNameAndType } from "~/builder/shared/assets/asset-utils";
 import { fileUploadPath } from "~/shared/asset-client";
@@ -28,10 +29,6 @@ const ImageParams = z.object({
     z.literal("raw"),
   ]),
 });
-
-const decodePathFragment = (fragment: string) => {
-  return decodeURIComponent(fragment);
-};
 
 // this route used as proxy for images to cloudflare endpoint
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/

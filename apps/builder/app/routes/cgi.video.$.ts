@@ -3,12 +3,8 @@ import { join } from "node:path";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import env from "~/env/env.server";
-import { getMimeTypeByFilename } from "@webstudio-is/sdk";
+import { getMimeTypeByFilename, decodePathFragment } from "@webstudio-is/sdk";
 import { fileUploadPath } from "~/shared/asset-client";
-
-const decodePathFragment = (fragment: string) => {
-  return decodeURIComponent(fragment);
-};
 
 // this route used as proxy for videos to cloudflare endpoint or serve local files
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/

@@ -13,6 +13,7 @@ import {
   FONT_EXTENSIONS,
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
+  decodePathFragment,
 } from "./assets";
 
 describe("allowed-file-types", () => {
@@ -366,6 +367,41 @@ describe("allowed-file-types", () => {
       expect(detectAssetType("my.font.file.woff2")).toBe("font");
       expect(detectAssetType("my.video.file.mp4")).toBe("video");
       expect(detectAssetType("my.doc.file.pdf")).toBe("file");
+    });
+  });
+
+  describe("decodePathFragment", () => {
+    test("decodes URI components correctly", () => {
+      expect(decodePathFragment("hello%20world.jpg")).toBe("hello world.jpg");
+      expect(decodePathFragment("image%2Btest.png")).toBe("image+test.png");
+      expect(decodePathFragment("file%40name.pdf")).toBe("file@name.pdf");
+    });
+
+    test("throws error on path traversal attempts with ..", () => {
+      expect(() => decodePathFragment("../secret.txt")).toThrow(
+        "Invalid file path"
+      );
+      expect(() => decodePathFragment("folder/../secret.txt")).toThrow(
+        "Invalid file path"
+      );
+      expect(() => decodePathFragment("..%2Fsecret.txt")).toThrow(
+        "Invalid file path"
+      );
+    });
+
+    test("throws error on absolute path attempts", () => {
+      expect(() => decodePathFragment("/etc/passwd")).toThrow(
+        "Invalid file path"
+      );
+      expect(() => decodePathFragment("%2Fetc%2Fpasswd")).toThrow(
+        "Invalid file path"
+      );
+    });
+
+    test("allows normal filenames and paths", () => {
+      expect(decodePathFragment("image.jpg")).toBe("image.jpg");
+      expect(decodePathFragment("folder/image.jpg")).toBe("folder/image.jpg");
+      expect(decodePathFragment("my-file_123.png")).toBe("my-file_123.png");
     });
   });
 });

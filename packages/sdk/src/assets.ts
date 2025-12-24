@@ -290,6 +290,21 @@ export const detectAssetType = (
 };
 
 /**
+ * Safely decode a URL path fragment, preventing path traversal attacks
+ * @throws Error if the decoded path contains path traversal attempts
+ */
+export const decodePathFragment = (fragment: string): string => {
+  const decoded = decodeURIComponent(fragment);
+
+  // Prevent path traversal attacks
+  if (decoded.includes("..") || decoded.startsWith("/")) {
+    throw new Error("Invalid file path");
+  }
+
+  return decoded;
+};
+
+/**
  * Generates the appropriate URL for an asset based on its type and format.
  * - Images use /cgi/image/ with format=raw
  * - Videos use /cgi/video/
