@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { CssProperty, InvalidValue } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/sync/data-stores";
-import { ImageManager } from "~/builder/shared/asset-manager";
+import { AssetManager } from "~/builder/shared/asset-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
@@ -104,7 +104,7 @@ export const ImageControl = ({
         title="Images"
         titleSuffix={<AssetUpload type="image" />}
         content={
-          <ImageManager
+          <AssetManager
             accept="image/*"
             onChange={(assetId) => {
               setRepeatedStyleItem(styleDecl, index, {

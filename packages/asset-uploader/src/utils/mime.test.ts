@@ -137,4 +137,25 @@ describe("doesAssetMatchMimePatterns", () => {
       )
     ).toBe(false);
   });
+
+  test("handles uppercase format extensions", () => {
+    expect(
+      doesAssetMatchMimePatterns(
+        { type: "image", format: "JPG" },
+        new Set(["image/*"])
+      )
+    ).toBe(true);
+    expect(
+      doesAssetMatchMimePatterns(
+        { type: "image", format: "PNG" },
+        new Set(["image/png"])
+      )
+    ).toBe(true);
+    expect(
+      doesAssetMatchMimePatterns(
+        { type: "font", format: "WOFF2" },
+        new Set(["font/*"])
+      )
+    ).toBe(true);
+  });
 });

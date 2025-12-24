@@ -549,7 +549,7 @@ export async function uploadAssets(
 
 const filterByType = (
   assetContainers: AssetContainer[],
-  type: AssetType | undefined
+  type: Asset["type"] | undefined
 ) => {
   if (type === undefined) {
     return assetContainers;
@@ -559,7 +559,7 @@ const filterByType = (
   });
 };
 
-export const useAssets = (type?: AssetType) => {
+export const useAssets = (type?: Asset["type"]) => {
   const assetContainers = useStore($assetContainers);
 
   const assetsByType = useMemo(() => {

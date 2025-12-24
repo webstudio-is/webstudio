@@ -88,11 +88,12 @@ export const getAssetMime = ({
   type: "image" | "font" | "file";
   format: string;
 }): string | undefined => {
-  const mime = `${type}/${format}`;
+  const lowerFormat = format.toLowerCase();
+  const mime = `${type}/${lowerFormat}`;
   if (mimeTypes.has(mime)) {
     return mime;
   }
-  const mime2 = extensionToMime.get(`.${format}`);
+  const mime2 = extensionToMime.get(`.${lowerFormat}`);
   if (mime2 === undefined) {
     warnOnce(
       true,
