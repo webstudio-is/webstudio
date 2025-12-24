@@ -55,6 +55,8 @@ import {
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { FlexGrid } from "./shared/flex-grid";
+import { GridVisual } from "./shared/grid-visual";
+import { GridAlignmentVisual } from "./shared/grid-alignment";
 import { humanizeString } from "~/shared/string-utils";
 
 const GapLinked = ({
@@ -195,7 +197,7 @@ const GapInput = ({
   );
 };
 
-const FlexGap = () => {
+const Gap = () => {
   const [columnGap, rowGap] = useComputedStyles(["column-gap", "row-gap"]);
   const [isLinked, setIsLinked] = useState(
     () => toValue(columnGap.cascadedValue) === toValue(rowGap.cascadedValue)
@@ -370,7 +372,7 @@ const LayoutSectionFlex = () => {
   const flexWrapValue = toValue(flexWrap.cascadedValue);
 
   return (
-    <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
+    <Flex direction="column" gap="2">
       <Flex css={{ gap: theme.spacing[7] }} align="stretch">
         <FlexGrid />
         <Flex direction="column" justify="between">
@@ -494,7 +496,19 @@ const LayoutSectionFlex = () => {
         </Flex>
       </Flex>
 
-      <FlexGap />
+      <Gap />
+    </Flex>
+  );
+};
+
+const LayoutSectionGrid = () => {
+  return (
+    <Flex direction="column" gap="5">
+      <Flex gap="7" align="stretch">
+        <GridVisual />
+        <GridAlignmentVisual />
+      </Flex>
+      <Gap />
     </Flex>
   );
 };
@@ -547,7 +561,7 @@ export const Section = () => {
           <LayoutSectionFlex />
         )}
         {(displayValue === "grid" || displayValue === "inline-grid") && (
-          <Box>Grid controls coming soon...</Box>
+          <LayoutSectionGrid />
         )}
       </Flex>
     </StyleSection>
