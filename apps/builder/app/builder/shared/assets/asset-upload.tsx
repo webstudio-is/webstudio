@@ -2,13 +2,9 @@ import { type ChangeEvent, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { Button, Flex, Tooltip, toast } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import {
-  type AssetType,
-  MAX_UPLOAD_SIZE,
-  toBytes,
-  IMAGE_MIME_TYPES,
-  detectAssetType,
-} from "@webstudio-is/asset-uploader";
+import { IMAGE_MIME_TYPES, detectAssetType } from "@webstudio-is/sdk";
+import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { uploadAssets } from "./use-assets";
 import { $authPermit } from "~/shared/nano-states";
@@ -39,7 +35,7 @@ const useUpload = () => {
     // Group files by their detected type
     const filesByType = new Map<AssetType, File[]>();
     for (const file of files) {
-      const detectedType = detectAssetType(file);
+      const detectedType = detectAssetType(file.name);
       if (!filesByType.has(detectedType)) {
         filesByType.set(detectedType, []);
       }
@@ -60,6 +56,7 @@ const useUpload = () => {
 const acceptMap = {
   image: IMAGE_MIME_TYPES.join(", "),
   font: FONT_MIME_TYPES,
+  video: undefined, // Videos can be uploaded through file type
   // We allow everything by default for files, specific validation happens serverside
   file: undefined,
 };

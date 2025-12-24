@@ -1,3 +1,5 @@
+import type { Asset } from "./schema/assets";
+
 /**
  * Central registry of allowed file types, extensions, and MIME types
  * for asset uploads and serving.
@@ -262,17 +264,12 @@ export const validateFileName = (
 };
 
 /**
- * Check if a format is a video format
- */
-export const isVideoFormat = (format: string): boolean => {
-  return VIDEO_EXTENSIONS.includes(format.toLowerCase());
-};
-
-/**
  * Detect the asset type from a file based on its extension
  */
-export const detectAssetType = (file: File): "image" | "font" | "file" => {
-  const ext = file.name.split(".").pop()?.toLowerCase();
+export const detectAssetType = (
+  fileName: string
+): "image" | "font" | "video" | "file" => {
+  const ext = fileName.split(".").pop()?.toLowerCase();
   if (!ext) {
     return "file";
   }
@@ -285,5 +282,35 @@ export const detectAssetType = (file: File): "image" | "font" | "file" => {
     return "font";
   }
 
+  if (VIDEO_EXTENSIONS.includes(ext)) {
+    return "video";
+  }
+
   return "file";
+};
+
+/**
+ * Generates the appropriate URL for an asset based on its type and format.
+ * - Images use /cgi/image/ with format=raw
+ * - Videos use /cgi/video/
+ * - Other assets use /cgi/asset/
+ *
+ * @param asset - The asset to generate URL for
+ * @param origin - Optional origin to prepend (e.g., "https://example.com")
+ * @returns A URL instance for the asset
+ */
+export const getAssetUrl = (asset: Asset, origin?: string): URL => {
+  let path: string;
+
+  if (asset.type === "image") {
+    path = `/cgi/image/${asset.name}?format=raw`;
+  } else if (VIDEO_EXTENSIONS.includes(asset.format.toLowerCase())) {
+    path = `/cgi/video/${asset.name}`;
+  } else {
+    path = `/cgi/asset/${asset.name}`;
+  }
+
+  // Use a base URL if no origin provided, for relative URL construction
+  const base = origin ?? "http://localhost";
+  return new URL(path, base);
 };

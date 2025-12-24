@@ -4,7 +4,7 @@ import {
   ALLOWED_FILE_TYPES,
   IMAGE_EXTENSIONS,
   VIDEO_EXTENSIONS,
-} from "@webstudio-is/asset-uploader";
+} from "@webstudio-is/sdk";
 import type { Asset } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/nano-states";
 import { useEffect } from "react";

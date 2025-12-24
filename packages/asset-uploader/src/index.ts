@@ -4,4 +4,3 @@ export * from "./constants";
 export * from "./utils/to-bytes";
 export * from "./utils/sanitize-s3-key";
 export * from "./utils/mime";
-export * from "./utils/allowed-file-types";

@@ -1,1 +1,1 @@
-export type AssetType = "image" | "font" | "file";
+export type AssetType = "image" | "font" | "video" | "file";

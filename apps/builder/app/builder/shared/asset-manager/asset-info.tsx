@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { useStore } from "@nanostores/react";
-import { getMimeByExtension } from "@webstudio-is/asset-uploader";
+import { getMimeTypeByExtension } from "@webstudio-is/sdk";
 import {
   Box,
   Button,
@@ -32,6 +32,7 @@ import {
 import {
   AspectRatioIcon,
   CloudIcon,
+  CopyIcon,
   DimensionsIcon,
   DownloadIcon,
   GearIcon,
@@ -71,8 +72,10 @@ import {
 import {
   formatAssetName,
   parseAssetName,
+  getAssetUrl,
 } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 
 const buttonLinkClass = css({
   all: "unset",
@@ -341,7 +344,7 @@ const AssetInfoContent = ({
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <PageIcon />
             <Text variant="labelsSentenceCase">
-              {getMimeByExtension(`.${ext}`)}
+              {getMimeTypeByExtension(ext) ?? "unknown"}
             </Text>
           </Flex>
           {"width" in meta && "height" in meta && (
@@ -414,6 +417,22 @@ const AssetInfoContent = ({
         />
       </Grid>
 
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <Label htmlFor="asset-manager-id">ID</Label>
+        <InputField
+          id="asset-manager-id"
+          readOnly
+          value={id}
+          suffix={
+            <Flex justify="center" css={{ paddingInline: theme.spacing[2] }}>
+              <CopyToClipboard text={id}>
+                <SmallIconButton icon={<CopyIcon />} />
+              </CopyToClipboard>
+            </Flex>
+          }
+        />
+      </Grid>
+
       <Flex justify="between" css={{ padding: theme.panel.padding }}>
         {authPermit === "view" ? (
           <Tooltip side="bottom" content="View mode. You can't delete assets.">
@@ -470,11 +489,7 @@ const AssetInfoContent = ({
             <IconButton
               as="a"
               download={formatAssetName(asset)}
-              href={
-                asset.type === "image"
-                  ? `/cgi/image/${asset.name}?format=raw`
-                  : `/cgi/asset/${asset.name}`
-              }
+              href={getAssetUrl(asset).href}
             >
               <DownloadIcon />
             </IconButton>

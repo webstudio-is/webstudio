@@ -3,6 +3,7 @@ import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { isBuilder } from "../router-utils";
 import { createContext } from "../context.server";
+import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 
 /**
  * System Resource that provides the list of assets for the current project.
@@ -27,5 +28,16 @@ export const loader = async ({ request }: { request: Request }) => {
 
   const assets = await loadAssetsByProject(projectId, context);
 
-  return json(assets);
+  // Convert array to object with asset IDs as keys and add URL to each asset
+  const assetsById = Object.fromEntries(
+    assets.map((asset) => [
+      asset.id,
+      {
+        ...asset,
+        url: getAssetUrl(asset).href,
+      },
+    ])
+  );
+
+  return json(assetsById);
 };

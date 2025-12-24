@@ -1,5 +1,5 @@
 import { Select } from "@webstudio-is/design-system";
-import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/asset-uploader";
+import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/sdk";
 import { titleCase } from "title-case";
 
 type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;

@@ -2,10 +2,7 @@ import { createReadStream, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
-import {
-  getMimeTypeByFilename,
-  isAllowedExtension,
-} from "@webstudio-is/asset-uploader";
+import { getMimeTypeByFilename, isAllowedExtension } from "@webstudio-is/sdk";
 import env from "~/env/env.server";
 import { fileUploadPath } from "~/shared/asset-client";
 

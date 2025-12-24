@@ -3,7 +3,7 @@
 
 import warnOnce from "warn-once";
 import type { Asset } from "@webstudio-is/sdk";
-import { ALLOWED_FILE_TYPES } from "./allowed-file-types";
+import { ALLOWED_FILE_TYPES } from "@webstudio-is/sdk";
 
 const mimeCategories = [
   "image",

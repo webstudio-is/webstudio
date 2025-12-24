@@ -14,7 +14,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { acceptUploadType, validateFiles } from "./asset-upload";
-import { detectAssetType } from "@webstudio-is/asset-uploader";
+import { detectAssetType } from "@webstudio-is/sdk";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -152,7 +152,7 @@ export const AssetsShell = ({
           // Group files by their detected type
           const filesByType = new Map<string, File[]>();
           for (const file of files) {
-            const detectedType = detectAssetType(file);
+            const detectedType = detectAssetType(file.name);
             if (!filesByType.has(detectedType)) {
               filesByType.set(detectedType, []);
             }

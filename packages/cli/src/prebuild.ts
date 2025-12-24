@@ -46,6 +46,7 @@ import {
   generateCss,
   ROOT_INSTANCE_ID,
   elementComponent,
+  getAssetUrl,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -428,23 +429,11 @@ export const prebuild = async (options: {
     const assetOrigin = siteData.origin;
 
     for (const asset of siteData.assets) {
-      if (asset.type === "image") {
+      if (asset.type === "image" || asset.type === "font") {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              `${assetOrigin}/cgi/image/${asset.name}?format=raw`,
-              asset.name,
-              assetBaseUrl
-            )
-          )
-        );
-      }
-
-      if (asset.type === "font") {
-        assetsToDownload.push(
-          limit(() =>
-            downloadAsset(
-              `${assetOrigin}/cgi/asset/${asset.name}`,
+              getAssetUrl(asset, assetOrigin).href,
               asset.name,
               assetBaseUrl
             )

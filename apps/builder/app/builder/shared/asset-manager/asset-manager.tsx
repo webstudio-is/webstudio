@@ -7,10 +7,10 @@ import {
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
+import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
-  FILE_EXTENSIONS_BY_CATEGORY,
 } from "@webstudio-is/asset-uploader";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";

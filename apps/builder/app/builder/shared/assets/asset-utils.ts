@@ -3,10 +3,12 @@ import { nanoid } from "nanoid";
 import {
   getMimeTypeByExtension,
   IMAGE_EXTENSIONS,
-} from "@webstudio-is/asset-uploader";
+  detectAssetType,
+  getAssetUrl,
+} from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
 
-export { detectAssetType } from "@webstudio-is/asset-uploader";
+export { detectAssetType, getAssetUrl };
 
 export const getImageNameAndType = (fileName: string) => {
   // Extract extension from filename

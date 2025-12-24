@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { imageMeta } from "image-meta";
 import { FontMeta } from "@webstudio-is/fonts";
-import { ImageMeta } from "@webstudio-is/sdk";
+import { ImageMeta, validateFileName } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
-import { validateFileName } from "./allowed-file-types";
 
 export type AssetData = {
   size: number;

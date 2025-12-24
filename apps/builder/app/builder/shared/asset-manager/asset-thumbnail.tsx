@@ -15,20 +15,15 @@ import {
 import type { IconComponent } from "@webstudio-is/icons";
 import {
   FILE_EXTENSIONS_BY_CATEGORY,
-  IMAGE_EXTENSIONS,
-  isVideoFormat,
-} from "@webstudio-is/asset-uploader";
-import type { FileCategory } from "@webstudio-is/asset-uploader";
+  detectAssetType,
+} from "@webstudio-is/sdk";
+import type { FileCategory } from "@webstudio-is/sdk";
 
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Partial<Record<FileCategory, IconComponent>> = {
   fonts: TextCapitalizeIcon,
   documents: PageIcon,
-};
-
-const isImageFormat = (format: string): boolean => {
-  return IMAGE_EXTENSIONS.includes(format.toLowerCase());
 };
 
 const getFileIcon = (format: string): IconComponent => {
@@ -187,6 +182,7 @@ export const AssetThumbnail = ({
   const { basename, ext } = parseAssetName(asset.name);
   const alt = asset.description ?? formatAssetName(asset);
   const isUploading = assetContainer.status === "uploading";
+  const assetType = detectAssetType(asset.name);
 
   return (
     <ThumbnailContainer
@@ -214,7 +210,7 @@ export const AssetThumbnail = ({
           onChange?.(assetContainer);
         }}
       >
-        {isImageFormat(asset.format) ? (
+        {assetType === "image" ? (
           // Image files - show preview
           <StyledWebstudioImage
             assetId={asset.id}
@@ -228,7 +224,7 @@ export const AssetThumbnail = ({
             // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
             width={64}
           />
-        ) : isVideoFormat(asset.format) ? (
+        ) : assetType === "video" ? (
           // Video files - show video thumbnail (first frame)
           <StyledWebstudioVideo
             src={
