@@ -28,13 +28,16 @@ export const loader = async ({ request }: { request: Request }) => {
 
   const assets = await loadAssetsByProject(projectId, context);
 
+  const requestUrl = new URL(request.url);
+  const origin = `${requestUrl.protocol}//${requestUrl.host}`;
+
   // Convert array to object with asset IDs as keys and add URL to each asset
   const assetsById = Object.fromEntries(
     assets.map((asset) => [
       asset.id,
       {
         ...asset,
-        url: getAssetUrl(asset).href,
+        url: getAssetUrl(asset, origin).href,
       },
     ])
   );

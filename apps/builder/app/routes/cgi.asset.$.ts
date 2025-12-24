@@ -7,7 +7,6 @@ import {
   isAllowedExtension,
   decodePathFragment,
 } from "@webstudio-is/sdk";
-import env from "~/env/env.server";
 import { fileUploadPath } from "~/shared/asset-client";
 
 // This route serves generic assets without processing
@@ -24,30 +23,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Response("Forbidden", {
       status: 403,
     });
-  }
-
-  // If RESIZE_ORIGIN is set, proxy the request
-  if (env.RESIZE_ORIGIN !== undefined) {
-    const assetUrl = new URL(`${env.RESIZE_ORIGIN}/cgi/asset/${name}`);
-
-    const response = await fetch(assetUrl.href, {
-      headers: {
-        accept: request.headers.get("accept") ?? "",
-        "accept-encoding": request.headers.get("accept-encoding") ?? "",
-      },
-    });
-
-    const responseWHeaders = new Response(response.body, response);
-
-    if (false === responseWHeaders.ok) {
-      console.error(
-        `Request to Asset url ${assetUrl.href} responded with status = ${responseWHeaders.status}`
-      );
-    }
-
-    responseWHeaders.headers.set("Access-Control-Allow-Origin", url.origin);
-
-    return responseWHeaders;
   }
 
   // Support absolute urls locally

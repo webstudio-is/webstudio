@@ -311,21 +311,20 @@ export const decodePathFragment = (fragment: string): string => {
  * - Other assets use /cgi/asset/
  *
  * @param asset - The asset to generate URL for
- * @param origin - Optional origin to prepend (e.g., "https://example.com")
- * @returns A URL instance for the asset
+ * @param origin - Origin to prepend (e.g., "https://example.com"). When provided, returns an absolute URL.
+ * @returns A URL object. Use .pathname for relative paths, .href for absolute URLs
  */
-export const getAssetUrl = (asset: Asset, origin?: string): URL => {
+export const getAssetUrl = (asset: Asset, origin: string): URL => {
   let path: string;
+  const assetType = detectAssetType(asset.name);
 
-  if (asset.type === "image") {
+  if (assetType === "image") {
     path = `/cgi/image/${asset.name}?format=raw`;
-  } else if (VIDEO_EXTENSIONS.includes(asset.format.toLowerCase())) {
+  } else if (assetType === "video") {
     path = `/cgi/video/${asset.name}`;
   } else {
     path = `/cgi/asset/${asset.name}`;
   }
 
-  // Use a base URL if no origin provided, for relative URL construction
-  const base = origin ?? "http://localhost";
-  return new URL(path, base);
+  return new URL(path, origin);
 };

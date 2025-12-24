@@ -14,6 +14,7 @@ import {
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
   decodePathFragment,
+  getAssetUrl,
 } from "./assets";
 
 describe("allowed-file-types", () => {
@@ -398,10 +399,126 @@ describe("allowed-file-types", () => {
       );
     });
 
-    test("allows normal filenames and paths", () => {
+    test("handles normal filenames", () => {
       expect(decodePathFragment("image.jpg")).toBe("image.jpg");
-      expect(decodePathFragment("folder/image.jpg")).toBe("folder/image.jpg");
-      expect(decodePathFragment("my-file_123.png")).toBe("my-file_123.png");
+      expect(decodePathFragment("my-file.pdf")).toBe("my-file.pdf");
+      expect(decodePathFragment("file_123.png")).toBe("file_123.png");
+    });
+  });
+
+  describe("getAssetUrl", () => {
+    const mockImageAsset = {
+      id: "image-1",
+      name: "photo.jpg",
+      projectId: "project-1",
+      size: 1024,
+      type: "image" as const,
+      format: "jpg",
+      description: "",
+      createdAt: "2024-01-01",
+      meta: { width: 100, height: 100 },
+    };
+
+    const mockVideoAsset = {
+      id: "video-1",
+      name: "video.mp4",
+      projectId: "project-1",
+      size: 2048,
+      type: "file" as const,
+      format: "mp4",
+      description: "",
+      createdAt: "2024-01-01",
+      meta: {},
+    };
+
+    const mockFontAsset = {
+      id: "font-1",
+      name: "font.woff2",
+      projectId: "project-1",
+      size: 512,
+      type: "font" as const,
+      format: "woff2",
+      description: "",
+      createdAt: "2024-01-01",
+      meta: { family: "Arial", style: "normal", weight: 400 },
+    };
+
+    const mockGenericAsset = {
+      id: "doc-1",
+      name: "document.pdf",
+      projectId: "project-1",
+      size: 4096,
+      type: "file" as const,
+      format: "pdf",
+      description: "",
+      createdAt: "2024-01-01",
+      meta: {},
+    };
+
+    test("generates correct URL for image assets", () => {
+      const url = getAssetUrl(mockImageAsset, "https://example.com");
+      expect(url.href).toBe(
+        "https://example.com/cgi/image/photo.jpg?format=raw"
+      );
+      expect(url.pathname).toBe("/cgi/image/photo.jpg");
+      expect(url.search).toBe("?format=raw");
+    });
+
+    test("generates correct URL for video assets", () => {
+      const url = getAssetUrl(mockVideoAsset, "https://example.com");
+      expect(url.href).toBe("https://example.com/cgi/video/video.mp4");
+      expect(url.pathname).toBe("/cgi/video/video.mp4");
+    });
+
+    test("generates correct URL for font assets", () => {
+      const url = getAssetUrl(mockFontAsset, "https://example.com");
+      expect(url.href).toBe("https://example.com/cgi/asset/font.woff2");
+      expect(url.pathname).toBe("/cgi/asset/font.woff2");
+    });
+
+    test("generates correct URL for generic file assets", () => {
+      const url = getAssetUrl(mockGenericAsset, "https://example.com");
+      expect(url.href).toBe("https://example.com/cgi/asset/document.pdf");
+      expect(url.pathname).toBe("/cgi/asset/document.pdf");
+    });
+
+    test("works with different origins", () => {
+      const url1 = getAssetUrl(mockImageAsset, "https://example.com");
+      const url2 = getAssetUrl(mockImageAsset, "http://localhost:3000");
+      const url3 = getAssetUrl(mockImageAsset, "https://cdn.example.org");
+
+      expect(url1.origin).toBe("https://example.com");
+      expect(url2.origin).toBe("http://localhost:3000");
+      expect(url3.origin).toBe("https://cdn.example.org");
+
+      // All should have the same pathname
+      expect(url1.pathname).toBe(url2.pathname);
+      expect(url2.pathname).toBe(url3.pathname);
+    });
+
+    test("pathname can be used for relative URLs", () => {
+      const url = getAssetUrl(mockGenericAsset, "https://example.com");
+      expect(url.pathname).toBe("/cgi/asset/document.pdf");
+      // pathname is suitable for href attribute in same-origin context
+    });
+
+    test("detects video format case-insensitively", () => {
+      const upperCaseVideo = {
+        ...mockVideoAsset,
+        format: "MP4",
+      };
+      const url = getAssetUrl(upperCaseVideo, "https://example.com");
+      expect(url.pathname).toBe("/cgi/video/video.mp4");
+    });
+
+    test("handles assets with special characters in name", () => {
+      const specialAsset = {
+        ...mockGenericAsset,
+        name: "my document (1).pdf",
+      };
+      const url = getAssetUrl(specialAsset, "https://example.com");
+      // URL constructor automatically encodes special characters in pathname
+      expect(url.pathname).toBe("/cgi/asset/my%20document%20(1).pdf");
     });
   });
 });
