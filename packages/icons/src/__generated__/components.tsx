@@ -795,6 +795,81 @@ export const ArrowDownAZIcon: IconComponent = forwardRef(
 );
 ArrowDownAZIcon.displayName = "ArrowDownAZIcon";
 
+export const ArrowDownNarrowWideIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth=".667"
+          d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M7.333 2.667H10M7.333 5.333H12M7.333 8H14"
+        />
+      </svg>
+    );
+  }
+);
+ArrowDownNarrowWideIcon.displayName = "ArrowDownNarrowWideIcon";
+
+export const ArrowDownWideNarrowIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth=".667"
+          d="m2 10.667 2.667 2.666 2.666-2.666M4.667 13.333V2.667M7.333 2.667H14M7.333 5.333H12M7.333 8H10"
+        />
+      </svg>
+    );
+  }
+);
+ArrowDownWideNarrowIcon.displayName = "ArrowDownWideNarrowIcon";
+
+export const ArrowDownZAIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="#000"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth=".667"
+          d="m2 10.667 2.667 2.666 2.666-2.666M4.667 2.667v10.666M10 2.667h3.333l-3.333 4h3.333M10 13.333V11a1.667 1.667 0 1 1 3.333 0v2.333M13.333 12H10"
+        />
+      </svg>
+    );
+  }
+);
+ArrowDownZAIcon.displayName = "ArrowDownZAIcon";
+
 export const ArrowDownIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
