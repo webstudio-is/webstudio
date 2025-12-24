@@ -13,6 +13,7 @@ import {
   parseAssetName,
 } from "~/builder/shared/assets/asset-utils";
 import type { IconComponent } from "@webstudio-is/icons";
+import type { AllowedFileExtension } from "@webstudio-is/sdk";
 import {
   FILE_EXTENSIONS_BY_CATEGORY,
   detectAssetType,
@@ -30,7 +31,7 @@ const getFileIcon = (format: string): IconComponent => {
 
   // Check which category this format belongs to
   for (const [category, extensions] of Object.entries(FORMAT_CATEGORIES)) {
-    if (extensions.includes(lowerFormat)) {
+    if (extensions.includes(lowerFormat as AllowedFileExtension)) {
       return CATEGORY_ICON_MAP[category as MimeCategory] ?? PageIcon;
     }
   }

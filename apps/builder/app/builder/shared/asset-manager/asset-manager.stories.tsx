@@ -5,14 +5,16 @@ import {
   IMAGE_EXTENSIONS,
   VIDEO_EXTENSIONS,
 } from "@webstudio-is/sdk";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, AllowedFileExtension } from "@webstudio-is/sdk";
 import { $assets } from "~/shared/nano-states";
 import { useEffect } from "react";
 
 // Create mock assets for every file type
 const createMockAssets = (): Asset[] => {
   const extensions = Object.keys(ALLOWED_FILE_TYPES).filter(
-    (ext) => !IMAGE_EXTENSIONS.includes(ext) && !VIDEO_EXTENSIONS.includes(ext)
+    (ext) =>
+      !IMAGE_EXTENSIONS.includes(ext as AllowedFileExtension) &&
+      !VIDEO_EXTENSIONS.includes(ext as AllowedFileExtension)
   );
   const assets: Asset[] = [];
 

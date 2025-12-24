@@ -1,4 +1,9 @@
-import type { Asset, FontAsset, ImageAsset } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  FontAsset,
+  ImageAsset,
+  AllowedFileExtension,
+} from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 import {
   getMimeTypeByExtension,
@@ -19,7 +24,7 @@ export const getImageNameAndType = (fileName: string) => {
   }
 
   // Check if it's a valid image extension
-  if (!IMAGE_EXTENSIONS.includes(extractedExt)) {
+  if (!IMAGE_EXTENSIONS.includes(extractedExt as AllowedFileExtension)) {
     return;
   }
 
