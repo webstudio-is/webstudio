@@ -181,7 +181,12 @@ export const AssetsShell = ({
         position: "relative",
       }}
     >
-      <Flex css={{ padding: theme.panel.padding }} gap="2" wrap="wrap">
+      <Flex
+        css={{ padding: theme.panel.padding }}
+        gap="2"
+        wrap="wrap"
+        shrink={false}
+      >
         <SearchField
           css={{ flexGrow: 1 }}
           {...searchProps}
