@@ -1,23 +1,5 @@
-import { useEffect, useState } from "react";
-import { ProgressRadial, styled } from "@webstudio-is/design-system";
-
-const useFakeProgress = () => {
-  const [progressBarPercentage, setProgressBarPercentage] = useState(0);
-
-  // @todo rewrite this fake indication to show real progress
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setProgressBarPercentage((percentage) =>
-        percentage < 60 ? percentage + 1 : 0
-      );
-    }, 100);
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  return progressBarPercentage;
-};
+import { rawTheme, styled } from "@webstudio-is/design-system";
+import { SpinnerIcon } from "@webstudio-is/icons";
 
 const AnimationContainer = styled("div", {
   position: "absolute",
@@ -33,10 +15,9 @@ const AnimationContainer = styled("div", {
 });
 
 export const UploadingAnimation = () => {
-  const progressBarPercentage = useFakeProgress();
   return (
     <AnimationContainer>
-      <ProgressRadial value={progressBarPercentage} max={60} />
+      <SpinnerIcon size={rawTheme.spacing[15]} />
     </AnimationContainer>
   );
 };
