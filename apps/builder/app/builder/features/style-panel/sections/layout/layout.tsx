@@ -55,6 +55,7 @@ import {
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { FlexGrid } from "./shared/flex-grid";
+import { GridVisual } from "./shared/grid-visual";
 import { humanizeString } from "~/shared/string-utils";
 
 const GapLinked = ({
@@ -547,7 +548,7 @@ export const Section = () => {
           <LayoutSectionFlex />
         )}
         {(displayValue === "grid" || displayValue === "inline-grid") && (
-          <Box>Grid controls coming soon...</Box>
+          <GridVisual />
         )}
       </Flex>
     </StyleSection>
