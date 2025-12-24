@@ -104,20 +104,38 @@ export const getAssetMime = ({
 };
 
 export const doesAssetMatchMimePatterns = (
-  asset: Pick<Asset, "format" | "type">,
+  asset: Pick<Asset, "format" | "type" | "name">,
   patterns: Set<string> | "*"
 ): boolean => {
   if (patterns === "*") {
     return true;
   }
 
+  // Try matching based on asset type and format
   const mime = getAssetMime(asset);
-
-  if (mime === undefined) {
-    return false;
+  if (mime !== undefined) {
+    if (patterns.has(mime) || patterns.has(`${getCategory(mime)}/*`)) {
+      return true;
+    }
   }
 
-  return patterns.has(mime) || patterns.has(`${getCategory(mime)}/*`);
+  // If it doesn't match and the asset type is "file" and has a name,
+  // try detecting the actual MIME type from the filename extension
+  // This handles legacy assets that were incorrectly stored as type "file"
+  if (asset.type === "file" && asset.name) {
+    const extension = asset.name.split(".").pop()?.toLowerCase();
+    if (extension) {
+      const mimeFromExtension = extensionToMime.get(`.${extension}`);
+      if (mimeFromExtension) {
+        return (
+          patterns.has(mimeFromExtension) ||
+          patterns.has(`${getCategory(mimeFromExtension)}/*`)
+        );
+      }
+    }
+  }
+
+  return false;
 };
 
 export const getMimeByExtension = (ext: string): string => {

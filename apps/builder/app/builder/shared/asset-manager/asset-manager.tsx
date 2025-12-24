@@ -8,10 +8,7 @@ import {
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/sdk";
-import {
-  FILE_EXTENSIONS_BY_CATEGORY,
-  detectAssetType,
-} from "@webstudio-is/sdk";
+import { FILE_EXTENSIONS_BY_CATEGORY } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
@@ -87,30 +84,9 @@ const useLogic = ({
     const patterns = acceptToMimePatterns(accept ?? "");
 
     if (patterns !== "*") {
-      acceptable = assetContainers.filter((item) => {
-        // First try normal MIME matching
-        let matches = doesAssetMatchMimePatterns(item.asset, patterns);
-
-        // If it doesn't match but the asset type is "file",
-        // try detecting the actual type from the filename
-        // This handles legacy assets that were incorrectly stored as type "file"
-        if (!matches && item.asset.type === "file") {
-          const detectedType = detectAssetType(item.asset.name);
-          if (
-            detectedType === "image" ||
-            detectedType === "video" ||
-            detectedType === "font"
-          ) {
-            // Create a temporary asset with the detected type for matching
-            matches = doesAssetMatchMimePatterns(
-              { ...item.asset, type: detectedType as "image" | "font" },
-              patterns
-            );
-          }
-        }
-
-        return matches;
-      });
+      acceptable = assetContainers.filter((item) =>
+        doesAssetMatchMimePatterns(item.asset, patterns)
+      );
     } else if (accept !== undefined) {
       // Filter by file extension
       const extensions = accept.split(",").map((ext) => ext.trim());
