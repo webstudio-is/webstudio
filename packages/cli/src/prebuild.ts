@@ -428,12 +428,16 @@ export const prebuild = async (options: {
   if (options.assets === true) {
     const assetOrigin = siteData.origin;
 
+    if (!assetOrigin) {
+      console.warn("Warning: Asset origin is not defined in project data.");
+    }
+
     for (const asset of siteData.assets) {
       if (asset.type === "image" || asset.type === "font") {
         assetsToDownload.push(
           limit(() =>
             downloadAsset(
-              getAssetUrl(asset, assetOrigin).href,
+              getAssetUrl(asset, assetOrigin || "").href,
               asset.name,
               assetBaseUrl
             )
