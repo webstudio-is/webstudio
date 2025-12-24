@@ -1101,6 +1101,9 @@ importers:
       tinyexec:
         specifier: ^0.3.2
         version: 0.3.2
+      warn-once:
+        specifier: ^0.1.1
+        version: 0.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
