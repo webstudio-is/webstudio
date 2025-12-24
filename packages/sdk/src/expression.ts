@@ -1,7 +1,6 @@
 import {
   type Expression,
   type Identifier,
-  type Node,
   parse,
   parseExpressionAt,
 } from "acorn";
