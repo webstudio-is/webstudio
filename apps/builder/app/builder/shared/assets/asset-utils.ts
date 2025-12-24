@@ -97,16 +97,18 @@ export const getFileName = (file: File | URL) => {
 export const uploadingFileDataToAsset = (
   fileData: UploadingFileData
 ): Asset => {
-  const mimeType = getMimeType(
-    fileData.source === "file" ? fileData.file : new URL(fileData.url)
-  );
+  const fileOrUrl =
+    fileData.source === "file" ? fileData.file : new URL(fileData.url);
+  const fileName = getFileName(fileOrUrl);
+  const mimeType = getMimeType(fileOrUrl);
   const format = mimeType.split("/")[1];
+  const assetType = detectAssetType(fileName);
 
-  if (mimeType.startsWith("video/")) {
+  if (assetType === "video") {
     // Use image type for now
     const asset: ImageAsset = {
       id: fileData.assetId,
-      name: fileData.objectURL,
+      name: fileName,
       format,
       type: "image",
       description: "",
@@ -123,10 +125,10 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  if (mimeType.startsWith("image/")) {
+  if (assetType === "image") {
     const asset: ImageAsset = {
       id: fileData.assetId,
-      name: fileData.objectURL,
+      name: fileName,
       format,
       type: "image",
       description: "",
@@ -143,20 +145,37 @@ export const uploadingFileDataToAsset = (
     return asset;
   }
 
-  const asset: FontAsset = {
+  if (assetType === "font") {
+    const asset: FontAsset = {
+      id: fileData.assetId,
+      name: fileName,
+      format: format as FontAsset["format"],
+      type: "font",
+      description: "",
+      createdAt: "",
+      projectId: "",
+      size: 0,
+      meta: {
+        family: "system",
+        style: "normal",
+        weight: 400,
+      },
+    };
+
+    return asset;
+  }
+
+  // Default to file type for all other types (documents, code, audio, etc.)
+  const asset: Asset = {
     id: fileData.assetId,
-    name: fileData.objectURL,
-    format: "woff2",
-    type: "font",
+    name: fileName,
+    format,
+    type: "file",
     description: "",
     createdAt: "",
     projectId: "",
     size: 0,
-    meta: {
-      family: "system",
-      style: "normal",
-      weight: 400,
-    },
+    meta: {},
   };
 
   return asset;
