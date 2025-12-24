@@ -502,8 +502,10 @@ const LayoutSectionFlex = () => {
 const orderedDisplayValues = [
   "block",
   "flex",
+  "grid",
   "inline-block",
   "inline-flex",
+  "inline-grid",
   "inline",
   "none",
 ];
@@ -543,6 +545,9 @@ export const Section = () => {
         </Grid>
         {(displayValue === "flex" || displayValue === "inline-flex") && (
           <LayoutSectionFlex />
+        )}
+        {(displayValue === "grid" || displayValue === "inline-grid") && (
+          <Box>Grid controls coming soon...</Box>
         )}
       </Flex>
     </StyleSection>
