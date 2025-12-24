@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { matchSorter } from "match-sorter";
 import {
+  Flex,
   Grid,
   findNextListItemIndex,
   theme,
@@ -15,6 +16,7 @@ import {
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { AssetFilters } from "./asset-filters";
+import { AssetSortSelect, sortAssets, type SortState } from "./asset-sort";
 
 type FormatCategory = keyof typeof FILE_EXTENSIONS_BY_CATEGORY;
 
@@ -33,6 +35,10 @@ const useLogic = ({
   const [selectedFormat, setSelectedFormat] = useState<
     FormatCategory | typeof ALL_FORMATS
   >(ALL_FORMATS);
+  const [sortState, setSortState] = useState<SortState>({
+    sortBy: "createdAt",
+    order: "desc",
+  });
 
   const searchProps = useSearchFieldKeys({
     onMove({ direction }) {
@@ -98,13 +104,16 @@ const useLogic = ({
       );
     }
 
-    if (searchProps.value === "") {
-      return acceptable;
+    let result = acceptable;
+    if (searchProps.value !== "") {
+      result = matchSorter(acceptable, searchProps.value, {
+        keys: [(item) => item.asset.name],
+      });
     }
-    return matchSorter(acceptable, searchProps.value, {
-      keys: [(item) => item.asset.name],
-    });
-  }, [assetContainers, accept, searchProps.value, selectedFormat]);
+
+    // Apply sorting
+    return sortAssets(result, sortState);
+  }, [assetContainers, accept, searchProps.value, selectedFormat, sortState]);
 
   const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
@@ -121,6 +130,8 @@ const useLogic = ({
     formatCounts,
     selectedFormat,
     setSelectedFormat,
+    sortState,
+    setSortState,
   };
 };
 
@@ -145,6 +156,8 @@ export const AssetManager = ({
     formatCounts,
     selectedFormat,
     setSelectedFormat,
+    sortState,
+    setSortState,
   } = useLogic({
     onChange,
     accept,
@@ -153,13 +166,16 @@ export const AssetManager = ({
   return (
     <AssetsShell
       filters={
-        showFilters ? (
-          <AssetFilters
-            formatCounts={formatCounts}
-            selectedFormat={selectedFormat}
-            onFormatChange={setSelectedFormat}
-          />
-        ) : undefined
+        <Flex gap="2" grow>
+          {showFilters && (
+            <AssetFilters
+              formatCounts={formatCounts}
+              selectedFormat={selectedFormat}
+              onFormatChange={setSelectedFormat}
+            />
+          )}
+          <AssetSortSelect value={sortState} onValueChange={setSortState} />
+        </Flex>
       }
       searchProps={searchProps}
       isEmpty={filteredItems.length === 0}
