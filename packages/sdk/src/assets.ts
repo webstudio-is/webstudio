@@ -17,17 +17,13 @@ export const ALLOWED_FILE_TYPES = {
   pdf: "application/pdf",
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
-  // Spreadsheets
   xls: "application/vnd.ms-excel",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   csv: "text/csv",
-
-  // Presentations
   ppt: "application/vnd.ms-powerpoint",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 
-  // Text/Code
+  // Code
   txt: "text/plain",
   md: "text/markdown",
   js: "text/javascript",
@@ -79,9 +75,10 @@ export type AllowedFileExtension = keyof typeof ALLOWED_FILE_TYPES;
 /**
  * Set of allowed file extensions for quick lookup
  */
-export const ALLOWED_FILE_EXTENSIONS: ReadonlySet<string> = new Set<string>(
-  Object.keys(ALLOWED_FILE_TYPES)
-);
+export const ALLOWED_FILE_EXTENSIONS: ReadonlySet<AllowedFileExtension> =
+  new Set<AllowedFileExtension>(
+    Object.keys(ALLOWED_FILE_TYPES) as AllowedFileExtension[]
+  );
 
 /**
  * Set of allowed MIME type categories
@@ -101,22 +98,17 @@ export type MimeCategory = (typeof MIME_CATEGORIES)[number];
  * File extensions grouped by MIME category for UI display and filtering
  */
 export const FILE_EXTENSIONS_BY_CATEGORY: Readonly<
-  Record<MimeCategory, string[]>
+  Record<MimeCategory, AllowedFileExtension[]>
 > = (() => {
-  const categories: Record<MimeCategory, string[]> = {
-    image: [],
-    font: [],
-    audio: [],
-    video: [],
-    text: [],
-    application: [],
-  };
+  const categories = Object.fromEntries(
+    MIME_CATEGORIES.map((category) => [category, []])
+  ) as unknown as Record<MimeCategory, AllowedFileExtension[]>;
 
   Object.entries(ALLOWED_FILE_TYPES).forEach(([ext, mimeType]) => {
     const [category] = mimeType.split("/") as [MimeCategory];
 
     if (category in categories) {
-      categories[category].push(ext);
+      categories[category].push(ext as AllowedFileExtension);
     }
   });
 
@@ -149,7 +141,7 @@ const getCategory = (pattern: string): MimeCategory => {
 /**
  * All image file extensions
  */
-export const IMAGE_EXTENSIONS: readonly string[] =
+export const IMAGE_EXTENSIONS: readonly AllowedFileExtension[] =
   FILE_EXTENSIONS_BY_CATEGORY.image;
 
 /**
@@ -162,7 +154,7 @@ export const IMAGE_MIME_TYPES: readonly string[] = IMAGE_EXTENSIONS.map(
 /**
  * All video file extensions
  */
-export const VIDEO_EXTENSIONS: readonly string[] =
+export const VIDEO_EXTENSIONS: readonly AllowedFileExtension[] =
   FILE_EXTENSIONS_BY_CATEGORY.video;
 
 /**
@@ -175,7 +167,7 @@ export const VIDEO_MIME_TYPES: readonly string[] = VIDEO_EXTENSIONS.map(
 /**
  * All font file extensions
  */
-export const FONT_EXTENSIONS: readonly string[] =
+export const FONT_EXTENSIONS: readonly AllowedFileExtension[] =
   FILE_EXTENSIONS_BY_CATEGORY.font;
 
 /**
@@ -202,7 +194,9 @@ export const getMimeTypeByFilename = (fileName: string): string => {
  * Check if a file extension is allowed
  */
 export const isAllowedExtension = (extension: string): boolean => {
-  return ALLOWED_FILE_EXTENSIONS.has(extension.toLowerCase());
+  return ALLOWED_FILE_EXTENSIONS.has(
+    extension.toLowerCase() as AllowedFileExtension
+  );
 };
 
 /**
@@ -372,15 +366,15 @@ export const detectAssetType = (
     return "file";
   }
 
-  if (IMAGE_EXTENSIONS.includes(ext)) {
+  if (IMAGE_EXTENSIONS.includes(ext as AllowedFileExtension)) {
     return "image";
   }
 
-  if (FONT_EXTENSIONS.includes(ext)) {
+  if (FONT_EXTENSIONS.includes(ext as AllowedFileExtension)) {
     return "font";
   }
 
-  if (VIDEO_EXTENSIONS.includes(ext)) {
+  if (VIDEO_EXTENSIONS.includes(ext as AllowedFileExtension)) {
     return "video";
   }
 

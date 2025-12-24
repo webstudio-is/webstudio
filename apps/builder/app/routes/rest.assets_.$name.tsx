@@ -2,7 +2,11 @@ import { z } from "zod";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
-import { isAllowedMimeCategory, IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import {
+  isAllowedMimeCategory,
+  IMAGE_MIME_TYPES,
+  ALLOWED_FILE_TYPES,
+} from "@webstudio-is/sdk";
 import type { ActionData } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
@@ -73,14 +77,24 @@ export const action = async (
       }
 
       const url = new URL(request.url);
-      const contentTypeArr = contentType?.split(";")[0]?.split("/") ?? [];
+
+      // Get file extension from filename
+      const fileExtension = params.name.split(".").pop()?.toLowerCase();
+
+      // Use the file extension to determine the correct MIME type
+      // This handles cases where browsers send legacy MIME types (e.g., application/font-woff instead of font/woff)
+      const correctMimeType = fileExtension
+        ? ALLOWED_FILE_TYPES[fileExtension as keyof typeof ALLOWED_FILE_TYPES]
+        : contentType?.split(";")[0];
+
+      const contentTypeArr = correctMimeType?.split("/") ?? [];
 
       // Validate MIME type against allowed categories
       const mimeCategory = contentTypeArr[0];
       if (
         mimeCategory &&
-        contentType &&
-        !isAllowedMimeCategory(contentType.split(";")[0])
+        correctMimeType &&
+        !isAllowedMimeCategory(mimeCategory)
       ) {
         throw new Error(`MIME type "${mimeCategory}/*" is not allowed`);
       }

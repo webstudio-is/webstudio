@@ -22,8 +22,7 @@ import type { MimeCategory } from "@webstudio-is/sdk";
 const FORMAT_CATEGORIES = FILE_EXTENSIONS_BY_CATEGORY;
 
 const CATEGORY_ICON_MAP: Partial<Record<MimeCategory, IconComponent>> = {
-  text: TextCapitalizeIcon,
-  application: PageIcon,
+  font: TextCapitalizeIcon,
 };
 
 const getFileIcon = (format: string): IconComponent => {

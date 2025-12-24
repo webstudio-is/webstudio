@@ -7,20 +7,15 @@ import {
   theme,
   useSearchFieldKeys,
 } from "@webstudio-is/design-system";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, AllowedFileExtension } from "@webstudio-is/sdk";
 import {
-  FILE_EXTENSIONS_BY_CATEGORY,
-  type MimeCategory,
   acceptToMimePatterns,
-  acceptToMimeCategories,
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/sdk";
 import { AssetsShell, type AssetContainer, useAssets } from "../assets";
 import { AssetThumbnail } from "./asset-thumbnail";
 import { AssetFilters } from "./asset-filters";
 import { AssetSortSelect, sortAssets, type SortState } from "./asset-sort";
-
-const ALL_FORMATS = "all" as const;
 
 const useLogic = ({
   onChange,
@@ -33,24 +28,9 @@ const useLogic = ({
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Auto-select format based on accept prop, default to "all"
-  const initialFormat = useMemo((): MimeCategory | typeof ALL_FORMATS => {
-    if (!accept) {
-      return ALL_FORMATS;
-    }
-
-    const categories = acceptToMimeCategories(accept);
-    if (categories === "*" || categories.size !== 1) {
-      return ALL_FORMATS;
-    }
-
-    // Get the single category - it's already a MimeCategory
-    return Array.from(categories)[0];
-  }, [accept]);
-
-  const [selectedFormat, setSelectedFormat] = useState<
-    MimeCategory | typeof ALL_FORMATS
-  >(initialFormat);
+  const [selectedExtensions, setSelectedExtensions] = useState<
+    AllowedFileExtension[] | "*"
+  >("*");
   const [sortState, setSortState] = useState<SortState>({
     sortBy: "createdAt",
     order: "desc",
@@ -75,21 +55,14 @@ const useLogic = ({
     },
   });
 
-  // Get available format categories based on existing assets
+  // Get available format counts based on existing assets
   const formatCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const counts: Partial<Record<AllowedFileExtension, number>> = {};
 
     assetContainers.forEach((container) => {
-      const format = container.asset.format.toLowerCase();
-
-      for (const [category, extensions] of Object.entries(
-        FILE_EXTENSIONS_BY_CATEGORY
-      )) {
-        if (extensions.includes(format)) {
-          counts[category] = (counts[category] || 0) + 1;
-          break;
-        }
-      }
+      const format =
+        container.asset.format.toLowerCase() as AllowedFileExtension;
+      counts[format] = (counts[format] || 0) + 1;
     });
 
     return counts;
@@ -111,12 +84,12 @@ const useLogic = ({
       );
     }
 
-    // Filter by selected format category
-    if (selectedFormat !== ALL_FORMATS) {
-      const allowedExtensions =
-        FILE_EXTENSIONS_BY_CATEGORY[selectedFormat] || [];
+    // Filter by selected extensions
+    if (selectedExtensions !== "*") {
       acceptable = acceptable.filter((item) =>
-        allowedExtensions.includes(item.asset.format.toLowerCase())
+        selectedExtensions.includes(
+          item.asset.format.toLowerCase() as AllowedFileExtension
+        )
       );
     }
 
@@ -129,7 +102,13 @@ const useLogic = ({
 
     // Apply sorting
     return sortAssets(result, sortState);
-  }, [assetContainers, accept, searchProps.value, selectedFormat, sortState]);
+  }, [
+    assetContainers,
+    accept,
+    searchProps.value,
+    selectedExtensions,
+    sortState,
+  ]);
 
   const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
@@ -144,8 +123,8 @@ const useLogic = ({
     handleSelect,
     selectedIndex,
     formatCounts,
-    selectedFormat,
-    setSelectedFormat,
+    selectedExtensions,
+    setSelectedExtensions,
     sortState,
     setSortState,
   };
@@ -164,8 +143,8 @@ export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
     searchProps,
     selectedIndex,
     formatCounts,
-    selectedFormat,
-    setSelectedFormat,
+    selectedExtensions,
+    setSelectedExtensions,
     sortState,
     setSortState,
   } = useLogic({
@@ -179,8 +158,8 @@ export const AssetManager = ({ accept, onChange }: AssetManagerProps) => {
         <Flex gap="2" grow>
           <AssetFilters
             formatCounts={formatCounts}
-            selectedFormat={selectedFormat}
-            onFormatChange={setSelectedFormat}
+            value={selectedExtensions}
+            onChange={setSelectedExtensions}
           />
           <AssetSortSelect value={sortState} onValueChange={setSortState} />
         </Flex>

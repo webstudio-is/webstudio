@@ -441,10 +441,10 @@ describe("allowed-file-types", () => {
       projectId: "project-1",
       size: 512,
       type: "font" as const,
-      format: "woff2",
+      format: "woff2" as const,
       description: "",
       createdAt: "2024-01-01",
-      meta: { family: "Arial", style: "normal", weight: 400 },
+      meta: { family: "Arial", style: "normal" as const, weight: 400 },
     };
 
     const mockGenericAsset = {
