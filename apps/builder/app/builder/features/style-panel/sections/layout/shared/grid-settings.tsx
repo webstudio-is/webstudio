@@ -16,6 +16,10 @@ import {
 } from "../../../shared/css-value-input";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
+import {
+  CollapsibleSectionRoot,
+  useOpenState,
+} from "~/builder/shared/collapsible-section";
 
 const parseTrackList = (value: string): string[] => {
   if (!value || value === "none") {
@@ -45,6 +49,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
   const tracks = parseTrackList(value);
+  const [isOpen, setIsOpen] = useOpenState({ label });
 
   const [intermediateValues, setIntermediateValues] = useState<
     Record<number, StyleValue | IntermediateStyleValue>
@@ -73,27 +78,37 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
   };
 
   return (
-    <Flex direction="column" gap="2">
-      <Flex align="center" justify="between">
-        <Text variant="labelsSentenceCase" color="subtle">
-          {label} ({tracks.length})
-        </Text>
-        <Button
-          prefix={<PlusIcon />}
-          color="neutral"
-          onClick={addTrack}
-          css={{ minWidth: "auto" }}
+    <CollapsibleSectionRoot
+      label={`${label} (${tracks.length})`}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      trigger={
+        <Flex
+          align="center"
+          justify="between"
+          css={{ padding: theme.spacing[5] }}
         >
-          Add
-        </Button>
-      </Flex>
-      <Flex direction="column" gap="1">
+          <Text variant="labelsSentenceCase" color="subtle">
+            {label} ({tracks.length})
+          </Text>
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              addTrack();
+            }}
+          >
+            <PlusIcon />
+          </IconButton>
+        </Flex>
+      }
+    >
+      <Flex direction="column" gap="2">
         {tracks.map((track, index) => (
           <Grid
             key={index}
+            gap="2"
             css={{
-              gridTemplateColumns: `${theme.spacing[9]} 1fr ${theme.spacing[9]}`,
-              gap: theme.spacing[3],
+              gridTemplateColumns: `auto 1fr auto`,
               alignItems: "center",
             }}
           >
@@ -164,7 +179,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
           </Grid>
         ))}
       </Flex>
-    </Flex>
+    </CollapsibleSectionRoot>
   );
 };
 
@@ -183,7 +198,7 @@ export const GridSettingsPanel = ({
     <FloatingPanel
       title="Grid Settings"
       content={
-        <Flex direction="column" gap="3" css={{ padding: theme.spacing[9] }}>
+        <Flex direction="column">
           <TrackEditor property="grid-template-columns" label="Columns" />
           <TrackEditor property="grid-template-rows" label="Rows" />
         </Flex>
