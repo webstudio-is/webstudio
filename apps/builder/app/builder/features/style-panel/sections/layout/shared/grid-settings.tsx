@@ -170,9 +170,15 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
 
 type GridSettingsPanelProps = {
   children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export const GridSettingsPanel = ({ children }: GridSettingsPanelProps) => {
+export const GridSettingsPanel = ({
+  children,
+  open,
+  onOpenChange,
+}: GridSettingsPanelProps) => {
   return (
     <FloatingPanel
       title="Grid Settings"
@@ -182,6 +188,8 @@ export const GridSettingsPanel = ({ children }: GridSettingsPanelProps) => {
           <TrackEditor property="grid-template-rows" label="Rows" />
         </Flex>
       }
+      open={open}
+      onOpenChange={onOpenChange}
     >
       {children}
     </FloatingPanel>
