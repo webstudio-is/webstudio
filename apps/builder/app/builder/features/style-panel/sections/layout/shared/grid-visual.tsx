@@ -126,6 +126,7 @@ type GridSizePanelProps = {
   columnCount: number;
   rowCount: number;
   onOpenSettings: () => void;
+  onClose: () => void;
 };
 
 const GridSizePanel = ({
@@ -133,6 +134,7 @@ const GridSizePanel = ({
   columnCount,
   rowCount,
   onOpenSettings,
+  onClose,
 }: GridSizePanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -178,7 +180,7 @@ const GridSizePanel = ({
       value: Array(rows).fill("1fr").join(" "),
     });
     batch.publish();
-    setIsOpen(false);
+    onClose();
   };
 
   return (
@@ -212,8 +214,9 @@ const GridSizePanel = ({
                 }}
                 onHighlight={() => {}}
                 onChangeComplete={(event) => {
-                  setColumnValue(event.value);
-                  setColumnIntermediate(undefined);
+                  if (event.value.type === "unit") {
+                    handleSelectorSelect(event.value.value, rowCount);
+                  }
                 }}
                 onAbort={() => {
                   setColumnIntermediate(undefined);
@@ -242,8 +245,9 @@ const GridSizePanel = ({
                 }}
                 onHighlight={() => {}}
                 onChangeComplete={(event) => {
-                  setRowValue(event.value);
-                  setRowIntermediate(undefined);
+                  if (event.value.type === "unit") {
+                    handleSelectorSelect(columnCount, event.value.value);
+                  }
                 }}
                 onAbort={() => {
                   setRowIntermediate(undefined);
@@ -367,6 +371,7 @@ export const GridVisual = () => {
         columnCount={columnCount}
         rowCount={rowCount}
         onOpenSettings={() => setSettingsPanelOpen(true)}
+        onClose={() => {}}
       >
         {/* Visual grid preview - similar to Figma's style */}
         <button
