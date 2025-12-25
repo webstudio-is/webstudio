@@ -7,17 +7,19 @@ import {
   IconButton,
   FloatingPanel,
   Grid,
-  InputField,
+  Tooltip,
+  css,
 } from "@webstudio-is/design-system";
-import { toValue } from "@webstudio-is/css-engine";
+import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import { GearIcon } from "@webstudio-is/icons";
 import { useComputedStyleDecl } from "../../../shared/model";
-import {
-  getPriorityStyleValueSource,
-  PropertyLabel,
-} from "../../../property-label";
+import { PropertyLabel } from "../../../property-label";
 import { GridSettingsPanel } from "./grid-settings";
 import { createBatchUpdate } from "../../../shared/use-style-data";
+import {
+  CssValueInput,
+  type IntermediateStyleValue,
+} from "../../../shared/css-value-input";
 
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
@@ -28,6 +30,94 @@ const parseTrackCount = (value: string): number => {
   // TODO: Handle more complex values like minmax(), repeat(), etc.
   const tracks = value.split(/\s+/).filter(Boolean);
   return tracks.length;
+};
+
+const selectorCellStyle = css({
+  width: 16,
+  height: 16,
+  borderRadius: theme.borderRadius[3],
+  backgroundColor: theme.colors.backgroundControls,
+  border: `1px solid ${theme.colors.borderMain}`,
+  transition: "all 0.1s ease",
+  "&:hover": {
+    borderColor: theme.colors.borderFocus,
+  },
+  variants: {
+    highlighted: {
+      true: {
+        backgroundColor: theme.colors.backgroundHover,
+        borderColor: theme.colors.borderFocus,
+      },
+    },
+  },
+});
+
+type GridSizeSelectorProps = {
+  onSelect: (columns: number, rows: number) => void;
+  initialColumns: number;
+  initialRows: number;
+};
+
+const GridSizeSelector = ({
+  onSelect,
+  initialColumns,
+  initialRows,
+}: GridSizeSelectorProps) => {
+  const [hoveredCell, setHoveredCell] = useState<{
+    col: number;
+    row: number;
+  } | null>(null);
+
+  const maxCols = 12;
+  const maxRows = 8;
+
+  const cells = useMemo(() => {
+    return Array.from({ length: maxRows * maxCols }).map((_, i) => {
+      const col = i % maxCols;
+      const row = Math.floor(i / maxCols);
+      const isSelected =
+        col < initialColumns && row < initialRows && !hoveredCell;
+      const isHighlighted =
+        hoveredCell && col <= hoveredCell.col && row <= hoveredCell.row;
+
+      return (
+        <Tooltip
+          key={i}
+          content={
+            hoveredCell && col === hoveredCell.col && row === hoveredCell.row
+              ? `${hoveredCell.col + 1}×${hoveredCell.row + 1}`
+              : ""
+          }
+          open={
+            hoveredCell
+              ? col === hoveredCell.col && row === hoveredCell.row
+              : false
+          }
+        >
+          <button
+            onMouseEnter={() => setHoveredCell({ col, row })}
+            onClick={() => onSelect(col + 1, row + 1)}
+            className={selectorCellStyle({
+              highlighted: isHighlighted || isSelected || undefined,
+            })}
+          />
+        </Tooltip>
+      );
+    });
+  }, [hoveredCell, onSelect, maxCols, maxRows, initialColumns, initialRows]);
+
+  return (
+    <Grid
+      onMouseLeave={() => setHoveredCell(null)}
+      css={{
+        gridTemplateColumns: `repeat(${maxCols}, 1fr)`,
+        gridTemplateRows: `repeat(${maxRows}, 1fr)`,
+        gap: 2,
+      }}
+    >
+      {cells}
+    </Grid>
+  );
 };
 
 type GridSizePanelProps = {
@@ -42,29 +132,38 @@ const GridSizePanel = ({
   rowCount,
 }: GridSizePanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [columnInput, setColumnInput] = useState("");
-  const [rowInput, setRowInput] = useState("");
 
-  const handleOpen = () => {
-    setColumnInput(String(columnCount));
-    setRowInput(String(rowCount));
-    setIsOpen(true);
-  };
+  const columnsStyleDecl = useComputedStyleDecl("grid-template-columns");
+  const rowsStyleDecl = useComputedStyleDecl("grid-template-rows");
 
-  const handleApply = () => {
-    const columns = parseInt(columnInput, 10);
-    const rows = parseInt(rowInput, 10);
+  const [columnValue, setColumnValue] = useState<StyleValue>({
+    type: "unit",
+    value: columnCount,
+    unit: "number",
+  });
+  const [rowValue, setRowValue] = useState<StyleValue>({
+    type: "unit",
+    value: rowCount,
+    unit: "number",
+  });
+  const [columnIntermediate, setColumnIntermediate] = useState<
+    StyleValue | IntermediateStyleValue | undefined
+  >();
+  const [rowIntermediate, setRowIntermediate] = useState<
+    StyleValue | IntermediateStyleValue | undefined
+  >();
 
-    if (
-      isNaN(columns) ||
-      isNaN(rows) ||
-      columns < 1 ||
-      rows < 1 ||
-      columns > 20 ||
-      rows > 20
-    ) {
-      return;
-    }
+  const handleSelectorSelect = (columns: number, rows: number) => {
+    setColumnValue({
+      type: "unit",
+      value: columns,
+      unit: "number",
+    });
+    setRowValue({
+      type: "unit",
+      value: rows,
+      unit: "number",
+    });
 
     const batch = createBatchUpdate();
     batch.setProperty("grid-template-columns")({
@@ -91,56 +190,89 @@ const GridSizePanel = ({
                 label="Columns"
                 properties={["grid-template-columns"]}
               />
-              <InputField
-                type="number"
-                min={1}
-                max={20}
-                value={columnInput}
-                onChange={(event) => setColumnInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    handleApply();
+              <CssValueInput
+                styleSource={columnsStyleDecl.source.name}
+                property="grid-template-columns"
+                value={columnValue}
+                intermediateValue={columnIntermediate}
+                unitOptions={[]}
+                onChange={(value) => {
+                  if (value === undefined) {
+                    return;
+                  }
+                  if (value.type === "intermediate") {
+                    setColumnIntermediate(value);
+                  } else {
+                    setColumnValue(value);
+                    setColumnIntermediate(undefined);
                   }
                 }}
+                onHighlight={() => {}}
+                onChangeComplete={(event) => {
+                  setColumnValue(event.value);
+                  setColumnIntermediate(undefined);
+                }}
+                onAbort={() => {
+                  setColumnIntermediate(undefined);
+                }}
+                onReset={() => {}}
               />
             </Grid>
             <Grid gap={1} css={{ flexGrow: 1 }}>
               <PropertyLabel label="Rows" properties={["grid-template-rows"]} />
-              <InputField
-                type="number"
-                min={1}
-                max={20}
-                value={rowInput}
-                onChange={(event) => setRowInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    handleApply();
+              <CssValueInput
+                styleSource={rowsStyleDecl.source.name}
+                property="grid-template-rows"
+                value={rowValue}
+                intermediateValue={rowIntermediate}
+                unitOptions={[]}
+                onChange={(value) => {
+                  if (value === undefined) {
+                    return;
+                  }
+                  if (value.type === "intermediate") {
+                    setRowIntermediate(value);
+                  } else {
+                    setRowValue(value);
+                    setRowIntermediate(undefined);
                   }
                 }}
+                onHighlight={() => {}}
+                onChangeComplete={(event) => {
+                  setRowValue(event.value);
+                  setRowIntermediate(undefined);
+                }}
+                onAbort={() => {
+                  setRowIntermediate(undefined);
+                }}
+                onReset={() => {}}
               />
             </Grid>
           </Flex>
+          <GridSizeSelector
+            onSelect={handleSelectorSelect}
+            initialColumns={columnCount}
+            initialRows={rowCount}
+          />
         </Flex>
       }
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <Box
-        role="button"
-        tabIndex={0}
-        onClick={handleOpen}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            handleOpen();
-          }
-        }}
-      >
-        {children}
-      </Box>
+      {children}
     </FloatingPanel>
   );
 };
+
+const gridVisualButtonStyle = css({
+  all: "unset",
+  position: "relative",
+  borderRadius: theme.borderRadius[3],
+  cursor: "pointer",
+  "&:focus-visible, &:hover, &[data-state=open]": {
+    outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
+  },
+});
 
 export const GridVisual = () => {
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
@@ -152,20 +284,12 @@ export const GridVisual = () => {
   const columnCount = parseTrackCount(columnsValue);
   const rowCount = parseTrackCount(rowsValue);
 
-  const styleValueSourceColor = getPriorityStyleValueSource([
-    gridTemplateColumns,
-    gridTemplateRows,
-  ]);
-
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
 
-  // Calculate cell size to fit within max dimensions (60px width/height)
-  const maxWidth = 62;
-  const maxHeight = 62;
-  const maxCellWidth = Math.floor(maxWidth / displayColumnCount);
-  const maxCellHeight = Math.floor(maxHeight / displayRowCount);
-  const cellSize = Math.min(maxCellWidth, maxCellHeight, 16); // Cap at 16px max
+  // Fixed grid dimensions
+  const gridWidth = 62;
+  const gridHeight = 62;
 
   // Memoize grid cells to avoid recreating on each render
   const gridCells = useMemo(() => {
@@ -197,29 +321,23 @@ export const GridVisual = () => {
   return (
     <Box
       css={{
-        padding: theme.spacing[5],
         borderRadius: theme.borderRadius[4],
       }}
     >
       <Flex direction="row" align="center" gap="2">
         <GridSizePanel columnCount={columnCount} rowCount={rowCount}>
           {/* Visual grid preview - similar to Figma's style */}
-          <Box
+          <button
             aria-label={`Grid layout: ${columnCount} columns by ${rowCount} rows`}
-            css={{
-              position: "relative",
-              borderRadius: theme.borderRadius[3],
-              cursor: "pointer",
-              "&:focus-visible, &:hover": {
-                outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
-              },
-            }}
+            className={gridVisualButtonStyle()}
           >
             <Box
               css={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${displayColumnCount}, ${cellSize}px)`,
-                gridTemplateRows: `repeat(${displayRowCount}, ${cellSize}px)`,
+                gridTemplateColumns: `repeat(${displayColumnCount}, 1fr)`,
+                gridTemplateRows: `repeat(${displayRowCount}, 1fr)`,
+                width: gridWidth,
+                height: gridHeight,
                 gap: 0,
                 border: `1px solid ${theme.colors.borderMain}`,
                 borderRadius: theme.borderRadius[3],
@@ -242,7 +360,7 @@ export const GridVisual = () => {
             >
               {columnCount}×{rowCount}
             </Text>
-          </Box>
+          </button>
         </GridSizePanel>
         <GridSettingsPanel>
           <IconButton aria-label="Edit grid settings">
