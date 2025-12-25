@@ -474,43 +474,45 @@ const LayoutSectionFlex = () => {
 
   return (
     <Flex direction="column" gap="2">
-      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
+      <Grid
+        css={{
+          gridTemplateColumns: "1fr 1fr 1fr",
+          alignItems: "stretch",
+        }}
+      >
         <FlexVisual />
-        <Flex direction="column" justify="between">
-          <Flex css={{ gap: theme.spacing[7] }}>
-            <MenuControl
-              property="flex-direction"
-              items={[
-                { name: "row", label: "Row", icon: ArrowRightIcon },
-                {
-                  name: "row-reverse",
-                  label: "Row Reverse",
-                  icon: ArrowLeftIcon,
-                },
-                { name: "column", label: "Column", icon: ArrowDownIcon },
-                {
-                  name: "column-reverse",
-                  label: "Column Reverse",
-                  icon: ArrowUpIcon,
-                },
-              ]}
-            />
-            <ToggleControl
-              property="flex-wrap"
-              items={[
-                { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
-                { name: "wrap", label: "Wrap", icon: WrapIcon },
-              ]}
-            />
-          </Flex>
-          <AlignmentControls
-            showAlignContent={
-              flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse"
-            }
+        <Flex css={{ gap: theme.spacing[7] }}>
+          <MenuControl
+            property="flex-direction"
+            items={[
+              { name: "row", label: "Row", icon: ArrowRightIcon },
+              {
+                name: "row-reverse",
+                label: "Row Reverse",
+                icon: ArrowLeftIcon,
+              },
+              { name: "column", label: "Column", icon: ArrowDownIcon },
+              {
+                name: "column-reverse",
+                label: "Column Reverse",
+                icon: ArrowUpIcon,
+              },
+            ]}
+          />
+          <ToggleControl
+            property="flex-wrap"
+            items={[
+              { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
+              { name: "wrap", label: "Wrap", icon: WrapIcon },
+            ]}
           />
         </Flex>
-      </Flex>
-
+        <AlignmentControls
+          showAlignContent={
+            flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse"
+          }
+        />
+      </Grid>
       <Gap />
     </Flex>
   );
@@ -519,8 +521,14 @@ const LayoutSectionFlex = () => {
 const LayoutSectionGrid = () => {
   return (
     <Flex direction="column" gap="2">
-      <GridVisual />
-      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
+      <Grid
+        css={{
+          gridTemplateColumns: "auto auto 1fr",
+          gap: theme.spacing[7],
+          alignItems: "stretch",
+        }}
+      >
+        <GridVisual />
         <FlexVisual />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
@@ -628,7 +636,7 @@ const LayoutSectionGrid = () => {
             />
           </Flex>
         </Flex>
-      </Flex>
+      </Grid>
 
       <Gap />
     </Flex>
