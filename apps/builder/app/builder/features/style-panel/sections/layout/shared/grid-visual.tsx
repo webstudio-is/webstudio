@@ -4,14 +4,14 @@ import {
   Flex,
   theme,
   Text,
-  IconButton,
   FloatingPanel,
   Grid,
   Tooltip,
   css,
+  Button,
+  IconButton,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
-import { GearIcon } from "@webstudio-is/icons";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { PropertyLabel } from "../../../property-label";
 import { GridSettingsPanel } from "./grid-settings";
@@ -20,6 +20,7 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../../shared/css-value-input";
+import { EllipsesIcon } from "@webstudio-is/icons";
 
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
@@ -124,12 +125,14 @@ type GridSizePanelProps = {
   children: ReactNode;
   columnCount: number;
   rowCount: number;
+  onOpenSettings: () => void;
 };
 
 const GridSizePanel = ({
   children,
   columnCount,
   rowCount,
+  onOpenSettings,
 }: GridSizePanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -254,6 +257,16 @@ const GridSizePanel = ({
             initialColumns={columnCount}
             initialRows={rowCount}
           />
+          <Button
+            color="neutral"
+            onClick={() => {
+              setIsOpen(false);
+              onOpenSettings();
+            }}
+            css={{ width: "100%" }}
+          >
+            Open grid settings
+          </Button>
         </Flex>
       }
       open={isOpen}
@@ -283,6 +296,8 @@ export const GridVisual = () => {
 
   const columnCount = parseTrackCount(columnsValue);
   const rowCount = parseTrackCount(rowsValue);
+
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
 
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
@@ -322,52 +337,77 @@ export const GridVisual = () => {
     <Box
       css={{
         borderRadius: theme.borderRadius[4],
+        position: "relative",
+        "&:hover": {
+          "--grid-settings-button-opacity": "1",
+        },
+        "&:focus-within": {
+          "--grid-settings-button-opacity": "1",
+        },
       }}
     >
-      <Flex direction="row" align="center" gap="2">
-        <GridSizePanel columnCount={columnCount} rowCount={rowCount}>
-          {/* Visual grid preview - similar to Figma's style */}
-          <button
-            aria-label={`Grid layout: ${columnCount} columns by ${rowCount} rows`}
-            className={gridVisualButtonStyle()}
+      <GridSettingsPanel
+        open={settingsPanelOpen}
+        onOpenChange={setSettingsPanelOpen}
+      >
+        <IconButton
+          css={{
+            position: "absolute",
+            top: theme.spacing[3],
+            right: theme.spacing[3],
+            opacity: "var(--grid-settings-button-opacity, 0)",
+            transition: "opacity 100ms ease",
+            pointerEvents: "auto",
+            zIndex: 1,
+            "&:focus-visible": {
+              opacity: 1,
+            },
+          }}
+        >
+          <EllipsesIcon />
+        </IconButton>
+      </GridSettingsPanel>
+      <GridSizePanel
+        columnCount={columnCount}
+        rowCount={rowCount}
+        onOpenSettings={() => setSettingsPanelOpen(true)}
+      >
+        {/* Visual grid preview - similar to Figma's style */}
+        <button
+          aria-label={`Grid layout: ${columnCount} columns by ${rowCount} rows`}
+          className={gridVisualButtonStyle()}
+        >
+          <Box
+            css={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${displayColumnCount}, 1fr)`,
+              gridTemplateRows: `repeat(${displayRowCount}, 1fr)`,
+              width: gridWidth,
+              height: gridHeight,
+              gap: 0,
+              border: `1px solid ${theme.colors.borderMain}`,
+              borderRadius: theme.borderRadius[3],
+              overflow: "hidden",
+            }}
           >
-            <Box
-              css={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${displayColumnCount}, 1fr)`,
-                gridTemplateRows: `repeat(${displayRowCount}, 1fr)`,
-                width: gridWidth,
-                height: gridHeight,
-                gap: 0,
-                border: `1px solid ${theme.colors.borderMain}`,
-                borderRadius: theme.borderRadius[3],
-                overflow: "hidden",
-              }}
-            >
-              {gridCells}
-            </Box>
-            <Text
-              variant="mono"
-              css={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                fontSize: theme.deprecatedFontSize[3],
-                fontWeight: 500,
-                pointerEvents: "none",
-              }}
-            >
-              {columnCount}×{rowCount}
-            </Text>
-          </button>
-        </GridSizePanel>
-        <GridSettingsPanel>
-          <IconButton aria-label="Edit grid settings">
-            <GearIcon />
-          </IconButton>
-        </GridSettingsPanel>
-      </Flex>
+            {gridCells}
+          </Box>
+          <Text
+            variant="mono"
+            css={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: theme.deprecatedFontSize[3],
+              fontWeight: 500,
+              pointerEvents: "none",
+            }}
+          >
+            {columnCount}×{rowCount}
+          </Text>
+        </button>
+      </GridSizePanel>
     </Box>
   );
 };
