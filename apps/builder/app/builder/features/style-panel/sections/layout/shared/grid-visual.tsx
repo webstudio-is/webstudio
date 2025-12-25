@@ -280,9 +280,14 @@ const GridSizePanel = ({
 const gridVisualButtonStyle = css({
   all: "unset",
   position: "relative",
+  display: "grid",
+  width: 60,
+  height: 60,
+  outline: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[3],
+  overflow: "hidden",
   cursor: "pointer",
-  "&:focus-visible, &:hover, &[data-state=open]": {
+  "&:focus-within, &:hover, &[data-state=open]": {
     outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
   },
 });
@@ -301,10 +306,6 @@ export const GridVisual = () => {
 
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
-
-  // Fixed grid dimensions
-  const gridWidth = 62;
-  const gridHeight = 62;
 
   // Memoize grid cells to avoid recreating on each render
   const gridCells = useMemo(() => {
@@ -338,10 +339,8 @@ export const GridVisual = () => {
       css={{
         borderRadius: theme.borderRadius[4],
         position: "relative",
+        "--grid-settings-button-opacity": settingsPanelOpen ? 1 : 0,
         "&:hover": {
-          "--grid-settings-button-opacity": "1",
-        },
-        "&:focus-within": {
           "--grid-settings-button-opacity": "1",
         },
       }}
@@ -351,17 +350,14 @@ export const GridVisual = () => {
         onOpenChange={setSettingsPanelOpen}
       >
         <IconButton
+          tabIndex={-1}
           css={{
             position: "absolute",
-            top: theme.spacing[3],
-            right: theme.spacing[3],
+            top: 0,
+            right: 0,
             opacity: "var(--grid-settings-button-opacity, 0)",
             transition: "opacity 100ms ease",
-            pointerEvents: "auto",
             zIndex: 1,
-            "&:focus-visible": {
-              opacity: 1,
-            },
           }}
         >
           <EllipsesIcon />
@@ -376,22 +372,12 @@ export const GridVisual = () => {
         <button
           aria-label={`Grid layout: ${columnCount} columns by ${rowCount} rows`}
           className={gridVisualButtonStyle()}
+          style={{
+            gridTemplateColumns: `repeat(${displayColumnCount}, 1fr)`,
+            gridTemplateRows: `repeat(${displayRowCount}, 1fr)`,
+          }}
         >
-          <Box
-            css={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${displayColumnCount}, 1fr)`,
-              gridTemplateRows: `repeat(${displayRowCount}, 1fr)`,
-              width: gridWidth,
-              height: gridHeight,
-              gap: 0,
-              border: `1px solid ${theme.colors.borderMain}`,
-              borderRadius: theme.borderRadius[3],
-              overflow: "hidden",
-            }}
-          >
-            {gridCells}
-          </Box>
+          {gridCells}
           <Text
             variant="mono"
             css={{
