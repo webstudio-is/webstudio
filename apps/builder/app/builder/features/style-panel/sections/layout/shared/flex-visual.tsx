@@ -93,7 +93,7 @@ export const FlexVisual = () => {
         gridTemplateRows: "repeat(3, 1fr)",
         color,
         "&:focus-within": {
-          outlineColor: theme.colors.borderLocalFlexUi,
+          outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
         },
       }}
     >
