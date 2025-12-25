@@ -655,6 +655,9 @@ export const properties = [
   "align-content",
   "row-gap",
   "column-gap",
+  "grid-auto-flow",
+  "grid-template-columns",
+  "grid-template-rows",
 ] satisfies Array<CssProperty>;
 
 export const Section = () => {
