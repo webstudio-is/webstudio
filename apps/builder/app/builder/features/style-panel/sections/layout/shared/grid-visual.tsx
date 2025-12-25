@@ -12,14 +12,18 @@ import {
   IconButton,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
-import { useComputedStyleDecl } from "../../../shared/model";
+import { keywordValues } from "@webstudio-is/css-data";
+import {
+  useComputedStyleDecl,
+  $availableUnitVariables,
+} from "../../../shared/model";
 import { PropertyLabel } from "../../../property-label";
 import { GridSettingsPanel } from "./grid-settings";
-import { createBatchUpdate } from "../../../shared/use-style-data";
 import {
-  CssValueInput,
-  type IntermediateStyleValue,
-} from "../../../shared/css-value-input";
+  createBatchUpdate,
+  deleteProperty,
+} from "../../../shared/use-style-data";
+import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { EllipsesIcon } from "@webstudio-is/icons";
 
 const parseTrackCount = (value: string): number => {
@@ -141,45 +145,75 @@ const GridSizePanel = ({
   const columnsStyleDecl = useComputedStyleDecl("grid-template-columns");
   const rowsStyleDecl = useComputedStyleDecl("grid-template-rows");
 
-  const [columnValue, setColumnValue] = useState<StyleValue>({
-    type: "unit",
-    value: columnCount,
-    unit: "number",
-  });
-  const [rowValue, setRowValue] = useState<StyleValue>({
-    type: "unit",
-    value: rowCount,
-    unit: "number",
-  });
-  const [columnIntermediate, setColumnIntermediate] = useState<
-    StyleValue | IntermediateStyleValue | undefined
-  >();
-  const [rowIntermediate, setRowIntermediate] = useState<
-    StyleValue | IntermediateStyleValue | undefined
-  >();
+  // Helper to check if value is a simple 1fr pattern (e.g., "1fr 1fr 1fr")
+  const isSimpleFrPattern = (value: StyleValue): boolean => {
+    if (value.type !== "unparsed") {
+      return false;
+    }
+    const tracks = value.value.split(/\s+/).filter(Boolean);
+    return tracks.every((track) => track === "1fr");
+  };
+
+  // Get the value to display in the input
+  const getDisplayValue = (
+    cascadedValue: StyleValue,
+    count: number
+  ): StyleValue => {
+    if (
+      cascadedValue.type === "guaranteedInvalid" ||
+      (cascadedValue.type === "keyword" && cascadedValue.value === "none") ||
+      isSimpleFrPattern(cascadedValue)
+    ) {
+      return { type: "unit", value: count, unit: "number" };
+    }
+    return cascadedValue;
+  };
+
+  const columnValue = getDisplayValue(
+    columnsStyleDecl.cascadedValue,
+    columnCount
+  );
+  const rowValue = getDisplayValue(rowsStyleDecl.cascadedValue, rowCount);
+
+  const handleChange = (
+    columns: number | StyleValue,
+    rows: number | StyleValue
+  ) => {
+    const batch = createBatchUpdate();
+
+    if (typeof columns === "number") {
+      batch.setProperty("grid-template-columns")({
+        type: "unparsed",
+        value: Array(columns).fill("1fr").join(" "),
+      });
+    } else if (columns.type === "unit" && columns.unit === "number") {
+      batch.setProperty("grid-template-columns")({
+        type: "unparsed",
+        value: Array(columns.value).fill("1fr").join(" "),
+      });
+    } else {
+      batch.setProperty("grid-template-columns")(columns);
+    }
+
+    if (typeof rows === "number") {
+      batch.setProperty("grid-template-rows")({
+        type: "unparsed",
+        value: Array(rows).fill("1fr").join(" "),
+      });
+    } else if (rows.type === "unit" && rows.unit === "number") {
+      batch.setProperty("grid-template-rows")({
+        type: "unparsed",
+        value: Array(rows.value).fill("1fr").join(" "),
+      });
+    } else {
+      batch.setProperty("grid-template-rows")(rows);
+    }
+
+    batch.publish();
+  };
 
   const handleSelectorSelect = (columns: number, rows: number) => {
-    setColumnValue({
-      type: "unit",
-      value: columns,
-      unit: "number",
-    });
-    setRowValue({
-      type: "unit",
-      value: rows,
-      unit: "number",
-    });
-
-    const batch = createBatchUpdate();
-    batch.setProperty("grid-template-columns")({
-      type: "unparsed",
-      value: Array(columns).fill("1fr").join(" "),
-    });
-    batch.setProperty("grid-template-rows")({
-      type: "unparsed",
-      value: Array(rows).fill("1fr").join(" "),
-    });
-    batch.publish();
+    handleChange(columns, rows);
     onClose();
   };
 
@@ -195,64 +229,50 @@ const GridSizePanel = ({
                 label="Columns"
                 properties={["grid-template-columns"]}
               />
-              <CssValueInput
+              <CssValueInputContainer
                 styleSource={columnsStyleDecl.source.name}
                 property="grid-template-columns"
                 value={columnValue}
-                intermediateValue={columnIntermediate}
                 unitOptions={[]}
-                onChange={(value) => {
-                  if (value === undefined) {
-                    return;
-                  }
-                  if (value.type === "intermediate") {
-                    setColumnIntermediate(value);
-                  } else {
-                    setColumnValue(value);
-                    setColumnIntermediate(undefined);
-                  }
+                getOptions={() => [
+                  ...(keywordValues["grid-template-columns"] ?? []).map(
+                    (value) => ({
+                      type: "keyword" as const,
+                      value,
+                    })
+                  ),
+                  ...$availableUnitVariables.get(),
+                ]}
+                onUpdate={(value) => {
+                  handleChange(value, rowCount);
                 }}
-                onHighlight={() => {}}
-                onChangeComplete={(event) => {
-                  if (event.value.type === "unit") {
-                    handleSelectorSelect(event.value.value, rowCount);
-                  }
+                onDelete={() => {
+                  deleteProperty("grid-template-columns");
                 }}
-                onAbort={() => {
-                  setColumnIntermediate(undefined);
-                }}
-                onReset={() => {}}
               />
             </Grid>
             <Grid gap={1} css={{ flexGrow: 1 }}>
               <PropertyLabel label="Rows" properties={["grid-template-rows"]} />
-              <CssValueInput
+              <CssValueInputContainer
                 styleSource={rowsStyleDecl.source.name}
                 property="grid-template-rows"
                 value={rowValue}
-                intermediateValue={rowIntermediate}
                 unitOptions={[]}
-                onChange={(value) => {
-                  if (value === undefined) {
-                    return;
-                  }
-                  if (value.type === "intermediate") {
-                    setRowIntermediate(value);
-                  } else {
-                    setRowValue(value);
-                    setRowIntermediate(undefined);
-                  }
+                getOptions={() => [
+                  ...(keywordValues["grid-template-rows"] ?? []).map(
+                    (value) => ({
+                      type: "keyword" as const,
+                      value,
+                    })
+                  ),
+                  ...$availableUnitVariables.get(),
+                ]}
+                onUpdate={(value) => {
+                  handleChange(columnCount, value);
                 }}
-                onHighlight={() => {}}
-                onChangeComplete={(event) => {
-                  if (event.value.type === "unit") {
-                    handleSelectorSelect(columnCount, event.value.value);
-                  }
+                onDelete={() => {
+                  deleteProperty("grid-template-rows");
                 }}
-                onAbort={() => {
-                  setRowIntermediate(undefined);
-                }}
-                onReset={() => {}}
               />
             </Grid>
           </Flex>
