@@ -283,8 +283,8 @@ const GridSizePanel = ({
           />
           <Button
             color="neutral"
-            onClick={() => {
-              setIsOpen(false);
+            onClick={(event) => {
+              onClose();
               onOpenSettings();
             }}
             css={{ width: "100%" }}
@@ -391,7 +391,7 @@ export const GridVisual = () => {
         columnCount={columnCount}
         rowCount={rowCount}
         onOpenSettings={() => setSettingsPanelOpen(true)}
-        onClose={() => {}}
+        onClose={() => setSettingsPanelOpen(false)}
       >
         {/* Visual grid preview - similar to Figma's style */}
         <button
