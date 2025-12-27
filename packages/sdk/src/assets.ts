@@ -410,11 +410,8 @@ export const getAssetUrl = (asset: Asset, origin: string): URL => {
   let path: string;
   const assetType = detectAssetType(asset.name);
 
-  // Route SVGs to the asset endpoint to avoid image optimization
-  if (asset.name.toLowerCase().endsWith(".svg")) {
-    path = `/cgi/asset/${asset.name}`;
-  } else if (assetType === "image") {
-    path = `/cgi/image/${asset.name}`;
+  if (assetType === "image") {
+    path = `/cgi/image/${asset.name}?format=raw`;
   } else if (assetType === "video") {
     path = `/cgi/video/${asset.name}`;
   } else {

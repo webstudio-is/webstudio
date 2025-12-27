@@ -461,20 +461,11 @@ describe("allowed-file-types", () => {
 
     test("generates correct URL for image assets", () => {
       const url = getAssetUrl(mockImageAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/image/photo.jpg");
+      expect(url.href).toBe(
+        "https://example.com/cgi/image/photo.jpg?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/image/photo.jpg");
-      expect(url.search).toBe("");
-    });
-
-    test("generates correct URL for SVG assets via asset route", () => {
-      const svgAsset = {
-        ...mockImageAsset,
-        name: "icon.svg",
-        format: "svg",
-      };
-      const url = getAssetUrl(svgAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/icon.svg");
-      expect(url.pathname).toBe("/cgi/asset/icon.svg");
+      expect(url.search).toBe("?format=raw");
     });
 
     test("generates correct URL for video assets", () => {

@@ -71,8 +71,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (env.RESIZE_ORIGIN !== undefined) {
     const imgHref = wsImageLoader({
-      ...imageParameters,
       src: name,
+      ...imageParameters,
       format: "auto",
     });
 
