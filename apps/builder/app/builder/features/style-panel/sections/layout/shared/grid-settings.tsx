@@ -15,6 +15,7 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
+import { GridAreas } from "./grid-areas";
 
 const parseTrackList = (value: string): string[] => {
   if (!value || value === "none") {
@@ -156,6 +157,7 @@ export const GridSettingsPanel = ({
         <Flex direction="column">
           <TrackEditor property="grid-template-columns" label="Columns" />
           <TrackEditor property="grid-template-rows" label="Rows" />
+          <GridAreas />
         </Flex>
       }
       open={open}
