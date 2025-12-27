@@ -1,19 +1,14 @@
-import { useState } from "react";
 import {
   theme,
   Flex,
   Text,
-  Button,
   IconButton,
   FloatingPanel,
   Grid,
 } from "@webstudio-is/design-system";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
-import {
-  type IntermediateStyleValue,
-  CssValueInput,
-} from "../../../shared/css-value-input";
+import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import {
@@ -49,11 +44,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
   const tracks = parseTrackList(value);
-  const [isOpen, setIsOpen] = useOpenState({ label });
-
-  const [intermediateValues, setIntermediateValues] = useState<
-    Record<number, StyleValue | IntermediateStyleValue>
-  >({});
+  const [isOpen, setIsOpen] = useOpenState(label);
 
   const updateTracks = (newTracks: string[]) => {
     const batch = createBatchUpdate();
@@ -115,58 +106,22 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
             <Text color="subtle" css={{ textAlign: "center" }}>
               {index + 1}
             </Text>
-            <CssValueInput
+            <CssValueInputContainer
               styleSource="local"
               property={property}
-              value={
-                intermediateValues[index] ?? {
-                  type: "unparsed",
-                  value: track,
-                }
-              }
-              intermediateValue={intermediateValues[index]}
-              keywords={[]}
-              onChange={(value) => {
-                if (value && "value" in value) {
-                  const stringValue =
-                    value.type === "unparsed" ? value.value : toValue(value);
-                  updateTrack(index, stringValue);
-                }
-                setIntermediateValues((prev) => {
-                  const next = { ...prev };
-                  delete next[index];
-                  return next;
-                });
+              value={{
+                type: "unparsed",
+                value: track,
               }}
-              onIntermediateChange={(value) => {
-                if (value !== undefined) {
-                  setIntermediateValues((prev) => ({
-                    ...prev,
-                    [index]: value,
-                  }));
-                }
+              onUpdate={(styleValue) => {
+                const stringValue =
+                  styleValue.type === "unparsed"
+                    ? styleValue.value
+                    : toValue(styleValue);
+                updateTrack(index, stringValue);
               }}
-              onHighlight={() => {}}
-              onChangeComplete={({ value }) => {
-                if (value && "value" in value) {
-                  const stringValue =
-                    value.type === "unparsed" ? value.value : toValue(value);
-                  updateTrack(index, stringValue);
-                }
-              }}
-              onAbort={() => {
-                setIntermediateValues((prev) => {
-                  const next = { ...prev };
-                  delete next[index];
-                  return next;
-                });
-              }}
-              onReset={() => {
-                setIntermediateValues((prev) => {
-                  const next = { ...prev };
-                  delete next[index];
-                  return next;
-                });
+              onDelete={() => {
+                // Don't allow deleting individual tracks
               }}
             />
             <IconButton
