@@ -283,7 +283,7 @@ const GridSizePanel = ({
           />
           <Button
             color="neutral"
-            onClick={(event) => {
+            onClick={() => {
               onClose();
               onOpenSettings();
             }}
