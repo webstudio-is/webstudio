@@ -8,6 +8,7 @@ import {
   decodePathFragment,
 } from "@webstudio-is/sdk";
 import { fileUploadPath } from "~/shared/asset-client";
+import env from "~/env/env.server";
 
 // This route serves generic assets without processing
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -22,6 +23,38 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (refererUrl.host !== url.host) {
     throw new Response("Forbidden", {
       status: 403,
+    });
+  }
+
+  // In production, proxy to the storage origin (R2/S3)
+  if (env.RESIZE_ORIGIN !== undefined) {
+    const assetUrl = new URL(env.RESIZE_ORIGIN + url.pathname);
+
+    const response = await fetch(assetUrl.href, {
+      headers: {
+        accept: request.headers.get("accept") ?? "",
+        "accept-encoding": request.headers.get("accept-encoding") ?? "",
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        `Request to asset url ${assetUrl.href} responded with status = ${response.status}`
+      );
+      throw new Response("Not found", {
+        status: response.status,
+      });
+    }
+
+    // Override content-type from storage with correct MIME type based on filename
+    const contentType = getMimeTypeByFilename(name);
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set("content-type", contentType);
+    responseHeaders.set("Access-Control-Allow-Origin", url.origin);
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: responseHeaders,
     });
   }
 
