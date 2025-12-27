@@ -36,11 +36,13 @@ export const getAssetData = async (
     let image: undefined | { format: string; width: number; height: number };
     try {
       const parsed = imageMeta(Buffer.from(options.data));
-      if (parsed.type && parsed.width && parsed.height) {
+      if (parsed.type) {
         image = {
           format: parsed.type,
-          width: parsed.width,
-          height: parsed.height,
+          // SVG images may not have explicit width/height dimensions
+          // (they use viewBox instead), so we default to 0 if missing
+          width: parsed.width ?? 0,
+          height: parsed.height ?? 0,
         };
       }
     } catch {
