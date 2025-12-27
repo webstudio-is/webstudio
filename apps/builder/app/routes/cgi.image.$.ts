@@ -73,8 +73,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Use the format from URL parameters instead of hardcoding "auto"
     // This allows getAssetUrl() to specify format=raw for SVGs and other non-optimizable formats
     const imgHref = wsImageLoader({
-      src: name,
       ...imageParameters,
+      src: name,
+      format: imageParameters.format === "raw" ? "raw" : "auto",
     });
 
     const imgUrl = new URL(env.RESIZE_ORIGIN + imgHref);
