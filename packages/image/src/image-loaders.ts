@@ -35,6 +35,11 @@ export const wsImageLoader: ImageLoader = (props) => {
     src = src.slice("/cgi/asset".length);
   }
 
+  // Route SVGs through /cgi/asset/ to avoid image optimization
+  if (src.toLowerCase().endsWith(".svg")) {
+    return `/cgi/asset/${encodePathFragment(src)}`;
+  }
+
   const resultUrl = new URL("/cgi/image/", NON_EXISTING_DOMAIN);
 
   if (props.format !== "raw") {
