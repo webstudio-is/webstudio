@@ -42,7 +42,7 @@ const additionalShortcuts = [
     label: "Expand all items",
     description: "Click on arrow to expand or collapse all child items",
     category: "Navigator",
-    defaultHotkeys: ["alt+click", "alt+click"],
+    defaultHotkeys: ["alt+click"],
   },
   {
     name: "switchBreakpoint",
