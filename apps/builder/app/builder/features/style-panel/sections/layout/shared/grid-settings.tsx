@@ -154,7 +154,7 @@ export const GridSettingsPanel = ({
     <FloatingPanel
       title="Grid Settings"
       content={
-        <Flex direction="column">
+        <Flex direction="column" data-floating-panel-container>
           <TrackEditor property="grid-template-columns" label="Columns" />
           <TrackEditor property="grid-template-rows" label="Rows" />
           <GridAreas />
