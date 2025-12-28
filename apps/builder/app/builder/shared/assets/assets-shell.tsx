@@ -13,7 +13,8 @@ import {
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { AssetUpload, acceptUploadType, validateFiles } from "./asset-upload";
+import { acceptUploadType, validateFiles } from "./asset-upload";
+import { detectAssetType } from "@webstudio-is/sdk";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -35,6 +36,7 @@ import {
 } from "./drag-monitor";
 
 type AssetsShellProps = {
+  filters?: JSX.Element;
   searchProps: ComponentProps<typeof SearchField>;
   children: JSX.Element;
   type: AssetType;
@@ -52,6 +54,7 @@ const OVER = 2;
 type DropTargetState = typeof IDLE | typeof OVER;
 
 export const AssetsShell = ({
+  filters,
   searchProps,
   isEmpty,
   children,
@@ -144,7 +147,21 @@ export const AssetsShell = ({
               return false;
             });
 
-          uploadAssets(type, files);
+          // Group files by their detected type
+          const filesByType = new Map<string, File[]>();
+          for (const file of files) {
+            const detectedType = detectAssetType(file.name);
+            if (!filesByType.has(detectedType)) {
+              filesByType.set(detectedType, []);
+            }
+            filesByType.get(detectedType)!.push(file);
+          }
+
+          // Upload each group with the correct type
+          for (const [detectedType, filesOfType] of filesByType) {
+            uploadAssets(detectedType as AssetType, filesOfType);
+          }
+
           uploadAssets(type, droppedUrls);
         },
       })
@@ -164,14 +181,19 @@ export const AssetsShell = ({
         position: "relative",
       }}
     >
-      <Flex css={{ padding: theme.panel.padding }} gap="2">
+      <Flex
+        css={{ padding: theme.panel.padding }}
+        gap="2"
+        wrap="wrap"
+        shrink={false}
+      >
         <SearchField
           css={{ flexGrow: 1 }}
           {...searchProps}
           autoFocus
           placeholder="Search"
         />
-        <AssetUpload type={type} accept={accept} />
+        {filters}
       </Flex>
       <Separator />
       {isEmpty && <NotFound />}

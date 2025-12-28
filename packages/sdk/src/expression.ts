@@ -43,7 +43,13 @@ export const allowedStringMethods = new Set([
   "toLocaleUpperCase",
 ]);
 
-export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
+export const allowedArrayMethods = new Set([
+  "at",
+  "includes",
+  "join",
+  "slice",
+  "filter",
+]);
 
 export const lintExpression = ({
   expression,
@@ -87,6 +93,7 @@ export const lintExpression = ({
       // support parsing import to forbid explicitly
       sourceType: "module",
     });
+
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {

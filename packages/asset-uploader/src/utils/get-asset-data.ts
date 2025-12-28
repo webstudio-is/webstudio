@@ -1,19 +1,19 @@
 import { z } from "zod";
 import { imageMeta } from "image-meta";
 import { FontMeta } from "@webstudio-is/fonts";
-import { ImageMeta } from "@webstudio-is/sdk";
+import { ImageMeta, validateFileName } from "@webstudio-is/sdk";
 import { getFontData } from "./font-data";
 
 export type AssetData = {
   size: number;
   format: string;
-  meta: ImageMeta | FontMeta;
+  meta: ImageMeta | FontMeta | object;
 };
 
 export const AssetData: z.ZodType<AssetData> = z.object({
   size: z.number(),
   format: z.string(),
-  meta: z.union([ImageMeta, FontMeta]),
+  meta: z.union([ImageMeta, FontMeta, z.object({})]),
 });
 
 type BaseAssetOptions = {
@@ -26,7 +26,8 @@ type AssetOptions =
   | ({
       type: "image";
     } & BaseAssetOptions)
-  | ({ type: "font" } & BaseAssetOptions);
+  | ({ type: "font" } & BaseAssetOptions)
+  | ({ type: "file" } & BaseAssetOptions);
 
 export const getAssetData = async (
   options: AssetOptions
@@ -35,11 +36,13 @@ export const getAssetData = async (
     let image: undefined | { format: string; width: number; height: number };
     try {
       const parsed = imageMeta(Buffer.from(options.data));
-      if (parsed.type && parsed.width && parsed.height) {
+      if (parsed.type) {
         image = {
           format: parsed.type,
-          width: parsed.width,
-          height: parsed.height,
+          // SVG images may not have explicit width/height dimensions
+          // (they use viewBox instead), so we default to 0 if missing
+          width: parsed.width ?? 0,
+          height: parsed.height ?? 0,
         };
       }
     } catch {
@@ -56,11 +59,23 @@ export const getAssetData = async (
       meta: { width, height },
     };
   }
-  const { format, ...meta } = getFontData(options.data, options.name);
+
+  if (options.type === "font") {
+    const { format, ...meta } = getFontData(options.data, options.name);
+
+    return {
+      size: options.size,
+      format,
+      meta,
+    };
+  }
+
+  // Validate file name and get extension
+  const { extension } = validateFileName(options.name);
 
   return {
     size: options.size,
-    format,
-    meta,
+    format: extension,
+    meta: {},
   };
 };

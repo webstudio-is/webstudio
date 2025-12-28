@@ -279,12 +279,14 @@ const uploadAsset = async ({
   authToken,
   projectId,
   fileOrUrl,
+  assetType,
   onCompleted,
   onError,
 }: {
   authToken: undefined | string;
   projectId: string;
   fileOrUrl: File | URL;
+  assetType: AssetType;
   onCompleted: (data: UploadData) => void;
   onError: (error: string) => void;
 }) => {
@@ -294,7 +296,7 @@ const uploadAsset = async ({
 
     const metaFormData = new FormData();
     metaFormData.append("projectId", projectId);
-    metaFormData.append("type", mimeType);
+    metaFormData.append("type", assetType);
     // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
     // should be removed after fix
     metaFormData.append(
@@ -448,6 +450,7 @@ const processUpload = async (
         projectId,
         fileOrUrl:
           fileData.source === "file" ? fileData.file : new URL(fileData.url),
+        assetType: fileData.type,
         onCompleted: (data) => {
           URL.revokeObjectURL(fileData.objectURL);
           deleteUploadingFileData(assetId);
@@ -544,13 +547,19 @@ export async function uploadAssets(
   return res;
 }
 
-const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
+const filterByType = (
+  assetContainers: AssetContainer[],
+  type: Asset["type"] | undefined
+) => {
+  if (type === undefined) {
+    return assetContainers;
+  }
   return assetContainers.filter((assetContainer) => {
     return assetContainer.asset.type === type;
   });
 };
 
-export const useAssets = (type: AssetType) => {
+export const useAssets = (type?: Asset["type"]) => {
   const assetContainers = useStore($assetContainers);
 
   const assetsByType = useMemo(() => {

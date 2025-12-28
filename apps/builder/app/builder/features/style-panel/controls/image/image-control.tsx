@@ -8,13 +8,14 @@ import {
 } from "@webstudio-is/design-system";
 import type { CssProperty, InvalidValue } from "@webstudio-is/css-engine";
 import { $assets } from "~/shared/sync/data-stores";
-import { ImageManager } from "~/shared/image-manager";
+import { AssetManager } from "~/builder/shared/asset-manager";
 import { useComputedStyleDecl } from "../../shared/model";
 import {
   getRepeatedStyleItem,
   setRepeatedStyleItem,
 } from "../../shared/repeated-style";
 import { formatAssetName } from "~/builder/shared/assets/asset-utils";
+import { AssetUpload } from "~/builder/shared/assets";
 
 const isValidURL = (value: string) => {
   try {
@@ -101,8 +102,10 @@ export const ImageControl = ({
       />
       <FloatingPanel
         title="Images"
+        titleSuffix={<AssetUpload type="image" />}
         content={
-          <ImageManager
+          <AssetManager
+            accept="image/*"
             onChange={(assetId) => {
               setRepeatedStyleItem(styleDecl, index, {
                 type: "image",

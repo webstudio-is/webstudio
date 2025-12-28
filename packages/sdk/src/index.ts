@@ -13,6 +13,7 @@ export * from "./schema/webstudio";
 export * from "./schema/prop-meta";
 export * from "./schema/component-meta";
 
+export * from "./assets";
 export * from "./core-metas";
 export * from "./instances-utils";
 export * from "./page-utils";

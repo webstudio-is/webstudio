@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
 import { useStore } from "@nanostores/react";
-import { getMimeByExtension } from "@webstudio-is/asset-uploader";
+import { getMimeTypeByExtension } from "@webstudio-is/sdk";
 import {
   Box,
   Button,
@@ -32,6 +32,7 @@ import {
 import {
   AspectRatioIcon,
   CloudIcon,
+  CopyIcon,
   DimensionsIcon,
   DownloadIcon,
   GearIcon,
@@ -71,8 +72,10 @@ import {
 import {
   formatAssetName,
   parseAssetName,
+  getAssetUrl,
 } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
+import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 
 const buttonLinkClass = css({
   all: "unset",
@@ -263,7 +266,7 @@ const useLocalValue = <Type extends string>(
   ] as const;
 };
 
-const ImageInfoContent = ({
+const AssetInfoContent = ({
   asset,
   usages,
 }: {
@@ -341,7 +344,7 @@ const ImageInfoContent = ({
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <PageIcon />
             <Text variant="labelsSentenceCase">
-              {getMimeByExtension(`.${ext}`)}
+              {getMimeTypeByExtension(ext) ?? "unknown"}
             </Text>
           </Flex>
           {"width" in meta && "height" in meta && (
@@ -377,12 +380,12 @@ const ImageInfoContent = ({
       </Box>
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
-        <Label htmlFor="image-manager-filename">Name</Label>
+        <Label htmlFor="asset-manager-filename">Name</Label>
         <InputErrorsTooltip
           errors={filenameError ? [filenameError] : undefined}
         >
           <InputField
-            id="image-manager-filename"
+            id="asset-manager-filename"
             color={filenameError ? "error" : undefined}
             value={filename}
             onChange={(event) => {
@@ -395,7 +398,7 @@ const ImageInfoContent = ({
 
       <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
         <Label
-          htmlFor="image-manager-description"
+          htmlFor="asset-manager-description"
           css={{ display: "flex", alignItems: "center", gap: 4 }}
         >
           Description
@@ -407,10 +410,26 @@ const ImageInfoContent = ({
           </Tooltip>
         </Label>
         <InputField
-          id="image-manager-description"
+          id="asset-manager-description"
           placeholder='Enter "alt" text'
           value={description}
           onChange={(event) => setDescription(event.target.value)}
+        />
+      </Grid>
+
+      <Grid css={{ padding: theme.panel.padding, gap: 4 }}>
+        <Label htmlFor="asset-manager-id">ID</Label>
+        <InputField
+          id="asset-manager-id"
+          readOnly
+          value={id}
+          suffix={
+            <Flex justify="center" css={{ paddingInline: theme.spacing[2] }}>
+              <CopyToClipboard text={id}>
+                <SmallIconButton icon={<CopyIcon />} />
+              </CopyToClipboard>
+            </Flex>
+          }
         />
       </Grid>
 
@@ -470,7 +489,7 @@ const ImageInfoContent = ({
             <IconButton
               as="a"
               download={formatAssetName(asset)}
-              href={`/cgi/image/${asset.name}?format=raw`}
+              href={getAssetUrl(asset, window.location.origin).href}
             >
               <DownloadIcon />
             </IconButton>
@@ -481,13 +500,13 @@ const ImageInfoContent = ({
   );
 };
 
-const triggerVisibilityVar = `--ws-image-info-trigger-visibility`;
+const triggerVisibilityVar = `--ws-asset-info-trigger-visibility`;
 
-export const imageInfoCssVars = ({ show }: { show: boolean }) => ({
+export const assetInfoCssVars = ({ show }: { show: boolean }) => ({
   [triggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
-export const ImageInfo = ({ asset }: { asset: Asset }) => {
+export const AssetInfo = ({ asset }: { asset: Asset }) => {
   const usagesByAssetId = useStore($usagesByAssetId);
   const usages = usagesByAssetId.get(asset.id) ?? [];
   return (
@@ -509,7 +528,11 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
                 fill: `oklch(from ${theme.colors.white} l c h / 0.9)`,
               },
               "&:hover": {
-                color: theme.colors.foregroundIconMain,
+                color: theme.colors.backgroundIconSubtle,
+                background: "transparent",
+                "& svg": {
+                  fill: `oklch(from ${theme.colors.white} l c h / 1)`,
+                },
               },
             }}
             icon={<GearIcon />}
@@ -517,7 +540,7 @@ export const ImageInfo = ({ asset }: { asset: Asset }) => {
         </PopoverTrigger>
         <PopoverContent css={{ minWidth: 250 }}>
           <PopoverTitle>Asset Details</PopoverTitle>
-          <ImageInfoContent asset={asset} usages={usages} />
+          <AssetInfoContent asset={asset} usages={usages} />
         </PopoverContent>
       </Popover>
       {usages.length === 0 && (
