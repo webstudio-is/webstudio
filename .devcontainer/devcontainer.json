@@ -19,9 +19,16 @@
   // "forwardPorts": [3000, 5432],
   "forwardPorts": [5173],
 
+  // Allow the container to use the default command from the base image
+  "overrideCommand": false,
+  // Mount the project folder from your local machine into the container for live code access
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspaces/webstudio,type=bind,consistency=cached"
+  ],
+  
   // Use 'postCreateCommand' to run commands after the container is created.
 
-  "postCreateCommand": ".devcontainer/postinstall.sh",
+  "postCreateCommand": "chmod +x .devcontainer/postinstall.sh && .devcontainer/postinstall.sh",
   // "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
     "vscode": {
