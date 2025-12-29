@@ -367,7 +367,9 @@ export const StyleSourceControl = ({
           </StyleSourceButton>
         </Flex>
         {stateLabel !== undefined && (
-          <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+          <Tooltip content={state || stateLabel} side="top">
+            <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+          </Tooltip>
         )}
         {showMenu && (
           <Menu open={menuOpen} onOpenChange={setMenuOpen}>

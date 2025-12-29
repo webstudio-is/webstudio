@@ -37,6 +37,7 @@ import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
 import { humanizeString } from "~/shared/string-utils";
+import { getUsedSelectors } from "./shared/recent-selectors";
 
 // Declare command for this module
 declare module "~/shared/pubsub" {
@@ -345,6 +346,13 @@ export const StyleSourcesSection = () => {
   const selectedInstanceStatesByStyleSourceId = useStore(
     $selectedInstanceStatesByStyleSourceId
   );
+  const selectedOrLastStyleSourceSelector = useStore(
+    $selectedOrLastStyleSourceSelector
+  );
+  const styles = useStore($styles);
+
+  // Extract all used selectors from project styles
+  const usedSelectors = getUsedSelectors(styles);
 
   // Subscribe to focusStyleSourceInput command
   useEffect(() => {
@@ -361,9 +369,6 @@ export const StyleSourcesSection = () => {
       styleSource,
       selectedInstanceStatesByStyleSourceId.get(styleSource.id) ?? []
     )
-  );
-  const selectedOrLastStyleSourceSelector = useStore(
-    $selectedOrLastStyleSourceSelector
   );
 
   const [editingItemId, setEditingItemId] = useState<StyleSource["id"]>();
@@ -388,6 +393,7 @@ export const StyleSourcesSection = () => {
         value={value}
         selectedItemSelector={selectedOrLastStyleSourceSelector}
         componentStates={componentStates}
+        recentlyUsedSelectors={usedSelectors}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstance(id);
