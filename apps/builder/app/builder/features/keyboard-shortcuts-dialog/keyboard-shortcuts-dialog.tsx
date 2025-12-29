@@ -39,10 +39,10 @@ const additionalShortcuts = [
   },
   {
     name: "expandAllNavigatorNodes",
-    label: "Expand all nodes",
-    description: "Click on arrow to expand or collapse all nodes",
+    label: "Expand all items",
+    description: "Click on arrow to expand or collapse all child items",
     category: "Navigator",
-    defaultHotkeys: ["meta+click", "ctrl+click"],
+    defaultHotkeys: ["alt+click"],
   },
   {
     name: "switchBreakpoint",
