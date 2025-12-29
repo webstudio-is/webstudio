@@ -1828,7 +1828,7 @@ describe("pseudo-element inheritance", () => {
         state: "::before",
         property: "font-family",
       }).usedValue
-    ).toEqual({ type: "unparsed", value: "Arial" });
+    ).toEqual({ type: "fontFamily", value: ["Arial"] });
   });
 
   test("pseudo-elements can override inherited properties", () => {
@@ -2061,7 +2061,7 @@ describe("pseudo-element inheritance", () => {
         state: "::before",
         property: "--my-size",
       }).computedValue
-    ).toEqual({ type: "unparsed", value: "100px" });
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
 
     // Pseudo-element should be able to use inherited custom properties
     expect(
