@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   theme,
   Flex,
@@ -26,6 +26,7 @@ import {
   checkOverlap,
   findNonOverlappingPosition,
   isAreaWithinBounds,
+  filterAreasWithinBounds,
 } from "./grid-areas.utils";
 
 type AreaEditorProps = {
@@ -301,7 +302,10 @@ export const GridAreas = () => {
         updatedAreas.push(newArea);
       }
 
-      const template = generateGridTemplate(updatedAreas, columns, rows);
+      // Filter out areas that are out of bounds
+      const validAreas = filterAreasWithinBounds(updatedAreas, columns, rows);
+
+      const template = generateGridTemplate(validAreas, columns, rows);
       batch.setProperty("grid-template-areas")({
         type: "unparsed",
         value: template,
@@ -333,6 +337,36 @@ export const GridAreas = () => {
     [areas, columns, rows]
   );
 
+  // Clean up areas that are out of bounds when grid dimensions change
+  useEffect(() => {
+    // Only run if there are areas and dimensions are valid
+    if (areas.length === 0 || columns === 0 || rows === 0) {
+      return;
+    }
+
+    const validAreas = filterAreasWithinBounds(areas, columns, rows);
+
+    // If some areas are invalid, update the grid-template-areas
+    if (validAreas.length < areas.length) {
+      const batch = createBatchUpdate();
+
+      if (validAreas.length === 0) {
+        batch.setProperty("grid-template-areas")({
+          type: "keyword",
+          value: "none",
+        });
+      } else {
+        const template = generateGridTemplate(validAreas, columns, rows);
+        batch.setProperty("grid-template-areas")({
+          type: "unparsed",
+          value: template,
+        });
+      }
+
+      batch.publish();
+    }
+  }, [columns, rows, areas]);
+
   return (
     <CollapsibleSectionRoot
       label={`Areas (${areas.length})`}
@@ -358,6 +392,9 @@ export const GridAreas = () => {
 
               const batch = createBatchUpdate();
 
+              // Calculate actual dimensions after potential row addition
+              let actualRows = rows;
+
               // If we need a new row, add it to the grid
               if (needsNewRow) {
                 const currentRows = rowsValue.split(/\s+/).filter(Boolean);
@@ -368,6 +405,7 @@ export const GridAreas = () => {
                   type: "unparsed",
                   value: updatedRows,
                 });
+                actualRows = rows + 1; // Use the new row count
               }
 
               // Add the new area to the grid
@@ -375,7 +413,7 @@ export const GridAreas = () => {
               const template = generateGridTemplate(
                 updatedAreas,
                 columns,
-                rows
+                actualRows // Use actualRows instead of stale rows
               );
               batch.setProperty("grid-template-areas")({
                 type: "unparsed",
