@@ -207,3 +207,17 @@ export const isAreaWithinBounds = (
     area.rowEnd <= gridRows + 1
   );
 };
+
+/**
+ * Filter out areas that don't fit within the grid dimensions
+ * Used when grid dimensions change (rows/columns deleted)
+ */
+export const filterAreasWithinBounds = (
+  areas: AreaInfo[],
+  gridColumns: number,
+  gridRows: number
+): AreaInfo[] => {
+  return areas.filter((area) =>
+    isAreaWithinBounds(area, gridColumns, gridRows)
+  );
+};

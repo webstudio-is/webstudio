@@ -7,6 +7,7 @@ import {
   generateUniqueAreaName,
   findNonOverlappingPosition,
   isAreaWithinBounds,
+  filterAreasWithinBounds,
   type AreaInfo,
 } from "./grid-areas.utils";
 
@@ -479,5 +480,158 @@ describe("isAreaWithinBounds", () => {
       rowEnd: 3,
     };
     expect(isAreaWithinBounds(area, 2, 2)).toBe(true);
+  });
+});
+
+describe("filterAreasWithinBounds", () => {
+  test("returns all areas when all are valid", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "area1",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "area2",
+        columnStart: 2,
+        columnEnd: 3,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 3, 2);
+    expect(result).toEqual(areas);
+    expect(result).toHaveLength(2);
+  });
+
+  test("filters out single area that exceeds column bounds", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "valid",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid",
+        columnStart: 1,
+        columnEnd: 4,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 2, 2);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("valid");
+  });
+
+  test("filters out single area that exceeds row bounds", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "valid",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 4,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 2, 2);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("valid");
+  });
+
+  test("filters out multiple invalid areas", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "valid",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid1",
+        columnStart: 1,
+        columnEnd: 5,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid2",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 5,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 2, 2);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("valid");
+  });
+
+  test("returns empty array when all areas are invalid", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "invalid1",
+        columnStart: 1,
+        columnEnd: 5,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid2",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 5,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 2, 2);
+    expect(result).toEqual([]);
+  });
+
+  test("returns empty array for empty input", () => {
+    const result = filterAreasWithinBounds([], 3, 3);
+    expect(result).toEqual([]);
+  });
+
+  test("preserves order of valid areas", () => {
+    const areas: AreaInfo[] = [
+      {
+        name: "first",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "invalid",
+        columnStart: 1,
+        columnEnd: 5,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      {
+        name: "second",
+        columnStart: 2,
+        columnEnd: 3,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+    ];
+    const result = filterAreasWithinBounds(areas, 3, 2);
+    expect(result).toHaveLength(2);
+    expect(result[0].name).toBe("first");
+    expect(result[1].name).toBe("second");
   });
 });
