@@ -475,9 +475,11 @@ export const getComputedStyleDecl = ({
       usedCustomProperties.add(customProperty);
 
       const fallback: undefined | VarFallback = varValue.fallback;
+      // Custom properties are always inherited, so look them up from parent (without state)
       const customPropertyValue = getComputedStyleDecl({
         model,
         instanceSelector,
+        state: undefined, // Don't pass pseudo-element state for custom property lookup
         property: customProperty,
         customPropertiesGraph,
       });
