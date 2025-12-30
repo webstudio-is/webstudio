@@ -23,6 +23,7 @@ import { useStore } from "@nanostores/react";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { ConditionInput } from "./condition-input";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -164,16 +165,13 @@ const BreakpointEditorItem = ({
               }
             />
           </Flex>
-          <InputField
+          <ConditionInput
             name="condition"
-            css={{ width: "100%" }}
-            type="text"
             value={conditionValue}
-            onChange={(event) => {
-              setConditionValue(event.target.value);
+            onChange={(value) => {
+              setConditionValue(value);
               handleChange();
             }}
-            placeholder="e.g., orientation: portrait"
             onBlur={handleChangeComplete}
           />
         </Flex>
