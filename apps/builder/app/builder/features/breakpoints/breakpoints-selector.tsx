@@ -6,31 +6,65 @@ import {
   Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
+  ToolbarSeparator,
+  ToolbarButton,
   Tooltip,
   theme,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  Button,
+  Separator,
+  DropdownMenuSeparator,
 } from "@webstudio-is/design-system";
-import { AlertIcon, AsteriskIcon } from "@webstudio-is/icons";
+import { AlertIcon, AsteriskIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
+import { BreakpointsEditor } from "./breakpoints-editor";
+import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   $selectedBreakpoint,
   $selectedBreakpointId,
+  $breakpoints,
+  $styles,
 } from "~/shared/nano-states";
-import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import {
+  groupBreakpoints,
+  isBaseBreakpoint,
+  $breakpointsMenuView,
+} from "~/shared/breakpoints";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";
+import { serverSyncStore } from "~/shared/sync/sync-stores";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
+  const conditionText = breakpoint.condition
+    ? ` (${breakpoint.condition})`
+    : "";
+
   if (isBaseBreakpoint(breakpoint)) {
     return (
       <Text>
-        <Text variant="regularBold">Base</Text>
+        <Text variant="regularBold">Base{conditionText}</Text>
         <br />
         Styles on Base apply to all viewport sizes unless overwritten by another
         breakpoint. Start your styling here.
       </Text>
     );
   }
+
+  if (breakpoint.condition) {
+    return (
+      <Text>
+        <Text variant="regularBold">{breakpoint.condition}</Text>
+        <br />
+        Styles on this breakpoint apply when {breakpoint.condition}.
+      </Text>
+    );
+  }
+
   if (breakpoint.maxWidth !== undefined) {
     return (
       <Text>
@@ -135,6 +169,40 @@ export const BreakpointsSelector = ({
 }: BreakpointsSelector) => {
   const refs = useRef(new Map<string, HTMLButtonElement>());
   const getButtonById = useCallback((id: string) => refs.current.get(id), []);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [breakpointToDelete, setBreakpointToDelete] = useState<
+    Breakpoint | undefined
+  >();
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+
+  const handleDelete = () => {
+    if (breakpointToDelete === undefined) {
+      return;
+    }
+    serverSyncStore.createTransaction(
+      [$breakpoints, $styles],
+      (breakpoints, styles) => {
+        const breakpointId = breakpointToDelete.id;
+        breakpoints.delete(breakpointId);
+        for (const [styleDeclKey, styleDecl] of styles) {
+          if (styleDecl.breakpointId === breakpointId) {
+            styles.delete(styleDeclKey);
+          }
+        }
+      }
+    );
+
+    if (breakpointToDelete.id === selectedBreakpoint.id) {
+      const breakpointsArray = Array.from(breakpoints.values());
+      const base =
+        breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
+      $selectedBreakpointId.set(base.id);
+      setCanvasWidth(base.id);
+    }
+    setBreakpointToDelete(undefined);
+    setConfirmationOpen(false);
+  };
 
   return (
     <Toolbar>
@@ -152,41 +220,125 @@ export const BreakpointsSelector = ({
         }}
         css={{ position: "relative" }}
       >
-        {groupBreakpoints(Array.from(breakpoints.values())).map(
-          (breakpoint) => {
-            return (
-              <Tooltip
-                key={breakpoint.id}
-                content={getTooltipContent(breakpoint)}
-                variant="wrapped"
-                disableHoverableContent
+        {(() => {
+          const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+
+          // Render width-based breakpoints
+          return grouped.widthBased.map((breakpoint) => (
+            <Tooltip
+              key={breakpoint.id}
+              content={getTooltipContent(breakpoint)}
+              variant="wrapped"
+              disableHoverableContent
+            >
+              <ToolbarToggleItem
+                variant="subtle"
+                ref={(node) => {
+                  if (node) {
+                    refs.current.set(breakpoint.id, node);
+                    return;
+                  }
+                  refs.current.delete(breakpoint.id);
+                }}
+                value={breakpoint.id}
               >
-                <ToolbarToggleItem
-                  variant="subtle"
-                  ref={(node) => {
-                    if (node) {
-                      refs.current.set(breakpoint.id, node);
-                      return;
-                    }
-                    refs.current.delete(breakpoint.id);
-                  }}
-                  value={breakpoint.id}
-                >
-                  {breakpoint.minWidth ?? breakpoint.maxWidth ?? (
-                    <AsteriskIcon size={22} />
-                  )}
-                </ToolbarToggleItem>
-              </Tooltip>
-            );
-          }
+                {breakpoint.minWidth ?? breakpoint.maxWidth ?? (
+                  <AsteriskIcon size={22} />
+                )}
+              </ToolbarToggleItem>
+            </Tooltip>
+          ));
+        })()}
+        {selectedBreakpoint.condition === undefined && (
+          <CascadeIndicator
+            getButtonById={getButtonById}
+            selectedBreakpoint={selectedBreakpoint}
+            breakpoints={breakpoints}
+          />
         )}
-        <CascadeIndicator
-          getButtonById={getButtonById}
-          selectedBreakpoint={selectedBreakpoint}
-          breakpoints={breakpoints}
-        />
       </ToolbarToggleGroup>
+      {(() => {
+        const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+        const selectedCustom = grouped.custom.find(
+          (bp) => bp.id === selectedBreakpoint.id
+        );
+        return (
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <ToolbarButton
+                variant="subtle"
+                aria-label="Breakpoints with custom conditions"
+                data-state={selectedCustom ? "on" : "off"}
+              >
+                {selectedCustom ? selectedCustom.label : <EllipsesIcon />}
+              </ToolbarButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent css={{ width: theme.spacing[30] }}>
+              {grouped.custom.map((breakpoint) => (
+                <DropdownMenuCheckboxItem
+                  key={breakpoint.id}
+                  checked={breakpoint.id === selectedBreakpoint.id}
+                  onSelect={() => {
+                    $selectedBreakpointId.set(breakpoint.id);
+                    setCanvasWidth(breakpoint.id);
+                  }}
+                >
+                  <Flex justify="between" gap="2">
+                    <Text truncate css={{ flexBasis: "50%" }}>
+                      {breakpoint.label}
+                    </Text>
+                    <Text color="subtle" truncate>
+                      {breakpoint.condition}
+                    </Text>
+                  </Flex>
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+
+              <Flex
+                align="center"
+                justify="center"
+                css={{ padding: theme.panel.padding }}
+              >
+                <Button
+                  color="neutral"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setEditorOpen(true);
+                  }}
+                  css={{ width: "100%" }}
+                >
+                  Edit breakpoints{" "}
+                </Button>
+              </Flex>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      })()}
       <ZoomWarning />
+      <BreakpointsEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        onDelete={(breakpoint) => {
+          setBreakpointToDelete(breakpoint);
+          setEditorOpen(false);
+          setConfirmationOpen(true);
+        }}
+      >
+        <div style={{ height: "100%", width: 0 }} />
+      </BreakpointsEditor>
+      {breakpointToDelete && (
+        <ConfirmationDialog
+          open={confirmationOpen}
+          breakpoint={breakpointToDelete}
+          onAbort={() => {
+            setBreakpointToDelete(undefined);
+            setConfirmationOpen(false);
+            setEditorOpen(true);
+          }}
+          onConfirm={handleDelete}
+        />
+      )}
     </Toolbar>
   );
 };

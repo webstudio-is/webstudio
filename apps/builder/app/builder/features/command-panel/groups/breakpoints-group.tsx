@@ -29,9 +29,19 @@ export const $breakpointOptions = computed(
     if (!isOpen) {
       return [];
     }
-    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
-      compareMedia
+    const allBreakpoints = Array.from(breakpoints.values());
+
+    // Separate custom condition breakpoints from width-based
+    const customBreakpoints = allBreakpoints.filter(
+      (bp) => bp.condition !== undefined
     );
+    const widthBasedBreakpoints = allBreakpoints
+      .filter((bp) => bp.condition === undefined)
+      .sort(compareMedia);
+
+    // Combine with custom conditions at the end
+    const sortedBreakpoints = [...widthBasedBreakpoints, ...customBreakpoints];
+
     const breakpointOptions: BreakpointOption[] = [];
     for (let index = 0; index < sortedBreakpoints.length; index += 1) {
       const breakpoint = sortedBreakpoints[index];
@@ -39,7 +49,9 @@ export const $breakpointOptions = computed(
         continue;
       }
       const width =
-        (breakpoint.minWidth ?? breakpoint.maxWidth)?.toString() ?? "";
+        breakpoint.condition ??
+        (breakpoint.minWidth ?? breakpoint.maxWidth)?.toString() ??
+        "";
       breakpointOptions.push({
         terms: ["breakpoints", breakpoint.label, width],
         type: "breakpoint",
@@ -52,6 +64,10 @@ export const $breakpointOptions = computed(
 );
 
 const getBreakpointLabel = (breakpoint: Breakpoint) => {
+  if (breakpoint.condition) {
+    return `${breakpoint.label}: ${breakpoint.condition}`;
+  }
+
   let label = "All Sizes";
   if (breakpoint.minWidth !== undefined) {
     label = `≥ ${breakpoint.minWidth} PX`;

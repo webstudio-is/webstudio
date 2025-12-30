@@ -869,6 +869,12 @@ test("parse media query", () => {
   expect(parseMediaQuery(`(max-width: 768px)`)).toEqual({
     maxWidth: 768,
   });
+  expect(parseMediaQuery(`(orientation: portrait)`)).toEqual({
+    condition: "orientation:portrait",
+  });
+  expect(parseMediaQuery(`(orientation: landscape)`)).toEqual({
+    condition: "orientation:landscape",
+  });
   expect(parseMediaQuery(`(hover: hover)`)).toEqual(undefined);
 });
 

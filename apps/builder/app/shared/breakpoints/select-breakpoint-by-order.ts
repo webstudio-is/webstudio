@@ -8,9 +8,9 @@ import { setCanvasWidth } from "~/builder/shared/calc-canvas-width";
 export const selectBreakpointByOrder = (orderNumber: number) => {
   const breakpoints = $breakpoints.get();
   const index = orderNumber - 1;
-  const breakpoint = groupBreakpoints(Array.from(breakpoints.values())).at(
-    index
-  );
+  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+  const allBreakpoints = [...grouped.widthBased, ...grouped.custom];
+  const breakpoint = allBreakpoints.at(index);
   if (breakpoint) {
     $selectedBreakpointId.set(breakpoint.id);
     setCanvasWidth(breakpoint.id);
