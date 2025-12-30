@@ -875,7 +875,9 @@ test("parse media query", () => {
   expect(parseMediaQuery(`(orientation: landscape)`)).toEqual({
     condition: "orientation:landscape",
   });
-  expect(parseMediaQuery(`(hover: hover)`)).toEqual(undefined);
+  expect(parseMediaQuery(`(hover: hover)`)).toEqual({
+    condition: "hover:hover",
+  });
 });
 
 test("camel case css property", () => {

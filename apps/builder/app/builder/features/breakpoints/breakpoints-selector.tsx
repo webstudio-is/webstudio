@@ -6,18 +6,15 @@ import {
   Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
-  ToolbarSeparator,
   ToolbarButton,
   Tooltip,
   theme,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
-  Button,
-  Separator,
   DropdownMenuSeparator,
+  Button,
 } from "@webstudio-is/design-system";
 import { AlertIcon, AsteriskIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
@@ -29,11 +26,7 @@ import {
   $breakpoints,
   $styles,
 } from "~/shared/nano-states";
-import {
-  groupBreakpoints,
-  isBaseBreakpoint,
-  $breakpointsMenuView,
-} from "~/shared/breakpoints";
+import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { setCanvasWidth } from "../../shared/calc-canvas-width";
 import { $canvasWidth } from "~/builder/shared/nano-states";
 import { useDebouncedCallback } from "use-debounce";

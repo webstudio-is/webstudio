@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
   Flex,
