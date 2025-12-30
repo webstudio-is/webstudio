@@ -121,13 +121,13 @@ const EnabledAssetUpload = ({ accept, type }: AssetUploadProps) => {
   );
 };
 
-export const AssetUpload = ({ type }: AssetUploadProps) => {
+export const AssetUpload = ({ type, accept }: AssetUploadProps) => {
   const authPermit = useStore($authPermit);
 
   if (authPermit !== "view") {
     // Split into a separate component to avoid using `useUpload` hook unnecessarily
     // (It's hard to mock this hook in storybook)
-    return <EnabledAssetUpload type={type} />;
+    return <EnabledAssetUpload type={type} accept={accept} />;
   }
 
   return (
