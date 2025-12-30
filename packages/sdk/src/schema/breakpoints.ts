@@ -10,6 +10,13 @@ export const Breakpoint = z
     maxWidth: z.number().optional(),
     condition: z.string().optional(),
   })
+  .transform((data) => {
+    // Normalize empty condition strings to undefined
+    if (data.condition !== undefined && data.condition.trim() === "") {
+      return { ...data, condition: undefined };
+    }
+    return data;
+  })
   .refine(({ minWidth, maxWidth, condition }) => {
     // If condition is set, minWidth and maxWidth should not be set
     if (condition !== undefined) {

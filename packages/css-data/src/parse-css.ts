@@ -318,10 +318,12 @@ export const parseMediaQuery = (
         // Capture any other media feature as custom condition
         const generated = csstree.generate(node);
         // Remove outer parentheses if present
-        const cleaned =
+        let cleaned =
           generated.startsWith("(") && generated.endsWith(")")
             ? generated.slice(1, -1)
             : generated;
+        // Normalize whitespace: remove spaces around colons for consistency
+        cleaned = cleaned.replace(/\s*:\s*/g, ":");
         otherFeatures.push(cleaned);
       }
     }

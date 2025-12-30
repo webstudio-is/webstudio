@@ -878,6 +878,26 @@ test("parse media query", () => {
   expect(parseMediaQuery(`(hover: hover)`)).toEqual({
     condition: "hover:hover",
   });
+  // Test whitespace normalization
+  expect(parseMediaQuery(`(orientation:portrait)`)).toEqual({
+    condition: "orientation:portrait",
+  });
+  expect(parseMediaQuery(`(  orientation  :  portrait  )`)).toEqual({
+    condition: "orientation:portrait",
+  });
+  // Test multiple conditions
+  expect(parseMediaQuery(`(orientation: portrait) and (hover: hover)`)).toEqual(
+    {
+      condition: "orientation:portrait and hover:hover",
+    }
+  );
+  // Test other media features
+  expect(parseMediaQuery(`(prefers-color-scheme: dark)`)).toEqual({
+    condition: "prefers-color-scheme:dark",
+  });
+  expect(parseMediaQuery(`(pointer: coarse)`)).toEqual({
+    condition: "pointer:coarse",
+  });
 });
 
 test("camel case css property", () => {
