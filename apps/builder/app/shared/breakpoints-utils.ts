@@ -3,6 +3,7 @@ import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 
 /**
  * Check if a breakpoint is the base breakpoint (no min or max width).
+ * Note: Does not check for custom conditions.
  */
 export const isBaseBreakpoint = (breakpoint: {
   minWidth?: number;
@@ -13,6 +14,9 @@ export const isBaseBreakpoint = (breakpoint: {
  * Group breakpoints into width-based and custom condition categories.
  * Width-based breakpoints are ordered: min-width (largest to smallest), base, max-width (largest to smallest).
  * Custom condition breakpoints are kept separate and not sorted.
+ *
+ * Note: minWidth/maxWidth and condition are mutually exclusive - a breakpoint has either
+ * width-based properties OR a custom condition, never both.
  */
 export const groupBreakpoints = <
   T extends { minWidth?: number; maxWidth?: number; condition?: string },
@@ -41,7 +45,8 @@ export const groupBreakpoints = <
 
 /**
  * Build a map of merged breakpoint IDs from fragment breakpoints to existing breakpoints.
- * Breakpoints are merged when they have matching minWidth, maxWidth, and label.
+ * Breakpoints are merged when they have matching minWidth, maxWidth, condition, and label.
+ * Note: minWidth/maxWidth and condition are mutually exclusive.
  *
  * @param fragmentBreakpoints - Breakpoints from the fragment being inserted
  * @param existingBreakpoints - Existing breakpoints in the project

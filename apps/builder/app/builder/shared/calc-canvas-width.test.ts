@@ -263,6 +263,124 @@ describe("other breakpoints", () => {
   });
 });
 
+describe("custom condition breakpoints", () => {
+  test("returns default width for custom condition breakpoint", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Portrait", condition: "orientation:portrait" },
+    ];
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[1],
+        workspaceWidth,
+      })
+    ).toStrictEqual(320);
+  });
+
+  test("returns default width for hover condition", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Hover", condition: "hover:hover" },
+    ];
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[1],
+        workspaceWidth,
+      })
+    ).toStrictEqual(320);
+  });
+
+  test("returns default width for prefers-color-scheme", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Dark", condition: "prefers-color-scheme:dark" },
+    ];
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[1],
+        workspaceWidth,
+      })
+    ).toStrictEqual(320);
+  });
+
+  test("ignores custom canvasWidth for condition breakpoints", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Portrait", condition: "orientation:portrait" },
+    ];
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[1],
+        workspaceWidth,
+        canvasWidth: 800, // Should be ignored
+      })
+    ).toStrictEqual(320);
+  });
+
+  test("base breakpoint ignores custom condition breakpoints when calculating width", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Tablet", minWidth: 768 },
+      { id: "2", label: "Portrait", condition: "orientation:portrait" },
+      { id: "3", label: "Hover", condition: "hover:hover" },
+    ];
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[0],
+        workspaceWidth,
+      })
+    ).toStrictEqual(767); // minWidth - 1, ignoring condition breakpoints
+  });
+
+  test("handles mix of width-based and condition breakpoints", () => {
+    const workspaceWidth = 1200;
+    const breakpoints = [
+      { id: "0", label: "Base" },
+      { id: "1", label: "Tablet", minWidth: 768 },
+      { id: "2", label: "Portrait", condition: "orientation:portrait" },
+      { id: "3", label: "Desktop", minWidth: 1024 },
+      { id: "4", label: "Hover", condition: "hover:hover" },
+    ];
+
+    // Width-based breakpoint works normally
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[1],
+        workspaceWidth,
+      })
+    ).toStrictEqual(768);
+
+    // Condition breakpoint returns default
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[2],
+        workspaceWidth,
+      })
+    ).toStrictEqual(320);
+
+    // Base calculates correctly ignoring condition breakpoints
+    expect(
+      calcCanvasWidth({
+        breakpoints,
+        selectedBreakpoint: breakpoints[0],
+        workspaceWidth,
+      })
+    ).toStrictEqual(767);
+  });
+});
+
 describe("setCanvasWidth", () => {
   beforeEach(() => {
     // Reset stores before each test
@@ -343,6 +461,39 @@ describe("setCanvasWidth", () => {
 
     setCanvasWidth("0");
     expect($canvasWidth.get()).toBe(1500);
+  });
+
+  test("sets default canvas width for custom condition breakpoint", () => {
+    $workspaceRect.set(createRect(1200, 800));
+    $breakpoints.set(
+      new Map([
+        ["0", { id: "0", label: "Base" }],
+        [
+          "1",
+          { id: "1", label: "Portrait", condition: "orientation:portrait" },
+        ],
+      ])
+    );
+
+    const result = setCanvasWidth("1");
+
+    expect(result).toBe(true);
+    expect($canvasWidth.get()).toBe(320); // Default width for condition breakpoints
+  });
+
+  test("sets canvas width for hover condition breakpoint", () => {
+    $workspaceRect.set(createRect(1500, 800));
+    $breakpoints.set(
+      new Map([
+        ["0", { id: "0", label: "Base" }],
+        ["1", { id: "1", label: "Hover", condition: "hover:hover" }],
+      ])
+    );
+
+    const result = setCanvasWidth("1");
+
+    expect(result).toBe(true);
+    expect($canvasWidth.get()).toBe(320);
   });
 });
 

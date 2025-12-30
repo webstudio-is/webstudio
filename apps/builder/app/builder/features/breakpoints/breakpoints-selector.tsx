@@ -86,6 +86,13 @@ const breakpointMatchesMediaQuery = (
   breakpoint?: Breakpoint,
   canvasWidth?: number
 ) => {
+  // Custom condition breakpoints depend on runtime browser/device features (orientation, hover, color-scheme, etc.)
+  // rather than canvas width, so there's no width-related zoom mismatch to detect. Returning true prevents the
+  // ZoomWarning component from showing false warnings for breakpoints where canvas width is irrelevant.
+  if (breakpoint?.condition !== undefined) {
+    return true;
+  }
+
   if (
     canvasWidth === undefined ||
     (breakpoint?.minWidth === undefined && breakpoint?.maxWidth === undefined)
