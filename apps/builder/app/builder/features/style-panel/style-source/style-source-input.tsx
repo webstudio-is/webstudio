@@ -59,9 +59,12 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { humanizeString } from "~/shared/string-utils";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import {
+  validateSelector,
+  type ComponentState,
+} from "../shared/selector-validation";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -236,10 +239,10 @@ const TextFieldBase: ForwardRefRenderFunction<
           }
           label={item.label}
           stateLabel={
-            item.id === selectedItemSelector?.styleSourceId
-              ? states.find(
-                  (state) => state.selector === selectedItemSelector.state
-                )?.label
+            item.id === selectedItemSelector?.styleSourceId &&
+            selectedItemSelector.state
+              ? states.find((s) => s.selector === selectedItemSelector.state)
+                  ?.label || selectedItemSelector.state
               : undefined
           }
           error={item.id === error?.id ? error : undefined}
@@ -266,17 +269,6 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
-type ComponentState = {
-  category: "states" | "component-states";
-  selector: string;
-  label: string;
-};
-
-const categories = [
-  "states",
-  "component-states",
-] satisfies ComponentState["category"][];
-
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   inputRef: (element: HTMLInputElement | null) => void;
   error?: StyleSourceError;
@@ -285,6 +277,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
   componentStates?: ComponentState[];
+  recentlyUsedSelectors?: string[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -354,6 +347,14 @@ const renderMenuItems = (props: {
   item: IntermediateItem;
   hasStyles: boolean;
   states: ComponentState[];
+  recentlyUsedSelectors: string[];
+  selectorInputValue: string;
+  selectorValidation: ReturnType<typeof validateSelector>;
+  onSelectorInputChange: (value: string) => void;
+  onSelectorInputKeyDown: (
+    event: React.KeyboardEvent,
+    itemId: IntermediateItem["id"]
+  ) => void;
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -426,62 +427,78 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
-      {categories.map((currentCategory) => {
-        const categoryStates = props.states.filter(
-          ({ category }) => category === currentCategory
-        );
-        // prevent rendering empty category
-        if (categoryStates.length === 0) {
-          return;
-        }
-        return (
-          <Fragment key={currentCategory}>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              {humanizeString(currentCategory)}
-            </DropdownMenuLabel>
-            {categoryStates.map(({ label, selector }) => (
-              <DropdownMenuItem
-                key={selector}
-                withIndicator={true}
-                icon={
-                  props.item.id === props.selectedItemSelector?.styleSourceId &&
-                  selector === props.selectedItemSelector.state && (
-                    <CheckMarkIcon
-                      color={
-                        props.item.states.includes(selector)
-                          ? rawTheme.colors.foregroundPrimary
-                          : rawTheme.colors.foregroundIconMain
-                      }
-                      size={12}
-                    />
-                  )
-                }
-                onSelect={() =>
-                  props.onSelect?.({
-                    styleSourceId: props.item.id,
-                    // toggle state selection
-                    state:
-                      props.selectedItemSelector?.state === selector
-                        ? undefined
-                        : selector,
-                  })
-                }
-              >
-                <Flex justify="between" align="center" grow>
-                  {label}
-                  {props.item.states.includes(selector) && (
-                    <DotIcon
-                      size="12"
-                      color={rawTheme.colors.foregroundPrimary}
-                    />
-                  )}
-                </Flex>
-              </DropdownMenuItem>
-            ))}
-          </Fragment>
-        );
-      })}
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel>Pseudo Class / Element</DropdownMenuLabel>
+      <Box css={{ padding: theme.spacing[2] }}>
+        <InputField
+          value={props.selectorInputValue}
+          onChange={(event) => props.onSelectorInputChange(event.target.value)}
+          onKeyDown={(event) =>
+            props.onSelectorInputKeyDown(event, props.item.id)
+          }
+          placeholder=":hover, ::before, :has(:focus-visible)"
+          autoFocus={false}
+          css={{
+            width: "100%",
+            fontFamily: theme.fonts.mono,
+          }}
+        />
+        {props.selectorValidation.valid === false && (
+          <Text
+            css={{
+              color: theme.colors.foregroundDestructive,
+              fontSize: theme.deprecatedFontSize[1],
+              marginTop: theme.spacing[1],
+            }}
+          >
+            {props.selectorValidation.message}
+          </Text>
+        )}
+      </Box>
+
+      {props.recentlyUsedSelectors.length > 0 && (
+        <>
+          <DropdownMenuSeparator />
+          {props.recentlyUsedSelectors.map((selector) => (
+            <DropdownMenuItem
+              key={selector}
+              withIndicator={true}
+              icon={
+                props.item.id === props.selectedItemSelector?.styleSourceId &&
+                selector === props.selectedItemSelector.state && (
+                  <CheckMarkIcon
+                    color={
+                      props.item.states.includes(selector)
+                        ? rawTheme.colors.foregroundPrimary
+                        : rawTheme.colors.foregroundIconMain
+                    }
+                    size={12}
+                  />
+                )
+              }
+              onSelect={() =>
+                props.onSelect?.({
+                  styleSourceId: props.item.id,
+                  state:
+                    props.selectedItemSelector?.state === selector
+                      ? undefined
+                      : selector,
+                })
+              }
+            >
+              <Flex justify="between" align="center" grow>
+                <Text css={{ fontFamily: theme.fonts.mono }}>{selector}</Text>
+                {props.item.states.includes(selector) && (
+                  <DotIcon
+                    size="12"
+                    color={rawTheme.colors.foregroundPrimary}
+                  />
+                )}
+              </Flex>
+            </DropdownMenuItem>
+          ))}
+        </>
+      )}
 
       <DropdownMenuSeparator />
       {props.item.source === "local" && (
@@ -503,6 +520,10 @@ export const StyleSourceInput = (
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
+  const [selectorInputValue, setSelectorInputValue] = useState("");
+  const [selectorValidation, setSelectorValidation] = useState(
+    validateSelector("")
+  );
 
   const {
     items,
@@ -556,6 +577,48 @@ export const StyleSourceInput = (
   let hasGlobalTokenItem = false;
 
   const states = props.componentStates ?? [];
+  const recentlyUsedSelectors = props.recentlyUsedSelectors ?? [];
+
+  const handleSelectorInputChange = (value: string) => {
+    setSelectorInputValue(value);
+    // Don't validate while typing, only show validation errors after Enter
+    setSelectorValidation({ valid: true });
+  };
+
+  const handleSelectorInputKeyDown = (
+    event: React.KeyboardEvent,
+    itemId: IntermediateItem["id"]
+  ) => {
+    if (event.key === "Enter") {
+      const selector = selectorInputValue.trim();
+
+      // Validate only when user presses Enter
+      const validation = validateSelector(selector);
+      setSelectorValidation(validation);
+
+      if (validation.valid) {
+        if (selector) {
+          // Select the item with the new selector
+          props.onSelectItem?.({
+            styleSourceId: itemId,
+            state: selector,
+          });
+        } else {
+          // Empty selector removes state
+          props.onSelectItem?.({
+            styleSourceId: itemId,
+            state: undefined,
+          });
+        }
+        setSelectorInputValue("");
+        setSelectorValidation({ valid: true });
+      }
+      // If validation failed, keep the input value so user can fix it
+    } else if (event.key === "Escape") {
+      setSelectorInputValue("");
+      setSelectorValidation({ valid: true });
+    }
+  };
 
   return (
     <ComboboxRoot open={isOpen}>
@@ -572,7 +635,14 @@ export const StyleSourceInput = (
                 item,
                 hasStyles,
                 states,
-                onSelect: props.onSelectItem,
+                recentlyUsedSelectors,
+                selectorInputValue,
+                selectorValidation,
+                onSelectorInputChange: handleSelectorInputChange,
+                onSelectorInputKeyDown: handleSelectorInputKeyDown,
+                onSelect: (itemSelector) => {
+                  props.onSelectItem?.(itemSelector);
+                },
                 onDuplicate: props.onDuplicateItem,
                 onConvertToToken: props.onConvertToToken,
                 onEnable: props.onEnableItem,
