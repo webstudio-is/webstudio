@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogTitle,
   DialogActions,
-  DialogClose,
 } from "@webstudio-is/design-system";
 
 type ConfirmationDialogProps = {
@@ -36,11 +35,9 @@ export const ConfirmationDialog = ({
           </Text>
         </Flex>
         <DialogActions>
-          <DialogClose asChild>
-            <Button color="neutral" onClick={onAbort}>
-              Cancel
-            </Button>
-          </DialogClose>
+          <Button color="neutral" onClick={onAbort}>
+            Cancel
+          </Button>
           <Button onClick={onConfirm} color="destructive">
             Delete
           </Button>
