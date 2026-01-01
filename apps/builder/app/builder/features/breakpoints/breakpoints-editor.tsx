@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { nanoid } from "nanoid";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
@@ -13,7 +12,6 @@ import {
   PopoverSeparator,
   Separator,
   Box,
-  toast,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -24,6 +22,7 @@ import { $breakpoints } from "~/shared/sync/data-stores";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { ConditionInput } from "./condition-input";
+import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -32,150 +31,120 @@ type BreakpointEditorItemProps = {
   onDelete: (breakpoint: Breakpoint) => void;
 };
 
-const BreakpointFormData = z.object({
-  label: z.string(),
-  type: z.enum(["minWidth", "maxWidth"]).optional(),
-  value: z.string().transform(Number).optional(),
-  condition: z.string().optional(),
-});
-
-const useHandleChangeComplete = (
-  breakpoint: Breakpoint,
-  onChangeComplete: (breakpoint: Breakpoint) => void
-) => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [formEntries, setFormEntries] =
-    useState<Record<string, FormDataEntryValue>>();
-
-  /**
-   * Read form data using onChange event so we can access values at useEffect unsubscribe
-   */
-  const handleChange = () => {
-    const form = formRef.current;
-    if (form === null || form.reportValidity() === false) {
-      return;
-    }
-    setFormEntries(Object.fromEntries(new FormData(form)));
-  };
-
-  const handleChangeComplete = () => {
-    if (formEntries === undefined) {
-      return;
-    }
-
-    const parsed = BreakpointFormData.safeParse(formEntries);
-    if (parsed.success === false) {
-      toast.error(parsed.error.message);
-      return;
-    }
-
-    const newBreakpoint: Breakpoint = {
-      id: breakpoint.id,
-      label: parsed.data.label,
-    };
-
-    // If condition is set, use it exclusively
-    if (parsed.data.condition && parsed.data.condition.trim() !== "") {
-      newBreakpoint.condition = parsed.data.condition.trim();
-    } else if (parsed.data.type && parsed.data.value !== undefined) {
-      // Otherwise use width
-      newBreakpoint[parsed.data.type] = parsed.data.value;
-    }
-
-    onChangeComplete(newBreakpoint);
-  };
-  const handleChangeCompleteRef = useRef(handleChangeComplete);
-  handleChangeCompleteRef.current = handleChangeComplete;
-
-  // Handle change when unmounting (Popup close in our case)
-  useEffect(() => handleChangeCompleteRef.current, []);
-
-  return { formRef, handleChangeComplete, handleChange };
-};
-
 const BreakpointEditorItem = ({
   breakpoint,
   autoFocus,
   onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const { formRef, handleChangeComplete, handleChange } =
-    useHandleChangeComplete(breakpoint, onChangeComplete);
-
   const [conditionValue, setConditionValue] = useState(
     breakpoint.condition ?? ""
   );
   const hasCondition = conditionValue.trim() !== "";
 
+  const [label, setLabel] = useState(breakpoint.label);
+  const [type, setType] = useState<"minWidth" | "maxWidth">(
+    breakpoint.maxWidth ? "maxWidth" : "minWidth"
+  );
+  const [widthValue, setWidthValue] = useState(
+    breakpoint.minWidth ?? breakpoint.maxWidth ?? 0
+  );
+
+  const handleSubmit = () => {
+    // Validate: must have either a condition OR a width value
+    const shouldSubmit = hasCondition || widthValue !== undefined;
+
+    if (!shouldSubmit) {
+      // Don't save invalid breakpoints - they must have either width or condition
+      return;
+    }
+
+    const newBreakpoint: Breakpoint = {
+      id: breakpoint.id,
+      label: label.trim() || breakpoint.label, // Preserve original label if empty
+    };
+
+    if (hasCondition) {
+      // Set condition, but explicitly don't include width properties
+      newBreakpoint.condition = conditionValue.trim();
+    } else if (widthValue !== undefined) {
+      // Only set width if we have a valid value (including 0)
+      newBreakpoint[type] = widthValue;
+    }
+
+    onChangeComplete(newBreakpoint);
+  };
+
   return (
     <Flex gap="2">
-      <form
-        ref={formRef}
-        onKeyPress={(event) => {
-          if (event.key === "Enter") {
-            handleChangeComplete();
-          }
-        }}
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleChangeComplete();
-        }}
-        onBlur={handleChangeComplete}
-        onChange={handleChange}
-      >
-        <Flex direction="column" gap="1">
-          <InputField
-            type="text"
-            defaultValue={breakpoint.label}
-            placeholder="Breakpoint name"
-            name="label"
-            minLength={1}
-            required
-            autoFocus={autoFocus}
-          />
-          <Flex gap="2" css={{ width: theme.spacing[26] }}>
-            <Select
-              name="type"
-              css={{ width: theme.spacing[28] }}
-              options={["maxWidth", "minWidth"]}
-              getLabel={(option) =>
-                option === "maxWidth" ? "Max Width" : "Min Width"
-              }
-              defaultValue={breakpoint.maxWidth ? "maxWidth" : "minWidth"}
-              onChange={handleChangeComplete}
-              disabled={hasCondition}
-            />
-            <InputField
-              css={{ flexShrink: 1 }}
-              defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
-              type="number"
-              name="value"
-              min={0}
-              required={!hasCondition}
-              disabled={hasCondition}
-              suffix={
-                <Text
-                  variant="unit"
-                  color="moreSubtle"
-                  align="center"
-                  css={{ width: theme.spacing[10] }}
-                >
-                  PX
-                </Text>
-              }
-            />
-          </Flex>
-          <ConditionInput
-            name="condition"
-            value={conditionValue}
+      <Flex direction="column" gap="1">
+        <InputField
+          type="text"
+          value={label}
+          onChange={(event) => setLabel(event.target.value)}
+          onBlur={handleSubmit}
+          placeholder="Breakpoint name"
+          minLength={1}
+          required
+          autoFocus={autoFocus}
+        />
+        <Flex gap="2" css={{ width: theme.spacing[26] }}>
+          <Select
+            css={{ width: theme.spacing[28] }}
+            options={["maxWidth", "minWidth"]}
+            getLabel={(option) =>
+              option === "maxWidth" ? "Max Width" : "Min Width"
+            }
+            value={type}
             onChange={(value) => {
-              setConditionValue(value);
-              handleChange();
+              setType(value as "minWidth" | "maxWidth");
+              handleSubmit();
             }}
-            onBlur={handleChangeComplete}
+            disabled={hasCondition}
           />
+          <Box css={{ flexShrink: 1 }}>
+            <CssValueInput
+              styleSource="local"
+              property="width"
+              value={{ type: "unit", value: widthValue, unit: "px" }}
+              intermediateValue={undefined}
+              disabled={hasCondition}
+              getOptions={() => []}
+              onChange={(value) => {
+                if (value?.type === "unit") {
+                  setWidthValue(Math.max(0, value.value));
+                } else if (value?.type === "intermediate") {
+                  const parsed = parseFloat(value.value);
+                  if (!isNaN(parsed)) {
+                    setWidthValue(Math.max(0, parsed));
+                  }
+                }
+              }}
+              onChangeComplete={(event) => {
+                if (event.value.type === "unit") {
+                  setWidthValue(Math.max(0, event.value.value));
+                  handleSubmit();
+                }
+              }}
+              onHighlight={() => {}}
+              onAbort={() => {
+                setWidthValue(breakpoint.minWidth ?? breakpoint.maxWidth ?? 0);
+              }}
+              onReset={() => {
+                setWidthValue(0);
+                handleSubmit();
+              }}
+            />
+          </Box>
         </Flex>
-      </form>
+        <ConditionInput
+          value={conditionValue}
+          onChange={(value) => {
+            setConditionValue(value);
+          }}
+          onBlur={handleSubmit}
+        />
+      </Flex>
       <IconButton
         onClick={() => {
           onDelete(breakpoint);
