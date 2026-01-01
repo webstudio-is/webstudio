@@ -42,7 +42,11 @@ export const BackgroundSize = ({ index }: { index: number }) => {
 
   const selectOptions = [...keywordValues[property], "custom"];
   const selectValue =
-    styleValue?.type === "keyword" ? toValue(styleValue) : "auto";
+    styleValue?.type === "keyword"
+      ? toValue(styleValue)
+      : styleValue?.type === "tuple"
+        ? "custom"
+        : "auto";
 
   const customSizeOptions = [autoKeyword];
   const customSizeValue = toTuple(styleValue);
