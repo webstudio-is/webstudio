@@ -14,7 +14,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const name = decodePathFragment(url.pathname.slice(basePath.length));
 
-  if (env.RESIZE_ORIGIN !== undefined) {
+  // WebM format is not supported by Cloudflare Image Resizing.
+  // Serve WebM files directly from filesystem, but proxy other formats.
+  const isWebM = name.toLowerCase().endsWith(".webm");
+
+  if (env.RESIZE_ORIGIN !== undefined && !isWebM) {
     const videoUrl = new URL(env.RESIZE_ORIGIN + url.pathname);
     videoUrl.search = url.search;
 
