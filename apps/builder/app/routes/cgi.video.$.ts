@@ -14,9 +14,32 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const name = decodePathFragment(url.pathname.slice(basePath.length));
 
+  console.log(
+    JSON.stringify(
+      {
+        name,
+        pathname: url.pathname,
+        RESIZE_ORIGIN: env.RESIZE_ORIGIN,
+      },
+      null,
+      2
+    )
+  );
+
   // WebM format is not supported by Cloudflare Image Resizing.
   // Serve WebM files directly from filesystem, but proxy other formats.
   const isWebM = name.toLowerCase().endsWith(".webm");
+
+  console.log(
+    JSON.stringify(
+      {
+        isWebM,
+        willProxy: env.RESIZE_ORIGIN !== undefined && !isWebM,
+      },
+      null,
+      2
+    )
+  );
 
   if (env.RESIZE_ORIGIN !== undefined && !isWebM) {
     const videoUrl = new URL(env.RESIZE_ORIGIN + url.pathname);
@@ -45,10 +68,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // support absolute urls locally
   if (URL.canParse(name)) {
+    console.log(JSON.stringify({ fetchingAbsoluteUrl: name }, null, 2));
     return fetch(name);
   }
 
   const filePath = join(process.cwd(), fileUploadPath, name);
+
+  console.log(
+    JSON.stringify(
+      {
+        filePath,
+        exists: existsSync(filePath),
+        cwd: process.cwd(),
+        fileUploadPath,
+      },
+      null,
+      2
+    )
+  );
 
   if (existsSync(filePath) === false) {
     throw new Response("Not found", {
@@ -57,6 +94,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const contentType = getMimeTypeByFilename(name);
+
+  console.log(
+    JSON.stringify(
+      {
+        servingFile: true,
+        contentType,
+      },
+      null,
+      2
+    )
+  );
 
   return new Response(
     createReadableStreamFromReadable(createReadStream(filePath)),
