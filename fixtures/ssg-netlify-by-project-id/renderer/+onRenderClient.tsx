@@ -1,9 +1,5 @@
 import { type Root, createRoot } from "react-dom/client";
 import type { OnRenderClientSync } from "vike/types";
-// @todo think about how to make __generated__ typeable
-/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-// @ts-ignore
-import { CustomCode } from "../app/__generated__/_index";
 
 let root: Root;
 
@@ -17,7 +13,7 @@ export const onRenderClient: OnRenderClientSync = (pageContext) => {
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Head data={pageContext.data} />
-        <CustomCode />
+        {/* avoid hydrating custom code on client, it will duplicate all scripts */}
       </head>
       <Page data={pageContext.data} />
     </>
