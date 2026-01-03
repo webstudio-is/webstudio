@@ -70,7 +70,7 @@ export const PageSettingsMeta = ({
 }: {
   url?: string;
   host?: string;
-  siteName: string;
+  siteName?: string;
   pageMeta: PageMeta;
   imageLoader: ImageLoader;
   assetBaseUrl: string;
