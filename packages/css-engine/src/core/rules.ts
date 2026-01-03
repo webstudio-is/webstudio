@@ -291,9 +291,16 @@ export class NestingRule {
   }
 }
 
+/**
+ * Options for media queries.
+ * Note: minWidth/maxWidth and condition are mutually exclusive.
+ * If condition is set, minWidth and maxWidth must be undefined.
+ * If minWidth or maxWidth is set, condition must be undefined.
+ */
 export type MediaRuleOptions = {
   minWidth?: number;
   maxWidth?: number;
+  condition?: string;
   mediaType?: "all" | "screen" | "print";
 };
 
@@ -347,13 +354,22 @@ export class MediaRule {
       return "";
     }
     let conditionText = "";
-    const { minWidth, maxWidth } = this.options;
-    if (minWidth !== undefined) {
-      conditionText = ` and (min-width: ${minWidth}px)`;
+    const { minWidth, maxWidth, condition } = this.options;
+
+    // condition and minWidth/maxWidth are mutually exclusive
+    // If condition is set, use it exclusively (minWidth/maxWidth must be undefined)
+    if (condition !== undefined) {
+      conditionText = ` and (${condition})`;
+    } else {
+      // Otherwise use width-based conditions (condition must be undefined)
+      if (minWidth !== undefined) {
+        conditionText = ` and (min-width: ${minWidth}px)`;
+      }
+      if (maxWidth !== undefined) {
+        conditionText += ` and (max-width: ${maxWidth}px)`;
+      }
     }
-    if (maxWidth !== undefined) {
-      conditionText += ` and (max-width: ${maxWidth}px)`;
-    }
+
     return `@media ${this.#mediaType}${conditionText} {\n${rules.join(
       "\n"
     )}\n}`;

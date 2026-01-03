@@ -38,7 +38,8 @@ describe("groupBreakpoints", () => {
       { maxWidth: 767 },
       { maxWidth: 479 },
     ];
-    const grouped = [
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([
       { minWidth: 1920 },
       { minWidth: 1440 },
       { minWidth: 1280 },
@@ -46,8 +47,8 @@ describe("groupBreakpoints", () => {
       { maxWidth: 991 },
       { maxWidth: 767 },
       { maxWidth: 479 },
-    ];
-    expect(groupBreakpoints(initial)).toStrictEqual(grouped);
+    ]);
+    expect(result.custom).toStrictEqual([]);
   });
 
   test("handles unsorted input", () => {
@@ -58,36 +59,70 @@ describe("groupBreakpoints", () => {
       { maxWidth: 991 },
       { minWidth: 1280 },
     ];
-    const grouped = [
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([
       { minWidth: 1920 },
       { minWidth: 1280 },
       {},
       { maxWidth: 991 },
       { maxWidth: 479 },
-    ];
-    expect(groupBreakpoints(initial)).toStrictEqual(grouped);
+    ]);
+    expect(result.custom).toStrictEqual([]);
   });
 
   test("handles only min-width breakpoints", () => {
     const initial = [{ minWidth: 768 }, { minWidth: 1024 }];
-    const grouped = [{ minWidth: 1024 }, { minWidth: 768 }];
-    expect(groupBreakpoints(initial)).toStrictEqual(grouped);
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([
+      { minWidth: 1024 },
+      { minWidth: 768 },
+    ]);
+    expect(result.custom).toStrictEqual([]);
   });
 
   test("handles only max-width breakpoints", () => {
     const initial = [{ maxWidth: 991 }, { maxWidth: 479 }];
-    const grouped = [{ maxWidth: 991 }, { maxWidth: 479 }];
-    expect(groupBreakpoints(initial)).toStrictEqual(grouped);
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([
+      { maxWidth: 991 },
+      { maxWidth: 479 },
+    ]);
+    expect(result.custom).toStrictEqual([]);
   });
 
   test("handles only base breakpoint", () => {
     const initial = [{}];
-    const grouped = [{}];
-    expect(groupBreakpoints(initial)).toStrictEqual(grouped);
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([{}]);
+    expect(result.custom).toStrictEqual([]);
   });
 
   test("handles empty array", () => {
-    expect(groupBreakpoints([])).toStrictEqual([]);
+    const result = groupBreakpoints([]);
+    expect(result.widthBased).toStrictEqual([]);
+    expect(result.custom).toStrictEqual([]);
+  });
+
+  test("separates custom condition breakpoints from width-based", () => {
+    const initial = [
+      { minWidth: 1920 },
+      { condition: "orientation: portrait" },
+      { minWidth: 1280 },
+      {},
+      { condition: "hover: hover" },
+      { maxWidth: 991 },
+    ];
+    const result = groupBreakpoints(initial);
+    expect(result.widthBased).toStrictEqual([
+      { minWidth: 1920 },
+      { minWidth: 1280 },
+      {},
+      { maxWidth: 991 },
+    ]);
+    expect(result.custom).toStrictEqual([
+      { condition: "orientation: portrait" },
+      { condition: "hover: hover" },
+    ]);
   });
 });
 

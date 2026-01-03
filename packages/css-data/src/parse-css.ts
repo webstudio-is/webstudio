@@ -297,6 +297,7 @@ export const parseCss = (css: string): ParsedStyleDecl[] => {
 type ParsedBreakpoint = {
   minWidth?: number;
   maxWidth?: number;
+  condition?: string;
 };
 
 export const parseMediaQuery = (
@@ -305,23 +306,45 @@ export const parseMediaQuery = (
   const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
   let property: undefined | "minWidth" | "maxWidth";
   let value: undefined | number;
+  const otherFeatures: string[] = [];
+
   csstree.walk(ast, (node) => {
     if (node.type === "Feature") {
       if (node.name === "min-width") {
         property = "minWidth";
-      }
-      if (node.name === "max-width") {
+      } else if (node.name === "max-width") {
         property = "maxWidth";
+      } else {
+        // Capture any other media feature as custom condition
+        const generated = csstree.generate(node);
+        // Remove outer parentheses if present
+        let cleaned =
+          generated.startsWith("(") && generated.endsWith(")")
+            ? generated.slice(1, -1)
+            : generated;
+        // Normalize whitespace: remove spaces around colons for consistency
+        cleaned = cleaned.replace(/\s*:\s*/g, ":");
+        otherFeatures.push(cleaned);
       }
     }
     if (node.type === "Dimension" && node.unit === "px") {
       value = Number(node.value);
     }
   });
+
+  const condition =
+    otherFeatures.length > 0 ? otherFeatures.join(" and ") : undefined;
+
+  // If there's a custom condition and no width, return only condition
+  if (condition !== undefined && property === undefined) {
+    return { condition };
+  }
+
   if (property === undefined || value === undefined) {
     return;
   }
   return {
     [property]: value,
+    ...(condition !== undefined ? { condition } : {}),
   };
 };

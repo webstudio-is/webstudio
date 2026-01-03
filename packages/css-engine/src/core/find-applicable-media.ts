@@ -2,7 +2,11 @@ import { compareMedia } from "./compare-media";
 import { matchMedia } from "./match-media";
 import type { MediaRuleOptions } from "./rules";
 
-// Find media rule that matches the given width when rendered.
+/**
+ * Find the applicable media rule that matches the given width.
+ * Only matches width-based breakpoints (minWidth/maxWidth).
+ * Custom condition breakpoints are not matched by this function.
+ */
 export const findApplicableMedia = <Media extends MediaRuleOptions>(
   media: Array<Media>,
   width: number

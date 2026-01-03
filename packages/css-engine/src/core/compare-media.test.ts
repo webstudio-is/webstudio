@@ -62,4 +62,61 @@ describe("Compare media", () => {
     const sorted = initial.sort(compareMedia);
     expect(sorted).toStrictEqual(expected);
   });
+
+  test("custom conditions sorted alphabetically after base", () => {
+    const initial = [
+      {},
+      { condition: "orientation:portrait" },
+      { condition: "hover:hover" },
+      { condition: "prefers-color-scheme:dark" },
+    ];
+    const expected = [
+      {},
+      { condition: "hover:hover" },
+      { condition: "orientation:portrait" },
+      { condition: "prefers-color-scheme:dark" },
+    ];
+    const sorted = initial.sort(compareMedia);
+    expect(sorted).toStrictEqual(expected);
+  });
+
+  test("custom conditions before width-based", () => {
+    const initial = [
+      {},
+      { minWidth: 1024 },
+      { condition: "orientation:portrait" },
+      { maxWidth: 768 },
+    ];
+    const expected = [
+      {},
+      { condition: "orientation:portrait" },
+      { maxWidth: 768 },
+      { minWidth: 1024 },
+    ];
+    const sorted = initial.sort(compareMedia);
+    expect(sorted).toStrictEqual(expected);
+  });
+
+  test("mixed custom conditions and width-based", () => {
+    const initial = [
+      {},
+      { maxWidth: 991 },
+      { condition: "hover:hover" },
+      { minWidth: 1280 },
+      { condition: "orientation:landscape" },
+      { maxWidth: 767 },
+      { condition: "prefers-color-scheme:dark" },
+    ];
+    const expected = [
+      {},
+      { condition: "hover:hover" },
+      { condition: "orientation:landscape" },
+      { condition: "prefers-color-scheme:dark" },
+      { maxWidth: 991 },
+      { maxWidth: 767 },
+      { minWidth: 1280 },
+    ];
+    const sorted = initial.sort(compareMedia);
+    expect(sorted).toStrictEqual(expected);
+  });
 });
