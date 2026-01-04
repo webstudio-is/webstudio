@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useState, useMemo } from "react";
 import { nanoid } from "nanoid";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
@@ -13,13 +12,19 @@ import {
   PopoverSeparator,
   Separator,
   Box,
-  toast,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { ConditionInput } from "./condition-input";
+import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
+import { useLocalValue } from "~/builder/features/settings-panel/shared";
+import { buildBreakpointFromEditorState } from "./breakpoint-editor-utils";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -28,125 +33,139 @@ type BreakpointEditorItemProps = {
   onDelete: (breakpoint: Breakpoint) => void;
 };
 
-const BreakpointFormData = z.object({
-  label: z.string(),
-  type: z.enum(["minWidth", "maxWidth"]),
-  value: z.string().transform(Number),
-});
-
-const useHandleChangeComplete = (
-  breakpoint: Breakpoint,
-  onChangeComplete: (breakpoint: Breakpoint) => void
-) => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [formEntries, setFormEntries] =
-    useState<Record<string, FormDataEntryValue>>();
-
-  /**
-   * Read form data using onChange event so we can access values at useEffect unsubscribe
-   */
-  const handleChange = () => {
-    const form = formRef.current;
-    if (form === null || form.reportValidity() === false) {
-      return;
-    }
-    setFormEntries(Object.fromEntries(new FormData(form)));
-  };
-
-  const handleChangeComplete = () => {
-    if (formEntries === undefined) {
-      return;
-    }
-
-    const parsed = BreakpointFormData.safeParse(formEntries);
-    if (parsed.success === false) {
-      toast.error(parsed.error.message);
-      return;
-    }
-
-    const newBreakpoint: Breakpoint = {
-      id: breakpoint.id,
-      label: parsed.data.label,
-      [parsed.data.type]: parsed.data.value,
-    };
-    onChangeComplete(newBreakpoint);
-  };
-  const handleChangeCompleteRef = useRef(handleChangeComplete);
-  handleChangeCompleteRef.current = handleChangeComplete;
-
-  // Handle change when unmounting (Popup close in our case)
-  useEffect(() => handleChangeCompleteRef.current, []);
-
-  return { formRef, handleChangeComplete, handleChange };
-};
-
 const BreakpointEditorItem = ({
   breakpoint,
   autoFocus,
   onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const { formRef, handleChangeComplete, handleChange } =
-    useHandleChangeComplete(breakpoint, onChangeComplete);
+  const [type, setType] = useState<"minWidth" | "maxWidth">(
+    breakpoint.maxWidth !== undefined ? "maxWidth" : "minWidth"
+  );
+
+  const initialValue = useMemo(
+    () => ({
+      label: breakpoint.label,
+      condition: breakpoint.condition ?? "",
+      width: breakpoint.minWidth ?? breakpoint.maxWidth ?? 0,
+    }),
+    [
+      breakpoint.label,
+      breakpoint.condition,
+      breakpoint.minWidth,
+      breakpoint.maxWidth,
+    ]
+  );
+
+  const localValue = useLocalValue(
+    initialValue,
+    (value) => {
+      const newBreakpoint = buildBreakpointFromEditorState(
+        breakpoint.id,
+        value.label,
+        value.condition,
+        type,
+        value.width,
+        breakpoint
+      );
+
+      if (newBreakpoint !== undefined) {
+        onChangeComplete(newBreakpoint);
+      }
+    },
+    { autoSave: true }
+  );
+
+  const hasCondition = localValue.value.condition.trim() !== "";
 
   return (
     <Flex gap="2">
-      <form
-        ref={formRef}
-        onKeyPress={(event) => {
-          if (event.key === "Enter") {
-            handleChangeComplete();
+      <Flex direction="column" gap="1">
+        <InputField
+          type="text"
+          value={localValue.value.label}
+          onChange={(event) =>
+            localValue.set({ ...localValue.value, label: event.target.value })
           }
-        }}
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleChangeComplete();
-        }}
-        onBlur={handleChangeComplete}
-        onChange={handleChange}
-      >
-        <Flex direction="column" gap="1">
-          <InputField
-            type="text"
-            defaultValue={breakpoint.label}
-            placeholder="Breakpoint name"
-            name="label"
-            minLength={1}
-            required
-            autoFocus={autoFocus}
+          onBlur={localValue.save}
+          placeholder="Breakpoint name"
+          minLength={1}
+          required
+          autoFocus={autoFocus}
+        />
+        <Flex gap="2" css={{ width: theme.spacing[26] }}>
+          <Select
+            css={{ width: theme.spacing[28] }}
+            options={["maxWidth", "minWidth"]}
+            getLabel={(option) =>
+              option === "maxWidth" ? "Max Width" : "Min Width"
+            }
+            value={type}
+            onChange={(value) => {
+              setType(value as "minWidth" | "maxWidth");
+              localValue.save();
+            }}
+            disabled={hasCondition}
           />
-          <Flex gap="2" css={{ width: theme.spacing[26] }}>
-            <Select
-              name="type"
-              css={{ width: theme.spacing[28] }}
-              options={["maxWidth", "minWidth"]}
-              getLabel={(option) =>
-                option === "maxWidth" ? "Max Width" : "Min Width"
-              }
-              defaultValue={breakpoint.maxWidth ? "maxWidth" : "minWidth"}
-              onChange={handleChangeComplete}
+          <Box css={{ flexShrink: 1 }}>
+            <CssValueInput
+              styleSource="local"
+              property="width"
+              value={{
+                type: "unit",
+                value: localValue.value.width,
+                unit: "px",
+              }}
+              intermediateValue={undefined}
+              disabled={hasCondition}
+              getOptions={() => []}
+              onChange={(value) => {
+                if (value?.type === "unit") {
+                  localValue.set({
+                    ...localValue.value,
+                    width: Math.max(0, value.value),
+                  });
+                } else if (value?.type === "intermediate") {
+                  const parsed = parseFloat(value.value);
+                  if (!isNaN(parsed)) {
+                    localValue.set({
+                      ...localValue.value,
+                      width: Math.max(0, parsed),
+                    });
+                  }
+                }
+              }}
+              onChangeComplete={(event) => {
+                if (event.value.type === "unit") {
+                  localValue.set({
+                    ...localValue.value,
+                    width: Math.max(0, event.value.value),
+                  });
+                  localValue.save();
+                }
+              }}
+              onHighlight={() => {}}
+              onAbort={() => {
+                localValue.set({
+                  ...localValue.value,
+                  width: breakpoint.minWidth ?? breakpoint.maxWidth ?? 0,
+                });
+              }}
+              onReset={() => {
+                localValue.set({ ...localValue.value, width: 0 });
+                localValue.save();
+              }}
             />
-            <InputField
-              css={{ flexShrink: 1 }}
-              defaultValue={breakpoint.minWidth ?? breakpoint.maxWidth ?? 0}
-              type="number"
-              name="value"
-              min={0}
-              required
-              suffix={
-                <Text
-                  variant="unit"
-                  color="moreSubtle"
-                  align="center"
-                  css={{ width: theme.spacing[10] }}
-                >
-                  PX
-                </Text>
-              }
-            />
-          </Flex>
+          </Box>
         </Flex>
-      </form>
+        <ConditionInput
+          value={localValue.value.condition}
+          onChange={(value) => {
+            localValue.set({ ...localValue.value, condition: value });
+          }}
+          onBlur={localValue.save}
+        />
+      </Flex>
       <IconButton
         onClick={() => {
           onDelete(breakpoint);
@@ -160,22 +179,36 @@ const BreakpointEditorItem = ({
 
 type BreakpointsEditorProps = {
   onDelete: (breakpoint: Breakpoint) => void;
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
+export const BreakpointsEditor = ({
+  onDelete,
+  children,
+  open,
+  onOpenChange,
+}: BreakpointsEditorProps) => {
   const breakpoints = useStore($breakpoints);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-  const initialBreakpointsRef = useRef(
-    groupBreakpoints(Array.from(breakpoints.values()))
-  );
+
+  // Use current breakpoints from store, not stale cached version
+  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+  const currentBreakpointsFlat = [...grouped.widthBased, ...grouped.custom];
+
   const allBreakpoints = [
     ...addedBreakpoints,
-    ...initialBreakpointsRef.current.filter(
+    ...currentBreakpointsFlat.filter(
       (breakpoint) =>
         addedBreakpoints.find((added) => added.id === breakpoint.id) ===
         undefined
     ),
-  ].filter((breakpoint) => isBaseBreakpoint(breakpoint) === false);
+  ].filter(
+    (breakpoint) =>
+      breakpoint.condition !== undefined ||
+      isBaseBreakpoint(breakpoint) === false
+  );
 
   const handleChangeComplete = (breakpoint: Breakpoint) => {
     serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
@@ -183,48 +216,59 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
     });
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange?.(newOpen);
+  };
+
   return (
-    <Flex direction="column">
-      <PanelTitle
-        css={{ paddingInline: theme.panel.paddingInline }}
-        suffix={
-          <IconButton
-            onClick={() => {
-              const newBreakpoint: Breakpoint = {
-                id: nanoid(),
-                label: "",
-                minWidth: 0,
-              };
-              setAddedBreakpoints([newBreakpoint, ...addedBreakpoints]);
-            }}
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent>
+        <Flex direction="column">
+          <PanelTitle
+            css={{ paddingInline: theme.panel.paddingInline }}
+            suffix={
+              <IconButton
+                onClick={() => {
+                  const newBreakpoint: Breakpoint = {
+                    id: nanoid(),
+                    label: "",
+                    minWidth: 0,
+                  };
+                  setAddedBreakpoints([newBreakpoint, ...addedBreakpoints]);
+                }}
+              >
+                <PlusIcon />
+              </IconButton>
+            }
           >
-            <PlusIcon />
-          </IconButton>
-        }
-      >
-        {"Breakpoints"}
-      </PanelTitle>
-      <Separator />
-      <Fragment>
-        {allBreakpoints.map((breakpoint, index, all) => {
-          return (
-            <Fragment key={breakpoint.id}>
-              <Box css={{ p: theme.panel.padding }}>
-                <BreakpointEditorItem
-                  breakpoint={breakpoint}
-                  onChangeComplete={handleChangeComplete}
-                  onDelete={onDelete}
-                  autoFocus={index === 0}
-                />
-              </Box>
-              {index < all.length - 1 && <PopoverSeparator />}
-            </Fragment>
-          );
-        })}
-      </Fragment>
-      {allBreakpoints.length === 0 && (
-        <Text css={{ margin: theme.spacing[10] }}>No breakpoints found</Text>
-      )}
-    </Flex>
+            {"Breakpoints"}
+          </PanelTitle>
+          <Separator />
+          <Fragment>
+            {allBreakpoints.map((breakpoint, index, all) => {
+              return (
+                <Fragment key={breakpoint.id}>
+                  <Box css={{ p: theme.panel.padding }}>
+                    <BreakpointEditorItem
+                      breakpoint={breakpoint}
+                      onChangeComplete={handleChangeComplete}
+                      onDelete={onDelete}
+                      autoFocus={index === 0}
+                    />
+                  </Box>
+                  {index < all.length - 1 && <PopoverSeparator />}
+                </Fragment>
+              );
+            })}
+          </Fragment>
+          {allBreakpoints.length === 0 && (
+            <Text css={{ margin: theme.spacing[10] }}>
+              No breakpoints found
+            </Text>
+          )}
+        </Flex>
+      </PopoverContent>
+    </Popover>
   );
 };
