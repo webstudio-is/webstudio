@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useState, useEffect, useMemo } from "react";
 import { nanoid } from "nanoid";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
@@ -23,6 +23,8 @@ import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { ConditionInput } from "./condition-input";
 import { CssValueInput } from "~/builder/features/style-panel/shared/css-value-input";
+import { useLocalValue } from "~/builder/features/settings-panel/shared";
+import { buildBreakpointFromEditorState } from "./breakpoint-editor-utils";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -37,52 +39,55 @@ const BreakpointEditorItem = ({
   onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const [conditionValue, setConditionValue] = useState(
-    breakpoint.condition ?? ""
-  );
-  const hasCondition = conditionValue.trim() !== "";
-
-  const [label, setLabel] = useState(breakpoint.label);
   const [type, setType] = useState<"minWidth" | "maxWidth">(
-    breakpoint.maxWidth ? "maxWidth" : "minWidth"
-  );
-  const [widthValue, setWidthValue] = useState(
-    breakpoint.minWidth ?? breakpoint.maxWidth ?? 0
+    breakpoint.maxWidth !== undefined ? "maxWidth" : "minWidth"
   );
 
-  const handleSubmit = () => {
-    // Validate: must have either a condition OR a width value
-    const shouldSubmit = hasCondition || widthValue !== undefined;
+  const initialValue = useMemo(
+    () => ({
+      label: breakpoint.label,
+      condition: breakpoint.condition ?? "",
+      width: breakpoint.minWidth ?? breakpoint.maxWidth ?? 0,
+    }),
+    [
+      breakpoint.label,
+      breakpoint.condition,
+      breakpoint.minWidth,
+      breakpoint.maxWidth,
+    ]
+  );
 
-    if (!shouldSubmit) {
-      // Don't save invalid breakpoints - they must have either width or condition
-      return;
-    }
+  const localValue = useLocalValue(
+    initialValue,
+    (value) => {
+      const newBreakpoint = buildBreakpointFromEditorState(
+        breakpoint.id,
+        value.label,
+        value.condition,
+        type,
+        value.width,
+        breakpoint
+      );
 
-    const newBreakpoint: Breakpoint = {
-      id: breakpoint.id,
-      label: label.trim() || breakpoint.label, // Preserve original label if empty
-    };
+      if (newBreakpoint !== undefined) {
+        onChangeComplete(newBreakpoint);
+      }
+    },
+    { autoSave: true }
+  );
 
-    if (hasCondition) {
-      // Set condition, but explicitly don't include width properties
-      newBreakpoint.condition = conditionValue.trim();
-    } else if (widthValue !== undefined) {
-      // Only set width if we have a valid value (including 0)
-      newBreakpoint[type] = widthValue;
-    }
-
-    onChangeComplete(newBreakpoint);
-  };
+  const hasCondition = localValue.value.condition.trim() !== "";
 
   return (
     <Flex gap="2">
       <Flex direction="column" gap="1">
         <InputField
           type="text"
-          value={label}
-          onChange={(event) => setLabel(event.target.value)}
-          onBlur={handleSubmit}
+          value={localValue.value.label}
+          onChange={(event) =>
+            localValue.set({ ...localValue.value, label: event.target.value })
+          }
+          onBlur={localValue.save}
           placeholder="Breakpoint name"
           minLength={1}
           required
@@ -98,7 +103,7 @@ const BreakpointEditorItem = ({
             value={type}
             onChange={(value) => {
               setType(value as "minWidth" | "maxWidth");
-              handleSubmit();
+              localValue.save();
             }}
             disabled={hasCondition}
           />
@@ -106,43 +111,59 @@ const BreakpointEditorItem = ({
             <CssValueInput
               styleSource="local"
               property="width"
-              value={{ type: "unit", value: widthValue, unit: "px" }}
+              value={{
+                type: "unit",
+                value: localValue.value.width,
+                unit: "px",
+              }}
               intermediateValue={undefined}
               disabled={hasCondition}
               getOptions={() => []}
               onChange={(value) => {
                 if (value?.type === "unit") {
-                  setWidthValue(Math.max(0, value.value));
+                  localValue.set({
+                    ...localValue.value,
+                    width: Math.max(0, value.value),
+                  });
                 } else if (value?.type === "intermediate") {
                   const parsed = parseFloat(value.value);
                   if (!isNaN(parsed)) {
-                    setWidthValue(Math.max(0, parsed));
+                    localValue.set({
+                      ...localValue.value,
+                      width: Math.max(0, parsed),
+                    });
                   }
                 }
               }}
               onChangeComplete={(event) => {
                 if (event.value.type === "unit") {
-                  setWidthValue(Math.max(0, event.value.value));
-                  handleSubmit();
+                  localValue.set({
+                    ...localValue.value,
+                    width: Math.max(0, event.value.value),
+                  });
+                  localValue.save();
                 }
               }}
               onHighlight={() => {}}
               onAbort={() => {
-                setWidthValue(breakpoint.minWidth ?? breakpoint.maxWidth ?? 0);
+                localValue.set({
+                  ...localValue.value,
+                  width: breakpoint.minWidth ?? breakpoint.maxWidth ?? 0,
+                });
               }}
               onReset={() => {
-                setWidthValue(0);
-                handleSubmit();
+                localValue.set({ ...localValue.value, width: 0 });
+                localValue.save();
               }}
             />
           </Box>
         </Flex>
         <ConditionInput
-          value={conditionValue}
+          value={localValue.value.condition}
           onChange={(value) => {
-            setConditionValue(value);
+            localValue.set({ ...localValue.value, condition: value });
           }}
-          onBlur={handleSubmit}
+          onBlur={localValue.save}
         />
       </Flex>
       <IconButton
@@ -171,16 +192,14 @@ export const BreakpointsEditor = ({
 }: BreakpointsEditorProps) => {
   const breakpoints = useStore($breakpoints);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-  const initialBreakpointsRef = useRef(
-    groupBreakpoints(Array.from(breakpoints.values()))
-  );
-  const initialBreakpointsFlat = [
-    ...initialBreakpointsRef.current.widthBased,
-    ...initialBreakpointsRef.current.custom,
-  ];
+
+  // Use current breakpoints from store, not stale cached version
+  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+  const currentBreakpointsFlat = [...grouped.widthBased, ...grouped.custom];
+
   const allBreakpoints = [
     ...addedBreakpoints,
-    ...initialBreakpointsFlat.filter(
+    ...currentBreakpointsFlat.filter(
       (breakpoint) =>
         addedBreakpoints.find((added) => added.id === breakpoint.id) ===
         undefined
@@ -197,8 +216,12 @@ export const BreakpointsEditor = ({
     });
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange?.(newOpen);
+  };
+
   return (
-    <Popover open={open} onOpenChange={onOpenChange} modal>
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent>
         <Flex direction="column">

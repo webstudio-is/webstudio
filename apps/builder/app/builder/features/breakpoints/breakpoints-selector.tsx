@@ -274,6 +274,36 @@ export const BreakpointsSelector = ({
               </ToolbarButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent css={{ width: theme.spacing[30] }}>
+              {grouped.widthBased.map((breakpoint) => {
+                let description = "All Sizes";
+                if (breakpoint.minWidth !== undefined) {
+                  description = `≥ ${breakpoint.minWidth} PX`;
+                } else if (breakpoint.maxWidth !== undefined) {
+                  description = `≤ ${breakpoint.maxWidth} PX`;
+                }
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={breakpoint.id}
+                    checked={breakpoint.id === selectedBreakpoint.id}
+                    onSelect={() => {
+                      $selectedBreakpointId.set(breakpoint.id);
+                      setCanvasWidth(breakpoint.id);
+                    }}
+                  >
+                    <Flex justify="between" grow gap="2">
+                      <Text truncate css={{ flexBasis: "50%" }}>
+                        {breakpoint.label}
+                      </Text>
+                      <Text color="subtle" truncate>
+                        {description}
+                      </Text>
+                    </Flex>
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+              {grouped.widthBased.length > 0 && grouped.custom.length > 0 && (
+                <DropdownMenuSeparator />
+              )}
               {grouped.custom.map((breakpoint) => (
                 <DropdownMenuCheckboxItem
                   key={breakpoint.id}
@@ -283,7 +313,7 @@ export const BreakpointsSelector = ({
                     setCanvasWidth(breakpoint.id);
                   }}
                 >
-                  <Flex justify="between" gap="2">
+                  <Flex justify="between" grow gap="2">
                     <Text truncate css={{ flexBasis: "50%" }}>
                       {breakpoint.label}
                     </Text>
@@ -293,7 +323,9 @@ export const BreakpointsSelector = ({
                   </Flex>
                 </DropdownMenuCheckboxItem>
               ))}
-              {grouped.custom.length > 0 && <DropdownMenuSeparator />}
+              {(grouped.widthBased.length > 0 || grouped.custom.length > 0) && (
+                <DropdownMenuSeparator />
+              )}
 
               <Flex
                 align="center"
@@ -308,7 +340,7 @@ export const BreakpointsSelector = ({
                   }}
                   css={{ width: "100%" }}
                 >
-                  Edit breakpoint
+                  Edit breakpoints
                 </Button>
               </Flex>
             </DropdownMenuContent>
