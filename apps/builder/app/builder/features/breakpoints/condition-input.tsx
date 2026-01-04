@@ -2,35 +2,124 @@ import { useMemo } from "react";
 import { Combobox } from "@webstudio-is/design-system";
 
 const PREDEFINED_CONDITIONS = [
-  { value: "orientation:portrait", label: "Orientation: Portrait" },
-  { value: "orientation:landscape", label: "Orientation: Landscape" },
-  { value: "hover:hover", label: "Hover: Hover" },
-  { value: "hover:none", label: "Hover: None" },
-  { value: "prefers-color-scheme:dark", label: "Color Scheme: Dark" },
-  { value: "prefers-color-scheme:light", label: "Color Scheme: Light" },
-  { value: "prefers-reduced-motion:reduce", label: "Reduced Motion: Reduce" },
+  {
+    value: "orientation:portrait",
+    label: "Orientation: Portrait",
+    description: "Device is in portrait mode (height > width)",
+  },
+  {
+    value: "orientation:landscape",
+    label: "Orientation: Landscape",
+    description: "Device is in landscape mode (width > height)",
+  },
+  {
+    value: "hover:hover",
+    label: "Hover: Hover",
+    description: "Primary input can hover over elements",
+  },
+  {
+    value: "hover:none",
+    label: "Hover: None",
+    description: "Primary input cannot hover (e.g., touch screens)",
+  },
+  {
+    value: "prefers-color-scheme:dark",
+    label: "Color Scheme: Dark",
+    description: "User prefers dark color scheme",
+  },
+  {
+    value: "prefers-color-scheme:light",
+    label: "Color Scheme: Light",
+    description: "User prefers light color scheme",
+  },
+  {
+    value: "prefers-reduced-motion:reduce",
+    label: "Reduced Motion: Reduce",
+    description: "User prefers reduced motion/animations",
+  },
   {
     value: "prefers-reduced-motion:no-preference",
     label: "Reduced Motion: No Preference",
+    description: "User has no preference for reduced motion",
   },
-  { value: "pointer:coarse", label: "Pointer: Coarse" },
-  { value: "pointer:fine", label: "Pointer: Fine" },
-  { value: "pointer:none", label: "Pointer: None" },
-  { value: "any-hover:hover", label: "Any Hover: Hover" },
-  { value: "any-hover:none", label: "Any Hover: None" },
-  { value: "any-pointer:coarse", label: "Any Pointer: Coarse" },
-  { value: "any-pointer:fine", label: "Any Pointer: Fine" },
-  { value: "any-pointer:none", label: "Any Pointer: None" },
-  { value: "prefers-contrast:more", label: "Contrast: More" },
-  { value: "prefers-contrast:less", label: "Contrast: Less" },
-  { value: "prefers-contrast:no-preference", label: "Contrast: No Preference" },
-  { value: "display-mode:fullscreen", label: "Display Mode: Fullscreen" },
-  { value: "display-mode:standalone", label: "Display Mode: Standalone" },
-  { value: "display-mode:minimal-ui", label: "Display Mode: Minimal UI" },
-  { value: "display-mode:browser", label: "Display Mode: Browser" },
+  {
+    value: "pointer:coarse",
+    label: "Pointer: Coarse",
+    description: "Primary input has limited accuracy (e.g., touch)",
+  },
+  {
+    value: "pointer:fine",
+    label: "Pointer: Fine",
+    description: "Primary input has fine accuracy (e.g., mouse)",
+  },
+  {
+    value: "pointer:none",
+    label: "Pointer: None",
+    description: "No pointing device available",
+  },
+  {
+    value: "any-hover:hover",
+    label: "Any Hover: Hover",
+    description: "At least one input can hover",
+  },
+  {
+    value: "any-hover:none",
+    label: "Any Hover: None",
+    description: "No inputs can hover",
+  },
+  {
+    value: "any-pointer:coarse",
+    label: "Any Pointer: Coarse",
+    description: "At least one input has limited accuracy",
+  },
+  {
+    value: "any-pointer:fine",
+    label: "Any Pointer: Fine",
+    description: "At least one input has fine accuracy",
+  },
+  {
+    value: "any-pointer:none",
+    label: "Any Pointer: None",
+    description: "No pointing devices available",
+  },
+  {
+    value: "prefers-contrast:more",
+    label: "Contrast: More",
+    description: "User prefers higher contrast",
+  },
+  {
+    value: "prefers-contrast:less",
+    label: "Contrast: Less",
+    description: "User prefers lower contrast",
+  },
+  {
+    value: "prefers-contrast:no-preference",
+    label: "Contrast: No Preference",
+    description: "User has no contrast preference",
+  },
+  {
+    value: "display-mode:fullscreen",
+    label: "Display Mode: Fullscreen",
+    description: "App is in fullscreen mode",
+  },
+  {
+    value: "display-mode:standalone",
+    label: "Display Mode: Standalone",
+    description: "App is in standalone mode (PWA)",
+  },
+  {
+    value: "display-mode:minimal-ui",
+    label: "Display Mode: Minimal UI",
+    description: "App with minimal browser UI (PWA)",
+  },
+  {
+    value: "display-mode:browser",
+    label: "Display Mode: Browser",
+    description: "App in regular browser tab",
+  },
 ];
 
-type Condition = { value: string; label: string };
+type Condition = { value: string; label: string; description?: string };
 
 type ConditionInputProps = {
   name?: string;
@@ -79,6 +168,7 @@ export const ConditionInput = ({
       getItemProps={(item) => ({
         children: item.label,
       })}
+      getDescription={(item) => item?.description}
       onItemSelect={(item) => {
         if (item) {
           onChange(item.value);
