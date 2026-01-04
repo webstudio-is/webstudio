@@ -264,7 +264,7 @@ describe("other breakpoints", () => {
 });
 
 describe("custom condition breakpoints", () => {
-  test("returns default width for custom condition breakpoint", () => {
+  test("returns undefined for custom condition breakpoint", () => {
     const workspaceWidth = 1200;
     const breakpoints = [
       { id: "0", label: "Base" },
@@ -276,10 +276,10 @@ describe("custom condition breakpoints", () => {
         selectedBreakpoint: breakpoints[1],
         workspaceWidth,
       })
-    ).toStrictEqual(320);
+    ).toBeUndefined();
   });
 
-  test("returns default width for hover condition", () => {
+  test("returns undefined for hover condition", () => {
     const workspaceWidth = 1200;
     const breakpoints = [
       { id: "0", label: "Base" },
@@ -291,10 +291,10 @@ describe("custom condition breakpoints", () => {
         selectedBreakpoint: breakpoints[1],
         workspaceWidth,
       })
-    ).toStrictEqual(320);
+    ).toBeUndefined();
   });
 
-  test("returns default width for prefers-color-scheme", () => {
+  test("returns undefined for prefers-color-scheme", () => {
     const workspaceWidth = 1200;
     const breakpoints = [
       { id: "0", label: "Base" },
@@ -306,10 +306,10 @@ describe("custom condition breakpoints", () => {
         selectedBreakpoint: breakpoints[1],
         workspaceWidth,
       })
-    ).toStrictEqual(320);
+    ).toBeUndefined();
   });
 
-  test("ignores custom canvasWidth for condition breakpoints", () => {
+  test("returns undefined regardless of custom canvasWidth for condition breakpoints", () => {
     const workspaceWidth = 1200;
     const breakpoints = [
       { id: "0", label: "Base" },
@@ -322,7 +322,7 @@ describe("custom condition breakpoints", () => {
         workspaceWidth,
         canvasWidth: 800, // Should be ignored
       })
-    ).toStrictEqual(320);
+    ).toBeUndefined();
   });
 
   test("base breakpoint ignores custom condition breakpoints when calculating width", () => {
@@ -361,14 +361,14 @@ describe("custom condition breakpoints", () => {
       })
     ).toStrictEqual(768);
 
-    // Condition breakpoint returns default
+    // Condition breakpoint returns undefined
     expect(
       calcCanvasWidth({
         breakpoints,
         selectedBreakpoint: breakpoints[2],
         workspaceWidth,
       })
-    ).toStrictEqual(320);
+    ).toBeUndefined();
 
     // Base calculates correctly ignoring condition breakpoints
     expect(
@@ -463,7 +463,7 @@ describe("setCanvasWidth", () => {
     expect($canvasWidth.get()).toBe(1500);
   });
 
-  test("sets default canvas width for custom condition breakpoint", () => {
+  test("returns undefined for custom condition breakpoint in setCanvasWidth", () => {
     $workspaceRect.set(createRect(1200, 800));
     $breakpoints.set(
       new Map([
@@ -478,10 +478,10 @@ describe("setCanvasWidth", () => {
     const result = setCanvasWidth("1");
 
     expect(result).toBe(true);
-    expect($canvasWidth.get()).toBe(320); // Default width for condition breakpoints
+    expect($canvasWidth.get()).toBeUndefined(); // Undefined for condition breakpoints
   });
 
-  test("sets canvas width for hover condition breakpoint", () => {
+  test("returns undefined for hover condition breakpoint in setCanvasWidth", () => {
     $workspaceRect.set(createRect(1500, 800));
     $breakpoints.set(
       new Map([
@@ -493,7 +493,7 @@ describe("setCanvasWidth", () => {
     const result = setCanvasWidth("1");
 
     expect(result).toBe(true);
-    expect($canvasWidth.get()).toBe(320);
+    expect($canvasWidth.get()).toBeUndefined();
   });
 });
 

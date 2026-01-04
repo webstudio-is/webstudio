@@ -125,7 +125,7 @@ describe("breakpoint-editor-utils", () => {
       });
     });
 
-    test("preserves original condition when cleared in editor", () => {
+    test("converts to width-based when condition is cleared", () => {
       const original = {
         id: "id5",
         label: "Portrait",
@@ -141,10 +141,11 @@ describe("breakpoint-editor-utils", () => {
         original
       );
 
+      // When condition is cleared with valid width (including 0), convert to width-based
       expect(result).toEqual({
         id: "id5",
         label: "Portrait",
-        condition: "orientation:portrait",
+        minWidth: 0,
       });
     });
 

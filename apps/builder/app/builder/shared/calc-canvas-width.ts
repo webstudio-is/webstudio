@@ -65,6 +65,12 @@ export const calcCanvasWidth = ({
   workspaceWidth: number;
   canvasWidth?: number;
 }) => {
+  // Condition-based breakpoints (e.g., orientation:portrait, hover:hover) don't have width ranges
+  // Return undefined so the width will be defined by current canvas width
+  if (selectedBreakpoint.condition !== undefined) {
+    return;
+  }
+
   // When user has resized the canvas to a custom value, we want to keep it.
   if (isCustomCanvasWidth(breakpoints, selectedBreakpoint, canvasWidth)) {
     return canvasWidth;
