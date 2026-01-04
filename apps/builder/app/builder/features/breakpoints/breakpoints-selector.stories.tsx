@@ -56,22 +56,13 @@ export const Story = () => {
   return (
     <>
       <StorySection title="All">
-        <BreakpointsSelector
-          breakpoints={mixed}
-          selectedBreakpoint={selectedBreakpointMixed}
-        />
+        <BreakpointsSelector />
       </StorySection>
       <StorySection title="Max-width">
-        <BreakpointsSelector
-          breakpoints={max}
-          selectedBreakpoint={selectedBreakpointMax}
-        />
+        <BreakpointsSelector />
       </StorySection>
       <StorySection title="Min-width">
-        <BreakpointsSelector
-          breakpoints={min}
-          selectedBreakpoint={selectedBreakpointMin}
-        />
+        <BreakpointsSelector />
       </StorySection>
     </>
   );

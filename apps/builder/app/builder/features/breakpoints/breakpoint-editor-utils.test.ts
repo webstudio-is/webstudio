@@ -1,4 +1,4 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import {
   isConditionBasedBreakpoint,
   isWidthBasedBreakpoint,
@@ -108,17 +108,21 @@ describe("breakpoint-editor-utils", () => {
       });
     });
 
-    test("returns undefined for invalid breakpoint (no condition, width is 0)", () => {
+    test("allows zero as valid width (e.g., base breakpoint)", () => {
       const result = buildBreakpointFromEditorState(
         "id4",
-        "Invalid",
+        "Base",
         "",
         "minWidth",
         0,
         undefined
       );
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({
+        id: "id4",
+        label: "Base",
+        minWidth: 0,
+      });
     });
 
     test("preserves original condition when cleared in editor", () => {

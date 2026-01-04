@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useMemo } from "react";
+import { Fragment, useState, useMemo } from "react";
 import { nanoid } from "nanoid";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {

@@ -58,8 +58,8 @@ export const buildBreakpointFromEditorState = (
   if (hasCondition) {
     // Condition-based: only set condition
     newBreakpoint.condition = trimmedCondition;
-  } else if (widthValue > 0) {
-    // Width-based: only set width
+  } else if (widthValue !== undefined && widthValue >= 0) {
+    // Width-based: only set width (zero is valid for base breakpoints)
     newBreakpoint[widthType] = widthValue;
   } else if (originalBreakpoint?.condition !== undefined) {
     // Preserve existing condition if input was cleared
