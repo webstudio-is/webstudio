@@ -3,10 +3,6 @@
 
 import { Fragment, useState } from "react";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-import {
-  Body as Body,
-  Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
 
 export const projectId = "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e";
 
@@ -28,16 +24,8 @@ export const pageFontAssets: string[] = [];
 
 export const pageBackgroundImageAssets: string[] = [];
 
-export const CustomCode = () => {
-  return <></>;
-};
-
 const Page = (_props: { system: any }) => {
-  return (
-    <Body className={`w-body`}>
-      <Heading className={`w-heading`}>{"FIXTURE-CLIENT-DO-NOT-TOUCH"}</Heading>
-    </Body>
-  );
+  return <body className={`w-element`} />;
 };
 
 export { Page };
