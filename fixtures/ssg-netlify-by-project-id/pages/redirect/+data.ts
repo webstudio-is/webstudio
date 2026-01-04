@@ -1,6 +1,9 @@
 import type { PageContextServer } from "vike/types";
 import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
-import { getPageMeta, getResources } from "__SERVER__";
+import {
+  getPageMeta,
+  getResources,
+} from "../../app/__generated__/[redirect]._index.server";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
