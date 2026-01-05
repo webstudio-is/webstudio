@@ -97,7 +97,7 @@ export const Topbar = ({ project, hasProPlan, css, loading }: TopbarProps) => {
       <Flex css={{ flexBasis: "60%" }} justify="center">
         <BreakpointsContainer />
       </Flex>
-      <Toolbar css={{ flexBasis: "20%" }}>
+      <Toolbar>
         <ToolbarToggleGroup
           type="single"
           css={{
