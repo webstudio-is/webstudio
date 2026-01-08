@@ -12,6 +12,11 @@
 - Never use one-line if statements: `if (condition) something;`
 - Functions must never have more than 3 parameters - use an object parameter instead
 
+## Running Checks
+
+- When user says "run checks" or similar, always run both `pnpm eslint` and `pnpm typecheck` (not just `get_errors`)
+- Fix all eslint and TypeScript errors before considering work complete
+
 ## File Organization
 
 - Files named `types.ts` must only contain TypeScript type definitions, interfaces, and type aliases

@@ -201,6 +201,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -219,6 +221,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -237,6 +241,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "image",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -255,6 +261,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "video",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -273,6 +281,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "file",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -291,6 +301,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({
@@ -309,6 +321,8 @@ describe("uploadingFileDataToAsset", () => {
       source: "file",
       file,
       assetId: "test-id",
+      type: "file",
+      objectURL: "blob:test",
     });
 
     expect(result).toMatchObject({

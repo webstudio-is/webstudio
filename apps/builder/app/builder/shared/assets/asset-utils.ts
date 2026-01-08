@@ -113,10 +113,6 @@ export const uploadingFileDataToAsset = (
     // Fallback to file extension if MIME type doesn't provide format
     const match = fileName.match(/\.([^.]+)$/);
     format = match ? match[1].toLowerCase() : "";
-    console.log(
-      `[uploadingFileDataToAsset] MIME type missing or invalid (${mimeType}), extracted format from filename:`,
-      format
-    );
   }
 
   const assetType = detectAssetType(fileName);
