@@ -6,7 +6,11 @@ import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { getMimeTypeByExtension } from "@webstudio-is/sdk";
 import type { Asset, Pages, Props, Styles, Instance } from "@webstudio-is/sdk";
-import type { ImageValue, StyleValue } from "@webstudio-is/css-engine";
+import type {
+  ImageValue,
+  FontFamilyValue,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import { mapGetOrInsert } from "~/shared/shim";
 import {
   Box,
@@ -85,9 +89,12 @@ type AssetUsage =
 
 const traverseStyleValue = (
   styleValue: StyleValue,
-  callback: (value: ImageValue) => void
+  callback: (value: ImageValue | FontFamilyValue) => void
 ) => {
   if (styleValue.type === "image") {
+    callback(styleValue);
+  }
+  if (styleValue.type === "fontFamily") {
     callback(styleValue);
   }
   if (styleValue.type === "tuple") {
@@ -106,12 +113,23 @@ const calculateUsagesByAssetId = ({
   pages,
   props,
   styles,
+  assets,
 }: {
   pages: Pages | undefined;
   props: Props;
   styles: Styles;
+  assets: Map<Asset["id"], Asset>;
 }): Map<Asset["id"], AssetUsage[]> => {
   const usagesByAsset = new Map<Asset["id"], AssetUsage[]>();
+
+  // Build font family to asset ID map once for O(1) lookups
+  const fontFamilyToAssetId = new Map<string, Asset["id"]>();
+  for (const asset of assets.values()) {
+    if (asset.type === "font") {
+      fontFamilyToAssetId.set(asset.meta.family, asset.id);
+    }
+  }
+
   if (pages?.meta?.faviconAssetId) {
     const usages = mapGetOrInsert(usagesByAsset, pages.meta.faviconAssetId, []);
     usages.push({ type: "favicon" });
@@ -148,14 +166,20 @@ const calculateUsagesByAssetId = ({
     }
   }
   for (const [styleDeclKey, styleDecl] of styles) {
-    traverseStyleValue(styleDecl.value, (imageValue) => {
-      if (imageValue.value.type === "asset") {
-        const usages = mapGetOrInsert(
-          usagesByAsset,
-          imageValue.value.value,
-          []
-        );
+    traverseStyleValue(styleDecl.value, (value) => {
+      if (value.type === "image" && value.value.type === "asset") {
+        const usages = mapGetOrInsert(usagesByAsset, value.value.value, []);
         usages.push({ type: "style", styleDeclKey });
+      }
+      if (value.type === "fontFamily") {
+        // Match each font family name to its asset ID
+        for (const fontFamily of value.value) {
+          const assetId = fontFamilyToAssetId.get(fontFamily);
+          if (assetId !== undefined) {
+            const usages = mapGetOrInsert(usagesByAsset, assetId, []);
+            usages.push({ type: "style", styleDeclKey });
+          }
+        }
       }
     });
   }
@@ -163,9 +187,9 @@ const calculateUsagesByAssetId = ({
 };
 
 const $usagesByAssetId = computed(
-  [$pages, $props, $styles],
-  (pages, props, styles) => {
-    return calculateUsagesByAssetId({ pages, props, styles });
+  [$pages, $props, $styles, $assets],
+  (pages, props, styles, assets) => {
+    return calculateUsagesByAssetId({ pages, props, styles, assets });
   }
 );
 
