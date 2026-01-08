@@ -6,7 +6,7 @@ import { IMAGE_MIME_TYPES, detectAssetType } from "@webstudio-is/sdk";
 import { MAX_UPLOAD_SIZE, toBytes } from "@webstudio-is/asset-uploader";
 import type { AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
-import { uploadAssets } from "./use-assets";
+import { uploadAssets } from "./upload-assets";
 import { $authPermit } from "~/shared/nano-states";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);

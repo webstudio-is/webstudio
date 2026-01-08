@@ -2,8 +2,12 @@ import isValidFilename from "valid-filename";
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import prettyBytes from "pretty-bytes";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { getMimeTypeByExtension } from "@webstudio-is/sdk";
+import type { Asset, Pages, Props, Styles, Instance } from "@webstudio-is/sdk";
+import type { ImageValue, StyleValue } from "@webstudio-is/css-engine";
+import { mapGetOrInsert } from "~/shared/shim";
 import {
   Box,
   Button,
@@ -40,7 +44,6 @@ import {
   PageIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import type { Asset, Instance } from "@webstudio-is/sdk";
 import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   $assets,
@@ -60,11 +63,7 @@ import {
   selectPage,
 } from "~/shared/awareness";
 import { updateWebstudioData } from "~/shared/instance-utils";
-import {
-  deleteAssets,
-  $usagesByAssetId,
-  type AssetUsage,
-} from "~/builder/shared/assets";
+import { deleteAssets } from "~/builder/shared/assets";
 import {
   $activeInspectorPanel,
   setActiveSidebarPanel,
@@ -76,6 +75,99 @@ import {
 } from "~/builder/shared/assets/asset-utils";
 import { getFormattedAspectRatio } from "./utils";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
+
+type AssetUsage =
+  | { type: "favicon" }
+  | { type: "socialImage"; pageId: string }
+  | { type: "marketplaceThumbnail"; pageId: string }
+  | { type: "prop"; propId: string }
+  | { type: "style"; styleDeclKey: string };
+
+const traverseStyleValue = (
+  styleValue: StyleValue,
+  callback: (value: ImageValue) => void
+) => {
+  if (styleValue.type === "image") {
+    callback(styleValue);
+  }
+  if (styleValue.type === "tuple") {
+    for (const item of styleValue.value) {
+      traverseStyleValue(item, callback);
+    }
+  }
+  if (styleValue.type === "layers") {
+    for (const item of styleValue.value) {
+      traverseStyleValue(item, callback);
+    }
+  }
+};
+
+const calculateUsagesByAssetId = ({
+  pages,
+  props,
+  styles,
+}: {
+  pages: Pages | undefined;
+  props: Props;
+  styles: Styles;
+}): Map<Asset["id"], AssetUsage[]> => {
+  const usagesByAsset = new Map<Asset["id"], AssetUsage[]>();
+  if (pages?.meta?.faviconAssetId) {
+    const usages = mapGetOrInsert(usagesByAsset, pages.meta.faviconAssetId, []);
+    usages.push({ type: "favicon" });
+  }
+  if (pages) {
+    for (const page of [pages.homePage, ...pages.pages]) {
+      if (page.meta.socialImageAssetId) {
+        const usages = mapGetOrInsert(
+          usagesByAsset,
+          page.meta.socialImageAssetId,
+          []
+        );
+        usages.push({ type: "socialImage", pageId: page.id });
+      }
+      if (page.marketplace?.thumbnailAssetId) {
+        const usages = mapGetOrInsert(
+          usagesByAsset,
+          page.marketplace.thumbnailAssetId,
+          []
+        );
+        usages.push({ type: "marketplaceThumbnail", pageId: page.id });
+      }
+    }
+  }
+  for (const prop of props.values()) {
+    if (
+      prop.type === "asset" &&
+      // ignore width and height properties which are specific to size
+      prop.name !== "width" &&
+      prop.name !== "height"
+    ) {
+      const usages = mapGetOrInsert(usagesByAsset, prop.value, []);
+      usages.push({ type: "prop", propId: prop.id });
+    }
+  }
+  for (const [styleDeclKey, styleDecl] of styles) {
+    traverseStyleValue(styleDecl.value, (imageValue) => {
+      if (imageValue.value.type === "asset") {
+        const usages = mapGetOrInsert(
+          usagesByAsset,
+          imageValue.value.value,
+          []
+        );
+        usages.push({ type: "style", styleDeclKey });
+      }
+    });
+  }
+  return usagesByAsset;
+};
+
+const $usagesByAssetId = computed(
+  [$pages, $props, $styles],
+  (pages, props, styles) => {
+    return calculateUsagesByAssetId({ pages, props, styles });
+  }
+);
 
 const buttonLinkClass = css({
   all: "unset",
@@ -548,4 +640,9 @@ export const AssetInfo = ({ asset }: { asset: Asset }) => {
       )}
     </>
   );
+};
+
+export const __testing__ = {
+  traverseStyleValue,
+  calculateUsagesByAssetId,
 };
