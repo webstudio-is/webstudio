@@ -10,11 +10,15 @@
 - Never use arbitrary CSS number values, 99% of the time you need to use a value from the theme
 - Never use margin, always use gap or padding
 - Never use one-line if statements: `if (condition) something;`
+- Never use the `function` keyword - always use arrow functions (`const name = () => {}`) or function expressions with arrow syntax
 - Functions must never have more than 3 parameters - use an object parameter instead
+- Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 
 ## Running Checks
 
-- When user says "run checks" or similar, always run both `pnpm eslint` and `pnpm typecheck` (not just `get_errors`)
+- Before running any commands, always check `get_errors` tool first to see TypeScript and ESLint errors in the VS Code editor
+- Only run `pnpm typecheck` and `pnpm eslint` when user explicitly says "run checks" or after completing substantial changes
+- `pnpm typecheck` is slow - avoid running it unnecessarily during development
 - Fix all eslint and TypeScript errors before considering work complete
 
 ## File Organization
@@ -22,6 +26,15 @@
 - Files named `types.ts` must only contain TypeScript type definitions, interfaces, and type aliases
 - Never add functions, constants, or executable code to `types.ts` files
 - Place utility functions in `*-utils.ts` files, constants in `constants.ts`, etc.
+
+### Function Placement Philosophy
+
+- Functions belong close to where they are used
+- If a function is used in one file only, it should be in that file
+- If a function is used by multiple files in the same directory, place it in a `*-utils.ts` file in that directory
+- Only create shared utility files when functions are used across different directories
+- Files prefixed with `use-` contain React hooks and state management (e.g., `use-assets.tsx`)
+- Separate pure utilities from side-effect code (React hooks, network calls, DOM operations)
 
 ## Testing
 

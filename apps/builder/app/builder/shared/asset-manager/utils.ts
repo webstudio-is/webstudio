@@ -1,10 +1,9 @@
 import { matchSorter } from "match-sorter";
-import type { AllowedFileExtension } from "@webstudio-is/sdk";
+import type { AllowedFileExtension, Asset } from "@webstudio-is/sdk";
 import {
   acceptToMimePatterns,
   doesAssetMatchMimePatterns,
 } from "@webstudio-is/sdk";
-import type { Asset } from "@webstudio-is/sdk";
 import type { AssetContainer } from "../assets";
 
 export type SortField = "name" | "size" | "createdAt";

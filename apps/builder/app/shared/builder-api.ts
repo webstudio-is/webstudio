@@ -1,7 +1,7 @@
 import { createRecursiveProxy } from "@trpc/server/shared";
 import invariant from "tiny-invariant";
 import { toast } from "@webstudio-is/design-system";
-import { uploadAssets } from "~/builder/shared/assets/use-assets";
+import { uploadAssets } from "~/builder/shared/assets/upload-assets";
 import { showTokenConflictDialog } from "./token-conflict-dialog";
 
 const apiWindowNamespace = "__webstudio__$__builderApi";
