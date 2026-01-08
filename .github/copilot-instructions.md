@@ -10,6 +10,13 @@
 - Never use arbitrary CSS number values, 99% of the time you need to use a value from the theme
 - Never use margin, always use gap or padding
 - Never use one-line if statements: `if (condition) something;`
+- Functions must never have more than 3 parameters - use an object parameter instead
+
+## File Organization
+
+- Files named `types.ts` must only contain TypeScript type definitions, interfaces, and type aliases
+- Never add functions, constants, or executable code to `types.ts` files
+- Place utility functions in `*-utils.ts` files, constants in `constants.ts`, etc.
 
 ## Testing
 
