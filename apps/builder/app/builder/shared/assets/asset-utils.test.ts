@@ -5,6 +5,7 @@ import {
   getImageNameAndType,
   getSha256Hash,
   detectAssetType,
+  uploadingFileDataToAsset,
 } from "./asset-utils";
 import type { Asset } from "@webstudio-is/sdk";
 
@@ -188,5 +189,147 @@ describe("detectAssetType", () => {
     expect(detectAssetType("my.font.file.woff2")).toBe("font");
     expect(detectAssetType("my.video.file.mp4")).toBe("video");
     expect(detectAssetType("my.doc.file.pdf")).toBe("file");
+  });
+});
+
+describe("uploadingFileDataToAsset", () => {
+  test("extracts format from MIME type for font with valid MIME", () => {
+    const file = new File(["content"], "InterVariable.woff2", {
+      type: "font/woff2",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "InterVariable.woff2",
+      format: "woff2",
+      type: "font",
+    });
+  });
+
+  test("falls back to filename extension when MIME type is missing", () => {
+    const file = new File(["content"], "InterVariable.woff2", {
+      type: "", // Empty MIME type
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "InterVariable.woff2",
+      format: "woff2",
+      type: "font",
+    });
+  });
+
+  test("handles image files with valid MIME type", () => {
+    const file = new File(["content"], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "image",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "photo.jpg",
+      format: "jpeg",
+      type: "image",
+    });
+  });
+
+  test("handles video files", () => {
+    const file = new File(["content"], "video.mp4", {
+      type: "video/mp4",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "video",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "video.mp4",
+      format: "mp4",
+      type: "image", // Videos are treated as images for now
+    });
+  });
+
+  test("handles generic file types", () => {
+    const file = new File(["content"], "document.pdf", {
+      type: "application/pdf",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "file",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "document.pdf",
+      format: "pdf",
+      type: "file",
+    });
+  });
+
+  test("extracts format from filename when MIME type has no subtype", () => {
+    const file = new File(["content"], "font.ttf", {
+      type: "font",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "font",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "font.ttf",
+      format: "ttf",
+      type: "font",
+    });
+  });
+
+  test("handles files with no extension", () => {
+    const file = new File(["content"], "README", {
+      type: "",
+    });
+    const result = uploadingFileDataToAsset({
+      source: "file",
+      file,
+      assetId: "test-id",
+      type: "file",
+      objectURL: "blob:test",
+    });
+
+    expect(result).toMatchObject({
+      id: "test-id",
+      name: "README",
+      format: "",
+      type: "file",
+    });
   });
 });
