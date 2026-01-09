@@ -296,6 +296,12 @@ const DomainItem = ({
       value: projectDomain.expectedTxtRecord,
       ttl: 300,
     } as const,
+    {
+      type: "TXT",
+      host: "_webstudio_is",
+      value: projectDomain.expectedTxtRecord,
+      ttl: 300,
+    } as const,
   ];
 
   return (
