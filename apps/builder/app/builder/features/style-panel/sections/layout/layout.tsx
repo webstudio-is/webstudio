@@ -534,6 +534,7 @@ const LayoutSectionFlex = () => {
 const LayoutSectionGrid = () => {
   return (
     <Flex direction="column" gap="2">
+      <GridVisual />
       <Grid
         css={{
           gridTemplateColumns: "1fr 1fr 1fr",
@@ -541,7 +542,6 @@ const LayoutSectionGrid = () => {
           alignItems: "stretch",
         }}
       >
-        <GridVisual />
         <FlexVisual />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
