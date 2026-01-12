@@ -56,7 +56,7 @@ import {
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { FlexVisual } from "./shared/flex-visual";
-import { GridVisual } from "./shared/grid-visual";
+import { GridVisual, GridVisualAlignment } from "./shared/grid-visual";
 import { humanizeString } from "~/shared/string-utils";
 
 const GapLinked = ({
@@ -542,7 +542,7 @@ const LayoutSectionGrid = () => {
           alignItems: "stretch",
         }}
       >
-        <FlexVisual />
+        <GridVisualAlignment />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
@@ -593,6 +593,32 @@ const LayoutSectionGrid = () => {
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
               property="align-items"
+              items={[
+                {
+                  name: "stretch",
+                  label: "Stretch",
+                  icon: StretchVerticalIcon,
+                },
+                {
+                  name: "baseline",
+                  label: "Baseline",
+                  icon: AlignBaselineIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignStartHorizontalIcon,
+                },
+                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+              ]}
+            />
+            <MenuControl
+              property="justify-items"
               items={[
                 {
                   name: "stretch",
@@ -672,6 +698,7 @@ export const properties = [
   "flex-direction",
   "flex-wrap",
   "align-items",
+  "justify-items",
   "justify-content",
   "align-content",
   "row-gap",
