@@ -374,7 +374,12 @@ const AlignmentControls = ({
   showAlignContent?: boolean;
 }) => {
   return (
-    <Flex css={{ gap: theme.spacing[7] }}>
+    <Grid
+      css={{
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gap: theme.spacing[7],
+      }}
+    >
       <MenuControl
         property="align-items"
         items={[
@@ -464,7 +469,7 @@ const AlignmentControls = ({
           ]}
         />
       )}
-    </Flex>
+    </Grid>
   );
 };
 
@@ -476,12 +481,18 @@ const LayoutSectionFlex = () => {
     <Flex direction="column" gap="2">
       <Grid
         css={{
-          gridTemplateColumns: "1fr 1fr 1fr",
-          alignItems: "stretch",
+          gridTemplateColumns: `1fr 1fr 1fr`,
+          gap: theme.spacing[7],
+          alignItems: "start",
         }}
       >
         <FlexVisual />
-        <Flex css={{ gap: theme.spacing[7] }}>
+        <Grid
+          css={{
+            gridTemplateColumns: "1fr 1fr",
+            gap: theme.spacing[7],
+          }}
+        >
           <MenuControl
             property="flex-direction"
             items={[
@@ -506,12 +517,14 @@ const LayoutSectionFlex = () => {
               { name: "wrap", label: "Wrap", icon: WrapIcon },
             ]}
           />
-        </Flex>
-        <AlignmentControls
-          showAlignContent={
-            flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse"
-          }
-        />
+          <Box css={{ gridColumn: "1 / -1" }}>
+            <AlignmentControls
+              showAlignContent={
+                flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse"
+              }
+            />
+          </Box>
+        </Grid>
       </Grid>
       <Gap />
     </Flex>
@@ -523,7 +536,7 @@ const LayoutSectionGrid = () => {
     <Flex direction="column" gap="2">
       <Grid
         css={{
-          gridTemplateColumns: "auto auto 1fr",
+          gridTemplateColumns: "1fr 1fr 1fr",
           gap: theme.spacing[7],
           alignItems: "stretch",
         }}
@@ -676,8 +689,8 @@ export const Section = () => {
       <Flex direction="column" gap="2">
         <Grid
           css={{
-            gridTemplateColumns: `1fr ${theme.spacing[24]}`,
-            alignItems: "center",
+            gridTemplateColumns: `1fr 2fr`,
+            gap: theme.spacing[4],
           }}
         >
           <PropertyLabel
