@@ -305,7 +305,7 @@ const gridVisualButtonStyle = css({
   all: "unset",
   position: "relative",
   display: "grid",
-  width: 60,
+  width: "100%",
   height: 60,
   outline: `1px solid ${theme.colors.borderMain}`,
   borderRadius: theme.borderRadius[3],
@@ -377,8 +377,8 @@ export const GridVisual = () => {
           tabIndex={-1}
           css={{
             position: "absolute",
-            top: 0,
-            right: 0,
+            top: theme.spacing[2],
+            right: theme.spacing[2],
             opacity: "var(--grid-settings-button-opacity, 0)",
             transition: "opacity 100ms ease",
             zIndex: 1,
