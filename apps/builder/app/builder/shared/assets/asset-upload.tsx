@@ -68,8 +68,17 @@ export const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
     .map((specifier) => specifier.trim());
 
   return specifierArray.some((specifier) => {
+    if (specifier === "*") {
+      return true;
+    }
+
     if (specifier.startsWith(".")) {
       return file.name.endsWith(specifier);
+    }
+
+    if (specifier.endsWith("/*")) {
+      const mimeCategory = specifier.slice(0, -2);
+      return file.type.startsWith(mimeCategory + "/");
     }
 
     return specifier === file.type;
