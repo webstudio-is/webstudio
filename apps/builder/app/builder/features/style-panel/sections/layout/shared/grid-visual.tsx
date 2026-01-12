@@ -15,9 +15,13 @@ import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import { keywordValues } from "@webstudio-is/css-data";
 import {
   useComputedStyleDecl,
+  useComputedStyles,
   $availableUnitVariables,
 } from "../../../shared/model";
-import { PropertyLabel } from "../../../property-label";
+import {
+  PropertyLabel,
+  getPriorityStyleValueSource,
+} from "../../../property-label";
 import { GridSettingsPanel } from "./grid-settings";
 import {
   createBatchUpdate,
@@ -25,6 +29,7 @@ import {
 } from "../../../shared/use-style-data";
 import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import { AlignmentUi } from "./alignment-ui";
 
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
@@ -420,5 +425,61 @@ export const GridVisual = () => {
         </button>
       </GridSizePanel>
     </Box>
+  );
+};
+
+export const GridVisualAlignment = () => {
+  const styles = useComputedStyles([
+    "grid-auto-flow",
+    "justify-content",
+    "align-items",
+  ]);
+  const styleValueSourceColor = getPriorityStyleValueSource(styles);
+  const [gridAutoFlow, justifyContent, alignItems] = styles;
+
+  const gridAutoFlowValue = toValue(gridAutoFlow.cascadedValue);
+  const justifyContentValue = toValue(justifyContent.cascadedValue);
+  const alignItemsValue = toValue(alignItems.cascadedValue);
+
+  const isColumnDirection = gridAutoFlowValue.includes("column");
+  const isDense = gridAutoFlowValue.includes("dense");
+
+  let color = theme.colors.foregroundFlexUiMain;
+  if (styleValueSourceColor === "local") {
+    color = theme.colors.foregroundLocalFlexUi;
+  }
+  if (styleValueSourceColor === "overwritten") {
+    color = theme.colors.foregroundOverwrittenFlexUi;
+  }
+  if (styleValueSourceColor === "remote") {
+    color = theme.colors.foregroundRemoteFlexUi;
+  }
+
+  const alignment = ["start", "center", "end"];
+
+  return (
+    <AlignmentUi
+      justifyContent={justifyContentValue}
+      alignItems={alignItemsValue}
+      isColumnDirection={isColumnDirection}
+      isDense={isDense}
+      color={color}
+      itemStretchWidth={false}
+      itemStretchHeight={false}
+      onSelect={({ x, y }) => {
+        const justifyContent = alignment[x];
+        const alignItems = alignment[y];
+        const batch = createBatchUpdate();
+        batch.setProperty("align-items")({
+          type: "keyword",
+          value: alignItems,
+        });
+        batch.setProperty("justify-content")({
+          type: "keyword",
+          value: justifyContent,
+        });
+        batch.publish();
+      }}
+    />
   );
 };
