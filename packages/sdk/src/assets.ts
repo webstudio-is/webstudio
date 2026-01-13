@@ -470,6 +470,7 @@ const extractFontMetadata = (asset: Asset): RuntimeMetadata => {
 
 const extractFileMetadata = (_asset: Asset): RuntimeMetadata => {
   // Generic files don't need additional metadata at runtime
+  return;
 };
 
 const metadataExtractors: Record<
