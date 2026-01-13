@@ -32,7 +32,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const origin = `${requestUrl.protocol}//${requestUrl.host}`;
 
   // Convert array to object with asset IDs as keys
-  // Use simplified format with only runtime-needed data
+  // Use /cgi/ endpoint URLs (relative paths)
   const assetsById = Object.fromEntries(
     assets.map((asset) => [asset.id, toRuntimeAsset(asset, origin)])
   );

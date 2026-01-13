@@ -434,17 +434,16 @@ export const prebuild = async (options: {
     }
 
     for (const asset of siteData.assets) {
-      if (asset.type === "image" || asset.type === "font") {
-        assetsToDownload.push(
-          limit(() =>
-            downloadAsset(
-              getAssetUrl(asset, assetOrigin || "").href,
-              asset.name,
-              assetBaseUrl
-            )
+      // Download all assets (images, fonts, videos, audio, documents, etc.)
+      assetsToDownload.push(
+        limit(() =>
+          downloadAsset(
+            getAssetUrl(asset, assetOrigin || "").href,
+            asset.name,
+            assetBaseUrl
           )
-        );
-      }
+        )
+      );
     }
   }
 
@@ -733,8 +732,8 @@ export const prebuild = async (options: {
   );
 
   // Generate assets resource file
-  // Assets need to use assetBaseUrl on published sites (not the builder origin)
-  // Use a placeholder origin that will be replaced with actual site origin at runtime
+  // Assets use /cgi/ endpoints on both builder and published sites
+  // Use a placeholder origin for URL construction, result will be relative paths
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => [
       asset.id,
