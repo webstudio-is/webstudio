@@ -692,6 +692,10 @@ export const prebuild = async (options: {
           importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
         )
         .replaceAll(
+          "__ASSETS__",
+          importFrom(`./app/__generated__/$resources.assets`, file)
+        )
+        .replaceAll(
           "__CLIENT__",
           importFrom(`./app/__generated__/${generatedBasename}`, file)
         )
@@ -724,6 +728,26 @@ export const prebuild = async (options: {
         null,
         2
       )};
+    `
+  );
+
+  // Generate assets resource file
+  // Assets need to use assetBaseUrl on published sites (not the builder origin)
+  const assetsById = Object.fromEntries(
+    siteData.assets.map((asset) => [
+      asset.id,
+      {
+        ...asset,
+        // Use relative URL that will work with assetBaseUrl
+        url: `${assetBaseUrl}${asset.name}`,
+      },
+    ])
+  );
+
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.assets.ts"),
+    `
+      export const assets = ${JSON.stringify(assetsById, null, 2)};
     `
   );
 
