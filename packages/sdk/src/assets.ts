@@ -490,15 +490,19 @@ const metadataExtractors: Record<
  * include the fields that are actually needed at runtime.
  *
  * @param asset - The full asset object
- * @param origin - Origin to use for generating the asset URL
- * @returns A minimal RuntimeAsset object
+ * @param origin - Origin to use for generating the asset URL (only used for URL construction, result is always a relative path)
+ * @returns A minimal RuntimeAsset object with relative URL
  */
 export const toRuntimeAsset = (asset: Asset, origin: string): RuntimeAsset => {
   const extractor = metadataExtractors[asset.type];
   const metadata = extractor(asset);
 
+  const url = getAssetUrl(asset, origin);
+  // Use pathname + search to get the relative path with query string
+  const relativeUrl = url.pathname + url.search;
+
   return {
-    url: getAssetUrl(asset, origin).href,
+    url: relativeUrl,
     ...metadata,
   };
 };

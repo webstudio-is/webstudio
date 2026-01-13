@@ -894,7 +894,7 @@ describe("allowed-file-types", () => {
     test("converts image asset with all fields", () => {
       const result = toRuntimeAsset(mockImageAsset, "https://example.com");
       expect(result).toEqual({
-        url: "https://example.com/cgi/image/photo.jpg?format=raw",
+        url: "/cgi/image/photo.jpg?format=raw",
         width: 1920,
         height: 1080,
       });
@@ -903,7 +903,7 @@ describe("allowed-file-types", () => {
     test("converts static font asset with metadata", () => {
       const result = toRuntimeAsset(mockFontAsset, "https://example.com");
       expect(result).toEqual({
-        url: "https://example.com/cgi/asset/font.woff2",
+        url: "/cgi/asset/font.woff2",
         family: "Arial",
         style: "normal",
         weight: 400,
@@ -916,7 +916,7 @@ describe("allowed-file-types", () => {
         "https://example.com"
       );
       expect(result).toEqual({
-        url: "https://example.com/cgi/asset/variable-font.woff2",
+        url: "/cgi/asset/variable-font.woff2",
         family: "Inter",
       });
     });
@@ -924,15 +924,16 @@ describe("allowed-file-types", () => {
     test("converts generic file asset with minimal fields", () => {
       const result = toRuntimeAsset(mockGenericAsset, "https://example.com");
       expect(result).toEqual({
-        url: "https://example.com/cgi/asset/document.pdf",
+        url: "/cgi/asset/document.pdf",
       });
     });
 
-    test("works with different origins", () => {
+    test("returns relative URLs regardless of origin", () => {
       const result1 = toRuntimeAsset(mockImageAsset, "https://cdn.example.com");
       const result2 = toRuntimeAsset(mockImageAsset, "http://localhost:3000");
-      expect(result1.url).toContain("https://cdn.example.com");
-      expect(result2.url).toContain("http://localhost:3000");
+      // Both should return the same relative URL
+      expect(result1.url).toBe("/cgi/image/photo.jpg?format=raw");
+      expect(result2.url).toBe("/cgi/image/photo.jpg?format=raw");
     });
 
     test("handles image without dimensions", () => {
