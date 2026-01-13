@@ -15,6 +15,7 @@ import {
   detectAssetType,
   decodePathFragment,
   getAssetUrl,
+  toRuntimeAsset,
   acceptToMimePatterns,
   acceptToMimeCategories,
   getAssetMime,
@@ -831,6 +832,120 @@ describe("allowed-file-types", () => {
           new Set(["image/*"])
         )
       ).toBe(false);
+    });
+  });
+
+  describe("toRuntimeAsset", () => {
+    const mockImageAsset = {
+      id: "image-1",
+      name: "photo.jpg",
+      projectId: "project-1",
+      size: 1024,
+      type: "image" as const,
+      format: "jpg",
+      description: "A photo",
+      createdAt: "2024-01-01",
+      meta: { width: 1920, height: 1080 },
+    };
+
+    const mockFontAsset = {
+      id: "font-1",
+      name: "font.woff2",
+      projectId: "project-1",
+      size: 512,
+      type: "font" as const,
+      format: "woff2" as const,
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {
+        family: "Arial",
+        style: "normal" as const,
+        weight: 400,
+      },
+    };
+
+    const mockVariableFontAsset = {
+      id: "font-2",
+      name: "variable-font.woff2",
+      projectId: "project-1",
+      size: 768,
+      type: "font" as const,
+      format: "woff2" as const,
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {
+        family: "Inter",
+        variationAxes: {},
+      },
+    };
+
+    const mockGenericAsset = {
+      id: "doc-1",
+      name: "document.pdf",
+      projectId: "project-1",
+      size: 4096,
+      type: "file" as const,
+      format: "pdf",
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {},
+    };
+
+    test("converts image asset with all fields", () => {
+      const result = toRuntimeAsset(mockImageAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "https://example.com/cgi/image/photo.jpg?format=raw",
+        width: 1920,
+        height: 1080,
+      });
+    });
+
+    test("converts static font asset with metadata", () => {
+      const result = toRuntimeAsset(mockFontAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "https://example.com/cgi/asset/font.woff2",
+        family: "Arial",
+        style: "normal",
+        weight: 400,
+      });
+    });
+
+    test("converts variable font asset without style/weight", () => {
+      const result = toRuntimeAsset(
+        mockVariableFontAsset,
+        "https://example.com"
+      );
+      expect(result).toEqual({
+        url: "https://example.com/cgi/asset/variable-font.woff2",
+        family: "Inter",
+      });
+    });
+
+    test("converts generic file asset with minimal fields", () => {
+      const result = toRuntimeAsset(mockGenericAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "https://example.com/cgi/asset/document.pdf",
+      });
+    });
+
+    test("works with different origins", () => {
+      const result1 = toRuntimeAsset(mockImageAsset, "https://cdn.example.com");
+      const result2 = toRuntimeAsset(mockImageAsset, "http://localhost:3000");
+      expect(result1.url).toContain("https://cdn.example.com");
+      expect(result2.url).toContain("http://localhost:3000");
+    });
+
+    test("handles image without dimensions", () => {
+      const assetWithoutDimensions = {
+        ...mockImageAsset,
+        meta: { width: 0, height: 0 },
+      };
+      const result = toRuntimeAsset(
+        assetWithoutDimensions,
+        "https://example.com"
+      );
+      expect(result).not.toHaveProperty("width");
+      expect(result).not.toHaveProperty("height");
     });
   });
 });

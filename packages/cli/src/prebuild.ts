@@ -47,6 +47,7 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   getAssetUrl,
+  toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -733,14 +734,11 @@ export const prebuild = async (options: {
 
   // Generate assets resource file
   // Assets need to use assetBaseUrl on published sites (not the builder origin)
+  // Use a placeholder origin that will be replaced with actual site origin at runtime
   const assetsById = Object.fromEntries(
     siteData.assets.map((asset) => [
       asset.id,
-      {
-        ...asset,
-        // Use relative URL that will work with assetBaseUrl
-        url: `${assetBaseUrl}${asset.name}`,
-      },
+      toRuntimeAsset(asset, "https://placeholder.local"),
     ])
   );
 
