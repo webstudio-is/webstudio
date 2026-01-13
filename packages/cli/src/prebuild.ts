@@ -747,7 +747,7 @@ export const prebuild = async (options: {
   await createFileIfNotExists(
     join(generatedDir, "$resources.assets.ts"),
     `
-      export const assets = ${JSON.stringify(assetsById, null, 2)};
+    export const assets = ${JSON.stringify(assetsById, null, 2)};
     `
   );
 

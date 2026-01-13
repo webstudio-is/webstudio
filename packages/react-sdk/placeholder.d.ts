@@ -58,6 +58,16 @@ declare module "__SITEMAP__" {
   }>;
 }
 
+declare module "__ASSETS__" {
+  import type { Asset } from "@webstudio-is/sdk";
+  export const assets: Record<
+    string,
+    Asset & {
+      url: string;
+    }
+  >;
+}
+
 declare module "__REDIRECT__" {
   export const url: string;
   export const status: number;
