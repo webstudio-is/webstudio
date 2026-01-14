@@ -9,6 +9,11 @@ export const assets = {
     width: 100,
     height: 100,
   },
+  cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78: {
+    url: "/cgi/video/video_QamtUWsD-ShifhzZLoNIv_BsTI5QxvAbqOcBwK4HpfZ.mp4?format=raw",
+    width: 202,
+    height: 360,
+  },
   "cd939c56-bcdd-4e64-bd9c-567a9bccd3da": {
     url: "/cgi/image/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg?format=raw",
     width: 1024,

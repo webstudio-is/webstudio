@@ -4,11 +4,6 @@
 import { Fragment, useState } from "react";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
-import {
-  Heading as Heading,
-  HtmlEmbed as HtmlEmbed,
-  Box as Box,
-} from "@webstudio-is/sdk-components-react";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
@@ -31,26 +26,27 @@ export const pageFontAssets: string[] = [];
 export const pageBackgroundImageAssets: string[] = [];
 
 const Page = (_props: { system: any }) => {
-  let jsonResourceVariable = useResource("jsonResourceVariable_1");
-  let [jsonVar, set$jsonVar] = useVariableState<any>({ hello: "world" });
-  let [globalVariable, set$globalVariable] =
-    useVariableState<any>("globalValue");
+  let assets = useResource("assets_1");
   return (
-    <Body className={`w-body`}>
-      <Heading className={`w-heading`}>
-        {`${jsonResourceVariable?.data?.args}`}
-      </Heading>
-      <HtmlEmbed
-        code={`<script>
-const a = ${jsonResourceVariable?.data?.args}
-
-const b = ${jsonVar}
-
-console.log(a, b);
-</script>`}
-        className={`w-html-embed`}
+    <Body className={`w-element`}>
+      <audio
+        controls={true}
+        src={
+          assets?.data?.[
+            "2b151fc7b4b0324e6ab78c40f72c7f59273f81fb1be3d08b3f9976428601b95e"
+          ]?.url
+        }
+        className={`w-element`}
       />
-      <Box className={`w-box`}>{globalVariable}</Box>
+      <video
+        controls={true}
+        src={
+          assets?.data
+            ?.cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78
+            ?.url
+        }
+        className={`w-element`}
+      />
     </Body>
   );
 };
