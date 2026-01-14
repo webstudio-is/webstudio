@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "24dfee9d-111e-4c48-a4ae-bb7e01205b9d",
+    "id": "ec62bd6c-353f-4b46-8870-cfe578a7c7a6",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 610,
-    "createdAt": "2026-01-14T01:41:50.13+00:00",
-    "updatedAt": "2026-01-14T01:41:50.13+00:00",
+    "version": 616,
+    "createdAt": "2026-01-14T02:01:41.678+00:00",
+    "updatedAt": "2026-01-14T02:01:41.678+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -7218,6 +7218,16 @@
   ],
   "assets": [
     {
+      "id": "2b151fc7b4b0324e6ab78c40f72c7f59273f81fb1be3d08b3f9976428601b95e",
+      "name": "e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
+      "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
+      "size": 19680,
+      "type": "file",
+      "format": "mp3",
+      "createdAt": "2026-01-14T01:59:48.958+00:00",
+      "meta": {}
+    },
+    {
       "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
       "name": "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
@@ -7245,12 +7255,12 @@
     },
     {
       "id": "cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78",
-      "name": "video_QamtUWsD-ShifhzZLoNIv_BsTI5QxvAbqOcBwK4HpfZ.mp4",
+      "name": "video_QamtUWsD-ShifhzZLoNIv_iUsqxbreCq0PcxoSahkmr.mp4",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 170479,
       "type": "image",
       "format": "mp4",
-      "createdAt": "2026-01-14T01:10:59.669+00:00",
+      "createdAt": "2026-01-14T02:00:11.351+00:00",
       "meta": {
         "width": 202,
         "height": 360
@@ -7275,5 +7285,5 @@
   },
   "projectDomain": "webstudio-fixture-project-a-0su3o",
   "projectTitle": "webstudio-fixture-project-a",
-  "origin": "https://main.development.webstudio.is"
+  "origin": "https://fix-assets.staging.webstudio.is"
 }
