@@ -8,7 +8,7 @@ import { Box as Box } from "@webstudio-is/sdk-components-react";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2026-01-14T01:23:08.296Z";
+export const lastPublished = "2026-01-14T01:41:50.130Z";
 
 export const siteName = "KittyGuardedZone";
 

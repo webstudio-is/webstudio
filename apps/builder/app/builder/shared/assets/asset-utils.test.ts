@@ -269,7 +269,7 @@ describe("uploadingFileDataToAsset", () => {
       id: "test-id",
       name: "video.mp4",
       format: "mp4",
-      type: "image", // Videos are treated as images for now
+      type: "file",
     });
   });
 
