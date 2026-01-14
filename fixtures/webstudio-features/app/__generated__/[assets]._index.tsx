@@ -7,7 +7,7 @@ import { Body as Body } from "@webstudio-is/sdk-components-react-router";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2026-01-14T02:01:41.678Z";
+export const lastPublished = "2026-01-14T02:15:01.315Z";
 
 export const siteName = "KittyGuardedZone";
 
@@ -41,9 +41,9 @@ const Page = (_props: { system: any }) => {
       <video
         controls={true}
         src={
-          assets?.data
-            ?.cbf6b1b052e52b256cef54a032a546bf43bf3f5441be4d1c5eeaabce26903d78
-            ?.url
+          assets?.data?.[
+            "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d"
+          ]?.url
         }
         className={`w-element`}
       />
