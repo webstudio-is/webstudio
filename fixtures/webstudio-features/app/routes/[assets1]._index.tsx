@@ -30,13 +30,13 @@ import {
   pageFontAssets,
   pageBackgroundImageAssets,
   breakpoints,
-} from "../__generated__/[assets]._index";
+} from "../__generated__/[assets1]._index";
 import {
   getResources,
   getPageMeta,
   getRemixParams,
   contactEmail,
-} from "../__generated__/[assets]._index.server";
+} from "../__generated__/[assets1]._index.server";
 import * as constants from "../constants.mjs";
 import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";

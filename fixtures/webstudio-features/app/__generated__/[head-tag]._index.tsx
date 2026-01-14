@@ -17,7 +17,7 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2026-01-14T02:24:07.339Z";
+export const lastPublished = "2026-01-14T02:31:46.451Z";
 
 export const siteName = "KittyGuardedZone";
 
