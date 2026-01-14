@@ -399,8 +399,7 @@ export const decodePathFragment = (fragment: string): string => {
 /**
  * Generates the appropriate URL for an asset based on its type and format.
  * - Images use /cgi/image/ with format=raw
- * - Videos use /cgi/video/ with format=raw
- * - Other assets use /cgi/asset/ with format=raw
+ * - All other assets (videos, audio, fonts, documents) use /cgi/asset/ with format=raw
  *
  * @param asset - The asset to generate URL for
  * @param origin - Origin to prepend (e.g., "https://example.com"). When provided, returns an absolute URL.
@@ -412,9 +411,8 @@ export const getAssetUrl = (asset: Asset, origin: string): URL => {
 
   if (assetType === "image") {
     path = `/cgi/image/${asset.name}?format=raw`;
-  } else if (assetType === "video") {
-    path = `/cgi/video/${asset.name}?format=raw`;
   } else {
+    // Videos, audio, fonts, documents all use /cgi/asset/
     path = `/cgi/asset/${asset.name}?format=raw`;
   }
 
