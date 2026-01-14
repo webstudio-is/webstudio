@@ -472,9 +472,9 @@ describe("allowed-file-types", () => {
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");
       expect(url.href).toBe(
-        "https://example.com/cgi/video/video.mp4?format=raw"
+        "https://example.com/cgi/asset/video.mp4?format=raw"
       );
-      expect(url.pathname).toBe("/cgi/video/video.mp4");
+      expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("generates correct URL for font assets", () => {
@@ -519,7 +519,7 @@ describe("allowed-file-types", () => {
         format: "MP4",
       };
       const url = getAssetUrl(upperCaseVideo, "https://example.com");
-      expect(url.pathname).toBe("/cgi/video/video.mp4");
+      expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("handles assets with special characters in name", () => {

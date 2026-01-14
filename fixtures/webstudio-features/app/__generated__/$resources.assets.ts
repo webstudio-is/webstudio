@@ -3,7 +3,7 @@ export const assets = {
     url: "/cgi/asset/e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3?format=raw",
   },
   "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d": {
-    url: "/cgi/video/webm-example_zNrAFpO1v78xz91jYpaiE.webm?format=raw",
+    url: "/cgi/asset/webm-example_zNrAFpO1v78xz91jYpaiE.webm?format=raw",
   },
   "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59": {
     url: "/cgi/image/cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png?format=raw",
