@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "9bda08d1-d85e-4cb3-94fb-a91f71d9742a",
+    "id": "86d5fff2-8c84-442e-b729-6bf98b2af234",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 620,
-    "createdAt": "2026-01-14T02:15:01.315+00:00",
-    "updatedAt": "2026-01-14T02:15:01.315+00:00",
+    "version": 624,
+    "createdAt": "2026-01-14T02:24:07.339+00:00",
+    "updatedAt": "2026-01-14T02:24:07.339+00:00",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -7229,16 +7229,13 @@
     },
     {
       "id": "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d",
-      "name": "webm-example_lTtcLEKcKkGYwe9xpEUY5.webm",
+      "name": "webm-example_zNrAFpO1v78xz91jYpaiE.webm",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 901185,
-      "type": "image",
+      "type": "file",
       "format": "webm",
-      "createdAt": "2026-01-14T02:13:39.619+00:00",
-      "meta": {
-        "width": 480,
-        "height": 270
-      }
+      "createdAt": "2026-01-14T02:23:41.915+00:00",
+      "meta": {}
     },
     {
       "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
