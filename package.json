@@ -9,7 +9,7 @@
     "dts": "pnpm -r dts",
     "dev": "pnpm --filter='@webstudio-is/builder' dev",
     "lint": "eslint \"**/*.{ts,tsx}\" --max-warnings 0",
-    "fixtures": "pnpm -r fixtures:sync && pnpm -r fixtures:build",
+    "fixtures": "pnpm -r fixtures:link && pnpm -r fixtures:sync && pnpm -r fixtures:build",
     "checks": "pnpm -r test && pnpm -r typecheck && pnpm lint && pnpm fixtures",
     "playwright": "pnpm -r playwright-init",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
