@@ -68,14 +68,6 @@ jobs:
         run: |
           find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
-      - name: Show diff before check
-        run: |
-          echo "=== Changed files ==="
-          git diff --name-only HEAD || true
-          echo ""
-          echo "=== Diff content (first 200 lines) ==="
-          git diff HEAD | head -n 200 || true
-
       - name: Test git diff
         # This command will fail if there are uncommitted changes, i.e something has broken
         run: git diff --name-only HEAD --exit-code
