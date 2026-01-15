@@ -18,7 +18,7 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2025-05-15T22:04:05.511Z";
+export const lastPublished = "2026-01-15T16:19:55.574Z";
 
 export const siteName = "KittyGuardedZone";
 
@@ -28,7 +28,8 @@ export const breakpoints = [
   { id: "Z8WjyXWkCrr35PXgjHdpY", minWidth: 472 },
 ];
 
-export const favIconAsset: string | undefined = undefined;
+export const favIconAsset: string | undefined =
+  "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png";
 
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: string[] = [];

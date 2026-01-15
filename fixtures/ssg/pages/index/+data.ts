@@ -4,6 +4,7 @@ import {
   getPageMeta,
   getResources,
 } from "../../app/__generated__/_index.server";
+import { assets } from "../../app/__generated__/$resources.assets";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -24,6 +25,12 @@ const customFetch: typeof fetch = (input, init) => {
       timestamp: startOfDay.getTime(),
     };
     const response = new Response(JSON.stringify(data));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
+  }
+
+  if (isLocalResource(input, "assets")) {
+    const response = new Response(JSON.stringify(assets));
     response.headers.set("content-type", "application/json; charset=utf-8");
     return Promise.resolve(response);
   }

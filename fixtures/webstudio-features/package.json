@@ -6,7 +6,7 @@
     "dev": "react-router dev",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-cddc1d44-af37-4cb6-a430-d300cf6f932d-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d'",
-    "fixtures:sync": "pnpm cli sync --buildId 043bda3f-0d77-4656-aa9c-652c1a1f272e && pnpm prettier --write ./.webstudio/",
+    "fixtures:sync": "pnpm cli sync --buildId 1b66ee06-8ea5-4420-9a0e-e0d3a67aca32 && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "pnpm cli build --template react-router --template ./.template && pnpm prettier --write ./app/ ./package.json ./tsconfig.json"
   },
   "private": true,
