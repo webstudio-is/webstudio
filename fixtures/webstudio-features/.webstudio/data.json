@@ -7218,17 +7218,24 @@
   ],
   "assets": [
     {
+      "id": "2b151fc7b4b0324e6ab78c40f72c7f59273f81fb1be3d08b3f9976428601b95e",
+      "name": "e-mail-39993_vrxyjxQv3j67Krs62Vz7Y.mp3",
+      "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
+      "size": 19680,
+      "type": "file",
+      "format": "mp3",
+      "createdAt": "2026-01-14T01:59:48.958+00:00",
+      "meta": {}
+    },
+    {
       "id": "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d",
       "name": "webm-example_2r_6VmRBjhAy3ldaqz0gk.webm",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 901185,
-      "type": "image",
+      "type": "file",
       "format": "webm",
       "createdAt": "2026-01-14T02:59:19.806+00:00",
-      "meta": {
-        "width": 480,
-        "height": 270
-      }
+      "meta": {}
     },
     {
       "id": "7cf5892080fa66b5e6175ffd2d27c304ee6b09ce1f21847a95000225ad1afa59",
@@ -7261,13 +7268,10 @@
       "name": "video_QamtUWsD-ShifhzZLoNIv_ald_1xtyEb3uHhFb7nCQa.mp4",
       "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
       "size": 170479,
-      "type": "image",
+      "type": "file",
       "format": "mp4",
       "createdAt": "2026-01-14T02:59:28.168+00:00",
-      "meta": {
-        "width": 202,
-        "height": 360
-      }
+      "meta": {}
     },
     {
       "id": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
@@ -7288,5 +7292,5 @@
   },
   "projectDomain": "webstudio-fixture-project-a-0su3o",
   "projectTitle": "webstudio-fixture-project-a",
-  "origin": "https://main.development.webstudio.is"
+  "origin": "https://fix-assets.staging.webstudio.is"
 }
