@@ -11,6 +11,12 @@
   a.w-element {
     box-sizing: border-box;
   }
+  body.w-element {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+  }
   body.w-body {
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;

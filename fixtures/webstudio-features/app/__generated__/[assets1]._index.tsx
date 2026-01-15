@@ -4,7 +4,6 @@
 import { Fragment, useState } from "react";
 import { useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
 import { Body as Body } from "@webstudio-is/sdk-components-react-router";
-import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
@@ -27,9 +26,27 @@ export const pageFontAssets: string[] = [];
 export const pageBackgroundImageAssets: string[] = [];
 
 const Page = (_props: { system: any }) => {
+  let assets = useResource("assets_1");
   return (
-    <Body className={`w-body`}>
-      <Heading className={`w-heading`}>{"Nested page"}</Heading>
+    <Body className={`w-element`}>
+      <audio
+        controls={true}
+        src={
+          assets?.data?.[
+            "2b151fc7b4b0324e6ab78c40f72c7f59273f81fb1be3d08b3f9976428601b95e"
+          ]?.url
+        }
+        className={`w-element`}
+      />
+      <video
+        controls={true}
+        src={
+          assets?.data?.[
+            "4afe692f78ec0530e355a551a3860302c4478037db7b25a3bdae82c32c78634d"
+          ]?.url
+        }
+        className={`w-element`}
+      />
     </Body>
   );
 };
