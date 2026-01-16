@@ -39,21 +39,93 @@
 
 ## Testing
 
-- Test utilities, not components
 - Every bug fix must have a test to prevent regression
+- Write tests for pure functions - avoid mocking whenever possible
+- Extract testable pure logic from side-effect code (I/O, network, DOM, React hooks)
+- **CRITICAL: Never define functions in test files that belong in implementation code**
+- If a test requires a pure function, that function must be exported from the implementation and imported in the test
 
-### Exporting Utilities for Testing
+### When to Test
 
-When testing internal utilities, export via `__testing__`:
+**DO test:**
+
+- Complex business logic with edge cases
+- Pure functions with non-trivial computation (algorithms, parsing, calculations)
+- Functions with multiple branches or conditions
+- Bug fixes (regression prevention)
+
+**DON'T test:**
+
+- Trivial wrappers around library/language features (e.g., `map.delete()`)
+- Simple data transformations with no logic
+- Coordination code that only orchestrates side effects
+- Direct framework integrations (DOM/React/hooks)
+
+### Writing Testable Code
+
+**WRONG** - Never define implementation logic in tests:
 
 ```typescript
-export const __testing__ = { internalUtility };
+// ❌ BAD: Function defined in test file
+const computeKey = (props: { assetId?: string }) => {
+  return props.assetId ?? "default";
+};
+
+test("computes key", () => {
+  expect(computeKey({ assetId: "123" })).toBe("123");
+});
 ```
 
-Import in tests:
+**CORRECT** - Extract to implementation, export, and test:
 
 ```typescript
-const { internalUtility } = __testing__;
+// implementation.ts
+export const computeKey = (props: {
+  assetId?: string;
+  src?: string;
+  defaultValue?: unknown;
+}) => {
+  return (
+    props.assetId?.toString() ??
+    (props.defaultValue != null ? String(props.defaultValue) : undefined) ??
+    (props.src != null ? String(props.src) : undefined)
+  );
+};
+
+// implementation.test.ts
+import { computeKey } from "./implementation";
+
+test("computes key", () => {
+  expect(computeKey({ assetId: "123" })).toBe("123");
+});
+```
+
+This ensures:
+
+- Implementation code is reusable and in the right place
+- Tests verify actual production code, not duplicates
+- No logic duplication between implementation and tests
+
+### Exporting for Tests
+
+**If the function is ALREADY used in production code:**
+
+- Use regular export: `export const utilityFn = ...`
+- The function has real production value beyond testing
+
+**If the function is ONLY needed for tests (internal utility not used elsewhere):**
+
+- Use `__testing__` export to signal it's for testing only:
+
+```typescript
+// implementation.ts
+const internalHelper = (x: number) => x * 2;
+
+export const __testing__ = { internalHelper };
+
+// implementation.test.ts
+import { __testing__ } from "./implementation";
+const { internalHelper } = __testing__;
 ```
 
 Don't create separate utility files just for testing.

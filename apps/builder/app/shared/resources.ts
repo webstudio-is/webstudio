@@ -1,30 +1,13 @@
 import { atom, computed } from "nanostores";
-import hash from "@emotion/hash";
 import type { DataSource, Resource, ResourceRequest } from "@webstudio-is/sdk";
 import { restResourcesLoader } from "./router-utils";
 import { computeExpression } from "./data-variables";
 import { fetch } from "./fetch.client";
+import { getResourceKey } from "./resource-utils";
 
 const MAX_PENDING_RESOURCES = 5;
 
-export const getResourceKey = (resource: ResourceRequest) => {
-  try {
-    return hash(
-      JSON.stringify([
-        // explicitly list all fields to keep hash stable
-        resource.name,
-        resource.method,
-        resource.url,
-        resource.searchParams,
-        resource.headers,
-        resource.body,
-      ])
-    );
-  } catch {
-    // guard from invalid resources
-    return "";
-  }
-};
+export { getResourceKey };
 
 const queue = new Map<string, ResourceRequest>();
 const pending = new Map<string, ResourceRequest>();
@@ -100,6 +83,23 @@ export const invalidateResource = (resource: ResourceRequest) => {
   const key = getResourceKey(resource);
   cache.delete(key);
   preloadResource(resource);
+};
+
+/**
+ * Invalidate the assets system resource.
+ * Call this when assets are uploaded, deleted, or modified to refresh expressions using assets.
+ */
+export const invalidateAssets = () => {
+  const url = "/$resources/assets";
+  // System resources always use GET with no params/headers/body
+  const systemResourceRequest: ResourceRequest = {
+    name: "assets",
+    method: "get",
+    url,
+    searchParams: [],
+    headers: [],
+  };
+  invalidateResource(systemResourceRequest);
 };
 
 export const computeResourceRequest = (
