@@ -39,6 +39,7 @@ import {
   textContentAttribute,
   standardAttributesToReactProps,
 } from "@webstudio-is/react-sdk";
+import { ArrayFrom } from "~/shared/array-utils";
 import { rawTheme } from "@webstudio-is/design-system";
 import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
 
@@ -504,35 +505,54 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    if (data && Array.isArray(data) === false) {
-      Component = InvalidCollectionDataStub as AnyComponent;
-    } else if (
-      // render stub component when no data or children
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
-            {createInstanceChildrenElements({
-              instances,
-              // create fake indexed id to distinct items for select and hover
-              instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
-                ...instanceSelector,
-              ],
-              children: instance.children,
-              Component: WebstudioComponentCanvas,
-              components,
-            })}
-          </Fragment>
-        );
-      });
+    const originalData = instanceProps.data;
+    const isObject =
+      originalData &&
+      typeof originalData === "object" &&
+      Array.isArray(originalData) === false;
+
+    if (isObject) {
+      const entries = Object.entries(originalData);
+      if (entries.length > 0 && instance.children.length > 0) {
+        return entries.map(([key]) => {
+          return (
+            <Fragment key={key}>
+              {createInstanceChildrenElements({
+                instances,
+                instanceSelector: [
+                  getIndexedInstanceId(instance.id, key),
+                  ...instanceSelector,
+                ],
+                children: instance.children,
+                Component: WebstudioComponentCanvas,
+                components,
+              })}
+            </Fragment>
+          );
+        });
+      }
     } else {
-      Component = DroppableComponentStub as AnyComponent;
+      const data = ArrayFrom(originalData);
+      if (data.length > 0 && instance.children.length > 0) {
+        return data.map((_item, index) => {
+          return (
+            <Fragment key={index}>
+              {createInstanceChildrenElements({
+                instances,
+                instanceSelector: [
+                  getIndexedInstanceId(instance.id, index),
+                  ...instanceSelector,
+                ],
+                children: instance.children,
+                Component: WebstudioComponentCanvas,
+                components,
+              })}
+            </Fragment>
+          );
+        });
+      }
     }
+    Component = DroppableComponentStub as AnyComponent;
   }
 
   if (instance.component === descendantComponent) {
@@ -660,30 +680,52 @@ export const WebstudioComponentPreview = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    // render nothing when no data or children
-    if (
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
-            {createInstanceChildrenElements({
-              instances,
-              // create fake indexed id to distinct items for select and hover
-              instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
-                ...instanceSelector,
-              ],
-              children: instance.children,
-              Component: WebstudioComponentPreview,
-              components,
-            })}
-          </Fragment>
-        );
-      });
+    const originalData = instanceProps.data;
+    const isObject =
+      originalData &&
+      typeof originalData === "object" &&
+      Array.isArray(originalData) === false;
+
+    if (isObject) {
+      const entries = Object.entries(originalData);
+      if (entries.length > 0 && instance.children.length > 0) {
+        return entries.map(([key]) => {
+          return (
+            <Fragment key={key}>
+              {createInstanceChildrenElements({
+                instances,
+                instanceSelector: [
+                  getIndexedInstanceId(instance.id, key),
+                  ...instanceSelector,
+                ],
+                children: instance.children,
+                Component: WebstudioComponentPreview,
+                components,
+              })}
+            </Fragment>
+          );
+        });
+      }
+    } else {
+      const data = ArrayFrom(originalData);
+      if (data.length > 0 && instance.children.length > 0) {
+        return data.map((_item, index) => {
+          return (
+            <Fragment key={index}>
+              {createInstanceChildrenElements({
+                instances,
+                instanceSelector: [
+                  getIndexedInstanceId(instance.id, index),
+                  ...instanceSelector,
+                ],
+                children: instance.children,
+                Component: WebstudioComponentPreview,
+                components,
+              })}
+            </Fragment>
+          );
+        });
+      }
     }
   }
 

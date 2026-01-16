@@ -794,6 +794,72 @@ test("compute item values for collection", () => {
   ).toEqual("orange");
 });
 
+test("compute item values for collection with object data", () => {
+  const dataVariable = new Variable("dataVariable", {
+    first: "apple",
+    second: "banana",
+    third: "orange",
+  });
+  const collectionItem = new Parameter("Collection Item");
+  const data = renderData(
+    <$.Body ws:id="bodyId">
+      <ws.collection
+        ws:id="collectionId"
+        data={expression`${dataVariable}`}
+        item={collectionItem}
+      >
+        <$.Box ws:id="boxId"></$.Box>
+      </ws.collection>
+    </$.Body>
+  );
+  $instances.set(data.instances);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  const [_dataVariableId, itemParameterId] = data.dataSources.keys();
+  selectPageRoot("bodyId");
+  $dataSourceVariables.set(new Map([]));
+  const values = $variableValuesByInstanceSelector.get();
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[first]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("apple");
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[second]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("banana");
+  expect(
+    values
+      .get(
+        getInstanceKey([
+          "boxId",
+          "collectionId[third]",
+          "collectionId",
+          "bodyId",
+          ROOT_INSTANCE_ID,
+        ])
+      )
+      ?.get(itemParameterId)
+  ).toEqual("orange");
+});
+
 test("compute resource variable values", () => {
   const resourceVariable = new ResourceValue("resourceVariable", {
     url: expression`""`,
