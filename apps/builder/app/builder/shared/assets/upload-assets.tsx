@@ -16,6 +16,8 @@ import {
   type UploadingFileData,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
+import { onNextTransactionComplete } from "~/shared/sync/project-queue";
+import { invalidateAssets } from "~/shared/resources";
 import {
   formatAssetName,
   getFileName,
@@ -38,6 +40,10 @@ const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
       assets.delete(assetId);
     }
   });
+
+  onNextTransactionComplete(() => {
+    invalidateAssets();
+  });
 };
 
 const safeSetAsset = (asset: Asset, projectId: string) => {
@@ -51,6 +57,10 @@ const safeSetAsset = (asset: Asset, projectId: string) => {
 
   serverSyncStore.createTransaction([$assets], (assets) => {
     assets.set(asset.id, asset);
+  });
+
+  onNextTransactionComplete(() => {
+    invalidateAssets();
   });
 };
 

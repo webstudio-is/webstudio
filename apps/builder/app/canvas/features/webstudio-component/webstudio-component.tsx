@@ -41,6 +41,21 @@ import {
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
+
+const computeComponentKey = (props: Record<string, unknown>) => {
+  const assetId = props.$webstudio$canvasOnly$assetId;
+  const src = props.src;
+  const defaultValue = props.defaultValue;
+
+  return (
+    (typeof assetId === "string" ? assetId : undefined) ??
+    (defaultValue != null ? String(defaultValue) : undefined) ??
+    (src != null ? String(src) : undefined)
+  );
+};
+
+export const __testing__ = { computeComponentKey };
+
 import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
@@ -557,8 +572,9 @@ export const WebstudioComponentCanvas = forwardRef<
 
   // React ignores defaultValue changes after first render.
   // Key prop forces re-creation to reflect updates on canvas.
-  const key =
-    props.defaultValue != null ? props.defaultValue.toString() : undefined;
+  // Also use assetId to recreate component when asset changes (e.g., deleted, replaced)
+  // For expressions that resolve to asset URLs (via assets resource), use the src value itself
+  const key = computeComponentKey(props);
 
   const instanceElement = (
     <>

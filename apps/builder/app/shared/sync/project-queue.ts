@@ -42,6 +42,55 @@ export type QueueStatus =
 
 export const $queueStatus = atom<QueueStatus>({ status: "idle" });
 
+// Transaction completion tracking
+type TransactionCompleteCallback = (success: boolean) => void;
+const transactionCallbacks = new Map<string, TransactionCompleteCallback[]>();
+
+// Atom to communicate transaction IDs from sendTransaction to user code
+export const $lastTransactionId = atom<string | undefined>(undefined);
+
+/**
+ * Register a callback to be called when a specific transaction is confirmed by the server.
+ * The callback receives true if the transaction was successfully persisted, false otherwise.
+ */
+export const onTransactionComplete = (
+  transactionId: string,
+  callback: TransactionCompleteCallback
+) => {
+  const callbacks = transactionCallbacks.get(transactionId) ?? [];
+  callbacks.push(callback);
+  transactionCallbacks.set(transactionId, callbacks);
+
+  // Cleanup after timeout to prevent memory leaks
+  setTimeout(() => {
+    transactionCallbacks.delete(transactionId);
+  }, 60000); // 1 minute timeout
+};
+
+/**
+ * Register a callback to be called when the next transaction is confirmed by the server.
+ * Use this right after calling serverSyncStore.createTransaction().
+ */
+export const onNextTransactionComplete = (callback: () => void) => {
+  let unsubscribe: (() => void) | undefined;
+  // eslint-disable-next-line prefer-const
+  unsubscribe = $lastTransactionId.subscribe((transactionId) => {
+    if (transactionId) {
+      onTransactionComplete(transactionId, (success) => {
+        if (success) {
+          callback();
+        }
+      });
+      unsubscribe?.();
+    }
+  });
+
+  // Cleanup after timeout to prevent memory leak if transaction never gets an ID
+  setTimeout(() => {
+    unsubscribe?.();
+  }, 60000);
+};
+
 const getRandomBetween = (a: number, b: number) => {
   return Math.random() * (b - a) + a;
 };
@@ -256,6 +305,18 @@ const pollQueue = async (signal: AbortSignal) => {
           const result = (await response.json()) as any;
           if (result.status === "ok") {
             details.version += 1;
+
+            // Notify all transaction completion callbacks
+            for (const transaction of transactions) {
+              const callbacks = transactionCallbacks.get(transaction.id);
+              if (callbacks) {
+                for (const callback of callbacks) {
+                  callback(true);
+                }
+                transactionCallbacks.delete(transaction.id);
+              }
+            }
+
             // stop retrying and wait next transactions
             continue polling;
           }
@@ -335,6 +396,7 @@ export class ServerSyncStorage implements SyncStorage {
 
   sendTransaction(transaction: Transaction<Change[]>) {
     if (transaction.object === "server") {
+      $lastTransactionId.set(transaction.id);
       commandQueue.enqueue({
         type: "transactions",
         transactions: [transaction],
