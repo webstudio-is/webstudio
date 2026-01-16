@@ -19,7 +19,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import { showAttribute, getCollectionEntries } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
@@ -196,7 +196,7 @@ export const $flatTree = computed(
       if (instance.component === collectionComponent && treeItem.isExpanded) {
         const originalData = propValues?.get("data");
         if (originalData && instance.children.length > 0) {
-          const entries = Object.entries(originalData);
+          const entries = getCollectionEntries(originalData);
           if (entries.length > 0) {
             entries.forEach(([key], entryIndex) => {
               for (

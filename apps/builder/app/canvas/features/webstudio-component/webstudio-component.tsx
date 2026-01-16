@@ -38,6 +38,7 @@ import {
   type AnyComponent,
   textContentAttribute,
   standardAttributesToReactProps,
+  getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
@@ -506,7 +507,7 @@ export const WebstudioComponentCanvas = forwardRef<
   if (instance.component === collectionComponent) {
     const originalData = instanceProps.data;
     if (originalData && instance.children.length > 0) {
-      const entries = Object.entries(originalData);
+      const entries = getCollectionEntries(originalData);
       if (entries.length > 0) {
         return entries.map(([key]) => (
           <Fragment key={key}>
@@ -654,7 +655,7 @@ export const WebstudioComponentPreview = forwardRef<
   if (instance.component === collectionComponent) {
     const originalData = instanceProps.data;
     if (originalData && instance.children.length > 0) {
-      const entries = Object.entries(originalData);
+      const entries = getCollectionEntries(originalData);
       if (entries.length > 0) {
         return entries.map(([key]) => (
           <Fragment key={key}>

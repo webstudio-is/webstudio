@@ -16,7 +16,11 @@ import {
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
 } from "@webstudio-is/sdk";
-import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
+import {
+  normalizeProps,
+  textContentAttribute,
+  getCollectionEntries,
+} from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
 import {
@@ -318,7 +322,7 @@ export const $propValuesByInstanceSelector = computed(
         const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
         if (itemVariableId !== undefined && originalData) {
-          for (const [key, value] of Object.entries(originalData)) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
             variableValues.set(itemVariableId, value);
             for (const child of instance.children) {
               if (child.type === "id") {
@@ -523,7 +527,7 @@ export const $variableValuesByInstanceSelector = computed(
         // prevent accessing item from collection
         variableValues.delete(itemVariableId);
         if (originalData) {
-          for (const [key, value] of Object.entries(originalData)) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
             const itemVariableValues = new Map(variableValues);
             itemVariableValues.set(itemVariableId, value);
             for (const child of instance.children) {
