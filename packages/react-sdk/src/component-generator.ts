@@ -278,7 +278,8 @@ export const generateJsxElement = ({
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
     // collection can be nullable or invalid type
     // fix implicitly on published sites
-    generatedElement += `{${collectionDataValue}?.map?.((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
+    // support both arrays and objects with Object.entries
+    generatedElement += `{Object.entries(${collectionDataValue} ?? {}).map(([${indexVariable}, ${collectionItemValue}]: any) =>\n`;
     generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
