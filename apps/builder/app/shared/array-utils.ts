@@ -19,19 +19,3 @@ export const repeatUntil = <Item>(array: Item[], count: number) => {
   }
   return repeatedArray;
 };
-
-/**
- * Converts data to an array, like Array.from but also handles plain objects.
- * - Arrays: returns as-is
- * - Objects: returns Object.values(object)
- * - Other: returns empty array
- */
-export const ArrayFrom = <T = unknown>(data: unknown): Array<T> => {
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && typeof data === "object") {
-    return Object.values(data) as Array<T>;
-  }
-  return [];
-};
