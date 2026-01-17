@@ -16,7 +16,11 @@ import {
   SYSTEM_VARIABLE_ID,
   findTreeInstanceIds,
 } from "@webstudio-is/sdk";
-import { normalizeProps, textContentAttribute } from "@webstudio-is/react-sdk";
+import {
+  normalizeProps,
+  textContentAttribute,
+  getCollectionEntries,
+} from "@webstudio-is/react-sdk";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
 import {
@@ -46,7 +50,7 @@ export const assetBaseUrl = "/cgi/asset/";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
-  index: number
+  index: number | string
 ) => `${instanceId}[${index}]`;
 
 /**
@@ -315,18 +319,18 @@ export const $propValuesByInstanceSelector = computed(
       );
 
       if (instance.component === collectionComponent) {
-        const data = propValues.get("data");
+        const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
-        if (Array.isArray(data) && itemVariableId !== undefined) {
-          data.forEach((item, index) => {
-            variableValues.set(itemVariableId, item);
+        if (itemVariableId !== undefined && originalData) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
+            variableValues.set(itemVariableId, value);
             for (const child of instance.children) {
               if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, index);
+                const indexId = getIndexedInstanceId(instanceId, key);
                 traverseInstances([child.value, indexId, ...instanceSelector]);
               }
             }
-          });
+          }
         }
         return;
       }
@@ -515,27 +519,27 @@ export const $variableValuesByInstanceSelector = computed(
       }
 
       if (instance.component === collectionComponent) {
-        const data = propValues.get("data");
+        const originalData = propValues.get("data");
         const itemVariableId = parameters.get("item");
         if (itemVariableId === undefined) {
           return;
         }
         // prevent accessing item from collection
         variableValues.delete(itemVariableId);
-        if (Array.isArray(data)) {
-          data.forEach((item, index) => {
+        if (originalData) {
+          for (const [key, value] of getCollectionEntries(originalData)) {
             const itemVariableValues = new Map(variableValues);
-            itemVariableValues.set(itemVariableId, item);
+            itemVariableValues.set(itemVariableId, value);
             for (const child of instance.children) {
               if (child.type === "id") {
-                const indexId = getIndexedInstanceId(instanceId, index);
+                const indexId = getIndexedInstanceId(instanceId, key);
                 traverseInstances(
                   [child.value, indexId, ...instanceSelector],
                   itemVariableValues
                 );
               }
             }
-          });
+          }
         }
         return;
       }

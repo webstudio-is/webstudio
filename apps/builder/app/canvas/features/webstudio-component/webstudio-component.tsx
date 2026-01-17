@@ -38,6 +38,7 @@ import {
   type AnyComponent,
   textContentAttribute,
   standardAttributesToReactProps,
+  getCollectionEntries,
 } from "@webstudio-is/react-sdk";
 import { rawTheme } from "@webstudio-is/design-system";
 import { Input, Select, Textarea } from "@webstudio-is/sdk-components-react";
@@ -504,23 +505,16 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    if (data && Array.isArray(data) === false) {
-      Component = InvalidCollectionDataStub as AnyComponent;
-    } else if (
-      // render stub component when no data or children
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
+    const originalData = instanceProps.data;
+    if (originalData && instance.children.length > 0) {
+      const entries = getCollectionEntries(originalData);
+      if (entries.length > 0) {
+        return entries.map(([key]) => (
+          <Fragment key={key}>
             {createInstanceChildrenElements({
               instances,
-              // create fake indexed id to distinct items for select and hover
               instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
+                getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
               children: instance.children,
@@ -528,11 +522,10 @@ export const WebstudioComponentCanvas = forwardRef<
               components,
             })}
           </Fragment>
-        );
-      });
-    } else {
-      Component = DroppableComponentStub as AnyComponent;
+        ));
+      }
     }
+    Component = DroppableComponentStub as AnyComponent;
   }
 
   if (instance.component === descendantComponent) {
@@ -660,21 +653,16 @@ export const WebstudioComponentPreview = forwardRef<
   }
 
   if (instance.component === collectionComponent) {
-    const data = instanceProps.data;
-    // render nothing when no data or children
-    if (
-      Array.isArray(data) &&
-      data.length > 0 &&
-      instance.children.length > 0
-    ) {
-      return data.map((_item, index) => {
-        return (
-          <Fragment key={index}>
+    const originalData = instanceProps.data;
+    if (originalData && instance.children.length > 0) {
+      const entries = getCollectionEntries(originalData);
+      if (entries.length > 0) {
+        return entries.map(([key]) => (
+          <Fragment key={key}>
             {createInstanceChildrenElements({
               instances,
-              // create fake indexed id to distinct items for select and hover
               instanceSelector: [
-                getIndexedInstanceId(instance.id, index),
+                getIndexedInstanceId(instance.id, key),
                 ...instanceSelector,
               ],
               children: instance.children,
@@ -682,8 +670,8 @@ export const WebstudioComponentPreview = forwardRef<
               components,
             })}
           </Fragment>
-        );
-      });
+        ));
+      }
     }
   }
 

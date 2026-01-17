@@ -24,6 +24,7 @@ import {
 import { indexProperty, tagProperty } from "@webstudio-is/sdk/runtime";
 import { isAttributeNameSafe, showAttribute } from "./props";
 import { standardAttributesToReactProps } from "./__generated__/standard-attributes";
+import { generateCollectionIterationCode } from "./collection-utils";
 
 /**
  * (arg1) => {
@@ -278,7 +279,12 @@ export const generateJsxElement = ({
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
     // collection can be nullable or invalid type
     // fix implicitly on published sites
-    generatedElement += `{${collectionDataValue}?.map?.((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
+    // support both arrays and objects with Object.entries
+    generatedElement += `{${generateCollectionIterationCode({
+      dataExpression: collectionDataValue,
+      keyVariable: indexVariable,
+      itemVariable: collectionItemValue,
+    })} =>\n`;
     generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;

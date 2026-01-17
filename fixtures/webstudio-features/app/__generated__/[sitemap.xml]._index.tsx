@@ -36,16 +36,19 @@ const Page = (_props: { system: any }) => {
       xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
       xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}
     >
-      {[
-        {
-          path: "/",
-          lastModified: "2024-05-07",
-        },
-        {
-          path: "/olegs-test",
-          lastModified: "2024-05-07",
-        },
-      ]?.map?.((url: any, index: number) => (
+      {Object.entries(
+        // @ts-ignore
+        [
+          {
+            path: "/",
+            lastModified: "2024-05-07",
+          },
+          {
+            path: "/olegs-test",
+            lastModified: "2024-05-07",
+          },
+        ] ?? {}
+      ).map(([index, url]: any) => (
         <Fragment key={index}>
           <XmlNode tag={"url"}>
             <XmlNode tag={"loc"}>
