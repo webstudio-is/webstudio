@@ -6,9 +6,9 @@ import {
 
 test("getCollectionEntries handles arrays", () => {
   expect(getCollectionEntries(["a", "b", "c"])).toEqual([
-    ["0", "a"],
-    ["1", "b"],
-    ["2", "c"],
+    [0, "a"],
+    [1, "b"],
+    [2, "c"],
   ]);
 });
 
@@ -40,7 +40,9 @@ test("generateCollectionIterationCode produces correct template", () => {
   expect(code).toBe(`Object.entries(
   // @ts-ignore
   myData ?? {}
-).map(([index, item]: any)`);
+).map(([_key, item]: any) => {
+  const index = Array.isArray(myData) ? Number(_key) : _key;
+  return`);
 });
 
 test("generated code works with arrays at runtime", () => {

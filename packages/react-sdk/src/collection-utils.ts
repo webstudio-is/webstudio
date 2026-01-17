@@ -11,17 +11,23 @@
 /**
  * Normalize collection data to entries format [key, value][].
  * Returns empty array if data is not iterable.
+ * For arrays, keys are converted to numbers.
  */
 export const getCollectionEntries = (
   data: unknown
-): Array<[string, unknown]> => {
+): Array<[string | number, unknown]> => {
   if (data === null || data === undefined) {
     return [];
   }
   if (typeof data !== "object") {
     return [];
   }
-  return Object.entries(data);
+  const entries = Object.entries(data);
+  // Convert string indices to numbers for arrays
+  if (Array.isArray(data)) {
+    return entries.map(([key, value]) => [Number(key), value]);
+  }
+  return entries;
 };
 
 /**
@@ -40,5 +46,7 @@ export const generateCollectionIterationCode = ({
   return `Object.entries(
   // @ts-ignore
   ${dataExpression} ?? {}
-).map(([${keyVariable}, ${itemVariable}]: any)`;
+).map(([_key, ${itemVariable}]: any) => {
+  const ${keyVariable} = Array.isArray(${dataExpression}) ? Number(_key) : _key;
+  return`;
 };

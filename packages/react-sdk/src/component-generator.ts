@@ -192,6 +192,7 @@ export const generateJsxElement = ({
   let conditionValue: undefined | string;
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
+  let collectionItemKeyValue: undefined | string;
   let classNameValue: undefined | string;
 
   for (const prop of props.values()) {
@@ -237,6 +238,9 @@ export const generateJsxElement = ({
       if (prop.name === "item") {
         collectionItemValue = propValue;
       }
+      if (prop.name === "itemKey") {
+        collectionItemKeyValue = propValue;
+      }
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
@@ -277,18 +281,22 @@ export const generateJsxElement = ({
       return "";
     }
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
+    // use itemKey prop if provided, otherwise use generated index variable
+    const keyVariable = collectionItemKeyValue ?? indexVariable;
     // collection can be nullable or invalid type
     // fix implicitly on published sites
     // support both arrays and objects with Object.entries
     generatedElement += `{${generateCollectionIterationCode({
       dataExpression: collectionDataValue,
-      keyVariable: indexVariable,
+      keyVariable,
       itemVariable: collectionItemValue,
-    })} =>\n`;
-    generatedElement += `<Fragment key={${indexVariable}}>\n`;
+    })} (\n`;
+    generatedElement += `<Fragment key={${keyVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
-    generatedElement += `)}\n`;
+    generatedElement += `)\n`;
+    generatedElement += `})\n`;
+    generatedElement += `}\n`;
   } else if (instance.component === blockComponent) {
     generatedElement += children;
   } else {

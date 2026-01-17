@@ -43,6 +43,7 @@ const linkMeta: TemplateMeta = {
 };
 
 const collectionItem = new Parameter("collectionItem");
+const collectionItemKey = new Parameter("collectionItemKey");
 
 const collectionMeta: TemplateMeta = {
   category: "data",
@@ -51,6 +52,7 @@ const collectionMeta: TemplateMeta = {
     <ws.collection
       data={["Collection Item 1", "Collection Item 2", "Collection Item 3"]}
       item={collectionItem}
+      itemKey={collectionItemKey}
     >
       <ws.element ws:tag="div">
         <ws.element ws:tag="div">{expression`${collectionItem}`}</ws.element>
