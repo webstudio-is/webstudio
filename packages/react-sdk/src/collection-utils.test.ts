@@ -44,6 +44,7 @@ test("generateCollectionIterationCode produces correct template", () => {
 });
 
 test("generated code works with arrays at runtime", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const data = ["apple", "banana", "orange"];
   const result: Array<[string, string]> = [];
 
@@ -62,6 +63,7 @@ test("generated code works with arrays at runtime", () => {
 });
 
 test("generated code works with objects at runtime", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const data = { first: "apple", second: "banana" };
   const result: Array<[string, string]> = [];
 
@@ -79,6 +81,7 @@ test("generated code works with objects at runtime", () => {
 });
 
 test("generated code handles null/undefined", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let data: null | undefined = null;
   const resultNull: Array<[string, unknown]> = [];
 
