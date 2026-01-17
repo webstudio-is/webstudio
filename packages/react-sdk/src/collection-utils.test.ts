@@ -37,11 +37,13 @@ test("generateCollectionIterationCode produces correct template", () => {
     itemVariable: "item",
   });
 
-  expect(code).toBe("Object.entries(myData ?? {}).map(([index, item]: any)");
+  expect(code).toBe(`Object.entries(
+  // @ts-ignore
+  myData ?? {}
+).map(([index, item]: any)`);
 });
 
 test("generated code works with arrays at runtime", () => {
-  // @ts-expect-error - used in eval
   const data = ["apple", "banana", "orange"];
   const result: Array<[string, string]> = [];
 
@@ -60,7 +62,6 @@ test("generated code works with arrays at runtime", () => {
 });
 
 test("generated code works with objects at runtime", () => {
-  // @ts-expect-error - used in eval
   const data = { first: "apple", second: "banana" };
   const result: Array<[string, string]> = [];
 
@@ -78,7 +79,6 @@ test("generated code works with objects at runtime", () => {
 });
 
 test("generated code handles null/undefined", () => {
-  // @ts-expect-error - used in eval
   let data: null | undefined = null;
   const resultNull: Array<[string, unknown]> = [];
 

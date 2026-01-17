@@ -37,6 +37,7 @@ const Page = (_props: { system: any }) => {
       xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}
     >
       {Object.entries(
+        // @ts-ignore
         [
           {
             path: "/",

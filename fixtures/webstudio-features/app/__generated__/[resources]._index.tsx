@@ -33,7 +33,10 @@ const Page = (_props: { system: any }) => {
   let list = useResource("list_1");
   return (
     <Body className={`w-body`}>
-      {Object.entries(list?.data ?? {}).map(([index, collectionItem]: any) => (
+      {Object.entries(
+        // @ts-ignore
+        list?.data ?? {}
+      ).map(([index, collectionItem]: any) => (
         <Fragment key={index}>
           <Box className={`w-box`}>
             <HtmlEmbed code={collectionItem?.name} className={`w-html-embed`} />

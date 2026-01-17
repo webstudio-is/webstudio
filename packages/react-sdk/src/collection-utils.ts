@@ -37,5 +37,8 @@ export const generateCollectionIterationCode = ({
   keyVariable: string;
   itemVariable: string;
 }) => {
-  return `Object.entries(${dataExpression} ?? {}).map(([${keyVariable}, ${itemVariable}]: any)`;
+  return `Object.entries(
+  // @ts-ignore
+  ${dataExpression} ?? {}
+).map(([${keyVariable}, ${itemVariable}]: any)`;
 };
