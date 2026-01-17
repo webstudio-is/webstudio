@@ -462,7 +462,10 @@ test("generate collection component as map", () => {
   ).toEqual(
     validateJSX(
       clear(`
-    {Object.entries(data ?? {}).map(([index, element]: any) =>
+    {Object.entries(
+      // @ts-ignore
+      data ?? {}
+    ).map(([index, element]: any) =>
     <Fragment key={index}>
     <Label />
     <Button
@@ -640,7 +643,10 @@ test("avoid generating collection parameter variable as state", () => {
     const Page = () => {
     let [data, set$data] = useVariableState<any>(["apple","orange","mango"])
     return <Body>
-    {Object.entries(data ?? {}).map(([index, element]: any) =>
+    {Object.entries(
+      // @ts-ignore
+      data ?? {}
+    ).map(([index, element]: any) =>
     <Fragment key={index}>
     </Fragment>
     )}
