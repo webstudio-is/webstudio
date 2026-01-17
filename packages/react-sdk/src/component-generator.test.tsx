@@ -845,21 +845,24 @@ test("generate conditional collection", () => {
       ),
     })
   ).toMatchInlineSnapshot(`
-"const Page = () => {
-let [condition, set$condition] = useVariableState<any>(false)
-return <Body>
-{(condition) &&
-<>
-{Object.entries([] ?? {}).map(([index, collectionItem]: any) =>
-<Fragment key={index}>
-</Fragment>
-)}
-</>
-}
-</Body>
-}
-"
-`);
+    "const Page = () => {
+    let [condition, set$condition] = useVariableState<any>(false)
+    return <Body>
+    {(condition) &&
+    <>
+    {Object.entries(
+      // @ts-ignore
+      [] ?? {}
+    ).map(([index, collectionItem]: any) =>
+    <Fragment key={index}>
+    </Fragment>
+    )}
+    </>
+    }
+    </Body>
+    }
+    "
+  `);
 });
 
 test("generate conditional body", () => {
