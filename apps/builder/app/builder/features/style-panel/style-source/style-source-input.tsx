@@ -269,6 +269,16 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
+const categories = [
+  "states",
+  "pseudo-elements",
+] satisfies ComponentState["category"][];
+
+const categoryLabels: Record<ComponentState["category"], string> = {
+  states: "States",
+  "pseudo-elements": "Pseudo elements",
+};
+
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   inputRef: (element: HTMLInputElement | null) => void;
   error?: StyleSourceError;
@@ -277,7 +287,6 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
   componentStates?: ComponentState[];
-  recentlyUsedSelectors?: string[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -347,7 +356,6 @@ const renderMenuItems = (props: {
   item: IntermediateItem;
   hasStyles: boolean;
   states: ComponentState[];
-  recentlyUsedSelectors: string[];
   selectorInputValue: string;
   selectorValidation: ReturnType<typeof validateSelector>;
   onSelectorInputChange: (value: string) => void;
@@ -427,8 +435,65 @@ const renderMenuItems = (props: {
         </DropdownMenuItem>
       )}
 
+      {categories.map((currentCategory) => {
+        const categoryStates = props.states.filter(
+          ({ category }) => category === currentCategory
+        );
+        // prevent rendering empty category
+        if (categoryStates.length === 0) {
+          return;
+        }
+        return (
+          <Fragment key={currentCategory}>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>
+              {categoryLabels[currentCategory]}
+            </DropdownMenuLabel>
+            {categoryStates.map(({ selector }) => (
+              <DropdownMenuItem
+                key={selector}
+                withIndicator={true}
+                icon={
+                  props.item.id === props.selectedItemSelector?.styleSourceId &&
+                  selector === props.selectedItemSelector.state && (
+                    <CheckMarkIcon
+                      color={
+                        props.item.states.includes(selector)
+                          ? rawTheme.colors.foregroundPrimary
+                          : rawTheme.colors.foregroundIconMain
+                      }
+                      size={12}
+                    />
+                  )
+                }
+                onSelect={() =>
+                  props.onSelect?.({
+                    styleSourceId: props.item.id,
+                    // toggle state selection
+                    state:
+                      props.selectedItemSelector?.state === selector
+                        ? undefined
+                        : selector,
+                  })
+                }
+              >
+                <Flex justify="between" align="center" grow>
+                  {selector}
+                  {props.item.states.includes(selector) && (
+                    <DotIcon
+                      size="12"
+                      color={rawTheme.colors.foregroundPrimary}
+                    />
+                  )}
+                </Flex>
+              </DropdownMenuItem>
+            ))}
+          </Fragment>
+        );
+      })}
+
       <DropdownMenuSeparator />
-      <DropdownMenuLabel>Pseudo Class / Element</DropdownMenuLabel>
+      <DropdownMenuLabel>Custom</DropdownMenuLabel>
       <Box css={{ padding: theme.spacing[2] }}>
         <InputField
           value={props.selectorInputValue}
@@ -455,50 +520,6 @@ const renderMenuItems = (props: {
           </Text>
         )}
       </Box>
-
-      {props.recentlyUsedSelectors.length > 0 && (
-        <>
-          <DropdownMenuSeparator />
-          {props.recentlyUsedSelectors.map((selector) => (
-            <DropdownMenuItem
-              key={selector}
-              withIndicator={true}
-              icon={
-                props.item.id === props.selectedItemSelector?.styleSourceId &&
-                selector === props.selectedItemSelector.state && (
-                  <CheckMarkIcon
-                    color={
-                      props.item.states.includes(selector)
-                        ? rawTheme.colors.foregroundPrimary
-                        : rawTheme.colors.foregroundIconMain
-                    }
-                    size={12}
-                  />
-                )
-              }
-              onSelect={() =>
-                props.onSelect?.({
-                  styleSourceId: props.item.id,
-                  state:
-                    props.selectedItemSelector?.state === selector
-                      ? undefined
-                      : selector,
-                })
-              }
-            >
-              <Flex justify="between" align="center" grow>
-                <Text css={{ fontFamily: theme.fonts.mono }}>{selector}</Text>
-                {props.item.states.includes(selector) && (
-                  <DotIcon
-                    size="12"
-                    color={rawTheme.colors.foregroundPrimary}
-                  />
-                )}
-              </Flex>
-            </DropdownMenuItem>
-          ))}
-        </>
-      )}
 
       <DropdownMenuSeparator />
       {props.item.source === "local" && (
@@ -577,7 +598,6 @@ export const StyleSourceInput = (
   let hasGlobalTokenItem = false;
 
   const states = props.componentStates ?? [];
-  const recentlyUsedSelectors = props.recentlyUsedSelectors ?? [];
 
   const handleSelectorInputChange = (value: string) => {
     setSelectorInputValue(value);
@@ -635,7 +655,6 @@ export const StyleSourceInput = (
                 item,
                 hasStyles,
                 states,
-                recentlyUsedSelectors,
                 selectorInputValue,
                 selectorValidation,
                 onSelectorInputChange: handleSelectorInputChange,

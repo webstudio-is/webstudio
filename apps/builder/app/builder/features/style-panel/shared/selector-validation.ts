@@ -7,7 +7,7 @@ export type ValidationResult = {
 };
 
 export type ComponentState = {
-  category: "states" | "component-states";
+  category: "states" | "pseudo-elements";
   selector: string;
   label: string;
 };

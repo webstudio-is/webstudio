@@ -15,6 +15,14 @@
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
 
+## UI Labels and Text
+
+- All visible labels and text must use sentence case capitalization:
+  - First word capitalized
+  - Subsequent words lowercase (unless proper nouns or acronyms)
+  - Examples: "Pseudo elements", "More states", "Component states"
+  - Not: "Pseudo Elements", "More States", "Component States"
+
 ## Running Commands
 
 - For global workspace commands (e.g., "update fixtures", "run checks"), always check the root `package.json` scripts first

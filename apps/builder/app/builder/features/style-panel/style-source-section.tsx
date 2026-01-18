@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
+import { isPseudoElement } from "@webstudio-is/css-data";
 import {
   type Instance,
   type StyleSource,
@@ -36,8 +37,6 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
-import { humanizeString } from "~/shared/string-utils";
-import { getUsedSelectors } from "./shared/recent-selectors";
 
 // Declare command for this module
 declare module "~/shared/pubsub" {
@@ -280,26 +279,51 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
 };
 
 const $componentStates = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags],
-  (selectedInstance, registeredComponentMetas, instanceTags) => {
+  [$selectedInstance, $registeredComponentMetas, $instanceTags, $styles],
+  (selectedInstance, registeredComponentMetas, instanceTags, styles) => {
     if (selectedInstance === undefined) {
       return;
     }
     const tag = instanceTags.get(selectedInstance.id);
-    const tagStates = [
+    const allStates = [
       ...pseudoClassesByTag["*"],
       ...(pseudoClassesByTag[tag ?? ""] ?? []),
-    ].map((state) => ({
-      category: "states" as const,
-      label: humanizeString(state),
-      selector: state,
-    }));
+    ];
+
+    // Get recently used selectors from project styles
+    const usedSelectors = new Set<string>();
+    for (const styleDecl of styles.values()) {
+      if (styleDecl.state && styleDecl.state.trim()) {
+        usedSelectors.add(styleDecl.state);
+      }
+    }
+
+    // Combine predefined states with recently used, removing duplicates
+    const allStateSelectors = new Set([...allStates, ...usedSelectors]);
+
+    const states = Array.from(allStateSelectors)
+      .filter((state) => !isPseudoElement(state))
+      .map((state) => ({
+        category: "states" as const,
+        label: state,
+        selector: state,
+      }));
+
+    const pseudoElements = Array.from(allStateSelectors)
+      .filter((state) => isPseudoElement(state))
+      .map((state) => ({
+        category: "pseudo-elements" as const,
+        label: state,
+        selector: state,
+      }));
+
     const meta = registeredComponentMetas.get(selectedInstance.component);
     const componentStates = (meta?.states ?? []).map((item) => ({
-      category: "component-states" as const,
+      category: "states" as const,
       ...item,
     }));
-    return [...tagStates, ...componentStates];
+
+    return [...states, ...componentStates, ...pseudoElements];
   }
 );
 
@@ -349,10 +373,6 @@ export const StyleSourcesSection = () => {
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
   );
-  const styles = useStore($styles);
-
-  // Extract all used selectors from project styles
-  const usedSelectors = getUsedSelectors(styles);
 
   // Subscribe to focusStyleSourceInput command
   useEffect(() => {
@@ -393,7 +413,6 @@ export const StyleSourcesSection = () => {
         value={value}
         selectedItemSelector={selectedOrLastStyleSourceSelector}
         componentStates={componentStates}
-        recentlyUsedSelectors={usedSelectors}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstance(id);

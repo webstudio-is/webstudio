@@ -76,7 +76,6 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
-    textTransform: "capitalize",
     textDecoration: "none",
     textIndent: "0px",
   },
