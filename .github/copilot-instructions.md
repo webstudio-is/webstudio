@@ -55,6 +55,9 @@
 - Only create shared utility files when functions are used across different directories
 - Files prefixed with `use-` contain React hooks and state management (e.g., `use-assets.tsx`)
 - Separate pure utilities from side-effect code (React hooks, network calls, DOM operations)
+- **Never create wrapper files that just re-export from packages** - import directly from the package where it's used
+- When moving code to a shared package, update all import sites to use the package directly
+- **When moving/refactoring code**: Always check where functions/types are actually used (grep for imports) and place them accordingly - don't assume, verify
 
 ## Testing
 

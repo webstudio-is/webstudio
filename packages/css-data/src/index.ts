@@ -8,6 +8,7 @@ export {
 } from "./__generated__/property-value-descriptions";
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";
+export * from "./__generated__/pseudo-classes";
 export * from "./property-parsers";
 
 // shorthand property parsers
@@ -35,3 +36,8 @@ export const isPseudoElement = (state: string): boolean => {
   const normalized = state.replace(/^::?/, "");
   return (pseudoElements as readonly string[]).includes(normalized);
 };
+
+export {
+  validateSelector,
+  type SelectorValidationResult,
+} from "./selector-validation";

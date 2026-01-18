@@ -61,10 +61,14 @@ import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import {
-  validateSelector,
-  type SelectorConfig,
-} from "../shared/selector-validation";
+import { validateSelector } from "@webstudio-is/css-data";
+
+type SelectorConfig = {
+  type: "state" | "pseudoElement";
+  selector: string;
+  label: string;
+  source?: "native" | "component" | "custom";
+};
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -434,7 +438,6 @@ const renderMenuItems = (props: {
           Delete
         </DropdownMenuItem>
       )}
-
       {categories.map((currentCategory) => {
         const categoryStates = props.states.filter(
           ({ type }) => type === currentCategory
@@ -502,24 +505,28 @@ const renderMenuItems = (props: {
           </Fragment>
         );
       })}
-
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Custom</DropdownMenuLabel>
       <Box css={{ padding: theme.spacing[4] }}>
         <InputField
           value={props.selectorInputValue}
           onChange={(event) => props.onSelectorInputChange(event.target.value)}
-          onKeyDown={(event) =>
-            props.onSelectorInputKeyDown(event, props.item.id)
-          }
-          placeholder="::before, :has(:focus-visible)"
+          onKeyDown={(event) => {
+            // Stop propagation to prevent dropdown menu typeahead from stealing focus
+            event.stopPropagation();
+            props.onSelectorInputKeyDown(event, props.item.id);
+          }}
+          placeholder="::before"
           autoFocus={false}
+          color={
+            props.selectorValidation.success === false ? "error" : undefined
+          }
           css={{
             width: "100%",
             fontFamily: theme.fonts.mono,
           }}
         />
-        {props.selectorValidation.valid === false && (
+        {props.selectorValidation.success === false && (
           <Text
             css={{
               color: theme.colors.foregroundDestructive,
@@ -527,11 +534,10 @@ const renderMenuItems = (props: {
               marginTop: theme.spacing[1],
             }}
           >
-            {props.selectorValidation.message}
+            {props.selectorValidation.error}
           </Text>
         )}
-      </Box>
-
+      </Box>{" "}
       <DropdownMenuSeparator />
       {props.item.source === "local" && (
         <DropdownMenuItem hint>
@@ -553,9 +559,9 @@ export const StyleSourceInput = (
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
   const [selectorInputValue, setSelectorInputValue] = useState("");
-  const [selectorValidation, setSelectorValidation] = useState(
-    validateSelector("")
-  );
+  const [selectorValidation, setSelectorValidation] = useState<
+    ReturnType<typeof validateSelector>
+  >({ success: true, type: "pseudo-class" });
 
   const {
     items,
@@ -613,7 +619,7 @@ export const StyleSourceInput = (
   const handleSelectorInputChange = (value: string) => {
     setSelectorInputValue(value);
     // Don't validate while typing, only show validation errors after Enter
-    setSelectorValidation({ valid: true });
+    setSelectorValidation({ success: true, type: "pseudo-class" });
   };
 
   const handleSelectorInputKeyDown = (
@@ -621,33 +627,39 @@ export const StyleSourceInput = (
     itemId: IntermediateItem["id"]
   ) => {
     if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+
       const selector = selectorInputValue.trim();
 
-      // Validate only when user presses Enter
+      // Empty selector removes state
+      if (selector === "") {
+        props.onSelectItem?.({
+          styleSourceId: itemId,
+          state: undefined,
+        });
+        setSelectorInputValue("");
+        setSelectorValidation({ success: true, type: "pseudo-class" });
+        return;
+      }
+
+      // Validate non-empty selectors
       const validation = validateSelector(selector);
       setSelectorValidation(validation);
 
-      if (validation.valid) {
-        if (selector) {
-          // Select the item with the new selector
-          props.onSelectItem?.({
-            styleSourceId: itemId,
-            state: selector,
-          });
-        } else {
-          // Empty selector removes state
-          props.onSelectItem?.({
-            styleSourceId: itemId,
-            state: undefined,
-          });
-        }
+      if (validation.success) {
+        // Select the item with the new selector
+        props.onSelectItem?.({
+          styleSourceId: itemId,
+          state: selector,
+        });
         setSelectorInputValue("");
-        setSelectorValidation({ valid: true });
+        setSelectorValidation({ success: true, type: "pseudo-class" });
       }
       // If validation failed, keep the input value so user can fix it
     } else if (event.key === "Escape") {
       setSelectorInputValue("");
-      setSelectorValidation({ valid: true });
+      setSelectorValidation({ success: true, type: "pseudo-class" });
     }
   };
 
