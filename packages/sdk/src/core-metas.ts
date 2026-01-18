@@ -57,6 +57,16 @@ const collectionMeta: WsComponentMeta = {
       control: "json",
       type: "json",
     },
+    item: {
+      required: false,
+      control: "text",
+      type: "string",
+    },
+    itemKey: {
+      required: false,
+      control: "text",
+      type: "string",
+    },
   },
 };
 

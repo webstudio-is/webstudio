@@ -1,13 +1,35 @@
 import type { MediaRuleOptions } from "./rules";
 
 /**
- * Sort by minWidth descending or maxWidth ascending
- * We want media querries with bigger minWidth to override the smaller once, but the smaller maxWidth to override the bigger once.
+ * Sort media queries for CSS cascade order.
+ * Width-based: minWidth descending, then maxWidth ascending
+ * Custom conditions: sorted alphabetically, placed between base and width-based
+ *
+ * Note: minWidth/maxWidth and condition are mutually exclusive in MediaRuleOptions.
  */
 export const compareMedia = (
   optionA: MediaRuleOptions,
   optionB: MediaRuleOptions
 ) => {
+  // If both have custom conditions, sort alphabetically
+  if (optionA.condition !== undefined && optionB.condition !== undefined) {
+    return optionA.condition.localeCompare(optionB.condition);
+  }
+
+  // Custom condition comes after base but before width-based
+  if (optionA.condition !== undefined) {
+    if (optionB.minWidth === undefined && optionB.maxWidth === undefined) {
+      return 1; // optionA (condition) after optionB (base)
+    }
+    return -1; // optionA (condition) before optionB (width)
+  }
+  if (optionB.condition !== undefined) {
+    if (optionA.minWidth === undefined && optionA.maxWidth === undefined) {
+      return -1; // optionA (base) before optionB (condition)
+    }
+    return 1; // optionA (width) after optionB (condition)
+  }
+
   // Ensures a media with no min/max is always first
   if (optionA.minWidth === undefined && optionA.maxWidth === undefined) {
     return -1;

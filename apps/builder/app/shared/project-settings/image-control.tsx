@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { FloatingPanel } from "@webstudio-is/design-system";
 import { AssetManager } from "~/builder/shared/asset-manager";
+import { AssetUpload } from "~/builder/shared/assets";
 
 // @todo should be moved to shared as its being reused in another feature
 export const ImageControl = (props: {
@@ -10,6 +11,7 @@ export const ImageControl = (props: {
   return (
     <FloatingPanel
       title="Images"
+      titleSuffix={<AssetUpload type="image" accept="image/*" />}
       placement="bottom-within"
       content={
         <AssetManager

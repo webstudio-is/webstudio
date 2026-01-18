@@ -10,7 +10,7 @@ import {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const lastPublished = "2025-05-15T22:04:05.511Z";
+export const lastPublished = "2026-01-15T16:19:55.574Z";
 
 export const siteName = "KittyGuardedZone";
 
@@ -20,7 +20,8 @@ export const breakpoints = [
   { id: "Z8WjyXWkCrr35PXgjHdpY", minWidth: 472 },
 ];
 
-export const favIconAsset: string | undefined = undefined;
+export const favIconAsset: string | undefined =
+  "cat_silhouette_BDpTbUFSpVbfUWQZNxbBG.png";
 
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: string[] = [];
@@ -35,31 +36,48 @@ const Page = (_props: { system: any }) => {
       xmlns={"http://www.sitemaps.org/schemas/sitemap/0.9"}
       xmlns:xhtml={"http://www.w3.org/TR/xhtml11/xhtml11_schema.html"}
     >
-      {[
-        {
-          path: "/",
-          lastModified: "2024-05-07",
-        },
-        {
-          path: "/olegs-test",
-          lastModified: "2024-05-07",
-        },
-      ]?.map?.((url: any, index: number) => (
-        <Fragment key={index}>
-          <XmlNode tag={"url"}>
-            <XmlNode tag={"loc"}>
-              {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
+      {Object.entries(
+        // @ts-ignore
+        [
+          {
+            path: "/",
+            lastModified: "2024-05-07",
+          },
+          {
+            path: "/olegs-test",
+            lastModified: "2024-05-07",
+          },
+        ] ?? {}
+      ).map(([_key, url]: any) => {
+        const index = Array.isArray([
+          {
+            path: "/",
+            lastModified: "2024-05-07",
+          },
+          {
+            path: "/olegs-test",
+            lastModified: "2024-05-07",
+          },
+        ])
+          ? Number(_key)
+          : _key;
+        return (
+          <Fragment key={index}>
+            <XmlNode tag={"url"}>
+              <XmlNode tag={"loc"}>
+                {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
+              </XmlNode>
+              <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
+              <XmlNode
+                tag={"xhtml:link"}
+                rel={"alternate"}
+                hreflang={"en"}
+                href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
+              />
             </XmlNode>
-            <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
-            <XmlNode
-              tag={"xhtml:link"}
-              rel={"alternate"}
-              hreflang={"en"}
-              href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
-            />
-          </XmlNode>
-        </Fragment>
-      ))}
+          </Fragment>
+        );
+      })}
       <XmlNode tag={"url"}>
         <XmlNode tag={"loc"}>{"custom-hand-made-location"}</XmlNode>
         <XmlNode tag={"lastmod"}>

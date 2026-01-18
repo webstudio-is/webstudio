@@ -183,6 +183,73 @@ const completionPath = (
   return;
 };
 
+/**
+ * Generate completion options for object properties and array/string methods.
+ * Exported for testing.
+ */
+export const generateCompletionOptions = ({
+  target,
+  pathName,
+  pathLength,
+}: {
+  target: unknown;
+  pathName: string;
+  pathLength: number;
+}): Array<{ label: string; detail: string; type?: string }> => {
+  const options: Array<{ label: string; detail: string; type?: string }> = [];
+
+  // Add object properties
+  if (typeof target === "object" && target !== null) {
+    for (const [name, value] of Object.entries(target)) {
+      options.push({
+        label: name,
+        detail: formatValuePreview(value),
+      });
+    }
+  }
+
+  // Add string/array methods and properties for nested paths
+  if (pathLength > 0) {
+    const isString = typeof target === "string";
+    const isArray = Array.isArray(target);
+
+    if (isString) {
+      for (const method of allowedStringMethods) {
+        if (method.toLowerCase().includes(pathName.toLowerCase())) {
+          options.push({
+            label: `${method}()`,
+            detail: "string method",
+            type: "method",
+          });
+        }
+      }
+    }
+
+    if (isArray) {
+      // Add length property
+      if ("length".toLowerCase().includes(pathName.toLowerCase())) {
+        options.push({
+          label: "length",
+          detail: `${target.length}`,
+          type: "property",
+        });
+      }
+
+      for (const method of allowedArrayMethods) {
+        if (method.toLowerCase().includes(pathName.toLowerCase())) {
+          options.push({
+            label: `${method}()`,
+            detail: "array method",
+            type: "method",
+          });
+        }
+      }
+    }
+  }
+
+  return options;
+};
+
 // Defines a completion source that completes from the given scope
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
@@ -200,18 +267,29 @@ const scopeCompletionSource: CompletionSource = (context) => {
       return null;
     }
   }
-  let options: Completion[] = [];
-  if (typeof target === "object" && target !== null) {
-    options = Object.entries(target).map(([name, value]) => ({
+
+  // Generate base completion options using exported function
+  const baseOptions = generateCompletionOptions({
+    target,
+    pathName: path.name,
+    pathLength: path.path.length,
+  });
+
+  // Convert to CodeMirror Completion format with apply functions
+  let options: Completion[] = baseOptions.map((option) => {
+    const name = option.label;
+    return {
       label: name,
       displayLabel: decodeDataVariableName(name),
-      detail: formatValuePreview(value),
+      detail: option.detail,
+      type: option.type,
       apply: (view, completion, from, to) => {
+        const textToInsert = name;
         // complete valid js identifier or top level variable without quotes
-        if (Identifier.test(name) || path.path.length === 0) {
+        if (Identifier.test(textToInsert) || path.path.length === 0) {
           // complete with dot
           view.dispatch({
-            ...insertCompletionText(view.state, name, from, to),
+            ...insertCompletionText(view.state, textToInsert, from, to),
             annotations: pickedCompletion.of(completion),
           });
         } else {
@@ -221,7 +299,7 @@ const scopeCompletionSource: CompletionSource = (context) => {
               view.state,
               // `param with spaces` -> ["param with spaces"]
               // `0` -> [0]
-              `[${/^\d+$/.test(name) ? name : JSON.stringify(name)}]`,
+              `[${/^\d+$/.test(textToInsert) ? textToInsert : JSON.stringify(textToInsert)}]`,
               // remove dot when autocomplete computed member expression
               // variable.
               // variable["name"]
@@ -232,7 +310,11 @@ const scopeCompletionSource: CompletionSource = (context) => {
           });
         }
       },
-    }));
+    };
+  });
+
+  // Sort options if target is an object
+  if (typeof target === "object" && target !== null) {
     options = matchSorter(options, path.name, {
       keys: [(option) => option.displayLabel ?? option.label],
       baseSort: (left, right) => {
@@ -248,55 +330,6 @@ const scopeCompletionSource: CompletionSource = (context) => {
         return leftIndex - rightIndex;
       },
     });
-  }
-
-  // Add safe string and array method completions
-  if (path.path.length > 0) {
-    const methodOptions: Completion[] = [];
-
-    // Determine if target is likely a string or array based on its value
-    const isString = typeof target === "string";
-    const isArray = Array.isArray(target);
-
-    // Add string methods only if target is a string
-    if (isString) {
-      for (const method of allowedStringMethods) {
-        if (method.toLowerCase().includes(path.name.toLowerCase())) {
-          methodOptions.push({
-            label: `${method}()`,
-            detail: "string method",
-            type: "method",
-            apply: (view, completion, from, to) => {
-              view.dispatch({
-                ...insertCompletionText(view.state, `${method}()`, from, to),
-                annotations: pickedCompletion.of(completion),
-              });
-            },
-          });
-        }
-      }
-    }
-
-    // Add array methods if target is an array
-    if (isArray) {
-      for (const method of allowedArrayMethods) {
-        if (method.toLowerCase().includes(path.name.toLowerCase())) {
-          methodOptions.push({
-            label: `${method}()`,
-            detail: "array method",
-            type: "method",
-            apply: (view, completion, from, to) => {
-              view.dispatch({
-                ...insertCompletionText(view.state, `${method}()`, from, to),
-                annotations: pickedCompletion.of(completion),
-              });
-            },
-          });
-        }
-      }
-    }
-
-    options = [...options, ...methodOptions];
   }
 
   return {

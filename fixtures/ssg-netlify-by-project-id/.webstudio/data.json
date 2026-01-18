@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "1e6d93b8-3faa-4155-8628-dd31cafaf00e",
+    "id": "8f0fdff2-e76b-4f86-9203-ea7df5f1143c",
     "projectId": "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e",
-    "version": 2,
-    "createdAt": "2024-09-03T04:32:12.506+00:00",
-    "updatedAt": "2024-09-03T04:32:12.506+00:00",
+    "version": 7,
+    "createdAt": "2026-01-04T10:46:48.415+00:00",
+    "updatedAt": "2026-01-04T10:46:48.415+00:00",
     "pages": {
       "meta": {},
       "homePage": {
@@ -16,13 +16,39 @@
         "meta": {},
         "path": ""
       },
-      "pages": [],
+      "pages": [
+        {
+          "id": "fOBamlMdmM461hLaITmV7",
+          "name": "Untitled",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "6dkXcbi85BtasJdJdkV9L",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "302",
+            "redirect": "\"/\"",
+            "documentType": "html",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/redirect"
+        }
+      ],
       "folders": [
         {
           "id": "root",
           "name": "Root",
           "slug": "",
-          "children": ["Y60VJnVZMU_ifI0GnAR1N"]
+          "children": ["Y60VJnVZMU_ifI0GnAR1N", "fOBamlMdmM461hLaITmV7"]
         }
       ]
     },
@@ -103,12 +129,23 @@
             }
           ]
         }
+      ],
+      [
+        "6dkXcbi85BtasJdJdkV9L",
+        {
+          "type": "instance",
+          "id": "6dkXcbi85BtasJdJdkV9L",
+          "component": "ws:element",
+          "tag": "body",
+          "children": []
+        }
       ]
     ],
     "deployment": {
       "destination": "saas",
-      "domains": [],
-      "projectDomain": "fixture-client-do-not-touch-wsmel"
+      "domains": ["fixture-client-do-not-touch-wsmel"],
+      "assetsDomain": "fixture-client-do-not-touch-wsmel",
+      "excludeWstdDomainFromSearch": false
     }
   },
   "page": {
@@ -129,6 +166,31 @@
       "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
       "meta": {},
       "path": ""
+    },
+    {
+      "id": "fOBamlMdmM461hLaITmV7",
+      "name": "Untitled",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "6dkXcbi85BtasJdJdkV9L",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "302",
+        "redirect": "\"/\"",
+        "documentType": "html",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/redirect"
     }
   ],
   "assets": [],

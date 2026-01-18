@@ -1,13 +1,12 @@
 import { z } from "zod";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
-import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import {
   isAllowedMimeCategory,
   IMAGE_MIME_TYPES,
   ALLOWED_FILE_TYPES,
 } from "@webstudio-is/sdk";
-import type { ActionData } from "~/builder/shared/assets";
+import type { AssetActionResponse } from "~/builder/shared/assets";
 import { createAssetClient } from "~/shared/asset-client";
 import { createContext } from "~/shared/context.server";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
@@ -20,7 +19,7 @@ const UrlBody = z.object({
 
 export const action = async (
   props: ActionFunctionArgs
-): Promise<ActionData | Array<Asset> | undefined> => {
+): Promise<AssetActionResponse> => {
   preventCrossOriginCookie(props.request);
   await checkCsrf(props.request);
 
@@ -133,4 +132,8 @@ export const action = async (
       errors: parseError(error).message,
     };
   }
+
+  return {
+    errors: "Method not allowed",
+  };
 };

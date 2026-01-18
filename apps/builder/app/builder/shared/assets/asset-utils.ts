@@ -106,25 +106,29 @@ export const uploadingFileDataToAsset = (
     fileData.source === "file" ? fileData.file : new URL(fileData.url);
   const fileName = getFileName(fileOrUrl);
   const mimeType = getMimeType(fileOrUrl);
-  const format = mimeType.split("/")[1];
+
+  // Extract format from MIME type if available, otherwise from filename extension
+  let format = mimeType.split("/")[1];
+  if (!format) {
+    // Fallback to file extension if MIME type doesn't provide format
+    const match = fileName.match(/\.([^.]+)$/);
+    format = match ? match[1].toLowerCase() : "";
+  }
+
   const assetType = detectAssetType(fileName);
 
   if (assetType === "video") {
-    // Use image type for now
-    const asset: ImageAsset = {
+    // Videos should be file type, not image type
+    const asset: Asset = {
       id: fileData.assetId,
       name: fileName,
       format,
-      type: "image",
+      type: "file",
       description: "",
       createdAt: "",
       projectId: "",
       size: 0,
-
-      meta: {
-        width: Number.NaN,
-        height: Number.NaN,
-      },
+      meta: {},
     };
 
     return asset;

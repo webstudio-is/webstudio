@@ -19,7 +19,7 @@ import {
   TreeSortableItem,
   type TreeDropTarget,
 } from "@webstudio-is/design-system";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import { showAttribute, getCollectionEntries } from "@webstudio-is/react-sdk";
 import {
   ROOT_INSTANCE_ID,
   collectionComponent,
@@ -194,33 +194,39 @@ export const $flatTree = computed(
 
       // render same children for each collection item in data
       if (instance.component === collectionComponent && treeItem.isExpanded) {
-        const data = propValues?.get("data");
-        // create items only when collection has content
-        if (Array.isArray(data) && instance.children.length > 0) {
-          data.forEach((_item, dataIndex) => {
-            for (let index = 0; index < instance.children.length; index += 1) {
-              const child = instance.children[index];
-              if (child.type === "id") {
-                const isLastChild = index === instance.children.length - 1;
-                const lastDescendentItem = traverse(
-                  child.value,
-                  [
+        const originalData = propValues?.get("data");
+        if (originalData && instance.children.length > 0) {
+          const entries = getCollectionEntries(originalData);
+          if (entries.length > 0) {
+            entries.forEach(([key], entryIndex) => {
+              for (
+                let index = 0;
+                index < instance.children.length;
+                index += 1
+              ) {
+                const child = instance.children[index];
+                if (child.type === "id") {
+                  const isLastChild = index === instance.children.length - 1;
+                  const lastDescendentItem = traverse(
                     child.value,
-                    getIndexedInstanceId(instance.id, dataIndex),
-                    ...selector,
-                  ],
-                  visibleAncestors,
-                  isHidden,
-                  isReusable,
-                  isLastChild,
-                  instance.children.length * dataIndex + index
-                );
-                if (lastDescendentItem) {
-                  lastItem = lastDescendentItem;
+                    [
+                      child.value,
+                      getIndexedInstanceId(instance.id, key),
+                      ...selector,
+                    ],
+                    visibleAncestors,
+                    isHidden,
+                    isReusable,
+                    isLastChild,
+                    instance.children.length * entryIndex + index
+                  );
+                  if (lastDescendentItem) {
+                    lastItem = lastDescendentItem;
+                  }
                 }
               }
-            }
-          });
+            });
+          }
         }
       } else if (level === 0 || treeItem.isExpanded) {
         for (let index = 0; index < instance.children.length; index += 1) {

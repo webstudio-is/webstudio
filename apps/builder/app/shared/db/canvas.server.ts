@@ -63,10 +63,11 @@ export const loadProductionCanvasData = async (
     }
   }
 
-  // Filter unused font assets
+  // Filter unused font assets but include all other asset types (images, videos, audio, documents)
   const assets = allAssets.filter(
     (asset) =>
       asset.type === "image" ||
+      asset.type === "file" ||
       (asset.type === "font" && fontFamilySet.has(asset.meta.family))
   );
 

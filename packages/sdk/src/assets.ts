@@ -399,8 +399,7 @@ export const decodePathFragment = (fragment: string): string => {
 /**
  * Generates the appropriate URL for an asset based on its type and format.
  * - Images use /cgi/image/ with format=raw
- * - Videos use /cgi/video/
- * - Other assets use /cgi/asset/
+ * - All other assets (videos, audio, fonts, documents) use /cgi/asset/ with format=raw
  *
  * @param asset - The asset to generate URL for
  * @param origin - Origin to prepend (e.g., "https://example.com"). When provided, returns an absolute URL.
@@ -412,11 +411,96 @@ export const getAssetUrl = (asset: Asset, origin: string): URL => {
 
   if (assetType === "image") {
     path = `/cgi/image/${asset.name}?format=raw`;
-  } else if (assetType === "video") {
-    path = `/cgi/video/${asset.name}`;
   } else {
-    path = `/cgi/asset/${asset.name}`;
+    // Videos, audio, fonts, documents all use /cgi/asset/
+    path = `/cgi/asset/${asset.name}?format=raw`;
   }
 
   return new URL(path, origin);
+};
+
+/**
+ * Runtime asset data structure with only fields needed at runtime.
+ * This is a simplified version of the Asset type, optimized for client-side usage.
+ */
+export type RuntimeAsset = {
+  url: string;
+  width?: number;
+  height?: number;
+  family?: string;
+  style?: string;
+  weight?: number;
+};
+
+/**
+ * Type-specific metadata extractors that define what runtime data each asset type needs.
+ * Adding a new asset type requires implementing its extractor here.
+ */
+type RuntimeMetadata = Omit<RuntimeAsset, "url"> | undefined;
+
+const extractImageMetadata = (asset: Asset): RuntimeMetadata => {
+  if (asset.type !== "image") {
+    return;
+  }
+  // Only include dimensions if they're non-zero
+  if (asset.meta.width && asset.meta.height) {
+    return {
+      width: asset.meta.width,
+      height: asset.meta.height,
+    };
+  }
+};
+
+const extractFontMetadata = (asset: Asset): RuntimeMetadata => {
+  if (asset.type !== "font") {
+    return;
+  }
+  const metadata: Omit<RuntimeAsset, "url"> = {
+    family: asset.meta.family,
+  };
+  // Static fonts have style and weight, variable fonts have variationAxes
+  if ("style" in asset.meta) {
+    metadata.style = asset.meta.style;
+    metadata.weight = asset.meta.weight;
+  }
+  return metadata;
+};
+
+const extractFileMetadata = (_asset: Asset): RuntimeMetadata => {
+  // Generic files don't need additional metadata at runtime
+  return;
+};
+
+const metadataExtractors: Record<
+  Asset["type"],
+  (asset: Asset) => RuntimeMetadata
+> = {
+  image: extractImageMetadata,
+  font: extractFontMetadata,
+  file: extractFileMetadata,
+};
+
+/**
+ * Converts a full Asset to a minimal RuntimeAsset format.
+ * This reduces payload size by including only runtime-needed data.
+ *
+ * Each asset type defines its own metadata extractor to ensure we only
+ * include the fields that are actually needed at runtime.
+ *
+ * @param asset - The full asset object
+ * @param origin - Origin to use for generating the asset URL (only used for URL construction, result is always a relative path)
+ * @returns A minimal RuntimeAsset object with relative URL
+ */
+export const toRuntimeAsset = (asset: Asset, origin: string): RuntimeAsset => {
+  const extractor = metadataExtractors[asset.type];
+  const metadata = extractor(asset);
+
+  const url = getAssetUrl(asset, origin);
+  // Use pathname + search to get the relative path with query string
+  const relativeUrl = url.pathname + url.search;
+
+  return {
+    url: relativeUrl,
+    ...metadata,
+  };
 };

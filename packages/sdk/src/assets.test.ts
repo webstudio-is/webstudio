@@ -15,6 +15,7 @@ import {
   detectAssetType,
   decodePathFragment,
   getAssetUrl,
+  toRuntimeAsset,
   acceptToMimePatterns,
   acceptToMimeCategories,
   getAssetMime,
@@ -470,19 +471,25 @@ describe("allowed-file-types", () => {
 
     test("generates correct URL for video assets", () => {
       const url = getAssetUrl(mockVideoAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/video/video.mp4");
-      expect(url.pathname).toBe("/cgi/video/video.mp4");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/video.mp4?format=raw"
+      );
+      expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("generates correct URL for font assets", () => {
       const url = getAssetUrl(mockFontAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/font.woff2");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/font.woff2?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/asset/font.woff2");
     });
 
     test("generates correct URL for generic file assets", () => {
       const url = getAssetUrl(mockGenericAsset, "https://example.com");
-      expect(url.href).toBe("https://example.com/cgi/asset/document.pdf");
+      expect(url.href).toBe(
+        "https://example.com/cgi/asset/document.pdf?format=raw"
+      );
       expect(url.pathname).toBe("/cgi/asset/document.pdf");
     });
 
@@ -512,7 +519,7 @@ describe("allowed-file-types", () => {
         format: "MP4",
       };
       const url = getAssetUrl(upperCaseVideo, "https://example.com");
-      expect(url.pathname).toBe("/cgi/video/video.mp4");
+      expect(url.pathname).toBe("/cgi/asset/video.mp4");
     });
 
     test("handles assets with special characters in name", () => {
@@ -831,6 +838,121 @@ describe("allowed-file-types", () => {
           new Set(["image/*"])
         )
       ).toBe(false);
+    });
+  });
+
+  describe("toRuntimeAsset", () => {
+    const mockImageAsset = {
+      id: "image-1",
+      name: "photo.jpg",
+      projectId: "project-1",
+      size: 1024,
+      type: "image" as const,
+      format: "jpg",
+      description: "A photo",
+      createdAt: "2024-01-01",
+      meta: { width: 1920, height: 1080 },
+    };
+
+    const mockFontAsset = {
+      id: "font-1",
+      name: "font.woff2",
+      projectId: "project-1",
+      size: 512,
+      type: "font" as const,
+      format: "woff2" as const,
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {
+        family: "Arial",
+        style: "normal" as const,
+        weight: 400,
+      },
+    };
+
+    const mockVariableFontAsset = {
+      id: "font-2",
+      name: "variable-font.woff2",
+      projectId: "project-1",
+      size: 768,
+      type: "font" as const,
+      format: "woff2" as const,
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {
+        family: "Inter",
+        variationAxes: {},
+      },
+    };
+
+    const mockGenericAsset = {
+      id: "doc-1",
+      name: "document.pdf",
+      projectId: "project-1",
+      size: 4096,
+      type: "file" as const,
+      format: "pdf",
+      description: null,
+      createdAt: "2024-01-01",
+      meta: {},
+    };
+
+    test("converts image asset with all fields", () => {
+      const result = toRuntimeAsset(mockImageAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "/cgi/image/photo.jpg?format=raw",
+        width: 1920,
+        height: 1080,
+      });
+    });
+
+    test("converts static font asset with metadata", () => {
+      const result = toRuntimeAsset(mockFontAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "/cgi/asset/font.woff2?format=raw",
+        family: "Arial",
+        style: "normal",
+        weight: 400,
+      });
+    });
+
+    test("converts variable font asset without style/weight", () => {
+      const result = toRuntimeAsset(
+        mockVariableFontAsset,
+        "https://example.com"
+      );
+      expect(result).toEqual({
+        url: "/cgi/asset/variable-font.woff2?format=raw",
+        family: "Inter",
+      });
+    });
+
+    test("converts generic file asset with minimal fields", () => {
+      const result = toRuntimeAsset(mockGenericAsset, "https://example.com");
+      expect(result).toEqual({
+        url: "/cgi/asset/document.pdf?format=raw",
+      });
+    });
+
+    test("returns relative URLs regardless of origin", () => {
+      const result1 = toRuntimeAsset(mockImageAsset, "https://cdn.example.com");
+      const result2 = toRuntimeAsset(mockImageAsset, "http://localhost:3000");
+      // Both should return the same relative URL
+      expect(result1.url).toBe("/cgi/image/photo.jpg?format=raw");
+      expect(result2.url).toBe("/cgi/image/photo.jpg?format=raw");
+    });
+
+    test("handles image without dimensions", () => {
+      const assetWithoutDimensions = {
+        ...mockImageAsset,
+        meta: { width: 0, height: 0 },
+      };
+      const result = toRuntimeAsset(
+        assetWithoutDimensions,
+        "https://example.com"
+      );
+      expect(result).not.toHaveProperty("width");
+      expect(result).not.toHaveProperty("height");
     });
   });
 });

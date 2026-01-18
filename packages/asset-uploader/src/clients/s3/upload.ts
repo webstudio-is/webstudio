@@ -3,6 +3,7 @@ import type { SignatureV4 } from "@smithy/signature-v4";
 import { type AssetData, getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
 import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
+import { getMimeTypeByFilename } from "@webstudio-is/sdk";
 
 export const uploadToS3 = async ({
   signer,
@@ -40,6 +41,9 @@ export const uploadToS3 = async ({
     endpoint
   );
 
+  // Use proper MIME type based on file extension instead of generic type category
+  const contentType = getMimeTypeByFilename(name);
+
   const s3Request = await signer.sign({
     method: "PUT",
     protocol: url.protocol,
@@ -47,7 +51,7 @@ export const uploadToS3 = async ({
     path: url.pathname,
     headers: {
       "x-amz-date": new Date().toISOString(),
-      "Content-Type": type,
+      "Content-Type": contentType,
       "Content-Length": `${data.byteLength}`,
       "Cache-Control": "public, max-age=31536004,immutable",
       "x-amz-content-sha256": "UNSIGNED-PAYLOAD",

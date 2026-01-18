@@ -1,9 +1,9 @@
 import { json } from "@remix-run/server-runtime";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+import { toRuntimeAsset } from "@webstudio-is/sdk";
 import { isBuilder } from "../router-utils";
 import { createContext } from "../context.server";
-import { getAssetUrl } from "~/builder/shared/assets/asset-utils";
 
 /**
  * System Resource that provides the list of assets for the current project.
@@ -31,15 +31,10 @@ export const loader = async ({ request }: { request: Request }) => {
   const requestUrl = new URL(request.url);
   const origin = `${requestUrl.protocol}//${requestUrl.host}`;
 
-  // Convert array to object with asset IDs as keys and add URL to each asset
+  // Convert array to object with asset IDs as keys
+  // Use /cgi/ endpoint URLs (relative paths)
   const assetsById = Object.fromEntries(
-    assets.map((asset) => [
-      asset.id,
-      {
-        ...asset,
-        url: getAssetUrl(asset, origin).href,
-      },
-    ])
+    assets.map((asset) => [asset.id, toRuntimeAsset(asset, origin)])
   );
 
   return json(assetsById);

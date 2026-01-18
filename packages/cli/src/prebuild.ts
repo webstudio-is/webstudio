@@ -47,6 +47,7 @@ import {
   ROOT_INSTANCE_ID,
   elementComponent,
   getAssetUrl,
+  toRuntimeAsset,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "./config";
@@ -433,17 +434,16 @@ export const prebuild = async (options: {
     }
 
     for (const asset of siteData.assets) {
-      if (asset.type === "image" || asset.type === "font") {
-        assetsToDownload.push(
-          limit(() =>
-            downloadAsset(
-              getAssetUrl(asset, assetOrigin || "").href,
-              asset.name,
-              assetBaseUrl
-            )
+      // Download all assets (images, fonts, videos, audio, documents, etc.)
+      assetsToDownload.push(
+        limit(() =>
+          downloadAsset(
+            getAssetUrl(asset, assetOrigin || "").href,
+            asset.name,
+            assetBaseUrl
           )
-        );
-      }
+        )
+      );
     }
   }
 
@@ -692,6 +692,10 @@ export const prebuild = async (options: {
           importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
         )
         .replaceAll(
+          "__ASSETS__",
+          importFrom(`./app/__generated__/$resources.assets`, file)
+        )
+        .replaceAll(
           "__CLIENT__",
           importFrom(`./app/__generated__/${generatedBasename}`, file)
         )
@@ -724,6 +728,23 @@ export const prebuild = async (options: {
         null,
         2
       )};
+    `
+  );
+
+  // Generate assets resource file
+  // Assets use /cgi/ endpoints on both builder and published sites
+  // Use a placeholder origin for URL construction, result will be relative paths
+  const assetsById = Object.fromEntries(
+    siteData.assets.map((asset) => [
+      asset.id,
+      toRuntimeAsset(asset, "https://placeholder.local"),
+    ])
+  );
+
+  await createFileIfNotExists(
+    join(generatedDir, "$resources.assets.ts"),
+    `
+    export const assets = ${JSON.stringify(assetsById, null, 2)};
     `
   );
 

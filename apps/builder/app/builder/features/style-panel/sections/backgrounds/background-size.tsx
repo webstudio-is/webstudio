@@ -17,6 +17,20 @@ import {
 
 const autoKeyword = { type: "keyword" as const, value: "auto" };
 
+/**
+ * Determines the select value based on style value type.
+ * Returns "custom" for tuple types to show width/height inputs.
+ */
+const getSelectValue = (styleValue: StyleValue | undefined): string => {
+  if (styleValue?.type === "keyword") {
+    return toValue(styleValue);
+  }
+  if (styleValue?.type === "tuple") {
+    return "custom";
+  }
+  return "auto";
+};
+
 const toTuple = (
   valueX?: StyleValue | string,
   valueY?: StyleValue | string
@@ -41,8 +55,7 @@ export const BackgroundSize = ({ index }: { index: number }) => {
   const styleValue = getRepeatedStyleItem(styleDecl, index);
 
   const selectOptions = [...keywordValues[property], "custom"];
-  const selectValue =
-    styleValue?.type === "keyword" ? toValue(styleValue) : "auto";
+  const selectValue = getSelectValue(styleValue);
 
   const customSizeOptions = [autoKeyword];
   const customSizeValue = toTuple(styleValue);
@@ -151,4 +164,8 @@ export const BackgroundSize = ({ index }: { index: number }) => {
       )}
     </>
   );
+};
+
+export const __testing__ = {
+  getSelectValue,
 };

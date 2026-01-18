@@ -16,6 +16,7 @@ import { $instances } from "~/shared/sync/data-stores";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import { CodeEditor } from "~/shared/code-editor";
@@ -138,11 +139,7 @@ export const TextContent = ({
           <BindingPopover
             scope={scope}
             aliases={aliases}
-            validate={(value) => {
-              if (value !== undefined && typeof value !== "string") {
-                return `Text Content expects a string value`;
-              }
-            }}
+            validate={(value) => validatePrimitiveValue(value, "Text Content")}
             variant={variant}
             value={expression}
             onChange={(newExpression) => {

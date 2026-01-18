@@ -1,5 +1,5 @@
 import { type FontFormat, FontMeta, FONT_FORMATS } from "@webstudio-is/fonts";
-import { type Asset, ImageMeta } from "@webstudio-is/sdk";
+import { type Asset, ImageMeta, detectAssetType } from "@webstudio-is/sdk";
 
 export const formatAsset = ({
   assetId,
@@ -39,8 +39,13 @@ export const formatAsset = ({
     };
   }
 
-  // Check if it's an image by checking if meta has width and height
+  // Detect actual asset type based on file extension
+  const detectedType = detectAssetType(file.name);
+
+  // Check if it's an image by verifying both metadata AND file extension
+  // Videos also have width/height but should not be treated as images
   const isImage =
+    detectedType === "image" &&
     parsedMeta &&
     typeof parsedMeta.width === "number" &&
     typeof parsedMeta.height === "number";
@@ -60,7 +65,7 @@ export const formatAsset = ({
     };
   }
 
-  // Default to file type for everything else
+  // Default to file type for everything else (including videos)
   return {
     id: assetId,
     name: file.name,

@@ -1,10 +1,10 @@
 import type { PageContextServer } from "vike/types";
-import { redirect } from "vike/abort";
 import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
 import {
   getPageMeta,
   getResources,
 } from "../../app/__generated__/_index.server";
+import { assets } from "../../app/__generated__/$resources.assets";
 
 const customFetch: typeof fetch = (input, init) => {
   if (typeof input !== "string") {
@@ -25,6 +25,12 @@ const customFetch: typeof fetch = (input, init) => {
       timestamp: startOfDay.getTime(),
     };
     const response = new Response(JSON.stringify(data));
+    response.headers.set("content-type", "application/json; charset=utf-8");
+    return Promise.resolve(response);
+  }
+
+  if (isLocalResource(input, "assets")) {
+    const response = new Response(JSON.stringify(assets));
     response.headers.set("content-type", "application/json; charset=utf-8");
     return Promise.resolve(response);
   }
@@ -52,14 +58,6 @@ export const data = async (pageContext: PageContextServer) => {
     getResources({ system }).data
   );
   const pageMeta = getPageMeta({ system, resources });
-
-  if (pageMeta.redirect) {
-    const status =
-      pageMeta.status === 301 || pageMeta.status === 302
-        ? pageMeta.status
-        : 302;
-    throw redirect(pageMeta.redirect, status);
-  }
 
   return {
     url: url.href,

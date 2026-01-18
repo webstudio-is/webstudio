@@ -17,49 +17,7 @@ import {
   ArrowDownWideNarrowIcon,
   ArrowDownNarrowWideIcon,
 } from "@webstudio-is/icons";
-import type { AssetContainer } from "../assets";
-
-export type SortField = "name" | "size" | "createdAt";
-export type SortOrder = "asc" | "desc";
-
-export type SortState = {
-  sortBy: SortField;
-  order: SortOrder;
-};
-
-export const sortAssets = (
-  assetContainers: AssetContainer[],
-  sortState: SortState
-): AssetContainer[] => {
-  const { sortBy, order } = sortState;
-  const sorted = [...assetContainers];
-
-  sorted.sort((a, b) => {
-    let comparison = 0;
-
-    if (sortBy === "name") {
-      const aName = a.asset.name.toLowerCase();
-      const bName = b.asset.name.toLowerCase();
-      comparison = aName.localeCompare(bName);
-    } else if (sortBy === "size") {
-      // Uploading assets don't have size yet, put them at the end
-      const aSize =
-        a.status === "uploaded" ? a.asset.size : Number.MAX_SAFE_INTEGER;
-      const bSize =
-        b.status === "uploaded" ? b.asset.size : Number.MAX_SAFE_INTEGER;
-      comparison = aSize - bSize;
-    } else if (sortBy === "createdAt") {
-      // Uploading assets don't have createdAt yet, put them at the end
-      const aCreated = a.status === "uploaded" ? a.asset.createdAt || "" : "";
-      const bCreated = b.status === "uploaded" ? b.asset.createdAt || "" : "";
-      comparison = new Date(aCreated).getTime() - new Date(bCreated).getTime();
-    }
-
-    return order === "asc" ? comparison : -comparison;
-  });
-
-  return sorted;
-};
+import type { SortState, SortField, SortOrder } from "./utils";
 
 type AssetSortSelectProps = {
   value: SortState;

@@ -25,7 +25,7 @@ import {
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import invariant from "tiny-invariant";
 import type { ContainsSource } from "@atlaskit/pragmatic-drag-and-drop/dist/types/public-utils/external/native-types";
-import { uploadAssets } from "./use-assets";
+import { uploadAssets } from "./upload-assets";
 import { UploadIcon } from "@webstudio-is/icons";
 import {
   IDLE,
