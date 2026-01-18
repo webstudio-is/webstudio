@@ -36,13 +36,19 @@ const Page = (_props: { system: any }) => {
       {Object.entries(
         // @ts-ignore
         list?.data ?? {}
-      ).map(([index, collectionItem]: any) => (
-        <Fragment key={index}>
-          <Box className={`w-box`}>
-            <HtmlEmbed code={collectionItem?.name} className={`w-html-embed`} />
-          </Box>
-        </Fragment>
-      ))}
+      ).map(([_key, collectionItem]: any) => {
+        const index = Array.isArray(list?.data) ? Number(_key) : _key;
+        return (
+          <Fragment key={index}>
+            <Box className={`w-box`}>
+              <HtmlEmbed
+                code={collectionItem?.name}
+                className={`w-html-embed`}
+              />
+            </Box>
+          </Fragment>
+        );
+      })}
     </Body>
   );
 };

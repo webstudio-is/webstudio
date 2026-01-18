@@ -47,6 +47,33 @@ import {
   type EditorApi,
 } from "./expression-editor";
 
+/**
+ * Check if a value is a primitive that can be safely stringified.
+ * Allows: string, number, boolean, null, undefined
+ * Rejects: object, array, function, symbol
+ */
+export const isPrimitiveValue = (value: unknown): boolean => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  const type = typeof value;
+  return type === "string" || type === "number" || type === "boolean";
+};
+
+/**
+ * Generate a validation error message for non-primitive values.
+ * @param label - The control label (e.g., "Title", "URL")
+ * @returns Error message or undefined if value is valid
+ */
+export const validatePrimitiveValue = (
+  value: unknown,
+  label: string
+): string | undefined => {
+  if (!isPrimitiveValue(value)) {
+    return `${label} expects a primitive value (string, number, boolean, null, or undefined), not an object, array, or function`;
+  }
+};
+
 export const evaluateExpressionWithinScope = (
   expression: string,
   scope: Record<string, unknown>

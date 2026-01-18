@@ -15,8 +15,13 @@
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
 
-## Running Checks
+## Running Commands
 
+- For global workspace commands (e.g., "update fixtures", "run checks"), always check the root `package.json` scripts first
+- The root package.json at `/workspaces/webstudio/package.json` contains commands like:
+  - `pnpm fixtures` - updates all fixtures (link, sync, build)
+  - `pnpm checks` - runs all checks (tests, typecheck, lint, fixtures)
+  - `pnpm build` - builds all packages
 - Before running any commands, always check `get_errors` tool first to see TypeScript and ESLint errors in the VS Code editor
 - Only run `pnpm typecheck` and `pnpm eslint` when user explicitly says "run checks" or after completing substantial changes
 - `pnpm typecheck` is slow - avoid running it unnecessarily during development

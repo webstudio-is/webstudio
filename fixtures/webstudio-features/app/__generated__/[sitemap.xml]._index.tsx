@@ -48,22 +48,36 @@ const Page = (_props: { system: any }) => {
             lastModified: "2024-05-07",
           },
         ] ?? {}
-      ).map(([index, url]: any) => (
-        <Fragment key={index}>
-          <XmlNode tag={"url"}>
-            <XmlNode tag={"loc"}>
-              {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
+      ).map(([_key, url]: any) => {
+        const index = Array.isArray([
+          {
+            path: "/",
+            lastModified: "2024-05-07",
+          },
+          {
+            path: "/olegs-test",
+            lastModified: "2024-05-07",
+          },
+        ])
+          ? Number(_key)
+          : _key;
+        return (
+          <Fragment key={index}>
+            <XmlNode tag={"url"}>
+              <XmlNode tag={"loc"}>
+                {`${system?.origin ?? "${ORIGIN}"}${url?.path}`}
+              </XmlNode>
+              <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
+              <XmlNode
+                tag={"xhtml:link"}
+                rel={"alternate"}
+                hreflang={"en"}
+                href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
+              />
             </XmlNode>
-            <XmlNode tag={"lastmod"}>{url?.lastModified}</XmlNode>
-            <XmlNode
-              tag={"xhtml:link"}
-              rel={"alternate"}
-              hreflang={"en"}
-              href={`${system?.origin ?? "${ORIGIN}"}${url?.path}en`}
-            />
-          </XmlNode>
-        </Fragment>
-      ))}
+          </Fragment>
+        );
+      })}
       <XmlNode tag={"url"}>
         <XmlNode tag={"loc"}>{"custom-hand-made-location"}</XmlNode>
         <XmlNode tag={"lastmod"}>

@@ -4,6 +4,7 @@ import { TextArea } from "@webstudio-is/design-system";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
@@ -57,11 +58,7 @@ export const TextControl = ({
       <BindingPopover
         scope={scope}
         aliases={aliases}
-        validate={(value) => {
-          if (value !== undefined && typeof value !== "string") {
-            return `${label} expects a string value`;
-          }
-        }}
+        validate={(value) => validatePrimitiveValue(value, label)}
         variant={variant}
         value={expression}
         onChange={(newExpression) =>

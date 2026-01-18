@@ -23,6 +23,7 @@ import { isLiteralExpression, Resource, type Prop } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
+  validatePrimitiveValue,
   type BindingVariant,
 } from "~/builder/shared/binding-popover";
 import {
@@ -320,11 +321,7 @@ export const ResourceControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "string") {
-              return `Expected URL string value`;
-            }
-          }}
+          validate={(value) => validatePrimitiveValue(value, "URL")}
           variant={variant}
           value={urlExpression}
           onChange={(newExpression) =>
