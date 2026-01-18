@@ -6,10 +6,11 @@ export type ValidationResult = {
   type?: "pseudo-class" | "pseudo-element" | "complex-selector";
 };
 
-export type ComponentState = {
-  category: "states" | "pseudo-elements";
+export type SelectorConfig = {
+  type: "state" | "pseudoElement";
   selector: string;
   label: string;
+  source?: "native" | "component" | "custom";
 };
 
 /**
@@ -98,7 +99,7 @@ export const validateSelector = (selector: string): ValidationResult => {
  */
 export const getSelectorLabel = (
   selector: string,
-  predefinedStates: ComponentState[]
+  predefinedStates: SelectorConfig[]
 ): string => {
   // Check if we have a predefined label
   const predefined = predefinedStates.find((s) => s.selector === selector);

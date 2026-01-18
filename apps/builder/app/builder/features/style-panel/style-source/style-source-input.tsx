@@ -63,7 +63,7 @@ import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import {
   validateSelector,
-  type ComponentState,
+  type SelectorConfig,
 } from "../shared/selector-validation";
 
 type IntermediateItem = {
@@ -270,13 +270,13 @@ const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 const categories = [
-  "states",
-  "pseudo-elements",
-] satisfies ComponentState["category"][];
+  "state",
+  "pseudoElement",
+] satisfies SelectorConfig["type"][];
 
-const categoryLabels: Record<ComponentState["category"], string> = {
-  states: "States",
-  "pseudo-elements": "Pseudo elements",
+const categoryLabels: Record<SelectorConfig["type"], string> = {
+  state: "States",
+  pseudoElement: "Pseudo elements",
 };
 
 type StyleSourceInputProps<Item extends IntermediateItem> = {
@@ -286,7 +286,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
-  componentStates?: ComponentState[];
+  componentStates?: SelectorConfig[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -355,7 +355,7 @@ const renderMenuItems = (props: {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
-  states: ComponentState[];
+  states: SelectorConfig[];
   selectorInputValue: string;
   selectorValidation: ReturnType<typeof validateSelector>;
   onSelectorInputChange: (value: string) => void;
@@ -437,7 +437,7 @@ const renderMenuItems = (props: {
 
       {categories.map((currentCategory) => {
         const categoryStates = props.states.filter(
-          ({ category }) => category === currentCategory
+          ({ type }) => type === currentCategory
         );
         // prevent rendering empty category
         if (categoryStates.length === 0) {
@@ -449,59 +449,70 @@ const renderMenuItems = (props: {
             <DropdownMenuLabel>
               {categoryLabels[currentCategory]}
             </DropdownMenuLabel>
-            {categoryStates.map(({ selector }) => (
-              <DropdownMenuItem
-                key={selector}
-                withIndicator={true}
-                icon={
-                  props.item.id === props.selectedItemSelector?.styleSourceId &&
-                  selector === props.selectedItemSelector.state && (
-                    <CheckMarkIcon
-                      color={
-                        props.item.states.includes(selector)
-                          ? rawTheme.colors.foregroundPrimary
-                          : rawTheme.colors.foregroundIconMain
-                      }
-                      size={12}
-                    />
-                  )
-                }
-                onSelect={() =>
-                  props.onSelect?.({
-                    styleSourceId: props.item.id,
-                    // toggle state selection
-                    state:
-                      props.selectedItemSelector?.state === selector
-                        ? undefined
-                        : selector,
-                  })
-                }
-              >
-                <Flex justify="between" align="center" grow>
-                  {selector}
-                  {props.item.states.includes(selector) && (
-                    <DotIcon
-                      size="12"
-                      color={rawTheme.colors.foregroundPrimary}
-                    />
-                  )}
-                </Flex>
-              </DropdownMenuItem>
-            ))}
+            {categoryStates.map(({ label, selector, source }, index) => {
+              const previousItem = categoryStates[index - 1];
+              const showSeparator =
+                index > 0 &&
+                source === "component" &&
+                previousItem?.source !== "component";
+
+              return (
+                <Fragment key={selector}>
+                  {showSeparator && <DropdownMenuSeparator />}
+                  <DropdownMenuItem
+                    withIndicator={true}
+                    icon={
+                      props.item.id ===
+                        props.selectedItemSelector?.styleSourceId &&
+                      selector === props.selectedItemSelector.state && (
+                        <CheckMarkIcon
+                          color={
+                            props.item.states.includes(selector)
+                              ? rawTheme.colors.foregroundPrimary
+                              : rawTheme.colors.foregroundIconMain
+                          }
+                          size={12}
+                        />
+                      )
+                    }
+                    onSelect={() =>
+                      props.onSelect?.({
+                        styleSourceId: props.item.id,
+                        // toggle state selection
+                        state:
+                          props.selectedItemSelector?.state === selector
+                            ? undefined
+                            : selector,
+                      })
+                    }
+                  >
+                    <Flex justify="between" align="center" grow>
+                      {label}
+                      {props.item.states.includes(selector) && (
+                        <DotIcon
+                          size="12"
+                          color={rawTheme.colors.foregroundPrimary}
+                        />
+                      )}
+                    </Flex>
+                  </DropdownMenuItem>
+                </Fragment>
+              );
+            })}
           </Fragment>
         );
       })}
 
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Custom</DropdownMenuLabel>
-      <Box css={{ padding: theme.spacing[2] }}>
+      <Box css={{ padding: theme.spacing[4] }}>
         <InputField
           value={props.selectorInputValue}
           onChange={(event) => props.onSelectorInputChange(event.target.value)}
           onKeyDown={(event) =>
             props.onSelectorInputKeyDown(event, props.item.id)
           }
-          placeholder=":hover, ::before, :has(:focus-visible)"
+          placeholder="::before, :has(:focus-visible)"
           autoFocus={false}
           css={{
             width: "100%",

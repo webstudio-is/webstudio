@@ -30,10 +30,16 @@
   - `pnpm fixtures` - updates all fixtures (link, sync, build)
   - `pnpm checks` - runs all checks (tests, typecheck, lint, fixtures)
   - `pnpm build` - builds all packages
+  - `pnpm playwright` - installs Playwright browser dependencies (run if animation tests fail with missing dependencies)
 - Before running any commands, always check `get_errors` tool first to see TypeScript and ESLint errors in the VS Code editor
 - Only run `pnpm typecheck` and `pnpm eslint` when user explicitly says "run checks" or after completing substantial changes
 - `pnpm typecheck` is slow - avoid running it unnecessarily during development
 - Fix all eslint and TypeScript errors before considering work complete
+
+### Test Failures
+
+- If tests fail with "Host system is missing dependencies to run browsers" error, run `pnpm playwright` to install Playwright dependencies
+- This is common in fresh dev containers or after container rebuilds
 
 ## File Organization
 

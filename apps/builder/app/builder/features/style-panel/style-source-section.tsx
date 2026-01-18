@@ -304,23 +304,30 @@ const $componentStates = computed(
     const states = Array.from(allStateSelectors)
       .filter((state) => !isPseudoElement(state))
       .map((state) => ({
-        category: "states" as const,
+        type: "state" as const,
         label: state,
         selector: state,
+        source: allStates.includes(state)
+          ? ("native" as const)
+          : ("custom" as const),
       }));
 
     const pseudoElements = Array.from(allStateSelectors)
       .filter((state) => isPseudoElement(state))
       .map((state) => ({
-        category: "pseudo-elements" as const,
+        type: "pseudoElement" as const,
         label: state,
         selector: state,
+        source: allStates.includes(state)
+          ? ("native" as const)
+          : ("custom" as const),
       }));
 
     const meta = registeredComponentMetas.get(selectedInstance.component);
     const componentStates = (meta?.states ?? []).map((item) => ({
-      category: "states" as const,
+      type: "state" as const,
       ...item,
+      source: "component" as const,
     }));
 
     return [...states, ...componentStates, ...pseudoElements];
