@@ -110,6 +110,11 @@ const Menu = (props: MenuProps) => {
 
 export type ItemSource = "token" | "tag" | "local";
 
+export type ItemSelector = {
+  styleSourceId: string;
+  state?: string;
+};
+
 type EditableTextProps = {
   value: string;
   isEditing: boolean;

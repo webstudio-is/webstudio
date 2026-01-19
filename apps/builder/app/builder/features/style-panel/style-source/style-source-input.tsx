@@ -25,18 +25,11 @@ import {
   type CSS,
   ComboboxLabel,
   ComboboxSeparator,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  rawTheme,
+  InputField,
   theme,
   styled,
   ComboboxScrollArea,
-  InputField,
-  Flex,
-  Text,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import {
   forwardRef,
@@ -52,6 +45,7 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import {
   type ItemSource,
+  type ItemSelector,
   type StyleSourceError,
   menuCssVars,
   StyleSourceControl,
@@ -62,13 +56,7 @@ import { StyleSourceBadge } from "./style-source-badge";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { validateSelector } from "@webstudio-is/css-data";
-
-type SelectorConfig = {
-  type: "state" | "pseudoElement";
-  selector: string;
-  label: string;
-  source?: "native" | "component" | "custom";
-};
+import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -77,11 +65,6 @@ type IntermediateItem = {
   source: ItemSource;
   isAdded?: boolean;
   states: string[];
-};
-
-export type ItemSelector = {
-  styleSourceId: StyleSource["id"];
-  state?: string;
 };
 
 const TextFieldContainer = styled("div", {
@@ -273,16 +256,6 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
-const categories = [
-  "state",
-  "pseudoElement",
-] satisfies SelectorConfig["type"][];
-
-const categoryLabels: Record<SelectorConfig["type"], string> = {
-  state: "States",
-  pseudoElement: "Pseudo elements",
-};
-
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   inputRef: (element: HTMLInputElement | null) => void;
   error?: StyleSourceError;
@@ -353,204 +326,6 @@ const markAddedValues = <Item extends IntermediateItem>(
     valueIds.add(item.id);
   }
   return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
-};
-
-const renderMenuItems = (props: {
-  selectedItemSelector: undefined | ItemSelector;
-  item: IntermediateItem;
-  hasStyles: boolean;
-  states: SelectorConfig[];
-  selectorInputValue: string;
-  selectorValidation: ReturnType<typeof validateSelector>;
-  onSelectorInputChange: (value: string) => void;
-  onSelectorInputKeyDown: (
-    event: React.KeyboardEvent,
-    itemId: IntermediateItem["id"]
-  ) => void;
-  onSelect?: (itemSelector: ItemSelector) => void;
-  onEdit?: (itemId: IntermediateItem["id"]) => void;
-  onDuplicate?: (itemId: IntermediateItem["id"]) => void;
-  onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
-  onDisable?: (itemId: IntermediateItem["id"]) => void;
-  onEnable?: (itemId: IntermediateItem["id"]) => void;
-  onDetach?: (itemId: IntermediateItem["id"]) => void;
-  onDelete?: (itemId: IntermediateItem["id"]) => void;
-  onClearStyles?: (itemId: IntermediateItem["id"]) => void;
-}) => {
-  return (
-    <>
-      <DropdownMenuLabel>
-        <Flex gap="1" justify="between" align="center">
-          <Text css={{ fontWeight: "bold" }} truncate>
-            {props.item.label}
-          </Text>
-          {props.hasStyles && (
-            <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
-          )}
-        </Flex>
-      </DropdownMenuLabel>
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
-          Rename
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.item.id)}>
-          Duplicate
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          onSelect={() => props.onConvertToToken?.(props.item.id)}
-        >
-          Convert to token
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onSelect={() => props.onClearStyles?.(props.item.id)}
-        >
-          Clear styles
-        </DropdownMenuItem>
-      )}
-      {/* @todo implement disabling
-    {props.disabled ? (
-      <DropdownMenuItem onSelect={() => props.onEnable?.(props.itemId)}>
-        Enable
-      </DropdownMenuItem>
-    ) : (
-      <DropdownMenuItem onSelect={() => props.onDisable?.(props.itemId)}>
-        Disable
-      </DropdownMenuItem>
-    )}
-    */}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onDetach?.(props.item.id)}>
-          Detach
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onSelect={() => props.onDelete?.(props.item.id)}
-        >
-          Delete
-        </DropdownMenuItem>
-      )}
-      {categories.map((currentCategory) => {
-        const categoryStates = props.states.filter(
-          ({ type }) => type === currentCategory
-        );
-        // prevent rendering empty category
-        if (categoryStates.length === 0) {
-          return;
-        }
-        return (
-          <Fragment key={currentCategory}>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              {categoryLabels[currentCategory]}
-            </DropdownMenuLabel>
-            {categoryStates.map(({ label, selector, source }, index) => {
-              const previousItem = categoryStates[index - 1];
-              const showSeparator =
-                index > 0 &&
-                source === "component" &&
-                previousItem?.source !== "component";
-
-              return (
-                <Fragment key={selector}>
-                  {showSeparator && <DropdownMenuSeparator />}
-                  <DropdownMenuItem
-                    withIndicator={true}
-                    icon={
-                      props.item.id ===
-                        props.selectedItemSelector?.styleSourceId &&
-                      selector === props.selectedItemSelector.state && (
-                        <CheckMarkIcon
-                          color={
-                            props.item.states.includes(selector)
-                              ? rawTheme.colors.foregroundPrimary
-                              : rawTheme.colors.foregroundIconMain
-                          }
-                          size={12}
-                        />
-                      )
-                    }
-                    onSelect={() =>
-                      props.onSelect?.({
-                        styleSourceId: props.item.id,
-                        // toggle state selection
-                        state:
-                          props.selectedItemSelector?.state === selector
-                            ? undefined
-                            : selector,
-                      })
-                    }
-                  >
-                    <Flex justify="between" align="center" grow>
-                      {label}
-                      {props.item.states.includes(selector) && (
-                        <DotIcon
-                          size="12"
-                          color={rawTheme.colors.foregroundPrimary}
-                        />
-                      )}
-                    </Flex>
-                  </DropdownMenuItem>
-                </Fragment>
-              );
-            })}
-          </Fragment>
-        );
-      })}
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>Custom</DropdownMenuLabel>
-      <Box css={{ padding: theme.spacing[4] }}>
-        <InputField
-          value={props.selectorInputValue}
-          onChange={(event) => props.onSelectorInputChange(event.target.value)}
-          onKeyDown={(event) => {
-            // Stop propagation to prevent dropdown menu typeahead from stealing focus
-            event.stopPropagation();
-            props.onSelectorInputKeyDown(event, props.item.id);
-          }}
-          placeholder="::before"
-          autoFocus={false}
-          color={
-            props.selectorValidation.success === false ? "error" : undefined
-          }
-          css={{
-            width: "100%",
-            fontFamily: theme.fonts.mono,
-          }}
-        />
-        {props.selectorValidation.success === false && (
-          <Text
-            css={{
-              color: theme.colors.foregroundDestructive,
-              fontSize: theme.deprecatedFontSize[1],
-              marginTop: theme.spacing[1],
-            }}
-          >
-            {props.selectorValidation.error}
-          </Text>
-        )}
-      </Box>{" "}
-      <DropdownMenuSeparator />
-      {props.item.source === "local" && (
-        <DropdownMenuItem hint>
-          Style instances without creating a token or override a token locally.
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "token" && (
-        <DropdownMenuItem hint>
-          Reuse styles across multiple instances by creating a token.
-        </DropdownMenuItem>
-      )}
-    </>
-  );
 };
 
 export const StyleSourceInput = (
@@ -672,29 +447,27 @@ export const StyleSourceInput = (
             {...inputProps}
             inputRef={props.inputRef}
             error={props.error}
-            renderStyleSourceMenuItems={(item, hasStyles) =>
-              renderMenuItems({
-                selectedItemSelector: props.selectedItemSelector,
-                item,
-                hasStyles,
-                states,
-                selectorInputValue,
-                selectorValidation,
-                onSelectorInputChange: handleSelectorInputChange,
-                onSelectorInputKeyDown: handleSelectorInputKeyDown,
-                onSelect: (itemSelector) => {
-                  props.onSelectItem?.(itemSelector);
-                },
-                onDuplicate: props.onDuplicateItem,
-                onConvertToToken: props.onConvertToToken,
-                onEnable: props.onEnableItem,
-                onDisable: props.onDisableItem,
-                onEdit: props.onEditItem,
-                onDetach: props.onDetachItem,
-                onDelete: props.onDeleteItem,
-                onClearStyles: props.onClearStyles,
-              })
-            }
+            renderStyleSourceMenuItems={(item, hasStyles) => (
+              <StyleSourceMenu
+                selectedItemSelector={props.selectedItemSelector}
+                item={item}
+                hasStyles={hasStyles}
+                states={states}
+                selectorInputValue={selectorInputValue}
+                selectorValidation={selectorValidation}
+                onSelectorInputChange={handleSelectorInputChange}
+                onSelectorInputKeyDown={handleSelectorInputKeyDown}
+                onSelect={props.onSelectItem}
+                onDuplicate={props.onDuplicateItem}
+                onConvertToToken={props.onConvertToToken}
+                onEnable={props.onEnableItem}
+                onDisable={props.onDisableItem}
+                onEdit={props.onEditItem}
+                onDetach={props.onDetachItem}
+                onDelete={props.onDeleteItem}
+                onClearStyles={props.onClearStyles}
+              />
+            )}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
             onEditItem={props.onEditItem}
