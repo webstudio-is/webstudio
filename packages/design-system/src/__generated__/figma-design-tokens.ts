@@ -69,25 +69,13 @@ export const typography = {
     textDecoration: "none",
     textIndent: "0px",
   },
-  labelsTitleCase: {
+  labels: {
     fontFamily:
       "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
-    textTransform: "capitalize",
-    textDecoration: "none",
-    textIndent: "0px",
-  },
-  labelsSentenceCase: {
-    fontFamily:
-      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
-    fontWeight: 500,
-    fontSize: "12px",
-    lineHeight: "16px",
-    letterSpacing: "0.005em",
-    textTransform: "none",
     textDecoration: "none",
     textIndent: "0px",
   },

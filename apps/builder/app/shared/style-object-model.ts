@@ -6,6 +6,7 @@ import {
   html,
   parseCssVar,
   propertiesData,
+  isPseudoElement,
 } from "@webstudio-is/css-data";
 import {
   type StyleValue,
@@ -127,12 +128,14 @@ const getCascadedValue = ({
   styleSourceId: selectedStyleSourceId,
   state: selectedState,
   property,
+  forPseudoElement = false,
 }: {
   model: StyleObjectModel;
   instanceId: Instance["id"];
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
   property: CssProperty;
+  forPseudoElement?: boolean;
 }) => {
   const {
     styles,
@@ -152,8 +155,8 @@ const getCascadedValue = ({
   // https://drafts.csswg.org/css-cascade-5/#declared
   const declaredValues: StyleValue[] = [];
 
-  // browser styles
-  if (tag) {
+  // browser styles - pseudo-elements don't inherit browser styles from parent
+  if (tag && !forPseudoElement) {
     const key = `${tag}:${property}`;
     const browserValue = html.get(key);
     if (browserValue) {
@@ -162,15 +165,25 @@ const getCascadedValue = ({
   }
 
   const states = new Set<undefined | string>();
-  // allow stateless to be overwritten
-  states.add(undefined);
-  for (const state of matchingStates) {
-    states.add(state);
-  }
-  // move selected state in the end if already present in matching states
-  if (selectedState) {
-    states.delete(selectedState);
-    states.add(selectedState);
+
+  // When computing for a pseudo-element, only include the pseudo-element state itself
+  // This prevents cascading of properties from the parent element
+  if (forPseudoElement) {
+    if (selectedState) {
+      states.add(selectedState);
+    }
+  } else {
+    // Original behavior for non-pseudo-elements
+    // allow stateless to be overwritten
+    states.add(undefined);
+    for (const state of matchingStates) {
+      states.add(state);
+    }
+    // move selected state in the end if already present in matching states
+    if (selectedState) {
+      states.delete(selectedState);
+      states.add(selectedState);
+    }
   }
 
   // preset component styles
@@ -367,6 +380,150 @@ export const getComputedStyleDecl = ({
   let cascadedValue: undefined | StyleValue;
   let source: StyleValueSource = { name: "default" };
 
+  // Check if we're computing for a pseudo-element
+  const computingForPseudoElement = state ? isPseudoElement(state) : false;
+
+  // If computing for a pseudo-element, treat it as a virtual child instance
+  // First compute the parent's value (without the pseudo-element state)
+  // Then compute the pseudo-element's value with inheritance from parent
+  if (computingForPseudoElement && instanceSelector.length > 0) {
+    // Step 1: Compute parent's value without the pseudo-element state
+    // Use a separate graph for parent lookup to avoid false cycle detection
+    // (parent using var(--x) doesn't mean pseudo-element can't also use var(--x))
+    const parentDecl = getComputedStyleDecl({
+      model,
+      instanceSelector,
+      styleSourceId,
+      state: undefined, // No state for parent
+      property,
+      customPropertiesGraph: new Map(),
+    });
+
+    // Step 2: Use parent's computed value as the inherited value for the pseudo-element
+    const inheritedValue: StyleValue = parentDecl.computedValue;
+    const inheritedSource: StyleValueSource =
+      parentDecl.source.name === "local"
+        ? { ...parentDecl.source, name: "remote" }
+        : parentDecl.source;
+
+    // Step 3: Get cascaded value for the pseudo-element itself
+    const targetInstanceId = instanceSelector[0];
+    const cascaded = getCascadedValue({
+      model,
+      instanceId: targetInstanceId,
+      styleSourceId,
+      state,
+      property,
+      forPseudoElement: true, // Flag to only collect pseudo-element styles
+    });
+
+    cascadedValue = cascaded?.value;
+    source = cascaded?.source ?? { name: "default" };
+
+    // Step 4: Resolve specified value with inheritance from parent
+    let specifiedValue: StyleValue = initialValue;
+
+    // explicit defaulting
+    // https://drafts.csswg.org/css-cascade-5/#defaulting-keywords
+    if (matchKeyword(cascadedValue, "initial")) {
+      specifiedValue = initialValue;
+    } else if (
+      matchKeyword(cascadedValue, "inherit") ||
+      // treat currentcolor as inherit when used on color property
+      // https://www.w3.org/TR/css-color-3/#currentColor-def
+      (property === "color" && matchKeyword(cascadedValue, "currentcolor"))
+    ) {
+      specifiedValue = inheritedValue;
+    } else if (matchKeyword(cascadedValue, "unset")) {
+      if (inherited) {
+        specifiedValue = inheritedValue;
+      } else {
+        specifiedValue = initialValue;
+      }
+    } else if (cascadedValue) {
+      specifiedValue = cascadedValue;
+    }
+    // defaulting https://drafts.csswg.org/css-cascade-5/#defaulting
+    else if (inherited) {
+      specifiedValue = inheritedValue;
+      cascadedValue = parentDecl.cascadedValue;
+      source = inheritedSource;
+    } else {
+      specifiedValue = initialValue;
+    }
+
+    // https://drafts.csswg.org/css-cascade-5/#computed
+    computedValue = specifiedValue;
+
+    // Handle custom properties and var() substitution
+    let usedCustomProperties = customPropertiesGraph.get(targetInstanceId);
+    if (usedCustomProperties === undefined) {
+      usedCustomProperties = new Set();
+      customPropertiesGraph.set(targetInstanceId, usedCustomProperties);
+    }
+
+    let invalid = false;
+    const parentUsedCustomProperties = usedCustomProperties;
+    usedCustomProperties = new Set<CssProperty>(usedCustomProperties);
+    customPropertiesGraph.set(targetInstanceId, usedCustomProperties);
+
+    computedValue = substituteVars(computedValue, (varValue) => {
+      const customProperty = `--${varValue.value}` as const;
+      // https://www.w3.org/TR/css-variables-1/#cycles
+      if (parentUsedCustomProperties.has(customProperty)) {
+        invalid = true;
+        return varValue;
+      }
+      usedCustomProperties.add(customProperty);
+
+      const fallback: undefined | VarFallback = varValue.fallback;
+      // Custom properties are always inherited, so look them up from parent (without state)
+      const customPropertyValue = getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state: undefined, // Don't pass pseudo-element state for custom property lookup
+        property: customProperty,
+        customPropertiesGraph,
+      });
+      let replacement = customPropertyValue.computedValue;
+      // https://www.w3.org/TR/css-variables-1/#invalid-variables
+      if (
+        replacement.type === "guaranteedInvalid" ||
+        (isCustomProperty === false && replacement.type === "invalid")
+      ) {
+        if (inherited) {
+          replacement = fallback ?? inheritedValue;
+        } else {
+          replacement = fallback ?? initialValue;
+        }
+      }
+      return replacement;
+    });
+
+    if (invalid) {
+      computedValue = invalidValue;
+    }
+
+    // https://drafts.csswg.org/css-cascade-5/#used
+    let usedValue: StyleValue = computedValue;
+    // https://drafts.csswg.org/css-color-4/#resolving-other-colors
+    if (matchKeyword(computedValue, "currentcolor")) {
+      const currentColor = getComputedStyleDecl({
+        model,
+        instanceSelector,
+        state, // Keep the pseudo-element state for currentcolor resolution
+        property: "color",
+      });
+      usedValue = currentColor.usedValue;
+    }
+
+    // fallback to initial value
+    cascadedValue ??= initialValue;
+
+    return { property, source, cascadedValue, computedValue, usedValue };
+  }
+
+  // Original behavior for non-pseudo-elements
   // start computing from the root
   for (let index = instanceSelector.length - 1; index >= 0; index -= 1) {
     const instanceId = instanceSelector[index];

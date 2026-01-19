@@ -100,7 +100,7 @@ const EmptyVariables = () => {
   return (
     <Flex direction="column" gap="2">
       <Flex justify="center" align="center">
-        <Text variant="labelsSentenceCase" align="center">
+        <Text variant="labels" align="center">
           No data variables created
           <br /> on this instance
         </Text>

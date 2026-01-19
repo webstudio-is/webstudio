@@ -25,18 +25,11 @@ import {
   type CSS,
   ComboboxLabel,
   ComboboxSeparator,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  rawTheme,
+  InputField,
   theme,
   styled,
   ComboboxScrollArea,
-  InputField,
-  Flex,
-  Text,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
 import {
   forwardRef,
@@ -52,6 +45,7 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import {
   type ItemSource,
+  type ItemSelector,
   type StyleSourceError,
   menuCssVars,
   StyleSourceControl,
@@ -59,9 +53,10 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { humanizeString } from "~/shared/string-utils";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { validateSelector } from "@webstudio-is/css-data";
+import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -70,11 +65,6 @@ type IntermediateItem = {
   source: ItemSource;
   isAdded?: boolean;
   states: string[];
-};
-
-export type ItemSelector = {
-  styleSourceId: StyleSource["id"];
-  state?: string;
 };
 
 const TextFieldContainer = styled("div", {
@@ -236,10 +226,10 @@ const TextFieldBase: ForwardRefRenderFunction<
           }
           label={item.label}
           stateLabel={
-            item.id === selectedItemSelector?.styleSourceId
-              ? states.find(
-                  (state) => state.selector === selectedItemSelector.state
-                )?.label
+            item.id === selectedItemSelector?.styleSourceId &&
+            selectedItemSelector.state
+              ? states.find((s) => s.selector === selectedItemSelector.state)
+                  ?.label || selectedItemSelector.state
               : undefined
           }
           error={item.id === error?.id ? error : undefined}
@@ -266,17 +256,6 @@ const TextFieldBase: ForwardRefRenderFunction<
 const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
-type ComponentState = {
-  category: "states" | "component-states";
-  selector: string;
-  label: string;
-};
-
-const categories = [
-  "states",
-  "component-states",
-] satisfies ComponentState["category"][];
-
 type StyleSourceInputProps<Item extends IntermediateItem> = {
   inputRef: (element: HTMLInputElement | null) => void;
   error?: StyleSourceError;
@@ -284,7 +263,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
-  componentStates?: ComponentState[];
+  componentStates?: SelectorConfig[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -349,160 +328,15 @@ const markAddedValues = <Item extends IntermediateItem>(
   return items.map((item) => ({ ...item, isAdded: valueIds.has(item.id) }));
 };
 
-const renderMenuItems = (props: {
-  selectedItemSelector: undefined | ItemSelector;
-  item: IntermediateItem;
-  hasStyles: boolean;
-  states: ComponentState[];
-  onSelect?: (itemSelector: ItemSelector) => void;
-  onEdit?: (itemId: IntermediateItem["id"]) => void;
-  onDuplicate?: (itemId: IntermediateItem["id"]) => void;
-  onConvertToToken?: (itemId: IntermediateItem["id"]) => void;
-  onDisable?: (itemId: IntermediateItem["id"]) => void;
-  onEnable?: (itemId: IntermediateItem["id"]) => void;
-  onDetach?: (itemId: IntermediateItem["id"]) => void;
-  onDelete?: (itemId: IntermediateItem["id"]) => void;
-  onClearStyles?: (itemId: IntermediateItem["id"]) => void;
-}) => {
-  return (
-    <>
-      <DropdownMenuLabel>
-        <Flex gap="1" justify="between" align="center">
-          <Text css={{ fontWeight: "bold" }} truncate>
-            {props.item.label}
-          </Text>
-          {props.hasStyles && (
-            <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
-          )}
-        </Flex>
-      </DropdownMenuLabel>
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
-          Rename
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onDuplicate?.(props.item.id)}>
-          Duplicate
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          onSelect={() => props.onConvertToToken?.(props.item.id)}
-        >
-          Convert to token
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onSelect={() => props.onClearStyles?.(props.item.id)}
-        >
-          Clear styles
-        </DropdownMenuItem>
-      )}
-      {/* @todo implement disabling
-    {props.disabled ? (
-      <DropdownMenuItem onSelect={() => props.onEnable?.(props.itemId)}>
-        Enable
-      </DropdownMenuItem>
-    ) : (
-      <DropdownMenuItem onSelect={() => props.onDisable?.(props.itemId)}>
-        Disable
-      </DropdownMenuItem>
-    )}
-    */}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem onSelect={() => props.onDetach?.(props.item.id)}>
-          Detach
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onSelect={() => props.onDelete?.(props.item.id)}
-        >
-          Delete
-        </DropdownMenuItem>
-      )}
-
-      {categories.map((currentCategory) => {
-        const categoryStates = props.states.filter(
-          ({ category }) => category === currentCategory
-        );
-        // prevent rendering empty category
-        if (categoryStates.length === 0) {
-          return;
-        }
-        return (
-          <Fragment key={currentCategory}>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              {humanizeString(currentCategory)}
-            </DropdownMenuLabel>
-            {categoryStates.map(({ label, selector }) => (
-              <DropdownMenuItem
-                key={selector}
-                withIndicator={true}
-                icon={
-                  props.item.id === props.selectedItemSelector?.styleSourceId &&
-                  selector === props.selectedItemSelector.state && (
-                    <CheckMarkIcon
-                      color={
-                        props.item.states.includes(selector)
-                          ? rawTheme.colors.foregroundPrimary
-                          : rawTheme.colors.foregroundIconMain
-                      }
-                      size={12}
-                    />
-                  )
-                }
-                onSelect={() =>
-                  props.onSelect?.({
-                    styleSourceId: props.item.id,
-                    // toggle state selection
-                    state:
-                      props.selectedItemSelector?.state === selector
-                        ? undefined
-                        : selector,
-                  })
-                }
-              >
-                <Flex justify="between" align="center" grow>
-                  {label}
-                  {props.item.states.includes(selector) && (
-                    <DotIcon
-                      size="12"
-                      color={rawTheme.colors.foregroundPrimary}
-                    />
-                  )}
-                </Flex>
-              </DropdownMenuItem>
-            ))}
-          </Fragment>
-        );
-      })}
-
-      <DropdownMenuSeparator />
-      {props.item.source === "local" && (
-        <DropdownMenuItem hint>
-          Style instances without creating a token or override a token locally.
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "token" && (
-        <DropdownMenuItem hint>
-          Reuse styles across multiple instances by creating a token.
-        </DropdownMenuItem>
-      )}
-    </>
-  );
-};
-
 export const StyleSourceInput = (
   props: StyleSourceInputProps<IntermediateItem>
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
+  const [selectorInputValue, setSelectorInputValue] = useState("");
+  const [selectorValidation, setSelectorValidation] = useState<
+    ReturnType<typeof validateSelector>
+  >({ success: true, type: "pseudo-class" });
 
   const {
     items,
@@ -557,6 +391,53 @@ export const StyleSourceInput = (
 
   const states = props.componentStates ?? [];
 
+  const handleSelectorInputChange = (value: string) => {
+    setSelectorInputValue(value);
+    // Don't validate while typing, only show validation errors after Enter
+    setSelectorValidation({ success: true, type: "pseudo-class" });
+  };
+
+  const handleSelectorInputKeyDown = (
+    event: React.KeyboardEvent,
+    itemId: IntermediateItem["id"]
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const selector = selectorInputValue.trim();
+
+      // Empty selector removes state
+      if (selector === "") {
+        props.onSelectItem?.({
+          styleSourceId: itemId,
+          state: undefined,
+        });
+        setSelectorInputValue("");
+        setSelectorValidation({ success: true, type: "pseudo-class" });
+        return;
+      }
+
+      // Validate non-empty selectors
+      const validation = validateSelector(selector);
+      setSelectorValidation(validation);
+
+      if (validation.success) {
+        // Select the item with the new selector
+        props.onSelectItem?.({
+          styleSourceId: itemId,
+          state: selector,
+        });
+        setSelectorInputValue("");
+        setSelectorValidation({ success: true, type: "pseudo-class" });
+      }
+      // If validation failed, keep the input value so user can fix it
+    } else if (event.key === "Escape") {
+      setSelectorInputValue("");
+      setSelectorValidation({ success: true, type: "pseudo-class" });
+    }
+  };
+
   return (
     <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
@@ -566,23 +447,27 @@ export const StyleSourceInput = (
             {...inputProps}
             inputRef={props.inputRef}
             error={props.error}
-            renderStyleSourceMenuItems={(item, hasStyles) =>
-              renderMenuItems({
-                selectedItemSelector: props.selectedItemSelector,
-                item,
-                hasStyles,
-                states,
-                onSelect: props.onSelectItem,
-                onDuplicate: props.onDuplicateItem,
-                onConvertToToken: props.onConvertToToken,
-                onEnable: props.onEnableItem,
-                onDisable: props.onDisableItem,
-                onEdit: props.onEditItem,
-                onDetach: props.onDetachItem,
-                onDelete: props.onDeleteItem,
-                onClearStyles: props.onClearStyles,
-              })
-            }
+            renderStyleSourceMenuItems={(item, hasStyles) => (
+              <StyleSourceMenu
+                selectedItemSelector={props.selectedItemSelector}
+                item={item}
+                hasStyles={hasStyles}
+                states={states}
+                selectorInputValue={selectorInputValue}
+                selectorValidation={selectorValidation}
+                onSelectorInputChange={handleSelectorInputChange}
+                onSelectorInputKeyDown={handleSelectorInputKeyDown}
+                onSelect={props.onSelectItem}
+                onDuplicate={props.onDuplicateItem}
+                onConvertToToken={props.onConvertToToken}
+                onEnable={props.onEnableItem}
+                onDisable={props.onDisableItem}
+                onEdit={props.onEditItem}
+                onDetach={props.onDetachItem}
+                onDelete={props.onDeleteItem}
+                onClearStyles={props.onClearStyles}
+              />
+            )}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
             onEditItem={props.onEditItem}

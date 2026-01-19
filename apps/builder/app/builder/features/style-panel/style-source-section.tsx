@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
+import { isPseudoElement } from "@webstudio-is/css-data";
 import {
   type Instance,
   type StyleSource,
@@ -36,7 +37,6 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/awareness";
 import { $instanceTags } from "./shared/model";
-import { humanizeString } from "~/shared/string-utils";
 
 // Declare command for this module
 declare module "~/shared/pubsub" {
@@ -279,26 +279,76 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
 };
 
 const $componentStates = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags],
-  (selectedInstance, registeredComponentMetas, instanceTags) => {
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $styles,
+    $selectedStyleState,
+  ],
+  (
+    selectedInstance,
+    registeredComponentMetas,
+    instanceTags,
+    styles,
+    selectedStyleState
+  ) => {
     if (selectedInstance === undefined) {
       return;
     }
     const tag = instanceTags.get(selectedInstance.id);
-    const tagStates = [
+    const allStates = [
       ...pseudoClassesByTag["*"],
       ...(pseudoClassesByTag[tag ?? ""] ?? []),
-    ].map((state) => ({
-      category: "states" as const,
-      label: humanizeString(state),
-      selector: state,
-    }));
+    ];
+
+    // Get recently used selectors from project styles
+    const usedSelectors = new Set<string>();
+    for (const styleDecl of styles.values()) {
+      if (styleDecl.state && styleDecl.state.trim()) {
+        usedSelectors.add(styleDecl.state);
+      }
+    }
+
+    // Include currently selected state so it appears in the menu immediately
+    // even before any styles are added to it
+    if (selectedStyleState && selectedStyleState.trim()) {
+      usedSelectors.add(selectedStyleState);
+    }
+
+    // Combine predefined states with recently used, removing duplicates
+    const allStateSelectors = new Set([...allStates, ...usedSelectors]);
+
+    const states = Array.from(allStateSelectors)
+      .filter((state) => !isPseudoElement(state))
+      .map((state) => ({
+        type: "state" as const,
+        label: state,
+        selector: state,
+        source: allStates.includes(state)
+          ? ("native" as const)
+          : ("custom" as const),
+      }));
+
+    const pseudoElements = Array.from(allStateSelectors)
+      .filter((state) => isPseudoElement(state))
+      .map((state) => ({
+        type: "pseudoElement" as const,
+        label: state,
+        selector: state,
+        source: allStates.includes(state)
+          ? ("native" as const)
+          : ("custom" as const),
+      }));
+
     const meta = registeredComponentMetas.get(selectedInstance.component);
     const componentStates = (meta?.states ?? []).map((item) => ({
-      category: "component-states" as const,
+      type: "state" as const,
       ...item,
+      source: "component" as const,
     }));
-    return [...tagStates, ...componentStates];
+
+    return [...states, ...componentStates, ...pseudoElements];
   }
 );
 
@@ -345,6 +395,9 @@ export const StyleSourcesSection = () => {
   const selectedInstanceStatesByStyleSourceId = useStore(
     $selectedInstanceStatesByStyleSourceId
   );
+  const selectedOrLastStyleSourceSelector = useStore(
+    $selectedOrLastStyleSourceSelector
+  );
 
   // Subscribe to focusStyleSourceInput command
   useEffect(() => {
@@ -361,9 +414,6 @@ export const StyleSourcesSection = () => {
       styleSource,
       selectedInstanceStatesByStyleSourceId.get(styleSource.id) ?? []
     )
-  );
-  const selectedOrLastStyleSourceSelector = useStore(
-    $selectedOrLastStyleSourceSelector
   );
 
   const [editingItemId, setEditingItemId] = useState<StyleSource["id"]>();

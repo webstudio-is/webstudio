@@ -96,7 +96,7 @@ export const Menu = () => {
               $openProjectSettings.set("general");
             }}
           >
-            Project Settings
+            Project settings
           </DropdownMenuItem>
         </Tooltip>
         <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
@@ -246,7 +246,7 @@ export const Menu = () => {
 
         {isDesignMode && (
           <DropdownMenuItem onSelect={() => emitCommand("openCommandPanel")}>
-            Search & Commands
+            Search & commands
             <DropdownMenuItemRightSlot>
               <Kbd value={["meta", "k"]} />
             </DropdownMenuItemRightSlot>
@@ -254,7 +254,7 @@ export const Menu = () => {
         )}
 
         <DropdownMenuItem onSelect={() => emitCommand("openKeyboardShortcuts")}>
-          Keyboard Shortcuts
+          Keyboard shortcuts
           <DropdownMenuItemRightSlot>
             <Kbd value={["shift", "?"]} />
           </DropdownMenuItemRightSlot>

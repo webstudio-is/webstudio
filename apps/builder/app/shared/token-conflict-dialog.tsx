@@ -139,7 +139,7 @@ export const TokenConflictDialog = () => {
                 >
                   <Radio value="theirs" />
                   <Flex direction="column" gap="1">
-                    <Text variant="labelsTitleCase">Theirs</Text>
+                    <Text variant="labels">Theirs</Text>
                     <Text color="subtle">
                       Keep incoming tokens with a suffix added to their names
                       (e.g., "primary-color-1")
@@ -162,7 +162,7 @@ export const TokenConflictDialog = () => {
                 >
                   <Radio value="ours" />
                   <Flex direction="column" gap="1">
-                    <Text variant="labelsTitleCase">Ours</Text>
+                    <Text variant="labels">Ours</Text>
                     <Text color="subtle">
                       Discard incoming tokens and use your existing project
                       tokens instead
@@ -185,7 +185,7 @@ export const TokenConflictDialog = () => {
                 >
                   <Radio value="merge" />
                   <Flex direction="column" gap="1">
-                    <Text variant="labelsTitleCase">Merge</Text>
+                    <Text variant="labels">Merge</Text>
                     <Text color="subtle">
                       Combine both into your existing token (incoming styles
                       override existing ones)

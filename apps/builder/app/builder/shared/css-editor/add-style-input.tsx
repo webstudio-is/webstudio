@@ -301,11 +301,7 @@ export const AddStyleInput = forwardRef<
                   {...combobox.getItemProps({ item, index })}
                   key={index}
                 >
-                  <Text
-                    variant="labelsSentenceCase"
-                    truncate
-                    css={{ maxWidth: "25ch" }}
-                  >
+                  <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
                     {item.label}
                   </Text>
                 </ComboboxListboxItem>

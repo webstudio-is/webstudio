@@ -92,7 +92,7 @@ const BaseToggleGroupButton = forwardRef<
       }
       css={{
         height: theme.spacing[10],
-        ...textVariants.labelsTitleCase,
+        ...textVariants.labels,
       }}
     />
   );

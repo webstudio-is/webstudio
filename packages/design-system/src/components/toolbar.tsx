@@ -26,7 +26,7 @@ export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
 
 const focusRing = focusRingStyle();
 
-const toggleItemStyle = css(textVariants.labelsTitleCase, {
+const toggleItemStyle = css(textVariants.labels, {
   // reset styles
   boxSizing: "border-box",
   position: "relative",

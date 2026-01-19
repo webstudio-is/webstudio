@@ -70,8 +70,8 @@ export const menuItemCss = css({
   },
   variants: {
     text: {
-      title: textVariants.labelsTitleCase,
-      sentence: textVariants.labelsSentenceCase,
+      title: textVariants.labels,
+      sentence: textVariants.labels,
     },
     withIndicator: {
       true: {
@@ -85,7 +85,7 @@ export const menuItemCss = css({
     },
     hint: {
       true: {
-        ...textVariants.labelsSentenceCase,
+        ...textVariants.labels,
         px: theme.spacing[5],
         background: theme.colors.backgroundMenuHint,
         borderRadius: theme.borderRadius[2],

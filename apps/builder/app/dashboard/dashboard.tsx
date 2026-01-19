@@ -114,7 +114,7 @@ const NavigationItems = ({
               className={sidebarLinkStyle()}
             >
               {item.prefix}
-              <Text variant="labelsSentenceCase" color="main">
+              <Text variant="labels" color="main">
                 {item.children}
               </Text>
             </NavLink>

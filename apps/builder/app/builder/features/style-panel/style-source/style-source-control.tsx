@@ -110,6 +110,11 @@ const Menu = (props: MenuProps) => {
 
 export type ItemSource = "token" | "tag" | "local";
 
+export type ItemSelector = {
+  styleSourceId: string;
+  state?: string;
+};
+
 type EditableTextProps = {
   value: string;
   isEditing: boolean;
@@ -367,7 +372,9 @@ export const StyleSourceControl = ({
           </StyleSourceButton>
         </Flex>
         {stateLabel !== undefined && (
-          <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+          <Tooltip content={state || stateLabel} side="top">
+            <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+          </Tooltip>
         )}
         {showMenu && (
           <Menu open={menuOpen} onOpenChange={setMenuOpen}>

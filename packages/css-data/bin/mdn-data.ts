@@ -371,6 +371,12 @@ const pseudoElements = Object.keys(selectors)
   })
   .map((selector) => selector.slice(2));
 
+const pseudoClasses = Object.keys(selectors)
+  .filter((selector) => {
+    return selector.startsWith(":") && !selector.startsWith("::");
+  })
+  .map((selector) => selector.slice(1));
+
 const getKeywordValues = (filteredProperties: FilteredProperties) => {
   const result = { ...customData.keywordValues };
   // https://www.w3.org/TR/css-values/#common-keywords
@@ -480,6 +486,7 @@ writeToFile(
   Object.keys(filteredData.animatableLonghands)
 );
 writeToFile("pseudo-elements.ts", "pseudoElements", pseudoElements);
+writeToFile("pseudo-classes.ts", "pseudoClasses", pseudoClasses);
 
 const typesFile = join(
   process.cwd(),

@@ -7,14 +7,17 @@ import {
   getStyleDeclKey,
   descendantComponent,
   rootComponent,
+  type Breakpoint,
   type StyleDecl,
   type StyleSourceSelection,
   createImageValueTransformer,
   addFontRules,
 } from "@webstudio-is/sdk";
 import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import { isPseudoElement } from "@webstudio-is/css-data";
 import {
   StyleValue,
+  type StyleSheetRegular,
   type TransformValue,
   type VarValue,
   createRegularStyleSheet,
@@ -69,6 +72,13 @@ export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
 // https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
 export const editingPlaceholderVariable = "--ws-editing-placeholder";
 
+// Minimum size to prevent elements from collapsing to zero dimensions on canvas
+// This value provides enough visual space to see and interact with empty elements
+const collapsePadding = "50px";
+
+const hasExpressionChildren = (instance: Instance) =>
+  instance.children.some((child) => child.type === "expression");
+
 const helperStylesShared = [
   // Display a placeholder text for elements that are editable but currently empty
   `:is([${editablePlaceholderAttribute}]):empty::before {
@@ -87,6 +97,7 @@ const helperStylesShared = [
       left: 0;
       right: 0;
       top: 0;
+      /* Ensures placeholder text is visible even in narrow containers */
       min-width: 100px;
       opacity: 0.3;
     }
@@ -107,22 +118,37 @@ const helperStylesShared = [
   // 4. This rule is used here and not in collapsing detection because `data-lexical-editor` might not be set instantly.
   //    Mistakes in collapsing will be corrected in the next cycle.
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="w"]) {
-    padding-right: 50px;
+    padding-right: ${collapsePadding};
   }`,
   // Has no height, will collapse
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="h"]) {
-    padding-top: 50px;
+    padding-top: ${collapsePadding};
   }`,
   // Has no width or height, will collapse
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="wh"]) {
-    padding-right: 50px;
-    padding-top: 50px;
+    padding-right: ${collapsePadding};
+    padding-top: ${collapsePadding};
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;
   }`,
   `[${idAttribute}][contenteditable] {
     box-shadow: 0 0 0 4px rgb(36 150 255 / 20%)
+  }`,
+];
+
+// Common user-select and cursor rules for canvas modes
+const helperStylesUserSelect = [
+  // When double clicking into an element to edit text, it should not select the word.
+  `[${idAttribute}] {
+    user-select: none;
+    /* Safari */
+    -webkit-user-select: none;
+    cursor: default;
+  }`,
+  `[${idAttribute}][contenteditable] {
+    /* Safari */
+    cursor: initial;
   }`,
 ];
 
@@ -138,38 +164,11 @@ const helperStylesShared = [
 // If user sets `height: 100px` or does anything that would give it a height - we remove the helper padding right away, so user can actually see the height they set
 //
 // In other words we prevent elements from collapsing when they have 0 height or width by making them non-zero on canvas, but then we remove those paddings as soon as element doesn't collapse.
-const helperStyles = [
-  // When double clicking into an element to edit text, it should not select the word.
-  `[${idAttribute}] {
-    user-select: none;
-    /* Safari */
-    -webkit-user-select: none;
-    cursor: default;
-  }`,
-  `
-  [${idAttribute}][contenteditable] {
-    /* Safari */
-    cursor: initial;
-  }
-  `,
-
-  ...helperStylesShared,
-];
+const helperStyles = [...helperStylesUserSelect, ...helperStylesShared];
 
 // Find all editable elements and set cursor text inside
 const helperStylesContentEdit = [
-  `[${idAttribute}] {
-    user-select: none;
-    /* Safari */
-    -webkit-user-select: none;
-    cursor: default;
-  }`,
-  `
-  [${idAttribute}][contenteditable] {
-    /* Safari */
-    cursor: initial;
-  }
-  `,
+  ...helperStylesUserSelect,
   ...helperStylesShared,
 ];
 
@@ -185,6 +184,41 @@ const subscribeDesignModeHelperStyles = () => {
     helpersSheet.clear();
     helpersSheet.render();
   };
+};
+
+/**
+ * Compute CSS rules for editable elements in content edit mode.
+ * Groups selectors into chunks to avoid overly long :is() selectors.
+ */
+const computeEditableCursorRules = (
+  editableInstanceSelectors: InstanceSelector[],
+  instances: Map<Instance["id"], Instance>
+) => {
+  const rules: string[] = [];
+  // 20 is arbitrary but keeps selector length reasonable
+  const chunkSize = 20;
+  for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
+    const chunk = editableInstanceSelectors
+      .slice(i, i + chunkSize)
+      .filter((selector) => {
+        const instance = instances.get(selector[0]);
+        if (instance === undefined) {
+          return false;
+        }
+        // Instances with expression children are not directly editable
+        return hasExpressionChildren(instance) === false;
+      });
+    if (chunk.length === 0) {
+      continue;
+    }
+    const selectors = chunk.map(
+      (selector) => `[${idAttribute}="${selector[0]}"]`
+    );
+    rules.push(
+      `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
+    );
+  }
+  return rules;
 };
 
 const subscribeContentEditModeHelperStyles = () => {
@@ -214,35 +248,11 @@ const subscribeContentEditModeHelperStyles = () => {
         results: editableInstanceSelectors,
       });
 
-      // Group IDs into chunks of 20 since :is() allows for more efficient grouping
-      const chunkSize = 20;
-      for (let i = 0; i < editableInstanceSelectors.length; i += chunkSize) {
-        const chunk = editableInstanceSelectors
-          .slice(i, i + chunkSize)
-          .filter((selector) => {
-            const instance = instances.get(selector[0]);
-            if (instance === undefined) {
-              return false;
-            }
-
-            const hasExpressionChildren = instance.children.some(
-              (child) => child.type === "expression"
-            );
-
-            if (hasExpressionChildren) {
-              return false;
-            }
-
-            return true;
-          });
-
-        const selectors = chunk.map(
-          (selector) => `[${idAttribute}="${selector[0]}"]`
-        );
-
-        helpersSheet.addPlaintextRule(
-          `:is(${selectors.join(", ")}), :is(${selectors.join(", ")}) a { cursor: text; }`
-        );
+      for (const rule of computeEditableCursorRules(
+        editableInstanceSelectors,
+        instances
+      )) {
+        helpersSheet.addPlaintextRule(rule);
       }
     }
 
@@ -281,7 +291,9 @@ const $transformValue = computed($assets, (assets) =>
   })
 );
 
-const getEphemeralProperty = (styleDecl: StyleDecl) => {
+const getEphemeralProperty = (
+  styleDecl: Pick<StyleDecl, "styleSourceId" | "state" | "property">
+) => {
   const { styleSourceId, state = "", property } = styleDecl;
   return `--${styleSourceId}-${state}-${property}`;
 };
@@ -292,7 +304,7 @@ const toVarValue = (
   styleDecl: StyleDecl,
   transformValue: TransformValue,
   fallback?: StyleValue
-): undefined | VarValue => {
+): VarValue => {
   return {
     type: "var",
     // var style value is relying on name without leading "--"
@@ -305,40 +317,100 @@ const toVarValue = (
   };
 };
 
+const computeDescendantSelectors = <
+  P extends { instanceId: string; name: string; type: string; value?: unknown },
+>(
+  instances: Map<Instance["id"], Instance>,
+  props: Map<string, P>
+) => {
+  const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
+  const descendantInstanceIds: Instance["id"][] = [];
+  for (const instance of instances.values()) {
+    if (instance.component === descendantComponent) {
+      descendantInstanceIds.push(instance.id);
+    }
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentIdByInstanceId.set(child.value, instance.id);
+      }
+    }
+  }
+  const descendantSelectorByInstanceId = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.name === "selector" && prop.type === "string") {
+      descendantSelectorByInstanceId.set(prop.instanceId, prop.value as string);
+    }
+  }
+  const descendantSelectors = new Map<Instance["id"], string>();
+  for (const instanceId of descendantInstanceIds) {
+    const parentId = parentIdByInstanceId.get(instanceId);
+    const selector = descendantSelectorByInstanceId.get(instanceId);
+    if (parentId && selector) {
+      descendantSelectors.set(
+        instanceId,
+        `[${idAttribute}="${parentId}"]${selector}`
+      );
+    }
+  }
+  return descendantSelectors;
+};
+
+/**
+ * Convert StyleDecl to declaration params for sheet operations.
+ */
+const toDeclarationParams = (styleDecl: StyleDecl) => ({
+  breakpoint: styleDecl.breakpointId,
+  selector: styleDecl.state ?? "",
+  property: styleDecl.property,
+});
+
+/**
+ * Compute added and deleted styles by comparing current styles with previous.
+ * Returns new prevStylesSet to track for next diff.
+ */
+const computeStylesDiff = ({
+  styles,
+  transformValue,
+  prevStylesSet,
+  prevTransformValue,
+}: {
+  styles: Map<string, StyleDecl>;
+  transformValue: TransformValue;
+  prevStylesSet: Set<StyleDecl>;
+  prevTransformValue: TransformValue | undefined;
+}) => {
+  // invalidate styles cache when assets are changed
+  let effectivePrevStyles = prevStylesSet;
+  if (prevTransformValue !== transformValue) {
+    effectivePrevStyles = new Set();
+  }
+  const stylesSet = new Set(styles.values());
+  const addedStyles = setDifference(stylesSet, effectivePrevStyles);
+  const deletedStyles = setDifference(effectivePrevStyles, stylesSet);
+  return { addedStyles, deletedStyles, nextPrevStylesSet: stylesSet };
+};
+
+/**
+ * Convert instance ID to CSS selector.
+ * ROOT_INSTANCE_ID maps to ":root", others to attribute selector.
+ */
+const getInstanceSelector = (instanceId: string) =>
+  instanceId === ROOT_INSTANCE_ID
+    ? ":root"
+    : `[${idAttribute}="${instanceId}"]`;
+
+/**
+ * Convert component and tag to preset CSS selector.
+ * rootComponent maps to ":root", others use :where() for low specificity.
+ */
+const getPresetStyleSelector = (component: string, tag: string) =>
+  component === rootComponent
+    ? ":root"
+    : `${tag}:where([data-ws-component="${component}"])`;
+
 const $descendantSelectors = computed(
   [$instances, $props],
-  (instances, props) => {
-    const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
-    const descendantInstanceIds: Instance["id"][] = [];
-    for (const instance of instances.values()) {
-      if (instance.component === descendantComponent) {
-        descendantInstanceIds.push(instance.id);
-      }
-      for (const child of instance.children) {
-        if (child.type === "id") {
-          parentIdByInstanceId.set(child.value, instance.id);
-        }
-      }
-    }
-    const descendantSelectorByInstanceId = new Map<Instance["id"], string>();
-    for (const prop of props.values()) {
-      if (prop.name === "selector" && prop.type === "string") {
-        descendantSelectorByInstanceId.set(prop.instanceId, prop.value);
-      }
-    }
-    const descendantSelectors = new Map<Instance["id"], string>();
-    for (const instanceId of descendantInstanceIds) {
-      const parentId = parentIdByInstanceId.get(instanceId);
-      const selector = descendantSelectorByInstanceId.get(instanceId);
-      if (parentId && selector) {
-        descendantSelectors.set(
-          instanceId,
-          `[${idAttribute}="${parentId}"]${selector}`
-        );
-      }
-    }
-    return descendantSelectors;
-  }
+  computeDescendantSelectors
 );
 
 /**
@@ -378,31 +450,26 @@ export const subscribeStyles = () => {
     [$styles, $transformValue],
     (styles, transformValue) => [styles, transformValue] as const
   ).subscribe(([styles, transformValue]) => {
-    // invalidate styles cache when assets are changed
-    if (prevTransformValue !== transformValue) {
-      prevTransformValue = transformValue;
-      prevStylesSet = new Set();
-    }
-    const stylesSet = new Set(styles.values());
-    const addedStyles = setDifference(stylesSet, prevStylesSet);
-    const deletedStyles = setDifference(prevStylesSet, stylesSet);
-    prevStylesSet = stylesSet;
-    // delete before adding declaraions by the same key
+    const { addedStyles, deletedStyles, nextPrevStylesSet } = computeStylesDiff(
+      {
+        styles,
+        transformValue,
+        prevStylesSet,
+        prevTransformValue,
+      }
+    );
+    prevTransformValue = transformValue;
+    prevStylesSet = nextPrevStylesSet;
+    // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
-      rule.deleteDeclaration({
-        breakpoint: styleDecl.breakpointId,
-        selector: styleDecl.state ?? "",
-        property: styleDecl.property,
-      });
+      rule.deleteDeclaration(toDeclarationParams(styleDecl));
     }
     for (const styleDecl of addedStyles) {
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.setDeclaration({
-        breakpoint: styleDecl.breakpointId,
-        selector: styleDecl.state ?? "",
-        property: styleDecl.property,
-        value: toVarValue(styleDecl, transformValue) ?? styleDecl.value,
+        ...toDeclarationParams(styleDecl),
+        value: toVarValue(styleDecl, transformValue),
       });
     }
     renderUserSheetInTheNextFrame();
@@ -416,11 +483,7 @@ export const subscribeStyles = () => {
       const addedSelections = setDifference(selectionsSet, prevSelectionsSet);
       prevSelectionsSet = selectionsSet;
       for (const { instanceId, values } of addedSelections) {
-        const selector =
-          instanceId === ROOT_INSTANCE_ID
-            ? ":root"
-            : `[${idAttribute}="${instanceId}"]`;
-        const rule = userSheet.addNestingRule(selector);
+        const rule = userSheet.addNestingRule(getInstanceSelector(instanceId));
         rule.applyMixins(values);
       }
       renderUserSheetInTheNextFrame();
@@ -500,11 +563,9 @@ export const GlobalStyles = () => {
     presetSheet.addMediaRule("presets");
     for (const [component, meta] of metas) {
       for (const [tag, styles] of Object.entries(meta.presetStyle ?? {})) {
-        const selector =
-          component === rootComponent
-            ? ":root"
-            : `${tag}:where([data-ws-component="${component}"])`;
-        const rule = presetSheet.addNestingRule(selector);
+        const rule = presetSheet.addNestingRule(
+          getPresetStyleSelector(component, tag)
+        );
         for (const declaration of styles) {
           rule.setDeclaration({
             breakpoint: "presets",
@@ -521,6 +582,42 @@ export const GlobalStyles = () => {
   return null;
 };
 
+const computeInstanceStyles = ({
+  selectedInstance,
+  selectedStyleState,
+  breakpoints,
+  styleSourceSelections,
+  styles,
+}: {
+  selectedInstance: Instance | undefined;
+  selectedStyleState: string | undefined;
+  breakpoints: Map<string, Breakpoint>;
+  styleSourceSelections: Map<string, { values: string[] }>;
+  styles: Map<string, StyleDecl>;
+}) => {
+  if (selectedInstance === undefined || selectedStyleState === undefined) {
+    return;
+  }
+  const styleSources = new Set(
+    styleSourceSelections.get(selectedInstance.id)?.values
+  );
+  const instanceStyles: StyleDecl[] = [];
+  for (const styleDecl of styles.values()) {
+    if (
+      styleDecl.state === selectedStyleState &&
+      styleSources.has(styleDecl.styleSourceId)
+    ) {
+      instanceStyles.push(styleDecl);
+    }
+  }
+  return {
+    instanceId: selectedInstance.id,
+    selectedState: selectedStyleState,
+    breakpoints: Array.from(breakpoints.values()),
+    styles: instanceStyles,
+  };
+};
+
 const $instanceStyles = computed(
   [
     $selectedInstance,
@@ -535,29 +632,61 @@ const $instanceStyles = computed(
     breakpoints,
     styleSourceSelections,
     styles
-  ) => {
-    if (selectedInstance === undefined || selectedStyleState === undefined) {
-      return;
-    }
-    const styleSources = new Set(
-      styleSourceSelections.get(selectedInstance.id)?.values
-    );
-    const instanceStyles: StyleDecl[] = [];
-    for (const styleDecl of styles.values()) {
-      if (
-        styleDecl.state === selectedStyleState &&
-        styleSources.has(styleDecl.styleSourceId)
-      ) {
-        instanceStyles.push(styleDecl);
-      }
-    }
-    return {
-      instanceId: selectedInstance.id,
-      breakpoints: Array.from(breakpoints.values()),
-      styles: instanceStyles,
-    };
-  }
+  ) =>
+    computeInstanceStyles({
+      selectedInstance,
+      selectedStyleState,
+      breakpoints,
+      styleSourceSelections,
+      styles,
+    })
 );
+
+/**
+ * Render state styles to a stylesheet.
+ *
+ * For pseudo-classes like :hover, render without state so users can preview
+ * the styles without triggering the state.
+ * For pseudo-elements like ::before, keep the selector so styles apply
+ * to the pseudo-element, not the parent.
+ */
+const renderStateStyles = ({
+  instanceStyles,
+  sheet,
+  transformValue,
+  toStyleValue,
+}: {
+  instanceStyles: ReturnType<typeof $instanceStyles.get>;
+  sheet: StyleSheetRegular;
+  transformValue: TransformValue;
+  toStyleValue: (
+    styleDecl: StyleDecl,
+    transformValue: TransformValue
+  ) => StyleValue;
+}) => {
+  sheet.clear();
+  if (instanceStyles === undefined) {
+    sheet.render();
+    return;
+  }
+  const { instanceId, selectedState, breakpoints, styles } = instanceStyles;
+  for (const breakpoint of breakpoints) {
+    sheet.addMediaRule(breakpoint.id, breakpoint);
+  }
+  const selector = `[${idAttribute}="${instanceId}"]`;
+  const rule = sheet.addNestingRule(selector);
+  const stateSelector = isPseudoElement(selectedState) ? selectedState : "";
+  for (const styleDecl of styles) {
+    rule.setDeclaration({
+      breakpoint: styleDecl.breakpointId,
+      selector: stateSelector,
+      property: styleDecl.property,
+      value: toStyleValue(styleDecl, transformValue),
+    });
+  }
+  sheet.setTransformer(transformValue);
+  sheet.render();
+};
 
 /**
  * render currently selected state styles as stateless
@@ -565,30 +694,13 @@ const $instanceStyles = computed(
  */
 const subscribeStateStyles = () => {
   return $instanceStyles.subscribe((instanceStyles) => {
-    if (instanceStyles === undefined) {
-      stateSheet.clear();
-      stateSheet.render();
-      return;
-    }
-    // reset state sheet on every update to avoid stale styles
-    stateSheet.clear();
-    const { instanceId, breakpoints, styles } = instanceStyles;
-    for (const breakpoint of breakpoints.values()) {
-      stateSheet.addMediaRule(breakpoint.id, breakpoint);
-    }
-    const selector = `[${idAttribute}="${instanceId}"]`;
-    const rule = stateSheet.addNestingRule(selector);
-    for (const styleDecl of styles) {
-      rule.setDeclaration({
-        breakpoint: styleDecl.breakpointId,
-        // render without state
-        selector: "",
-        property: styleDecl.property,
-        value: toVarValue(styleDecl, $transformValue.get()) ?? styleDecl.value,
-      });
-    }
-    stateSheet.setTransformer($transformValue.get());
-    stateSheet.render();
+    renderStateStyles({
+      instanceStyles,
+      sheet: stateSheet,
+      transformValue: $transformValue.get(),
+      toStyleValue: (styleDecl, transformValue) =>
+        toVarValue(styleDecl, transformValue),
+    });
   });
 };
 
@@ -631,7 +743,7 @@ const subscribeEphemeralStyle = () => {
     // add ephemeral styles
     if (ephemeralStyles.length > 0) {
       canvasApi.setInert();
-      const selector = `[${idAttribute}="${instance.id}"]`;
+      const selector = getInstanceSelector(instance.id);
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
@@ -658,34 +770,37 @@ const subscribeEphemeralStyle = () => {
 
           const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
 
-          // Use the actual style value as a fallback (non-ephemeral); see the “Lazy” comment above.
+          // Use the actual style value as a fallback (non-ephemeral); see the "Lazy" comment above.
           const computedStyleDecl = createComputedStyleDeclStore(
             hyphenateProperty(styleDecl.property)
           ).get();
 
-          const value =
-            toVarValue(
-              styleDecl,
-              $transformValue.get(),
-              computedStyleDecl.cascadedValue
-            ) ?? computedStyleDecl.cascadedValue;
+          const value = toVarValue(
+            styleDecl,
+            $transformValue.get(),
+            computedStyleDecl.cascadedValue
+          );
 
           mixinRule.setDeclaration({
-            breakpoint: styleDecl.breakpointId,
-            selector: styleDecl.state ?? "",
-            property: styleDecl.property,
+            ...toDeclarationParams(styleDecl),
             value,
           });
 
           rule.addMixin(styleDecl.styleSourceId);
 
-          // temporary render var() in state sheet as well
+          // When editing state styles (e.g., :hover), also render var() in stateSheet
+          // so ephemeral updates are visible in the state preview
           if (styleDecl.state !== undefined) {
             const stateRule = stateSheet.addNestingRule(selector);
+            // For pseudo-elements (::before, ::after), keep the selector so styles
+            // apply to the pseudo-element. For pseudo-classes (:hover, :focus),
+            // render without state so users can preview without triggering the state.
+            const stateSelector = isPseudoElement(styleDecl.state)
+              ? styleDecl.state
+              : "";
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
-              // render without state
-              selector: "",
+              selector: stateSelector,
               property: styleDecl.property,
               value,
             });
@@ -700,4 +815,16 @@ const subscribeEphemeralStyle = () => {
       }
     }
   });
+};
+
+export const __testing__ = {
+  getEphemeralProperty,
+  getInstanceSelector,
+  getPresetStyleSelector,
+  computeDescendantSelectors,
+  computeInstanceStyles,
+  computeEditableCursorRules,
+  computeStylesDiff,
+  toDeclarationParams,
+  renderStateStyles,
 };

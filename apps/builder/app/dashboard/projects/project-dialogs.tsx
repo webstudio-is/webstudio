@@ -349,7 +349,7 @@ export const DeleteProjectDialog = ({
             <Text
               as="span"
               color="destructive"
-              variant="labelsSentenceCase"
+              variant="labels"
               css={{ userSelect: "text" }}
             >
               {` ${title} `}

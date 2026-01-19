@@ -10,6 +10,7 @@ export { mergeStyles } from "./merger";
 export { generateStyleMap } from "./rules";
 export type { StyleSheetRegular } from "./style-sheet-regular";
 export * from "./create-style-sheet";
+export { FakeStyleElement } from "./style-element";
 export * from "./to-value";
 export { hyphenateProperty } from "./to-property";
 export * from "./match-media";

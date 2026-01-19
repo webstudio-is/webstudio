@@ -455,11 +455,11 @@ const AssetInfoContent = ({
         >
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <CloudIcon />
-            <Text variant="labelsSentenceCase">{prettyBytes(size)}</Text>
+            <Text variant="labels">{prettyBytes(size)}</Text>
           </Flex>
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <PageIcon />
-            <Text variant="labelsSentenceCase">
+            <Text variant="labels">
               {getMimeTypeByExtension(ext) ?? "unknown"}
             </Text>
           </Flex>
@@ -467,15 +467,13 @@ const AssetInfoContent = ({
             <>
               <Flex align="center" gap={1}>
                 <DimensionsIcon />
-                <Text variant="labelsSentenceCase">
+                <Text variant="labels">
                   {meta.width} x {meta.height}
                 </Text>
               </Flex>
               <Flex align="center" gap={1}>
                 <AspectRatioIcon />
-                <Text variant="labelsSentenceCase">
-                  {getFormattedAspectRatio(meta)}
-                </Text>
+                <Text variant="labels">{getFormattedAspectRatio(meta)}</Text>
               </Flex>
             </>
           )}
@@ -490,7 +488,7 @@ const AssetInfoContent = ({
             >
               <UsageDot />
             </Flex>
-            <Text variant="labelsSentenceCase">{usages.length} uses</Text>
+            <Text variant="labels">{usages.length} uses</Text>
           </Flex>
         </Grid>
       </Box>

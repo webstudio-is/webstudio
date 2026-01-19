@@ -40,7 +40,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       <Flex shrink={false}>
         <InstanceIcon instance={instance} />
       </Flex>
-      <Text truncate variant="labelsSentenceCase">
+      <Text truncate variant="labels">
         {getInstanceLabel(instance)}
       </Text>
     </Flex>

@@ -15,17 +15,32 @@
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
 
+## UI Labels and Text
+
+- All visible labels and text must use sentence case capitalization:
+  - First word capitalized
+  - Subsequent words lowercase (unless proper nouns or acronyms)
+  - Examples: "Pseudo elements", "More states", "Component states"
+  - Not: "Pseudo Elements", "More States", "Component States"
+
 ## Running Commands
 
-- For global workspace commands (e.g., "update fixtures", "run checks"), always check the root `package.json` scripts first
-- The root package.json at `/workspaces/webstudio/package.json` contains commands like:
-  - `pnpm fixtures` - updates all fixtures (link, sync, build)
-  - `pnpm checks` - runs all checks (tests, typecheck, lint, fixtures)
-  - `pnpm build` - builds all packages
+- **When user says "checks" or "run checks" or "global checks"**: Run `pnpm -w run checks` (works from any directory)
+- The `-w` flag runs scripts from the workspace root regardless of current directory
+- The root package.json contains these workspace-level commands:
+  - `pnpm -w run checks` - runs all checks (tests, typecheck, lint, fixtures) - **USE THIS FOR "checks"**
+  - `pnpm -w run fixtures` - updates all fixtures (link, sync, build)
+  - `pnpm -w run build` - builds all packages
+  - `pnpm -w run playwright` - installs Playwright browser dependencies (run if animation tests fail with missing dependencies)
 - Before running any commands, always check `get_errors` tool first to see TypeScript and ESLint errors in the VS Code editor
 - Only run `pnpm typecheck` and `pnpm eslint` when user explicitly says "run checks" or after completing substantial changes
 - `pnpm typecheck` is slow - avoid running it unnecessarily during development
 - Fix all eslint and TypeScript errors before considering work complete
+
+### Test Failures
+
+- If tests fail with "Host system is missing dependencies to run browsers" error, run `pnpm playwright` to install Playwright dependencies
+- This is common in fresh dev containers or after container rebuilds
 
 ## File Organization
 
@@ -41,6 +56,9 @@
 - Only create shared utility files when functions are used across different directories
 - Files prefixed with `use-` contain React hooks and state management (e.g., `use-assets.tsx`)
 - Separate pure utilities from side-effect code (React hooks, network calls, DOM operations)
+- **Never create wrapper files that just re-export from packages** - import directly from the package where it's used
+- When moving code to a shared package, update all import sites to use the package directly
+- **When moving/refactoring code**: Always check where functions/types are actually used (grep for imports) and place them accordingly - don't assume, verify
 
 ## Testing
 
@@ -133,7 +151,10 @@ import { __testing__ } from "./implementation";
 const { internalHelper } = __testing__;
 ```
 
-Don't create separate utility files just for testing.
+- `__testing__` exports must always be placed at the end of the module
+- Don't create separate utility files just for testing
+- Explicit return types are not needed - TypeScript infers them
+- When encountering magic numbers without comments, check `git log -S "<number>" --oneline` to find the commit that introduced it and add explanation from commit message as a comment
 
 ## Debugging
 

@@ -140,7 +140,7 @@ const BindingPanel = ({
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
         <Flex gap="1" css={{ padding: theme.panel.padding }}>
-          <Text variant="labelsSentenceCase">Variables</Text>
+          <Text variant="labels">Variables</Text>
           <Tooltip
             variant="wrapped"
             content={
@@ -152,7 +152,7 @@ const BindingPanel = ({
         </Flex>
         {scopeEntries.length === 0 && (
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
-            <Text variant="labelsSentenceCase" align="center">
+            <Text variant="labels" align="center">
               No variables available
             </Text>
           </Flex>
@@ -191,7 +191,7 @@ const BindingPanel = ({
         </CssValueListArrowFocus>
       </Box>
       <Flex gap="1" css={{ padding: theme.panel.padding }}>
-        <Text variant="labelsSentenceCase">Expression Editor</Text>
+        <Text variant="labels">Expression Editor</Text>
         <Tooltip
           variant="wrapped"
           content={
