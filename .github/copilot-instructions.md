@@ -165,3 +165,17 @@ const { internalHelper } = __testing__;
 ## UI/UX
 
 - Never decide on implementation details around UI and UX yourself, always ask user and provide choices
+
+## Social Posts (Release Announcements)
+
+When writing social posts for new releases:
+
+- Start with "New in Webstudio:" to make it clear it's a release
+- Use a single relevant emoji at the start
+- No hashtags
+- No version numbers
+- Use terminology from the UI that users will recognize (e.g., "Style panel", "Collection component")
+- Keep it factual — don't use marketing language like "without writing code" or "game-changer"
+- Explain what the feature does, not why it's impressive
+- One post per major feature
+- To get features for a release, run: `git log <previous-tag>..<current-tag> --oneline` and look for commits prefixed with `feat:`
