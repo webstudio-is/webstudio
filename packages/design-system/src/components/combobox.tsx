@@ -191,13 +191,15 @@ const StyledPopoverContent = styled(PopoverContent, {
 
 export const ComboboxContent = forwardRef(
   (
-    { style, onOpenAutoFocus, ...props }: ComponentProps<typeof PopoverContent>,
+    { style, ...props }: ComponentProps<typeof PopoverContent>,
     forwardRef: Ref<HTMLDivElement>
   ) => {
     return (
       <Portal>
         <StyledPopoverContent
-          onOpenAutoFocus={onOpenAutoFocus}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+          }}
           {...props}
           ref={forwardRef}
         />
