@@ -388,13 +388,15 @@ export const getComputedStyleDecl = ({
   // Then compute the pseudo-element's value with inheritance from parent
   if (computingForPseudoElement && instanceSelector.length > 0) {
     // Step 1: Compute parent's value without the pseudo-element state
+    // Use a separate graph for parent lookup to avoid false cycle detection
+    // (parent using var(--x) doesn't mean pseudo-element can't also use var(--x))
     const parentDecl = getComputedStyleDecl({
       model,
       instanceSelector,
       styleSourceId,
       state: undefined, // No state for parent
       property,
-      customPropertiesGraph,
+      customPropertiesGraph: new Map(),
     });
 
     // Step 2: Use parent's computed value as the inherited value for the pseudo-element

@@ -25,12 +25,13 @@
 
 ## Running Commands
 
-- For global workspace commands (e.g., "update fixtures", "run checks"), always check the root `package.json` scripts first
-- The root package.json at `/workspaces/webstudio/package.json` contains commands like:
-  - `pnpm fixtures` - updates all fixtures (link, sync, build)
-  - `pnpm checks` - runs all checks (tests, typecheck, lint, fixtures)
-  - `pnpm build` - builds all packages
-  - `pnpm playwright` - installs Playwright browser dependencies (run if animation tests fail with missing dependencies)
+- **When user says "checks" or "run checks" or "global checks"**: Run `pnpm -w run checks` (works from any directory)
+- The `-w` flag runs scripts from the workspace root regardless of current directory
+- The root package.json contains these workspace-level commands:
+  - `pnpm -w run checks` - runs all checks (tests, typecheck, lint, fixtures) - **USE THIS FOR "checks"**
+  - `pnpm -w run fixtures` - updates all fixtures (link, sync, build)
+  - `pnpm -w run build` - builds all packages
+  - `pnpm -w run playwright` - installs Playwright browser dependencies (run if animation tests fail with missing dependencies)
 - Before running any commands, always check `get_errors` tool first to see TypeScript and ESLint errors in the VS Code editor
 - Only run `pnpm typecheck` and `pnpm eslint` when user explicitly says "run checks" or after completing substantial changes
 - `pnpm typecheck` is slow - avoid running it unnecessarily during development

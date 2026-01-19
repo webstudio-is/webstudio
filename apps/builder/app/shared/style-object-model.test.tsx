@@ -2080,7 +2080,7 @@ describe("pseudo-element inheritance", () => {
         state: "::before",
         property: "width",
       }).usedValue
-    ).toEqual({ type: "unparsed", value: "100px" });
+    ).toEqual({ type: "unit", unit: "px", value: 100 });
   });
 
   test("pseudo-classes still cascade properties (not pseudo-elements)", () => {

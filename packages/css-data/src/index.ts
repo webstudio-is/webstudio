@@ -9,6 +9,10 @@ export {
 export * from "./__generated__/animatable-properties";
 export * from "./__generated__/pseudo-elements";
 export * from "./__generated__/pseudo-classes";
+export {
+  pseudoClassDescriptions,
+  pseudoElementDescriptions,
+} from "./__generated__/pseudo-selector-descriptions";
 export * from "./property-parsers";
 
 // shorthand property parsers
