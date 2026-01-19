@@ -509,7 +509,7 @@ export const TreeNodeLabel = ({
     <>
       {prefix}
       <Text
-        variant="labelsSentenceCase"
+        variant="labels"
         truncate
         css={{
           marginLeft: prefix ? theme.spacing[3] : 0,

@@ -479,7 +479,7 @@ export const CommandItem = ({
 };
 
 export const CommandGroupHeading = styled("div", {
-  ...textVariants.labelsSentenceCase,
+  ...textVariants.labels,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
   backgroundColor: theme.colors.backgroundControls,
@@ -490,7 +490,7 @@ export const CommandGroupHeading = styled("div", {
 });
 
 export const CommandGroupFooter = styled("div", {
-  ...textVariants.labelsSentenceCase,
+  ...textVariants.labels,
   color: theme.colors.foregroundMoreSubtle,
   display: "flex",
   gap: theme.spacing[5],

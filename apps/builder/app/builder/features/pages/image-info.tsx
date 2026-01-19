@@ -49,20 +49,20 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
             css={{ gridTemplateColumns: "max-content 1fr" }}
           >
             <ImageIcon />
-            <Text truncate variant={"labelsSentenceCase"}>
+            <Text truncate variant={"labels"}>
               {formatAssetName(asset)}
             </Text>
           </Grid>
           <Grid columns={2} gap={1} align={"center"}>
             <Flex gap={1}>
               <DimensionsIcon />
-              <Text variant={"labelsTitleCase"}>
+              <Text variant={"labels"}>
                 {asset.meta.width} x {asset.meta.height} Px
               </Text>
             </Flex>
             <Flex gap={1}>
               <AspectRatioIcon />
-              <Text variant={"labelsTitleCase"}>
+              <Text variant={"labels"}>
                 {getFormattedAspectRatio(asset.meta)}
               </Text>
             </Flex>

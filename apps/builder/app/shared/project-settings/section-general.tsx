@@ -130,7 +130,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
 
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
-          <Text variant="labelsSentenceCase">Project ID:</Text>
+          <Text variant="labels">Project ID:</Text>
           <Text userSelect="text">{effectiveProjectId}</Text>
           <CopyToClipboard text={effectiveProjectId} copyText="Copy ID">
             <IconButton aria-label="Copy ID">

@@ -18,7 +18,7 @@ const CommandBarContent = () => {
   return (
     <>
       <CommandBarContentSection>
-        <Text variant={"labelsSentenceCase"} align={"center"}>
+        <Text variant={"labels"} align={"center"}>
           Previous propmts
         </Text>
         <div />

@@ -172,7 +172,7 @@ const InternalToast = ({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
-                variant={"labelsSentenceCase"}
+                variant={"labels"}
               >
                 {children}
               </Text>

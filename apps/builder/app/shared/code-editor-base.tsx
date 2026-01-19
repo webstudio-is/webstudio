@@ -166,7 +166,7 @@ const autocompletionTooltipTheme = EditorView.theme({
     padding: rawTheme.spacing[3],
   },
   ".cm-tooltip.cm-tooltip-autocomplete ul li": {
-    ...textVariants.labelsTitleCase,
+    ...textVariants.labels,
     textTransform: "none",
     position: "relative",
     display: "flex",

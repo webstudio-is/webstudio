@@ -39,7 +39,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Calendar</Text>
+              <Text variant="labels">Calendar</Text>
             </Flex>
           </CommandItem>
           <CommandItem>
@@ -47,7 +47,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Search Emoji</Text>
+              <Text variant="labels">Search Emoji</Text>
             </Flex>
           </CommandItem>
           <CommandItem>
@@ -55,7 +55,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Calculator</Text>
+              <Text variant="labels">Calculator</Text>
             </Flex>
           </CommandItem>
         </CommandGroup>
@@ -69,7 +69,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Profile</Text>
+              <Text variant="labels">Profile</Text>
             </Flex>
             <Kbd value={["meta", "p"]} />
           </CommandItem>
@@ -78,7 +78,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Billing</Text>
+              <Text variant="labels">Billing</Text>
             </Flex>
             <Kbd value={["meta", "b"]} />
           </CommandItem>
@@ -87,7 +87,7 @@ const CommandContent = () => {
               <CommandIcon>
                 <InfoCircleIcon />
               </CommandIcon>
-              <Text variant="labelsTitleCase">Settings</Text>
+              <Text variant="labels">Settings</Text>
             </Flex>
             <Kbd value={["meta", "s"]} />
           </CommandItem>

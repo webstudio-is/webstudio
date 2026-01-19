@@ -32,10 +32,10 @@ export const MediaBadge = () => {
   }
   return (
     <Flex gap="2" className={labelStyle()} align="center">
-      <Text variant="labelsTitleCase" color="contrast" className={badgeStyle()}>
+      <Text variant="labels" color="contrast" className={badgeStyle()}>
         {breakpoint.maxWidth ?? breakpoint.minWidth}
       </Text>
-      <Text variant="labelsSentenceCase">{media}</Text>
+      <Text variant="labels">{media}</Text>
     </Flex>
   );
 };

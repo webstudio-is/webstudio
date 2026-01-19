@@ -107,7 +107,7 @@ export const ProjectSettingsDialog = ({
                         }}
                         align="center"
                       >
-                        <Text variant="labelsTitleCase" truncate>
+                        <Text variant="labels" truncate>
                           {name}
                         </Text>
                       </Flex>

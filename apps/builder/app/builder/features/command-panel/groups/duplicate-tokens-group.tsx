@@ -314,7 +314,7 @@ export const DuplicateTokensGroup = ({
                     }
                   }}
                 >
-                  <Text variant="labelsTitleCase">
+                  <Text variant="labels">
                     {token.name}{" "}
                     <Text as="span" color="moreSubtle">
                       {formatUsageCount(usages)} · {duplicates.length} duplicate

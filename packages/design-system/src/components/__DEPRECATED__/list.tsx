@@ -72,7 +72,7 @@ export const DeprecatedListItem = forwardRef<
         justify="between"
       >
         <Text
-          variant="labelsSentenceCase"
+          variant="labels"
           truncate
           color={state === "disabled" ? "subtle" : "main"}
         >
