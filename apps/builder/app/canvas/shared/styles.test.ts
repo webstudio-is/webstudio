@@ -668,13 +668,13 @@ describe("toDeclarationParams", () => {
     const styleDecl = createStyleDecl({
       breakpointId: "tablet",
       state: ":hover",
-      property: "background-color",
+      property: "backgroundColor",
     });
     const result = toDeclarationParams(styleDecl);
     expect(result).toEqual({
       breakpoint: "tablet",
       selector: ":hover",
-      property: "background-color",
+      property: "backgroundColor",
     });
   });
 
