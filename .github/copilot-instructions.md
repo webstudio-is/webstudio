@@ -16,6 +16,12 @@
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
 
+## Comments
+
+- Don't state the obvious that's already written clearly with code
+- Explain WHY you do things, not WHAT you do
+- Only explain WHAT when logic is non-trivial to clarify intent
+
 ## UI Labels and Text
 
 - All visible labels and text must use sentence case capitalization:
