@@ -1,7 +1,10 @@
 import { StyleSheetRegular } from "./style-sheet-regular";
-import { StyleElement } from "./style-element";
+import { StyleElement, FakeStyleElement } from "./style-element";
 
-export const createRegularStyleSheet = (options?: { name?: string }) => {
-  const element = new StyleElement(options?.name);
+export const createRegularStyleSheet = (options?: {
+  name?: string;
+  element?: StyleElement | FakeStyleElement;
+}) => {
+  const element = options?.element ?? new StyleElement(options?.name);
   return new StyleSheetRegular(element);
 };

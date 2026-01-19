@@ -151,7 +151,10 @@ import { __testing__ } from "./implementation";
 const { internalHelper } = __testing__;
 ```
 
-Don't create separate utility files just for testing.
+- `__testing__` exports must always be placed at the end of the module
+- Don't create separate utility files just for testing
+- Explicit return types are not needed - TypeScript infers them
+- When encountering magic numbers without comments, check `git log -S "<number>" --oneline` to find the commit that introduced it and add explanation from commit message as a comment
 
 ## Debugging
 
