@@ -36,7 +36,7 @@ type IntermediateItem = {
   states: string[];
 };
 
-const categories = [
+const selectorLabels = [
   "state",
   "pseudoElement",
 ] satisfies SelectorConfig["type"][];
@@ -223,7 +223,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           Delete
         </DropdownMenuItem>
       )}
-      {categories.map((currentCategory) => {
+      {selectorLabels.map((currentCategory) => {
         const categoryStates = props.states.filter(
           ({ type }) => type === currentCategory
         );

@@ -4,11 +4,11 @@ import { pseudoClasses } from "./__generated__/pseudo-classes";
 
 export type SelectorValidationResult =
   | { success: false; error: string }
-  | { success: true; type: "pseudo-class" | "pseudo-element" };
+  | { success: true; type: "pseudo-class" | "pseudo-element" | "attribute" };
 
 /**
- * Validates a CSS pseudo-class or pseudo-element selector
- * @param selector - The selector to validate (e.g., ":hover", "::before")
+ * Validates a CSS pseudo-class, pseudo-element, or attribute selector
+ * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
  */
 export const validateSelector = (
@@ -18,12 +18,12 @@ export const validateSelector = (
     return { success: false, error: "Selector cannot be empty" };
   }
 
-  // Must start with a colon
-  if (!selector.startsWith(":")) {
+  // Must start with a colon or bracket
+  if (!selector.startsWith(":") && !selector.startsWith("[")) {
     return {
       success: false,
       error:
-        "Selector must start with a colon (:) for pseudo-classes or double colon (::) for pseudo-elements",
+        "Selector must start with a colon (:) for pseudo-classes, double colon (::) for pseudo-elements, or bracket ([) for attribute selectors",
     };
   }
 
@@ -34,10 +34,11 @@ export const validateSelector = (
 
     let foundPseudoClass = false;
     let foundPseudoElement = false;
+    let foundAttribute = false;
     let pseudoClassName: string | undefined;
     let pseudoElementName: string | undefined;
 
-    // Walk the AST to find pseudo-class or pseudo-element selectors
+    // Walk the AST to find pseudo-class, pseudo-element, or attribute selectors
     csstree.walk(ast, (node) => {
       if (node.type === "PseudoClassSelector") {
         foundPseudoClass = true;
@@ -46,6 +47,9 @@ export const validateSelector = (
       if (node.type === "PseudoElementSelector") {
         foundPseudoElement = true;
         pseudoElementName = node.name;
+      }
+      if (node.type === "AttributeSelector") {
+        foundAttribute = true;
       }
     });
 
@@ -98,6 +102,10 @@ export const validateSelector = (
         success: false,
         error: "Invalid pseudo-class",
       };
+    }
+
+    if (foundAttribute) {
+      return { success: true, type: "attribute" };
     }
 
     // If we get here, something unexpected happened

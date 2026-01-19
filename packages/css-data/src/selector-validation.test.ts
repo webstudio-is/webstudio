@@ -177,6 +177,72 @@ describe("validateSelector", () => {
     });
   });
 
+  describe("attribute selectors", () => {
+    test("basic attribute selectors", () => {
+      const selectors = [
+        "[data-state]",
+        "[data-state=open]",
+        "[data-state=closed]",
+        "[aria-expanded=true]",
+        "[aria-hidden=false]",
+      ];
+
+      for (const selector of selectors) {
+        const result = validateSelector(selector);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.type).toBe("attribute");
+        }
+      }
+    });
+
+    test("attribute selectors with operators", () => {
+      const selectors = [
+        "[class~=foo]",
+        "[lang|=en]",
+        "[href^=https]",
+        '[src$=".png"]',
+        "[title*=hello]",
+      ];
+
+      for (const selector of selectors) {
+        const result = validateSelector(selector);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.type).toBe("attribute");
+        }
+      }
+    });
+
+    test("attribute selectors with quotes", () => {
+      const selectors = [
+        '[data-state="open"]',
+        "[data-state='closed']",
+        '[aria-label="menu button"]',
+      ];
+
+      for (const selector of selectors) {
+        const result = validateSelector(selector);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.type).toBe("attribute");
+        }
+      }
+    });
+
+    test("case-insensitive attribute selectors", () => {
+      const selectors = ["[type=text i]", "[href$=PDF i]"];
+
+      for (const selector of selectors) {
+        const result = validateSelector(selector);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.type).toBe("attribute");
+        }
+      }
+    });
+  });
+
   describe("invalid selectors", () => {
     test("empty selector", () => {
       const result = validateSelector("");
@@ -194,12 +260,12 @@ describe("validateSelector", () => {
       }
     });
 
-    test("selector not starting with colon", () => {
+    test("selector not starting with colon or bracket", () => {
       const result = validateSelector("hover");
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBe(
-          "Selector must start with a colon (:) for pseudo-classes or double colon (::) for pseudo-elements"
+          "Selector must start with a colon (:) for pseudo-classes, double colon (::) for pseudo-elements, or bracket ([) for attribute selectors"
         );
       }
     });
@@ -250,6 +316,14 @@ describe("validateSelector", () => {
       const result = validateSelector(":has(>>invalid)");
       // This actually parses in css-tree (it's lenient)
       expect(result.success).toBe(true);
+    });
+
+    test("unbalanced brackets in attribute selector", () => {
+      const result = validateSelector("[data-state");
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe("Invalid CSS selector syntax");
+      }
     });
   });
 });
