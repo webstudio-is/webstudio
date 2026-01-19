@@ -12,6 +12,7 @@
 - Never use one-line if statements: `if (condition) something;`
 - Never use the `function` keyword - always use arrow functions (`const name = () => {}`) or function expressions with arrow syntax
 - Functions must never have more than 3 parameters - use an object parameter instead
+- Components should have no more than 10 props - if more are needed, consider restructuring
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
 
@@ -179,3 +180,8 @@ When writing social posts for new releases:
 - Explain what the feature does, not why it's impressive
 - One post per major feature
 - To get features for a release, run: `git log <previous-tag>..<current-tag> --oneline` and look for commits prefixed with `feat:`
+
+## Code Review
+
+- After completing changes, review your own code against all instructions in this document.
+- If a component or module needs refactoring (e.g., too many props, too complex, violates guidelines), ask the user before proceeding.

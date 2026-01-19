@@ -1,19 +1,17 @@
 import { Fragment, useState } from "react";
 import {
   Box,
+  Combobox,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   Flex,
-  InputErrorsTooltip,
-  InputField,
   rawTheme,
   Text,
   theme,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import {
-  validateSelector,
   pseudoClassDescriptions,
   pseudoElementDescriptions,
 } from "@webstudio-is/css-data";
@@ -58,6 +56,12 @@ const menuActionDescriptions = {
 
 type MenuAction = keyof typeof menuActionDescriptions;
 
+// All available CSS selectors for autocomplete
+const allSelectors = [
+  ...Object.keys(pseudoClassDescriptions),
+  ...Object.keys(pseudoElementDescriptions),
+];
+
 const getDescription = (selector: string, type: "state" | "pseudoElement") => {
   // Normalize the selector to match the description keys
   const normalized = selector.startsWith(":") ? selector : `:${selector}`;
@@ -76,18 +80,62 @@ const getDescription = (selector: string, type: "state" | "pseudoElement") => {
   );
 };
 
+const getSelectorDescription = (selector: string | null | undefined) => {
+  if (selector === undefined || selector === null) {
+    return;
+  }
+  // Determine type based on which description object contains the selector
+  const type =
+    selector in pseudoElementDescriptions ? "pseudoElement" : "state";
+  const description = getDescription(selector, type);
+  if (description === undefined) {
+    return;
+  }
+  return <Box css={{ maxWidth: theme.spacing[26] }}>{description}</Box>;
+};
+
+const SelectorCombobox = ({
+  existingSelectors,
+  onSelect,
+}: {
+  existingSelectors: string[];
+  onSelect: (selector: string) => void;
+}) => {
+  const [value, setValue] = useState("");
+
+  return (
+    <Box onKeyDown={(event) => event.stopPropagation()}>
+      <Combobox<string>
+        autoFocus={false}
+        placeholder="::before"
+        suffix={<span />}
+        getItems={() =>
+          allSelectors.filter((selector) =>
+            existingSelectors.every((s) => s !== selector)
+          )
+        }
+        value={value}
+        itemToString={(item) => item ?? ""}
+        defaultHighlightedIndex={0}
+        getDescription={getSelectorDescription}
+        onItemSelect={(item) => {
+          if (item) {
+            onSelect(item);
+            setValue("");
+          }
+        }}
+        onChange={(newValue) => setValue(newValue ?? "")}
+      />
+    </Box>
+  );
+};
+
 type StyleSourceMenuProps = {
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
   states: SelectorConfig[];
-  selectorInputValue: string;
-  selectorValidation: ReturnType<typeof validateSelector>;
-  onSelectorInputChange: (value: string) => void;
-  onSelectorInputKeyDown: (
-    event: React.KeyboardEvent,
-    itemId: IntermediateItem["id"]
-  ) => void;
+  onAddSelector?: (itemId: IntermediateItem["id"], selector: string) => void;
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -300,36 +348,12 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       <DropdownMenuSeparator />
       <DropdownMenuLabel>Add more</DropdownMenuLabel>
       <Box css={{ padding: theme.spacing[4] }}>
-        <InputErrorsTooltip
-          variant="wrapped"
-          errors={
-            props.selectorValidation.success === false
-              ? [props.selectorValidation.error]
-              : undefined
+        <SelectorCombobox
+          existingSelectors={props.states.map((state) => state.selector)}
+          onSelect={(selector) =>
+            props.onAddSelector?.(props.item.id, selector)
           }
-          side="bottom"
-        >
-          <InputField
-            value={props.selectorInputValue}
-            onChange={(event) =>
-              props.onSelectorInputChange(event.target.value)
-            }
-            onFocus={() => {
-              setHighlightedSelector(undefined);
-              setHighlightedAction(undefined);
-            }}
-            onKeyDown={(event) => {
-              event.stopPropagation();
-              props.onSelectorInputKeyDown(event, props.item.id);
-            }}
-            placeholder="::before"
-            autoFocus={false}
-            color={
-              props.selectorValidation.success === false ? "error" : undefined
-            }
-            css={{ width: "100%" }}
-          />
-        </InputErrorsTooltip>
+        />
       </Box>
       <DropdownMenuSeparator />
       <DropdownMenuItem hint>{description}</DropdownMenuItem>

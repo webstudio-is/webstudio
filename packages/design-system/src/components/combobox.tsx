@@ -330,7 +330,20 @@ export const useCombobox = <Item,>({
       }
     },
 
-    stateReducer,
+    stateReducer: (state, actionAndChanges) => {
+      const { type, changes } = actionAndChanges;
+      // Apply user's state reducer first
+      const userChanges = stateReducer(state, actionAndChanges);
+      // When menu opens, set highlighted index to defaultHighlightedIndex
+      if (
+        userChanges.isOpen === true &&
+        state.isOpen === false &&
+        defaultHighlightedIndex !== -1
+      ) {
+        return { ...userChanges, highlightedIndex: defaultHighlightedIndex };
+      }
+      return userChanges;
+    },
     itemToString,
     inputValue: value ? itemToString(value) : "",
     onInputValueChange(state) {
@@ -515,9 +528,9 @@ export const Combobox = <Item,>({
                   );
                 })}
             </ComboboxScrollArea>
-            {description && (
+            {descriptions.some(Boolean) && (
               <ComboboxItemDescription descriptions={descriptions}>
-                {description}
+                {description ?? " "}
               </ComboboxItemDescription>
             )}
           </ComboboxListbox>
