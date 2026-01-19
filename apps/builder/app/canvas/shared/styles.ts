@@ -792,10 +792,15 @@ const subscribeEphemeralStyle = () => {
           // so ephemeral updates are visible in the state preview
           if (styleDecl.state !== undefined) {
             const stateRule = stateSheet.addNestingRule(selector);
+            // For pseudo-elements (::before, ::after), keep the selector so styles
+            // apply to the pseudo-element. For pseudo-classes (:hover, :focus),
+            // render without state so users can preview without triggering the state.
+            const stateSelector = isPseudoElement(styleDecl.state)
+              ? styleDecl.state
+              : "";
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
-              // render without state
-              selector: "",
+              selector: stateSelector,
               property: styleDecl.property,
               value,
             });
