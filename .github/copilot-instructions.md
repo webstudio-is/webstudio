@@ -191,3 +191,6 @@ When writing social posts for new releases:
 
 - After completing changes, review your own code against all instructions in this document.
 - If a component or module needs refactoring (e.g., too many props, too complex, violates guidelines), ask the user before proceeding.
+- Always perform these two checks:
+  1. What needs to be purified? (extract pure functions from side-effect code)
+  2. Which of the pure functions need tests? (see "When to Test" section)

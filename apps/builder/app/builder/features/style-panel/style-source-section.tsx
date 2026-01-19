@@ -87,7 +87,7 @@ const getOrCreateStyleSourceSelectionMutable = (
   return styleSourceSelection;
 };
 
-const addStyleSourceToInstaceMutable = (
+const addStyleSourceToInstanceMutable = (
   styleSourceSelections: StyleSourceSelections,
   styleSources: StyleSources,
   instanceId: Instance["id"],
@@ -126,7 +126,7 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
     [$styleSources, $styleSourceSelections],
     (styleSources, styleSourceSelections) => {
       styleSources.set(newStyleSource.id, newStyleSource);
-      addStyleSourceToInstaceMutable(
+      addStyleSourceToInstanceMutable(
         styleSourceSelections,
         styleSources,
         instanceId,
@@ -147,7 +147,7 @@ export const addStyleSourceToInstance = (
   serverSyncStore.createTransaction(
     [$styleSourceSelections, $styleSources],
     (styleSourceSelections, styleSources) => {
-      addStyleSourceToInstaceMutable(
+      addStyleSourceToInstanceMutable(
         styleSourceSelections,
         styleSources,
         instanceId,
@@ -278,6 +278,70 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
   });
 };
 
+type SelectorConfig = {
+  type: "state" | "pseudoElement";
+  selector: string;
+  label: string;
+  source: "native" | "component" | "custom";
+};
+
+const getComponentStates = ({
+  predefinedStates,
+  componentStates,
+  instanceStyleSourceIds,
+  styles,
+  selectedStyleState,
+}: {
+  predefinedStates: string[];
+  componentStates: Array<{ label: string; selector: string }>;
+  instanceStyleSourceIds: Set<StyleSource["id"]>;
+  styles: Iterable<Pick<StyleDecl, "state" | "styleSourceId">>;
+  selectedStyleState: string | undefined;
+}): SelectorConfig[] => {
+  const allStates = [...pseudoClassesByTag["*"], ...predefinedStates];
+
+  const usedSelectors = new Set<string>();
+  for (const styleDecl of styles) {
+    if (
+      styleDecl.state &&
+      styleDecl.state.trim() &&
+      instanceStyleSourceIds.has(styleDecl.styleSourceId)
+    ) {
+      usedSelectors.add(styleDecl.state);
+    }
+  }
+
+  // Show selected state in menu immediately, before any styles are added
+  if (selectedStyleState && selectedStyleState.trim()) {
+    usedSelectors.add(selectedStyleState);
+  }
+
+  const allStateSelectors = new Set([...allStates, ...usedSelectors]);
+
+  const toConfig = (selector: string): SelectorConfig => ({
+    type: isPseudoElement(selector) ? "pseudoElement" : "state",
+    label: selector,
+    selector,
+    source: allStates.includes(selector) ? "native" : "custom",
+  });
+
+  const states = Array.from(allStateSelectors)
+    .filter((state) => !isPseudoElement(state))
+    .map(toConfig);
+
+  const pseudoElements = Array.from(allStateSelectors)
+    .filter(isPseudoElement)
+    .map(toConfig);
+
+  const componentStatesConfig = componentStates.map((item) => ({
+    type: "state" as const,
+    ...item,
+    source: "component" as const,
+  }));
+
+  return [...states, ...componentStatesConfig, ...pseudoElements];
+};
+
 const $componentStates = computed(
   [
     $selectedInstance,
@@ -285,70 +349,31 @@ const $componentStates = computed(
     $instanceTags,
     $styles,
     $selectedStyleState,
+    $styleSourceSelections,
   ],
   (
     selectedInstance,
     registeredComponentMetas,
     instanceTags,
     styles,
-    selectedStyleState
+    selectedStyleState,
+    styleSourceSelections
   ) => {
     if (selectedInstance === undefined) {
       return;
     }
     const tag = instanceTags.get(selectedInstance.id);
-    const allStates = [
-      ...pseudoClassesByTag["*"],
-      ...(pseudoClassesByTag[tag ?? ""] ?? []),
-    ];
-
-    // Get recently used selectors from project styles
-    const usedSelectors = new Set<string>();
-    for (const styleDecl of styles.values()) {
-      if (styleDecl.state && styleDecl.state.trim()) {
-        usedSelectors.add(styleDecl.state);
-      }
-    }
-
-    // Include currently selected state so it appears in the menu immediately
-    // even before any styles are added to it
-    if (selectedStyleState && selectedStyleState.trim()) {
-      usedSelectors.add(selectedStyleState);
-    }
-
-    // Combine predefined states with recently used, removing duplicates
-    const allStateSelectors = new Set([...allStates, ...usedSelectors]);
-
-    const states = Array.from(allStateSelectors)
-      .filter((state) => !isPseudoElement(state))
-      .map((state) => ({
-        type: "state" as const,
-        label: state,
-        selector: state,
-        source: allStates.includes(state)
-          ? ("native" as const)
-          : ("custom" as const),
-      }));
-
-    const pseudoElements = Array.from(allStateSelectors)
-      .filter((state) => isPseudoElement(state))
-      .map((state) => ({
-        type: "pseudoElement" as const,
-        label: state,
-        selector: state,
-        source: allStates.includes(state)
-          ? ("native" as const)
-          : ("custom" as const),
-      }));
-
     const meta = registeredComponentMetas.get(selectedInstance.component);
-    const componentStates = (meta?.states ?? []).map((item) => ({
-      type: "state" as const,
-      ...item,
-      source: "component" as const,
-    }));
 
-    return [...states, ...componentStates, ...pseudoElements];
+    return getComponentStates({
+      predefinedStates: pseudoClassesByTag[tag ?? ""] ?? [],
+      componentStates: meta?.states ?? [],
+      instanceStyleSourceIds: new Set(
+        styleSourceSelections.get(selectedInstance.id)?.values
+      ),
+      styles: styles.values(),
+      selectedStyleState,
+    });
   }
 );
 
@@ -373,9 +398,6 @@ const convertToInputItem = (
   };
 };
 
-/**
- * find all non-local and component style sources
- */
 const $availableStyleSources = computed([$styleSources], (styleSources) => {
   const availableStylesSources: StyleSourceInputItem[] = [];
   for (const styleSource of styleSources.values()) {
@@ -504,3 +526,5 @@ export const StyleSourcesSection = () => {
     </>
   );
 };
+
+export const __testing__ = { getComponentStates };
