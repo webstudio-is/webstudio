@@ -241,8 +241,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                 const previousItem = categoryStates[index - 1];
                 const showSeparator =
                   index > 0 &&
-                  source === "component" &&
-                  previousItem?.source !== "component";
+                  ((source === "component" &&
+                    previousItem?.source !== "component") ||
+                    (source === "custom" && previousItem?.source !== "custom"));
 
                 return (
                   <Fragment key={selector}>
@@ -297,7 +298,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         );
       })}
       <DropdownMenuSeparator />
-      <DropdownMenuLabel>Custom</DropdownMenuLabel>
+      <DropdownMenuLabel>Add more</DropdownMenuLabel>
       <Box css={{ padding: theme.spacing[4] }}>
         <InputErrorsTooltip
           variant="wrapped"
