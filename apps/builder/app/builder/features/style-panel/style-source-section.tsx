@@ -279,8 +279,20 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
 };
 
 const $componentStates = computed(
-  [$selectedInstance, $registeredComponentMetas, $instanceTags, $styles],
-  (selectedInstance, registeredComponentMetas, instanceTags, styles) => {
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $styles,
+    $selectedStyleState,
+  ],
+  (
+    selectedInstance,
+    registeredComponentMetas,
+    instanceTags,
+    styles,
+    selectedStyleState
+  ) => {
     if (selectedInstance === undefined) {
       return;
     }
@@ -296,6 +308,12 @@ const $componentStates = computed(
       if (styleDecl.state && styleDecl.state.trim()) {
         usedSelectors.add(styleDecl.state);
       }
+    }
+
+    // Include currently selected state so it appears in the menu immediately
+    // even before any styles are added to it
+    if (selectedStyleState && selectedStyleState.trim()) {
+      usedSelectors.add(selectedStyleState);
     }
 
     // Combine predefined states with recently used, removing duplicates

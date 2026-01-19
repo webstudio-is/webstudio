@@ -278,7 +278,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                       }
                     >
                       <Flex justify="between" align="center" grow>
-                        {label}
+                        <Text variant="labelsTitleCase" truncate>
+                          {label}
+                        </Text>
                         {props.item.states.includes(selector) && (
                           <DotIcon
                             size="12"
