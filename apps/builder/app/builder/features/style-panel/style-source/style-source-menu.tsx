@@ -1,23 +1,29 @@
 import { Fragment, useState } from "react";
 import {
   Box,
+  Combobox,
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Flex,
-  InputErrorsTooltip,
-  InputField,
   rawTheme,
+  styled,
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, ChevronDownIcon, DotIcon } from "@webstudio-is/icons";
 import {
-  validateSelector,
   pseudoClassDescriptions,
   pseudoElementDescriptions,
 } from "@webstudio-is/css-data";
-import type { ItemSource, ItemSelector } from "./style-source-control";
+import {
+  menuCssVars,
+  type ItemSource,
+  type ItemSelector,
+} from "./style-source-control";
 
 export type SelectorConfig = {
   type: "state" | "pseudoElement";
@@ -35,6 +41,59 @@ type IntermediateItem = {
   isAdded?: boolean;
   states: string[];
 };
+
+const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
+const menuTriggerVisibilityOverrideVar =
+  "--ws-style-source-menu-trigger-visibility-override";
+const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
+const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+
+const MenuTrigger = styled("button", {
+  display: "inline-flex",
+  border: "none",
+  boxSizing: "border-box",
+  minWidth: 0,
+  alignItems: "center",
+  position: "absolute",
+  right: 0,
+  top: 0,
+  height: "100%",
+  padding: 0,
+  borderTopRightRadius: theme.borderRadius[4],
+  borderBottomRightRadius: theme.borderRadius[4],
+  color: theme.colors.foregroundContrastMain,
+  visibility,
+  "&:hover, &[data-state=open]": {
+    ...menuCssVars({ show: true }),
+    "&::after": {
+      content: '""',
+      display: "block",
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: "100%",
+      height: "100%",
+      visibility,
+      backgroundColor: theme.colors.backgroundButtonHover,
+      borderTopRightRadius: theme.borderRadius[4],
+      borderBottomRightRadius: theme.borderRadius[4],
+      pointerEvents: "none",
+    },
+  },
+});
+
+const MenuTriggerGradient = styled(Box, {
+  position: "absolute",
+  top: 0,
+  right: 0,
+  width: theme.sizes.controlHeight,
+  height: "100%",
+  visibility,
+  background: `var(${menuTriggerGradientVar})`,
+  borderTopRightRadius: theme.borderRadius[4],
+  borderBottomRightRadius: theme.borderRadius[4],
+  pointerEvents: "none",
+});
 
 const selectorLabels = [
   "state",
@@ -58,6 +117,12 @@ const menuActionDescriptions = {
 
 type MenuAction = keyof typeof menuActionDescriptions;
 
+// All available CSS selectors for autocomplete
+const allSelectors = [
+  ...Object.keys(pseudoClassDescriptions),
+  ...Object.keys(pseudoElementDescriptions),
+];
+
 const getDescription = (selector: string, type: "state" | "pseudoElement") => {
   // Normalize the selector to match the description keys
   const normalized = selector.startsWith(":") ? selector : `:${selector}`;
@@ -76,18 +141,64 @@ const getDescription = (selector: string, type: "state" | "pseudoElement") => {
   );
 };
 
+const getSelectorDescription = (selector: string | null | undefined) => {
+  if (selector === undefined || selector === null) {
+    return;
+  }
+  // Determine type based on which description object contains the selector
+  const type =
+    selector in pseudoElementDescriptions ? "pseudoElement" : "state";
+  const description = getDescription(selector, type);
+  if (description === undefined) {
+    return;
+  }
+  return <Box css={{ maxWidth: theme.spacing[26] }}>{description}</Box>;
+};
+
+const SelectorCombobox = ({
+  existingSelectors,
+  onSelect,
+}: {
+  existingSelectors: string[];
+  onSelect: (selector: string) => void;
+}) => {
+  const [value, setValue] = useState("");
+
+  return (
+    <Box onKeyDown={(event) => event.stopPropagation()}>
+      <Combobox<string>
+        autoFocus={false}
+        placeholder="::before"
+        suffix={<span />}
+        getItems={() =>
+          allSelectors.filter((selector) =>
+            existingSelectors.every((s) => s !== selector)
+          )
+        }
+        value={value}
+        itemToString={(item) => item ?? ""}
+        defaultHighlightedIndex={0}
+        getDescription={getSelectorDescription}
+        onItemSelect={(item) => {
+          if (item) {
+            onSelect(item);
+            setValue("");
+          }
+        }}
+        onChange={(newValue) => setValue(newValue ?? "")}
+      />
+    </Box>
+  );
+};
+
 type StyleSourceMenuProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
   states: SelectorConfig[];
-  selectorInputValue: string;
-  selectorValidation: ReturnType<typeof validateSelector>;
-  onSelectorInputChange: (value: string) => void;
-  onSelectorInputKeyDown: (
-    event: React.KeyboardEvent,
-    itemId: IntermediateItem["id"]
-  ) => void;
+  onAddSelector?: (itemId: IntermediateItem["id"], selector: string) => void;
   onSelect?: (itemSelector: ItemSelector) => void;
   onEdit?: (itemId: IntermediateItem["id"]) => void;
   onDuplicate?: (itemId: IntermediateItem["id"]) => void;
@@ -144,194 +255,188 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
     actionDescription ?? selectorDescription ?? sourceDescription;
 
   return (
-    <>
-      <DropdownMenuLabel>
-        <Flex gap="1" justify="between" align="center">
-          <Text css={{ fontWeight: "bold" }} truncate>
-            {props.item.label}
-          </Text>
-          {props.hasStyles && (
-            <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
-          )}
-        </Flex>
-      </DropdownMenuLabel>
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("rename");
-          }}
-          onSelect={() => props.onEdit?.(props.item.id)}
-        >
-          Rename
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("duplicate");
-          }}
-          onSelect={() => props.onDuplicate?.(props.item.id)}
-        >
-          Duplicate
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("convertToToken");
-          }}
-          onSelect={() => props.onConvertToToken?.(props.item.id)}
-        >
-          Convert to token
-        </DropdownMenuItem>
-      )}
-      {props.item.source === "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("clearStyles");
-          }}
-          onSelect={() => props.onClearStyles?.(props.item.id)}
-        >
-          Clear styles
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("detach");
-          }}
-          onSelect={() => props.onDetach?.(props.item.id)}
-        >
-          Detach
-        </DropdownMenuItem>
-      )}
-      {props.item.source !== "local" && (
-        <DropdownMenuItem
-          destructive={true}
-          onFocus={() => {
-            setHighlightedSelector(undefined);
-            setHighlightedAction("delete");
-          }}
-          onSelect={() => props.onDelete?.(props.item.id)}
-        >
-          Delete
-        </DropdownMenuItem>
-      )}
-      {selectorLabels.map((currentCategory) => {
-        const categoryStates = props.states.filter(
-          ({ type }) => type === currentCategory
-        );
-        if (categoryStates.length === 0) {
-          return;
-        }
-        return (
-          <Fragment key={currentCategory}>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>
-              {categoryLabels[currentCategory]}
-            </DropdownMenuLabel>
-            {categoryStates.map(
-              ({ label, selector, source, type, description }, index) => {
-                const previousItem = categoryStates[index - 1];
-                const showSeparator =
-                  index > 0 &&
-                  source === "component" &&
-                  previousItem?.source !== "component";
-
-                return (
-                  <Fragment key={selector}>
-                    {showSeparator && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      withIndicator={true}
-                      onFocus={() => {
-                        setHighlightedAction(undefined);
-                        setHighlightedSelector({ selector, type, description });
-                      }}
-                      icon={
-                        props.item.id ===
-                          props.selectedItemSelector?.styleSourceId &&
-                        selector === props.selectedItemSelector.state && (
-                          <CheckMarkIcon
-                            color={
-                              props.item.states.includes(selector)
-                                ? rawTheme.colors.foregroundPrimary
-                                : rawTheme.colors.foregroundIconMain
-                            }
-                            size={12}
-                          />
-                        )
-                      }
-                      onSelect={() =>
-                        props.onSelect?.({
-                          styleSourceId: props.item.id,
-                          state:
-                            props.selectedItemSelector?.state === selector
-                              ? undefined
-                              : selector,
-                        })
-                      }
-                    >
-                      <Flex justify="between" align="center" grow>
-                        <Text variant="labels" truncate>
-                          {label}
-                        </Text>
-                        {props.item.states.includes(selector) && (
-                          <DotIcon
-                            size="12"
-                            color={rawTheme.colors.foregroundPrimary}
-                          />
-                        )}
-                      </Flex>
-                    </DropdownMenuItem>
-                  </Fragment>
-                );
-              }
+    <DropdownMenu modal open={props.open} onOpenChange={props.onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <MenuTrigger aria-label="Menu Button">
+          <MenuTriggerGradient />
+          <ChevronDownIcon style={{ position: "relative" }} />
+        </MenuTrigger>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        autoFocus
+        css={{ maxWidth: theme.spacing[26] }}
+      >
+        <DropdownMenuLabel>
+          <Flex gap="1" justify="between" align="center">
+            <Text css={{ fontWeight: "bold" }} truncate>
+              {props.item.label}
+            </Text>
+            {props.hasStyles && (
+              <DotIcon size="12" color={rawTheme.colors.foregroundPrimary} />
             )}
-          </Fragment>
-        );
-      })}
-      <DropdownMenuSeparator />
-      <DropdownMenuLabel>Custom</DropdownMenuLabel>
-      <Box css={{ padding: theme.spacing[4] }}>
-        <InputErrorsTooltip
-          variant="wrapped"
-          errors={
-            props.selectorValidation.success === false
-              ? [props.selectorValidation.error]
-              : undefined
-          }
-          side="bottom"
-        >
-          <InputField
-            value={props.selectorInputValue}
-            onChange={(event) =>
-              props.onSelectorInputChange(event.target.value)
-            }
+          </Flex>
+        </DropdownMenuLabel>
+        {props.item.source !== "local" && (
+          <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
-              setHighlightedAction(undefined);
+              setHighlightedAction("rename");
             }}
-            onKeyDown={(event) => {
-              event.stopPropagation();
-              props.onSelectorInputKeyDown(event, props.item.id);
+            onSelect={() => props.onEdit?.(props.item.id)}
+          >
+            Rename
+          </DropdownMenuItem>
+        )}
+        {props.item.source !== "local" && (
+          <DropdownMenuItem
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("duplicate");
             }}
-            placeholder="::before"
-            autoFocus={false}
-            color={
-              props.selectorValidation.success === false ? "error" : undefined
+            onSelect={() => props.onDuplicate?.(props.item.id)}
+          >
+            Duplicate
+          </DropdownMenuItem>
+        )}
+        {props.item.source === "local" && (
+          <DropdownMenuItem
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("convertToToken");
+            }}
+            onSelect={() => props.onConvertToToken?.(props.item.id)}
+          >
+            Convert to token
+          </DropdownMenuItem>
+        )}
+        {props.item.source === "local" && (
+          <DropdownMenuItem
+            destructive={true}
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("clearStyles");
+            }}
+            onSelect={() => props.onClearStyles?.(props.item.id)}
+          >
+            Clear styles
+          </DropdownMenuItem>
+        )}
+        {props.item.source !== "local" && (
+          <DropdownMenuItem
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("detach");
+            }}
+            onSelect={() => props.onDetach?.(props.item.id)}
+          >
+            Detach
+          </DropdownMenuItem>
+        )}
+        {props.item.source !== "local" && (
+          <DropdownMenuItem
+            destructive={true}
+            onFocus={() => {
+              setHighlightedSelector(undefined);
+              setHighlightedAction("delete");
+            }}
+            onSelect={() => props.onDelete?.(props.item.id)}
+          >
+            Delete
+          </DropdownMenuItem>
+        )}
+        {selectorLabels.map((currentCategory) => {
+          const categoryStates = props.states.filter(
+            ({ type }) => type === currentCategory
+          );
+          if (categoryStates.length === 0) {
+            return;
+          }
+          return (
+            <Fragment key={currentCategory}>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>
+                {categoryLabels[currentCategory]}
+              </DropdownMenuLabel>
+              {categoryStates.map(
+                ({ label, selector, source, type, description }, index) => {
+                  const previousItem = categoryStates[index - 1];
+                  const showSeparator =
+                    index > 0 &&
+                    ((source === "component" &&
+                      previousItem?.source !== "component") ||
+                      (source === "custom" &&
+                        previousItem?.source !== "custom"));
+
+                  return (
+                    <Fragment key={selector}>
+                      {showSeparator && <DropdownMenuSeparator />}
+                      <DropdownMenuItem
+                        withIndicator={true}
+                        onFocus={() => {
+                          setHighlightedAction(undefined);
+                          setHighlightedSelector({
+                            selector,
+                            type,
+                            description,
+                          });
+                        }}
+                        icon={
+                          props.item.id ===
+                            props.selectedItemSelector?.styleSourceId &&
+                          selector === props.selectedItemSelector.state && (
+                            <CheckMarkIcon
+                              color={
+                                props.item.states.includes(selector)
+                                  ? rawTheme.colors.foregroundPrimary
+                                  : rawTheme.colors.foregroundIconMain
+                              }
+                              size={12}
+                            />
+                          )
+                        }
+                        onSelect={() =>
+                          props.onSelect?.({
+                            styleSourceId: props.item.id,
+                            state:
+                              props.selectedItemSelector?.state === selector
+                                ? undefined
+                                : selector,
+                          })
+                        }
+                      >
+                        <Flex justify="between" align="center" grow>
+                          <Text variant="labels" truncate>
+                            {label}
+                          </Text>
+                          {props.item.states.includes(selector) && (
+                            <DotIcon
+                              size="12"
+                              color={rawTheme.colors.foregroundPrimary}
+                            />
+                          )}
+                        </Flex>
+                      </DropdownMenuItem>
+                    </Fragment>
+                  );
+                }
+              )}
+            </Fragment>
+          );
+        })}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Add more</DropdownMenuLabel>
+        <Box css={{ padding: theme.spacing[4] }}>
+          <SelectorCombobox
+            existingSelectors={props.states.map((state) => state.selector)}
+            onSelect={(selector) =>
+              props.onAddSelector?.(props.item.id, selector)
             }
-            css={{ width: "100%" }}
           />
-        </InputErrorsTooltip>
-      </Box>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem hint>{description}</DropdownMenuItem>
-    </>
+        </Box>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem hint>{description}</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

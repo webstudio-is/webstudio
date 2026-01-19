@@ -55,7 +55,6 @@ import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { validateSelector } from "@webstudio-is/css-data";
 import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
@@ -96,7 +95,12 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     label: string;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    renderStyleSourceMenuItems: (item: Item, hasStyles: boolean) => ReactNode;
+    renderMenu: (params: {
+      item: Item;
+      hasStyles: boolean;
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+    }) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
     onSelectItem?: (itemSelector: ItemSelector) => void;
@@ -105,6 +109,42 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     states: { label: string; selector: string }[];
     error?: StyleSourceError;
   };
+
+// Wrapper component to manage menu state per item
+const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
+  item,
+  hasStyles,
+  renderMenu,
+  ...props
+}: Omit<
+  ComponentProps<typeof StyleSourceControl>,
+  "menu" | "id" | "hasStyles" | "onOpenMenu"
+> & {
+  item: Item;
+  hasStyles: boolean;
+  renderMenu: (params: {
+    item: Item;
+    hasStyles: boolean;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) => ReactNode;
+}) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <StyleSourceControl
+      {...props}
+      id={item.id}
+      hasStyles={hasStyles}
+      onOpenMenu={() => setMenuOpen(true)}
+      menu={renderMenu({
+        item,
+        hasStyles,
+        open: menuOpen,
+        onOpenChange: setMenuOpen,
+      })}
+    />
+  );
+};
 
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
@@ -142,7 +182,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     label,
     value,
     selectedItemSelector,
-    renderStyleSourceMenuItems,
+    renderMenu,
     onChangeItem,
     onSort,
     onSelectItem,
@@ -214,10 +254,10 @@ const TextFieldBase: ForwardRefRenderFunction<
         aria-label="New Style Source Input"
       />
       {value.map((item) => (
-        <StyleSourceControl
+        <StyleSourceControlWithMenu
           key={item.id}
-          menuItems={renderStyleSourceMenuItems(item, hasStyles(item.id))}
-          id={item.id}
+          item={item}
+          renderMenu={renderMenu}
           selected={item.id === selectedItemSelector?.styleSourceId}
           state={
             item.id === selectedItemSelector?.styleSourceId
@@ -333,10 +373,6 @@ export const StyleSourceInput = (
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
-  const [selectorInputValue, setSelectorInputValue] = useState("");
-  const [selectorValidation, setSelectorValidation] = useState<
-    ReturnType<typeof validateSelector>
-  >({ success: true, type: "pseudo-class" });
 
   const {
     items,
@@ -391,53 +427,6 @@ export const StyleSourceInput = (
 
   const states = props.componentStates ?? [];
 
-  const handleSelectorInputChange = (value: string) => {
-    setSelectorInputValue(value);
-    // Don't validate while typing, only show validation errors after Enter
-    setSelectorValidation({ success: true, type: "pseudo-class" });
-  };
-
-  const handleSelectorInputKeyDown = (
-    event: React.KeyboardEvent,
-    itemId: IntermediateItem["id"]
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const selector = selectorInputValue.trim();
-
-      // Empty selector removes state
-      if (selector === "") {
-        props.onSelectItem?.({
-          styleSourceId: itemId,
-          state: undefined,
-        });
-        setSelectorInputValue("");
-        setSelectorValidation({ success: true, type: "pseudo-class" });
-        return;
-      }
-
-      // Validate non-empty selectors
-      const validation = validateSelector(selector);
-      setSelectorValidation(validation);
-
-      if (validation.success) {
-        // Select the item with the new selector
-        props.onSelectItem?.({
-          styleSourceId: itemId,
-          state: selector,
-        });
-        setSelectorInputValue("");
-        setSelectorValidation({ success: true, type: "pseudo-class" });
-      }
-      // If validation failed, keep the input value so user can fix it
-    } else if (event.key === "Escape") {
-      setSelectorInputValue("");
-      setSelectorValidation({ success: true, type: "pseudo-class" });
-    }
-  };
-
   return (
     <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
@@ -447,16 +436,20 @@ export const StyleSourceInput = (
             {...inputProps}
             inputRef={props.inputRef}
             error={props.error}
-            renderStyleSourceMenuItems={(item, hasStyles) => (
+            renderMenu={({ item, hasStyles, open, onOpenChange }) => (
               <StyleSourceMenu
+                open={open}
+                onOpenChange={onOpenChange}
                 selectedItemSelector={props.selectedItemSelector}
                 item={item}
                 hasStyles={hasStyles}
                 states={states}
-                selectorInputValue={selectorInputValue}
-                selectorValidation={selectorValidation}
-                onSelectorInputChange={handleSelectorInputChange}
-                onSelectorInputKeyDown={handleSelectorInputKeyDown}
+                onAddSelector={(itemId, selector) => {
+                  props.onSelectItem?.({
+                    styleSourceId: itemId,
+                    state: selector,
+                  });
+                }}
                 onSelect={props.onSelectItem}
                 onDuplicate={props.onDuplicateItem}
                 onConvertToToken={props.onConvertToToken}

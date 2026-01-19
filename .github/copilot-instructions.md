@@ -12,8 +12,15 @@
 - Never use one-line if statements: `if (condition) something;`
 - Never use the `function` keyword - always use arrow functions (`const name = () => {}`) or function expressions with arrow syntax
 - Functions must never have more than 3 parameters - use an object parameter instead
+- Components should have no more than 10 props - if more are needed, consider restructuring
 - Never alias the same type or variable to different names (e.g., `type AliasName = OriginalName`) - always use the original name consistently throughout the codebase
 - Spreading `undefined` works fine in JavaScript/TypeScript - the spread operator skips it. Never return empty objects `{}` when you can just `return` (or omit return for `undefined`). Example: `return { ...obj, ...maybeUndefined }` works correctly.
+
+## Comments
+
+- Don't state the obvious that's already written clearly with code
+- Explain WHY you do things, not WHAT you do
+- Only explain WHAT when logic is non-trivial to clarify intent
 
 ## UI Labels and Text
 
@@ -165,3 +172,22 @@ const { internalHelper } = __testing__;
 ## UI/UX
 
 - Never decide on implementation details around UI and UX yourself, always ask user and provide choices
+
+## Social Posts (Release Announcements)
+
+When writing social posts for new releases:
+
+- Start with "New in Webstudio:" to make it clear it's a release
+- Use a single relevant emoji at the start
+- No hashtags
+- No version numbers
+- Use terminology from the UI that users will recognize (e.g., "Style panel", "Collection component")
+- Keep it factual — don't use marketing language like "without writing code" or "game-changer"
+- Explain what the feature does, not why it's impressive
+- One post per major feature
+- To get features for a release, run: `git log <previous-tag>..<current-tag> --oneline` and look for commits prefixed with `feat:`
+
+## Code Review
+
+- After completing changes, review your own code against all instructions in this document.
+- If a component or module needs refactoring (e.g., too many props, too complex, violates guidelines), ask the user before proceeding.

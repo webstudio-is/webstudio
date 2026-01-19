@@ -1,12 +1,16 @@
 import {
   forwardRef,
+  useState,
+  useEffect,
   type ComponentProps,
   type ElementRef,
   type ReactElement,
   type ReactNode,
 } from "react";
+import { mergeRefs } from "@react-aria/utils";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
+import { focusFirstCollectionItem } from "../utilities";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
   menuCss,
@@ -32,14 +36,26 @@ const DropdownMenuContentStyled = styled(
 );
 export const DropdownMenuContent = forwardRef<
   ElementRef<typeof DropdownMenuContentStyled>,
-  ComponentProps<typeof DropdownMenuContentStyled>
->((props, ref) => {
+  ComponentProps<typeof DropdownMenuContentStyled> & { autoFocus?: boolean }
+>(({ autoFocus, ...props }, forwardedRef) => {
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (autoFocus && node) {
+      focusFirstCollectionItem(node);
+    }
+  }, [autoFocus, node]);
+
   return (
     <DropdownMenuPrimitive.Portal>
-      <DropdownMenuContentStyled {...props} ref={ref} />
+      <DropdownMenuContentStyled
+        {...props}
+        ref={mergeRefs(forwardedRef, setNode)}
+      />
     </DropdownMenuPrimitive.Portal>
   );
 });
+DropdownMenuContent.displayName = "DropdownMenuContent";
 
 const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss);
 export const DropdownMenuSubContent = forwardRef<

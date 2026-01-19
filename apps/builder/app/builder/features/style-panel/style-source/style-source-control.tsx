@@ -1,7 +1,4 @@
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
   Text,
   styled,
   Box,
@@ -9,16 +6,14 @@ import {
   Flex,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { StyleSource } from "@webstudio-is/sdk";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
 const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
 const menuTriggerVisibilityOverrideVar =
   "--ws-style-source-menu-trigger-visibility-override";
 const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
-const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
 
 export const menuCssVars = ({
   show,
@@ -34,78 +29,6 @@ export const menuCssVars = ({
   return {
     [property]: show ? "visible" : "hidden",
   };
-};
-
-const MenuTrigger = styled("button", {
-  display: "inline-flex",
-  border: "none",
-  boxSizing: "border-box",
-  minWidth: 0,
-  alignItems: "center",
-  position: "absolute",
-  right: 0,
-  top: 0,
-  height: "100%",
-  padding: 0,
-  borderTopRightRadius: theme.borderRadius[4],
-  borderBottomRightRadius: theme.borderRadius[4],
-  color: theme.colors.foregroundContrastMain,
-  visibility,
-  "&:hover, &[data-state=open]": {
-    ...menuCssVars({ show: true }),
-    "&::after": {
-      content: '""',
-      display: "block",
-      position: "absolute",
-      top: 0,
-      right: 0,
-      width: "100%",
-      height: "100%",
-      visibility,
-      backgroundColor: theme.colors.backgroundButtonHover,
-      borderTopRightRadius: theme.borderRadius[4],
-      borderBottomRightRadius: theme.borderRadius[4],
-      pointerEvents: "none",
-    },
-  },
-});
-
-const MenuTriggerGradient = styled(Box, {
-  position: "absolute",
-  top: 0,
-  right: 0,
-  width: theme.sizes.controlHeight,
-  height: "100%",
-  visibility,
-  background: `var(${menuTriggerGradientVar})`,
-  borderTopRightRadius: theme.borderRadius[4],
-  borderBottomRightRadius: theme.borderRadius[4],
-  pointerEvents: "none",
-});
-
-type MenuProps = {
-  children: ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-};
-
-const Menu = (props: MenuProps) => {
-  return (
-    <DropdownMenu modal open={props.open} onOpenChange={props.onOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <MenuTrigger aria-label="Menu Button">
-          <MenuTriggerGradient />
-          <ChevronDownIcon style={{ position: "relative" }} />
-        </MenuTrigger>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        onCloseAutoFocus={(event) => event.preventDefault()}
-        css={{ maxWidth: theme.spacing[26] }}
-      >
-        {props.children}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 };
 
 export type ItemSource = "token" | "tag" | "local";
@@ -285,7 +208,7 @@ type StyleSourceControlProps = {
   id: StyleSource["id"];
   error?: StyleSourceError;
   label: string;
-  menuItems: ReactNode;
+  menu: ReactNode;
   selected: boolean;
   state: undefined | string;
   stateLabel: undefined | string;
@@ -297,11 +220,12 @@ type StyleSourceControlProps = {
   onSelect: () => void;
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
+  onOpenMenu?: () => void;
 };
 
 export const StyleSourceControl = ({
   id,
-  menuItems,
+  menu,
   selected,
   state,
   stateLabel,
@@ -315,14 +239,14 @@ export const StyleSourceControl = ({
   onChangeValue,
   onChangeEditing,
   onSelect,
+  onOpenMenu,
 }: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleContextMenu = (event: React.MouseEvent) => {
     if (showMenu && disabled === false && isEditing === false) {
       event.preventDefault();
-      setMenuOpen(true);
+      onOpenMenu?.();
     }
   };
 
@@ -376,11 +300,7 @@ export const StyleSourceControl = ({
             <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
           </Tooltip>
         )}
-        {showMenu && (
-          <Menu open={menuOpen} onOpenChange={setMenuOpen}>
-            {menuItems}
-          </Menu>
-        )}
+        {showMenu && menu}
       </StyleSourceContainer>
     </Tooltip>
   );
