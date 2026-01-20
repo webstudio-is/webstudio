@@ -1,6 +1,5 @@
 {
-  "typescript.tsdk": "node_modules/@typescript/native-preview/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.experimental.useTsgo": true,
   // Disable formatting for SQL files
   "[sql]": {
     "editor.formatOnSave": false,
