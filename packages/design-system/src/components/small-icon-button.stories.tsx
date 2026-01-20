@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { EllipsesIcon, XIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
@@ -7,7 +7,7 @@ import {
 } from "./small-icon-button";
 import { StorySection, StoryGrid } from "./storybook";
 
-const iconsMap = {
+const iconsMap: Record<string, ReactNode> = {
   "<EllipsesIcon>": <EllipsesIcon />,
   "<XIcon>": <XIcon />,
   "<TrashIcon>": <TrashIcon />,

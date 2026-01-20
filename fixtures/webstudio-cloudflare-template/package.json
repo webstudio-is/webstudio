@@ -7,7 +7,7 @@
     "fixtures:build": "pnpm cli build --template cloudflare --template saas-helpers --template internal && pnpm prettier --write ./app/ ./package.json ./tsconfig.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "deploy": "npm run build && wrangler pages deploy ./build/client",
     "start": "wrangler pages dev ./build/client",
     "typegen": "wrangler types",

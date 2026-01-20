@@ -40,7 +40,7 @@
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "vitest run",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",

@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "build": "react-router build",
     "dev": "react-router dev",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",

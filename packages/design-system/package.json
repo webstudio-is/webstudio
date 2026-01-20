@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "devDependencies": {

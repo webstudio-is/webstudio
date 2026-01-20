@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@react-router/dev": "^7.5.3",
