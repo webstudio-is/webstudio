@@ -269,6 +269,23 @@ export const updateDomain = async (
 
   await assertEditPermission(input.id, context);
 
+  // Check if project has been published - forbid renaming wstd domain after publishing
+  const projectData = await context.postgrest.client
+    .from("DashboardProject")
+    .select("isPublished")
+    .eq("id", input.id)
+    .single();
+
+  if (projectData.error) {
+    throw projectData.error;
+  }
+
+  if (projectData.data.isPublished) {
+    throw new Error(
+      "Cannot change domain after the project has been published"
+    );
+  }
+
   const updatedProject = await context.postgrest.client
     .from("Project")
     .update({ domain })

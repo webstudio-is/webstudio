@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { createProductionBuild } from "@webstudio-is/project-build/index.server";
+import {
+  createProductionBuild,
+  unpublishBuild,
+} from "@webstudio-is/project-build/index.server";
 import {
   router,
   procedure,
@@ -145,6 +148,44 @@ export const domainRouter = router({
         }
 
         return result;
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+  /**
+   * Unpublish a specific domain from the project
+   */
+  unpublish: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        domain: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Remove domain from deployment in DB first
+        await unpublishBuild(
+          { projectId: input.projectId, domain: input.domain },
+          ctx
+        );
+
+        const { deploymentTrpc, env } = ctx.deployment;
+
+        // Call deployment service to delete the worker for this domain
+        const result = await deploymentTrpc.unpublish.mutate({
+          projectId: input.projectId,
+          domain: input.domain,
+          // preview support
+          branchName: env.GITHUB_REF_NAME,
+        });
+
+        // Allow NOT_IMPLEMENTED to proceed (for local dev without deployment service)
+        if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
+          return result;
+        }
+
+        return { success: true } as const;
       } catch (error) {
         return createErrorResponse(error);
       }
