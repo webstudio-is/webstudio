@@ -174,10 +174,7 @@ export const domainRouter = router({
 
         // Call deployment service to delete the worker for this domain
         const result = await deploymentTrpc.unpublish.mutate({
-          projectId: input.projectId,
           domain: input.domain,
-          // preview support
-          branchName: env.GITHUB_REF_NAME,
         });
 
         // Allow NOT_IMPLEMENTED to proceed (for local dev without deployment service)

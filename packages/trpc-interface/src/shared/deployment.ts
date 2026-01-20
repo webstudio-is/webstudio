@@ -16,10 +16,7 @@ export const PublishInput = z.object({
 });
 
 export const UnpublishInput = z.object({
-  projectId: z.string(),
   domain: z.string(),
-  // preview support
-  branchName: z.string(),
 });
 
 export const Output = z.discriminatedUnion("success", [
