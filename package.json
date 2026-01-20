@@ -39,6 +39,7 @@
     "@storybook/react-vite": "^8.6.4",
     "@types/node": "^22.13.10",
     "@types/react": "^18.2.70",
+    "@typescript/native-preview": "7.0.0-dev.20260120.1",
     "esbuild": "^0.25.3",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",

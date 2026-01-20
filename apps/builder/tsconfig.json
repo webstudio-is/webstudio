@@ -13,9 +13,8 @@
     ],
 
     "paths": {
-      "~/*": ["app/*"]
+      "~/*": ["./app/*"]
     },
-    "baseUrl": ".",
     "declaration": false,
     "emitDeclarationOnly": false,
     "declarationDir": null,
