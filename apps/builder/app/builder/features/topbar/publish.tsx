@@ -110,7 +110,7 @@ const ChangeProjectDomain = ({
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useOptimistic(false);
 
   const pageUrl = new URL(publishedOrigin);
   pageUrl.pathname = selectedPagePath;
@@ -155,20 +155,16 @@ const ChangeProjectDomain = ({
 
   const handleUnpublish = async () => {
     setIsUnpublishing(true);
-    try {
-      const result = await nativeClient.domain.unpublish.mutate({
-        projectId: project.id,
-        domain: project.domain,
-      });
-      if (result.success === false) {
-        toast.error(result.error);
-        return;
-      }
-      await refresh();
-      toast.success("Project unpublished");
-    } finally {
-      setIsUnpublishing(false);
+    const result = await nativeClient.domain.unpublish.mutate({
+      projectId: project.id,
+      domain: project.domain,
+    });
+    if (result.success === false) {
+      toast.error(result.error);
+      return;
     }
+    await refresh();
+    toast.success("Project unpublished");
   };
 
   const { statusText, status } =
@@ -314,10 +310,9 @@ const ChangeProjectDomain = ({
         {isPublished && (
           <Tooltip content="Unpublish to enable domain renaming">
             <Button
-              onClick={handleUnpublish}
+              formAction={handleUnpublish}
               color="destructive"
               state={isUnpublishing ? "pending" : undefined}
-              disabled={isUnpublishing}
               css={{ width: "100%" }}
             >
               Unpublish
