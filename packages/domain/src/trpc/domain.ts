@@ -170,7 +170,7 @@ export const domainRouter = router({
           ctx
         );
 
-        const { deploymentTrpc, env } = ctx.deployment;
+        const { deploymentTrpc } = ctx.deployment;
 
         // Call deployment service to delete the worker for this domain
         const result = await deploymentTrpc.unpublish.mutate({
