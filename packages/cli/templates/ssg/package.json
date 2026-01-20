@@ -5,7 +5,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite dev",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@webstudio-is/image": "0.0.0-webstudio-version",

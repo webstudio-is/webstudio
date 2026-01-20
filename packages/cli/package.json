@@ -22,7 +22,7 @@
     "!*.{test,stories}.*"
   ],
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "build": "rm -rf lib && vite build",
     "test": "vitest run"
   },

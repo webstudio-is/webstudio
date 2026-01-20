@@ -38,8 +38,10 @@ const csrfSessionStorage = createCookieSessionStorage({
   },
 });
 
-const toBase64Url = (buffer: ArrayBuffer) => {
-  return Buffer.from(buffer).toString("base64url");
+const toBase64Url = (buffer: ArrayBuffer | ArrayBufferView) => {
+  return Buffer.from(
+    buffer instanceof ArrayBuffer ? buffer : buffer.buffer
+  ).toString("base64url");
 };
 
 export const getRequestAuthHash = async (request: Request) => {

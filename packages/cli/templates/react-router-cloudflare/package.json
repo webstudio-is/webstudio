@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "typecheck": "wrangler types && tsc",
+    "typecheck": "wrangler types && tsgo",
     "typegen": "wrangler types",
     "preview": "react-router build && vite preview",
     "deploy": "react-router build && wrangler deploy"

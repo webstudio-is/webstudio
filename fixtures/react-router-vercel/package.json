@@ -1,7 +1,7 @@
 {
   "name": "webstudio-react-router-vercel",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit",
     "cli": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
     "fixtures:link": "pnpm cli link --link https://p-d845c167-ea07-4875-b08d-83e97c09dcce-dot-${BUILDER_HOST:-main.development.webstudio.is}'?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93'",
     "fixtures:sync": "pnpm cli sync --buildId f565d527-32e7-4731-bc71-aca9e9574587 && pnpm prettier --write ./.webstudio/",

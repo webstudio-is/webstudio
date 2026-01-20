@@ -34,7 +34,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run",
     "build:normalize.css": "tsx --conditions=webstudio ./scripts/normalize.css.ts && prettier --write src/__generated__/normalize.css.ts",
     "build": "rm -rf lib && esbuild src/index.ts src/runtime.ts src/__generated__/normalize.css.ts src/core-templates.tsx --outdir=lib --bundle --format=esm --packages=external",

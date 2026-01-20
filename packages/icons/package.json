@@ -9,7 +9,7 @@
     "build": "rm -rf lib && esbuild src/index.ts src/__generated__/svg.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --declarationDir lib/types",
     "generate": "rm -fr src/__generated__ && tsx generate.ts && prettier --write src/__generated__",
-    "typecheck": "tsc"
+    "typecheck": "tsgo --noEmit"
   },
   "devDependencies": {
     "@svgo/jsx": "^0.4.2",

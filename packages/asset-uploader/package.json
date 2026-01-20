@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsgo --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "dependencies": {
