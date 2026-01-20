@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Flex,
+  InputErrorsTooltip,
   rawTheme,
   styled,
   Text,
@@ -18,6 +19,7 @@ import { CheckMarkIcon, ChevronDownIcon, DotIcon } from "@webstudio-is/icons";
 import {
   pseudoClassDescriptions,
   pseudoElementDescriptions,
+  validateSelector,
 } from "@webstudio-is/css-data";
 import {
   menuCssVars,
@@ -163,31 +165,61 @@ const SelectorCombobox = ({
   onSelect: (selector: string) => void;
 }) => {
   const [value, setValue] = useState("");
+  const [error, setError] = useState<string>();
+
+  const handleSubmit = (selector: string) => {
+    const validation = validateSelector(selector);
+    if (validation.success === false) {
+      setError(validation.error);
+      return;
+    }
+    setError(undefined);
+    onSelect(selector);
+    setValue("");
+  };
+
+  const availableItems = allSelectors.filter((selector) =>
+    existingSelectors.every((s) => s !== selector)
+  );
 
   return (
-    <Box onKeyDown={(event) => event.stopPropagation()}>
-      <Combobox<string>
-        autoFocus={false}
-        placeholder="::before"
-        suffix={<span />}
-        getItems={() =>
-          allSelectors.filter((selector) =>
-            existingSelectors.every((s) => s !== selector)
-          )
+    <form
+      onKeyDown={(event) => event.stopPropagation()}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (value.trim()) {
+          handleSubmit(value.trim());
         }
-        value={value}
-        itemToString={(item) => item ?? ""}
-        defaultHighlightedIndex={0}
-        getDescription={getSelectorDescription}
-        onItemSelect={(item) => {
-          if (item) {
-            onSelect(item);
-            setValue("");
-          }
-        }}
-        onChange={(newValue) => setValue(newValue ?? "")}
-      />
-    </Box>
+      }}
+    >
+      <InputErrorsTooltip
+        variant="wrapped"
+        errors={error ? [error] : undefined}
+      >
+        <Combobox<string>
+          autoFocus={false}
+          placeholder="::before"
+          suffix={<span />}
+          color={error ? "error" : undefined}
+          getItems={() => availableItems}
+          value={value}
+          itemToString={(item) => item ?? ""}
+          defaultHighlightedIndex={0}
+          getDescription={getSelectorDescription}
+          onItemSelect={(item) => {
+            if (item) {
+              handleSubmit(item);
+            }
+          }}
+          onChange={(newValue) => {
+            setValue(newValue ?? "");
+            if (error) {
+              setError(undefined);
+            }
+          }}
+        />
+      </InputErrorsTooltip>
+    </form>
   );
 };
 
