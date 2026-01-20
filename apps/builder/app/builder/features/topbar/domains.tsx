@@ -380,7 +380,7 @@ const DomainItem = ({
         </>
       )}
 
-      {projectDomain.latestBuildVirtual?.deployment && (
+      {projectDomain.latestBuildVirtual && (
         <Button
           formAction={handleUnpublish}
           state={isUnpublishInProgress ? "pending" : undefined}
