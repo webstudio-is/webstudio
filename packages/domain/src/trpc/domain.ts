@@ -164,12 +164,6 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        // Remove domain from deployment in DB first
-        await unpublishBuild(
-          { projectId: input.projectId, domain: input.domain },
-          ctx
-        );
-
         const { deploymentTrpc } = ctx.deployment;
 
         // Call deployment service to delete the worker for this domain
@@ -177,10 +171,17 @@ export const domainRouter = router({
           domain: input.domain,
         });
 
-        // Allow NOT_IMPLEMENTED to proceed (for local dev without deployment service)
+        // If failed (and not NOT_IMPLEMENTED), return error without touching DB
         if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
           return result;
         }
+
+        // Remove domain from deployment in DB after successful worker deletion
+        // Also proceed if NOT_IMPLEMENTED (for local dev without deployment service)
+        await unpublishBuild(
+          { projectId: input.projectId, domain: input.domain },
+          ctx
+        );
 
         return { success: true } as const;
       } catch (error) {
