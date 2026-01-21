@@ -157,7 +157,7 @@ const ChangeProjectDomain = ({
     setIsUnpublishing(true);
     const result = await nativeClient.domain.unpublish.mutate({
       projectId: project.id,
-      domain: project.domain,
+      domain: `${project.domain}.${publisherHost}`,
     });
     if (result.success === false) {
       toast.error(result.message);
