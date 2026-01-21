@@ -182,7 +182,10 @@ export const domainRouter = router({
           return result;
         }
 
-        return { success: true, message: input.domain } as const;
+        return {
+          success: true,
+          message: `${input.domain} unpublished`,
+        } as const;
       } catch (error) {
         return createErrorResponse(error);
       }
