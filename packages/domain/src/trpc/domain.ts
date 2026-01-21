@@ -179,7 +179,10 @@ export const domainRouter = router({
 
         // If worker deletion failed (and not NOT_IMPLEMENTED), return error
         if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
-          return result;
+          return {
+            success: false,
+            message: `Failed to unpublish ${input.domain}`,
+          } as const;
         }
 
         return {
@@ -187,7 +190,10 @@ export const domainRouter = router({
           message: `${input.domain} unpublished`,
         } as const;
       } catch (error) {
-        return createErrorResponse(error);
+        return {
+          success: false,
+          message: `Failed to unpublish ${input.domain}`,
+        } as const;
       }
     }),
   /**

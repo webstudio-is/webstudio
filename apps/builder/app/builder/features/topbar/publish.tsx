@@ -160,7 +160,7 @@ const ChangeProjectDomain = ({
       domain: project.domain,
     });
     if (result.success === false) {
-      toast.error(result.error);
+      toast.error(result.message);
       return;
     }
     await refresh();

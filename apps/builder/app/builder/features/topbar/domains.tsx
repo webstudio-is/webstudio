@@ -205,7 +205,7 @@ const DomainItem = ({
     });
 
     if (result.success === false) {
-      toast.error(result.error);
+      toast.error(result.message);
       return;
     }
 
