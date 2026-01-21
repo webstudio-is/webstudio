@@ -247,7 +247,7 @@ export const unpublishBuild = async (
     );
   }
 
-  // Find the build that has this domain in its deployment
+  // Find all builds that have this domain in their deployment
   const buildsResult = await context.postgrest.client
     .from("Build")
     .select("id, deployment")
@@ -259,8 +259,8 @@ export const unpublishBuild = async (
     throw buildsResult.error;
   }
 
-  // Find the build with this specific domain in deployment.domains
-  const targetBuild = buildsResult.data.find((build) => {
+  // Find all builds with this specific domain in deployment.domains
+  const targetBuilds = buildsResult.data.filter((build) => {
     const deployment = parseDeployment(build.deployment);
     if (deployment === undefined) {
       return false;
@@ -271,44 +271,49 @@ export const unpublishBuild = async (
     return deployment.domains.includes(props.domain);
   });
 
-  if (targetBuild === undefined) {
+  if (targetBuilds.length === 0) {
     throw new Error(`Domain ${props.domain} is not published`);
   }
 
-  const deployment = parseDeployment(targetBuild.deployment);
+  // Process all builds that contain this domain
+  for (const targetBuild of targetBuilds) {
+    const deployment = parseDeployment(targetBuild.deployment);
 
-  if (deployment === undefined || deployment.destination !== "saas") {
-    throw new Error("Build is not published to SaaS");
-  }
-
-  // Remove the domain from the deployment
-  const remainingDomains = deployment.domains.filter((d) => d !== props.domain);
-
-  if (remainingDomains.length === 0) {
-    // Delete the production build entirely when no domains remain
-    // Don't set deployment=null as that would create a duplicate "dev build"
-    const result = await context.postgrest.client
-      .from("Build")
-      .delete()
-      .eq("id", targetBuild.id);
-
-    if (result.error) {
-      throw result.error;
+    if (deployment === undefined || deployment.destination !== "saas") {
+      continue;
     }
-  } else {
-    // Update with remaining domains
-    const newDeployment = JSON.stringify({
-      ...deployment,
-      domains: remainingDomains,
-    });
 
-    const result = await context.postgrest.client
-      .from("Build")
-      .update({ deployment: newDeployment })
-      .eq("id", targetBuild.id);
+    // Remove the domain from the deployment
+    const remainingDomains = deployment.domains.filter(
+      (d) => d !== props.domain
+    );
 
-    if (result.error) {
-      throw result.error;
+    if (remainingDomains.length === 0) {
+      // Delete the production build entirely when no domains remain
+      // Don't set deployment=null as that would create a duplicate "dev build"
+      const result = await context.postgrest.client
+        .from("Build")
+        .delete()
+        .eq("id", targetBuild.id);
+
+      if (result.error) {
+        throw result.error;
+      }
+    } else {
+      // Update with remaining domains
+      const newDeployment = JSON.stringify({
+        ...deployment,
+        domains: remainingDomains,
+      });
+
+      const result = await context.postgrest.client
+        .from("Build")
+        .update({ deployment: newDeployment })
+        .eq("id", targetBuild.id);
+
+      if (result.error) {
+        throw result.error;
+      }
     }
   }
 };

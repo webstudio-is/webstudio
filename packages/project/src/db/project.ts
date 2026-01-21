@@ -269,20 +269,46 @@ export const updateDomain = async (
 
   await assertEditPermission(input.id, context);
 
-  // Check if project has been published - forbid renaming wstd domain after publishing
-  const projectData = await context.postgrest.client
-    .from("DashboardProject")
-    .select("isPublished")
+  // Check if the current wstd domain is published - forbid renaming while published
+  // Get current domain first
+  const currentProject = await context.postgrest.client
+    .from("Project")
+    .select("domain")
     .eq("id", input.id)
     .single();
 
-  if (projectData.error) {
-    throw projectData.error;
+  if (currentProject.error) {
+    throw currentProject.error;
   }
 
-  if (projectData.data.isPublished) {
+  // Check if any build has this domain in deployment.domains
+  const buildsWithDomain = await context.postgrest.client
+    .from("Build")
+    .select("id, deployment")
+    .eq("projectId", input.id)
+    .not("deployment", "is", null);
+
+  if (buildsWithDomain.error) {
+    throw buildsWithDomain.error;
+  }
+
+  const isDomainPublished = buildsWithDomain.data.some((build) => {
+    const deployment = build.deployment as {
+      destination?: string;
+      domains?: string[];
+    } | null;
+    if (deployment === null) {
+      return false;
+    }
+    if (deployment.destination === "static") {
+      return false;
+    }
+    return deployment.domains?.includes(currentProject.data.domain) ?? false;
+  });
+
+  if (isDomainPublished) {
     throw new Error(
-      "Cannot change domain after the project has been published"
+      "Cannot change domain while it is published. Unpublish first."
     );
   }
 

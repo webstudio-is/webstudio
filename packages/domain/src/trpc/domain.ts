@@ -185,19 +185,20 @@ export const domainRouter = router({
         if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
           return {
             success: false,
-            message: `Failed to unpublish ${input.domain}`,
-          } as const;
+            message: `Failed to unpublish ${input.domain}: ${result.error}`,
+          };
         }
 
         return {
           success: true,
           message: `${input.domain} unpublished`,
-        } as const;
+        };
       } catch (error) {
+        console.error("Unpublish failed:", error);
         return {
           success: false,
-          message: `Failed to unpublish ${input.domain}`,
-        } as const;
+          message: `Failed to unpublish ${input.domain}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        };
       }
     }),
   /**
