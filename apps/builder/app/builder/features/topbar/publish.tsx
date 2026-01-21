@@ -175,7 +175,8 @@ const ChangeProjectDomain = ({
           status: "PENDING" as const,
         };
 
-  const isPublished = project.latestBuildVirtual != null;
+  // Check if the wstd domain specifically is published (not just any custom domain)
+  const isPublished = project.latestBuildVirtual?.domain === project.domain;
 
   return (
     <CollapsibleDomainSection
