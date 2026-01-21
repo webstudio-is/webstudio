@@ -171,19 +171,18 @@ export const domainRouter = router({
           domain: input.domain,
         });
 
-        // If failed (and not NOT_IMPLEMENTED), return error without touching DB
-        if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
-          return result;
-        }
-
-        // Remove domain from deployment in DB after successful worker deletion
-        // Also proceed if NOT_IMPLEMENTED (for local dev without deployment service)
+        // Always unpublish in DB regardless of worker deletion result
         await unpublishBuild(
           { projectId: input.projectId, domain: input.domain },
           ctx
         );
 
-        return { success: true } as const;
+        // If worker deletion failed (and not NOT_IMPLEMENTED), return error
+        if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
+          return result;
+        }
+
+        return { success: true, domain: input.domain } as const;
       } catch (error) {
         return createErrorResponse(error);
       }
