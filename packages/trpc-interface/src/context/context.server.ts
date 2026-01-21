@@ -60,6 +60,7 @@ type DeploymentContext = {
     BUILDER_ORIGIN: string;
     GITHUB_REF_NAME: string;
     GITHUB_SHA: string | undefined;
+    PUBLISHER_HOST: string;
   };
 };
 

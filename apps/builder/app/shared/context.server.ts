@@ -137,6 +137,7 @@ const createDeploymentContext = (builderOrigin: string) => {
       BUILDER_ORIGIN: getRequestOrigin(builderOrigin),
       GITHUB_REF_NAME: staticEnv.GITHUB_REF_NAME ?? "undefined",
       GITHUB_SHA: staticEnv.GITHUB_SHA ?? undefined,
+      PUBLISHER_HOST: env.PUBLISHER_HOST,
     },
   };
 

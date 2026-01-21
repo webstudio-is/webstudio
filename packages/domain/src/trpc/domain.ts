@@ -164,16 +164,20 @@ export const domainRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { deploymentTrpc } = ctx.deployment;
+        const { deploymentTrpc, env } = ctx.deployment;
 
         // Call deployment service to delete the worker for this domain
         const result = await deploymentTrpc.unpublish.mutate({
           domain: input.domain,
         });
 
+        // Extract subdomain for DB lookup (strip publisher host suffix)
+        // e.g., "myproject.wstd.work" → "myproject", "custom.com" → "custom.com"
+        const dbDomain = input.domain.replace(`.${env.PUBLISHER_HOST}`, "");
+
         // Always unpublish in DB regardless of worker deletion result
         await unpublishBuild(
-          { projectId: input.projectId, domain: input.domain },
+          { projectId: input.projectId, domain: dbDomain },
           ctx
         );
 
