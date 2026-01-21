@@ -182,7 +182,7 @@ export const domainRouter = router({
           return result;
         }
 
-        return { success: true, domain: input.domain } as const;
+        return { success: true, message: input.domain } as const;
       } catch (error) {
         return createErrorResponse(error);
       }
