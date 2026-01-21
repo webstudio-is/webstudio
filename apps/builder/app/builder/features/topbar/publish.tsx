@@ -164,7 +164,7 @@ const ChangeProjectDomain = ({
       return;
     }
     await refresh();
-    toast.success("Project unpublished");
+    toast.success(result.message);
   };
 
   const { statusText, status } =

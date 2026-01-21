@@ -210,7 +210,7 @@ const DomainItem = ({
     }
 
     await refresh();
-    toast.success(`${projectDomain.domain} unpublished`);
+    toast.success(result.message);
   };
 
   const handleRemoveDomain = async () => {
