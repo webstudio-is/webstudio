@@ -225,7 +225,9 @@ const forms: Record<string, TemplateMeta> = {
           ws:style={css`
             display: block;
           `}
-        />
+        >
+          <ws.pseudo ws:tag="::placeholder" />
+        </ws.element>
         <ws.element ws:tag="button">
           {new PlaceholderValue("Submit")}
         </ws.element>
@@ -266,7 +268,9 @@ const forms: Record<string, TemplateMeta> = {
         ws:style={css`
           display: block;
         `}
-      />
+      >
+        <ws.pseudo ws:tag="::placeholder" />
+      </ws.element>
     ),
   },
 
@@ -280,7 +284,9 @@ const forms: Record<string, TemplateMeta> = {
         ws:style={css`
           display: block;
         `}
-      />
+      >
+        <ws.pseudo ws:tag="::placeholder" />
+      </ws.element>
     ),
   },
 
