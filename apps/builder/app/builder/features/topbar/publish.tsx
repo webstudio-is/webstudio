@@ -110,6 +110,7 @@ const ChangeProjectDomain = ({
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
   const [isUpdateInProgress, setIsUpdateInProgress] = useOptimistic(false);
+  const [isUnpublishing, setIsUnpublishing] = useOptimistic(false);
 
   const pageUrl = new URL(publishedOrigin);
   pageUrl.pathname = selectedPagePath;
@@ -152,6 +153,20 @@ const ChangeProjectDomain = ({
     });
   };
 
+  const handleUnpublish = async () => {
+    setIsUnpublishing(true);
+    const result = await nativeClient.domain.unpublish.mutate({
+      projectId: project.id,
+      domain: `${project.domain}.${publisherHost}`,
+    });
+    if (result.success === false) {
+      toast.error(result.message);
+      return;
+    }
+    await refresh();
+    toast.success(result.message);
+  };
+
   const { statusText, status } =
     project.latestBuildVirtual != null
       ? getPublishStatusAndText(project.latestBuildVirtual)
@@ -159,6 +174,9 @@ const ChangeProjectDomain = ({
           statusText: "Not published",
           status: "PENDING" as const,
         };
+
+  // Check if the wstd domain specifically is published (not just any custom domain)
+  const isPublished = project.latestBuildVirtual?.domain === project.domain;
 
   return (
     <CollapsibleDomainSection
@@ -209,15 +227,25 @@ const ChangeProjectDomain = ({
     >
       <Grid gap={2}>
         <Grid flow="column" align="center" gap={2}>
-          <Label htmlFor={id} css={{ width: theme.spacing[20] }}>
-            Domain:
-          </Label>
+          <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
+            <Label htmlFor={id}>Domain:</Label>
+            <Tooltip
+              content="Domain can't be renamed once published. Unpublish to enable renaming."
+              variant="wrapped"
+            >
+              <InfoCircleIcon
+                tabIndex={0}
+                style={{ flexShrink: 0 }}
+                color={rawTheme.colors.foregroundSubtle}
+              />
+            </Tooltip>
+          </Flex>
           <InputField
             text="mono"
             id={id}
             placeholder="Domain"
             value={domain}
-            disabled={isUpdateInProgress}
+            disabled={isUpdateInProgress || isPublished}
             onChange={(event) => {
               setError(undefined);
               setDomain(event.target.value);
@@ -279,6 +307,18 @@ const ChangeProjectDomain = ({
               readOnly
             />
           </Grid>
+        )}
+        {isPublished && (
+          <Tooltip content="Unpublish to enable domain renaming">
+            <Button
+              formAction={handleUnpublish}
+              color="destructive"
+              state={isUnpublishing ? "pending" : undefined}
+              css={{ width: "100%" }}
+            >
+              Unpublish
+            </Button>
+          </Tooltip>
         )}
       </Grid>
     </CollapsibleDomainSection>

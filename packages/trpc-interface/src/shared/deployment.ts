@@ -15,6 +15,10 @@ export const PublishInput = z.object({
   logProjectName: z.string(),
 });
 
+export const UnpublishInput = z.object({
+  domain: z.string(),
+});
+
 export const Output = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(true),
@@ -32,6 +36,15 @@ export const Output = z.discriminatedUnion("success", [
 export const deploymentRouter = router({
   publish: procedure
     .input(PublishInput)
+    .output(Output)
+    .mutation(() => {
+      return {
+        success: false,
+        error: "NOT_IMPLEMENTED",
+      };
+    }),
+  unpublish: procedure
+    .input(UnpublishInput)
     .output(Output)
     .mutation(() => {
       return {

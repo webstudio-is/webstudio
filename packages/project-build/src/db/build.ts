@@ -138,17 +138,17 @@ export const loadDevBuildByProjectId = async (
     .from("Build")
     .select("*")
     .eq("projectId", projectId)
-    .is("deployment", null);
+    .is("deployment", null)
+    .order("createdAt", { ascending: false })
+    .limit(1);
   // .single(); Note: Single response is not compressed. Uncomment the following line once the issue is resolved: https://github.com/orgs/supabase/discussions/28757
 
   if (build.error) {
     throw build.error;
   }
 
-  if (build.data.length !== 1) {
-    throw new Error(
-      `Results contain ${build.data.length} row(s) requires 1 row`
-    );
+  if (build.data.length === 0) {
+    throw new Error("No dev build found");
   }
 
   return parseCompactBuild(build.data[0]);
@@ -226,6 +226,95 @@ export const createBuild = async (
   });
   if (newBuild.error) {
     throw newBuild.error;
+  }
+};
+
+export const unpublishBuild = async (
+  props: {
+    projectId: Build["projectId"];
+    domain: string;
+  },
+  context: AppContext
+) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId: props.projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new AuthorizationError(
+      "You don't have access to unpublish this project"
+    );
+  }
+
+  // Find all builds that have this domain in their deployment
+  const buildsResult = await context.postgrest.client
+    .from("Build")
+    .select("id, deployment")
+    .eq("projectId", props.projectId)
+    .not("deployment", "is", null)
+    .order("createdAt", { ascending: false });
+
+  if (buildsResult.error) {
+    throw buildsResult.error;
+  }
+
+  // Find all builds with this specific domain in deployment.domains
+  const targetBuilds = buildsResult.data.filter((build) => {
+    const deployment = parseDeployment(build.deployment);
+    if (deployment === undefined) {
+      return false;
+    }
+    if (deployment.destination === "static") {
+      return false;
+    }
+    return deployment.domains.includes(props.domain);
+  });
+
+  if (targetBuilds.length === 0) {
+    throw new Error(`Domain ${props.domain} is not published`);
+  }
+
+  // Process all builds that contain this domain
+  for (const targetBuild of targetBuilds) {
+    const deployment = parseDeployment(targetBuild.deployment);
+
+    if (deployment === undefined || deployment.destination !== "saas") {
+      continue;
+    }
+
+    // Remove the domain from the deployment
+    const remainingDomains = deployment.domains.filter(
+      (d) => d !== props.domain
+    );
+
+    if (remainingDomains.length === 0) {
+      // Delete the production build entirely when no domains remain
+      // Don't set deployment=null as that would create a duplicate "dev build"
+      const result = await context.postgrest.client
+        .from("Build")
+        .delete()
+        .eq("id", targetBuild.id);
+
+      if (result.error) {
+        throw result.error;
+      }
+    } else {
+      // Update with remaining domains
+      const newDeployment = JSON.stringify({
+        ...deployment,
+        domains: remainingDomains,
+      });
+
+      const result = await context.postgrest.client
+        .from("Build")
+        .update({ deployment: newDeployment })
+        .eq("id", targetBuild.id);
+
+      if (result.error) {
+        throw result.error;
+      }
+    }
   }
 };
 

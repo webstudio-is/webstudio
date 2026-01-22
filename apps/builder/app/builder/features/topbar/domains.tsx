@@ -194,6 +194,25 @@ const DomainItem = ({
 
   const [isRemoveInProgress, setIsRemoveInProgress] = useOptimistic(false);
 
+  const [isUnpublishInProgress, setIsUnpublishInProgress] =
+    useOptimistic(false);
+
+  const handleUnpublish = async () => {
+    setIsUnpublishInProgress(true);
+    const result = await nativeClient.domain.unpublish.mutate({
+      projectId: projectDomain.projectId,
+      domain: projectDomain.domain,
+    });
+
+    if (result.success === false) {
+      toast.error(result.message);
+      return;
+    }
+
+    await refresh();
+    toast.success(result.message);
+  };
+
   const handleRemoveDomain = async () => {
     setIsRemoveInProgress(true);
     const result = await nativeClient.domain.remove.mutate({
@@ -359,6 +378,17 @@ const DomainItem = ({
             Check status
           </Button>
         </>
+      )}
+
+      {projectDomain.latestBuildVirtual && (
+        <Button
+          formAction={handleUnpublish}
+          state={isUnpublishInProgress ? "pending" : undefined}
+          color="destructive"
+          css={{ width: "100%", flexShrink: 0 }}
+        >
+          Unpublish
+        </Button>
       )}
 
       <Button

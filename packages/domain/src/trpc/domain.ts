@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as projectApi from "@webstudio-is/project/index.server";
-import { createProductionBuild } from "@webstudio-is/project-build/index.server";
+import {
+  createProductionBuild,
+  unpublishBuild,
+} from "@webstudio-is/project-build/index.server";
 import {
   router,
   procedure,
@@ -147,6 +150,55 @@ export const domainRouter = router({
         return result;
       } catch (error) {
         return createErrorResponse(error);
+      }
+    }),
+  /**
+   * Unpublish a specific domain from the project
+   */
+  unpublish: procedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        domain: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const { deploymentTrpc, env } = ctx.deployment;
+
+        // Call deployment service to delete the worker for this domain
+        const result = await deploymentTrpc.unpublish.mutate({
+          domain: input.domain,
+        });
+
+        // Extract subdomain for DB lookup (strip publisher host suffix)
+        // e.g., "myproject.wstd.work" → "myproject", "custom.com" → "custom.com"
+        const dbDomain = input.domain.replace(`.${env.PUBLISHER_HOST}`, "");
+
+        // Always unpublish in DB regardless of worker deletion result
+        await unpublishBuild(
+          { projectId: input.projectId, domain: dbDomain },
+          ctx
+        );
+
+        // If worker deletion failed (and not NOT_IMPLEMENTED), return error
+        if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
+          return {
+            success: false,
+            message: `Failed to unpublish ${input.domain}: ${result.error}`,
+          };
+        }
+
+        return {
+          success: true,
+          message: `${input.domain} unpublished`,
+        };
+      } catch (error) {
+        console.error("Unpublish failed:", error);
+        return {
+          success: false,
+          message: `Failed to unpublish ${input.domain}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        };
       }
     }),
   /**
