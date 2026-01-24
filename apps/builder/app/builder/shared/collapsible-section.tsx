@@ -20,6 +20,7 @@ import {
 } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Simplify } from "type-fest";
+import { capitalCase } from "change-case";
 
 type Label = string;
 
@@ -135,7 +136,7 @@ export const CollapsibleSectionRoot = ({
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>
-            <SectionTitleLabel>{label}</SectionTitleLabel>
+            <SectionTitleLabel>{capitalCase(label ?? "")}</SectionTitleLabel>
           </SectionTitle>
         )}
       </Collapsible.Trigger>
@@ -231,7 +232,7 @@ export const CollapsibleSectionWithAddButton = ({
             ) : undefined
           }
         >
-          <SectionTitleLabel>{props.label}</SectionTitleLabel>
+          <SectionTitleLabel>{capitalCase(props.label)}</SectionTitleLabel>
         </SectionTitle>
       }
     >

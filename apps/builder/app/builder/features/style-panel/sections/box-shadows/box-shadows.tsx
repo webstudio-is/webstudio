@@ -19,7 +19,7 @@ export const properties = ["box-shadow"] satisfies [
   ...CssProperty[],
 ];
 
-const label = "Box Shadows";
+const label = "Box shadows";
 const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {

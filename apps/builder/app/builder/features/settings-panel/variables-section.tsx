@@ -264,7 +264,7 @@ const VariablesList = () => {
   );
 };
 
-const label = "Data Variables";
+const label = "Data variables";
 
 export const VariablesSection = () => {
   const [isOpen, setIsOpen] = useOpenState(label);
@@ -290,7 +290,7 @@ export const VariablesSection = () => {
             </VariablePopoverTrigger>
           }
         >
-          <SectionTitleLabel>Data Variables</SectionTitleLabel>
+          <SectionTitleLabel>Data variables</SectionTitleLabel>
         </SectionTitle>
       }
     >
