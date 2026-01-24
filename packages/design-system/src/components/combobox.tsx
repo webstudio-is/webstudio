@@ -268,7 +268,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (_state, { changes }) => changes,
   match = defaultMatch,
-  defaultHighlightedIndex = -1,
+  defaultHighlightedIndex = 0,
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -338,7 +338,7 @@ export const useCombobox = <Item,>({
       if (
         userChanges.isOpen === true &&
         state.isOpen === false &&
-        defaultHighlightedIndex !== -1
+        defaultHighlightedIndex >= 0
       ) {
         return { ...userChanges, highlightedIndex: defaultHighlightedIndex };
       }
@@ -514,13 +514,10 @@ export const Combobox = <Item,>({
         </ComboboxAnchor>
         <ComboboxContent
           onOpenAutoFocus={(event) => {
-            if (
-              props.defaultHighlightedIndex === undefined ||
-              props.defaultHighlightedIndex === -1
-            ) {
+            event.preventDefault();
+            if ((props.defaultHighlightedIndex ?? 0) < 0) {
               return;
             }
-            event.preventDefault();
             if (event.currentTarget instanceof HTMLElement) {
               focusFirstCollectionItem(event.currentTarget);
             }

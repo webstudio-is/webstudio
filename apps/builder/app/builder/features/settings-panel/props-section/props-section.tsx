@@ -155,7 +155,6 @@ const AddPropertyOrAttribute = ({
       justify="center"
     >
       <Combobox<Item>
-        defaultHighlightedIndex={0}
         autoFocus
         color={isValid ? undefined : "error"}
         placeholder="Select or create"

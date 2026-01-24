@@ -177,7 +177,6 @@ export const AddStyleInput = forwardRef<
     getItems: getAutocompleteItems,
     itemToString: (item) => item?.label ?? "",
     value: item,
-    defaultHighlightedIndex: 0,
     getItemProps: () => ({ text: "sentence" }),
     match: matchOrSuggestToCreate,
     onChange: (input) => {
