@@ -204,7 +204,6 @@ const SelectorCombobox = ({
           getItems={() => availableItems}
           value={value}
           itemToString={(item) => item ?? ""}
-          defaultHighlightedIndex={0}
           getDescription={getSelectorDescription}
           onItemSelect={(item) => {
             if (item) {

@@ -21,6 +21,17 @@
 - Don't state the obvious that's already written clearly with code
 - Explain WHY you do things, not WHAT you do
 - Only explain WHAT when logic is non-trivial to clarify intent
+- WHY comments must describe concrete user scenario or failure mode, not abstract explanations
+- Bad: "Prevent accidental X" - Good: "User does Y and expects Z, without this they'd get W instead"
+
+## Response Style
+
+- Don't echo back what user said
+- Don't show code blocks when you can just edit
+- Before acting, state what you'll do in ~5 words (use bullet points if multiple actions)
+- Wait for confirmation before proceeding
+- Never summarize after editing
+- Never list multiple options - pick the best one
 
 ## UI Labels and Text
 
