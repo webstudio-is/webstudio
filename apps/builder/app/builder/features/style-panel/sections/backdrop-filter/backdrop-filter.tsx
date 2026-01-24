@@ -21,7 +21,7 @@ export const properties = ["backdrop-filter"] satisfies [
   ...CssProperty[],
 ];
 
-const label = "Backdrop Filters";
+const label = "Backdrop filters";
 const initialBackdropFilter = "blur(0px)";
 
 const getItemProps = (_index: number, value: StyleValue) => {

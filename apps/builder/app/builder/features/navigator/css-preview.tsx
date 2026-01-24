@@ -91,7 +91,7 @@ export const CssPreview = () => {
     return null;
   }
   return (
-    <CollapsibleSection label="CSS Preview" fullWidth>
+    <CollapsibleSection label="CSS preview" fullWidth>
       <ScrollArea css={{ padding: theme.panel.padding }}>
         <pre tabIndex={0} className={preStyle()}>
           <div

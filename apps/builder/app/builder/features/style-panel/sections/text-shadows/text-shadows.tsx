@@ -19,7 +19,7 @@ export const properties = ["text-shadow"] satisfies [
   ...CssProperty[],
 ];
 
-const label = "Text Shadows";
+const label = "Text shadows";
 const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 const getItemProps = (layer: StyleValue, computedLayer?: StyleValue) => {
