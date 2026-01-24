@@ -392,7 +392,6 @@ export const StyleSourceInput = (
     },
     selectedItem: undefined,
     match: matchOrSuggestToCreate,
-    defaultHighlightedIndex: 0,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
