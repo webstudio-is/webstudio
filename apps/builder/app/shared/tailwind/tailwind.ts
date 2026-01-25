@@ -9,6 +9,7 @@ import {
 } from "@webstudio-is/css-data";
 import {
   getStyleDeclKey,
+  type Breakpoint,
   type Instance,
   type Prop,
   type WebstudioFragment,
@@ -16,14 +17,16 @@ import {
 import { isBaseBreakpoint } from "../nano-states";
 import { preflight } from "./__generated__/preflight";
 
-const availableBreakpoints = [
-  { id: "1920", minWidth: 1920 },
-  { id: "1440", minWidth: 1440 },
-  { id: "1280", minWidth: 1280 },
-  { id: "base" },
-  { id: "991", maxWidth: 991 },
-  { id: "767", maxWidth: 767 },
-  { id: "479", maxWidth: 479 },
+// breakpoints used to map tailwind classes to webstudio breakpoints
+// includes both min-width (desktop-first) and max-width (mobile-first) breakpoints
+const tailwindBreakpoints: Breakpoint[] = [
+  { id: "1920", label: "1920", minWidth: 1920 },
+  { id: "1440", label: "1440", minWidth: 1440 },
+  { id: "1280", label: "1280", minWidth: 1280 },
+  { id: "base", label: "" },
+  { id: "991", label: "991", maxWidth: 991 },
+  { id: "767", label: "767", maxWidth: 767 },
+  { id: "479", label: "479", maxWidth: 479 },
 ];
 
 const tailwindToWebstudioMappings: Record<number, undefined | number> = {
@@ -39,7 +42,7 @@ const tailwindToWebstudioMappings: Record<number, undefined | number> = {
 
 type StyleDecl = Omit<ParsedStyleDecl, "selector">;
 
-type Breakpoint = {
+type StyleBreakpoint = {
   styleDecl: StyleDecl;
   minWidth?: number;
   maxWidth?: number;
@@ -51,7 +54,7 @@ type Range = {
   end: number;
 };
 
-const serializeBreakpoint = (breakpoint: Breakpoint) => {
+const serializeStyleBreakpoint = (breakpoint: StyleBreakpoint) => {
   if (breakpoint?.minWidth !== undefined) {
     return `(min-width: ${breakpoint.minWidth}px)`;
   }
@@ -62,7 +65,7 @@ const serializeBreakpoint = (breakpoint: Breakpoint) => {
 
 const UPPER_BOUND = Number.MAX_SAFE_INTEGER;
 
-const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
+const breakpointsToRanges = (breakpoints: StyleBreakpoint[]) => {
   // collect lower bounds and ids
   const values = new Set<number>([0]);
   const styles = new Map<undefined | number, StyleDecl>();
@@ -111,11 +114,14 @@ const breakpointsToRanges = (breakpoints: Breakpoint[]) => {
   return ranges;
 };
 
-const rangesToBreakpoints = (ranges: Range[]) => {
-  const breakpoints: Breakpoint[] = [];
+const rangesToBreakpoints = (
+  ranges: Range[],
+  userBreakpoints: Breakpoint[]
+) => {
+  const breakpoints: StyleBreakpoint[] = [];
   for (const { styleDecl, start, end } of ranges) {
     let matchedBreakpoint;
-    for (const breakpoint of availableBreakpoints) {
+    for (const breakpoint of userBreakpoints) {
       if (breakpoint.minWidth === start) {
         matchedBreakpoint = { styleDecl, minWidth: start };
       }
@@ -130,15 +136,18 @@ const rangesToBreakpoints = (ranges: Range[]) => {
       }
     }
     if (matchedBreakpoint) {
-      styleDecl.breakpoint = serializeBreakpoint(matchedBreakpoint);
+      styleDecl.breakpoint = serializeStyleBreakpoint(matchedBreakpoint);
       breakpoints.push(matchedBreakpoint);
     }
   }
   return breakpoints;
 };
 
-const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
-  const breakpointGroups = new Map<string, Breakpoint[]>();
+const adaptBreakpoints = (
+  parsedStyles: StyleDecl[],
+  userBreakpoints: Breakpoint[]
+) => {
+  const breakpointGroups = new Map<string, StyleBreakpoint[]>();
   for (const styleDecl of parsedStyles) {
     const mediaQuery = styleDecl.breakpoint
       ? parseMediaQuery(styleDecl.breakpoint)
@@ -162,7 +171,7 @@ const adaptBreakpoints = (parsedStyles: StyleDecl[]) => {
   const newStyles: typeof parsedStyles = [];
   for (const group of breakpointGroups.values()) {
     const ranges = breakpointsToRanges(group);
-    const newGroup = rangesToBreakpoints(ranges);
+    const newGroup = rangesToBreakpoints(ranges, userBreakpoints);
     for (const { styleDecl } of newGroup) {
       newStyles.push(styleDecl);
     }
@@ -174,7 +183,7 @@ const createUnoGenerator = async () => {
   return await createGenerator({
     presets: [
       presetWind3({
-        // css variables are defined on the same element as style
+        // css variables are defined on the same element as styleDecl
         preflight: "on-demand",
         // dark mode will be ignored by parser
         dark: "media",
@@ -185,7 +194,11 @@ const createUnoGenerator = async () => {
   });
 };
 
-const parseTailwindClasses = async (classes: string) => {
+const parseTailwindClasses = async (
+  classes: string,
+  userBreakpoints: Breakpoint[],
+  fragmentBreakpoints: Breakpoint[]
+) => {
   // avoid caching uno generator instance
   // to prevent bloating css with preflights from previous calls
   const generator = await createUnoGenerator();
@@ -231,8 +244,7 @@ const parseTailwindClasses = async (classes: string) => {
   parsedStyles = parsedStyles.filter(
     (styleDecl) => !styleDecl.state?.startsWith("::")
   );
-  // setup base breakpoint for container class
-  // to avoid hole in ranges
+  // setup base breakpoint for container class to avoid hole in ranges
   if (hasContainer) {
     parsedStyles.unshift({
       property: "max-width",
@@ -263,12 +275,24 @@ const parseTailwindClasses = async (classes: string) => {
       }
     );
   }
-  parsedStyles = adaptBreakpoints(parsedStyles);
+  parsedStyles = adaptBreakpoints(parsedStyles, userBreakpoints);
+  // container class generates max-width styles for all Tailwind breakpoints
+  // filter out min-width ones only if user doesn't have min-width breakpoints
+  const hasUserMinWidthBreakpoints = fragmentBreakpoints.some(
+    (bp) => bp.minWidth !== undefined
+  );
+  if (hasContainer && !hasUserMinWidthBreakpoints) {
+    parsedStyles = parsedStyles.filter(
+      (styleDecl) =>
+        styleDecl.property !== "max-width" ||
+        !styleDecl.breakpoint?.includes("min-width")
+    );
+  }
   const newClasses = classes
     .split(" ")
     .filter((item) => !generated.matched.has(item))
     .join(" ");
-  return { newClasses: newClasses, parsedStyles };
+  return { newClasses, parsedStyles };
 };
 
 const getUniqueIdForList = <List extends Array<{ id: string }>>(list: List) => {
@@ -343,7 +367,7 @@ export const generateFragmentFromTailwind = async (
       styleSourceSelections.get(instanceId)
     );
     if (styleSourceSelection === undefined) {
-      styleSourceSelection = { instanceId: instanceId, values: [] };
+      styleSourceSelection = { instanceId, values: [] };
       styleSourceSelections.set(instanceId, styleSourceSelection);
     }
     styleSources.set(localStyleSource.id, localStyleSource);
@@ -369,9 +393,9 @@ export const generateFragmentFromTailwind = async (
         property: camelCaseProperty(parsedStyleDecl.property),
         value: parsedStyleDecl.value,
       };
-      const styleDeckKey = getStyleDeclKey(styleDecl);
-      styles.delete(styleDeckKey);
-      styles.set(styleDeckKey, styleDecl);
+      const styleDeclKey = getStyleDeclKey(styleDecl);
+      styles.delete(styleDeclKey);
+      styles.set(styleDeclKey, styleDecl);
     }
   };
 
@@ -386,8 +410,12 @@ export const generateFragmentFromTailwind = async (
   await Promise.all(
     fragment.props.map(async (prop) => {
       if (prop.name === "class" && prop.type === "string") {
+        // always use tailwindBreakpoints for parsing to support all Tailwind classes
+        // new breakpoints will be created as needed via getBreakpointId
         const { newClasses, parsedStyles } = await parseTailwindClasses(
-          prop.value
+          prop.value,
+          tailwindBreakpoints,
+          fragment.breakpoints
         );
         if (parsedStyles.length > 0) {
           createOrMergeLocalStyles(prop.instanceId, parsedStyles);
