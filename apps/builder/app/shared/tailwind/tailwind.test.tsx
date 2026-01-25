@@ -368,7 +368,9 @@ describe("extract breakpoints", () => {
     );
   });
 
-  test("extract container class", async () => {
+  test("container class without user min-width breakpoints", async () => {
+    // container class should only create max-width breakpoints, not min-width
+    // this prevents unwanted 1280/1440 breakpoints from being created
     expect(
       await generateFragmentFromTailwind(
         renderTemplate(<ws.element ws:tag="div" class="container"></ws.element>)
@@ -388,6 +390,47 @@ describe("extract breakpoints", () => {
               max-width: 768px;
             }
             max-width: 1024px;
+            width: 100%;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("container class with user min-width breakpoints", async () => {
+    // when user already has min-width breakpoints, container should use them
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element
+            ws:tag="div"
+            ws:style={css`
+              @media (min-width: 1280px) {
+                color: red;
+              }
+            `}
+            class="container"
+          ></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (min-width: 1280px) {
+              color: red;
+            }
+            @media (max-width: 479px) {
+              max-width: none;
+            }
+            @media (max-width: 767px) {
+              max-width: 640px;
+            }
+            @media (max-width: 991px) {
+              max-width: 768px;
+            }
+            max-width: 1024px;
             @media (min-width: 1280px) {
               max-width: 1280px;
             }
@@ -395,6 +438,73 @@ describe("extract breakpoints", () => {
               max-width: 1536px;
             }
             width: 100%;
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("explicit xl class creates min-width breakpoint", async () => {
+    // explicit xl: classes should create min-width breakpoints
+    // unlike container which is special-cased
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element ws:tag="div" class="text-sm xl:text-lg"></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            font-size: 0.875rem;
+            @media (min-width: 1280px) {
+              font-size: 1.125rem;
+            }
+            line-height: 1.25rem;
+            @media (min-width: 1280px) {
+              line-height: 1.75rem;
+            }
+          `}
+        ></ws.element>
+      )
+    );
+  });
+
+  test("container combined with explicit xl class", async () => {
+    // container shouldn't create min-width breakpoints
+    // but explicit xl: class should
+    expect(
+      await generateFragmentFromTailwind(
+        renderTemplate(
+          <ws.element ws:tag="div" class="container xl:text-lg"></ws.element>
+        )
+      )
+    ).toEqual(
+      renderTemplate(
+        <ws.element
+          ws:tag="div"
+          ws:style={css`
+            @media (max-width: 479px) {
+              max-width: none;
+            }
+            @media (max-width: 767px) {
+              max-width: 640px;
+            }
+            @media (max-width: 991px) {
+              max-width: 768px;
+            }
+            max-width: 1024px;
+            width: 100%;
+            font-size: unset;
+            @media (min-width: 1280px) {
+              font-size: 1.125rem;
+            }
+            line-height: unset;
+            @media (min-width: 1280px) {
+              line-height: 1.75rem;
+            }
           `}
         ></ws.element>
       )
@@ -576,6 +686,41 @@ describe("extract breakpoints", () => {
         ></ws.element>
       )
     );
+  });
+
+  test("non-responsive classes create only base breakpoint", async () => {
+    const fragment = await generateFragmentFromTailwind(
+      renderTemplate(
+        <ws.element ws:tag="div" class="m-2 p-4 text-red-500"></ws.element>
+      )
+    );
+    expect(fragment.breakpoints).toEqual([{ id: "base", label: "" }]);
+  });
+
+  test("container class creates only needed breakpoints", async () => {
+    const fragment = await generateFragmentFromTailwind(
+      renderTemplate(<ws.element ws:tag="div" class="container"></ws.element>)
+    );
+    // container should only create max-width breakpoints, not 1280/1440/1920 min-width ones
+    expect(fragment.breakpoints).toEqual([
+      { id: "0", label: "479", maxWidth: 479 },
+      { id: "1", label: "767", maxWidth: 767 },
+      { id: "2", label: "991", maxWidth: 991 },
+      { id: "base", label: "" },
+    ]);
+  });
+
+  test("sm:class creates only needed breakpoints", async () => {
+    const fragment = await generateFragmentFromTailwind(
+      renderTemplate(
+        <ws.element ws:tag="div" class="opacity-50 sm:opacity-100"></ws.element>
+      )
+    );
+    // sm: should only create 479 max-width and base, not all breakpoints
+    expect(fragment.breakpoints).toEqual([
+      { id: "0", label: "479", maxWidth: 479 },
+      { id: "base", label: "" },
+    ]);
   });
 });
 
