@@ -55,6 +55,19 @@
 - `pnpm typecheck` is slow - avoid running it unnecessarily during development
 - Fix all eslint and TypeScript errors before considering work complete
 
+### Git Commits
+
+- **When user says "push"**: Always `git add -A` to stage ALL changes, not just the current file
+- Write comprehensive commit messages covering ALL changes in the commit
+- Commit message format:
+  - First line: `type: short description` (fix/feat/refactor/test/chore)
+  - Blank line
+  - Body: Explain the problem being solved and why the change was made
+  - List all significant changes with bullet points
+  - If tests were added, list them
+- Never write commit messages that only describe one file when multiple files changed
+- The commit message should make sense to someone reviewing the PR without seeing the code
+
 ### Test Failures
 
 - If tests fail with "Host system is missing dependencies to run browsers" error, run `pnpm playwright` to install Playwright dependencies
