@@ -268,7 +268,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (_state, { changes }) => changes,
   match = defaultMatch,
-  defaultHighlightedIndex = 0,
+  defaultHighlightedIndex = -1,
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
