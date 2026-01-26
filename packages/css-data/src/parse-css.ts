@@ -24,6 +24,9 @@ const prefixedProperties = [
   "-moz-osx-font-smoothing",
   "-webkit-tap-highlight-color",
   "-webkit-overflow-scrolling",
+  "-webkit-text-stroke",
+  "-webkit-text-stroke-color",
+  "-webkit-text-stroke-width",
 ];
 const prefixes = ["webkit", "moz", "ms", "o"];
 const prefixRegex = new RegExp(`^-(${prefixes.join("|")})-`);

@@ -539,6 +539,23 @@ describe("Parse CSS", () => {
     ]);
   });
 
+  test("keep prefix for -webkit-text-stroke", () => {
+    // shorthand is kept as-is (not expanded) but prefix is preserved
+    expect(parseCss(`a { -webkit-text-stroke: 1px black; }`)).toEqual([
+      {
+        selector: "a",
+        property: "-webkit-text-stroke",
+        value: {
+          type: "tuple",
+          value: [
+            { type: "unit", unit: "px", value: 1 },
+            { type: "keyword", value: "black" },
+          ],
+        },
+      },
+    ]);
+  });
+
   test("parse child combinator", () => {
     expect(parseCss(`a > b { color: #ff0000 }`)).toEqual([
       {
