@@ -94,4 +94,22 @@ describe("parseStyleInput", () => {
       new Map([["rotate", { type: "invalid", value: "z 0" }]])
     );
   });
+
+  test("preserves -webkit-text-stroke as shorthand property, not as CSS variable", () => {
+    const result = parseStyleInput("-webkit-text-stroke: 1px red");
+    expect(result).toEqual(
+      new Map([
+        [
+          "-webkit-text-stroke",
+          {
+            type: "tuple",
+            value: [
+              { type: "unit", unit: "px", value: 1 },
+              { type: "keyword", value: "red" },
+            ],
+          },
+        ],
+      ])
+    );
+  });
 });

@@ -51,7 +51,13 @@ export const parseStyleInput = (css: string): CssStyleMap => {
       continue;
     }
     // somethingunknown: red; -> --somethingunknown: red;
-    if (propertiesData[property] === undefined) {
+    // but keep known shorthands like -webkit-text-stroke as-is
+    if (
+      propertiesData[property] === undefined &&
+      shorthandProperties.includes(
+        property as (typeof shorthandProperties)[number]
+      ) === false
+    ) {
       styleMap.set(`--${property}`, value);
       continue;
     }
