@@ -63,7 +63,7 @@ describe("Remote src image transforms", () => {
     expect(resultUrl.searchParams.get("width")).toBe("128");
 
     expect(result).toMatchInlineSnapshot(
-      `"/cgi/image/https%3A//example.com/lo%253Fgo.webp%3Fa%3D1?width=128&quality=100&format=auto"`
+      `"/cgi/image/https%3A%2F%2Fexample.com%2Flo%253Fgo.webp%3Fa%3D1?width=128&quality=100&format=auto"`
     );
   });
 

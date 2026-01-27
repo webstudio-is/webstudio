@@ -11,6 +11,13 @@ const joinPath = (...segments: string[]) => {
 };
 
 const encodePathFragment = (fragment: string) => {
+  // For absolute URLs, keep slashes fully encoded to prevent URL path normalization
+  // e.g., https:// in path would become https:/ when server normalizes //
+  // For relative paths, replace %2F with / for cleaner URLs
+  const isAbsoluteUrl = /^[a-z][a-z0-9+.-]*:/i.test(fragment);
+  if (isAbsoluteUrl) {
+    return encodeURIComponent(fragment);
+  }
   return encodeURIComponent(fragment).replace(/%2F/g, "/");
 };
 
