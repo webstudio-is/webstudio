@@ -6,14 +6,7 @@ import { PropertyInlineLabel } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { BackgroundCodeEditor } from "./background-code-editor";
 import { $assets } from "~/shared/sync/data-stores";
-
-const isAbsoluteURL = (value: string) => {
-  try {
-    return Boolean(new URL(value));
-  } catch {
-    return false;
-  }
-};
+import { isAbsoluteUrl } from "@webstudio-is/sdk";
 
 export const BackgroundImage = ({ index }: { index: number }) => {
   const elementRef = useRef<HTMLDivElement>(null);
@@ -36,7 +29,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       const url = layer.value.url;
 
       // If it's an absolute URL, no validation needed
-      if (isAbsoluteURL(url)) {
+      if (isAbsoluteUrl(url)) {
         return undefined;
       }
 

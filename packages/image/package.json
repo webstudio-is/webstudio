@@ -12,6 +12,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
+    "@webstudio-is/sdk": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "warn-once": "^0.1.1"
   },

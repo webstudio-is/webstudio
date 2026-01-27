@@ -1,4 +1,4 @@
-import { getPagePath } from "@webstudio-is/sdk";
+import { getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -12,15 +12,6 @@ import {
 } from "~/shared/nano-states";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 import { comparePatterns } from "./shared/routing-priority";
-
-const isAbsoluteUrl = (href: string) => {
-  try {
-    new URL(href);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const getSelectedPagePathname = () => {
   const pages = $pages.get();
