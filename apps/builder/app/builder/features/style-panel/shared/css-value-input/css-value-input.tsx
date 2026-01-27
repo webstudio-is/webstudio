@@ -760,7 +760,12 @@ export const CssValueInput = ({
         unit: value.unit,
       };
 
-      onChangeComplete({ value: newValue, ...meta, type: "delta" });
+      onChangeComplete({
+        value: newValue,
+        ...meta,
+        type: "delta",
+        close: false,
+      });
       event.preventDefault();
     }
   };
