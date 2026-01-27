@@ -6,7 +6,11 @@ import {
   useEffect,
 } from "react";
 import { useFetcher, type Fetcher, type FormProps } from "react-router";
-import { formIdFieldName, formBotFieldName } from "@webstudio-is/sdk/runtime";
+import {
+  formIdFieldName,
+  formBotFieldName,
+  getBraveErrorHtml,
+} from "@webstudio-is/sdk/runtime";
 
 export const defaultTag = "form";
 
@@ -126,6 +130,7 @@ export const WebhookForm = forwardRef<
           value={action?.toString()}
         />
         {children}
+        <div dangerouslySetInnerHTML={{ __html: getBraveErrorHtml() }} />
       </fetcher.Form>
     );
   }
