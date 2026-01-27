@@ -244,16 +244,21 @@ export const action = async ({
       throw new Error("Form bot field not found");
     }
 
-    const submitTime = parseInt(formBotValue, 16);
-    // Assumes that the difference between the server time and the form submission time,
-    // including any client-server time drift, is within a 5-minute range.
-    // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
-    // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
-    if (
-      Number.isNaN(submitTime) ||
-      Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
-    ) {
-      throw new Error(`Form bot value invalid ${formBotValue}`);
+    // Skip timestamp validation for Brave browser
+    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
+    // See: https://github.com/brave/brave-browser/issues/46541
+    if (formBotValue !== "brave") {
+      const submitTime = parseInt(formBotValue, 16);
+      // Assumes that the difference between the server time and the form submission time,
+      // including any client-server time drift, is within a 5-minute range.
+      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
+      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
+      if (
+        Number.isNaN(submitTime) ||
+        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
+      ) {
+        throw new Error(`Form bot value invalid ${formBotValue}`);
+      }
     }
 
     formData.delete(formIdFieldName);
