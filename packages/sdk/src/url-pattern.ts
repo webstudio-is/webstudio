@@ -13,3 +13,15 @@ const tokenRegexGlobal = new RegExp(tokenRegex.source, "g");
 export const matchPathnameParams = (pathname: string) => {
   return pathname.matchAll(tokenRegexGlobal);
 };
+
+/**
+ * Check if a string is an absolute URL (has a valid protocol)
+ */
+export const isAbsoluteUrl = (href: string) => {
+  try {
+    new URL(href);
+    return true;
+  } catch {
+    return false;
+  }
+};
