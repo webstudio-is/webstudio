@@ -37,8 +37,8 @@ describe("Image optimizations applied", () => {
     expect(imgAttr).toMatchInlineSnapshot(`
       {
         "sizes": "100vw",
-        "src": "/cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=256&quality=100&format=auto",
-        "srcSet": "/cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=16&quality=100&format=auto 16w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=32&quality=100&format=auto 32w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=48&quality=100&format=auto 48w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=64&quality=100&format=auto 64w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=96&quality=100&format=auto 96w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=128&quality=100&format=auto 128w, /cgi/image/https%3A%2F%2Fwebstudio.is%2Flogo.webp?width=256&quality=100&format=auto 256w",
+        "src": "/cgi/image/https%3A//webstudio.is/logo.webp?width=256&quality=100&format=auto",
+        "srcSet": "/cgi/image/https%3A//webstudio.is/logo.webp?width=16&quality=100&format=auto 16w, /cgi/image/https%3A//webstudio.is/logo.webp?width=32&quality=100&format=auto 32w, /cgi/image/https%3A//webstudio.is/logo.webp?width=48&quality=100&format=auto 48w, /cgi/image/https%3A//webstudio.is/logo.webp?width=64&quality=100&format=auto 64w, /cgi/image/https%3A//webstudio.is/logo.webp?width=96&quality=100&format=auto 96w, /cgi/image/https%3A//webstudio.is/logo.webp?width=128&quality=100&format=auto 128w, /cgi/image/https%3A//webstudio.is/logo.webp?width=256&quality=100&format=auto 256w",
       }
     `);
   });

@@ -1,5 +1,4 @@
 import warnOnce from "warn-once";
-import { isAbsoluteUrl } from "@webstudio-is/sdk";
 import { allSizes, type ImageLoader } from "./image-optimize";
 
 const NON_EXISTING_DOMAIN = "https://a3cbcbec-cdb1-4ea4-ad60-43c795308ddc.ddc";
@@ -12,12 +11,6 @@ const joinPath = (...segments: string[]) => {
 };
 
 const encodePathFragment = (fragment: string) => {
-  // For absolute URLs, keep slashes fully encoded to prevent URL path normalization
-  // e.g., https:// in path would become https:/ when server normalizes //
-  // For relative paths, replace %2F with / for cleaner URLs
-  if (isAbsoluteUrl(fragment)) {
-    return encodeURIComponent(fragment);
-  }
   return encodeURIComponent(fragment).replace(/%2F/g, "/");
 };
 
