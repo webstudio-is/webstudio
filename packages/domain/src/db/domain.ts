@@ -8,7 +8,7 @@ import * as projectApi from "@webstudio-is/project/index.server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type Result = { success: false; error: string } | { success: true };
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { db } from "../db";
 import type { IsEqual } from "type-fest";
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type Relation =
   Database["public"]["Tables"]["AuthorizationToken"]["Row"]["relation"];

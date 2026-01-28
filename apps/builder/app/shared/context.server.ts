@@ -6,7 +6,7 @@ import { entryApi } from "./entri/entri-api.server";
 
 import { getUserPlanFeatures } from "./db/user-plan-features.server";
 import { staticEnv } from "~/env/env.static.server";
-import { createClient } from "@webstudio-is/postrest/index.server";
+import { createClient } from "@webstudio-is/postgrest/index.server";
 import { builderAuthenticator } from "~/services/builder-auth.server";
 import { readLoginSessionBloomFilter } from "~/services/session.server";
 import type { BloomFilter } from "~/services/bloom-filter.server";
@@ -184,7 +184,7 @@ const createTrpcCache = () => {
   };
 };
 
-export const createPostrestContext = () => {
+export const createPostgrestContext = () => {
   return { client: createClient(env.POSTGREST_URL, env.POSTGREST_API_KEY) };
 };
 
@@ -192,7 +192,7 @@ export const createPostrestContext = () => {
  * argument buildEnv==="prod" only if we are loading project with production build
  */
 export const createContext = async (request: Request): Promise<AppContext> => {
-  const postgrest = createPostrestContext();
+  const postgrest = createPostgrestContext();
   const authorization = await createAuthorizationContext(request, postgrest);
 
   const domain = createDomainContext();

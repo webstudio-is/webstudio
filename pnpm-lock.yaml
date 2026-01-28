@@ -274,7 +274,7 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
-      '@webstudio-is/postrest':
+      '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../../packages/postgrest
       '@webstudio-is/project':
@@ -1046,7 +1046,7 @@ importers:
 
   packages/authorization-token:
     dependencies:
-      '@webstudio-is/postrest':
+      '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
       '@webstudio-is/trpc-interface':
@@ -1490,7 +1490,7 @@ importers:
 
   packages/domain:
     dependencies:
-      '@webstudio-is/postrest':
+      '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
       '@webstudio-is/project':
@@ -1731,7 +1731,7 @@ importers:
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
-      '@webstudio-is/postrest':
+      '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
       '@webstudio-is/sdk':
@@ -2222,7 +2222,7 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
-      '@webstudio-is/postrest':
+      '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
       '@webstudio-is/tsconfig':
