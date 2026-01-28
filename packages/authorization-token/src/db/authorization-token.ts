@@ -1,4 +1,4 @@
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
   authorizeProject,

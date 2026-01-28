@@ -1,6 +1,6 @@
 /* eslint no-console: ["error", { allow: ["time", "timeEnd"] }] */
 
-import type { Database } from "@webstudio-is/postrest/index.server";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   AuthorizationError,
   authorizeProject,

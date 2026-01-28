@@ -17,7 +17,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@webstudio-is/postrest": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "vitest": "^3.1.2"
   },

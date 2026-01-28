@@ -9,7 +9,7 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@webstudio-is/postrest": "workspace:*",
+    "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
