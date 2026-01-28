@@ -5,6 +5,11 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/webstudio",
+  "initializeCommand": "mkdir -p ~/.github ~/webstudio",
+  "mounts": [
+    "source=${localEnv:HOME}/webstudio/webstudio-saas,target=/workspaces/webstudio-saas,type=bind",
+    "source=${localEnv:HOME}/.github,target=/workspaces/webstudio/.github,type=bind"
+  ],
   "features": {
     "ghcr.io/robbert229/devcontainer-features/postgresql-client:1": {
       "version": "15"
@@ -31,7 +36,8 @@
         "me-dutour-mathieu.vscode-github-actions",
         "eamodio.gitlens",
         "bradymholt.pgformatter",
-        "YoavBls.pretty-ts-errors"
+        "YoavBls.pretty-ts-errors",
+        "typescriptteam.native-preview"
       ]
     }
   }
