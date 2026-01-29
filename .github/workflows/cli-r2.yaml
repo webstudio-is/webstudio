@@ -1,6 +1,12 @@
 name: CLI R2
 
 on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or SHA to build"
+        required: false
+        default: "main"
   push:
     branches:
       - "*.staging"
@@ -29,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+          ref: ${{ inputs.ref || github.sha }} # Use input ref for workflow_dispatch, or HEAD commit
 
       # We need submodules here as this is used for the cloudflare build
       - uses: ./.github/actions/submodules-checkout
@@ -69,13 +75,23 @@ jobs:
 
       - name: Copy artifact
         run: |
-          # For staging
-          aws s3 cp cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${{ github.ref_name }}.tar.zst"
+          # Get the actual SHA of the checked out commit
+          ACTUAL_SHA=$(git rev-parse HEAD)
 
-          # For production can be cached forever
+          # For staging/branch builds
+          if [ -n "${{ github.ref_name }}" ] && [ "${{ github.ref_name }}" != "" ]; then
+            aws s3 cp cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${{ github.ref_name }}.tar.zst"
+          fi
+
+          # For production - use the actual SHA (can be cached forever)
           aws s3 cp \
           --metadata-directive REPLACE --cache-control "public,max-age=31536102,immutable" \
-          cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${{ github.sha }}.tar.zst"
+          cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${ACTUAL_SHA}.tar.zst"
+
+          # Also upload as "main" for workflow_dispatch on main branch
+          if [ "${{ inputs.ref }}" = "main" ] || [ "${{ github.ref_name }}" = "main" ]; then
+            aws s3 cp cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/main.tar.zst"
+          fi
 
         working-directory: ${{ github.workspace }}/..
         env:
@@ -103,7 +119,10 @@ jobs:
           node-version: 20
 
       - name: Copy atrifact via http
-        run: curl -o cloudflare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst
+        run: |
+          # For workflow_dispatch, use the input ref; for push, use branch name
+          ARTIFACT_REF="${{ inputs.ref || github.ref_name }}"
+          curl -o cloudflare-template.tar.zst "${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${ARTIFACT_REF}.tar.zst"
 
       - name: Extract archive
         run: tar --use-compress-program="zstd -d" -xf cloudflare-template.tar.zst -C .
@@ -131,6 +150,8 @@ jobs:
 
   delete-github-deployments:
     needs: checks
+    # Only delete deployments for branch pushes, not workflow_dispatch
+    if: github.event_name == 'push'
     uses: ./.github/workflows/delete-github-deployments.yml
     with:
       ref: ${{ github.ref_name }}
