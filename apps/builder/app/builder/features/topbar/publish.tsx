@@ -414,7 +414,9 @@ const Publish = ({
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
-  const { hasPaidPlan, allowStagingPublish } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const { allowStagingPublish } = userPlanFeatures;
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
@@ -914,8 +916,6 @@ const Content = (props: {
   const [newDomains, setNewDomains] = useState(new Set<string>());
 
   const project = useStore($project);
-
-  const hasCustomDomains = (project?.domainsVirtual.length ?? 0) > 0;
 
   if (project == null) {
     throw new Error("Project not found");

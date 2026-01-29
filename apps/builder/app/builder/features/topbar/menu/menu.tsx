@@ -58,7 +58,8 @@ const ViewMenuItem = () => {
 };
 
 export const Menu = () => {
-  const { hasPaidPlan } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
   const authToken = useStore($authToken);

@@ -521,7 +521,6 @@ export const ProjectDialogs = ({
         isOpen={openDialog === "share"}
         onOpenChange={(open) => onOpenDialogChange(open ? "share" : undefined)}
         projectId={projectId}
-        hasProPlan={userPlanFeatures.hasProPlan}
       />
       <TagsDialog
         projectId={projectId}

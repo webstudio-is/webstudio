@@ -389,7 +389,8 @@ const AssetInfoContent = ({
   asset: Asset;
   usages: AssetUsage[];
 }) => {
-  const { hasPaidPlan } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const { size, meta, id, name } = asset;
   const { basename, ext } = parseAssetName(name);
   const [filenameError, setFilenameError] = useState<string>();

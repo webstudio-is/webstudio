@@ -98,7 +98,8 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
-  const { hasPaidPlan } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const { error, isOpen, showDialog } = useEntri({
     domain,
     dnsRecords,

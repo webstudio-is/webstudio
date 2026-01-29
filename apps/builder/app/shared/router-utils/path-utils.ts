@@ -100,9 +100,12 @@ export const loginPath = (params: {
 export const logoutPath = () => "/logout";
 export const restLogoutPath = () => "/dashboard-logout";
 
-export const userPlanSubscriptionPath = () => {
+export const userPlanSubscriptionPath = (subscriptionId?: string) => {
   const urlSearchParams = new URLSearchParams();
   urlSearchParams.set("return_url", window.location.href);
+  if (subscriptionId) {
+    urlSearchParams.set("subscription", subscriptionId);
+  }
 
   return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
 };

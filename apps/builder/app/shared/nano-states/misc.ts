@@ -304,8 +304,7 @@ export const $userPlanFeatures = atom<UserPlanFeatures>({
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 1,
-  hasSubscription: false,
-  hasPaidPlan: false,
+  purchases: [],
 });
 
 const builderModes = ["design", "preview", "content"] as const;

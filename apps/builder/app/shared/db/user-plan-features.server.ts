@@ -21,7 +21,7 @@ export const getUserPlanFeatures = async (
 
   const productsResult = await postgrest.client
     .from("Product")
-    .select("name, meta")
+    .select("id, name, meta")
     .in(
       "id",
       userProducts.map(({ productId }) => productId ?? "")
@@ -34,10 +34,29 @@ export const getUserPlanFeatures = async (
 
   const products = productsResult.data;
 
+  // Create a map of productId -> product name for quick lookup
+  const productIdToName = new Map<string, string>();
+  for (const product of products) {
+    productIdToName.set(product.id, product.name);
+  }
+
+  // Build purchases array - includes all products (subscriptions and LTDs)
+  // subscriptionId only set for recurring subscriptions (manageable in Stripe)
+  const purchases: Array<{
+    planName: string;
+    subscriptionId?: string;
+  }> = [];
+  for (const userProduct of userProducts) {
+    if (userProduct.productId) {
+      const planName = productIdToName.get(userProduct.productId) ?? "Pro";
+      purchases.push({
+        planName,
+        subscriptionId: userProduct.subscriptionId ?? undefined,
+      });
+    }
+  }
+
   if (userProducts.length > 0) {
-    const hasSubscription = userProducts.some(
-      (log) => log.subscriptionId !== null
-    );
     const productMetas = products.map((product) => {
       return {
         allowAdditionalPermissions: true,
@@ -68,9 +87,7 @@ export const getUserPlanFeatures = async (
       maxPublishesAllowedPerUser: Math.max(
         ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
       ),
-      hasSubscription,
-      hasPaidPlan: true,
-      planName: products[0].name,
+      purchases,
     };
   }
 
@@ -83,9 +100,7 @@ export const getUserPlanFeatures = async (
       maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-      hasSubscription: true,
-      hasPaidPlan: true,
-      planName: "env.USER_PLAN Pro",
+      purchases: [{ planName: "env.USER_PLAN Pro" }],
     };
   }
 
@@ -97,7 +112,6 @@ export const getUserPlanFeatures = async (
     maxContactEmails: 0,
     maxDomainsAllowedPerUser: 0,
     maxPublishesAllowedPerUser: 10,
-    hasSubscription: false,
-    hasPaidPlan: false,
+    purchases: [],
   };
 };

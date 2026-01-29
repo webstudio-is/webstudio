@@ -61,15 +61,15 @@ export const ProfileMenu = ({
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const planNames = userPlanFeatures.purchases.map((p) => p.planName);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          badge={
-            userPlanFeatures.hasPaidPlan ? userPlanFeatures.planName : undefined
-          }
+          badge={hasPaidPlan ? planNames.join(", ") : undefined}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -77,14 +77,24 @@ export const ProfileMenu = ({
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
         </DropdownMenuLabel>
-        {userPlanFeatures.hasSubscription && (
-          <DropdownMenuItem
-            onSelect={() => navigate(userPlanSubscriptionPath())}
-          >
-            Manage Subscription
-          </DropdownMenuItem>
-        )}
-        {userPlanFeatures.hasPaidPlan === false && (
+        {userPlanFeatures.purchases
+          .filter(
+            (
+              purchase
+            ): purchase is typeof purchase & { subscriptionId: string } =>
+              Boolean(purchase.subscriptionId)
+          )
+          .map((purchase) => (
+            <DropdownMenuItem
+              key={purchase.subscriptionId}
+              onSelect={() =>
+                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+              }
+            >
+              Manage {purchase.planName}
+            </DropdownMenuItem>
+          ))}
+        {hasPaidPlan === false && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");

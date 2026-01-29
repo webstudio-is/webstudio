@@ -72,20 +72,12 @@ type UserPlanFeatures = {
   maxContactEmails: number;
   maxDomainsAllowedPerUser: number;
   maxPublishesAllowedPerUser: number;
-  hasSubscription: boolean;
-} & (
-  | {
-      hasPaidPlan: true;
-      planName: string;
-    }
-  | { hasPaidPlan: false }
-);
-
-// No strings except planName - no secrets
-({}) as Omit<UserPlanFeatures, "planName"> satisfies Record<
-  string,
-  boolean | number
->;
+  /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
+  purchases: Array<{
+    planName: string;
+    subscriptionId?: string;
+  }>;
+};
 
 type TrpcCache = {
   setMaxAge: (path: string, value: number) => void;

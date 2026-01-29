@@ -41,7 +41,8 @@ export const SectionBackups = ({
 }: {
   projectId?: string;
 }) => {
-  const { hasProPlan } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
   const project = useStore($project);
   const projectId = projectIdProp ?? project?.id ?? "";
