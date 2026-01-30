@@ -63,6 +63,9 @@ export const ProfileMenu = ({
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
   const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const latestPlanName = userPlanFeatures.purchases[0]?.planName;
+  const subscriptions = userPlanFeatures.purchases.filter((purchase) =>
+    Boolean(purchase.subscriptionId)
+  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -72,23 +75,27 @@ export const ProfileMenu = ({
           badge={latestPlanName}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" width="regular">
         <DropdownMenuLabel>
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
         </DropdownMenuLabel>
-        {userPlanFeatures.purchases
-          .filter((purchase) => Boolean(purchase.subscriptionId))
-          .map((purchase) => (
-            <DropdownMenuItem
-              key={purchase.subscriptionId}
-              onSelect={() =>
-                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
-              }
-            >
-              Manage {purchase.planName}
-            </DropdownMenuItem>
-          ))}
+        {subscriptions.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Purchases</DropdownMenuLabel>
+          </>
+        )}
+        {subscriptions.map((purchase) => (
+          <DropdownMenuItem
+            key={purchase.subscriptionId}
+            onSelect={() =>
+              navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+            }
+          >
+            Manage {purchase.planName}
+          </DropdownMenuItem>
+        ))}
         {hasPaidPlan === false && (
           <DropdownMenuItem
             onSelect={() => {
