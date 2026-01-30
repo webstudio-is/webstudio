@@ -22,14 +22,14 @@ interface DomainCheckboxProps {
 }
 
 export const DomainCheckbox = (props: DomainCheckboxProps) => {
-  const hasProPlan = useStore($userPlanFeatures).hasProPlan;
+  const { allowStagingPublish } = useStore($userPlanFeatures);
   const project = useStore($project);
 
   if (project === undefined) {
     return;
   }
 
-  const tooltipContentForFreeUsers = hasProPlan ? undefined : (
+  const tooltipContentForFreeUsers = allowStagingPublish ? undefined : (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Text variant="titles">Publish to Staging</Text>
       <Text>
@@ -56,13 +56,13 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     </Flex>
   );
 
-  const defaultChecked = hasProPlan ? props.defaultChecked : true;
-  const disabled = hasProPlan ? props.disabled : true;
+  const defaultChecked = allowStagingPublish ? props.defaultChecked : true;
+  const disabled = allowStagingPublish ? props.disabled : true;
 
   const hideDomainCheckbox =
     project.domainsVirtual.filter(
       (domain) => domain.status === "ACTIVE" && domain.verified
-    ).length === 0 && hasProPlan;
+    ).length === 0 && allowStagingPublish;
 
   return (
     <div style={{ display: hideDomainCheckbox ? "none" : "contents" }}>

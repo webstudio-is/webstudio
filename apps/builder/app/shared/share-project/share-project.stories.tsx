@@ -98,7 +98,7 @@ export const Empty: StoryFn<typeof ShareProject> = () => {
       <PopoverContent>
         <ShareProject
           {...props}
-          hasProPlan={false}
+          allowAdditionalPermissions={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`
@@ -120,7 +120,7 @@ export const WithLinks: StoryFn<typeof ShareProject> = () => {
       <PopoverContent>
         <ShareProject
           {...props}
-          hasProPlan={false}
+          allowAdditionalPermissions={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`
@@ -142,7 +142,7 @@ export const WithAsyncLinks: StoryFn<typeof ShareProject> = () => {
       <PopoverContent>
         <ShareProject
           {...props}
-          hasProPlan={false}
+          allowAdditionalPermissions={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`

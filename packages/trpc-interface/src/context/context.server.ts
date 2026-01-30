@@ -65,25 +65,19 @@ type DeploymentContext = {
 };
 
 type UserPlanFeatures = {
-  allowShareAdminLinks: boolean;
+  allowAdditionalPermissions: boolean;
   allowDynamicData: boolean;
+  allowContentMode: boolean;
+  allowStagingPublish: boolean;
   maxContactEmails: number;
   maxDomainsAllowedPerUser: number;
   maxPublishesAllowedPerUser: number;
-  hasSubscription: boolean;
-} & (
-  | {
-      hasProPlan: true;
-      planName: string;
-    }
-  | { hasProPlan: false }
-);
-
-// No strings except planName - no secrets
-({}) as Omit<UserPlanFeatures, "planName"> satisfies Record<
-  string,
-  boolean | number
->;
+  /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
+  purchases: Array<{
+    planName: string;
+    subscriptionId?: string;
+  }>;
+};
 
 type TrpcCache = {
   setMaxAge: (path: string, value: number) => void;

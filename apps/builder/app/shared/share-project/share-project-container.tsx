@@ -3,6 +3,8 @@ import { useDebouncedCallback } from "use-debounce";
 import { builderUrl } from "~/shared/router-utils";
 import { trpcClient } from "../trpc/trpc-client";
 import { ShareProject, type LinkOptions } from "./share-project";
+import { useStore } from "@nanostores/react";
+import { $userPlanFeatures } from "../nano-states";
 
 const useShareProjectContainer = (projectId: string) => {
   const {
@@ -89,17 +91,14 @@ const useShareProjectContainer = (projectId: string) => {
 
 type ShareButtonProps = {
   projectId: string;
-  hasProPlan: boolean;
 };
 
 /**
  * we place the logic inside Popover so that the fetcher does not exist outside of it.
  * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
  */
-export const ShareProjectContainer = ({
-  projectId,
-  hasProPlan,
-}: ShareButtonProps) => {
+export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
+  const { allowAdditionalPermissions } = useStore($userPlanFeatures);
   const {
     links,
     handleChangeDebounced,
@@ -110,7 +109,7 @@ export const ShareProjectContainer = ({
 
   return (
     <ShareProject
-      hasProPlan={hasProPlan}
+      allowAdditionalPermissions={allowAdditionalPermissions}
       links={links}
       onChange={handleChangeDebounced}
       onDelete={handleDelete}

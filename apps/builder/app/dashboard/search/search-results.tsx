@@ -21,7 +21,7 @@ const initialSearchResults: SearchResults = {
 
 export const SearchResults = (props: DashboardData) => {
   const [searchParams] = useSearchParams();
-  const { projects, templates, userPlanFeatures, publisherHost } = props;
+  const { projects, templates, publisherHost, userPlanFeatures } = props;
   const search = searchParams.get("q");
 
   const results = useMemo(() => {

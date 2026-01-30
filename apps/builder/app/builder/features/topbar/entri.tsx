@@ -98,7 +98,8 @@ const useEntri = ({ domain, dnsRecords, onClose }: EntriProps) => {
 
 export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
   entriGlobalStyles();
-  const { hasProPlan } = useStore($userPlanFeatures);
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const { error, isOpen, showDialog } = useEntri({
     domain,
     dnsRecords,
@@ -113,7 +114,7 @@ export const Entri = ({ domain, dnsRecords, onClose }: EntriProps) => {
         color="primary"
         type="button"
         onClick={() => {
-          if (hasProPlan) {
+          if (hasPaidPlan) {
             showDialog();
           } else {
             setRequestUpgrade(true);

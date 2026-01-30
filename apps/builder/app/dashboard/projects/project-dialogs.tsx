@@ -389,16 +389,14 @@ export const ShareProjectDialog = ({
   isOpen,
   onOpenChange,
   projectId,
-  hasProPlan,
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   projectId: string;
-  hasProPlan: boolean;
 }) => {
   return (
     <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ShareProjectContainer hasProPlan={hasProPlan} projectId={projectId} />
+      <ShareProjectContainer projectId={projectId} />
     </Dialog>
   );
 };
@@ -523,7 +521,6 @@ export const ProjectDialogs = ({
         isOpen={openDialog === "share"}
         onOpenChange={(open) => onOpenDialogChange(open ? "share" : undefined)}
         projectId={projectId}
-        hasProPlan={userPlanFeatures.hasProPlan}
       />
       <TagsDialog
         projectId={projectId}

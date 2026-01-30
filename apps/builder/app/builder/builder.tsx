@@ -434,10 +434,12 @@ export const Builder = ({
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
+          <Main css={{ pointerEvents: "none" }}>
+            <CanvasToolsContainer />
+          </Main>
           {project ? (
             <Topbar
               project={project}
-              hasProPlan={userPlanFeatures.hasProPlan}
               css={{ gridArea: "header" }}
               loading={
                 <LoadingBackground

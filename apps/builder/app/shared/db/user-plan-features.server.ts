@@ -21,7 +21,7 @@ export const getUserPlanFeatures = async (
 
   const productsResult = await postgrest.client
     .from("Product")
-    .select("name, meta")
+    .select("id, name, meta")
     .in(
       "id",
       userProducts.map(({ productId }) => productId ?? "")
@@ -34,14 +34,35 @@ export const getUserPlanFeatures = async (
 
   const products = productsResult.data;
 
+  // Create a map of productId -> product name for quick lookup
+  const productIdToName = new Map<string, string>();
+  for (const product of products) {
+    productIdToName.set(product.id, product.name);
+  }
+
+  // Build purchases array - includes all products (subscriptions and LTDs)
+  // subscriptionId only set for recurring subscriptions (manageable in Stripe)
+  const purchases: Array<{
+    planName: string;
+    subscriptionId?: string;
+  }> = [];
+  for (const userProduct of userProducts) {
+    if (userProduct.productId) {
+      const planName = productIdToName.get(userProduct.productId) ?? "Pro";
+      purchases.push({
+        planName,
+        subscriptionId: userProduct.subscriptionId ?? undefined,
+      });
+    }
+  }
+
   if (userProducts.length > 0) {
-    const hasSubscription = userProducts.some(
-      (log) => log.subscriptionId !== null
-    );
     const productMetas = products.map((product) => {
       return {
-        allowShareAdminLinks: true,
+        allowAdditionalPermissions: true,
         allowDynamicData: true,
+        allowContentMode: true,
+        allowStagingPublish: true,
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
@@ -49,10 +70,14 @@ export const getUserPlanFeatures = async (
       };
     });
     return {
-      allowShareAdminLinks: productMetas.some(
-        (item) => item.allowShareAdminLinks
+      allowAdditionalPermissions: productMetas.some(
+        (item) => item.allowAdditionalPermissions
       ),
       allowDynamicData: productMetas.some((item) => item.allowDynamicData),
+      allowContentMode: productMetas.some((item) => item.allowContentMode),
+      allowStagingPublish: productMetas.some(
+        (item) => item.allowStagingPublish
+      ),
       maxContactEmails: Math.max(
         ...productMetas.map((item) => item.maxContactEmails)
       ),
@@ -62,32 +87,31 @@ export const getUserPlanFeatures = async (
       maxPublishesAllowedPerUser: Math.max(
         ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
       ),
-      hasSubscription,
-      hasProPlan: true,
-      planName: products[0].name,
+      purchases,
     };
   }
 
   if (env.USER_PLAN === "pro") {
     return {
-      allowShareAdminLinks: true,
+      allowAdditionalPermissions: true,
       allowDynamicData: true,
+      allowContentMode: true,
+      allowStagingPublish: true,
       maxContactEmails: 5,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-      hasSubscription: true,
-      hasProPlan: true,
-      planName: "env.USER_PLAN Pro",
+      purchases: [{ planName: "env.USER_PLAN Pro" }],
     };
   }
 
   return {
-    allowShareAdminLinks: false,
+    allowAdditionalPermissions: false,
     allowDynamicData: false,
+    allowContentMode: false,
+    allowStagingPublish: false,
     maxContactEmails: 0,
     maxDomainsAllowedPerUser: 0,
     maxPublishesAllowedPerUser: 10,
-    hasSubscription: false,
-    hasProPlan: false,
+    purchases: [],
   };
 };

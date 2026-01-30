@@ -61,15 +61,15 @@ export const ProfileMenu = ({
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
+  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const latestPlanName = userPlanFeatures.purchases[0]?.planName;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          badge={
-            userPlanFeatures.hasProPlan ? userPlanFeatures.planName : undefined
-          }
+          badge={latestPlanName}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -77,21 +77,24 @@ export const ProfileMenu = ({
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
         </DropdownMenuLabel>
-        {userPlanFeatures.hasSubscription && (
-          <DropdownMenuItem
-            onSelect={() => navigate(userPlanSubscriptionPath())}
-          >
-            Manage Subscription
-          </DropdownMenuItem>
-        )}
-        {userPlanFeatures.hasProPlan === false && (
+        {userPlanFeatures.purchases
+          .filter((purchase) => Boolean(purchase.subscriptionId))
+          .map((purchase) => (
+            <DropdownMenuItem
+              key={purchase.subscriptionId}
+              onSelect={() =>
+                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+              }
+            >
+              Manage {purchase.planName}
+            </DropdownMenuItem>
+          ))}
+        {hasPaidPlan === false && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");
             }}
-            css={{
-              gap: theme.spacing[3],
-            }}
+            css={{ gap: theme.spacing[3] }}
           >
             <UpgradeIcon />
             <div>Upgrade to Pro</div>
