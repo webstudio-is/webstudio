@@ -62,14 +62,14 @@ export const ProfileMenu = ({
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
   const hasPaidPlan = userPlanFeatures.purchases.length > 0;
-  const planNames = userPlanFeatures.purchases.map((p) => p.planName);
+  const latestPlanName = userPlanFeatures.purchases[0]?.planName;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          badge={hasPaidPlan ? planNames.join(", ") : undefined}
+          badge={latestPlanName}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -94,9 +94,7 @@ export const ProfileMenu = ({
             onSelect={() => {
               window.open("https://webstudio.is/pricing");
             }}
-            css={{
-              gap: theme.spacing[3],
-            }}
+            css={{ gap: theme.spacing[3] }}
           >
             <UpgradeIcon />
             <div>Upgrade to Pro</div>
