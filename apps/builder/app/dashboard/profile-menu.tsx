@@ -78,12 +78,7 @@ export const ProfileMenu = ({
           <Text>{user.email}</Text>
         </DropdownMenuLabel>
         {userPlanFeatures.purchases
-          .filter(
-            (
-              purchase
-            ): purchase is typeof purchase & { subscriptionId: string } =>
-              Boolean(purchase.subscriptionId)
-          )
+          .filter((purchase) => Boolean(purchase.subscriptionId))
           .map((purchase) => (
             <DropdownMenuItem
               key={purchase.subscriptionId}
