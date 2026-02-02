@@ -3,7 +3,7 @@ import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import {
   isAllowedMimeCategory,
-  IMAGE_MIME_TYPES,
+  RESIZABLE_IMAGE_MIME_TYPES,
   ALLOWED_FILE_TYPES,
 } from "@webstudio-is/sdk";
 import type { AssetActionResponse } from "~/builder/shared/assets";
@@ -50,7 +50,7 @@ export const action = async (
           const imageRequest = await fetch(url, {
             method: "GET",
             headers: {
-              Accept: IMAGE_MIME_TYPES.join(","),
+              Accept: RESIZABLE_IMAGE_MIME_TYPES.join(","),
             },
           });
 

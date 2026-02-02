@@ -152,6 +152,22 @@ export const IMAGE_MIME_TYPES: readonly string[] = IMAGE_EXTENSIONS.map(
 );
 
 /**
+ * Subset of IMAGE_MIME_TYPES supported as input by the image resizing pipeline.
+ * Used in the Accept header when fetching external images to prevent services
+ * like Unsplash (with auto=format) from serving formats like AVIF that cause
+ * Cloudflare Image Resizing ERROR 9520 during transformation.
+ *
+ * See: https://developers.cloudflare.com/images/transform-images/#supported-input-formats
+ */
+export const RESIZABLE_IMAGE_MIME_TYPES: readonly string[] = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+];
+
+/**
  * All video file extensions
  */
 export const VIDEO_EXTENSIONS: readonly AllowedFileExtension[] =
