@@ -177,6 +177,96 @@ const BreakpointEditorItem = ({
   );
 };
 
+type BreakpointsEditorContentProps = {
+  onDelete: (breakpoint: Breakpoint) => void;
+};
+
+/**
+ * Content component that holds local state for newly added breakpoints.
+ * This component unmounts when the popover closes, automatically cleaning up
+ * the addedBreakpointIds state.
+ */
+const BreakpointsEditorContent = ({
+  onDelete,
+}: BreakpointsEditorContentProps) => {
+  const breakpoints = useStore($breakpoints);
+  // Track IDs of breakpoints added in this session to maintain their position at the top
+  const [addedBreakpointIds, setAddedBreakpointIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
+  const currentBreakpointsFlat = [...grouped.widthBased, ...grouped.custom];
+
+  // Separate breakpoints added in this session from existing ones
+  const addedInSession = currentBreakpointsFlat.filter((bp) =>
+    addedBreakpointIds.has(bp.id)
+  );
+  const existing = currentBreakpointsFlat.filter(
+    (bp) => !addedBreakpointIds.has(bp.id)
+  );
+
+  // Show breakpoints added in this session first (UX choice), then existing ones
+  const allBreakpoints = [...addedInSession, ...existing].filter(
+    (breakpoint) =>
+      breakpoint.condition !== undefined ||
+      isBaseBreakpoint(breakpoint) === false
+  );
+
+  const handleChangeComplete = (breakpoint: Breakpoint) => {
+    serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
+      breakpoints.set(breakpoint.id, breakpoint);
+    });
+  };
+
+  const handleAddBreakpoint = () => {
+    const id = nanoid();
+    const newBreakpoint: Breakpoint = {
+      id,
+      label: "",
+      minWidth: 0,
+    };
+    // Add to store immediately so it appears in the list
+    serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
+      breakpoints.set(id, newBreakpoint);
+    });
+    // Track this ID as added in this session
+    setAddedBreakpointIds((prev) => new Set([...prev, id]));
+  };
+
+  return (
+    <Flex direction="column">
+      <PanelTitle
+        css={{ paddingInline: theme.panel.paddingInline }}
+        suffix={
+          <IconButton onClick={handleAddBreakpoint}>
+            <PlusIcon />
+          </IconButton>
+        }
+      >
+        Breakpoints
+      </PanelTitle>
+      <Separator />
+      {allBreakpoints.map((breakpoint, index, all) => (
+        <Fragment key={breakpoint.id}>
+          <Box css={{ p: theme.panel.padding }}>
+            <BreakpointEditorItem
+              breakpoint={breakpoint}
+              onChangeComplete={handleChangeComplete}
+              onDelete={onDelete}
+              autoFocus={index === 0}
+            />
+          </Box>
+          {index < all.length - 1 && <PopoverSeparator />}
+        </Fragment>
+      ))}
+      {allBreakpoints.length === 0 && (
+        <Text css={{ margin: theme.spacing[10] }}>No breakpoints found</Text>
+      )}
+    </Flex>
+  );
+};
+
 type BreakpointsEditorProps = {
   onDelete: (breakpoint: Breakpoint) => void;
   children: React.ReactNode;
@@ -190,84 +280,11 @@ export const BreakpointsEditor = ({
   open,
   onOpenChange,
 }: BreakpointsEditorProps) => {
-  const breakpoints = useStore($breakpoints);
-  const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
-
-  // Use current breakpoints from store, not stale cached version
-  const grouped = groupBreakpoints(Array.from(breakpoints.values()));
-  const currentBreakpointsFlat = [...grouped.widthBased, ...grouped.custom];
-
-  const allBreakpoints = [
-    ...addedBreakpoints,
-    ...currentBreakpointsFlat.filter(
-      (breakpoint) =>
-        addedBreakpoints.find((added) => added.id === breakpoint.id) ===
-        undefined
-    ),
-  ].filter(
-    (breakpoint) =>
-      breakpoint.condition !== undefined ||
-      isBaseBreakpoint(breakpoint) === false
-  );
-
-  const handleChangeComplete = (breakpoint: Breakpoint) => {
-    serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
-      breakpoints.set(breakpoint.id, breakpoint);
-    });
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    onOpenChange?.(newOpen);
-  };
-
   return (
-    <Popover open={open} onOpenChange={handleOpenChange} modal>
+    <Popover open={open} onOpenChange={onOpenChange} modal>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent>
-        <Flex direction="column">
-          <PanelTitle
-            css={{ paddingInline: theme.panel.paddingInline }}
-            suffix={
-              <IconButton
-                onClick={() => {
-                  const newBreakpoint: Breakpoint = {
-                    id: nanoid(),
-                    label: "",
-                    minWidth: 0,
-                  };
-                  setAddedBreakpoints([newBreakpoint, ...addedBreakpoints]);
-                }}
-              >
-                <PlusIcon />
-              </IconButton>
-            }
-          >
-            {"Breakpoints"}
-          </PanelTitle>
-          <Separator />
-          <Fragment>
-            {allBreakpoints.map((breakpoint, index, all) => {
-              return (
-                <Fragment key={breakpoint.id}>
-                  <Box css={{ p: theme.panel.padding }}>
-                    <BreakpointEditorItem
-                      breakpoint={breakpoint}
-                      onChangeComplete={handleChangeComplete}
-                      onDelete={onDelete}
-                      autoFocus={index === 0}
-                    />
-                  </Box>
-                  {index < all.length - 1 && <PopoverSeparator />}
-                </Fragment>
-              );
-            })}
-          </Fragment>
-          {allBreakpoints.length === 0 && (
-            <Text css={{ margin: theme.spacing[10] }}>
-              No breakpoints found
-            </Text>
-          )}
-        </Flex>
+        <BreakpointsEditorContent onDelete={onDelete} />
       </PopoverContent>
     </Popover>
   );
