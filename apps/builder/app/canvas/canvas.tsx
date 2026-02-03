@@ -68,6 +68,7 @@ import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { subscribeSelected } from "./instance-selected";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
+import { subscribeBreakpointSimulator } from "./shared/breakpoint-simulator";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
 import { subscribeScrollbarSize } from "./scrollbar-width";
@@ -190,6 +191,7 @@ const DesignMode = () => {
     subscribeInstanceHovering(options);
     subscribeFontLoadingDone(options);
     subscribeModifierKeys(options);
+    subscribeBreakpointSimulator(options);
     return () => {
       abortController.abort();
     };
