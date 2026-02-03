@@ -9,7 +9,6 @@ import {
   Avatar,
   theme,
   Button,
-  ProBadge,
   DropdownMenuSeparator,
   Text,
 } from "@webstudio-is/design-system";
@@ -29,9 +28,8 @@ const ProfileButton = forwardRef<
   {
     name: string;
     image?: string;
-    badge?: string;
   }
->(({ image, name, badge, ...rest }, forwardedRef) => {
+>(({ image, name, ...rest }, forwardedRef) => {
   return (
     <Button
       color="ghost"
@@ -46,9 +44,7 @@ const ProfileButton = forwardRef<
         // Exception for avatar. May need to introduce a 32px controls size later.
         height: theme.spacing[13],
       }}
-    >
-      {badge && <ProBadge>{badge}</ProBadge>}
-    </Button>
+    />
   );
 });
 
@@ -62,18 +58,13 @@ export const ProfileMenu = ({
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
   const hasPaidPlan = userPlanFeatures.purchases.length > 0;
-  const latestPlanName = userPlanFeatures.purchases[0]?.planName;
   const subscriptions = userPlanFeatures.purchases.filter((purchase) =>
     Boolean(purchase.subscriptionId)
   );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <ProfileButton
-          image={user.image || undefined}
-          name={nameOrEmail}
-          badge={latestPlanName}
-        />
+        <ProfileButton image={user.image || undefined} name={nameOrEmail} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" width="regular">
         <DropdownMenuLabel>
@@ -104,7 +95,7 @@ export const ProfileMenu = ({
             css={{ gap: theme.spacing[3] }}
           >
             <UpgradeIcon />
-            <div>Upgrade to Pro</div>
+            <div>Upgrade</div>
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
