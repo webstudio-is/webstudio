@@ -9,6 +9,7 @@ import {
   Avatar,
   theme,
   Button,
+  ProBadge,
   DropdownMenuSeparator,
   Text,
 } from "@webstudio-is/design-system";
@@ -28,8 +29,9 @@ const ProfileButton = forwardRef<
   {
     name: string;
     image?: string;
+    hasPurchases?: boolean;
   }
->(({ image, name, ...rest }, forwardedRef) => {
+>(({ image, name, hasPurchases, ...rest }, forwardedRef) => {
   return (
     <Button
       color="ghost"
@@ -44,7 +46,9 @@ const ProfileButton = forwardRef<
         // Exception for avatar. May need to introduce a 32px controls size later.
         height: theme.spacing[13],
       }}
-    />
+    >
+      {hasPurchases === false && <ProBadge>Free</ProBadge>}
+    </Button>
   );
 });
 
@@ -64,7 +68,11 @@ export const ProfileMenu = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <ProfileButton image={user.image || undefined} name={nameOrEmail} />
+        <ProfileButton
+          image={user.image || undefined}
+          name={nameOrEmail}
+          hasPurchases={hasPaidPlan}
+        />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" width="regular">
         <DropdownMenuLabel>
