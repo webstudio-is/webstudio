@@ -82,7 +82,7 @@ export const ProfileMenu = ({
         {subscriptions.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Manage subscriptions</DropdownMenuLabel>
+            <DropdownMenuLabel>Subscriptions</DropdownMenuLabel>
           </>
         )}
         {subscriptions.map((purchase) => (
