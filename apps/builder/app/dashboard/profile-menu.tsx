@@ -82,7 +82,7 @@ export const ProfileMenu = ({
         {subscriptions.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Purchases</DropdownMenuLabel>
+            <DropdownMenuLabel>Manage subscriptions</DropdownMenuLabel>
           </>
         )}
         {subscriptions.map((purchase) => (
@@ -92,7 +92,7 @@ export const ProfileMenu = ({
               navigate(userPlanSubscriptionPath(purchase.subscriptionId))
             }
           >
-            Manage {purchase.planName}
+            {purchase.planName}
           </DropdownMenuItem>
         ))}
         {hasPaidPlan === false && (
