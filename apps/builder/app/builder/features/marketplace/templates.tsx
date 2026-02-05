@@ -26,9 +26,12 @@ import { builderUrl } from "~/shared/router-utils";
 import {
   extractWebstudioFragment,
   findClosestInsertable,
+  detectFragmentTokenConflicts,
+  detectPageTokenConflicts,
   insertWebstudioFragmentAt,
   updateWebstudioData,
 } from "~/shared/instance-utils";
+import { builderApi } from "~/shared/builder-api";
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import { Card } from "./card";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
@@ -43,7 +46,7 @@ const isBody = (instance: Instance) =>
  * - Currently only supports inserting everything from the body
  * - Could be extended to support children of some other instance e.g. Marketplace Item
  */
-const insertSection = ({
+const insertSection = async ({
   data,
   instanceId,
 }: {
@@ -66,22 +69,33 @@ const insertSection = ({
     if (insertable.position === "end") {
       insertable.position = "after";
     }
-    insertWebstudioFragmentAt(fragment, insertable);
+    const conflicts = detectFragmentTokenConflicts({ fragment });
+    const conflictResolution =
+      conflicts.length > 0
+        ? await builderApi.showTokenConflictDialog(conflicts)
+        : "theirs";
+    insertWebstudioFragmentAt(fragment, insertable, conflictResolution);
   }
 };
 
-const insertPage = ({
+const insertPage = async ({
   data: sourceData,
   pageId,
 }: {
   data: WebstudioData;
   pageId: Page["id"];
 }) => {
+  const conflicts = detectPageTokenConflicts({ sourceData, pageId });
+  const conflictResolution =
+    conflicts.length > 0
+      ? await builderApi.showTokenConflictDialog(conflicts)
+      : "theirs";
   let newPageId: undefined | Page["id"];
   updateWebstudioData((targetData) => {
     newPageId = insertPageCopyMutable({
       source: { data: sourceData, pageId },
       target: { data: targetData, folderId: ROOT_FOLDER_ID },
+      conflictResolution,
     });
   });
   if (newPageId) {
@@ -213,6 +227,8 @@ export const Templates = ({
                                 insertSection({
                                   data,
                                   instanceId: templateData.rootInstanceId,
+                                }).catch(() => {
+                                  // User cancelled conflict dialog
                                 });
                               }
                               if (
@@ -222,6 +238,8 @@ export const Templates = ({
                                 insertPage({
                                   data,
                                   pageId: templateData.pageId,
+                                }).catch(() => {
+                                  // User cancelled conflict dialog
                                 });
                               }
                             }}

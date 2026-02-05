@@ -35,12 +35,9 @@ const expectString = expect.any(String) as unknown as string;
 enableMapSet();
 registerContainers();
 
-// Mock insertFragmentWithConflictResolution to always return "theirs"
+// Mock detectFragmentTokenConflicts to always return no conflicts
 beforeAll(() => {
-  vi.spyOn(
-    instanceUtils,
-    "insertFragmentWithConflictResolution"
-  ).mockResolvedValue("theirs");
+  vi.spyOn(instanceUtils, "detectFragmentTokenConflicts").mockReturnValue([]);
 });
 
 $registeredComponentMetas.set(

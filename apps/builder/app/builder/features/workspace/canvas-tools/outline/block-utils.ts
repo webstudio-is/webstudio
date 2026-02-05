@@ -2,6 +2,7 @@ import type { Instance, Instances } from "@webstudio-is/sdk";
 import { blockTemplateComponent } from "@webstudio-is/sdk";
 import { shallowEqual } from "shallow-equal";
 import { selectInstance } from "~/shared/awareness";
+import { builderApi } from "~/shared/builder-api";
 import { findAvailableVariables } from "~/shared/data-variables";
 import {
   extractWebstudioFragment,
@@ -10,7 +11,7 @@ import {
   insertInstanceChildrenMutable,
   insertWebstudioFragmentCopy,
   updateWebstudioData,
-  insertFragmentWithConflictResolution,
+  detectFragmentTokenConflicts,
 } from "~/shared/instance-utils";
 import {
   $instances,
@@ -177,9 +178,11 @@ export const insertTemplateAt = async (
   };
 
   try {
-    const conflictResolution = await insertFragmentWithConflictResolution({
-      fragment,
-    });
+    const conflicts = detectFragmentTokenConflicts({ fragment });
+    const conflictResolution =
+      conflicts.length > 0
+        ? await builderApi.showTokenConflictDialog(conflicts)
+        : "theirs";
 
     updateWebstudioData((data) => {
       const { newInstanceIds } = insertWebstudioFragmentCopy({
