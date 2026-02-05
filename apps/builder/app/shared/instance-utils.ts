@@ -333,7 +333,8 @@ export const insertWebstudioElementAt = (insertable?: Insertable) => {
 
 export const insertWebstudioFragmentAt = (
   fragment: WebstudioFragment,
-  insertable?: Insertable
+  insertable?: Insertable,
+  conflictResolution?: ConflictResolution
 ): boolean => {
   // cannot insert empty fragment
   if (fragment.children.length === 0) {
@@ -361,6 +362,7 @@ export const insertWebstudioFragmentAt = (
         startingInstanceId: instancePath[0].instance.id,
       }),
       projectId: project.id,
+      conflictResolution,
     });
     const children: Instance["children"] = fragment.children.map((child) => {
       if (child.type === "id") {
@@ -1786,28 +1788,24 @@ export const buildInstancePath = (
 };
 
 /**
- * Detects token conflicts and shows resolution dialog if needed.
- * Returns the conflict resolution strategy to use.
+ * Detects token conflicts for a fragment insertion.
  *
  * @param fragment - The fragment to check for conflicts
- * @returns Promise that resolves with "theirs" (keep incoming) or "ours" (use existing), or rejects if user cancels
+ * @returns Array of token conflicts (empty if no conflicts)
  */
-export const insertFragmentWithConflictResolution = async ({
+export const detectFragmentTokenConflicts = ({
   fragment,
 }: {
   fragment: WebstudioFragment;
-}): Promise<ConflictResolution> => {
+}) => {
   const data = getWebstudioData();
-  if (data === undefined) {
-    throw new Error("No webstudio data available");
-  }
 
   const mergedBreakpointIds = buildMergedBreakpointIds(
     fragment.breakpoints,
     data.breakpoints
   );
 
-  const conflicts = detectTokenConflicts({
+  return detectTokenConflicts({
     fragmentStyleSources: fragment.styleSources,
     fragmentStyles: fragment.styles,
     existingStyleSources: data.styleSources,
@@ -1815,12 +1813,60 @@ export const insertFragmentWithConflictResolution = async ({
     breakpoints: data.breakpoints,
     mergedBreakpointIds,
   });
+};
 
-  if (conflicts.length === 0) {
-    // No conflicts, use theirs (doesn't matter which since there are no conflicts)
-    return "theirs";
+/**
+ * Detects token conflicts for a page insertion.
+ * Combines fragments from ROOT_INSTANCE and page body for conflict detection.
+ *
+ * @param sourceData - The source webstudio data containing the page
+ * @param pageId - The page ID to check for conflicts
+ * @returns Array of token conflicts (empty if no conflicts)
+ */
+export const detectPageTokenConflicts = ({
+  sourceData,
+  pageId,
+}: {
+  sourceData: WebstudioData;
+  pageId: string;
+}) => {
+  const data = getWebstudioData();
+
+  const page = sourceData.pages.pages.find((p) => p.id === pageId);
+  if (page === undefined && sourceData.pages.homePage.id !== pageId) {
+    throw new Error("Page not found");
   }
+  const targetPage = page ?? sourceData.pages.homePage;
 
-  // Show conflict dialog and wait for user choice
-  return await builderApi.showTokenConflictDialog(conflicts);
+  // Extract fragments for both ROOT_INSTANCE and page body
+  const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);
+  const pageFragment = extractWebstudioFragment(
+    sourceData,
+    targetPage.rootInstanceId
+  );
+
+  // Combine style sources and styles from both fragments
+  const combinedStyleSources = [
+    ...rootFragment.styleSources,
+    ...pageFragment.styleSources,
+  ];
+  const combinedStyles = [...rootFragment.styles, ...pageFragment.styles];
+  const combinedBreakpoints = [
+    ...rootFragment.breakpoints,
+    ...pageFragment.breakpoints,
+  ];
+
+  const mergedBreakpointIds = buildMergedBreakpointIds(
+    combinedBreakpoints,
+    data.breakpoints
+  );
+
+  return detectTokenConflicts({
+    fragmentStyleSources: combinedStyleSources,
+    fragmentStyles: combinedStyles,
+    existingStyleSources: data.styleSources,
+    existingStyles: data.styles,
+    breakpoints: data.breakpoints,
+    mergedBreakpointIds,
+  });
 };
