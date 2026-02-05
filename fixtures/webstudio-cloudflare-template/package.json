@@ -24,7 +24,7 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22"
   },
   "dependencies": {
     "@remix-run/cloudflare": "2.16.5",
