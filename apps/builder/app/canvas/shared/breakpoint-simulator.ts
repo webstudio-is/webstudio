@@ -19,27 +19,29 @@ let state: SimulatorState | undefined;
 export const subscribeBreakpointSimulator = (options: {
   signal: AbortSignal;
 }): (() => void) => {
-  // Apply initial simulation
+  // Apply initial simulation only if a condition-based breakpoint is selected
   const selectedBreakpoint = $selectedBreakpoint.get();
-  state = simulateMediaCondition(
-    document,
-    selectedBreakpoint?.condition,
-    state
-  );
+  if (selectedBreakpoint?.condition) {
+    state = simulateMediaCondition(
+      document,
+      selectedBreakpoint.condition,
+      state
+    );
+  }
 
   // Listen for changes
   const unsubscribe = $selectedBreakpoint.listen((breakpoint) => {
     state = simulateMediaCondition(document, breakpoint?.condition, state);
   });
 
-  // Cleanup on abort
-  options.signal.addEventListener("abort", () => {
+  const cleanup = () => {
     unsubscribe();
     simulateMediaCondition(document, undefined, state);
-  });
-
-  return () => {
-    unsubscribe();
-    simulateMediaCondition(document, undefined, state);
+    state = undefined;
   };
+
+  // Cleanup on abort
+  options.signal.addEventListener("abort", cleanup);
+
+  return cleanup;
 };
