@@ -347,17 +347,36 @@ const parseDate = (datetimeString: string) => {
 
 /**
  * Format a date using a template string.
- * Supports tokens: YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s
- * Example: formatDate(new Date(), "YYYY-MM-DD HH:mm:ss") => "2025-11-03 18:47:25"
+ * Supports tokens: YYYY, YY, MMMM, MMM, MM, M, DDDD, DDD, DD, D, HH, H, mm, m, ss, s
+ * Example: formatDate(new Date(), "YYYY-MM-DD HH:mm:ss", "en-US") => "2025-11-03 18:47:25"
+ * Example: formatDate(new Date(), "DDDD, MMMM D, YYYY", "en-US") => "Monday, November 3, 2025"
  */
-const formatDate = (date: Date, template: string): string => {
+const formatDate = (date: Date, template: string, locale = "en-US"): string => {
   const pad = (n: number, length = 2) => String(n).padStart(length, "0");
+
+  // Get localized day and month names
+  const longDayName = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+  }).format(date);
+  const shortDayName = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+  }).format(date);
+  const longMonthName = new Intl.DateTimeFormat(locale, {
+    month: "long",
+  }).format(date);
+  const shortMonthName = new Intl.DateTimeFormat(locale, {
+    month: "short",
+  }).format(date);
 
   const tokens: Record<string, string | number> = {
     YYYY: date.getFullYear(),
     YY: String(date.getFullYear()).slice(-2),
+    MMMM: longMonthName,
+    MMM: shortMonthName,
     MM: pad(date.getMonth() + 1),
     M: date.getMonth() + 1,
+    DDDD: longDayName,
+    DDD: shortDayName,
     DD: pad(date.getDate()),
     D: date.getDate(),
     HH: pad(date.getHours()),
@@ -368,9 +387,12 @@ const formatDate = (date: Date, template: string): string => {
     s: date.getSeconds(),
   };
 
-  return template.replace(/\b(YYYY|YY|MM|M|DD|D|HH|H|mm|m|ss|s)\b/g, (match) =>
-    String(tokens[match])
-  );
+  // Sort tokens by length (longest first) to avoid partial replacements
+  // e.g., replace MMMM before MMM, DDDD before DDD
+  const sortedTokens = Object.keys(tokens).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(`\\b(${sortedTokens.join("|")})\\b`, "g");
+
+  return template.replace(pattern, (match) => String(tokens[match]));
 };
 
 type TimeProps = Pick<ComponentProps<"time">, "dateTime"> & {
@@ -379,9 +401,16 @@ type TimeProps = Pick<ComponentProps<"time">, "dateTime"> & {
   dateStyle?: DateStyle;
   timeStyle?: TimeStyle;
   /**
-   * Custom format template string. When provided, overrides Date Style and Time Style.
-   * Supports tokens: YYYY, YY, MM, M, DD, D, HH, H, mm, m, ss, s.
-   * Example: "YYYY-MM-DD HH:mm:ss" displays as "2025-11-03 18:47:25"
+   * Custom format template. Overrides Date Style and Time Style.
+   *
+   * Tokens: YYYY/YY (year), MMMM/MMM/MM/M (month), DDDD/DDD/DD/D (day), HH/H (hours), mm/m (minutes), ss/s (seconds)
+   *
+   * Examples:
+   * - "YYYY-MM-DD" → 2025-11-03
+   * - "DDDD, MMMM D" → Monday, November 3
+   * - "DDD, D. MMM YYYY" → Mon, 3. Nov 2025
+   *
+   * Day and month names use the selected language.
    */
   format?: string;
 };
@@ -419,7 +448,7 @@ export const Time = forwardRef<ElementRef<"time">, TimeProps>(
       // Use custom format template if provided
       if (format) {
         try {
-          formattedDate = formatDate(date, format);
+          formattedDate = formatDate(date, format, locale);
         } catch {
           /* Do Nothing */
         }
