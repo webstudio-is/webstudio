@@ -134,6 +134,7 @@
     "@types/react-dom": "^18.2.25",
     "@vitest/coverage-v8": "3.1.2",
     "@webstudio-is/tsconfig": "workspace:*",
+    "css.escape": "^1.5.1",
     "fast-glob": "^3.3.2",
     "html-tags": "^4.0.0",
     "react-router-dom": "^6.30.0",
