@@ -38,7 +38,7 @@
     "typescript": "5.8.2"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22"
   },
   "name": "webstudio-react-router-docker",
   "version": "0.0.1",

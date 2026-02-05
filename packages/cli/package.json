@@ -28,7 +28,7 @@
   },
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": ">=20.12"
+    "node": ">=22"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
