@@ -13,6 +13,7 @@ services:
       # preserve history
       - ./.local:/home/node/.local
       - docker-data:/var/lib/docker
+      - ${HOME}/.github/instructions:/home/node/.github/instructions
 
     entrypoint: ["/usr/local/share/docker-init.sh"]
     # Overrides default command so things don't shut down after the process ends.
