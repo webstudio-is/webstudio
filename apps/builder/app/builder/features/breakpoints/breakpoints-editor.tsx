@@ -217,6 +217,9 @@ export const BreakpointsEditor = ({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen === false) {
+      setAddedBreakpoints([]);
+    }
     onOpenChange?.(newOpen);
   };
 
