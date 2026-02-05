@@ -2,19 +2,44 @@ name: Vercel Deploy Staging
 
 on:
   push:
+  pull_request_target:
+    types: [labeled, synchronize]
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
-  group: vercel-deploy-${{ github.workflow }}-${{ github.sha }}
+  group: vercel-deploy-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
   contents: read # to fetch code (actions/checkout)
   statuses: write # This is required for the GitHub Script createCommitStatus to work
   deployments: write
+  pull-requests: write # needed to remove labels and comment
 
 jobs:
+  # Remove the safe-to-deploy label when new commits are pushed to a PR (requires re-review)
+  remove-label-on-update:
+    if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove safe-to-deploy label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'safe-to-deploy'
+            }).catch(() => {});
+            console.log('Removed safe-to-deploy label due to new commits. Re-review required.');
+
   deployment:
+    # Run on push (for repo branches) OR on labeled event with safe-to-deploy label (for fork PRs)
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy')
+    
     # Execute development and staging on staging branches
     # Execute only development on all other branches
     strategy:
@@ -23,7 +48,7 @@ jobs:
           - staging
           - development
         is-staging:
-          - ${{ endsWith(github.ref_name, '.staging') }}
+          - ${{ github.event_name == 'push' && endsWith(github.ref_name, '.staging') }}
         exclude:
           - environment: staging
             is-staging: false
@@ -38,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/submodules-checkout
         with:
@@ -48,7 +73,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - uses: ./.github/actions/vercel
@@ -58,8 +83,8 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          ref-name: ${{ github.ref_name }}
-          sha: ${{ github.sha }}
+          ref-name: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
+          sha: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
           environment: ${{ matrix.environment }}
 
       - name: Debug Vercel Outputs
@@ -79,6 +104,19 @@ jobs:
           title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
           description: "[${{ matrix.environment }}] Site url"
           url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
+
+      - name: Comment on PR with deployment URL
+        if: github.event_name == 'pull_request_target' && matrix.environment == 'development'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployUrl = 'https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🚀 **Deployed!**\n\n📍 Preview: ${deployUrl}\n\n_Note: Adding new commits will remove the \`safe-to-deploy\` label and require re-approval._`
+            });
 
     outputs:
       builder-url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
@@ -100,4 +138,4 @@ jobs:
     needs: fixtures-test
     uses: ./.github/workflows/delete-github-deployments.yml
     with:
-      ref: ${{ github.ref_name }}
+      ref: ${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}

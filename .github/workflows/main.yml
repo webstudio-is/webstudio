@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+  pull_request_target:
+    types: [labeled]
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -16,6 +18,12 @@ permissions:
 
 jobs:
   checks:
+    # Run on push, regular PR (for repo branches), or labeled PR with safe-to-deploy (for forks)
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-deploy')
+    
     timeout-minutes: 20
 
     strategy:
@@ -47,7 +55,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Pnpm install

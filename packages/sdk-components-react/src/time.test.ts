@@ -78,3 +78,61 @@ test("formatDate with custom separator", () => {
   const date = new Date("2025-10-31T14:05:09");
   expect(formatDate(date, "DD.MM.YYYY")).toBe("31.10.2025");
 });
+
+test("formatDate with full month name in English", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "MMMM D, YYYY", "en-US")).toBe("October 31, 2025");
+});
+
+test("formatDate with short month name in English", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "MMM D, YYYY", "en-US")).toBe("Oct 31, 2025");
+});
+
+test("formatDate with full day name in English", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "DDDD, MMMM D, YYYY", "en-US")).toBe(
+    "Friday, October 31, 2025"
+  );
+});
+
+test("formatDate with short day name in English", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "DDD, MMM D", "en-US")).toBe("Fri, Oct 31");
+});
+
+test("formatDate with full month name in German", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "D. MMMM YYYY", "de-DE")).toBe("31. Oktober 2025");
+});
+
+test("formatDate with full day name in German", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "DDDD, D. MMMM YYYY", "de-DE")).toBe(
+    "Freitag, 31. Oktober 2025"
+  );
+});
+
+test("formatDate with short day and month in Spanish", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "DDD, D MMM YYYY", "es-ES")).toBe("vie, 31 oct 2025");
+});
+
+test("formatDate with full day and month in French", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "DDDD D MMMM YYYY", "fr-FR")).toBe(
+    "vendredi 31 octobre 2025"
+  );
+});
+
+test("formatDate with mixed tokens", () => {
+  const date = new Date("2025-01-15T09:30:45");
+  expect(formatDate(date, "DDDD, MMMM D, YYYY at HH:mm", "en-US")).toBe(
+    "Wednesday, January 15, 2025 at 09:30"
+  );
+});
+
+test("formatDate preserves non-token text", () => {
+  const date = new Date("2025-10-31T14:05:09");
+  expect(formatDate(date, "Today is DDDD", "en-US")).toBe("Today is Friday");
+});

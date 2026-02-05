@@ -13,7 +13,7 @@
     "fixtures:build": "rm -rf pages && pnpm cli build --template ssg-netlify --template internal && prettier --write ."
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22"
   },
   "type": "module",
   "keywords": [],
