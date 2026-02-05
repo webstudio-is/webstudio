@@ -259,12 +259,17 @@ const useScrub = ({
       },
       shouldHandleEvent,
     });
+    // value.type and value.unit are intentionally in the dependency array
+    // to re-setup scrub when the value type changes (e.g., from keyword to unit)
   }, [
     shouldHandleEvent,
     property,
     updateIntermediateValue,
     onAbortStable,
     defaultUnit,
+    value.type,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    "unit" in value ? value.unit : undefined,
   ]);
 
   return [scrubRef, inputRef];
