@@ -16,10 +16,10 @@ To install Node.js using NVM, first install NVM by running:
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 ```
 
-Once NVM is installed, you can install Node.js version 18 by running:
+Once NVM is installed, you can install Node.js version 22 by running:
 
 ```bash
-nvm install 18
+nvm install 22
 ```
 
 Verify your Node.js installation by checking its version:
