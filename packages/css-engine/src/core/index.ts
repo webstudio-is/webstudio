@@ -2,6 +2,7 @@ export type {
   StyleMap,
   NestingRule,
   MediaRule,
+  MediaRuleOptions,
   PlaintextRule,
   FontFaceRule,
 } from "./rules";

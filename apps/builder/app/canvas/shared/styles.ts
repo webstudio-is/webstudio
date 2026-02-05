@@ -14,9 +14,10 @@ import {
   addFontRules,
 } from "@webstudio-is/sdk";
 import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
-import { isPseudoElement } from "@webstudio-is/css-data";
+import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
 import {
   StyleValue,
+  type MediaRuleOptions,
   type StyleSheetRegular,
   type TransformValue,
   type VarValue,
@@ -31,6 +32,7 @@ import {
   $instances,
   $props,
   $registeredComponentMetas,
+  $selectedBreakpoint,
   $selectedInstanceSelector,
   $selectedStyleState,
   $styleSourceSelections,
@@ -414,6 +416,38 @@ const $descendantSelectors = computed(
 );
 
 /**
+ * Transform breakpoint options to simulate condition-based breakpoints.
+ * When a condition breakpoint is selected (e.g. prefers-color-scheme:dark),
+ * breakpoints with the same feature+value render as base (always apply),
+ * same feature but different value render as "not all" (never apply),
+ * and all others are unchanged.
+ */
+const simulateConditionBreakpoints = ({
+  breakpoints,
+  selectedBreakpoint,
+}: {
+  breakpoints: Iterable<Breakpoint>;
+  selectedBreakpoint: Breakpoint | undefined;
+}): Map<string, MediaRuleOptions> => {
+  const result = new Map<string, MediaRuleOptions>();
+  const simulated = selectedBreakpoint?.condition
+    ? parseMediaCondition(selectedBreakpoint.condition)
+    : undefined;
+  for (const breakpoint of breakpoints) {
+    if (simulated && breakpoint.condition) {
+      const parsed = parseMediaCondition(breakpoint.condition);
+      if (parsed?.feature === simulated.feature) {
+        const mediaType = parsed.value === simulated.value ? "all" : "not all";
+        result.set(breakpoint.id, { mediaType });
+        continue;
+      }
+    }
+    result.set(breakpoint.id, breakpoint);
+  }
+  return result;
+};
+
+/**
  * track new or deleted styles and style source selections items
  * and update style sheet accordingly
  */
@@ -430,9 +464,17 @@ export const subscribeStyles = () => {
     });
   };
 
-  const unsubscribeBreakpoints = $breakpoints.subscribe((breakpoints) => {
-    for (const breakpoint of breakpoints.values()) {
-      userSheet.addMediaRule(breakpoint.id, breakpoint);
+  const unsubscribeBreakpoints = computed(
+    [$breakpoints, $selectedBreakpoint],
+    (breakpoints, selectedBreakpoint) =>
+      [breakpoints, selectedBreakpoint] as const
+  ).subscribe(([breakpoints, selectedBreakpoint]) => {
+    const mediaRules = simulateConditionBreakpoints({
+      breakpoints: breakpoints.values(),
+      selectedBreakpoint,
+    });
+    for (const [id, options] of mediaRules) {
+      userSheet.addMediaRule(id, options);
     }
     renderUserSheetInTheNextFrame();
   });
@@ -826,5 +868,8 @@ export const __testing__ = {
   computeEditableCursorRules,
   computeStylesDiff,
   toDeclarationParams,
+  toVarValue,
+  hasExpressionChildren,
   renderStateStyles,
+  simulateConditionBreakpoints,
 };

@@ -9,6 +9,10 @@ import {
   createRegularStyleSheet,
   FakeStyleElement,
 } from "@webstudio-is/css-engine";
+
+// polyfill CSS.escape for Node environment
+import "css.escape";
+
 import { __testing__ } from "./styles";
 
 const {
@@ -20,7 +24,10 @@ const {
   computeEditableCursorRules,
   computeStylesDiff,
   toDeclarationParams,
+  toVarValue,
+  hasExpressionChildren,
   renderStateStyles,
+  simulateConditionBreakpoints,
 } = __testing__;
 
 const createTestSheet = () =>
@@ -742,5 +749,217 @@ describe("getPresetStyleSelector", () => {
     expect(getPresetStyleSelector("MyCustomComponent", "span")).toBe(
       'span:where([data-ws-component="MyCustomComponent"])'
     );
+  });
+});
+
+describe("hasExpressionChildren", () => {
+  const createInstance = (
+    id: string,
+    children: Instance["children"] = []
+  ): Instance => ({
+    id,
+    type: "instance",
+    component: "Box",
+    children,
+  });
+
+  test("returns false for instance with no children", () => {
+    expect(hasExpressionChildren(createInstance("box"))).toBe(false);
+  });
+
+  test("returns false for instance with only id children", () => {
+    expect(
+      hasExpressionChildren(
+        createInstance("box", [
+          { type: "id", value: "child-1" },
+          { type: "id", value: "child-2" },
+        ])
+      )
+    ).toBe(false);
+  });
+
+  test("returns false for instance with text children", () => {
+    expect(
+      hasExpressionChildren(
+        createInstance("box", [{ type: "text", value: "hello" }])
+      )
+    ).toBe(false);
+  });
+
+  test("returns true for instance with expression child", () => {
+    expect(
+      hasExpressionChildren(
+        createInstance("box", [{ type: "expression", value: "someExpr" }])
+      )
+    ).toBe(true);
+  });
+
+  test("returns true when expression is mixed with other children", () => {
+    expect(
+      hasExpressionChildren(
+        createInstance("box", [
+          { type: "text", value: "hello" },
+          { type: "expression", value: "expr" },
+          { type: "id", value: "child" },
+        ])
+      )
+    ).toBe(true);
+  });
+});
+
+describe("toVarValue", () => {
+  test("returns var type with escaped property name", () => {
+    const result = toVarValue(
+      createStyleDecl({
+        styleSourceId: "source-1",
+        state: ":hover",
+        property: "color",
+      }),
+      mockTransformValue
+    );
+    expect(result.type).toBe("var");
+    expect(result.value).toBe(CSS.escape("source-1-:hover-color"));
+  });
+
+  test("uses style decl value as fallback by default", () => {
+    const result = toVarValue(
+      createStyleDecl({
+        value: { type: "keyword", value: "red" },
+      }),
+      mockTransformValue
+    );
+    expect(result.fallback).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("uses explicit fallback when provided", () => {
+    const result = toVarValue(
+      createStyleDecl({
+        value: { type: "keyword", value: "red" },
+      }),
+      mockTransformValue,
+      { type: "keyword", value: "blue" }
+    );
+    expect(result.fallback).toEqual({ type: "keyword", value: "blue" });
+  });
+
+  test("handles missing state", () => {
+    const result = toVarValue(
+      createStyleDecl({
+        styleSourceId: "local",
+        state: undefined,
+        property: "display",
+      }),
+      mockTransformValue
+    );
+    expect(result.value).toBe(CSS.escape("local--display"));
+  });
+
+  test("handles pseudo-element state", () => {
+    const result = toVarValue(
+      createStyleDecl({
+        styleSourceId: "abc",
+        state: "::before",
+        property: "content",
+      }),
+      mockTransformValue
+    );
+    expect(result.value).toBe(CSS.escape("abc-::before-content"));
+  });
+});
+
+describe("simulateConditionBreakpoints", () => {
+  const base = { id: "base", label: "Base" };
+  const dark = {
+    id: "dark",
+    label: "Dark",
+    condition: "prefers-color-scheme:dark",
+  };
+  const light = {
+    id: "light",
+    label: "Light",
+    condition: "prefers-color-scheme:light",
+  };
+  const tablet = { id: "tablet", label: "Tablet", maxWidth: 991 };
+  const portrait = {
+    id: "portrait",
+    label: "Portrait",
+    condition: "orientation:portrait",
+  };
+
+  test("passes breakpoints through when no condition is selected", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, tablet],
+      selectedBreakpoint: base,
+    });
+    expect(result).toEqual(
+      new Map([
+        ["base", base],
+        ["dark", dark],
+        ["tablet", tablet],
+      ])
+    );
+  });
+
+  test("simulates matching condition as all", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, light],
+      selectedBreakpoint: dark,
+    });
+    expect(result.get("dark")).toEqual({ mediaType: "all" });
+  });
+
+  test("simulates non-matching same-feature condition as not all", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, light],
+      selectedBreakpoint: dark,
+    });
+    expect(result.get("light")).toEqual({ mediaType: "not all" });
+  });
+
+  test("does not affect base breakpoint", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, light],
+      selectedBreakpoint: dark,
+    });
+    expect(result.get("base")).toEqual(base);
+  });
+
+  test("does not affect unrelated condition breakpoints", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, portrait],
+      selectedBreakpoint: dark,
+    });
+    expect(result.get("portrait")).toEqual(portrait);
+  });
+
+  test("does not affect width-based breakpoints", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark, tablet],
+      selectedBreakpoint: dark,
+    });
+    expect(result.get("tablet")).toEqual(tablet);
+  });
+
+  test("handles undefined selected breakpoint", () => {
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, dark],
+      selectedBreakpoint: undefined,
+    });
+    expect(result).toEqual(
+      new Map([
+        ["base", base],
+        ["dark", dark],
+      ])
+    );
+  });
+
+  test("handles breakpoint with empty string condition", () => {
+    const emptyCondition = { id: "empty", label: "Empty", condition: "" };
+    const result = simulateConditionBreakpoints({
+      breakpoints: [base, emptyCondition, dark],
+      selectedBreakpoint: dark,
+    });
+    // Empty condition doesn't parse, so it passes through unchanged
+    expect(result.get("empty")).toEqual(emptyCondition);
   });
 });

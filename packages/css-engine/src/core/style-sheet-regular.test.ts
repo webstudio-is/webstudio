@@ -501,6 +501,51 @@ describe("Style Sheet Regular", () => {
     `);
   });
 
+  test("update condition media rule to simulated mediaType", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("base", {});
+    sheet.addMediaRule("dark", { condition: "prefers-color-scheme:dark" });
+    sheet.addMediaRule("light", { condition: "prefers-color-scheme:light" });
+    sheet.addNestingRule(".c").setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    sheet.addNestingRule(".c").setDeclaration({
+      breakpoint: "dark",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    sheet.addNestingRule(".c").setDeclaration({
+      breakpoint: "light",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    });
+    // simulate selecting "dark" breakpoint
+    sheet.addMediaRule("dark", { mediaType: "all" });
+    sheet.addMediaRule("light", { mediaType: "not all" });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c {
+          color: red
+        }
+      }
+      @media all {
+        .c {
+          color: blue
+        }
+      }
+      @media not all {
+        .c {
+          color: green
+        }
+      }"
+    `);
+  });
+
   test("don't override media queries", () => {
     const sheet = createRegularStyleSheet();
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);

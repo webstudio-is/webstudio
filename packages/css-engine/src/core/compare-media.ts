@@ -1,6 +1,29 @@
 import type { MediaRuleOptions } from "./rules";
 
 /**
+ * Check if a media rule is a simulated condition breakpoint.
+ * Simulated conditions have an explicit mediaType ("all" or "not all")
+ * but no condition, minWidth, or maxWidth.
+ *
+ * Note: This assumes that options with ONLY mediaType set are always simulated
+ * conditions, not legitimate "screen-only" or "print-only" queries.
+ * This is safe because the codebase doesn't use standalone mediaType options
+ * for any other purpose.
+ */
+const isSimulatedCondition = (options: MediaRuleOptions) =>
+  options.mediaType !== undefined &&
+  options.condition === undefined &&
+  options.minWidth === undefined &&
+  options.maxWidth === undefined;
+
+/**
+ * Check if a media rule is a condition-based breakpoint
+ * (either real or simulated).
+ */
+const isCondition = (options: MediaRuleOptions) =>
+  options.condition !== undefined || isSimulatedCondition(options);
+
+/**
  * Sort media queries for CSS cascade order.
  * Width-based: minWidth descending, then maxWidth ascending
  * Custom conditions: sorted alphabetically, placed between base and width-based
@@ -11,19 +34,22 @@ export const compareMedia = (
   optionA: MediaRuleOptions,
   optionB: MediaRuleOptions
 ) => {
-  // If both have custom conditions, sort alphabetically
-  if (optionA.condition !== undefined && optionB.condition !== undefined) {
-    return optionA.condition.localeCompare(optionB.condition);
+  const aIsCondition = isCondition(optionA);
+  const bIsCondition = isCondition(optionB);
+
+  // If both are conditions (real or simulated), sort alphabetically by condition
+  if (aIsCondition && bIsCondition) {
+    return (optionA.condition ?? "").localeCompare(optionB.condition ?? "");
   }
 
-  // Custom condition comes after base but before width-based
-  if (optionA.condition !== undefined) {
+  // Condition comes after base but before width-based
+  if (aIsCondition) {
     if (optionB.minWidth === undefined && optionB.maxWidth === undefined) {
       return 1; // optionA (condition) after optionB (base)
     }
     return -1; // optionA (condition) before optionB (width)
   }
-  if (optionB.condition !== undefined) {
+  if (bIsCondition) {
     if (optionA.minWidth === undefined && optionA.maxWidth === undefined) {
       return -1; // optionA (base) before optionB (condition)
     }
