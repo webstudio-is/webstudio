@@ -12,6 +12,11 @@ import { $selectedBreakpoint } from "~/shared/nano-states";
 
 let state: SimulatorState | undefined;
 
+const applySimulation = () => {
+  const condition = $selectedBreakpoint.get()?.condition;
+  state = simulateMediaCondition(document, condition, state);
+};
+
 /**
  * Subscribe to breakpoint changes and apply simulation.
  * Returns an unsubscribe function.
@@ -19,28 +24,27 @@ let state: SimulatorState | undefined;
 export const subscribeBreakpointSimulator = (options: {
   signal: AbortSignal;
 }): (() => void) => {
-  // Apply initial simulation only if a condition-based breakpoint is selected
-  const selectedBreakpoint = $selectedBreakpoint.get();
-  if (selectedBreakpoint?.condition) {
-    state = simulateMediaCondition(
-      document,
-      selectedBreakpoint.condition,
-      state
-    );
-  }
+  applySimulation();
 
-  // Listen for changes
-  const unsubscribe = $selectedBreakpoint.listen((breakpoint) => {
-    state = simulateMediaCondition(document, breakpoint?.condition, state);
+  const unsubscribe = $selectedBreakpoint.listen(() => applySimulation());
+
+  // Re-apply simulation when <style> elements are re-rendered,
+  // because replacing textContent destroys old CSSOM rules
+  // and creates fresh unmodified ones.
+  const observer = new MutationObserver(() => applySimulation());
+  observer.observe(document.head, {
+    childList: true,
+    subtree: true,
+    characterData: true,
   });
 
   const cleanup = () => {
     unsubscribe();
+    observer.disconnect();
     simulateMediaCondition(document, undefined, state);
     state = undefined;
   };
 
-  // Cleanup on abort
   options.signal.addEventListener("abort", cleanup);
 
   return cleanup;
