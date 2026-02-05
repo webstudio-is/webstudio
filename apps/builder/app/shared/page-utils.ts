@@ -23,6 +23,7 @@ import {
   unsetExpressionVariables,
 } from "./data-variables";
 import { $project } from "./nano-states";
+import type { ConflictResolution } from "./token-conflict-dialog";
 
 const deduplicateName = (
   pages: Pages,
@@ -94,9 +95,11 @@ const replaceDataSources = (
 export const insertPageCopyMutable = ({
   source,
   target,
+  conflictResolution,
 }: {
   source: { data: WebstudioData; pageId: Page["id"] };
   target: { data: WebstudioData; folderId: Folder["id"] };
+  conflictResolution?: ConflictResolution;
 }) => {
   const project = $project.get();
   const page = findPageByIdOrPath(source.pageId, source.data.pages);
@@ -112,6 +115,7 @@ export const insertPageCopyMutable = ({
       startingInstanceId: ROOT_INSTANCE_ID,
     }),
     projectId: project.id,
+    conflictResolution,
   });
   const unsetVariables = new Set<DataSource["id"]>();
   const unsetNameById = new Map<DataSource["id"], DataSource["name"]>();
@@ -136,6 +140,7 @@ export const insertPageCopyMutable = ({
     }),
     availableVariables,
     projectId: project.id,
+    conflictResolution,
   });
   // unwrap page draft
   const newPage = structuredClone(unwrap(page));

@@ -5,10 +5,12 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   $,
   ws,
+  css,
   expression,
   renderTemplate,
   renderData,
   ResourceValue,
+  token,
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import * as radixMetas from "@webstudio-is/sdk-components-react-radix/metas";
@@ -49,6 +51,7 @@ import {
   canConvertInstance,
   convertInstance,
   deleteSelectedInstance,
+  detectPageTokenConflicts,
 } from "./instance-utils";
 import type { InstancePath } from "./awareness";
 import {
@@ -125,6 +128,18 @@ const getIdValuePair = <T extends { id: string }>(item: T) =>
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map(getIdValuePair));
+
+const setDataStores = (data: Omit<WebstudioData, "pages">) => {
+  $instances.set(data.instances);
+  $breakpoints.set(data.breakpoints);
+  $styleSources.set(data.styleSources);
+  $styles.set(data.styles);
+  $styleSourceSelections.set(data.styleSourceSelections);
+  $dataSources.set(data.dataSources);
+  $props.set(data.props);
+  $assets.set(data.assets);
+  $resources.set(data.resources);
+};
 
 const createInstance = (
   id: Instance["id"],
@@ -3573,5 +3588,448 @@ describe("deleteSelectedInstance", () => {
     selectInstance(["child1", "parent", "body"]);
     deleteSelectedInstance();
     expect($awareness.get()?.instanceSelector).toEqual(["parent", "body"]);
+  });
+});
+
+describe("insertWebstudioFragmentAt with conflictResolution", () => {
+  beforeEach(() => {
+    $project.set({ id: "project-id" } as Project);
+  });
+
+  test("uses conflictResolution='theirs' by default (creates new token with suffix)", () => {
+    // Existing project with a "primary" token (used by existing-box)
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: blue;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+
+    // Create fragment with token that has same name but different styles
+    const fragment = renderTemplate(
+      <$.Box
+        ws:id="box"
+        ws:tokens={[
+          token(
+            "primary",
+            css`
+              color: red;
+            `
+          ),
+        ]}
+      ></$.Box>
+    );
+
+    setDataStores(data);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["body"]);
+
+    // Insert without explicit conflictResolution (defaults to "theirs")
+    insertWebstudioFragmentAt(fragment, {
+      parentSelector: ["body"],
+      position: "end",
+    });
+
+    // The existing token should still have blue color (unchanged)
+    const styles = Array.from($styles.get().values());
+    const styleSources = Array.from($styleSources.get().values());
+    const existingToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary"
+    );
+    const existingTokenStyle = styles.find(
+      (s) =>
+        s.styleSourceId === existingToken?.id &&
+        s.property === "color" &&
+        s.breakpointId === "base"
+    );
+    expect(existingTokenStyle?.value).toEqual({
+      type: "keyword",
+      value: "blue",
+    });
+
+    // A new token "primary-1" should be created with red color
+    const newToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary-1"
+    );
+    expect(newToken).toBeDefined();
+    const newTokenStyle = styles.find(
+      (s) =>
+        s.styleSourceId === newToken?.id &&
+        s.property === "color" &&
+        s.breakpointId === "base"
+    );
+    expect(newTokenStyle?.value).toEqual({ type: "keyword", value: "red" });
+  });
+
+  test("uses conflictResolution='ours' to keep existing token styles", () => {
+    // Existing project with a "primary" token (used by existing-box)
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: blue;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+
+    const fragment = renderTemplate(
+      <$.Box
+        ws:id="box"
+        ws:tokens={[
+          token(
+            "primary",
+            css`
+              color: red;
+            `
+          ),
+        ]}
+      ></$.Box>
+    );
+
+    setDataStores(data);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["body"]);
+
+    // Insert with conflictResolution="ours" to keep existing styles
+    insertWebstudioFragmentAt(
+      fragment,
+      {
+        parentSelector: ["body"],
+        position: "end",
+      },
+      "ours"
+    );
+
+    // The existing token should still have blue color (kept original)
+    const styles = Array.from($styles.get().values());
+    const styleSources = Array.from($styleSources.get().values());
+    const existingToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary"
+    );
+    const primaryTokenStyle = styles.find(
+      (s) =>
+        s.styleSourceId === existingToken?.id &&
+        s.property === "color" &&
+        s.breakpointId === "base"
+    );
+    expect(primaryTokenStyle?.value).toEqual({
+      type: "keyword",
+      value: "blue",
+    });
+
+    // No new token should be created
+    const newToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary-1"
+    );
+    expect(newToken).toBeUndefined();
+  });
+
+  test("uses conflictResolution='merge' to merge styles (theirs overrides)", () => {
+    // Existing project with a "primary" token that has color and fontSize
+    const data = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: blue;
+                font-size: 16px;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+
+    // Fragment with same "primary" token but different color and new property
+    const fragment = renderTemplate(
+      <$.Box
+        ws:id="box"
+        ws:tokens={[
+          token(
+            "primary",
+            css`
+              color: red;
+              font-weight: bold;
+            `
+          ),
+        ]}
+      ></$.Box>
+    );
+
+    setDataStores(data);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+    $awareness.set({ pageId: pages.homePage.id });
+    selectInstance(["body"]);
+
+    // Insert with conflictResolution="merge"
+    insertWebstudioFragmentAt(
+      fragment,
+      {
+        parentSelector: ["body"],
+        position: "end",
+      },
+      "merge"
+    );
+
+    // The existing token should now have red color (overridden by fragment)
+    const styles = Array.from($styles.get().values());
+    const styleSources = Array.from($styleSources.get().values());
+    const existingToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary"
+    );
+    const colorStyle = styles.find(
+      (s) =>
+        s.styleSourceId === existingToken?.id &&
+        s.property === "color" &&
+        s.breakpointId === "base"
+    );
+    expect(colorStyle?.value).toEqual({ type: "keyword", value: "red" });
+
+    // fontSize should still be there (not in fragment, so kept)
+    const fontSizeStyle = styles.find(
+      (s) =>
+        s.styleSourceId === existingToken?.id &&
+        s.property === "fontSize" &&
+        s.breakpointId === "base"
+    );
+    expect(fontSizeStyle?.value).toEqual({
+      type: "unit",
+      value: 16,
+      unit: "px",
+    });
+
+    // fontWeight should be added from fragment
+    const fontWeightStyle = styles.find(
+      (s) =>
+        s.styleSourceId === existingToken?.id &&
+        s.property === "fontWeight" &&
+        s.breakpointId === "base"
+    );
+    expect(fontWeightStyle?.value).toEqual({ type: "keyword", value: "bold" });
+
+    // No new token should be created
+    const newToken = styleSources.find(
+      (s) => s.type === "token" && s.name === "primary-1"
+    );
+    expect(newToken).toBeUndefined();
+  });
+});
+
+describe("detectPageTokenConflicts", () => {
+  beforeEach(() => {
+    $project.set({ id: "project-id" } as Project);
+  });
+
+  test("returns empty array when no conflicts exist", () => {
+    // Set up target project data (no tokens)
+    const targetData = renderData(
+      <$.Body ws:id="body">
+        <$.Box ws:id="existing-box"></$.Box>
+      </$.Body>
+    );
+    setDataStores(targetData);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+
+    // Create source data with a token
+    const sourceData = renderData(
+      <$.Body ws:id="source-body">
+        <$.Box
+          ws:id="source-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: red;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+    const sourcePages = createDefaultPages({ rootInstanceId: "source-body" });
+    const sourceWebstudioData: WebstudioData = {
+      ...sourceData,
+      pages: sourcePages,
+    };
+
+    const conflicts = detectPageTokenConflicts({
+      sourceData: sourceWebstudioData,
+      pageId: sourcePages.homePage.id,
+    });
+
+    // No conflicts
+    expect(conflicts).toEqual([]);
+  });
+
+  test("returns conflicts when token conflicts exist", () => {
+    // Set up target project with a "primary" token
+    const targetData = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: blue;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+    setDataStores(targetData);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+
+    // Create source data with same "primary" token but different styles
+    const sourceData = renderData(
+      <$.Body ws:id="source-body">
+        <$.Box
+          ws:id="source-box"
+          ws:tokens={[
+            token(
+              "primary",
+              css`
+                color: red;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+    const sourcePages = createDefaultPages({ rootInstanceId: "source-body" });
+    const sourceWebstudioData: WebstudioData = {
+      ...sourceData,
+      pages: sourcePages,
+    };
+
+    const conflicts = detectPageTokenConflicts({
+      sourceData: sourceWebstudioData,
+      pageId: sourcePages.homePage.id,
+    });
+
+    // Should return conflicts
+    expect(conflicts.length).toBeGreaterThan(0);
+    expect(conflicts[0].tokenName).toBe("primary");
+  });
+
+  test("detects conflicts from ROOT_INSTANCE tokens", () => {
+    // Set up target project with a "header" token
+    const targetData = renderData(
+      <$.Body ws:id="body">
+        <$.Box
+          ws:id="existing-box"
+          ws:tokens={[
+            token(
+              "header",
+              css`
+                background: white;
+              `
+            ),
+          ]}
+        ></$.Box>
+      </$.Body>
+    );
+    setDataStores(targetData);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+
+    // Create source data with a ROOT_INSTANCE that has conflicting "header" token
+    const sourceBodyData = renderData(
+      <$.Body ws:id="source-body">
+        <$.Box ws:id="source-box"></$.Box>
+      </$.Body>
+    );
+    // Add a global "header" token with different styles (simulating ROOT_INSTANCE content)
+    const headerTokenId = "header-token-id";
+    sourceBodyData.styleSources.set(headerTokenId, {
+      type: "token",
+      id: headerTokenId,
+      name: "header",
+    });
+    const baseBreakpointId = Array.from(
+      sourceBodyData.breakpoints.values()
+    ).find((b) => b.minWidth === undefined)?.id;
+    if (baseBreakpointId) {
+      sourceBodyData.styles.set(`${headerTokenId}:base:backgroundColor`, {
+        styleSourceId: headerTokenId,
+        breakpointId: baseBreakpointId,
+        property: "backgroundColor",
+        value: { type: "keyword", value: "black" },
+      });
+    }
+    // Add ROOT_INSTANCE with the header token
+    sourceBodyData.instances.set(ROOT_INSTANCE_ID, {
+      type: "instance",
+      id: ROOT_INSTANCE_ID,
+      component: "Box",
+      children: [],
+    });
+    sourceBodyData.styleSourceSelections.set(ROOT_INSTANCE_ID, {
+      instanceId: ROOT_INSTANCE_ID,
+      values: [headerTokenId],
+    });
+
+    const sourcePages = createDefaultPages({ rootInstanceId: "source-body" });
+    const sourceWebstudioData: WebstudioData = {
+      ...sourceBodyData,
+      pages: sourcePages,
+    };
+
+    const conflicts = detectPageTokenConflicts({
+      sourceData: sourceWebstudioData,
+      pageId: sourcePages.homePage.id,
+    });
+
+    // Should detect conflict from ROOT_INSTANCE token
+    expect(conflicts.length).toBeGreaterThan(0);
+    expect(conflicts[0].tokenName).toBe("header");
+  });
+
+  test("throws error when page not found", () => {
+    const targetData = renderData(<$.Body ws:id="body"></$.Body>);
+    setDataStores(targetData);
+    const pages = createDefaultPages({ rootInstanceId: "body" });
+    $pages.set(pages);
+
+    const sourceData = renderData(<$.Body ws:id="source-body"></$.Body>);
+    const sourcePages = createDefaultPages({ rootInstanceId: "source-body" });
+    const sourceWebstudioData: WebstudioData = {
+      ...sourceData,
+      pages: sourcePages,
+    };
+
+    expect(() =>
+      detectPageTokenConflicts({
+        sourceData: sourceWebstudioData,
+        pageId: "non-existent-page-id",
+      })
+    ).toThrow("Page not found");
   });
 });
