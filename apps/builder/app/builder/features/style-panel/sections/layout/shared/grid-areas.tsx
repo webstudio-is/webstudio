@@ -28,6 +28,7 @@ import {
   isAreaWithinBounds,
   filterAreasWithinBounds,
 } from "./grid-areas.utils";
+import { GridPositionInputs } from "./grid-position-inputs";
 
 type AreaEditorProps = {
   area: AreaInfo | undefined;
@@ -104,13 +105,7 @@ const AreaEditor = ({
     );
   }, [value, area, existingAreas, onSave, editingIndex, gridColumns, gridRows]);
 
-  const isColumnStartValid =
-    value.columnStart >= 1 && value.columnStart < value.columnEnd;
-  const isColumnEndValid =
-    value.columnEnd > value.columnStart && value.columnEnd <= gridColumns + 1;
-  const isRowStartValid = value.rowStart >= 1 && value.rowStart < value.rowEnd;
-  const isRowEndValid =
-    value.rowEnd > value.rowStart && value.rowEnd <= gridRows + 1;
+  // Validation is now handled by GridPositionInputs component
 
   // Check for duplicate names
   const trimmedName = value.name.trim();
@@ -166,88 +161,13 @@ const AreaEditor = ({
         }}
       >
         <Label css={{ paddingTop: theme.spacing[3] }}>Position</Label>
-        <Flex gap="2">
-          <Flex direction="column" gap="1">
-            <Grid
-              css={{
-                gridTemplateColumns: "1fr 1fr",
-                gap: theme.spacing[3],
-              }}
-            >
-              <InputField
-                type="number"
-                value={String(value.columnStart)}
-                onChange={(event) => {
-                  const newValue = Number(event.target.value);
-                  if (!isNaN(newValue)) {
-                    setValue({ ...value, columnStart: newValue });
-                  }
-                }}
-                onBlur={handleSave}
-                color={isColumnStartValid ? undefined : "error"}
-                min={1}
-                max={gridColumns}
-              />
-              <InputField
-                type="number"
-                value={String(value.columnEnd)}
-                onChange={(event) => {
-                  const newValue = Number(event.target.value);
-                  if (!isNaN(newValue)) {
-                    setValue({ ...value, columnEnd: newValue });
-                  }
-                }}
-                onBlur={handleSave}
-                color={isColumnEndValid ? undefined : "error"}
-                min={2}
-                max={gridColumns + 1}
-              />
-            </Grid>
-            <Text variant="labels" color="subtle">
-              Column: start/end
-            </Text>
-          </Flex>
-          <Flex direction="column" gap="1">
-            <Grid
-              css={{
-                gridTemplateColumns: "1fr 1fr",
-                gap: theme.spacing[3],
-              }}
-            >
-              <InputField
-                type="number"
-                value={String(value.rowStart)}
-                onChange={(event) => {
-                  const newValue = Number(event.target.value);
-                  if (!isNaN(newValue)) {
-                    setValue({ ...value, rowStart: newValue });
-                  }
-                }}
-                onBlur={handleSave}
-                color={isRowStartValid ? undefined : "error"}
-                min={1}
-                max={gridRows}
-              />
-              <InputField
-                type="number"
-                value={String(value.rowEnd)}
-                onChange={(event) => {
-                  const newValue = Number(event.target.value);
-                  if (!isNaN(newValue)) {
-                    setValue({ ...value, rowEnd: newValue });
-                  }
-                }}
-                onBlur={handleSave}
-                color={isRowEndValid ? undefined : "error"}
-                min={2}
-                max={gridRows + 1}
-              />
-            </Grid>
-            <Text variant="labels" color="subtle">
-              Row: start/end
-            </Text>
-          </Flex>
-        </Flex>
+        <GridPositionInputs
+          value={value}
+          onChange={(position) => setValue({ ...value, ...position })}
+          onBlur={handleSave}
+          gridColumns={gridColumns}
+          gridRows={gridRows}
+        />
       </Grid>
       {hasDuplicateName && (
         <Text variant="labels" color="destructive">

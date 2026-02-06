@@ -20,11 +20,18 @@ import {
 } from "../../shared/css-value-input";
 import {
   useComputedStyleDecl,
+  useComputedStyles,
   useParentComputedStyleDecl,
 } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import { parseGridAreas } from "../layout/shared/grid-areas.utils";
-import { TextControl } from "../../controls";
+import {
+  parseGridAreas,
+  getGridDimensions,
+} from "../layout/shared/grid-areas.utils";
+import {
+  GridPositionInputs,
+  type GridPosition,
+} from "../layout/shared/grid-position-inputs";
 
 export const properties = [
   "grid-column-start",
@@ -352,40 +359,114 @@ const GridChildPositionArea = () => {
 };
 
 const GridChildPositionManual = () => {
+  const parentGridTemplateColumns = useParentComputedStyleDecl(
+    "grid-template-columns"
+  );
+  const parentGridTemplateRows =
+    useParentComputedStyleDecl("grid-template-rows");
+  const [columnStart, columnEnd, rowStart, rowEnd] = useComputedStyles([
+    "grid-column-start",
+    "grid-column-end",
+    "grid-row-start",
+    "grid-row-end",
+  ]);
+
+  // Get grid dimensions from parent
+  const { columns: gridColumns, rows: gridRows } = getGridDimensions(
+    toValue(parentGridTemplateColumns.computedValue),
+    toValue(parentGridTemplateRows.computedValue)
+  );
+
+  // Extract numeric values from CSS values
+  const getNumericValue = (styleValue: StyleValue): number => {
+    if (styleValue.type === "unit" && styleValue.unit === "number") {
+      return styleValue.value;
+    }
+    return 1;
+  };
+
+  const position: GridPosition = {
+    columnStart: getNumericValue(columnStart.cascadedValue),
+    columnEnd: getNumericValue(columnEnd.cascadedValue),
+    rowStart: getNumericValue(rowStart.cascadedValue),
+    rowEnd: getNumericValue(rowEnd.cascadedValue),
+  };
+
+  const handleChange = (newPosition: GridPosition) => {
+    const batch = createBatchUpdate();
+    batch.setProperty("grid-column-start")({
+      type: "unit",
+      value: newPosition.columnStart,
+      unit: "number",
+    });
+    batch.setProperty("grid-column-end")({
+      type: "unit",
+      value: newPosition.columnEnd,
+      unit: "number",
+    });
+    batch.setProperty("grid-row-start")({
+      type: "unit",
+      value: newPosition.rowStart,
+      unit: "number",
+    });
+    batch.setProperty("grid-row-end")({
+      type: "unit",
+      value: newPosition.rowEnd,
+      unit: "number",
+    });
+    batch.publish({ isEphemeral: true });
+  };
+
+  const handleBlur = () => {
+    const batch = createBatchUpdate();
+    batch.setProperty("grid-column-start")({
+      type: "unit",
+      value: position.columnStart,
+      unit: "number",
+    });
+    batch.setProperty("grid-column-end")({
+      type: "unit",
+      value: position.columnEnd,
+      unit: "number",
+    });
+    batch.setProperty("grid-row-start")({
+      type: "unit",
+      value: position.rowStart,
+      unit: "number",
+    });
+    batch.setProperty("grid-row-end")({
+      type: "unit",
+      value: position.rowEnd,
+      unit: "number",
+    });
+    batch.publish();
+  };
+
   return (
-    <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Column start"
-          description="The starting column grid line"
-          properties={["grid-column-start"]}
-        />
-        <TextControl property="grid-column-start" />
-      </Grid>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Column end"
-          description="The ending column grid line"
-          properties={["grid-column-end"]}
-        />
-        <TextControl property="grid-column-end" />
-      </Grid>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Row start"
-          description="The starting row grid line"
-          properties={["grid-row-start"]}
-        />
-        <TextControl property="grid-row-start" />
-      </Grid>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Row end"
-          description="The ending row grid line"
-          properties={["grid-row-end"]}
-        />
-        <TextControl property="grid-row-end" />
-      </Grid>
+    <Grid
+      css={{
+        gridTemplateColumns: "4fr 6fr",
+        gap: theme.spacing[3],
+        alignItems: "start",
+      }}
+    >
+      <PropertyLabel
+        label="Position"
+        description="Manually position the item using grid line numbers"
+        properties={[
+          "grid-column-start",
+          "grid-column-end",
+          "grid-row-start",
+          "grid-row-end",
+        ]}
+      />
+      <GridPositionInputs
+        value={position}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        gridColumns={gridColumns}
+        gridRows={gridRows}
+      />
     </Grid>
   );
 };
