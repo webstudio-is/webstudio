@@ -80,7 +80,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
           justify="between"
           css={{ padding: theme.spacing[5] }}
         >
-          <Text variant="labelsSentenceCase" color="subtle">
+          <Text variant="labels" color="subtle">
             {label} ({tracks.length})
           </Text>
           <IconButton
