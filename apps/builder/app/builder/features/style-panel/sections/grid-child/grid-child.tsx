@@ -378,18 +378,22 @@ const GridChildPositionManual = () => {
   );
 
   // Extract numeric values from CSS values
-  const getNumericValue = (styleValue: StyleValue): number => {
+  // For "auto" or non-numeric values, use sensible defaults based on position type
+  const getNumericValue = (
+    styleValue: StyleValue,
+    defaultValue: number
+  ): number => {
     if (styleValue.type === "unit" && styleValue.unit === "number") {
       return styleValue.value;
     }
-    return 1;
+    return defaultValue;
   };
 
   const position: GridPosition = {
-    columnStart: getNumericValue(columnStart.cascadedValue),
-    columnEnd: getNumericValue(columnEnd.cascadedValue),
-    rowStart: getNumericValue(rowStart.cascadedValue),
-    rowEnd: getNumericValue(rowEnd.cascadedValue),
+    columnStart: getNumericValue(columnStart.cascadedValue, 1),
+    columnEnd: getNumericValue(columnEnd.cascadedValue, 2),
+    rowStart: getNumericValue(rowStart.cascadedValue, 1),
+    rowEnd: getNumericValue(rowEnd.cascadedValue, 2),
   };
 
   const handleChange = (newPosition: GridPosition) => {
