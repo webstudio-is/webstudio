@@ -39,7 +39,6 @@ export const FlexVisual = () => {
       justifyContent={justifyContentValue}
       alignItems={alignItemsValue}
       isColumnDirection={isColumnDirection}
-      isDense={false}
       color={color}
       itemStretchWidth={false}
       itemStretchHeight={false}

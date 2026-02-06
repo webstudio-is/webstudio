@@ -444,7 +444,6 @@ export const GridVisualAlignment = () => {
   const alignItemsValue = toValue(alignItems.cascadedValue);
 
   const isColumnDirection = gridAutoFlowValue.includes("column");
-  const isDense = gridAutoFlowValue.includes("dense");
 
   // For grid, justify-items controls item alignment within cells
   // When stretch, items fill the track width (row) or height (column)
@@ -470,9 +469,7 @@ export const GridVisualAlignment = () => {
     <AlignmentUi
       justifyContent={justifyContentValue}
       alignItems={alignItemsValue}
-      justifyItems={justifyItemsValue}
       isColumnDirection={isColumnDirection}
-      isDense={isDense}
       color={color}
       itemStretchWidth={itemStretchWidth}
       itemStretchHeight={itemStretchHeight}
