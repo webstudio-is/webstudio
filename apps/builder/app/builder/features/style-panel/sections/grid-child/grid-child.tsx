@@ -24,6 +24,7 @@ import {
 } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
 import { parseGridAreas } from "../layout/shared/grid-areas.utils";
+import { TextControl } from "../../controls";
 
 export const properties = [
   "grid-column-start",
@@ -351,5 +352,40 @@ const GridChildPositionArea = () => {
 };
 
 const GridChildPositionManual = () => {
-  return null;
+  return (
+    <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
+      <Grid css={{ gap: theme.spacing[3] }}>
+        <PropertyLabel
+          label="Column start"
+          description="The starting column grid line"
+          properties={["grid-column-start"]}
+        />
+        <TextControl property="grid-column-start" />
+      </Grid>
+      <Grid css={{ gap: theme.spacing[3] }}>
+        <PropertyLabel
+          label="Column end"
+          description="The ending column grid line"
+          properties={["grid-column-end"]}
+        />
+        <TextControl property="grid-column-end" />
+      </Grid>
+      <Grid css={{ gap: theme.spacing[3] }}>
+        <PropertyLabel
+          label="Row start"
+          description="The starting row grid line"
+          properties={["grid-row-start"]}
+        />
+        <TextControl property="grid-row-start" />
+      </Grid>
+      <Grid css={{ gap: theme.spacing[3] }}>
+        <PropertyLabel
+          label="Row end"
+          description="The ending row grid line"
+          properties={["grid-row-end"]}
+        />
+        <TextControl property="grid-row-end" />
+      </Grid>
+    </Grid>
+  );
 };
