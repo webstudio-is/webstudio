@@ -203,7 +203,7 @@ const AreaEditor = ({
                 max={gridColumns + 1}
               />
             </Grid>
-            <Text variant="labelsSentenceCase" color="subtle">
+            <Text variant="labels" color="subtle">
               Column: start/end
             </Text>
           </Flex>
@@ -243,19 +243,19 @@ const AreaEditor = ({
                 max={gridRows + 1}
               />
             </Grid>
-            <Text variant="labelsSentenceCase" color="subtle">
+            <Text variant="labels" color="subtle">
               Row: start/end
             </Text>
           </Flex>
         </Flex>
       </Grid>
       {hasDuplicateName && (
-        <Text variant="labelsSentenceCase" color="destructive">
+        <Text variant="labels" color="destructive">
           Area name already exists
         </Text>
       )}
       {hasOverlap && (
-        <Text variant="labelsSentenceCase" color="destructive">
+        <Text variant="labels" color="destructive">
           Area overlaps with another area
         </Text>
       )}
@@ -378,7 +378,7 @@ export const GridAreas = () => {
           justify="between"
           css={{ padding: theme.spacing[5] }}
         >
-          <Text variant="labelsSentenceCase" color="subtle">
+          <Text variant="labels" color="subtle">
             Areas ({areas.length})
           </Text>
           <IconButton
