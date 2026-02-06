@@ -57,7 +57,7 @@ export const FlexGrid = () => {
             </Box>
             {justifyContent.map((justifyContent) => (
               <Box key={justifyContent} css={{ position: "relative" }}>
-                <FlexGridComponent />
+                <FlexVisualComponent />
               </Box>
             ))}
           </Flex>
