@@ -4455,7 +4455,12 @@ export const declarationsGenerated = {
   "zoom:unset": "Unsets the zoom level, allowing the browser to decide.",
 } as Record<string, string | undefined>;
 
-export const declarationsOverrides = {} as Record<string, string | undefined>;
+export const declarationsOverrides = {
+  "gridAutoFlow:row dense":
+    "Grid items are placed along rows, filling in holes earlier in the grid when smaller items appear later.",
+  "gridAutoFlow:column dense":
+    "Grid items are placed along columns, filling in holes earlier in the grid when smaller items appear later.",
+} as Record<string, string | undefined>;
 
 export const declarations = {
   ...declarationsGenerated,

@@ -122,7 +122,12 @@ export const MenuControl = ({
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem hint>
-          <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+          <Box css={{ width: theme.spacing[26] }}>
+            <Box css={{ fontFamily: theme.fonts.mono, mb: theme.spacing[5] }}>
+              {property}: {descriptionValue ?? currentValue}
+            </Box>
+            {description}
+          </Box>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
