@@ -445,21 +445,12 @@ const GridChildPositionManual = () => {
   return (
     <Grid
       css={{
-        gridTemplateColumns: "4fr 6fr",
+        gridTemplateColumns: "4fr 7fr",
         gap: theme.spacing[3],
         alignItems: "start",
       }}
     >
-      <PropertyLabel
-        label="Position"
-        description="Manually position the item using grid line numbers"
-        properties={[
-          "grid-column-start",
-          "grid-column-end",
-          "grid-row-start",
-          "grid-row-end",
-        ]}
-      />
+      <div />
       <GridPositionInputs
         value={position}
         onChange={handleChange}
