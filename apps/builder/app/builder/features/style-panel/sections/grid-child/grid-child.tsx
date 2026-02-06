@@ -129,7 +129,7 @@ const GridChildPositionAuto = () => {
     <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
       <Grid css={{ gap: theme.spacing[3] }}>
         <PropertyLabel
-          label="Column Span"
+          label="Column span"
           description="Number of columns this item should span"
           properties={["grid-column-end"]}
         />
@@ -140,7 +140,7 @@ const GridChildPositionAuto = () => {
       </Grid>
       <Grid css={{ gap: theme.spacing[3] }}>
         <PropertyLabel
-          label="Row Span"
+          label="Row span"
           description="Number of rows this item should span"
           properties={["grid-row-end"]}
         />
