@@ -3,11 +3,14 @@ import {
   Box,
   Flex,
   Grid,
+  Select,
+  Text,
   theme,
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import { StyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
@@ -15,8 +18,12 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import { useComputedStyleDecl } from "../../shared/model";
+import {
+  useComputedStyleDecl,
+  useParentComputedStyleDecl,
+} from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
+import { parseGridAreas } from "../layout/shared/grid-areas.utils";
 
 export const properties = [
   "grid-column-start",
@@ -292,7 +299,55 @@ const SpanInput = ({
 };
 
 const GridChildPositionArea = () => {
-  return null;
+  const parentGridTemplateAreas = useParentComputedStyleDecl(
+    "grid-template-areas"
+  );
+  const gridRowStart = useComputedStyleDecl("grid-row-start");
+
+  // Parse area names from parent's grid-template-areas
+  const areasValue = toValue(parentGridTemplateAreas.computedValue);
+  const areas = parseGridAreas(areasValue);
+  const areaNames = areas.map((area) => area.name);
+
+  // Get current area name from grid-row-start
+  // When using named areas, grid-row-start contains the area name
+  const currentValue = toValue(gridRowStart.cascadedValue);
+  const selectedArea = areaNames.includes(currentValue) ? currentValue : "";
+
+  const handleAreaChange = (areaName: string) => {
+    const batch = createBatchUpdate();
+    // Setting all four properties to the same area name places the item in that area
+    const areaValue: StyleValue = { type: "keyword", value: areaName };
+    batch.setProperty("grid-row-start")(areaValue);
+    batch.setProperty("grid-column-start")(areaValue);
+    batch.setProperty("grid-row-end")(areaValue);
+    batch.setProperty("grid-column-end")(areaValue);
+    batch.publish();
+  };
+
+  if (areaNames.length === 0) {
+    return (
+      <Text color="moreSubtle">
+        No named areas defined. Add areas in the parent grid's template.
+      </Text>
+    );
+  }
+
+  return (
+    <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+      <PropertyLabel
+        label="Area"
+        description="Place this item in a named grid area"
+        properties={["grid-row-start"]}
+      />
+      <Select
+        options={areaNames}
+        value={selectedArea}
+        onChange={handleAreaChange}
+        placeholder="Select area"
+      />
+    </Grid>
+  );
 };
 
 const GridChildPositionManual = () => {
