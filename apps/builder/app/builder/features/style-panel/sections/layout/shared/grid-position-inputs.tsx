@@ -71,7 +71,7 @@ const PositionInputGroup = ({
   maxEnd: number;
   label: string;
 }) => (
-  <Flex direction="column" gap="1">
+  <Flex direction="column" gap="1" css={{ flex: 1 }}>
     <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
       <InputField
         type="number"
