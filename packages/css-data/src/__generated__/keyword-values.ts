@@ -15,6 +15,16 @@ export const keywordValues: KeywordValues = {
   "view-timeline-name": [],
   "scroll-timeline-name": [],
   "view-timeline-inset": [],
+  "grid-auto-flow": [
+    "row",
+    "column",
+    "dense",
+    "row dense",
+    "column dense",
+    "initial",
+    "inherit",
+    "unset",
+  ],
   "list-style-type": [
     "disc",
     "circle",
@@ -3933,7 +3943,6 @@ export const keywordValues: KeywordValues = {
     "inherit",
     "unset",
   ],
-  "grid-auto-flow": ["row", "column", "dense", "initial", "inherit", "unset"],
   "grid-auto-rows": [
     "min-content",
     "max-content",
