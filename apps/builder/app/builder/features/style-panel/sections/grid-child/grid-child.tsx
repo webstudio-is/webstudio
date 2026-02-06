@@ -94,7 +94,7 @@ const GridChildPositionMode = ({
   ];
 
   return (
-    <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+    <Grid css={{ gridTemplateColumns: "3fr 7fr" }}>
       <PropertyLabel
         label="Position"
         description="How the grid item is positioned within the grid"
@@ -342,7 +342,7 @@ const GridChildPositionArea = () => {
   }
 
   return (
-    <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+    <Grid css={{ gridTemplateColumns: "3fr 7fr" }}>
       <PropertyLabel
         label="Area"
         description="Place this item in a named grid area"
@@ -445,7 +445,7 @@ const GridChildPositionManual = () => {
   return (
     <Grid
       css={{
-        gridTemplateColumns: "4fr 7fr",
+        gridTemplateColumns: "3fr 7fr",
         gap: theme.spacing[3],
         alignItems: "start",
       }}
