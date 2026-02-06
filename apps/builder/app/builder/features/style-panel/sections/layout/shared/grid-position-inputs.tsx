@@ -24,19 +24,17 @@ export const validateGridPosition = (
   position: GridPosition,
   gridColumns: number,
   gridRows: number
-): GridPositionValidation => {
-  return {
-    isColumnStartValid:
-      position.columnStart >= 1 && position.columnStart < position.columnEnd,
-    isColumnEndValid:
-      position.columnEnd > position.columnStart &&
-      position.columnEnd <= gridColumns + 1,
-    isRowStartValid:
-      position.rowStart >= 1 && position.rowStart < position.rowEnd,
-    isRowEndValid:
-      position.rowEnd > position.rowStart && position.rowEnd <= gridRows + 1,
-  };
-};
+): GridPositionValidation => ({
+  isColumnStartValid:
+    position.columnStart >= 1 && position.columnStart < position.columnEnd,
+  isColumnEndValid:
+    position.columnEnd > position.columnStart &&
+    position.columnEnd <= gridColumns + 1,
+  isRowStartValid:
+    position.rowStart >= 1 && position.rowStart < position.rowEnd,
+  isRowEndValid:
+    position.rowEnd > position.rowStart && position.rowEnd <= gridRows + 1,
+});
 
 type GridPositionInputsProps = {
   value: GridPosition;
@@ -45,6 +43,70 @@ type GridPositionInputsProps = {
   gridColumns: number;
   gridRows: number;
 };
+
+const PositionInputGroup = ({
+  startValue,
+  endValue,
+  onStartChange,
+  onEndChange,
+  onBlur,
+  isStartValid,
+  isEndValid,
+  minStart,
+  maxStart,
+  minEnd,
+  maxEnd,
+  label,
+}: {
+  startValue: number;
+  endValue: number;
+  onStartChange: (value: number) => void;
+  onEndChange: (value: number) => void;
+  onBlur?: () => void;
+  isStartValid: boolean;
+  isEndValid: boolean;
+  minStart: number;
+  maxStart: number;
+  minEnd: number;
+  maxEnd: number;
+  label: string;
+}) => (
+  <Flex direction="column" gap="1">
+    <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
+      <InputField
+        type="number"
+        value={String(startValue)}
+        onChange={(event) => {
+          const num = Number(event.target.value);
+          if (!isNaN(num)) {
+            onStartChange(num);
+          }
+        }}
+        onBlur={onBlur}
+        color={isStartValid ? undefined : "error"}
+        min={minStart}
+        max={maxStart}
+      />
+      <InputField
+        type="number"
+        value={String(endValue)}
+        onChange={(event) => {
+          const num = Number(event.target.value);
+          if (!isNaN(num)) {
+            onEndChange(num);
+          }
+        }}
+        onBlur={onBlur}
+        color={isEndValid ? undefined : "error"}
+        min={minEnd}
+        max={maxEnd}
+      />
+    </Grid>
+    <Text variant="tiny" color="subtle">
+      {label}
+    </Text>
+  </Flex>
+);
 
 export const GridPositionInputs = ({
   value,
@@ -57,76 +119,34 @@ export const GridPositionInputs = ({
 
   return (
     <Flex gap="2">
-      <Flex direction="column" gap="1">
-        <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
-          <InputField
-            type="number"
-            value={String(value.columnStart)}
-            onChange={(event) => {
-              const newValue = Number(event.target.value);
-              if (!isNaN(newValue)) {
-                onChange({ ...value, columnStart: newValue });
-              }
-            }}
-            onBlur={onBlur}
-            color={validation.isColumnStartValid ? undefined : "error"}
-            min={1}
-            max={gridColumns}
-          />
-          <InputField
-            type="number"
-            value={String(value.columnEnd)}
-            onChange={(event) => {
-              const newValue = Number(event.target.value);
-              if (!isNaN(newValue)) {
-                onChange({ ...value, columnEnd: newValue });
-              }
-            }}
-            onBlur={onBlur}
-            color={validation.isColumnEndValid ? undefined : "error"}
-            min={2}
-            max={gridColumns + 1}
-          />
-        </Grid>
-        <Text variant="labels" color="subtle">
-          Column: start / end
-        </Text>
-      </Flex>
-      <Flex direction="column" gap="1">
-        <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
-          <InputField
-            type="number"
-            value={String(value.rowStart)}
-            onChange={(event) => {
-              const newValue = Number(event.target.value);
-              if (!isNaN(newValue)) {
-                onChange({ ...value, rowStart: newValue });
-              }
-            }}
-            onBlur={onBlur}
-            color={validation.isRowStartValid ? undefined : "error"}
-            min={1}
-            max={gridRows}
-          />
-          <InputField
-            type="number"
-            value={String(value.rowEnd)}
-            onChange={(event) => {
-              const newValue = Number(event.target.value);
-              if (!isNaN(newValue)) {
-                onChange({ ...value, rowEnd: newValue });
-              }
-            }}
-            onBlur={onBlur}
-            color={validation.isRowEndValid ? undefined : "error"}
-            min={2}
-            max={gridRows + 1}
-          />
-        </Grid>
-        <Text variant="labels" color="subtle">
-          Row: start / end
-        </Text>
-      </Flex>
+      <PositionInputGroup
+        startValue={value.columnStart}
+        endValue={value.columnEnd}
+        onStartChange={(columnStart) => onChange({ ...value, columnStart })}
+        onEndChange={(columnEnd) => onChange({ ...value, columnEnd })}
+        onBlur={onBlur}
+        isStartValid={validation.isColumnStartValid}
+        isEndValid={validation.isColumnEndValid}
+        minStart={1}
+        maxStart={gridColumns}
+        minEnd={2}
+        maxEnd={gridColumns + 1}
+        label="Column: start / end"
+      />
+      <PositionInputGroup
+        startValue={value.rowStart}
+        endValue={value.rowEnd}
+        onStartChange={(rowStart) => onChange({ ...value, rowStart })}
+        onEndChange={(rowEnd) => onChange({ ...value, rowEnd })}
+        onBlur={onBlur}
+        isStartValid={validation.isRowStartValid}
+        isEndValid={validation.isRowEndValid}
+        minStart={1}
+        maxStart={gridRows}
+        minEnd={2}
+        maxEnd={gridRows + 1}
+        label="Row: start / end"
+      />
     </Flex>
   );
 };
