@@ -343,11 +343,7 @@ const GridChildPositionArea = () => {
 
   return (
     <Grid css={{ gridTemplateColumns: "3fr 7fr" }}>
-      <PropertyLabel
-        label="Area"
-        description="Place this item in a named grid area"
-        properties={["grid-row-start"]}
-      />
+      <div />
       <Select
         options={areaNames}
         value={selectedArea}

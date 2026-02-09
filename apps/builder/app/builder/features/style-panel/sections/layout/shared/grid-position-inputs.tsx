@@ -23,18 +23,25 @@ export type GridPositionValidation = {
 export const validateGridPosition = (
   position: GridPosition,
   gridColumns: number,
-  gridRows: number
-): GridPositionValidation => ({
-  isColumnStartValid:
-    position.columnStart >= 1 && position.columnStart < position.columnEnd,
-  isColumnEndValid:
-    position.columnEnd > position.columnStart &&
-    position.columnEnd <= gridColumns + 1,
-  isRowStartValid:
-    position.rowStart >= 1 && position.rowStart < position.rowEnd,
-  isRowEndValid:
-    position.rowEnd > position.rowStart && position.rowEnd <= gridRows + 1,
-});
+  gridRows: number,
+  options: { checkBounds?: boolean } = {}
+): GridPositionValidation => {
+  const { checkBounds = false } = options;
+  return {
+    // Start must be >= 1 and strictly less than end
+    isColumnStartValid:
+      position.columnStart >= 1 && position.columnStart < position.columnEnd,
+    // End must be greater than start, optionally within grid bounds
+    isColumnEndValid:
+      position.columnEnd > position.columnStart &&
+      (!checkBounds || position.columnEnd <= gridColumns + 1),
+    isRowStartValid:
+      position.rowStart >= 1 && position.rowStart < position.rowEnd,
+    isRowEndValid:
+      position.rowEnd > position.rowStart &&
+      (!checkBounds || position.rowEnd <= gridRows + 1),
+  };
+};
 
 type GridPositionInputsProps = {
   value: GridPosition;
@@ -42,6 +49,7 @@ type GridPositionInputsProps = {
   onBlur?: () => void;
   gridColumns: number;
   gridRows: number;
+  checkBounds?: boolean;
 };
 
 const PositionInputGroup = ({
@@ -114,8 +122,11 @@ export const GridPositionInputs = ({
   onBlur,
   gridColumns,
   gridRows,
+  checkBounds = false,
 }: GridPositionInputsProps) => {
-  const validation = validateGridPosition(value, gridColumns, gridRows);
+  const validation = validateGridPosition(value, gridColumns, gridRows, {
+    checkBounds,
+  });
 
   return (
     <Flex gap="2">
