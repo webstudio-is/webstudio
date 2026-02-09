@@ -167,6 +167,7 @@ const AreaEditor = ({
           onBlur={handleSave}
           gridColumns={gridColumns}
           gridRows={gridRows}
+          checkBounds
         />
       </Grid>
       {hasDuplicateName && (
