@@ -10,6 +10,7 @@ import {
 import { EllipsesIcon } from "@webstudio-is/icons";
 import type { DialogType } from "./project-dialogs";
 import { useDuplicateProject } from "./project-dialogs";
+import { builderUrl } from "~/shared/router-utils";
 
 type ProjectMenuProps = {
   projectId: string;
@@ -19,6 +20,14 @@ type ProjectMenuProps = {
 export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const handleDuplicateProject = useDuplicateProject(projectId);
+
+  const handleOpenInSafeMode = () => {
+    window.location.href = builderUrl({
+      origin: window.origin,
+      projectId,
+      safemode: true,
+    });
+  };
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -41,14 +50,17 @@ export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
         <DropdownMenuItem onSelect={() => onOpenChange("share")}>
           Share
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onOpenChange("delete")}>
+          Delete
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onOpenChange("tags")}>
           Tags
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onOpenChange("settings")}>
           Settings
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("delete")}>
-          Delete
+        <DropdownMenuItem onSelect={handleOpenInSafeMode}>
+          Open in safe mode
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

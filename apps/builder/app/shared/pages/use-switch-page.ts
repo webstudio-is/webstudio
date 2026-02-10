@@ -90,8 +90,9 @@ export const useSyncPageUrl = () => {
     const searParamsMode = isBuilderMode(searParamsModeRaw)
       ? searParamsModeRaw
       : undefined;
+    const searchParamsSafemode = searchParams.get("safemode");
 
-    // Do not navigate on popstate change
+    // Do not navigate on popstate change or if params match
     if (
       searchParamsPageId === page.id &&
       searchParamsPageHash === pageHash.hash &&
@@ -106,6 +107,7 @@ export const useSyncPageUrl = () => {
         authToken: $authToken.get(),
         pageHash: pageHash.hash === "" ? undefined : pageHash.hash,
         mode: builderMode === "design" ? undefined : builderMode,
+        safemode: searchParamsSafemode === "true",
       })
     );
   }, [builderMode, navigate, page, pageHash]);

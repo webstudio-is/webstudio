@@ -8,8 +8,16 @@ const apiWindowNamespace = "__webstudio__$__builderApi";
 
 type ToastHandler = (message: string) => void;
 
+const isSafeMode = (() => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).get("safemode") === "true";
+})();
+
 const _builderApi = {
   isInitialized: () => true,
+  isSafeMode: () => isSafeMode,
   toast: {
     info: toast.info as ToastHandler,
     warn: toast.warn as ToastHandler,

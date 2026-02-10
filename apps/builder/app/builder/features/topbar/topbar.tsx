@@ -27,6 +27,7 @@ import type { ReactNode } from "react";
 import { CloneButton } from "./clone";
 import { $selectedPage } from "~/shared/awareness";
 import { BuilderModeDropDown } from "./builder-mode";
+import { SafeModeButton } from "./safe-mode";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -106,6 +107,7 @@ export const Topbar = ({ project, css, loading }: TopbarProps) => {
             width: theme.spacing[30],
           }}
         >
+          <SafeModeButton />
           <ViewMode />
           <SyncStatus />
 
