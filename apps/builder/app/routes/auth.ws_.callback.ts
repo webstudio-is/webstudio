@@ -26,8 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     allowedDestinations(request, ["document"]);
     // CSRF is not needed for document only routes
 
-    const returnTo =
-      (await returnToPath(request)) ?? builderPath({ safemode: false });
+    const returnTo = (await returnToPath(request)) ?? builderPath();
 
     debug("Start exchanging the code for the access token");
 

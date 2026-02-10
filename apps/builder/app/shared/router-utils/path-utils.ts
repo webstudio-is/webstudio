@@ -19,14 +19,14 @@ export const builderPath = ({
   authToken,
   pageHash,
   mode,
-  safemode,
+  safemode = false,
 }: {
   pageId?: string;
   authToken?: string;
   pageHash?: string;
   mode?: "preview" | "content";
-  safemode: boolean;
-}) => {
+  safemode?: boolean;
+} = {}) => {
   return `/${searchParams({
     pageId,
     authToken,
@@ -50,7 +50,7 @@ export const builderUrl = (props: {
     builderPath({
       pageId: props.pageId,
       authToken: props.authToken,
-      safemode: props.safemode ?? false,
+      safemode: props.safemode,
     }),
     authServerOrigin
   );
