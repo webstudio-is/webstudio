@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { ShieldIcon } from "@webstudio-is/icons";
 import {
-  Tooltip,
-  ToolbarToggleItem,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  theme,
+  ToolbarButton,
   Button,
   Text,
   Flex,
@@ -10,6 +14,8 @@ import {
 import { builderApi } from "~/shared/builder-api";
 
 export const SafeModeButton = () => {
+  const [open, setOpen] = useState(false);
+
   if (!builderApi.isSafeMode()) {
     return;
   }
@@ -21,10 +27,21 @@ export const SafeModeButton = () => {
   };
 
   return (
-    <Tooltip
-      variant="wrapped"
-      content={
-        <Flex direction="column" gap="2">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <ToolbarButton variant="subtle" tabIndex={0}>
+          <ShieldIcon stroke={rawTheme.colors.foregroundDestructive} />
+        </ToolbarButton>
+      </PopoverTrigger>
+      <PopoverContent>
+        <Flex
+          direction="column"
+          gap="2"
+          css={{
+            padding: theme.panel.padding,
+            width: theme.spacing[30],
+          }}
+        >
           <Text variant="regularBold">Safe mode active</Text>
           <Text>
             Safe mode prevents all external JavaScript from executing. HTML
@@ -35,11 +52,7 @@ export const SafeModeButton = () => {
             Exit safe mode
           </Button>
         </Flex>
-      }
-    >
-      <ToolbarToggleItem value="safe-mode" variant="subtle" tabIndex={0}>
-        <ShieldIcon stroke={rawTheme.colors.foregroundDestructive} />
-      </ToolbarToggleItem>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 };

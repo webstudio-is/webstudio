@@ -32,7 +32,7 @@ export const builderPath = ({
     authToken,
     pageHash,
     mode,
-    safemode: String(safemode),
+    safemode: safemode ? "true" : undefined,
   })}`;
 };
 
