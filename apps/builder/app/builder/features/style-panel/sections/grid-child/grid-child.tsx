@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Flex,
@@ -48,13 +48,66 @@ type PositionMode = "auto" | "area" | "manual";
 
 export const Section = () => {
   const [positionMode, setPositionMode] = useState<PositionMode>("auto");
+  const [columnStart, columnEnd, rowStart, rowEnd] = useComputedStyles([
+    "grid-column-start",
+    "grid-column-end",
+    "grid-row-start",
+    "grid-row-end",
+  ]);
+
+  const handleModeChange = (newMode: PositionMode) => {
+    const hasKeywordValues =
+      columnStart.cascadedValue.type === "keyword" &&
+      columnEnd.cascadedValue.type === "keyword" &&
+      rowStart.cascadedValue.type === "keyword" &&
+      rowEnd.cascadedValue.type === "keyword";
+
+    const batch = createBatchUpdate();
+
+    if (newMode === "auto") {
+      // Always reset to auto placement when switching to auto mode
+      batch.setProperty("grid-column-start")({
+        type: "keyword",
+        value: "auto",
+      });
+      batch.setProperty("grid-column-end")({ type: "keyword", value: "auto" });
+      batch.setProperty("grid-row-start")({ type: "keyword", value: "auto" });
+      batch.setProperty("grid-row-end")({ type: "keyword", value: "auto" });
+      batch.publish();
+    } else if (newMode === "manual" && hasKeywordValues) {
+      // Convert keywords to numeric positions when switching to manual
+      batch.setProperty("grid-column-start")({
+        type: "unit",
+        value: 1,
+        unit: "number",
+      });
+      batch.setProperty("grid-column-end")({
+        type: "unit",
+        value: 2,
+        unit: "number",
+      });
+      batch.setProperty("grid-row-start")({
+        type: "unit",
+        value: 1,
+        unit: "number",
+      });
+      batch.setProperty("grid-row-end")({
+        type: "unit",
+        value: 2,
+        unit: "number",
+      });
+      batch.publish();
+    }
+
+    setPositionMode(newMode);
+  };
 
   return (
     <StyleSection label="Grid child" properties={properties}>
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <GridChildPositionMode
           value={positionMode}
-          onChange={setPositionMode}
+          onChange={handleModeChange}
         />
         {positionMode === "auto" && <GridChildPositionAuto />}
         {positionMode === "area" && <GridChildPositionArea />}
@@ -394,12 +447,16 @@ const GridChildPositionManual = () => {
   const rEnd = getNumericValue(rowEnd.cascadedValue, 2);
 
   // Validate and fix invalid positions (end must be greater than start)
-  const position: GridPosition = {
-    columnStart: colStart,
-    columnEnd: colEnd > colStart ? colEnd : colStart + 1,
-    rowStart: rStart,
-    rowEnd: rEnd > rStart ? rEnd : rStart + 1,
-  };
+  // Use useMemo to stabilize the position object so it doesn't change on every render
+  const position: GridPosition = useMemo(
+    () => ({
+      columnStart: colStart,
+      columnEnd: colEnd > colStart ? colEnd : colStart + 1,
+      rowStart: rStart,
+      rowEnd: rEnd > rStart ? rEnd : rStart + 1,
+    }),
+    [colStart, colEnd, rStart, rEnd]
+  );
 
   const localValue = useLocalValue(
     position,
