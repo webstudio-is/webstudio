@@ -224,7 +224,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
     const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
       props;
-    const { renderer } = useContext(ReactSdkContext);
+    const { renderer, isSafeMode } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();
 
@@ -249,6 +249,19 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       );
     }
     // We are or on canvas | preview | published site after client routing
+
+    // In safe mode, never execute scripts regardless of other settings
+    if (isSafeMode) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
+    }
 
     // The only case we need to prevent script execution if it's explicitly disabled on the canvas
     if (renderer === "canvas" && executeScriptOnCanvas !== true) {

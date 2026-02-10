@@ -107,6 +107,7 @@ const handleError = (error: unknown) => {
 };
 
 const useElementsTree = (components: Components, instances: Instances) => {
+  const isSafeMode = builderApi.isSafeMode();
   const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const breakpointsMap = useStore($breakpoints);
@@ -132,6 +133,7 @@ const useElementsTree = (components: Components, instances: Instances) => {
       <ReactSdkContext.Provider
         value={{
           renderer: isPreviewMode ? "preview" : "canvas",
+          isSafeMode,
           assetBaseUrl,
           imageLoader: wsImageLoader,
           videoLoader: wsVideoLoader,
@@ -152,7 +154,14 @@ const useElementsTree = (components: Components, instances: Instances) => {
         })}
       </ReactSdkContext.Provider>
     );
-  }, [instances, rootInstanceId, components, isPreviewMode, breakpoints]);
+  }, [
+    instances,
+    rootInstanceId,
+    components,
+    isPreviewMode,
+    breakpoints,
+    isSafeMode,
+  ]);
 };
 
 const DesignMode = () => {

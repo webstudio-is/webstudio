@@ -19,17 +19,20 @@ export const builderPath = ({
   authToken,
   pageHash,
   mode,
+  safemode = false,
 }: {
   pageId?: string;
   authToken?: string;
   pageHash?: string;
   mode?: "preview" | "content";
-}) => {
+  safemode?: boolean;
+} = {}) => {
   return `/${searchParams({
     pageId,
     authToken,
     pageHash,
     mode,
+    safemode: safemode ? "true" : undefined,
   })}`;
 };
 
@@ -39,11 +42,16 @@ export const builderUrl = (props: {
   origin: string;
   authToken?: string;
   mode?: BuilderMode;
+  safemode?: boolean;
 }) => {
   const authServerOrigin = getAuthorizationServerOrigin(props.origin);
 
   const url = new URL(
-    builderPath({ pageId: props.pageId, authToken: props.authToken }),
+    builderPath({
+      pageId: props.pageId,
+      authToken: props.authToken,
+      safemode: props.safemode,
+    }),
     authServerOrigin
   );
 
