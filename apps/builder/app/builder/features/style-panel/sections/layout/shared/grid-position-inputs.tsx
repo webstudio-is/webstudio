@@ -27,7 +27,7 @@ export const validateGridPosition = (
   options: { checkBounds?: boolean } = {}
 ): GridPositionValidation => {
   const { checkBounds = false } = options;
-  return {
+  const result = {
     // Start must be >= 1 and strictly less than end
     isColumnStartValid:
       position.columnStart >= 1 && position.columnStart < position.columnEnd,
@@ -41,6 +41,7 @@ export const validateGridPosition = (
       position.rowEnd > position.rowStart &&
       (!checkBounds || position.rowEnd <= gridRows + 1),
   };
+  return result;
 };
 
 type GridPositionInputsProps = {
@@ -110,7 +111,7 @@ const PositionInputGroup = ({
         max={maxEnd}
       />
     </Grid>
-    <Text variant="tiny" color="subtle">
+    <Text variant="small" color="subtle">
       {label}
     </Text>
   </Flex>
