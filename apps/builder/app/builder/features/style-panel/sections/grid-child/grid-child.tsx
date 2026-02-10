@@ -32,6 +32,7 @@ import {
   GridPositionInputs,
   type GridPosition,
 } from "../layout/shared/grid-position-inputs";
+import { useLocalValue } from "../../../settings-panel/shared";
 
 export const properties = [
   "grid-column-start",
@@ -94,11 +95,16 @@ const GridChildPositionMode = ({
   ];
 
   return (
-    <Grid css={{ gridTemplateColumns: "3fr 7fr" }}>
+    <Grid css={{ gridTemplateColumns: "3fr 8fr" }}>
       <PropertyLabel
         label="Position"
         description="How the grid item is positioned within the grid"
-        properties={["grid-column-start", "grid-row-start"]}
+        properties={[
+          "grid-column-start",
+          "grid-column-end",
+          "grid-row-start",
+          "grid-row-end",
+        ]}
       />
       <ToggleGroup
         type="single"
@@ -143,23 +149,19 @@ const GridChildPositionAuto = () => {
   return (
     <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
       <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Column span"
-          description="Number of columns this item should span"
-          properties={["grid-column-end"]}
-        />
         <SpanInput
           property="grid-column-end"
           startProperty="grid-column-start"
         />
+        <Text variant="small" color="subtle">
+          Column span
+        </Text>
       </Grid>
       <Grid css={{ gap: theme.spacing[3] }}>
-        <PropertyLabel
-          label="Row span"
-          description="Number of rows this item should span"
-          properties={["grid-row-end"]}
-        />
         <SpanInput property="grid-row-end" startProperty="grid-row-start" />
+        <Text variant="small" color="subtle">
+          Row span
+        </Text>
       </Grid>
     </Grid>
   );
@@ -342,7 +344,7 @@ const GridChildPositionArea = () => {
   }
 
   return (
-    <Grid css={{ gridTemplateColumns: "3fr 7fr" }}>
+    <Grid css={{ gridTemplateColumns: "3fr 8fr" }}>
       <div />
       <Select
         options={areaNames}
@@ -385,14 +387,67 @@ const GridChildPositionManual = () => {
     return defaultValue;
   };
 
+  // Get values with defaults, ensuring they form a valid position
+  const colStart = getNumericValue(columnStart.cascadedValue, 1);
+  const colEnd = getNumericValue(columnEnd.cascadedValue, 2);
+  const rStart = getNumericValue(rowStart.cascadedValue, 1);
+  const rEnd = getNumericValue(rowEnd.cascadedValue, 2);
+
+  // Validate and fix invalid positions (end must be greater than start)
   const position: GridPosition = {
-    columnStart: getNumericValue(columnStart.cascadedValue, 1),
-    columnEnd: getNumericValue(columnEnd.cascadedValue, 2),
-    rowStart: getNumericValue(rowStart.cascadedValue, 1),
-    rowEnd: getNumericValue(rowEnd.cascadedValue, 2),
+    columnStart: colStart,
+    columnEnd: colEnd > colStart ? colEnd : colStart + 1,
+    rowStart: rStart,
+    rowEnd: rEnd > rStart ? rEnd : rStart + 1,
   };
 
+  const localValue = useLocalValue(
+    position,
+    (newPosition) => {
+      // Validate and fix the position before saving
+      const validPosition = {
+        columnStart: Math.max(1, Math.round(newPosition.columnStart)),
+        columnEnd: Math.max(1, Math.round(newPosition.columnEnd)),
+        rowStart: Math.max(1, Math.round(newPosition.rowStart)),
+        rowEnd: Math.max(1, Math.round(newPosition.rowEnd)),
+      };
+
+      // Ensure end is greater than start
+      if (validPosition.columnEnd <= validPosition.columnStart) {
+        validPosition.columnEnd = validPosition.columnStart + 1;
+      }
+      if (validPosition.rowEnd <= validPosition.rowStart) {
+        validPosition.rowEnd = validPosition.rowStart + 1;
+      }
+
+      const batch = createBatchUpdate();
+      batch.setProperty("grid-column-start")({
+        type: "unit",
+        value: validPosition.columnStart,
+        unit: "number",
+      });
+      batch.setProperty("grid-column-end")({
+        type: "unit",
+        value: validPosition.columnEnd,
+        unit: "number",
+      });
+      batch.setProperty("grid-row-start")({
+        type: "unit",
+        value: validPosition.rowStart,
+        unit: "number",
+      });
+      batch.setProperty("grid-row-end")({
+        type: "unit",
+        value: validPosition.rowEnd,
+        unit: "number",
+      });
+      batch.publish();
+    },
+    { autoSave: false }
+  );
+
   const handleChange = (newPosition: GridPosition) => {
+    localValue.set(newPosition);
     const batch = createBatchUpdate();
     batch.setProperty("grid-column-start")({
       type: "unit",
@@ -417,44 +472,18 @@ const GridChildPositionManual = () => {
     batch.publish({ isEphemeral: true });
   };
 
-  const handleBlur = () => {
-    const batch = createBatchUpdate();
-    batch.setProperty("grid-column-start")({
-      type: "unit",
-      value: position.columnStart,
-      unit: "number",
-    });
-    batch.setProperty("grid-column-end")({
-      type: "unit",
-      value: position.columnEnd,
-      unit: "number",
-    });
-    batch.setProperty("grid-row-start")({
-      type: "unit",
-      value: position.rowStart,
-      unit: "number",
-    });
-    batch.setProperty("grid-row-end")({
-      type: "unit",
-      value: position.rowEnd,
-      unit: "number",
-    });
-    batch.publish();
-  };
-
   return (
     <Grid
       css={{
-        gridTemplateColumns: "3fr 7fr",
-        gap: theme.spacing[3],
+        gridTemplateColumns: "3fr 8fr",
         alignItems: "start",
       }}
     >
       <div />
       <GridPositionInputs
-        value={position}
+        value={localValue.value}
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={localValue.save}
         gridColumns={gridColumns}
         gridRows={gridRows}
       />
