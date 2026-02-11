@@ -16,6 +16,7 @@ export const ViewMode = () => {
         align="center"
         justify="center"
         css={{ height: theme.spacing["15"] }}
+        shrink={false}
       >
         <CloudIcon
           color={rawTheme.colors.backgroundAlertMain}

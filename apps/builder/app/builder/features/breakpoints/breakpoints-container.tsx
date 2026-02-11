@@ -17,7 +17,7 @@ import { serverSyncStore } from "~/shared/sync/sync-stores";
 import type { Breakpoint } from "@webstudio-is/sdk";
 
 const hideOnMobile = {
-  "@media (max-width: 640px)": {
+  "@media (max-width: 800px)": {
     display: "none",
   },
 } as const;
