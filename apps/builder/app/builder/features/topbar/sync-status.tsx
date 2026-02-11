@@ -40,6 +40,7 @@ export const SyncStatus = () => {
     align: "center" as const,
     justify: "center" as const,
     css: { height: theme.spacing["15"] },
+    shrink: false,
   };
 
   if (statusObject.status === "failed") {

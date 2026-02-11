@@ -94,7 +94,7 @@ export const Topbar = ({ project, css, loading }: TopbarProps) => {
           </Flex>
         )}
       </Flex>
-      <Flex css={{ flexBasis: "60%" }} justify="center">
+      <Flex justify="center">
         <BreakpointsContainer />
       </Flex>
       <Toolbar>
@@ -104,7 +104,7 @@ export const Topbar = ({ project, css, loading }: TopbarProps) => {
             isolation: "isolate",
             justifyContent: "flex-end",
             gap: theme.spacing[5],
-            width: theme.spacing[30],
+            flexShrink: 0,
           }}
         >
           <SafeModeButton />
