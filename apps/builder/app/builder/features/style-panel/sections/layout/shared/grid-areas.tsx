@@ -288,11 +288,53 @@ export const GridAreas = () => {
     }
   }, [columns, rows, areas]);
 
+  const addArea = useCallback(() => {
+    const { area: newArea, needsNewRow } = findNonOverlappingPosition(
+      areas,
+      columns,
+      rows
+    );
+
+    const batch = createBatchUpdate();
+
+    // Calculate actual dimensions after potential row addition
+    let actualRows = rows;
+
+    // If we need a new row, add it to the grid
+    if (needsNewRow) {
+      const currentRows = rowsValue.split(/\s+/).filter(Boolean);
+      const lastRowSize = currentRows[currentRows.length - 1] || "1fr";
+      const updatedRows = [...currentRows, lastRowSize].join(" ");
+      batch.setProperty("grid-template-rows")({
+        type: "unparsed",
+        value: updatedRows,
+      });
+      actualRows = rows + 1; // Use the new row count
+    }
+
+    // Add the new area to the grid
+    const updatedAreas = [...areas, newArea];
+    const template = generateGridTemplate(
+      updatedAreas,
+      columns,
+      actualRows // Use actualRows instead of stale rows
+    );
+    batch.setProperty("grid-template-areas")({
+      type: "unparsed",
+      value: template,
+    });
+    batch.publish();
+
+    // Now open the dialog to edit the newly created area
+    setEditingAreaIndex(areas.length);
+  }, [areas, columns, rows, rowsValue]);
+
   return (
     <CollapsibleSectionRoot
       label={`Areas (${areas.length})`}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      fullWidth
       trigger={
         <Flex
           align="center"
@@ -305,45 +347,7 @@ export const GridAreas = () => {
           <IconButton
             onClick={(e) => {
               e.stopPropagation();
-              const { area: newArea, needsNewRow } = findNonOverlappingPosition(
-                areas,
-                columns,
-                rows
-              );
-
-              const batch = createBatchUpdate();
-
-              // Calculate actual dimensions after potential row addition
-              let actualRows = rows;
-
-              // If we need a new row, add it to the grid
-              if (needsNewRow) {
-                const currentRows = rowsValue.split(/\s+/).filter(Boolean);
-                const lastRowSize =
-                  currentRows[currentRows.length - 1] || "1fr";
-                const updatedRows = [...currentRows, lastRowSize].join(" ");
-                batch.setProperty("grid-template-rows")({
-                  type: "unparsed",
-                  value: updatedRows,
-                });
-                actualRows = rows + 1; // Use the new row count
-              }
-
-              // Add the new area to the grid
-              const updatedAreas = [...areas, newArea];
-              const template = generateGridTemplate(
-                updatedAreas,
-                columns,
-                actualRows // Use actualRows instead of stale rows
-              );
-              batch.setProperty("grid-template-areas")({
-                type: "unparsed",
-                value: template,
-              });
-              batch.publish();
-
-              // Now open the dialog to edit the newly created area
-              setEditingAreaIndex(areas.length);
+              addArea();
             }}
           >
             <PlusIcon />
@@ -356,7 +360,7 @@ export const GridAreas = () => {
           <Text
             color="subtle"
             align="center"
-            css={{ padding: theme.spacing[5] }}
+            css={{ padding: theme.panel.padding }}
           >
             No Areas
           </Text>
@@ -372,6 +376,7 @@ export const GridAreas = () => {
               "&:hover": {
                 backgroundColor: theme.colors.backgroundHover,
               },
+              paddingInline: theme.panel.paddingInline,
             }}
             onClick={() => setEditingAreaIndex(index)}
           >
