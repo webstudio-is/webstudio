@@ -23,6 +23,8 @@ export const AlignSelfControl = ({ variant }: AlignSelfControlProps) => {
   const startValue = variant === "flex" ? "flex-start" : "start";
   const endValue = variant === "flex" ? "flex-end" : "end";
   const axisName = variant === "flex" ? "cross axis" : "block axis";
+  const parentProperty =
+    variant === "flex" ? "align-items" : "align-items or align-content";
 
   return (
     <Grid css={{ gridTemplateColumns: "3fr 8fr" }}>
@@ -37,8 +39,7 @@ export const AlignSelfControl = ({ variant }: AlignSelfControlProps) => {
         items={[
           {
             child: <XSmallIcon />,
-            description:
-              "The element's alignment is determined by its parent's align-items property.",
+            description: `The element's alignment is determined by its parent's ${parentProperty} property.`,
             value: "auto",
           },
           {
@@ -63,8 +64,7 @@ export const AlignSelfControl = ({ variant }: AlignSelfControlProps) => {
           },
           {
             child: <AlignSelfBaselineIcon />,
-            description:
-              "The element is aligned to the baseline of the parent.",
+            description: `The element is aligned to the baseline along the ${axisName}.`,
             value: "baseline",
           },
         ]}

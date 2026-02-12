@@ -1,9 +1,11 @@
 // This file was auto-generated
 export const propertiesGenerated = {
   accentColor: "Sets the color used for highlighting user interface controls.",
-  alignContent: "Aligns a flex container's lines within the flex container.",
-  alignItems: "Aligns items along the cross axis of a flex container.",
-  alignSelf: "Aligns a flex item along the cross axis of its container.",
+  alignContent:
+    "Aligns and distributes content along the cross/block axis of a flex or grid container.",
+  alignItems:
+    "Aligns items along the cross/block axis within a flex or grid container.",
+  alignSelf: "Aligns an item along the cross/block axis within its container.",
   alignTracks: "Defines how tracks are aligned in a grid container.",
   animationComposition: "Specifies whether an animation is additive or not.",
   animationDelay: "Defines a delay for the start of an animation.",
@@ -221,10 +223,11 @@ export const propertiesGenerated = {
     "Sets the inline-start position of an element relative to its nearest positioned ancestor.",
   isolation:
     "Determines whether an element should create a new stacking context.",
-  justifyContent: "Aligns flex items along the main axis of their container.",
+  justifyContent:
+    "Aligns and distributes content along the main/inline axis of a flex or grid container.",
   justifyItems:
-    "Aligns items inside a grid cell along both the row and column axis.",
-  justifySelf: "Aligns a grid item along both the row and column axis.",
+    "Aligns items along the inline axis within a flex or grid container.",
+  justifySelf: "Aligns an item along the inline axis within its container.",
   justifyTracks: "Aligns grid tracks along the row or column axis.",
   left: "Sets the left position of an element relative to its nearest positioned ancestor.",
   letterSpacing: "Controls the spacing between characters in a block of text.",
@@ -297,7 +300,8 @@ export const propertiesGenerated = {
   offsetRotate:
     "Controls the rotation of an element around a fixed point in degrees.",
   opacity: "Controls the transparency of an element.",
-  order: "Controls the order in which an element appears in a flex container.",
+  order:
+    "Controls the order in which an element appears within its flex or grid container.",
   orphans: "Controls the minimum number of lines for the last line of a block.",
   outlineColor: "Controls the color of an element's outline.",
   outlineOffset:
@@ -570,9 +574,9 @@ export const propertiesGenerated = {
   padding: "Sets the padding on all four sides of an element at once.",
   "padding-block": "Sets the padding on the block axis of an element.",
   "padding-inline": "Sets the padding on the inline axis of an element.",
-  "place-content": "Aligns a flex container's lines within it.",
-  "place-items": "Aligns a flex container's items within it.",
-  "place-self": "Allows the default alignment of a flex item to be overridden.",
+  "place-content": "Shorthand for align-content and justify-content.",
+  "place-items": "Shorthand for align-items and justify-items.",
+  "place-self": "Shorthand for align-self and justify-self.",
   "scroll-margin": "Controls the top and bottom sides of the scrollbar",
   "scroll-margin-block": "Controls the top and bottom sides of the scrollbar",
   "scroll-margin-inline": "Controls the left and right sides of the scrollbar",
@@ -633,27 +637,28 @@ export const properties = {
 
 export const declarationsGenerated = {
   "alignContent:normal":
-    "Aligns and distributes grid items along the cross axis with different spacing options.",
+    "Aligns and distributes items along the cross/block axis with default spacing.",
   "alignContent:first":
-    "Aligns and distributes grid items along the cross axis, prioritizing the first line.",
+    "Aligns and distributes items along the cross/block axis, prioritizing the first line.",
   "alignContent:last":
-    "Aligns and distributes grid items along the cross axis, prioritizing the last line.",
-  "alignContent:baseline": "Aligns grid items with their baselines.",
+    "Aligns and distributes items along the cross/block axis, prioritizing the last line.",
+  "alignContent:baseline": "Aligns items with their baselines.",
   "alignContent:space-between":
-    "Aligns and distributes grid items with equal space between them.",
+    "Aligns and distributes items with equal space between them.",
   "alignContent:space-around":
-    "Aligns and distributes grid items with equal space around them.",
+    "Aligns and distributes items with equal space around them.",
   "alignContent:space-evenly":
-    "Aligns and distributes grid items with equal space between them and around the edges.",
-  "alignContent:stretch": "Stretches grid items to fill the container.",
+    "Aligns and distributes items with equal space between them and around the edges.",
+  "alignContent:stretch": "Stretches items to fill the container.",
   "alignContent:unsafe": "Enables alignment modes that are considered risky.",
   "alignContent:safe": "Enables alignment modes that are safe to use.",
-  "alignContent:center": "Centers and aligns grid items to the center.",
-  "alignContent:start": "Aligns grid items to the start of the container.",
-  "alignContent:end": "Aligns grid items to the end of the container.",
+  "alignContent:center": "Centers items along the cross/block axis.",
+  "alignContent:start": "Aligns items to the start of the container.",
+  "alignContent:end": "Aligns items to the end of the container.",
   "alignContent:flex-start":
-    "Aligns grid items to the start of the first line.",
-  "alignContent:flex-end": "Aligns grid items to the end of the last line.",
+    "Aligns items to the start of the container (same as start).",
+  "alignContent:flex-end":
+    "Aligns items to the end of the container (same as end).",
   "alignContent:initial": "Sets the default alignment for align-content.",
   "alignContent:inherit":
     "The element inherits the align-content value of its parent.",
@@ -663,8 +668,8 @@ export const declarationsGenerated = {
     "The default, stretches the element vertically depending on the height of the container.",
   "alignItems:stretch":
     "Stretches the element vertically to fill the container.",
-  "alignItems:first": "Stretches flex items from the first baseline.",
-  "alignItems:last": "Stretches flex items from the last baseline.",
+  "alignItems:first": "Aligns items from the first baseline.",
+  "alignItems:last": "Aligns items from the last baseline.",
   "alignItems:baseline":
     "Aligns the element with the baseline of the parent container.",
   "alignItems:unsafe":
@@ -678,29 +683,31 @@ export const declarationsGenerated = {
   "alignItems:self-start": "Aligns the element at the start of itself.",
   "alignItems:self-end": "Aligns the element at the end of itself.",
   "alignItems:flex-start":
-    "Aligns the element at the start of the flex container.",
-  "alignItems:flex-end": "Aligns the element at the end of the flex container.",
+    "Aligns items at the start of the container (same as start).",
+  "alignItems:flex-end":
+    "Aligns items at the end of the container (same as end).",
   "alignItems:initial": "Items are aligned to their default position.",
   "alignItems:inherit":
     "Inherits the align-items property from the parent element.",
   "alignItems:unset": "Resets the align-items property to its default value.",
-  "alignSelf:auto": "Default alignment for the individual flex item.",
+  "alignSelf:auto": "Uses the parent's align-items value.",
   "alignSelf:normal":
-    'Same as "stretch", but only for flex items that haven\'t specified a `flex-basis` value.',
-  "alignSelf:stretch": "Stretch to fill the container (the default value).",
-  "alignSelf:first": "Places the item at the start of the cross axis.",
-  "alignSelf:last": "Places the item at the end of the cross axis.",
+    "Behaves as stretch or start depending on the layout mode.",
+  "alignSelf:stretch": "Stretches to fill the container.",
+  "alignSelf:first": "Places the item at the start of the cross/block axis.",
+  "alignSelf:last": "Places the item at the end of the cross/block axis.",
   "alignSelf:baseline":
-    "Aligns the baseline of the flex item with the baseline of the parent container.",
+    "Aligns the item's baseline with the baseline of other items.",
   "alignSelf:unsafe": "Enables a kind of backwards compatibility mode.",
   "alignSelf:safe": "Applies all but potentially hazardous alignment values.",
-  "alignSelf:center": "Centers the flex item vertically.",
-  "alignSelf:start": "Places the item at the start of the cross axis.",
-  "alignSelf:end": "Places the item at the end of the cross axis.",
-  "alignSelf:self-start": "Places the item at the start of the cross axis.",
-  "alignSelf:self-end": "Places the item at the end of the cross axis.",
-  "alignSelf:flex-start": "Aligns flex items to the start of the cross axis.",
-  "alignSelf:flex-end": "Aligns flex items to the end of the cross axis.",
+  "alignSelf:center": "Centers the item along the cross/block axis.",
+  "alignSelf:start": "Places the item at the start of the cross/block axis.",
+  "alignSelf:end": "Places the item at the end of the cross/block axis.",
+  "alignSelf:self-start":
+    "Places the item at the start of the cross/block axis.",
+  "alignSelf:self-end": "Places the item at the end of the cross/block axis.",
+  "alignSelf:flex-start": "Places the item at the start (same as start).",
+  "alignSelf:flex-end": "Places the item at the end (same as end).",
   "alignSelf:initial": "Sets the align-self property to its default value.",
   "alignSelf:inherit":
     "Inherits the align-self property from its parent element.",
@@ -729,9 +736,9 @@ export const declarationsGenerated = {
   "alignTracks:start": "Aligns the grid tracks to the start of the grid area.",
   "alignTracks:end": "Aligns the grid tracks to the end of the grid area.",
   "alignTracks:flex-start":
-    "Aligns the grid tracks to the start of the flex container.",
+    "Aligns the grid tracks to the start of the container (same as start).",
   "alignTracks:flex-end":
-    "Aligns the grid tracks to the end of the flex container.",
+    "Aligns the grid tracks to the end of the container (same as end).",
   "alignTracks:initial": "Sets the alignment to its default value.",
   "alignTracks:inherit": "Inherits the alignment from its parent element.",
   "alignTracks:unset": "Resets the alignment to its natural value.",
@@ -2413,56 +2420,44 @@ export const declarationsGenerated = {
   "justifyContent:unset":
     "Resets the property to its default value if it has been set before, otherwise behaves like inherit.",
   "justifyItems:normal":
-    "The grid items are aligned according to the default alignment for the items.",
-  "justifyItems:stretch": "The grid items are stretched to fill the grid area.",
+    "Items are aligned according to the default alignment.",
+  "justifyItems:stretch": "Items are stretched to fill the container.",
   "justifyItems:first": "Invalid value.",
   "justifyItems:last": "Invalid value.",
-  "justifyItems:baseline":
-    "The grid items are aligned such that their baselines align.",
-  "justifyItems:unsafe":
-    "The grid items are aligned as if `start` if values are unsafe.",
-  "justifyItems:safe":
-    "The grid items are aligned as if `center` if values are unsafe.",
-  "justifyItems:center": "The grid items are centered in the grid area.",
-  "justifyItems:start":
-    "The grid items are aligned to the start of the grid area.",
-  "justifyItems:end": "The grid items are aligned to the end of the grid area.",
+  "justifyItems:baseline": "Items are aligned such that their baselines align.",
+  "justifyItems:unsafe": "Allows alignment that may cause overflow.",
+  "justifyItems:safe": "Prevents alignment that may cause overflow.",
+  "justifyItems:center": "Items are centered along the inline axis.",
+  "justifyItems:start": "Items are aligned to the start of the inline axis.",
+  "justifyItems:end": "Items are aligned to the end of the inline axis.",
   "justifyItems:self-start":
-    "The grid items are aligned to the start of the grid area for their respective axis.",
+    "Items are aligned to the start of their respective inline axis.",
   "justifyItems:self-end":
-    "The grid items are aligned to the end of the grid area for their respective axis.",
-  "justifyItems:flex-start":
-    "The grid items are aligned to the start of the axis lines.",
-  "justifyItems:flex-end":
-    "The grid items are aligned to the end of the axis lines.",
-  "justifyItems:left":
-    "The grid items are aligned to the left of the grid area container.",
-  "justifyItems:right":
-    "The grid items are aligned to the right of the grid area container.",
+    "Items are aligned to the end of their respective inline axis.",
+  "justifyItems:flex-start": "Items are aligned to the start (same as start).",
+  "justifyItems:flex-end": "Items are aligned to the end (same as end).",
+  "justifyItems:left": "Items are aligned to the left of the container.",
+  "justifyItems:right": "Items are aligned to the right of the container.",
   "justifyItems:legacy": "Aligns items according to their legacy alignment.",
   "justifyItems:initial": "Sets the alignment to its default value.",
   "justifyItems:inherit": "Inherits the alignment from its parent element.",
   "justifyItems:unset": "Resets the alignment to its inherited value.",
-  "justifySelf:auto": "The browser selects the alignment.",
+  "justifySelf:auto": "Uses the parent's justify-items value.",
   "justifySelf:normal":
-    "The browser places the item according to the container's alignment rules.",
+    "The item is placed according to the container's alignment rules.",
   "justifySelf:stretch": "Stretches the item to fit the container.",
-  "justifySelf:first": "Places the item at the start of the grid area.",
-  "justifySelf:last": "Places the item at the end of the grid area.",
+  "justifySelf:first": "Places the item at the start of the inline axis.",
+  "justifySelf:last": "Places the item at the end of the inline axis.",
   "justifySelf:baseline": "Aligns the item along the baseline.",
-  "justifySelf:unsafe": "Allows the item to be placed outside the grid area.",
-  "justifySelf:safe":
-    "Prevents the item from being placed outside the grid area.",
-  "justifySelf:center": "Centers the item horizontally.",
-  "justifySelf:start": "Places the item at the start of the row.",
-  "justifySelf:end": "Places the item at the end of the row.",
-  "justifySelf:self-start": "Aligns the item at the start of its grid area.",
-  "justifySelf:self-end":
-    "Aligns the content of a grid item to the end of its grid cell along the inline (row) axis.",
-  "justifySelf:flex-start":
-    "Aligns a flex item to the start (beginning) of the container along the main axis.",
-  "justifySelf:flex-end":
-    "Aligns a flex item to the end of the container along the main axis.",
+  "justifySelf:unsafe": "Allows alignment that may cause overflow.",
+  "justifySelf:safe": "Prevents alignment that may cause overflow.",
+  "justifySelf:center": "Centers the item along the inline axis.",
+  "justifySelf:start": "Places the item at the start of the inline axis.",
+  "justifySelf:end": "Places the item at the end of the inline axis.",
+  "justifySelf:self-start": "Aligns the item at the start of its inline axis.",
+  "justifySelf:self-end": "Aligns the item at the end of its inline axis.",
+  "justifySelf:flex-start": "Places the item at the start (same as start).",
+  "justifySelf:flex-end": "Places the item at the end (same as end).",
   "justifySelf:left":
     "Aligns the content of an element to the left of its container.",
   "justifySelf:right":
@@ -2494,9 +2489,9 @@ export const declarationsGenerated = {
   "justifyTracks:end":
     "Aligns justification content to the end of the grid area.",
   "justifyTracks:flex-start":
-    "Aligns justification content to the start of the flex container.",
+    "Aligns tracks to the start of the container (same as start).",
   "justifyTracks:flex-end":
-    "Aligns justification content to the end of the flex container.",
+    "Aligns tracks to the end of the container (same as end).",
   "justifyTracks:left":
     "Aligns justification content to the left of the grid area.",
   "justifyTracks:right":
