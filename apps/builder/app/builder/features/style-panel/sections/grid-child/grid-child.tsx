@@ -8,6 +8,8 @@ import {
   theme,
   ToggleGroup,
   ToggleGroupButton,
+  SectionTitleButton,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
@@ -35,6 +37,9 @@ import {
 import { useLocalValue } from "../../../settings-panel/shared";
 import { AlignSelfControl, JustifySelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
+import { useStore } from "@nanostores/react";
+import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { ExternalLinkIcon } from "@webstudio-is/icons";
 
 export const properties = [
   "grid-column-start",
@@ -104,8 +109,25 @@ export const Section = () => {
     setPositionMode(newMode);
   };
 
+  const instancePath = useStore($selectedInstancePath);
+  // Get the parent instance (second item in the path, index 1)
+  const parentInstance = instancePath?.[1];
+
   return (
-    <StyleSection label="Grid child" properties={properties}>
+    <StyleSection
+      label="Grid child"
+      properties={properties}
+      suffix={
+        parentInstance && (
+          <Tooltip content="Select grid container">
+            <SectionTitleButton
+              prefix={<ExternalLinkIcon />}
+              onClick={() => selectInstance(parentInstance.instanceSelector)}
+            />
+          </Tooltip>
+        )
+      }
+    >
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <GridChildPositionMode
           value={positionMode}
