@@ -5,6 +5,8 @@ import {
   ToggleGroup,
   ToggleGroupButton,
   FloatingPanel,
+  SectionTitleButton,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { CssProperty } from "@webstudio-is/css-engine";
@@ -15,6 +17,7 @@ import {
   ShrinkIcon,
   GrowIcon,
   EllipsesIcon,
+  ExternalLinkIcon,
 } from "@webstudio-is/icons";
 import { StyleSection } from "../../shared/style-section";
 import {
@@ -23,10 +26,12 @@ import {
 } from "../../property-label";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import { useComputedStyles } from "../../shared/model";
 import { createBatchUpdate } from "../../shared/use-style-data";
 import { AlignSelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
+import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
 
 export const properties = [
   "flex-shrink",
@@ -37,8 +42,25 @@ export const properties = [
 ] satisfies [CssProperty, ...CssProperty[]];
 
 export const Section = () => {
+  const instancePath = useStore($selectedInstancePath);
+  // Get the parent instance (second item in the path, index 1)
+  const parentInstance = instancePath?.[1];
+
   return (
-    <StyleSection label="Flex Child" properties={properties}>
+    <StyleSection
+      label="Flex child"
+      properties={properties}
+      suffix={
+        parentInstance && (
+          <Tooltip content="Select flex container">
+            <SectionTitleButton
+              prefix={<ExternalLinkIcon />}
+              onClick={() => selectInstance(parentInstance.instanceSelector)}
+            />
+          </Tooltip>
+        )
+      }
+    >
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <FlexChildSectionAlign />
         <FlexChildSectionSizing />
