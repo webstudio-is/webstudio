@@ -33,6 +33,8 @@ import {
   type GridPosition,
 } from "../layout/shared/grid-position-inputs";
 import { useLocalValue } from "../../../settings-panel/shared";
+import { AlignSelfControl, JustifySelfControl } from "../shared/align-self";
+import { OrderControl } from "../shared/order";
 
 export const properties = [
   "grid-column-start",
@@ -112,6 +114,7 @@ export const Section = () => {
         {positionMode === "auto" && <GridChildPositionAuto />}
         {positionMode === "area" && <GridChildPositionArea />}
         {positionMode === "manual" && <GridChildPositionManual />}
+        <GridChildAlign />
       </Flex>
     </StyleSection>
   );
@@ -200,21 +203,24 @@ const GridChildPositionMode = ({
 
 const GridChildPositionAuto = () => {
   return (
-    <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <SpanInput
-          property="grid-column-end"
-          startProperty="grid-column-start"
-        />
-        <Text variant="small" color="subtle">
-          Column span
-        </Text>
-      </Grid>
-      <Grid css={{ gap: theme.spacing[3] }}>
-        <SpanInput property="grid-row-end" startProperty="grid-row-start" />
-        <Text variant="small" color="subtle">
-          Row span
-        </Text>
+    <Grid css={{ gridTemplateColumns: "3fr 8fr" }}>
+      <div />
+      <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[5] }}>
+        <Grid css={{ gap: theme.spacing[3] }}>
+          <SpanInput
+            property="grid-column-end"
+            startProperty="grid-column-start"
+          />
+          <Text variant="small" color="subtle">
+            Column span
+          </Text>
+        </Grid>
+        <Grid css={{ gap: theme.spacing[3] }}>
+          <SpanInput property="grid-row-end" startProperty="grid-row-start" />
+          <Text variant="small" color="subtle">
+            Row span
+          </Text>
+        </Grid>
       </Grid>
     </Grid>
   );
@@ -545,5 +551,15 @@ const GridChildPositionManual = () => {
         gridRows={gridRows}
       />
     </Grid>
+  );
+};
+
+const GridChildAlign = () => {
+  return (
+    <Flex direction="column" gap="1">
+      <AlignSelfControl variant="grid" />
+      <JustifySelfControl />
+      <OrderControl />
+    </Flex>
   );
 };
