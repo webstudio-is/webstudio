@@ -384,6 +384,17 @@ const AlignmentControls = ({
         property="align-items"
         items={[
           {
+            name: "start",
+            label: "Start",
+            icon: AlignStartHorizontalIcon,
+          },
+          {
+            name: "center",
+            label: "Center",
+            icon: AlignCenterHorizontalIcon,
+          },
+          { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+          {
             name: "stretch",
             label: "Stretch",
             icon: StretchVerticalIcon,
@@ -393,22 +404,26 @@ const AlignmentControls = ({
             label: "Baseline",
             icon: AlignBaselineIcon,
           },
-          {
-            name: "center",
-            label: "Center",
-            icon: AlignCenterHorizontalIcon,
-          },
-          {
-            name: "start",
-            label: "Start",
-            icon: AlignStartHorizontalIcon,
-          },
-          { name: "end", label: "End", icon: AlignEndHorizontalIcon },
         ]}
       />
       <MenuControl
         property="justify-content"
         items={[
+          {
+            name: "start",
+            label: "Start",
+            icon: AlignHorizontalJustifyStartIcon,
+          },
+          {
+            name: "center",
+            label: "Center",
+            icon: AlignHorizontalJustifyCenterIcon,
+          },
+          {
+            name: "end",
+            label: "End",
+            icon: AlignHorizontalJustifyEndIcon,
+          },
           {
             name: "space-between",
             label: "Space Between",
@@ -419,27 +434,28 @@ const AlignmentControls = ({
             label: "Space Around",
             icon: AlignHorizontalSpaceAroundIcon,
           },
-          {
-            name: "center",
-            label: "Center",
-            icon: AlignHorizontalJustifyCenterIcon,
-          },
-          {
-            name: "start",
-            label: "Start",
-            icon: AlignHorizontalJustifyStartIcon,
-          },
-          {
-            name: "end",
-            label: "End",
-            icon: AlignHorizontalJustifyEndIcon,
-          },
         ]}
       />
       {showAlignContent && (
         <MenuControl
           property="align-content"
           items={[
+            {
+              name: "start",
+              label: "Start",
+              icon: AlignContentStartIcon,
+            },
+            {
+              name: "center",
+              label: "Center",
+              icon: AlignContentCenterIcon,
+            },
+            { name: "end", label: "End", icon: AlignContentEndIcon },
+            {
+              name: "stretch",
+              label: "Stretch",
+              icon: AlignContentStretchIcon,
+            },
             {
               name: "space-between",
               label: "Space Between",
@@ -450,22 +466,6 @@ const AlignmentControls = ({
               label: "Space Around",
               icon: AlignContentSpaceAroundIcon,
             },
-            {
-              name: "stretch",
-              label: "Stretch",
-              icon: AlignContentStretchIcon,
-            },
-            {
-              name: "center",
-              label: "Center",
-              icon: AlignContentCenterIcon,
-            },
-            {
-              name: "start",
-              label: "Start",
-              icon: AlignContentStartIcon,
-            },
-            { name: "end", label: "End", icon: AlignContentEndIcon },
           ]}
         />
       )}
@@ -562,6 +562,22 @@ const LayoutSectionGrid = () => {
               property="align-content"
               items={[
                 {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignContentStartIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignContentCenterIcon,
+                },
+                { name: "end", label: "End", icon: AlignContentEndIcon },
+                {
+                  name: "stretch",
+                  label: "Stretch",
+                  icon: AlignContentStretchIcon,
+                },
+                {
                   name: "space-between",
                   label: "Space Between",
                   icon: AlignContentSpaceBetweenIcon,
@@ -571,22 +587,6 @@ const LayoutSectionGrid = () => {
                   label: "Space Around",
                   icon: AlignContentSpaceAroundIcon,
                 },
-                {
-                  name: "stretch",
-                  label: "Stretch",
-                  icon: AlignContentStretchIcon,
-                },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignContentCenterIcon,
-                },
-                {
-                  name: "start",
-                  label: "Start",
-                  icon: AlignContentStartIcon,
-                },
-                { name: "end", label: "End", icon: AlignContentEndIcon },
               ]}
             />
           </Flex>
@@ -595,6 +595,17 @@ const LayoutSectionGrid = () => {
               property="align-items"
               items={[
                 {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignStartHorizontalIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
+                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+                {
                   name: "stretch",
                   label: "Stretch",
                   icon: StretchVerticalIcon,
@@ -604,23 +615,23 @@ const LayoutSectionGrid = () => {
                   label: "Baseline",
                   icon: AlignBaselineIcon,
                 },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignCenterHorizontalIcon,
-                },
-                {
-                  name: "start",
-                  label: "Start",
-                  icon: AlignStartHorizontalIcon,
-                },
-                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
               ]}
             />
             <MenuControl
               property="justify-items"
               items={[
                 {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignStartHorizontalIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
+                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+                {
                   name: "stretch",
                   label: "Stretch",
                   icon: StretchVerticalIcon,
@@ -630,22 +641,26 @@ const LayoutSectionGrid = () => {
                   label: "Baseline",
                   icon: AlignBaselineIcon,
                 },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignCenterHorizontalIcon,
-                },
-                {
-                  name: "start",
-                  label: "Start",
-                  icon: AlignStartHorizontalIcon,
-                },
-                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
               ]}
             />
             <MenuControl
               property="justify-content"
               items={[
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignHorizontalJustifyStartIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignHorizontalJustifyCenterIcon,
+                },
+                {
+                  name: "end",
+                  label: "End",
+                  icon: AlignHorizontalJustifyEndIcon,
+                },
                 {
                   name: "space-between",
                   label: "Space Between",
@@ -655,21 +670,6 @@ const LayoutSectionGrid = () => {
                   name: "space-around",
                   label: "Space Around",
                   icon: AlignHorizontalSpaceAroundIcon,
-                },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignHorizontalJustifyCenterIcon,
-                },
-                {
-                  name: "start",
-                  label: "Start",
-                  icon: AlignHorizontalJustifyStartIcon,
-                },
-                {
-                  name: "end",
-                  label: "End",
-                  icon: AlignHorizontalJustifyEndIcon,
                 },
               ]}
             />
