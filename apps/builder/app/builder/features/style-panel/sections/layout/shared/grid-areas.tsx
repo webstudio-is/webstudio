@@ -8,6 +8,9 @@ import {
   Label,
   InputField,
   Grid,
+  CssValueListItem,
+  CssValueListArrowFocus,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
@@ -201,9 +204,6 @@ export const GridAreas = () => {
   const areas = parseGridAreas(areasValue);
   const { columns, rows } = getGridDimensions(columnsValue, rowsValue);
 
-  const editingArea =
-    editingAreaIndex !== undefined ? areas[editingAreaIndex] : undefined;
-
   const saveArea = useCallback(
     (newArea: AreaInfo, oldName?: string) => {
       const batch = createBatchUpdate();
@@ -355,80 +355,67 @@ export const GridAreas = () => {
         </Flex>
       }
     >
-      <Flex direction="column" gap="2">
-        {areas.length === 0 && (
-          <Text
-            color="subtle"
-            align="center"
-            css={{ padding: theme.panel.padding }}
-          >
-            No Areas
-          </Text>
-        )}
-        {areas.map((area, index) => (
-          <Grid
-            key={area.name}
-            gap="2"
-            css={{
-              gridTemplateColumns: "auto 1fr auto",
-              alignItems: "center",
-              cursor: "pointer",
-              "&:hover": {
-                backgroundColor: theme.colors.backgroundHover,
-              },
-              paddingInline: theme.panel.paddingInline,
-            }}
-            onClick={() => setEditingAreaIndex(index)}
-          >
-            <Text color="subtle" css={{ textAlign: "center" }}>
-              {index + 1}
-            </Text>
-            <Text>
-              {area.name} Row {area.rowStart} / Col {area.columnStart}
-            </Text>
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                removeArea(area.name);
-              }}
-              css={{ minWidth: "auto" }}
+      <CssValueListArrowFocus>
+        <Flex direction="column">
+          {areas.length === 0 && (
+            <Text
+              color="subtle"
+              align="center"
+              css={{ padding: theme.panel.padding }}
             >
-              <MinusIcon />
-            </IconButton>
-          </Grid>
-        ))}
-      </Flex>
-
-      {editingArea && (
-        <FloatingPanel
-          placement="bottom-within"
-          title={
-            editingAreaIndex !== undefined && editingAreaIndex < areas.length
-              ? "Edit Area"
-              : "New Area"
-          }
-          content={
-            <AreaEditor
-              key={editingAreaIndex}
-              area={editingArea}
-              editingIndex={editingAreaIndex}
-              gridColumns={columns}
-              gridRows={rows}
-              existingAreas={areas}
-              onSave={saveArea}
-              onClose={() => setEditingAreaIndex(undefined)}
-            />
-          }
-          open={editingAreaIndex !== undefined}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingAreaIndex(undefined);
-            }
-          }}
-        >
-          <div />
-        </FloatingPanel>
-      )}
+              No Areas
+            </Text>
+          )}
+          {areas.map((area, index) => (
+            <FloatingPanel
+              key={area.name}
+              placement="bottom-within"
+              title="Edit Area"
+              content={
+                <AreaEditor
+                  area={area}
+                  editingIndex={index}
+                  gridColumns={columns}
+                  gridRows={rows}
+                  existingAreas={areas}
+                  onSave={saveArea}
+                  onClose={() => setEditingAreaIndex(undefined)}
+                />
+              }
+              open={editingAreaIndex === index}
+              onOpenChange={(open) => {
+                if (open) {
+                  setEditingAreaIndex(index);
+                } else {
+                  setEditingAreaIndex(undefined);
+                }
+              }}
+            >
+              <CssValueListItem
+                id={String(index)}
+                index={index}
+                label={
+                  <Label truncate>
+                    {area.name} ({area.columnStart}-{area.columnEnd - 1} /{" "}
+                    {area.rowStart}-{area.rowEnd - 1})
+                  </Label>
+                }
+                buttons={
+                  <SmallIconButton
+                    variant="destructive"
+                    tabIndex={-1}
+                    icon={<MinusIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeArea(area.name);
+                    }}
+                  />
+                }
+              />
+            </FloatingPanel>
+          ))}
+        </Flex>
+      </CssValueListArrowFocus>
     </CollapsibleSectionRoot>
   );
 };
