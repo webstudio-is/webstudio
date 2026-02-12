@@ -709,7 +709,6 @@ const contentStyle = css(panelStyle, {
   width: "min-content",
   height: "min-content",
   minWidth: theme.sizes.sidebarWidth,
-  minHeight: theme.spacing[22],
   maxWidth: `calc(100vw - ${theme.spacing[15]})`,
   maxHeight: `calc(100vh - ${theme.spacing[15]})`,
   userSelect: "none",
