@@ -143,7 +143,7 @@ export const GridPositionInputs = ({
         maxStart={gridColumns}
         minEnd={2}
         maxEnd={gridColumns + 1}
-        label="Column: start / end"
+        label="Column: start/end"
       />
       <PositionInputGroup
         startValue={value.rowStart}
@@ -157,7 +157,7 @@ export const GridPositionInputs = ({
         maxStart={gridRows}
         minEnd={2}
         maxEnd={gridRows + 1}
-        label="Row: start / end"
+        label="Row: start/end"
       />
     </Flex>
   );
