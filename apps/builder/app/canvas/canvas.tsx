@@ -67,6 +67,7 @@ import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { subscribeSelected } from "./instance-selected";
+import { subscribeGridOverlayOnSelected } from "./grid-overlay";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";
@@ -178,8 +179,11 @@ const DesignMode = () => {
       abortController.signal
     );
     const unsubscribeSelected = subscribeSelected(debounceEffect);
+    const unsubscribeGridOverlay =
+      subscribeGridOverlayOnSelected(debounceEffect);
     return () => {
       unsubscribeSelected();
+      unsubscribeGridOverlay();
       abortController.abort();
     };
   }, [debounceEffect]);
@@ -218,8 +222,11 @@ const ContentEditMode = () => {
       abortController.signal
     );
     const unsubscribeSelected = subscribeSelected(debounceEffect);
+    const unsubscribeGridOverlay =
+      subscribeGridOverlayOnSelected(debounceEffect);
     return () => {
       unsubscribeSelected();
+      unsubscribeGridOverlay();
       abortController.abort();
     };
   }, [debounceEffect]);
