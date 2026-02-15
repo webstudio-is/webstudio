@@ -1,3 +1,4 @@
+import * as colorjs from "colorjs.io/fn";
 import {
   useState,
   useEffect,
@@ -60,7 +61,6 @@ import {
 import { isDescendantOrSelf, type InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
-import Color from "colorjs.io";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {
   deleteInstanceMutable,
@@ -146,7 +146,7 @@ const CaretColorPlugin = () => {
 
     let isLightBackground = false;
     try {
-      const color = new Color(elementColor);
+      const color = colorjs.parse(elementColor);
       const alpha = color.alpha ?? 1;
       isLightBackground = alpha < 0.1;
     } catch {

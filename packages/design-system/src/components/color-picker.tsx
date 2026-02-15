@@ -1,3 +1,4 @@
+import * as colorjs from "colorjs.io/fn";
 import {
   forwardRef,
   type ComponentProps,
@@ -5,7 +6,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import Color from "colorjs.io";
 import { clamp } from "@react-aria/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { RgbaColorPicker } from "react-colorful";
@@ -23,6 +23,21 @@ import { IconButton } from "./icon-button";
 import { InputField } from "./input-field";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
+colorjs.ColorSpace.register(colorjs.sRGB);
+colorjs.ColorSpace.register(colorjs.sRGB_Linear);
+colorjs.ColorSpace.register(colorjs.HSL);
+colorjs.ColorSpace.register(colorjs.HWB);
+colorjs.ColorSpace.register(colorjs.Lab);
+colorjs.ColorSpace.register(colorjs.LCH);
+colorjs.ColorSpace.register(colorjs.OKLab);
+colorjs.ColorSpace.register(colorjs.OKLCH);
+colorjs.ColorSpace.register(colorjs.P3);
+colorjs.ColorSpace.register(colorjs.A98RGB);
+colorjs.ColorSpace.register(colorjs.ProPhoto);
+colorjs.ColorSpace.register(colorjs.REC_2020);
+colorjs.ColorSpace.register(colorjs.XYZ_D65);
+colorjs.ColorSpace.register(colorjs.XYZ_D50);
+
 type RgbaColor = {
   r: number;
   g: number;
@@ -31,12 +46,12 @@ type RgbaColor = {
 };
 
 // Helper to create RgbaColor from colorjs.io Color
-const colorToRgba = (color: Color): RgbaColor => {
+const colorToRgba = (color: colorjs.PlainColorObject): RgbaColor => {
   const [r, g, b] = color.coords;
   return {
-    r: r * 255,
-    g: g * 255,
-    b: b * 255,
+    r: (r ?? 0) * 255,
+    g: (g ?? 0) * 255,
+    b: (b ?? 0) * 255,
     a: color.alpha ?? 1,
   };
 };
@@ -46,8 +61,7 @@ const transparentColor: RgbaColor = { r: 0, g: 0, b: 0, a: 0 };
 // Helper to parse color string to RgbaColor
 export const parseColorString = (colorString: string): RgbaColor => {
   try {
-    const color = new Color(colorString);
-    return colorToRgba(color.to("srgb"));
+    return colorToRgba(colorjs.to(colorString, "srgb"));
   } catch {
     return transparentColor;
   }
@@ -81,7 +95,7 @@ const colorfulStyles = css({
 
 const whiteColor: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
 const borderColorSwatch = colorToRgba(
-  new Color(rawTheme.colors.borderColorSwatch)
+  colorjs.to(rawTheme.colors.borderColorSwatch, "srgb")
 );
 
 const distance = (a: RgbaColor, b: RgbaColor) =>
@@ -281,7 +295,10 @@ export const ColorPicker = ({
           onChange={(event) => {
             setHex(event.target.value);
             try {
-              const color = new Color(normalizeHex(event.target.value));
+              const color = colorjs.to(
+                normalizeHex(event.target.value),
+                "srgb"
+              );
               const rgba = colorToRgba(color);
               const newValue = colorResultToRgbValue(rgba);
               onChange(newValue);
