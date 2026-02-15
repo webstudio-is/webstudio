@@ -1,3 +1,4 @@
+import { clamp } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
 import { css, type Rect } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
@@ -28,9 +29,6 @@ const lineStyle = css({
   },
 });
 
-const clampValue = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, value));
-
 const HorizontalLine = ({
   y,
   x,
@@ -50,17 +48,17 @@ const HorizontalLine = ({
   const scaledWidth = width * scaleFactor;
 
   // Clamp to visible area
-  const clampedY = clampValue(
+  const clampedY = clamp(
     scaledY,
     clampingRect.top,
     clampingRect.top + clampingRect.height
   );
-  const clampedLeft = clampValue(
+  const clampedLeft = clamp(
     scaledX,
     clampingRect.left,
     clampingRect.left + clampingRect.width
   );
-  const clampedRight = clampValue(
+  const clampedRight = clamp(
     scaledX + scaledWidth,
     clampingRect.left,
     clampingRect.left + clampingRect.width
@@ -106,17 +104,17 @@ const VerticalLine = ({
   const scaledHeight = height * scaleFactor;
 
   // Clamp to visible area
-  const clampedX = clampValue(
+  const clampedX = clamp(
     scaledX,
     clampingRect.left,
     clampingRect.left + clampingRect.width
   );
-  const clampedTop = clampValue(
+  const clampedTop = clamp(
     scaledY,
     clampingRect.top,
     clampingRect.top + clampingRect.height
   );
-  const clampedBottom = clampValue(
+  const clampedBottom = clamp(
     scaledY + scaledHeight,
     clampingRect.top,
     clampingRect.top + clampingRect.height
