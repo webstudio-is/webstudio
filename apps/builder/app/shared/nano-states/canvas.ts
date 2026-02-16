@@ -188,6 +188,9 @@ export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(
 
 export type GridCellData = {
   instanceId: Instance["id"];
+  // Actual column and row count (from DOM probing)
+  columnCount: number;
+  rowCount: number;
   // Horizontal lines: each has y position, x start, and width
   horizontalLines: Array<{ y: number; x: number; width: number }>;
   // Vertical lines: each has x position, y start, and height

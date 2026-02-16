@@ -724,6 +724,7 @@ export const properties = [
 export const Section = () => {
   const display = useComputedStyleDecl("display");
   const displayValue = toValue(display.cascadedValue);
+
   return (
     <StyleSection label="Layout" properties={properties}>
       <Flex direction="column" gap="2">

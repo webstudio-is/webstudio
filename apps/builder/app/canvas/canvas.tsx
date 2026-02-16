@@ -67,7 +67,7 @@ import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { initCanvasApi } from "~/shared/canvas-api";
 import { subscribeFontLoadingDone } from "./shared/font-weight-support";
 import { subscribeSelected } from "./instance-selected";
-import { subscribeGridOverlayOnSelected } from "./grid-overlay";
+import { subscribeGridOverlayOnSelected } from "./grid-outline-utils";
 import { subscribeScrollNewInstanceIntoView } from "./shared/scroll-new-instance-into-view";
 import { $selectedPage } from "~/shared/awareness";
 import { createInstanceElement } from "./elements";

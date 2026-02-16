@@ -4,6 +4,7 @@ import {
   serializeGridTemplateTrackList,
   parseMinmax,
   serializeMinmax,
+  checkGridTemplateSupport,
 } from "./grid-template-tracks";
 
 describe("parseGridTemplateTrackList", () => {
@@ -263,5 +264,83 @@ describe("parseMinmax and serializeMinmax round-trip", () => {
     expect(parsed).not.toBeUndefined();
     const serialized = serializeMinmax(parsed!);
     expect(serialized).toBe(original);
+  });
+});
+
+describe("checkGridTemplateSupport", () => {
+  test("supports empty and none values", () => {
+    expect(checkGridTemplateSupport("")).toEqual({ supported: true });
+    expect(checkGridTemplateSupport("none")).toEqual({ supported: true });
+  });
+
+  test("supports simple track values", () => {
+    expect(checkGridTemplateSupport("1fr")).toEqual({ supported: true });
+    expect(checkGridTemplateSupport("100px 1fr auto")).toEqual({
+      supported: true,
+    });
+  });
+
+  test("supports minmax()", () => {
+    expect(checkGridTemplateSupport("minmax(100px, 1fr)")).toEqual({
+      supported: true,
+    });
+  });
+
+  test("supports repeat() with number", () => {
+    expect(checkGridTemplateSupport("repeat(3, 1fr)")).toEqual({
+      supported: true,
+    });
+  });
+
+  test("rejects subgrid", () => {
+    const result = checkGridTemplateSupport("subgrid");
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "subgrid");
+  });
+
+  test("rejects masonry", () => {
+    const result = checkGridTemplateSupport("masonry");
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "masonry");
+  });
+
+  test("supports CSS variables (should be resolved via computedValue)", () => {
+    // CSS variables are supported when using computedValue which resolves them
+    const result = checkGridTemplateSupport("var(--grid-cols)");
+    expect(result.supported).toBe(true);
+  });
+
+  test("rejects repeat(auto-fill)", () => {
+    const result = checkGridTemplateSupport("repeat(auto-fill, 100px)");
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "auto-fill");
+  });
+
+  test("rejects repeat(auto-fit)", () => {
+    const result = checkGridTemplateSupport(
+      "repeat(auto-fit, minmax(100px, 1fr))"
+    );
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "auto-fit");
+  });
+
+  test("rejects line names", () => {
+    const result = checkGridTemplateSupport("[header] 1fr [content] 2fr");
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "line-names");
+  });
+
+  test("rejects mixed auto-fill with other tracks", () => {
+    const result = checkGridTemplateSupport(
+      "100px repeat(auto-fill, 1fr) 100px"
+    );
+    expect(result.supported).toBe(false);
+    expect(result).toHaveProperty("reason");
+    expect(result).toHaveProperty("type", "auto-fill");
   });
 });

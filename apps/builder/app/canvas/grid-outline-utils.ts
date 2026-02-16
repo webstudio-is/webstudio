@@ -31,70 +31,33 @@ const computeGridCells = (
 
   const MAX_PROBE = 20; // Reasonable limit for probing
 
+  // Get the actual track counts from computed style
+  // This gives us the explicit tracks without creating implicit ones
+  const gridTemplateColumns = computedStyle.gridTemplateColumns;
+  const gridTemplateRows = computedStyle.gridTemplateRows;
+
+  // Parse track counts from computed values (e.g., "100px 200px 100px" -> 3)
+  // "none" means no explicit tracks
+  const parseTrackCount = (trackValue: string): number => {
+    if (trackValue === "none" || trackValue === "") {
+      return 1; // Default to 1 track
+    }
+    // Split by spaces, but respect brackets for repeat() etc.
+    // Computed values don't have repeat(), they're expanded
+    // e.g., "100px 200px auto" -> 3 tracks
+    const tracks = trackValue.trim().split(/\s+/);
+    return Math.max(1, tracks.length);
+  };
+
+  const columnCount = Math.min(parseTrackCount(gridTemplateColumns), MAX_PROBE);
+  const rowCount = Math.min(parseTrackCount(gridTemplateRows), MAX_PROBE);
+
   // First, detect actual column and row count by probing positions
   // Place probes and track unique X/Y positions
   const xPositions = new Set<number>();
   const yPositions = new Set<number>();
 
-  // Probe columns: find where X stops increasing
-  let lastX = -Infinity;
-  let columnCount = 0;
-  for (let col = 1; col <= MAX_PROBE; col++) {
-    const probe = document.createElement("div");
-    probe.style.cssText = `
-      grid-column: ${col};
-      grid-row: 1;
-      pointer-events: none;
-      visibility: hidden;
-      align-self: stretch;
-      justify-self: stretch;
-    `;
-    gridElement.appendChild(probe);
-    const rect = probe.getBoundingClientRect();
-    gridElement.removeChild(probe);
-
-    // Once X stops increasing, we've found all explicit columns
-    if (rect.left <= lastX) {
-      break;
-    }
-    xPositions.add(rect.left);
-    xPositions.add(rect.right);
-    lastX = rect.left;
-    columnCount = col;
-  }
-
-  // Probe rows: find where Y stops increasing
-  let lastY = -Infinity;
-  let rowCount = 0;
-  for (let row = 1; row <= MAX_PROBE; row++) {
-    const probe = document.createElement("div");
-    probe.style.cssText = `
-      grid-column: 1;
-      grid-row: ${row};
-      pointer-events: none;
-      visibility: hidden;
-      align-self: stretch;
-      justify-self: stretch;
-    `;
-    gridElement.appendChild(probe);
-    const rect = probe.getBoundingClientRect();
-    gridElement.removeChild(probe);
-
-    // Once Y stops increasing, we've found all explicit rows
-    if (rect.top <= lastY) {
-      break;
-    }
-    yPositions.add(rect.top);
-    yPositions.add(rect.bottom);
-    lastY = rect.top;
-    rowCount = row;
-  }
-
-  if (columnCount === 0 || rowCount === 0) {
-    return undefined;
-  }
-
-  // Now probe all cells to get accurate positions (handles gaps, etc.)
+  // Probe all cells to get accurate positions (handles gaps, etc.)
   for (let row = 1; row <= rowCount; row++) {
     for (let col = 1; col <= columnCount; col++) {
       const probe = document.createElement("div");
@@ -145,6 +108,8 @@ const computeGridCells = (
 
   return {
     instanceId,
+    columnCount,
+    rowCount,
     horizontalLines,
     verticalLines,
   };
