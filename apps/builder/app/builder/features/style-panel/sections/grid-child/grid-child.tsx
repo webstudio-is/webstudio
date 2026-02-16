@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Flex,
@@ -53,14 +53,91 @@ export const properties = [
 
 type PositionMode = "auto" | "area" | "manual";
 
+/**
+ * Derives the position mode from the current CSS values.
+ * - "auto": All values are "auto" or span values (auto placement)
+ * - "area": Values contain named grid areas (keywords that are not "auto")
+ * - "manual": Values are numeric line positions
+ */
+const derivePositionMode = (
+  columnStart: StyleValue,
+  columnEnd: StyleValue,
+  rowStart: StyleValue,
+  rowEnd: StyleValue
+): PositionMode => {
+  const values = [columnStart, columnEnd, rowStart, rowEnd];
+
+  // Check if any value is numeric (manual mode)
+  const hasNumericValues = values.some(
+    (value) => value.type === "unit" && value.unit === "number"
+  );
+
+  if (hasNumericValues) {
+    return "manual";
+  }
+
+  // Check if all values are "auto" or span tuples (auto mode)
+  const isAutoOrSpan = (value: StyleValue): boolean => {
+    if (value.type === "keyword" && value.value === "auto") {
+      return true;
+    }
+    // Span values like "span 2" are tuples
+    if (value.type === "tuple" && value.value.length === 2) {
+      const [first] = value.value;
+      if (first.type === "keyword" && first.value === "span") {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const allAutoOrSpan = values.every(isAutoOrSpan);
+
+  if (allAutoOrSpan) {
+    return "auto";
+  }
+
+  // If we have non-auto keyword values, it's likely a named area
+  const hasNamedArea = values.some(
+    (value) => value.type === "keyword" && value.value !== "auto"
+  );
+
+  if (hasNamedArea) {
+    return "area";
+  }
+
+  // Default to auto
+  return "auto";
+};
+
 export const Section = () => {
-  const [positionMode, setPositionMode] = useState<PositionMode>("auto");
   const [columnStart, columnEnd, rowStart, rowEnd] = useComputedStyles([
     "grid-column-start",
     "grid-column-end",
     "grid-row-start",
     "grid-row-end",
   ]);
+
+  // Derive position mode from CSS values - this ensures the correct tab is shown
+  // when selecting different instances with different grid positioning
+  const derivedPositionMode = useMemo(
+    () =>
+      derivePositionMode(
+        columnStart.cascadedValue,
+        columnEnd.cascadedValue,
+        rowStart.cascadedValue,
+        rowEnd.cascadedValue
+      ),
+    [columnStart, columnEnd, rowStart, rowEnd]
+  );
+
+  // Track user override - when user explicitly changes mode, use that until CSS values match
+  const [userOverrideMode, setUserOverrideMode] = useState<PositionMode | null>(
+    null
+  );
+
+  // Use user override if set, otherwise use derived mode
+  const positionMode = userOverrideMode ?? derivedPositionMode;
 
   const handleModeChange = (newMode: PositionMode) => {
     const hasKeywordValues =
@@ -106,8 +183,18 @@ export const Section = () => {
       batch.publish();
     }
 
-    setPositionMode(newMode);
+    // Set user override - this will be cleared when CSS values change
+    // to match the new mode (since derivePositionMode will return newMode)
+    setUserOverrideMode(newMode);
   };
+
+  // Clear user override when derived mode matches (CSS was updated to match the mode)
+  // This allows the component to correctly derive mode for new instances
+  useEffect(() => {
+    if (userOverrideMode !== null && derivedPositionMode === userOverrideMode) {
+      setUserOverrideMode(null);
+    }
+  }, [derivedPositionMode, userOverrideMode]);
 
   const instancePath = useStore($selectedInstancePath);
   // Get the parent instance (second item in the path, index 1)
@@ -584,4 +671,8 @@ const GridChildAlign = () => {
       <OrderControl />
     </Flex>
   );
+};
+
+export const __testing__ = {
+  derivePositionMode,
 };
