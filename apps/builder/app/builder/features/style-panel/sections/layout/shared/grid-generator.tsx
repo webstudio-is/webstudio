@@ -13,7 +13,6 @@ import {
 import { toValue } from "@webstudio-is/css-engine";
 import {
   parseGridTemplateTrackList,
-  checkGridTemplateSupport,
   getGridAxisMode,
   getGridAxisLabel,
   isImplicitGridMode,
@@ -36,31 +35,14 @@ const parseTrackCount = (value: string): number => {
 };
 
 /**
- * Modes that block the grid generator UI entirely.
- * These require dedicated UIs or have no visual representation.
+ * Modes where we cannot determine the track count.
+ * For these, we show a default 2×2 grid and display "?" as the count.
  */
-const BLOCKED_MODES = new Set<GridAxisMode>([
+const UNKNOWN_COUNT_MODES = new Set<GridAxisMode>([
   "subgrid",
   "masonry",
   "line-names",
 ]);
-
-/**
- * Analyze grid axis support and return mode with optional unsupported reason.
- */
-const analyzeGridAxis = (
-  cascadedValue: string
-): { mode: GridAxisMode; unsupportedReason?: string } => {
-  const mode = getGridAxisMode(cascadedValue);
-  if (BLOCKED_MODES.has(mode)) {
-    const support = checkGridTemplateSupport(cascadedValue);
-    return {
-      mode,
-      unsupportedReason: support.supported ? undefined : support.reason,
-    };
-  }
-  return { mode };
-};
 
 /**
  * Calculate the actual track count for an axis.
@@ -197,28 +179,27 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   // Analyze both axes using pure functions
   const columnsValueCascaded = toValue(gridTemplateColumns.cascadedValue);
   const rowsValueCascaded = toValue(gridTemplateRows.cascadedValue);
-  const columnsAxis = analyzeGridAxis(columnsValueCascaded);
-  const rowsAxis = analyzeGridAxis(rowsValueCascaded);
-
-  // Check if either axis is blocked
-  const isBlocked =
-    BLOCKED_MODES.has(columnsAxis.mode) || BLOCKED_MODES.has(rowsAxis.mode);
-  const unsupportedReason =
-    columnsAxis.unsupportedReason ?? rowsAxis.unsupportedReason;
+  const columnsMode = getGridAxisMode(columnsValueCascaded);
+  const rowsMode = getGridAxisMode(rowsValueCascaded);
 
   // Calculate track counts
+  // For unknown modes (subgrid, masonry, line-names), we use defaults
   const columnsValueComputed = toValue(gridTemplateColumns.computedValue);
   const rowsValueComputed = toValue(gridTemplateRows.computedValue);
   const columnCount = getAxisTrackCount(
-    columnsAxis.mode,
+    columnsMode,
     columnsValueComputed,
     gridCellData?.columnCount
   );
   const rowCount = getAxisTrackCount(
-    rowsAxis.mode,
+    rowsMode,
     rowsValueComputed,
     gridCellData?.rowCount
   );
+
+  // Check if counts are unknown (for display purposes)
+  const isColumnsCountUnknown = UNKNOWN_COUNT_MODES.has(columnsMode);
+  const isRowsCountUnknown = UNKNOWN_COUNT_MODES.has(rowsMode);
 
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
@@ -271,31 +252,6 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     );
   }, [displayColumnCount, displayRowCount]);
 
-  // Show disabled state with hint when grid values are unsupported
-  if (isBlocked) {
-    return (
-      <Tooltip content={unsupportedReason}>
-        <Flex
-          align="center"
-          justify="center"
-          css={{
-            width: "100%",
-            height: 60,
-            borderRadius: theme.borderRadius[3],
-            border: `1px dashed ${theme.colors.borderMain}`,
-            backgroundColor: theme.colors.backgroundPanel,
-            color: theme.colors.foregroundSubtle,
-            cursor: "not-allowed",
-          }}
-        >
-          <Text variant="labels" color="subtle">
-            Advanced grid configuration
-          </Text>
-        </Flex>
-      </Tooltip>
-    );
-  }
-
   return (
     <FloatingPanel
       title="Grid generator"
@@ -335,8 +291,10 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
             whiteSpace: "nowrap",
           }}
         >
-          {getGridAxisLabel(columnsAxis.mode, columnCount)}×
-          {getGridAxisLabel(rowsAxis.mode, rowCount)}
+          {isColumnsCountUnknown
+            ? "?"
+            : getGridAxisLabel(columnsMode, columnCount)}
+          ×{isRowsCountUnknown ? "?" : getGridAxisLabel(rowsMode, rowCount)}
         </Text>
       </button>
     </FloatingPanel>
