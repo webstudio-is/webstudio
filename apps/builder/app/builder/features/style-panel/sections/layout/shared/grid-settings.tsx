@@ -394,15 +394,15 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
     return undefined;
   })();
 
+  const editGridButton = (
+    <Button color="neutral" disabled={!isEditable} css={{ width: "100%" }}>
+      Configure grid
+    </Button>
+  );
+
   // Show disabled button with tooltip when unsupported
   if (!isEditable) {
-    return (
-      <Tooltip content={unsupportedReason}>
-        <Button color="neutral" disabled css={{ width: "100%" }}>
-          Edit grid
-        </Button>
-      </Tooltip>
-    );
+    return <Tooltip content={unsupportedReason}>{editGridButton}</Tooltip>;
   }
 
   return (
@@ -423,9 +423,7 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
       open={open}
       onOpenChange={onOpenChange}
     >
-      <Button color="neutral" css={{ width: "100%" }}>
-        Edit grid
-      </Button>
+      {editGridButton}
     </FloatingPanel>
   );
 };
