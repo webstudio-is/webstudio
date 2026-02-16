@@ -439,10 +439,9 @@ describe("getGridAxisLabel", () => {
     expect(getGridAxisLabel("explicit", 5)).toBe("5");
   });
 
-  test("returns track count for other modes", () => {
-    // For subgrid/masonry/line-names, returns track count as string
-    expect(getGridAxisLabel("subgrid", 4)).toBe("4");
-    expect(getGridAxisLabel("masonry", 3)).toBe("3");
-    expect(getGridAxisLabel("line-names", 2)).toBe("2");
+  test("returns mode name for advanced modes", () => {
+    expect(getGridAxisLabel("subgrid", 4)).toBe("subgrid");
+    expect(getGridAxisLabel("masonry", 3)).toBe("masonry");
+    expect(getGridAxisLabel("line-names", 2)).toBe("[…]");
   });
 });

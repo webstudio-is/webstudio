@@ -436,6 +436,12 @@ export const getGridAxisLabel = (
       return "auto";
     case "none":
       return "none";
+    case "subgrid":
+      return "subgrid";
+    case "masonry":
+      return "masonry";
+    case "line-names":
+      return "[…]";
     default:
       return String(trackCount);
   }
