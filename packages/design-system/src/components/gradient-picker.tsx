@@ -19,7 +19,7 @@ import type {
   GradientStop,
   ParsedGradient,
 } from "@webstudio-is/css-data";
-import Color from "colorjs.io";
+import * as colorjs from "colorjs.io/fn";
 import { ChevronFilledUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import { Flex } from "./flex";
@@ -32,23 +32,31 @@ const mixColors = (
   color2: RgbValue,
   ratio: number
 ): RgbValue => {
-  const c1 = new Color("srgb", [
-    color1.r / 255,
-    color1.g / 255,
-    color1.b / 255,
-  ]);
-  const c2 = new Color("srgb", [
-    color2.r / 255,
-    color2.g / 255,
-    color2.b / 255,
-  ]);
-  const mixed = c1.mix(c2, ratio);
+  const c1: colorjs.ColorConstructor = {
+    spaceId: "srgb",
+    coords: [
+      (color1.r ?? 0) / 255,
+      (color1.g ?? 0) / 255,
+      (color1.b ?? 0) / 255,
+    ],
+    alpha: undefined,
+  };
+  const c2: colorjs.ColorConstructor = {
+    spaceId: "srgb",
+    coords: [
+      (color2.r ?? 0) / 255,
+      (color2.g ?? 0) / 255,
+      (color2.b ?? 0) / 255,
+    ],
+    alpha: undefined,
+  };
+  const mixed = colorjs.mix(c1, c2, ratio);
   const [r, g, b] = mixed.coords;
   return {
     type: "rgb",
-    r: r * 255,
-    g: g * 255,
-    b: b * 255,
+    r: (r ?? 0) * 255,
+    g: (g ?? 0) * 255,
+    b: (b ?? 0) * 255,
     alpha: color1.alpha ?? 1,
   };
 };
@@ -88,14 +96,14 @@ const toRgbColor = (
   }
 
   try {
-    const parsed = new Color(toValue(color));
+    const parsed = colorjs.parse(toValue(color));
     const [r, g, b] = parsed.coords;
     const alpha = parsed.alpha;
     return {
       type: "rgb",
-      r: r * 255,
-      g: g * 255,
-      b: b * 255,
+      r: (r ?? 0) * 255,
+      g: (g ?? 0) * 255,
+      b: (b ?? 0) * 255,
       alpha: alpha ?? 1,
     };
   } catch {
