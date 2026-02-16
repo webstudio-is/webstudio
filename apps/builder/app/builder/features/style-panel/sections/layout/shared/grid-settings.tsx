@@ -22,6 +22,8 @@ import {
   parseMinmax,
   serializeMinmax,
   checkGridTemplateSupport,
+  isEditableGridMode,
+  getGridAxisMode,
   type GridTrack,
 } from "@webstudio-is/css-data";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
@@ -373,20 +375,29 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
   const columnsValue = toValue(gridTemplateColumns.cascadedValue);
   const rowsValue = toValue(gridTemplateRows.cascadedValue);
 
-  // Check if the grid values are supported by the visual editor
-  const columnsSupport = checkGridTemplateSupport(columnsValue);
-  const rowsSupport = checkGridTemplateSupport(rowsValue);
-  const isSupported = columnsSupport.supported && rowsSupport.supported;
-  const unsupportedReason = !columnsSupport.supported
-    ? columnsSupport.reason
-    : !rowsSupport.supported
-      ? rowsSupport.reason
-      : undefined;
+  // Check if the grid values can be edited visually
+  const columnsMode = getGridAxisMode(columnsValue);
+  const rowsMode = getGridAxisMode(rowsValue);
+  const isEditable =
+    isEditableGridMode(columnsMode) && isEditableGridMode(rowsMode);
+
+  // Get reason for non-editable modes
+  const getUnsupportedReason = () => {
+    if (!isEditableGridMode(columnsMode)) {
+      const support = checkGridTemplateSupport(columnsValue);
+      return support.supported ? undefined : support.reason;
+    }
+    if (!isEditableGridMode(rowsMode)) {
+      const support = checkGridTemplateSupport(rowsValue);
+      return support.supported ? undefined : support.reason;
+    }
+    return undefined;
+  };
 
   // Show disabled button with tooltip when unsupported
-  if (isSupported === false) {
+  if (!isEditable) {
     return (
-      <Tooltip content={unsupportedReason}>
+      <Tooltip content={getUnsupportedReason()}>
         <Button color="neutral" disabled css={{ width: "100%" }}>
           Edit grid
         </Button>
