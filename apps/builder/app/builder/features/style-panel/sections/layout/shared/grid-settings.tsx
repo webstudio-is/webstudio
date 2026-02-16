@@ -22,6 +22,11 @@ import {
 } from "~/builder/shared/collapsible-section";
 import { GridAreas } from "./grid-areas";
 
+const trackTypeLabels = {
+  column: { singular: "Column", plural: "Columns" },
+  row: { singular: "Row", plural: "Rows" },
+} as const;
+
 const parseTrackList = (value: string): string[] => {
   if (!value || value === "none") {
     return [];
@@ -43,14 +48,15 @@ const serializeTrackList = (tracks: string[]): StyleValue => {
 
 type TrackEditorProps = {
   property: "grid-template-columns" | "grid-template-rows";
-  label: string;
+  trackType: keyof typeof trackTypeLabels;
 };
 
-const TrackEditor = ({ property, label }: TrackEditorProps) => {
+const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
+  const { singular, plural } = trackTypeLabels[trackType];
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
   const tracks = parseTrackList(value);
-  const [isOpen, setIsOpen] = useOpenState(label);
+  const [isOpen, setIsOpen] = useOpenState(trackType);
   const [editingIndex, setEditingIndex] = useState<number | undefined>(
     undefined
   );
@@ -113,7 +119,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
 
   return (
     <CollapsibleSectionRoot
-      label={`${label} (${tracks.length})`}
+      label={`${plural} (${tracks.length})`}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
@@ -124,7 +130,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
           css={{ padding: theme.spacing[5] }}
         >
           <Text variant="labels" color="subtle">
-            {label} ({tracks.length})
+            {plural} ({tracks.length})
           </Text>
           <IconButton
             onClick={(e) => {
@@ -145,7 +151,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
               align="center"
               css={{ padding: theme.panel.padding }}
             >
-              No {label.toLowerCase()}
+              No {trackType}
             </Text>
           )}
           {tracks.map((track, index) => {
@@ -154,7 +160,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
               <FloatingPanel
                 key={id}
                 placement="bottom-within"
-                title={`Edit ${label.slice(0, -1)}`}
+                title={`Edit ${trackType}`}
                 content={
                   <Flex
                     direction="column"
@@ -198,7 +204,7 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
                   index={index}
                   label={
                     <Label truncate>
-                      {label.slice(0, -1)} {index + 1}: {track}
+                      {singular} {index + 1}: {track}
                     </Label>
                   }
                   buttons={
@@ -239,8 +245,8 @@ export const GridSettingsPanel = ({
       title="Grid settings"
       content={
         <Flex direction="column" data-floating-panel-container>
-          <TrackEditor property="grid-template-columns" label="Columns" />
-          <TrackEditor property="grid-template-rows" label="Rows" />
+          <TrackEditor property="grid-template-columns" trackType="column" />
+          <TrackEditor property="grid-template-rows" trackType="row" />
           <GridAreas />
         </Flex>
       }
