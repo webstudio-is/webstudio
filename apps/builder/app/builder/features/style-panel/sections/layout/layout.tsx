@@ -55,8 +55,10 @@ import {
   $availableUnitVariables,
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { FlexVisual } from "./shared/flex-visual";
-import { GridVisual, GridVisualAlignment } from "./shared/grid-visual";
+import { FlexAlignment } from "./shared/flex-alignment";
+import { GridGenerator } from "./shared/grid-generator";
+import { GridSettings } from "./shared/grid-settings";
+import { GridAlignment } from "./shared/grid-alignment";
 import { humanizeString } from "~/shared/string-utils";
 
 const GapLinked = ({
@@ -486,7 +488,7 @@ const LayoutSectionFlex = () => {
           alignItems: "start",
         }}
       >
-        <FlexVisual />
+        <FlexAlignment />
         <Grid
           css={{
             gridTemplateColumns: "1fr 1fr",
@@ -532,9 +534,20 @@ const LayoutSectionFlex = () => {
 };
 
 const LayoutSectionGrid = () => {
+  const [openPanel, setOpenPanel] = useState<
+    "generator" | "settings" | undefined
+  >();
+
   return (
     <Flex direction="column" gap="2">
-      <GridVisual />
+      <GridGenerator
+        open={openPanel === "generator"}
+        onOpenChange={(open) => setOpenPanel(open ? "generator" : undefined)}
+      />
+      <GridSettings
+        open={openPanel === "settings"}
+        onOpenChange={(open) => setOpenPanel(open ? "settings" : undefined)}
+      />
       <Grid
         css={{
           gridTemplateColumns: "1fr 1fr 1fr",
@@ -542,7 +555,7 @@ const LayoutSectionGrid = () => {
           alignItems: "stretch",
         }}
       >
-        <GridVisualAlignment />
+        <GridAlignment />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl

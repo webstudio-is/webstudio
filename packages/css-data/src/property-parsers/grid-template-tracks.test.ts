@@ -1,0 +1,188 @@
+import { describe, test, expect } from "vitest";
+import {
+  parseGridTemplateTrackList,
+  serializeGridTemplateTrackList,
+} from "./grid-template-tracks";
+
+describe("parseGridTemplateTrackList", () => {
+  test("returns empty array for 'none'", () => {
+    expect(parseGridTemplateTrackList("none")).toEqual([]);
+  });
+
+  test("returns empty array for empty string", () => {
+    expect(parseGridTemplateTrackList("")).toEqual([]);
+  });
+
+  test("parses simple fr units", () => {
+    expect(parseGridTemplateTrackList("1fr")).toEqual([{ value: "1fr" }]);
+    expect(parseGridTemplateTrackList("1fr 2fr")).toEqual([
+      { value: "1fr" },
+      { value: "2fr" },
+    ]);
+    expect(parseGridTemplateTrackList("1fr 2fr 3fr")).toEqual([
+      { value: "1fr" },
+      { value: "2fr" },
+      { value: "3fr" },
+    ]);
+  });
+
+  test("parses pixel values", () => {
+    expect(parseGridTemplateTrackList("100px")).toEqual([{ value: "100px" }]);
+    expect(parseGridTemplateTrackList("100px 200px")).toEqual([
+      { value: "100px" },
+      { value: "200px" },
+    ]);
+  });
+
+  test("parses percentage values", () => {
+    expect(parseGridTemplateTrackList("50%")).toEqual([{ value: "50%" }]);
+    expect(parseGridTemplateTrackList("25% 75%")).toEqual([
+      { value: "25%" },
+      { value: "75%" },
+    ]);
+  });
+
+  test("parses mixed units", () => {
+    expect(parseGridTemplateTrackList("100px 1fr 50%")).toEqual([
+      { value: "100px" },
+      { value: "1fr" },
+      { value: "50%" },
+    ]);
+  });
+
+  test("parses auto keyword", () => {
+    expect(parseGridTemplateTrackList("auto")).toEqual([{ value: "auto" }]);
+    expect(parseGridTemplateTrackList("auto 1fr auto")).toEqual([
+      { value: "auto" },
+      { value: "1fr" },
+      { value: "auto" },
+    ]);
+  });
+
+  test("parses min-content and max-content", () => {
+    expect(parseGridTemplateTrackList("min-content")).toEqual([
+      { value: "min-content" },
+    ]);
+    expect(parseGridTemplateTrackList("max-content")).toEqual([
+      { value: "max-content" },
+    ]);
+    expect(parseGridTemplateTrackList("min-content 1fr max-content")).toEqual([
+      { value: "min-content" },
+      { value: "1fr" },
+      { value: "max-content" },
+    ]);
+  });
+
+  test("parses minmax() function", () => {
+    expect(parseGridTemplateTrackList("minmax(100px, 1fr)")).toEqual([
+      { value: "minmax(100px,1fr)" },
+    ]);
+    expect(
+      parseGridTemplateTrackList("minmax(100px, 1fr) minmax(200px, 2fr)")
+    ).toEqual([{ value: "minmax(100px,1fr)" }, { value: "minmax(200px,2fr)" }]);
+  });
+
+  test("parses fit-content() function", () => {
+    expect(parseGridTemplateTrackList("fit-content(200px)")).toEqual([
+      { value: "fit-content(200px)" },
+    ]);
+  });
+
+  test("expands repeat() with number", () => {
+    expect(parseGridTemplateTrackList("repeat(3, 1fr)")).toEqual([
+      { value: "1fr" },
+      { value: "1fr" },
+      { value: "1fr" },
+    ]);
+  });
+
+  test("expands repeat() with multiple tracks", () => {
+    expect(parseGridTemplateTrackList("repeat(2, 100px 1fr)")).toEqual([
+      { value: "100px" },
+      { value: "1fr" },
+      { value: "100px" },
+      { value: "1fr" },
+    ]);
+  });
+
+  test("keeps repeat(auto-fill) as single track", () => {
+    const result = parseGridTemplateTrackList("repeat(auto-fill, 100px)");
+    expect(result).toEqual([{ value: "repeat(auto-fill,100px)" }]);
+  });
+
+  test("keeps repeat(auto-fit) as single track", () => {
+    const result = parseGridTemplateTrackList(
+      "repeat(auto-fit, minmax(100px, 1fr))"
+    );
+    expect(result).toEqual([{ value: "repeat(auto-fit,minmax(100px,1fr))" }]);
+  });
+
+  test("handles complex mixed values", () => {
+    expect(
+      parseGridTemplateTrackList(
+        "100px repeat(2, 1fr) minmax(100px, auto) 50px"
+      )
+    ).toEqual([
+      { value: "100px" },
+      { value: "1fr" },
+      { value: "1fr" },
+      { value: "minmax(100px,auto)" },
+      { value: "50px" },
+    ]);
+  });
+
+  test("ignores line names", () => {
+    expect(
+      parseGridTemplateTrackList("[header] 1fr [content] 2fr [footer]")
+    ).toEqual([{ value: "1fr" }, { value: "2fr" }]);
+  });
+
+  test("ignores line names with repeat", () => {
+    expect(parseGridTemplateTrackList("repeat(2, [col] 1fr)")).toEqual([
+      { value: "1fr" },
+      { value: "1fr" },
+    ]);
+  });
+});
+
+describe("serializeGridTemplateTrackList", () => {
+  test("returns 'none' for empty array", () => {
+    expect(serializeGridTemplateTrackList([])).toBe("none");
+  });
+
+  test("joins tracks with spaces", () => {
+    expect(
+      serializeGridTemplateTrackList([{ value: "1fr" }, { value: "2fr" }])
+    ).toBe("1fr 2fr");
+  });
+
+  test("handles single track", () => {
+    expect(serializeGridTemplateTrackList([{ value: "100px" }])).toBe("100px");
+  });
+
+  test("preserves complex values", () => {
+    expect(
+      serializeGridTemplateTrackList([
+        { value: "100px" },
+        { value: "minmax(100px,1fr)" },
+        { value: "auto" },
+      ])
+    ).toBe("100px minmax(100px,1fr) auto");
+  });
+});
+
+describe("round-trip parsing and serialization", () => {
+  test("simple values round-trip correctly", () => {
+    const original = "1fr 2fr 3fr";
+    const parsed = parseGridTemplateTrackList(original);
+    const serialized = serializeGridTemplateTrackList(parsed);
+    expect(serialized).toBe(original);
+  });
+
+  test("mixed values round-trip correctly", () => {
+    const original = "100px 1fr auto";
+    const parsed = parseGridTemplateTrackList(original);
+    const serialized = serializeGridTemplateTrackList(parsed);
+    expect(serialized).toBe(original);
+  });
+});
