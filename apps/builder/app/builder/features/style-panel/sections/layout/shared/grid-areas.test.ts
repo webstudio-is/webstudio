@@ -196,8 +196,8 @@ describe("getGridDimensions", () => {
     expect(
       getGridDimensions("repeat(3, 1fr)", "minmax(100px, 1fr) auto 200px")
     ).toEqual({
-      columns: 2, // 'repeat(3, 1fr)' is treated as 2 tokens by split
-      rows: 4, // 'minmax(100px, 1fr)' '1fr)' 'auto' '200px' = 4 tokens
+      columns: 3, // repeat(3, 1fr) = 3 columns
+      rows: 3, // minmax(100px, 1fr), auto, 200px = 3 rows
     });
   });
 

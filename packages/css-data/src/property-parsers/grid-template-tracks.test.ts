@@ -5,6 +5,10 @@ import {
   parseMinmax,
   serializeMinmax,
   checkGridTemplateSupport,
+  getGridAxisMode,
+  isImplicitGridMode,
+  isEditableGridMode,
+  getGridAxisLabel,
 } from "./grid-template-tracks";
 
 describe("parseGridTemplateTrackList", () => {
@@ -342,5 +346,103 @@ describe("checkGridTemplateSupport", () => {
     expect(result.supported).toBe(false);
     expect(result).toHaveProperty("reason");
     expect(result).toHaveProperty("type", "auto-fill");
+  });
+});
+
+describe("getGridAxisMode", () => {
+  test("returns 'none' for empty or none values", () => {
+    expect(getGridAxisMode("")).toBe("none");
+    expect(getGridAxisMode("none")).toBe("none");
+  });
+
+  test("returns 'auto' for single auto keyword", () => {
+    expect(getGridAxisMode("auto")).toBe("auto");
+  });
+
+  test("returns 'explicit' for regular track values", () => {
+    expect(getGridAxisMode("1fr 2fr")).toBe("explicit");
+    expect(getGridAxisMode("100px 200px")).toBe("explicit");
+    expect(getGridAxisMode("repeat(3, 1fr)")).toBe("explicit");
+    expect(getGridAxisMode("minmax(100px, 1fr)")).toBe("explicit");
+  });
+
+  test("returns 'auto-fill' for repeat(auto-fill, ...)", () => {
+    expect(getGridAxisMode("repeat(auto-fill, 100px)")).toBe("auto-fill");
+    expect(getGridAxisMode("repeat(auto-fill, minmax(100px, 1fr))")).toBe(
+      "auto-fill"
+    );
+  });
+
+  test("returns 'auto-fit' for repeat(auto-fit, ...)", () => {
+    expect(getGridAxisMode("repeat(auto-fit, 100px)")).toBe("auto-fit");
+    expect(getGridAxisMode("repeat(auto-fit, minmax(100px, 1fr))")).toBe(
+      "auto-fit"
+    );
+  });
+
+  test("returns 'subgrid' for subgrid", () => {
+    expect(getGridAxisMode("subgrid")).toBe("subgrid");
+    expect(getGridAxisMode("subgrid [header] [content]")).toBe("subgrid");
+  });
+
+  test("returns 'masonry' for masonry", () => {
+    expect(getGridAxisMode("masonry")).toBe("masonry");
+  });
+
+  test("returns 'line-names' for values with line names", () => {
+    expect(getGridAxisMode("[header] 1fr [content]")).toBe("line-names");
+  });
+});
+
+describe("isImplicitGridMode", () => {
+  test("returns true for implicit modes", () => {
+    expect(isImplicitGridMode("auto-fill")).toBe(true);
+    expect(isImplicitGridMode("auto-fit")).toBe(true);
+    expect(isImplicitGridMode("auto")).toBe(true);
+    expect(isImplicitGridMode("none")).toBe(true);
+  });
+
+  test("returns false for explicit modes", () => {
+    expect(isImplicitGridMode("explicit")).toBe(false);
+    expect(isImplicitGridMode("subgrid")).toBe(false);
+    expect(isImplicitGridMode("masonry")).toBe(false);
+    expect(isImplicitGridMode("line-names")).toBe(false);
+  });
+});
+
+describe("isEditableGridMode", () => {
+  test("returns true for editable modes", () => {
+    expect(isEditableGridMode("explicit")).toBe(true);
+    expect(isEditableGridMode("none")).toBe(true);
+    expect(isEditableGridMode("auto")).toBe(true);
+  });
+
+  test("returns false for non-editable modes", () => {
+    expect(isEditableGridMode("auto-fill")).toBe(false);
+    expect(isEditableGridMode("auto-fit")).toBe(false);
+    expect(isEditableGridMode("subgrid")).toBe(false);
+    expect(isEditableGridMode("masonry")).toBe(false);
+    expect(isEditableGridMode("line-names")).toBe(false);
+  });
+});
+
+describe("getGridAxisLabel", () => {
+  test("returns mode name for implicit modes", () => {
+    expect(getGridAxisLabel("auto-fill", 5)).toBe("auto-fill");
+    expect(getGridAxisLabel("auto-fit", 3)).toBe("auto-fit");
+    expect(getGridAxisLabel("auto", 2)).toBe("auto");
+    expect(getGridAxisLabel("none", 2)).toBe("none");
+  });
+
+  test("returns track count for explicit mode", () => {
+    expect(getGridAxisLabel("explicit", 3)).toBe("3");
+    expect(getGridAxisLabel("explicit", 5)).toBe("5");
+  });
+
+  test("returns track count for other modes", () => {
+    // For subgrid/masonry/line-names, returns track count as string
+    expect(getGridAxisLabel("subgrid", 4)).toBe("4");
+    expect(getGridAxisLabel("masonry", 3)).toBe("3");
+    expect(getGridAxisLabel("line-names", 2)).toBe("2");
   });
 });

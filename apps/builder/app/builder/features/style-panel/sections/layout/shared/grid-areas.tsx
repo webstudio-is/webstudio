@@ -15,6 +15,7 @@ import {
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
+import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -117,14 +118,11 @@ export const getGridDimensions = (
   columnsValue: string,
   rowsValue: string
 ): { columns: number; rows: number } => {
-  const columns =
-    columnsValue && columnsValue !== "none"
-      ? columnsValue.split(/\s+/).filter(Boolean).length
-      : 2;
-  const rows =
-    rowsValue && rowsValue !== "none"
-      ? rowsValue.split(/\s+/).filter(Boolean).length
-      : 2;
+  const columnTracks = parseGridTemplateTrackList(columnsValue);
+  const rowTracks = parseGridTemplateTrackList(rowsValue);
+  // Default to 2 if no tracks (for "none" or empty values)
+  const columns = columnTracks.length || 2;
+  const rows = rowTracks.length || 2;
   return { columns, rows };
 };
 
@@ -526,9 +524,13 @@ export const GridAreas = () => {
 
     // If we need a new row, add it to the grid
     if (needsNewRow) {
-      const currentRows = rowsValue.split(/\s+/).filter(Boolean);
-      const lastRowSize = currentRows[currentRows.length - 1] || "1fr";
-      const updatedRows = [...currentRows, lastRowSize].join(" ");
+      const currentRowTracks = parseGridTemplateTrackList(rowsValue);
+      const lastRowSize =
+        currentRowTracks[currentRowTracks.length - 1]?.value || "1fr";
+      const updatedRows = [
+        ...currentRowTracks.map((t) => t.value),
+        lastRowSize,
+      ].join(" ");
       batch.setProperty("grid-template-rows")({
         type: "unparsed",
         value: updatedRows,

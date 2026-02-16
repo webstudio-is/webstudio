@@ -10,6 +10,7 @@ import { subscribeWindowResize } from "~/shared/dom-hooks";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
+import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 
 const hideGridOverlay = () => {
   $gridCellData.set(undefined);
@@ -36,21 +37,14 @@ const computeGridCells = (
   const gridTemplateColumns = computedStyle.gridTemplateColumns;
   const gridTemplateRows = computedStyle.gridTemplateRows;
 
-  // Parse track counts from computed values (e.g., "100px 200px 100px" -> 3)
-  // "none" means no explicit tracks
-  const parseTrackCount = (trackValue: string): number => {
-    if (trackValue === "none" || trackValue === "") {
-      return 1; // Default to 1 track
-    }
-    // Split by spaces, but respect brackets for repeat() etc.
-    // Computed values don't have repeat(), they're expanded
-    // e.g., "100px 200px auto" -> 3 tracks
-    const tracks = trackValue.trim().split(/\s+/);
-    return Math.max(1, tracks.length);
-  };
+  // Parse track counts using the proper CSS parser
+  // Computed values are already expanded (no repeat(), var(), etc.)
+  const columnTracks = parseGridTemplateTrackList(gridTemplateColumns);
+  const rowTracks = parseGridTemplateTrackList(gridTemplateRows);
 
-  const columnCount = Math.min(parseTrackCount(gridTemplateColumns), MAX_PROBE);
-  const rowCount = Math.min(parseTrackCount(gridTemplateRows), MAX_PROBE);
+  // Ensure at least 1 track, cap at MAX_PROBE
+  const columnCount = Math.min(Math.max(1, columnTracks.length), MAX_PROBE);
+  const rowCount = Math.min(Math.max(1, rowTracks.length), MAX_PROBE);
 
   // First, detect actual column and row count by probing positions
   // Place probes and track unique X/Y positions

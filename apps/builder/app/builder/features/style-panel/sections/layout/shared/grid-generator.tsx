@@ -14,17 +14,68 @@ import { toValue } from "@webstudio-is/css-engine";
 import {
   parseGridTemplateTrackList,
   checkGridTemplateSupport,
+  getGridAxisMode,
+  getGridAxisLabel,
+  isImplicitGridMode,
+  type GridAxisMode,
 } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { $gridCellData } from "~/shared/nano-states";
 
+/**
+ * Parse track count from a computed CSS value.
+ * Returns 2 as default for empty/none values.
+ */
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
-    return 2; // Default to 2×2 grid
+    return 2;
   }
   const tracks = parseGridTemplateTrackList(value);
   return tracks.length || 2;
+};
+
+/**
+ * Modes that block the grid generator UI entirely.
+ * These require dedicated UIs or have no visual representation.
+ */
+const BLOCKED_MODES = new Set<GridAxisMode>([
+  "subgrid",
+  "masonry",
+  "line-names",
+]);
+
+/**
+ * Analyze grid axis support and return mode with optional unsupported reason.
+ */
+const analyzeGridAxis = (
+  cascadedValue: string
+): { mode: GridAxisMode; unsupportedReason?: string } => {
+  const mode = getGridAxisMode(cascadedValue);
+  if (BLOCKED_MODES.has(mode)) {
+    const support = checkGridTemplateSupport(cascadedValue);
+    return {
+      mode,
+      unsupportedReason: support.supported ? undefined : support.reason,
+    };
+  }
+  return { mode };
+};
+
+/**
+ * Calculate the actual track count for an axis.
+ * Uses DOM-probed count for implicit modes, parsed count for explicit.
+ */
+const getAxisTrackCount = (
+  mode: GridAxisMode,
+  computedValue: string,
+  domCount: number | undefined
+): number => {
+  const parsedCount = parseTrackCount(computedValue);
+  if (isImplicitGridMode(mode)) {
+    return domCount ?? parsedCount;
+  }
+  return parsedCount;
 };
 
 const selectorCellStyle = css({
@@ -143,54 +194,31 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
   const gridCellData = useStore($gridCellData);
 
-  // Use cascaded values for support check (to detect subgrid, masonry, etc.)
+  // Analyze both axes using pure functions
   const columnsValueCascaded = toValue(gridTemplateColumns.cascadedValue);
   const rowsValueCascaded = toValue(gridTemplateRows.cascadedValue);
+  const columnsAxis = analyzeGridAxis(columnsValueCascaded);
+  const rowsAxis = analyzeGridAxis(rowsValueCascaded);
 
-  // Check for unsupported features - but allow auto-fill/auto-fit for the generator
-  // since we use DOM-based counts to show the current grid size
-  const columnsSupport = checkGridTemplateSupport(columnsValueCascaded);
-  const rowsSupport = checkGridTemplateSupport(rowsValueCascaded);
+  // Check if either axis is blocked
+  const isBlocked =
+    BLOCKED_MODES.has(columnsAxis.mode) || BLOCKED_MODES.has(rowsAxis.mode);
+  const unsupportedReason =
+    columnsAxis.unsupportedReason ?? rowsAxis.unsupportedReason;
 
-  // Generator allows auto-fill/auto-fit (uses DOM counts), only blocks subgrid/masonry/line-names
-  const generatorBlockTypes = new Set(["subgrid", "masonry", "line-names"]);
-  const isColumnsBlocked =
-    !columnsSupport.supported && generatorBlockTypes.has(columnsSupport.type);
-  const isRowsBlocked =
-    !rowsSupport.supported && generatorBlockTypes.has(rowsSupport.type);
-  const isSupported = !isColumnsBlocked && !isRowsBlocked;
-  const unsupportedReason = isColumnsBlocked
-    ? columnsSupport.reason
-    : isRowsBlocked
-      ? rowsSupport.reason
-      : undefined;
-
-  // Detect auto-fill/auto-fit for display purposes
-  const isColumnsAutoFill =
-    !columnsSupport.supported && columnsSupport.type === "auto-fill";
-  const isColumnsAutoFit =
-    !columnsSupport.supported && columnsSupport.type === "auto-fit";
-  const isRowsAutoFill =
-    !rowsSupport.supported && rowsSupport.type === "auto-fill";
-  const isRowsAutoFit =
-    !rowsSupport.supported && rowsSupport.type === "auto-fit";
-  const hasAutoColumns = isColumnsAutoFill || isColumnsAutoFit;
-  const hasAutoRows = isRowsAutoFill || isRowsAutoFit;
-
-  // Parse track counts from CSS values
+  // Calculate track counts
   const columnsValueComputed = toValue(gridTemplateColumns.computedValue);
   const rowsValueComputed = toValue(gridTemplateRows.computedValue);
-  const parsedColumnCount = parseTrackCount(columnsValueComputed);
-  const parsedRowCount = parseTrackCount(rowsValueComputed);
-
-  // For auto-fill/auto-fit, use DOM-probed counts (responsive)
-  // For regular grids, use parsed counts (more accurate for explicit tracks)
-  const columnCount = hasAutoColumns
-    ? (gridCellData?.columnCount ?? parsedColumnCount)
-    : parsedColumnCount;
-  const rowCount = hasAutoRows
-    ? (gridCellData?.rowCount ?? parsedRowCount)
-    : parsedRowCount;
+  const columnCount = getAxisTrackCount(
+    columnsAxis.mode,
+    columnsValueComputed,
+    gridCellData?.columnCount
+  );
+  const rowCount = getAxisTrackCount(
+    rowsAxis.mode,
+    rowsValueComputed,
+    gridCellData?.rowCount
+  );
 
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
@@ -244,7 +272,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   }, [displayColumnCount, displayRowCount]);
 
   // Show disabled state with hint when grid values are unsupported
-  if (isSupported === false) {
+  if (isBlocked) {
     return (
       <Tooltip content={unsupportedReason}>
         <Flex
@@ -307,12 +335,8 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
             whiteSpace: "nowrap",
           }}
         >
-          {hasAutoColumns
-            ? isColumnsAutoFit
-              ? "auto-fit"
-              : "auto-fill"
-            : columnCount}
-          ×{hasAutoRows ? (isRowsAutoFit ? "auto-fit" : "auto-fill") : rowCount}
+          {getGridAxisLabel(columnsAxis.mode, columnCount)}×
+          {getGridAxisLabel(rowsAxis.mode, rowCount)}
         </Text>
       </button>
     </FloatingPanel>

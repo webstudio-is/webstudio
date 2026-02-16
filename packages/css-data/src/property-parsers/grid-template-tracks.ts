@@ -328,3 +328,115 @@ export const checkGridTemplateSupport = (
 
   return { supported: true };
 };
+
+/**
+ * Describes the mode of a grid axis (columns or rows).
+ *
+ * - "explicit": Regular explicit tracks (e.g., "1fr 2fr 100px")
+ * - "auto-fill": Dynamic tracks via repeat(auto-fill, ...)
+ * - "auto-fit": Dynamic tracks via repeat(auto-fit, ...)
+ * - "auto": Single "auto" keyword - implicit tracks based on children
+ * - "none": No explicit tracks defined
+ * - "subgrid": Subgrid inherits tracks from parent
+ * - "masonry": Experimental masonry layout
+ * - "line-names": Has named grid lines like [header]
+ */
+export type GridAxisMode =
+  | "explicit"
+  | "auto-fill"
+  | "auto-fit"
+  | "auto"
+  | "none"
+  | "subgrid"
+  | "masonry"
+  | "line-names";
+
+/**
+ * Analyze a grid template value to determine its mode.
+ *
+ * @param value - The CSS value string for grid-template-columns/rows
+ * @returns The axis mode describing the type of grid track definition
+ *
+ * @example
+ * getGridAxisMode("1fr 2fr 100px") // "explicit"
+ * getGridAxisMode("repeat(auto-fill, minmax(200px, 1fr))") // "auto-fill"
+ * getGridAxisMode("none") // "none"
+ * getGridAxisMode("auto") // "auto"
+ * getGridAxisMode("subgrid") // "subgrid"
+ */
+export const getGridAxisMode = (value: string): GridAxisMode => {
+  if (!value || value === "none" || value === "") {
+    return "none";
+  }
+
+  if (value === "auto") {
+    return "auto";
+  }
+
+  if (value.includes("subgrid")) {
+    return "subgrid";
+  }
+
+  if (value.includes("masonry")) {
+    return "masonry";
+  }
+
+  const support = checkGridTemplateSupport(value);
+  if (!support.supported) {
+    // Map the unsupported type directly to mode
+    return support.type;
+  }
+
+  return "explicit";
+};
+
+/**
+ * Check if a grid axis mode represents a dynamic/implicit grid that
+ * requires DOM probing to determine actual track count.
+ *
+ * @param mode - The grid axis mode
+ * @returns true if the mode requires DOM-based track counting
+ */
+export const isImplicitGridMode = (mode: GridAxisMode): boolean => {
+  return (
+    mode === "auto-fill" ||
+    mode === "auto-fit" ||
+    mode === "auto" ||
+    mode === "none"
+  );
+};
+
+/**
+ * Check if a grid axis mode is editable in the visual grid UI.
+ *
+ * @param mode - The grid axis mode
+ * @returns true if the mode can be edited visually
+ */
+export const isEditableGridMode = (mode: GridAxisMode): boolean => {
+  return mode === "explicit" || mode === "none" || mode === "auto";
+};
+
+/**
+ * Get a display label for a grid axis mode (for the grid generator).
+ *
+ * @param mode - The grid axis mode
+ * @param trackCount - The actual track count (for explicit modes)
+ * @returns Display string like "3", "auto-fit", "none"
+ */
+export const getGridAxisLabel = (
+  mode: GridAxisMode,
+  trackCount: number
+): string => {
+  switch (mode) {
+    case "auto-fill":
+      return "auto-fill";
+    case "auto-fit":
+      return "auto-fit";
+    case "auto":
+      return "auto";
+    case "none":
+      return "none";
+    default:
+      return String(trackCount);
+  }
+};
