@@ -35,16 +35,6 @@ const parseTrackCount = (value: string): number => {
 };
 
 /**
- * Modes where we cannot determine the track count.
- * For these, we show a default 2×2 grid and display "?" as the count.
- */
-const UNKNOWN_COUNT_MODES = new Set<GridAxisMode>([
-  "subgrid",
-  "masonry",
-  "line-names",
-]);
-
-/**
  * Calculate the actual track count for an axis.
  * Uses DOM-probed count for implicit modes, parsed count for explicit.
  */
@@ -197,10 +187,6 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     gridCellData?.rowCount
   );
 
-  // Check if counts are unknown (for display purposes)
-  const isColumnsCountUnknown = UNKNOWN_COUNT_MODES.has(columnsMode);
-  const isRowsCountUnknown = UNKNOWN_COUNT_MODES.has(rowsMode);
-
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
 
@@ -291,10 +277,8 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
             whiteSpace: "nowrap",
           }}
         >
-          {isColumnsCountUnknown
-            ? "?"
-            : getGridAxisLabel(columnsMode, columnCount)}
-          ×{isRowsCountUnknown ? "?" : getGridAxisLabel(rowsMode, rowCount)}
+          {getGridAxisLabel(columnsMode, columnCount)}×
+          {getGridAxisLabel(rowsMode, rowCount)}
         </Text>
       </button>
     </FloatingPanel>
