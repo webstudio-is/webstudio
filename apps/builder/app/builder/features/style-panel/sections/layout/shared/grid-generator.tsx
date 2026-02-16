@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Box,
   Flex,
@@ -10,9 +11,13 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
+import {
+  parseGridTemplateTrackList,
+  checkGridTemplateSupport,
+} from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
+import { $gridCellData } from "~/shared/nano-states";
 
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
@@ -136,12 +141,56 @@ type GridGeneratorProps = {
 export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const gridCellData = useStore($gridCellData);
 
-  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
-  const rowsValue = toValue(gridTemplateRows.cascadedValue);
+  // Use cascaded values for support check (to detect subgrid, masonry, etc.)
+  const columnsValueCascaded = toValue(gridTemplateColumns.cascadedValue);
+  const rowsValueCascaded = toValue(gridTemplateRows.cascadedValue);
 
-  const columnCount = parseTrackCount(columnsValue);
-  const rowCount = parseTrackCount(rowsValue);
+  // Check for unsupported features - but allow auto-fill/auto-fit for the generator
+  // since we use DOM-based counts to show the current grid size
+  const columnsSupport = checkGridTemplateSupport(columnsValueCascaded);
+  const rowsSupport = checkGridTemplateSupport(rowsValueCascaded);
+
+  // Generator allows auto-fill/auto-fit (uses DOM counts), only blocks subgrid/masonry/line-names
+  const generatorBlockTypes = new Set(["subgrid", "masonry", "line-names"]);
+  const isColumnsBlocked =
+    !columnsSupport.supported && generatorBlockTypes.has(columnsSupport.type);
+  const isRowsBlocked =
+    !rowsSupport.supported && generatorBlockTypes.has(rowsSupport.type);
+  const isSupported = !isColumnsBlocked && !isRowsBlocked;
+  const unsupportedReason = isColumnsBlocked
+    ? columnsSupport.reason
+    : isRowsBlocked
+      ? rowsSupport.reason
+      : undefined;
+
+  // Detect auto-fill/auto-fit for display purposes
+  const isColumnsAutoFill =
+    !columnsSupport.supported && columnsSupport.type === "auto-fill";
+  const isColumnsAutoFit =
+    !columnsSupport.supported && columnsSupport.type === "auto-fit";
+  const isRowsAutoFill =
+    !rowsSupport.supported && rowsSupport.type === "auto-fill";
+  const isRowsAutoFit =
+    !rowsSupport.supported && rowsSupport.type === "auto-fit";
+  const hasAutoColumns = isColumnsAutoFill || isColumnsAutoFit;
+  const hasAutoRows = isRowsAutoFill || isRowsAutoFit;
+
+  // Parse track counts from CSS values
+  const columnsValueComputed = toValue(gridTemplateColumns.computedValue);
+  const rowsValueComputed = toValue(gridTemplateRows.computedValue);
+  const parsedColumnCount = parseTrackCount(columnsValueComputed);
+  const parsedRowCount = parseTrackCount(rowsValueComputed);
+
+  // For auto-fill/auto-fit, use DOM-probed counts (responsive)
+  // For regular grids, use parsed counts (more accurate for explicit tracks)
+  const columnCount = hasAutoColumns
+    ? (gridCellData?.columnCount ?? parsedColumnCount)
+    : parsedColumnCount;
+  const rowCount = hasAutoRows
+    ? (gridCellData?.rowCount ?? parsedRowCount)
+    : parsedRowCount;
 
   const displayColumnCount = Math.min(columnCount, 8);
   const displayRowCount = Math.min(rowCount, 8);
@@ -194,6 +243,31 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     );
   }, [displayColumnCount, displayRowCount]);
 
+  // Show disabled state with hint when grid values are unsupported
+  if (isSupported === false) {
+    return (
+      <Tooltip content={unsupportedReason}>
+        <Flex
+          align="center"
+          justify="center"
+          css={{
+            width: "100%",
+            height: 60,
+            borderRadius: theme.borderRadius[3],
+            border: `1px dashed ${theme.colors.borderMain}`,
+            backgroundColor: theme.colors.backgroundPanel,
+            color: theme.colors.foregroundSubtle,
+            cursor: "not-allowed",
+          }}
+        >
+          <Text variant="labels" color="subtle">
+            Advanced grid configuration
+          </Text>
+        </Flex>
+      </Tooltip>
+    );
+  }
+
   return (
     <FloatingPanel
       title="Grid generator"
@@ -230,9 +304,15 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
             fontSize: theme.deprecatedFontSize[3],
             fontWeight: 500,
             pointerEvents: "none",
+            whiteSpace: "nowrap",
           }}
         >
-          {columnCount}×{rowCount}
+          {hasAutoColumns
+            ? isColumnsAutoFit
+              ? "auto-fit"
+              : "auto-fill"
+            : columnCount}
+          ×{hasAutoRows ? (isRowsAutoFit ? "auto-fit" : "auto-fill") : rowCount}
         </Text>
       </button>
     </FloatingPanel>

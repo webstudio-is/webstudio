@@ -13,6 +13,7 @@ import {
   Button,
   Checkbox,
   Grid,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -20,6 +21,7 @@ import {
   serializeGridTemplateTrackList,
   parseMinmax,
   serializeMinmax,
+  checkGridTemplateSupport,
   type GridTrack,
 } from "@webstudio-is/css-data";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
@@ -365,6 +367,33 @@ type GridSettingsProps = {
 };
 
 export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
+  const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
+  const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+
+  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
+  const rowsValue = toValue(gridTemplateRows.cascadedValue);
+
+  // Check if the grid values are supported by the visual editor
+  const columnsSupport = checkGridTemplateSupport(columnsValue);
+  const rowsSupport = checkGridTemplateSupport(rowsValue);
+  const isSupported = columnsSupport.supported && rowsSupport.supported;
+  const unsupportedReason = !columnsSupport.supported
+    ? columnsSupport.reason
+    : !rowsSupport.supported
+      ? rowsSupport.reason
+      : undefined;
+
+  // Show disabled button with tooltip when unsupported
+  if (isSupported === false) {
+    return (
+      <Tooltip content={unsupportedReason}>
+        <Button color="neutral" disabled css={{ width: "100%" }}>
+          Edit grid
+        </Button>
+      </Tooltip>
+    );
+  }
+
   return (
     <FloatingPanel
       title="Grid settings"

@@ -141,7 +141,7 @@ const VerticalLine = ({
   );
 };
 
-export const GridOverlay = () => {
+export const GridOutlines = () => {
   const gridCellData = useStore($gridCellData);
   const scale = useStore($scale);
   const clampingRect = useStore($clampingRect);

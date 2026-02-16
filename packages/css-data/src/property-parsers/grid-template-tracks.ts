@@ -234,3 +234,97 @@ export const parseMinmax = (value: string): Minmax | undefined => {
 export const serializeMinmax = (minmax: Minmax): string => {
   return `minmax(${minmax.min},${minmax.max})`;
 };
+
+/**
+ * Result of checking if a grid template value is supported by the visual editor.
+ */
+export type GridTemplateSupport =
+  | { supported: true }
+  | {
+      supported: false;
+      reason: string;
+      type: "subgrid" | "masonry" | "line-names" | "auto-fill" | "auto-fit";
+    };
+
+/**
+ * Check if a grid-template-columns or grid-template-rows value can be
+ * represented and edited by the visual grid UI.
+ *
+ * Unsupported values:
+ * - `subgrid` - requires dedicated UI
+ * - `masonry` - experimental, not a track definition
+ * - `repeat(auto-fill, ...)` / `repeat(auto-fit, ...)` - dynamic track count
+ * - Line names like `[header]` - would be silently discarded on edit
+ *
+ * Note: CSS variables are supported - use computedValue which resolves them.
+ *
+ * @param value - The CSS value string for grid-template-columns/rows
+ * @returns Object indicating if supported, with reason and type if not
+ */
+export const checkGridTemplateSupport = (
+  value: string
+): GridTemplateSupport => {
+  if (!value || value === "none") {
+    return { supported: true };
+  }
+
+  // Check for subgrid
+  if (value.includes("subgrid")) {
+    return {
+      supported: false,
+      type: "subgrid",
+      reason: "Subgrid is not supported in the visual editor",
+    };
+  }
+
+  // Check for masonry
+  if (value.includes("masonry")) {
+    return {
+      supported: false,
+      type: "masonry",
+      reason: "Masonry layout is not supported in the visual editor",
+    };
+  }
+
+  const ast = cssTryParseValue(value);
+  if (ast === undefined || ast.type !== "Value") {
+    return { supported: true }; // Let invalid values pass through
+  }
+
+  const children = ast.children.toArray();
+
+  for (const node of children) {
+    // Check for line names (bracketed identifiers)
+    if (node.type === "Brackets") {
+      return {
+        supported: false,
+        type: "line-names",
+        reason: "Named grid lines are not supported in the visual editor",
+      };
+    }
+
+    // Check for auto-fill/auto-fit in repeat()
+    if (node.type === "Function" && node.name === "repeat") {
+      const repeatChildren = node.children.toArray();
+      const countNode = repeatChildren[0];
+      if (countNode?.type === "Identifier") {
+        if (countNode.name === "auto-fill") {
+          return {
+            supported: false,
+            type: "auto-fill",
+            reason: "Dynamic grid tracks (auto-fill) cannot be edited visually",
+          };
+        }
+        if (countNode.name === "auto-fit") {
+          return {
+            supported: false,
+            type: "auto-fit",
+            reason: "Dynamic grid tracks (auto-fit) cannot be edited visually",
+          };
+        }
+      }
+    }
+  }
+
+  return { supported: true };
+};
