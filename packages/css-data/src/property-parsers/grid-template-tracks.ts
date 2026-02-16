@@ -174,3 +174,63 @@ export const serializeGridTemplateTrackList = (tracks: GridTrack[]): string => {
   }
   return tracks.map((track) => track.value).join(" ");
 };
+
+/**
+ * Represents a minmax() function with min and max values.
+ */
+export type Minmax = {
+  min: string;
+  max: string;
+};
+
+/**
+ * Parse a minmax() function value into its min and max parts.
+ * Returns undefined if the value is not a valid minmax() function.
+ *
+ * @example
+ * parseMinmax("minmax(100px, 1fr)") // { min: "100px", max: "1fr" }
+ * parseMinmax("1fr") // undefined
+ */
+export const parseMinmax = (value: string): Minmax | undefined => {
+  const ast = cssTryParseValue(value);
+  if (ast === undefined || ast.type !== "Value") {
+    return undefined;
+  }
+
+  const children = ast.children.toArray();
+  if (children.length !== 1) {
+    return undefined;
+  }
+
+  const node = children[0];
+  if (node.type !== "Function" || node.name !== "minmax") {
+    return undefined;
+  }
+
+  const args = node.children.toArray();
+  // minmax has two arguments separated by a comma
+  // Structure: [min-value, Operator(","), max-value]
+  const values: string[] = [];
+  for (const arg of args) {
+    if (arg.type === "Operator" && arg.value === ",") {
+      continue;
+    }
+    values.push(csstree.generate(arg));
+  }
+
+  if (values.length !== 2) {
+    return undefined;
+  }
+
+  return { min: values[0], max: values[1] };
+};
+
+/**
+ * Create a minmax() CSS value from min and max parts.
+ *
+ * @example
+ * serializeMinmax({ min: "100px", max: "1fr" }) // "minmax(100px,1fr)"
+ */
+export const serializeMinmax = (minmax: Minmax): string => {
+  return `minmax(${minmax.min},${minmax.max})`;
+};

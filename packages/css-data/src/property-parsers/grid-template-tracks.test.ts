@@ -2,6 +2,8 @@ import { describe, test, expect } from "vitest";
 import {
   parseGridTemplateTrackList,
   serializeGridTemplateTrackList,
+  parseMinmax,
+  serializeMinmax,
 } from "./grid-template-tracks";
 
 describe("parseGridTemplateTrackList", () => {
@@ -183,6 +185,83 @@ describe("round-trip parsing and serialization", () => {
     const original = "100px 1fr auto";
     const parsed = parseGridTemplateTrackList(original);
     const serialized = serializeGridTemplateTrackList(parsed);
+    expect(serialized).toBe(original);
+  });
+});
+
+describe("parseMinmax", () => {
+  test("parses simple minmax", () => {
+    expect(parseMinmax("minmax(100px, 1fr)")).toEqual({
+      min: "100px",
+      max: "1fr",
+    });
+  });
+
+  test("parses minmax with auto", () => {
+    expect(parseMinmax("minmax(auto, 1fr)")).toEqual({
+      min: "auto",
+      max: "1fr",
+    });
+  });
+
+  test("parses minmax with min-content/max-content", () => {
+    expect(parseMinmax("minmax(min-content, max-content)")).toEqual({
+      min: "min-content",
+      max: "max-content",
+    });
+  });
+
+  test("parses minmax with percentage", () => {
+    expect(parseMinmax("minmax(10%, 50%)")).toEqual({
+      min: "10%",
+      max: "50%",
+    });
+  });
+
+  test("returns undefined for non-minmax values", () => {
+    expect(parseMinmax("1fr")).toBeUndefined();
+    expect(parseMinmax("100px")).toBeUndefined();
+    expect(parseMinmax("auto")).toBeUndefined();
+  });
+
+  test("returns undefined for other functions", () => {
+    expect(parseMinmax("fit-content(200px)")).toBeUndefined();
+    expect(parseMinmax("repeat(3, 1fr)")).toBeUndefined();
+  });
+
+  test("returns undefined for invalid values", () => {
+    expect(parseMinmax("")).toBeUndefined();
+    expect(parseMinmax("minmax()")).toBeUndefined();
+    expect(parseMinmax("minmax(100px)")).toBeUndefined();
+  });
+});
+
+describe("serializeMinmax", () => {
+  test("creates minmax string", () => {
+    expect(serializeMinmax({ min: "100px", max: "1fr" })).toBe(
+      "minmax(100px,1fr)"
+    );
+  });
+
+  test("handles auto values", () => {
+    expect(serializeMinmax({ min: "auto", max: "1fr" })).toBe(
+      "minmax(auto,1fr)"
+    );
+  });
+
+  test("handles content values", () => {
+    expect(serializeMinmax({ min: "min-content", max: "max-content" })).toBe(
+      "minmax(min-content,max-content)"
+    );
+  });
+});
+
+describe("parseMinmax and serializeMinmax round-trip", () => {
+  test("minmax round-trips correctly", () => {
+    const original = "minmax(100px,1fr)";
+    const parsed = parseMinmax(original);
+    expect(parsed).not.toBeUndefined();
+    const serialized = serializeMinmax(parsed!);
     expect(serialized).toBe(original);
   });
 });

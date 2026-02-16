@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, type ReactNode } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import {
   theme,
   Flex,
@@ -11,11 +11,15 @@ import {
   SmallIconButton,
   useSortable,
   Button,
+  Checkbox,
+  Grid,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
   parseGridTemplateTrackList,
   serializeGridTemplateTrackList,
+  parseMinmax,
+  serializeMinmax,
   type GridTrack,
 } from "@webstudio-is/css-data";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
@@ -68,31 +72,122 @@ const TrackItem = ({
   onUpdate,
   onRemove,
 }: TrackItemProps) => {
+  const minmaxParts = parseMinmax(track);
+  const [isMinmax, setIsMinmax] = useState(minmaxParts !== undefined);
+  const [minValue, setMinValue] = useState(minmaxParts?.min ?? "0");
+  const [maxValue, setMaxValue] = useState(minmaxParts?.max ?? "1fr");
+
+  // Sync state when track prop changes (e.g., external edits, undo/redo)
+  useEffect(() => {
+    const parsed = parseMinmax(track);
+    setIsMinmax(parsed !== undefined);
+    if (parsed) {
+      setMinValue(parsed.min);
+      setMaxValue(parsed.max);
+    }
+  }, [track]);
+
+  const handleMinmaxToggle = (checked: boolean) => {
+    setIsMinmax(checked);
+    if (checked) {
+      // Convert single value to minmax with reasonable defaults
+      const newMin = "0";
+      const newMax = track === "auto" ? "1fr" : track;
+      setMinValue(newMin);
+      setMaxValue(newMax);
+      onUpdate(index, serializeMinmax({ min: newMin, max: newMax }));
+    } else {
+      // Convert minmax to single value (use max value)
+      onUpdate(index, maxValue);
+    }
+  };
+
+  const handleMinUpdate = (value: string) => {
+    setMinValue(value);
+    onUpdate(index, serializeMinmax({ min: value, max: maxValue }));
+  };
+
+  const handleMaxUpdate = (value: string) => {
+    setMaxValue(value);
+    onUpdate(index, serializeMinmax({ min: minValue, max: value }));
+  };
+
   return (
     <FloatingPanel
       placement="bottom-within"
       title={`Edit ${trackType}`}
       content={
         <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
-          <Label>Size</Label>
-          <CssValueInputContainer
-            styleSource="local"
-            property={property}
-            value={{
-              type: "unparsed",
-              value: track,
-            }}
-            onUpdate={(styleValue) => {
-              const stringValue =
-                styleValue.type === "unparsed"
-                  ? styleValue.value
-                  : toValue(styleValue);
-              onUpdate(index, stringValue);
-            }}
-            onDelete={() => {
-              // Don't allow deleting from input
-            }}
-          />
+          {isMinmax ? (
+            <Grid columns={2} gap="2">
+              <Flex direction="column" gap="1">
+                <Label>Min</Label>
+                <CssValueInputContainer
+                  styleSource="local"
+                  property={property}
+                  value={{
+                    type: "unparsed",
+                    value: minValue,
+                  }}
+                  onUpdate={(styleValue) => {
+                    const stringValue =
+                      styleValue.type === "unparsed"
+                        ? styleValue.value
+                        : toValue(styleValue);
+                    handleMinUpdate(stringValue);
+                  }}
+                  onDelete={() => {}}
+                />
+              </Flex>
+              <Flex direction="column" gap="1">
+                <Label>Max</Label>
+                <CssValueInputContainer
+                  styleSource="local"
+                  property={property}
+                  value={{
+                    type: "unparsed",
+                    value: maxValue,
+                  }}
+                  onUpdate={(styleValue) => {
+                    const stringValue =
+                      styleValue.type === "unparsed"
+                        ? styleValue.value
+                        : toValue(styleValue);
+                    handleMaxUpdate(stringValue);
+                  }}
+                  onDelete={() => {}}
+                />
+              </Flex>
+            </Grid>
+          ) : (
+            <Flex direction="column" gap="1">
+              <Label>Value</Label>
+              <CssValueInputContainer
+                styleSource="local"
+                property={property}
+                value={{
+                  type: "unparsed",
+                  value: track,
+                }}
+                onUpdate={(styleValue) => {
+                  const stringValue =
+                    styleValue.type === "unparsed"
+                      ? styleValue.value
+                      : toValue(styleValue);
+                  onUpdate(index, stringValue);
+                }}
+                onDelete={() => {}}
+              />
+            </Flex>
+          )}
+          <Flex align="center" gap="2">
+            <Checkbox
+              id={`minmax-${id}`}
+              checked={isMinmax}
+              onCheckedChange={handleMinmaxToggle}
+            />
+            <Label htmlFor={`minmax-${id}`}>Use min/max</Label>
+          </Flex>
         </Flex>
       }
       open={isEditing}
