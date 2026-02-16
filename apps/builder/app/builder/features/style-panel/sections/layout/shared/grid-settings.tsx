@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   theme,
   Flex,
@@ -92,29 +92,23 @@ const TrackEditor = ({ property, label }: TrackEditorProps) => {
     [tracks, updateTracks]
   );
 
-  const swapTracks = (newIndex: number, oldIndex: number) => {
-    if (oldIndex === newIndex) {
-      return;
-    }
-    const newTracks = [...tracks];
-    const [removed] = newTracks.splice(oldIndex, 1);
-    newTracks.splice(newIndex, 0, removed);
-    updateTracks(newTracks);
-  };
-
   const sortableItems = useMemo(
     () => tracks.map((_, index) => ({ id: String(index) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tracks.length]
   );
 
-  // Use ref to avoid stale closure in useSortable
-  const swapTracksRef = useRef(swapTracks);
-  swapTracksRef.current = swapTracks;
-
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
-    onSort: (newIndex, oldIndex) => swapTracksRef.current(newIndex, oldIndex),
+    onSort: (newIndex, oldIndex) => {
+      if (oldIndex === newIndex) {
+        return;
+      }
+      const newTracks = [...tracks];
+      const [removed] = newTracks.splice(oldIndex, 1);
+      newTracks.splice(newIndex, 0, removed);
+      updateTracks(newTracks);
+    },
   });
 
   return (
