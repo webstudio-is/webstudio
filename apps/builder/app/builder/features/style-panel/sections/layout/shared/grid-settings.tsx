@@ -46,6 +46,87 @@ const serializeTrackList = (tracks: string[]): StyleValue => {
   };
 };
 
+type TrackItemProps = {
+  property: "grid-template-columns" | "grid-template-rows";
+  singular: string;
+  track: string;
+  index: number;
+  id: string;
+  dragItemId: string | undefined;
+  isEditing: boolean;
+  onEditingChange: (open: boolean) => void;
+  onUpdate: (index: number, newValue: string) => void;
+  onRemove: (index: number) => void;
+};
+
+const TrackItem = ({
+  property,
+  singular,
+  track,
+  index,
+  id,
+  dragItemId,
+  isEditing,
+  onEditingChange,
+  onUpdate,
+  onRemove,
+}: TrackItemProps) => {
+  return (
+    <FloatingPanel
+      placement="bottom-within"
+      title={`Edit ${singular}`}
+      content={
+        <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
+          <Label>Size</Label>
+          <CssValueInputContainer
+            styleSource="local"
+            property={property}
+            value={{
+              type: "unparsed",
+              value: track,
+            }}
+            onUpdate={(styleValue) => {
+              const stringValue =
+                styleValue.type === "unparsed"
+                  ? styleValue.value
+                  : toValue(styleValue);
+              onUpdate(index, stringValue);
+            }}
+            onDelete={() => {
+              // Don't allow deleting from input
+            }}
+          />
+        </Flex>
+      }
+      open={isEditing}
+      onOpenChange={onEditingChange}
+    >
+      <CssValueListItem
+        id={id}
+        draggable
+        active={dragItemId === id}
+        index={index}
+        label={
+          <Label truncate>
+            {singular} {index + 1}: {track}
+          </Label>
+        }
+        buttons={
+          <SmallIconButton
+            variant="destructive"
+            tabIndex={-1}
+            icon={<MinusIcon />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(index);
+            }}
+          />
+        }
+      />
+    </FloatingPanel>
+  );
+};
+
 type TrackEditorProps = {
   property: "grid-template-columns" | "grid-template-rows";
   trackType: keyof typeof trackTypeLabels;
@@ -157,69 +238,25 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
           {tracks.map((track, index) => {
             const id = String(index);
             return (
-              <FloatingPanel
+              <TrackItem
                 key={id}
-                placement="bottom-within"
-                title={`Edit ${trackType}`}
-                content={
-                  <Flex
-                    direction="column"
-                    gap="2"
-                    css={{ padding: theme.panel.padding }}
-                  >
-                    <Label>Size</Label>
-                    <CssValueInputContainer
-                      styleSource="local"
-                      property={property}
-                      value={{
-                        type: "unparsed",
-                        value: track,
-                      }}
-                      onUpdate={(styleValue) => {
-                        const stringValue =
-                          styleValue.type === "unparsed"
-                            ? styleValue.value
-                            : toValue(styleValue);
-                        updateTrack(index, stringValue);
-                      }}
-                      onDelete={() => {
-                        // Don't allow deleting from input
-                      }}
-                    />
-                  </Flex>
-                }
-                open={editingIndex === index}
-                onOpenChange={(open) => {
+                property={property}
+                singular={singular}
+                track={track}
+                index={index}
+                id={id}
+                dragItemId={dragItemId}
+                isEditing={editingIndex === index}
+                onEditingChange={(open) => {
                   if (open) {
                     setEditingIndex(index);
                   } else {
                     setEditingIndex(undefined);
                   }
                 }}
-              >
-                <CssValueListItem
-                  id={id}
-                  draggable
-                  active={dragItemId === id}
-                  index={index}
-                  label={
-                    <Label truncate>
-                      {singular} {index + 1}: {track}
-                    </Label>
-                  }
-                  buttons={
-                    <SmallIconButton
-                      variant="destructive"
-                      tabIndex={-1}
-                      icon={<MinusIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeTrack(index);
-                      }}
-                    />
-                  }
-                />
-              </FloatingPanel>
+                onUpdate={updateTrack}
+                onRemove={removeTrack}
+              />
             );
           })}
           {placementIndicator}
