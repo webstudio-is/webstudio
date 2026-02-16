@@ -1,20 +1,26 @@
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useState, useCallback, type ReactNode } from "react";
 import {
   theme,
   Flex,
   Text,
-  IconButton,
   FloatingPanel,
+  IconButton,
   Label,
   CssValueListItem,
   CssValueListArrowFocus,
   SmallIconButton,
   useSortable,
+  Button,
 } from "@webstudio-is/design-system";
-import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
-import { CssValueInputContainer } from "../../../shared/css-value-input";
+import {
+  parseGridTemplateTrackList,
+  serializeGridTemplateTrackList,
+  type GridTrack,
+} from "@webstudio-is/css-data";
+import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { useComputedStyleDecl } from "../../../shared/model";
+import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import {
   CollapsibleSectionRoot,
@@ -27,27 +33,17 @@ const trackTypeLabels = {
   row: { singular: "Row", plural: "Rows" },
 } as const;
 
-const parseTrackList = (value: string): string[] => {
-  if (!value || value === "none") {
-    return [];
-  }
-  // Simple parsing - split by spaces
-  // TODO: Handle complex values like minmax(), repeat()
-  return value.split(/\s+/).filter(Boolean);
-};
-
-const serializeTrackList = (tracks: string[]): StyleValue => {
-  if (tracks.length === 0) {
+const serializeTrackList = (tracks: GridTrack[]): StyleValue => {
+  const value = serializeGridTemplateTrackList(tracks);
+  if (value === "none") {
     return { type: "keyword", value: "none" };
   }
-  return {
-    type: "unparsed",
-    value: tracks.join(" "),
-  };
+  return { type: "unparsed", value };
 };
 
 type TrackItemProps = {
   property: "grid-template-columns" | "grid-template-rows";
+  trackType: "column" | "row";
   singular: string;
   track: string;
   index: number;
@@ -61,6 +57,7 @@ type TrackItemProps = {
 
 const TrackItem = ({
   property,
+  trackType,
   singular,
   track,
   index,
@@ -74,7 +71,7 @@ const TrackItem = ({
   return (
     <FloatingPanel
       placement="bottom-within"
-      title={`Edit ${singular}`}
+      title={`Edit ${trackType}`}
       content={
         <Flex direction="column" gap="2" css={{ padding: theme.panel.padding }}>
           <Label>Size</Label>
@@ -107,7 +104,7 @@ const TrackItem = ({
         active={dragItemId === id}
         index={index}
         label={
-          <Label truncate>
+          <Label truncate title={`${singular} ${index + 1}: ${track}`}>
             {singular} {index + 1}: {track}
           </Label>
         }
@@ -136,14 +133,14 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   const { singular, plural } = trackTypeLabels[trackType];
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
-  const tracks = parseTrackList(value);
+  const tracks = parseGridTemplateTrackList(value);
   const [isOpen, setIsOpen] = useOpenState(trackType);
   const [editingIndex, setEditingIndex] = useState<number | undefined>(
     undefined
   );
 
   const updateTracks = useCallback(
-    (newTracks: string[]) => {
+    (newTracks: GridTrack[]) => {
       const batch = createBatchUpdate();
       batch.setProperty(property)(serializeTrackList(newTracks));
       batch.publish();
@@ -152,7 +149,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   );
 
   const addTrack = useCallback(() => {
-    const newTracks = [...tracks, "1fr"];
+    const newTracks = [...tracks, { value: "1fr" }];
     updateTracks(newTracks);
     // Open editor for the new track
     setEditingIndex(tracks.length);
@@ -173,7 +170,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   const updateTrack = useCallback(
     (index: number, newValue: string) => {
       const newTracks = [...tracks];
-      newTracks[index] = newValue;
+      newTracks[index] = { value: newValue };
       updateTracks(newTracks);
     },
     [tracks, updateTracks]
@@ -241,8 +238,9 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
               <TrackItem
                 key={id}
                 property={property}
+                trackType={trackType}
                 singular={singular}
-                track={track}
+                track={track.value}
                 index={index}
                 id={id}
                 dragItemId={dragItemId}
@@ -266,22 +264,22 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   );
 };
 
-type GridSettingsPanelProps = {
-  children: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+type GridSettingsProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export const GridSettingsPanel = ({
-  children,
-  open,
-  onOpenChange,
-}: GridSettingsPanelProps) => {
+export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
   return (
     <FloatingPanel
       title="Grid settings"
+      placement="bottom-within"
       content={
-        <Flex direction="column" data-floating-panel-container>
+        <Flex
+          direction="column"
+          css={{ width: theme.spacing[30] }}
+          data-floating-panel-container
+        >
           <TrackEditor property="grid-template-columns" trackType="column" />
           <TrackEditor property="grid-template-rows" trackType="row" />
           <GridAreas />
@@ -290,7 +288,9 @@ export const GridSettingsPanel = ({
       open={open}
       onOpenChange={onOpenChange}
     >
-      {children}
+      <Button color="neutral" css={{ width: "100%" }}>
+        Edit grid
+      </Button>
     </FloatingPanel>
   );
 };

@@ -26,10 +26,7 @@ import {
   useParentComputedStyleDecl,
 } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import {
-  parseGridAreas,
-  getGridDimensions,
-} from "../layout/shared/grid-areas.utils";
+import { parseGridAreas, getGridDimensions } from "../layout/shared/grid-areas";
 import {
   GridPositionInputs,
   type GridPosition,

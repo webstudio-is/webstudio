@@ -1,9 +1,9 @@
 import { Box, Flex } from "@webstudio-is/design-system";
-import { FlexVisual as FlexVisualComponent } from "./flex-visual";
+import { FlexAlignment as FlexAlignmentComponent } from "./flex-alignment";
 
 export default {
-  title: "Style Panel/Layout/Flex Visual",
-  component: FlexVisualComponent,
+  title: "Style Panel/Layout/Flex Alignment",
+  component: FlexAlignmentComponent,
 };
 
 const alignItems = ["normal", "stretch", "baseline", "center", "start", "end"];
@@ -57,7 +57,7 @@ export const FlexGrid = () => {
             </Box>
             {justifyContent.map((justifyContent) => (
               <Box key={justifyContent} css={{ position: "relative" }}>
-                <FlexVisualComponent />
+                <FlexAlignmentComponent />
               </Box>
             ))}
           </Flex>
