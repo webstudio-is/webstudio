@@ -382,7 +382,7 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
     isEditableGridMode(columnsMode) && isEditableGridMode(rowsMode);
 
   // Get reason for non-editable modes
-  const getUnsupportedReason = () => {
+  const unsupportedReason = (() => {
     if (!isEditableGridMode(columnsMode)) {
       const support = checkGridTemplateSupport(columnsValue);
       return support.supported ? undefined : support.reason;
@@ -392,12 +392,12 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
       return support.supported ? undefined : support.reason;
     }
     return undefined;
-  };
+  })();
 
   // Show disabled button with tooltip when unsupported
   if (!isEditable) {
     return (
-      <Tooltip content={getUnsupportedReason()}>
+      <Tooltip content={unsupportedReason}>
         <Button color="neutral" disabled css={{ width: "100%" }}>
           Edit grid
         </Button>
