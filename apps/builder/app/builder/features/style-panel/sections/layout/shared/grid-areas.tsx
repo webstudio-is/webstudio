@@ -23,6 +23,7 @@ import {
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { GridPositionInputs } from "./grid-position-inputs";
+import { $gridEditingArea } from "~/builder/shared/nano-states";
 
 export type AreaInfo = {
   name: string;
@@ -414,6 +415,9 @@ export const GridAreas = () => {
   const [editingAreaIndex, setEditingAreaIndex] = useState<number | undefined>(
     undefined
   );
+  const [hoveredAreaIndex, setHoveredAreaIndex] = useState<number | undefined>(
+    undefined
+  );
 
   const gridTemplateAreas = useComputedStyleDecl("grid-template-areas");
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
@@ -425,6 +429,26 @@ export const GridAreas = () => {
 
   const areas = parseGridAreas(areasValue);
   const { columns, rows } = getGridDimensions(columnsValue, rowsValue);
+
+  // Update grid editing area highlight when editing or hovering an area
+  // Editing takes priority over hovering
+  const highlightIndex = editingAreaIndex ?? hoveredAreaIndex;
+  useEffect(() => {
+    if (highlightIndex !== undefined && areas[highlightIndex]) {
+      const area = areas[highlightIndex];
+      $gridEditingArea.set({
+        columnStart: area.columnStart,
+        columnEnd: area.columnEnd,
+        rowStart: area.rowStart,
+        rowEnd: area.rowEnd,
+      });
+    } else {
+      $gridEditingArea.set(undefined);
+    }
+    return () => {
+      $gridEditingArea.set(undefined);
+    };
+  }, [highlightIndex, areas]);
 
   const saveArea = useCallback(
     (newArea: AreaInfo, oldName?: string) => {
@@ -550,9 +574,6 @@ export const GridAreas = () => {
       value: template,
     });
     batch.publish();
-
-    // Now open the dialog to edit the newly created area
-    setEditingAreaIndex(areas.length);
   }, [areas, columns, rows, rowsValue]);
 
   return (
@@ -596,7 +617,7 @@ export const GridAreas = () => {
             <FloatingPanel
               key={area.name}
               placement="bottom-within"
-              title="Edit Area"
+              title="Edit area"
               content={
                 <AreaEditor
                   area={area}
@@ -620,6 +641,8 @@ export const GridAreas = () => {
               <CssValueListItem
                 id={String(index)}
                 index={index}
+                onMouseEnter={() => setHoveredAreaIndex(index)}
+                onMouseLeave={() => setHoveredAreaIndex(undefined)}
                 label={
                   <Label truncate>
                     {area.name} ({area.columnStart}-{area.columnEnd - 1} /{" "}
