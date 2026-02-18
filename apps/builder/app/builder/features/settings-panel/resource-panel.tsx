@@ -321,7 +321,7 @@ export const SearchParams = ({
   return (
     <Grid gap={1}>
       <Flex justify="between" align="center">
-        <Label>Search Params</Label>
+        <Label>Search params</Label>
         <SmallIconButton
           aria-label="Add another search param"
           icon={<PlusIcon />}
@@ -495,7 +495,7 @@ const CacheMaxAge = ({
 }) => {
   return (
     <Grid gap={1}>
-      <Label htmlFor="resource-panel-max-age">Cache Max Age</Label>
+      <Label htmlFor="resource-panel-max-age">Cache max age</Label>
       <InputField
         id="resource-panel-max-age"
         suffix={
@@ -1225,7 +1225,7 @@ export const GraphqlResourceForm = forwardRef<
       </Grid>
 
       <Grid gap={1}>
-        <Label>GraphQL Variables</Label>
+        <Label>GraphQL variables</Label>
         {/* use invisible text input to reflect expression editor in form
             type=hidden does not emit invalid event */}
         <input

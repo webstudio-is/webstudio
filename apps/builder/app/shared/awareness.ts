@@ -140,7 +140,7 @@ export const getInstancePath = (
   // all consuming code expect at least one instance to be selected
   // though it is possible to get empty array when undo created page
   if (instancePath.length === 0) {
-    return undefined;
+    return;
   }
   return instancePath;
 };

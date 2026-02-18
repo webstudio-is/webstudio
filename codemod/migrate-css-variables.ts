@@ -71,7 +71,7 @@ const guessGroupName = (variableName: string) => {
   if (variableName === "sans" || variableName === "mono") {
     return "fonts";
   }
-  return undefined;
+  return;
 };
 
 const migrateVariables = (originalCode: string) => {

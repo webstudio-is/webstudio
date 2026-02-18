@@ -76,6 +76,7 @@ import {
   $userPlanFeatures,
   $isDesignMode,
 } from "~/shared/nano-states";
+import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
   BindingControl,
   BindingPopover,
@@ -106,6 +107,7 @@ import {
 } from "./page-utils";
 import { Form } from "./form";
 import { CustomMetadata } from "./custom-metadata";
+import { findMatchingRedirect } from "~/shared/project-settings/utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -368,7 +370,7 @@ const StatusField = ({
   return (
     <Grid gap={1}>
       <Flex align="center" gap={1}>
-        <Label htmlFor={id}>Status Code </Label>
+        <Label htmlFor={id}>Status code </Label>
         <Tooltip
           content={
             <Text>
@@ -524,14 +526,24 @@ const LanguageField = ({
   );
 };
 
-const usePageUrl = (values: Values) => {
-  const pages = useStore($pages);
-  const foldersPath =
-    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
-  const path = [foldersPath, values.path]
+/**
+ * Compute the full page path from form values.
+ * This combines folder path with page path, handling home page special case.
+ */
+const computePagePath = (values: Values, pages: Pages): string => {
+  if (values.isHomePage) {
+    return "/";
+  }
+  const foldersPath = getPagePath(values.parentFolderId, pages);
+  return [foldersPath, values.path]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
+};
+
+const usePageUrl = (values: Values) => {
+  const pages = useStore($pages);
+  const path = pages === undefined ? "" : computePagePath(values, pages);
 
   const system = useStore($currentSystem);
   const publishedOrigin = useStore($publishedOrigin);
@@ -621,7 +633,7 @@ const MarketplaceSection = ({
         />
       )}
       <Grid gap={1}>
-        <Label>Marketplace Preview</Label>
+        <Label>Marketplace preview</Label>
         <Box
           css={{
             padding: theme.spacing[5],
@@ -683,15 +695,39 @@ const FormFields = ({
     computeExpression(values.excludePageFromSearch, variableValues)
   );
 
+  // Check if any redirect matches this page's path
+  const fullPagePath = computePagePath(values, pages);
+  const matchingRedirect = findMatchingRedirect(
+    fullPagePath,
+    pages.redirects ?? []
+  );
+
   return (
     <Grid css={{ height: "100%" }}>
       <ScrollArea>
+        {matchingRedirect && (
+          <PanelBanner variant="warning">
+            <Text>
+              A redirect from "{matchingRedirect.old}" will override this page.
+              The page will not be rendered when published.{" "}
+              <Link
+                color="inherit"
+                underline="always"
+                onClick={() => {
+                  $openProjectSettings.set("redirects");
+                }}
+              >
+                Go to Redirects settings
+              </Link>
+            </Text>
+          </PanelBanner>
+        )}
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
         <Grid gap={2} css={{ padding: theme.panel.padding }}>
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.name}>Page Name</Label>
+            <Label htmlFor={fieldIds.name}>Page name</Label>
             <InputErrorsTooltip errors={errors.name}>
               <InputField
                 color={errors.name && "error"}
@@ -814,7 +850,7 @@ const FormFields = ({
           )}
 
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.documentType}>Document Type</Label>
+            <Label htmlFor={fieldIds.documentType}>Document type</Label>
             <Select
               options={documentTypes}
               getValue={(docType: (typeof documentTypes)[number]) => docType}
@@ -850,7 +886,7 @@ const FormFields = ({
                 pages.
               </Text>
               <Grid gap={1}>
-                <Label>Search Result Preview</Label>
+                <Label>Search result preview</Label>
                 <Box
                   css={{
                     padding: theme.spacing[5],
@@ -1038,7 +1074,7 @@ const FormFields = ({
             <Text color="subtle">
               This image appears when you share a link to this page on social
               media sites. If no image is set here, the Social Image set in the
-              Project Settings will be used. The optimal dimensions for the
+              project settings will be used. The optimal dimensions for the
               image are 1200x630 px or larger with a 1.91:1 aspect ratio.
             </Text>
             <BindingControl>

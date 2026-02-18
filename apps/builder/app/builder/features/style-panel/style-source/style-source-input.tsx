@@ -486,7 +486,7 @@ export const StyleSourceInput = (
                     const { key, ...itemProps } = getItemProps({ item, index });
                     return (
                       <Fragment key={index}>
-                        <ComboboxLabel>New Token</ComboboxLabel>
+                        <ComboboxLabel>New token</ComboboxLabel>
                         <ComboboxListboxItem
                           {...itemProps}
                           key={key}
@@ -509,7 +509,7 @@ export const StyleSourceInput = (
                     label = (
                       <>
                         {hasNewTokenItem && <ComboboxSeparator />}
-                        <ComboboxLabel>Global Tokens</ComboboxLabel>
+                        <ComboboxLabel>Global tokens</ComboboxLabel>
                       </>
                     );
                   }

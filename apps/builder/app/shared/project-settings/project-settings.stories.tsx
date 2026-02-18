@@ -5,7 +5,7 @@ import { $pages, $project } from "~/shared/sync/data-stores";
 import type { Project } from "@webstudio-is/project";
 
 export default {
-  title: "Project Settings",
+  title: "Project settings",
   component: ProjectSettingsDialog,
 };
 

@@ -102,7 +102,7 @@ const CloneProjectView = ({
             }}
             gap="1"
           >
-            <Label>Project Title</Label>
+            <Label>Project title</Label>
             <InputField
               name="title"
               defaultValue={title}
@@ -124,7 +124,7 @@ const CloneProjectView = ({
             </DialogClose>
           </DialogActions>
         </form>
-        <DialogTitle>Clone Project</DialogTitle>
+        <DialogTitle>Clone project</DialogTitle>
       </DialogContent>
     </Dialog>
   );

@@ -654,7 +654,7 @@ export const AssetInfo = ({ asset }: { asset: Asset }) => {
           />
         </PopoverTrigger>
         <PopoverContent css={{ minWidth: 250 }}>
-          <PopoverTitle>Asset Details</PopoverTitle>
+          <PopoverTitle>Asset details</PopoverTitle>
           <AssetInfoContent asset={asset} usages={usages} />
         </PopoverContent>
       </Popover>

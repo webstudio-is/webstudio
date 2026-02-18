@@ -142,7 +142,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
 
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
-          <Label htmlFor={siteNameId}>Site Name</Label>
+          <Label htmlFor={siteNameId}>Site name</Label>
           <Tooltip
             variant="wrapped"
             content="Used in search results and social previews."
@@ -163,7 +163,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
 
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
-          <Label htmlFor={contactEmailId}>Contact Email</Label>
+          <Label htmlFor={contactEmailId}>Contact email</Label>
           <Tooltip
             variant="wrapped"
             content="Used as the email recipient when submitting a webhook form without an action."
@@ -219,7 +219,7 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
       <Separator />
 
       <Grid gap={2} css={sectionSpacing}>
-        <Label>Custom Code</Label>
+        <Label>Custom code</Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published project.

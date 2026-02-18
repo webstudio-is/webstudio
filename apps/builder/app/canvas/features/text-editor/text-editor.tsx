@@ -488,7 +488,7 @@ const isSelectionFirstNode = () => {
 const getDomSelectionRect = () => {
   const domSelection = window.getSelection();
   if (!domSelection || !domSelection.focusNode) {
-    return undefined;
+    return;
   }
 
   // Get current line position

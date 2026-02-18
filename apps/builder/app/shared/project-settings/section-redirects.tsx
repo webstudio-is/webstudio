@@ -1,31 +1,99 @@
 import { useStore } from "@nanostores/react";
 import {
+  Box,
   Button,
+  Combobox,
   Flex,
   Grid,
   InputErrorsTooltip,
-  InputField,
   Link,
   List,
   ListItem,
+  rawTheme,
   Select,
   SmallIconButton,
   Text,
   theme,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  AlertIcon,
+  ArrowRightIcon,
+  InfoCircleIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import {
   OldPagePath,
   PageRedirect,
   ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { $pages } from "~/shared/sync/data-stores";
 import { $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
+
+const statusCodeOptions = ["301", "302"] as const;
+
+const statusCodeDescriptions: Record<string, string> = {
+  "301": "Moved permanently. SEO ranking transfers to new URL.",
+  "302": "Moved temporarily. SEO ranking stays with original URL.",
+};
+
+type ValidationResult = {
+  errors: string[];
+  warnings: string[];
+};
+
+const validateFromPath = (
+  fromPath: string,
+  redirects: Array<PageRedirect>,
+  existingPaths: Set<string>
+): ValidationResult => {
+  const fromPathValidationResult = OldPagePath.safeParse(fromPath);
+
+  if (fromPathValidationResult.success) {
+    if (fromPath.startsWith("/")) {
+      // Check for duplicate redirect first (error takes precedence)
+      if (redirects.some((redirect) => redirect.old === fromPath)) {
+        return {
+          errors: ["This path is already being redirected"],
+          warnings: [],
+        };
+      }
+
+      // Show warning if redirecting from an existing page path
+      // The redirect will take precedence over the page when published
+      if (existingPaths.has(fromPath)) {
+        return {
+          errors: [],
+          warnings: ["This redirect will override an existing page"],
+        };
+      }
+    }
+    return { errors: [], warnings: [] };
+  }
+
+  return {
+    errors: fromPathValidationResult.error.format()?._errors,
+    warnings: [],
+  };
+};
+
+const validateToPath = (toPath: string): string[] => {
+  const toPathValidationResult = ProjectNewRedirectPath.safeParse(toPath);
+  if (toPathValidationResult.success) {
+    return [];
+  }
+  return toPathValidationResult.error.format()._errors;
+};
+
+// Exported for testing
+export const __testing__ = {
+  validateFromPath,
+  validateToPath,
+};
 
 export const SectionRedirects = () => {
   const publishedOrigin = useStore($publishedOrigin);
@@ -33,65 +101,37 @@ export const SectionRedirects = () => {
     () => $pages.get()?.redirects ?? []
   );
 
-  const [oldPath, setOldPath] = useState<string>("");
-  const [newPath, setNewPath] = useState<string>("");
+  const [fromPath, setFromPath] = useState<string>("");
+  const [toPath, setToPath] = useState<string>("");
   const [httpStatus, setHttpStatus] =
     useState<PageRedirect["status"]>(undefined);
-  const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
-  const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
+  const [fromPathErrors, setFromPathErrors] = useState<string[]>([]);
+  const [fromPathWarnings, setFromPathWarnings] = useState<string[]>([]);
+  const [toPathErrors, setToPathErrors] = useState<string[]>([]);
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
-  const oldPathRef = useRef<HTMLInputElement>(null);
+  const fromPathRef = useRef<HTMLInputElement>(null);
 
-  const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
-    oldPathErrors.length === 0 && newPathErrors.length === 0;
+    fromPathErrors.length === 0 && toPathErrors.length === 0;
 
-  const handleOldPathChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setOldPath(event.target.value);
-    setOldPathErrors(validateOldPath(event.target.value));
+  // Get all page paths for combobox suggestions
+  const pagePaths = Array.from(existingPaths).sort();
+
+  const handleFromPathChange = (value: string) => {
+    setFromPath(value);
+    const { errors, warnings } = validateFromPath(
+      value,
+      redirects,
+      existingPaths
+    );
+    setFromPathErrors(errors);
+    setFromPathWarnings(warnings);
   };
 
-  const handleNewPathChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setNewPath(event.target.value);
-    setNewPathErrors(validateNewPath(event.target.value));
-  };
-
-  const validateOldPath = (oldPath: string): string[] => {
-    const oldPathValidationResult = OldPagePath.safeParse(oldPath);
-
-    if (oldPathValidationResult.success === true) {
-      if (oldPath.startsWith("/") === true) {
-        /*
-          This is the path, that users want to redirect to.
-          If the path already exists in the project. Then we can't add a redirect
-        */
-        if (existingPaths.has(oldPath) === true) {
-          return ["This path already exists in the project"];
-        }
-
-        if (redirects.some((redirect) => redirect.old === oldPath)) {
-          return ["This path is already being redirected"];
-        }
-      }
-      return [];
-    }
-
-    return oldPathValidationResult.error.format()?._errors;
-  };
-
-  const validateNewPath = (newPath: string): string[] => {
-    const newPathValidationResult = ProjectNewRedirectPath.safeParse(newPath);
-    if (newPathValidationResult.success) {
-      return [];
-    }
-    return newPathValidationResult.error.format()._errors;
-  };
-
-  const handleOnKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleAddRedirect();
-    }
+  const handleToPathChange = (value: string) => {
+    setToPath(value);
+    setToPathErrors(validateToPath(value));
   };
 
   const handleSave = (redirects: Array<PageRedirect>) => {
@@ -105,10 +145,22 @@ export const SectionRedirects = () => {
   };
 
   const handleAddRedirect = () => {
-    const validOldPath = validateOldPath(oldPath);
-    const validNewPath = validateNewPath(newPath);
+    const { errors: fromPathValidationErrors, warnings } = validateFromPath(
+      fromPath,
+      redirects,
+      existingPaths
+    );
+    const toPathValidationErrors = validateToPath(toPath);
 
-    if (validOldPath.length > 0 || validNewPath.length > 0) {
+    // Update error state so user sees what went wrong
+    setFromPathErrors(fromPathValidationErrors);
+    setFromPathWarnings(warnings);
+    setToPathErrors(toPathValidationErrors);
+
+    if (
+      fromPathValidationErrors.length > 0 ||
+      toPathValidationErrors.length > 0
+    ) {
       return;
     }
 
@@ -116,16 +168,17 @@ export const SectionRedirects = () => {
     flushSync(() => {
       handleSave([
         {
-          old: oldPath,
-          new: newPath,
+          old: fromPath,
+          new: toPath,
           status: httpStatus ?? "301",
         },
         ...redirects,
       ]);
-      setOldPath("");
-      setNewPath("");
+      setFromPath("");
+      setToPath("");
+      setFromPathWarnings([]);
     });
-    oldPathRef.current?.focus();
+    fromPathRef.current?.focus();
   };
 
   const handleDeleteRedirect = (index: number) => {
@@ -137,36 +190,70 @@ export const SectionRedirects = () => {
   return (
     <>
       <Grid gap={2} css={sectionSpacing}>
-        <Text variant="titles">Redirects</Text>
+        <Flex gap={1} align="center">
+          <Text variant="titles">Redirects</Text>
+          <Tooltip
+            variant="wrapped"
+            content={
+              <>
+                <Text variant="regularBold">Supported patterns:</Text>
+                <br />
+                <Text>/path → Exact match</Text>
+                <br />
+                <Text>/blog/* → All paths under /blog/</Text>
+                <br />
+                <Text>/:slug → Dynamic segment</Text>
+                <br />
+                <Text>/:id? → Optional segment</Text>
+                <br />
+                <br />
+                <Text color="subtle">
+                  Note: Captured values cannot be substituted into the
+                  destination path.
+                </Text>
+              </>
+            }
+          >
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={0}
+            />
+          </Tooltip>
+        </Flex>
         <Text color="subtle">
-          Redirects old URLs to new ones so that you don’t lose any traffic or
-          search engine rankings.
+          Redirect old URLs to new ones so you don't lose traffic or search
+          engine rankings.
         </Text>
 
         <Flex gap="2" align="center">
           <InputErrorsTooltip
-            errors={oldPathErrors.length > 0 ? oldPathErrors : undefined}
+            errors={fromPathErrors.length > 0 ? fromPathErrors : undefined}
             side="top"
           >
-            <InputField
-              ref={oldPathRef}
+            <Combobox<string>
+              inputRef={fromPathRef}
               autoFocus
-              type="text"
-              placeholder="/old-path"
-              value={oldPath}
-              css={{ flexGrow: 1 }}
-              onKeyDown={handleOnKeyDown}
-              onChange={handleOldPathChange}
-              color={oldPathErrors.length === 0 ? undefined : "error"}
+              placeholder="/old-path or /old/*"
+              value={fromPath}
+              color={fromPathErrors.length === 0 ? undefined : "error"}
+              getItems={() => pagePaths}
+              itemToString={(item) => item ?? ""}
+              onItemSelect={(value) => handleFromPathChange(value ?? "")}
+              onChange={(value) => handleFromPathChange(value ?? "")}
             />
           </InputErrorsTooltip>
 
           <Select
             id="redirect-type"
             placeholder="301"
-            options={["301", "302"]}
+            options={[...statusCodeOptions]}
             value={httpStatus ?? "301"}
             css={{ width: theme.spacing[18] }}
+            getDescription={(option) => (
+              <Box css={{ width: theme.spacing[25] }}>
+                {statusCodeDescriptions[option]}
+              </Box>
+            )}
             onChange={(value) => {
               setHttpStatus(value as PageRedirect["status"]);
             }}
@@ -175,30 +262,40 @@ export const SectionRedirects = () => {
           <ArrowRightIcon size={16} style={{ flexShrink: 0 }} />
 
           <InputErrorsTooltip
-            errors={newPathErrors.length > 0 ? newPathErrors : undefined}
+            errors={toPathErrors.length > 0 ? toPathErrors : undefined}
             side="top"
           >
-            <InputField
-              type="text"
-              placeholder="/new-path or URL"
-              value={newPath}
-              onKeyDown={handleOnKeyDown}
-              onChange={handleNewPathChange}
-              color={newPathErrors.length === 0 ? undefined : "error"}
+            <Combobox<string>
+              placeholder="/to-path or URL"
+              value={toPath}
+              color={toPathErrors.length === 0 ? undefined : "error"}
+              getItems={() => pagePaths}
+              itemToString={(item) => item ?? ""}
+              onItemSelect={(value) => handleToPathChange(value ?? "")}
+              onChange={(value) => handleToPathChange(value ?? "")}
             />
           </InputErrorsTooltip>
 
           <Button
-            disabled={isValidRedirects === false || oldPath === newPath}
+            disabled={isValidRedirects === false || fromPath === toPath}
             onClick={handleAddRedirect}
             css={{ flexShrink: 0 }}
           >
             Add
           </Button>
         </Flex>
+        {fromPathWarnings.length > 0 && (
+          <Flex gap="1" align="center">
+            <AlertIcon
+              color={rawTheme.colors.backgroundAlertMain}
+              style={{ flexShrink: 0 }}
+            />
+            <Text color="subtle">{fromPathWarnings.join(". ")}</Text>
+          </Flex>
+        )}
       </Grid>
 
-      {redirectKeys.length > 0 ? (
+      {redirects.length > 0 ? (
         <Grid css={sectionSpacing}>
           <List asChild>
             <Flex direction="column" gap="1" align="stretch">

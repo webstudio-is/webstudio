@@ -139,7 +139,7 @@ const printLineHeight = (path: string[], unparsedValue: unknown) => {
   // @todo: figure out how to convert AUTO to pixels or something
   // https://discord.com/channels/955905230107738152/1065939291479478343
   if (value === "AUTO") {
-    return undefined;
+    return;
   }
   if (value.endsWith("%")) {
     return value;

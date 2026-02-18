@@ -25,6 +25,7 @@ import { SectionRedirects } from "./section-redirects";
 import { SectionPublish } from "./section-publish";
 import { SectionMarketplace } from "./section-marketplace";
 import { SectionBackups } from "./section-backups";
+import { titleCase } from "title-case";
 
 const sections = new Map<
   SectionName,
@@ -108,7 +109,7 @@ export const ProjectSettingsDialog = ({
                         align="center"
                       >
                         <Text variant="labels" truncate>
-                          {name}
+                          {titleCase(name)}
                         </Text>
                       </Flex>
                     </ListItem>
@@ -133,7 +134,7 @@ export const ProjectSettingsDialog = ({
           {/* Title is at the end intentionally,
            * to make the close button last in the tab order
            */}
-          <DialogTitle>Project Settings</DialogTitle>
+          <DialogTitle>Project settings</DialogTitle>
         </fieldset>
       </DialogContent>
     </Dialog>

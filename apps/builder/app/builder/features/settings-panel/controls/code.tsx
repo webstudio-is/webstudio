@@ -208,7 +208,7 @@ export const CodeControl = ({
               }
             >
               <Flex gap="1" align="center">
-                <Text variant="labels">Code Editor</Text>
+                <Text variant="labels">Code editor</Text>
                 {errorInfo}
               </Flex>
             </DialogTitle>
