@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, describe } from "vitest";
 import { generateRemixParams, generateRemixRoute } from "./remix";
 
 test("convert home page to remix route", () => {
@@ -11,6 +11,45 @@ test("convert path to remix route", () => {
   expect(generateRemixRoute("/blog/my-introduction")).toEqual(
     "[blog].[my-introduction]._index"
   );
+});
+
+describe("non-Latin character routes", () => {
+  // When users define redirects with non-Latin characters (e.g., Chinese, Japanese),
+  // the generateRemixRoute function must produce valid filenames.
+  // Note: The actual HTTP request will have URL-encoded paths, but React Router
+  // handles the decoding automatically when matching routes.
+
+  test("convert Chinese path to remix route", () => {
+    expect(generateRemixRoute("/关于我们")).toEqual("[关于我们]._index");
+    expect(generateRemixRoute("/产品/手机")).toEqual("[产品].[手机]._index");
+  });
+
+  test("convert Japanese path to remix route", () => {
+    expect(generateRemixRoute("/日本語")).toEqual("[日本語]._index");
+    expect(generateRemixRoute("/ブログ/記事")).toEqual(
+      "[ブログ].[記事]._index"
+    );
+  });
+
+  test("convert Korean path to remix route", () => {
+    expect(generateRemixRoute("/한국어")).toEqual("[한국어]._index");
+  });
+
+  test("convert Cyrillic path to remix route", () => {
+    expect(generateRemixRoute("/привет")).toEqual("[привет]._index");
+    expect(generateRemixRoute("/блог/статья")).toEqual(
+      "[блог].[статья]._index"
+    );
+  });
+
+  test("convert European diacritics to remix route", () => {
+    expect(generateRemixRoute("/über-uns")).toEqual("[über-uns]._index");
+    expect(generateRemixRoute("/café")).toEqual("[café]._index");
+  });
+
+  test("convert mixed Latin and non-Latin path to remix route", () => {
+    expect(generateRemixRoute("/blog/关于")).toEqual("[blog].[关于]._index");
+  });
 });
 
 test("convert wildcard to remix route", () => {
