@@ -227,12 +227,18 @@ export const SectionRedirects = () => {
             <Tooltip
               variant="wrapped"
               content={
-                <Flex direction="column" gap="1">
-                  <Text variant="regularBold">Supported patterns:</Text>
-                  <Text>/path → Exact match</Text>
-                  <Text>/blog/* → All paths under /blog/</Text>
-                  <Text>/:slug → Dynamic segment</Text>
-                  <Text>/:id? → Optional segment</Text>
+                <Flex direction="column" gap="2">
+                  <Text color="subtle">
+                    Redirect old URLs to new ones so you don't lose traffic or
+                    search engine rankings.
+                  </Text>
+                  <Flex direction="column" gap="1">
+                    <Text variant="regularBold">Supported patterns:</Text>
+                    <Text>/path → Exact match</Text>
+                    <Text>/blog/* → All paths under /blog/</Text>
+                    <Text>/:slug → Dynamic segment</Text>
+                    <Text>/:id? → Optional segment</Text>
+                  </Flex>
                 </Flex>
               }
             >
@@ -282,10 +288,6 @@ export const SectionRedirects = () => {
             </DialogActions>
           </DialogContent>
         </Dialog>
-        <Text color="subtle">
-          Redirect old URLs to new ones so you don't lose traffic or search
-          engine rankings.
-        </Text>
 
         <Flex gap="2" align="center">
           <InputErrorsTooltip

@@ -39,9 +39,9 @@ describe("validateFromPath", () => {
     });
 
     test("returns error for path with invalid characters", () => {
-      const result = validateFromPath("/page@name", [], new Set());
+      const result = validateFromPath("/page name", [], new Set());
       expect(result.errors).toContain(
-        "Only a-z, A-Z, 0-9, -, _, /, :, ?, . and * are allowed"
+        "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)"
       );
       expect(result.warnings).toEqual([]);
     });

@@ -121,10 +121,17 @@ export const OldPagePath = z
   )
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
-  .refine(
-    (path) => /^[-_a-zA-Z0-9*:?\\/.]*$/.test(path), // Allow uppercase letters (A-Z)
-    "Only a-z, A-Z, 0-9, -, _, /, :, ?, . and * are allowed"
-  )
+  .refine((path) => {
+    // Disallow specific problematic characters that should never appear in paths:
+    // - Spaces and whitespace
+    // - URL-unsafe characters: < > " { } | \ ^ ` [ ]
+    // - Control characters
+    // All other characters (including non-Latin Unicode like Chinese, Japanese,
+    // Korean, Cyrillic, Arabic, etc.) are allowed as they are valid in modern URLs
+    // when properly encoded by the browser
+    const disallowedChars = /[\s<>"{}|\\^`\[\]\x00-\x1f\x7f]/;
+    return !disallowedChars.test(path);
+  }, "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)")
   .refine(
     (path) => path !== "/s" && path.startsWith("/s/") === false,
     "/s prefix is reserved for the system"
