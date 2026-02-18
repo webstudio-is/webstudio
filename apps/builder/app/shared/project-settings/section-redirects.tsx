@@ -3,6 +3,12 @@ import {
   Box,
   Button,
   Combobox,
+  Dialog,
+  DialogActions,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
   Flex,
   Grid,
   InputErrorsTooltip,
@@ -108,6 +114,7 @@ export const SectionRedirects = () => {
   const [fromPathWarnings, setFromPathWarnings] = useState<string[]>([]);
   const [toPathErrors, setToPathErrors] = useState<string[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const fromPathRef = useRef<HTMLInputElement>(null);
@@ -199,6 +206,11 @@ export const SectionRedirects = () => {
     }
   };
 
+  const handleDeleteAll = () => {
+    handleSave([]);
+    setIsDeleteAllDialogOpen(false);
+  };
+
   return (
     <>
       <ImportRedirectsDialog
@@ -230,14 +242,46 @@ export const SectionRedirects = () => {
               />
             </Tooltip>
           </Flex>
-          <Button
-            color="ghost"
-            prefix={<UploadIcon />}
-            onClick={() => setIsImportDialogOpen(true)}
-          >
-            Import
-          </Button>
+          <Flex gap="1">
+            {redirects.length > 0 && (
+              <Button
+                color="ghost"
+                prefix={<TrashIcon />}
+                onClick={() => setIsDeleteAllDialogOpen(true)}
+              >
+                Delete all
+              </Button>
+            )}
+            <Button
+              color="ghost"
+              prefix={<UploadIcon />}
+              onClick={() => setIsImportDialogOpen(true)}
+            >
+              Import
+            </Button>
+          </Flex>
         </Flex>
+
+        <Dialog
+          open={isDeleteAllDialogOpen}
+          onOpenChange={setIsDeleteAllDialogOpen}
+        >
+          <DialogContent>
+            <DialogTitle>Delete all redirects</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all {redirects.length} redirect
+              {redirects.length !== 1 ? "s" : ""}? This action cannot be undone.
+            </DialogDescription>
+            <DialogActions>
+              <Button color="destructive" onClick={handleDeleteAll}>
+                Delete all
+              </Button>
+              <DialogClose>
+                <Button color="ghost">Cancel</Button>
+              </DialogClose>
+            </DialogActions>
+          </DialogContent>
+        </Dialog>
         <Text color="subtle">
           Redirect old URLs to new ones so you don't lose traffic or search
           engine rankings.
