@@ -53,7 +53,6 @@ const serializeTrackList = (tracks: GridTrack[]): StyleValue => {
 type TrackItemProps = {
   property: "grid-template-columns" | "grid-template-rows";
   trackType: "column" | "row";
-  singular: string;
   track: string;
   index: number;
   id: string;
@@ -69,7 +68,6 @@ type TrackItemProps = {
 const TrackItem = ({
   property,
   trackType,
-  singular,
   track,
   index,
   id,
@@ -236,7 +234,7 @@ type TrackEditorProps = {
 };
 
 const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
-  const { singular, plural } = trackTypeLabels[trackType];
+  const { plural } = trackTypeLabels[trackType];
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
   const tracks = parseGridTemplateTrackList(value);
@@ -367,7 +365,6 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
                 key={id}
                 property={property}
                 trackType={trackType}
-                singular={singular}
                 track={track.value}
                 index={index}
                 id={id}
