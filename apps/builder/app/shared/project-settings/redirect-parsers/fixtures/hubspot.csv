@@ -1,0 +1,13 @@
+Original URL,Target URL
+# HubSpot URL Mapping Export Format
+# Columns: "Original URL", "Target URL"
+# Note: HubSpot does not export status codes (all are 301)
+# Docs: https://knowledge.hubspot.com/website-pages/set-up-url-redirects
+
+/old-landing,/new-landing
+/blog/2023/post-title,/blog/post-title
+/resources/ebook-download,/resources/guides/ebook
+/pricing-old,/pricing
+/demo-request,/get-started
+/case-studies/company-a,/customers/company-a
+/webinar-archive,/resources/webinars

@@ -1,0 +1,74 @@
+# Apache .htaccess Redirect Configuration
+# =========================================
+# Comprehensive test fixture for Apache redirect directives
+# Docs: https://httpd.apache.org/docs/current/mod/mod_alias.html
+
+# -----------------------------------------------------------------
+# ENABLE REWRITE ENGINE (ignored by parser)
+# -----------------------------------------------------------------
+RewriteEngine On
+RewriteBase /
+
+# -----------------------------------------------------------------
+# BASIC REDIRECTS (supported)
+# -----------------------------------------------------------------
+
+# Simple redirects with status codes
+Redirect 301 /old-page /new-page
+Redirect 302 /temp-page /landing
+Redirect 301 /about-us /about
+Redirect 302 /contact-us /contact
+
+# Redirect with permanent/temp keywords
+Redirect permanent /legacy /modern
+Redirect temp /maintenance /coming-soon
+
+# Redirect without status (defaults to 302 in Apache)
+Redirect /simple /destination
+
+# External URL redirects
+Redirect 301 /github https://github.com/example/repo
+Redirect 301 /docs https://docs.example.com/
+
+# -----------------------------------------------------------------
+# CASE VARIATIONS (all should work)
+# -----------------------------------------------------------------
+redirect 301 /lowercase /target1
+REDIRECT 301 /uppercase /target2
+
+# -----------------------------------------------------------------
+# WHITESPACE VARIATIONS
+# -----------------------------------------------------------------
+Redirect    301    /extra-spaces    /target3
+
+# -----------------------------------------------------------------
+# STATUS CODE CONVERSION
+# -----------------------------------------------------------------
+Redirect 307 /temp-307 /temp-destination
+Redirect 308 /perm-308 /perm-destination
+
+# -----------------------------------------------------------------
+# REDIRECTMATCH - REGEX (skipped with warning)
+# -----------------------------------------------------------------
+RedirectMatch 301 ^/blog/([0-9]+)/([0-9]+)/(.*)$ /posts/$1-$2-$3
+RedirectMatch ^/category/(.*)$ /topics/$1
+
+# -----------------------------------------------------------------
+# REWRITERULE (skipped with warning)
+# -----------------------------------------------------------------
+RewriteRule ^old/(.*)$ /new/$1 [R=301,L]
+RewriteRule ^api/(.*)$ https://api.example.com/$1 [P]
+RewriteCond %{HTTP_HOST} ^www\.example\.com$ [NC]
+RewriteRule ^(.*)$ https://example.com/$1 [R=301,L]
+
+# -----------------------------------------------------------------
+# OTHER DIRECTIVES (ignored, not reported as skipped)
+# -----------------------------------------------------------------
+Options +FollowSymLinks
+ErrorDocument 404 /404.html
+Header set X-Frame-Options "SAMEORIGIN"
+
+# -----------------------------------------------------------------
+# MORE REDIRECTS AFTER OTHER DIRECTIVES
+# -----------------------------------------------------------------
+Redirect 301 /final-redirect /final-destination

@@ -1,0 +1,120 @@
+{
+  "$comment": "JSON Redirects - Comprehensive Test Fixture",
+  "$formats": "Vercel vercel.json, Next.js next.config.js, generic array format",
+  "$docs": "https://vercel.com/docs/edge-network/redirects, https://nextjs.org/docs/app/api-reference/next-config-js/redirects",
+
+  "redirects": [
+    {
+      "$comment": "BASIC REDIRECTS (supported)",
+      "source": "/old-page",
+      "destination": "/new-page",
+      "permanent": true
+    },
+    {
+      "source": "/temp-redirect",
+      "destination": "/landing",
+      "permanent": false
+    },
+    {
+      "$comment": "Vercel/Next.js statusCode variant",
+      "source": "/with-status-code",
+      "destination": "/target",
+      "statusCode": 301
+    },
+    {
+      "source": "/temp-status-code",
+      "destination": "/other-target",
+      "statusCode": 302
+    },
+    {
+      "$comment": "External URLs",
+      "source": "/external",
+      "destination": "https://example.com",
+      "permanent": true
+    },
+    {
+      "source": "/docs-external",
+      "destination": "https://docs.example.com/",
+      "permanent": true
+    },
+
+    {
+      "$comment": "DYNAMIC PATTERNS (skipped - unsupported)",
+      "source": "/blog/:slug",
+      "destination": "/posts/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://docs.example.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/old-blog/:year/:month/:slug",
+      "destination": "/blog/:year-:month-:slug",
+      "permanent": true
+    },
+
+    {
+      "$comment": "CONDITIONS (skipped - unsupported)",
+      "source": "/with-query",
+      "has": [
+        {
+          "type": "query",
+          "key": "page"
+        }
+      ],
+      "destination": "/paginated?p=:page",
+      "permanent": false
+    },
+    {
+      "source": "/geo-redirect",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-vercel-ip-country",
+          "value": "DE"
+        }
+      ],
+      "destination": "/de",
+      "permanent": false
+    },
+    {
+      "source": "/missing-cookie",
+      "missing": [
+        {
+          "type": "cookie",
+          "key": "session"
+        }
+      ],
+      "destination": "/login",
+      "permanent": false
+    },
+
+    {
+      "$comment": "LOCALE HANDLING (skipped - unsupported)",
+      "source": "/with-locale/:path*",
+      "destination": "/:nextInternalLocale/:path*",
+      "locale": false,
+      "permanent": true
+    },
+
+    {
+      "$comment": "NO STATUS (defaults to 301)",
+      "source": "/no-status",
+      "destination": "/default-permanent"
+    },
+
+    {
+      "$comment": "STATUS CODE CONVERSION",
+      "source": "/redirect-307",
+      "destination": "/temp-307-target",
+      "statusCode": 307
+    },
+    {
+      "source": "/redirect-308",
+      "destination": "/perm-308-target",
+      "statusCode": 308
+    }
+  ]
+}
