@@ -21,12 +21,11 @@ import {
   ArrowRightIcon,
   InfoCircleIcon,
   TrashIcon,
+  UploadIcon,
 } from "@webstudio-is/icons";
-import {
-  OldPagePath,
-  PageRedirect,
-  ProjectNewRedirectPath,
-} from "@webstudio-is/sdk";
+import { ImportRedirectsDialog } from "./import-redirects-dialog";
+import { OldPagePath, ProjectNewRedirectPath } from "@webstudio-is/sdk";
+import type { PageRedirect } from "@webstudio-is/sdk";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { $pages } from "~/shared/sync/data-stores";
@@ -108,6 +107,7 @@ export const SectionRedirects = () => {
   const [fromPathErrors, setFromPathErrors] = useState<string[]>([]);
   const [fromPathWarnings, setFromPathWarnings] = useState<string[]>([]);
   const [toPathErrors, setToPathErrors] = useState<string[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const fromPathRef = useRef<HTMLInputElement>(null);
@@ -187,38 +187,56 @@ export const SectionRedirects = () => {
     handleSave(newRedirects);
   };
 
+  const handleImportRedirects = (
+    importedRedirects: PageRedirect[],
+    mode: "add" | "replace"
+  ) => {
+    if (mode === "replace") {
+      handleSave(importedRedirects);
+    } else {
+      // Add mode - prepend new redirects
+      handleSave([...importedRedirects, ...redirects]);
+    }
+  };
+
   return (
     <>
+      <ImportRedirectsDialog
+        isOpen={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        existingRedirects={redirects}
+        onImport={handleImportRedirects}
+      />
+
       <Grid gap={2} css={sectionSpacing}>
-        <Flex gap={1} align="center">
-          <Text variant="titles">Redirects</Text>
-          <Tooltip
-            variant="wrapped"
-            content={
-              <>
-                <Text variant="regularBold">Supported patterns:</Text>
-                <br />
-                <Text>/path → Exact match</Text>
-                <br />
-                <Text>/blog/* → All paths under /blog/</Text>
-                <br />
-                <Text>/:slug → Dynamic segment</Text>
-                <br />
-                <Text>/:id? → Optional segment</Text>
-                <br />
-                <br />
-                <Text color="subtle">
-                  Note: Captured values cannot be substituted into the
-                  destination path.
-                </Text>
-              </>
-            }
+        <Flex gap={1} align="center" justify="between">
+          <Flex gap={1} align="center">
+            <Text variant="titles">Redirects</Text>
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Flex direction="column" gap="1">
+                  <Text variant="regularBold">Supported patterns:</Text>
+                  <Text>/path → Exact match</Text>
+                  <Text>/blog/* → All paths under /blog/</Text>
+                  <Text>/:slug → Dynamic segment</Text>
+                  <Text>/:id? → Optional segment</Text>
+                </Flex>
+              }
+            >
+              <InfoCircleIcon
+                color={rawTheme.colors.foregroundSubtle}
+                tabIndex={0}
+              />
+            </Tooltip>
+          </Flex>
+          <Button
+            color="ghost"
+            prefix={<UploadIcon />}
+            onClick={() => setIsImportDialogOpen(true)}
           >
-            <InfoCircleIcon
-              color={rawTheme.colors.foregroundSubtle}
-              tabIndex={0}
-            />
-          </Tooltip>
+            Import
+          </Button>
         </Flex>
         <Text color="subtle">
           Redirect old URLs to new ones so you don't lose traffic or search

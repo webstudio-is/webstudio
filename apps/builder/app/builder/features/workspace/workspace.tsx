@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { theme, Toaster, css } from "@webstudio-is/design-system";
+import { theme, css } from "@webstudio-is/design-system";
 import {
   $canvasWidth,
   $scale,
@@ -131,15 +131,12 @@ export const CanvasToolsContainer = () => {
   const outlineStyle = useOutlineStyle();
 
   return (
-    <>
-      <div
-        data-name="canvas-tools-wrapper"
-        className={canvasContainerStyle()}
-        style={outlineStyle}
-      >
-        <CanvasTools />
-      </div>
-      <Toaster />
-    </>
+    <div
+      data-name="canvas-tools-wrapper"
+      className={canvasContainerStyle()}
+      style={outlineStyle}
+    >
+      <CanvasTools />
+    </div>
   );
 };

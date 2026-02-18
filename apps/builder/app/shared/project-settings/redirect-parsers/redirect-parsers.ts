@@ -1,8 +1,8 @@
 import Papa from "papaparse";
 
 export type ParsedRedirect = {
-  from: string;
-  to: string;
+  old: string;
+  new: string;
   status: number;
 };
 
@@ -356,8 +356,8 @@ const normalizeRecord = (
 
   return {
     redirect: {
-      from: normalizedFrom,
-      to: normalizedTo,
+      old: normalizedFrom,
+      new: normalizedTo,
       status: statusResult.status,
     },
   };

@@ -11,8 +11,8 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
       expect(result.skipped).toEqual([]);
     });
@@ -24,8 +24,8 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -36,7 +36,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -47,7 +47,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -58,7 +58,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -69,7 +69,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -80,7 +80,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -92,8 +92,8 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old-page", to: "/new-page", status: 301 },
-        { from: "/about", to: "/about-us", status: 301 },
+        { old: "/old-page", new: "/new-page", status: 301 },
+        { old: "/about", new: "/about-us", status: 301 },
       ]);
     });
 
@@ -105,8 +105,8 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old-page", to: "/new-page", status: 301 },
-        { from: "/blog/old-post", to: "/blog/new-post", status: 301 },
+        { old: "/old-page", new: "/new-page", status: 301 },
+        { old: "/blog/old-post", new: "/blog/new-post", status: 301 },
       ]);
     });
 
@@ -117,7 +117,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old,path", to: "/new", status: 301 },
+        { old: "/old,path", new: "/new", status: 301 },
       ]);
     });
 
@@ -128,7 +128,7 @@ describe("parseRedirects", () => {
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "https://example.com/new", status: 301 },
+        { old: "/old", new: "https://example.com/new", status: 301 },
       ]);
     });
 
@@ -168,8 +168,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -181,8 +181,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -193,7 +193,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
   });
@@ -208,8 +208,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -223,7 +223,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -235,7 +235,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -250,8 +250,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/temp", to: "/new", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/temp", new: "/new", status: 302 },
       ]);
     });
 
@@ -263,7 +263,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -307,7 +307,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -350,8 +350,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -361,7 +361,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -410,7 +410,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "https://example.com/new", status: 301 },
+        { old: "/old", new: "https://example.com/new", status: 301 },
       ]);
     });
 
@@ -432,8 +432,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -444,8 +444,8 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 301 },
       ]);
     });
 
@@ -455,7 +455,7 @@ invalid-no-slash,/new,301
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -503,8 +503,8 @@ Redirect 302 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -514,7 +514,7 @@ Redirect 302 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 302 },
+        { old: "/old", new: "/new", status: 302 },
       ]);
     });
 
@@ -525,8 +525,8 @@ Redirect temp /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -536,7 +536,7 @@ Redirect temp /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "https://example.com/new", status: 301 },
+        { old: "/old", new: "https://example.com/new", status: 301 },
       ]);
     });
 
@@ -605,7 +605,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -615,7 +615,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
   });
@@ -680,7 +680,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -711,8 +711,8 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
       ]);
     });
 
@@ -725,9 +725,9 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
-        { from: "/about", to: "/about-us", status: 302 },
-        { from: "/contact", to: "/contact-us", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
+        { old: "/about", new: "/about-us", status: 302 },
+        { old: "/contact", new: "/contact-us", status: 301 },
       ]);
       expect(result.skipped).toHaveLength(0);
     });
@@ -759,7 +759,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old?ref=123", to: "/new?ref=456", status: 301 },
+        { old: "/old?ref=123", new: "/new?ref=456", status: 301 },
       ]);
     });
 
@@ -770,7 +770,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/hello%20world", to: "/hello-world", status: 301 },
+        { old: "/hello%20world", new: "/hello-world", status: 301 },
       ]);
     });
 
@@ -781,7 +781,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old#section", to: "/new#section", status: 301 },
+        { old: "/old#section", new: "/new#section", status: 301 },
       ]);
     });
 
@@ -792,7 +792,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/", to: "/home", status: 301 },
+        { old: "/", new: "/home", status: 301 },
       ]);
     });
 
@@ -805,8 +805,8 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new/", status: 301 },
-        { from: "/about", to: "/about-us/", status: 301 },
+        { old: "/old", new: "/new/", status: 301 },
+        { old: "/about", new: "/about-us/", status: 301 },
       ]);
     });
   });
@@ -824,8 +824,8 @@ REDIRECT 301 /about /about-us`;
 
       expect(result.redirects.length).toBeGreaterThan(0);
       expect(result.redirects[0]).toMatchObject({
-        from: expect.stringMatching(/^\//),
-        to: expect.stringMatching(/^\//),
+        old: expect.stringMatching(/^\//),
+        new: expect.stringMatching(/^\//),
         status: 301,
       });
       expect(result.skipped).toHaveLength(0);
@@ -948,8 +948,8 @@ REDIRECT 301 /about /about-us`;
       // Should parse the redirect, ignoring the $comment field
       expect(result.redirects).toHaveLength(1);
       expect(result.redirects[0]).toEqual({
-        from: "/old",
-        to: "/new",
+        old: "/old",
+        new: "/new",
         status: 301,
       });
     });
@@ -964,7 +964,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -1005,7 +1005,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -1028,7 +1028,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: '/old"path', to: "/new", status: 301 },
+        { old: '/old"path', new: "/new", status: 301 },
       ]);
     });
 
@@ -1050,7 +1050,7 @@ REDIRECT 301 /about /about-us`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/new", status: 301 },
+        { old: "/old", new: "/new", status: 301 },
       ]);
     });
 
@@ -1130,7 +1130,7 @@ Redirect 301 /old /new`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toEqual([
-        { from: "/old", to: "/path/with spaces/target", status: 301 },
+        { old: "/old", new: "/path/with spaces/target", status: 301 },
       ]);
     });
 
@@ -1167,7 +1167,7 @@ https://example.com/old,/new,301`;
 
       // Protocol-relative URLs start with // and are valid redirect targets
       expect(result.redirects).toHaveLength(1);
-      expect(result.redirects[0].to).toBe("//cdn.example.com/asset");
+      expect(result.redirects[0].new).toBe("//cdn.example.com/asset");
     });
 
     test("handles unicode paths", () => {
@@ -1178,8 +1178,8 @@ https://example.com/old,/new,301`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toHaveLength(2);
-      expect(result.redirects[0].from).toBe("/über");
-      expect(result.redirects[1].from).toBe("/日本語");
+      expect(result.redirects[0].old).toBe("/über");
+      expect(result.redirects[1].old).toBe("/日本語");
     });
 
     test("handles very long paths", () => {
@@ -1190,7 +1190,7 @@ ${longPath},/new,301`;
       const result = parseRedirects(input);
 
       expect(result.redirects).toHaveLength(1);
-      expect(result.redirects[0].from).toBe(longPath);
+      expect(result.redirects[0].old).toBe(longPath);
     });
 
     test("handles empty lines interspersed in Netlify format", () => {
