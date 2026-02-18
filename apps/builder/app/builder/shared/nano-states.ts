@@ -4,8 +4,8 @@ import {
   $selectedInstanceRenderState,
 } from "~/shared/nano-states/misc";
 import { $canvasIframeState } from "~/shared/nano-states/canvas";
-import { $settings, getSetting } from "../client-settings";
 import type { SidebarPanelName } from "~/builder/sidebar-left/types";
+import { $settings, getSetting } from "./client-settings";
 
 export const $isShareDialogOpen = atom<boolean>(false);
 
@@ -149,3 +149,21 @@ export const toggleActiveSidebarPanel = (panel: SidebarPanelName) => {
 };
 
 export const $remoteDialog = atom<{ title: string; url: string } | undefined>();
+
+// Track which grid track (column/row) is being edited in the style panel
+export type GridEditingTrack = {
+  type: "column" | "row";
+  index: number;
+};
+
+export const $gridEditingTrack = atom<GridEditingTrack | undefined>(undefined);
+
+// Track which grid area is being edited in the style panel
+export type GridEditingArea = {
+  columnStart: number;
+  columnEnd: number;
+  rowStart: number;
+  rowEnd: number;
+};
+
+export const $gridEditingArea = atom<GridEditingArea | undefined>(undefined);

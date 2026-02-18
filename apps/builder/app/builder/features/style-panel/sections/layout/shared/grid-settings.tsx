@@ -35,6 +35,7 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { GridAreas } from "./grid-areas";
+import { $gridEditingTrack } from "~/builder/shared/nano-states";
 
 const trackTypeLabels = {
   column: { singular: "Column", plural: "Columns" },
@@ -61,6 +62,8 @@ type TrackItemProps = {
   onEditingChange: (open: boolean) => void;
   onUpdate: (index: number, newValue: string) => void;
   onRemove: (index: number) => void;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
 };
 
 const TrackItem = ({
@@ -75,6 +78,8 @@ const TrackItem = ({
   onEditingChange,
   onUpdate,
   onRemove,
+  onHoverStart,
+  onHoverEnd,
 }: TrackItemProps) => {
   const minmaxParts = parseMinmax(track);
   const [isMinmax, setIsMinmax] = useState(minmaxParts !== undefined);
@@ -202,9 +207,11 @@ const TrackItem = ({
         draggable
         active={dragItemId === id}
         index={index}
+        onMouseEnter={onHoverStart}
+        onMouseLeave={onHoverEnd}
         label={
-          <Label truncate title={`${singular} ${index + 1}: ${track}`}>
-            {singular} {index + 1}: {track}
+          <Label truncate title={track}>
+            {track}
           </Label>
         }
         buttons={
@@ -237,6 +244,30 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   const [editingIndex, setEditingIndex] = useState<number | undefined>(
     undefined
   );
+  const [hoveredIndex, setHoveredIndex] = useState<number | undefined>(
+    undefined
+  );
+
+  // Update grid editing track highlight when editing or hovering a track
+  // Editing takes priority over hovering
+  const highlightIndex = editingIndex ?? hoveredIndex;
+  useEffect(() => {
+    if (highlightIndex !== undefined) {
+      $gridEditingTrack.set({ type: trackType, index: highlightIndex });
+    } else {
+      // Only clear if this track type was being edited
+      const current = $gridEditingTrack.get();
+      if (current?.type === trackType) {
+        $gridEditingTrack.set(undefined);
+      }
+    }
+    return () => {
+      const current = $gridEditingTrack.get();
+      if (current?.type === trackType) {
+        $gridEditingTrack.set(undefined);
+      }
+    };
+  }, [highlightIndex, trackType]);
 
   const updateTracks = useCallback(
     (newTracks: GridTrack[]) => {
@@ -250,8 +281,6 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   const addTrack = useCallback(() => {
     const newTracks = [...tracks, { value: "1fr" }];
     updateTracks(newTracks);
-    // Open editor for the new track
-    setEditingIndex(tracks.length);
   }, [tracks, updateTracks]);
 
   const removeTrack = useCallback(
@@ -353,6 +382,8 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
                 }}
                 onUpdate={updateTrack}
                 onRemove={removeTrack}
+                onHoverStart={() => setHoveredIndex(index)}
+                onHoverEnd={() => setHoveredIndex(undefined)}
               />
             );
           })}
@@ -412,7 +443,7 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
       content={
         <Flex
           direction="column"
-          css={{ width: theme.spacing[30] }}
+          css={{ width: theme.spacing[30], overflow: "auto" }}
           data-floating-panel-container
         >
           <TrackEditor property="grid-template-columns" trackType="column" />
