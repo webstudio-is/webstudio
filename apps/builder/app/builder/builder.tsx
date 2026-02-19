@@ -4,6 +4,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   theme,
   Box,
+  Toaster,
   type CSS,
   Flex,
   Grid,
@@ -480,6 +481,7 @@ export const Builder = ({
         <KeyboardShortcutsDialog />
         <TokenConflictDialog />
         <RemoteDialog />
+        <Toaster />
       </div>
     </TooltipProvider>
   );

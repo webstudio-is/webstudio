@@ -81,7 +81,7 @@ const idToElement = (
       }
     }
   }
-  return undefined;
+  return;
 };
 
 const mapItems = (
@@ -111,7 +111,7 @@ const findItem = (data: ItemData[], id: string): ItemData | undefined => {
       return found;
     }
   }
-  return undefined;
+  return;
 };
 
 const findItemPath = (data: ItemData[], id: string): ItemData[] | undefined => {
@@ -124,7 +124,7 @@ const findItemPath = (data: ItemData[], id: string): ItemData[] | undefined => {
       return [...found, item];
     }
   }
-  return undefined;
+  return;
 };
 
 export const Canvas = () => {

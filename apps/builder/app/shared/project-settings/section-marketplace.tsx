@@ -177,7 +177,7 @@ export const SectionMarketplace = () => {
         Marketplace
       </Text>
       <Grid gap={1} css={sectionSpacing}>
-        <Label htmlFor={ids.name}>Product Name</Label>
+        <Label htmlFor={ids.name}>Product name</Label>
         <InputErrorsTooltip errors={errors?.name}>
           <InputField
             id={ids.name}
@@ -279,7 +279,7 @@ export const SectionMarketplace = () => {
       </Grid>
 
       <Grid gap={1} css={sectionSpacing}>
-        <Label htmlFor={ids.issues}>Issues Tracker</Label>
+        <Label htmlFor={ids.issues}>Issues tracker</Label>
         <InputErrorsTooltip errors={errors?.issues}>
           <InputField
             id={ids.issues}

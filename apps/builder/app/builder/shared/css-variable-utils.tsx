@@ -444,7 +444,7 @@ export const renameCssVariable = (
     }
   });
 
-  return undefined;
+  return;
 };
 
 export const deleteUnusedCssVariables = () => {

@@ -26,6 +26,9 @@
       "webstudio": "./src/core-templates.tsx",
       "types": "./lib/types/core-templates.d.ts",
       "import": "./lib/core-templates.js"
+    },
+    "./router-paths.test": {
+      "webstudio": "./src/router-paths.test.ts"
     }
   },
   "files": [

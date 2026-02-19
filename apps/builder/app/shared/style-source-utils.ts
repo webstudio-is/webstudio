@@ -597,7 +597,7 @@ export const validateAndRenameStyleSource = ({
       return { type: "duplicate", id };
     }
   }
-  return undefined;
+  return;
 };
 
 /**

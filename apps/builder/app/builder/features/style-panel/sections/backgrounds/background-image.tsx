@@ -16,21 +16,21 @@ export const BackgroundImage = ({ index }: { index: number }) => {
       const newValue = parsed.get("background-image");
 
       if (newValue === undefined || newValue?.type === "invalid") {
-        return undefined;
+        return;
       }
 
       const [layer] = newValue.type === "layers" ? newValue.value : [newValue];
 
       // Only validate image URLs, not keywords or other types
       if (layer?.type !== "image" || layer.value.type !== "url") {
-        return undefined;
+        return;
       }
 
       const url = layer.value.url;
 
       // If it's an absolute URL, no validation needed
       if (isAbsoluteUrl(url)) {
-        return undefined;
+        return;
       }
 
       // Check if the asset exists in the project
@@ -42,7 +42,7 @@ export const BackgroundImage = ({ index }: { index: number }) => {
         return [`Asset ${url} is not found in project`];
       }
 
-      return undefined;
+      return;
     },
     []
   );

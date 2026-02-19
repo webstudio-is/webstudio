@@ -131,7 +131,7 @@ const FormFields = ({
       <ScrollArea>
         <Grid gap={3} css={{ padding: theme.panel.padding }}>
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.name}>Folder Name</Label>
+            <Label htmlFor={fieldIds.name}>Folder name</Label>
             <InputErrorsTooltip errors={errors.name}>
               <InputField
                 tabIndex={1}

@@ -218,7 +218,7 @@ const getInt = (value: unknown): number | undefined => {
     }
   }
 
-  return undefined;
+  return;
 };
 
 /**

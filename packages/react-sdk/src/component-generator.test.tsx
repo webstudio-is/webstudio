@@ -41,7 +41,7 @@ const isValidJSX = (code: string): boolean => {
         ts.ScriptKind.TSX
       );
     }
-    return undefined;
+    return;
   };
 
   const program = ts.createProgram(

@@ -282,7 +282,7 @@ const getInstanceSelector = (
       return [...selector, ...rootInstanceSelector];
     }
   }
-  return undefined;
+  return;
 };
 
 const $indexesWithinAncestors = computed(

@@ -233,7 +233,7 @@ export const RenameStyleSourceDialog = ({
           }
         }}
       >
-        <DialogTitle>Rename Token</DialogTitle>
+        <DialogTitle>Rename token</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Flex direction="column" gap="1">
             <InputField

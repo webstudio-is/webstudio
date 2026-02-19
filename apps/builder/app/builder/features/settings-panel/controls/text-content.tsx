@@ -126,7 +126,7 @@ export const TextContent = ({
                 </DialogTitleActions>
               }
             >
-              <Text variant="labels">Text Content</Text>
+              <Text variant="labels">Text content</Text>
             </DialogTitle>
           }
           size="small"

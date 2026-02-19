@@ -130,7 +130,7 @@ const $data = atom<DashboardData | undefined>();
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   $data.set(data);
   globalStyles();
-  return undefined;
+  return null;
 };
 
 const getView = (pathname: string, hasProjects: boolean) => {
@@ -153,7 +153,7 @@ export const Dashboard = () => {
   const location = useLocation();
 
   if (data === undefined) {
-    return;
+    return null;
   }
 
   const {

@@ -1,0 +1,129 @@
+# Netlify _redirects Format - Comprehensive Test Fixture
+# ========================================================
+# Syntax: /from /to [status]
+# Official docs: https://docs.netlify.com/routing/redirects/
+
+# -----------------------------------------------------------------
+# BASIC REDIRECTS (supported)
+# -----------------------------------------------------------------
+
+# Simple permanent redirects (301)
+/home /
+/about-us /about 301
+/contact-us /contact 301
+
+# Temporary redirects (302)
+/sale /offers 302
+/promo /campaigns 302
+
+# No status code (defaults to 301)
+/default /target
+
+# External URL redirects
+/github https://github.com/example/repo 301
+/twitter https://twitter.com/example
+
+# -----------------------------------------------------------------
+# COMMENTS AND WHITESPACE
+# -----------------------------------------------------------------
+
+# This is a comment
+  # Indented comment
+
+   /indented-source /indented-target 301
+
+/lots-of-space    /destination   301
+
+# Empty lines are ignored
+
+
+# -----------------------------------------------------------------
+# STATUS CODES
+# -----------------------------------------------------------------
+
+/moved /new-location 301
+/found /temporary 302
+/temp-redirect /temp 307
+/perm-redirect /perm 308
+
+# -----------------------------------------------------------------
+# PATH PATTERNS (skipped - unsupported)
+# -----------------------------------------------------------------
+
+# Splat wildcards
+/blog/* /posts/:splat 301
+/old-docs/* /docs/:splat
+
+# Placeholders
+/news/:year/:month/:day/:slug /blog/:year-:month-:day-:slug 301
+/products/:category/:id /shop/:category/item/:id
+
+# Mixed patterns from real-world (Astro docs)
+/:lang/install/auto /:lang/install-and-setup/
+/:lang/guides/deploy/:service /:lang/deploy/:service
+/docs/* /:splat
+/:lang/docs/* /:lang/:splat
+
+# -----------------------------------------------------------------
+# CONDITIONS (skipped - unsupported)
+# -----------------------------------------------------------------
+
+# Country-based
+/ /en 302 Country=us,ca,gb
+/ /de 302 Country=de,at,ch
+
+# Language-based
+/products /en/products 301 Language=en
+
+# Role-based
+/admin/* /login 302 Role=admin
+
+# -----------------------------------------------------------------
+# REWRITES (skipped - status 200)
+# -----------------------------------------------------------------
+
+/api/* https://api.example.com/:splat 200
+
+# -----------------------------------------------------------------
+# FORCE REDIRECTS (the ! is ignored, redirect is processed)
+# -----------------------------------------------------------------
+
+/override /new-override 301!
+
+# -----------------------------------------------------------------
+# QUERY PARAMETER MATCHING (skipped - unsupported)
+# -----------------------------------------------------------------
+
+/store id=:id /products/:id 301
+/search q=:query /results?search=:query
+
+# -----------------------------------------------------------------
+# TRAILING SLASH HANDLING
+# -----------------------------------------------------------------
+
+# Will be normalized (trailing slash stripped from source)
+/old-path/ /new-path 301
+
+# -----------------------------------------------------------------
+# 404 CATCH-ALLS (skipped - status 404)
+# -----------------------------------------------------------------
+
+/:lang/* /:lang/404/ 404
+
+# -----------------------------------------------------------------
+# REAL-WORLD EXAMPLES (from Astro, React Router, Redux)
+# -----------------------------------------------------------------
+
+# Simple path moves (Astro)
+/en/getting-started/quick-start /en/install-and-setup/
+/reference/renderer-reference /en/reference/integrations-reference/
+/en/core-concepts/component-hydration /en/concepts/islands/
+
+# External API docs (React Router)
+/en/main/routers/create-browser-router https://api.reactrouter.com/v7/functions/react_router.createBrowserRouter.html
+/en/main/hooks/use-navigate https://api.reactrouter.com/v7/functions/react_router.useNavigate.html
+
+# Tutorial migrations (Redux)
+/basics/usagewithreact /tutorials/fundamentals/part-5-ui-react
+/advanced/asyncactions /tutorials/fundamentals/part-6-async-logic
+/recipes/computingderiveddata /usage/deriving-data-selectors

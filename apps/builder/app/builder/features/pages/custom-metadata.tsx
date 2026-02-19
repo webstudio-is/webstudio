@@ -143,7 +143,7 @@ const MetadataItem = (props: {
 export const CustomMetadata = (props: CustomMetadataProps) => {
   return (
     <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-      <Label text="title">Custom Metadata</Label>
+      <Label text="title">Custom metadata</Label>
       <Text color="subtle">
         Use this section to input metadata for the document, which will be used
         to generate{" "}

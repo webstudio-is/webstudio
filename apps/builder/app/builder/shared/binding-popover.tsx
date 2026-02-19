@@ -191,7 +191,7 @@ const BindingPanel = ({
         </CssValueListArrowFocus>
       </Box>
       <Flex gap="1" css={{ padding: theme.panel.padding }}>
-        <Text variant="labels">Expression Editor</Text>
+        <Text variant="labels">Expression editor</Text>
         <Tooltip
           variant="wrapped"
           content={

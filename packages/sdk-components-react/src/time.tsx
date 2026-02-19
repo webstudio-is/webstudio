@@ -307,7 +307,7 @@ const dateStyleOrUndefined = (
   if (["full", "long", "medium", "short"].includes(value as string)) {
     return value as Intl.DateTimeFormatOptions["dateStyle"];
   }
-  return undefined;
+  return;
 };
 
 const timeStyleOrUndefined = (
@@ -316,7 +316,7 @@ const timeStyleOrUndefined = (
   if (["full", "long", "medium", "short"].includes(value as string)) {
     return value as Intl.DateTimeFormatOptions["timeStyle"];
   }
-  return undefined;
+  return;
 };
 
 const parseDate = (datetimeString: string) => {

@@ -121,10 +121,18 @@ export const OldPagePath = z
   )
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
-  .refine(
-    (path) => /^[-_a-zA-Z0-9*:?\\/.]*$/.test(path), // Allow uppercase letters (A-Z)
-    "Only a-z, A-Z, 0-9, -, _, /, :, ?, . and * are allowed"
-  )
+  .refine((path) => {
+    // Disallow specific problematic characters that should never appear in paths:
+    // - Spaces and whitespace
+    // - URL-unsafe characters: < > " { } | \ ^ ` [ ]
+    // - Control characters
+    // All other characters (including non-Latin Unicode like Chinese, Japanese,
+    // Korean, Cyrillic, Arabic, etc.) are allowed as they are valid in modern URLs
+    // when properly encoded by the browser
+    // eslint-disable-next-line no-control-regex
+    const disallowedChars = /[\s<>"{}|\\^`[\]\u0000-\u001f\u007f]/;
+    return !disallowedChars.test(path);
+  }, "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)")
   .refine(
     (path) => path !== "/s" && path.startsWith("/s/") === false,
     "/s prefix is reserved for the system"
@@ -153,16 +161,19 @@ const ProjectMeta = z.object({
 });
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
-export const ProjectNewRedirectPath = z.string().refine((data) => {
-  // Users should be able to redirect from any old-path to the home page in the new project.
-  try {
-    // can be relative and absolute paths
-    new URL(data, "http://url.com");
-    return true;
-  } catch {
-    return false;
-  }
-}, "Must be a valid URL");
+export const ProjectNewRedirectPath = z
+  .string()
+  .min(1, "Path is required")
+  .refine((data) => {
+    // Users should be able to redirect from any old-path to the home page in the new project.
+    try {
+      // can be relative and absolute paths
+      new URL(data, "http://url.com");
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL");
 
 export const PageRedirect = z.object({
   old: OldPagePath,

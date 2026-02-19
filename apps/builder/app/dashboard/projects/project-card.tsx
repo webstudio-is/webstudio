@@ -213,7 +213,7 @@ export const ProjectCard = ({
           {isPublished ? (
             <PublishedLink domain={displayDomain} tabIndex={-1} />
           ) : (
-            <Text color="subtle">Not Published</Text>
+            <Text color="subtle">Not published</Text>
           )}
         </Flex>
         <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />

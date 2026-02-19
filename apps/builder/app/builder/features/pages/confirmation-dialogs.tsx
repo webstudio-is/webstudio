@@ -31,7 +31,7 @@ export const DeletePageConfirmationDialog = ({
       }}
     >
       <DialogContent>
-        <DialogTitle>Delete Page</DialogTitle>
+        <DialogTitle>Delete page</DialogTitle>
         <Flex gap="3" direction="column" css={{ padding: theme.panel.padding }}>
           <Text>{`Are you sure you want to delete "${page.name}"?`}</Text>
           <Text>

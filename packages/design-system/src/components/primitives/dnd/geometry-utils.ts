@@ -75,7 +75,7 @@ export const getPlacementBetween = (
   b: Rect | undefined
 ): Placement | undefined => {
   if (a === undefined || b === undefined) {
-    return undefined;
+    return;
   }
 
   const [firstY, secondY] = a.top < b.top ? [a, b] : [b, a];
@@ -85,13 +85,13 @@ export const getPlacementBetween = (
 
   // if rects overlap we don't want to put placement between them
   if (distanceX < 0 && distanceY < 0) {
-    return undefined;
+    return;
   }
 
   // if rects aren't aligned (vertically or horizontally)
   // we don't want to put placement between them
   if (distanceX >= 0 && distanceY >= 0) {
-    return undefined;
+    return;
   }
 
   if (distanceX < 0) {
@@ -127,7 +127,7 @@ export const getPlacementNextTo = (
   padding = 5
 ): Placement | undefined => {
   if (rect === undefined) {
-    return undefined;
+    return;
   }
 
   const isForward = childrenOrientation.reverse
@@ -325,7 +325,7 @@ export const getIndexAdjustment = (
   // diagonal equation
   const getDiagonalY = (diagonalX: number) => {
     if (width === 0) {
-      return undefined;
+      return;
     }
     const slope = height / width;
     const topRightCorner = { x: left + width, y: top };

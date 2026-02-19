@@ -31,7 +31,7 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
 
   const tooltipContentForFreeUsers = allowStagingPublish ? undefined : (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-      <Text variant="titles">Publish to Staging</Text>
+      <Text variant="titles">Publish to staging</Text>
       <Text>
         <Flex direction="column">
           Staging allows you to preview a production version of your site
