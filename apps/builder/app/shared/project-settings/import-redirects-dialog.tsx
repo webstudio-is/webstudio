@@ -25,7 +25,7 @@ import {
   parseRedirects,
   type ParsedRedirect,
   type SkippedLine,
-} from "./redirect-parsers/redirect-parsers";
+} from "~/shared/redirects/redirect-parsers";
 
 type ImportStep = "input" | "preview";
 type MergeMode = "add" | "replace";
