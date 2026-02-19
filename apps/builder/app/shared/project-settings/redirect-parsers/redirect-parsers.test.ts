@@ -1,4 +1,6 @@
 import { describe, test, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseRedirects } from "./redirect-parsers";
 
 describe("parseRedirects", () => {
@@ -812,11 +814,9 @@ REDIRECT 301 /about /about-us`;
   });
 
   describe("fixture files", () => {
-    test("parses Shopify CSV fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/shopify.csv"),
+    test("parses Shopify CSV fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/shopify.csv"),
         "utf-8"
       );
 
@@ -831,11 +831,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.skipped).toHaveLength(0);
     });
 
-    test("parses HubSpot CSV fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/hubspot.csv"),
+    test("parses HubSpot CSV fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/hubspot.csv"),
         "utf-8"
       );
 
@@ -845,11 +843,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.skipped).toHaveLength(0);
     });
 
-    test("parses Vercel/Next.js JSON fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/vercel-nextjs.json"),
+    test("parses Vercel/Next.js JSON fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/vercel-nextjs.json"),
         "utf-8"
       );
 
@@ -861,11 +857,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.skipped.length).toBeGreaterThan(0);
     });
 
-    test("parses Netlify _redirects fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/netlify._redirects"),
+    test("parses Netlify _redirects fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/netlify._redirects"),
         "utf-8"
       );
 
@@ -877,11 +871,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.skipped.length).toBeGreaterThan(0);
     });
 
-    test("parses Apache htaccess fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/apache.htaccess"),
+    test("parses Apache htaccess fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/apache.htaccess"),
         "utf-8"
       );
 
@@ -893,11 +885,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.skipped.length).toBeGreaterThan(0);
     });
 
-    test("parses generic CSV fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/generic.csv"),
+    test("parses generic CSV fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/generic.csv"),
         "utf-8"
       );
 
@@ -907,11 +897,9 @@ REDIRECT 301 /about /about-us`;
       expect(result.redirects.length).toBeGreaterThanOrEqual(10);
     });
 
-    test("parses generic JSON fixture", async () => {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const content = await fs.readFile(
-        path.join(__dirname, "fixtures/generic.json"),
+    test("parses generic JSON fixture", () => {
+      const content = readFileSync(
+        join(__dirname, "fixtures/generic.json"),
         "utf-8"
       );
 

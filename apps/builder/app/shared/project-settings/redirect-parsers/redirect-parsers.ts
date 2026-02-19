@@ -551,7 +551,7 @@ const parseNetlify = (content: string): ParseResult => {
 
     const from = parts[0];
     const to = parts[1];
-    let statusPart = parts[2];
+    const statusPart = parts[2];
     const rest = parts.slice(3).join(" ");
 
     // Check for conditions in remaining parts

@@ -129,7 +129,8 @@ export const OldPagePath = z
     // All other characters (including non-Latin Unicode like Chinese, Japanese,
     // Korean, Cyrillic, Arabic, etc.) are allowed as they are valid in modern URLs
     // when properly encoded by the browser
-    const disallowedChars = /[\s<>"{}|\\^`\[\]\x00-\x1f\x7f]/;
+    // eslint-disable-next-line no-control-regex
+    const disallowedChars = /[\s<>"{}|\\^`[\]\u0000-\u001f\u007f]/;
     return !disallowedChars.test(path);
   }, "Path contains invalid characters (spaces or URL-unsafe characters are not allowed)")
   .refine(
