@@ -7,7 +7,6 @@ import {
   DialogActions,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogTitle,
   Flex,
   Grid,
@@ -16,6 +15,8 @@ import {
   List,
   ListItem,
   rawTheme,
+  ScrollArea,
+  SearchField,
   Select,
   SmallIconButton,
   Text,
@@ -115,12 +116,22 @@ export const SectionRedirects = () => {
   const [toPathErrors, setToPathErrors] = useState<string[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const fromPathRef = useRef<HTMLInputElement>(null);
 
   const isValidRedirects =
     fromPathErrors.length === 0 && toPathErrors.length === 0;
+
+  // Filter redirects based on search query
+  const filteredRedirects = searchQuery
+    ? redirects.filter(
+        (redirect) =>
+          redirect.old.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          redirect.new.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : redirects;
 
   // Get all page paths for combobox suggestions
   const pagePaths = Array.from(existingPaths).sort();
@@ -220,44 +231,51 @@ export const SectionRedirects = () => {
         onImport={handleImportRedirects}
       />
 
-      <Grid gap={2} css={sectionSpacing}>
-        <Flex gap={1} align="center" justify="between">
-          <Flex gap={1} align="center">
-            <Text variant="titles">Redirects</Text>
-            <Tooltip
-              variant="wrapped"
-              content={
-                <Flex direction="column" gap="2">
-                  <Text color="subtle">
-                    Redirect old URLs to new ones so you don't lose traffic or
-                    search engine rankings.
-                  </Text>
-                  <Flex direction="column" gap="1">
-                    <Text variant="regularBold">Supported patterns:</Text>
-                    <Text>/path → Exact match</Text>
-                    <Text>/blog/* → All paths under /blog/</Text>
-                    <Text>/:slug → Dynamic segment</Text>
-                    <Text>/:id? → Optional segment</Text>
-                  </Flex>
+      <Grid gap={3} css={sectionSpacing}>
+        <Flex gap={1} align="center">
+          <Text variant="titles">Redirects</Text>
+          <Tooltip
+            variant="wrapped"
+            content={
+              <Flex direction="column" gap="2">
+                <Text>
+                  Redirect old URLs to new ones so you don't lose traffic or
+                  search engine rankings.
+                </Text>
+                <Flex direction="column" gap="1">
+                  <Text>Supported patterns:</Text>
+                  <Text>/path → Exact match</Text>
+                  <Text>/blog/* → All paths under /blog/</Text>
+                  <Text>/:slug → Dynamic segment</Text>
+                  <Text>/:id? → Optional segment</Text>
                 </Flex>
-              }
+              </Flex>
+            }
+          >
+            <InfoCircleIcon
+              color={rawTheme.colors.foregroundSubtle}
+              tabIndex={0}
+            />
+          </Tooltip>
+        </Flex>
+
+        <Flex gap="2" justify="between">
+          <SearchField
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onAbort={() => setSearchQuery("")}
+            disabled={redirects.length === 0}
+          />
+          <Flex gap="2">
+            <Button
+              color="ghost"
+              prefix={<TrashIcon />}
+              onClick={() => setIsDeleteAllDialogOpen(true)}
+              disabled={redirects.length === 0}
             >
-              <InfoCircleIcon
-                color={rawTheme.colors.foregroundSubtle}
-                tabIndex={0}
-              />
-            </Tooltip>
-          </Flex>
-          <Flex gap="1">
-            {redirects.length > 0 && (
-              <Button
-                color="ghost"
-                prefix={<TrashIcon />}
-                onClick={() => setIsDeleteAllDialogOpen(true)}
-              >
-                Delete all
-              </Button>
-            )}
+              Delete all
+            </Button>
             <Button
               color="ghost"
               prefix={<UploadIcon />}
@@ -274,10 +292,13 @@ export const SectionRedirects = () => {
         >
           <DialogContent>
             <DialogTitle>Delete all redirects</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete all {redirects.length} redirect
-              {redirects.length !== 1 ? "s" : ""}? This action cannot be undone.
-            </DialogDescription>
+            <Flex css={{ padding: theme.panel.padding }}>
+              <Text>
+                Are you sure you want to delete all {redirects.length} redirect
+                {redirects.length !== 1 ? "s" : ""}? This action cannot be
+                undone.
+              </Text>
+            </Flex>
             <DialogActions>
               <Button color="destructive" onClick={handleDeleteAll}>
                 Delete all
@@ -323,8 +344,6 @@ export const SectionRedirects = () => {
             }}
           />
 
-          <ArrowRightIcon size={16} style={{ flexShrink: 0 }} />
-
           <InputErrorsTooltip
             errors={toPathErrors.length > 0 ? toPathErrors : undefined}
             side="top"
@@ -358,24 +377,37 @@ export const SectionRedirects = () => {
           </Flex>
         )}
       </Grid>
-
       {redirects.length > 0 ? (
-        <Grid css={sectionSpacing}>
-          <List asChild>
-            <Flex direction="column" gap="1" align="stretch">
-              {redirects.map((redirect, index) => {
-                return (
-                  <ListItem asChild key={redirect.old} index={index}>
-                    <Flex
-                      justify="between"
-                      align="center"
-                      gap="2"
-                      css={{
-                        p: theme.spacing[3],
-                        overflow: "hidden",
-                      }}
-                    >
-                      <Flex gap="2" align="center">
+        <ScrollArea>
+          <Grid css={sectionSpacing}>
+            <List asChild>
+              <Flex direction="column" gap="1" align="stretch">
+                {filteredRedirects.map((redirect, index) => {
+                  return (
+                    <ListItem asChild key={redirect.old}>
+                      <Grid
+                        align="center"
+                        gap="2"
+                        css={{
+                          p: theme.spacing[3],
+                          overflow: "hidden",
+                          gridTemplateColumns: `1fr auto auto 1fr`,
+                          position: "relative",
+                          "& > button": {
+                            opacity: 0,
+                            position: "absolute",
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            height: "auto",
+                            borderRadius: 0,
+                            background: theme.colors.backgroundPanel,
+                          },
+                          "&:hover > button, &:focus-within > button": {
+                            opacity: 1,
+                          },
+                        }}
+                      >
                         <Tooltip content={redirect.old}>
                           <Link
                             underline="hover"
@@ -384,8 +416,9 @@ export const SectionRedirects = () => {
                               publishedOrigin
                             ).toString()}
                             css={{
-                              width: theme.spacing[18],
                               wordBreak: "break-all",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
                             }}
                             target="_blank"
                           >
@@ -393,9 +426,7 @@ export const SectionRedirects = () => {
                           </Link>
                         </Tooltip>
                         <Text>{redirect.status ?? "301"}</Text>
-                        <Flex shrink={false} align="center">
-                          <ArrowRightIcon size={16} aria-disabled />
-                        </Flex>
+                        <ArrowRightIcon size={16} />
                         <Tooltip content={redirect.new}>
                           <Link
                             underline="hover"
@@ -405,29 +436,28 @@ export const SectionRedirects = () => {
                             ).toString()}
                             css={{
                               wordBreak: "break-all",
-                              maxWidth: theme.spacing[30],
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
                             }}
                             target="_blank"
                           >
                             {redirect.new}
                           </Link>
                         </Tooltip>
-                      </Flex>
-                      <Flex gap="2">
                         <SmallIconButton
                           variant="destructive"
                           icon={<TrashIcon />}
                           aria-label={`Delete redirect from ${redirect.old}`}
                           onClick={() => handleDeleteRedirect(index)}
                         />
-                      </Flex>
-                    </Flex>
-                  </ListItem>
-                );
-              })}
-            </Flex>
-          </List>
-        </Grid>
+                      </Grid>
+                    </ListItem>
+                  );
+                })}
+              </Flex>
+            </List>
+          </Grid>
+        </ScrollArea>
       ) : null}
     </>
   );

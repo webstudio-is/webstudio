@@ -210,6 +210,10 @@ describe("ProjectNewRedirectPath", () => {
     expect(ProjectNewRedirectPath.safeParse("/한국어").success).toBe(true);
   });
 
+  test("rejects empty string", () => {
+    expect(ProjectNewRedirectPath.safeParse("").success).toBe(false);
+  });
+
   test("rejects truly invalid URLs", () => {
     // Note: ProjectNewRedirectPath uses new URL(data, baseURL) which is very permissive
     // It treats most strings as valid relative paths. The only truly invalid inputs

@@ -229,13 +229,12 @@ describe("validateFromPath", () => {
 });
 
 describe("validateToPath", () => {
-  // Note: ProjectNewRedirectPath uses `new URL(data, baseURL)` which accepts
-  // most strings including empty strings when a base URL is provided.
-  // Only truly invalid URL characters will fail.
+  // Note: ProjectNewRedirectPath uses `new URL(data, baseURL)` which is permissive
+  // for most strings. However, empty strings are explicitly rejected.
 
-  test("accepts empty path (becomes base URL)", () => {
+  test("rejects empty path", () => {
     const errors = validateToPath("");
-    expect(errors).toEqual([]);
+    expect(errors).toContain("Path is required");
   });
 
   test("accepts relative path with spaces (URL-encoded)", () => {
