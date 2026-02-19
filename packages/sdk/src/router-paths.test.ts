@@ -1,9 +1,9 @@
 /**
- * Shared test suite for redirect path handling consistency.
+ * Shared test suite for router path handling consistency.
  *
- * This ensures that redirect paths are handled consistently across:
- * 1. OldPagePath schema validation (SDK)
- * 2. URLPattern matching (builder)
+ * This ensures that router paths are handled consistently across:
+ * 1. Path schema validation (SDK) - OldPagePath, page paths
+ * 2. URLPattern matching (builder) - used for all page routing
  * 3. Route generation for published sites (react-sdk)
  *
  * If a path is valid in one layer, it should work in all layers.
@@ -11,19 +11,19 @@
 
 import { describe, test, expect } from "vitest";
 import { OldPagePath, ProjectNewRedirectPath } from "./schema/pages";
-import { ALL_VALID_PATHS, ALL_INVALID_PATHS } from "./redirect-path-test-data";
+import { ALL_VALID_PATHS, ALL_INVALID_PATHS } from "./router-path-test-data";
 
 // Re-export for use in other packages
 export {
-  VALID_REDIRECT_PATHS,
-  INVALID_REDIRECT_PATHS,
+  VALID_ROUTER_PATHS,
+  INVALID_ROUTER_PATHS,
   ALL_VALID_PATHS,
   ALL_INVALID_PATHS,
   VALID_URLPATTERN_PATHS,
   STATIC_PATHS,
-} from "./redirect-path-test-data";
+} from "./router-path-test-data";
 
-describe("Redirect path validation consistency", () => {
+describe("Router path validation consistency", () => {
   describe("OldPagePath schema - valid paths", () => {
     test.each(ALL_VALID_PATHS)("accepts: %s", (path) => {
       const result = OldPagePath.safeParse(path);

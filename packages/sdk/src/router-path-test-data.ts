@@ -1,17 +1,18 @@
 /**
- * Shared test data for redirect path validation.
+ * Shared test data for router path validation.
  *
  * This file exports test cases that should be used consistently across:
- * 1. OldPagePath schema validation (SDK)
- * 2. URLPattern matching (builder)
+ * 1. Path schema validation (SDK) - OldPagePath, page paths, etc.
+ * 2. URLPattern matching (builder) - used for all page routing
  * 3. Route generation for published sites (react-sdk)
  *
+ * These paths are used for pages, redirects, and any routable URL.
  * Add new test cases here to ensure all layers are tested with the same data.
  */
 
 // These test cases define what paths should be valid/invalid across ALL layers
 
-export const VALID_REDIRECT_PATHS = {
+export const VALID_ROUTER_PATHS = {
   // Basic paths
   basic: ["/about", "/blog", "/contact-us", "/products/item-1"],
 
@@ -44,7 +45,7 @@ export const VALID_REDIRECT_PATHS = {
   mixed: ["/blog/关于", "/news/港聞", "/category/日本語"],
 } as const;
 
-export const INVALID_REDIRECT_PATHS = {
+export const INVALID_ROUTER_PATHS = {
   // Empty or root only
   empty: ["", "/"],
 
@@ -75,34 +76,34 @@ export const INVALID_REDIRECT_PATHS = {
 } as const;
 
 // Flattened arrays for convenience
-export const ALL_VALID_PATHS = Object.values(VALID_REDIRECT_PATHS).flat();
-export const ALL_INVALID_PATHS = Object.values(INVALID_REDIRECT_PATHS).flat();
+export const ALL_VALID_PATHS = Object.values(VALID_ROUTER_PATHS).flat();
+export const ALL_INVALID_PATHS = Object.values(INVALID_ROUTER_PATHS).flat();
 
 // Paths that are specifically for testing URLPattern matching (no query/fragment)
 export const VALID_URLPATTERN_PATHS = [
-  ...VALID_REDIRECT_PATHS.basic,
-  ...VALID_REDIRECT_PATHS.patterns,
-  ...VALID_REDIRECT_PATHS.chinese,
-  ...VALID_REDIRECT_PATHS.japanese,
-  ...VALID_REDIRECT_PATHS.korean,
-  ...VALID_REDIRECT_PATHS.cyrillic,
-  ...VALID_REDIRECT_PATHS.arabic,
-  ...VALID_REDIRECT_PATHS.hebrew,
-  ...VALID_REDIRECT_PATHS.greek,
-  ...VALID_REDIRECT_PATHS.european,
-  ...VALID_REDIRECT_PATHS.mixed,
+  ...VALID_ROUTER_PATHS.basic,
+  ...VALID_ROUTER_PATHS.patterns,
+  ...VALID_ROUTER_PATHS.chinese,
+  ...VALID_ROUTER_PATHS.japanese,
+  ...VALID_ROUTER_PATHS.korean,
+  ...VALID_ROUTER_PATHS.cyrillic,
+  ...VALID_ROUTER_PATHS.arabic,
+  ...VALID_ROUTER_PATHS.hebrew,
+  ...VALID_ROUTER_PATHS.greek,
+  ...VALID_ROUTER_PATHS.european,
+  ...VALID_ROUTER_PATHS.mixed,
 ] as const;
 
 // Static paths (no wildcards/params) for testing route generation
 export const STATIC_PATHS = [
-  ...VALID_REDIRECT_PATHS.basic,
-  ...VALID_REDIRECT_PATHS.chinese,
-  ...VALID_REDIRECT_PATHS.japanese,
-  ...VALID_REDIRECT_PATHS.korean,
-  ...VALID_REDIRECT_PATHS.cyrillic,
-  ...VALID_REDIRECT_PATHS.arabic,
-  ...VALID_REDIRECT_PATHS.hebrew,
-  ...VALID_REDIRECT_PATHS.greek,
-  ...VALID_REDIRECT_PATHS.european,
-  ...VALID_REDIRECT_PATHS.mixed,
+  ...VALID_ROUTER_PATHS.basic,
+  ...VALID_ROUTER_PATHS.chinese,
+  ...VALID_ROUTER_PATHS.japanese,
+  ...VALID_ROUTER_PATHS.korean,
+  ...VALID_ROUTER_PATHS.cyrillic,
+  ...VALID_ROUTER_PATHS.arabic,
+  ...VALID_ROUTER_PATHS.hebrew,
+  ...VALID_ROUTER_PATHS.greek,
+  ...VALID_ROUTER_PATHS.european,
+  ...VALID_ROUTER_PATHS.mixed,
 ] as const;

@@ -6,13 +6,13 @@ import {
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/redirect-paths.test";
+import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/router-paths.test";
 
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure
  * URLPattern matching is consistent with schema validation.
  */
-describe("Shared redirect path tests - URLPattern matching", () => {
+describe("Shared router path tests - URLPattern matching", () => {
   describe("all valid paths can be used as URLPattern patterns", () => {
     test.each(VALID_URLPATTERN_PATHS)("accepts pattern: %s", (pattern) => {
       // Pattern should be valid for URLPattern

@@ -1,12 +1,12 @@
 import { expect, test, describe } from "vitest";
 import { generateRemixParams, generateRemixRoute } from "./remix";
-import { STATIC_PATHS } from "@webstudio-is/sdk/redirect-paths.test";
+import { STATIC_PATHS } from "@webstudio-is/sdk/router-paths.test";
 
 /**
  * These tests use the shared test data from @webstudio-is/sdk to ensure
  * route generation is consistent with schema validation and URLPattern matching.
  */
-describe("Shared redirect path tests - Route generation", () => {
+describe("Shared router path tests - Route generation", () => {
   describe("all valid static paths generate valid routes", () => {
     test.each(STATIC_PATHS)("generates route for: %s", (path) => {
       const route = generateRemixRoute(path);
