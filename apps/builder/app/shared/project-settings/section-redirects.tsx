@@ -324,7 +324,12 @@ export const SectionRedirects = () => {
               getItems={() => pagePaths}
               itemToString={(item) => item ?? ""}
               onItemSelect={(value) => handleFromPathChange(value ?? "")}
-              onChange={(value) => handleFromPathChange(value ?? "")}
+              onChange={(value) => {
+                // Don't reset value on blur (when value is undefined)
+                if (value !== undefined) {
+                  handleFromPathChange(value);
+                }
+              }}
             />
           </InputErrorsTooltip>
 
@@ -355,7 +360,12 @@ export const SectionRedirects = () => {
               getItems={() => pagePaths}
               itemToString={(item) => item ?? ""}
               onItemSelect={(value) => handleToPathChange(value ?? "")}
-              onChange={(value) => handleToPathChange(value ?? "")}
+              onChange={(value) => {
+                // Don't reset value on blur (when value is undefined)
+                if (value !== undefined) {
+                  handleToPathChange(value);
+                }
+              }}
             />
           </InputErrorsTooltip>
 
