@@ -26,6 +26,9 @@
       "webstudio": "./src/core-templates.tsx",
       "types": "./lib/types/core-templates.d.ts",
       "import": "./lib/core-templates.js"
+    },
+    "./redirect-paths.test": {
+      "webstudio": "./src/redirect-paths.test.ts"
     }
   },
   "files": [

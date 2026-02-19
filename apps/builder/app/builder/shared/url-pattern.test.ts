@@ -6,6 +6,34 @@ import {
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+import { VALID_URLPATTERN_PATHS } from "@webstudio-is/sdk/redirect-paths.test";
+
+/**
+ * These tests use the shared test data from @webstudio-is/sdk to ensure
+ * URLPattern matching is consistent with schema validation.
+ */
+describe("Shared redirect path tests - URLPattern matching", () => {
+  describe("all valid paths can be used as URLPattern patterns", () => {
+    test.each(VALID_URLPATTERN_PATHS)("accepts pattern: %s", (pattern) => {
+      // Pattern should be valid for URLPattern
+      // Some patterns may have validation errors due to our custom rules
+      // but they should still work with URLPattern itself
+      expect(() => matchPathnamePattern(pattern, pattern)).not.toThrow();
+    });
+  });
+
+  describe("all valid static paths can be matched exactly", () => {
+    // Filter out patterns (those with : or *)
+    const staticPaths = VALID_URLPATTERN_PATHS.filter(
+      (p) => !p.includes(":") && !p.includes("*")
+    );
+
+    test.each(staticPaths)("matches exactly: %s", (path) => {
+      const result = matchPathnamePattern(path, path);
+      expect(result).toEqual({});
+    });
+  });
+});
 
 test("decode matched params", () => {
   expect(matchPathnamePattern("/blog/:slug", "/blog/привет")).toEqual({
