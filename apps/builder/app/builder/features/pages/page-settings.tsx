@@ -108,6 +108,10 @@ import {
 import { Form } from "./form";
 import { CustomMetadata } from "./custom-metadata";
 import { findMatchingRedirect } from "~/shared/project-settings/utils";
+import {
+  LOOP_ERROR,
+  wouldCreateLoop,
+} from "~/shared/redirects/redirect-loop-detection";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -252,6 +256,24 @@ const validateValues = (
       errors.path.push(...messages);
     }
   }
+
+  // Validate redirect doesn't create a loop
+  if (
+    pages !== undefined &&
+    values.path !== undefined &&
+    computedValues.redirect &&
+    typeof computedValues.redirect === "string" &&
+    computedValues.redirect !== ""
+  ) {
+    const existingRedirects = pages.redirects ?? [];
+    if (
+      wouldCreateLoop(values.path, computedValues.redirect, existingRedirects)
+    ) {
+      errors.redirect = errors.redirect ?? [];
+      errors.redirect.push(LOOP_ERROR);
+    }
+  }
+
   return errors;
 };
 

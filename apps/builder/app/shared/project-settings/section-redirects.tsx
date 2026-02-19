@@ -39,6 +39,10 @@ import { $pages } from "~/shared/sync/data-stores";
 import { $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { getExistingRoutePaths, sectionSpacing } from "./utils";
+import {
+  LOOP_ERROR,
+  wouldCreateLoop,
+} from "~/shared/redirects/redirect-loop-detection";
 
 const statusCodeOptions = ["301", "302"] as const;
 
@@ -169,15 +173,19 @@ export const SectionRedirects = () => {
       existingPaths
     );
     const toPathValidationErrors = validateToPath(toPath);
+    const hasLoop = wouldCreateLoop(fromPath, toPath, redirects);
 
     // Update error state so user sees what went wrong
     setFromPathErrors(fromPathValidationErrors);
     setFromPathWarnings(warnings);
-    setToPathErrors(toPathValidationErrors);
+    setToPathErrors(
+      hasLoop ? [...toPathValidationErrors, LOOP_ERROR] : toPathValidationErrors
+    );
 
     if (
       fromPathValidationErrors.length > 0 ||
-      toPathValidationErrors.length > 0
+      toPathValidationErrors.length > 0 ||
+      hasLoop
     ) {
       return;
     }

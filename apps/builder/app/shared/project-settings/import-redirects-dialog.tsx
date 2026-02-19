@@ -26,6 +26,7 @@ import {
   type ParsedRedirect,
   type SkippedLine,
 } from "~/shared/redirects/redirect-parsers";
+import { detectLoopsInBatch } from "~/shared/redirects/redirect-loop-detection";
 
 type ImportStep = "input" | "preview";
 type MergeMode = "add" | "replace";
@@ -155,16 +156,36 @@ export const ImportRedirectsDialog = ({
     const uniqueNew = newRedirects.filter((r) => !existingPaths.has(r.old));
 
     if (mergeMode === "add") {
-      // Only add non-duplicate redirects
-      onImport(uniqueNew, "add");
+      // Detect loops with existing redirects
+      const { valid, looped } = detectLoopsInBatch(
+        uniqueNew,
+        existingRedirects
+      );
+      const loopCount = looped.length;
+
+      onImport(valid, "add");
+      const skippedParts = [
+        duplicates.length > 0 &&
+          `${duplicates.length} duplicate${duplicates.length !== 1 ? "s" : ""}`,
+        loopCount > 0 && `${loopCount} loop${loopCount !== 1 ? "s" : ""}`,
+      ].filter(Boolean);
+      const skippedMessage =
+        skippedParts.length > 0 ? ` (${skippedParts.join(", ")} skipped)` : "";
       toast.success(
-        `Imported ${uniqueNew.length} redirect${uniqueNew.length !== 1 ? "s" : ""}${duplicates.length > 0 ? ` (${duplicates.length} duplicate${duplicates.length !== 1 ? "s" : ""} skipped)` : ""}`
+        `Imported ${valid.length} redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
       );
     } else {
-      // Replace all - use all new redirects
-      onImport(newRedirects, "replace");
+      // Replace all - detect loops within the new set
+      const { valid, looped } = detectLoopsInBatch(newRedirects, []);
+      const loopCount = looped.length;
+
+      onImport(valid, "replace");
+      const skippedMessage =
+        loopCount > 0
+          ? ` (${loopCount} loop${loopCount !== 1 ? "s" : ""} skipped)`
+          : "";
       toast.success(
-        `Replaced all redirects with ${newRedirects.length} new redirect${newRedirects.length !== 1 ? "s" : ""}`
+        `Replaced all redirects with ${valid.length} new redirect${valid.length !== 1 ? "s" : ""}${skippedMessage}`
       );
     }
 
