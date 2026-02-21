@@ -12,6 +12,7 @@ import {
   HoveredInstanceOutline,
   SelectedInstanceOutline,
 } from "./outline";
+import { GridOutlines } from "./grid-outlines";
 
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
@@ -80,6 +81,7 @@ export const CanvasTools = () => {
     <>
       {isPreviewMode === false && (
         <>
+          <GridOutlines />
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />

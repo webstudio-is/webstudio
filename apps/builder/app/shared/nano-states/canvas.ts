@@ -185,3 +185,16 @@ export const $canvasIframeState = atom<"idle" | "ready">("idle");
 export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(
   new Map()
 );
+
+export type GridCellData = {
+  instanceId: Instance["id"];
+  // Actual column and row count (from DOM probing)
+  columnCount: number;
+  rowCount: number;
+  // Horizontal lines: each has y position, x start, and width
+  horizontalLines: Array<{ y: number; x: number; width: number }>;
+  // Vertical lines: each has x position, y start, and height
+  verticalLines: Array<{ x: number; y: number; height: number }>;
+};
+
+export const $gridCellData = atom<GridCellData | undefined>(undefined);

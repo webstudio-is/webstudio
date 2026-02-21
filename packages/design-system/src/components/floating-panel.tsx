@@ -127,6 +127,7 @@ type FloatingPanelProps = {
 
 const contentStyle = css({
   width: theme.sizes.sidebarWidth,
+  overflow: "auto",
 });
 
 const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
@@ -155,6 +156,7 @@ export const FloatingPanel = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
   const currentPositionRef = useRef<{ x: number; y: number }>();
+  const maxHeightRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLElement | null>(null);
 
   // Wrap onOpenChange to reset position when panel closes
@@ -162,6 +164,7 @@ export const FloatingPanel = ({
     if (isOpen === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      maxHeightRef.current = undefined;
       containerRef.current = null;
     }
     // Update internal state if uncontrolled
@@ -176,6 +179,7 @@ export const FloatingPanel = ({
     if (open === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      maxHeightRef.current = undefined;
       containerRef.current = null;
     }
   }, [open]);
@@ -220,6 +224,15 @@ export const FloatingPanel = ({
           offsetProp
         );
         currentPositionRef.current = { x, y };
+
+        // Calculate max height based on container bounds
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const availableHeight = containerRect.bottom - y - 10; // 10px padding
+        if (availableHeight > 0) {
+          maxHeightRef.current = availableHeight;
+          contentElement.style.maxHeight = `${availableHeight}px`;
+        }
+
         setPosition({ x, y });
         return;
       }

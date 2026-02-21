@@ -43,6 +43,7 @@ import {
   $selectedInstanceOutline,
   $blockChildOutline,
   $textToolbar,
+  $gridCellData,
   $registeredComponentMetas,
   $registeredTemplates,
   $modifierKeys,
@@ -138,6 +139,7 @@ export const createObjectPool = () => {
     new NanostoresSyncObject("blockChildOutline", $blockChildOutline),
     new NanostoresSyncObject("instanceContextMenu", $instanceContextMenu),
     new NanostoresSyncObject("modifierKeys", $modifierKeys),
+    new NanostoresSyncObject("gridCellData", $gridCellData),
     new NanostoresSyncObject(
       "collaborativeInstanceSelector",
       $collaborativeInstanceSelector

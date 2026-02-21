@@ -49,6 +49,14 @@ export const parseIntermediateOrInvalidValue = (
     value = value.slice(0, -1);
   }
 
+  // Round values for properties that require integers when unit is "number"
+  if ("unit" in styleValue && styleValue.unit === "number") {
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue) && !Number.isInteger(numericValue)) {
+      value = String(Math.round(numericValue));
+    }
+  }
+
   // When user enters a number, we don't know if its a valid unit value,
   // so we are going to parse it with a unit and if its not invalid - we take it.
   const ast = cssTryParseValue(value);
@@ -94,7 +102,7 @@ export const parseIntermediateOrInvalidValue = (
   if ("unit" in styleValue && styleValue.unit === "number") {
     // when unit is number some properties supports only integer
     // for example z-index
-    styleInput = parseCssValue(property, `${Math.round(Number(value))}`);
+    styleInput = parseCssValue(property, value);
     if (styleInput.type !== "invalid") {
       return styleInput;
     }
