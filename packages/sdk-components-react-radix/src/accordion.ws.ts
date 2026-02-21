@@ -6,7 +6,16 @@ import {
   ContentIcon,
 } from "@webstudio-is/icons/svg";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
-import { div, h3, button } from "@webstudio-is/sdk/normalize.css";
+import {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  div,
+  button,
+} from "@webstudio-is/sdk/normalize.css";
 import { radix } from "./shared/meta";
 import { buttonReset } from "./shared/preset-styles";
 import {
@@ -52,6 +61,28 @@ export const metaAccordionHeader: WsComponentMeta = {
     descendants: [radix.AccordionTrigger],
   },
   presetStyle: {
+    h1: [
+      ...h1,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h2: [
+      ...h2,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
     h3: [
       ...h3,
       {
@@ -63,8 +94,50 @@ export const metaAccordionHeader: WsComponentMeta = {
         value: { type: "unit", unit: "px", value: 0 },
       },
     ],
+    h4: [
+      ...h4,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h5: [
+      ...h5,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
+    h6: [
+      ...h6,
+      {
+        property: "margin-top",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+      {
+        property: "margin-bottom",
+        value: { type: "unit", unit: "px", value: 0 },
+      },
+    ],
   },
-  props: propsAccordionHeader,
+  initialProps: ["tag"],
+  props: {
+    ...propsAccordionHeader,
+    tag: {
+      required: true,
+      control: "tag",
+      type: "string",
+      options: ["h1", "h2", "h3", "h4", "h5", "h6"],
+    },
+  },
 };
 
 export const metaAccordionTrigger: WsComponentMeta = {
