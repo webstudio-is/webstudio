@@ -234,9 +234,16 @@ export const AddStyleInput = forwardRef<
       if (property.startsWith("--")) {
         const error = validateCssVariableName(property);
         if (error) {
-          // Show error via toast
-          toast.error(error.message);
-          return;
+          // For duplicate variables, show warning and continue updating the values
+          if (error.type === "duplicate") {
+            toast.warn(
+              `CSS variable "${property}" already exists. Its value will be updated.`
+            );
+          } else {
+            // Show error via toast and block submission
+            toast.error(error.message);
+            return;
+          }
         }
       }
 

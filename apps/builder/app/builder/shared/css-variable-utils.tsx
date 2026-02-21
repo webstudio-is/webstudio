@@ -270,7 +270,7 @@ export const $unusedCssVariables = computed(
   }
 );
 
-export type CssVariableError =
+type CssVariableError =
   | { type: "required"; message: string }
   | { type: "invalid"; message: string }
   | { type: "duplicate"; message: string };
