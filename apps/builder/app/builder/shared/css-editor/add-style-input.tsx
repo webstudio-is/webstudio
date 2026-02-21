@@ -236,7 +236,9 @@ export const AddStyleInput = forwardRef<
         if (error) {
           // For duplicate variables, show warning and continue updating the values
           if (error.type === "duplicate") {
-            toast.info(error.message);
+            toast.warn(
+              `CSS variable "${property}" already exists. Its value will be updated.`
+            );
           } else {
             // Show error via toast and block submission
             toast.error(error.message);
