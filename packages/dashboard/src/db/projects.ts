@@ -121,11 +121,28 @@ export const findManyByIds = async (
   if (projectIds.length === 0) {
     return [];
   }
-  const data = await context.postgrest.client
+
+  // Get the user ID for ownership filtering
+  // Allow service context (no authorization) to access any projects (for templates)
+  const userId =
+    context.authorization.type === "user"
+      ? context.authorization.userId
+      : undefined;
+
+  let query = context.postgrest.client
     .from("DashboardProject")
     .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
     .in("id", projectIds)
-    .eq("isDeleted", false)
+    .eq("isDeleted", false);
+
+  // If user context, also filter by userId OR isMarketplaceApproved (public templates)
+  if (userId !== undefined) {
+    query = query.or(
+      `userId.eq.${userId},marketplaceApprovalStatus.eq.APPROVED`
+    );
+  }
+
+  const data = await query
     .order("createdAt", { ascending: false })
     .order("id", { ascending: false });
   if (data.error) {

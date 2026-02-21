@@ -124,7 +124,17 @@ export const projectRouter = router({
           ctx.authorization.type !== "user" &&
           ctx.authorization.type !== "token"
         ) {
-          throw new Error("Not authorized");
+          throw new AuthorizationError("Not authorized");
+        }
+        const permit = await authorizeProject.getProjectPermit(
+          {
+            projectId: input.projectId,
+            permits: ["view", "build", "admin"],
+          },
+          ctx
+        );
+        if (permit === undefined) {
+          throw new AuthorizationError("Not authorized to access this project");
         }
         const publishedBuilds = await ctx.postgrest.client
           .from("published_builds")
