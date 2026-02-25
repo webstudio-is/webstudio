@@ -385,17 +385,17 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
           variant="mono"
           css={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            fontSize: theme.deprecatedFontSize[3],
-            fontWeight: 500,
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             pointerEvents: "none",
             whiteSpace: "nowrap",
           }}
         >
-          {getGridAxisLabel(columnsMode, columnCount)}×
-          {getGridAxisLabel(rowsMode, rowCount)}
+          {getGridAxisLabel(columnsMode, columnCount) +
+            "×" +
+            getGridAxisLabel(rowsMode, rowCount)}
         </Text>
       </button>
     </FloatingPanel>
