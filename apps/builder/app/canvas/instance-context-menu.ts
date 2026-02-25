@@ -1,8 +1,16 @@
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
-import { $instanceContextMenu } from "~/shared/nano-states";
+import {
+  $instanceContextMenu,
+  $textEditingInstanceSelector,
+} from "~/shared/nano-states";
 
 export const subscribeInstanceContextMenu = () => {
   const handleContextMenu = (event: MouseEvent) => {
+    // Allow native context menu when editing text content
+    if ($textEditingInstanceSelector.get() !== undefined) {
+      return;
+    }
+
     const target = event.target as HTMLElement;
     const element = target.closest(`[${selectorIdAttribute}]`);
     const selectorId = element?.getAttribute(selectorIdAttribute);
