@@ -55,7 +55,7 @@ import {
   initCopyPaste,
   initCopyPasteForContentEditMode,
 } from "~/shared/copy-paste/init-copy-paste";
-import { setDataCollapsed, subscribeCollapsed } from "./collapsed";
+import { inflateInstance, subscribeInflator } from "./inflator";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
@@ -302,18 +302,18 @@ export const Canvas = () => {
   useEffect(() => {
     const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
-      setDataCollapsed(rootInstanceId);
+      inflateInstance(rootInstanceId);
     }
   });
 
   useWindowResizeDebounced(() => {
     const rootInstanceId = selectedPage?.rootInstanceId;
     if (rootInstanceId !== undefined) {
-      setDataCollapsed(rootInstanceId);
+      inflateInstance(rootInstanceId);
     }
   });
 
-  useEffect(subscribeCollapsed, []);
+  useEffect(subscribeInflator, []);
 
   useHashLinkSync();
 

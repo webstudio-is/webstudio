@@ -27,7 +27,7 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
-import { setDataCollapsed } from "~/canvas/collapsed";
+import { inflateInstance } from "~/canvas/inflator";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 
@@ -128,7 +128,7 @@ const subscribeSelectedInstance = (
     );
   };
 
-  const updateDataCollapsed = () => {
+  const updateInflation = () => {
     if (visibleElements.length === 0) {
       return;
     }
@@ -144,15 +144,15 @@ const subscribeSelectedInstance = (
         continue;
       }
 
-      setDataCollapsed(instanceSelector[0], false);
+      inflateInstance(instanceSelector[0], false);
     }
 
-    // Synchronously execute setDataCollapsed to calculate right outline
-    // This fixes an issue, when new element outline was calculated before collapsed elements calculations
-    setDataCollapsed(instanceId, true);
+    // Synchronously execute inflateInstance to calculate right outline
+    // This fixes an issue, when new element outline was calculated before inflation calculations
+    inflateInstance(instanceId, true);
   };
 
-  updateDataCollapsed();
+  updateInflation();
 
   const showOutline = () => {
     if ($isResizingCanvas.get()) {
@@ -216,7 +216,7 @@ const subscribeSelectedInstance = (
       updateElements();
       // Having hover etc, element can have no size because of that
       // Newly created element can have 0 size
-      updateDataCollapsed();
+      updateInflation();
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
       showOutline();

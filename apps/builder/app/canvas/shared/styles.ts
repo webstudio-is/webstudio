@@ -13,7 +13,7 @@ import {
   createImageValueTransformer,
   addFontRules,
 } from "@webstudio-is/sdk";
-import { collapsedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
 import {
   StyleValue,
@@ -107,7 +107,7 @@ const helperStylesShared = [
   `,
 
   // Using :where allows to prevent increasing specificity, so that helper is overwritten by user styles.
-  `[${idAttribute}]:where([${collapsedAttribute}]:not(body)) {
+  `[${idAttribute}]:where([${inflatedAttribute}]:not(body)) {
     outline: 1px dashed rgba(0,0,0,0.7);
     outline-offset: -1px;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
@@ -119,15 +119,15 @@ const helperStylesShared = [
   // 3. We prevent this by excluding elements with `data-lexical-editor`.
   // 4. This rule is used here and not in collapsing detection because `data-lexical-editor` might not be set instantly.
   //    Mistakes in collapsing will be corrected in the next cycle.
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="w"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="w"]) {
     padding-right: ${collapsePadding};
   }`,
   // Has no height, will collapse
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="h"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="h"]) {
     padding-top: ${collapsePadding};
   }`,
   // Has no width or height, will collapse
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${collapsedAttribute}="wh"]) {
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="wh"]) {
     padding-right: ${collapsePadding};
     padding-top: ${collapsePadding};
   }`,
