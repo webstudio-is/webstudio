@@ -9,13 +9,7 @@ import {
   FloatingPanel,
   Tooltip,
   css,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  SmallIconButton,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   parseGridTemplateTrackList,
@@ -144,64 +138,6 @@ const GridGeneratorSelector = ({
   );
 };
 
-type GridGeneratorEditorProps = {
-  columns: number;
-  rows: number;
-  selectedCells: Set<string>;
-  onToggleCell: (col: number, row: number) => void;
-};
-
-const GridGeneratorEditor = ({
-  columns,
-  rows,
-  selectedCells,
-  onToggleCell,
-}: GridGeneratorEditorProps) => {
-  const maxCols = 12;
-  const maxRows = 8;
-
-  const cells = useMemo(() => {
-    return Array.from({ length: maxRows * maxCols }).map((_, i) => {
-      const col = i % maxCols;
-      const row = Math.floor(i / maxCols);
-      const isInGrid = col < columns && row < rows;
-      const cellKey = `${col},${row}`;
-      const isSelected = selectedCells.has(cellKey);
-
-      return (
-        <button
-          key={i}
-          onClick={() => {
-            if (isInGrid) {
-              onToggleCell(col, row);
-            }
-          }}
-          disabled={!isInGrid}
-          className={selectorCellStyle({
-            highlighted: isSelected || undefined,
-          })}
-          style={{
-            opacity: isInGrid ? 1 : 0.3,
-            cursor: isInGrid ? "pointer" : "default",
-          }}
-        />
-      );
-    });
-  }, [columns, rows, selectedCells, onToggleCell, maxCols, maxRows]);
-
-  return (
-    <Grid
-      css={{
-        gridTemplateColumns: `repeat(${maxCols}, 1fr)`,
-        gridTemplateRows: `repeat(${maxRows}, 1fr)`,
-        gap: 2,
-      }}
-    >
-      {cells}
-    </Grid>
-  );
-};
-
 const gridGeneratorButtonStyle = css({
   all: "unset",
   position: "relative",
@@ -226,8 +162,6 @@ type GridGeneratorProps = {
 };
 
 export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
-  const [mode, setMode] = useState<"picker" | "edit">("picker");
-  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
   const gridCellData = useStore($gridCellData);
@@ -276,26 +210,6 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     handleChange(columns, rows);
   };
 
-  const handleToggleCell = (col: number, row: number) => {
-    const cellKey = `${col},${row}`;
-    setSelectedCells((prev) => {
-      const next = new Set(prev);
-      if (next.has(cellKey)) {
-        next.delete(cellKey);
-      } else {
-        next.add(cellKey);
-      }
-      return next;
-    });
-  };
-
-  const handleModeToggle = (pressed: boolean) => {
-    setMode(pressed ? "edit" : "picker");
-    if (!pressed) {
-      setSelectedCells(new Set());
-    }
-  };
-
   // Memoize grid cells to avoid recreating on each render
   const gridCells = useMemo(() => {
     return Array.from({ length: displayColumnCount * displayRowCount }).map(
@@ -327,49 +241,17 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     <FloatingPanel
       title="Grid generator"
       placement="bottom-within"
-      titleSuffix={
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SmallIconButton
-              aria-label="Grid options"
-              icon={<EllipsesIcon />}
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => handleModeToggle(mode !== "edit")}
-            >
-              {mode === "picker" ? "Edit" : "Stop editing"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
       content={
         <Flex direction="column" gap="3" css={{ padding: theme.panel.padding }}>
-          {mode === "picker" ? (
-            <GridGeneratorSelector
-              onSelect={handleSelectorSelect}
-              initialColumns={columnCount}
-              initialRows={rowCount}
-            />
-          ) : (
-            <GridGeneratorEditor
-              columns={columnCount}
-              rows={rowCount}
-              selectedCells={selectedCells}
-              onToggleCell={handleToggleCell}
-            />
-          )}
+          <GridGeneratorSelector
+            onSelect={handleSelectorSelect}
+            initialColumns={columnCount}
+            initialRows={rowCount}
+          />
         </Flex>
       }
       open={open}
-      onOpenChange={(isOpen) => {
-        if (isOpen === false) {
-          setMode("picker");
-          setSelectedCells(new Set());
-        }
-        onOpenChange(isOpen);
-      }}
+      onOpenChange={onOpenChange}
     >
       {/* Visual grid preview - similar to Figma's style */}
       <button
