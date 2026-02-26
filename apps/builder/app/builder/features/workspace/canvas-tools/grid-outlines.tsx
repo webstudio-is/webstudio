@@ -8,6 +8,7 @@ import {
   $gridEditingTrack,
   $gridEditingArea,
 } from "~/builder/shared/nano-states";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 // Compute the AABB offset that CSS transforms cause, by letting the browser
 // do all parsing and matrix composition via a hidden probe element.
@@ -62,6 +63,7 @@ export const GridOutlines = () => {
   const gridEditingTrack = useStore($gridEditingTrack);
   const gridEditingArea = useStore($gridEditingArea);
   const scale = useStore($scale);
+  const ephemeralStyles = useStore($ephemeralStyles);
   const mirrorRef = useRef<HTMLDivElement>(null);
 
   const resolvedCssText = gridCellData?.resolvedCssText;
@@ -86,7 +88,7 @@ export const GridOutlines = () => {
     }
   }, [resolvedCssText]);
 
-  if (!gridCellData) {
+  if (!gridCellData || ephemeralStyles.length !== 0) {
     return null;
   }
 
