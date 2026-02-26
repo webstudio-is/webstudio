@@ -188,13 +188,22 @@ export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(
 
 export type GridCellData = {
   instanceId: Instance["id"];
-  // Actual column and row count (from DOM probing)
   columnCount: number;
   rowCount: number;
-  // Horizontal lines: each has y position, x start, and width
-  horizontalLines: Array<{ y: number; x: number; width: number }>;
-  // Vertical lines: each has x position, y start, and height
-  verticalLines: Array<{ x: number; y: number; height: number }>;
+  // Border-box rect of the grid container in canvas coordinates
+  rect: { top: number; left: number; width: number; height: number };
+  // Resolved CSS strings from getComputedStyle (canvas-space px values).
+  // The builder overlay applies these directly and uses CSS transform: scale()
+  // to convert from canvas-space to screen-space.
+  resolvedColumnTemplate: string;
+  resolvedRowTemplate: string;
+  resolvedColumnGap: string;
+  resolvedRowGap: string;
+  resolvedPadding: string;
+  resolvedBorderWidth: string;
+  resolvedDirection: string;
+  resolvedJustifyContent: string;
+  resolvedAlignContent: string;
 };
 
 export const $gridCellData = atom<GridCellData | undefined>(undefined);

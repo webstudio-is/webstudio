@@ -116,20 +116,21 @@ const helperStylesShared = [
   // 3. We prevent this by excluding elements with `data-lexical-editor`.
   // 4. This rule is used here and not in collapsing detection because `data-lexical-editor` might not be set instantly.
   //    Mistakes in collapsing will be corrected in the next cycle.
-  // Grid containers set --ws-inflate-w / --ws-inflate-h to trackCount * INFLATE_PADDING
-  // so each virtual cell gets INFLATE_PADDING worth of space. Non-grid elements
-  // fall back to the default INFLATE_PADDING.
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="w"]) {
-    padding-right: var(--ws-inflate-w, ${INFLATE_PADDING}px);
+  // Grid containers use track-level minmax() inflation (applied inline by
+  // inflator.ts) instead of padding, so we skip padding for elements that
+  // have inline grid-template-columns or grid-template-rows (i.e. grids).
+  // Non-grid elements fall back to the default INFLATE_PADDING.
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor]):not([style*="grid-template"])[${inflatedAttribute}="w"]) {
+    padding-right: ${INFLATE_PADDING}px;
   }`,
   // Has no height, will collapse
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="h"]) {
-    padding-top: var(--ws-inflate-h, ${INFLATE_PADDING}px);
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor]):not([style*="grid-template"])[${inflatedAttribute}="h"]) {
+    padding-top: ${INFLATE_PADDING}px;
   }`,
   // Has no width or height, will collapse
-  `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="wh"]) {
-    padding-right: var(--ws-inflate-w, ${INFLATE_PADDING}px);
-    padding-top: var(--ws-inflate-h, ${INFLATE_PADDING}px);
+  `[${idAttribute}]:where(:not(body):not([data-lexical-editor]):not([style*="grid-template"])[${inflatedAttribute}="wh"]) {
+    padding-right: ${INFLATE_PADDING}px;
+    padding-top: ${INFLATE_PADDING}px;
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;
