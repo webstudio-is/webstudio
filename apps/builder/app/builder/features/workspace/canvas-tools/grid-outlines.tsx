@@ -48,6 +48,7 @@ const cellStyle = css({
   pointerEvents: "none",
   outline: `1px dashed ${theme.colors.borderMain}`,
   outlineOffset: "-0.5px",
+  contain: "strict",
 });
 
 const highlightStyle = css({
