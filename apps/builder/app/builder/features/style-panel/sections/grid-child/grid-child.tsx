@@ -26,7 +26,8 @@ import {
   useParentComputedStyleDecl,
 } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import { parseGridAreas, getGridDimensions } from "../layout/shared/grid-areas";
+import { parseGridAreas } from "@webstudio-is/css-data";
+import { getGridDimensions } from "../layout/shared/grid-areas";
 import {
   GridPositionInputs,
   type GridPosition,
@@ -146,14 +147,18 @@ export const Section = () => {
     const batch = createBatchUpdate();
 
     if (newMode === "auto") {
-      // Always reset to auto placement when switching to auto mode
-      batch.setProperty("grid-column-start")({
-        type: "keyword",
-        value: "auto",
-      });
-      batch.setProperty("grid-column-end")({ type: "keyword", value: "auto" });
-      batch.setProperty("grid-row-start")({ type: "keyword", value: "auto" });
-      batch.setProperty("grid-row-end")({ type: "keyword", value: "auto" });
+      // Reset to span 1 on all axes for auto placement
+      const span1: StyleValue = {
+        type: "tuple",
+        value: [
+          { type: "keyword", value: "span" },
+          { type: "unit", value: 1, unit: "number" },
+        ],
+      };
+      batch.setProperty("grid-column-start")(span1);
+      batch.setProperty("grid-column-end")(span1);
+      batch.setProperty("grid-row-start")(span1);
+      batch.setProperty("grid-row-end")(span1);
       batch.publish();
     } else if (newMode === "manual" && hasKeywordValues) {
       // Convert keywords to numeric positions when switching to manual
@@ -375,18 +380,13 @@ const SpanInput = ({
   };
 
   // Create span StyleValue from number
-  const createSpanValue = (num: number): StyleValue => {
-    if (num <= 1) {
-      return { type: "keyword", value: "auto" };
-    }
-    return {
-      type: "tuple",
-      value: [
-        { type: "keyword", value: "span" },
-        { type: "unit", value: num, unit: "number" },
-      ],
-    };
-  };
+  const createSpanValue = (num: number): StyleValue => ({
+    type: "tuple",
+    value: [
+      { type: "keyword", value: "span" },
+      { type: "unit", value: num, unit: "number" },
+    ],
+  });
 
   const currentSpan = getSpanNumber(value);
 
@@ -412,8 +412,7 @@ const SpanInput = ({
         Math.max(1, Math.round(styleValue.value))
       );
       const batch = createBatchUpdate();
-      // Set start to auto for auto placement mode
-      batch.setProperty(startProperty)({ type: "keyword", value: "auto" });
+      batch.setProperty(startProperty)(spanValue);
       batch.setProperty(property)(spanValue);
       batch.publish({ isEphemeral: true });
     }
@@ -426,7 +425,7 @@ const SpanInput = ({
         Math.max(1, Math.round(styleValue.value))
       );
       const batch = createBatchUpdate();
-      batch.setProperty(startProperty)({ type: "keyword", value: "auto" });
+      batch.setProperty(startProperty)(spanValue);
       batch.setProperty(property)(spanValue);
       batch.publish();
     }

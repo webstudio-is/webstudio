@@ -15,7 +15,11 @@ import {
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
 import { lexer } from "css-tree";
-import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
+import {
+  parseGridTemplateTrackList,
+  parseGridAreas,
+  type AreaInfo,
+} from "@webstudio-is/css-data";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -25,56 +29,13 @@ import { createBatchUpdate } from "../../../shared/use-style-data";
 import { GridPositionInputs } from "./grid-position-inputs";
 import { $gridEditingArea } from "~/builder/shared/nano-states";
 
-export type AreaInfo = {
-  name: string;
-  columnStart: number;
-  columnEnd: number;
-  rowStart: number;
-  rowEnd: number;
-};
+export { parseGridAreas, type AreaInfo } from "@webstudio-is/css-data";
 
 /**
- * Parse grid-template-areas CSS string into structured area information
- * @example
- * parseGridAreas('"header header" "sidebar main"')
- * // Returns: [
- * //   { name: 'header', columnStart: 1, columnEnd: 3, rowStart: 1, rowEnd: 2 },
- * //   { name: 'sidebar', columnStart: 1, columnEnd: 2, rowStart: 2, rowEnd: 3 },
- * //   { name: 'main', columnStart: 2, columnEnd: 3, rowStart: 2, rowEnd: 3 }
- * // ]
+ * Convert a user-typed area name into a valid CSS <custom-ident>.
+ * Replaces whitespace runs with a single dash.
  */
-export const parseGridAreas = (value: string): AreaInfo[] => {
-  if (!value || value === "none") {
-    return [];
-  }
-
-  const areaMap = new Map<string, AreaInfo>();
-  const rows = value.match(/"[^"]+"/g) || [];
-
-  rows.forEach((row, rowIndex) => {
-    const names = row.replace(/"/g, "").split(/\s+/).filter(Boolean);
-    names.forEach((name, colIndex) => {
-      if (name !== ".") {
-        if (!areaMap.has(name)) {
-          areaMap.set(name, {
-            name,
-            columnStart: colIndex + 1,
-            columnEnd: colIndex + 2,
-            rowStart: rowIndex + 1,
-            rowEnd: rowIndex + 2,
-          });
-        } else {
-          // Extend the area bounds
-          const area = areaMap.get(name)!;
-          area.columnEnd = Math.max(area.columnEnd, colIndex + 2);
-          area.rowEnd = Math.max(area.rowEnd, rowIndex + 2);
-        }
-      }
-    });
-  });
-
-  return Array.from(areaMap.values());
-};
+const toAreaName = (input: string): string => input.replace(/\s+/g, "-");
 
 /**
  * Generate grid-template-areas CSS string from area information
@@ -254,6 +215,7 @@ export const __testing__ = {
   findNonOverlappingPosition,
   isAreaWithinBounds,
   filterAreasWithinBounds,
+  toAreaName,
 };
 
 type AreaEditorProps = {
@@ -286,7 +248,7 @@ const AreaEditor = ({
   );
 
   const handleSave = useCallback(() => {
-    const trimmedName = value.name.trim() || "Area";
+    const trimmedName = toAreaName(value.name.trim()) || "Area";
 
     // Validate CSS identifier using css-tree lexer
     if (!lexer.match("<custom-ident>", trimmedName).matched) {
@@ -334,7 +296,7 @@ const AreaEditor = ({
   // Validation is now handled by GridPositionInputs component
 
   // Check for duplicate names
-  const trimmedName = value.name.trim();
+  const trimmedName = toAreaName(value.name.trim());
   // Filter out the area being edited from the comparison using index
   const otherAreas =
     editingIndex !== undefined
@@ -388,12 +350,31 @@ const AreaEditor = ({
       >
         <Label css={{ paddingTop: theme.spacing[3] }}>Position</Label>
         <GridPositionInputs
-          value={value}
-          onChange={(position) => setValue({ ...value, ...position })}
+          value={{
+            ...value,
+            columnEnd: value.columnEnd - 1,
+            rowEnd: value.rowEnd - 1,
+          }}
+          onChange={(position) =>
+            setValue({
+              ...value,
+              ...position,
+              columnEnd: position.columnEnd + 1,
+              rowEnd: position.rowEnd + 1,
+            })
+          }
           onBlur={handleSave}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              onClose();
+            } else if (event.key === "Enter") {
+              handleSave();
+            }
+          }}
           gridColumns={gridColumns}
           gridRows={gridRows}
           checkBounds
+          inclusiveEnd
         />
       </Grid>
       {hasDuplicateName && (

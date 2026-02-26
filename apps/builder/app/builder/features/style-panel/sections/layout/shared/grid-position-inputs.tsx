@@ -24,22 +24,28 @@ export const validateGridPosition = (
   position: GridPosition,
   gridColumns: number,
   gridRows: number,
-  options: { checkBounds?: boolean } = {}
+  options: { checkBounds?: boolean; inclusiveEnd?: boolean } = {}
 ): GridPositionValidation => {
-  const { checkBounds = false } = options;
+  const { checkBounds = false, inclusiveEnd = false } = options;
+  // With inclusiveEnd, end is a track index (end >= start is valid).
+  // Without, end is a grid-line number (end > start is required).
+  const endOp = inclusiveEnd
+    ? (end: number, start: number) => end >= start
+    : (end: number, start: number) => end > start;
+  const maxCol = inclusiveEnd ? gridColumns : gridColumns + 1;
+  const maxRow = inclusiveEnd ? gridRows : gridRows + 1;
   const result = {
-    // Start must be >= 1 and strictly less than end
     isColumnStartValid:
-      position.columnStart >= 1 && position.columnStart < position.columnEnd,
-    // End must be greater than start, optionally within grid bounds
+      position.columnStart >= 1 &&
+      endOp(position.columnEnd, position.columnStart),
     isColumnEndValid:
-      position.columnEnd > position.columnStart &&
-      (!checkBounds || position.columnEnd <= gridColumns + 1),
+      endOp(position.columnEnd, position.columnStart) &&
+      (!checkBounds || position.columnEnd <= maxCol),
     isRowStartValid:
-      position.rowStart >= 1 && position.rowStart < position.rowEnd,
+      position.rowStart >= 1 && endOp(position.rowEnd, position.rowStart),
     isRowEndValid:
-      position.rowEnd > position.rowStart &&
-      (!checkBounds || position.rowEnd <= gridRows + 1),
+      endOp(position.rowEnd, position.rowStart) &&
+      (!checkBounds || position.rowEnd <= maxRow),
   };
   return result;
 };
@@ -48,9 +54,16 @@ type GridPositionInputsProps = {
   value: GridPosition;
   onChange: (value: GridPosition) => void;
   onBlur?: () => void;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
   gridColumns: number;
   gridRows: number;
   checkBounds?: boolean;
+  /**
+   * When true, "end" values are inclusive track indices (1-based)
+   * instead of exclusive grid-line numbers.
+   * Validation uses end >= start instead of end > start.
+   */
+  inclusiveEnd?: boolean;
 };
 
 const PositionInputGroup = ({
@@ -59,6 +72,7 @@ const PositionInputGroup = ({
   onStartChange,
   onEndChange,
   onBlur,
+  onKeyDown,
   isStartValid,
   isEndValid,
   minStart,
@@ -79,6 +93,7 @@ const PositionInputGroup = ({
   minEnd: number;
   maxEnd: number;
   label: string;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
 }) => (
   <Flex direction="column" gap="1" css={{ flex: 1 }}>
     <Grid css={{ gridTemplateColumns: "1fr 1fr", gap: theme.spacing[3] }}>
@@ -92,6 +107,7 @@ const PositionInputGroup = ({
           }
         }}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         color={isStartValid ? undefined : "error"}
         min={minStart}
         max={maxStart}
@@ -106,6 +122,7 @@ const PositionInputGroup = ({
           }
         }}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         color={isEndValid ? undefined : "error"}
         min={minEnd}
         max={maxEnd}
@@ -121,13 +138,20 @@ export const GridPositionInputs = ({
   value,
   onChange,
   onBlur,
+  onKeyDown,
   gridColumns,
   gridRows,
   checkBounds = false,
+  inclusiveEnd = false,
 }: GridPositionInputsProps) => {
   const validation = validateGridPosition(value, gridColumns, gridRows, {
     checkBounds,
+    inclusiveEnd,
   });
+
+  const colMaxEnd = inclusiveEnd ? gridColumns : gridColumns + 1;
+  const rowMaxEnd = inclusiveEnd ? gridRows : gridRows + 1;
+  const minEnd = inclusiveEnd ? 1 : 2;
 
   return (
     <Flex gap="2">
@@ -137,12 +161,13 @@ export const GridPositionInputs = ({
         onStartChange={(columnStart) => onChange({ ...value, columnStart })}
         onEndChange={(columnEnd) => onChange({ ...value, columnEnd })}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         isStartValid={validation.isColumnStartValid}
         isEndValid={validation.isColumnEndValid}
         minStart={1}
         maxStart={gridColumns}
-        minEnd={2}
-        maxEnd={gridColumns + 1}
+        minEnd={minEnd}
+        maxEnd={colMaxEnd}
         label="Column: start/end"
       />
       <PositionInputGroup
@@ -151,12 +176,13 @@ export const GridPositionInputs = ({
         onStartChange={(rowStart) => onChange({ ...value, rowStart })}
         onEndChange={(rowEnd) => onChange({ ...value, rowEnd })}
         onBlur={onBlur}
+        onKeyDown={onKeyDown}
         isStartValid={validation.isRowStartValid}
         isEndValid={validation.isRowEndValid}
         minStart={1}
         maxStart={gridRows}
-        minEnd={2}
-        maxEnd={gridRows + 1}
+        minEnd={minEnd}
+        maxEnd={rowMaxEnd}
         label="Row: start/end"
       />
     </Flex>

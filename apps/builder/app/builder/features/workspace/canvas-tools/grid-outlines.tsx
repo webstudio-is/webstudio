@@ -1,7 +1,7 @@
 import { useMemo, useLayoutEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { css } from "@webstudio-is/design-system";
-import { theme } from "@webstudio-is/design-system";
+import { theme, textVariants } from "@webstudio-is/design-system";
 import { $gridCellData } from "~/shared/nano-states";
 import {
   $scale,
@@ -9,6 +9,7 @@ import {
   $gridEditingArea,
 } from "~/builder/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
+import { parseGridAreas } from "@webstudio-is/css-data";
 
 // Compute the AABB offset that CSS transforms cause, by letting the browser
 // do all parsing and matrix composition via a hidden probe element.
@@ -45,17 +46,81 @@ const containerStyle = css({
   contain: "strict",
 });
 
+// Use the browser's CSS parser to extract a single property from cssText.
+// Never write ad-hoc regex/string parsers for CSS values.
+const probe = document.createElement("div");
+const getPropertyFromCssText = (cssText: string, property: string): string => {
+  probe.style.cssText = cssText;
+  return probe.style.getPropertyValue(property);
+};
+
+// Build a map of "col,row" → area name from cssText.
+// Only the top-left cell of each named area gets an entry so the
+// label appears once, not in every spanned cell.
+const getAreaNamesByCell = (cssText: string): Map<string, string> => {
+  const areas = getPropertyFromCssText(cssText, "grid-template-areas");
+  const result = new Map<string, string>();
+  for (const { name, columnStart, rowStart } of parseGridAreas(areas)) {
+    result.set(`${columnStart},${rowStart}`, name);
+  }
+  return result;
+};
+
+// Build a set of all "col,row" keys that belong to any named area.
+// Used to suppress per-cell outlines inside areas.
+const getAreaCells = (cssText: string): Set<string> => {
+  const areas = getPropertyFromCssText(cssText, "grid-template-areas");
+  const result = new Set<string>();
+  for (const { columnStart, columnEnd, rowStart, rowEnd } of parseGridAreas(
+    areas
+  )) {
+    for (let row = rowStart; row < rowEnd; row++) {
+      for (let col = columnStart; col < columnEnd; col++) {
+        result.add(`${col},${row}`);
+      }
+    }
+  }
+  return result;
+};
+
+// Return the full parsed area spans for rendering merged area outlines.
+const getAreaSpans = (cssText: string) => {
+  const areas = getPropertyFromCssText(cssText, "grid-template-areas");
+  return parseGridAreas(areas);
+};
+
 const cellStyle = css({
   pointerEvents: "none",
   outline: `1px dashed ${theme.colors.borderMain}`,
   outlineOffset: "-0.5px",
-  contain: "strict",
+  // Area cells suppress their per-cell outline; a merged area outline
+  // div renders a single border around the whole area instead.
+  "&[data-area]": {
+    outline: "none",
+  },
+});
+
+const areaOutlineStyle = css({
+  pointerEvents: "none",
+  outline: `1px solid ${theme.colors.borderMain}`,
+  outlineOffset: "-0.5px",
+});
+
+const areaLabelStyle = css(textVariants.regular, {
+  position: "absolute",
+  top: 2,
+  left: 4,
+  color: theme.colors.foregroundSubtle,
+  pointerEvents: "none",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "calc(100% - 8px)",
 });
 
 const highlightStyle = css({
   pointerEvents: "none",
-  backgroundColor: theme.colors.backgroundInfoNotification,
-  opacity: 0.6,
+  backgroundColor: "oklch(94.8% 0.027 246.4 / 0.6)",
 });
 
 export const GridOutlines = () => {
@@ -75,6 +140,24 @@ export const GridOutlines = () => {
   const transformOffset = useMemo(
     () =>
       resolvedCssText ? getTransformOffset(resolvedCssText) : { dx: 0, dy: 0 },
+    [resolvedCssText]
+  );
+
+  // Parse area names from the cssText — only the top-left cell gets a label
+  const areaNames = useMemo(
+    () => getAreaNamesByCell(resolvedCssText ?? ""),
+    [resolvedCssText]
+  );
+
+  // Set of all cells covered by any named area — for outline styling
+  const areaCells = useMemo(
+    () => getAreaCells(resolvedCssText ?? ""),
+    [resolvedCssText]
+  );
+
+  // Full area spans for rendering merged outlines
+  const areaSpans = useMemo(
+    () => getAreaSpans(resolvedCssText ?? ""),
     [resolvedCssText]
   );
 
@@ -133,11 +216,36 @@ export const GridOutlines = () => {
             Styles applied via cssText in useEffect — adding a new synced
             property only requires a one-line change in grid-outline-utils. */}
         <div ref={mirrorRef}>
-          {cells.map(({ col, row }) => (
+          {cells.map(({ col, row }) => {
+            const areaName = areaNames.get(`${col},${row}`);
+            const isArea = areaCells.has(`${col},${row}`);
+            return (
+              <div
+                key={`${col}-${row}`}
+                className={cellStyle()}
+                data-area={isArea ? "" : undefined}
+                style={{
+                  gridColumn: col,
+                  gridRow: row,
+                  position: "relative",
+                }}
+              >
+                {areaName && (
+                  <span className={areaLabelStyle()}>{areaName}</span>
+                )}
+              </div>
+            );
+          })}
+          {/* Merged area outlines: one div per named area spanning its
+              full grid region, rendered after cells so it paints on top. */}
+          {areaSpans.map((area) => (
             <div
-              key={`${col}-${row}`}
-              className={cellStyle()}
-              style={{ gridColumn: col, gridRow: row }}
+              key={`area-outline-${area.name}`}
+              className={areaOutlineStyle()}
+              style={{
+                gridColumn: `${area.columnStart} / ${area.columnEnd}`,
+                gridRow: `${area.rowStart} / ${area.rowEnd}`,
+              }}
             />
           ))}
           {gridEditingTrack && (

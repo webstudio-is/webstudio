@@ -13,6 +13,7 @@ const {
   findNonOverlappingPosition,
   isAreaWithinBounds,
   filterAreasWithinBounds,
+  toAreaName,
 } = __testing__;
 
 describe("parseGridAreas", () => {
@@ -637,5 +638,31 @@ describe("filterAreasWithinBounds", () => {
     expect(result).toHaveLength(2);
     expect(result[0].name).toBe("first");
     expect(result[1].name).toBe("second");
+  });
+});
+
+describe("toAreaName", () => {
+  test("replaces spaces with dashes", () => {
+    expect(toAreaName("Area 1")).toBe("Area-1");
+  });
+
+  test("replaces multiple consecutive spaces with a single dash", () => {
+    expect(toAreaName("my   area")).toBe("my-area");
+  });
+
+  test("replaces leading and trailing spaces", () => {
+    expect(toAreaName(" header ")).toBe("-header-");
+  });
+
+  test("returns single word unchanged", () => {
+    expect(toAreaName("sidebar")).toBe("sidebar");
+  });
+
+  test("handles empty string", () => {
+    expect(toAreaName("")).toBe("");
+  });
+
+  test("handles tabs and mixed whitespace", () => {
+    expect(toAreaName("a\tb")).toBe("a-b");
   });
 });
