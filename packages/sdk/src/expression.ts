@@ -43,13 +43,7 @@ export const allowedStringMethods = new Set([
   "toLocaleUpperCase",
 ]);
 
-export const allowedArrayMethods = new Set([
-  "at",
-  "includes",
-  "join",
-  "slice",
-  "filter",
-]);
+export const allowedArrayMethods = new Set(["at", "includes", "join", "slice"]);
 
 export const lintExpression = ({
   expression,

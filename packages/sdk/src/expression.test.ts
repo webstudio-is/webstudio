@@ -456,12 +456,6 @@ describe("transpile expression", () => {
         executable: true,
       })
     ).toEqual("items?.map?.(item => item?.id)");
-    expect(
-      transpileExpression({
-        expression: "data.list.filter(x => x > 0)",
-        executable: true,
-      })
-    ).toEqual("data?.list?.filter?.(x => x > 0)");
   });
 
   test("transpile nested method calls with optional chaining", () => {
