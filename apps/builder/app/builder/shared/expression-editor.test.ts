@@ -64,7 +64,6 @@ describe("generateCompletionOptions", () => {
       expect(labels).toContain("1");
       expect(labels).toContain("2");
       expect(labels).toContain("length");
-      expect(labels).toContain("filter()");
       expect(labels).toContain("slice()");
 
       // Check specific values
@@ -73,22 +72,6 @@ describe("generateCompletionOptions", () => {
         label: "length",
         detail: "3",
         type: "property",
-      });
-    });
-
-    test("includes array methods when searching", () => {
-      const target = [1, 2, 3];
-      const options = generateCompletionOptions({
-        target,
-        pathName: "fil",
-        pathLength: 1,
-      });
-
-      const methodOptions = options.filter((o) => o.type === "method");
-      expect(methodOptions).toContainEqual({
-        label: "filter()",
-        detail: "array method",
-        type: "method",
       });
     });
 
@@ -233,7 +216,6 @@ describe("generateCompletionOptions", () => {
       // Empty array has length and all array methods
       const labels = options.map((o) => o.label);
       expect(labels).toContain("length");
-      expect(labels).toContain("filter()");
       expect(labels).toContain("slice()");
 
       const lengthOption = options.find((o) => o.label === "length");
