@@ -1,3 +1,4 @@
+import { useMemo, useLayoutEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { css } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
@@ -7,6 +8,29 @@ import {
   $gridEditingTrack,
   $gridEditingArea,
 } from "~/builder/shared/nano-states";
+
+// Compute the AABB offset that CSS transforms cause, by letting the browser
+// do all parsing and matrix composition via a hidden probe element.
+// No manual parsing of translate/rotate/scale values — works with any CSS,
+// including variables already resolved to computed values on the canvas.
+const getTransformOffset = (cssText: string): { dx: number; dy: number } => {
+  const probe = document.createElement("div");
+  // Apply the same CSS as the canvas element (width, height, transform,
+  // transform-origin, translate, rotate, scale, etc.)
+  probe.style.cssText = cssText;
+  // Override layout: fixed at viewport origin, invisible
+  probe.style.position = "fixed";
+  probe.style.left = "0px";
+  probe.style.top = "0px";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  document.body.appendChild(probe);
+  const bcr = probe.getBoundingClientRect();
+  document.body.removeChild(probe);
+  // Without transforms the probe sits at (0, 0).
+  // The delta is the displacement caused by CSS transforms.
+  return { dx: bcr.left, dy: bcr.top };
+};
 
 const containerStyle = css({
   position: "absolute",
@@ -37,36 +61,47 @@ export const GridOutlines = () => {
   const gridEditingTrack = useStore($gridEditingTrack);
   const gridEditingArea = useStore($gridEditingArea);
   const scale = useStore($scale);
+  const mirrorRef = useRef<HTMLDivElement>(null);
+
+  const resolvedCssText = gridCellData?.resolvedCssText;
+
+  // Compute the transform-induced offset so we can position the wrapper at
+  // the untransformed layout origin. The mirror div then re-applies the CSS
+  // transforms, landing the overlay at the correct visual position.
+  // Uses a hidden probe element — the browser handles all CSS parsing.
+  const transformOffset = useMemo(
+    () =>
+      resolvedCssText ? getTransformOffset(resolvedCssText) : { dx: 0, dy: 0 },
+    [resolvedCssText]
+  );
+
+  // Apply canvas CSS to the mirror div via cssText — bypasses React's
+  // style system so we can sync any property without type gymnastics.
+  // useLayoutEffect (not useEffect) to apply styles synchronously before
+  // paint, avoiding a one-frame flash of unstyled content.
+  useLayoutEffect(() => {
+    if (mirrorRef.current && resolvedCssText !== undefined) {
+      mirrorRef.current.style.cssText = resolvedCssText;
+    }
+  }, [resolvedCssText]);
 
   if (!gridCellData) {
     return null;
   }
 
   const {
-    rect,
+    bcr,
+    untransformedWidth,
+    untransformedHeight,
     columnCount,
     rowCount,
-    resolvedDisplay,
-    resolvedWidth,
-    resolvedHeight,
-    resolvedBoxSizing,
-    resolvedColumnTemplate,
-    resolvedRowTemplate,
-    resolvedColumnGap,
-    resolvedRowGap,
-    resolvedPadding,
-    resolvedBorderWidth,
-    resolvedBorderStyle,
-    resolvedDirection,
-    resolvedGridTemplateAreas,
-    resolvedJustifyContent,
-    resolvedJustifyItems,
-    resolvedAlignContent,
-    resolvedTransform,
-    resolvedTransformOrigin,
   } = gridCellData;
 
   const scaleFactor = scale / 100;
+
+  // Recover untransformed position: BCR includes transforms, subtract them.
+  const untransformedLeft = bcr.left - transformOffset.dx;
+  const untransformedTop = bcr.top - transformOffset.dy;
 
   // Generate one cell per grid slot
   const cells: Array<{ col: number; row: number }> = [];
@@ -84,37 +119,17 @@ export const GridOutlines = () => {
           position: "absolute",
           left: 0,
           top: 0,
-          transform: `scale(${scaleFactor}) translate3d(${rect.left}px, ${rect.top}px, 0)`,
+          transform: `scale(${scaleFactor}) translate3d(${untransformedLeft}px, ${untransformedTop}px, 0)`,
           transformOrigin: "0 0",
-          width: rect.width,
-          height: rect.height,
+          width: untransformedWidth,
+          height: untransformedHeight,
           pointerEvents: "none",
         }}
       >
-        {/* Grid mirror: faithfully reproduces the canvas element's CSS */}
-        <div
-          style={{
-            display: resolvedDisplay,
-            width: resolvedWidth,
-            height: resolvedHeight,
-            boxSizing: resolvedBoxSizing as "border-box" | "content-box",
-            gridTemplateColumns: resolvedColumnTemplate,
-            gridTemplateRows: resolvedRowTemplate,
-            gridTemplateAreas: resolvedGridTemplateAreas,
-            columnGap: resolvedColumnGap,
-            rowGap: resolvedRowGap,
-            padding: resolvedPadding,
-            borderWidth: resolvedBorderWidth,
-            borderStyle: resolvedBorderStyle,
-            borderColor: "transparent",
-            direction: resolvedDirection as "ltr" | "rtl",
-            justifyContent: resolvedJustifyContent,
-            justifyItems: resolvedJustifyItems,
-            alignContent: resolvedAlignContent,
-            transform: resolvedTransform,
-            transformOrigin: resolvedTransformOrigin,
-          }}
-        >
+        {/* Grid mirror: faithfully reproduces the canvas element's CSS.
+            Styles applied via cssText in useEffect — adding a new synced
+            property only requires a one-line change in grid-outline-utils. */}
+        <div ref={mirrorRef}>
           {cells.map(({ col, row }) => (
             <div
               key={`${col}-${row}`}

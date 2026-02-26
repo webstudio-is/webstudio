@@ -190,33 +190,17 @@ export type GridCellData = {
   instanceId: Instance["id"];
   columnCount: number;
   rowCount: number;
-  // Untransformed border-box rect of the grid container in canvas viewport
-  // coordinates. Size comes from offsetWidth/offsetHeight (ignores CSS
-  // transforms), position is recovered by inverting the element's own
-  // transform from the getBoundingClientRect AABB.
-  rect: { top: number; left: number; width: number; height: number };
-  // Resolved CSS strings from getComputedStyle (canvas-space px values).
-  // The builder overlay applies these on a child "mirror" div that
-  // faithfully reproduces the canvas element. A parent wrapper handles
-  // our scale + translate positioning.
-  resolvedDisplay: string;
-  resolvedWidth: string;
-  resolvedHeight: string;
-  resolvedBoxSizing: string;
-  resolvedColumnTemplate: string;
-  resolvedRowTemplate: string;
-  resolvedColumnGap: string;
-  resolvedRowGap: string;
-  resolvedPadding: string;
-  resolvedBorderWidth: string;
-  resolvedBorderStyle: string;
-  resolvedDirection: string;
-  resolvedGridTemplateAreas: string;
-  resolvedJustifyContent: string;
-  resolvedJustifyItems: string;
-  resolvedAlignContent: string;
-  resolvedTransform: string;
-  resolvedTransformOrigin: string;
+  // Raw bounding client rect (post-transform). The builder recovers the
+  // untransformed position by probing a hidden element with the same CSS.
+  bcr: { top: number; left: number };
+  // Untransformed border-box dimensions from offsetWidth/offsetHeight.
+  untransformedWidth: number;
+  untransformedHeight: number;
+  // CSS text built from getComputedStyle on the canvas element.
+  // Applied verbatim to the builder overlay mirror div via style.cssText.
+  // Adding a new synced property = one line in the whitelist array
+  // in grid-outline-utils.ts.
+  resolvedCssText: string;
 };
 
 export const $gridCellData = atom<GridCellData | undefined>(undefined);
