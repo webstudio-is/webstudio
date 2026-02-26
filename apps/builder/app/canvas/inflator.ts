@@ -333,24 +333,33 @@ const applyInflation = () => {
 
   // Now combine all operations in batches.
 
-  // 1. Remove all inflated attributes and grid inflation overrides
-  const clearInflation = (el: Element) => {
+  // 1. Remove all inflated attributes and grid inflation overrides.
+  // Only remove standard grid-template-* properties from elements that
+  // were actually inflated (have inflatedAttribute), because those are
+  // the only ones we set them on. Removing them blindly from baseElement
+  // or its parent could clobber user-authored inline styles.
+  const clearInflation = (el: Element, wasInflated: boolean) => {
     el.removeAttribute(inflatedAttribute);
     if (el instanceof HTMLElement) {
       el.style.removeProperty("--ws-inflate-h");
       el.style.removeProperty("--ws-inflate-w");
-      el.style.removeProperty("grid-template-columns");
-      el.style.removeProperty("grid-template-rows");
+      if (wasInflated) {
+        el.style.removeProperty("grid-template-columns");
+        el.style.removeProperty("grid-template-rows");
+      }
     }
   };
   if (baseElement.parentElement) {
-    clearInflation(baseElement.parentElement);
+    clearInflation(
+      baseElement.parentElement,
+      baseElement.parentElement.hasAttribute(inflatedAttribute)
+    );
   }
-  clearInflation(baseElement);
+  clearInflation(baseElement, baseElement.hasAttribute(inflatedAttribute));
   for (const element of baseElement.querySelectorAll(
     `[${inflatedAttribute}]`
   )) {
-    clearInflation(element);
+    clearInflation(element, true);
   }
 
   // 2. Read stores once for all elements

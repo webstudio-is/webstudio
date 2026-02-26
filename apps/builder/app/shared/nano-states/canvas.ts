@@ -190,20 +190,33 @@ export type GridCellData = {
   instanceId: Instance["id"];
   columnCount: number;
   rowCount: number;
-  // Border-box rect of the grid container in canvas coordinates
+  // Untransformed border-box rect of the grid container in canvas viewport
+  // coordinates. Size comes from offsetWidth/offsetHeight (ignores CSS
+  // transforms), position is recovered by inverting the element's own
+  // transform from the getBoundingClientRect AABB.
   rect: { top: number; left: number; width: number; height: number };
   // Resolved CSS strings from getComputedStyle (canvas-space px values).
-  // The builder overlay applies these directly and uses CSS transform: scale()
-  // to convert from canvas-space to screen-space.
+  // The builder overlay applies these on a child "mirror" div that
+  // faithfully reproduces the canvas element. A parent wrapper handles
+  // our scale + translate positioning.
+  resolvedDisplay: string;
+  resolvedWidth: string;
+  resolvedHeight: string;
+  resolvedBoxSizing: string;
   resolvedColumnTemplate: string;
   resolvedRowTemplate: string;
   resolvedColumnGap: string;
   resolvedRowGap: string;
   resolvedPadding: string;
   resolvedBorderWidth: string;
+  resolvedBorderStyle: string;
   resolvedDirection: string;
+  resolvedGridTemplateAreas: string;
   resolvedJustifyContent: string;
+  resolvedJustifyItems: string;
   resolvedAlignContent: string;
+  resolvedTransform: string;
+  resolvedTransformOrigin: string;
 };
 
 export const $gridCellData = atom<GridCellData | undefined>(undefined);
