@@ -1,6 +1,7 @@
 import htmlTags, { voidHtmlTags, type HtmlTags } from "html-tags";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { compareMedia, type StyleValue } from "@webstudio-is/css-engine";
+import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import type { Breakpoint, StyleDecl, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -19,6 +20,11 @@ const isHtmlTag = (tag: string): tag is HtmlTags =>
 const instanceIdSet = new Set<string>();
 
 let rafHandle: number;
+
+// Padding in px added to collapsed elements to give them visible size on canvas.
+// Grid containers multiply this by their track count so each virtual cell
+// gets this amount of space.
+export const INFLATE_PADDING = 75;
 
 // Do not add inflation paddings for replaced elements as at the moment we add them they don't have real size
 // https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element
@@ -327,13 +333,25 @@ const applyInflation = () => {
 
   // Now combine all operations in batches.
 
-  // 1. Remove all inflated attributes
+  // 1. Remove all inflated attributes and grid inflation custom properties
   baseElement.parentElement?.removeAttribute(inflatedAttribute);
+  if (baseElement.parentElement instanceof HTMLElement) {
+    baseElement.parentElement.style.removeProperty("--ws-inflate-h");
+    baseElement.parentElement.style.removeProperty("--ws-inflate-w");
+  }
   baseElement.removeAttribute(inflatedAttribute);
+  if (baseElement instanceof HTMLElement) {
+    baseElement.style.removeProperty("--ws-inflate-h");
+    baseElement.style.removeProperty("--ws-inflate-w");
+  }
   for (const element of baseElement.querySelectorAll(
     `[${inflatedAttribute}]`
   )) {
     element.removeAttribute(inflatedAttribute);
+    if (element instanceof HTMLElement) {
+      element.style.removeProperty("--ws-inflate-h");
+      element.style.removeProperty("--ws-inflate-w");
+    }
   }
 
   // 2. Read stores once for all elements
@@ -367,9 +385,33 @@ const applyInflation = () => {
       instances: allInstances,
     });
 
+    // Grid containers with no children may have non-zero offsetHeight/offsetWidth
+    // purely from gaps even though all tracks collapsed to 0px.
+    // Detect this case and treat the dimension as 0 so inflation kicks in.
+    let { offsetWidth, offsetHeight } = element;
+    const elementComputedStyle = window.getComputedStyle(element);
+    if (
+      (elementComputedStyle.display === "grid" ||
+        elementComputedStyle.display === "inline-grid") &&
+      element.childElementCount === 0
+    ) {
+      const rows = parseGridTemplateTrackList(
+        elementComputedStyle.gridTemplateRows
+      );
+      const cols = parseGridTemplateTrackList(
+        elementComputedStyle.gridTemplateColumns
+      );
+      if (rows.length > 0 && rows.every((t) => t.value === "0px")) {
+        offsetHeight = 0;
+      }
+      if (cols.length > 0 && cols.every((t) => t.value === "0px")) {
+        offsetWidth = 0;
+      }
+    }
+
     const state = getInflationState({
-      offsetWidth: element.offsetWidth,
-      offsetHeight: element.offsetHeight,
+      offsetWidth,
+      offsetHeight,
       explicitWidth: elementSize.width,
       explicitHeight: elementSize.height,
     });
@@ -379,9 +421,37 @@ const applyInflation = () => {
     }
   }
 
-  // 4. Add inflated attributes
+  // 4. Add inflated attributes and grid-specific inflation sizing
   for (const [element, value] of inflatedElements.entries()) {
     element.setAttribute(inflatedAttribute, value);
+
+    // Grid containers inflate proportionally to track count so each
+    // virtual cell gets INFLATE_PADDING worth of space, making the
+    // grid structure visible even without child elements.
+    const computedStyle = window.getComputedStyle(element);
+    const display = computedStyle.display;
+    if (display === "grid" || display === "inline-grid") {
+      const rowCount = Math.max(
+        1,
+        parseGridTemplateTrackList(computedStyle.gridTemplateRows).length
+      );
+      const colCount = Math.max(
+        1,
+        parseGridTemplateTrackList(computedStyle.gridTemplateColumns).length
+      );
+      if (value.includes("h")) {
+        element.style.setProperty(
+          "--ws-inflate-h",
+          `${rowCount * INFLATE_PADDING}px`
+        );
+      }
+      if (value.includes("w")) {
+        element.style.setProperty(
+          "--ws-inflate-w",
+          `${colCount * INFLATE_PADDING}px`
+        );
+      }
+    }
   }
 
   inflatorElement.setAttribute("hidden", "true");

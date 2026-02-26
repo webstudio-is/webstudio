@@ -14,6 +14,7 @@ import {
   addFontRules,
 } from "@webstudio-is/sdk";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
+import { INFLATE_PADDING } from "~/canvas/inflator";
 import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
 import {
   StyleValue,
@@ -74,10 +75,6 @@ export const editablePlaceholderAttribute = "data-ws-editable-placeholder";
 // https://developer.mozilla.org/en-US/docs/Web/CSS/attr#backwards_compatibility
 export const editingPlaceholderVariable = "--ws-editing-placeholder";
 
-// Minimum size to prevent elements from collapsing to zero dimensions on canvas
-// This value provides enough visual space to see and interact with empty elements
-const collapsePadding = "50px";
-
 const hasExpressionChildren = (instance: Instance) =>
   instance.children.some((child) => child.type === "expression");
 
@@ -119,17 +116,20 @@ const helperStylesShared = [
   // 3. We prevent this by excluding elements with `data-lexical-editor`.
   // 4. This rule is used here and not in collapsing detection because `data-lexical-editor` might not be set instantly.
   //    Mistakes in collapsing will be corrected in the next cycle.
+  // Grid containers set --ws-inflate-w / --ws-inflate-h to trackCount * INFLATE_PADDING
+  // so each virtual cell gets INFLATE_PADDING worth of space. Non-grid elements
+  // fall back to the default INFLATE_PADDING.
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="w"]) {
-    padding-right: ${collapsePadding};
+    padding-right: var(--ws-inflate-w, ${INFLATE_PADDING}px);
   }`,
   // Has no height, will collapse
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="h"]) {
-    padding-top: ${collapsePadding};
+    padding-top: var(--ws-inflate-h, ${INFLATE_PADDING}px);
   }`,
   // Has no width or height, will collapse
   `[${idAttribute}]:where(:not(body):not([data-lexical-editor])[${inflatedAttribute}="wh"]) {
-    padding-right: ${collapsePadding};
-    padding-top: ${collapsePadding};
+    padding-right: var(--ws-inflate-w, ${INFLATE_PADDING}px);
+    padding-top: var(--ws-inflate-h, ${INFLATE_PADDING}px);
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;

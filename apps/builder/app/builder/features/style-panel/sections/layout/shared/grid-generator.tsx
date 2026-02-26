@@ -21,17 +21,18 @@ import {
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { $gridCellData } from "~/shared/nano-states";
+import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 
 /**
  * Parse track count from a computed CSS value.
- * Returns 2 as default for empty/none values.
+ * Returns DEFAULT_GRID_TRACK_COUNT for empty/none values.
  */
 const parseTrackCount = (value: string): number => {
   if (!value || value === "none") {
-    return 2;
+    return DEFAULT_GRID_TRACK_COUNT;
   }
   const tracks = parseGridTemplateTrackList(value);
-  return tracks.length || 2;
+  return tracks.length || DEFAULT_GRID_TRACK_COUNT;
 };
 
 /**

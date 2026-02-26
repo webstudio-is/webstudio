@@ -10,14 +10,18 @@ import { subscribeWindowResize } from "~/shared/dom-hooks";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
+import { inflatedAttribute } from "@webstudio-is/react-sdk";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 
 const hideGridOverlay = () => {
   $gridCellData.set(undefined);
 };
 
-// Use probe elements to measure exact cell positions
-// We probe a grid of positions and dedupe based on actual coordinates
+// Use probe elements to measure exact cell positions.
+// We probe one row of columns and one column of rows to find track edges,
+// then compute grid LINE positions as midpoints between adjacent track
+// boundaries (i.e. the centre of each gap). When tracks collapse to 0px
+// we fall back to distributing lines evenly.
 const computeGridCells = (
   gridElement: HTMLElement,
   instanceId: string
@@ -33,12 +37,9 @@ const computeGridCells = (
   const MAX_PROBE = 20; // Reasonable limit for probing
 
   // Get the actual track counts from computed style
-  // This gives us the explicit tracks without creating implicit ones
   const gridTemplateColumns = computedStyle.gridTemplateColumns;
   const gridTemplateRows = computedStyle.gridTemplateRows;
 
-  // Parse track counts using the proper CSS parser
-  // Computed values are already expanded (no repeat(), var(), etc.)
   const columnTracks = parseGridTemplateTrackList(gridTemplateColumns);
   const rowTracks = parseGridTemplateTrackList(gridTemplateRows);
 
@@ -46,37 +47,110 @@ const computeGridCells = (
   const columnCount = Math.min(Math.max(1, columnTracks.length), MAX_PROBE);
   const rowCount = Math.min(Math.max(1, rowTracks.length), MAX_PROBE);
 
-  // First, detect actual column and row count by probing positions
-  // Place probes and track unique X/Y positions
-  const xPositions = new Set<number>();
-  const yPositions = new Set<number>();
-
-  // Probe all cells to get accurate positions (handles gaps, etc.)
-  for (let row = 1; row <= rowCount; row++) {
-    for (let col = 1; col <= columnCount; col++) {
-      const probe = document.createElement("div");
-      probe.style.cssText = `
-        grid-column: ${col};
-        grid-row: ${row};
-        pointer-events: none;
-        visibility: hidden;
-        align-self: stretch;
-        justify-self: stretch;
-      `;
-      gridElement.appendChild(probe);
-      const rect = probe.getBoundingClientRect();
-      gridElement.removeChild(probe);
-
-      xPositions.add(rect.left);
-      xPositions.add(rect.right);
-      yPositions.add(rect.top);
-      yPositions.add(rect.bottom);
-    }
+  // --- Probe one row to get column edges ---
+  const columnEdges: Array<{ left: number; right: number }> = [];
+  for (let col = 1; col <= columnCount; col++) {
+    const probe = document.createElement("div");
+    probe.style.cssText = `
+      grid-column: ${col};
+      grid-row: 1;
+      pointer-events: none;
+      visibility: hidden;
+      align-self: stretch;
+      justify-self: stretch;
+    `;
+    gridElement.appendChild(probe);
+    const rect = probe.getBoundingClientRect();
+    gridElement.removeChild(probe);
+    columnEdges.push({ left: rect.left, right: rect.right });
   }
 
-  // Sort positions
-  const sortedX = [...xPositions].sort((a, b) => a - b);
-  const sortedY = [...yPositions].sort((a, b) => a - b);
+  // --- Probe one column to get row edges ---
+  const rowEdges: Array<{ top: number; bottom: number }> = [];
+  for (let row = 1; row <= rowCount; row++) {
+    const probe = document.createElement("div");
+    probe.style.cssText = `
+      grid-column: 1;
+      grid-row: ${row};
+      pointer-events: none;
+      visibility: hidden;
+      align-self: stretch;
+      justify-self: stretch;
+    `;
+    gridElement.appendChild(probe);
+    const rect = probe.getBoundingClientRect();
+    gridElement.removeChild(probe);
+    rowEdges.push({ top: rect.top, bottom: rect.bottom });
+  }
+
+  // --- Compute grid line positions ---
+  // Grid lines sit at: start of first track, midpoint of each gap, end of last track.
+  // With no gap the midpoint equals the shared boundary.
+  let sortedX: number[] = [];
+  if (columnEdges.length > 0) {
+    sortedX.push(columnEdges[0].left);
+    for (let i = 0; i < columnEdges.length - 1; i++) {
+      sortedX.push((columnEdges[i].right + columnEdges[i + 1].left) / 2);
+    }
+    sortedX.push(columnEdges[columnEdges.length - 1].right);
+  }
+
+  let sortedY: number[] = [];
+  if (rowEdges.length > 0) {
+    sortedY.push(rowEdges[0].top);
+    for (let i = 0; i < rowEdges.length - 1; i++) {
+      sortedY.push((rowEdges[i].bottom + rowEdges[i + 1].top) / 2);
+    }
+    sortedY.push(rowEdges[rowEdges.length - 1].bottom);
+  }
+
+  // --- Fallback when tracks collapse to 0px ---
+  const containerRect = gridElement.getBoundingClientRect();
+  const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+  const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+  const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+  const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+  const contentLeft = containerRect.left + paddingLeft;
+  const contentTop = containerRect.top + paddingTop;
+  const contentWidth = containerRect.width - paddingLeft - paddingRight;
+  const contentHeight = containerRect.height - paddingTop - paddingBottom;
+
+  // For inflated grids the inflation padding IS the visible space, so
+  // distribute fallback lines across the full container rect on inflated
+  // axes. Non-inflated axes use the content box as usual.
+  const inflatedAttr = gridElement.getAttribute(inflatedAttribute);
+  const isWidthInflated = inflatedAttr === "w" || inflatedAttr === "wh";
+  const isHeightInflated = inflatedAttr === "h" || inflatedAttr === "wh";
+
+  const fallbackLeft = isWidthInflated ? containerRect.left : contentLeft;
+  const fallbackTop = isHeightInflated ? containerRect.top : contentTop;
+  const fallbackWidth = isWidthInflated ? containerRect.width : contentWidth;
+  const fallbackHeight = isHeightInflated
+    ? containerRect.height
+    : contentHeight;
+
+  // When all line positions collapse to (nearly) the same point the user
+  // can't see anything useful. Fall back to an even distribution.
+  // On inflated axes the visible space comes entirely from inflation padding,
+  // so probed positions sit in a tiny content area — always use the fallback.
+  const xSpan =
+    sortedX.length >= 2 ? sortedX[sortedX.length - 1] - sortedX[0] : 0;
+  const ySpan =
+    sortedY.length >= 2 ? sortedY[sortedY.length - 1] - sortedY[0] : 0;
+
+  if (xSpan < 1 || isWidthInflated) {
+    sortedX = Array.from(
+      { length: columnCount + 1 },
+      (_, i) => fallbackLeft + (fallbackWidth * i) / columnCount
+    );
+  }
+
+  if (ySpan < 1 || isHeightInflated) {
+    sortedY = Array.from(
+      { length: rowCount + 1 },
+      (_, i) => fallbackTop + (fallbackHeight * i) / rowCount
+    );
+  }
 
   if (sortedX.length < 2 || sortedY.length < 2) {
     return undefined;
@@ -131,53 +205,60 @@ const findGridContainer = (
 };
 
 const subscribeGridOverlay = (
-  selectedInstanceSelector: Readonly<InstanceSelector>,
-  debounceEffect: (callback: () => void) => void
+  selectedInstanceSelector: Readonly<InstanceSelector>
 ) => {
   if (selectedInstanceSelector.length === 0) {
     hideGridOverlay();
     return;
   }
 
-  const gridInfo = findGridContainer(selectedInstanceSelector);
+  let rafId = 0;
 
-  if (!gridInfo) {
-    hideGridOverlay();
-    return;
-  }
-
-  const { element: gridElement, instanceId } = gridInfo;
-
+  // Re-evaluate findGridContainer on every update so that the overlay
+  // appears as soon as an element becomes a grid (e.g. display changed
+  // from block → grid) without requiring a re-selection.
   const updateGridOverlay = () => {
     if ($isResizingCanvas.get()) {
       hideGridOverlay();
       return;
     }
 
-    const cellData = computeGridCells(gridElement, instanceId);
+    const gridInfo = findGridContainer(selectedInstanceSelector);
+    if (!gridInfo) {
+      hideGridOverlay();
+      return;
+    }
+
+    const cellData = computeGridCells(gridInfo.element, gridInfo.instanceId);
     $gridCellData.set(cellData);
+  };
+
+  // Schedule an update after styles are applied to the DOM.
+  // The stylesheet renderer uses rAF, so we need rAF→rAF to ensure
+  // both the CSS is written and layout is recalculated.
+  const scheduleUpdate = () => {
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(() => {
+        updateGridOverlay();
+      });
+    });
   };
 
   // Initial computation
   updateGridOverlay();
 
   const unsubscribeStylesIndex = $stylesIndex.subscribe(() => {
-    // Styles are applied to DOM via RAF in the stylesheet renderer,
-    // then browser needs another frame to recalculate layout
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        debounceEffect(updateGridOverlay);
-      });
-    });
+    scheduleUpdate();
   });
 
   const unsubscribeInstances = $instances.subscribe(() => {
-    debounceEffect(updateGridOverlay);
+    scheduleUpdate();
   });
 
   const unsubscribePropValues =
     $propValuesByInstanceSelectorWithMemoryProps.subscribe(() => {
-      debounceEffect(updateGridOverlay);
+      scheduleUpdate();
     });
 
   const unsubscribeIsResizing = $isResizingCanvas.subscribe((isResizing) => {
@@ -199,6 +280,7 @@ const subscribeGridOverlay = (
   });
 
   return () => {
+    cancelAnimationFrame(rafId);
     hideGridOverlay();
     unsubscribeStylesIndex();
     unsubscribeInstances();
@@ -209,9 +291,7 @@ const subscribeGridOverlay = (
   };
 };
 
-export const subscribeGridOverlayOnSelected = (
-  debounceEffect: (callback: () => void) => void
-) => {
+export const subscribeGridOverlayOnSelected = () => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeGridOverlay = () => {};
 
@@ -220,8 +300,7 @@ export const subscribeGridOverlayOnSelected = (
     if (instanceSelector !== previousSelectedInstance) {
       unsubscribeGridOverlay();
       unsubscribeGridOverlay =
-        subscribeGridOverlay(instanceSelector ?? [], debounceEffect) ??
-        (() => {});
+        subscribeGridOverlay(instanceSelector ?? []) ?? (() => {});
       previousSelectedInstance = instanceSelector;
     }
   });

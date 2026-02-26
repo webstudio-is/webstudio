@@ -179,8 +179,7 @@ const DesignMode = () => {
       abortController.signal
     );
     const unsubscribeSelected = subscribeSelected(debounceEffect);
-    const unsubscribeGridOverlay =
-      subscribeGridOverlayOnSelected(debounceEffect);
+    const unsubscribeGridOverlay = subscribeGridOverlayOnSelected();
     return () => {
       unsubscribeSelected();
       unsubscribeGridOverlay();
@@ -222,8 +221,7 @@ const ContentEditMode = () => {
       abortController.signal
     );
     const unsubscribeSelected = subscribeSelected(debounceEffect);
-    const unsubscribeGridOverlay =
-      subscribeGridOverlayOnSelected(debounceEffect);
+    const unsubscribeGridOverlay = subscribeGridOverlayOnSelected();
     return () => {
       unsubscribeSelected();
       unsubscribeGridOverlay();

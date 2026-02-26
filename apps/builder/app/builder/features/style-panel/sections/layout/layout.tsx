@@ -1,4 +1,4 @@
-import { useState, type JSX, type ReactNode } from "react";
+import { useEffect, useState, type JSX, type ReactNode } from "react";
 import {
   theme,
   Box,
@@ -60,6 +60,7 @@ import { GridGenerator } from "./shared/grid-generator";
 import { GridSettings } from "./shared/grid-settings";
 import { GridAlignment } from "./shared/grid-alignment";
 import { humanizeString } from "~/shared/string-utils";
+import { DEFAULT_GRID_TRACK_COUNT, DEFAULT_GRID_GAP } from "./shared/constants";
 
 const GapLinked = ({
   isLinked,
@@ -533,10 +534,51 @@ const LayoutSectionFlex = () => {
   );
 };
 
+const applyDefaultGridStyles = (columnsValue: string, rowsValue: string) => {
+  const isColumnsEmpty = !columnsValue || columnsValue === "none";
+  const isRowsEmpty = !rowsValue || rowsValue === "none";
+  if (isColumnsEmpty === false || isRowsEmpty === false) {
+    return;
+  }
+  const defaultValue = Array(DEFAULT_GRID_TRACK_COUNT).fill("1fr").join(" ");
+  const batch = createBatchUpdate();
+  batch.setProperty("grid-template-columns")({
+    type: "unparsed",
+    value: defaultValue,
+  });
+  batch.setProperty("grid-template-rows")({
+    type: "unparsed",
+    value: defaultValue,
+  });
+  batch.setProperty("column-gap")({
+    type: "unit",
+    value: DEFAULT_GRID_GAP,
+    unit: "px",
+  });
+  batch.setProperty("row-gap")({
+    type: "unit",
+    value: DEFAULT_GRID_GAP,
+    unit: "px",
+  });
+  batch.publish();
+};
+
 const LayoutSectionGrid = () => {
   const [openPanel, setOpenPanel] = useState<
     "generator" | "settings" | undefined
   >();
+
+  const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
+  const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
+  const rowsValue = toValue(gridTemplateRows.cascadedValue);
+
+  // Apply default 2×2 grid with gap when first switching to grid display
+  useEffect(() => {
+    applyDefaultGridStyles(columnsValue, rowsValue);
+    // Only run on mount — LayoutSectionGrid mounts when display becomes grid
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Flex direction="column" gap="2">

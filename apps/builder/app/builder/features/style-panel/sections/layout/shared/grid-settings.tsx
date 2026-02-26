@@ -58,6 +58,7 @@ type TrackItemProps = {
   id: string;
   dragItemId: string | undefined;
   isEditing: boolean;
+  canRemove: boolean;
   onEditingChange: (open: boolean) => void;
   onUpdate: (index: number, newValue: string) => void;
   onRemove: (index: number) => void;
@@ -73,6 +74,7 @@ const TrackItem = ({
   id,
   dragItemId,
   isEditing,
+  canRemove,
   onEditingChange,
   onUpdate,
   onRemove,
@@ -216,6 +218,7 @@ const TrackItem = ({
           <SmallIconButton
             variant="destructive"
             tabIndex={-1}
+            disabled={canRemove === false}
             icon={<MinusIcon />}
             onClick={(e) => {
               e.stopPropagation();
@@ -283,7 +286,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
 
   const removeTrack = useCallback(
     (index: number) => {
-      if (tracks.length > 0) {
+      if (tracks.length > 1) {
         updateTracks(tracks.filter((_, i) => i !== index));
         if (editingIndex === index) {
           setEditingIndex(undefined);
@@ -370,6 +373,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
                 id={id}
                 dragItemId={dragItemId}
                 isEditing={editingIndex === index}
+                canRemove={tracks.length > 1}
                 onEditingChange={(open) => {
                   if (open) {
                     setEditingIndex(index);
