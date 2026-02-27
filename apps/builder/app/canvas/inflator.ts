@@ -26,6 +26,11 @@ let rafHandle: number;
 // gets this amount of space.
 export const INFLATE_PADDING = 75;
 
+// Marker attribute for grid containers with per-track minmax wrapping.
+// Separate from inflatedAttribute so dashed-outline CSS doesn't apply
+// to grids that aren't fully collapsed — only their tracks are inflated.
+const gridInflatedAttribute = "data-ws-grid-inflated";
+
 // Do not add inflation paddings for replaced elements as at the moment we add them they don't have real size
 // https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element
 const replacedHtmlElements = ["iframe", "video", "embed", "img"];
@@ -248,6 +253,7 @@ const applyInflation = () => {
   elements.push(...descendants);
 
   const elementsToRecalculate: HTMLElement[] = [];
+  const gridContainers = new Set<HTMLElement>();
   const parentsWithAbsoluteChildren = new Map<HTMLElement, number>();
 
   for (const element of elements) {
@@ -264,6 +270,16 @@ const applyInflation = () => {
     }
 
     const elementStyle = window.getComputedStyle(element);
+
+    // Collect grid containers for per-track inflation (step 5).
+    // Runs regardless of child count — even grids with children need
+    // their tracks wrapped to prevent empty cells from collapsing.
+    if (
+      elementStyle.display === "grid" ||
+      elementStyle.display === "inline-grid"
+    ) {
+      gridContainers.add(element);
+    }
 
     // Find all Leaf like elements
     // Leaf like elements are elements that have no children or all children are absolute or fixed
@@ -334,32 +350,28 @@ const applyInflation = () => {
   // Now combine all operations in batches.
 
   // 1. Remove all inflated attributes and grid inflation overrides.
-  // Only remove standard grid-template-* properties from elements that
-  // were actually inflated (have inflatedAttribute), because those are
-  // the only ones we set them on. Removing them blindly from baseElement
-  // or its parent could clobber user-authored inline styles.
-  const clearInflation = (el: Element, wasInflated: boolean) => {
+  const clearInflation = (el: Element) => {
+    const wasInflated = el.hasAttribute(inflatedAttribute);
+    const wasGridInflated = el.hasAttribute(gridInflatedAttribute);
     el.removeAttribute(inflatedAttribute);
+    el.removeAttribute(gridInflatedAttribute);
     if (el instanceof HTMLElement) {
       el.style.removeProperty("--ws-inflate-h");
       el.style.removeProperty("--ws-inflate-w");
-      if (wasInflated) {
+      if (wasInflated || wasGridInflated) {
         el.style.removeProperty("grid-template-columns");
         el.style.removeProperty("grid-template-rows");
       }
     }
   };
   if (baseElement.parentElement) {
-    clearInflation(
-      baseElement.parentElement,
-      baseElement.parentElement.hasAttribute(inflatedAttribute)
-    );
+    clearInflation(baseElement.parentElement);
   }
-  clearInflation(baseElement, baseElement.hasAttribute(inflatedAttribute));
+  clearInflation(baseElement);
   for (const element of baseElement.querySelectorAll(
-    `[${inflatedAttribute}]`
+    `[${inflatedAttribute}], [${gridInflatedAttribute}]`
   )) {
-    clearInflation(element, true);
+    clearInflation(element);
   }
 
   // 2. Read stores once for all elements
@@ -429,39 +441,35 @@ const applyInflation = () => {
     }
   }
 
-  // 4. Add inflated attributes and grid-specific track-level inflation.
-  // For grid containers, inflate collapsed tracks using minmax(75px, 1fr)
-  // instead of padding. This makes the grid structure visible and lets
-  // getComputedStyle return non-zero track sizes that outlines can mirror.
+  // 4. Add inflated attributes for collapsed elements (dashed outline + padding).
   for (const [element, value] of inflatedElements.entries()) {
     element.setAttribute(inflatedAttribute, value);
+  }
 
+  // 5. Per-track grid inflation.
+  // Wrap every track with minmax(INFLATE_PADDING, <resolved>) so each cell
+  // gets at least INFLATE_PADDING px. This is a builder-only affordance —
+  // it runs for ALL grid containers regardless of child count so empty
+  // cells stay visible and clickable even when other cells have content.
+  // In preview and published sites this code never runs.
+  for (const element of gridContainers) {
     const computedStyle = window.getComputedStyle(element);
-    const display = computedStyle.display;
-    if (display !== "grid" && display !== "inline-grid") {
-      continue;
+
+    const cols = parseGridTemplateTrackList(computedStyle.gridTemplateColumns);
+    if (cols.length > 0) {
+      element.style.gridTemplateColumns = cols
+        .map((t) => `minmax(${INFLATE_PADDING}px, ${t.value})`)
+        .join(" ");
     }
 
-    const inflatedTrack = `minmax(${INFLATE_PADDING}px, 1fr)`;
+    const rows = parseGridTemplateTrackList(computedStyle.gridTemplateRows);
+    if (rows.length > 0) {
+      element.style.gridTemplateRows = rows
+        .map((t) => `minmax(${INFLATE_PADDING}px, ${t.value})`)
+        .join(" ");
+    }
 
-    if (value.includes("w")) {
-      const cols = parseGridTemplateTrackList(
-        computedStyle.gridTemplateColumns
-      );
-      const colCount = Math.max(1, cols.length);
-      element.style.gridTemplateColumns = Array.from(
-        { length: colCount },
-        () => inflatedTrack
-      ).join(" ");
-    }
-    if (value.includes("h")) {
-      const rows = parseGridTemplateTrackList(computedStyle.gridTemplateRows);
-      const rowCount = Math.max(1, rows.length);
-      element.style.gridTemplateRows = Array.from(
-        { length: rowCount },
-        () => inflatedTrack
-      ).join(" ");
-    }
+    element.setAttribute(gridInflatedAttribute, "");
   }
 
   inflatorElement.setAttribute("hidden", "true");
