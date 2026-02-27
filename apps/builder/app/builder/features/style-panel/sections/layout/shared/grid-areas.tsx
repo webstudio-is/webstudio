@@ -27,6 +27,7 @@ import {
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
 import { GridPositionInputs } from "./grid-position-inputs";
+import { GridAreaPicker } from "./grid-area-picker";
 import { $gridEditingArea } from "~/builder/shared/nano-states";
 
 export { parseGridAreas, type AreaInfo } from "@webstudio-is/css-data";
@@ -247,51 +248,55 @@ const AreaEditor = ({
     }
   );
 
-  const handleSave = useCallback(() => {
-    const trimmedName = toAreaName(value.name.trim()) || "Area";
+  const handleSave = useCallback(
+    (overrideValue?: AreaInfo) => {
+      const current = overrideValue ?? value;
+      const trimmedName = toAreaName(current.name.trim()) || "Area";
 
-    // Validate CSS identifier using css-tree lexer
-    if (!lexer.match("<custom-ident>", trimmedName).matched) {
-      return;
-    }
+      // Validate CSS identifier using css-tree lexer
+      if (!lexer.match("<custom-ident>", trimmedName).matched) {
+        return;
+      }
 
-    // Filter out the area being edited from validation using index
-    const otherAreas =
-      editingIndex !== undefined
-        ? existingAreas.filter((_, index) => index !== editingIndex)
-        : existingAreas;
+      // Filter out the area being edited from validation using index
+      const otherAreas =
+        editingIndex !== undefined
+          ? existingAreas.filter((_, index) => index !== editingIndex)
+          : existingAreas;
 
-    // Check for duplicate names
-    const hasDuplicateName = otherAreas.some(
-      (existingArea) => existingArea.name === trimmedName
-    );
+      // Check for duplicate names
+      const hasDuplicateName = otherAreas.some(
+        (existingArea) => existingArea.name === trimmedName
+      );
 
-    if (hasDuplicateName) {
-      return;
-    }
+      if (hasDuplicateName) {
+        return;
+      }
 
-    // Validate bounds
-    if (!isAreaWithinBounds(value, gridColumns, gridRows)) {
-      return;
-    }
+      // Validate bounds
+      if (!isAreaWithinBounds(current, gridColumns, gridRows)) {
+        return;
+      }
 
-    // Check for overlaps with other areas
-    const hasOverlap = otherAreas.some((existingArea) =>
-      checkOverlap(value, existingArea)
-    );
+      // Check for overlaps with other areas
+      const hasOverlap = otherAreas.some((existingArea) =>
+        checkOverlap(current, existingArea)
+      );
 
-    if (hasOverlap) {
-      return;
-    }
+      if (hasOverlap) {
+        return;
+      }
 
-    onSave(
-      {
-        ...value,
-        name: trimmedName,
-      },
-      area?.name
-    );
-  }, [value, area, existingAreas, onSave, editingIndex, gridColumns, gridRows]);
+      onSave(
+        {
+          ...current,
+          name: trimmedName,
+        },
+        area?.name
+      );
+    },
+    [value, area, existingAreas, onSave, editingIndex, gridColumns, gridRows]
+  );
 
   // Validation is now handled by GridPositionInputs component
 
@@ -327,7 +332,7 @@ const AreaEditor = ({
           css={{ gridColumn: "span 2" }}
           value={value.name}
           onChange={(event) => setValue({ ...value, name: event.target.value })}
-          onBlur={handleSave}
+          onBlur={() => handleSave()}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               onClose();
@@ -363,7 +368,7 @@ const AreaEditor = ({
               rowEnd: position.rowEnd + 1,
             })
           }
-          onBlur={handleSave}
+          onBlur={() => handleSave()}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               onClose();
@@ -377,6 +382,36 @@ const AreaEditor = ({
           inclusiveEnd
         />
       </Grid>
+
+      <GridAreaPicker
+        value={value}
+        onChange={(picked) => {
+          setValue(picked);
+          handleSave(picked);
+        }}
+        onHoverChange={(hovered) => {
+          if (hovered) {
+            $gridEditingArea.set({
+              columnStart: hovered.columnStart,
+              columnEnd: hovered.columnEnd,
+              rowStart: hovered.rowStart,
+              rowEnd: hovered.rowEnd,
+            });
+          } else {
+            // Restore current value highlight
+            $gridEditingArea.set({
+              columnStart: value.columnStart,
+              columnEnd: value.columnEnd,
+              rowStart: value.rowStart,
+              rowEnd: value.rowEnd,
+            });
+          }
+        }}
+        gridColumns={gridColumns}
+        gridRows={gridRows}
+        otherAreas={otherAreas}
+      />
+
       {hasDuplicateName && (
         <Text variant="labels" color="destructive">
           Area name already exists
