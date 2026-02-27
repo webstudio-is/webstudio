@@ -13,6 +13,7 @@ import {
 import { toValue } from "@webstudio-is/css-engine";
 import {
   parseGridTemplateTrackList,
+  parseGridAreas,
   getGridAxisMode,
   getGridAxisLabel,
   isImplicitGridMode,
@@ -165,6 +166,7 @@ type GridGeneratorProps = {
 export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const gridTemplateAreas = useComputedStyleDecl("grid-template-areas");
   const gridCellData = useStore($gridCellData);
 
   // Analyze both axes using pure functions
@@ -211,12 +213,41 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     handleChange(columns, rows);
   };
 
+  // Build a map from "col,row" (0-based) to area name for the preview
+  const areasValue = toValue(gridTemplateAreas.cascadedValue);
+  const areas = useMemo(() => parseGridAreas(areasValue), [areasValue]);
+
+  const areaMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const area of areas) {
+      for (let r = area.rowStart; r < area.rowEnd; r++) {
+        for (let c = area.columnStart; c < area.columnEnd; c++) {
+          const displayCol = c - 1;
+          const displayRow = r - 1;
+          if (displayCol < displayColumnCount && displayRow < displayRowCount) {
+            map.set(`${displayCol},${displayRow}`, area.name);
+          }
+        }
+      }
+    }
+    return map;
+  }, [areas, displayColumnCount, displayRowCount]);
+
   // Memoize grid cells to avoid recreating on each render
   const gridCells = useMemo(() => {
     return Array.from({ length: displayColumnCount * displayRowCount }).map(
       (_, i) => {
         const col = i % displayColumnCount;
         const row = Math.floor(i / displayColumnCount);
+        const areaName = areaMap.get(`${col},${row}`);
+        const rightNeighbor = areaMap.get(`${col + 1},${row}`);
+        const bottomNeighbor = areaMap.get(`${col},${row + 1}`);
+        // Hide border when both sides belong to the same named area
+        const mergedRight =
+          areaName !== undefined && areaName === rightNeighbor;
+        const mergedBottom =
+          areaName !== undefined && areaName === bottomNeighbor;
+
         return (
           <Box
             key={i}
@@ -224,11 +255,11 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
               width: "100%",
               height: "100%",
               borderRight:
-                col < displayColumnCount - 1
+                col < displayColumnCount - 1 && !mergedRight
                   ? `1px solid ${theme.colors.borderMain}`
                   : undefined,
               borderBottom:
-                row < displayRowCount - 1
+                row < displayRowCount - 1 && !mergedBottom
                   ? `1px solid ${theme.colors.borderMain}`
                   : undefined,
             }}
@@ -236,7 +267,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
         );
       }
     );
-  }, [displayColumnCount, displayRowCount]);
+  }, [displayColumnCount, displayRowCount, areaMap]);
 
   return (
     <FloatingPanel

@@ -71,10 +71,66 @@ const clampRectangle = (
   return { colStart, colEnd, rowStart, rowEnd };
 };
 
+/**
+ * Compute the result of clicking a cell in the area picker.
+ *
+ * Returns `undefined` when the click should be ignored (occupied cell).
+ * Otherwise returns `{ area, anchor }` with the new area bounds and anchor point.
+ *
+ * - Clicking an occupied cell → ignored
+ * - Clicking a selected cell → resets to 1×1 at that cell (new anchor)
+ * - Clicking an unselected cell → extends from anchor, clamped around obstacles
+ */
+const computeCellClick = (
+  col: number,
+  row: number,
+  value: AreaInfo,
+  anchor: { col: number; row: number },
+  occupied: Map<string, string>
+): { area: AreaInfo; anchor: { col: number; row: number } } | undefined => {
+  if (occupied.has(`${col},${row}`)) {
+    return undefined;
+  }
+
+  const isSelected =
+    col >= value.columnStart &&
+    col < value.columnEnd &&
+    row >= value.rowStart &&
+    row < value.rowEnd;
+
+  // Click a selected cell → deselect all, set this cell as the new anchor
+  if (isSelected) {
+    return {
+      area: {
+        ...value,
+        columnStart: col,
+        columnEnd: col + 1,
+        rowStart: row,
+        rowEnd: row + 1,
+      },
+      anchor: { col, row },
+    };
+  }
+
+  // Click an unselected cell → extend from anchor to form a rectangle
+  const rect = clampRectangle(anchor, { col, row }, occupied);
+  return {
+    area: {
+      ...value,
+      columnStart: rect.colStart,
+      columnEnd: rect.colEnd + 1,
+      rowStart: rect.rowStart,
+      rowEnd: rect.rowEnd + 1,
+    },
+    anchor,
+  };
+};
+
 // Export for testing only
 export const __testing__ = {
   buildOccupiedCellMap,
   clampRectangle,
+  computeCellClick,
 };
 
 const pickerCellStyle = css({
@@ -136,34 +192,18 @@ export const GridAreaPicker = ({
   };
 
   const handleCellClick = (col: number, row: number) => {
-    if (occupied.has(`${col},${row}`)) {
+    const result = computeCellClick(
+      col,
+      row,
+      value,
+      anchorRef.current,
+      occupied
+    );
+    if (result === undefined) {
       return;
     }
-
-    const isSelected = isCellSelected(col, row);
-
-    // Click a selected cell → narrow to just this 1×1 cell
-    if (isSelected) {
-      anchorRef.current = { col, row };
-      onChange({
-        ...value,
-        columnStart: col,
-        columnEnd: col + 1,
-        rowStart: row,
-        rowEnd: row + 1,
-      });
-      return;
-    }
-
-    // Click an unselected cell → extend from anchor
-    const rect = clampRectangle(anchorRef.current, { col, row }, occupied);
-    onChange({
-      ...value,
-      columnStart: rect.colStart,
-      columnEnd: rect.colEnd + 1,
-      rowStart: rect.rowStart,
-      rowEnd: rect.rowEnd + 1,
-    });
+    anchorRef.current = result.anchor;
+    onChange(result.area);
   };
 
   const cells = useMemo(() => {

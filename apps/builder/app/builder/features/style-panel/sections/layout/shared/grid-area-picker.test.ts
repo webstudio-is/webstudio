@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { __testing__ } from "./grid-area-picker";
 import type { AreaInfo } from "@webstudio-is/css-data";
 
-const { buildOccupiedCellMap, clampRectangle } = __testing__;
+const { buildOccupiedCellMap, clampRectangle, computeCellClick } = __testing__;
 
 describe("buildOccupiedCellMap", () => {
   test("returns empty map when no areas", () => {
@@ -122,6 +122,155 @@ describe("clampRectangle", () => {
       colEnd: 1,
       rowStart: 1,
       rowEnd: 2,
+    });
+  });
+});
+
+describe("computeCellClick", () => {
+  const baseArea: AreaInfo = {
+    name: "test",
+    columnStart: 1,
+    columnEnd: 2,
+    rowStart: 1,
+    rowEnd: 2,
+  };
+
+  test("ignores click on occupied cell", () => {
+    const occupied = new Map([["2,1", "other"]]);
+    const result = computeCellClick(
+      2,
+      1,
+      baseArea,
+      { col: 1, row: 1 },
+      occupied
+    );
+    expect(result).toBeUndefined();
+  });
+
+  test("clicking selected cell resets to 1×1 at that cell", () => {
+    const area: AreaInfo = {
+      name: "test",
+      columnStart: 1,
+      columnEnd: 4,
+      rowStart: 1,
+      rowEnd: 3,
+    };
+    const result = computeCellClick(2, 2, area, { col: 1, row: 1 }, new Map());
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 2,
+        columnEnd: 3,
+        rowStart: 2,
+        rowEnd: 3,
+      },
+      anchor: { col: 2, row: 2 },
+    });
+  });
+
+  test("clicking unselected cell extends from anchor", () => {
+    const result = computeCellClick(
+      3,
+      3,
+      baseArea,
+      { col: 1, row: 1 },
+      new Map()
+    );
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 1,
+        columnEnd: 4,
+        rowStart: 1,
+        rowEnd: 4,
+      },
+      anchor: { col: 1, row: 1 },
+    });
+  });
+
+  test("extending to diagonal cell forms full rectangle", () => {
+    // click (1,1) then (6,6) — should select 1-6 × 1-6
+    const area: AreaInfo = {
+      name: "test",
+      columnStart: 1,
+      columnEnd: 2,
+      rowStart: 1,
+      rowEnd: 2,
+    };
+    const result = computeCellClick(6, 6, area, { col: 1, row: 1 }, new Map());
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 1,
+        columnEnd: 7,
+        rowStart: 1,
+        rowEnd: 7,
+      },
+      anchor: { col: 1, row: 1 },
+    });
+  });
+
+  test("extending after reset forms new rectangle from new anchor", () => {
+    // After resetting to (2,2), clicking (7,7) should select 2-7 × 2-7
+    const area: AreaInfo = {
+      name: "test",
+      columnStart: 2,
+      columnEnd: 3,
+      rowStart: 2,
+      rowEnd: 3,
+    };
+    const result = computeCellClick(7, 7, area, { col: 2, row: 2 }, new Map());
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 2,
+        columnEnd: 8,
+        rowStart: 2,
+        rowEnd: 8,
+      },
+      anchor: { col: 2, row: 2 },
+    });
+  });
+
+  test("extending clamps around occupied cells", () => {
+    const occupied = new Map([["3,1", "other"]]);
+    const result = computeCellClick(
+      4,
+      1,
+      baseArea,
+      { col: 1, row: 1 },
+      occupied
+    );
+    // Can't include col 3, so clamps to col 1-2
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 1,
+        columnEnd: 3,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      anchor: { col: 1, row: 1 },
+    });
+  });
+
+  test("clicking the only selected cell (1×1) still resets anchor", () => {
+    const result = computeCellClick(
+      1,
+      1,
+      baseArea,
+      { col: 1, row: 1 },
+      new Map()
+    );
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 1,
+        columnEnd: 2,
+        rowStart: 1,
+        rowEnd: 2,
+      },
+      anchor: { col: 1, row: 1 },
     });
   });
 });
