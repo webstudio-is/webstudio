@@ -78,8 +78,7 @@ export const __testing__ = {
 };
 
 const pickerCellStyle = css({
-  width: 16,
-  height: 16,
+  minHeight: 20,
   borderRadius: theme.borderRadius[3],
   backgroundColor: theme.colors.backgroundControls,
   border: `1px solid ${theme.colors.borderMain}`,
@@ -237,8 +236,9 @@ export const GridAreaPicker = ({
         onHoverChange?.(undefined);
       }}
       css={{
-        gridTemplateColumns: `repeat(${gridColumns}, 16px)`,
-        gridTemplateRows: `repeat(${gridRows}, 16px)`,
+        width: "100%",
+        gridTemplateColumns: `repeat(${gridColumns}, minmax(20px, 1fr))`,
+        gridTemplateRows: `repeat(${gridRows}, 20px)`,
         gap: 1,
       }}
     >
