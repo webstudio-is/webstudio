@@ -133,26 +133,44 @@ export const __testing__ = {
   computeCellClick,
 };
 
-const pickerCellStyle = css({
+const freeCellStyle = css({
   minHeight: 20,
-  borderRadius: theme.borderRadius[3],
+  border: "none",
+  padding: 0,
   backgroundColor: theme.colors.backgroundControls,
-  border: `1px solid ${theme.colors.borderMain}`,
-  transition: "all 0.1s ease",
+  transition: "background-color 0.1s ease",
   cursor: "pointer",
   "&:hover": {
-    borderColor: theme.colors.borderFocus,
-  },
-  '&[data-state="selected"]': {
     backgroundColor: theme.colors.backgroundPrimary,
-    borderColor: theme.colors.borderFocus,
   },
-  '&[data-state="disabled"]': {
-    backgroundColor: theme.colors.backgroundDestructiveMain,
-    borderColor: theme.colors.borderDestructiveMain,
-    cursor: "not-allowed",
-    opacity: 0.6,
+});
+
+const selectedCellStyle = css({
+  minHeight: 20,
+  border: "none",
+  padding: 0,
+  backgroundColor: "transparent",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
   },
+});
+
+const occupiedAreaStyle = css({
+  minHeight: 20,
+  border: "none",
+  padding: 0,
+  borderRadius: theme.borderRadius[3],
+  backgroundColor: theme.colors.backgroundDestructiveMain,
+  cursor: "not-allowed",
+  opacity: 0.6,
+});
+
+const selectedAreaBgStyle = css({
+  border: "none",
+  borderRadius: theme.borderRadius[3],
+  backgroundColor: theme.colors.backgroundPrimary,
+  pointerEvents: "none",
 });
 
 type GridAreaPickerProps = {
@@ -182,15 +200,6 @@ export const GridAreaPicker = ({
     [otherAreas, gridColumns, gridRows]
   );
 
-  const isCellSelected = (col: number, row: number): boolean => {
-    return (
-      col >= value.columnStart &&
-      col < value.columnEnd &&
-      row >= value.rowStart &&
-      row < value.rowEnd
-    );
-  };
-
   const handleCellClick = (col: number, row: number) => {
     const result = computeCellClick(
       col,
@@ -206,56 +215,62 @@ export const GridAreaPicker = ({
     onChange(result.area);
   };
 
+  // Deduplicate areas for rendering as single spanning elements
+  const visibleAreas = useMemo(() => {
+    const seen = new Set<string>();
+    return otherAreas.filter((area) => {
+      if (seen.has(area.name)) {
+        return false;
+      }
+      if (area.columnStart > gridColumns || area.rowStart > gridRows) {
+        return false;
+      }
+      if (area.columnEnd <= 1 || area.rowEnd <= 1) {
+        return false;
+      }
+      seen.add(area.name);
+      return true;
+    });
+  }, [otherAreas, gridColumns, gridRows]);
+
+  const hasSelection =
+    value.columnEnd > value.columnStart && value.rowEnd > value.rowStart;
+
+  // Individual buttons for free and selected cells
   const cells = useMemo(() => {
     const result: React.ReactNode[] = [];
     for (let row = 1; row <= gridRows; row++) {
       for (let col = 1; col <= gridColumns; col++) {
-        const key = `${col},${row}`;
-        const occupiedBy = occupied.get(key);
-        const isDisabled = occupiedBy !== undefined;
-        const isSelected = isCellSelected(col, row);
-
-        const state = isDisabled
-          ? "disabled"
-          : isSelected
-            ? "selected"
-            : undefined;
-
-        const cell = (
+        if (occupied.has(`${col},${row}`)) {
+          continue;
+        }
+        const isSelected =
+          col >= value.columnStart &&
+          col < value.columnEnd &&
+          row >= value.rowStart &&
+          row < value.rowEnd;
+        result.push(
           <button
-            key={key}
-            className={pickerCellStyle()}
-            data-state={state}
+            key={`${col},${row}`}
+            className={isSelected ? selectedCellStyle() : freeCellStyle()}
+            style={{
+              gridColumn: `${col} / ${col + 1}`,
+              gridRow: `${row} / ${row + 1}`,
+            }}
+            onClick={() => handleCellClick(col, row)}
             onMouseEnter={() => {
-              if (isDisabled) {
-                const area = otherAreas.find((a) => a.name === occupiedBy);
-                onHoverChange?.(area);
-              } else {
-                onHoverChange?.({
-                  name: "",
-                  columnStart: col,
-                  columnEnd: col + 1,
-                  rowStart: row,
-                  rowEnd: row + 1,
-                });
-              }
+              onHoverChange?.({
+                name: "",
+                columnStart: col,
+                columnEnd: col + 1,
+                rowStart: row,
+                rowEnd: row + 1,
+              });
             }}
             onMouseLeave={() => onHoverChange?.(undefined)}
-            onClick={() => handleCellClick(col, row)}
-            disabled={isDisabled}
-            aria-label={`Cell ${col}, ${row}${occupiedBy ? ` (${occupiedBy})` : ""}`}
+            aria-label={`Cell ${col}, ${row}`}
           />
         );
-
-        if (isDisabled && occupiedBy) {
-          result.push(
-            <Tooltip key={key} content={occupiedBy}>
-              {cell}
-            </Tooltip>
-          );
-        } else {
-          result.push(cell);
-        }
       }
     }
     return result;
@@ -272,16 +287,51 @@ export const GridAreaPicker = ({
 
   return (
     <Grid
-      onMouseLeave={() => {
-        onHoverChange?.(undefined);
-      }}
+      onMouseLeave={() => onHoverChange?.(undefined)}
       css={{
         width: "100%",
         gridTemplateColumns: `repeat(${gridColumns}, minmax(20px, 1fr))`,
         gridTemplateRows: `repeat(${gridRows}, 20px)`,
         gap: 1,
+        backgroundColor: theme.colors.borderMain,
+        borderRadius: theme.borderRadius[4],
+        overflow: "hidden",
       }}
     >
+      {/* Selected area background: single element spanning the whole selection */}
+      {hasSelection && (
+        <div
+          className={selectedAreaBgStyle()}
+          style={{
+            gridColumn: `${value.columnStart} / ${value.columnEnd}`,
+            gridRow: `${value.rowStart} / ${value.rowEnd}`,
+          }}
+        />
+      )}
+
+      {/* Occupied areas: one spanning element per area */}
+      {visibleAreas.map((area) => {
+        const colStart = Math.max(1, area.columnStart);
+        const colEnd = Math.min(gridColumns + 1, area.columnEnd);
+        const rowStart = Math.max(1, area.rowStart);
+        const rowEnd = Math.min(gridRows + 1, area.rowEnd);
+        return (
+          <Tooltip key={area.name} content={area.name}>
+            <button
+              disabled
+              className={occupiedAreaStyle()}
+              style={{
+                gridColumn: `${colStart} / ${colEnd}`,
+                gridRow: `${rowStart} / ${rowEnd}`,
+              }}
+              onMouseEnter={() => onHoverChange?.(area)}
+              onMouseLeave={() => onHoverChange?.(undefined)}
+              aria-label={`Area ${area.name}`}
+            />
+          </Tooltip>
+        );
+      })}
+
       {cells}
     </Grid>
   );
