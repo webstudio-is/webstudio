@@ -66,6 +66,14 @@ export const html: StyleDecl[] = [
   { property: "display", value: { type: "keyword", value: "grid" } },
   { property: "min-height", value: { type: "unit", unit: "%", value: 100 } },
   {
+    property: "grid-template-rows",
+    value: { type: "unit", unit: "fr", value: 1 },
+  },
+  {
+    property: "grid-template-columns",
+    value: { type: "unit", unit: "fr", value: 1 },
+  },
+  {
     property: "font-family",
     value: { type: "fontFamily", value: ["Arial", "Roboto", "sans-serif"] },
   },

@@ -66,6 +66,8 @@ html {
   /* 1 */
   display: grid;
   min-height: 100%;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
   /* 2 */
   font-family: Arial, Roboto, sans-serif;
   font-size: 16px;

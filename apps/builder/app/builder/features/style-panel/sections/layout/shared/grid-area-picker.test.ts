@@ -273,4 +273,31 @@ describe("computeCellClick", () => {
       anchor: { col: 1, row: 1 },
     });
   });
+
+  test("clicking selected cell in square selection resets to 1×1", () => {
+    const squareArea: AreaInfo = {
+      name: "test",
+      columnStart: 1,
+      columnEnd: 4,
+      rowStart: 1,
+      rowEnd: 4,
+    };
+    const result = computeCellClick(
+      2,
+      2,
+      squareArea,
+      { col: 1, row: 1 },
+      new Map()
+    );
+    expect(result).toEqual({
+      area: {
+        name: "test",
+        columnStart: 2,
+        columnEnd: 3,
+        rowStart: 2,
+        rowEnd: 3,
+      },
+      anchor: { col: 2, row: 2 },
+    });
+  });
 });

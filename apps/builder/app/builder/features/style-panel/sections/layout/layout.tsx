@@ -1,4 +1,6 @@
-import { useEffect, useState, type JSX, type ReactNode } from "react";
+import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
+import { $selectedInstanceKey } from "~/shared/awareness";
 import {
   theme,
   Box,
@@ -568,18 +570,6 @@ const LayoutSectionGrid = () => {
     "generator" | "settings" | undefined
   >();
 
-  const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
-  const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
-  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
-  const rowsValue = toValue(gridTemplateRows.cascadedValue);
-
-  // Apply default 2×2 grid with gap when first switching to grid display
-  useEffect(() => {
-    applyDefaultGridStyles(columnsValue, rowsValue);
-    // Only run on mount — LayoutSectionGrid mounts when display becomes grid
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <Flex direction="column" gap="2">
       <GridGenerator
@@ -763,9 +753,38 @@ export const properties = [
   "grid-template-rows",
 ] satisfies Array<CssProperty>;
 
+const isGridDisplay = (value: string) =>
+  value === "grid" || value === "inline-grid";
+
 export const Section = () => {
   const display = useComputedStyleDecl("display");
   const displayValue = toValue(display.cascadedValue);
+  const instanceKey = useStore($selectedInstanceKey);
+  const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
+  const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
+  const rowsValue = toValue(gridTemplateRows.cascadedValue);
+
+  const prevRef = useRef<{
+    displayValue: string;
+    instanceKey: string | undefined;
+  }>();
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    prevRef.current = { displayValue, instanceKey };
+    // Apply defaults only when display transitions from non-grid to grid
+    // on the same instance (not on initial render or instance switch)
+    if (
+      prev === undefined ||
+      prev.instanceKey !== instanceKey ||
+      isGridDisplay(prev.displayValue) ||
+      isGridDisplay(displayValue) === false
+    ) {
+      return;
+    }
+    applyDefaultGridStyles(columnsValue, rowsValue);
+  }, [displayValue, instanceKey, columnsValue, rowsValue]);
 
   return (
     <StyleSection label="Layout" properties={properties}>

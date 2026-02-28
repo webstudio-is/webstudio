@@ -25,7 +25,11 @@ import {
   useComputedStyles,
   useParentComputedStyleDecl,
 } from "../../shared/model";
-import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
+import {
+  createBatchUpdate,
+  deleteProperty,
+  resetEphemeralStyles,
+} from "../../shared/use-style-data";
 import { parseGridAreas } from "@webstudio-is/css-data";
 import { getGridDimensions } from "../layout/shared/grid-areas";
 import {
@@ -457,9 +461,10 @@ const SpanInput = ({
       }}
       onChangeComplete={({ value }) => {
         handleChangeComplete(value);
+        resetEphemeralStyles();
       }}
       onAbort={() => {
-        deleteProperty(property, { isEphemeral: true });
+        resetEphemeralStyles();
       }}
       onReset={() => {
         setIntermediateValue(undefined);
@@ -651,7 +656,10 @@ const GridChildPositionManual = () => {
       <GridPositionInputs
         value={localValue.value}
         onChange={handleChange}
-        onBlur={localValue.save}
+        onBlur={() => {
+          localValue.save();
+          resetEphemeralStyles();
+        }}
         gridColumns={gridColumns}
         gridRows={gridRows}
       />
