@@ -185,3 +185,22 @@ export const $canvasIframeState = atom<"idle" | "ready">("idle");
 export const $detectedFontsWeights = atom<Map<string, Array<FontWeight>>>(
   new Map()
 );
+
+export type GridCellData = {
+  instanceId: Instance["id"];
+  columnCount: number;
+  rowCount: number;
+  // Raw bounding client rect (post-transform). The builder recovers the
+  // untransformed position by probing a hidden element with the same CSS.
+  bcr: { top: number; left: number };
+  // Untransformed border-box dimensions from offsetWidth/offsetHeight.
+  untransformedWidth: number;
+  untransformedHeight: number;
+  // CSS text built from getComputedStyle on the canvas element.
+  // Applied verbatim to the builder overlay mirror div via style.cssText.
+  // Adding a new synced property = one line in the whitelist array
+  // in grid-outline-utils.ts.
+  resolvedCssText: string;
+};
+
+export const $gridCellData = atom<GridCellData | undefined>(undefined);

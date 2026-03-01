@@ -71,7 +71,7 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { setDataCollapsed } from "~/canvas/collapsed";
+import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { TextEditor } from "../text-editor";
@@ -348,12 +348,12 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
 const existingElements = new Set<string>();
 
 /**
- * We are identifying newly created instances like Tooltips and ensuring the calculation of 'collapsed' elements.
+ * We are identifying newly created instances like Tooltips and ensuring the calculation of 'inflated' elements.
  */
-const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
+const useInflateOnNewElement = (instanceId: Instance["id"]) => {
   useEffect(() => {
     if (existingElements.has(instanceId) === false) {
-      setDataCollapsed(instanceId);
+      inflateInstance(instanceId);
     }
 
     existingElements.add(instanceId);
@@ -466,7 +466,7 @@ export const WebstudioComponentCanvas = forwardRef<
    */
   const initialContentEditableContent = useRef(children);
 
-  useCollapsedOnNewElement(instanceId);
+  useInflateOnNewElement(instanceId);
 
   // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes

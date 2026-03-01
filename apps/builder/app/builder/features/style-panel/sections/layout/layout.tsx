@@ -1,4 +1,6 @@
-import { useState, type JSX, type ReactNode } from "react";
+import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
+import { $selectedInstanceKey } from "~/shared/awareness";
 import {
   theme,
   Box,
@@ -38,6 +40,7 @@ import {
   AlignContentSpaceAroundIcon,
   AlignContentSpaceBetweenIcon,
   AlignContentStretchIcon,
+  RepeatGridIcon,
 } from "@webstudio-is/icons";
 import { MenuControl, SelectControl } from "../../controls";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
@@ -54,8 +57,12 @@ import {
   $availableUnitVariables,
 } from "../../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { FlexGrid } from "./shared/flex-grid";
+import { FlexAlignment } from "./shared/flex-alignment";
+import { GridGenerator } from "./shared/grid-generator";
+import { GridSettings } from "./shared/grid-settings";
+import { GridAlignment } from "./shared/grid-alignment";
 import { humanizeString } from "~/shared/string-utils";
+import { DEFAULT_GRID_TRACK_COUNT, DEFAULT_GRID_GAP } from "./shared/constants";
 
 const GapLinked = ({
   isLinked,
@@ -195,7 +202,7 @@ const GapInput = ({
   );
 };
 
-const FlexGap = () => {
+const Gap = () => {
   const [columnGap, rowGap] = useComputedStyles(["column-gap", "row-gap"]);
   const [isLinked, setIsLinked] = useState(
     () => toValue(columnGap.cascadedValue) === toValue(rowGap.cascadedValue)
@@ -365,38 +372,272 @@ const FlexGap = () => {
   );
 };
 
+// Shared alignment controls for both Flex and Grid
+const AlignmentControls = ({
+  showAlignContent = true,
+}: {
+  showAlignContent?: boolean;
+}) => {
+  return (
+    <Grid
+      css={{
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gap: theme.spacing[7],
+      }}
+    >
+      <MenuControl
+        property="align-items"
+        items={[
+          {
+            name: "start",
+            label: "Start",
+            icon: AlignStartHorizontalIcon,
+          },
+          {
+            name: "center",
+            label: "Center",
+            icon: AlignCenterHorizontalIcon,
+          },
+          { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+          {
+            name: "stretch",
+            label: "Stretch",
+            icon: StretchVerticalIcon,
+          },
+          {
+            name: "baseline",
+            label: "Baseline",
+            icon: AlignBaselineIcon,
+          },
+        ]}
+      />
+      <MenuControl
+        property="justify-content"
+        items={[
+          {
+            name: "start",
+            label: "Start",
+            icon: AlignHorizontalJustifyStartIcon,
+          },
+          {
+            name: "center",
+            label: "Center",
+            icon: AlignHorizontalJustifyCenterIcon,
+          },
+          {
+            name: "end",
+            label: "End",
+            icon: AlignHorizontalJustifyEndIcon,
+          },
+          {
+            name: "space-between",
+            label: "Space Between",
+            icon: AlignHorizontalSpaceBetweenIcon,
+          },
+          {
+            name: "space-around",
+            label: "Space Around",
+            icon: AlignHorizontalSpaceAroundIcon,
+          },
+        ]}
+      />
+      {showAlignContent && (
+        <MenuControl
+          property="align-content"
+          items={[
+            {
+              name: "start",
+              label: "Start",
+              icon: AlignContentStartIcon,
+            },
+            {
+              name: "center",
+              label: "Center",
+              icon: AlignContentCenterIcon,
+            },
+            { name: "end", label: "End", icon: AlignContentEndIcon },
+            {
+              name: "stretch",
+              label: "Stretch",
+              icon: AlignContentStretchIcon,
+            },
+            {
+              name: "space-between",
+              label: "Space Between",
+              icon: AlignContentSpaceBetweenIcon,
+            },
+            {
+              name: "space-around",
+              label: "Space Around",
+              icon: AlignContentSpaceAroundIcon,
+            },
+          ]}
+        />
+      )}
+    </Grid>
+  );
+};
+
 const LayoutSectionFlex = () => {
   const flexWrap = useComputedStyleDecl("flex-wrap");
   const flexWrapValue = toValue(flexWrap.cascadedValue);
 
   return (
-    <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
-      <Flex css={{ gap: theme.spacing[7] }} align="stretch">
-        <FlexGrid />
+    <Flex direction="column" gap="2">
+      <Grid
+        css={{
+          gridTemplateColumns: `1fr 1fr 1fr`,
+          gap: theme.spacing[7],
+          alignItems: "start",
+        }}
+      >
+        <FlexAlignment />
+        <Grid
+          css={{
+            gridTemplateColumns: "1fr 1fr",
+            gap: theme.spacing[7],
+          }}
+        >
+          <MenuControl
+            property="flex-direction"
+            items={[
+              { name: "row", label: "Row", icon: ArrowRightIcon },
+              {
+                name: "row-reverse",
+                label: "Row Reverse",
+                icon: ArrowLeftIcon,
+              },
+              { name: "column", label: "Column", icon: ArrowDownIcon },
+              {
+                name: "column-reverse",
+                label: "Column Reverse",
+                icon: ArrowUpIcon,
+              },
+            ]}
+          />
+          <ToggleControl
+            property="flex-wrap"
+            items={[
+              { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
+              { name: "wrap", label: "Wrap", icon: WrapIcon },
+            ]}
+          />
+          <Box css={{ gridColumn: "1 / -1" }}>
+            <AlignmentControls
+              showAlignContent={
+                flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse"
+              }
+            />
+          </Box>
+        </Grid>
+      </Grid>
+      <Gap />
+    </Flex>
+  );
+};
+
+const applyDefaultGridStyles = (columnsValue: string, rowsValue: string) => {
+  const isColumnsEmpty = !columnsValue || columnsValue === "none";
+  const isRowsEmpty = !rowsValue || rowsValue === "none";
+  if (isColumnsEmpty === false || isRowsEmpty === false) {
+    return;
+  }
+  const defaultColumns = Array(DEFAULT_GRID_TRACK_COUNT).fill("1fr").join(" ");
+  const defaultRows = Array(DEFAULT_GRID_TRACK_COUNT).fill("auto").join(" ");
+  const batch = createBatchUpdate();
+  batch.setProperty("grid-template-columns")({
+    type: "unparsed",
+    value: defaultColumns,
+  });
+  batch.setProperty("grid-template-rows")({
+    type: "unparsed",
+    value: defaultRows,
+  });
+  batch.setProperty("grid-auto-columns")({
+    type: "unit",
+    value: 1,
+    unit: "fr",
+  });
+  batch.setProperty("column-gap")({
+    type: "unit",
+    value: DEFAULT_GRID_GAP,
+    unit: "px",
+  });
+  batch.setProperty("row-gap")({
+    type: "unit",
+    value: DEFAULT_GRID_GAP,
+    unit: "px",
+  });
+  batch.publish();
+};
+
+const LayoutSectionGrid = () => {
+  const [openPanel, setOpenPanel] = useState<
+    "generator" | "settings" | undefined
+  >();
+
+  return (
+    <Flex direction="column" gap="2">
+      <GridGenerator
+        open={openPanel === "generator"}
+        onOpenChange={(open) => setOpenPanel(open ? "generator" : undefined)}
+      />
+      <GridSettings
+        open={openPanel === "settings"}
+        onOpenChange={(open) => setOpenPanel(open ? "settings" : undefined)}
+      />
+      <Grid
+        css={{
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: theme.spacing[7],
+          alignItems: "stretch",
+        }}
+      >
+        <GridAlignment />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
-              property="flex-direction"
+              property="grid-auto-flow"
               items={[
                 { name: "row", label: "Row", icon: ArrowRightIcon },
-                {
-                  name: "row-reverse",
-                  label: "Row Reverse",
-                  icon: ArrowLeftIcon,
-                },
                 { name: "column", label: "Column", icon: ArrowDownIcon },
+                { name: "row dense", label: "Row Dense", icon: RepeatGridIcon },
                 {
-                  name: "column-reverse",
-                  label: "Column Reverse",
-                  icon: ArrowUpIcon,
+                  name: "column dense",
+                  label: "Column Dense",
+                  icon: RepeatGridIcon,
                 },
               ]}
             />
-            <ToggleControl
-              property="flex-wrap"
+            <MenuControl
+              property="align-content"
               items={[
-                { name: "nowrap", label: "No Wrap", icon: NoWrapIcon },
-                { name: "wrap", label: "Wrap", icon: WrapIcon },
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignContentStartIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignContentCenterIcon,
+                },
+                { name: "end", label: "End", icon: AlignContentEndIcon },
+                {
+                  name: "stretch",
+                  label: "Stretch",
+                  icon: AlignContentStretchIcon,
+                },
+                {
+                  name: "space-between",
+                  label: "Space Between",
+                  icon: AlignContentSpaceBetweenIcon,
+                },
+                {
+                  name: "space-around",
+                  label: "Space Around",
+                  icon: AlignContentSpaceAroundIcon,
+                },
               ]}
             />
           </Flex>
@@ -404,6 +645,17 @@ const LayoutSectionFlex = () => {
             <MenuControl
               property="align-items"
               items={[
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignStartHorizontalIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
+                { name: "end", label: "End", icon: AlignEndHorizontalIcon },
                 {
                   name: "stretch",
                   label: "Stretch",
@@ -414,22 +666,52 @@ const LayoutSectionFlex = () => {
                   label: "Baseline",
                   icon: AlignBaselineIcon,
                 },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignCenterHorizontalIcon,
-                },
+              ]}
+            />
+            <MenuControl
+              property="justify-items"
+              items={[
                 {
                   name: "start",
                   label: "Start",
                   icon: AlignStartHorizontalIcon,
                 },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignCenterHorizontalIcon,
+                },
                 { name: "end", label: "End", icon: AlignEndHorizontalIcon },
+                {
+                  name: "stretch",
+                  label: "Stretch",
+                  icon: StretchVerticalIcon,
+                },
+                {
+                  name: "baseline",
+                  label: "Baseline",
+                  icon: AlignBaselineIcon,
+                },
               ]}
             />
             <MenuControl
               property="justify-content"
               items={[
+                {
+                  name: "start",
+                  label: "Start",
+                  icon: AlignHorizontalJustifyStartIcon,
+                },
+                {
+                  name: "center",
+                  label: "Center",
+                  icon: AlignHorizontalJustifyCenterIcon,
+                },
+                {
+                  name: "end",
+                  label: "End",
+                  icon: AlignHorizontalJustifyEndIcon,
+                },
                 {
                   name: "space-between",
                   label: "Space Between",
@@ -440,61 +722,13 @@ const LayoutSectionFlex = () => {
                   label: "Space Around",
                   icon: AlignHorizontalSpaceAroundIcon,
                 },
-                {
-                  name: "center",
-                  label: "Center",
-                  icon: AlignHorizontalJustifyCenterIcon,
-                },
-                {
-                  name: "start",
-                  label: "Start",
-                  icon: AlignHorizontalJustifyStartIcon,
-                },
-                {
-                  name: "end",
-                  label: "End",
-                  icon: AlignHorizontalJustifyEndIcon,
-                },
               ]}
             />
-            {(flexWrapValue === "wrap" || flexWrapValue === "wrap-reverse") && (
-              <MenuControl
-                property="align-content"
-                items={[
-                  {
-                    name: "space-between",
-                    label: "Space Between",
-                    icon: AlignContentSpaceBetweenIcon,
-                  },
-                  {
-                    name: "space-around",
-                    label: "Space Around",
-                    icon: AlignContentSpaceAroundIcon,
-                  },
-                  {
-                    name: "stretch",
-                    label: "Stretch",
-                    icon: AlignContentStretchIcon,
-                  },
-                  {
-                    name: "center",
-                    label: "Center",
-                    icon: AlignContentCenterIcon,
-                  },
-                  {
-                    name: "start",
-                    label: "Start",
-                    icon: AlignContentStartIcon,
-                  },
-                  { name: "end", label: "End", icon: AlignContentEndIcon },
-                ]}
-              />
-            )}
           </Flex>
         </Flex>
-      </Flex>
+      </Grid>
 
-      <FlexGap />
+      <Gap />
     </Flex>
   );
 };
@@ -502,8 +736,10 @@ const LayoutSectionFlex = () => {
 const orderedDisplayValues = [
   "block",
   "flex",
+  "grid",
   "inline-block",
   "inline-flex",
+  "inline-grid",
   "inline",
   "none",
 ];
@@ -513,22 +749,58 @@ export const properties = [
   "flex-direction",
   "flex-wrap",
   "align-items",
+  "justify-items",
   "justify-content",
   "align-content",
   "row-gap",
   "column-gap",
+  "grid-auto-flow",
+  "grid-auto-columns",
+  "grid-auto-rows",
+  "grid-template-columns",
+  "grid-template-rows",
 ] satisfies Array<CssProperty>;
+
+const isGridDisplay = (value: string) =>
+  value === "grid" || value === "inline-grid";
 
 export const Section = () => {
   const display = useComputedStyleDecl("display");
   const displayValue = toValue(display.cascadedValue);
+  const instanceKey = useStore($selectedInstanceKey);
+  const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
+  const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const columnsValue = toValue(gridTemplateColumns.cascadedValue);
+  const rowsValue = toValue(gridTemplateRows.cascadedValue);
+
+  const prevRef = useRef<{
+    displayValue: string;
+    instanceKey: string | undefined;
+  }>();
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    prevRef.current = { displayValue, instanceKey };
+    // Apply defaults only when display transitions from non-grid to grid
+    // on the same instance (not on initial render or instance switch)
+    if (
+      prev === undefined ||
+      prev.instanceKey !== instanceKey ||
+      isGridDisplay(prev.displayValue) ||
+      isGridDisplay(displayValue) === false
+    ) {
+      return;
+    }
+    applyDefaultGridStyles(columnsValue, rowsValue);
+  }, [displayValue, instanceKey, columnsValue, rowsValue]);
+
   return (
     <StyleSection label="Layout" properties={properties}>
       <Flex direction="column" gap="2">
         <Grid
           css={{
-            gridTemplateColumns: `1fr ${theme.spacing[24]}`,
-            alignItems: "center",
+            gridTemplateColumns: `1fr 2fr`,
+            gap: theme.spacing[4],
           }}
         >
           <PropertyLabel
@@ -543,6 +815,9 @@ export const Section = () => {
         </Grid>
         {(displayValue === "flex" || displayValue === "inline-flex") && (
           <LayoutSectionFlex />
+        )}
+        {(displayValue === "grid" || displayValue === "inline-grid") && (
+          <LayoutSectionGrid />
         )}
       </Flex>
     </StyleSection>

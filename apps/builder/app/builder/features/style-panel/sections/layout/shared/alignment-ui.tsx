@@ -1,11 +1,6 @@
-import type { CSSProperties } from "react";
 import { Box, Flex, Grid, IconButton } from "@webstudio-is/design-system";
-import { toValue } from "@webstudio-is/css-engine";
 import { DotIcon } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
-import { useComputedStyles } from "../../../shared/model";
-import { getPriorityStyleValueSource } from "../../../property-label";
-import { createBatchUpdate } from "../../../shared/use-style-data";
 
 // Sometimes we need to hide a dot that ends up at an end
 // of a line and visually extends it
@@ -28,46 +23,33 @@ const shouldHideDot = ({
       return x === 2 && y === 2;
     }
   }
-
   return false;
 };
 
-export const FlexGrid = () => {
-  const styles = useComputedStyles([
-    "flex-direction",
-    "justify-content",
-    "align-items",
-  ]);
-  const styleValueSourceColor = getPriorityStyleValueSource(styles);
-  const [flexDirection, justifyContent, alignItems] = styles;
-  const flexDirectionValue = toValue(flexDirection.cascadedValue);
-  const justifyContentValue = toValue(justifyContent.cascadedValue);
-  const alignItemsValue = toValue(alignItems.cascadedValue);
+type AlignmentVisualProps = {
+  // Visual state
+  justifyContent: string;
+  alignItems: string;
+  isColumnDirection: boolean;
+  color: string;
+  // Item sizing for stretch behavior
+  itemStretchWidth: boolean;
+  itemStretchHeight: boolean;
+  // Click handler for grid buttons
+  onSelect: (position: { x: number; y: number }) => void;
+};
+
+export const AlignmentUi = ({
+  justifyContent,
+  alignItems,
+  isColumnDirection,
+  color,
+  itemStretchWidth,
+  itemStretchHeight,
+  onSelect,
+}: AlignmentVisualProps) => {
   const alignment = ["start", "center", "end"];
   const gridSize = alignment.length;
-  const isFlexDirectionColumn =
-    flexDirectionValue === "column" || flexDirectionValue === "column-reverse";
-
-  let color = theme.colors.foregroundFlexUiMain;
-
-  if (styleValueSourceColor === "local") {
-    color = theme.colors.foregroundLocalFlexUi;
-  }
-  if (styleValueSourceColor === "overwritten") {
-    color = theme.colors.foregroundOverwrittenFlexUi;
-  }
-  if (styleValueSourceColor === "remote") {
-    color = theme.colors.foregroundRemoteFlexUi;
-  }
-
-  const addjustLinesPadding = (padding: number | undefined) => {
-    if (padding === undefined) {
-      return {};
-    }
-    return isFlexDirectionColumn
-      ? { paddingTop: padding, paddingBottom: padding }
-      : { paddingLeft: padding, paddingRight: padding };
-  };
 
   return (
     <Grid
@@ -82,17 +64,16 @@ export const FlexGrid = () => {
         gridTemplateRows: "repeat(3, 1fr)",
         color,
         "&:focus-within": {
-          outlineColor: theme.colors.borderLocalFlexUi,
+          outline: `1px solid ${theme.colors.borderLocalFlexUi}`,
         },
       }}
     >
       {Array.from(Array(gridSize * gridSize), (_, index) => {
         const x = index % gridSize;
         const y = Math.floor(index / gridSize);
-        // grid edges starts with 1
         let gridColumn = `${x + 1} / ${x + 2}`;
         let gridRow = `${y + 1} / ${y + 2}`;
-        if (isFlexDirectionColumn) {
+        if (isColumnDirection) {
           [gridColumn, gridRow] = [gridRow, gridColumn];
         }
         return (
@@ -123,26 +104,13 @@ export const FlexGrid = () => {
                   outline: "none",
                 },
               }}
-              onClick={() => {
-                const justifyContent = alignment[x];
-                const alignItems = alignment[y];
-                const batch = createBatchUpdate();
-                batch.setProperty("align-items")({
-                  type: "keyword",
-                  value: alignItems,
-                });
-                batch.setProperty("justify-content")({
-                  type: "keyword",
-                  value: justifyContent,
-                });
-                batch.publish();
-              }}
+              onClick={() => onSelect({ x, y })}
             >
               {shouldHideDot({
                 x,
                 y,
-                justifyContent: justifyContentValue,
-                alignItems: alignItemsValue,
+                justifyContent,
+                alignItems,
               }) === false && (
                 <Box css={{ size: 16 }}>
                   <DotIcon size={8} />
@@ -163,28 +131,39 @@ export const FlexGrid = () => {
           pointerEvents: "none",
         }}
         style={{
-          flexDirection: flexDirectionValue as CSSProperties["flexDirection"],
-          justifyContent: justifyContentValue,
-          alignItems: alignItemsValue,
-          ...addjustLinesPadding(
-            justifyContentValue === "space-between"
-              ? 8
-              : justifyContentValue === "space-around"
-                ? 14.5
-                : undefined
-          ),
+          flexDirection: isColumnDirection ? "column" : "row",
+          justifyContent,
+          alignItems,
+          ...(justifyContent === "space-between"
+            ? isColumnDirection
+              ? { paddingTop: 8, paddingBottom: 8 }
+              : { paddingLeft: 8, paddingRight: 8 }
+            : justifyContent === "space-around"
+              ? isColumnDirection
+                ? { paddingTop: 14.5, paddingBottom: 14.5 }
+                : { paddingLeft: 14.5, paddingRight: 14.5 }
+              : {}),
         }}
       >
-        {[7, 12, 5].map((size) => (
+        {[9, 14, 7].map((size) => (
           <Box
             key={size}
             css={{
               borderRadius: theme.borderRadius[1],
               backgroundColor: "currentColor",
-              ...(isFlexDirectionColumn
-                ? { minWidth: size, minHeight: 3 }
-                : { minWidth: 3, minHeight: size }),
+              flexShrink: 0,
             }}
+            style={
+              isColumnDirection
+                ? {
+                    minWidth: itemStretchWidth ? "100%" : size,
+                    minHeight: 3,
+                  }
+                : {
+                    minWidth: 3,
+                    minHeight: itemStretchHeight ? "100%" : size,
+                  }
+            }
           />
         ))}
       </Flex>
