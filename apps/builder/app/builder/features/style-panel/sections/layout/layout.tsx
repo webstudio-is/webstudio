@@ -542,15 +542,21 @@ const applyDefaultGridStyles = (columnsValue: string, rowsValue: string) => {
   if (isColumnsEmpty === false || isRowsEmpty === false) {
     return;
   }
-  const defaultValue = Array(DEFAULT_GRID_TRACK_COUNT).fill("1fr").join(" ");
+  const defaultColumns = Array(DEFAULT_GRID_TRACK_COUNT).fill("1fr").join(" ");
+  const defaultRows = Array(DEFAULT_GRID_TRACK_COUNT).fill("auto").join(" ");
   const batch = createBatchUpdate();
   batch.setProperty("grid-template-columns")({
     type: "unparsed",
-    value: defaultValue,
+    value: defaultColumns,
   });
   batch.setProperty("grid-template-rows")({
     type: "unparsed",
-    value: defaultValue,
+    value: defaultRows,
+  });
+  batch.setProperty("grid-auto-columns")({
+    type: "unit",
+    value: 1,
+    unit: "fr",
   });
   batch.setProperty("column-gap")({
     type: "unit",
@@ -749,6 +755,8 @@ export const properties = [
   "row-gap",
   "column-gap",
   "grid-auto-flow",
+  "grid-auto-columns",
+  "grid-auto-rows",
   "grid-template-columns",
   "grid-template-rows",
 ] satisfies Array<CssProperty>;

@@ -27,6 +27,8 @@ import {
   type GridTrack,
 } from "@webstudio-is/css-data";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
+import { useStore } from "@nanostores/react";
+import { $selectedInstance } from "~/shared/awareness";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { CssValueInputContainer } from "../../../shared/css-value-input";
 import { createBatchUpdate } from "../../../shared/use-style-data";
@@ -50,14 +52,21 @@ const serializeTrackList = (tracks: GridTrack[]): StyleValue => {
   return { type: "unparsed", value };
 };
 
+type GridTrackProperty =
+  | "grid-template-columns"
+  | "grid-template-rows"
+  | "grid-auto-columns"
+  | "grid-auto-rows";
+
 type TrackItemProps = {
-  property: "grid-template-columns" | "grid-template-rows";
+  property: GridTrackProperty;
   trackType: "column" | "row";
   track: string;
   index: number;
   id: string;
   dragItemId: string | undefined;
   isEditing: boolean;
+  isAuto?: boolean;
   canRemove: boolean;
   onEditingChange: (open: boolean) => void;
   onUpdate: (index: number, newValue: string) => void;
@@ -74,6 +83,7 @@ const TrackItem = ({
   id,
   dragItemId,
   isEditing,
+  isAuto,
   canRemove,
   onEditingChange,
   onUpdate,
@@ -204,7 +214,7 @@ const TrackItem = ({
     >
       <CssValueListItem
         id={id}
-        draggable
+        draggable={!isAuto}
         active={dragItemId === id}
         index={index}
         onMouseEnter={onHoverStart}
@@ -215,16 +225,18 @@ const TrackItem = ({
           </Label>
         }
         buttons={
-          <SmallIconButton
-            variant="destructive"
-            tabIndex={-1}
-            disabled={canRemove === false}
-            icon={<MinusIcon />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(index);
-            }}
-          />
+          isAuto ? undefined : (
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              disabled={canRemove === false}
+              icon={<MinusIcon />}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(index);
+              }}
+            />
+          )
         }
       />
     </FloatingPanel>
@@ -232,16 +244,30 @@ const TrackItem = ({
 };
 
 type TrackEditorProps = {
-  property: "grid-template-columns" | "grid-template-rows";
+  property: GridTrackProperty;
   trackType: keyof typeof trackTypeLabels;
+  label?: string;
+  defaultTrackValue?: string;
+  autoTrackCount?: number;
 };
 
-const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
+const TrackEditor = ({
+  property,
+  trackType,
+  label: labelOverride,
+  defaultTrackValue = "1fr",
+  autoTrackCount,
+}: TrackEditorProps) => {
   const { plural } = trackTypeLabels[trackType];
+  const isAuto =
+    property === "grid-auto-columns" || property === "grid-auto-rows";
+  const label = labelOverride ?? plural;
+  const displayCount = isAuto ? (autoTrackCount ?? 0) : undefined;
+  const openStateKey = isAuto ? `auto-${trackType}` : trackType;
   const styleDecl = useComputedStyleDecl(property);
   const value = toValue(styleDecl.cascadedValue);
   const tracks = parseGridTemplateTrackList(value);
-  const [isOpen, setIsOpen] = useOpenState(trackType);
+  const [isOpen, setIsOpen] = useOpenState(openStateKey);
   const [editingIndex, setEditingIndex] = useState<number | undefined>(
     undefined
   );
@@ -250,9 +276,12 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   );
 
   // Update grid editing track highlight when editing or hovering a track
-  // Editing takes priority over hovering
+  // Only for template tracks since auto tracks aren't shown in the grid overlay
   const highlightIndex = editingIndex ?? hoveredIndex;
   useEffect(() => {
+    if (isAuto) {
+      return;
+    }
     if (highlightIndex !== undefined) {
       $gridEditingTrack.set({ type: trackType, index: highlightIndex });
     } else {
@@ -268,7 +297,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
         $gridEditingTrack.set(undefined);
       }
     };
-  }, [highlightIndex, trackType]);
+  }, [isAuto, highlightIndex, trackType]);
 
   const updateTracks = useCallback(
     (newTracks: GridTrack[]) => {
@@ -280,9 +309,9 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
   );
 
   const addTrack = useCallback(() => {
-    const newTracks = [...tracks, { value: "1fr" }];
+    const newTracks = [...tracks, { value: defaultTrackValue }];
     updateTracks(newTracks);
-  }, [tracks, updateTracks]);
+  }, [tracks, updateTracks, defaultTrackValue]);
 
   const removeTrack = useCallback(
     (index: number) => {
@@ -326,7 +355,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
 
   return (
     <CollapsibleSectionRoot
-      label={`${plural} (${tracks.length})`}
+      label={`${label} (${displayCount ?? tracks.length})`}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
@@ -337,16 +366,18 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
           css={{ padding: theme.spacing[5] }}
         >
           <Text variant="labels" color="subtle">
-            {plural} ({tracks.length})
+            {label} ({displayCount ?? tracks.length})
           </Text>
-          <IconButton
-            onClick={(e) => {
-              e.stopPropagation();
-              addTrack();
-            }}
-          >
-            <PlusIcon />
-          </IconButton>
+          {!isAuto && (
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                addTrack();
+              }}
+            >
+              <PlusIcon />
+            </IconButton>
+          )}
         </Flex>
       }
     >
@@ -373,6 +404,7 @@ const TrackEditor = ({ property, trackType }: TrackEditorProps) => {
                 id={id}
                 dragItemId={dragItemId}
                 isEditing={editingIndex === index}
+                isAuto={isAuto}
                 canRemove={tracks.length > 1}
                 onEditingChange={(open) => {
                   if (open) {
@@ -401,11 +433,39 @@ type GridSettingsProps = {
 };
 
 export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
+  const selectedInstance = useStore($selectedInstance);
   const gridTemplateColumns = useComputedStyleDecl("grid-template-columns");
   const gridTemplateRows = useComputedStyleDecl("grid-template-rows");
+  const gridAutoFlow = useComputedStyleDecl("grid-auto-flow");
 
   const columnsValue = toValue(gridTemplateColumns.cascadedValue);
   const rowsValue = toValue(gridTemplateRows.cascadedValue);
+  const autoFlowValue = toValue(gridAutoFlow.cascadedValue);
+
+  const childCount =
+    selectedInstance?.children.filter((child) => child.type === "id").length ??
+    0;
+  const templateColumnCount = parseGridTemplateTrackList(columnsValue).length;
+  const templateRowCount = parseGridTemplateTrackList(rowsValue).length;
+  const isColumnFlow = autoFlowValue.startsWith("column");
+
+  // Auto tracks are created when children exceed the defined template tracks.
+  // For row flow: extra children overflow into new rows.
+  // For column flow: extra children overflow into new columns.
+  const autoRowCount = isColumnFlow
+    ? 0
+    : Math.max(
+        0,
+        Math.ceil(childCount / Math.max(1, templateColumnCount)) -
+          templateRowCount
+      );
+  const autoColumnCount = isColumnFlow
+    ? Math.max(
+        0,
+        Math.ceil(childCount / Math.max(1, templateRowCount)) -
+          templateColumnCount
+      )
+    : 0;
 
   // Check if the grid values can be edited visually
   const columnsMode = getGridAxisMode(columnsValue);
@@ -448,7 +508,20 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
           data-floating-panel-container
         >
           <TrackEditor property="grid-template-columns" trackType="column" />
+          <TrackEditor
+            property="grid-auto-columns"
+            trackType="column"
+            label="Auto columns"
+            autoTrackCount={autoColumnCount}
+          />
           <TrackEditor property="grid-template-rows" trackType="row" />
+          <TrackEditor
+            property="grid-auto-rows"
+            trackType="row"
+            label="Auto rows"
+            defaultTrackValue="auto"
+            autoTrackCount={autoRowCount}
+          />
           <GridAreas />
         </Flex>
       }
