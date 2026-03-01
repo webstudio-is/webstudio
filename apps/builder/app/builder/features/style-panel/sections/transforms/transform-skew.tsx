@@ -13,21 +13,16 @@ import { extractSkewPropertiesFromTransform } from "./transform-extractors";
 // angle
 const fakeProperty = "rotate";
 
+const defaultAngle: StyleValue = { type: "unit", value: 0, unit: "deg" };
+
 export const SkewPanelContent = () => {
   const styleDecl = useComputedStyleDecl("transform");
   const { skewX: skewXFn, skewY: skewYFn } = extractSkewPropertiesFromTransform(
     styleDecl.cascadedValue
   );
-  const skewX: StyleValue = skewXFn?.args.value[0] ?? {
-    type: "unit",
-    value: 0,
-    unit: "deg",
-  };
-  const skewY: StyleValue = skewYFn?.args.value[0] ?? {
-    type: "unit",
-    value: 0,
-    unit: "deg",
-  };
+
+  const skewX: StyleValue = skewXFn?.args.value[0] ?? defaultAngle;
+  const skewY: StyleValue = skewYFn?.args.value[0] ?? defaultAngle;
 
   return (
     <Flex direction="column" gap={2}>
