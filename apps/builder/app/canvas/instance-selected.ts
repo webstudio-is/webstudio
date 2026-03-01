@@ -27,7 +27,7 @@ import {
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 import { $selectedInstanceOutline } from "~/shared/nano-states";
-import { inflateInstance } from "~/canvas/inflator";
+import { inflateInstance, gridInflatedAttribute } from "~/canvas/inflator";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 
@@ -244,6 +244,20 @@ const subscribeSelectedInstance = (
 
   const mutationHandler: MutationCallback = (mutationRecords) => {
     if (hasDoNotTrackMutationRecord(mutationRecords)) {
+      return;
+    }
+
+    // Skip style mutations caused by grid inflation to prevent infinite loop:
+    // inflation sets inline grid-template-* on the parent, which triggers
+    // this observer, which calls update() → updateInflation() → loop.
+    const hasNonInflationMutation = mutationRecords.some(
+      (record) =>
+        record.type !== "attributes" ||
+        record.attributeName !== "style" ||
+        !(record.target instanceof Element) ||
+        !record.target.hasAttribute(gridInflatedAttribute)
+    );
+    if (!hasNonInflationMutation) {
       return;
     }
 

@@ -29,7 +29,7 @@ export const INFLATE_PADDING = 75;
 // Marker attribute for grid containers with per-track minmax wrapping.
 // Separate from inflatedAttribute so dashed-outline CSS doesn't apply
 // to grids that aren't fully collapsed — only their tracks are inflated.
-const gridInflatedAttribute = "data-ws-grid-inflated";
+export const gridInflatedAttribute = "data-ws-grid-inflated";
 
 // Do not add inflation paddings for replaced elements as at the moment we add them they don't have real size
 // https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element
