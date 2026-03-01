@@ -39,6 +39,22 @@ import {
 import { GridAreas } from "./grid-areas";
 import { $gridEditingTrack } from "~/builder/shared/nano-states";
 
+/**
+ * Compute how many auto tracks are created when children exceed
+ * the defined template tracks along the flow axis.
+ * e.g. a 2×2 grid with 5 children in row flow → ceil(5/2) - 2 = 1 auto row.
+ */
+const computeAutoTrackCount = (
+  childCount: number,
+  crossAxisTrackCount: number,
+  flowAxisTrackCount: number
+) =>
+  Math.max(
+    0,
+    Math.ceil(childCount / Math.max(1, crossAxisTrackCount)) -
+      flowAxisTrackCount
+  );
+
 const trackTypeLabels = {
   column: { singular: "Column", plural: "Columns" },
   row: { singular: "Row", plural: "Rows" },
@@ -449,22 +465,11 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
   const templateRowCount = parseGridTemplateTrackList(rowsValue).length;
   const isColumnFlow = autoFlowValue.startsWith("column");
 
-  // Auto tracks are created when children exceed the defined template tracks.
-  // For row flow: extra children overflow into new rows.
-  // For column flow: extra children overflow into new columns.
   const autoRowCount = isColumnFlow
     ? 0
-    : Math.max(
-        0,
-        Math.ceil(childCount / Math.max(1, templateColumnCount)) -
-          templateRowCount
-      );
+    : computeAutoTrackCount(childCount, templateColumnCount, templateRowCount);
   const autoColumnCount = isColumnFlow
-    ? Math.max(
-        0,
-        Math.ceil(childCount / Math.max(1, templateRowCount)) -
-          templateColumnCount
-      )
+    ? computeAutoTrackCount(childCount, templateRowCount, templateColumnCount)
     : 0;
 
   // Check if the grid values can be edited visually
