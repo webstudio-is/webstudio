@@ -67,3 +67,6 @@ packages/prisma-client/src/__generated__
 
 # copilot instructions
 .github/instructions
+
+# claude code
+.claude
