@@ -95,9 +95,8 @@ if (env.DEV_LOGIN === "true") {
         throw new Error("Secret is required");
       }
 
-      const [secret, email = "hello@webstudio.is"] = secretValue
-        .toString()
-        .split(":");
+      const [secret, email = env.DEV_LOGIN_EMAIL ?? "hello@webstudio.is"] =
+        secretValue.toString().split(":");
 
       if (secret === env.AUTH_SECRET) {
         try {

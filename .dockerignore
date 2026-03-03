@@ -1,0 +1,31 @@
+# Version control
+.git
+.devcontainer
+
+# Fixtures (not needed for builder image)
+fixtures/
+
+# Dependencies (reinstalled during build)
+node_modules
+**/node_modules
+
+# Build artifacts (rebuilt during Docker build)
+apps/builder/build
+apps/builder/public/build
+**/lib
+**/.turbo
+dist
+
+# Env files (secrets must not enter the build context)
+.env*
+*.pem
+!https/*.pem
+
+# Test / IDE / misc
+coverage
+.DS_Store
+*.db
+*.db-journal
+tsconfig.tsbuildinfo
+storybook-static
+.thunder
