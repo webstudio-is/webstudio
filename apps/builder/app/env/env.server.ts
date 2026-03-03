@@ -2,6 +2,7 @@
 const env = {
   // Authentication
   DEV_LOGIN: process.env.DEV_LOGIN,
+  DEV_LOGIN_EMAIL: process.env.DEV_LOGIN_EMAIL,
   GH_CLIENT_ID: process.env.GH_CLIENT_ID,
   GH_CLIENT_SECRET: process.env.GH_CLIENT_SECRET,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,

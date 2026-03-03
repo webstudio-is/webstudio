@@ -37,6 +37,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# self-hosting secrets (deploy/.env is created from deploy/.env.example)
+deploy/.env
+
 # data
 /data
 *.db
