@@ -1,0 +1,12 @@
+# syntax=docker/dockerfile:1
+# Lightweight dev image: no build step, source is bind-mounted at runtime.
+# Build context: repo root (docker build -f apps/builder/Dockerfile.dev .)
+
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.14.4 --activate
+
+# OpenSSL is required by Prisma engine binaries
+RUN apk add --no-cache openssl
+
+WORKDIR /app

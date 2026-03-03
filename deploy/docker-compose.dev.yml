@@ -1,0 +1,99 @@
+# Development compose: source is bind-mounted, Vite HMR enabled.
+# Usage (from deploy/): docker compose -f docker-compose.dev.yml up
+#
+# First start: slow (~2-3 min) — pnpm install downloads all packages.
+# Subsequent starts: fast — named volumes (node_modules, pnpm_store) persist.
+#
+# To reset packages: docker compose -f docker-compose.dev.yml down -v
+
+services:
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: webstudio
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgREST ────────────────────────────────────────────────────────────────
+  postgrest:
+    image: postgrest/postgrest:v12.2.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/webstudio
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET}
+      PGRST_DB_SCHEMAS: public
+
+  # ── Webstudio builder (dev) ──────────────────────────────────────────────────
+  app:
+    build:
+      context: ..
+      dockerfile: apps/builder/Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # 1. Install deps (fast on re-start: named volumes persist)
+    # 2. Generate Prisma client (Alpine engine binary)
+    # 3. Run SQL migrations
+    # 4. Start Vite dev server with HMR
+    command: >
+      sh -c "
+        pnpm install --frozen-lockfile &&
+        pnpm --filter=@webstudio-is/prisma-client generate &&
+        node_modules/.bin/prisma migrate deploy
+          --schema=packages/prisma-client/prisma/schema.prisma &&
+        pnpm --filter=@webstudio-is/builder dev
+      "
+    volumes:
+      # Bind-mount the entire repo so source edits are reflected immediately
+      - ..:/app
+      # Isolate root node_modules inside the container (Alpine-compatible binaries)
+      - node_modules:/app/node_modules
+      # Cache the pnpm content-addressable store across restarts
+      - pnpm_store:/root/.local/share/pnpm/store
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      # Tells vite.config.ts to bind on 0.0.0.0 instead of wstd.dev
+      DOCKER_DEV: "true"
+      PORT: 3000
+      POSTGREST_URL: http://postgrest:3000
+      # Inline the DB URL so ${POSTGRES_PASSWORD} is expanded by Compose
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/webstudio
+      DIRECT_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/webstudio
+      AUTH_SECRET: ${AUTH_SECRET}
+      DEV_LOGIN: ${DEV_LOGIN:-true}
+      DEV_LOGIN_EMAIL: ${DEV_LOGIN_EMAIL:-}
+      GH_CLIENT_ID: ${GH_CLIENT_ID:-}
+      GH_CLIENT_SECRET: ${GH_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      POSTGREST_API_KEY: ${POSTGREST_API_KEY}
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET}
+      FEATURES: ${FEATURES:-*}
+      USER_PLAN: ${USER_PLAN:-pro}
+      MAX_ASSETS_PER_PROJECT: ${MAX_ASSETS_PER_PROJECT:-50}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+
+volumes:
+  db-data:
+  node_modules:
+  pnpm_store:
