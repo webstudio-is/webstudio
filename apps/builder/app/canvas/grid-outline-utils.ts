@@ -11,6 +11,7 @@ import type { InstanceSelector } from "~/shared/tree-utils";
 import { $awareness } from "~/shared/awareness";
 import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
+import { doNotTrackMutation } from "~/shared/dom-utils";
 
 const hideGridOverlay = () => {
   $gridCellData.set(undefined);
@@ -65,6 +66,79 @@ const mirrorProperties = [
   "translate",
 ];
 
+// Sentinel value for the implicit track probe. Implicit (auto-generated)
+// tracks will resolve to this size while explicit tracks keep their original
+// resolved size. 1.25px is unlikely to appear in authored CSS.
+const IMPLICIT_PROBE_SIZE = 1.25;
+
+/**
+ * Find the index where implicit tracks begin for one axis.
+ * Parses the resolved template track list from a clone where
+ * grid-auto-columns/rows are set to IMPLICIT_PROBE_SIZE px.
+ * Returns the 0-based index of the first implicit track, or
+ * trackCount when all tracks are explicit.
+ */
+const findImplicitStart = (
+  resolvedTemplate: string,
+  trackCount: number
+): number => {
+  const tracks = parseGridTemplateTrackList(resolvedTemplate);
+  for (let i = 0; i < tracks.length; i++) {
+    const size = parseFloat(tracks[i].value);
+    if (Math.abs(size - IMPLICIT_PROBE_SIZE) < 0.01) {
+      return i;
+    }
+  }
+  return trackCount;
+};
+
+/**
+ * Probe implicit track boundaries by creating a hidden clone of the grid
+ * with grid-auto-columns/rows set to 1.25px. Implicit tracks resolve to
+ * 1.25px while explicit tracks retain their authored size.
+ */
+const probeImplicitTracks = (
+  gridElement: HTMLElement,
+  columnCount: number,
+  rowCount: number
+): { implicitColumnStart: number; implicitRowStart: number } => {
+  const clone = gridElement.cloneNode(false) as HTMLElement;
+  doNotTrackMutation(clone);
+  clone.style.cssText = window.getComputedStyle(gridElement).cssText;
+  clone.style.position = "fixed";
+  clone.style.visibility = "hidden";
+  clone.style.pointerEvents = "none";
+  clone.style.gridAutoColumns = `${IMPLICIT_PROBE_SIZE}px`;
+  clone.style.gridAutoRows = `${IMPLICIT_PROBE_SIZE}px`;
+
+  // Copy child placeholders so the browser generates the same implicit tracks
+  for (const child of gridElement.children) {
+    const placeholder = document.createElement("div");
+    const childStyle = window.getComputedStyle(child);
+    placeholder.style.gridColumnStart = childStyle.gridColumnStart;
+    placeholder.style.gridColumnEnd = childStyle.gridColumnEnd;
+    placeholder.style.gridRowStart = childStyle.gridRowStart;
+    placeholder.style.gridRowEnd = childStyle.gridRowEnd;
+    placeholder.style.order = childStyle.order;
+    doNotTrackMutation(placeholder);
+    clone.appendChild(placeholder);
+  }
+
+  document.body.appendChild(clone);
+  const probeStyle = window.getComputedStyle(clone);
+  const implicitColumnStart = findImplicitStart(
+    probeStyle.gridTemplateColumns,
+    columnCount
+  );
+  const implicitRowStart = findImplicitStart(
+    probeStyle.gridTemplateRows,
+    rowCount
+  );
+  document.body.removeChild(clone);
+
+  return { implicitColumnStart, implicitRowStart };
+};
+
 const computeGridCells = (
   gridElement: HTMLElement,
   instanceId: string
@@ -105,6 +179,12 @@ const computeGridCells = (
   // Override border-color to transparent — we need border space but not color
   parts.push("border-color:transparent");
 
+  const { implicitColumnStart, implicitRowStart } = probeImplicitTracks(
+    gridElement,
+    columnCount,
+    rowCount
+  );
+
   return {
     instanceId,
     columnCount,
@@ -113,6 +193,8 @@ const computeGridCells = (
     untransformedWidth,
     untransformedHeight,
     resolvedCssText: parts.join(";"),
+    implicitColumnStart,
+    implicitRowStart,
   };
 };
 
@@ -242,4 +324,8 @@ export const subscribeGridOverlayOnSelected = () => {
     unsubscribe();
     unsubscribeGridOverlay();
   };
+};
+
+export const __testing__ = {
+  findImplicitStart,
 };

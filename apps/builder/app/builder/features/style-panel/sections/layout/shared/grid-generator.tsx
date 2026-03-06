@@ -9,6 +9,7 @@ import {
   FloatingPanel,
   Tooltip,
   css,
+  Separator,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -140,6 +141,150 @@ const GridGeneratorSelector = ({
   );
 };
 
+type GridPreset = {
+  label: string;
+  columns: string;
+  rows: string;
+  areas?: string;
+  // Mini-preview dimensions for the button thumbnail
+  previewColumns: string;
+  previewRows: string;
+};
+
+const gridPresets: GridPreset[] = [
+  {
+    label: "Fluid sidebar",
+    columns: "fit-content(300px) 1fr",
+    rows: "1fr",
+    previewColumns: "1fr 3fr",
+    previewRows: "1fr",
+  },
+  {
+    label: "Page stack",
+    columns: "1fr",
+    rows: "auto 1fr auto",
+    previewColumns: "1fr",
+    previewRows: "1fr 4fr 1fr",
+  },
+  {
+    label: "Holy grail",
+    columns: "1fr 3fr 1fr",
+    rows: "auto 1fr auto",
+    areas: `"header header header" "sidebar main aside" "footer footer footer"`,
+    previewColumns: "1fr 3fr 1fr",
+    previewRows: "1fr 3fr 1fr",
+  },
+  {
+    label: "Responsive cards",
+    columns: "repeat(auto-fit, minmax(250px, 1fr))",
+    rows: "auto",
+    previewColumns: "1fr 1fr 1fr",
+    previewRows: "1fr 1fr",
+  },
+  {
+    label: "Feature section",
+    columns: "repeat(auto-fit, minmax(350px, 1fr))",
+    rows: "auto",
+    previewColumns: "1fr 1fr",
+    previewRows: "1fr",
+  },
+  {
+    label: "Footer columns",
+    columns: "repeat(auto-fit, minmax(150px, 1fr))",
+    rows: "auto",
+    previewColumns: "1fr 1fr 1fr 1fr",
+    previewRows: "1fr",
+  },
+];
+
+const presetButtonStyle = css({
+  all: "unset",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: theme.spacing[2],
+  cursor: "pointer",
+  borderRadius: theme.borderRadius[3],
+  padding: theme.spacing[3],
+  boxSizing: "border-box",
+  "&:hover": {
+    backgroundColor: theme.colors.backgroundHover,
+  },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+  },
+});
+
+const presetPreviewStyle = css({
+  width: "100%",
+  aspectRatio: "3 / 2",
+  borderRadius: theme.borderRadius[2],
+  border: `1px solid ${theme.colors.borderMain}`,
+  overflow: "hidden",
+});
+
+type GridPresetsPickerProps = {
+  onSelect: (preset: GridPreset) => void;
+};
+
+const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
+  return (
+    <Grid
+      css={{
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: theme.spacing[3],
+      }}
+    >
+      {gridPresets.map((preset) => (
+        <Tooltip key={preset.label} content={preset.label}>
+          <button
+            className={presetButtonStyle()}
+            onClick={() => onSelect(preset)}
+          >
+            <Grid
+              className={presetPreviewStyle()}
+              css={{
+                gridTemplateColumns: preset.previewColumns,
+                gridTemplateRows: preset.previewRows,
+                gap: 1,
+                padding: 2,
+              }}
+            >
+              {Array.from({
+                length:
+                  preset.previewColumns.split(" ").length *
+                  preset.previewRows.split(" ").length,
+              }).map((_, i) => (
+                <Box
+                  key={i}
+                  css={{
+                    backgroundColor: theme.colors.backgroundControls,
+                    borderRadius: theme.borderRadius[1],
+                    border: `1px solid ${theme.colors.borderMain}`,
+                  }}
+                />
+              ))}
+            </Grid>
+            <Text
+              variant="tiny"
+              align="center"
+              css={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+              }}
+            >
+              {preset.label}
+            </Text>
+          </button>
+        </Tooltip>
+      ))}
+    </Grid>
+  );
+};
+
 const gridGeneratorButtonStyle = css({
   all: "unset",
   position: "relative",
@@ -213,6 +358,27 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     handleChange(columns, rows);
   };
 
+  const handlePresetSelect = (preset: GridPreset) => {
+    const batch = createBatchUpdate();
+    batch.setProperty("grid-template-columns")({
+      type: "unparsed",
+      value: preset.columns,
+    });
+    batch.setProperty("grid-template-rows")({
+      type: "unparsed",
+      value: preset.rows,
+    });
+    if (preset.areas) {
+      batch.setProperty("grid-template-areas")({
+        type: "unparsed",
+        value: preset.areas,
+      });
+    } else {
+      batch.deleteProperty("grid-template-areas");
+    }
+    batch.publish();
+  };
+
   // Build a map from "col,row" (0-based) to area name for the preview
   const areasValue = toValue(gridTemplateAreas.cascadedValue);
   const areas = useMemo(() => parseGridAreas(areasValue), [areasValue]);
@@ -280,6 +446,9 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
             initialColumns={columnCount}
             initialRows={rowCount}
           />
+          <Separator />
+          <Text variant="labels">Presets</Text>
+          <GridPresetsPicker onSelect={handlePresetSelect} />
         </Flex>
       }
       open={open}
@@ -314,4 +483,8 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
       </button>
     </FloatingPanel>
   );
+};
+
+export const __testing__ = {
+  gridPresets,
 };
