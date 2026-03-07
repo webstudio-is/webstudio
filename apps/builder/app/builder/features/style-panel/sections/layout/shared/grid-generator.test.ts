@@ -264,7 +264,7 @@ describe("applyFillGridItems", () => {
     }
   });
 
-  test("sets display flex style on each item", () => {
+  test("sets display flex and flex-direction column on each item", () => {
     const data = createEmptyData("grid-1");
     const items = computeFillGridData({
       totalCells: 2,
@@ -273,7 +273,7 @@ describe("applyFillGridItems", () => {
     });
     applyFillGridItems(data, items, "bp-1", "grid-1");
 
-    expect(data.styles.size).toBe(2);
+    expect(data.styles.size).toBe(4);
     const styleValues = Array.from(data.styles.values()) as Array<{
       breakpointId: string;
       property: string;
@@ -281,8 +281,18 @@ describe("applyFillGridItems", () => {
     }>;
     for (const style of styleValues) {
       expect(style.breakpointId).toBe("bp-1");
-      expect(style.property).toBe("display");
+    }
+    const displayStyles = styleValues.filter((s) => s.property === "display");
+    const directionStyles = styleValues.filter(
+      (s) => s.property === "flexDirection"
+    );
+    expect(displayStyles).toHaveLength(2);
+    expect(directionStyles).toHaveLength(2);
+    for (const style of displayStyles) {
       expect(style.value).toEqual({ type: "keyword", value: "flex" });
+    }
+    for (const style of directionStyles) {
+      expect(style.value).toEqual({ type: "keyword", value: "column" });
     }
   });
 

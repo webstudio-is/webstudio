@@ -345,13 +345,20 @@ const applyFillGridItems = (
       instanceId,
       values: [styleSourceId],
     });
-    const styleDecl: StyleDecl = {
+    const displayStyleDecl: StyleDecl = {
       breakpointId,
       styleSourceId,
       property: "display",
       value: { type: "keyword", value: "flex" },
     };
-    data.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+    data.styles.set(getStyleDeclKey(displayStyleDecl), displayStyleDecl);
+    const directionStyleDecl: StyleDecl = {
+      breakpointId,
+      styleSourceId,
+      property: "flexDirection",
+      value: { type: "keyword", value: "column" },
+    };
+    data.styles.set(getStyleDeclKey(directionStyleDecl), directionStyleDecl);
     parentInstance.children.push({ type: "id", value: instanceId });
   }
 };
