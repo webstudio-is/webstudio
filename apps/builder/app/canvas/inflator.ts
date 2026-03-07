@@ -448,12 +448,30 @@ const applyInflation = () => {
 
   // 5. Per-track grid inflation.
   // Only inflate tracks that resolved to 0px (empty/collapsed).
-  // Tracks with content already have size from their children.
+  // Skip inflation on axes that use auto-fit — the browser intentionally
+  // collapses unused auto-fit tracks to 0px and they should stay hidden.
   for (const element of gridContainers) {
+    const instanceId = element.getAttribute(idAttribute);
+    const instanceStyles = instanceId
+      ? stylesByInstanceId.get(instanceId)
+      : undefined;
+
+    const hasAutoFit = (property: string) =>
+      instanceStyles?.some(
+        (s) =>
+          s.property === property &&
+          s.value.type === "unparsed" &&
+          s.value.value.includes("auto-fit")
+      ) ?? false;
+
     const computedStyle = window.getComputedStyle(element);
 
     const cols = parseGridTemplateTrackList(computedStyle.gridTemplateColumns);
-    if (cols.length > 0 && cols.some((t) => t.value === "0px")) {
+    if (
+      !hasAutoFit("gridTemplateColumns") &&
+      cols.length > 0 &&
+      cols.some((t) => t.value === "0px")
+    ) {
       element.style.gridTemplateColumns = cols
         .map((t) =>
           t.value === "0px" ? `minmax(${INFLATE_PADDING}px, 0px)` : t.value
@@ -462,7 +480,11 @@ const applyInflation = () => {
     }
 
     const rows = parseGridTemplateTrackList(computedStyle.gridTemplateRows);
-    if (rows.length > 0 && rows.some((t) => t.value === "0px")) {
+    if (
+      !hasAutoFit("gridTemplateRows") &&
+      rows.length > 0 &&
+      rows.some((t) => t.value === "0px")
+    ) {
       element.style.gridTemplateRows = rows
         .map((t) =>
           t.value === "0px" ? `minmax(${INFLATE_PADDING}px, 0px)` : t.value
