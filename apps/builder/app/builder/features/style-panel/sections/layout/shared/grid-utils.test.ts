@@ -6,9 +6,7 @@ import type {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import { __testing__ } from "./commands";
-
-const { isAutoGridPlacement, resetGridChildPlacement } = __testing__;
+import { isAutoGridPlacement, resetGridChildPlacement } from "./grid-utils";
 
 const createStyleDecl = (
   styleSourceId: string,

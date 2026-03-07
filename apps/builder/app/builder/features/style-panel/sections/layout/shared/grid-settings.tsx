@@ -13,7 +13,6 @@ import {
   Button,
   Checkbox,
   Grid,
-  Tooltip,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -21,7 +20,6 @@ import {
   serializeGridTemplateTrackList,
   parseMinmax,
   serializeMinmax,
-  checkGridTemplateSupport,
   isEditableGridMode,
   getGridAxisMode,
   type GridTrack,
@@ -265,6 +263,7 @@ type TrackEditorProps = {
   label?: string;
   defaultTrackValue?: string;
   autoTrackCount?: number;
+  disabled?: boolean;
 };
 
 const TrackEditor = ({
@@ -273,6 +272,7 @@ const TrackEditor = ({
   label: labelOverride,
   defaultTrackValue = "1fr",
   autoTrackCount,
+  disabled = false,
 }: TrackEditorProps) => {
   const { plural } = trackTypeLabels[trackType];
   const isAuto =
@@ -386,6 +386,7 @@ const TrackEditor = ({
           </Text>
           {!isAuto && (
             <IconButton
+              disabled={disabled}
               onClick={(e) => {
                 e.stopPropagation();
                 addTrack();
@@ -472,35 +473,17 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
     ? computeAutoTrackCount(childCount, templateRowCount, templateColumnCount)
     : 0;
 
-  // Check if the grid values can be edited visually
+  // Check if each axis can be edited visually
   const columnsMode = getGridAxisMode(columnsValue);
   const rowsMode = getGridAxisMode(rowsValue);
-  const isEditable =
-    isEditableGridMode(columnsMode) && isEditableGridMode(rowsMode);
-
-  // Get reason for non-editable modes
-  const unsupportedReason = (() => {
-    if (!isEditableGridMode(columnsMode)) {
-      const support = checkGridTemplateSupport(columnsValue);
-      return support.supported ? undefined : support.reason;
-    }
-    if (!isEditableGridMode(rowsMode)) {
-      const support = checkGridTemplateSupport(rowsValue);
-      return support.supported ? undefined : support.reason;
-    }
-    return undefined;
-  })();
+  const isColumnsEditable = isEditableGridMode(columnsMode);
+  const isRowsEditable = isEditableGridMode(rowsMode);
 
   const editGridButton = (
-    <Button color="neutral" disabled={!isEditable} css={{ width: "100%" }}>
+    <Button color="neutral" css={{ width: "100%" }}>
       Configure grid
     </Button>
   );
-
-  // Show disabled button with tooltip when unsupported
-  if (!isEditable) {
-    return <Tooltip content={unsupportedReason}>{editGridButton}</Tooltip>;
-  }
 
   return (
     <FloatingPanel
@@ -512,14 +495,22 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
           css={{ width: theme.spacing[30], overflow: "auto" }}
           data-floating-panel-container
         >
-          <TrackEditor property="grid-template-columns" trackType="column" />
+          <TrackEditor
+            property="grid-template-columns"
+            trackType="column"
+            disabled={!isColumnsEditable}
+          />
           <TrackEditor
             property="grid-auto-columns"
             trackType="column"
             label="Auto columns"
             autoTrackCount={autoColumnCount}
           />
-          <TrackEditor property="grid-template-rows" trackType="row" />
+          <TrackEditor
+            property="grid-template-rows"
+            trackType="row"
+            disabled={!isRowsEditable}
+          />
           <TrackEditor
             property="grid-auto-rows"
             trackType="row"

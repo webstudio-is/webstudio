@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
+import { nanoid } from "nanoid";
 import {
   Box,
+  Button,
   Flex,
   Grid,
   theme,
@@ -12,6 +14,7 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
+import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
 import {
   parseGridTemplateTrackList,
   parseGridAreas,
@@ -22,7 +25,13 @@ import {
 } from "@webstudio-is/css-data";
 import { useComputedStyleDecl } from "../../../shared/model";
 import { createBatchUpdate } from "../../../shared/use-style-data";
-import { $gridCellData } from "~/shared/nano-states";
+import {
+  $breakpoints,
+  $gridCellData,
+  $instances,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
+import { updateWebstudioData } from "~/shared/instance-utils";
 import { DEFAULT_GRID_TRACK_COUNT } from "./constants";
 
 /**
@@ -285,6 +294,68 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
   );
 };
 
+type FillGridInput = {
+  totalCells: number;
+  existingChildCount: number;
+  generateId: () => string;
+};
+
+type FillGridItem = {
+  instanceId: string;
+  styleSourceId: string;
+};
+
+const computeFillGridData = ({
+  totalCells,
+  existingChildCount,
+  generateId,
+}: FillGridInput): FillGridItem[] => {
+  const cellsToAdd = totalCells - existingChildCount;
+  if (cellsToAdd <= 0) {
+    return [];
+  }
+  return Array.from({ length: cellsToAdd }, () => ({
+    instanceId: generateId(),
+    styleSourceId: generateId(),
+  }));
+};
+
+const applyFillGridItems = (
+  data: Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
+  items: FillGridItem[],
+  breakpointId: string,
+  parentInstanceId: string
+) => {
+  const parentInstance = data.instances.get(parentInstanceId);
+  if (parentInstance === undefined) {
+    return;
+  }
+  for (const { instanceId, styleSourceId } of items) {
+    data.instances.set(instanceId, {
+      type: "instance",
+      id: instanceId,
+      component: "Box",
+      children: [],
+    });
+    data.styleSources.set(styleSourceId, {
+      type: "local",
+      id: styleSourceId,
+    });
+    data.styleSourceSelections.set(instanceId, {
+      instanceId,
+      values: [styleSourceId],
+    });
+    const styleDecl: StyleDecl = {
+      breakpointId,
+      styleSourceId,
+      property: "display",
+      value: { type: "keyword", value: "flex" },
+    };
+    data.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+    parentInstance.children.push({ type: "id", value: instanceId });
+  }
+};
+
 const gridGeneratorButtonStyle = css({
   all: "unset",
   position: "relative",
@@ -379,6 +450,38 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
     batch.publish();
   };
 
+  const handleFillGrid = () => {
+    const instanceSelector = $selectedInstanceSelector.get();
+    if (instanceSelector === undefined) {
+      return;
+    }
+    const instances = $instances.get();
+    const parentInstance = instances.get(instanceSelector[0]);
+    if (parentInstance === undefined) {
+      return;
+    }
+    const existingChildCount = parentInstance.children.filter(
+      (child) => child.type === "id"
+    ).length;
+    const baseBreakpoint = Array.from($breakpoints.get().values()).find(
+      (bp) => bp.minWidth === undefined && bp.maxWidth === undefined
+    );
+    if (baseBreakpoint === undefined) {
+      return;
+    }
+    const items = computeFillGridData({
+      totalCells: columnCount * rowCount,
+      existingChildCount,
+      generateId: nanoid,
+    });
+    if (items.length === 0) {
+      return;
+    }
+    updateWebstudioData((data) => {
+      applyFillGridItems(data, items, baseBreakpoint.id, instanceSelector[0]);
+    });
+  };
+
   // Build a map from "col,row" (0-based) to area name for the preview
   const areasValue = toValue(gridTemplateAreas.cascadedValue);
   const areas = useMemo(() => parseGridAreas(areasValue), [areasValue]);
@@ -440,15 +543,36 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
       title="Grid generator"
       placement="bottom-within"
       content={
-        <Flex direction="column" gap="3" css={{ padding: theme.panel.padding }}>
-          <GridGeneratorSelector
-            onSelect={handleSelectorSelect}
-            initialColumns={columnCount}
-            initialRows={rowCount}
-          />
+        <Flex direction="column">
+          <Flex
+            direction="column"
+            gap="3"
+            css={{ padding: theme.panel.padding }}
+          >
+            <GridGeneratorSelector
+              onSelect={handleSelectorSelect}
+              initialColumns={columnCount}
+              initialRows={rowCount}
+            />
+          </Flex>
           <Separator />
-          <Text variant="labels">Presets</Text>
-          <GridPresetsPicker onSelect={handlePresetSelect} />
+          <Flex
+            direction="column"
+            gap="3"
+            css={{ padding: theme.panel.padding }}
+          >
+            <GridPresetsPicker onSelect={handlePresetSelect} />
+          </Flex>
+          <Separator />
+          <Flex css={{ padding: theme.panel.padding }}>
+            <Button
+              color="neutral"
+              css={{ width: "100%" }}
+              onClick={handleFillGrid}
+            >
+              Fill grid
+            </Button>
+          </Flex>
         </Flex>
       }
       open={open}
@@ -487,4 +611,6 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
 
 export const __testing__ = {
   gridPresets,
+  computeFillGridData,
+  applyFillGridItems,
 };
