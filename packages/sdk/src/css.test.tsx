@@ -468,7 +468,7 @@ test("generate :root preset and user styles", () => {
       [
         rootComponent,
         {
-          label: "Global Root",
+          label: "Global root",
           presetStyle: {
             html: css`
               display: grid;

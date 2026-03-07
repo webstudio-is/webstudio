@@ -46,7 +46,7 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
     return false;
   }
 
-  // Allows native selection of text in the Builder panels, such as CSS Preview.
+  // Allows native selection of text in the Builder panels, such as CSS preview.
   if (event.type === "copy") {
     const isInBuilderContext = window.self === window.top;
     const selection = window.getSelection();

@@ -1693,7 +1693,7 @@ export const findClosestInsertable = (
   const instanceSelector = from?.parentSelector ??
     awareness?.instanceSelector ?? [selectedPage.rootInstanceId];
   if (instanceSelector[0] === ROOT_INSTANCE_ID) {
-    toast.error(`Cannot insert into Global Root`);
+    toast.error(`Cannot insert into Global root`);
     return;
   }
   const metas = $registeredComponentMetas.get();

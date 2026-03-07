@@ -15,7 +15,7 @@ import { tags } from "./__generated__/tags";
 export const rootComponent = "ws:root";
 
 const rootMeta: WsComponentMeta = {
-  label: "Global Root",
+  label: "Global root",
   icon: SettingsIcon,
   presetStyle: {
     html,

@@ -182,7 +182,7 @@ export const StylePanel = () => {
     <>
       <Box css={{ padding: theme.panel.padding }}>
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
-          Style Sources
+          Style sources
         </Text>
         <StyleSourcesSection />
       </Box>

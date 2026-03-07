@@ -198,7 +198,7 @@ const AdvancedPropertyValue = ({
 };
 
 /**
- * The Advanced section in the Style Panel on </> Global Root has performance issues.
+ * The Advanced section in the Style Panel on </> Global root has performance issues.
  * To fix this, we skip rendering properties not visible in the viewport using the contentvisibilityautostatechange event,
  * and the contentVisibility and containIntrinsicSize CSS properties.
  */
