@@ -447,25 +447,26 @@ const applyInflation = () => {
   }
 
   // 5. Per-track grid inflation.
-  // Wrap every track with minmax(INFLATE_PADDING, <resolved>) so each cell
-  // gets at least INFLATE_PADDING px. This is a builder-only affordance —
-  // it runs for ALL grid containers regardless of child count so empty
-  // cells stay visible and clickable even when other cells have content.
-  // In preview and published sites this code never runs.
+  // Only inflate tracks that resolved to 0px (empty/collapsed).
+  // Tracks with content already have size from their children.
   for (const element of gridContainers) {
     const computedStyle = window.getComputedStyle(element);
 
     const cols = parseGridTemplateTrackList(computedStyle.gridTemplateColumns);
-    if (cols.length > 0) {
+    if (cols.length > 0 && cols.some((t) => t.value === "0px")) {
       element.style.gridTemplateColumns = cols
-        .map((t) => `minmax(${INFLATE_PADDING}px, ${t.value})`)
+        .map((t) =>
+          t.value === "0px" ? `minmax(${INFLATE_PADDING}px, 0px)` : t.value
+        )
         .join(" ");
     }
 
     const rows = parseGridTemplateTrackList(computedStyle.gridTemplateRows);
-    if (rows.length > 0) {
+    if (rows.length > 0 && rows.some((t) => t.value === "0px")) {
       element.style.gridTemplateRows = rows
-        .map((t) => `minmax(${INFLATE_PADDING}px, ${t.value})`)
+        .map((t) =>
+          t.value === "0px" ? `minmax(${INFLATE_PADDING}px, 0px)` : t.value
+        )
         .join(" ");
     }
 
