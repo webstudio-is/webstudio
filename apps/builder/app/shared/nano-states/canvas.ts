@@ -199,7 +199,7 @@ export type GridCellData = {
   // CSS text built from getComputedStyle on the canvas element.
   // Applied verbatim to the builder overlay mirror div via style.cssText.
   // Adding a new synced property = one line in the whitelist array
-  // in grid-outline-utils.ts.
+  // in grid-guide-utils.ts.
   resolvedCssText: string;
   // Index of the first implicit column track (0-based), or columnCount
   // when all tracks are explicit.

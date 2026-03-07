@@ -632,7 +632,7 @@ export const GridAreas = () => {
           {areas.map((area, index) => (
             <FloatingPanel
               key={area.name}
-              placement="bottom-within"
+              placement="left-start"
               title="Edit area"
               content={
                 <AreaEditor

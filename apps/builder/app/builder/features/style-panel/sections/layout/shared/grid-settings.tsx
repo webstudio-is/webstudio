@@ -292,7 +292,7 @@ const TrackEditor = ({
   );
 
   // Update grid editing track highlight when editing or hovering a track
-  // Only for template tracks since auto tracks aren't shown in the grid overlay
+  // Only for template tracks since auto tracks aren't shown in the grid guides
   const highlightIndex = editingIndex ?? hoveredIndex;
   useEffect(() => {
     if (isAuto) {

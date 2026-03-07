@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { __testing__ } from "./grid-outline-utils";
+import { __testing__ } from "./grid-guide-utils";
 
 const { findImplicitStart } = __testing__;
 

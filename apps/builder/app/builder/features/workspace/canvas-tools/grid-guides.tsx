@@ -123,7 +123,7 @@ const highlightStyle = css({
   backgroundColor: "oklch(94.8% 0.027 246.4 / 0.6)",
 });
 
-export const GridOutlines = () => {
+export const GridGuides = () => {
   const gridCellData = useStore($gridCellData);
   const gridEditingTrack = useStore($gridEditingTrack);
   const gridEditingArea = useStore($gridEditingArea);
@@ -214,7 +214,7 @@ export const GridOutlines = () => {
       >
         {/* Grid mirror: faithfully reproduces the canvas element's CSS.
             Styles applied via cssText in useEffect — adding a new synced
-            property only requires a one-line change in grid-outline-utils. */}
+            property only requires a one-line change in grid-guide-utils. */}
         <div ref={mirrorRef}>
           {cells.map(({ col, row }) => {
             const areaName = areaNames.get(`${col},${row}`);

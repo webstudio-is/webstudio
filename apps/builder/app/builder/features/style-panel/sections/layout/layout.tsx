@@ -61,6 +61,7 @@ import { FlexAlignment } from "./shared/flex-alignment";
 import { GridGenerator } from "./shared/grid-generator";
 import { GridSettings } from "./shared/grid-settings";
 import { GridAlignment } from "./shared/grid-alignment";
+import { $openGridEditorPanel } from "~/builder/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 import { DEFAULT_GRID_TRACK_COUNT, DEFAULT_GRID_GAP } from "./shared/constants";
 
@@ -572,19 +573,21 @@ const applyDefaultGridStyles = (columnsValue: string, rowsValue: string) => {
 };
 
 const LayoutSectionGrid = () => {
-  const [openPanel, setOpenPanel] = useState<
-    "generator" | "settings" | undefined
-  >();
+  const openPanel = useStore($openGridEditorPanel);
 
   return (
     <Flex direction="column" gap="2">
       <GridGenerator
         open={openPanel === "generator"}
-        onOpenChange={(open) => setOpenPanel(open ? "generator" : undefined)}
+        onOpenChange={(open) =>
+          $openGridEditorPanel.set(open ? "generator" : undefined)
+        }
       />
       <GridSettings
         open={openPanel === "settings"}
-        onOpenChange={(open) => setOpenPanel(open ? "settings" : undefined)}
+        onOpenChange={(open) =>
+          $openGridEditorPanel.set(open ? "settings" : undefined)
+        }
       />
       <Grid
         css={{

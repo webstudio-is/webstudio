@@ -13,14 +13,14 @@ import { getElementByInstanceSelector } from "~/shared/dom-utils";
 import { parseGridTemplateTrackList } from "@webstudio-is/css-data";
 import { doNotTrackMutation } from "~/shared/dom-utils";
 
-const hideGridOverlay = () => {
+const hideGridGuides = () => {
   $gridCellData.set(undefined);
 };
 
 const MAX_TRACKS = 20;
 
 // Read resolved CSS strings from getComputedStyle. No DOM probing needed —
-// the builder overlay mirrors the grid via a child div that faithfully
+// the builder grid guides mirror the grid via a child div that faithfully
 // reproduces the canvas element's CSS (including user transforms).
 // A parent wrapper handles our scale + translate positioning.
 // Inflation is handled at the track level (minmax in inflator.ts), so
@@ -219,11 +219,11 @@ const findGridContainer = (
   return undefined;
 };
 
-const subscribeGridOverlay = (
+const subscribeGridGuides = (
   selectedInstanceSelector: Readonly<InstanceSelector>
 ) => {
   if (selectedInstanceSelector.length === 0) {
-    hideGridOverlay();
+    hideGridGuides();
     return;
   }
 
@@ -232,15 +232,15 @@ const subscribeGridOverlay = (
   // Re-evaluate findGridContainer on every update so that the overlay
   // appears as soon as an element becomes a grid (e.g. display changed
   // from block → grid) without requiring a re-selection.
-  const updateGridOverlay = () => {
+  const updateGridGuides = () => {
     if ($isResizingCanvas.get()) {
-      hideGridOverlay();
+      hideGridGuides();
       return;
     }
 
     const gridInfo = findGridContainer(selectedInstanceSelector);
     if (!gridInfo) {
-      hideGridOverlay();
+      hideGridGuides();
       return;
     }
 
@@ -255,13 +255,13 @@ const subscribeGridOverlay = (
     cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(() => {
       rafId = requestAnimationFrame(() => {
-        updateGridOverlay();
+        updateGridGuides();
       });
     });
   };
 
   // Initial computation
-  updateGridOverlay();
+  updateGridGuides();
 
   const unsubscribeStylesIndex = $stylesIndex.subscribe(() => {
     scheduleUpdate();
@@ -278,25 +278,25 @@ const subscribeGridOverlay = (
 
   const unsubscribeIsResizing = $isResizingCanvas.subscribe((isResizing) => {
     if (isResizing) {
-      hideGridOverlay();
+      hideGridGuides();
     } else {
-      updateGridOverlay();
+      updateGridGuides();
     }
   });
 
   const unsubscribeScrollState = subscribeScrollState({
-    onScrollStart: hideGridOverlay,
-    onScrollEnd: updateGridOverlay,
+    onScrollStart: hideGridGuides,
+    onScrollEnd: updateGridGuides,
   });
 
   const unsubscribeWindowResize = subscribeWindowResize({
-    onResizeStart: hideGridOverlay,
-    onResizeEnd: updateGridOverlay,
+    onResizeStart: hideGridGuides,
+    onResizeEnd: updateGridGuides,
   });
 
   return () => {
     cancelAnimationFrame(rafId);
-    hideGridOverlay();
+    hideGridGuides();
     unsubscribeStylesIndex();
     unsubscribeInstances();
     unsubscribePropValues();
@@ -306,23 +306,23 @@ const subscribeGridOverlay = (
   };
 };
 
-export const subscribeGridOverlayOnSelected = () => {
+export const subscribeGridGuidesOnSelected = () => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
-  let unsubscribeGridOverlay = () => {};
+  let unsubscribeGridGuides = () => {};
 
   const unsubscribe = $awareness.subscribe((awareness) => {
     const instanceSelector = awareness?.instanceSelector;
     if (instanceSelector !== previousSelectedInstance) {
-      unsubscribeGridOverlay();
-      unsubscribeGridOverlay =
-        subscribeGridOverlay(instanceSelector ?? []) ?? (() => {});
+      unsubscribeGridGuides();
+      unsubscribeGridGuides =
+        subscribeGridGuides(instanceSelector ?? []) ?? (() => {});
       previousSelectedInstance = instanceSelector;
     }
   });
 
   return () => {
     unsubscribe();
-    unsubscribeGridOverlay();
+    unsubscribeGridGuides();
   };
 };
 

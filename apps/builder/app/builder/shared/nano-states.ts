@@ -167,3 +167,9 @@ export type GridEditingArea = {
 };
 
 export const $gridEditingArea = atom<GridEditingArea | undefined>(undefined);
+
+// Which grid editor panel is open (if any).
+// Used to conditionally show grid guides on the canvas.
+export const $openGridEditorPanel = atom<"generator" | "settings" | undefined>(
+  undefined
+);
