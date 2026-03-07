@@ -548,7 +548,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
   return (
     <FloatingPanel
       title="Grid generator"
-      placement="bottom-within"
+      placement="left-start"
       content={
         <Flex direction="column">
           <Flex
@@ -584,6 +584,7 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
       }
       open={open}
       onOpenChange={onOpenChange}
+      closeOnInteractOutside={false}
     >
       {/* Visual grid preview - similar to Figma's style */}
       <button

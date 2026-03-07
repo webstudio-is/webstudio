@@ -578,15 +578,15 @@ const LayoutSectionGrid = () => {
   return (
     <Flex direction="column" gap="2">
       <GridGenerator
-        open={openPanel === "generator"}
+        open={openPanel.generator}
         onOpenChange={(open) =>
-          $openGridEditorPanel.set(open ? "generator" : undefined)
+          $openGridEditorPanel.set({ ...openPanel, generator: open })
         }
       />
       <GridSettings
-        open={openPanel === "settings"}
+        open={openPanel.settings}
         onOpenChange={(open) =>
-          $openGridEditorPanel.set(open ? "settings" : undefined)
+          $openGridEditorPanel.set({ ...openPanel, settings: open })
         }
       />
       <Grid

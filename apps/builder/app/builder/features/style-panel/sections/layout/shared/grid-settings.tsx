@@ -523,6 +523,7 @@ export const GridSettings = ({ open, onOpenChange }: GridSettingsProps) => {
       }
       open={open}
       onOpenChange={onOpenChange}
+      closeOnInteractOutside={false}
     >
       {editGridButton}
     </FloatingPanel>

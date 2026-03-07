@@ -123,6 +123,8 @@ type FloatingPanelProps = {
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** When false, the panel won't close when clicking outside it. */
+  closeOnInteractOutside?: boolean;
 };
 
 const contentStyle = css({
@@ -145,6 +147,7 @@ export const FloatingPanel = ({
   offset: offsetProp = defaultOffset,
   open: openProp,
   onOpenChange,
+  closeOnInteractOutside = true,
 }: FloatingPanelProps) => {
   // Support both controlled and uncontrolled modes
   const [internalOpen, setInternalOpen] = useState(false);
@@ -304,7 +307,7 @@ export const FloatingPanel = ({
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
           // while not allowing having multiple non-center positioned dialogs open at the same time.
-          if (placement === "center") {
+          if (placement === "center" || closeOnInteractOutside === false) {
             event.preventDefault();
           }
         }}

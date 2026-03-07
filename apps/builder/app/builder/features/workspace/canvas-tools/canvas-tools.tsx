@@ -86,7 +86,9 @@ export const CanvasTools = () => {
     <>
       {isPreviewMode === false && (
         <>
-          {openGridEditorPanel !== undefined && <GridGuides />}
+          {(openGridEditorPanel.generator || openGridEditorPanel.settings) && (
+            <GridGuides />
+          )}
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />

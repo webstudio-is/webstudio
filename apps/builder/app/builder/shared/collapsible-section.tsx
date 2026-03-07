@@ -231,7 +231,7 @@ export const CollapsibleSectionWithAddButton = ({
             ) : undefined
           }
         >
-          <SectionTitleLabel>{capitalCase(props.label)}</SectionTitleLabel>
+          <SectionTitleLabel>{props.label}</SectionTitleLabel>
         </SectionTitle>
       }
     >
