@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+import type { StyleDecl } from "@webstudio-is/sdk";
 import { __testing__ } from "./grid-generator";
 
 const { gridPresets, computeFillGridData, applyFillGridItems } = __testing__;
@@ -25,7 +26,7 @@ const createEmptyData = (parentId: string) => ({
     string,
     { instanceId: string; values: string[] }
   >(),
-  styles: new Map<string, unknown>(),
+  styles: new Map<string, StyleDecl>(),
 });
 
 describe("gridPresets", () => {

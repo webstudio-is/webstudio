@@ -321,7 +321,10 @@ const computeFillGridData = ({
 };
 
 const applyFillGridItems = (
-  data: Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
+  data: Pick<
+    Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
+    "instances" | "styleSources" | "styleSourceSelections" | "styles"
+  >,
   items: FillGridItem[],
   breakpointId: string,
   parentInstanceId: string
