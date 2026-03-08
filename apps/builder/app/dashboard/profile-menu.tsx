@@ -61,10 +61,8 @@ export const ProfileMenu = ({
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
-  const subscriptions = userPlanFeatures.purchases.filter((purchase) =>
-    Boolean(purchase.subscriptionId)
-  );
+  const purchases = userPlanFeatures.purchases;
+  const hasPaidPlan = purchases.length > 0;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -79,22 +77,28 @@ export const ProfileMenu = ({
           {user.username ?? defaultUserName}
           <Text>{user.email}</Text>
         </DropdownMenuLabel>
-        {subscriptions.length > 0 && (
+        {purchases.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Purchases</DropdownMenuLabel>
           </>
         )}
-        {subscriptions.map((purchase) => (
-          <DropdownMenuItem
-            key={purchase.subscriptionId}
-            onSelect={() =>
-              navigate(userPlanSubscriptionPath(purchase.subscriptionId))
-            }
-          >
-            {purchase.planName}
-          </DropdownMenuItem>
-        ))}
+        {purchases.map((purchase, index) =>
+          purchase.subscriptionId ? (
+            <DropdownMenuItem
+              key={purchase.subscriptionId}
+              onSelect={() =>
+                navigate(userPlanSubscriptionPath(purchase.subscriptionId))
+              }
+            >
+              {purchase.planName}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuLabel key={index}>
+              {purchase.planName}
+            </DropdownMenuLabel>
+          )
+        )}
         {hasPaidPlan === false && (
           <DropdownMenuItem
             onSelect={() => {
