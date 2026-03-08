@@ -63,7 +63,7 @@ const getCssText = (
     result.push(generateStyleMap(mergeStyles(style)));
   };
 
-  add("Style Sources", sourceStyles);
+  add("Style sources", sourceStyles);
   add("Cascaded", cascadedStyles);
   add("Preset", presetStyles);
 

@@ -24,6 +24,7 @@ import { Box } from "./box";
 import { ScrollArea } from "./scroll-area";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
+  minWidth: "var(--radix-select-trigger-width)",
   "&[data-side=top]": {
     "--ws-select-description-display-top": "block",
     "--ws-select-description-order": 0,

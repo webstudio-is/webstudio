@@ -11,9 +11,8 @@
     "build:webflow-presets": "pnpm css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "build:tailwind-preflight": "tsx --conditions=webstudio ./app/shared/tailwind/preflight-bin.ts && prettier --write ./app/shared/tailwind/__generated__/preflight.ts",
     "start": "remix-serve build/server/index.js",
-    "build:http-client": "pnpm --filter=@webstudio-is/http-client build",
-    "dev": "pnpm build:http-client && remix vite:dev",
-    "dev:auth": "pnpm build:http-client && DEBUG=OAuth2Strategy,ws:* remix vite:dev",
+    "dev": "remix vite:dev",
+    "dev:auth": "DEBUG=OAuth2Strategy,ws:* remix vite:dev",
     "typecheck": "tsgo --noEmit --emitDeclarationOnly false",
     "test": "vitest run"
   },

@@ -1,6 +1,7 @@
 import type {
   FunctionValue,
   KeywordValue,
+  LayersValue,
   StyleValue,
   TupleValue,
   UnitValue,
@@ -33,8 +34,9 @@ export const extractRotatePropertiesFromTransform = (transform: StyleValue) => {
 };
 
 export const extractSkewPropertiesFromTransform = (skew: StyleValue) => {
-  let skewX: FunctionValue | undefined = undefined;
-  let skewY: FunctionValue | undefined = undefined;
+  type SkewFunction = FunctionValue & { args: LayersValue };
+  let skewX: SkewFunction | undefined = undefined;
+  let skewY: SkewFunction | undefined = undefined;
 
   if (skew.type !== "tuple") {
     return { skewX, skewY };
@@ -42,11 +44,11 @@ export const extractSkewPropertiesFromTransform = (skew: StyleValue) => {
 
   for (const item of skew.value) {
     if (item.type === "function" && item.name === "skewX") {
-      skewX = item;
+      skewX = item as SkewFunction;
     }
 
     if (item.type === "function" && item.name === "skewY") {
-      skewY = item;
+      skewY = item as SkewFunction;
     }
   }
 

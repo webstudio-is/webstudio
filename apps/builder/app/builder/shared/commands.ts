@@ -1,4 +1,8 @@
 import { toast } from "@webstudio-is/design-system";
+import {
+  isAutoGridPlacement,
+  resetGridChildPlacement,
+} from "~/builder/features/style-panel/sections/layout/shared/grid-utils";
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $editingItemSelector,
@@ -363,6 +367,26 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           if (newRootInstanceId === undefined) {
             return;
           }
+
+          // When the original child is auto-placed in a grid, ensure the
+          // duplicate is also auto-placed to prevent overlapping items.
+          // Manually positioned children keep their exact grid position.
+          if (
+            isAutoGridPlacement({
+              styles: data.styles,
+              styleSources: data.styleSources,
+              styleSourceSelections: data.styleSourceSelections,
+              instanceId: selectedItem.instance.id,
+            })
+          ) {
+            resetGridChildPlacement({
+              styles: data.styles,
+              styleSources: data.styleSources,
+              styleSourceSelections: data.styleSourceSelections,
+              instanceId: newRootInstanceId,
+            });
+          }
+
           const parentInstance = data.instances.get(parentItem.instance.id);
           if (parentInstance === undefined) {
             return;

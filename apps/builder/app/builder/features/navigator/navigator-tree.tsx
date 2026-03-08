@@ -637,7 +637,7 @@ export const NavigatorTree = () => {
                 disableHoverableContent={true}
                 content={
                   <Text>
-                    Variables defined on Global Root are available on every
+                    Variables defined on Global root are available on every
                     instance on every page.
                   </Text>
                 }

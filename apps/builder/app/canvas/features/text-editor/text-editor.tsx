@@ -54,7 +54,7 @@ import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
 import {
-  collapsedAttribute,
+  inflatedAttribute,
   idAttribute,
   selectorIdAttribute,
 } from "@webstudio-is/react-sdk";
@@ -85,7 +85,7 @@ import {
   getVisibleElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import deepEqual from "fast-deep-equal";
-import { setDataCollapsed } from "~/canvas/collapsed";
+import { inflateInstance } from "~/canvas/inflator";
 import {
   $selectedPage,
   addTemporaryInstance,
@@ -1546,7 +1546,7 @@ export const TextEditor = ({
         if (treeRootInstance) {
           const jsonState = editorState.toJSON();
           if (deepEqual(jsonState, lastSavedStateJsonRef.current)) {
-            setDataCollapsed(rootInstanceSelector[0], false);
+            inflateInstance(rootInstanceSelector[0], false);
             return;
           }
 
@@ -1557,7 +1557,7 @@ export const TextEditor = ({
           lastSavedStateJsonRef.current = jsonState;
         }
 
-        setDataCollapsed(rootInstanceSelector[0], false);
+        inflateInstance(rootInstanceSelector[0], false);
       });
 
       const textEditingSelector = $textEditingInstanceSelector.get()?.selector;
@@ -1699,7 +1699,7 @@ export const TextEditor = ({
             continue;
           }
 
-          if (!elt.hasAttribute(collapsedAttribute)) {
+          if (!elt.hasAttribute(inflatedAttribute)) {
             continue;
           }
         }

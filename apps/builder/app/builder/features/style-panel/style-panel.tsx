@@ -152,6 +152,10 @@ export const StylePanel = () => {
     if (category === "flexChild" && parentDisplay.includes("flex") === false) {
       continue;
     }
+    // show grid child UI only when parent is grid or inline-grid
+    if (category === "gridChild" && parentDisplay.includes("grid") === false) {
+      continue;
+    }
     // allow customizing list item type only for list and list item
     if (
       category === "listItem" &&
@@ -178,7 +182,7 @@ export const StylePanel = () => {
     <>
       <Box css={{ padding: theme.panel.padding }}>
         <Text variant="titles" css={{ paddingBlock: theme.panel.paddingBlock }}>
-          Style Sources
+          Style sources
         </Text>
         <StyleSourcesSection />
       </Box>

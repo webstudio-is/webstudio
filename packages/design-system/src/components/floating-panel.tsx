@@ -123,10 +123,13 @@ type FloatingPanelProps = {
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** When false, the panel won't close when clicking outside it. */
+  closeOnInteractOutside?: boolean;
 };
 
 const contentStyle = css({
   width: theme.sizes.sidebarWidth,
+  overflow: "auto",
 });
 
 const defaultOffset: OffsetOptions = { mainAxis: 0, crossAxis: 0 };
@@ -144,6 +147,7 @@ export const FloatingPanel = ({
   offset: offsetProp = defaultOffset,
   open: openProp,
   onOpenChange,
+  closeOnInteractOutside = true,
 }: FloatingPanelProps) => {
   // Support both controlled and uncontrolled modes
   const [internalOpen, setInternalOpen] = useState(false);
@@ -155,6 +159,7 @@ export const FloatingPanel = ({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number }>();
   const currentPositionRef = useRef<{ x: number; y: number }>();
+  const maxHeightRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLElement | null>(null);
 
   // Wrap onOpenChange to reset position when panel closes
@@ -162,6 +167,7 @@ export const FloatingPanel = ({
     if (isOpen === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      maxHeightRef.current = undefined;
       containerRef.current = null;
     }
     // Update internal state if uncontrolled
@@ -176,6 +182,7 @@ export const FloatingPanel = ({
     if (open === false) {
       currentPositionRef.current = undefined;
       setPosition(undefined);
+      maxHeightRef.current = undefined;
       containerRef.current = null;
     }
   }, [open]);
@@ -220,6 +227,15 @@ export const FloatingPanel = ({
           offsetProp
         );
         currentPositionRef.current = { x, y };
+
+        // Calculate max height based on container bounds
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const availableHeight = containerRect.bottom - y - 10; // 10px padding
+        if (availableHeight > 0) {
+          maxHeightRef.current = availableHeight;
+          contentElement.style.maxHeight = `${availableHeight}px`;
+        }
+
         setPosition({ x, y });
         return;
       }
@@ -291,7 +307,7 @@ export const FloatingPanel = ({
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
           // while not allowing having multiple non-center positioned dialogs open at the same time.
-          if (placement === "center") {
+          if (placement === "center" || closeOnInteractOutside === false) {
             event.preventDefault();
           }
         }}

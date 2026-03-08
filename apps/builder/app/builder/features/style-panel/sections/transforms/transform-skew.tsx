@@ -6,34 +6,23 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 import { PropertyInlineLabel } from "../../property-label";
 import { useComputedStyleDecl } from "../../shared/model";
 import { updateTransformFunction } from "./transform-utils";
+import { extractSkewPropertiesFromTransform } from "./transform-extractors";
 
 // We use fakeProperty to pass for the CssValueInputContainer.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax
 // angle
 const fakeProperty = "rotate";
 
+const defaultAngle: StyleValue = { type: "unit", value: 0, unit: "deg" };
+
 export const SkewPanelContent = () => {
   const styleDecl = useComputedStyleDecl("transform");
-  const tuple =
-    styleDecl.cascadedValue.type === "tuple"
-      ? styleDecl.cascadedValue
-      : undefined;
-  let skewX: StyleValue = { type: "unit", value: 0, unit: "deg" };
-  let skewY: StyleValue = { type: "unit", value: 0, unit: "deg" };
-  for (const item of tuple?.value ?? []) {
-    if (
-      item.type === "function" &&
-      item.args.type === "layers" &&
-      item.args.value[0].type === "unit"
-    ) {
-      if (item.name === "skewx") {
-        skewX = item.args.value[0];
-      }
-      if (item.name === "skewY") {
-        skewY = item.args.value[0];
-      }
-    }
-  }
+  const { skewX: skewXFn, skewY: skewYFn } = extractSkewPropertiesFromTransform(
+    styleDecl.cascadedValue
+  );
+
+  const skewX: StyleValue = skewXFn?.args.value[0] ?? defaultAngle;
+  const skewY: StyleValue = skewYFn?.args.value[0] ?? defaultAngle;
 
   return (
     <Flex direction="column" gap={2}>
