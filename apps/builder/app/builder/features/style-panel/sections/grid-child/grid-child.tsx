@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
+import { parseGridAreas } from "@webstudio-is/css-data";
 import { StyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
@@ -30,8 +31,8 @@ import {
   deleteProperty,
   resetEphemeralStyles,
 } from "../../shared/use-style-data";
-import { parseGridAreas } from "@webstudio-is/css-data";
 import { getGridDimensions } from "../layout/shared/grid-areas";
+import { GridAreaPicker } from "../layout/shared/grid-area-picker";
 import {
   GridPositionInputs,
   type GridPosition,
@@ -645,25 +646,50 @@ const GridChildPositionManual = () => {
     batch.publish({ isEphemeral: true });
   };
 
+  const handlePickerChange = (area: AreaInfo) => {
+    const newPosition: GridPosition = {
+      columnStart: area.columnStart,
+      columnEnd: area.columnEnd,
+      rowStart: area.rowStart,
+      rowEnd: area.rowEnd,
+    };
+    localValue.set(newPosition);
+    handleChange(newPosition);
+    localValue.save();
+    resetEphemeralStyles();
+  };
+
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: "3fr 8fr",
-        alignItems: "start",
-      }}
-    >
-      <div />
-      <GridPositionInputs
-        value={localValue.value}
-        onChange={handleChange}
-        onBlur={() => {
-          localValue.save();
-          resetEphemeralStyles();
+    <Flex direction="column" gap="2">
+      <Grid
+        css={{
+          gridTemplateColumns: "3fr 8fr",
+          alignItems: "start",
         }}
+      >
+        <div />
+        <GridPositionInputs
+          value={localValue.value}
+          onChange={handleChange}
+          onBlur={() => {
+            localValue.save();
+            resetEphemeralStyles();
+          }}
+          gridColumns={gridColumns}
+          gridRows={gridRows}
+        />
+      </Grid>
+      <GridAreaPicker
+        value={{
+          name: "",
+          ...localValue.value,
+        }}
+        onChange={handlePickerChange}
         gridColumns={gridColumns}
         gridRows={gridRows}
+        otherAreas={[]}
       />
-    </Grid>
+    </Flex>
   );
 };
 
