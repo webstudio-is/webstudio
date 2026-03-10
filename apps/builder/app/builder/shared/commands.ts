@@ -52,6 +52,7 @@ import { isSyncIdle } from "~/shared/sync/project-queue";
 import { openDeleteUnusedTokensDialog } from "~/builder/shared/style-source-actions";
 import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
+import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
 import {
   copyInstance,
@@ -555,6 +556,15 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       description: "Remove unused CSS variables",
       handler: () => {
         openDeleteUnusedCssVariablesDialog();
+      },
+    },
+
+    {
+      name: "deleteUnusedAssets",
+      label: "Delete unused assets",
+      description: "Remove unused assets",
+      handler: () => {
+        openDeleteUnusedAssetsDialog();
       },
     },
 

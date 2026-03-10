@@ -109,7 +109,7 @@ const traverseStyleValue = (
   }
 };
 
-const calculateUsagesByAssetId = ({
+export const calculateUsagesByAssetId = ({
   pages,
   props,
   styles,

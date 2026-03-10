@@ -326,6 +326,7 @@ export const DeleteUnusedTokensDialog = () => {
             {unusedTokens.length > 0 && (
               <Button
                 color="destructive"
+                autoFocus
                 onClick={() => {
                   const deletedCount = deleteUnusedTokens();
                   handleClose();
