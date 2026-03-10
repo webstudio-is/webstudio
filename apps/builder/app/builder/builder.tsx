@@ -63,6 +63,7 @@ import { CommandPanel } from "./features/command-panel";
 import { DeleteUnusedTokensDialog } from "~/builder/shared/style-source-actions";
 import { DeleteUnusedDataVariablesDialog } from "~/builder/shared/data-variable-utils";
 import { DeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
+import { DeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { KeyboardShortcutsDialog } from "./features/keyboard-shortcuts-dialog";
 import { TokenConflictDialog } from "~/shared/token-conflict-dialog";
 
@@ -478,6 +479,7 @@ export const Builder = ({
         <DeleteUnusedTokensDialog />
         <DeleteUnusedDataVariablesDialog />
         <DeleteUnusedCssVariablesDialog />
+        <DeleteUnusedAssetsDialog />
         <KeyboardShortcutsDialog />
         <TokenConflictDialog />
         <RemoteDialog />

@@ -640,6 +640,7 @@ const DeleteUnusedCssVariablesDialogContent = ({
         {unusedVariablesArray.length > 0 && (
           <Button
             color="destructive"
+            autoFocus
             onClick={() => {
               const deletedCount = deleteUnusedCssVariables();
               onClose();

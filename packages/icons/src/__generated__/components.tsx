@@ -1476,6 +1476,30 @@ export const BracesIcon: IconComponent = forwardRef(
 );
 BracesIcon.displayName = "BracesIcon";
 
+export const BrushCleaningIcon: IconComponent = forwardRef(
+  ({ fill = "none", size = 16, ...props }, forwardedRef) => {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        width={size}
+        height={size}
+        fill={fill}
+        {...props}
+        ref={forwardedRef}
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.667 14.667 10 12m2.667-2.667a.667.667 0 0 0 .666-.666V8A1.333 1.333 0 0 0 12 6.667h-2A.667.667 0 0 1 9.333 6V2.667a1.333 1.333 0 1 0-2.666 0V6A.667.667 0 0 1 6 6.667H4A1.333 1.333 0 0 0 2.667 8v.667a.667.667 0 0 0 .666.666m9.334 0H3.333m9.334 0 1.315 4.512a.667.667 0 0 1-.649.822H2.667a.668.668 0 0 1-.649-.822l1.315-4.512m2 5.334L6 12"
+        />
+      </svg>
+    );
+  }
+);
+BrushCleaningIcon.displayName = "BrushCleaningIcon";
+
 export const BugIcon: IconComponent = forwardRef(
   ({ fill = "none", size = 16, ...props }, forwardedRef) => {
     return (
