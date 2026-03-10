@@ -42,6 +42,7 @@ import { AlignSelfControl, JustifySelfControl } from "../shared/align-self";
 import { OrderControl } from "../shared/order";
 import { useStore } from "@nanostores/react";
 import { $selectedInstancePath, selectInstance } from "~/shared/awareness";
+import { $isStylePanelGridVisible } from "~/builder/shared/nano-states";
 import { ExternalLinkIcon } from "@webstudio-is/icons";
 
 export const properties = [
@@ -111,6 +112,19 @@ const derivePositionMode = (
 
   // Default to auto
   return "auto";
+};
+
+/**
+ * Shows grid guides on the canvas while this component is mounted.
+ */
+const GridChildGuides = () => {
+  useEffect(() => {
+    $isStylePanelGridVisible.set(true);
+    return () => {
+      $isStylePanelGridVisible.set(false);
+    };
+  }, []);
+  return null;
 };
 
 export const Section = () => {
@@ -222,6 +236,7 @@ export const Section = () => {
         )
       }
     >
+      <GridChildGuides />
       <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
         <GridChildPositionMode
           value={positionMode}
