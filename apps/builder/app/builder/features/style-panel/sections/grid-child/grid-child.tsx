@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { parseGridAreas } from "@webstudio-is/css-data";
+import { parseGridAreas, type AreaInfo } from "@webstudio-is/css-data";
 import { StyleSection } from "../../shared/style-section";
 import { PropertyLabel } from "../../property-label";
 import { ToggleGroupTooltip } from "../../controls/toggle-group/toggle-group-control";
