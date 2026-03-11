@@ -61,7 +61,7 @@ import { FlexAlignment } from "./shared/flex-alignment";
 import { GridGenerator } from "./shared/grid-generator";
 import { GridSettings } from "./shared/grid-settings";
 import { GridAlignment } from "./shared/grid-alignment";
-import { $openGridEditorPanel } from "~/builder/shared/nano-states";
+import { $isStylePanelGridVisible } from "~/builder/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 import { DEFAULT_GRID_TRACK_COUNT, DEFAULT_GRID_GAP } from "./shared/constants";
 
@@ -573,21 +573,27 @@ const applyDefaultGridStyles = (columnsValue: string, rowsValue: string) => {
 };
 
 const LayoutSectionGrid = () => {
-  const openPanel = useStore($openGridEditorPanel);
+  const [openPanel, setOpenPanel] = useState({
+    generator: false,
+    settings: false,
+  });
+
+  useEffect(() => {
+    $isStylePanelGridVisible.set(true);
+    return () => {
+      $isStylePanelGridVisible.set(false);
+    };
+  }, []);
 
   return (
     <Flex direction="column" gap="2">
       <GridGenerator
         open={openPanel.generator}
-        onOpenChange={(open) =>
-          $openGridEditorPanel.set({ ...openPanel, generator: open })
-        }
+        onOpenChange={(open) => setOpenPanel({ ...openPanel, generator: open })}
       />
       <GridSettings
         open={openPanel.settings}
-        onOpenChange={(open) =>
-          $openGridEditorPanel.set({ ...openPanel, settings: open })
-        }
+        onOpenChange={(open) => setOpenPanel({ ...openPanel, settings: open })}
       />
       <Grid
         css={{

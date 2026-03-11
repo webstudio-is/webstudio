@@ -21,7 +21,7 @@ import { applyScale } from "./outline";
 import {
   $clampingRect,
   $scale,
-  $openGridEditorPanel,
+  $isStylePanelGridVisible,
 } from "~/builder/shared/nano-states";
 import { BlockChildHoveredInstanceOutline } from "./outline/block-instance-outline";
 import { TextEditorContextMenu } from "./block-editor-context-menu";
@@ -49,7 +49,7 @@ export const CanvasTools = () => {
   const instances = useStore($instances);
   const scale = useStore($scale);
   const clampingRect = useStore($clampingRect);
-  const openGridEditorPanel = useStore($openGridEditorPanel);
+  const isStylePanelGridVisible = useStore($isStylePanelGridVisible);
 
   if (!canvasToolsVisible) {
     return;
@@ -86,9 +86,7 @@ export const CanvasTools = () => {
     <>
       {isPreviewMode === false && (
         <>
-          {(openGridEditorPanel.generator || openGridEditorPanel.settings) && (
-            <GridGuides />
-          )}
+          {isStylePanelGridVisible && <GridGuides />}
           <SelectedInstanceOutline />
           <HoveredInstanceOutline />
           <CollaborativeInstanceOutline />
