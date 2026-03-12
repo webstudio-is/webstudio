@@ -15,7 +15,6 @@ const user = {
   email: null,
   image: null,
   username: "Taylor",
-  teamId: null,
   provider: "github",
   projectsTags: [],
 };

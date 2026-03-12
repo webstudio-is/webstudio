@@ -18,11 +18,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Team {
-  id    String @id @default(uuid())
-  users User[]
-}
-
 enum UploadStatus {
   UPLOADING
   UPLOADED
@@ -63,9 +58,8 @@ model User {
   image            String?
   username         String?
   createdAt        DateTime           @default(now()) @db.Timestamptz(3)
-  team             Team?              @relation(fields: [teamId], references: [id])
-  teamId           String?
   projects         Project[]
+  workspaces       Workspace[]
   projectsTags     Json               @default("[]")
   clientReferences ClientReferences[]
   checkout         TransactionLog[]
@@ -150,6 +144,8 @@ model Project {
   domain                    String                       @unique
   user                      User?                        @relation(fields: [userId], references: [id])
   userId                    String?
+  workspace                 Workspace?                   @relation(fields: [workspaceId], references: [id])
+  workspaceId               String?
   build                     Build[]
   isDeleted                 Boolean                      @default(false)
   files                     File[]
@@ -289,6 +285,30 @@ view LatestStaticBuildPerProject {
   @@unique([buildId, projectId])
 }
 
+model Workspace {
+  id        String    @id @default(uuid())
+  name      String
+  isDefault Boolean   @default(false)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  projects  Project[]
+  members   WorkspaceMember[]
+
+  // Only one default workspace per user
+  @@unique([userId, isDefault])
+}
+
+model WorkspaceMember {
+  workspace   Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  userId      String
+  relation    AuthorizationRelation  @default(administrators)
+  createdAt   DateTime              @default(now()) @db.Timestamptz(3)
+
+  @@id([workspaceId, userId])
+}
+
 // Dashboard
 view DashboardProject {
   id                        String                    @id @default(uuid())
@@ -296,6 +316,7 @@ view DashboardProject {
   title                     String
   domain                    String
   userId                    String?
+  workspaceId               String?
   previewImageAsset         Asset?                    @relation(fields: [previewImageAssetId, id], references: [id, projectId])
   previewImageAssetId       String?
   isDeleted                 Boolean                   @default(false)
