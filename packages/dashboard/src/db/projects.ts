@@ -76,7 +76,11 @@ const fetchAndMapDomains = async <
 
 export type DashboardProject = Awaited<ReturnType<typeof findMany>>[number];
 
-export const findMany = async (userId: string, context: AppContext) => {
+export const findMany = async (
+  userId: string,
+  context: AppContext,
+  workspaceId?: string
+) => {
   if (context.authorization.type !== "user") {
     throw new AuthorizationError(
       "Only logged in users can view the project list"
@@ -89,11 +93,17 @@ export const findMany = async (userId: string, context: AppContext) => {
     );
   }
 
-  const data = await context.postgrest.client
+  let query = context.postgrest.client
     .from("DashboardProject")
     .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
     .eq("userId", userId)
-    .eq("isDeleted", false)
+    .eq("isDeleted", false);
+
+  if (workspaceId !== undefined) {
+    query = query.eq("workspaceId", workspaceId);
+  }
+
+  const data = await query
     .order("createdAt", { ascending: false })
     .order("id", { ascending: false });
   if (data.error) {

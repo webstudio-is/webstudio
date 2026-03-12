@@ -1,4 +1,5 @@
 import type { DashboardProject } from "@webstudio-is/dashboard";
+import type { Workspace } from "@webstudio-is/project";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
@@ -13,4 +14,6 @@ export type DashboardData = {
     id: string;
     title: string;
   };
+  workspaces?: Array<Workspace>;
+  currentWorkspaceId?: string;
 };
