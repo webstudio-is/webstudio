@@ -274,17 +274,7 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
                 />
               ))}
             </Grid>
-            <Text
-              variant="tiny"
-              align="center"
-              css={{
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                wordBreak: "break-word",
-              }}
-            >
+            <Text variant="small" align="center">
               {preset.label}
             </Text>
           </button>
@@ -321,10 +311,7 @@ const computeFillGridData = ({
 };
 
 const applyFillGridItems = (
-  data: Pick<
-    Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
-    "instances" | "styleSources" | "styleSourceSelections" | "styles"
-  >,
+  data: Parameters<Parameters<typeof updateWebstudioData>[0]>[0],
   items: FillGridItem[],
   breakpointId: string,
   parentInstanceId: string
