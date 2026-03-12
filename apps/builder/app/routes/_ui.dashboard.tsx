@@ -27,11 +27,6 @@ import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
-const parseCookieValue = (cookieHeader: string, name: string) => {
-  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-  return match?.[1];
-};
-
 export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
 
@@ -100,11 +95,13 @@ const loadDashboardData = async (request: Request) => {
   if (isFeatureEnabled("workspaces")) {
     workspaces = await workspaceApi.findMany(user.id, context);
 
-    // Read selected workspace from cookie, fall back to the default workspace
-    const cookieHeader = request.headers.get("Cookie") ?? "";
-    const selectedId = parseCookieValue(cookieHeader, "selectedWorkspaceId");
+    // Read selected workspace from URL, fall back to the default workspace
+    const selectedId = url.searchParams.get("workspaceId");
 
-    const matchedWorkspace = workspaces.find((w) => w.id === selectedId);
+    const matchedWorkspace =
+      selectedId === null
+        ? undefined
+        : workspaces.find((w) => w.id === selectedId);
     const defaultWorkspace = workspaces.find((w) => w.isDefault);
     currentWorkspaceId = (matchedWorkspace ?? defaultWorkspace)?.id;
 
