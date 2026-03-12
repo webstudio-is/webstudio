@@ -56,6 +56,42 @@ export const workspaceRouter = router({
       return createErrorResponse(error);
     }
   }),
+
+  addMember: procedure
+    .input(z.object({ workspaceId: z.string(), email: z.string().email() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const member = await workspaceApi.addMember(input, ctx);
+        return { success: true as const, data: member };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+
+  removeMember: procedure
+    .input(z.object({ workspaceId: z.string(), userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await workspaceApi.removeMember(
+          { workspaceId: input.workspaceId, memberUserId: input.userId },
+          ctx
+        );
+        return { success: true as const };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+
+  listMembers: procedure
+    .input(z.object({ workspaceId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const members = await workspaceApi.listMembers(input, ctx);
+        return { success: true as const, data: members };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
 });
 
 export type WorkspaceRouter = typeof workspaceRouter;
