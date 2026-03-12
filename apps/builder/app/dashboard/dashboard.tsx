@@ -28,6 +28,8 @@ import { help } from "~/shared/help";
 import { SearchResults } from "./search/search-results";
 import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
+import { WorkspaceSelector } from "./workspace-selector";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const globalStyles = globalCss({
   body: {
@@ -163,9 +165,17 @@ export const Dashboard = () => {
     projectToClone,
     projects,
     templates,
+    workspaces,
+    currentWorkspaceId,
   } = data;
   const hasProjects = projects.length > 0;
   const view = getView(location.pathname, hasProjects);
+
+  const showWorkspaceSelector =
+    isFeatureEnabled("workspaces") &&
+    workspaces !== undefined &&
+    workspaces.length > 0 &&
+    currentWorkspaceId !== undefined;
 
   return (
     <TooltipProvider>
@@ -196,7 +206,16 @@ export const Dashboard = () => {
             <Search />
           </Flex>
           <nav>
-            <CollapsibleSection label="Workspace" fullWidth>
+            {showWorkspaceSelector && (
+              <WorkspaceSelector
+                workspaces={workspaces}
+                currentWorkspaceId={currentWorkspaceId}
+              />
+            )}
+            <CollapsibleSection
+              label={showWorkspaceSelector ? "Navigation" : "Workspace"}
+              fullWidth
+            >
               <NavigationItems
                 items={
                   view === "welcome" || hasProjects === false
@@ -258,10 +277,22 @@ export const Dashboard = () => {
             userPlanFeatures={userPlanFeatures}
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
+            currentWorkspaceId={currentWorkspaceId}
           />
         )}
-        {view === "templates" && <Templates projects={templates} />}
-        {view === "welcome" && <Templates projects={templates} welcome />}
+        {view === "templates" && (
+          <Templates
+            projects={templates}
+            currentWorkspaceId={currentWorkspaceId}
+          />
+        )}
+        {view === "welcome" && (
+          <Templates
+            projects={templates}
+            welcome
+            currentWorkspaceId={currentWorkspaceId}
+          />
+        )}
         {view === "search" && <SearchResults {...data} />}
       </Flex>
       <CloneProject projectToClone={projectToClone} />

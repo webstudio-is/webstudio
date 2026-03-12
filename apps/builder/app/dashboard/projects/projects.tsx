@@ -65,6 +65,7 @@ type ProjectsProps = {
   userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
+  currentWorkspaceId?: string;
 };
 
 export const Projects = (props: ProjectsProps) => {
@@ -138,7 +139,7 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <CreateProject />
+          <CreateProject workspaceId={props.currentWorkspaceId} />
         </Flex>
       </Header>
       <Flex

@@ -41,9 +41,14 @@ export const TemplatesGrid = ({
 type ProjectsProps = {
   projects: Array<DashboardProject>;
   welcome?: boolean;
+  currentWorkspaceId?: string;
 };
 
-export const Templates = ({ projects, welcome = false }: ProjectsProps) => {
+export const Templates = ({
+  projects,
+  welcome = false,
+  currentWorkspaceId,
+}: ProjectsProps) => {
   return (
     <Main>
       <Header variant="main">
@@ -51,7 +56,7 @@ export const Templates = ({ projects, welcome = false }: ProjectsProps) => {
           {welcome ? "What will you create?" : "Starter templates"}
         </Text>
         <Flex gap="2">
-          <CreateProject />
+          <CreateProject workspaceId={currentWorkspaceId} />
         </Flex>
       </Header>
       <Flex

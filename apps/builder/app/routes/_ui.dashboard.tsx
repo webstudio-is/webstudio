@@ -199,6 +199,14 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
   nextUrl,
 }) => {
+  // Revalidate when workspace changes (need to re-fetch project list)
+  if (
+    currentUrl.searchParams.get("workspaceId") !==
+    nextUrl.searchParams.get("workspaceId")
+  ) {
+    return true;
+  }
+
   // We have the entire data on the client, so we don't need to revalidate when
   // URL is changing.
   if (currentUrl.href !== nextUrl.href) {
