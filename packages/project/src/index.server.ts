@@ -1,3 +1,4 @@
 export * from "./db/project";
-export * from "./db/workspace";
+export * as workspace from "./db/workspace";
 export * from "./trpc/project-router";
+export * from "./trpc/workspace-router";
