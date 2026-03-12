@@ -131,7 +131,7 @@ const DialogContent = ({
   );
 };
 
-const useCreateProject = () => {
+const useCreateProject = (workspaceId?: string) => {
   const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
@@ -143,7 +143,7 @@ const useCreateProject = () => {
         : undefined;
     setErrors(errors);
     if (parsed.success) {
-      send({ title }, (data) => {
+      send({ title, workspaceId }, (data) => {
         if (data?.id) {
           window.location.href = builderUrl({
             origin: window.origin,
@@ -168,10 +168,13 @@ const useCreateProject = () => {
 
 export const CreateProject = ({
   buttonText = "New blank project",
+  workspaceId,
 }: {
   buttonText?: string;
+  workspaceId?: string;
 }) => {
-  const { handleSubmit, handleOpenChange, state, errors } = useCreateProject();
+  const { handleSubmit, handleOpenChange, state, errors } =
+    useCreateProject(workspaceId);
 
   return (
     <Dialog
