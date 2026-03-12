@@ -82,7 +82,7 @@ export const loadById = async (projectId: string, context: AppContext) => {
 };
 
 export const create = async (
-  { title }: { title: string },
+  { title, workspaceId }: { title: string; workspaceId?: string },
   context: AppContext
 ) => {
   Title.parse(title);
@@ -116,7 +116,7 @@ export const create = async (
 
   const updatedProject = await context.postgrest.client
     .from("Project")
-    .update({ userId })
+    .update({ userId, workspaceId: workspaceId ?? null })
     .eq("id", projectId)
     .select("*")
     .single();

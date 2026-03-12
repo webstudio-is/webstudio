@@ -14,6 +14,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
+import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
@@ -24,6 +25,12 @@ import { allowedDestinations } from "~/services/destinations.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+
+const parseCookieValue = (cookieHeader: string, name: string) => {
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match?.[1];
+};
 
 export const meta = () => {
   const metas: ReturnType<MetaFunction> = [];
@@ -83,9 +90,31 @@ const loadDashboardData = async (request: Request) => {
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
-  const projects = await dashboardProjectCaller(context).findMany({
+  const findManyInput: { userId: string; workspaceId?: string } = {
     userId: user.id,
-  });
+  };
+
+  let workspaces: Awaited<ReturnType<typeof workspaceApi.findMany>> | undefined;
+  let currentWorkspaceId: string | undefined;
+
+  if (isFeatureEnabled("workspaces")) {
+    workspaces = await workspaceApi.findMany(user.id, context);
+
+    // Read selected workspace from cookie, fall back to the default workspace
+    const cookieHeader = request.headers.get("Cookie") ?? "";
+    const selectedId = parseCookieValue(cookieHeader, "selectedWorkspaceId");
+
+    const matchedWorkspace = workspaces.find((w) => w.id === selectedId);
+    const defaultWorkspace = workspaces.find((w) => w.isDefault);
+    currentWorkspaceId = (matchedWorkspace ?? defaultWorkspace)?.id;
+
+    if (currentWorkspaceId !== undefined) {
+      findManyInput.workspaceId = currentWorkspaceId;
+    }
+  }
+
+  const projects =
+    await dashboardProjectCaller(context).findMany(findManyInput);
 
   const templates = await dashboardProjectCaller(context).findManyByIds({
     projectIds: env.PROJECT_TEMPLATES,
@@ -98,6 +127,8 @@ const loadDashboardData = async (request: Request) => {
     userPlanFeatures,
     projects,
     templates,
+    workspaces,
+    currentWorkspaceId,
   };
 };
 
@@ -140,8 +171,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   preventCrossOriginCookie(request);
   allowedDestinations(request, ["document", "empty"]);
 
-  const { context, user, userPlanFeatures, origin, projects, templates } =
-    await loadDashboardData(request);
+  const {
+    context,
+    user,
+    userPlanFeatures,
+    origin,
+    projects,
+    templates,
+    workspaces,
+    currentWorkspaceId,
+  } = await loadDashboardData(request);
 
   const projectToClone = await getProjectToClone(request, context);
 
@@ -153,6 +192,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     publisherHost: env.PUBLISHER_HOST,
     origin,
     projectToClone,
+    workspaces,
+    currentWorkspaceId,
   };
 };
 
