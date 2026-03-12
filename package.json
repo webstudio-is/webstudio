@@ -57,8 +57,7 @@
   },
   "engines": {
     "node": "22",
-    "pnpm": "^9.14.0",
-    "yarn": "This project is configured to use pnpm"
+    "pnpm": "^9.14.0"
   },
   "nano-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
