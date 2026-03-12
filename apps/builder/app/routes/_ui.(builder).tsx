@@ -13,12 +13,14 @@ import {
 } from "@remix-run/server-runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 import {
   AuthorizationError,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { getUserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
 
 import env from "~/env/env.server";
@@ -153,6 +155,23 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
             context
           )
         : authDb.tokenDefaultPermissions;
+
+    // When the project belongs to a workspace, resolve plan from the workspace owner
+    // so the owner's subscription governs all projects in the workspace
+    if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
+      const workspace = await context.postgrest.client
+        .from("Workspace")
+        .select("userId")
+        .eq("id", project.workspaceId)
+        .single();
+
+      if (workspace.data?.userId) {
+        context.userPlanFeatures = await getUserPlanFeatures(
+          workspace.data.userId,
+          context.postgrest
+        );
+      }
+    }
 
     const { userPlanFeatures } = context;
     if (userPlanFeatures === undefined) {

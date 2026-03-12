@@ -309,6 +309,14 @@ model WorkspaceMember {
   @@id([workspaceId, userId])
 }
 
+view WorkspaceProjectAuthorization {
+  userId    String
+  projectId String
+  relation  String
+
+  @@id([userId, projectId, relation])
+}
+
 // Dashboard
 view DashboardProject {
   id                        String                    @id @default(uuid())

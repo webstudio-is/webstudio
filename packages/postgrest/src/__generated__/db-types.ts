@@ -949,6 +949,14 @@ export type Database = {
         };
         Relationships: [];
       };
+      WorkspaceProjectAuthorization: {
+        Row: {
+          projectId: string | null;
+          relation: string | null;
+          userId: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       clone_project: {
