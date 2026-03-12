@@ -168,3 +168,161 @@ export const findMany = async (userId: string, context: AppContext) => {
   // Owned workspaces first (default on top), then member workspaces
   return [...owned.data, ...memberOf.data];
 };
+
+const assertOwner = async (
+  workspaceId: string,
+  userId: string,
+  context: AppContext
+) => {
+  const workspace = await context.postgrest.client
+    .from("Workspace")
+    .select("id, userId")
+    .eq("id", workspaceId)
+    .single();
+
+  if (workspace.error) {
+    throw workspace.error;
+  }
+
+  if (workspace.data.userId !== userId) {
+    throw new AuthorizationError("Only the workspace owner can manage members");
+  }
+
+  return workspace.data;
+};
+
+export const addMember = async (
+  { workspaceId, email }: { workspaceId: string; email: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+  await assertOwner(workspaceId, userId, context);
+
+  // Look up the user by email
+  const user = await context.postgrest.client
+    .from("User")
+    .select("id, email, username")
+    .eq("email", email)
+    .single();
+
+  if (user.error) {
+    throw new Error("User not found");
+  }
+
+  if (user.data.id === userId) {
+    throw new Error("You are already the owner of this workspace");
+  }
+
+  const result = await context.postgrest.client
+    .from("WorkspaceMember")
+    .insert({
+      workspaceId,
+      userId: user.data.id,
+      relation: "administrators",
+    })
+    .select()
+    .single();
+
+  if (result.error) {
+    // Unique constraint violation = already a member
+    if (result.error.code === "23505") {
+      throw new Error("User is already a member of this workspace");
+    }
+    throw result.error;
+  }
+
+  return result.data;
+};
+
+export const removeMember = async (
+  { workspaceId, memberUserId }: { workspaceId: string; memberUserId: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+  await assertOwner(workspaceId, userId, context);
+
+  if (memberUserId === userId) {
+    throw new Error("The workspace owner cannot be removed");
+  }
+
+  const result = await context.postgrest.client
+    .from("WorkspaceMember")
+    .delete()
+    .eq("workspaceId", workspaceId)
+    .eq("userId", memberUserId);
+
+  if (result.error) {
+    throw result.error;
+  }
+};
+
+export const listMembers = async (
+  { workspaceId }: { workspaceId: string },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+
+  // Verify the caller is the owner or a member
+  const workspace = await context.postgrest.client
+    .from("Workspace")
+    .select("id, userId")
+    .eq("id", workspaceId)
+    .single();
+
+  if (workspace.error) {
+    throw workspace.error;
+  }
+
+  if (workspace.data.userId !== userId) {
+    // Check if caller is a member
+    const membership = await context.postgrest.client
+      .from("WorkspaceMember")
+      .select("userId")
+      .eq("workspaceId", workspaceId)
+      .eq("userId", userId)
+      .maybeSingle();
+
+    if (membership.error) {
+      throw membership.error;
+    }
+
+    if (membership.data === null) {
+      throw new AuthorizationError("You don't have access to this workspace");
+    }
+  }
+
+  const members = await context.postgrest.client
+    .from("WorkspaceMember")
+    .select("userId, relation, createdAt")
+    .eq("workspaceId", workspaceId)
+    .order("createdAt");
+
+  if (members.error) {
+    throw members.error;
+  }
+
+  const memberUserIds = members.data.map((m) => m.userId);
+
+  if (memberUserIds.length === 0) {
+    return [];
+  }
+
+  const users = await context.postgrest.client
+    .from("User")
+    .select("id, email, username")
+    .in("id", memberUserIds);
+
+  if (users.error) {
+    throw users.error;
+  }
+
+  const usersById = new Map(users.data.map((u) => [u.id, u]));
+
+  return members.data.map((m) => ({
+    userId: m.userId,
+    relation: m.relation,
+    createdAt: m.createdAt,
+    email: usersById.get(m.userId)?.email ?? null,
+    username: usersById.get(m.userId)?.username ?? null,
+  }));
+};
