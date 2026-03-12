@@ -81,7 +81,7 @@ const genericCreateAccount = async (
   const workspace = await context.postgrest.client
     .from("Workspace")
     .insert({
-      name: "Personal",
+      name: "My workspace",
       isDefault: true,
       userId,
     })
