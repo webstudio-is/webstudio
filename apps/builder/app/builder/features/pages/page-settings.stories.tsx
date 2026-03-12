@@ -72,6 +72,7 @@ $project.set({
   tags: [],
 
   marketplaceApprovalStatus: "UNLISTED",
+  workspaceId: null,
 
   latestStaticBuild: null,
   previewImageAssetId: null,
