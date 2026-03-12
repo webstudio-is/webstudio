@@ -8,12 +8,19 @@ import {
   InputField,
   styled,
   Flex,
+  Link,
+  SmallIconButton,
   NestedInputButton,
   Separator,
   toast,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { AlertIcon, CheckCircleIcon, CopyIcon } from "@webstudio-is/icons";
+import {
+  AlertIcon,
+  CheckCircleIcon,
+  CopyIcon,
+  HelpIcon,
+} from "@webstudio-is/icons";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
   Fragment,
@@ -323,8 +330,8 @@ const DomainItem = ({
         <DomainCheckbox
           buildId={projectDomain.latestBuildVirtual?.buildId}
           defaultChecked={
-            projectDomain.latestBuildVirtual?.buildId != null &&
-            projectDomain.latestBuildVirtual?.buildId ===
+            projectDomain.latestBuildVirtual == null ||
+            projectDomain.latestBuildVirtual.buildId ===
               project.latestBuildVirtual?.buildId
           }
           domain={projectDomain.domain}
@@ -431,14 +438,31 @@ const DomainItem = ({
           )}
         </Grid>
 
-        <Text color="subtle">
-          <strong>To verify your domain:</strong>
-          <br />
-          Visit the admin console of your domain registrar (the website you
-          purchased your domain from) and create one <strong>CNAME</strong>{" "}
-          record and one <strong>TXT</strong> record with the values shown
-          below:
-        </Text>
+        <Flex align="center" gap="1">
+          <Text color="subtle">
+            <strong>Connect your domain</strong>
+          </Text>
+          <Tooltip
+            variant="wrapped"
+            content={
+              <Text>
+                Visit the admin console of your domain registrar (the website
+                you purchased your domain from) and create one CNAME record and
+                one TXT record with the values shown below.{" "}
+                <Link
+                  color="inherit"
+                  href="https://docs.webstudio.is/university/foundations/publishing-and-custom-domains"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn more.
+                </Link>
+              </Text>
+            }
+          >
+            <SmallIconButton icon={<HelpIcon />} />
+          </Tooltip>
+        </Flex>
 
         <Grid
           gap={2}

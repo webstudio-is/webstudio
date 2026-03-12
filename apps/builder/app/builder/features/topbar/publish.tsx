@@ -925,6 +925,13 @@ const Content = (props: {
   const { userPublishCount, maxPublishesAllowedPerUser } =
     useUserPublishCount();
 
+  const hasUnpublishedDomains = project.domainsVirtual.some(
+    (domain) =>
+      domain.verified &&
+      domain.status === "ACTIVE" &&
+      domain.latestBuildVirtual == null
+  );
+
   return (
     <form>
       <ScrollArea>
@@ -958,6 +965,18 @@ const Content = (props: {
           onExportClick={props.onExportClick}
         />
         <UpgradeBanner />
+        {hasUnpublishedDomains && (
+          <PanelBanner>
+            <Flex align="center" gap="1">
+              <InfoCircleIcon color={rawTheme.colors.foregroundMain} />
+              <Text variant="regularBold">Don't forget to publish</Text>
+            </Flex>
+            <Text>
+              You have a custom domain that hasn't been published yet. Hit
+              publish to make it live.
+            </Text>
+          </PanelBanner>
+        )}
         <Publish
           project={project}
           refresh={refreshProject}
