@@ -274,7 +274,7 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
                 />
               ))}
             </Grid>
-            <Text variant="tiny" align="center">
+            <Text variant="small" align="center">
               {preset.label}
             </Text>
           </button>
