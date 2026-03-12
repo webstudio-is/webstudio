@@ -206,41 +206,65 @@ export const Dashboard = () => {
             <Search />
           </Flex>
           <nav>
-            {showWorkspaceSelector && (
-              <WorkspaceSelector
-                workspaces={workspaces}
-                currentWorkspaceId={currentWorkspaceId}
-              />
+            {showWorkspaceSelector ? (
+              <>
+                <WorkspaceSelector
+                  workspaces={workspaces}
+                  currentWorkspaceId={currentWorkspaceId}
+                />
+                <NavigationItems
+                  items={
+                    view === "welcome" || hasProjects === false
+                      ? [
+                          {
+                            to: dashboardPath(),
+                            prefix: <ExtensionIcon />,
+                            children: "Welcome",
+                          },
+                        ]
+                      : [
+                          {
+                            to: dashboardPath("projects"),
+                            prefix: <BodyIcon />,
+                            children: "Projects",
+                          },
+                          {
+                            to: dashboardPath("templates"),
+                            prefix: <ExtensionIcon />,
+                            children: "Starter templates",
+                          },
+                        ]
+                  }
+                />
+              </>
+            ) : (
+              <CollapsibleSection label="Workspace" fullWidth>
+                <NavigationItems
+                  items={
+                    view === "welcome" || hasProjects === false
+                      ? [
+                          {
+                            to: dashboardPath(),
+                            prefix: <ExtensionIcon />,
+                            children: "Welcome",
+                          },
+                        ]
+                      : [
+                          {
+                            to: dashboardPath("projects"),
+                            prefix: <BodyIcon />,
+                            children: "Projects",
+                          },
+                          {
+                            to: dashboardPath("templates"),
+                            prefix: <ExtensionIcon />,
+                            children: "Starter templates",
+                          },
+                        ]
+                  }
+                />
+              </CollapsibleSection>
             )}
-            <CollapsibleSection
-              label={showWorkspaceSelector ? "Navigation" : "Workspace"}
-              fullWidth
-            >
-              <NavigationItems
-                items={
-                  view === "welcome" || hasProjects === false
-                    ? [
-                        {
-                          to: dashboardPath(),
-                          prefix: <ExtensionIcon />,
-                          children: "Welcome",
-                        },
-                      ]
-                    : [
-                        {
-                          to: dashboardPath("projects"),
-                          prefix: <BodyIcon />,
-                          children: "Projects",
-                        },
-                        {
-                          to: dashboardPath("templates"),
-                          prefix: <ExtensionIcon />,
-                          children: "Starter templates",
-                        },
-                      ]
-                }
-              />
-            </CollapsibleSection>
             <CollapsibleSection label="Help & support" fullWidth>
               <NavigationItems
                 items={help.map((item) => ({
