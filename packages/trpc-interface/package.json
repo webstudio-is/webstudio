@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@webstudio-is/feature-flags": "workspace:*",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "memoize": "^10.0.0",

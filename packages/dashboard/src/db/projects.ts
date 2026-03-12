@@ -2,6 +2,7 @@ import {
   AuthorizationError,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type DomainVirtual = {
   domain: string;
@@ -95,13 +96,17 @@ export const findMany = async (
 
   let query = context.postgrest.client
     .from("DashboardProject")
-    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)")
-    .eq("userId", userId)
-    .eq("isDeleted", false);
+    .select("*, previewImageAsset:Asset (*), latestBuildVirtual (*)");
 
-  if (workspaceId !== undefined) {
+  // When filtering by workspace with flag on, show all workspace projects
+  // (members can see all projects in the workspace)
+  if (workspaceId !== undefined && isFeatureEnabled("workspaces")) {
     query = query.eq("workspaceId", workspaceId);
+  } else {
+    query = query.eq("userId", userId);
   }
+
+  query = query.eq("isDeleted", false);
 
   const data = await query
     .order("createdAt", { ascending: false })

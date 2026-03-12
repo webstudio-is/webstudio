@@ -1,5 +1,6 @@
 import type { AppContext } from "../context/context.server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import memoize from "memoize";
 
 type Relation =
@@ -21,6 +22,13 @@ type CheckInput = {
   };
 };
 
+const permitToRelationRewrite: Record<TokenAuthPermit, Relation[]> = {
+  view: ["viewers", "editors", "builders", "administrators"],
+  edit: ["editors", "builders", "administrators"],
+  build: ["builders", "administrators"],
+  admin: ["administrators"],
+};
+
 const check = async (
   postgrestClient: AppContext["postgrest"]["client"],
   input: CheckInput
@@ -28,7 +36,7 @@ const check = async (
   const { subjectSet } = input;
 
   if (subjectSet.namespace === "User") {
-    // We check only if the user is the owner of the project
+    // Check if the user is the direct owner of the project
     const row = await postgrestClient
       .from("Project")
       .select("id")
@@ -39,7 +47,46 @@ const check = async (
       throw row.error;
     }
 
-    return { allowed: row.data !== null };
+    if (row.data !== null) {
+      return { allowed: true };
+    }
+
+    // Workspace-based authorization
+    if (isFeatureEnabled("workspaces")) {
+      const wpaRows = await postgrestClient
+        .from("WorkspaceProjectAuthorization")
+        .select("relation")
+        .eq("userId", subjectSet.id)
+        .eq("projectId", input.id);
+
+      if (wpaRows.error) {
+        throw wpaRows.error;
+      }
+
+      if (wpaRows.data.length > 0) {
+        const relations = wpaRows.data.map((r) => r.relation);
+
+        // Workspace owner gets all permits
+        if (relations.includes("own")) {
+          return { allowed: true };
+        }
+
+        // Only workspace owner (above) gets "own" permit
+        if (input.permit === "own") {
+          return { allowed: false };
+        }
+
+        // Check member relations against permit hierarchy
+        const allowed = relations.some((r) =>
+          (
+            permitToRelationRewrite[input.permit as TokenAuthPermit] ?? []
+          ).includes(r as Relation)
+        );
+        return { allowed };
+      }
+    }
+
+    return { allowed: false };
   }
 
   if (input.permit === "own") {
@@ -49,13 +96,6 @@ const check = async (
   if (subjectSet.namespace !== "Token") {
     return { allowed: false };
   }
-
-  const permitToRelationRewrite: Record<TokenAuthPermit, Relation[]> = {
-    view: ["viewers", "editors", "builders", "administrators"],
-    edit: ["editors", "builders", "administrators"],
-    build: ["builders", "administrators"],
-    admin: ["administrators"],
-  };
 
   const row = await postgrestClient
     .from("AuthorizationToken")

@@ -1302,6 +1302,9 @@ importers:
 
   packages/dashboard:
     dependencies:
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
       '@webstudio-is/project':
         specifier: workspace:*
         version: link:../project
@@ -2224,6 +2227,9 @@ importers:
       '@trpc/server':
         specifier: ^10.45.2
         version: 10.45.2
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
       memoize:
         specifier: ^10.0.0
         version: 10.0.0
