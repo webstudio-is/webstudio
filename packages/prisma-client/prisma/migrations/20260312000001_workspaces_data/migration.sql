@@ -3,7 +3,7 @@
 
 -- Create a default workspace for every existing user who doesn't have one yet.
 INSERT INTO "Workspace" (id, name, "isDefault", "userId")
-SELECT gen_random_uuid(), 'Personal', true, u.id
+SELECT gen_random_uuid(), 'My workspace', true, u.id
 FROM "User" u
 WHERE NOT EXISTS (
   SELECT 1 FROM "Workspace" w WHERE w."userId" = u.id AND w."isDefault" = true
