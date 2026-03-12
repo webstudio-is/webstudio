@@ -61,6 +61,7 @@ const projects = [
     marketplaceApprovalStatus: "UNLISTED" as const,
     tags: [],
     domainsVirtual: [],
+    workspaceId: null,
   } as DashboardProject,
 ];
 
