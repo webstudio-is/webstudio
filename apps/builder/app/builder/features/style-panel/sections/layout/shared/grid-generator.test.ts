@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
-import type { StyleDecl } from "@webstudio-is/sdk";
+import type { WebstudioData } from "@webstudio-is/sdk";
 import { __testing__ } from "./grid-generator";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 const { gridPresets, computeFillGridData, applyFillGridItems } = __testing__;
 
@@ -9,7 +10,13 @@ const makeIdGenerator = () => {
   return () => `id-${++counter}`;
 };
 
-const createEmptyData = (parentId: string) => ({
+const createEmptyData = (parentId: string): WebstudioData => ({
+  pages: createDefaultPages({ rootInstanceId: parentId }),
+  assets: new Map(),
+  dataSources: new Map(),
+  resources: new Map(),
+  props: new Map(),
+  breakpoints: new Map(),
   instances: new Map([
     [
       parentId,
@@ -21,12 +28,9 @@ const createEmptyData = (parentId: string) => ({
       },
     ],
   ]),
-  styleSources: new Map<string, { type: "local"; id: string }>(),
-  styleSourceSelections: new Map<
-    string,
-    { instanceId: string; values: string[] }
-  >(),
-  styles: new Map<string, StyleDecl>(),
+  styleSources: new Map(),
+  styleSourceSelections: new Map(),
+  styles: new Map(),
 });
 
 describe("gridPresets", () => {
