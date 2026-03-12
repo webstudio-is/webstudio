@@ -1,11 +1,17 @@
-import { Select, theme, Text, css } from "@webstudio-is/design-system";
+import { Select, Flex, theme } from "@webstudio-is/design-system";
 import type { Workspace } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 
-const selectStyle = css({
-  paddingInline: theme.panel.paddingInline,
-  paddingBlock: theme.spacing[5],
-});
+const sortWorkspaces = (workspaces: Array<Workspace>) =>
+  [...workspaces].sort((a, b) => {
+    if (a.isDefault) {
+      return -1;
+    }
+    if (b.isDefault) {
+      return 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 
 export const WorkspaceSelector = ({
   workspaces,
@@ -16,24 +22,18 @@ export const WorkspaceSelector = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Sort: default workspace first, then alphabetically
-  const sorted = [...workspaces].sort((a, b) => {
-    if (a.isDefault) {
-      return -1;
-    }
-    if (b.isDefault) {
-      return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const sorted = sortWorkspaces(workspaces);
 
   return (
-    <div className={selectStyle()}>
-      <Text variant="titles" color="subtle" truncate>
-        Workspace
-      </Text>
+    <Flex
+      css={{
+        paddingInline: theme.panel.paddingInline,
+        paddingBlock: theme.spacing[5],
+      }}
+    >
       <Select
+        color="ghost"
+        fullWidth
         options={sorted}
         getValue={(workspace) => workspace.id}
         getLabel={(workspace) => workspace.name}
@@ -49,8 +49,7 @@ export const WorkspaceSelector = ({
 
           navigate(`${location.pathname}?workspaceId=${workspace.id}`);
         }}
-        fullWidth
       />
-    </div>
+    </Flex>
   );
 };
