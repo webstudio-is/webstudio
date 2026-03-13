@@ -171,6 +171,22 @@ export const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // If the URL references a workspace that no longer exists, the server
+  // falls back to the default workspace. Clean up the stale URL param.
+  const urlWorkspaceId = new URLSearchParams(location.search).get(
+    "workspaceId"
+  );
+  const currentWorkspaceId = data?.currentWorkspaceId;
+  useEffect(() => {
+    if (
+      urlWorkspaceId !== null &&
+      currentWorkspaceId !== undefined &&
+      urlWorkspaceId !== currentWorkspaceId
+    ) {
+      navigate(location.pathname, { replace: true });
+    }
+  }, [urlWorkspaceId, currentWorkspaceId, location.pathname, navigate]);
+
   if (data === undefined) {
     return null;
   }
@@ -183,7 +199,6 @@ export const Dashboard = () => {
     projects,
     templates,
     workspaces,
-    currentWorkspaceId,
   } = data;
   const hasProjects = projects.length > 0;
   const view = getView(location.pathname, hasProjects);
