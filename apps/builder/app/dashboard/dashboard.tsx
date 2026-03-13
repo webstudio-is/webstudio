@@ -227,12 +227,13 @@ export const Dashboard = () => {
               <>
                 <Flex
                   css={{
-                    paddingInline: theme.panel.paddingInline,
+                    paddingInline: theme.spacing[5],
                   }}
                 >
                   <WorkspaceSelector
                     workspaces={workspaces}
                     currentWorkspaceId={currentWorkspaceId}
+                    userId={user.id}
                     onDeleted={() => {
                       navigate(dashboardPath("projects"));
                     }}

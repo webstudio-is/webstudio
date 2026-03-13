@@ -160,6 +160,7 @@ const MemberRow = ({
   username,
   userId,
   workspaceId,
+  canRemove,
   index,
   onRemoved,
 }: {
@@ -167,11 +168,13 @@ const MemberRow = ({
   username: string;
   userId: string;
   workspaceId: string;
+  canRemove: boolean;
   index: number;
   onRemoved: () => void;
 }) => {
   const { send, state } = trpcClient.workspace.removeMember.useMutation();
   const revalidator = useRevalidator();
+  const [error, setError] = useState<string>();
 
   return (
     <ListItem index={index} asChild>
@@ -189,22 +192,33 @@ const MemberRow = ({
             </Text>
           )}
         </Flex>
-        <Tooltip content="Remove member">
-          <IconButton
-            data-action
-            tabIndex={-1}
-            aria-label="Remove member"
-            onClick={() => {
-              send({ workspaceId, userId }, () => {
-                onRemoved();
-                revalidator.revalidate();
-              });
-            }}
-            disabled={state !== "idle"}
+        {canRemove && (
+          <Tooltip
+            content={error ?? "Remove member"}
+            variant={error ? "wrapped" : undefined}
+            open={error ? true : undefined}
           >
-            <TrashIcon />
-          </IconButton>
-        </Tooltip>
+            <IconButton
+              data-action
+              tabIndex={-1}
+              aria-label="Remove member"
+              onClick={() => {
+                setError(undefined);
+                send({ workspaceId, userId }, (result) => {
+                  if (result && "error" in result) {
+                    setError(parseTrpcError(result.error) ?? result.error);
+                    return;
+                  }
+                  onRemoved();
+                  revalidator.revalidate();
+                });
+              }}
+              disabled={state !== "idle"}
+            >
+              <TrashIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Flex>
     </ListItem>
   );
@@ -212,10 +226,12 @@ const MemberRow = ({
 
 const MemberList = ({
   workspaceId,
+  canRemove,
   refreshKey,
   onRefresh,
 }: {
   workspaceId: string;
+  canRemove: boolean;
   refreshKey: number;
   onRefresh: () => void;
 }) => {
@@ -227,8 +243,16 @@ const MemberList = ({
 
   const members = data && "data" in data ? data.data : undefined;
 
-  if (members === undefined || members.length === 0) {
+  if (members === undefined) {
     return;
+  }
+
+  if (members.length === 0) {
+    return (
+      <Text color="subtle" align="center">
+        No members yet
+      </Text>
+    );
   }
 
   return (
@@ -240,6 +264,7 @@ const MemberList = ({
           username={member.username ?? ""}
           userId={member.userId}
           workspaceId={workspaceId}
+          canRemove={canRemove}
           index={index}
           onRemoved={onRefresh}
         />
@@ -332,13 +357,16 @@ export const RenameWorkspaceDialog = ({
 
 export const ManageMembersDialog = ({
   workspace,
+  userId,
   isOpen,
   onOpenChange,
 }: {
   workspace: Workspace;
+  userId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) => {
+  const isOwner = workspace.userId === userId;
   const revalidator = useRevalidator();
   const [errors, setErrors] = useState<string[]>();
   const [membersKey, setMembersKey] = useState(0);
@@ -401,35 +429,43 @@ export const ManageMembersDialog = ({
     >
       <DialogContent css={{ width: theme.spacing[34] }}>
         <Flex as="form" direction="column" gap="3" onSubmit={handleSubmit}>
-          <Flex
-            gap="1"
-            direction="column"
+          {isOwner && (
+            <Flex
+              gap="1"
+              direction="column"
+              css={{
+                px: theme.spacing[7],
+                paddingTop: theme.spacing[5],
+              }}
+            >
+              <Label>Invite members</Label>
+              <Flex gap="2">
+                <Box css={{ flexGrow: 1 }}>
+                  <InputErrorsTooltip errors={errors}>
+                    <InputField
+                      name="emails"
+                      placeholder="alice@example.com, bob@example.com"
+                      color={errors ? "error" : undefined}
+                    />
+                  </InputErrorsTooltip>
+                </Box>
+                <Button type="submit" state={inviting ? "pending" : undefined}>
+                  Invite
+                </Button>
+              </Flex>
+            </Flex>
+          )}
+          <ScrollAreaNative
             css={{
-              px: theme.spacing[7],
-              paddingTop: theme.spacing[5],
+              maxHeight: 300,
+              paddingTop: isOwner ? undefined : theme.spacing[5],
             }}
           >
-            <Label>Invite members</Label>
-            <Flex gap="2">
-              <Box css={{ flexGrow: 1 }}>
-                <InputErrorsTooltip errors={errors}>
-                  <InputField
-                    name="emails"
-                    placeholder="alice@example.com, bob@example.com"
-                    color={errors ? "error" : undefined}
-                  />
-                </InputErrorsTooltip>
-              </Box>
-              <Button type="submit" state={inviting ? "pending" : undefined}>
-                Invite
-              </Button>
-            </Flex>
-          </Flex>
-          <ScrollAreaNative css={{ maxHeight: 300 }}>
             <Flex direction="column" gap="2" css={{ px: theme.spacing[7] }}>
               <Text variant="labels">Members</Text>
               <MemberList
                 workspaceId={workspace.id}
+                canRemove={isOwner}
                 refreshKey={membersKey}
                 onRefresh={() => setMembersKey((key) => key + 1)}
               />
