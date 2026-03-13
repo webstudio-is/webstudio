@@ -203,30 +203,47 @@ export const addMember = async (
     .from("User")
     .select("id, email, username")
     .eq("email", email)
-    .single();
+    .maybeSingle();
 
   if (user.error) {
-    throw new Error("User not found");
+    throw user.error;
   }
 
-  if (user.data.id === userId) {
-    throw new Error("You are already the owner of this workspace");
+  let memberId: string;
+
+  if (user.data) {
+    if (user.data.id === userId) {
+      throw new Error("You are already the owner of this workspace");
+    }
+    memberId = user.data.id;
+  } else {
+    // Create a placeholder user for the invited email
+    const newUser = await context.postgrest.client
+      .from("User")
+      .insert({ id: crypto.randomUUID(), email })
+      .select("id")
+      .single();
+
+    if (newUser.error) {
+      throw newUser.error;
+    }
+    memberId = newUser.data.id;
   }
 
   const result = await context.postgrest.client
     .from("WorkspaceMember")
     .insert({
       workspaceId,
-      userId: user.data.id,
+      userId: memberId,
       relation: "administrators",
     })
     .select()
     .single();
 
   if (result.error) {
-    // Unique constraint violation = already a member
+    // Silently succeed if already a member
     if (result.error.code === "23505") {
-      throw new Error("User is already a member of this workspace");
+      return;
     }
     throw result.error;
   }
@@ -295,7 +312,7 @@ export const listMembers = async (
     .from("WorkspaceMember")
     .select("userId, relation, createdAt")
     .eq("workspaceId", workspaceId)
-    .order("createdAt");
+    .order("createdAt", { ascending: false });
 
   if (members.error) {
     throw members.error;

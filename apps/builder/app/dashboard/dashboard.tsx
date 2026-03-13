@@ -14,7 +14,12 @@ import {
   buttonStyle,
 } from "@webstudio-is/design-system";
 import { BodyIcon, ExtensionIcon } from "@webstudio-is/icons";
-import { NavLink, useLocation, useRevalidator } from "@remix-run/react";
+import {
+  NavLink,
+  useLocation,
+  useNavigate,
+  useRevalidator,
+} from "@remix-run/react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
@@ -104,13 +109,22 @@ const NavigationItems = ({
     target?: string;
   }>;
 }) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const workspaceId = searchParams.get("workspaceId");
+
   return (
     <List style={{ padding: 0, margin: 0 }}>
       {items.map((item, index) => {
+        const to =
+          workspaceId && item.target === undefined
+            ? `${item.to}?workspaceId=${workspaceId}`
+            : item.to;
+
         return (
           <ListItem asChild index={index} key={index}>
             <NavLink
-              to={item.to}
+              to={to}
               end
               target={item.target}
               className={sidebarLinkStyle()}
@@ -130,7 +144,9 @@ const NavigationItems = ({
 const $data = atom<DashboardData | undefined>();
 
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
-  $data.set(data);
+  useEffect(() => {
+    $data.set(data);
+  }, [data]);
   globalStyles();
   return null;
 };
@@ -153,6 +169,7 @@ const getView = (pathname: string, hasProjects: boolean) => {
 export const Dashboard = () => {
   const data = useStore($data);
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (data === undefined) {
     return null;
@@ -208,10 +225,19 @@ export const Dashboard = () => {
           <nav>
             {showWorkspaceSelector ? (
               <>
-                <WorkspaceSelector
-                  workspaces={workspaces}
-                  currentWorkspaceId={currentWorkspaceId}
-                />
+                <Flex
+                  css={{
+                    paddingInline: theme.panel.paddingInline,
+                  }}
+                >
+                  <WorkspaceSelector
+                    workspaces={workspaces}
+                    currentWorkspaceId={currentWorkspaceId}
+                    onDeleted={() => {
+                      navigate(dashboardPath("projects"));
+                    }}
+                  />
+                </Flex>
                 <NavigationItems
                   items={
                     view === "welcome" || hasProjects === false
