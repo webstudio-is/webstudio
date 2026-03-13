@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   Flex,
   MenuCheckedIcon,
+  Avatar,
   theme,
   Button,
 } from "@webstudio-is/design-system";
@@ -42,10 +43,12 @@ const sortWorkspaces = (workspaces: Array<Workspace>) =>
 export const WorkspaceSelector = ({
   workspaces,
   currentWorkspaceId,
+  userId,
   onDeleted,
 }: {
   workspaces: Array<Workspace>;
   currentWorkspaceId: string;
+  userId: string;
   onDeleted: () => void;
 }) => {
   const navigate = useNavigate();
@@ -67,7 +70,20 @@ export const WorkspaceSelector = ({
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button color="ghost" suffix={<ChevronDownIcon />}>
+          <Button
+            color="ghost"
+            prefix={
+              <Avatar
+                size="small"
+                fallback={(currentWorkspace?.name ?? "W")
+                  .charAt(0)
+                  .toLocaleUpperCase()}
+                alt={currentWorkspace?.name ?? "Workspace"}
+                css={{ borderRadius: theme.borderRadius[4] }}
+              />
+            }
+            suffix={<ChevronDownIcon />}
+          >
             {currentWorkspace?.name ?? "Workspace"}
           </Button>
         </DropdownMenuTrigger>
@@ -104,6 +120,7 @@ export const WorkspaceSelector = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             icon={<NotebookAndPenIcon />}
+            disabled={currentWorkspace?.userId !== userId}
             onSelect={() => setRenameOpen(true)}
           >
             Rename
@@ -117,7 +134,10 @@ export const WorkspaceSelector = ({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             icon={<TrashIcon />}
-            disabled={currentWorkspace?.isDefault === true}
+            disabled={
+              currentWorkspace?.isDefault === true ||
+              currentWorkspace?.userId !== userId
+            }
             onSelect={() => setDeleteOpen(true)}
           >
             Delete
@@ -140,6 +160,7 @@ export const WorkspaceSelector = ({
           />
           <ManageMembersDialog
             workspace={currentWorkspace}
+            userId={userId}
             isOpen={inviteOpen}
             onOpenChange={setInviteOpen}
           />
