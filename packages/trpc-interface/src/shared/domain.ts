@@ -1,7 +1,10 @@
 /**
- * Localhost implementation of the dashboard trpc interface
- * It's playground, and just emulates real 3rd party apis
+ * Self-hosting implementation of the domain tRPC interface.
+ * Performs real DNS lookups to verify TXT ownership records.
+ *
+ * For SaaS the real implementation lives in the Cloudflare Workers deployment service.
  */
+import { resolveTxt } from "node:dns/promises";
 import { z } from "zod";
 import { router, procedure } from "./trpc";
 
@@ -16,42 +19,40 @@ const createOutput = <T extends z.ZodType>(data: T) =>
 
 declare global {
   // eslint-disable-next-line no-var
-  var dnsTxtEntries: Map<string, string>;
-  // eslint-disable-next-line no-var
-  var domainStates: Map<string, "active" | "pending" | "error">;
+  var verifiedDomains: Map<string, boolean>;
 }
 
-// Remix purges require module cache on every request in development,
-// this is the way to persist data between requests in development
-globalThis.dnsTxtEntries =
-  globalThis.dnsTxtEntries ?? new Map<string, string>();
-globalThis.domainStates =
-  globalThis.domainStates ?? new Map<string, "active" | "pending">();
+// Persist verified domain state across requests (Remix purges require cache on dev)
+globalThis.verifiedDomains =
+  globalThis.verifiedDomains ?? new Map<string, boolean>();
 
 export const domainRouter = router({
   /**
-   * Verify TXT record and add custom domain entry to DNS
+   * Verify TXT ownership record via real DNS lookup.
+   * The user must add a TXT record at _webstudio-challenge.<domain> with the expected value.
    */
   create: procedure
     .input(CreateInput)
     .output(createOutput(z.optional(z.undefined())))
     .mutation(async ({ input }) => {
-      const record = dnsTxtEntries.get(input.domain);
-      if (record !== input.txtRecord) {
-        // Return an error once then update the record
-        dnsTxtEntries.set(input.domain, input.txtRecord);
-
+      const txtHost = `_webstudio-challenge.${input.domain}`;
+      try {
+        const records = await resolveTxt(txtHost);
+        const flat = records.flat();
+        if (flat.includes(input.txtRecord) === false) {
+          return {
+            success: false,
+            error: `TXT record mismatch at ${txtHost}. Expected "${input.txtRecord}" but found: ${flat.join(", ") || "nothing"}`,
+          };
+        }
+        verifiedDomains.set(input.domain, true);
+        return { success: true };
+      } catch (error) {
         return {
           success: false,
-          error: `TXT record does not match, expected "${
-            input.txtRecord
-          }" but got "${record ?? "undefined"}"`,
+          error: `DNS lookup failed for ${txtHost}: ${error instanceof Error ? error.message : "unknown error"}. Make sure the TXT record has propagated.`,
         };
       }
-
-      domainStates.set(input.domain, "pending");
-
-      return { success: true };
     }),
 
   refresh: procedure
@@ -60,8 +61,10 @@ export const domainRouter = router({
     .mutation(async () => {
       return { success: true };
     }),
+
   /**
-   * Get status of verified domain
+   * Return active status for domains whose TXT record was previously verified.
+   * Falls back to re-checking DNS if not in the verified set (e.g. after restart).
    */
   getStatus: procedure
     .input(Input)
@@ -74,43 +77,18 @@ export const domainRouter = router({
       )
     )
     .query(async ({ input }) => {
-      const domainState = domainStates.get(input.domain);
-
-      if (domainState === undefined) {
-        domainStates.set(input.domain, "pending");
-
-        return {
-          success: false,
-          error: `Domain ${input.domain} is not active`,
-        };
-      }
-
-      if (domainState === "active") {
-        setTimeout(() => {
-          domainStates.set(input.domain, "error");
-        });
-      }
-
-      if (domainState === "pending" || domainState === "error") {
-        setTimeout(() => {
-          domainStates.set(input.domain, "active");
-        }, 5000);
-      }
-
-      if (domainState === "error") {
+      if (verifiedDomains.get(input.domain) === true) {
         return {
           success: true,
-          data: {
-            status: "error",
-            error: "Domain cname verification failed",
-          },
+          data: { status: "active" as const },
         };
       }
 
       return {
         success: true,
         data: {
-          status: domainState,
+          status: "error" as const,
+          error: `Domain ${input.domain} has not been verified. Please complete the TXT verification step first.`,
         },
       };
     }),

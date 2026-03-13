@@ -63,6 +63,8 @@ type DeploymentContext = {
     GITHUB_REF_NAME: string;
     GITHUB_SHA: string | undefined;
     PUBLISHER_HOST: string;
+    /** Undefined when running in self-hosting mode (no remote deployment service) */
+    TRPC_SERVER_URL: string | undefined;
   };
 };
 
