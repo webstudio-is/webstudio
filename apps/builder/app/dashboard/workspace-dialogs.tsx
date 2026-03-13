@@ -503,7 +503,15 @@ export const DeleteWorkspaceDialog = ({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (open === false) {
+          setError(undefined);
+        }
+      }}
+    >
       <DialogContent>
         <Flex
           direction="column"
@@ -519,7 +527,11 @@ export const DeleteWorkspaceDialog = ({
               <Text as="span" variant="titles">
                 {workspace.name}
               </Text>
-              ? This action cannot be undone.
+              ?{" "}
+              <Text as="span" color="destructive">
+                All projects
+              </Text>{" "}
+              in this workspace will be deleted. This action cannot be undone.
             </Text>
           </DialogDescription>
           {error && <Text color="destructive">{error}</Text>}
@@ -529,15 +541,18 @@ export const DeleteWorkspaceDialog = ({
             color="destructive"
             state={state === "idle" ? undefined : "pending"}
             onClick={() => {
-              send({ workspaceId: workspace.id }, (result) => {
-                if (result && "error" in result) {
-                  setError(result.error);
-                  return;
+              send(
+                { workspaceId: workspace.id, deleteProjects: true },
+                (result) => {
+                  if (result && "error" in result) {
+                    setError(result.error);
+                    return;
+                  }
+                  onOpenChange(false);
+                  onDeleted();
+                  revalidator.revalidate();
                 }
-                onOpenChange(false);
-                onDeleted();
-                revalidator.revalidate();
-              });
+              );
             }}
           >
             Delete forever

@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
@@ -69,7 +70,10 @@ export const rename = async (
 };
 
 export const remove = async (
-  { workspaceId }: { workspaceId: string },
+  {
+    workspaceId,
+    deleteProjects,
+  }: { workspaceId: string; deleteProjects?: boolean },
   context: AppContext
 ) => {
   const userId = assertUser(context);
@@ -95,22 +99,34 @@ export const remove = async (
     throw new Error("The default workspace cannot be deleted");
   }
 
-  // Reject if workspace still contains projects
+  // Check for active projects
   const projects = await context.postgrest.client
     .from("Project")
     .select("id")
     .eq("workspaceId", workspaceId)
-    .eq("isDeleted", false)
-    .limit(1);
+    .eq("isDeleted", false);
 
   if (projects.error) {
     throw projects.error;
   }
 
   if (projects.data.length > 0) {
-    throw new Error(
-      "Cannot delete a workspace that still contains projects. Move or delete all projects first."
-    );
+    if (deleteProjects !== true) {
+      throw new Error(
+        "Cannot delete a workspace that still contains projects. Move or delete all projects first."
+      );
+    }
+
+    // Soft-delete all projects in the workspace
+    const deleteResult = await context.postgrest.client
+      .from("Project")
+      .update({ isDeleted: true, domain: nanoid() })
+      .eq("workspaceId", workspaceId)
+      .eq("isDeleted", false);
+
+    if (deleteResult.error) {
+      throw deleteResult.error;
+    }
   }
 
   const result = await context.postgrest.client

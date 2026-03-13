@@ -32,7 +32,12 @@ export const workspaceRouter = router({
     }),
 
   delete: procedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        deleteProjects: z.boolean().optional(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         await workspaceApi.remove(input, ctx);
