@@ -1,10 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
   theme,
-  css,
-  Flex,
-  Toolbar,
-  ToolbarToggleGroup,
   ToolbarButton,
   Text,
   type CSS,
@@ -15,19 +11,20 @@ import type { Project } from "@webstudio-is/project";
 import { $pages } from "~/shared/sync/data-stores";
 import { $editingPageId } from "~/shared/nano-states";
 
-import { ShareButton } from "./share";
-import { PublishButton } from "./publish";
-import { SyncStatus } from "./sync-status";
-import { Menu } from "./menu";
-import { BreakpointsContainer } from "../breakpoints";
-import { ViewMode } from "./view-mode";
-import { AddressBarPopover } from "../address-bar";
+import { ShareButton } from "~/builder/features/share";
+import { PublishButton } from "~/builder/features/publish";
+import { SyncStatus } from "~/builder/features/sync-status";
+import { Menu } from "~/builder/features/menu";
+import { BreakpointsContainer } from "~/builder/features/breakpoints";
+import { ViewMode } from "~/builder/features/view-mode";
+import { AddressBarPopover } from "~/builder/features/address-bar";
 import { toggleActiveSidebarPanel } from "~/builder/shared/nano-states";
 import type { ReactNode } from "react";
-import { CloneButton } from "./clone";
+import { CloneButton } from "~/builder/features/clone";
 import { $selectedPage } from "~/shared/awareness";
-import { BuilderModeDropDown } from "./builder-mode";
-import { SafeModeButton } from "./safe-mode";
+import { BuilderModeDropDown } from "~/builder/features/builder-mode";
+import { SafeModeButton } from "~/builder/features/safe-mode";
+import { TopbarLayout } from "./topbar-layout";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -61,16 +58,6 @@ const PagesButton = () => {
   );
 };
 
-const topbarContainerStyle = css({
-  position: "relative",
-  display: "flex",
-  justifyContent: "space-between",
-  background: theme.colors.backgroundTopbar,
-  height: theme.spacing[15],
-  paddingRight: theme.panel.paddingInline,
-  color: theme.colors.foregroundContrastMain,
-});
-
 type TopbarProps = {
   project: Project;
   loading: ReactNode;
@@ -80,44 +67,30 @@ type TopbarProps = {
 export const Topbar = ({ project, css, loading }: TopbarProps) => {
   const pages = useStore($pages);
   return (
-    <nav className={topbarContainerStyle({ css })}>
-      <Flex css={{ flexBasis: "20%" }}>
-        <Flex grow={false} shrink={false}>
-          <Menu />
-        </Flex>
-
-        {/* prevent rendering when data is not loaded */}
-        {pages && (
-          <Flex align="center">
+    <TopbarLayout
+      css={css}
+      menu={<Menu />}
+      left={
+        pages ? (
+          <>
             <PagesButton />
             <AddressBarPopover />
-          </Flex>
-        )}
-      </Flex>
-      <Flex justify="center">
-        <BreakpointsContainer />
-      </Flex>
-      <Toolbar>
-        <ToolbarToggleGroup
-          type="single"
-          css={{
-            isolation: "isolate",
-            justifyContent: "flex-end",
-            gap: theme.spacing[5],
-            flexShrink: 0,
-          }}
-        >
+          </>
+        ) : undefined
+      }
+      center={<BreakpointsContainer />}
+      right={
+        <>
           <SafeModeButton />
           <ViewMode />
           <SyncStatus />
-
           <BuilderModeDropDown />
           <ShareButton projectId={project.id} />
           <PublishButton projectId={project.id} />
           <CloneButton />
-        </ToolbarToggleGroup>
-      </Toolbar>
-      {loading}
-    </nav>
+        </>
+      }
+      loading={loading}
+    />
   );
 };

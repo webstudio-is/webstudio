@@ -3,7 +3,7 @@ import { $authPermit } from "~/shared/nano-states";
 import { ViewMode } from "./view-mode";
 
 export default {
-  title: "Builder/Topbar/View Mode",
+  title: "Builder/View Mode",
   component: ViewMode,
 };
 
@@ -13,22 +13,7 @@ export const Active = () => {
     <Flex
       css={{
         height: theme.spacing[15],
-        background: rawTheme.colors.backgroundPanel,
-        padding: theme.spacing[5],
-      }}
-    >
-      <ViewMode />
-    </Flex>
-  );
-};
-
-export const Hidden = () => {
-  $authPermit.set("edit");
-  return (
-    <Flex
-      css={{
-        height: theme.spacing[15],
-        background: rawTheme.colors.backgroundPanel,
+        background: rawTheme.colors.backgroundTopbar,
         padding: theme.spacing[5],
       }}
     >

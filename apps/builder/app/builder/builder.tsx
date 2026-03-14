@@ -15,7 +15,7 @@ import { initializeClientSync, getSyncClient } from "~/shared/sync/sync-client";
 import { usePreventUnload } from "~/shared/sync/project-queue";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import { Inspector } from "./inspector";
-import { Topbar } from "./features/topbar";
+import { Topbar } from "./shared/topbar";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,

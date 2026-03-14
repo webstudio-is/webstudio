@@ -23,5 +23,3 @@ export const WithFallback = () => (
     <Avatar fallback="WS" />
   </Flex>
 );
-
-export const NoImageNoFallback = () => <Avatar />;
