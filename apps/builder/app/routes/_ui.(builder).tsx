@@ -165,12 +165,14 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         .eq("id", project.workspaceId)
         .single();
 
-      if (workspace.data?.userId) {
-        context.userPlanFeatures = await getUserPlanFeatures(
-          workspace.data.userId,
-          context.postgrest
-        );
+      if (workspace.error) {
+        throw workspace.error;
       }
+
+      context.userPlanFeatures = await getUserPlanFeatures(
+        workspace.data.userId,
+        context.postgrest
+      );
     }
 
     const { userPlanFeatures } = context;

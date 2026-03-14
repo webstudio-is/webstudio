@@ -144,7 +144,9 @@ const NavigationItems = ({
 const $data = atom<DashboardData | undefined>();
 
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
-  $data.set(data);
+  useEffect(() => {
+    $data.set(data);
+  }, [data]);
   globalStyles();
   return null;
 };
@@ -207,6 +209,28 @@ export const Dashboard = () => {
     workspaces.length > 0 &&
     currentWorkspaceId !== undefined;
 
+  const navItems =
+    view === "welcome" || hasProjects === false
+      ? [
+          {
+            to: dashboardPath(),
+            prefix: <ExtensionIcon />,
+            children: "Welcome",
+          },
+        ]
+      : [
+          {
+            to: dashboardPath("projects"),
+            prefix: <BodyIcon />,
+            children: "Projects",
+          },
+          {
+            to: dashboardPath("templates"),
+            prefix: <ExtensionIcon />,
+            children: "Starter templates",
+          },
+        ];
+
   return (
     <TooltipProvider>
       <Flex css={{ height: "100vh" }}>
@@ -252,57 +276,11 @@ export const Dashboard = () => {
                     }}
                   />
                 </Flex>
-                <NavigationItems
-                  items={
-                    view === "welcome" || hasProjects === false
-                      ? [
-                          {
-                            to: dashboardPath(),
-                            prefix: <ExtensionIcon />,
-                            children: "Welcome",
-                          },
-                        ]
-                      : [
-                          {
-                            to: dashboardPath("projects"),
-                            prefix: <BodyIcon />,
-                            children: "Projects",
-                          },
-                          {
-                            to: dashboardPath("templates"),
-                            prefix: <ExtensionIcon />,
-                            children: "Starter templates",
-                          },
-                        ]
-                  }
-                />
+                <NavigationItems items={navItems} />
               </>
             ) : (
               <CollapsibleSection label="Workspace" fullWidth>
-                <NavigationItems
-                  items={
-                    view === "welcome" || hasProjects === false
-                      ? [
-                          {
-                            to: dashboardPath(),
-                            prefix: <ExtensionIcon />,
-                            children: "Welcome",
-                          },
-                        ]
-                      : [
-                          {
-                            to: dashboardPath("projects"),
-                            prefix: <BodyIcon />,
-                            children: "Projects",
-                          },
-                          {
-                            to: dashboardPath("templates"),
-                            prefix: <ExtensionIcon />,
-                            children: "Starter templates",
-                          },
-                        ]
-                  }
-                />
+                <NavigationItems items={navItems} />
               </CollapsibleSection>
             )}
             <CollapsibleSection label="Help & support" fullWidth>
