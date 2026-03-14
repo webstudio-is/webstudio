@@ -551,7 +551,7 @@ export const ManageMembersDialog = ({
             <Button color="ghost">Cancel</Button>
           </DialogClose>
         </DialogActions>
-        <DialogTitle>Manage members</DialogTitle>
+        <DialogTitle>Members</DialogTitle>
       </DialogContent>
     </Dialog>
   );
