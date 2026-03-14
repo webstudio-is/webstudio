@@ -16,7 +16,7 @@ const createWorkspace = (
   isDefault: false,
   createdAt: new Date().toISOString(),
   userId: "user-1",
-  userRelation: "own",
+  workspaceRelation: "own",
   ...overrides,
 });
 
@@ -56,13 +56,13 @@ export const MemberView: StoryFn = () => {
       name: "My workspace",
       isDefault: true,
       userId: "member-1",
-      userRelation: "own",
+      workspaceRelation: "own",
     }),
     createWorkspace({
       id: "ws-shared",
       name: "Team workspace",
       userId: "owner-1",
-      userRelation: "editors",
+      workspaceRelation: "editors",
     }),
   ];
 

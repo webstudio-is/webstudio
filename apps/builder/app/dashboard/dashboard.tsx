@@ -23,7 +23,7 @@ import {
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { setSharedStores } from "~/shared/nano-states";
 import { dashboardPath } from "~/shared/router-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { ProfileMenu } from "./profile-menu";
@@ -36,7 +36,6 @@ import type { DashboardData } from "./shared/types";
 import { Search } from "./search/search-field";
 import { WorkspaceSelector } from "./workspace-selector";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { getPermissions } from "~/shared/permissions";
 
 const globalStyles = globalCss({
   body: {
@@ -148,7 +147,7 @@ const $data = atom<DashboardData | undefined>();
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
   useEffect(() => {
     $data.set(data);
-    $userPlanFeatures.set(data.userPlanFeatures);
+    setSharedStores(data);
   }, [data]);
   globalStyles();
   return null;
@@ -180,7 +179,6 @@ export const Dashboard = () => {
 
   const {
     user,
-    userPlanFeatures,
     publisherHost,
     projectToClone,
     projects,
@@ -196,12 +194,6 @@ export const Dashboard = () => {
     workspaces !== undefined &&
     workspaces.length > 0 &&
     currentWorkspaceId !== undefined;
-
-  const currentWorkspace = workspaces?.find((w) => w.id === currentWorkspaceId);
-  const permissions = getPermissions({
-    userRelation: currentWorkspace?.userRelation,
-    userPlanFeatures,
-  });
 
   const navItems =
     view === "welcome" || hasProjects === false
@@ -241,7 +233,7 @@ export const Dashboard = () => {
           }}
         >
           <Header variant="aside">
-            <ProfileMenu user={user} permissions={permissions} />
+            <ProfileMenu user={user} />
           </Header>
           <Flex
             direction="column"
@@ -313,14 +305,12 @@ export const Dashboard = () => {
             publisherHost={publisherHost}
             projectsTags={user.projectsTags}
             currentWorkspaceId={currentWorkspaceId}
-            permissions={permissions}
           />
         )}
         {view === "templates" && (
           <Templates
             projects={templates}
             currentWorkspaceId={currentWorkspaceId}
-            permissions={permissions}
           />
         )}
         {view === "welcome" && (
@@ -328,7 +318,6 @@ export const Dashboard = () => {
             projects={templates}
             welcome
             currentWorkspaceId={currentWorkspaceId}
-            permissions={permissions}
           />
         )}
         {view === "search" && <SearchResults {...data} />}

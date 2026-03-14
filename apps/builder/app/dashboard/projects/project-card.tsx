@@ -14,7 +14,6 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import { ProjectDialogs, type DialogType } from "./project-dialogs";
-import type { getPermissions } from "~/shared/permissions";
 import {
   ThumbnailLinkWithAbbr,
   ThumbnailLinkWithImage,
@@ -54,7 +53,6 @@ type ProjectCardProps = {
   project: DashboardProject;
   publisherHost: string;
   projectsTags: User["projectsTags"];
-  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const ProjectCard = ({
@@ -71,7 +69,6 @@ export const ProjectCard = ({
   },
   publisherHost,
   projectsTags,
-  permissions,
   ...props
 }: ProjectCardProps) => {
   // Determine which domain to display: custom domain if available, otherwise wstd subdomain
@@ -216,11 +213,7 @@ export const ProjectCard = ({
             <Text color="subtle">Not published</Text>
           )}
         </Flex>
-        <ProjectMenu
-          projectId={id}
-          onOpenChange={setOpenDialog}
-          permissions={permissions}
-        />
+        <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
       </CardFooter>
       <ProjectDialogs
         projectId={id}

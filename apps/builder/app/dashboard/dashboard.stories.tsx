@@ -2,7 +2,10 @@ import type { StoryFn } from "@storybook/react";
 import type { JSX } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { Dashboard, DashboardSetup } from "./dashboard";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import {
+  defaultUserPlanFeatures,
+  type UserPlanFeatures,
+} from "@webstudio-is/trpc-interface/user-plan-features";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export default {
@@ -24,16 +27,7 @@ const createRouter = (element: JSX.Element, path: string, current?: string) =>
     initialEntries: [current ?? path],
   });
 
-const userPlanFeatures: UserPlanFeatures = {
-  allowAdditionalPermissions: false,
-  allowDynamicData: false,
-  allowContentMode: false,
-  allowStagingPublish: false,
-  maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 1,
-  purchases: [],
-};
+const userPlanFeatures: UserPlanFeatures = defaultUserPlanFeatures;
 
 const projects = [
   {
@@ -59,8 +53,10 @@ const data = {
   user,
   templates: projects,
   userPlanFeatures,
+  purchases: [],
   publisherHost: "https://wstd.work",
   projects,
+  workspaceRelation: "own" as const,
 };
 
 export const Welcome: StoryFn<typeof Dashboard> = () => {

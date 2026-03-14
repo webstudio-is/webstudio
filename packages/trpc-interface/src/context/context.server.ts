@@ -1,5 +1,9 @@
 import type { TrpcInterfaceClient } from "../shared/shared-router";
 import type { Client } from "@webstudio-is/postgrest/index.server";
+import type {
+  UserPlanFeatures,
+  UserPurchase,
+} from "../shared/user-plan-features";
 
 /**
  * All necessary parameters for Authorization
@@ -64,21 +68,6 @@ type DeploymentContext = {
   };
 };
 
-type UserPlanFeatures = {
-  allowAdditionalPermissions: boolean;
-  allowDynamicData: boolean;
-  allowContentMode: boolean;
-  allowStagingPublish: boolean;
-  maxContactEmails: number;
-  maxDomainsAllowedPerUser: number;
-  maxPublishesAllowedPerUser: number;
-  /** All user purchases (subscriptions and LTDs). subscriptionId present only for recurring subscriptions */
-  purchases: Array<{
-    planName: string;
-    subscriptionId?: string;
-  }>;
-};
-
 type TrpcCache = {
   setMaxAge: (path: string, value: number) => void;
   getMaxAge: (path: string) => number | undefined;
@@ -98,7 +87,8 @@ export type AppContext = {
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;
-  userPlanFeatures: UserPlanFeatures | undefined;
+  userPlanFeatures: UserPlanFeatures;
+  purchases: Array<UserPurchase>;
   trpcCache: TrpcCache;
   postgrest: PostgrestContext;
   createTokenContext: (token: string) => Promise<AppContext>;

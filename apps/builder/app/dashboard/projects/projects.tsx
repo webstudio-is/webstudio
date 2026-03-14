@@ -16,8 +16,9 @@ import { CreateProject } from "./project-dialogs";
 import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
+import { useStore } from "@nanostores/react";
 import type { User } from "~/shared/db/user.server";
-import type { getPermissions } from "~/shared/permissions";
+import { $permissions } from "~/shared/nano-states";
 import { Tag } from "./tags";
 import {
   SortSelect,
@@ -31,7 +32,6 @@ export const ProjectsGrid = ({
   projects,
   publisherHost,
   projectsTags,
-  permissions,
 }: ProjectsProps) => {
   return (
     <List asChild>
@@ -50,7 +50,6 @@ export const ProjectsGrid = ({
                 project={project}
                 publisherHost={publisherHost}
                 projectsTags={projectsTags}
-                permissions={permissions}
               />
             </ListItem>
           );
@@ -65,10 +64,10 @@ type ProjectsProps = {
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
-  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const Projects = (props: ProjectsProps) => {
+  const permissions = useStore($permissions);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTags = searchParams.getAll("tag");
   const viewMode = (searchParams.get("view") as "grid" | "list") ?? "grid";
@@ -139,7 +138,7 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          {props.permissions.canCreateProject && (
+          {permissions.canCreateProject && (
             <CreateProject workspaceId={props.currentWorkspaceId} />
           )}
         </Flex>

@@ -8,22 +8,19 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import { useStore } from "@nanostores/react";
 import type { DialogType } from "./project-dialogs";
 import { useDuplicateProject } from "./project-dialogs";
 import { builderUrl } from "~/shared/router-utils";
-import type { getPermissions } from "~/shared/permissions";
+import { $permissions } from "~/shared/nano-states";
 
 type ProjectMenuProps = {
   projectId: string;
   onOpenChange: (dialog: DialogType) => void;
-  permissions: ReturnType<typeof getPermissions>;
 };
 
-export const ProjectMenu = ({
-  projectId,
-  onOpenChange,
-  permissions,
-}: ProjectMenuProps) => {
+export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
+  const permissions = useStore($permissions);
   const [isOpen, setIsOpen] = useState(false);
   const handleDuplicateProject = useDuplicateProject(projectId);
 

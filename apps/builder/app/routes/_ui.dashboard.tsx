@@ -15,6 +15,7 @@ import {
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { workspace as workspaceApi } from "@webstudio-is/project/index.server";
+import type { WorkspaceRelation } from "@webstudio-is/project";
 import { parseBuilderUrl } from "@webstudio-is/http-client";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { builderUrl, isDashboard, loginPath } from "~/shared/router-utils";
@@ -75,13 +76,7 @@ const loadDashboardData = async (request: Request) => {
     throw new AuthorizationError("You must be logged in to access this page");
   }
 
-  const { userPlanFeatures } = context;
-
-  if (userPlanFeatures === undefined) {
-    throw new Response("User plan features are not defined", {
-      status: 404,
-    });
-  }
+  const { userPlanFeatures, purchases } = context;
 
   const { sourceOrigin } = parseBuilderUrl(request.url);
 
@@ -91,6 +86,7 @@ const loadDashboardData = async (request: Request) => {
 
   let workspaces: Awaited<ReturnType<typeof workspaceApi.findMany>> | undefined;
   let currentWorkspaceId: string | undefined;
+  let workspaceRelation: WorkspaceRelation | "own" = "own";
 
   if (isFeatureEnabled("workspaces")) {
     workspaces = await workspaceApi.findMany(user.id, context);
@@ -113,7 +109,12 @@ const loadDashboardData = async (request: Request) => {
     }
 
     const defaultWorkspace = workspaces.find((w) => w.isDefault);
-    currentWorkspaceId = (matchedWorkspace ?? defaultWorkspace)?.id;
+    const currentWorkspace = matchedWorkspace ?? defaultWorkspace;
+    currentWorkspaceId = currentWorkspace?.id;
+
+    if (currentWorkspace !== undefined) {
+      workspaceRelation = currentWorkspace.workspaceRelation;
+    }
 
     if (currentWorkspaceId !== undefined) {
       findManyInput.workspaceId = currentWorkspaceId;
@@ -132,10 +133,12 @@ const loadDashboardData = async (request: Request) => {
     user,
     origin: sourceOrigin,
     userPlanFeatures,
+    purchases,
     projects,
     templates,
     workspaces,
     currentWorkspaceId,
+    workspaceRelation,
   };
 };
 
@@ -182,11 +185,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     context,
     user,
     userPlanFeatures,
+    purchases,
     origin,
     projects,
     templates,
     workspaces,
     currentWorkspaceId,
+    workspaceRelation,
   } = await loadDashboardData(request);
 
   const projectToClone = await getProjectToClone(request, context);
@@ -196,11 +201,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     projects,
     templates,
     userPlanFeatures,
+    purchases,
     publisherHost: env.PUBLISHER_HOST,
     origin,
     projectToClone,
     workspaces,
     currentWorkspaceId,
+    workspaceRelation,
   };
 };
 

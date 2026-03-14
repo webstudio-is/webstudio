@@ -20,19 +20,19 @@ export type MarketplaceApprovalStatus = z.infer<
   typeof MarketplaceApprovalStatus
 >;
 
-export const memberRelations = [
+export const workspaceRelations = [
   "viewers",
   "editors",
   "builders",
   "administrators",
 ] as const;
 
-export type MemberRelation = (typeof memberRelations)[number];
+export type WorkspaceRelation = (typeof workspaceRelations)[number];
 
 /** Safest default when relation is unknown — principle of least privilege */
-export const defaultMemberRelation: MemberRelation = "viewers";
+export const defaultWorkspaceRelation: WorkspaceRelation = "viewers";
 
-export const memberRelationLabels: Record<MemberRelation, string> = {
+export const workspaceRelationLabels: Record<WorkspaceRelation, string> = {
   viewers: "Viewer",
   editors: "Editor",
   builders: "Builder",

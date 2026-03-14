@@ -1,12 +1,16 @@
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import type { UserPlanFeatures } from "@webstudio-is/trpc-interface/user-plan-features";
 import env from "~/env/env.server";
 
-export type UserPlanFeatures = NonNullable<AppContext["userPlanFeatures"]>;
+type UserPlanInfo = {
+  userPlanFeatures: UserPlanFeatures;
+  purchases: AppContext["purchases"];
+};
 
-export const getUserPlanFeatures = async (
+export const getUserPlanInfo = async (
   userId: string,
   postgrest: AppContext["postgrest"]
-): Promise<UserPlanFeatures> => {
+): Promise<UserPlanInfo> => {
   const userProductsResult = await postgrest.client
     .from("UserProduct")
     .select("customerId, subscriptionId, productId")
@@ -59,6 +63,8 @@ export const getUserPlanFeatures = async (
   if (userProducts.length > 0) {
     const productMetas = products.map((product) => {
       return {
+        canDownloadAssets: true,
+        canRestoreBackups: true,
         allowAdditionalPermissions: true,
         allowDynamicData: true,
         allowContentMode: true,
@@ -70,48 +76,60 @@ export const getUserPlanFeatures = async (
       };
     });
     return {
-      allowAdditionalPermissions: productMetas.some(
-        (item) => item.allowAdditionalPermissions
-      ),
-      allowDynamicData: productMetas.some((item) => item.allowDynamicData),
-      allowContentMode: productMetas.some((item) => item.allowContentMode),
-      allowStagingPublish: productMetas.some(
-        (item) => item.allowStagingPublish
-      ),
-      maxContactEmails: Math.max(
-        ...productMetas.map((item) => item.maxContactEmails)
-      ),
-      maxDomainsAllowedPerUser: Math.max(
-        ...productMetas.map((item) => item.maxDomainsAllowedPerUser)
-      ),
-      maxPublishesAllowedPerUser: Math.max(
-        ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
-      ),
+      userPlanFeatures: {
+        canDownloadAssets: productMetas.some((item) => item.canDownloadAssets),
+        canRestoreBackups: productMetas.some((item) => item.canRestoreBackups),
+        allowAdditionalPermissions: productMetas.some(
+          (item) => item.allowAdditionalPermissions
+        ),
+        allowDynamicData: productMetas.some((item) => item.allowDynamicData),
+        allowContentMode: productMetas.some((item) => item.allowContentMode),
+        allowStagingPublish: productMetas.some(
+          (item) => item.allowStagingPublish
+        ),
+        maxContactEmails: Math.max(
+          ...productMetas.map((item) => item.maxContactEmails)
+        ),
+        maxDomainsAllowedPerUser: Math.max(
+          ...productMetas.map((item) => item.maxDomainsAllowedPerUser)
+        ),
+        maxPublishesAllowedPerUser: Math.max(
+          ...productMetas.map((item) => item.maxPublishesAllowedPerUser)
+        ),
+      },
       purchases,
     };
   }
 
   if (env.USER_PLAN === "pro") {
     return {
-      allowAdditionalPermissions: true,
-      allowDynamicData: true,
-      allowContentMode: true,
-      allowStagingPublish: true,
-      maxContactEmails: 5,
-      maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
-      maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+      userPlanFeatures: {
+        canDownloadAssets: true,
+        canRestoreBackups: true,
+        allowAdditionalPermissions: true,
+        allowDynamicData: true,
+        allowContentMode: true,
+        allowStagingPublish: true,
+        maxContactEmails: 5,
+        maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
+        maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
+      },
       purchases: [{ planName: "env.USER_PLAN Pro" }],
     };
   }
 
   return {
-    allowAdditionalPermissions: false,
-    allowDynamicData: false,
-    allowContentMode: false,
-    allowStagingPublish: false,
-    maxContactEmails: 0,
-    maxDomainsAllowedPerUser: 0,
-    maxPublishesAllowedPerUser: 10,
+    userPlanFeatures: {
+      canDownloadAssets: false,
+      canRestoreBackups: false,
+      allowAdditionalPermissions: false,
+      allowDynamicData: false,
+      allowContentMode: false,
+      allowStagingPublish: false,
+      maxContactEmails: 0,
+      maxDomainsAllowedPerUser: 0,
+      maxPublishesAllowedPerUser: 10,
+    },
     purchases: [],
   };
 };

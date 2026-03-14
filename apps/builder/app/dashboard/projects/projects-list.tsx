@@ -14,7 +14,6 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import type { User } from "~/shared/db/user.server";
-import type { getPermissions } from "~/shared/permissions";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
@@ -71,7 +70,6 @@ type ProjectsListItemProps = {
   project: DashboardProject;
   publisherHost: string;
   projectsTags: User["projectsTags"];
-  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const ProjectsListItem = ({
@@ -87,7 +85,6 @@ export const ProjectsListItem = ({
   },
   publisherHost,
   projectsTags,
-  permissions,
 }: ProjectsListItemProps) => {
   const customDomain = domainsVirtual?.find(
     (d: { domain: string; status: string; verified: boolean }) =>
@@ -156,11 +153,7 @@ export const ProjectsListItem = ({
           </div>
 
           <div role="cell">
-            <ProjectMenu
-              projectId={id}
-              onOpenChange={setOpenDialog}
-              permissions={permissions}
-            />
+            <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
           </div>
         </div>
       </ListItem>
@@ -185,7 +178,6 @@ type ProjectsListProps = {
   sortBy?: SortField;
   sortOrder?: SortOrder;
   onSortChange: (field: SortField) => void;
-  permissions: ReturnType<typeof getPermissions>;
 };
 
 const columns: Array<{ field: SortField; label: string } | null> = [
@@ -203,7 +195,6 @@ export const ProjectsList = ({
   sortBy,
   sortOrder,
   onSortChange,
-  permissions,
 }: ProjectsListProps) => {
   return (
     <div className={tableStyles()} role="table" aria-label="Projects list">
@@ -257,7 +248,6 @@ export const ProjectsList = ({
               project={project}
               publisherHost={publisherHost}
               projectsTags={projectsTags}
-              permissions={permissions}
             />
           ))}
         </div>
