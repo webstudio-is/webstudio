@@ -1712,6 +1712,9 @@ importers:
       '@webstudio-is/authorization-token':
         specifier: workspace:*
         version: link:../authorization-token
+      '@webstudio-is/feature-flags':
+        specifier: workspace:*
+        version: link:../feature-flags
       '@webstudio-is/postgrest':
         specifier: workspace:*
         version: link:../postgrest
