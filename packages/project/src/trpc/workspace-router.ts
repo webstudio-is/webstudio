@@ -66,8 +66,10 @@ export const workspaceRouter = router({
     .input(z.object({ workspaceId: z.string(), email: z.string().email() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        const member = await workspaceApi.addMember(input, ctx);
-        return { success: true as const, data: member };
+        await workspaceApi.addMember(input, ctx);
+        // No data returned — response must be identical for existing and
+        // non-existing emails to prevent email enumeration.
+        return { success: true as const };
       } catch (error) {
         return createErrorResponse(error);
       }

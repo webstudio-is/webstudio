@@ -8,6 +8,7 @@ import { createBuild } from "@webstudio-is/project-build/index.server";
 import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 import type { SetNonNullable } from "type-fest";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const findProjectIdsByUserId = async (
   userId: string,
@@ -297,6 +298,38 @@ export const clone = async (
 
   if (clonedProject.error) {
     throw clonedProject.error;
+  }
+
+  // If the source project belongs to a workspace and the cloning user is
+  // the workspace owner or a member, place the clone in the same workspace.
+  if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
+    const workspace = await destinationContext.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", project.workspaceId)
+      .maybeSingle();
+
+    if (workspace.data !== null) {
+      let isMemberOrOwner = workspace.data.userId === userId;
+
+      if (isMemberOrOwner === false) {
+        const membership = await destinationContext.postgrest.client
+          .from("WorkspaceMember")
+          .select("userId")
+          .eq("workspaceId", project.workspaceId)
+          .eq("userId", userId)
+          .maybeSingle();
+
+        isMemberOrOwner = membership.data !== null;
+      }
+
+      if (isMemberOrOwner) {
+        await destinationContext.postgrest.client
+          .from("Project")
+          .update({ workspaceId: project.workspaceId })
+          .eq("id", clonedProject.data.id);
+      }
+    }
   }
 
   return { id: clonedProject.data.id };

@@ -254,8 +254,6 @@ export const addMember = async (
     }
     throw result.error;
   }
-
-  return result.data;
 };
 
 export const removeMember = async (
