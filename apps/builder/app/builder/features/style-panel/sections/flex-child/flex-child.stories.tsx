@@ -1,13 +1,13 @@
 import { Box, theme } from "@webstudio-is/design-system";
-import { Section } from "./borders";
+import { Section } from "./flex-child";
 
-export const Borders = () => (
+export const FlexChild = () => (
   <Box css={{ width: theme.sizes.sidebarWidth }}>
     <Section />
   </Box>
 );
 
 export default {
-  title: "Style Panel/Borders",
+  title: "Style Panel/Flex Child",
   component: Section,
 };

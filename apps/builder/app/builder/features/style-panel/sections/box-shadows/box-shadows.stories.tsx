@@ -1,13 +1,13 @@
 import { Box, theme } from "@webstudio-is/design-system";
-import { Section } from "./borders";
+import { Section } from "./box-shadows";
 
-export const Borders = () => (
+export const BoxShadows = () => (
   <Box css={{ width: theme.sizes.sidebarWidth }}>
     <Section />
   </Box>
 );
 
 export default {
-  title: "Style Panel/Borders",
+  title: "Style Panel/Box Shadows",
   component: Section,
 };

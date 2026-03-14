@@ -1,4 +1,4 @@
-import { styled, theme } from "@webstudio-is/design-system";
+import { Box, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import {
   $breakpoints,
@@ -12,11 +12,6 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { Section } from "./transitions";
 import { $awareness } from "~/shared/awareness";
 import { createDefaultPages } from "@webstudio-is/project-build";
-
-const Panel = styled("div", {
-  width: theme.spacing[30],
-  boxShadow: theme.shadows.panelSectionDropShadow,
-});
 
 const transitionProperty: StyleDecl = {
   breakpointId: "base",
@@ -63,13 +58,11 @@ $awareness.set({
   instanceSelector: ["box"],
 });
 
-export const Transitions = () => {
-  return (
-    <Panel>
-      <Section />
-    </Panel>
-  );
-};
+export const Transitions = () => (
+  <Box css={{ width: theme.sizes.sidebarWidth }}>
+    <Section />
+  </Box>
+);
 
 export default {
   title: "Style Panel/Transitions",
