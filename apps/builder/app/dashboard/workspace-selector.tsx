@@ -13,13 +13,7 @@ import {
   theme,
   Button,
 } from "@webstudio-is/design-system";
-import {
-  ChevronDownIcon,
-  EmailIcon,
-  NotebookAndPenIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
+import { ChevronDownIcon } from "@webstudio-is/icons";
 import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 import {
@@ -114,28 +108,21 @@ export const WorkspaceSelector = ({
             ))}
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            icon={<PlusIcon />}
-            onSelect={() => setCreateOpen(true)}
-          >
+          <DropdownMenuItem withIndicator onSelect={() => setCreateOpen(true)}>
             Create new
           </DropdownMenuItem>
           <DropdownMenuItem
-            icon={<NotebookAndPenIcon />}
+            withIndicator
             disabled={currentWorkspace?.userId !== userId}
             onSelect={() => setRenameOpen(true)}
           >
             Rename
           </DropdownMenuItem>
-          <DropdownMenuItem
-            icon={<EmailIcon />}
-            onSelect={() => setInviteOpen(true)}
-          >
-            Manage members
+          <DropdownMenuItem withIndicator onSelect={() => setInviteOpen(true)}>
+            Members
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
-            icon={<TrashIcon />}
+            withIndicator
             disabled={
               currentWorkspace?.isDefault === true ||
               currentWorkspace?.userId !== userId
