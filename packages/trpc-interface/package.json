@@ -25,6 +25,9 @@
   "exports": {
     "./index.server": {
       "webstudio": "./src/index.server.ts"
+    },
+    "./user-plan-features": {
+      "webstudio": "./src/shared/user-plan-features.ts"
     }
   },
   "license": "AGPL-3.0-or-later",

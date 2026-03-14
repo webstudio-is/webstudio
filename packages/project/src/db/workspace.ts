@@ -4,13 +4,16 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { softDeleteProject } from "./project";
-import { defaultMemberRelation, type MemberRelation } from "../shared/schema";
+import {
+  defaultWorkspaceRelation,
+  type WorkspaceRelation,
+} from "../shared/schema";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
 export type WorkspaceWithRelation = Workspace & {
   /** The current user's relation to the workspace: "own" for owners */
-  userRelation: MemberRelation | "own";
+  workspaceRelation: WorkspaceRelation | "own";
 };
 
 const assertUser = (context: AppContext) => {
@@ -173,12 +176,15 @@ export const findMany = async (userId: string, context: AppContext) => {
 
   const memberWorkspaceIds = memberships.data.map((m) => m.workspaceId);
   const relationByWorkspaceId = new Map(
-    memberships.data.map((m) => [m.workspaceId, m.relation as MemberRelation])
+    memberships.data.map((m) => [
+      m.workspaceId,
+      m.relation as WorkspaceRelation,
+    ])
   );
 
   const ownedWithRelation: WorkspaceWithRelation[] = owned.data.map((w) => ({
     ...w,
-    userRelation: "own" as const,
+    workspaceRelation: "own" as const,
   }));
 
   if (memberWorkspaceIds.length === 0) {
@@ -198,7 +204,8 @@ export const findMany = async (userId: string, context: AppContext) => {
   const memberWithRelation: WorkspaceWithRelation[] = memberOf.data.map(
     (w) => ({
       ...w,
-      userRelation: relationByWorkspaceId.get(w.id) ?? defaultMemberRelation,
+      workspaceRelation:
+        relationByWorkspaceId.get(w.id) ?? defaultWorkspaceRelation,
     })
   );
 
@@ -233,7 +240,7 @@ export const addMember = async (
     workspaceId,
     email,
     relation,
-  }: { workspaceId: string; email: string; relation: MemberRelation },
+  }: { workspaceId: string; email: string; relation: WorkspaceRelation },
   context: AppContext
 ) => {
   const userId = assertUser(context);
@@ -281,7 +288,7 @@ export const addMember = async (
   }
 };
 
-export const updateMemberRelation = async (
+export const updateWorkspaceRelation = async (
   {
     workspaceId,
     memberUserId,
@@ -289,7 +296,7 @@ export const updateMemberRelation = async (
   }: {
     workspaceId: string;
     memberUserId: string;
-    relation: MemberRelation;
+    relation: WorkspaceRelation;
   },
   context: AppContext
 ) => {

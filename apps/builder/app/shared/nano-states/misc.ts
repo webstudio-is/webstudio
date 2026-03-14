@@ -2,6 +2,12 @@ import type { Simplify } from "type-fest";
 import { atom, computed, onSet } from "nanostores";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import {
+  defaultUserPlanFeatures,
+  type UserPlanFeatures,
+  type UserPurchase,
+} from "@webstudio-is/trpc-interface/user-plan-features";
+import type { WorkspaceRelation } from "@webstudio-is/project";
 import { toast, type Placement } from "@webstudio-is/design-system";
 import type {
   Instance,
@@ -17,7 +23,6 @@ import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $awareness, $selectedInstance } from "../awareness";
-import type { UserPlanFeatures } from "../db/user-plan-features.server";
 import { getPermissions } from "../permissions";
 import {
   $project,
@@ -296,17 +301,27 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-// keep in sync with user-plan-features.server
-export const $userPlanFeatures = atom<UserPlanFeatures>({
-  allowAdditionalPermissions: false,
-  allowDynamicData: false,
-  allowContentMode: false,
-  allowStagingPublish: false,
-  maxContactEmails: 0,
-  maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 1,
-  purchases: [],
-});
+export const $userPlanFeatures = atom<UserPlanFeatures>(
+  defaultUserPlanFeatures
+);
+
+export const $workspaceRelation = atom<WorkspaceRelation | "own">("own");
+
+export const $purchases = atom<Array<UserPurchase>>([]);
+
+/**
+ * Set stores shared between builder and dashboard.
+ * Keep in sync with the atoms above.
+ */
+export const setSharedStores = (data: {
+  userPlanFeatures: UserPlanFeatures;
+  purchases: Array<UserPurchase>;
+  workspaceRelation: WorkspaceRelation | "own";
+}) => {
+  $userPlanFeatures.set(data.userPlanFeatures);
+  $purchases.set(data.purchases);
+  $workspaceRelation.set(data.workspaceRelation);
+};
 
 const builderModes = ["design", "preview", "content"] as const;
 export type BuilderMode = (typeof builderModes)[number];
@@ -340,9 +355,9 @@ export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
 export const $permissions = computed(
-  [$userPlanFeatures, $authPermit],
-  (userPlanFeatures, authPermit) =>
-    getPermissions({ userPlanFeatures, authPermit })
+  [$userPlanFeatures, $authPermit, $workspaceRelation],
+  (userPlanFeatures, authPermit, workspaceRelation) =>
+    getPermissions({ workspaceRelation, userPlanFeatures, authPermit })
 );
 
 export const $isContentModeAllowed = computed(

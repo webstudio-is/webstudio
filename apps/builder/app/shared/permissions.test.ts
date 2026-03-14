@@ -1,19 +1,22 @@
 import { describe, test, expect } from "vitest";
 import { getPermissions } from "./permissions";
 
-// Default plan permission values when userPlanFeatures is not provided
+// Free plan permission values
 const defaultPlanPermissions = {
+  canDownloadAssets: false,
+  canRestoreBackups: false,
   allowDynamicData: false,
   allowContentMode: false,
   allowStagingPublish: false,
   allowAdditionalPermissions: false,
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
-  maxPublishesAllowedPerUser: 0,
-  purchases: [],
+  maxPublishesAllowedPerUser: 10,
 };
 
 const proPlan = {
+  canDownloadAssets: true,
+  canRestoreBackups: true,
   allowAdditionalPermissions: true,
   allowDynamicData: true,
   allowContentMode: true,
@@ -21,10 +24,11 @@ const proPlan = {
   maxContactEmails: 5,
   maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
   maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-  purchases: [{ planName: "Pro" }],
 };
 
 const freePlan = {
+  canDownloadAssets: false,
+  canRestoreBackups: false,
   allowAdditionalPermissions: false,
   allowDynamicData: false,
   allowContentMode: false,
@@ -32,26 +36,14 @@ const freePlan = {
   maxContactEmails: 0,
   maxDomainsAllowedPerUser: 0,
   maxPublishesAllowedPerUser: 10,
-  purchases: [],
 };
 
 describe("getPermissions", () => {
   describe("role-based permissions", () => {
-    test("personal projects (no relation) have full role permissions", () => {
-      expect(getPermissions({})).toEqual({
-        canCreateProject: true,
-        canDuplicate: true,
-        canRename: true,
-        canShare: true,
-        canDelete: true,
-        canEditTags: true,
-        canOpenSettings: true,
-        ...defaultPlanPermissions,
-      });
-    });
-
-    test("workspace owner has full role permissions", () => {
-      expect(getPermissions({ userRelation: "own" })).toEqual({
+    test("owner has full role permissions", () => {
+      expect(
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+      ).toEqual({
         canCreateProject: true,
         canDuplicate: true,
         canRename: true,
@@ -64,7 +56,10 @@ describe("getPermissions", () => {
     });
 
     test("administrators can create, duplicate, rename, and edit tags", () => {
-      const result = getPermissions({ userRelation: "administrators" });
+      const result = getPermissions({
+        workspaceRelation: "administrators",
+        userPlanFeatures: freePlan,
+      });
       expect(result).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -78,7 +73,10 @@ describe("getPermissions", () => {
     });
 
     test("builders can create, duplicate, rename, and edit tags", () => {
-      const result = getPermissions({ userRelation: "builders" });
+      const result = getPermissions({
+        workspaceRelation: "builders",
+        userPlanFeatures: freePlan,
+      });
       expect(result).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -92,7 +90,10 @@ describe("getPermissions", () => {
     });
 
     test("editors can rename and edit tags only", () => {
-      const result = getPermissions({ userRelation: "editors" });
+      const result = getPermissions({
+        workspaceRelation: "editors",
+        userPlanFeatures: freePlan,
+      });
       expect(result).toEqual({
         canCreateProject: false,
         canDuplicate: false,
@@ -106,7 +107,10 @@ describe("getPermissions", () => {
     });
 
     test("viewers have no role-based permissions", () => {
-      const result = getPermissions({ userRelation: "viewers" });
+      const result = getPermissions({
+        workspaceRelation: "viewers",
+        userPlanFeatures: freePlan,
+      });
       expect(result).toEqual({
         canCreateProject: false,
         canDuplicate: false,
@@ -122,43 +126,55 @@ describe("getPermissions", () => {
 
   describe("canCreateProject by role", () => {
     test("own → true", () => {
-      expect(getPermissions({ userRelation: "own" }).canCreateProject).toBe(
-        true
-      );
-    });
-
-    test("undefined (personal) → true", () => {
-      expect(getPermissions({}).canCreateProject).toBe(true);
+      expect(
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+          .canCreateProject
+      ).toBe(true);
     });
 
     test("administrators → true", () => {
       expect(
-        getPermissions({ userRelation: "administrators" }).canCreateProject
+        getPermissions({
+          workspaceRelation: "administrators",
+          userPlanFeatures: freePlan,
+        }).canCreateProject
       ).toBe(true);
     });
 
     test("builders → true", () => {
       expect(
-        getPermissions({ userRelation: "builders" }).canCreateProject
+        getPermissions({
+          workspaceRelation: "builders",
+          userPlanFeatures: freePlan,
+        }).canCreateProject
       ).toBe(true);
     });
 
     test("editors → false", () => {
-      expect(getPermissions({ userRelation: "editors" }).canCreateProject).toBe(
-        false
-      );
+      expect(
+        getPermissions({
+          workspaceRelation: "editors",
+          userPlanFeatures: freePlan,
+        }).canCreateProject
+      ).toBe(false);
     });
 
     test("viewers → false", () => {
-      expect(getPermissions({ userRelation: "viewers" }).canCreateProject).toBe(
-        false
-      );
+      expect(
+        getPermissions({
+          workspaceRelation: "viewers",
+          userPlanFeatures: freePlan,
+        }).canCreateProject
+      ).toBe(false);
     });
   });
 
   describe("plan-based permissions", () => {
     test("pro plan enables all plan features", () => {
-      const result = getPermissions({ userPlanFeatures: proPlan });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        userPlanFeatures: proPlan,
+      });
       expect(result).toMatchObject({
         allowDynamicData: true,
         allowContentMode: true,
@@ -171,7 +187,10 @@ describe("getPermissions", () => {
     });
 
     test("free plan restricts plan features", () => {
-      const result = getPermissions({ userPlanFeatures: freePlan });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        userPlanFeatures: freePlan,
+      });
       expect(result).toMatchObject({
         allowDynamicData: false,
         allowContentMode: false,
@@ -182,45 +201,48 @@ describe("getPermissions", () => {
         maxPublishesAllowedPerUser: 10,
       });
     });
-
-    test("purchases array is passed through from pro plan", () => {
-      const result = getPermissions({ userPlanFeatures: proPlan });
-      expect(result.purchases).toEqual([{ planName: "Pro" }]);
-    });
-
-    test("purchases is empty array for free plan", () => {
-      const result = getPermissions({ userPlanFeatures: freePlan });
-      expect(result.purchases).toEqual([]);
-    });
-
-    test("purchases defaults to empty array when userPlanFeatures is not provided", () => {
-      expect(getPermissions({}).purchases).toEqual([]);
-    });
   });
 
   describe("allowContentMode with authPermit", () => {
     test("content mode allowed for shared project (view permit)", () => {
-      const result = getPermissions({ authPermit: "view" });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        authPermit: "view",
+        userPlanFeatures: freePlan,
+      });
       expect(result.allowContentMode).toBe(true);
     });
 
     test("content mode allowed for shared project (edit permit)", () => {
-      const result = getPermissions({ authPermit: "edit" });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        authPermit: "edit",
+        userPlanFeatures: freePlan,
+      });
       expect(result.allowContentMode).toBe(true);
     });
 
     test("content mode allowed for shared project (build permit)", () => {
-      const result = getPermissions({ authPermit: "build" });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        authPermit: "build",
+        userPlanFeatures: freePlan,
+      });
       expect(result.allowContentMode).toBe(true);
     });
 
     test("content mode allowed for shared project (admin permit)", () => {
-      const result = getPermissions({ authPermit: "admin" });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        authPermit: "admin",
+        userPlanFeatures: freePlan,
+      });
       expect(result.allowContentMode).toBe(true);
     });
 
     test("content mode allowed for shared project with free plan", () => {
       const result = getPermissions({
+        workspaceRelation: "own",
         authPermit: "edit",
         userPlanFeatures: freePlan,
       });
@@ -228,26 +250,36 @@ describe("getPermissions", () => {
     });
 
     test("content mode depends on plan for own project", () => {
-      expect(getPermissions({ authPermit: "own" }).allowContentMode).toBe(
-        false
-      );
       expect(
-        getPermissions({ authPermit: "own", userPlanFeatures: proPlan })
-          .allowContentMode
+        getPermissions({
+          workspaceRelation: "own",
+          authPermit: "own",
+          userPlanFeatures: freePlan,
+        }).allowContentMode
+      ).toBe(false);
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          authPermit: "own",
+          userPlanFeatures: proPlan,
+        }).allowContentMode
       ).toBe(true);
     });
 
-    test("content mode denied without authPermit and without plan features", () => {
-      expect(getPermissions({}).allowContentMode).toBe(false);
-    });
-
     test("content mode denied without authPermit on free plan", () => {
-      const result = getPermissions({ userPlanFeatures: freePlan });
-      expect(result.allowContentMode).toBe(false);
+      expect(
+        getPermissions({
+          workspaceRelation: "own",
+          userPlanFeatures: freePlan,
+        }).allowContentMode
+      ).toBe(false);
     });
 
     test("content mode allowed without authPermit on pro plan", () => {
-      const result = getPermissions({ userPlanFeatures: proPlan });
+      const result = getPermissions({
+        workspaceRelation: "own",
+        userPlanFeatures: proPlan,
+      });
       expect(result.allowContentMode).toBe(true);
     });
   });
@@ -255,7 +287,10 @@ describe("getPermissions", () => {
   describe("combined role and plan permissions", () => {
     test("viewer on free plan has minimal permissions", () => {
       expect(
-        getPermissions({ userRelation: "viewers", userPlanFeatures: freePlan })
+        getPermissions({
+          workspaceRelation: "viewers",
+          userPlanFeatures: freePlan,
+        })
       ).toEqual({
         canCreateProject: false,
         canDuplicate: false,
@@ -264,6 +299,8 @@ describe("getPermissions", () => {
         canDelete: false,
         canEditTags: false,
         canOpenSettings: false,
+        canDownloadAssets: false,
+        canRestoreBackups: false,
         allowDynamicData: false,
         allowContentMode: false,
         allowStagingPublish: false,
@@ -271,13 +308,15 @@ describe("getPermissions", () => {
         maxContactEmails: 0,
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
-        purchases: [],
       });
     });
 
     test("builder on pro plan has builder role + all plan features", () => {
       expect(
-        getPermissions({ userRelation: "builders", userPlanFeatures: proPlan })
+        getPermissions({
+          workspaceRelation: "builders",
+          userPlanFeatures: proPlan,
+        })
       ).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -286,6 +325,8 @@ describe("getPermissions", () => {
         canDelete: false,
         canEditTags: true,
         canOpenSettings: false,
+        canDownloadAssets: true,
+        canRestoreBackups: true,
         allowDynamicData: true,
         allowContentMode: true,
         allowStagingPublish: true,
@@ -293,13 +334,12 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-        purchases: [{ planName: "Pro" }],
       });
     });
 
     test("owner on pro plan has all permissions", () => {
       expect(
-        getPermissions({ userRelation: "own", userPlanFeatures: proPlan })
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
       ).toEqual({
         canCreateProject: true,
         canDuplicate: true,
@@ -308,6 +348,8 @@ describe("getPermissions", () => {
         canDelete: true,
         canEditTags: true,
         canOpenSettings: true,
+        canDownloadAssets: true,
+        canRestoreBackups: true,
         allowDynamicData: true,
         allowContentMode: true,
         allowStagingPublish: true,
@@ -315,14 +357,13 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-        purchases: [{ planName: "Pro" }],
       });
     });
 
     test("administrator on free plan has admin role but limited plan features", () => {
       expect(
         getPermissions({
-          userRelation: "administrators",
+          workspaceRelation: "administrators",
           userPlanFeatures: freePlan,
         })
       ).toEqual({
@@ -333,6 +374,8 @@ describe("getPermissions", () => {
         canDelete: false,
         canEditTags: true,
         canOpenSettings: false,
+        canDownloadAssets: false,
+        canRestoreBackups: false,
         allowDynamicData: false,
         allowContentMode: false,
         allowStagingPublish: false,
@@ -340,13 +383,15 @@ describe("getPermissions", () => {
         maxContactEmails: 0,
         maxDomainsAllowedPerUser: 0,
         maxPublishesAllowedPerUser: 10,
-        purchases: [],
       });
     });
 
     test("editor on pro plan has editor role + all plan features", () => {
       expect(
-        getPermissions({ userRelation: "editors", userPlanFeatures: proPlan })
+        getPermissions({
+          workspaceRelation: "editors",
+          userPlanFeatures: proPlan,
+        })
       ).toEqual({
         canCreateProject: false,
         canDuplicate: false,
@@ -355,6 +400,8 @@ describe("getPermissions", () => {
         canDelete: false,
         canEditTags: true,
         canOpenSettings: false,
+        canDownloadAssets: true,
+        canRestoreBackups: true,
         allowDynamicData: true,
         allowContentMode: true,
         allowStagingPublish: true,
@@ -362,7 +409,6 @@ describe("getPermissions", () => {
         maxContactEmails: 5,
         maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
         maxPublishesAllowedPerUser: Number.MAX_SAFE_INTEGER,
-        purchases: [{ planName: "Pro" }],
       });
     });
   });
@@ -370,7 +416,7 @@ describe("getPermissions", () => {
   describe("all three parameters combined", () => {
     test("viewer + free plan + shared project enables only content mode", () => {
       const result = getPermissions({
-        userRelation: "viewers",
+        workspaceRelation: "viewers",
         userPlanFeatures: freePlan,
         authPermit: "edit",
       });
@@ -391,7 +437,7 @@ describe("getPermissions", () => {
 
     test("builder + pro plan + shared project has builder role + all plan features", () => {
       const result = getPermissions({
-        userRelation: "builders",
+        workspaceRelation: "builders",
         userPlanFeatures: proPlan,
         authPermit: "build",
       });
@@ -406,54 +452,66 @@ describe("getPermissions", () => {
       expect(result.allowContentMode).toBe(true);
       expect(result.allowStagingPublish).toBe(true);
       expect(result.allowAdditionalPermissions).toBe(true);
-      expect(result.purchases).toEqual([{ planName: "Pro" }]);
     });
   });
 
   describe("maxContactEmails", () => {
-    test("defaults to 0 when no plan features", () => {
-      expect(getPermissions({}).maxContactEmails).toBe(0);
+    test("defaults to 0 on free plan", () => {
+      expect(
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+          .maxContactEmails
+      ).toBe(0);
     });
 
     test("reflects plan value", () => {
       expect(
-        getPermissions({ userPlanFeatures: proPlan }).maxContactEmails
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
+          .maxContactEmails
       ).toBe(5);
     });
   });
 
   describe("maxDomainsAllowedPerUser", () => {
-    test("defaults to 0 when no plan features", () => {
-      expect(getPermissions({}).maxDomainsAllowedPerUser).toBe(0);
+    test("defaults to 0 on free plan", () => {
+      expect(
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+          .maxDomainsAllowedPerUser
+      ).toBe(0);
     });
 
     test("reflects plan value", () => {
       expect(
-        getPermissions({ userPlanFeatures: proPlan }).maxDomainsAllowedPerUser
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
+          .maxDomainsAllowedPerUser
       ).toBe(Number.MAX_SAFE_INTEGER);
     });
 
     test("free plan has 0", () => {
       expect(
-        getPermissions({ userPlanFeatures: freePlan }).maxDomainsAllowedPerUser
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+          .maxDomainsAllowedPerUser
       ).toBe(0);
     });
   });
 
   describe("maxPublishesAllowedPerUser", () => {
-    test("defaults to 0 when no plan features", () => {
-      expect(getPermissions({}).maxPublishesAllowedPerUser).toBe(0);
+    test("defaults to 10 on free plan", () => {
+      expect(
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
+          .maxPublishesAllowedPerUser
+      ).toBe(10);
     });
 
     test("reflects plan value for pro", () => {
       expect(
-        getPermissions({ userPlanFeatures: proPlan }).maxPublishesAllowedPerUser
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: proPlan })
+          .maxPublishesAllowedPerUser
       ).toBe(Number.MAX_SAFE_INTEGER);
     });
 
     test("free plan allows limited publishes", () => {
       expect(
-        getPermissions({ userPlanFeatures: freePlan })
+        getPermissions({ workspaceRelation: "own", userPlanFeatures: freePlan })
           .maxPublishesAllowedPerUser
       ).toBe(10);
     });

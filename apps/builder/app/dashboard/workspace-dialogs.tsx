@@ -26,9 +26,9 @@ import {
 import { TrashIcon } from "@webstudio-is/icons";
 import {
   type Workspace,
-  type MemberRelation,
-  memberRelations,
-  memberRelationLabels,
+  type WorkspaceRelation,
+  workspaceRelations,
+  workspaceRelationLabels,
 } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 
@@ -153,14 +153,14 @@ const MemberRow = ({
   email: string;
   userId: string;
   workspaceId: string;
-  relation: MemberRelation;
+  relation: WorkspaceRelation;
   canRemove: boolean;
   index: number;
   onRefresh: () => void;
 }) => {
   const removeMutation = trpcClient.workspace.removeMember.useMutation();
   const updateMutation =
-    trpcClient.workspace.updateMemberRelation.useMutation();
+    trpcClient.workspace.updateWorkspaceRelation.useMutation();
   const revalidator = useRevalidator();
   const [error, setError] = useState<string>();
   const [localRelation, setLocalRelation] = useState(relation);
@@ -179,12 +179,12 @@ const MemberRow = ({
         <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
           {canRemove ? (
             <Select
-              options={[...memberRelations]}
+              options={[...workspaceRelations]}
               value={localRelation}
-              getLabel={(option: MemberRelation) =>
-                memberRelationLabels[option]
+              getLabel={(option: WorkspaceRelation) =>
+                workspaceRelationLabels[option]
               }
-              onChange={(newRelation: MemberRelation) => {
+              onChange={(newRelation: WorkspaceRelation) => {
                 setError(undefined);
                 setLocalRelation(newRelation);
                 updateMutation.send(
@@ -206,7 +206,7 @@ const MemberRow = ({
               }}
             />
           ) : (
-            <Text color="subtle">{memberRelationLabels[relation]}</Text>
+            <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
           )}
           {canRemove && (
             <Tooltip
@@ -254,7 +254,7 @@ const MemberList = ({
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
-  invitedEmails: Map<string, MemberRelation>;
+  invitedEmails: Map<string, WorkspaceRelation>;
   onRefresh: () => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -297,7 +297,7 @@ const MemberList = ({
           email={member.email ?? ""}
           userId={member.userId}
           workspaceId={workspaceId}
-          relation={member.relation as MemberRelation}
+          relation={member.relation as WorkspaceRelation}
           canRemove={canRemove}
           index={index}
           onRefresh={onRefresh}
@@ -314,7 +314,7 @@ const MemberList = ({
             <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
               <Text truncate>{email}</Text>
             </Flex>
-            <Text color="subtle">{memberRelationLabels[relation]}</Text>
+            <Text color="subtle">{workspaceRelationLabels[relation]}</Text>
           </Flex>
         </ListItem>
       ))}
@@ -421,9 +421,9 @@ export const ManageMembersDialog = ({
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
   const [inviteRelation, setInviteRelation] =
-    useState<MemberRelation>("viewers");
+    useState<WorkspaceRelation>("viewers");
   const [invitedEmails, setInvitedEmails] = useState<
-    Map<string, MemberRelation>
+    Map<string, WorkspaceRelation>
   >(new Map());
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -515,10 +515,10 @@ export const ManageMembersDialog = ({
                   </InputErrorsTooltip>
                 </Box>
                 <Select
-                  options={[...memberRelations]}
+                  options={[...workspaceRelations]}
                   value={inviteRelation}
-                  getLabel={(option: MemberRelation) =>
-                    memberRelationLabels[option]
+                  getLabel={(option: WorkspaceRelation) =>
+                    workspaceRelationLabels[option]
                   }
                   onChange={setInviteRelation}
                 />

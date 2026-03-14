@@ -12,7 +12,7 @@ const createWorkspace = (
   isDefault: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   userId: "user-1",
-  userRelation: "own",
+  workspaceRelation: "own",
   ...overrides,
 });
 

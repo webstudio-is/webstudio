@@ -41,7 +41,7 @@ export const SectionBackups = ({
 }: {
   projectId?: string;
 }) => {
-  const { purchases } = useStore($permissions);
+  const { canRestoreBackups } = useStore($permissions);
   const { data, load } = trpcClient.project.publishedBuilds.useQuery();
   const project = useStore($project);
   const projectId = projectIdProp ?? project?.id ?? "";
@@ -92,7 +92,7 @@ export const SectionBackups = ({
         <DialogTrigger asChild>
           <Button
             css={{ justifySelf: "start" }}
-            disabled={purchases.length === 0 || options.length === 0}
+            disabled={canRestoreBackups === false || options.length === 0}
           >
             Restore
           </Button>
@@ -127,7 +127,7 @@ export const SectionBackups = ({
           </Flex>
         </DialogContent>
       </Dialog>
-      {purchases.length === 0 && (
+      {canRestoreBackups === false && (
         <PanelBanner>
           <img
             src={cmsUpgradeBanner}

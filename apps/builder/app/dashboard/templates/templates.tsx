@@ -10,8 +10,9 @@ import {
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
+import { useStore } from "@nanostores/react";
 import { TemplateCard } from "./template-card";
-import type { getPermissions } from "~/shared/permissions";
+import { $permissions } from "~/shared/nano-states";
 
 export const TemplatesGrid = ({
   projects,
@@ -43,15 +44,14 @@ type ProjectsProps = {
   projects: Array<DashboardProject>;
   welcome?: boolean;
   currentWorkspaceId?: string;
-  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const Templates = ({
   projects,
   welcome = false,
   currentWorkspaceId,
-  permissions,
 }: ProjectsProps) => {
+  const permissions = useStore($permissions);
   return (
     <Main>
       <Header variant="main">

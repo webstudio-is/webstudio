@@ -14,9 +14,10 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
+import { useStore } from "@nanostores/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
-import type { getPermissions } from "~/shared/permissions";
+import { $purchases } from "~/shared/nano-states";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -52,16 +53,10 @@ const ProfileButton = forwardRef<
   );
 });
 
-export const ProfileMenu = ({
-  user,
-  permissions,
-}: {
-  user: User;
-  permissions: ReturnType<typeof getPermissions>;
-}) => {
+export const ProfileMenu = ({ user }: { user: User }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  const { purchases } = permissions;
+  const purchases = useStore($purchases);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

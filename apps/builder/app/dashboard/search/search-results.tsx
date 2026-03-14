@@ -8,7 +8,6 @@ import { Header, Main } from "../shared/layout";
 import type { DashboardData } from "../shared/types";
 import { NothingFound } from "./nothing-found";
 import { TemplatesGrid } from "../templates/templates";
-import { getPermissions } from "~/shared/permissions";
 
 type SearchResults = {
   projects: Array<DashboardProject>;
@@ -22,7 +21,7 @@ const initialSearchResults: SearchResults = {
 
 export const SearchResults = (props: DashboardData) => {
   const [searchParams] = useSearchParams();
-  const { projects, templates, publisherHost, userPlanFeatures } = props;
+  const { projects, templates, publisherHost } = props;
   const search = searchParams.get("q");
 
   const results = useMemo(() => {
@@ -38,14 +37,6 @@ export const SearchResults = (props: DashboardData) => {
 
   const nothingFound =
     results.projects.length === 0 && results.templates.length === 0;
-
-  const currentWorkspace = props.workspaces?.find(
-    (w) => w.id === props.currentWorkspaceId
-  );
-  const permissions = getPermissions({
-    userRelation: currentWorkspace?.userRelation,
-    userPlanFeatures,
-  });
 
   return (
     <Main>
@@ -72,7 +63,6 @@ export const SearchResults = (props: DashboardData) => {
               projects={results.projects}
               publisherHost={publisherHost}
               projectsTags={props.user.projectsTags}
-              permissions={permissions}
             />
           </>
         )}

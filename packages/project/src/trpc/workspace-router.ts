@@ -5,10 +5,10 @@ import {
   procedure,
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
-import { memberRelations } from "../shared/schema";
+import { workspaceRelations } from "../shared/schema";
 
 const Name = z.string().min(2).max(100);
-const Relation = z.enum(memberRelations);
+const Relation = z.enum(workspaceRelations);
 
 export const workspaceRouter = router({
   create: procedure
@@ -83,7 +83,7 @@ export const workspaceRouter = router({
       }
     }),
 
-  updateMemberRelation: procedure
+  updateWorkspaceRelation: procedure
     .input(
       z.object({
         workspaceId: z.string(),
@@ -93,7 +93,7 @@ export const workspaceRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        await workspaceApi.updateMemberRelation(input, ctx);
+        await workspaceApi.updateWorkspaceRelation(input, ctx);
         return { success: true as const };
       } catch (error) {
         return createErrorResponse(error);
