@@ -102,6 +102,16 @@ const loadDashboardData = async (request: Request) => {
       selectedId === null
         ? undefined
         : workspaces.find((w) => w.id === selectedId);
+
+    // If the URL references a workspace that no longer exists or the user
+    // lost access to, strip the stale param and redirect so the client
+    // falls back to the default workspace.
+    if (selectedId !== null && matchedWorkspace === undefined) {
+      url.searchParams.delete("workspaceId");
+      const search = url.searchParams.toString();
+      throw redirect(search ? `${url.pathname}?${search}` : url.pathname);
+    }
+
     const defaultWorkspace = workspaces.find((w) => w.isDefault);
     currentWorkspaceId = (matchedWorkspace ?? defaultWorkspace)?.id;
 

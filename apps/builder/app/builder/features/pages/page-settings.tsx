@@ -73,7 +73,7 @@ import {
   $pages,
   $publishedOrigin,
   $project,
-  $userPlanFeatures,
+  $permissions,
   $isDesignMode,
 } from "~/shared/nano-states";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
@@ -320,7 +320,7 @@ const PathField = ({
   value: string;
   onChange: (value: string) => void;
 }) => {
-  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($permissions);
   const id = useId();
   return (
     <Grid gap={1}>
@@ -464,7 +464,7 @@ const RedirectField = ({
   onChange: (value: string) => void;
 }) => {
   const id = useId();
-  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($permissions);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
   return (
     <Grid gap={1}>
@@ -692,7 +692,7 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
-  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($permissions);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
   const pageUrl = usePageUrl(values);

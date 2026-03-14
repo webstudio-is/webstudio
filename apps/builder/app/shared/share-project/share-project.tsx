@@ -5,6 +5,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
+import type { MemberRelation } from "@webstudio-is/project";
 import {
   Box,
   Button,
@@ -108,11 +109,12 @@ const Menu = ({
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
 
-  const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
-    if (checked) {
-      onChange({ ...value, relation });
-    }
-  };
+  const handleCheckedChange =
+    (relation: MemberRelation) => (checked: boolean) => {
+      if (checked) {
+        onChange({ ...value, relation });
+      }
+    };
 
   const saveCustomLinkName = () => {
     if (customLinkName.length === 0) {
@@ -377,12 +379,10 @@ const itemStyle = css({
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type Relation = "viewers" | "editors" | "builders" | "administrators";
-
 export type LinkOptions = {
   token: string;
   name: string;
-  relation: Relation;
+  relation: MemberRelation;
   canCopy: boolean;
   canClone: boolean;
   canPublish: boolean;
@@ -396,7 +396,7 @@ type SharedLinkItemType = {
   allowAdditionalPermissions: boolean;
 };
 
-const relationToMode: Record<Relation, BuilderMode> = {
+const relationToMode: Record<MemberRelation, BuilderMode> = {
   viewers: "preview",
   editors: "content",
   builders: "design",

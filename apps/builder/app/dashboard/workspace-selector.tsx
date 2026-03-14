@@ -20,7 +20,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import type { Workspace } from "@webstudio-is/project";
+import type { WorkspaceWithRelation } from "@webstudio-is/project";
 import { useNavigate, useLocation } from "@remix-run/react";
 import {
   CreateWorkspaceDialog,
@@ -29,7 +29,7 @@ import {
   DeleteWorkspaceDialog,
 } from "./workspace-dialogs";
 
-const sortWorkspaces = (workspaces: Array<Workspace>) =>
+const sortWorkspaces = (workspaces: Array<WorkspaceWithRelation>) =>
   [...workspaces].sort((a, b) => {
     if (a.isDefault) {
       return -1;
@@ -48,7 +48,7 @@ export const WorkspaceSelector = ({
   userId,
   onDeleted,
 }: {
-  workspaces: Array<Workspace>;
+  workspaces: Array<WorkspaceWithRelation>;
   currentWorkspaceId: string;
   userId: string;
   onDeleted: () => void;

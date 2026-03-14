@@ -4,8 +4,14 @@ import {
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { softDeleteProject } from "./project";
+import { defaultMemberRelation, type MemberRelation } from "../shared/schema";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
+
+export type WorkspaceWithRelation = Workspace & {
+  /** The current user's relation to the workspace: "own" for owners */
+  userRelation: MemberRelation | "own";
+};
 
 const assertUser = (context: AppContext) => {
   if (context.authorization.type !== "user") {
@@ -158,7 +164,7 @@ export const findMany = async (userId: string, context: AppContext) => {
   // Workspaces where the user is a member (not owner)
   const memberships = await context.postgrest.client
     .from("WorkspaceMember")
-    .select("workspaceId")
+    .select("workspaceId, relation")
     .eq("userId", userId);
 
   if (memberships.error) {
@@ -166,9 +172,17 @@ export const findMany = async (userId: string, context: AppContext) => {
   }
 
   const memberWorkspaceIds = memberships.data.map((m) => m.workspaceId);
+  const relationByWorkspaceId = new Map(
+    memberships.data.map((m) => [m.workspaceId, m.relation as MemberRelation])
+  );
+
+  const ownedWithRelation: WorkspaceWithRelation[] = owned.data.map((w) => ({
+    ...w,
+    userRelation: "own" as const,
+  }));
 
   if (memberWorkspaceIds.length === 0) {
-    return owned.data;
+    return ownedWithRelation;
   }
 
   const memberOf = await context.postgrest.client
@@ -181,8 +195,15 @@ export const findMany = async (userId: string, context: AppContext) => {
     throw memberOf.error;
   }
 
+  const memberWithRelation: WorkspaceWithRelation[] = memberOf.data.map(
+    (w) => ({
+      ...w,
+      userRelation: relationByWorkspaceId.get(w.id) ?? defaultMemberRelation,
+    })
+  );
+
   // Owned workspaces first (default on top), then member workspaces
-  return [...owned.data, ...memberOf.data];
+  return [...ownedWithRelation, ...memberWithRelation];
 };
 
 const assertOwner = async (
@@ -208,7 +229,11 @@ const assertOwner = async (
 };
 
 export const addMember = async (
-  { workspaceId, email }: { workspaceId: string; email: string },
+  {
+    workspaceId,
+    email,
+    relation,
+  }: { workspaceId: string; email: string; relation: MemberRelation },
   context: AppContext
 ) => {
   const userId = assertUser(context);
@@ -242,7 +267,7 @@ export const addMember = async (
     .insert({
       workspaceId,
       userId: memberId,
-      relation: "administrators",
+      relation,
     })
     .select()
     .single();
@@ -253,6 +278,42 @@ export const addMember = async (
       return;
     }
     throw result.error;
+  }
+};
+
+export const updateMemberRelation = async (
+  {
+    workspaceId,
+    memberUserId,
+    relation,
+  }: {
+    workspaceId: string;
+    memberUserId: string;
+    relation: MemberRelation;
+  },
+  context: AppContext
+) => {
+  const userId = assertUser(context);
+  await assertOwner(workspaceId, userId, context);
+
+  if (memberUserId === userId) {
+    throw new Error("Cannot change the workspace owner's role");
+  }
+
+  const result = await context.postgrest.client
+    .from("WorkspaceMember")
+    .update({ relation })
+    .eq("workspaceId", workspaceId)
+    .eq("userId", memberUserId)
+    .select()
+    .maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (result.data === null) {
+    throw new Error("Member not found");
   }
 };
 

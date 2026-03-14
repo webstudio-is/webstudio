@@ -8,6 +8,7 @@ import { Header, Main } from "../shared/layout";
 import type { DashboardData } from "../shared/types";
 import { NothingFound } from "./nothing-found";
 import { TemplatesGrid } from "../templates/templates";
+import { getPermissions } from "~/shared/permissions";
 
 type SearchResults = {
   projects: Array<DashboardProject>;
@@ -38,6 +39,14 @@ export const SearchResults = (props: DashboardData) => {
   const nothingFound =
     results.projects.length === 0 && results.templates.length === 0;
 
+  const currentWorkspace = props.workspaces?.find(
+    (w) => w.id === props.currentWorkspaceId
+  );
+  const permissions = getPermissions({
+    userRelation: currentWorkspace?.userRelation,
+    userPlanFeatures,
+  });
+
   return (
     <Main>
       <Header variant="main">
@@ -61,9 +70,9 @@ export const SearchResults = (props: DashboardData) => {
             </Text>
             <ProjectsGrid
               projects={results.projects}
-              userPlanFeatures={userPlanFeatures}
               publisherHost={publisherHost}
               projectsTags={props.user.projectsTags}
+              permissions={permissions}
             />
           </>
         )}

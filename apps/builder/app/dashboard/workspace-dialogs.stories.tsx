@@ -103,21 +103,3 @@ export const Delete: StoryFn = () => {
   );
   return <RouterProvider router={router} />;
 };
-
-// ---------------------------------------------------------------------------
-// Delete workspace dialog — long name wrapping
-// ---------------------------------------------------------------------------
-
-export const DeleteLongName: StoryFn = () => {
-  const router = createRouter(
-    <DeleteWorkspaceDialog
-      workspace={createWorkspace({
-        name: "My very important production workspace with a very long name",
-      })}
-      isOpen={true}
-      onOpenChange={() => {}}
-      onDeleted={() => {}}
-    />
-  );
-  return <RouterProvider router={router} />;
-};

@@ -11,13 +11,19 @@ import { EllipsesIcon } from "@webstudio-is/icons";
 import type { DialogType } from "./project-dialogs";
 import { useDuplicateProject } from "./project-dialogs";
 import { builderUrl } from "~/shared/router-utils";
+import type { getPermissions } from "~/shared/permissions";
 
 type ProjectMenuProps = {
   projectId: string;
   onOpenChange: (dialog: DialogType) => void;
+  permissions: ReturnType<typeof getPermissions>;
 };
 
-export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
+export const ProjectMenu = ({
+  projectId,
+  onOpenChange,
+  permissions,
+}: ProjectMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const handleDuplicateProject = useDuplicateProject(projectId);
 
@@ -41,24 +47,36 @@ export const ProjectMenu = ({ projectId, onOpenChange }: ProjectMenuProps) => {
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" css={{ width: theme.spacing[24] }}>
-        <DropdownMenuItem onSelect={handleDuplicateProject}>
-          Duplicate
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("rename")}>
-          Rename
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("share")}>
-          Share
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("delete")}>
-          Delete
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("tags")}>
-          Tags
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onOpenChange("settings")}>
-          Settings
-        </DropdownMenuItem>
+        {permissions.canDuplicate && (
+          <DropdownMenuItem onSelect={handleDuplicateProject}>
+            Duplicate
+          </DropdownMenuItem>
+        )}
+        {permissions.canRename && (
+          <DropdownMenuItem onSelect={() => onOpenChange("rename")}>
+            Rename
+          </DropdownMenuItem>
+        )}
+        {permissions.canShare && (
+          <DropdownMenuItem onSelect={() => onOpenChange("share")}>
+            Share
+          </DropdownMenuItem>
+        )}
+        {permissions.canDelete && (
+          <DropdownMenuItem onSelect={() => onOpenChange("delete")}>
+            Delete
+          </DropdownMenuItem>
+        )}
+        {permissions.canEditTags && (
+          <DropdownMenuItem onSelect={() => onOpenChange("tags")}>
+            Tags
+          </DropdownMenuItem>
+        )}
+        {permissions.canOpenSettings && (
+          <DropdownMenuItem onSelect={() => onOpenChange("settings")}>
+            Settings
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={handleOpenInSafeMode}>
           Open in safe mode
         </DropdownMenuItem>

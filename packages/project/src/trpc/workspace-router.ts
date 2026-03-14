@@ -5,8 +5,10 @@ import {
   procedure,
   createErrorResponse,
 } from "@webstudio-is/trpc-interface/index.server";
+import { memberRelations } from "../shared/schema";
 
 const Name = z.string().min(2).max(100);
+const Relation = z.enum(memberRelations);
 
 export const workspaceRouter = router({
   create: procedure
@@ -63,7 +65,13 @@ export const workspaceRouter = router({
   }),
 
   addMember: procedure
-    .input(z.object({ workspaceId: z.string(), email: z.string().email() }))
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        email: z.string().email(),
+        relation: Relation,
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         await workspaceApi.addMember(input, ctx);
@@ -75,14 +83,28 @@ export const workspaceRouter = router({
       }
     }),
 
-  removeMember: procedure
-    .input(z.object({ workspaceId: z.string(), userId: z.string() }))
+  updateMemberRelation: procedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        memberUserId: z.string(),
+        relation: Relation,
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       try {
-        await workspaceApi.removeMember(
-          { workspaceId: input.workspaceId, memberUserId: input.userId },
-          ctx
-        );
+        await workspaceApi.updateMemberRelation(input, ctx);
+        return { success: true as const };
+      } catch (error) {
+        return createErrorResponse(error);
+      }
+    }),
+
+  removeMember: procedure
+    .input(z.object({ workspaceId: z.string(), memberUserId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        await workspaceApi.removeMember(input, ctx);
         return { success: true as const };
       } catch (error) {
         return createErrorResponse(error);

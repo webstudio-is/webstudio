@@ -18,6 +18,7 @@ import { type InstanceSelector } from "../tree-utils";
 import type { ChildrenOrientation } from "@webstudio-is/design-system";
 import { $awareness, $selectedInstance } from "../awareness";
 import type { UserPlanFeatures } from "../db/user-plan-features.server";
+import { getPermissions } from "../permissions";
 import {
   $project,
   $publisherHost,
@@ -338,17 +339,15 @@ export const $authToken = atom<string | undefined>(undefined);
 export const $stagingUsername = atom<string | undefined>();
 export const $stagingPassword = atom<string | undefined>();
 
-export const $isContentModeAllowed = computed(
-  [$authToken, $userPlanFeatures],
-  (token, userPlanFeatures) => {
-    // In own projects, everyone can edit content
-    if (token === undefined) {
-      return true;
-    }
+export const $permissions = computed(
+  [$userPlanFeatures, $authPermit],
+  (userPlanFeatures, authPermit) =>
+    getPermissions({ userPlanFeatures, authPermit })
+);
 
-    // In shared projects, only Pro users can share editable links, so check the plan features of the user who shared the link
-    return userPlanFeatures.allowContentMode === true;
-  }
+export const $isContentModeAllowed = computed(
+  $permissions,
+  (permissions) => permissions.allowContentMode
 );
 
 export const $isDesignModeAllowed = computed([$authPermit], (authPermit) => {
