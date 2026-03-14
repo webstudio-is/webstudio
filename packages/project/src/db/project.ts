@@ -120,7 +120,7 @@ export const create = async (
     if (workspace.data.userId !== userId) {
       const membership = await context.postgrest.client
         .from("WorkspaceMember")
-        .select("userId")
+        .select("userId, relation")
         .eq("workspaceId", workspaceId)
         .eq("userId", userId)
         .maybeSingle();
@@ -131,6 +131,16 @@ export const create = async (
 
       if (membership.data === null) {
         throw new AuthorizationError("You don't have access to this workspace");
+      }
+
+      // Only builders and administrators can create projects
+      const canCreate =
+        membership.data.relation === "builders" ||
+        membership.data.relation === "administrators";
+      if (canCreate === false) {
+        throw new AuthorizationError(
+          "You don't have permission to create projects in this workspace"
+        );
       }
     }
 
@@ -286,6 +296,58 @@ export const clone = async (
   }
 
   // Should be some mixed context in case of RLS
+  // If the source project belongs to a workspace, check clone permissions
+  // BEFORE creating the clone to avoid unnecessary rollbacks.
+  let workspaceCloneTarget:
+    | undefined
+    | { workspaceId: string; projectOwnerUserId: string };
+
+  if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
+    const workspace = await destinationContext.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", project.workspaceId)
+      .maybeSingle();
+
+    if (workspace.data !== null) {
+      const isOwner = workspace.data.userId === userId;
+
+      if (isOwner) {
+        workspaceCloneTarget = {
+          workspaceId: project.workspaceId,
+          projectOwnerUserId: workspace.data.userId,
+        };
+      } else {
+        const membership = await destinationContext.postgrest.client
+          .from("WorkspaceMember")
+          .select("userId, relation")
+          .eq("workspaceId", project.workspaceId)
+          .eq("userId", userId)
+          .maybeSingle();
+
+        if (membership.data !== null) {
+          const canClone =
+            membership.data.relation === "builders" ||
+            membership.data.relation === "administrators";
+
+          if (canClone === false) {
+            throw new AuthorizationError(
+              "You don't have permission to clone projects in this workspace"
+            );
+          }
+
+          // Place clone in workspace, owned by the workspace owner
+          // (consistent with project creation)
+          workspaceCloneTarget = {
+            workspaceId: project.workspaceId,
+            projectOwnerUserId: workspace.data.userId,
+          };
+        }
+        // Non-members (e.g. token-based clone): clone stays in personal space
+      }
+    }
+  }
+
   const clonedProject = await destinationContext.postgrest.client.rpc(
     "clone_project",
     {
@@ -300,36 +362,14 @@ export const clone = async (
     throw clonedProject.error;
   }
 
-  // If the source project belongs to a workspace and the cloning user is
-  // the workspace owner or a member, place the clone in the same workspace.
-  if (isFeatureEnabled("workspaces") && project.workspaceId !== null) {
-    const workspace = await destinationContext.postgrest.client
-      .from("Workspace")
-      .select("userId")
-      .eq("id", project.workspaceId)
-      .maybeSingle();
-
-    if (workspace.data !== null) {
-      let isMemberOrOwner = workspace.data.userId === userId;
-
-      if (isMemberOrOwner === false) {
-        const membership = await destinationContext.postgrest.client
-          .from("WorkspaceMember")
-          .select("userId")
-          .eq("workspaceId", project.workspaceId)
-          .eq("userId", userId)
-          .maybeSingle();
-
-        isMemberOrOwner = membership.data !== null;
-      }
-
-      if (isMemberOrOwner) {
-        await destinationContext.postgrest.client
-          .from("Project")
-          .update({ workspaceId: project.workspaceId })
-          .eq("id", clonedProject.data.id);
-      }
-    }
+  if (workspaceCloneTarget !== undefined) {
+    await destinationContext.postgrest.client
+      .from("Project")
+      .update({
+        workspaceId: workspaceCloneTarget.workspaceId,
+        userId: workspaceCloneTarget.projectOwnerUserId,
+      })
+      .eq("id", clonedProject.data.id);
   }
 
   return { id: clonedProject.data.id };

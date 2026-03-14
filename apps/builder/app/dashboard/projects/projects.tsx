@@ -17,7 +17,7 @@ import { Header, Main } from "../shared/layout";
 import { useSearchParams } from "react-router-dom";
 import { setIsSubsetOf } from "~/shared/shim";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import type { getPermissions } from "~/shared/permissions";
 import { Tag } from "./tags";
 import {
   SortSelect,
@@ -29,9 +29,9 @@ import { ProjectsList } from "./projects-list";
 
 export const ProjectsGrid = ({
   projects,
-  userPlanFeatures,
   publisherHost,
   projectsTags,
+  permissions,
 }: ProjectsProps) => {
   return (
     <List asChild>
@@ -48,9 +48,9 @@ export const ProjectsGrid = ({
             <ListItem index={0} key={project.id} asChild>
               <ProjectCard
                 project={project}
-                userPlanFeatures={userPlanFeatures}
                 publisherHost={publisherHost}
                 projectsTags={projectsTags}
+                permissions={permissions}
               />
             </ListItem>
           );
@@ -62,10 +62,10 @@ export const ProjectsGrid = ({
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
   currentWorkspaceId?: string;
+  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const Projects = (props: ProjectsProps) => {
@@ -139,7 +139,9 @@ export const Projects = (props: ProjectsProps) => {
             </ToggleGroupButton>
           </ToggleGroup>
           <SortSelect value={sortState} onValueChange={handleSortChange} />
-          <CreateProject workspaceId={props.currentWorkspaceId} />
+          {props.permissions.canCreateProject && (
+            <CreateProject workspaceId={props.currentWorkspaceId} />
+          )}
         </Flex>
       </Header>
       <Flex

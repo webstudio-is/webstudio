@@ -18,12 +18,18 @@ import {
   IconButton,
   InputErrorsTooltip,
   ScrollAreaNative,
+  Select,
   Tooltip,
   css,
   theme,
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
-import type { Workspace } from "@webstudio-is/project";
+import {
+  type Workspace,
+  type MemberRelation,
+  memberRelations,
+  memberRelationLabels,
+} from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 
 // ---------------------------------------------------------------------------
@@ -139,20 +145,25 @@ const MemberRow = ({
   email,
   userId,
   workspaceId,
+  relation,
   canRemove,
   index,
-  onRemoved,
+  onRefresh,
 }: {
   email: string;
   userId: string;
   workspaceId: string;
+  relation: MemberRelation;
   canRemove: boolean;
   index: number;
-  onRemoved: () => void;
+  onRefresh: () => void;
 }) => {
-  const { send, state } = trpcClient.workspace.removeMember.useMutation();
+  const removeMutation = trpcClient.workspace.removeMember.useMutation();
+  const updateMutation =
+    trpcClient.workspace.updateMemberRelation.useMutation();
   const revalidator = useRevalidator();
   const [error, setError] = useState<string>();
+  const [localRelation, setLocalRelation] = useState(relation);
 
   return (
     <ListItem index={index} asChild>
@@ -162,36 +173,72 @@ const MemberRow = ({
         justify="between"
         className={memberItemStyle()}
       >
-        <Flex direction="column" css={{ minWidth: 0 }}>
+        <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
           <Text truncate>{email}</Text>
         </Flex>
-        {canRemove && (
-          <Tooltip
-            content={error ?? "Remove member"}
-            variant={error ? "wrapped" : undefined}
-            open={error ? true : undefined}
-          >
-            <IconButton
-              data-action
-              tabIndex={-1}
-              aria-label="Remove member"
-              onClick={() => {
+        <Flex align="center" gap="1" css={{ flexShrink: 0 }}>
+          {canRemove ? (
+            <Select
+              options={[...memberRelations]}
+              value={localRelation}
+              getLabel={(option: MemberRelation) =>
+                memberRelationLabels[option]
+              }
+              onChange={(newRelation: MemberRelation) => {
                 setError(undefined);
-                send({ workspaceId, userId }, (result) => {
-                  if (result && "error" in result) {
-                    setError(result.error);
-                    return;
+                setLocalRelation(newRelation);
+                updateMutation.send(
+                  {
+                    workspaceId,
+                    memberUserId: userId,
+                    relation: newRelation,
+                  },
+                  (result) => {
+                    if (result && "error" in result) {
+                      setError(result.error);
+                      setLocalRelation(relation);
+                      return;
+                    }
+                    onRefresh();
+                    revalidator.revalidate();
                   }
-                  onRemoved();
-                  revalidator.revalidate();
-                });
+                );
               }}
-              disabled={state !== "idle"}
+            />
+          ) : (
+            <Text color="subtle">{memberRelationLabels[relation]}</Text>
+          )}
+          {canRemove && (
+            <Tooltip
+              content={error ?? "Remove member"}
+              variant={error ? "wrapped" : undefined}
+              open={error ? true : undefined}
             >
-              <TrashIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+              <IconButton
+                data-action
+                tabIndex={-1}
+                aria-label="Remove member"
+                onClick={() => {
+                  setError(undefined);
+                  removeMutation.send(
+                    { workspaceId, memberUserId: userId },
+                    (result) => {
+                      if (result && "error" in result) {
+                        setError(result.error);
+                        return;
+                      }
+                      onRefresh();
+                      revalidator.revalidate();
+                    }
+                  );
+                }}
+                disabled={removeMutation.state !== "idle"}
+              >
+                <TrashIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Flex>
       </Flex>
     </ListItem>
   );
@@ -207,7 +254,7 @@ const MemberList = ({
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
-  invitedEmails: Set<string>;
+  invitedEmails: Map<string, MemberRelation>;
   onRefresh: () => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -219,18 +266,22 @@ const MemberList = ({
   const members = data && "data" in data ? data.data : undefined;
 
   if (members === undefined) {
-    return;
+    return (
+      <Text color="subtle" align="center">
+        Loading members…
+      </Text>
+    );
   }
 
   // Show invited emails that aren't already in the real member list.
   // This makes behavior identical for existing vs non-existing emails,
   // preventing email enumeration.
   const knownEmails = new Set(members.map((m) => m.email));
-  const pendingEmails = [...invitedEmails].filter(
-    (email) => knownEmails.has(email) === false
+  const pendingEntries = [...invitedEmails].filter(
+    ([email]) => knownEmails.has(email) === false
   );
 
-  if (members.length === 0 && pendingEmails.length === 0) {
+  if (members.length === 0 && pendingEntries.length === 0) {
     return (
       <Text color="subtle" align="center">
         No members yet
@@ -246,12 +297,13 @@ const MemberList = ({
           email={member.email ?? ""}
           userId={member.userId}
           workspaceId={workspaceId}
+          relation={member.relation as MemberRelation}
           canRemove={canRemove}
           index={index}
-          onRemoved={onRefresh}
+          onRefresh={onRefresh}
         />
       ))}
-      {pendingEmails.map((email, i) => (
+      {pendingEntries.map(([email, relation], i) => (
         <ListItem key={email} index={members.length + i} asChild>
           <Flex
             align="center"
@@ -259,9 +311,10 @@ const MemberList = ({
             justify="between"
             className={memberItemStyle()}
           >
-            <Flex direction="column" css={{ minWidth: 0 }}>
+            <Flex direction="column" css={{ minWidth: 0, flexGrow: 1 }}>
               <Text truncate>{email}</Text>
             </Flex>
+            <Text color="subtle">{memberRelationLabels[relation]}</Text>
           </Flex>
         </ListItem>
       ))}
@@ -367,7 +420,11 @@ export const ManageMembersDialog = ({
   const [errors, setErrors] = useState<string[]>();
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
-  const [invitedEmails, setInvitedEmails] = useState<Set<string>>(new Set());
+  const [inviteRelation, setInviteRelation] =
+    useState<MemberRelation>("viewers");
+  const [invitedEmails, setInvitedEmails] = useState<
+    Map<string, MemberRelation>
+  >(new Map());
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -393,6 +450,7 @@ export const ManageMembersDialog = ({
         await nativeClient.workspace.addMember.mutate({
           workspaceId: workspace.id,
           email,
+          relation: inviteRelation,
         });
         succeeded.push(email);
       } catch (error) {
@@ -405,7 +463,13 @@ export const ManageMembersDialog = ({
     setInviting(false);
 
     if (succeeded.length > 0) {
-      setInvitedEmails((prev) => new Set([...prev, ...succeeded]));
+      setInvitedEmails((prev) => {
+        const next = new Map(prev);
+        for (const email of succeeded) {
+          next.set(email, inviteRelation);
+        }
+        return next;
+      });
     }
 
     if (failed.length > 0) {
@@ -450,6 +514,14 @@ export const ManageMembersDialog = ({
                     />
                   </InputErrorsTooltip>
                 </Box>
+                <Select
+                  options={[...memberRelations]}
+                  value={inviteRelation}
+                  getLabel={(option: MemberRelation) =>
+                    memberRelationLabels[option]
+                  }
+                  onChange={setInviteRelation}
+                />
                 <Button type="submit" state={inviting ? "pending" : undefined}>
                   Invite
                 </Button>

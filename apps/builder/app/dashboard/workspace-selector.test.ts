@@ -1,15 +1,18 @@
 import { describe, test, expect } from "vitest";
 import { __testing__ } from "./workspace-selector";
-import type { Workspace } from "@webstudio-is/project";
+import type { WorkspaceWithRelation } from "@webstudio-is/project";
 
 const { sortWorkspaces } = __testing__;
 
-const createWorkspace = (overrides: Partial<Workspace>): Workspace => ({
+const createWorkspace = (
+  overrides: Partial<WorkspaceWithRelation>
+): WorkspaceWithRelation => ({
   id: "ws-1",
   name: "Workspace",
   isDefault: false,
   createdAt: "2024-01-01T00:00:00.000Z",
   userId: "user-1",
+  userRelation: "own",
   ...overrides,
 });
 

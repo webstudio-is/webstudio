@@ -11,6 +11,7 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header, Main } from "../shared/layout";
 import { CreateProject } from "../projects/project-dialogs";
 import { TemplateCard } from "./template-card";
+import type { getPermissions } from "~/shared/permissions";
 
 export const TemplatesGrid = ({
   projects,
@@ -42,12 +43,14 @@ type ProjectsProps = {
   projects: Array<DashboardProject>;
   welcome?: boolean;
   currentWorkspaceId?: string;
+  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const Templates = ({
   projects,
   welcome = false,
   currentWorkspaceId,
+  permissions,
 }: ProjectsProps) => {
   return (
     <Main>
@@ -55,9 +58,11 @@ export const Templates = ({
         <Text variant="brandSectionTitle" as="h2">
           {welcome ? "What will you create?" : "Starter templates"}
         </Text>
-        <Flex gap="2">
-          <CreateProject workspaceId={currentWorkspaceId} />
-        </Flex>
+        {permissions.canCreateProject && (
+          <Flex gap="2">
+            <CreateProject workspaceId={currentWorkspaceId} />
+          </Flex>
+        )}
       </Header>
       <Flex
         direction="column"

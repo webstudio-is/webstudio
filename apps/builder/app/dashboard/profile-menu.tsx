@@ -16,7 +16,7 @@ import {
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import type { getPermissions } from "~/shared/permissions";
 
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
@@ -54,22 +54,21 @@ const ProfileButton = forwardRef<
 
 export const ProfileMenu = ({
   user,
-  userPlanFeatures,
+  permissions,
 }: {
   user: User;
-  userPlanFeatures: UserPlanFeatures;
+  permissions: ReturnType<typeof getPermissions>;
 }) => {
   const navigate = useNavigate();
   const nameOrEmail = user.username ?? user.email ?? defaultUserName;
-  const purchases = userPlanFeatures.purchases;
-  const hasPaidPlan = purchases.length > 0;
+  const { purchases } = permissions;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <ProfileButton
           image={user.image || undefined}
           name={nameOrEmail}
-          hasPurchases={hasPaidPlan}
+          hasPurchases={purchases.length > 0}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" width="regular">
@@ -101,7 +100,7 @@ export const ProfileMenu = ({
             </DropdownMenuLabel>
           )
         )}
-        {hasPaidPlan === false && (
+        {purchases.length === 0 && (
           <DropdownMenuItem
             onSelect={() => {
               window.open("https://webstudio.is/pricing");

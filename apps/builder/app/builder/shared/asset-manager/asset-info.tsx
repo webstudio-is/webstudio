@@ -58,7 +58,7 @@ import {
   $props,
   $styles,
   $styleSourceSelections,
-  $userPlanFeatures,
+  $permissions,
 } from "~/shared/nano-states";
 import { $openProjectSettings } from "~/shared/nano-states/project-settings";
 import {
@@ -389,8 +389,7 @@ const AssetInfoContent = ({
   asset: Asset;
   usages: AssetUsage[];
 }) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
+  const { purchases } = useStore($permissions);
   const { size, meta, id, name } = asset;
   const { basename, ext } = parseAssetName(name);
   const [filenameError, setFilenameError] = useState<string>();
@@ -441,7 +440,7 @@ const AssetInfoContent = ({
   if (authPermit === "view") {
     downloadError =
       "Unavailable in View mode. Switch to Edit to download assets.";
-  } else if (!hasPaidPlan) {
+  } else if (purchases.length === 0) {
     downloadError = "Upgrade to Pro to download assets.";
   }
 

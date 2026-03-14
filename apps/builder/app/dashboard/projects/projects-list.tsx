@@ -14,7 +14,7 @@ import type { DashboardProject } from "@webstudio-is/dashboard";
 import { builderUrl } from "~/shared/router-utils";
 import { ProjectDialogs, type DialogType } from "./project-dialogs";
 import type { User } from "~/shared/db/user.server";
-import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import type { getPermissions } from "~/shared/permissions";
 import { ProjectMenu } from "./project-menu";
 import { formatDate } from "./utils";
 import type { SortField, SortOrder } from "./sort";
@@ -69,9 +69,9 @@ const tableStyles = css({
 
 type ProjectsListItemProps = {
   project: DashboardProject;
-  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
+  permissions: ReturnType<typeof getPermissions>;
 };
 
 export const ProjectsListItem = ({
@@ -85,9 +85,9 @@ export const ProjectsListItem = ({
     tags,
     domainsVirtual,
   },
-  userPlanFeatures,
   publisherHost,
   projectsTags,
+  permissions,
 }: ProjectsListItemProps) => {
   const customDomain = domainsVirtual?.find(
     (d: { domain: string; status: string; verified: boolean }) =>
@@ -156,7 +156,11 @@ export const ProjectsListItem = ({
           </div>
 
           <div role="cell">
-            <ProjectMenu projectId={id} onOpenChange={setOpenDialog} />
+            <ProjectMenu
+              projectId={id}
+              onOpenChange={setOpenDialog}
+              permissions={permissions}
+            />
           </div>
         </div>
       </ListItem>
@@ -168,7 +172,6 @@ export const ProjectsListItem = ({
         openDialog={openDialog}
         onOpenDialogChange={setOpenDialog}
         onHiddenChange={setIsHidden}
-        userPlanFeatures={userPlanFeatures}
         projectsTags={projectsTags}
       />
     </>
@@ -177,12 +180,12 @@ export const ProjectsListItem = ({
 
 type ProjectsListProps = {
   projects: Array<DashboardProject>;
-  userPlanFeatures: UserPlanFeatures;
   publisherHost: string;
   projectsTags: User["projectsTags"];
   sortBy?: SortField;
   sortOrder?: SortOrder;
   onSortChange: (field: SortField) => void;
+  permissions: ReturnType<typeof getPermissions>;
 };
 
 const columns: Array<{ field: SortField; label: string } | null> = [
@@ -195,12 +198,12 @@ const columns: Array<{ field: SortField; label: string } | null> = [
 
 export const ProjectsList = ({
   projects,
-  userPlanFeatures,
   publisherHost,
   projectsTags,
   sortBy,
   sortOrder,
   onSortChange,
+  permissions,
 }: ProjectsListProps) => {
   return (
     <div className={tableStyles()} role="table" aria-label="Projects list">
@@ -252,9 +255,9 @@ export const ProjectsList = ({
             <ProjectsListItem
               key={project.id}
               project={project}
-              userPlanFeatures={userPlanFeatures}
               publisherHost={publisherHost}
               projectsTags={projectsTags}
+              permissions={permissions}
             />
           ))}
         </div>

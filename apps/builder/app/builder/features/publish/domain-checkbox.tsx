@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 
 import { $project } from "~/shared/sync/data-stores";
-import { $userPlanFeatures } from "~/shared/nano-states";
+import { $permissions } from "~/shared/nano-states";
 
 export const domainToPublishName = "domainToPublish[]";
 
@@ -23,7 +23,7 @@ interface DomainCheckboxProps {
 }
 
 export const DomainCheckbox = (props: DomainCheckboxProps) => {
-  const { allowStagingPublish } = useStore($userPlanFeatures);
+  const { allowStagingPublish } = useStore($permissions);
   const project = useStore($project);
 
   if (project === undefined) {

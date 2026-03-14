@@ -56,7 +56,7 @@ import {
   $pages,
   $project,
   $publishedOrigin,
-  $userPlanFeatures,
+  $permissions,
   $stagingUsername,
   $stagingPassword,
   $publisherHost,
@@ -322,8 +322,8 @@ const ChangeProjectDomain = ({
 };
 
 const $restrictedFeatures = computed(
-  [$pages, $dataSources, $instances, $userPlanFeatures],
-  (pages, dataSources, instances, userPlanFeatures) => {
+  [$pages, $dataSources, $instances, $permissions],
+  (pages, dataSources, instances, permissions) => {
     const features = new Map<
       string,
       | undefined
@@ -334,12 +334,12 @@ const $restrictedFeatures = computed(
     }
     // specified emails for default webhook form
     if (
-      userPlanFeatures.maxContactEmails === 0 &&
+      permissions.maxContactEmails === 0 &&
       (pages?.meta?.contactEmail ?? "").trim()
     ) {
       features.set("Custom contact email", undefined);
     }
-    if (!userPlanFeatures.allowDynamicData) {
+    if (!permissions.allowDynamicData) {
       // pages with dynamic paths
       for (const page of [pages.homePage, ...pages.pages]) {
         const awareness = {
@@ -407,15 +407,14 @@ const Publish = ({
   disabled: boolean;
   refresh: () => Promise<void>;
 }) => {
-  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxPublishesAllowedPerUser, allowStagingPublish } =
+    useStore($permissions);
   const [publishError, setPublishError] = useState<
     undefined | JSX.Element | string
   >();
   const [isPublishing, setIsPublishing] = useOptimistic(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const hasPaidPlan = userPlanFeatures.purchases.length > 0;
   const countdown = usePublishCountdown(isPublishing);
 
   useEffect(() => {
@@ -534,7 +533,7 @@ const Publish = ({
         toast.success(
           <>
             The project has been successfully published.{" "}
-            {hasPaidPlan === false && (
+            {maxPublishesAllowedPerUser < Number.MAX_SAFE_INTEGER && (
               <div>
                 On the free plan, you have {timesLeft} out of{" "}
                 {maxPublishesAllowedPerUser} daily publications remaining. The
@@ -743,7 +742,7 @@ const PublishStatic = ({
 
 const useCanAddDomain = () => {
   const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
-  const { maxDomainsAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxDomainsAllowedPerUser } = useStore($permissions);
   const project = useStore($project);
   const activeDomainsCount = project?.domainsVirtual.filter(
     (domain) => domain.status === "ACTIVE" && domain.verified
@@ -759,7 +758,7 @@ const useCanAddDomain = () => {
 
 const useUserPublishCount = () => {
   const { load, data } = trpcClient.project.userPublishCount.useQuery();
-  const { maxPublishesAllowedPerUser } = useStore($userPlanFeatures);
+  const { maxPublishesAllowedPerUser } = useStore($permissions);
   useEffect(() => {
     load();
   }, [load]);
