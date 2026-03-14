@@ -17,7 +17,7 @@ import {
 import { TopbarLayout } from "./topbar-layout";
 
 export default {
-  title: "Builder/Topbar Layout",
+  title: "Topbar Layout",
   component: TopbarLayout,
 };
 

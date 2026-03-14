@@ -1,13 +1,13 @@
-import { Text, theme } from "@webstudio-is/design-system";
+import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
 import { Card, CardContent, CardFooter } from "./card";
 
 export default {
-  title: "Builder/Dashboard/Card",
+  title: "Dashboard/Card",
   component: Card,
 };
 
 export const Basic = () => (
-  <div style={{ width: 280 }}>
+  <Box css={{ width: theme.spacing[30] }}>
     <Card>
       <CardContent
         css={{ background: theme.colors.brandBackgroundProjectCardFront }}
@@ -16,11 +16,11 @@ export const Basic = () => (
         <Text truncate>My project</Text>
       </CardFooter>
     </Card>
-  </div>
+  </Box>
 );
 
 export const Selected = () => (
-  <div style={{ width: 280 }}>
+  <Box css={{ width: theme.spacing[30] }}>
     <Card aria-selected={true}>
       <CardContent
         css={{ background: theme.colors.brandBackgroundProjectCardFront }}
@@ -29,13 +29,13 @@ export const Selected = () => (
         <Text truncate>Selected project</Text>
       </CardFooter>
     </Card>
-  </div>
+  </Box>
 );
 
 export const Multiple = () => (
-  <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+  <Flex gap="3" wrap="wrap">
     {["Project Alpha", "My Website", "Landing Page"].map((title) => (
-      <div key={title} style={{ width: 280 }}>
+      <Box key={title} css={{ width: theme.spacing[30] }}>
         <Card>
           <CardContent
             css={{ background: theme.colors.brandBackgroundProjectCardFront }}
@@ -44,7 +44,7 @@ export const Multiple = () => (
             <Text truncate>{title}</Text>
           </CardFooter>
         </Card>
-      </div>
+      </Box>
     ))}
-  </div>
+  </Flex>
 );

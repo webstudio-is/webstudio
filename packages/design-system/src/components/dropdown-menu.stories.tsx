@@ -11,7 +11,7 @@ import {
 } from "./dropdown-menu";
 
 export default {
-  title: "Design System/Dropdown Menu",
+  title: "Dropdown Menu",
 };
 
 export const Basic = () => {

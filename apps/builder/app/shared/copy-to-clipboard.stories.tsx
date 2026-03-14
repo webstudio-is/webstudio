@@ -2,7 +2,7 @@ import { Button } from "@webstudio-is/design-system";
 import { CopyToClipboard } from "./copy-to-clipboard";
 
 export default {
-  title: "Builder/Copy To Clipboard",
+  title: "Copy To Clipboard",
   component: CopyToClipboard,
 };
 

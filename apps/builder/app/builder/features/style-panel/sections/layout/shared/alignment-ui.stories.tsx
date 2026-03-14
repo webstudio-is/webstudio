@@ -2,7 +2,7 @@ import { Box, Flex, theme } from "@webstudio-is/design-system";
 import { AlignmentUi } from "./alignment-ui";
 
 export default {
-  title: "Builder/Style Panel/Layout/Alignment UI",
+  title: "Style Panel/Layout/Alignment UI",
   component: AlignmentUi,
 };
 

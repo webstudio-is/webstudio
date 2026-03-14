@@ -2,7 +2,7 @@ import { Text } from "@webstudio-is/design-system";
 import { ShowMore } from "./show-more";
 
 export default {
-  title: "Builder/Style Panel/Show More",
+  title: "Style Panel/Show More",
   component: ShowMore,
 };
 

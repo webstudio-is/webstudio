@@ -3,7 +3,7 @@ import { $queueStatus } from "~/shared/sync/project-queue";
 import { SyncStatus } from "./sync-status";
 
 export default {
-  title: "Builder/Sync Status",
+  title: "Sync Status",
   component: SyncStatus,
 };
 

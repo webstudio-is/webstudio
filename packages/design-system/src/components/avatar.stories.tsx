@@ -2,7 +2,7 @@ import { Flex } from "./flex";
 import { Avatar } from "./avatar";
 
 export default {
-  title: "Design System/Avatar",
+  title: "Avatar",
   component: Avatar,
 };
 

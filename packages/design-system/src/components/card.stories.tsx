@@ -2,7 +2,7 @@ import { Text } from "./text";
 import { Card } from "./card";
 
 export default {
-  title: "Design System/Card",
+  title: "Card",
   component: Card,
 };
 

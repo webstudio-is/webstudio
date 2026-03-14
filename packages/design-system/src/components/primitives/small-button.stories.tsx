@@ -3,7 +3,7 @@ import { XSmallIcon, TrashIcon, PlusIcon } from "@webstudio-is/icons";
 import { SmallButton } from "./small-button";
 
 export default {
-  title: "Design System/Primitives/Small Button",
+  title: "Primitives/Small Button",
   component: SmallButton,
 };
 

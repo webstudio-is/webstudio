@@ -2,7 +2,7 @@ import { Flex } from "./flex";
 import { ProBadge } from "./pro-badge";
 
 export default {
-  title: "Design System/ProBadge",
+  title: "ProBadge",
   component: ProBadge,
 };
 

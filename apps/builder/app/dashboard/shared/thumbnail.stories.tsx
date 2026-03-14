@@ -1,50 +1,39 @@
+import { Box, theme } from "@webstudio-is/design-system";
 import { ThumbnailWithAbbr, ThumbnailLinkWithAbbr } from "./thumbnail";
 
 export default {
-  title: "Builder/Dashboard/Thumbnail",
+  title: "Dashboard/Thumbnail",
 };
 
-export const Abbreviation = () => (
-  <div
-    style={{
-      width: 280,
+const ThumbnailWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Box
+    css={{
+      width: theme.spacing[30],
       aspectRatio: "1.91/1",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "var(--ws-colors-brand-background-project-card-front)",
+      background: theme.colors.brandBackgroundProjectCardFront,
     }}
   >
+    {children}
+  </Box>
+);
+
+export const Abbreviation = () => (
+  <ThumbnailWrapper>
     <ThumbnailWithAbbr title="My Next Project" onClick={() => {}} />
-  </div>
+  </ThumbnailWrapper>
 );
 
 export const AbbreviationLink = () => (
-  <div
-    style={{
-      width: 280,
-      aspectRatio: "1.91/1",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "var(--ws-colors-brand-background-project-card-front)",
-    }}
-  >
+  <ThumbnailWrapper>
     <ThumbnailLinkWithAbbr title="Landing Page" to="#" />
-  </div>
+  </ThumbnailWrapper>
 );
 
 export const SingleWord = () => (
-  <div
-    style={{
-      width: 280,
-      aspectRatio: "1.91/1",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "var(--ws-colors-brand-background-project-card-front)",
-    }}
-  >
+  <ThumbnailWrapper>
     <ThumbnailWithAbbr title="Portfolio" onClick={() => {}} />
-  </div>
+  </ThumbnailWrapper>
 );

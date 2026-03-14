@@ -1,7 +1,7 @@
 import { ErrorMessage } from "./error-message.client";
 
 export default {
-  title: "Builder/Error Message",
+  title: "Error Message",
   component: ErrorMessage,
 };
 

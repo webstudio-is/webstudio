@@ -3,7 +3,7 @@ import { $authPermit } from "~/shared/nano-states";
 import { ViewMode } from "./view-mode";
 
 export default {
-  title: "Builder/View Mode",
+  title: "View Mode",
   component: ViewMode,
 };
 

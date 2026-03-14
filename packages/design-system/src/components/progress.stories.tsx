@@ -4,7 +4,7 @@ import { Button } from "./button";
 import { Progress } from "./progress";
 
 export default {
-  title: "Design System/Progress",
+  title: "Progress",
   component: Progress,
 };
 
