@@ -144,9 +144,7 @@ const NavigationItems = ({
 const $data = atom<DashboardData | undefined>();
 
 export const DashboardSetup = ({ data }: { data: DashboardData }) => {
-  useEffect(() => {
-    $data.set(data);
-  }, [data]);
+  $data.set(data);
   globalStyles();
   return null;
 };

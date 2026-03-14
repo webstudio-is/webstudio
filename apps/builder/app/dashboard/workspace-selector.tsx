@@ -40,6 +40,8 @@ const sortWorkspaces = (workspaces: Array<Workspace>) =>
     return a.name.localeCompare(b.name);
   });
 
+export const __testing__ = { sortWorkspaces };
+
 export const WorkspaceSelector = ({
   workspaces,
   currentWorkspaceId,

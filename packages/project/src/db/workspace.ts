@@ -1,9 +1,9 @@
-import { nanoid } from "nanoid";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
+import { softDeleteProject } from "./project";
 
 export type Workspace = Database["public"]["Tables"]["Workspace"]["Row"];
 
@@ -110,22 +110,22 @@ export const remove = async (
     throw projects.error;
   }
 
-  if (projects.data.length > 0) {
+  // Collect project IDs upfront so concurrent changes can't alter the set.
+  const projectIds = projects.data.map((p) => p.id);
+
+  if (projectIds.length > 0) {
     if (deleteProjects !== true) {
       throw new Error(
         "Cannot delete a workspace that still contains projects. Move or delete all projects first."
       );
     }
 
-    // Soft-delete all projects in the workspace
-    const deleteResult = await context.postgrest.client
-      .from("Project")
-      .update({ isDeleted: true, domain: nanoid() })
-      .eq("workspaceId", workspaceId)
-      .eq("isDeleted", false);
-
-    if (deleteResult.error) {
-      throw deleteResult.error;
+    // Soft-delete each project individually (each needs a unique domain).
+    // PostgREST doesn't support multi-request transactions, but this is
+    // safe to retry: the project query above filters by isDeleted=false,
+    // so already-deleted projects are skipped on the next attempt.
+    for (const id of projectIds) {
+      await softDeleteProject(id, context);
     }
   }
 

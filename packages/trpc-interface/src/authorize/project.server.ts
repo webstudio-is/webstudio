@@ -77,10 +77,9 @@ const check = async (
         }
 
         // Check member relations against permit hierarchy
+        const permitted = permitToRelationRewrite[input.permit] ?? [];
         const allowed = relations.some((r) =>
-          (
-            permitToRelationRewrite[input.permit as TokenAuthPermit] ?? []
-          ).includes(r as Relation)
+          permitted.includes(r as Relation)
         );
         return { allowed };
       }
