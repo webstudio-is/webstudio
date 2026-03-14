@@ -9,7 +9,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Blockquote",
+  title: "SDK/Blockquote",
 };
 
 const Story = {

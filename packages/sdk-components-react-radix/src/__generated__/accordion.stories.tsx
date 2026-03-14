@@ -83,7 +83,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Accordion",
+  title: "SDK Radix/Accordion",
 };
 
 const Story = {

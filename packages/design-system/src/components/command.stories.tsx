@@ -1,4 +1,3 @@
-import type { Meta, StoryFn } from "@storybook/react";
 import {
   Command as CommandComponent,
   CommandFooter,
@@ -15,7 +14,7 @@ import { Kbd } from "./kbd";
 import { Flex } from "./flex";
 import { Separator } from "./separator";
 
-const meta: Meta = {
+const meta = {
   title: "Command",
 };
 export default meta;
@@ -99,7 +98,7 @@ const CommandContent = () => {
   );
 };
 
-export const Command: StoryFn = () => {
+export const Command = () => {
   return (
     <CommandComponent>
       <CommandContent />

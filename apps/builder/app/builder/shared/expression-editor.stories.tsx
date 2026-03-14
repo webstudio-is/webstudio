@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { ExpressionEditor as ExpressionEditorComponent } from "./expression-editor";
 import { useState } from "react";
 
 export default {
   title: "Expression Editor",
   component: ExpressionEditorComponent,
-} satisfies Meta;
+};
 
 const scope = {
   $ws$dataSource$123: {
@@ -51,7 +50,7 @@ const ExpressionStory = () => {
   );
 };
 
-export const ExpressionEditor: StoryObj = {
+export const ExpressionEditor = {
   render: () => (
     <>
       <p>

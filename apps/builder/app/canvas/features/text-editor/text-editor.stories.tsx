@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import type { StoryFn, Meta } from "@storybook/react";
-import { action } from "@storybook/addon-actions";
+import { action } from "@ladle/react";
 import { Box, Button, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances, Props } from "@webstudio-is/sdk";
@@ -19,9 +18,8 @@ import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
 import { $awareness } from "~/shared/awareness";
 
 export default {
-  component: TextEditor,
   title: "Canvas/Text Editor",
-} satisfies Meta<typeof TextEditor>;
+};
 
 const createInstancePair = (
   id: Instance["id"],
@@ -60,7 +58,7 @@ const instances: Instances = new Map([
 
 const props: Props = new Map();
 
-export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
+export const Basic = ({ onChange }) => {
   const state = useStore($textToolbar);
 
   useEffect(subscribeCommands, []);
@@ -143,7 +141,7 @@ export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
   );
 };
 
-export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
+export const CursorPositioning = ({ onChange }) => {
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 
   return (
@@ -216,7 +214,7 @@ export const CursorPositioning: StoryFn<typeof TextEditor> = ({ onChange }) => {
   );
 };
 
-export const CursorPositioningUpDown: StoryFn<typeof TextEditor> = () => {
+export const CursorPositioningUpDown = () => {
   const [{ instances }, setState] = useState(() => {
     $pages.set({
       folders: [],

@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import type { JSX } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { Dashboard, DashboardSetup } from "./dashboard";
@@ -63,7 +62,7 @@ const data = {
   projects,
 };
 
-export const Welcome: StoryFn<typeof Dashboard> = () => {
+export const Welcome = () => {
   const router = createRouter(
     <>
       <DashboardSetup data={{ ...data, projects: [] }} />
@@ -74,7 +73,7 @@ export const Welcome: StoryFn<typeof Dashboard> = () => {
   return <RouterProvider router={router} />;
 };
 
-export const Projects: StoryFn<typeof Dashboard> = () => {
+export const Projects = () => {
   const router = createRouter(
     <>
       <DashboardSetup data={data} />
@@ -85,7 +84,7 @@ export const Projects: StoryFn<typeof Dashboard> = () => {
   return <RouterProvider router={router} />;
 };
 
-export const Templates: StoryFn<typeof Dashboard> = () => {
+export const Templates = () => {
   const router = createRouter(
     <>
       <DashboardSetup data={data} />
@@ -96,7 +95,7 @@ export const Templates: StoryFn<typeof Dashboard> = () => {
   return <RouterProvider router={router} />;
 };
 
-export const Search: StoryFn<typeof Dashboard> = () => {
+export const Search = () => {
   const router = createRouter(
     <>
       <DashboardSetup data={data} />
@@ -109,7 +108,7 @@ export const Search: StoryFn<typeof Dashboard> = () => {
   return <RouterProvider router={router} />;
 };
 
-export const SearchNothingFound: StoryFn<typeof Dashboard> = () => {
+export const SearchNothingFound = () => {
   const router = createRouter(
     <>
       <DashboardSetup data={data} />

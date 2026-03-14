@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import type { Meta, StoryFn } from "@storybook/react";
 import { Box, Text, theme } from "@webstudio-is/design-system";
 import { AddressBarPopover } from "./address-bar";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
@@ -61,9 +60,9 @@ const HistoryInspect = () => {
 export default {
   title: "Address Bar",
   component: AddressBarPopover,
-} satisfies Meta;
+};
 
-export const AddressBar: StoryFn = () => {
+export const AddressBar = () => {
   $awareness.set({ pageId: "dynamicId" });
   return (
     <>

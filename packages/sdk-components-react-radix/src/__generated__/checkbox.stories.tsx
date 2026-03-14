@@ -34,7 +34,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Checkbox",
+  title: "SDK Radix/Checkbox",
 };
 
 const Story = {

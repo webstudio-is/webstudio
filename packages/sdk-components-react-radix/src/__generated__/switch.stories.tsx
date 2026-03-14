@@ -12,7 +12,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Switch",
+  title: "SDK Radix/Switch",
 };
 
 const Story = {

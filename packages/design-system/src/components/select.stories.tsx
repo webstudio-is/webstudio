@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
@@ -9,7 +8,7 @@ export default {
   component: Select,
 };
 
-export const Simple: StoryFn<typeof Select> = () => {
+export const Simple = () => {
   const options = ["Apple", "Banana", "Orange"];
   const [value, setValue] = useState(options[0]);
   return (
@@ -17,7 +16,7 @@ export const Simple: StoryFn<typeof Select> = () => {
   );
 };
 
-export const Placeholder: StoryFn<typeof Select> = () => {
+export const Placeholder = () => {
   return (
     <Select
       placeholder="Select fruit"
@@ -26,11 +25,11 @@ export const Placeholder: StoryFn<typeof Select> = () => {
   );
 };
 
-export const Disabled: StoryFn<typeof Select> = () => {
+export const Disabled = () => {
   return <Select disabled options={["Apple", "Banana", "Orange"]} />;
 };
 
-export const FullWidth: StoryFn<typeof Select> = () => {
+export const FullWidth = () => {
   return (
     <div style={{ width: 200 }}>
       <Select
@@ -43,7 +42,7 @@ export const FullWidth: StoryFn<typeof Select> = () => {
   );
 };
 
-export const WithNestedLabelIcon: StoryFn<typeof Select> = () => {
+export const WithNestedLabelIcon = () => {
   return (
     <Select
       prefix={
@@ -58,7 +57,7 @@ export const WithNestedLabelIcon: StoryFn<typeof Select> = () => {
   );
 };
 
-export const WithComplexItems: StoryFn<typeof Select> = () => {
+export const WithComplexItems = () => {
   const items = {
     apple: { icon: "🍎" },
     banana: { icon: "🍌" },
@@ -83,7 +82,7 @@ export const WithComplexItems: StoryFn<typeof Select> = () => {
   );
 };
 
-export const WithDescriptions: StoryFn<typeof Select> = () => {
+export const WithDescriptions = () => {
   const options = [
     { label: "Apple", description: "An apple fruit" },
     { label: "Banana", description: "A banana fruit" },
@@ -117,7 +116,7 @@ export const WithDescriptions: StoryFn<typeof Select> = () => {
   );
 };
 
-export const Boundaries: StoryFn<typeof Select> = () => {
+export const Boundaries = () => {
   const items = Array(100)
     .fill(0)
     .map((_, index) => `Item ${index}`);

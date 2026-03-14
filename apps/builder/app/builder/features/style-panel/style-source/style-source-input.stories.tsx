@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import { type ItemSelector, type ItemSource, StyleSourceInput } from ".";
 
@@ -64,7 +63,7 @@ const removeItem = (
   setValue(value.filter((item) => item.id !== itemIdToRemove));
 };
 
-export const Basic: StoryFn<typeof StyleSourceInput> = () => {
+export const Basic = () => {
   const [value, setValue] = useState([localItem, ...getItems()]);
   return (
     <StyleSourceInput
@@ -87,7 +86,7 @@ export const Basic: StoryFn<typeof StyleSourceInput> = () => {
   );
 };
 
-export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
+export const WithTruncatedItem = () => {
   const [value, setValue] = useState<Array<Item>>([
     {
       id: nanoid(),
@@ -119,7 +118,7 @@ export const WithTruncatedItem: StoryFn<typeof StyleSourceInput> = () => {
   );
 };
 
-export const Complete: StoryFn<typeof StyleSourceInput> = () => {
+export const Complete = () => {
   const [value, setValue] = useState<Array<Item>>([
     localItem,
     ...getItems(),

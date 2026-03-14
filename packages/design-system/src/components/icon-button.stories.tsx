@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import { XIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
@@ -8,7 +7,7 @@ export default {
   component: IconButton,
 };
 
-export const Default: StoryFn<typeof IconButton> = () => {
+export const Default = () => {
   return (
     <Flex direction="column" gap={2}>
       <Flex gap={2}>

@@ -42,7 +42,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Tabs",
+  title: "SDK Radix/Tabs",
 };
 
 const Story = {

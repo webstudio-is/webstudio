@@ -1,4 +1,3 @@
-import type { Meta } from "@storybook/react";
 import { InsetLayout } from "./inset-layout";
 import { Grid, theme, Text } from "@webstudio-is/design-system";
 
@@ -20,5 +19,4 @@ export const InsetLayoutComponent = () => (
 
 export default {
   title: "Style Panel/Inset Layout",
-  component: InsetLayoutComponent,
-} as Meta<typeof InsetLayoutComponent>;
+};

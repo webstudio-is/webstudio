@@ -14,7 +14,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Content Embed",
+  title: "SDK/Content Embed",
 };
 
 const Story = {

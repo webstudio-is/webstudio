@@ -1,4 +1,3 @@
-import type { Meta } from "@storybook/react";
 import { useState, useRef } from "react";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
@@ -210,7 +209,6 @@ export const SortableList = ({
 
 export default {
   title: "Primitives/DND/Sortable List",
-  component: SortableList,
   args: {
     direction: "vertical",
     reversed: false,
@@ -221,4 +219,4 @@ export default {
       options: ["horizontal", "vertical", "wrap"],
     },
   },
-} satisfies Meta<typeof SortableList>;
+};

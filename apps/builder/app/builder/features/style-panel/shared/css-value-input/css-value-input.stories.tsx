@@ -2,7 +2,7 @@ import * as React from "react";
 import { Flex, InputField } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
-import { action } from "@storybook/addon-actions";
+import { action } from "@ladle/react";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
 

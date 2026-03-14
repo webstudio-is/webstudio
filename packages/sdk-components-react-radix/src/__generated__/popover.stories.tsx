@@ -35,7 +35,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Popover",
+  title: "SDK Radix/Popover",
 };
 
 const Story = {

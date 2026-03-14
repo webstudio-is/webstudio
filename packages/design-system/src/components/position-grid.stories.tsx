@@ -1,4 +1,4 @@
-import { action } from "@storybook/addon-actions";
+import { action } from "@ladle/react";
 import { PositionGrid as PositionGridComponent } from "./position-grid";
 import { Flex } from "./flex";
 import { useState } from "react";

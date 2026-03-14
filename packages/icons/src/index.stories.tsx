@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { Meta } from "@storybook/react";
 import * as icons from "./index";
 
 export const Icons = ({ testColor }: { testColor: boolean }): ReactNode => {
@@ -56,7 +55,7 @@ export const Icons = ({ testColor }: { testColor: boolean }): ReactNode => {
   );
 };
 
-const IconsMeta: Meta<typeof Icons> = {
+const IconsMeta = {
   title: "Icons",
   component: Icons,
   argTypes: {

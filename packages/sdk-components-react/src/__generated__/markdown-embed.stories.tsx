@@ -14,7 +14,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Markdown Embed",
+  title: "SDK/Markdown Embed",
 };
 
 const Story = {

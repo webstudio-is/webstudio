@@ -59,7 +59,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Sheet",
+  title: "SDK Radix/Sheet",
 };
 
 const Story = {

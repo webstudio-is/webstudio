@@ -1,4 +1,3 @@
-import type { Meta, StoryFn } from "@storybook/react";
 import { useEffect } from "react";
 import { initialBreakpoints, coreMetas } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
@@ -13,7 +12,7 @@ import { registerContainers } from "~/shared/sync/sync-stores";
 import { CommandPanel as CommandPanelComponent } from "./command-panel";
 import { openCommandPanel } from "./command-state";
 
-const meta: Meta = {
+const meta = {
   title: "Command Panel",
 };
 export default meta;
@@ -58,7 +57,7 @@ pages.pages.push({
 $pages.set(pages);
 $awareness.set({ pageId: pages.homePage.id });
 
-export const CommandPanel: StoryFn = () => {
+export const CommandPanel = () => {
   useEffect(() => {
     const controller = new AbortController();
     addEventListener(

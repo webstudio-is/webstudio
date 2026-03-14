@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
 import { ColorPicker, ColorPickerPopover } from "./color-picker";
@@ -33,7 +32,7 @@ const createHandlers = (setValue: (value: StyleValue) => void) => {
   return { handleChange, handleChangeComplete };
 };
 
-export const Inline: StoryFn<typeof ColorPicker> = () => {
+export const Inline = () => {
   const [value, setValue] = useState<StyleValue>(initialColor);
   const { handleChange, handleChangeComplete } = createHandlers(setValue);
 
@@ -49,7 +48,7 @@ export const Inline: StoryFn<typeof ColorPicker> = () => {
   );
 };
 
-export const WithPopover: StoryFn<typeof ColorPickerPopover> = () => {
+export const WithPopover = () => {
   const [value, setValue] = useState<StyleValue>(initialColor);
   const { handleChange, handleChangeComplete } = createHandlers(setValue);
 

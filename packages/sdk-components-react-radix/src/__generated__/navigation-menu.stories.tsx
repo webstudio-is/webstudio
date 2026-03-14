@@ -208,7 +208,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Navigation Menu",
+  title: "SDK Radix/Navigation Menu",
 };
 
 const Story = {

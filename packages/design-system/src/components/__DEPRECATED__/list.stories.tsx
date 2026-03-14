@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import { CheckMarkIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { DeprecatedList, DeprecatedListItem, useDeprecatedList } from "./list";
@@ -8,7 +7,7 @@ export default {
   component: DeprecatedList,
 };
 
-export const Declarative: StoryFn<typeof DeprecatedList> = () => {
+export const Declarative = () => {
   return (
     <DeprecatedList>
       <DeprecatedListItem>Apple</DeprecatedListItem>
@@ -29,7 +28,7 @@ export const Declarative: StoryFn<typeof DeprecatedList> = () => {
   );
 };
 
-export const WithHook: StoryFn<typeof DeprecatedList> = () => {
+export const WithHook = () => {
   const items = ["Banana", "Orange", "Apple"];
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [currentIndex, setCurrentIndex] = useState(-1);

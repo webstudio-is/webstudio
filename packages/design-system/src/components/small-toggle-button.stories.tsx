@@ -124,8 +124,4 @@ Demo.storyName = "Small Toggle Button";
 
 export default {
   title: "Small Toggle Button",
-  parameters: {
-    // to make the variant=contrast visible
-    backgrounds: { default: "Panel" },
-  },
 };

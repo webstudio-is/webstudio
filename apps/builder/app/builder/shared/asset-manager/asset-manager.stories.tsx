@@ -1,4 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { AssetManager } from "./asset-manager";
 import {
   ALLOWED_FILE_TYPES,
@@ -38,7 +37,7 @@ const createMockAssets = (): Asset[] => {
 export default {
   title: "Asset Manager",
   component: AssetManager,
-} satisfies Meta;
+};
 
 const AssetManagerStory = () => {
   useEffect(() => {
@@ -53,6 +52,6 @@ const AssetManagerStory = () => {
   );
 };
 
-export const AllFileTypes: StoryObj = {
+export const AllFileTypes = {
   render: () => <AssetManagerStory />,
 };

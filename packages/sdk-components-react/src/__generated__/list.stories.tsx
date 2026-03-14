@@ -19,7 +19,7 @@ const Component = () => {
 };
 
 export default {
-  title: "List",
+  title: "SDK/List",
 };
 
 const Story = {

@@ -10,7 +10,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Label",
+  title: "SDK Radix/Label",
 };
 
 const Story = {

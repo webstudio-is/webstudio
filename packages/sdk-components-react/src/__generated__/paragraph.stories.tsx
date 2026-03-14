@@ -9,7 +9,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Paragraph",
+  title: "SDK/Paragraph",
 };
 
 const Story = {

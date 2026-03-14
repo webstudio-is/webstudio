@@ -25,7 +25,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Tooltip",
+  title: "SDK Radix/Tooltip",
 };
 
 const Story = {

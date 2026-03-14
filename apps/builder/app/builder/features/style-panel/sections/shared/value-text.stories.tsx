@@ -1,4 +1,3 @@
-import type { Meta } from "@storybook/react";
 import { type ComponentProps, useState } from "react";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { SpaceLayout } from "../space/layout";
@@ -36,7 +35,6 @@ const valueOptions = [
 
 export default {
   title: "Style Panel/Space/Value Text",
-  component: ValueText,
   argTypes: {
     source: {
       control: "select",
@@ -50,4 +48,4 @@ export default {
       ),
     },
   },
-} as Meta<typeof ValueText>;
+};

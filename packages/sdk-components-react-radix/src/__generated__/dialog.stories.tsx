@@ -50,7 +50,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Dialog",
+  title: "SDK Radix/Dialog",
 };
 
 const Story = {

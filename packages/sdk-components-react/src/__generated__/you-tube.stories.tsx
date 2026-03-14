@@ -44,7 +44,7 @@ const Component = () => {
 };
 
 export default {
-  title: "YouTube",
+  title: "SDK/YouTube",
 };
 
 const Story = {

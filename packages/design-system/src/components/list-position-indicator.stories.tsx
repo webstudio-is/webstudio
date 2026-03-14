@@ -3,17 +3,20 @@ import {
   TreePositionIndicator,
 } from "./list-position-indicator";
 import { StorySection, StoryGrid } from "./storybook";
+import { theme } from "../stitches.config";
 
 export default {
   title: "List Position Indicator",
-  parameters: {
-    // to make white outline visible
-    backgrounds: { default: "Maintenance Medium" },
-  },
 };
 
+// Maintenance Medium background to make white outline visible
 export const Demo = () => (
-  <>
+  <div
+    style={{
+      backgroundColor: theme.colors.maintenanceMedium.value,
+      padding: 8,
+    }}
+  >
     <StorySection title="Coordinates check">
       <StoryGrid>
         <div
@@ -63,7 +66,7 @@ export const Demo = () => (
         </div>
       </StoryGrid>
     </StorySection>
-  </>
+  </div>
 );
 
 Demo.storyName = "List Position Indicator";

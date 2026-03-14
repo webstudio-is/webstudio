@@ -68,7 +68,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Radio Group",
+  title: "SDK Radix/Radio Group",
 };
 
 const Story = {

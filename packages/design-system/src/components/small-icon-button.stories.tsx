@@ -6,6 +6,7 @@ import {
   smallIconButtonVariants,
 } from "./small-icon-button";
 import { StorySection, StoryGrid } from "./storybook";
+import { theme } from "../stitches.config";
 
 const iconsMap = {
   "<EllipsesIcon>": <EllipsesIcon />,
@@ -15,13 +16,19 @@ const iconsMap = {
 
 const states = [undefined, ...smallIconButtonStates];
 
+// Maintenance Medium background to make the variant=contrast visible
 export const Demo = ({
   icon,
   ...rest
 }: Omit<ComponentProps<typeof SmallIconButton>, "icon"> & {
   icon: keyof typeof iconsMap;
 }) => (
-  <>
+  <div
+    style={{
+      backgroundColor: theme.colors.maintenanceMedium.value,
+      padding: 8,
+    }}
+  >
     <StorySection title="Configurable">
       <SmallIconButton icon={iconsMap[icon]} {...rest} />
     </StorySection>
@@ -62,7 +69,7 @@ export const Demo = ({
         ))}
       </StoryGrid>
     </StorySection>
-  </>
+  </div>
 );
 
 Demo.argTypes = {
@@ -83,8 +90,4 @@ Demo.storyName = "Small Icon Button";
 
 export default {
   title: "Small Icon Button",
-  parameters: {
-    // to make the variant=contrast visible
-    backgrounds: { default: "Maintenance Medium" },
-  },
 };

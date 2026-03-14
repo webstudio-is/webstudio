@@ -1,4 +1,3 @@
-import type { Meta } from "@storybook/react";
 import { Box } from "@webstudio-is/design-system";
 import { getStyleDeclKey, StyleDecl } from "@webstudio-is/sdk";
 import { createDefaultPages } from "@webstudio-is/project-build";
@@ -64,5 +63,4 @@ export const InsetControlComponent = () => {
 
 export default {
   title: "Style Panel/Inset",
-  component: InsetControlComponent,
-} as Meta<typeof InsetControlComponent>;
+};

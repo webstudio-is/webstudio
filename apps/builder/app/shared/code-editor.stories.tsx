@@ -1,11 +1,9 @@
 import { useState } from "react";
-import type { Meta } from "@storybook/react";
 import { CodeEditor as CodeEditorComponent } from "./code-editor";
 
 export default {
   title: "Code Editor",
-  component: CodeEditorComponent,
-} satisfies Meta;
+};
 
 const initialHtml = `
 <div>

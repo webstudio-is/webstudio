@@ -27,7 +27,7 @@ const Component = () => {
 };
 
 export default {
-  title: "Collapsible",
+  title: "SDK Radix/Collapsible",
 };
 
 const Story = {

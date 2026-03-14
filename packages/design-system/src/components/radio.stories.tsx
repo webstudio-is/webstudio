@@ -4,10 +4,6 @@ import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   title: "Radio",
-  parameters: {
-    // to make the white background in the control visible
-    backgrounds: { default: "Panel" },
-  },
 };
 
 export const Demo = () => {

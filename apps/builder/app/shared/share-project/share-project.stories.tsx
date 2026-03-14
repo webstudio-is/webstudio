@@ -1,4 +1,3 @@
-import type { StoryFn } from "@storybook/react";
 import {
   Button,
   Popover,
@@ -87,7 +86,7 @@ const useShareProject = (
   return { links, onChange, onDelete, onCreate };
 };
 
-export const Empty: StoryFn<typeof ShareProject> = () => {
+export const Empty = () => {
   const props = useShareProject();
   return (
     <Popover modal open>
@@ -109,7 +108,7 @@ export const Empty: StoryFn<typeof ShareProject> = () => {
   );
 };
 
-export const WithLinks: StoryFn<typeof ShareProject> = () => {
+export const WithLinks = () => {
   const props = useShareProject(initialLinks);
   return (
     <Popover modal open>
@@ -131,7 +130,7 @@ export const WithLinks: StoryFn<typeof ShareProject> = () => {
   );
 };
 
-export const WithAsyncLinks: StoryFn<typeof ShareProject> = () => {
+export const WithAsyncLinks = () => {
   const props = useShareProject(initialLinks, true);
   return (
     <Popover modal open>

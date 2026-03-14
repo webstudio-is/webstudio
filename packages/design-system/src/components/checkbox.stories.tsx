@@ -5,10 +5,6 @@ import { Tooltip } from "./tooltip";
 
 export default {
   title: "Checkbox",
-  parameters: {
-    // to make the white background in the control visible
-    backgrounds: { default: "Panel" },
-  },
 };
 
 export const Demo = () => {
