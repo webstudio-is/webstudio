@@ -35,14 +35,14 @@ export const domainRouter = router({
     .input(CreateInput)
     .output(createOutput(z.optional(z.undefined())))
     .mutation(async ({ input }) => {
-      const txtHost = `_webstudio-challenge.${input.domain}`;
+      const txtHost = `_webstudio_is.${input.domain}`;
       try {
         const records = await resolveTxt(txtHost);
         const flat = records.flat();
         if (flat.includes(input.txtRecord) === false) {
           return {
             success: false,
-            error: `TXT record mismatch at ${txtHost}. Expected "${input.txtRecord}" but found: ${flat.join(", ") || "nothing"}`,
+            error: `TXT record mismatch at ${txtHost}. Expected "${input.txtRecord}" but got: ${flat.join(", ") || "nothing"}`,
           };
         }
         verifiedDomains.set(input.domain, true);
