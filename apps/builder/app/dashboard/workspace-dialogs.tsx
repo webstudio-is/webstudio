@@ -26,26 +26,6 @@ import { TrashIcon } from "@webstudio-is/icons";
 import type { Workspace } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 
-/**
- * tRPC zod validation errors arrive as a JSON array string like:
- * `[{"code":"invalid_string","message":"Invalid email","path":["email"]}]`
- * Extract the first human-readable `message` from that JSON, or return as-is.
- */
-const parseTrpcError = (raw: string | undefined): string | undefined => {
-  if (raw === undefined) {
-    return undefined;
-  }
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].message) {
-      return parsed[0].message;
-    }
-  } catch {
-    // not JSON — return as-is
-  }
-  return raw;
-};
-
 // ---------------------------------------------------------------------------
 // Create workspace
 // ---------------------------------------------------------------------------
@@ -206,7 +186,7 @@ const MemberRow = ({
                 setError(undefined);
                 send({ workspaceId, userId }, (result) => {
                   if (result && "error" in result) {
-                    setError(parseTrpcError(result.error) ?? result.error);
+                    setError(result.error);
                     return;
                   }
                   onRemoved();
@@ -398,9 +378,7 @@ export const ManageMembersDialog = ({
         });
       } catch (error) {
         const message =
-          error instanceof Error
-            ? (parseTrpcError(error.message) ?? error.message)
-            : "Unknown error";
+          error instanceof Error ? error.message : "Unknown error";
         failed.push(`${email}: ${message}`);
       }
     }

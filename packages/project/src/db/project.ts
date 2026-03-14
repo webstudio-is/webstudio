@@ -99,6 +99,25 @@ export const create = async (
 
   const projectId = crypto.randomUUID();
 
+  // When creating inside a workspace, the project is owned by the workspace
+  // owner — not the creating user. This ensures the workspace owner retains
+  // full control and removing a member revokes all their access.
+  let projectOwnerUserId = userId;
+
+  if (workspaceId !== undefined) {
+    const workspace = await context.postgrest.client
+      .from("Workspace")
+      .select("userId")
+      .eq("id", workspaceId)
+      .single();
+
+    if (workspace.error) {
+      throw workspace.error;
+    }
+
+    projectOwnerUserId = workspace.data.userId;
+  }
+
   // create project without user first
   // and set user only after build is successfully created
   // this way to make project creation transactional
@@ -116,7 +135,7 @@ export const create = async (
 
   const updatedProject = await context.postgrest.client
     .from("Project")
-    .update({ userId, workspaceId: workspaceId ?? null })
+    .update({ userId: projectOwnerUserId, workspaceId: workspaceId ?? null })
     .eq("id", projectId)
     .select("*")
     .single();
@@ -139,16 +158,29 @@ export const markAsDeleted = async (
     return { errors: "Only the owner can delete the project" };
   }
 
-  const deletedProject = await context.postgrest.client
+  await softDeleteProject(projectId, context);
+};
+
+/**
+ * Soft-delete a single project: marks it as deleted and frees the subdomain
+ * by assigning a unique random domain. Must be called once per project —
+ * never in a bulk update — so every row gets its own unique domain.
+ */
+export const softDeleteProject = async (
+  projectId: string,
+  context: AppContext
+) => {
+  const result = await context.postgrest.client
     .from("Project")
     .update({
       isDeleted: true,
-      // Free up the subdomain
+      // Free the subdomain — each project needs a unique value
       domain: nanoid(),
     })
     .eq("id", projectId);
-  if (deletedProject.error) {
-    throw deletedProject.error;
+
+  if (result.error) {
+    throw result.error;
   }
 };
 
