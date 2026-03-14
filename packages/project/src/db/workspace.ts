@@ -225,26 +225,17 @@ export const addMember = async (
     throw user.error;
   }
 
-  let memberId: string;
-
-  if (user.data) {
-    if (user.data.id === userId) {
-      throw new Error("You are already the owner of this workspace");
-    }
-    memberId = user.data.id;
-  } else {
-    // Create a placeholder user for the invited email
-    const newUser = await context.postgrest.client
-      .from("User")
-      .insert({ id: crypto.randomUUID(), email })
-      .select("id")
-      .single();
-
-    if (newUser.error) {
-      throw newUser.error;
-    }
-    memberId = newUser.data.id;
+  // User not found — silently succeed without creating a placeholder.
+  // Returns the same shape to prevent email enumeration.
+  if (user.data === null) {
+    return;
   }
+
+  if (user.data.id === userId) {
+    throw new Error("You are already the owner of this workspace");
+  }
+
+  const memberId = user.data.id;
 
   const result = await context.postgrest.client
     .from("WorkspaceMember")
@@ -355,7 +346,7 @@ export const listMembers = async (
     userId: m.userId,
     relation: m.relation,
     createdAt: m.createdAt,
-    email: usersById.get(m.userId)?.email ?? null,
-    username: usersById.get(m.userId)?.username ?? null,
+    email: usersById.get(m.userId)?.email ?? "",
+    username: usersById.get(m.userId)?.username ?? "",
   }));
 };

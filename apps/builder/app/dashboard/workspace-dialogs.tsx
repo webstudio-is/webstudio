@@ -137,7 +137,6 @@ const memberItemStyle = css({
 
 const MemberRow = ({
   email,
-  username,
   userId,
   workspaceId,
   canRemove,
@@ -145,7 +144,6 @@ const MemberRow = ({
   onRemoved,
 }: {
   email: string;
-  username: string;
   userId: string;
   workspaceId: string;
   canRemove: boolean;
@@ -165,12 +163,7 @@ const MemberRow = ({
         className={memberItemStyle()}
       >
         <Flex direction="column" css={{ minWidth: 0 }}>
-          <Text truncate>{username || email}</Text>
-          {username && (
-            <Text color="subtle" variant="small" truncate>
-              {email}
-            </Text>
-          )}
+          <Text truncate>{email}</Text>
         </Flex>
         {canRemove && (
           <Tooltip
@@ -208,11 +201,13 @@ const MemberList = ({
   workspaceId,
   canRemove,
   refreshKey,
+  invitedEmails,
   onRefresh,
 }: {
   workspaceId: string;
   canRemove: boolean;
   refreshKey: number;
+  invitedEmails: Set<string>;
   onRefresh: () => void;
 }) => {
   const { load, data } = trpcClient.workspace.listMembers.useQuery();
@@ -227,7 +222,15 @@ const MemberList = ({
     return;
   }
 
-  if (members.length === 0) {
+  // Show invited emails that aren't already in the real member list.
+  // This makes behavior identical for existing vs non-existing emails,
+  // preventing email enumeration.
+  const knownEmails = new Set(members.map((m) => m.email));
+  const pendingEmails = [...invitedEmails].filter(
+    (email) => knownEmails.has(email) === false
+  );
+
+  if (members.length === 0 && pendingEmails.length === 0) {
     return (
       <Text color="subtle" align="center">
         No members yet
@@ -241,13 +244,26 @@ const MemberList = ({
         <MemberRow
           key={member.userId}
           email={member.email ?? ""}
-          username={member.username ?? ""}
           userId={member.userId}
           workspaceId={workspaceId}
           canRemove={canRemove}
           index={index}
           onRemoved={onRefresh}
         />
+      ))}
+      {pendingEmails.map((email, i) => (
+        <ListItem key={email} index={members.length + i} asChild>
+          <Flex
+            align="center"
+            gap="2"
+            justify="between"
+            className={memberItemStyle()}
+          >
+            <Flex direction="column" css={{ minWidth: 0 }}>
+              <Text truncate>{email}</Text>
+            </Flex>
+          </Flex>
+        </ListItem>
       ))}
     </List>
   );
@@ -351,6 +367,7 @@ export const ManageMembersDialog = ({
   const [errors, setErrors] = useState<string[]>();
   const [membersKey, setMembersKey] = useState(0);
   const [inviting, setInviting] = useState(false);
+  const [invitedEmails, setInvitedEmails] = useState<Set<string>>(new Set());
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -370,12 +387,14 @@ export const ManageMembersDialog = ({
     setInviting(true);
 
     const failed: string[] = [];
+    const succeeded: string[] = [];
     for (const email of emails) {
       try {
         await nativeClient.workspace.addMember.mutate({
           workspaceId: workspace.id,
           email,
         });
+        succeeded.push(email);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
@@ -384,6 +403,10 @@ export const ManageMembersDialog = ({
     }
 
     setInviting(false);
+
+    if (succeeded.length > 0) {
+      setInvitedEmails((prev) => new Set([...prev, ...succeeded]));
+    }
 
     if (failed.length > 0) {
       setErrors(failed);
@@ -445,6 +468,7 @@ export const ManageMembersDialog = ({
                 workspaceId={workspace.id}
                 canRemove={isOwner}
                 refreshKey={membersKey}
+                invitedEmails={invitedEmails}
                 onRefresh={() => setMembersKey((key) => key + 1)}
               />
             </Flex>

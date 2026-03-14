@@ -115,6 +115,24 @@ export const create = async (
       throw workspace.error;
     }
 
+    // Verify the caller is the workspace owner or a member
+    if (workspace.data.userId !== userId) {
+      const membership = await context.postgrest.client
+        .from("WorkspaceMember")
+        .select("userId")
+        .eq("workspaceId", workspaceId)
+        .eq("userId", userId)
+        .maybeSingle();
+
+      if (membership.error) {
+        throw membership.error;
+      }
+
+      if (membership.data === null) {
+        throw new AuthorizationError("You don't have access to this workspace");
+      }
+    }
+
     projectOwnerUserId = workspace.data.userId;
   }
 
