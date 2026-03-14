@@ -12,6 +12,7 @@
     "@trpc/server": "^10.45.2",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
+    "@webstudio-is/feature-flags": "workspace:*",
     "@webstudio-is/postgrest": "workspace:*",
     "@webstudio-is/project-build": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
