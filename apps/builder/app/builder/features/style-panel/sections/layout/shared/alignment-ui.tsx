@@ -2,10 +2,26 @@ import { Box, Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { DotIcon } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
 
-// Hide dots where flex/grid item lines overlap to avoid sub-pixel artifacts.
-// Lines have a cross-axis position (from alignItems) and main-axis positions
-// (from justifyContent). A dot is hidden when it sits at an intersection.
-const shouldHideDot = ({
+// Hide dots where indicator bars overlap to avoid sub-pixel artifacts.
+// Bars have a cross-axis position (from alignItems) and main-axis position
+// (from justifyContent). A dot is hidden when both axes match.
+//
+// x always maps to justify-content (main-axis position: 0=start, 1=center, 2=end)
+// y always maps to align-items (cross-axis position: 0=start, 1=center, 2=end)
+// The visual transposition for column direction is handled by the CSS grid swap.
+//
+// Cross-axis (y): CSS align-items controls bar position in the cross direction.
+//   stretch/normal → bars span full cross-axis (CSS stretches flex items)
+//   itemStretchWidth (column) / itemStretchHeight (row) → same visual effect
+//   start/baseline/center/end → bars sit at one specific position
+//
+// Main-axis (x): CSS justify-content controls bar distribution.
+//   normal/start → bars clustered at position 0
+//   center → bars at position 1
+//   end → bars at position 2
+//   space-between → bars at positions 0, 1, 2
+//   space-around → bars between positions, no dot overlap
+export const shouldHideDot = ({
   x,
   y,
   justifyContent,
@@ -22,18 +38,21 @@ const shouldHideDot = ({
   itemStretchWidth: boolean;
   itemStretchHeight: boolean;
 }) => {
-  const crossAxis = isColumnDirection ? x : y;
-  const mainAxis = isColumnDirection ? y : x;
+  // x always maps to justify-content (main-axis), y to align-items (cross-axis)
+  const crossAxis = y;
+  const mainAxis = x;
 
-  // Determine if the dot's cross-axis position overlaps with lines
+  // Check if the dot's cross-axis position overlaps with bars.
+  // CSS align-items: stretch/normal makes bars span full cross-axis.
+  // Explicit itemStretch* does the same via min-width/height: 100%.
   const isStretched =
-    (isColumnDirection ? itemStretchWidth : itemStretchHeight) ||
     alignItems === "stretch" ||
-    alignItems === "normal";
+    alignItems === "normal" ||
+    (isColumnDirection ? itemStretchWidth : itemStretchHeight);
 
   let crossMatch = false;
   if (isStretched) {
-    crossMatch = true; // lines span all cross-axis positions
+    crossMatch = true;
   } else {
     switch (alignItems) {
       case "start":
@@ -53,7 +72,7 @@ const shouldHideDot = ({
     return false;
   }
 
-  // Determine if the dot's main-axis position overlaps with lines
+  // Check if the dot's main-axis position overlaps with bars.
   switch (justifyContent) {
     case "normal":
     case "start":
@@ -63,8 +82,8 @@ const shouldHideDot = ({
     case "end":
       return mainAxis === 2;
     case "space-between":
-    case "space-around":
       return true;
+    // space-around: bars sit between dot positions, no overlap
   }
 
   return false;
