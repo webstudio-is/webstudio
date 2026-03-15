@@ -38,11 +38,7 @@ export const shouldHideDot = ({
   itemStretchWidth: boolean;
   itemStretchHeight: boolean;
 }) => {
-  // x always maps to justify-content (main-axis), y to align-items (cross-axis)
-  const crossAxis = y;
-  const mainAxis = x;
-
-  // Check if the dot's cross-axis position overlaps with bars.
+  // Check if the dot's cross-axis (y) position overlaps with bars.
   // CSS align-items: stretch/normal makes bars span full cross-axis.
   // Explicit itemStretch* does the same via min-width/height: 100%.
   const isStretched =
@@ -57,13 +53,13 @@ export const shouldHideDot = ({
     switch (alignItems) {
       case "start":
       case "baseline":
-        crossMatch = crossAxis === 0;
+        crossMatch = y === 0;
         break;
       case "center":
-        crossMatch = crossAxis === 1;
+        crossMatch = y === 1;
         break;
       case "end":
-        crossMatch = crossAxis === 2;
+        crossMatch = y === 2;
         break;
     }
   }
@@ -72,15 +68,15 @@ export const shouldHideDot = ({
     return false;
   }
 
-  // Check if the dot's main-axis position overlaps with bars.
+  // Check if the dot's main-axis (x) position overlaps with bars.
   switch (justifyContent) {
     case "normal":
     case "start":
-      return mainAxis === 0;
+      return x === 0;
     case "center":
-      return mainAxis === 1;
+      return x === 1;
     case "end":
-      return mainAxis === 2;
+      return x === 2;
     case "space-between":
       return true;
     // space-around: bars sit between dot positions, no overlap
