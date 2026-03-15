@@ -1,6 +1,9 @@
 import { useStore } from "@nanostores/react";
 import type { Meta, StoryFn } from "@storybook/react";
-import { Box, Text, theme } from "@webstudio-is/design-system";
+import { Text } from "@webstudio-is/design-system";
+import { ToolbarButton } from "@webstudio-is/design-system";
+import { WebstudioIcon } from "@webstudio-is/icons";
+import { TopbarLayout } from "~/builder/shared/topbar-layout";
 import { AddressBarPopover } from "./address-bar";
 import { $dataSources, $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
@@ -67,15 +70,14 @@ export const AddressBar: StoryFn = () => {
   $awareness.set({ pageId: "dynamicId" });
   return (
     <>
-      <Box
-        css={{
-          height: theme.spacing[15],
-          background: theme.colors.backgroundTopbar,
-          color: theme.colors.foregroundContrastMain,
-        }}
-      >
-        <AddressBarPopover />
-      </Box>
+      <TopbarLayout
+        menu={
+          <ToolbarButton aria-label="Menu">
+            <WebstudioIcon size={22} />
+          </ToolbarButton>
+        }
+        left={<AddressBarPopover />}
+      />
       <SystemInspect />
       <HistoryInspect />
     </>

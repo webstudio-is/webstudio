@@ -14,6 +14,10 @@ import {
   ShieldIcon,
   WebstudioIcon,
 } from "@webstudio-is/icons";
+import { $queueStatus } from "~/shared/sync/project-queue";
+import { $authPermit } from "~/shared/nano-states";
+import { SyncStatus } from "~/builder/features/sync-status";
+import { ViewMode } from "~/builder/features/view-mode";
 import { TopbarLayout } from "./topbar-layout";
 
 export default {
@@ -83,59 +87,6 @@ export const Default = () => (
   />
 );
 
-export const WithSyncError = () => (
-  <TopbarLayout
-    menu={<MenuPlaceholder />}
-    left={<PagePlaceholder />}
-    center={<BreakpointsPlaceholder />}
-    right={
-      <>
-        <SyncErrorIndicator />
-        <Button color="gradient">Share</Button>
-        <Button color="positive">Publish</Button>
-      </>
-    }
-  />
-);
-
-export const WithViewMode = () => (
-  <TopbarLayout
-    menu={<MenuPlaceholder />}
-    left={<PagePlaceholder />}
-    center={<BreakpointsPlaceholder />}
-    right={
-      <>
-        <ViewModeIndicator />
-        <Button color="gradient">Share</Button>
-        <Button color="positive">Publish</Button>
-      </>
-    }
-  />
-);
-
-export const WithClone = () => (
-  <TopbarLayout
-    menu={<MenuPlaceholder />}
-    left={<PagePlaceholder />}
-    center={<BreakpointsPlaceholder />}
-    right={
-      <>
-        <Button color="gradient">Share</Button>
-        <Button color="positive">Publish</Button>
-        <Link
-          data-state="auto"
-          className={buttonStyle({ color: "positive" })}
-          color="contrast"
-          href="#"
-          underline="none"
-        >
-          Clone
-        </Link>
-      </>
-    }
-  />
-);
-
 export const AllIndicators = () => (
   <TopbarLayout
     menu={<MenuPlaceholder />}
@@ -163,3 +114,39 @@ export const AllIndicators = () => (
 );
 
 export const Empty = () => <TopbarLayout menu={<MenuPlaceholder />} />;
+
+export const WithSyncStatusFailed = () => {
+  $queueStatus.set({ status: "failed" });
+  return (
+    <TopbarLayout
+      menu={<MenuPlaceholder />}
+      left={<PagePlaceholder />}
+      center={<BreakpointsPlaceholder />}
+      right={
+        <>
+          <SyncStatus />
+          <Button color="gradient">Share</Button>
+          <Button color="positive">Publish</Button>
+        </>
+      }
+    />
+  );
+};
+
+export const WithViewModeActive = () => {
+  $authPermit.set("view");
+  return (
+    <TopbarLayout
+      menu={<MenuPlaceholder />}
+      left={<PagePlaceholder />}
+      center={<BreakpointsPlaceholder />}
+      right={
+        <>
+          <ViewMode />
+          <Button color="gradient">Share</Button>
+          <Button color="positive">Publish</Button>
+        </>
+      }
+    />
+  );
+};

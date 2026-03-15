@@ -1,0 +1,33 @@
+import { Flex, Text } from "@webstudio-is/design-system";
+import { RelativeTime } from "./relative-time";
+
+export default {
+  title: "Builder/Shared/Relative Time",
+  component: RelativeTime,
+};
+
+export const Demo = () => {
+  const now = Date.now();
+  const times = [
+    { label: "Just now", date: new Date(now - 10_000) },
+    { label: "5 minutes ago", date: new Date(now - 5 * 60_000) },
+    { label: "1 hour ago", date: new Date(now - 60 * 60_000) },
+    { label: "Yesterday", date: new Date(now - 24 * 60 * 60_000) },
+    { label: "Last week", date: new Date(now - 7 * 24 * 60 * 60_000) },
+  ];
+
+  return (
+    <Flex direction="column" gap="2">
+      {times.map(({ label, date }) => (
+        <Flex key={label} gap="3" align="center">
+          <Text variant="labels" css={{ width: 120 }}>
+            {label}:
+          </Text>
+          <Text>
+            <RelativeTime time={date} />
+          </Text>
+        </Flex>
+      ))}
+    </Flex>
+  );
+};

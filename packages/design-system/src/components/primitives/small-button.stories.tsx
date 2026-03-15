@@ -1,70 +1,41 @@
+import { Grid } from "../grid";
 import { Flex } from "../flex";
+import { Text } from "../text";
 import { XSmallIcon, TrashIcon, PlusIcon } from "@webstudio-is/icons";
-import { SmallButton } from "./small-button";
+import { SmallButton, smallButtonVariants } from "./small-button";
 
 export default {
   title: "Primitives/Small Button",
   component: SmallButton,
 };
 
-export const Normal = () => (
-  <Flex gap="5" align="center">
-    <SmallButton>
-      <XSmallIcon />
-    </SmallButton>
-    <SmallButton>
-      <PlusIcon />
-    </SmallButton>
-    <SmallButton disabled>
-      <XSmallIcon />
-    </SmallButton>
-  </Flex>
-);
+const icons = [
+  { icon: <XSmallIcon />, label: "XSmallIcon" },
+  { icon: <TrashIcon />, label: "TrashIcon" },
+  { icon: <PlusIcon />, label: "PlusIcon" },
+];
 
-export const Destructive = () => (
-  <Flex gap="5" align="center">
-    <SmallButton variant="destructive">
-      <TrashIcon />
-    </SmallButton>
-    <SmallButton variant="destructive" disabled>
-      <TrashIcon />
-    </SmallButton>
-  </Flex>
-);
+export const Demo = () => (
+  <Grid columns={4} gap="3" align="center" css={{ width: 400 }}>
+    <Text variant="labels">Variant</Text>
+    {icons.map(({ label }) => (
+      <Text key={label} variant="labels">
+        {label}
+      </Text>
+    ))}
 
-export const Contrast = () => (
-  <Flex
-    gap="5"
-    align="center"
-    css={{ background: "#333", padding: 16, borderRadius: 8 }}
-  >
-    <SmallButton variant="contrast">
-      <XSmallIcon />
-    </SmallButton>
-    <SmallButton variant="contrast" disabled>
-      <XSmallIcon />
-    </SmallButton>
-  </Flex>
-);
-
-export const AllVariants = () => (
-  <Flex direction="column" gap="5">
-    <Flex gap="5" align="center">
-      <SmallButton variant="normal">
-        <XSmallIcon />
-      </SmallButton>
-      <SmallButton variant="destructive">
-        <TrashIcon />
-      </SmallButton>
-    </Flex>
-    <Flex
-      gap="5"
-      align="center"
-      css={{ background: "#333", padding: 16, borderRadius: 8 }}
-    >
-      <SmallButton variant="contrast">
-        <XSmallIcon />
-      </SmallButton>
-    </Flex>
-  </Flex>
+    {smallButtonVariants.map((variant) => (
+      <>
+        <Text variant="labels">{variant}</Text>
+        {icons.map(({ icon, label }) => (
+          <Flex key={`${variant}-${label}`} gap="2" align="center">
+            <SmallButton variant={variant}>{icon}</SmallButton>
+            <SmallButton variant={variant} disabled>
+              {icon}
+            </SmallButton>
+          </Flex>
+        ))}
+      </>
+    ))}
+  </Grid>
 );
