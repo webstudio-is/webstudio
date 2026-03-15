@@ -267,6 +267,11 @@ export const getImageAttributes = (props: {
   );
 
   if (props.src != null && props.src !== "") {
+    // Data URIs should be used as-is without optimization or loader processing
+    if (props.src.startsWith("data:")) {
+      return { src: props.src };
+    }
+
     if (props.srcSet == null && props.optimize) {
       const sizes =
         props.sizes ?? (props.width == null ? DEFAULT_SIZES : undefined);
